@@ -1,0 +1,4 @@
+/* Gmail logo */
+header div:has(> div > a[href="#inbox"] > img) {
+  display: none !important;
+}
