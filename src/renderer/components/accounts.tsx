@@ -92,7 +92,7 @@ function AddAccountButton() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Add</Button>
+        <Button size="sm">Add</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -118,7 +118,7 @@ function EditAccountButton({ account }: { account: Account }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="outline">
+        <Button size="icon" variant="ghost">
           <PencilIcon />
         </Button>
       </DialogTrigger>
@@ -152,26 +152,28 @@ export function Accounts() {
   const accounts = useAccounts();
   const moveAccount = trpc.moveAccount.useMutation();
 
-  if (!accounts.data) {
-    return;
-  }
-
   return (
-    <div>
-      <div className="flex justify-between mb-6">
-        <div className="text-xl font-semibold">Accounts</div>
+    <div className="py-5 px-6 bg-background border rounded-lg">
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-2xl font-bold tracking-tight">Accounts</div>
         <AddAccountButton />
       </div>
       <div className="space-y-4">
         {accounts.data.map((account, index) => (
           <div className="flex justify-between items-center" key={account.id}>
-            <div>{account.label}</div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
+              <div className="size-8 border rounded-full flex items-center justify-center text-sm font-light">
+                {account.label[0].toUpperCase()}
+              </div>
+              <div>{account.label}</div>
+            </div>
+            <div className="flex items-center gap-2">
               {accounts.data.length > 1 && (
                 <>
                   <Button
                     size="icon"
-                    variant="outline"
+                    className="size-8"
+                    variant="ghost"
                     disabled={index + 1 === accounts.data.length}
                     onClick={() => {
                       moveAccount.mutate({ account, move: "down" });
@@ -181,7 +183,8 @@ export function Accounts() {
                   </Button>
                   <Button
                     size="icon"
-                    variant="outline"
+                    className="size-8"
+                    variant="ghost"
                     disabled={index === 0}
                     onClick={() => {
                       moveAccount.mutate({ account, move: "up" });

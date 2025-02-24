@@ -25,7 +25,7 @@ export function AppSidebar() {
               key={account.id}
               type="button"
               className={cn(
-                "size-10 border rounded-md inline-flex items-center justify-center font-light cursor-pointer",
+                "size-10 border rounded-full flex items-center justify-center font-light cursor-pointer",
                 {
                   "bg-secondary": account.selected,
                 }
