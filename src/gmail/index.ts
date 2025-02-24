@@ -1,7 +1,11 @@
 import { WebContentsView } from "electron";
 import { config, getSelectedAccount } from "@/lib/config";
 import { openExternalUrl } from "@/lib/url";
-import { APP_SIDEBAR_WIDTH, APP_TOOLBAR_HEIGHT } from "@/lib/constants";
+import {
+	APP_SIDEBAR_WIDTH,
+	APP_TOOLBAR_HEIGHT,
+	GMAIL_URL,
+} from "@/lib/constants";
 import gmailStyles from "./styles.css" with { type: "text" };
 import path from "node:path";
 import type { Main } from "@/main";
@@ -19,8 +23,6 @@ export type GmailNavigationHistoryChangedListener = (
 export type GmailVisibleChangedListener = (visible: boolean) => void;
 
 export class Gmail {
-	static url = "https://mail.google.com";
-
 	main: Main;
 
 	views = new Map<string, WebContentsView>();
@@ -178,8 +180,8 @@ export class Gmail {
 
 		view.setVisible(this.visible && account.selected);
 
-		view.webContents.loadURL(Gmail.url);
-
+		view.webContents.loadURL(GMAIL_URL);
+		view.webContents.openDevTools();
 		view.webContents.setWindowOpenHandler(({ url }) => {
 			openExternalUrl(url);
 
@@ -189,7 +191,7 @@ export class Gmail {
 		});
 
 		view.webContents.on("dom-ready", () => {
-			if (view.webContents.getURL().startsWith(Gmail.url)) {
+			if (view.webContents.getURL().startsWith(GMAIL_URL)) {
 				view.webContents.insertCSS(gmailStyles);
 			}
 		});
