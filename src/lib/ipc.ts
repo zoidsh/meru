@@ -6,6 +6,7 @@ import { observable } from "@trpc/server/observable";
 import { randomUUID } from "node:crypto";
 import type { Main } from "@/main";
 import { config } from "./config";
+import { is } from "electron-util";
 
 const t = initTRPC.create({ isServer: true });
 
@@ -129,6 +130,54 @@ export function createIpcRouter({ main, gmail }: { main: Main; gmail: Gmail }) {
 
 				config.set("accounts", accounts);
 			}),
+		window: t.router({
+			control: t.procedure
+				.input(z.enum(["minimize", "maximize", "unmaximize", "close"]))
+				.mutation(({ input }) => {
+					switch (input) {
+						case "minimize": {
+							main.window.minimize();
+							break;
+						}
+						case "maximize": {
+							main.window.maximize();
+							break;
+						}
+						case "unmaximize": {
+							main.window.unmaximize();
+							break;
+						}
+						case "close": {
+							main.window.close();
+							break;
+						}
+					}
+				}),
+			getIsMaximized: t.procedure.query(() => {
+				return main.window.isMaximized();
+			}),
+			onMaximizedChanged: t.procedure.subscription(() => {
+				return observable<boolean>((emit) => {
+					const maximizeListener = () => {
+						emit.next(true);
+					};
+
+					const unmaximizeListener = () => {
+						emit.next(false);
+					};
+
+					main.window
+						.on("maximize", maximizeListener)
+						.on("unmaximize", unmaximizeListener);
+
+					return () => {
+						main.window
+							.off("maximize", maximizeListener)
+							.off("unmaximize", unmaximizeListener);
+					};
+				});
+			}),
+		}),
 		gmail: t.router({
 			getNavigationHistory: t.procedure.query(() =>
 				gmail.getNavigationHistory(),

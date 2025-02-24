@@ -1,7 +1,6 @@
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  BellIcon,
   RotateCwIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -10,13 +9,60 @@ import {
   useAccounts,
   useAppTitle,
   useGmailNavigationHistory,
-  useGmailNavigationHistoryGo,
-  useGmailReload,
-  useGmailToggleVisible,
   useGmailVisible,
+  useIsWindowMaximized,
 } from "../lib/hooks";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
+import type { HTMLAttributes } from "react";
+import { trpc } from "../lib/trpc";
+import { CloseIcon, MaximizeIcon, MinimizeIcon, RestoreIcon } from "./ui/icons";
+
+function WindowControlButton({
+  className,
+  ...props
+}: HTMLAttributes<HTMLButtonElement>) {
+  return (
+    <Button
+      variant="ghost"
+      className={cn("rounded-none", className)}
+      style={{ width: APP_TOOLBAR_HEIGHT, height: APP_TOOLBAR_HEIGHT }}
+      {...props}
+    />
+  );
+}
+
+function WindowControls() {
+  const controlWindow = trpc.window.control.useMutation();
+  const isWindowMaximized = useIsWindowMaximized();
+
+  return (
+    <div
+      className="flex"
+      // @ts-expect-error
+      style={{ appRegion: "none" }}
+    >
+      <WindowControlButton onClick={() => controlWindow.mutate("minimize")}>
+        <MinimizeIcon />
+      </WindowControlButton>
+      <WindowControlButton
+        onClick={() =>
+          controlWindow.mutate(
+            isWindowMaximized.data ? "unmaximize" : "maximize"
+          )
+        }
+      >
+        {isWindowMaximized.data ? <RestoreIcon /> : <MaximizeIcon />}
+      </WindowControlButton>
+      <WindowControlButton
+        className="hover:bg-destructive/90"
+        onClick={() => controlWindow.mutate("close")}
+      >
+        <CloseIcon />
+      </WindowControlButton>
+    </div>
+  );
+}
 
 function TitlebarSpacer() {
   return <div style={{ width: APP_SIDEBAR_WIDTH }} />;
@@ -39,8 +85,8 @@ function TitlebarTitle() {
 
 function TitlebarNavigation() {
   const gmailNavigationHistory = useGmailNavigationHistory();
-  const gmailNavigationHistoryGo = useGmailNavigationHistoryGo();
-  const gmailReload = useGmailReload();
+  const gmailNavigationHistoryGo = trpc.gmail.navigationHistoryGo.useMutation();
+  const gmailReload = trpc.gmail.reload.useMutation();
   const gmailVisible = useGmailVisible();
 
   return (
@@ -48,8 +94,12 @@ function TitlebarNavigation() {
       className={cn("flex items-center gap-1", {
         invisible: !gmailVisible.data,
       })}
-      // @ts-expect-error
-      style={{ appRegion: "none" }}
+      style={{
+        // @ts-expect-error
+        appRegion: "none",
+        marginLeft:
+          window.platform === "darwin" ? APP_SIDEBAR_WIDTH : undefined,
+      }}
     >
       <Button
         variant="ghost"
@@ -88,7 +138,7 @@ function TitlebarNavigation() {
 }
 
 export function AppTitlebar() {
-  const gmailToggleVisible = useGmailToggleVisible();
+  const gmailToggleVisible = trpc.gmail.toggleVisible.useMutation();
   const accounts = useAccounts();
 
   return (
@@ -102,14 +152,13 @@ export function AppTitlebar() {
         relative: accounts.data.length === 1,
       })}
     >
-      <TitlebarSpacer />
+      <TitlebarTitle />
       <div
         className={cn("flex-1 flex justify-between px-2", {
           relative: accounts.data.length > 1,
         })}
       >
         <TitlebarNavigation />
-        <TitlebarTitle />
         <div
           className="flex items-center gap-1"
           // @ts-expect-error
@@ -127,6 +176,7 @@ export function AppTitlebar() {
           </Button>
         </div>
       </div>
+      {window.platform !== "darwin" && <WindowControls />}
     </div>
   );
 }

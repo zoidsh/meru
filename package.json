@@ -10,6 +10,7 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "dev": "bun run scripts/build.ts --dev",
+    "stories": "bun run scripts/stories.ts",
     "build": "bun run scripts/build.ts",
     "dist:mac": "electron-builder --mac",
     "dist:linux": "electron-builder --linux",

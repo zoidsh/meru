@@ -17,7 +17,7 @@ const args = parseArgs({
 
 function cleanup() {
 	return Promise.all(
-		["./out", "./dist"].map((dir) => rm(dir, { recursive: true })),
+		["./out", "./dist"].map((dir) => rm(dir, { recursive: true, force: true })),
 	);
 }
 

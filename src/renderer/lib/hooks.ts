@@ -30,26 +30,6 @@ export function useAccounts() {
 	return accounts;
 }
 
-export function useSelectAccount() {
-	return trpc.selectAccount.useMutation();
-}
-
-export function useAddAccount() {
-	return trpc.addAccount.useMutation();
-}
-
-export function useEditAccount() {
-	return trpc.editAccount.useMutation();
-}
-
-export function useRemoveAccount() {
-	return trpc.removeAccount.useMutation();
-}
-
-export function useMoveAccount() {
-	return trpc.moveAccount.useMutation();
-}
-
 export function useGmailVisible() {
 	const gmailVisible = trpc.gmail.getVisible.useQuery(undefined, {
 		initialData: true,
@@ -65,6 +45,7 @@ export function useGmailVisible() {
 
 	return gmailVisible;
 }
+
 export function useGmailNavigationHistory() {
 	const gmailNavigationHistory = trpc.gmail.getNavigationHistory.useQuery();
 
@@ -82,14 +63,16 @@ export function useGmailNavigationHistory() {
 	return gmailNavigationHistory;
 }
 
-export function useGmailNavigationHistoryGo() {
-	return trpc.gmail.navigationHistoryGo.useMutation();
-}
+export function useIsWindowMaximized() {
+	const isWindowMaximized = trpc.window.getIsMaximized.useQuery();
 
-export function useGmailReload() {
-	return trpc.gmail.reload.useMutation();
-}
+	const utils = trpc.useUtils();
 
-export function useGmailToggleVisible() {
-	return trpc.gmail.toggleVisible.useMutation();
+	trpc.window.onMaximizedChanged.useSubscription(undefined, {
+		onData: (isMaximized) => {
+			utils.window.getIsMaximized.setData(undefined, isMaximized);
+		},
+	});
+
+	return isWindowMaximized;
 }

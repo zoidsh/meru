@@ -1,12 +1,13 @@
 import { APP_SIDEBAR_WIDTH } from "../../lib/constants";
-import { useAccounts, useGmailVisible, useSelectAccount } from "../lib/hooks";
+import { useAccounts, useGmailVisible } from "../lib/hooks";
+import { trpc } from "../lib/trpc";
 import { cn } from "../lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
 
 export function AppSidebar() {
   const gmailVisible = useGmailVisible();
   const accounts = useAccounts();
-  const selectAccount = useSelectAccount();
+  const selectAccount = trpc.selectAccount.useMutation();
 
   if (!gmailVisible.data) {
     return;

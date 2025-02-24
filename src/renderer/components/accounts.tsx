@@ -1,11 +1,5 @@
 import { type Account, accountSchema } from "@/lib/config/types";
-import {
-  useAccounts,
-  useAddAccount,
-  useEditAccount,
-  useMoveAccount,
-  useRemoveAccount,
-} from "../lib/hooks";
+import { useAccounts } from "../lib/hooks";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -27,6 +21,7 @@ import {
   DialogHeader,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
+import { trpc } from "../lib/trpc";
 
 function EditAccountForm({
   account = { label: "" },
@@ -92,7 +87,7 @@ function EditAccountForm({
 
 function AddAccountButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const addAccount = useAddAccount();
+  const addAccount = trpc.addAccount.useMutation();
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -117,8 +112,8 @@ function AddAccountButton() {
 
 function EditAccountButton({ account }: { account: Account }) {
   const [isOpen, setIsOpen] = useState(false);
-  const editAccount = useEditAccount();
-  const removeAccount = useRemoveAccount();
+  const editAccount = trpc.editAccount.useMutation();
+  const removeAccount = trpc.removeAccount.useMutation();
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -155,7 +150,7 @@ function EditAccountButton({ account }: { account: Account }) {
 
 export function Accounts() {
   const accounts = useAccounts();
-  const moveAccount = useMoveAccount();
+  const moveAccount = trpc.moveAccount.useMutation();
 
   if (!accounts.data) {
     return;
