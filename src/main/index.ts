@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { AppState } from "@/lib/app-state";
 import { config } from "@/lib/config";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { is } from "electron-util";
@@ -12,7 +13,7 @@ export class Main {
 		titleChanged: new Set<(title: string) => void>(),
 	};
 
-	constructor() {
+	constructor({ appState }: { appState: AppState }) {
 		const lastWindowState = config.get("lastWindowState");
 
 		this.window = new BrowserWindow({
@@ -61,6 +62,26 @@ export class Main {
 				mode: "detach",
 			});
 		}
+
+		this.window.on("close", (event) => {
+			// Workaround: Closing the main window when on full screen leaves a black screen
+			// https://github.com/electron/electron/issues/20263
+			if (is.macos && this.window.isFullScreen()) {
+				this.window.once("leave-full-screen", () => {
+					this.window.hide();
+				});
+
+				this.window.setFullScreen(false);
+			}
+
+			if (!appState.isQuitting) {
+				event.preventDefault();
+
+				this.window.blur();
+
+				this.window.hide();
+			}
+		});
 	}
 
 	onTitleChanged(listener: (title: string) => void) {
