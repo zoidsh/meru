@@ -8,8 +8,6 @@ export class Main {
 
 	title = "";
 
-	ready: Promise<void>;
-
 	listeners = {
 		titleChanged: new Set<(title: string) => void>(),
 	};
@@ -25,6 +23,7 @@ export class Main {
 			height: lastWindowState.bounds.height,
 			x: lastWindowState.bounds.x,
 			y: lastWindowState.bounds.y,
+			show: false,
 			fullscreen: lastWindowState.fullscreen,
 			titleBarStyle: "hiddenInset",
 			darkTheme: nativeTheme.shouldUseDarkColors,
@@ -40,8 +39,8 @@ export class Main {
 			icon: is.linux ? path.join("assets", "icon.png") : undefined,
 		});
 
-		this.ready = new Promise<void>((resolve) => {
-			this.window.webContents.once("dom-ready", resolve);
+		this.window.once("ready-to-show", () => {
+			this.window.show();
 		});
 
 		if (lastWindowState.maximized) {
@@ -59,12 +58,6 @@ export class Main {
 				mode: "detach",
 			});
 		}
-	}
-
-	async whenReady() {
-		await this.ready;
-
-		return this;
 	}
 
 	onTitleChanged(listener: (title: string) => void) {

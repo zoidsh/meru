@@ -12,7 +12,7 @@ if (!app.requestSingleInstanceLock()) {
 app.setAppUserModelId("dev.timche.meru");
 
 app.whenReady().then(async () => {
-	const main = await new Main().whenReady();
+	const main = new Main();
 
 	const gmail = new Gmail({ main });
 
