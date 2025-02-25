@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    check:
+      run: bun lint:write {staged_files}
+      stage_fixed: true

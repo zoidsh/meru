@@ -1,7 +1,7 @@
+import path from "node:path";
 import { config } from "@/lib/config";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { is } from "electron-util";
-import path from "node:path";
 
 export class Main {
 	window: BrowserWindow;

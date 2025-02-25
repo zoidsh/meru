@@ -1,5 +1,5 @@
-import { Glob, serve } from "bun";
 import path from "node:path";
+import { Glob, serve } from "bun";
 
 const storiesGlob = new Glob("**/*.stories.tsx");
 

@@ -1,9 +1,9 @@
 import { app } from "electron";
-import { Main } from "./main";
-import { Gmail } from "./gmail";
 import { createIPCHandler } from "electron-trpc/main";
-import { createIpcRouter } from "./lib/ipc";
+import { Gmail } from "./gmail";
 import { config } from "./lib/config";
+import { createIpcRouter } from "./lib/ipc";
+import { Main } from "./main";
 
 app.whenReady().then(async () => {
 	const main = await new Main().whenReady();

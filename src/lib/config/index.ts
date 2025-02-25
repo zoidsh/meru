@@ -1,5 +1,5 @@
-import Store from "electron-store";
 import { randomUUID } from "node:crypto";
+import Store from "electron-store";
 import type { Config } from "./types";
 
 export const config = new Store<Config>({

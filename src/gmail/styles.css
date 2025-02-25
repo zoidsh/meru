@@ -1,16 +1,16 @@
 /* Gmail logo */
 header div:has(> div > a[href="#inbox"] > img) {
-  display: none !important;
+	display: none !important;
 }
 
 .meru-url-preview {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  max-width: 50%;
-  padding: 6px;
-  font-size: 0.75rem;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	max-width: 50%;
+	padding: 6px;
+	font-size: 0.75rem;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }

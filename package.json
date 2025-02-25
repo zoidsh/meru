@@ -1,93 +1,90 @@
 {
-  "name": "meru",
-  "productName": "Meru",
-  "version": "3.0.0",
-  "private": true,
-  "description": "Nifty Gmail desktop app",
-  "author": "Tim Cheung <tim@cheung.io>",
-  "repository": "timche/meru",
-  "main": "out/app.js",
-  "scripts": {
-    "postinstall": "electron-builder install-app-deps",
-    "dev": "bun run scripts/build.ts --dev",
-    "stories": "bun run scripts/stories.ts",
-    "build": "bun run scripts/build.ts",
-    "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux",
-    "dist:window": "electron-builder --win"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@hookform/resolvers": "^4.1.0",
-    "@radix-ui/react-avatar": "^1.1.3",
-    "@radix-ui/react-dialog": "^1.1.6",
-    "@radix-ui/react-label": "^2.1.2",
-    "@radix-ui/react-scroll-area": "^1.2.3",
-    "@radix-ui/react-separator": "^1.1.2",
-    "@radix-ui/react-slot": "^1.1.2",
-    "@radix-ui/react-tooltip": "^1.1.8",
-    "@tanstack/react-query": "^4.29.14",
-    "@trpc/react-query": "^10.45.2",
-    "@trpc/server": "^10.45.2",
-    "@types/bun": "^1.2.3",
-    "@types/react-dom": "^19.0.4",
-    "bun-plugin-tailwind": "^0.0.14",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "electron": "^34.2.0",
-    "electron-builder": "^25.1.8",
-    "electron-trpc": "^0.7.1",
-    "lucide-react": "^0.475.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.2",
-    "tailwind-merge": "^3.0.1",
-    "tailwindcss": "^4.0.7",
-    "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.3",
-    "zod": "^3.24.2"
-  },
-  "dependencies": {
-    "electron-store": "^10.0.1",
-    "electron-util": "^0.18.1"
-  },
-  "build": {
-    "files": [
-      "!scripts${/*}",
-      "!src${/*}",
-      "!biome.json",
-      "!bun.lock",
-      "!bunfig.toml",
-      "!tsconfig.json"
-    ],
-    "appId": "dev.timche.meru",
-    "mac": {
-      "category": "public.app-category.productivity",
-      "darkModeSupport": true,
-      "target": {
-        "target": "default",
-        "arch": [
-          "x64",
-          "arm64"
-        ]
-      }
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "synopsis": "Nifty Gmail desktop app",
-      "description": "Meru is an unofficial and security focused Gmail app with many useful features.",
-      "category": "Network;Office"
-    },
-    "win": {
-      "verifyUpdateCodeSignature": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true
-    }
-  }
+	"name": "meru",
+	"productName": "Meru",
+	"version": "3.0.0",
+	"private": true,
+	"description": "Nifty Gmail desktop app",
+	"author": "Tim Cheung <tim@cheung.io>",
+	"repository": "timche/meru",
+	"main": "out/app.js",
+	"scripts": {
+		"postinstall": "electron-builder install-app-deps",
+		"dev": "bun run scripts/build.ts --dev",
+		"lint": "biome check .",
+		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+		"stories": "bun run scripts/stories.ts",
+		"build": "bun run scripts/build.ts",
+		"dist:mac": "electron-builder --mac",
+		"dist:linux": "electron-builder --linux",
+		"dist:window": "electron-builder --win"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@hookform/resolvers": "^4.1.0",
+		"@radix-ui/react-avatar": "^1.1.3",
+		"@radix-ui/react-dialog": "^1.1.6",
+		"@radix-ui/react-label": "^2.1.2",
+		"@radix-ui/react-scroll-area": "^1.2.3",
+		"@radix-ui/react-separator": "^1.1.2",
+		"@radix-ui/react-slot": "^1.1.2",
+		"@radix-ui/react-tooltip": "^1.1.8",
+		"@tanstack/react-query": "^4.29.14",
+		"@trpc/react-query": "^10.45.2",
+		"@trpc/server": "^10.45.2",
+		"@types/bun": "^1.2.3",
+		"@types/react-dom": "^19.0.4",
+		"bun-plugin-tailwind": "^0.0.14",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"electron": "^34.2.0",
+		"electron-builder": "^25.1.8",
+		"electron-trpc": "^0.7.1",
+		"lefthook": "^1.11.1",
+		"lucide-react": "^0.475.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-hook-form": "^7.54.2",
+		"tailwind-merge": "^3.0.1",
+		"tailwindcss": "^4.0.7",
+		"tailwindcss-animate": "^1.0.7",
+		"typescript": "^5.7.3",
+		"zod": "^3.24.2"
+	},
+	"dependencies": {
+		"electron-store": "^10.0.1",
+		"electron-util": "^0.18.1"
+	},
+	"build": {
+		"files": [
+			"!scripts${/*}",
+			"!src${/*}",
+			"!biome.json",
+			"!bun.lock",
+			"!bunfig.toml",
+			"!tsconfig.json"
+		],
+		"appId": "dev.timche.meru",
+		"mac": {
+			"category": "public.app-category.productivity",
+			"darkModeSupport": true,
+			"target": {
+				"target": "default",
+				"arch": ["x64", "arm64"]
+			}
+		},
+		"linux": {
+			"target": ["AppImage", "deb"],
+			"synopsis": "Nifty Gmail desktop app",
+			"description": "Meru is an unofficial and security focused Gmail app with many useful features.",
+			"category": "Network;Office"
+		},
+		"win": {
+			"verifyUpdateCodeSignature": false
+		},
+		"nsis": {
+			"oneClick": false,
+			"perMachine": false,
+			"allowToChangeInstallationDirectory": true
+		}
+	}
 }

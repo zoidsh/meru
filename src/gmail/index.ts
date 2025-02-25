@@ -1,15 +1,15 @@
-import { WebContentsView } from "electron";
+import path from "node:path";
 import { config, getSelectedAccount } from "@/lib/config";
-import { openExternalUrl } from "@/lib/url";
+import type { Account } from "@/lib/config/types";
 import {
 	APP_SIDEBAR_WIDTH,
 	APP_TOOLBAR_HEIGHT,
 	GMAIL_URL,
 } from "@/lib/constants";
-import gmailStyles from "./styles.css" with { type: "text" };
-import path from "node:path";
+import { openExternalUrl } from "@/lib/url";
 import type { Main } from "@/main";
-import type { Account } from "@/lib/config/types";
+import { WebContentsView } from "electron";
+import gmailStyles from "./styles.css" with { type: "text" };
 
 export type GmailNavigationHistory = {
 	canGoBack: boolean;

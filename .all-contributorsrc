@@ -1,108 +1,84 @@
 {
-  "files": [
-    "README.md"
-  ],
-  "imageSize": 100,
-  "commit": false,
-  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=popout)](#contributors)",
-  "contributors": [
-    {
-      "login": "bsramin",
-      "name": "Ramin Banihashemi",
-      "avatar_url": "https://avatars1.githubusercontent.com/u/672932?v=4",
-      "profile": "http://www.ramin.it",
-      "contributions": [
-        "code",
-        "ideas"
-      ]
-    },
-    {
-      "login": "cdloh",
-      "name": "Callum Loh",
-      "avatar_url": "https://avatars3.githubusercontent.com/u/883577?v=4",
-      "profile": "https://github.com/cdloh",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "herrevilkitten",
-      "name": "herrevilkitten",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/4753104?v=4",
-      "profile": "https://github.com/herrevilkitten",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "zhuzilin",
-      "name": "Zilin Zhu",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/10428324?v=4",
-      "profile": "https://zhuzilin.github.io/",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "cipriancraciun",
-      "name": "Ciprian Dorin Craciun",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/29785?v=4",
-      "profile": "https://volution.ro/ciprian",
-      "contributions": [
-        "ideas"
-      ]
-    },
-    {
-      "login": "cyfrost",
-      "name": "Cyrus Frost",
-      "avatar_url": "https://avatars3.githubusercontent.com/u/12471103?v=4",
-      "profile": "https://github.com/cyfrost",
-      "contributions": [
-        "code",
-        "maintenance"
-      ]
-    },
-    {
-      "login": "zzpxyx",
-      "name": "Zhipeng Zhang",
-      "avatar_url": "https://avatars3.githubusercontent.com/u/2282083?v=4",
-      "profile": "https://www.zzpxyx.com",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "hell0-Wor1d",
-      "name": "Jérôme Lemaire",
-      "avatar_url": "https://avatars2.githubusercontent.com/u/24373583?v=4",
-      "profile": "https://github.com/hell0-Wor1d",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "weichenw",
-      "name": "Wei Chen",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/9876456?v=4",
-      "profile": "https://github.com/weichenw",
-      "contributions": [
-        "platform"
-      ]
-    },
-    {
-      "login": "DinCahill",
-      "name": "Donal Cahill",
-      "avatar_url": "https://avatars.githubusercontent.com/u/510163?v=4",
-      "profile": "https://github.com/DinCahill",
-      "contributions": [
-        "code"
-      ]
-    }
-  ],
-  "contributorsPerLine": 7,
-  "projectName": "meru",
-  "projectOwner": "timche",
-  "repoType": "github",
-  "repoHost": "https://github.com",
-  "skipCi": true
+	"files": ["README.md"],
+	"imageSize": 100,
+	"commit": false,
+	"badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=popout)](#contributors)",
+	"contributors": [
+		{
+			"login": "bsramin",
+			"name": "Ramin Banihashemi",
+			"avatar_url": "https://avatars1.githubusercontent.com/u/672932?v=4",
+			"profile": "http://www.ramin.it",
+			"contributions": ["code", "ideas"]
+		},
+		{
+			"login": "cdloh",
+			"name": "Callum Loh",
+			"avatar_url": "https://avatars3.githubusercontent.com/u/883577?v=4",
+			"profile": "https://github.com/cdloh",
+			"contributions": ["code"]
+		},
+		{
+			"login": "herrevilkitten",
+			"name": "herrevilkitten",
+			"avatar_url": "https://avatars0.githubusercontent.com/u/4753104?v=4",
+			"profile": "https://github.com/herrevilkitten",
+			"contributions": ["code"]
+		},
+		{
+			"login": "zhuzilin",
+			"name": "Zilin Zhu",
+			"avatar_url": "https://avatars0.githubusercontent.com/u/10428324?v=4",
+			"profile": "https://zhuzilin.github.io/",
+			"contributions": ["code"]
+		},
+		{
+			"login": "cipriancraciun",
+			"name": "Ciprian Dorin Craciun",
+			"avatar_url": "https://avatars0.githubusercontent.com/u/29785?v=4",
+			"profile": "https://volution.ro/ciprian",
+			"contributions": ["ideas"]
+		},
+		{
+			"login": "cyfrost",
+			"name": "Cyrus Frost",
+			"avatar_url": "https://avatars3.githubusercontent.com/u/12471103?v=4",
+			"profile": "https://github.com/cyfrost",
+			"contributions": ["code", "maintenance"]
+		},
+		{
+			"login": "zzpxyx",
+			"name": "Zhipeng Zhang",
+			"avatar_url": "https://avatars3.githubusercontent.com/u/2282083?v=4",
+			"profile": "https://www.zzpxyx.com",
+			"contributions": ["code"]
+		},
+		{
+			"login": "hell0-Wor1d",
+			"name": "Jérôme Lemaire",
+			"avatar_url": "https://avatars2.githubusercontent.com/u/24373583?v=4",
+			"profile": "https://github.com/hell0-Wor1d",
+			"contributions": ["code"]
+		},
+		{
+			"login": "weichenw",
+			"name": "Wei Chen",
+			"avatar_url": "https://avatars0.githubusercontent.com/u/9876456?v=4",
+			"profile": "https://github.com/weichenw",
+			"contributions": ["platform"]
+		},
+		{
+			"login": "DinCahill",
+			"name": "Donal Cahill",
+			"avatar_url": "https://avatars.githubusercontent.com/u/510163?v=4",
+			"profile": "https://github.com/DinCahill",
+			"contributions": ["code"]
+		}
+	],
+	"contributorsPerLine": 7,
+	"projectName": "meru",
+	"projectOwner": "timche",
+	"repoType": "github",
+	"repoHost": "https://github.com",
+	"skipCi": true
 }

@@ -1,7 +1,7 @@
-import { build, file, serve, spawn, type Subprocess } from "bun";
-import { watch, rm } from "node:fs/promises";
-import rendererHtml from "@/renderer/index.html";
+import { rm, watch } from "node:fs/promises";
 import { parseArgs } from "node:util";
+import rendererHtml from "@/renderer/index.html";
+import { type Subprocess, build, file, serve, spawn } from "bun";
 import bunPluginTailwind from "bun-plugin-tailwind";
 
 const args = parseArgs({

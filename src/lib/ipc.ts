@@ -1,12 +1,12 @@
-import z from "zod";
-import { accountSchema, type Account, type Accounts } from "./config/types";
-import { initTRPC } from "@trpc/server";
-import type { Gmail, GmailNavigationHistory } from "@/gmail";
-import { observable } from "@trpc/server/observable";
 import { randomUUID } from "node:crypto";
+import type { Gmail, GmailNavigationHistory } from "@/gmail";
 import type { Main } from "@/main";
-import { config } from "./config";
+import { initTRPC } from "@trpc/server";
+import { observable } from "@trpc/server/observable";
 import { is } from "electron-util";
+import z from "zod";
+import { config } from "./config";
+import { type Account, type Accounts, accountSchema } from "./config/types";
 
 const t = initTRPC.create({ isServer: true });
 
