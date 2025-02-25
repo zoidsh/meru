@@ -29,6 +29,10 @@ app.whenReady().then(async () => {
 		main.show();
 	});
 
+	app.on("activate", () => {
+		main.show();
+	});
+
 	app.on("before-quit", () => {
 		config.set("lastWindowState", {
 			bounds: main.window.getBounds(),
