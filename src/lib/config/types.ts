@@ -26,4 +26,5 @@ export type Config = {
 	lastWindowState: LastWindowState;
 	hardwareAccelerationEnabled: boolean;
 	autoHideMenuBar: boolean;
+	launchMinimized: boolean;
 };

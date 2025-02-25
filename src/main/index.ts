@@ -41,9 +41,11 @@ export class Main {
 				: undefined,
 		});
 
-		this.window.once("ready-to-show", () => {
-			this.window.show();
-		});
+		if (!this.shouldLaunchMinimized()) {
+			this.window.once("ready-to-show", () => {
+				this.window.show();
+			});
+		}
 
 		if (lastWindowState.fullscreen) {
 			this.window.setFullScreen(true);
@@ -120,5 +122,13 @@ export class Main {
 		} else {
 			this.window.show();
 		}
+	}
+
+	shouldLaunchMinimized() {
+		return (
+			app.commandLine.hasSwitch("launch-minimized") ||
+			config.get("launchMinimized") ||
+			app.getLoginItemSettings().wasOpenedAtLogin
+		);
 	}
 }

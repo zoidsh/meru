@@ -17,6 +17,7 @@ export const config = new Store<Config>({
 		},
 		hardwareAccelerationEnabled: true,
 		autoHideMenuBar: false,
+		launchMinimized: false,
 	},
 });
 
