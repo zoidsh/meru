@@ -9,6 +9,8 @@ if (!app.requestSingleInstanceLock()) {
 	app.quit();
 }
 
+app.setAppUserModelId("dev.timche.meru");
+
 app.whenReady().then(async () => {
 	const main = await new Main().whenReady();
 
