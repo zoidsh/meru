@@ -10,6 +10,18 @@ export type Account = z.infer<typeof accountSchema>;
 
 export type Accounts = Account[];
 
+type LastWindowState = {
+	bounds: {
+		width: number;
+		height: number;
+		x: number | undefined;
+		y: number | undefined;
+	};
+	fullscreen: boolean;
+	maximized: boolean;
+};
+
 export type Config = {
 	accounts: Accounts;
+	lastWindowState: LastWindowState;
 };

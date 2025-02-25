@@ -1,3 +1,4 @@
+import { config } from "@/lib/config";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { is } from "electron-util";
 import path from "node:path";
@@ -14,12 +15,17 @@ export class Main {
 	};
 
 	constructor() {
+		const lastWindowState = config.get("lastWindowState");
+
 		this.window = new BrowserWindow({
 			title: app.name,
 			minWidth: 912,
-			width: 1280,
+			width: lastWindowState.bounds.width,
 			minHeight: 512,
-			height: 800,
+			height: lastWindowState.bounds.height,
+			x: lastWindowState.bounds.x,
+			y: lastWindowState.bounds.y,
+			fullscreen: lastWindowState.fullscreen,
 			titleBarStyle: "hiddenInset",
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {
@@ -37,6 +43,10 @@ export class Main {
 		this.ready = new Promise<void>((resolve) => {
 			this.window.webContents.once("dom-ready", resolve);
 		});
+
+		if (lastWindowState.maximized) {
+			this.window.maximize();
+		}
 
 		if (process.env.NODE_ENV === "production") {
 			this.window.webContents.loadFile(

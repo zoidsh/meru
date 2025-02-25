@@ -5,6 +5,16 @@ import type { Config } from "./types";
 export const config = new Store<Config>({
 	defaults: {
 		accounts: [{ id: randomUUID(), label: "Personal", selected: true }],
+		lastWindowState: {
+			bounds: {
+				width: 1280,
+				height: 800,
+				x: undefined,
+				y: undefined,
+			},
+			fullscreen: false,
+			maximized: false,
+		},
 	},
 });
 
