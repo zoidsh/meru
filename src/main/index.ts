@@ -36,7 +36,9 @@ export class Main {
 					"preload.js",
 				),
 			},
-			icon: is.linux ? path.join("assets", "icon.png") : undefined,
+			icon: is.linux
+				? path.join(__dirname, "..", "static", "icon.png")
+				: undefined,
 		});
 
 		this.window.once("ready-to-show", () => {
