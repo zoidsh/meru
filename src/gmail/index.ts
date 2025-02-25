@@ -56,6 +56,14 @@ export class Gmail {
 				});
 			}
 		});
+
+		main.window.on("focus", () => {
+			const selectedAccount = getSelectedAccount();
+
+			const view = this.getView(selectedAccount);
+
+			view.webContents.focus();
+		});
 	}
 
 	getPartition(account: Account) {
