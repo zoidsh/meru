@@ -5,6 +5,10 @@ import { config } from "./lib/config";
 import { createIpcRouter } from "./lib/ipc";
 import { Main } from "./main";
 
+if (!app.requestSingleInstanceLock()) {
+	app.quit();
+}
+
 app.whenReady().then(async () => {
 	const main = await new Main().whenReady();
 
@@ -13,6 +17,10 @@ app.whenReady().then(async () => {
 	createIPCHandler({
 		router: createIpcRouter({ main, gmail }),
 		windows: [main.window],
+	});
+
+	app.on("second-instance", () => {
+		main.show();
 	});
 
 	app.on("before-quit", () => {

@@ -86,4 +86,12 @@ export class Main {
 
 		this.emitTitleChanged(title);
 	}
+
+	show() {
+		if (this.window.isMinimized()) {
+			this.window.restore();
+		} else {
+			this.window.show();
+		}
+	}
 }
