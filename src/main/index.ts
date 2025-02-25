@@ -24,7 +24,6 @@ export class Main {
 			x: lastWindowState.bounds.x,
 			y: lastWindowState.bounds.y,
 			show: false,
-			fullscreen: lastWindowState.fullscreen,
 			titleBarStyle: "hiddenInset",
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {
@@ -42,6 +41,10 @@ export class Main {
 		this.window.once("ready-to-show", () => {
 			this.window.show();
 		});
+
+		if (lastWindowState.fullscreen) {
+			this.window.setFullScreen(true);
+		}
 
 		if (lastWindowState.maximized) {
 			this.window.maximize();
