@@ -24,4 +24,5 @@ type LastWindowState = {
 export type Config = {
 	accounts: Accounts;
 	lastWindowState: LastWindowState;
+	hardwareAccelerationEnabled: boolean;
 };

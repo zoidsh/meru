@@ -11,6 +11,10 @@ if (!app.requestSingleInstanceLock()) {
 
 app.setAppUserModelId("dev.timche.meru");
 
+if (config.get("hardwareAccelerationEnabled") === false) {
+	app.disableHardwareAcceleration();
+}
+
 app.whenReady().then(async () => {
 	const main = new Main();
 

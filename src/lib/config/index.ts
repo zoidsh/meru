@@ -15,6 +15,7 @@ export const config = new Store<Config>({
 			fullscreen: false,
 			maximized: false,
 		},
+		hardwareAccelerationEnabled: true,
 	},
 });
 
