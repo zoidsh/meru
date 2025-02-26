@@ -66,6 +66,58 @@ export class Gmail {
 		});
 	}
 
+	createView(account: Account) {
+		const view = new WebContentsView({
+			webPreferences: {
+				partition: this.getPartition(account),
+				preload: path.join(
+					...(process.env.NODE_ENV === "production"
+						? [__dirname]
+						: [process.cwd(), "out"]),
+					"gmail",
+					"preload.js",
+				),
+			},
+		});
+
+		this.main.window.contentView.addChildView(view);
+
+		const accounts = config.get("accounts");
+
+		const { width, height } = this.main.window.getBounds();
+
+		this.setViewBounds({
+			view,
+			width,
+			height,
+			sidebarInset: accounts.length > 1,
+		});
+
+		view.setVisible(this.visible && account.selected);
+
+		view.webContents.loadURL(GMAIL_URL);
+		view.webContents.openDevTools();
+		view.webContents.setWindowOpenHandler(({ url }) => {
+			openExternalUrl(url);
+
+			return {
+				action: "deny",
+			};
+		});
+
+		view.webContents.on("dom-ready", () => {
+			if (view.webContents.getURL().startsWith(GMAIL_URL)) {
+				view.webContents.insertCSS(gmailStyles);
+			}
+		});
+
+		if (account.selected) {
+			this.setViewListeners(view);
+		}
+
+		this.views.set(account.id, view);
+	}
+
 	getPartition(account: Account) {
 		return `persist:${account.id}`;
 	}
@@ -157,58 +209,6 @@ export class Gmail {
 
 	removeViewListeners(view: WebContentsView) {
 		view.removeAllListeners();
-	}
-
-	createView(account: Account) {
-		const view = new WebContentsView({
-			webPreferences: {
-				partition: this.getPartition(account),
-				preload: path.join(
-					...(process.env.NODE_ENV === "production"
-						? [__dirname]
-						: [process.cwd(), "out"]),
-					"gmail",
-					"preload.js",
-				),
-			},
-		});
-
-		this.main.window.contentView.addChildView(view);
-
-		const accounts = config.get("accounts");
-
-		const { width, height } = this.main.window.getBounds();
-
-		this.setViewBounds({
-			view,
-			width,
-			height,
-			sidebarInset: accounts.length > 1,
-		});
-
-		view.setVisible(this.visible && account.selected);
-
-		view.webContents.loadURL(GMAIL_URL);
-		view.webContents.openDevTools();
-		view.webContents.setWindowOpenHandler(({ url }) => {
-			openExternalUrl(url);
-
-			return {
-				action: "deny",
-			};
-		});
-
-		view.webContents.on("dom-ready", () => {
-			if (view.webContents.getURL().startsWith(GMAIL_URL)) {
-				view.webContents.insertCSS(gmailStyles);
-			}
-		});
-
-		if (account.selected) {
-			this.setViewListeners(view);
-		}
-
-		this.views.set(account.id, view);
 	}
 
 	setVisible(visible: boolean) {
