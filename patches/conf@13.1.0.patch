@@ -1,0 +1,12 @@
+diff --git a/dist/source/index.d.ts b/dist/source/index.d.ts
+index cc235a0d789462cb5a36e1426f5cc040c192ff11..818b87a2dd14c9a7e33a95693aee7a19e2d586bd 100644
+--- a/dist/source/index.d.ts
++++ b/dist/source/index.d.ts
+@@ -12,7 +12,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+     */
+     get<Key extends keyof T>(key: Key): T[Key];
+     get<Key extends keyof T>(key: Key, defaultValue: Required<T>[Key]): Required<T>[Key];
+-    get<Key extends string, Value = unknown>(key: Exclude<Key, keyof T>, defaultValue?: Value): Value;
+     /**
+     Set an item or multiple items at once.
+ 
