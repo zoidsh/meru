@@ -39,6 +39,7 @@
 		"electron": "^34.2.0",
 		"electron-builder": "^25.1.8",
 		"electron-trpc": "^0.7.1",
+		"element-ready": "^7.0.0",
 		"lefthook": "^1.11.1",
 		"lucide-react": "^0.475.0",
 		"react": "^19.0.0",
@@ -51,7 +52,9 @@
 		"zod": "^3.24.2"
 	},
 	"dependencies": {
+		"electron-log": "^5.3.2",
 		"electron-store": "^10.0.1",
+		"electron-updater": "^6.3.9",
 		"electron-util": "^0.18.1"
 	},
 	"build": {

@@ -1,10 +1,18 @@
 import path from "node:path";
-import type { AppState } from "@/lib/app-state";
+import { appState } from "@/app-state";
 import { config } from "@/lib/config";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { is } from "electron-util";
 
 export class Main {
+	static shouldLaunchMinimized() {
+		return (
+			app.commandLine.hasSwitch("launch-minimized") ||
+			config.get("launchMinimized") ||
+			app.getLoginItemSettings().wasOpenedAtLogin
+		);
+	}
+
 	window: BrowserWindow;
 
 	title = "";
@@ -13,7 +21,7 @@ export class Main {
 		titleChanged: new Set<(title: string) => void>(),
 	};
 
-	constructor({ appState }: { appState: AppState }) {
+	constructor() {
 		const lastWindowState = config.get("lastWindowState");
 
 		this.window = new BrowserWindow({
@@ -41,7 +49,7 @@ export class Main {
 				: undefined,
 		});
 
-		if (!this.shouldLaunchMinimized()) {
+		if (!Main.shouldLaunchMinimized()) {
 			this.window.once("ready-to-show", () => {
 				this.window.show();
 			});
@@ -55,17 +63,7 @@ export class Main {
 			this.window.maximize();
 		}
 
-		if (process.env.NODE_ENV === "production") {
-			this.window.webContents.loadFile(
-				path.join("out", "renderer", "index.html"),
-			);
-		} else {
-			this.window.webContents.loadURL("http://localhost:3000");
-
-			this.window.webContents.openDevTools({
-				mode: "detach",
-			});
-		}
+		this.load();
 
 		if (!is.macos) {
 			const autoHideMenuBar = config.get("autoHideMenuBar");
@@ -96,6 +94,20 @@ export class Main {
 		});
 	}
 
+	load() {
+		if (process.env.NODE_ENV === "production") {
+			this.window.webContents.loadFile(
+				path.join("out", "renderer", "index.html"),
+			);
+		} else {
+			this.window.webContents.loadURL("http://localhost:3000");
+
+			this.window.webContents.openDevTools({
+				mode: "detach",
+			});
+		}
+	}
+
 	onTitleChanged(listener: (title: string) => void) {
 		this.listeners.titleChanged.add(listener);
 
@@ -122,13 +134,5 @@ export class Main {
 		} else {
 			this.window.show();
 		}
-	}
-
-	shouldLaunchMinimized() {
-		return (
-			app.commandLine.hasSwitch("launch-minimized") ||
-			config.get("launchMinimized") ||
-			app.getLoginItemSettings().wasOpenedAtLogin
-		);
 	}
 }

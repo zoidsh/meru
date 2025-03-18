@@ -3,10 +3,9 @@ import type { Gmail, GmailNavigationHistory } from "@/gmail";
 import type { Main } from "@/main";
 import { initTRPC } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
-import { is } from "electron-util";
 import z from "zod";
-import { config } from "./config";
-import { type Account, type Accounts, accountSchema } from "./config/types";
+import { config } from "./lib/config";
+import { type Account, type Accounts, accountSchema } from "./lib/config/types";
 
 const t = initTRPC.create({ isServer: true });
 

@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { app } from "electron";
 import Store from "electron-store";
+import { is } from "electron-util";
 import type { Config } from "./types";
 
 export const config = new Store<Config>({
@@ -18,15 +20,28 @@ export const config = new Store<Config>({
 		hardwareAccelerationEnabled: true,
 		autoHideMenuBar: false,
 		launchMinimized: false,
+		trayIconEnabled: !is.macos,
+		titleBarStyle: "app",
+		"app.confirmExternalLink": true,
+		"app.launchMinimized": false,
+		"app.launchAtLogin": false,
+		"app.hardwareAcceleration": false,
+		"app.darkMode": "system",
+		"gmail.zoomFactor": 1,
+		"downloads.saveAs": false,
+		"downloads.openFolderWhenDone": false,
+		"downloads.location": app.getPath("downloads"),
+		"notifications.enabled": true,
+		"notifications.showSender": true,
+		"notifications.showSubject": true,
+		"notifications.showSummary": true,
+		"notifications.playSound": true,
+		"trayIcon.enabled": true,
+		"blocker.enabled": true,
+		"blocker.ads": true,
+		"blocker.analytics": true,
+		"blocker.trackers": true,
+		"updates.autoCheck": true,
+		"updates.notifyWhenDownloaded": true,
 	},
 });
-
-export function getSelectedAccount() {
-	const account = config.get("accounts").find((account) => account.selected);
-
-	if (!account) {
-		throw new Error("Could not find selected account");
-	}
-
-	return account;
-}

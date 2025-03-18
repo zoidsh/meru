@@ -25,7 +25,7 @@ function buildAppFiles() {
 	build({
 		entrypoints: [
 			"./src/app.ts",
-			"./src/gmail/preload.ts",
+			"./src/gmail/preload/index.ts",
 			"./src/renderer/preload.ts",
 		],
 		outdir: "./out",

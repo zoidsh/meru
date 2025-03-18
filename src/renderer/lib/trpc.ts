@@ -1,4 +1,4 @@
-import type { IpcRouter } from "@/lib/ipc";
+import type { IpcRouter } from "@/ipc";
 import { createTRPCReact } from "@trpc/react-query";
 import { ipcLink } from "electron-trpc/renderer";
 

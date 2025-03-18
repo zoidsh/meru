@@ -1,11 +1,12 @@
 import { app } from "electron";
 import { createIPCHandler } from "electron-trpc/main";
-import { is } from "electron-util";
+import { AppMenu } from "./app-menu";
+import { appState } from "./app-state";
 import { Gmail } from "./gmail";
-import { AppState } from "./lib/app-state";
+import { createIpcRouter } from "./ipc";
 import { config } from "./lib/config";
-import { createIpcRouter } from "./lib/ipc";
 import { Main } from "./main";
+import { Tray } from "./tray";
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -18,9 +19,7 @@ if (config.get("hardwareAccelerationEnabled") === false) {
 }
 
 app.whenReady().then(async () => {
-	const appState = new AppState();
-
-	const main = new Main({ appState });
+	const main = new Main();
 
 	const gmail = new Gmail({ main });
 
@@ -28,6 +27,9 @@ app.whenReady().then(async () => {
 		router: createIpcRouter({ main, gmail }),
 		windows: [main.window],
 	});
+
+	new Tray({ main, gmail });
+	new AppMenu({ main, gmail });
 
 	app.on("second-instance", () => {
 		main.show();
