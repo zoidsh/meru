@@ -11,7 +11,7 @@ export function useTitle() {
 	});
 
 	useEffect(() => {
-		ipc.on("onTitleChanged", (_event, title) => {
+		return ipc.on("onTitleChanged", (_event, title) => {
 			queryClient.setQueryData(["getTitle"], title);
 		});
 	}, [queryClient]);
@@ -28,7 +28,7 @@ export function useAccounts() {
 	});
 
 	useEffect(() => {
-		ipc.on("onAccountsChanged", (_event, title) => {
+		return ipc.on("onAccountsChanged", (_event, title) => {
 			queryClient.setQueryData(["getAccounts"], title);
 		});
 	}, [queryClient]);
@@ -45,7 +45,7 @@ export function useGmailVisible() {
 	});
 
 	useEffect(() => {
-		ipc.on("onGmailVisibleChanged", (_event, visible) => {
+		return ipc.on("onGmailVisibleChanged", (_event, visible) => {
 			queryClient.setQueryData(["getGmailVisible"], visible);
 		});
 	}, [queryClient]);
@@ -62,7 +62,7 @@ export function useGmailNavigationHistory() {
 	});
 
 	useEffect(() => {
-		ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
+		return ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
 			queryClient.setQueryData(["getNavigationHistory"], navigationHistory);
 		});
 	}, [queryClient]);
@@ -79,7 +79,7 @@ export function useIsWindowMaximized() {
 	});
 
 	useEffect(() => {
-		ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
+		return ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
 			queryClient.setQueryData(["getWindowMaximized"], navigationHistory);
 		});
 	}, [queryClient]);

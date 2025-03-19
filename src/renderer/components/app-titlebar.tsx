@@ -66,12 +66,8 @@ function WindowControls() {
 	);
 }
 
-function TitlebarSpacer() {
-	return <div style={{ width: APP_SIDEBAR_WIDTH }} />;
-}
-
 function TitlebarTitle() {
-	const appTitle = useTitle();
+	const title = useTitle();
 	const gmailVisible = useGmailVisible();
 
 	if (!gmailVisible.data) {
@@ -80,7 +76,7 @@ function TitlebarTitle() {
 
 	return (
 		<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
-			{appTitle.data}
+			{title.data}
 		</div>
 	);
 }
@@ -153,16 +149,10 @@ export function AppTitlebar() {
 				// @ts-expect-error
 				appRegion: "drag",
 			}}
-			className={cn("flex border-b select-none", {
-				relative: accounts.data.length === 1,
-			})}
+			className="flex border-b select-none relative"
 		>
 			<TitlebarTitle />
-			<div
-				className={cn("flex-1 flex justify-between px-2", {
-					relative: accounts.data.length > 1,
-				})}
-			>
+			<div className="flex-1 flex justify-between px-2">
 				<TitlebarNavigation />
 				<div
 					className="flex items-center gap-1"

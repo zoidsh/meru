@@ -98,7 +98,11 @@ export class Gmail {
 		view.setVisible(this.visible && account.selected);
 
 		view.webContents.loadURL(GMAIL_URL);
-		view.webContents.openDevTools({ mode: "detach" });
+
+		if (process.env.NODE_ENV !== "production") {
+			view.webContents.openDevTools();
+		}
+
 		view.webContents.setWindowOpenHandler(({ url }) => {
 			openExternalUrl(url);
 
