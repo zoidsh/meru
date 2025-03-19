@@ -26,7 +26,6 @@ export const config = new Store<Config>({
 		"app.launchMinimized": false,
 		"app.launchAtLogin": false,
 		"app.hardwareAcceleration": false,
-		"app.darkMode": "system",
 		"gmail.zoomFactor": 1,
 		"downloads.saveAs": false,
 		"downloads.openFolderWhenDone": false,

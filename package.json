@@ -68,7 +68,6 @@
 		"appId": "dev.timche.meru",
 		"mac": {
 			"category": "public.app-category.productivity",
-			"darkModeSupport": true,
 			"target": {
 				"target": "default",
 				"arch": ["x64", "arm64"]

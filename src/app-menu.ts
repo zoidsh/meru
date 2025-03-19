@@ -507,7 +507,7 @@ export class AppMenu {
 					{
 						label: "Manage Accounts",
 						click: () => {
-							this.gmail.setVisible(false);
+							this.gmail.hide();
 
 							this.main.show();
 						},
@@ -557,41 +557,6 @@ export class AppMenu {
 			{
 				label: "View",
 				submenu: [
-					{
-						label: "Dark Mode",
-						submenu: [
-							{
-								label: "Follow System Appearance",
-								type: "radio",
-								checked: config.get("app.darkMode") === "system",
-								click: () => {
-									nativeTheme.themeSource = "system";
-									config.set("app.darkMode", "system");
-								},
-							},
-							{
-								label: "Enabled",
-								type: "radio",
-								checked: config.get("app.darkMode") === true,
-								click: () => {
-									nativeTheme.themeSource = "dark";
-									config.set("app.darkMode", true);
-								},
-							},
-							{
-								label: "Disabled",
-								type: "radio",
-								checked: config.get("app.darkMode") === false,
-								click: () => {
-									nativeTheme.themeSource = "light";
-									config.set("app.darkMode", false);
-								},
-							},
-						],
-					},
-					{
-						type: "separator",
-					},
 					{
 						label: "Reload",
 						accelerator: "CommandOrControl+R",

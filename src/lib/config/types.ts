@@ -33,7 +33,6 @@ export type Config = {
 	"app.launchMinimized": boolean;
 	"app.launchAtLogin": boolean;
 	"app.hardwareAcceleration": boolean;
-	"app.darkMode": "system" | boolean;
 	"gmail.zoomFactor": number;
 	"downloads.saveAs": boolean;
 	"downloads.openFolderWhenDone": boolean;
