@@ -8,7 +8,6 @@ import { ScrollArea } from "./ui/scroll-area";
 
 export function AppMain() {
 	const gmailVisible = useGmailVisible();
-	console.log(">>>", gmailVisible.data);
 
 	if (typeof gmailVisible.data !== "boolean" || gmailVisible.data) {
 		return;
