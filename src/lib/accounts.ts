@@ -1,11 +1,21 @@
 import type { Gmail } from "@/gmail";
+import { app } from "electron";
 import { config } from "./config";
 
 export function getSelectedAccount() {
 	const account = config.get("accounts").find((account) => account.selected);
 
 	if (!account) {
-		throw new Error("Could not find selected account");
+		const accounts = config.get("accounts");
+
+		accounts[0].selected = true;
+
+		config.set("accounts", accounts);
+
+		app.relaunch();
+		app.quit();
+
+		return;
 	}
 
 	return account;

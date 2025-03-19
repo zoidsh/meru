@@ -19,6 +19,7 @@ import {
 } from "./lib/accounts";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL } from "./lib/constants";
+import { showRestartDialog } from "./lib/dialogs";
 import { openExternalUrl } from "./lib/url";
 import type { Main } from "./main";
 
@@ -123,7 +124,7 @@ export class AppMenu {
 										click: () => {
 											config.set("titleBarStyle", "app");
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -133,7 +134,7 @@ export class AppMenu {
 										click: () => {
 											config.set("titleBarStyle", "system");
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 								],
@@ -156,7 +157,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("downloadsSaveAs", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -166,7 +167,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("downloads.openFolderWhenDone", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -185,7 +186,7 @@ export class AppMenu {
 
 											config.set("downloads.location", filePaths[0]);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 								],
@@ -282,7 +283,7 @@ export class AppMenu {
 								click: ({ checked }: { checked: boolean }) => {
 									config.set("trayIcon.enabled", checked);
 
-									this.showRestartDialog();
+									showRestartDialog();
 								},
 							},
 							{
@@ -315,7 +316,7 @@ export class AppMenu {
 								click: ({ checked }: { checked: boolean }) => {
 									config.set("app.hardwareAcceleration", checked);
 
-									this.showRestartDialog();
+									showRestartDialog();
 								},
 							},
 							{
@@ -328,7 +329,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("blocker.enabled", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -341,7 +342,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("blocker.ads", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -351,7 +352,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("blocker.analytics", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 									{
@@ -361,7 +362,7 @@ export class AppMenu {
 										click: ({ checked }) => {
 											config.set("blocker.trackers", checked);
 
-											this.showRestartDialog();
+											showRestartDialog();
 										},
 									},
 								],
@@ -831,7 +832,7 @@ export class AppMenu {
 								click: () => {
 									config.clear();
 
-									this.showRestartDialog();
+									showRestartDialog();
 								},
 							},
 							{
@@ -844,7 +845,7 @@ export class AppMenu {
 										session.fromPartition(`persist:${id}`).clearCache();
 									}
 
-									this.showRestartDialog();
+									showRestartDialog();
 								},
 							},
 							{
@@ -856,7 +857,7 @@ export class AppMenu {
 
 									config.clear();
 
-									this.showRestartDialog();
+									showRestartDialog();
 								},
 							},
 							{
@@ -875,21 +876,5 @@ export class AppMenu {
 		];
 
 		return Menu.buildFromTemplate(template);
-	}
-
-	async showRestartDialog() {
-		const { response } = await dialog.showMessageBox({
-			type: "info",
-			buttons: ["Restart", "Later"],
-			message: "Restart required to apply changes",
-			detail: "Do you want to restart the app now?",
-			defaultId: 0,
-			cancelId: 1,
-		});
-
-		if (response === 0) {
-			app.relaunch();
-			app.quit();
-		}
 	}
 }

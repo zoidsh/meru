@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { selectAccount } from "@/lib/accounts";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import type { Main } from ".";
-import type { Gmail } from "../gmail";
+import type { Gmail, GmailNavigationHistory } from "../gmail";
 import { config } from "../lib/config";
 import type { Account, Accounts } from "../lib/config/types";
 
@@ -22,7 +22,7 @@ export type IpcMainEvents =
 			getTitle: () => string;
 			getAccounts: () => Accounts;
 			getWindowMaximized: () => boolean;
-			getNavigationHistory: () => { canGoBack: boolean; canGoForward: boolean };
+			getNavigationHistory: () => GmailNavigationHistory;
 			getGmailVisible: () => boolean;
 	  };
 
@@ -30,9 +30,7 @@ export type IpcRendererEvent = {
 	onTitleChanged: [title: string];
 	onAccountsChanged: [accounts: Accounts];
 	onWindowMaximizedChanged: [maximized: boolean];
-	onNavigationHistoryChanged: [
-		navigationHistory: { canGoBack: boolean; canGoForward: boolean },
-	];
+	onNavigationHistoryChanged: [navigationHistory: GmailNavigationHistory];
 	onGmailVisibleChanged: [visible: boolean];
 };
 
@@ -56,7 +54,7 @@ export function initMainIpc({ main, gmail }: { main: Main; gmail: Gmail }) {
 	});
 
 	ipc.on("selectAccount", (_event, selectedAccountId) => {
-		selectAccount({ selectedAccountId, gmail });
+		selectAccount(selectedAccountId, gmail);
 	});
 
 	ipc.on("addAccount", (_event, addedAccount) => {
