@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { selectAccount } from "@/lib/accounts";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import type { Main } from ".";
 import type { Gmail } from "../gmail";
@@ -55,16 +56,7 @@ export function initMainIpc({ main, gmail }: { main: Main; gmail: Gmail }) {
 	});
 
 	ipc.on("selectAccount", (_event, selectedAccountId) => {
-		config.set(
-			"accounts",
-			config.get("accounts").map((account) => {
-				if (account.id === selectedAccountId) {
-					gmail.selectView(account);
-				}
-
-				return { ...account, selected: account.id === selectedAccountId };
-			}),
-		);
+		selectAccount({ selectedAccountId, gmail });
 	});
 
 	ipc.on("addAccount", (_event, addedAccount) => {

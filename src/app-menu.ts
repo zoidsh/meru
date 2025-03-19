@@ -12,6 +12,11 @@ import {
 } from "electron";
 import log from "electron-log";
 import type { Gmail } from "./gmail";
+import {
+	selectAccount,
+	selectNextAccount,
+	selectPreviousAccount,
+} from "./lib/accounts";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL } from "./lib/constants";
 import { openExternalUrl } from "./lib/url";
@@ -30,6 +35,12 @@ export class AppMenu {
 		this.menu = this.createMenu();
 
 		Menu.setApplicationMenu(this.menu);
+
+		config.onDidChange("accounts", () => {
+			this.menu = this.createMenu();
+
+			Menu.setApplicationMenu(this.menu);
+		});
 	}
 
 	createMenu() {
@@ -51,7 +62,7 @@ export class AppMenu {
 			},
 		];
 
-		const appMenuTemplate: MenuItemConstructorOptions[] = [
+		const template: MenuItemConstructorOptions[] = [
 			{
 				label: app.name,
 				submenu: [
@@ -426,13 +437,12 @@ export class AppMenu {
 				],
 			},
 			{
-				label: "Account",
+				label: "Accounts",
 				submenu: [
 					...config.get("accounts").map((account, index) => ({
 						label: account.label,
 						click: () => {
-							this.gmail.selectView(account);
-							this.main.show();
+							selectAccount(account.id, this.gmail);
 						},
 						accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
 					})),
@@ -443,7 +453,7 @@ export class AppMenu {
 						label: "Select Next Account",
 						accelerator: "Ctrl+Tab",
 						click: () => {
-							this.gmail.selectNextAccount();
+							selectNextAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -454,7 +464,7 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							this.gmail.selectNextAccount();
+							selectNextAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -465,7 +475,7 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							this.gmail.selectNextAccount();
+							selectNextAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -474,7 +484,7 @@ export class AppMenu {
 						label: "Select Previous Account",
 						accelerator: "Ctrl+Shift+Tab",
 						click: () => {
-							this.gmail.selectPreviousAccount();
+							selectPreviousAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -485,7 +495,7 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							this.gmail.selectPreviousAccount();
+							selectPreviousAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -496,7 +506,7 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							this.gmail.selectPreviousAccount();
+							selectPreviousAccount(this.gmail);
 
 							this.main.show();
 						},
@@ -581,7 +591,7 @@ export class AppMenu {
 						click: () => {
 							this.main.window.webContents.openDevTools({ mode: "detach" });
 
-							this.gmail.getSelectedAccountView().webContents.openDevTools();
+							this.gmail.getSelectedView().webContents.openDevTools();
 
 							this.main.show();
 						},
@@ -864,7 +874,7 @@ export class AppMenu {
 			},
 		];
 
-		return Menu.buildFromTemplate(appMenuTemplate);
+		return Menu.buildFromTemplate(template);
 	}
 
 	async showRestartDialog() {

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { getSelectedAccount } from "@/lib/accounts";
 import { config } from "@/lib/config";
 import type { Account } from "@/lib/config/types";
 import {
@@ -59,7 +60,7 @@ export class Gmail {
 		});
 
 		main.window.on("focus", () => {
-			const selectedAccount = this.getSelectedAccount();
+			const selectedAccount = getSelectedAccount();
 
 			const view = this.getView(selectedAccount);
 
@@ -242,7 +243,7 @@ export class Gmail {
 	}
 
 	show() {
-		const selectedAccount = this.getSelectedAccount();
+		const selectedAccount = getSelectedAccount();
 
 		if (selectedAccount) {
 			for (const [accountId, view] of this.views) {
@@ -297,12 +298,12 @@ export class Gmail {
 		return view;
 	}
 
-	getSelectedAccountView() {
-		return this.getView(this.getSelectedAccount());
+	getSelectedView() {
+		return this.getView(getSelectedAccount());
 	}
 
 	getNavigationHistory() {
-		const view = this.getSelectedAccountView();
+		const view = this.getSelectedView();
 
 		return {
 			canGoBack: view.webContents.navigationHistory.canGoBack(),
@@ -313,91 +314,23 @@ export class Gmail {
 	go(action: "back" | "forward") {
 		switch (action) {
 			case "back": {
-				this.getSelectedAccountView().webContents.navigationHistory.goBack();
+				this.getSelectedView().webContents.navigationHistory.goBack();
 				break;
 			}
 			case "forward": {
-				this.getSelectedAccountView().webContents.navigationHistory.goForward();
+				this.getSelectedView().webContents.navigationHistory.goForward();
 				break;
 			}
 		}
 	}
 
 	reload() {
-		this.getSelectedAccountView().webContents.reload();
+		this.getSelectedView().webContents.reload();
 	}
 
 	sendToRenderer(event: RendererEvent) {
-		const view = this.getView(this.getSelectedAccount());
+		const view = this.getSelectedView();
 
 		view.webContents.send("ipc", event);
-	}
-
-	getSelectedAccount() {
-		const account = config.get("accounts").find((account) => account.selected);
-
-		if (!account) {
-			throw new Error("Could not find selected account");
-		}
-
-		return account;
-	}
-
-	selectPreviousAccount() {
-		const accounts = config.get("accounts");
-
-		const selectedAccountIndex = accounts.findIndex(
-			(account) => account.selected,
-		);
-
-		const previousAccount = accounts.at(
-			selectedAccountIndex === 0 ? -1 : selectedAccountIndex + 1,
-		);
-
-		if (!previousAccount) {
-			throw new Error("Could not find previous account");
-		}
-
-		config.set(
-			"accounts",
-			accounts.map((account) => ({
-				...account,
-				selected: account.id === previousAccount.id,
-			})),
-		);
-
-		this.selectView(previousAccount);
-
-		return previousAccount;
-	}
-
-	selectNextAccount() {
-		const accounts = config.get("accounts");
-
-		const selectedAccountIndex = accounts.findIndex(
-			(account) => account.selected,
-		);
-
-		const nextAccount = accounts.at(
-			selectedAccountIndex === accounts.length - 1
-				? 0
-				: selectedAccountIndex - 1,
-		);
-
-		if (!nextAccount) {
-			throw new Error("Could not find next account");
-		}
-
-		config.set(
-			"accounts",
-			accounts.map((account) => ({
-				...account,
-				selected: account.id === nextAccount.id,
-			})),
-		);
-
-		this.selectView(nextAccount);
-
-		return nextAccount;
 	}
 }
