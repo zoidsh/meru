@@ -98,7 +98,7 @@ export class Gmail {
 		view.setVisible(this.visible && account.selected);
 
 		view.webContents.loadURL(GMAIL_URL);
-		view.webContents.openDevTools();
+		view.webContents.openDevTools({ mode: "detach" });
 		view.webContents.setWindowOpenHandler(({ url }) => {
 			openExternalUrl(url);
 
@@ -251,8 +251,8 @@ export class Gmail {
 		}
 	}
 
-	removeView(account: Pick<Account, "id">) {
-		const view = this.views.get(account.id);
+	removeView(accountId: Account["id"]) {
+		const view = this.views.get(accountId);
 
 		if (!view) {
 			throw new Error("View not found");
@@ -261,7 +261,7 @@ export class Gmail {
 		view.webContents.close();
 		view.webContents.removeAllListeners();
 		this.main.window.contentView.removeChildView(view);
-		this.views.delete(account.id);
+		this.views.delete(accountId);
 	}
 
 	selectView(account: Account) {

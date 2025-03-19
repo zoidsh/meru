@@ -1,14 +1,10 @@
-import { contextBridge } from "electron";
-import { exposeElectronTRPC } from "electron-trpc/main";
-
-process.once("loaded", async () => {
-	exposeElectronTRPC();
-});
+import type { ElectronAPI } from "@electron-toolkit/preload";
+import { exposeElectronAPI } from "@electron-toolkit/preload";
 
 declare global {
 	interface Window {
-		platform: typeof process.platform;
+		electron: ElectronAPI;
 	}
 }
 
-contextBridge.exposeInMainWorld("platform", process.platform);
+exposeElectronAPI();

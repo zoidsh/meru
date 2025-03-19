@@ -1,11 +1,10 @@
 import { app } from "electron";
-import { createIPCHandler } from "electron-trpc/main";
 import { AppMenu } from "./app-menu";
 import { appState } from "./app-state";
 import { Gmail } from "./gmail";
-import { createIpcRouter } from "./ipc";
 import { config } from "./lib/config";
 import { Main } from "./main";
+import { initMainIpc } from "./main/ipc";
 import { Tray } from "./tray";
 
 if (!app.requestSingleInstanceLock()) {
@@ -23,10 +22,7 @@ app.whenReady().then(async () => {
 
 	const gmail = new Gmail({ main });
 
-	createIPCHandler({
-		router: createIpcRouter({ main, gmail }),
-		windows: [main.window],
-	});
+	initMainIpc({ main, gmail });
 
 	new Tray({ main, gmail });
 	new AppMenu({ main, gmail });

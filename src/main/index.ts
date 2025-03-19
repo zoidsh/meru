@@ -1,8 +1,8 @@
 import path from "node:path";
 import { appState } from "@/app-state";
 import { config } from "@/lib/config";
+import { platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
-import { is } from "electron-util";
 
 export class Main {
 	static shouldLaunchMinimized() {
@@ -44,7 +44,7 @@ export class Main {
 					"preload.js",
 				),
 			},
-			icon: is.linux
+			icon: platform.isLinux
 				? path.join(__dirname, "..", "static", "icon.png")
 				: undefined,
 		});
@@ -65,7 +65,7 @@ export class Main {
 
 		this.load();
 
-		if (!is.macos) {
+		if (!platform.isMacOS) {
 			const autoHideMenuBar = config.get("autoHideMenuBar");
 
 			this.window.setMenuBarVisibility(!autoHideMenuBar);
@@ -76,7 +76,7 @@ export class Main {
 		this.window.on("close", (event) => {
 			// Workaround: Closing the main window when on full screen leaves a black screen
 			// https://github.com/electron/electron/issues/20263
-			if (is.macos && this.window.isFullScreen()) {
+			if (platform.isMacOS && this.window.isFullScreen()) {
 				this.window.once("leave-full-screen", () => {
 					this.window.hide();
 				});

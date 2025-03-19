@@ -4,7 +4,7 @@ import { ArrowDownIcon, ArrowUpIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts } from "../lib/hooks";
-import { trpc } from "../lib/trpc";
+import { emitter } from "../lib/ipc";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -87,7 +87,6 @@ function EditAccountForm({
 
 function AddAccountButton() {
 	const [isOpen, setIsOpen] = useState(false);
-	const addAccount = trpc.addAccount.useMutation();
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -99,8 +98,8 @@ function AddAccountButton() {
 					<DialogTitle>Add account</DialogTitle>
 				</DialogHeader>
 				<EditAccountForm
-					onSubmit={(values) => {
-						addAccount.mutate(values);
+					onSubmit={(account) => {
+						emitter.send("addAccount", account);
 
 						setIsOpen(false);
 					}}
@@ -112,8 +111,6 @@ function AddAccountButton() {
 
 function EditAccountButton({ account }: { account: Account }) {
 	const [isOpen, setIsOpen] = useState(false);
-	const editAccount = trpc.editAccount.useMutation();
-	const removeAccount = trpc.removeAccount.useMutation();
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -129,7 +126,7 @@ function EditAccountButton({ account }: { account: Account }) {
 				<EditAccountForm
 					account={account}
 					onSubmit={(values) => {
-						editAccount.mutate({ ...account, ...values });
+						emitter.send("updateAccount", { ...account, ...values });
 
 						setIsOpen(false);
 					}}
@@ -139,7 +136,7 @@ function EditAccountButton({ account }: { account: Account }) {
 						);
 
 						if (confirmed) {
-							removeAccount.mutate(account);
+							emitter.send("removeAccount", account.id);
 						}
 					}}
 				/>
@@ -150,7 +147,10 @@ function EditAccountButton({ account }: { account: Account }) {
 
 export function Accounts() {
 	const accounts = useAccounts();
-	const moveAccount = trpc.moveAccount.useMutation();
+
+	if (!accounts.data) {
+		return;
+	}
 
 	return (
 		<div className="py-5 px-6 bg-background border rounded-lg">
@@ -176,7 +176,7 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index + 1 === accounts.data.length}
 										onClick={() => {
-											moveAccount.mutate({ account, move: "down" });
+											emitter.send("moveAccount", account.id, "down");
 										}}
 									>
 										<ArrowDownIcon />
@@ -187,7 +187,7 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index === 0}
 										onClick={() => {
-											moveAccount.mutate({ account, move: "up" });
+											emitter.send("moveAccount", account.id, "up");
 										}}
 									>
 										<ArrowUpIcon />

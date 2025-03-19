@@ -1,8 +1,8 @@
 import path from "node:path";
 import type { Gmail } from "@/gmail";
 import { config } from "@/lib/config";
+import { platform } from "@electron-toolkit/utils";
 import Electron from "electron";
-import { is } from "electron-util";
 import { Main } from "./main";
 
 export class Tray {
@@ -47,7 +47,7 @@ export class Tray {
 	}
 
 	createIcon(unread: boolean): Electron.NativeImage {
-		const iconFileName = is.macos
+		const iconFileName = platform.isMacOS
 			? "tray-icon.macos.Template.png"
 			: unread
 				? "tray-icon-unread.png"
@@ -88,7 +88,7 @@ export class Tray {
 		if (this.tray && this.icon && this.iconUnread) {
 			this.tray.setImage(unreadCount ? this.iconUnread : this.icon);
 
-			if (is.macos) {
+			if (platform.isMacOS) {
 				this.tray.setTitle(unreadCount ? unreadCount.toString() : "");
 			}
 		}
@@ -97,7 +97,7 @@ export class Tray {
 	getMenuTemplate() {
 		const macosMenuItems: Electron.MenuItemConstructorOptions[] = [];
 
-		if (is.macos) {
+		if (platform.isMacOS) {
 			macosMenuItems.push(
 				{
 					label: "Show Dock Icon",

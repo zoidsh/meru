@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { platform } from "@electron-toolkit/utils";
 import { app } from "electron";
 import Store from "electron-store";
-import { is } from "electron-util";
 import type { Config } from "./types";
 
 export const config = new Store<Config>({
@@ -20,7 +20,7 @@ export const config = new Store<Config>({
 		hardwareAccelerationEnabled: true,
 		autoHideMenuBar: false,
 		launchMinimized: false,
-		trayIconEnabled: !is.macos,
+		trayIconEnabled: !platform.isMacOS,
 		titleBarStyle: "app",
 		"app.confirmExternalLink": true,
 		"app.launchMinimized": false,

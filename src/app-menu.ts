@@ -1,4 +1,5 @@
 import path from "node:path";
+import { is, platform } from "@electron-toolkit/utils";
 import {
 	Menu,
 	type MenuItemConstructorOptions,
@@ -10,8 +11,6 @@ import {
 	shell,
 } from "electron";
 import log from "electron-log";
-import { is } from "electron-util";
-import { isDev } from "electron-util/main";
 import type { Gmail } from "./gmail";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL } from "./lib/constants";
@@ -83,7 +82,7 @@ export class AppMenu {
 						submenu: [
 							{
 								label: "Hide Menu bar",
-								visible: !is.macos,
+								visible: !platform.isMacOS,
 								type: "checkbox",
 								checked: config.get("autoHideMenuBar"),
 								click: ({ checked }) => {
@@ -104,7 +103,7 @@ export class AppMenu {
 							},
 							{
 								label: "Title Bar Style",
-								visible: is.linux,
+								visible: platform.isLinux,
 								submenu: [
 									{
 										label: "App",
@@ -213,7 +212,7 @@ export class AppMenu {
 									{
 										label: "Show Summary",
 										type: "checkbox",
-										visible: is.macos,
+										visible: platform.isMacOS,
 										checked: config.get("notifications.showSummary"),
 										click({ checked }) {
 											config.set("notifications.showSummary", checked);
@@ -264,7 +263,7 @@ export class AppMenu {
 								},
 							},
 							{
-								label: is.macos
+								label: platform.isMacOS
 									? "Show Menu Bar Icon"
 									: "Show System Tray Icon",
 								type: "checkbox",
@@ -285,7 +284,7 @@ export class AppMenu {
 							},
 							{
 								label: "Launch at Login",
-								visible: is.macos || is.windows,
+								visible: platform.isMacOS || platform.isWindows,
 								type: "checkbox",
 								checked: app.getLoginItemSettings().openAtLogin,
 								click(menuItem) {
@@ -397,7 +396,7 @@ export class AppMenu {
 					{
 						type: "separator",
 					},
-					...(is.macos ? macOSWindowItems : []),
+					...(platform.isMacOS ? macOSWindowItems : []),
 					{
 						label: `Quit ${app.name}`,
 						accelerator: "CommandOrControl+Q",
@@ -435,7 +434,7 @@ export class AppMenu {
 							this.gmail.selectView(account);
 							this.main.show();
 						},
-						accelerator: `${is.linux ? "Alt" : "CommandOrControl"}+${index + 1}`,
+						accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
 					})),
 					{
 						type: "separator",
@@ -452,7 +451,7 @@ export class AppMenu {
 					{
 						label: "Select Next Account (hidden shortcut 1)",
 						accelerator: "Cmd+Shift+]",
-						visible: isDev,
+						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
 							this.gmail.selectNextAccount();
@@ -463,7 +462,7 @@ export class AppMenu {
 					{
 						label: "Select Next Account (hidden shortcut 1)",
 						accelerator: "Cmd+Option+Right",
-						visible: isDev,
+						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
 							this.gmail.selectNextAccount();
@@ -483,7 +482,7 @@ export class AppMenu {
 					{
 						label: "Select Previous Account (hidden shortcut 1)",
 						accelerator: "Cmd+Shift+[",
-						visible: isDev,
+						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
 							this.gmail.selectPreviousAccount();
@@ -494,7 +493,7 @@ export class AppMenu {
 					{
 						label: "Select Previous Account (hidden shortcut 2)",
 						accelerator: "Cmd+Option+Left",
-						visible: isDev,
+						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
 							this.gmail.selectPreviousAccount();
@@ -613,7 +612,7 @@ export class AppMenu {
 					},
 					{
 						label: "Developer Tools",
-						accelerator: is.macos ? "Command+Alt+I" : "Control+Shift+I",
+						accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
 						click: () => {
 							this.main.window.webContents.openDevTools({ mode: "detach" });
 

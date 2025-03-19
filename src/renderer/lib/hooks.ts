@@ -1,78 +1,88 @@
-import { trpc } from "./trpc";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { emitter, ipc } from "./ipc";
 
-export function useAppTitle() {
-	const appTitle = trpc.getTitle.useQuery();
+export function useTitle() {
+	const queryClient = useQueryClient();
 
-	const utils = trpc.useUtils();
-
-	trpc.onTitleChanged.useSubscription(undefined, {
-		onData: (updatedTitle) => {
-			utils.getTitle.setData(undefined, updatedTitle);
-		},
+	const query = useQuery({
+		queryKey: ["getTitle"],
+		queryFn: () => emitter.invoke("getTitle"),
 	});
 
-	return appTitle;
+	useEffect(() => {
+		ipc.on("onTitleChanged", (_event, title) => {
+			queryClient.setQueryData(["getTitle"], title);
+		});
+	}, [queryClient]);
+
+	return query;
 }
 
 export function useAccounts() {
-	const accounts = trpc.getAccounts.useQuery(undefined, {
-		initialData: [],
+	const queryClient = useQueryClient();
+
+	const query = useQuery({
+		queryKey: ["getAccounts"],
+		queryFn: () => emitter.invoke("getAccounts"),
 	});
 
-	const utils = trpc.useUtils();
+	useEffect(() => {
+		ipc.on("onAccountsChanged", (_event, title) => {
+			queryClient.setQueryData(["getAccounts"], title);
+		});
+	}, [queryClient]);
 
-	trpc.onAccountsUpdated.useSubscription(undefined, {
-		onData: (updatedAccounts) => {
-			utils.getAccounts.setData(undefined, updatedAccounts);
-		},
-	});
-
-	return accounts;
+	return query;
 }
 
 export function useGmailVisible() {
-	const gmailVisible = trpc.gmail.getVisible.useQuery(undefined, {
-		initialData: true,
+	const queryClient = useQueryClient();
+
+	const query = useQuery({
+		queryKey: ["getGmailVisible"],
+		queryFn: () => emitter.invoke("getGmailVisible"),
 	});
 
-	const utils = trpc.useUtils();
+	useEffect(() => {
+		ipc.on("onGmailVisibleChanged", (_event, visible) => {
+			queryClient.setQueryData(["getGmailVisible"], visible);
+		});
+	}, [queryClient]);
 
-	trpc.gmail.onVisibleChanged.useSubscription(undefined, {
-		onData: (updatedVisible) => {
-			utils.gmail.getVisible.setData(undefined, updatedVisible);
-		},
-	});
-
-	return gmailVisible;
+	return query;
 }
 
 export function useGmailNavigationHistory() {
-	const gmailNavigationHistory = trpc.gmail.getNavigationHistory.useQuery();
+	const queryClient = useQueryClient();
 
-	const utils = trpc.useUtils();
-
-	trpc.gmail.onNavigationHistoryChanged.useSubscription(undefined, {
-		onData: (updatedNavigationHistory) => {
-			utils.gmail.getNavigationHistory.setData(
-				undefined,
-				updatedNavigationHistory,
-			);
-		},
+	const query = useQuery({
+		queryKey: ["getNavigationHistory"],
+		queryFn: () => emitter.invoke("getNavigationHistory"),
 	});
 
-	return gmailNavigationHistory;
+	useEffect(() => {
+		ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
+			queryClient.setQueryData(["getNavigationHistory"], navigationHistory);
+		});
+	}, [queryClient]);
+
+	return query;
 }
 
 export function useIsWindowMaximized() {
-	const isWindowMaximized = trpc.window.getIsMaximized.useQuery();
+	const queryClient = useQueryClient();
 
-	const utils = trpc.useUtils();
-
-	trpc.window.onMaximizedChanged.useSubscription(undefined, {
-		onData: (isMaximized) => {
-			utils.window.getIsMaximized.setData(undefined, isMaximized);
-		},
+	const query = useQuery({
+		queryKey: ["getWindowMaximized"],
+		queryFn: () => emitter.invoke("getWindowMaximized"),
 	});
 
-	return isWindowMaximized;
+	useEffect(() => {
+		ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
+			queryClient.setQueryData(["getWindowMaximized"], navigationHistory);
+		});
+	}, [queryClient]);
+
+	return query;
 }
