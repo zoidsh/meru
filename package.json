@@ -34,6 +34,7 @@
 		"@tanstack/react-query": "^5.69.0",
 		"@types/bun": "^1.2.5",
 		"@types/react-dom": "^19.0.4",
+		"@types/trusted-types": "^2.0.7",
 		"bun-plugin-tailwind": "^0.0.14",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",

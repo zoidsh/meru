@@ -1,10 +1,16 @@
-import type { IpcMainEvents, IpcRendererEvent } from "@/gmail";
+import type { IpcMainEvents, IpcRendererEvent } from "@/ipc";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
 
-const ipc = new IpcListener<IpcRendererEvent>();
+export const ipcRenderer = new IpcListener<IpcRendererEvent>();
 
-const emitter = new IpcEmitter<IpcMainEvents>();
+export const ipcMain = new IpcEmitter<IpcMainEvents>();
 
-ipc.on("navigateTo", (_event, destination) => {
-	window.location.hash = `#${destination}`;
+window.addEventListener("DOMContentLoaded", () => {
+	ipcRenderer.on("gmail.navigateTo", (_event, destination) => {
+		window.location.hash = `#${destination}`;
+	});
+
+	ipcRenderer.on("gmail.mail.open", (_event, messageId: string) => {
+		window.location.hash = `#inbox/${messageId}`;
+	});
 });

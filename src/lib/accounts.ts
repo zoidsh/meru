@@ -6,6 +6,16 @@ export function getAccounts() {
 	return config.get("accounts");
 }
 
+export function getAccount(accountId: string) {
+	const account = getAccounts().find((account) => account.id === accountId);
+
+	if (!account) {
+		throw new Error("Could not find account");
+	}
+
+	return account;
+}
+
 export function getSelectedAccount() {
 	const accounts = getAccounts();
 

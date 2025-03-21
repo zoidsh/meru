@@ -2,9 +2,9 @@ import { app } from "electron";
 import { AppMenu } from "./app-menu";
 import { appState } from "./app-state";
 import { Gmail } from "./gmail";
+import { initIpc } from "./ipc";
 import { config } from "./lib/config";
 import { Main } from "./main";
-import { initMainIpc } from "./main/ipc";
 import { Tray } from "./tray";
 
 if (!app.requestSingleInstanceLock()) {
@@ -22,10 +22,11 @@ app.whenReady().then(async () => {
 
 	const gmail = new Gmail({ main });
 
-	initMainIpc({ main, gmail });
+	const tray = new Tray({ main, gmail });
 
-	new Tray({ main, gmail });
 	new AppMenu({ main, gmail });
+
+	initIpc({ main, gmail, tray });
 
 	app.on("second-instance", () => {
 		main.show();

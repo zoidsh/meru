@@ -1,7 +1,7 @@
 import { APP_TOOLBAR_HEIGHT } from "@/lib/constants";
 import { XIcon } from "lucide-react";
 import { useGmailVisible } from "../lib/hooks";
-import { emitter } from "../lib/ipc";
+import { ipcMain } from "../lib/ipc";
 import { Accounts } from "./accounts";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -29,7 +29,7 @@ export function AppMain() {
 				size="icon"
 				className="size-7 absolute top-1.5 right-2"
 				onClick={() => {
-					emitter.send("toggleGmailVisible");
+					ipcMain.send("toggleGmailVisible");
 				}}
 			>
 				<XIcon />

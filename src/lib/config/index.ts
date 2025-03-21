@@ -43,4 +43,5 @@ export const config = new Store<Config>({
 		"updates.autoCheck": true,
 		"updates.notifyWhenDownloaded": true,
 	},
+	accessPropertiesByDotNotation: false,
 });

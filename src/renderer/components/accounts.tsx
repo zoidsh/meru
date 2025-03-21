@@ -4,7 +4,7 @@ import { ArrowDownIcon, ArrowUpIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts } from "../lib/hooks";
-import { emitter } from "../lib/ipc";
+import { ipcMain } from "../lib/ipc";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -99,7 +99,7 @@ function AddAccountButton() {
 				</DialogHeader>
 				<EditAccountForm
 					onSubmit={(account) => {
-						emitter.send("addAccount", account);
+						ipcMain.send("addAccount", account);
 
 						setIsOpen(false);
 					}}
@@ -126,7 +126,7 @@ function EditAccountButton({ account }: { account: Account }) {
 				<EditAccountForm
 					account={account}
 					onSubmit={(values) => {
-						emitter.send("updateAccount", { ...account, ...values });
+						ipcMain.send("updateAccount", { ...account, ...values });
 
 						setIsOpen(false);
 					}}
@@ -136,7 +136,7 @@ function EditAccountButton({ account }: { account: Account }) {
 						);
 
 						if (confirmed) {
-							emitter.send("removeAccount", account.id);
+							ipcMain.send("removeAccount", account.id);
 						}
 					}}
 				/>
@@ -176,7 +176,7 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index + 1 === accounts.data.length}
 										onClick={() => {
-											emitter.send("moveAccount", account.id, "down");
+											ipcMain.send("moveAccount", account.id, "down");
 										}}
 									>
 										<ArrowDownIcon />
@@ -187,7 +187,7 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index === 0}
 										onClick={() => {
-											emitter.send("moveAccount", account.id, "up");
+											ipcMain.send("moveAccount", account.id, "up");
 										}}
 									>
 										<ArrowUpIcon />

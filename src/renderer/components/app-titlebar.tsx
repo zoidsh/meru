@@ -13,7 +13,7 @@ import {
 	useIsWindowMaximized,
 	useTitle,
 } from "../lib/hooks";
-import { emitter } from "../lib/ipc";
+import { ipcMain } from "../lib/ipc";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { CloseIcon, MaximizeIcon, MinimizeIcon, RestoreIcon } from "./ui/icons";
@@ -42,13 +42,13 @@ function WindowControls() {
 			style={{ appRegion: "none" }}
 		>
 			<WindowControlButton
-				onClick={() => emitter.send("controlWindow", "minimize")}
+				onClick={() => ipcMain.send("controlWindow", "minimize")}
 			>
 				<MinimizeIcon />
 			</WindowControlButton>
 			<WindowControlButton
 				onClick={() =>
-					emitter.send(
+					ipcMain.send(
 						"controlWindow",
 						isWindowMaximized.data ? "unmaximize" : "maximize",
 					)
@@ -58,7 +58,7 @@ function WindowControls() {
 			</WindowControlButton>
 			<WindowControlButton
 				className="hover:bg-destructive/90"
-				onClick={() => emitter.send("controlWindow", "close")}
+				onClick={() => ipcMain.send("controlWindow", "close")}
 			>
 				<CloseIcon />
 			</WindowControlButton>
@@ -104,7 +104,7 @@ function TitlebarNavigation() {
 				size="icon"
 				className="size-7"
 				onClick={() => {
-					emitter.send("goNavigationHistory", "back");
+					ipcMain.send("goNavigationHistory", "back");
 				}}
 				disabled={!gmailNavigationHistory.data?.canGoBack}
 			>
@@ -115,7 +115,7 @@ function TitlebarNavigation() {
 				size="icon"
 				className="size-7"
 				onClick={() => {
-					emitter.send("goNavigationHistory", "forward");
+					ipcMain.send("goNavigationHistory", "forward");
 				}}
 				disabled={!gmailNavigationHistory.data?.canGoForward}
 			>
@@ -126,7 +126,7 @@ function TitlebarNavigation() {
 				size="icon"
 				className="size-7"
 				onClick={() => {
-					emitter.send("reload");
+					ipcMain.send("reload");
 				}}
 			>
 				<RotateCwIcon />
@@ -164,7 +164,7 @@ export function AppTitlebar() {
 						size="icon"
 						className="size-7"
 						onClick={() => {
-							emitter.send("toggleGmailVisible");
+							ipcMain.send("toggleGmailVisible");
 						}}
 					>
 						<SettingsIcon />

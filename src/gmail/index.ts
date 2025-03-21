@@ -1,6 +1,5 @@
 import path from "node:path";
 import { getAccounts, getSelectedAccount } from "@/lib/accounts";
-import { config } from "@/lib/config";
 import type { Account } from "@/lib/config/types";
 import {
 	APP_SIDEBAR_WIDTH,
@@ -9,30 +8,19 @@ import {
 } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import type { Main } from "@/main";
-import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { WebContentsView } from "electron";
+import { WebContentsView, session } from "electron";
 import gmailStyles from "./styles.css" with { type: "text" };
 
-// biome-ignore lint/complexity/noBannedTypes: @TODO
-export type IpcMainEvents = {};
-
-export type IpcRendererEvent = {
-	navigateTo: [
-		destination:
-			| "inbox"
-			| "starred"
-			| "snoozed"
-			| "sent"
-			| "drafts"
-			| "imp"
-			| "scheduled"
-			| "all"
-			| "trash"
-			| "spam"
-			| "settings"
-			| "compose",
-	];
-};
+export interface GmailMail {
+	messageId: string;
+	subject: string;
+	summary: string;
+	link: string;
+	sender: {
+		name: string;
+		email: string;
+	};
+}
 
 export type GmailNavigationHistory = {
 	canGoBack: boolean;
@@ -51,8 +39,7 @@ export class Gmail {
 	views = new Map<string, WebContentsView>();
 	visible = true;
 
-	ipc: IpcListener<IpcMainEvents>;
-	emitter: IpcEmitter<IpcRendererEvent>;
+	unreadCount = new Map<string, number>();
 
 	private listeners = {
 		navigationHistoryChanged: new Set<GmailNavigationHistoryChangedListener>(),
@@ -90,16 +77,22 @@ export class Gmail {
 
 			view.webContents.focus();
 		});
-
-		this.ipc = new IpcListener<IpcMainEvents>();
-
-		this.emitter = new IpcEmitter<IpcRendererEvent>();
 	}
 
 	createView(account: Account) {
+		const sessionPartitionKey = this.getSessionPartitionKey(account);
+
+		session
+			.fromPartition(sessionPartitionKey)
+			.setPermissionRequestHandler((_webContents, permission, callback) => {
+				if (permission === "notifications") {
+					callback(false);
+				}
+			});
+
 		const view = new WebContentsView({
 			webPreferences: {
-				partition: this.getPartition(account),
+				partition: sessionPartitionKey,
 				preload: path.join(
 					...(process.env.NODE_ENV === "production"
 						? [__dirname]
@@ -153,7 +146,7 @@ export class Gmail {
 		this.views.set(account.id, view);
 	}
 
-	getPartition(account: Account) {
+	getSessionPartitionKey(account: Account) {
 		return `persist:${account.id}`;
 	}
 

@@ -1,17 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { emitter, ipc } from "./ipc";
+import { ipcMain, ipcRenderer } from "./ipc";
 
 export function useTitle() {
 	const queryClient = useQueryClient();
 
 	const query = useQuery({
 		queryKey: ["getTitle"],
-		queryFn: () => emitter.invoke("getTitle"),
+		queryFn: () => ipcMain.invoke("getTitle"),
 	});
 
 	useEffect(() => {
-		return ipc.on("onTitleChanged", (_event, title) => {
+		return ipcRenderer.on("onTitleChanged", (_event, title) => {
 			queryClient.setQueryData(["getTitle"], title);
 		});
 	}, [queryClient]);
@@ -24,11 +24,11 @@ export function useAccounts() {
 
 	const query = useQuery({
 		queryKey: ["getAccounts"],
-		queryFn: () => emitter.invoke("getAccounts"),
+		queryFn: () => ipcMain.invoke("getAccounts"),
 	});
 
 	useEffect(() => {
-		return ipc.on("onAccountsChanged", (_event, title) => {
+		return ipcRenderer.on("onAccountsChanged", (_event, title) => {
 			queryClient.setQueryData(["getAccounts"], title);
 		});
 	}, [queryClient]);
@@ -41,11 +41,11 @@ export function useGmailVisible() {
 
 	const query = useQuery({
 		queryKey: ["getGmailVisible"],
-		queryFn: () => emitter.invoke("getGmailVisible"),
+		queryFn: () => ipcMain.invoke("getGmailVisible"),
 	});
 
 	useEffect(() => {
-		return ipc.on("onGmailVisibleChanged", (_event, visible) => {
+		return ipcRenderer.on("onGmailVisibleChanged", (_event, visible) => {
 			queryClient.setQueryData(["getGmailVisible"], visible);
 		});
 	}, [queryClient]);
@@ -58,13 +58,16 @@ export function useGmailNavigationHistory() {
 
 	const query = useQuery({
 		queryKey: ["getNavigationHistory"],
-		queryFn: () => emitter.invoke("getNavigationHistory"),
+		queryFn: () => ipcMain.invoke("getNavigationHistory"),
 	});
 
 	useEffect(() => {
-		return ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
-			queryClient.setQueryData(["getNavigationHistory"], navigationHistory);
-		});
+		return ipcRenderer.on(
+			"onNavigationHistoryChanged",
+			(_event, navigationHistory) => {
+				queryClient.setQueryData(["getNavigationHistory"], navigationHistory);
+			},
+		);
 	}, [queryClient]);
 
 	return query;
@@ -75,12 +78,32 @@ export function useIsWindowMaximized() {
 
 	const query = useQuery({
 		queryKey: ["getWindowMaximized"],
-		queryFn: () => emitter.invoke("getWindowMaximized"),
+		queryFn: () => ipcMain.invoke("getWindowMaximized"),
 	});
 
 	useEffect(() => {
-		return ipc.on("onNavigationHistoryChanged", (_event, navigationHistory) => {
-			queryClient.setQueryData(["getWindowMaximized"], navigationHistory);
+		return ipcRenderer.on(
+			"onNavigationHistoryChanged",
+			(_event, navigationHistory) => {
+				queryClient.setQueryData(["getWindowMaximized"], navigationHistory);
+			},
+		);
+	}, [queryClient]);
+
+	return query;
+}
+
+export function useUnreadMails() {
+	const queryClient = useQueryClient();
+
+	const query = useQuery({
+		queryKey: ["getUnreadMails"],
+		queryFn: () => ipcMain.invoke("getUnreadMails"),
+	});
+
+	useEffect(() => {
+		return ipcRenderer.on("onUnreadMailsChanged", (_event, unreadInboxes) => {
+			queryClient.setQueryData(["getUnreadMails"], unreadInboxes);
 		});
 	}, [queryClient]);
 

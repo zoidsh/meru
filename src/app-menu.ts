@@ -12,6 +12,7 @@ import {
 } from "electron";
 import log from "electron-log";
 import type { Gmail } from "./gmail";
+import { ipcRenderer } from "./ipc";
 import {
 	getAccounts,
 	selectAccount,
@@ -398,7 +399,7 @@ export class AppMenu {
 						label: "Gmail Settings",
 						accelerator: "Command+,",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"settings",
@@ -426,7 +427,7 @@ export class AppMenu {
 					{
 						label: "Compose",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"compose",
@@ -658,7 +659,7 @@ export class AppMenu {
 					{
 						label: "Inbox",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"inbox",
@@ -670,7 +671,7 @@ export class AppMenu {
 					{
 						label: "Important",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"imp",
@@ -682,7 +683,7 @@ export class AppMenu {
 					{
 						label: "Snoozed",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"snoozed",
@@ -694,7 +695,7 @@ export class AppMenu {
 					{
 						label: "Starred",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"starred",
@@ -709,7 +710,7 @@ export class AppMenu {
 					{
 						label: "Drafts",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"drafts",
@@ -721,7 +722,7 @@ export class AppMenu {
 					{
 						label: "Scheduled",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"scheduled",
@@ -733,7 +734,7 @@ export class AppMenu {
 					{
 						label: "Sent",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"sent",
@@ -745,7 +746,7 @@ export class AppMenu {
 					{
 						label: "Spam",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"spam",
@@ -757,7 +758,7 @@ export class AppMenu {
 					{
 						label: "Bin",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"trash",
@@ -772,7 +773,7 @@ export class AppMenu {
 					{
 						label: "All Mail",
 						click: () => {
-							this.gmail.emitter.send(
+							ipcRenderer.send(
 								this.gmail.getSelectedView().webContents,
 								"navigateTo",
 								"all",
