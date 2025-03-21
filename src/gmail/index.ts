@@ -1,5 +1,5 @@
 import path from "node:path";
-import { getSelectedAccount } from "@/lib/accounts";
+import { getAccounts, getSelectedAccount } from "@/lib/accounts";
 import { config } from "@/lib/config";
 import type { Account } from "@/lib/config/types";
 import {
@@ -62,7 +62,7 @@ export class Gmail {
 	constructor({ main }: { main: Main }) {
 		this.main = main;
 
-		const accounts = config.get("accounts");
+		const accounts = getAccounts();
 
 		for (const account of accounts) {
 			this.createView(account);
@@ -71,7 +71,7 @@ export class Gmail {
 		this.main.window.on("resize", () => {
 			const { width, height } = this.main.window.getBounds();
 
-			const accounts = config.get("accounts");
+			const accounts = getAccounts();
 
 			for (const view of this.views.values()) {
 				this.setViewBounds({
@@ -113,7 +113,7 @@ export class Gmail {
 
 		this.main.window.contentView.addChildView(view);
 
-		const accounts = config.get("accounts");
+		const accounts = getAccounts();
 
 		const { width, height } = this.main.window.getBounds();
 

@@ -2,8 +2,12 @@ import type { Gmail } from "@/gmail";
 import { app } from "electron";
 import { config } from "./config";
 
+export function getAccounts() {
+	return config.get("accounts");
+}
+
 export function getSelectedAccount() {
-	const accounts = config.get("accounts");
+	const accounts = getAccounts();
 
 	const selectedAccount = accounts.find((account) => account.selected);
 
@@ -24,7 +28,7 @@ export function getSelectedAccount() {
 export function selectAccount(selectedAccountId: string, gmail: Gmail) {
 	config.set(
 		"accounts",
-		config.get("accounts").map((account) => {
+		getAccounts().map((account) => {
 			if (account.id === selectedAccountId) {
 				gmail.selectView(account);
 			}
@@ -35,7 +39,7 @@ export function selectAccount(selectedAccountId: string, gmail: Gmail) {
 }
 
 export function selectPreviousAccount(gmail: Gmail) {
-	const accounts = config.get("accounts");
+	const accounts = getAccounts();
 
 	const selectedAccountIndex = accounts.findIndex(
 		(account) => account.selected,
@@ -63,7 +67,7 @@ export function selectPreviousAccount(gmail: Gmail) {
 }
 
 export function selectNextAccount(gmail: Gmail) {
-	const accounts = config.get("accounts");
+	const accounts = getAccounts();
 
 	const selectedAccountIndex = accounts.findIndex(
 		(account) => account.selected,

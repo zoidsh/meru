@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { selectAccount } from "@/lib/accounts";
+import { getAccounts, selectAccount } from "@/lib/accounts";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import type { Main } from ".";
 import type { Gmail, GmailNavigationHistory } from "../gmail";
@@ -45,7 +45,7 @@ export function initMainIpc({ main, gmail }: { main: Main; gmail: Gmail }) {
 		emitter.send(main.window.webContents, "onTitleChanged", title);
 	});
 
-	ipc.handle("getAccounts", () => config.get("accounts"));
+	ipc.handle("getAccounts", () => getAccounts());
 
 	config.onDidChange("accounts", (accounts) => {
 		if (accounts) {
@@ -64,7 +64,9 @@ export function initMainIpc({ main, gmail }: { main: Main; gmail: Gmail }) {
 			...addedAccount,
 		};
 
-		const accounts = [...config.get("accounts"), account];
+		const accounts = getAccounts();
+
+		accounts.push(account);
 
 		config.set("accounts", accounts);
 
@@ -117,7 +119,7 @@ export function initMainIpc({ main, gmail }: { main: Main; gmail: Gmail }) {
 	});
 
 	ipc.on("moveAccount", (_event, movedAccountId, direction) => {
-		const accounts = config.get("accounts");
+		const accounts = getAccounts();
 
 		const accountIndex = accounts.findIndex(
 			(account) => account.id === movedAccountId,

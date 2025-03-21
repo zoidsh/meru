@@ -13,6 +13,7 @@ import {
 import log from "electron-log";
 import type { Gmail } from "./gmail";
 import {
+	getAccounts,
 	selectAccount,
 	selectNextAccount,
 	selectPreviousAccount,
@@ -445,7 +446,7 @@ export class AppMenu {
 			{
 				label: "Accounts",
 				submenu: [
-					...config.get("accounts").map((account, index) => ({
+					...getAccounts().map((account, index) => ({
 						label: account.label,
 						click: () => {
 							selectAccount(account.id, this.gmail);
@@ -878,7 +879,7 @@ export class AppMenu {
 							{
 								label: "Clear Cache",
 								click: () => {
-									for (const { id } of config.get("accounts")) {
+									for (const { id } of getAccounts()) {
 										session.fromPartition(`persist:${id}`).clearCache();
 									}
 
@@ -888,7 +889,7 @@ export class AppMenu {
 							{
 								label: "Reset App Data",
 								click: () => {
-									for (const { id } of config.get("accounts")) {
+									for (const { id } of getAccounts()) {
 										session.fromPartition(`persist:${id}`).clearStorageData();
 									}
 

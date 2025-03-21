@@ -3,6 +3,7 @@ import type { Gmail } from "@/gmail";
 import { config } from "@/lib/config";
 import { platform } from "@electron-toolkit/utils";
 import Electron from "electron";
+import { getAccounts } from "./lib/accounts";
 import { Main } from "./main";
 
 export class Tray {
@@ -134,7 +135,7 @@ export class Tray {
 		}
 
 		const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-			...config.get("accounts").map((account) => ({
+			...getAccounts().map((account) => ({
 				label: account.label,
 				click: () => {
 					this.gmail.selectView(account);
