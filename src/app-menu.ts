@@ -397,10 +397,11 @@ export class AppMenu {
 						label: "Gmail Settings",
 						accelerator: "Command+,",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "settings",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"settings",
+							);
 
 							this.main.show();
 						},
@@ -424,7 +425,11 @@ export class AppMenu {
 					{
 						label: "Compose",
 						click: () => {
-							this.gmail.sendToRenderer({ type: "compose-email" });
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"compose",
+							);
 
 							this.main.show();
 						},
@@ -652,10 +657,11 @@ export class AppMenu {
 					{
 						label: "Inbox",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "inbox",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"inbox",
+							);
 
 							this.main.show();
 						},
@@ -663,10 +669,11 @@ export class AppMenu {
 					{
 						label: "Important",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "important",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"imp",
+							);
 
 							this.main.show();
 						},
@@ -674,10 +681,11 @@ export class AppMenu {
 					{
 						label: "Snoozed",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "inbox",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"snoozed",
+							);
 
 							this.main.show();
 						},
@@ -685,10 +693,11 @@ export class AppMenu {
 					{
 						label: "Starred",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "starred",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"starred",
+							);
 
 							this.main.show();
 						},
@@ -699,10 +708,11 @@ export class AppMenu {
 					{
 						label: "Drafts",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "drafts",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"drafts",
+							);
 
 							this.main.show();
 						},
@@ -710,10 +720,11 @@ export class AppMenu {
 					{
 						label: "Scheduled",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "scheduled",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"scheduled",
+							);
 
 							this.main.show();
 						},
@@ -721,10 +732,35 @@ export class AppMenu {
 					{
 						label: "Sent",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "sent",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"sent",
+							);
+
+							this.main.show();
+						},
+					},
+					{
+						label: "Spam",
+						click: () => {
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"spam",
+							);
+
+							this.main.show();
+						},
+					},
+					{
+						label: "Bin",
+						click: () => {
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"trash",
+							);
 
 							this.main.show();
 						},
@@ -735,10 +771,11 @@ export class AppMenu {
 					{
 						label: "All Mail",
 						click: () => {
-							this.gmail.sendToRenderer({
-								type: "go-to",
-								destination: "all",
-							});
+							this.gmail.emitter.send(
+								this.gmail.getSelectedView().webContents,
+								"navigateTo",
+								"all",
+							);
 
 							this.main.show();
 						},

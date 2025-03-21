@@ -3,11 +3,11 @@ import { app } from "electron";
 import { config } from "./config";
 
 export function getSelectedAccount() {
-	const account = config.get("accounts").find((account) => account.selected);
+	const accounts = config.get("accounts");
 
-	if (!account) {
-		const accounts = config.get("accounts");
+	const selectedAccount = accounts.find((account) => account.selected);
 
+	if (!selectedAccount) {
 		accounts[0].selected = true;
 
 		config.set("accounts", accounts);
@@ -15,10 +15,10 @@ export function getSelectedAccount() {
 		app.relaunch();
 		app.quit();
 
-		return;
+		throw new Error("Could not find selected account");
 	}
 
-	return account;
+	return selectedAccount;
 }
 
 export function selectAccount(selectedAccountId: string, gmail: Gmail) {

@@ -35,6 +35,7 @@
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-hook-form": "^7.54.2",
+        "select-dom": "^9.3.0",
         "tailwind-merge": "^3.0.2",
         "tailwindcss": "^4.0.14",
         "tailwindcss-animate": "^1.0.7",
@@ -774,6 +775,8 @@
     "sax": ["sax@1.4.1", "", {}, "sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg=="],
 
     "scheduler": ["scheduler@0.25.0", "", {}, "sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA=="],
+
+    "select-dom": ["select-dom@9.3.0", "", { "dependencies": { "typed-query-selector": "^2.11.0" } }, "sha512-oZkhmrKSdj4pEEpK55P2SK4oVr2ozXhr692kXteqf2d+chwjgjgS57AlUoZaFiwnfZR15aW4+GtGXNYBQgo6yw=="],
 
     "semver": ["semver@7.7.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA=="],
 

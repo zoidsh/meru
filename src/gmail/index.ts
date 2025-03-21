@@ -9,9 +9,30 @@ import {
 } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import type { Main } from "@/main";
+import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { WebContentsView } from "electron";
-import type { RendererEvent } from "./preload/ipc";
 import gmailStyles from "./styles.css" with { type: "text" };
+
+// biome-ignore lint/complexity/noBannedTypes: @TODO
+export type IpcMainEvents = {};
+
+export type IpcRendererEvent = {
+	navigateTo: [
+		destination:
+			| "inbox"
+			| "starred"
+			| "snoozed"
+			| "sent"
+			| "drafts"
+			| "imp"
+			| "scheduled"
+			| "all"
+			| "trash"
+			| "spam"
+			| "settings"
+			| "compose",
+	];
+};
 
 export type GmailNavigationHistory = {
 	canGoBack: boolean;
@@ -29,6 +50,9 @@ export class Gmail {
 
 	views = new Map<string, WebContentsView>();
 	visible = true;
+
+	ipc: IpcListener<IpcMainEvents>;
+	emitter: IpcEmitter<IpcRendererEvent>;
 
 	private listeners = {
 		navigationHistoryChanged: new Set<GmailNavigationHistoryChangedListener>(),
@@ -66,6 +90,10 @@ export class Gmail {
 
 			view.webContents.focus();
 		});
+
+		this.ipc = new IpcListener<IpcMainEvents>();
+
+		this.emitter = new IpcEmitter<IpcRendererEvent>();
 	}
 
 	createView(account: Account) {
@@ -272,6 +300,7 @@ export class Gmail {
 	selectView(account: Account) {
 		for (const [accountId, view] of this.views) {
 			view.setVisible(accountId === account.id);
+			view.webContents.focus();
 
 			if (accountId === account.id) {
 				this.setViewListeners(view);
@@ -326,11 +355,5 @@ export class Gmail {
 
 	reload() {
 		this.getSelectedView().webContents.reload();
-	}
-
-	sendToRenderer(event: RendererEvent) {
-		const view = this.getSelectedView();
-
-		view.webContents.send("ipc", event);
 	}
 }

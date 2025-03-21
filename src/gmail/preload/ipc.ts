@@ -1,27 +1,10 @@
-import { ipcRenderer } from "electron";
+import type { IpcMainEvents, IpcRendererEvent } from "@/gmail";
+import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
 
-export type RendererEvent =
-	| {
-			type: "go-to";
-			destination:
-				| "inbox"
-				| "starred"
-				| "snoozed"
-				| "sent"
-				| "drafts"
-				| "important"
-				| "scheduled"
-				| "all"
-				| "settings";
-	  }
-	| { type: "compose-email" };
+const ipc = new IpcListener<IpcRendererEvent>();
 
-ipcRenderer.on("ipc", (_event, event: RendererEvent) => {
-	switch (event.type) {
-		case "go-to": {
-			window.location.hash = `#${event.destination}`;
+const emitter = new IpcEmitter<IpcMainEvents>();
 
-			break;
-		}
-	}
+ipc.on("navigateTo", (_event, destination) => {
+	window.location.hash = `#${destination}`;
 });
