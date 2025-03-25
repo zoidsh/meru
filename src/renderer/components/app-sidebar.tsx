@@ -1,5 +1,10 @@
 import { APP_SIDEBAR_WIDTH } from "../../lib/constants";
-import { useAccounts, useGmailVisible, useUnreadMails } from "../lib/hooks";
+import {
+	useAccounts,
+	useAccountsAttentionRequired,
+	useGmailVisible,
+	useUnreadMails,
+} from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
 import { cn } from "../lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
@@ -8,6 +13,7 @@ export function AppSidebar() {
 	const gmailVisible = useGmailVisible();
 	const accounts = useAccounts();
 	const inboxesUnreadCount = useUnreadMails();
+	const accountsAttentionRequired = useAccountsAttentionRequired();
 
 	if (!gmailVisible.data || !accounts.data || accounts.data.length === 0) {
 		return;
@@ -20,6 +26,10 @@ export function AppSidebar() {
 		>
 			<div className="flex flex-col items-center gap-4 flex-1 py-4 px-3">
 				{accounts.data.map((account) => {
+					const attentionRequired = accountsAttentionRequired.data?.get(
+						account.id,
+					);
+
 					const inboxUnreadCount = inboxesUnreadCount.data?.get(account.id);
 
 					return (
@@ -37,6 +47,9 @@ export function AppSidebar() {
 							}}
 						>
 							{account.label[0].toUpperCase()}
+							{attentionRequired && (
+								<div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full w-2.5 h-2.5" />
+							)}
 							{inboxUnreadCount ? (
 								<div className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full text-white w-4 h-4 flex items-center justify-center text-[0.5rem]">
 									{inboxUnreadCount}

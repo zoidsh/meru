@@ -32,6 +32,7 @@ export type IpcMainEvents =
 			getNavigationHistory: () => GmailNavigationHistory;
 			getGmailVisible: () => boolean;
 			getUnreadMails: () => Map<string, number>;
+			getAccountsAttentionRequired: () => Map<string, boolean>;
 	  };
 
 export type IpcRendererEvent = {
@@ -41,6 +42,9 @@ export type IpcRendererEvent = {
 	onNavigationHistoryChanged: [navigationHistory: GmailNavigationHistory];
 	onGmailVisibleChanged: [visible: boolean];
 	onUnreadMailsChanged: [unreadInboxes: Map<string, number>];
+	onAccountsAttentionRequiredChanged: [
+		accountsAttentionRequired: Map<string, boolean>,
+	];
 	"gmail.navigateTo": [
 		destination:
 			| "inbox"
@@ -386,4 +390,17 @@ export function initIpc({
 			}
 		});
 	}
+
+	ipcMain.handle(
+		"getAccountsAttentionRequired",
+		() => appState.accountsAttentionRequired,
+	);
+
+	appState.onAccountsAttentionRequiredChanged((accountsAttentionRequired) => {
+		ipcRenderer.send(
+			main.window.webContents,
+			"onAccountsAttentionRequiredChanged",
+			accountsAttentionRequired,
+		);
+	});
 }

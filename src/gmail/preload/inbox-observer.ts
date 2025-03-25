@@ -147,8 +147,9 @@ async function observeInbox() {
 	}
 
 	const getUnreadCount = () => {
-		const unreadCountElement =
-			inboxAnchorContainerElement.querySelector(".bsU");
+		const unreadCountElement = document.querySelector(
+			`div:has(> ${inboxAnchorElementSelector}) .bsU`,
+		);
 
 		const currentUnreadCount = Number(unreadCountElement?.textContent || "0");
 

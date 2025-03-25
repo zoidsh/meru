@@ -109,3 +109,26 @@ export function useUnreadMails() {
 
 	return query;
 }
+
+export function useAccountsAttentionRequired() {
+	const queryClient = useQueryClient();
+
+	const query = useQuery({
+		queryKey: ["getAccountsAttentionRequired"],
+		queryFn: () => ipcMain.invoke("getAccountsAttentionRequired"),
+	});
+
+	useEffect(() => {
+		return ipcRenderer.on(
+			"onAccountsAttentionRequiredChanged",
+			(_event, unreadInboxes) => {
+				queryClient.setQueryData(
+					["getAccountsAttentionRequired"],
+					unreadInboxes,
+				);
+			},
+		);
+	}, [queryClient]);
+
+	return query;
+}

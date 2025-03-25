@@ -1,4 +1,5 @@
 import path from "node:path";
+import { appState } from "@/app-state";
 import { getAccounts, getSelectedAccount } from "@/lib/accounts";
 import type { Account } from "@/lib/config/types";
 import {
@@ -117,7 +118,11 @@ export class Gmail {
 			sidebarInset: accounts.length > 1,
 		});
 
-		view.setVisible(this.visible && account.selected);
+		view.setVisible(true);
+
+		view.webContents.once("did-finish-load", () => {
+			view.setVisible(this.visible && account.selected);
+		});
 
 		view.webContents.loadURL(GMAIL_URL);
 
@@ -131,6 +136,13 @@ export class Gmail {
 			return {
 				action: "deny",
 			};
+		});
+
+		view.webContents.on("did-navigate", (_event, url) => {
+			appState.setAccountAttentionRequired(
+				account.id,
+				!url.startsWith(GMAIL_URL),
+			);
 		});
 
 		view.webContents.on("dom-ready", () => {
