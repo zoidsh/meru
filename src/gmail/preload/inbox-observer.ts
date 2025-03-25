@@ -1,5 +1,6 @@
 import { GMAIL_URL } from "@/lib/constants";
 import elementReady from "element-ready";
+import Cookie from "js-cookie";
 import { $, $$ } from "select-dom";
 import type { GmailMail } from "..";
 import { ipcMain, ipcRenderer } from "./ipc";
@@ -7,6 +8,7 @@ import { ipcMain, ipcRenderer } from "./ipc";
 declare global {
 	interface Window {
 		GM_INBOX_TYPE: "CLASSIC" | "SECTIONED";
+		GM_ID_KEY: string;
 	}
 }
 
@@ -170,44 +172,78 @@ async function observeInbox() {
 	});
 }
 
-export const mailActionsMap = {
-	archive: "rc_^i",
-	markAsRead: "rd",
-	delete: "tr",
-	markAsSpam: "sp",
-};
+let gmailIdKey: string | undefined;
 
-let mailActionToken: string | undefined;
+async function fetchGmailIdKey() {
+	if (!gmailIdKey) {
+		const gmailDocument = await fetchGmail().then((res) => res.text());
 
-async function fetchActionToken() {
-	if (!mailActionToken) {
-		const gmailDocument = await fetchGmail().then(async (response) =>
-			response.text(),
-		);
-
-		mailActionToken = /var GM_ACTION_TOKEN="([\w-]+)";/.exec(
-			gmailDocument,
-		)?.[1];
+		gmailIdKey = /var GM_ID_KEY = '([a-z0-9]+)';/.exec(gmailDocument)?.[1];
 	}
 }
 
+export const mailActionCodeMap = {
+	archive: 1,
+	markAsRead: 3,
+	delete: 9,
+	markAsSpam: 7,
+};
+
 async function sendMailAction(
 	mailId: string,
-	action: keyof typeof mailActionsMap,
+	action: keyof typeof mailActionCodeMap,
 ) {
-	await fetchActionToken();
+	await fetchGmailIdKey();
 
-	if (!mailActionToken) {
+	if (!gmailIdKey) {
+		throw new Error("ID key is missing");
+	}
+
+	const gmailActionToken = Cookie.get("GMAIL_AT");
+
+	if (!gmailActionToken) {
 		throw new Error("Action token is missing");
 	}
 
-	const parameters = new URLSearchParams({
-		t: mailId,
-		at: mailActionToken,
-		act: mailActionsMap[action],
-	}).toString();
+	const command = "l:all";
+	const labels: [] = [];
+	const ids: [] = [];
+	const actionCode = mailActionCodeMap[action];
 
-	return fetchGmail(`?${parameters}`);
+	const body = new FormData();
+
+	body.append(
+		"s_jr",
+		JSON.stringify([
+			null,
+			[
+				[
+					null,
+					null,
+					null,
+					[null, actionCode, mailId, mailId, command, [], labels, ids],
+				],
+				[null, null, null, null, null, null, [null, true, false]],
+				[null, null, null, null, null, null, [null, true, false]],
+			],
+			2,
+			null,
+			null,
+			null,
+			gmailIdKey,
+		]),
+	);
+
+	const res = await fetchGmail(
+		`/s/?v=or&ik=${gmailIdKey}&at=${gmailActionToken}&subui=chrome&hl=en&ts=${Date.now()}`,
+		{
+			method: "POST",
+			credentials: "include",
+			body,
+		},
+	);
+
+	await res.text();
 }
 
 function getInboxAnchorElement() {
@@ -227,22 +263,12 @@ function refreshInbox() {
 window.document.addEventListener("DOMContentLoaded", () => {
 	observeInbox();
 
-	ipcRenderer.on("gmail.mail.quickAction", async (_event, mailId, action) => {
-		await sendMailAction(mailId, action);
+	ipcRenderer.on(
+		"gmail.mail.quickAction",
+		async (_event, messageId, action) => {
+			await sendMailAction(messageId, action);
 
-		refreshInbox();
-	});
-
-	ipcMain.send("gmail.receivedNewMails", [
-		{
-			messageId: "195cd4b7104810e6",
-			link: "https://mail.google.com/mail/u/0?account_id=tim@cheung.io&message_id=195cd4b7104810e6&view=conv&extsrc=atom",
-			subject: "Haha",
-			summary: "Cool",
-			sender: {
-				name: "Tim Cheung",
-				email: "timchedev@gmail.com",
-			},
+			refreshInbox();
 		},
-	]);
+	);
 });

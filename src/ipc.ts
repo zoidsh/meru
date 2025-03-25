@@ -5,7 +5,7 @@ import { platform } from "@electron-toolkit/utils";
 import { Notification, app } from "electron";
 import { appState } from "./app-state";
 import type { Gmail, GmailMail, GmailNavigationHistory } from "./gmail";
-import type { mailActionsMap } from "./gmail/preload/inbox-observer";
+import type { mailActionCodeMap } from "./gmail/preload/inbox-observer";
 import { config } from "./lib/config";
 import type { Account, Accounts } from "./lib/config/types";
 import type { Main } from "./main";
@@ -58,7 +58,7 @@ export type IpcRendererEvent = {
 	];
 	"gmail.mail.quickAction": [
 		messageId: string,
-		action: keyof typeof mailActionsMap,
+		action: keyof typeof mailActionCodeMap,
 	];
 	"gmail.mail.open": [messageId: string];
 };
