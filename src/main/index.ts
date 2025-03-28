@@ -104,7 +104,7 @@ class Main {
 				this.window.setFullScreen(false);
 			}
 
-			if (!appState.isQuitting) {
+			if (!appState.isQuittingApp) {
 				event.preventDefault();
 
 				this.window.blur();

@@ -81,6 +81,8 @@ if (args.values.dev) {
 				}
 			},
 		});
+
+		electron.unref();
 	};
 
 	const stopElectron = async () => {
