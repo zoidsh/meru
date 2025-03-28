@@ -12,7 +12,6 @@
 		"dev": "bun run scripts/build.ts --dev",
 		"lint": "biome check .",
 		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
-		"stories": "bun run scripts/stories.ts",
 		"build": "bun run scripts/build.ts",
 		"dist:mac": "electron-builder --mac",
 		"dist:linux": "electron-builder --linux",
