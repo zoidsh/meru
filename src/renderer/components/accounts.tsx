@@ -1,8 +1,9 @@
-import { type Account, accountSchema } from "@/lib/config/types";
+import type { AccountConfig } from "@/lib/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDownIcon, ArrowUpIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useAccounts } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
 import { Button } from "./ui/button";
@@ -23,18 +24,24 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 
-function EditAccountForm({
+export const accountSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	selected: z.boolean(),
+});
+
+function AccountForm({
 	account = { label: "" },
 	placeholder = "Work",
 	onSubmit,
 	onDelete,
 }: {
-	account?: Pick<Account, "label">;
+	account?: Pick<AccountConfig, "label">;
 	placeholder?: string;
-	onSubmit: (values: Pick<Account, "label">) => void;
+	onSubmit: (values: Pick<AccountConfig, "label">) => void;
 	onDelete?: () => void;
 }) {
-	const form = useForm<Pick<Account, "label">>({
+	const form = useForm<Pick<AccountConfig, "label">>({
 		resolver: zodResolver(accountSchema.pick({ label: true })),
 		defaultValues: {
 			label: account.label,
@@ -97,7 +104,7 @@ function AddAccountButton() {
 				<DialogHeader>
 					<DialogTitle>Add account</DialogTitle>
 				</DialogHeader>
-				<EditAccountForm
+				<AccountForm
 					onSubmit={(account) => {
 						ipcMain.send("addAccount", account);
 
@@ -109,7 +116,7 @@ function AddAccountButton() {
 	);
 }
 
-function EditAccountButton({ account }: { account: Account }) {
+function EditAccountButton({ account }: { account: AccountConfig }) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
@@ -123,7 +130,7 @@ function EditAccountButton({ account }: { account: Account }) {
 				<DialogHeader>
 					<DialogTitle>Edit account</DialogTitle>
 				</DialogHeader>
-				<EditAccountForm
+				<AccountForm
 					account={account}
 					onSubmit={(values) => {
 						ipcMain.send("updateAccount", { ...account, ...values });
@@ -160,12 +167,15 @@ export function Accounts() {
 			</div>
 			<div className="space-y-4">
 				{accounts.data.map((account, index) => (
-					<div className="flex justify-between items-center" key={account.id}>
+					<div
+						className="flex justify-between items-center"
+						key={account.config.id}
+					>
 						<div className="flex items-center gap-3">
 							<div className="size-8 border rounded-full flex items-center justify-center text-sm font-light">
-								{account.label[0].toUpperCase()}
+								{account.config.label[0].toUpperCase()}
 							</div>
-							<div>{account.label}</div>
+							<div>{account.config.label}</div>
 						</div>
 						<div className="flex items-center gap-2">
 							{accounts.data.length > 1 && (
@@ -176,7 +186,7 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index + 1 === accounts.data.length}
 										onClick={() => {
-											ipcMain.send("moveAccount", account.id, "down");
+											ipcMain.send("moveAccount", account.config.id, "down");
 										}}
 									>
 										<ArrowDownIcon />
@@ -187,14 +197,14 @@ export function Accounts() {
 										variant="ghost"
 										disabled={index === 0}
 										onClick={() => {
-											ipcMain.send("moveAccount", account.id, "up");
+											ipcMain.send("moveAccount", account.config.id, "up");
 										}}
 									>
 										<ArrowUpIcon />
 									</Button>
 								</>
 							)}
-							<EditAccountButton account={account} />
+							<EditAccountButton account={account.config} />
 						</div>
 					</div>
 				))}

@@ -2,7 +2,7 @@ import { GMAIL_URL } from "@/lib/constants";
 
 let urlPreviewElement: HTMLDivElement | null = null;
 
-window.addEventListener("DOMContentLoaded", () => {
+export function initUrlPreview() {
 	window.addEventListener("mouseover", (event) => {
 		const target = event.target as HTMLAnchorElement | HTMLElement;
 
@@ -28,4 +28,4 @@ window.addEventListener("DOMContentLoaded", () => {
 			urlPreviewElement = null;
 		}
 	});
-});
+}

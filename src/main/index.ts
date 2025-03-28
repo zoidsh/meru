@@ -1,11 +1,25 @@
 import path from "node:path";
 import { appState } from "@/app-state";
 import { config } from "@/lib/config";
-import { platform } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
 
-export class Main {
-	static shouldLaunchMinimized() {
+class Main {
+	private _window: BrowserWindow | undefined;
+
+	get window() {
+		if (!this._window) {
+			throw new Error("Window has not been initialized");
+		}
+
+		return this._window;
+	}
+
+	set window(browserWindow: BrowserWindow) {
+		this._window = browserWindow;
+	}
+
+	shouldLaunchMinimized() {
 		return (
 			app.commandLine.hasSwitch("launch-minimized") ||
 			config.get("launchMinimized") ||
@@ -13,15 +27,21 @@ export class Main {
 		);
 	}
 
-	window: BrowserWindow;
+	loadURL() {
+		if (is.dev) {
+			this.window.webContents.loadURL("http://localhost:3000");
 
-	title = "";
+			this.window.webContents.openDevTools({
+				mode: "detach",
+			});
+		} else {
+			this.window.webContents.loadFile(
+				path.join("out", "renderer", "index.html"),
+			);
+		}
+	}
 
-	listeners = {
-		titleChanged: new Set<(title: string) => void>(),
-	};
-
-	constructor() {
+	init() {
 		const lastWindowState = config.get("lastWindowState");
 
 		this.window = new BrowserWindow({
@@ -49,7 +69,9 @@ export class Main {
 				: undefined,
 		});
 
-		if (!Main.shouldLaunchMinimized()) {
+		this.loadURL();
+
+		if (!this.shouldLaunchMinimized()) {
 			this.window.once("ready-to-show", () => {
 				this.window.show();
 			});
@@ -62,8 +84,6 @@ export class Main {
 		if (lastWindowState.maximized) {
 			this.window.maximize();
 		}
-
-		this.load();
 
 		if (!platform.isMacOS) {
 			const autoHideMenuBar = config.get("autoHideMenuBar");
@@ -94,40 +114,6 @@ export class Main {
 		});
 	}
 
-	load() {
-		if (process.env.NODE_ENV === "production") {
-			this.window.webContents.loadFile(
-				path.join("out", "renderer", "index.html"),
-			);
-		} else {
-			this.window.webContents.loadURL("http://localhost:3000");
-
-			this.window.webContents.openDevTools({
-				mode: "detach",
-			});
-		}
-	}
-
-	onTitleChanged(listener: (title: string) => void) {
-		this.listeners.titleChanged.add(listener);
-
-		return () => {
-			this.listeners.titleChanged.delete(listener);
-		};
-	}
-
-	emitTitleChanged(title: string) {
-		for (const listener of this.listeners.titleChanged) {
-			listener(title);
-		}
-	}
-
-	setTitle(title: string) {
-		this.title = title;
-
-		this.emitTitleChanged(title);
-	}
-
 	show() {
 		if (this.window.isMinimized()) {
 			this.window.restore();
@@ -136,3 +122,5 @@ export class Main {
 		}
 	}
 }
+
+export const main = new Main();

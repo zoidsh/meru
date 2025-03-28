@@ -5,12 +5,12 @@ export const ipcRenderer = new IpcListener<IpcRendererEvent>();
 
 export const ipcMain = new IpcEmitter<IpcMainEvents>();
 
-window.addEventListener("DOMContentLoaded", () => {
-	ipcRenderer.on("gmail.navigateTo", (_event, destination) => {
+export function initIpc() {
+	ipcRenderer.on("navigateTo", (_event, destination) => {
 		window.location.hash = `#${destination}`;
 	});
 
-	ipcRenderer.on("gmail.mail.open", (_event, messageId: string) => {
+	ipcRenderer.on("openMail", (_event, messageId: string) => {
 		window.location.hash = `#inbox/${messageId}`;
 	});
-});
+}

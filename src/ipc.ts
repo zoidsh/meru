@@ -1,51 +1,49 @@
-import { randomUUID } from "node:crypto";
-import { getAccount, getAccounts, selectAccount } from "@/lib/accounts";
+import type { GmailMail, GmailState } from "@/gmail";
+import type { mailActionCodeMap } from "@/gmail/preload/inbox-observer";
+import { type AccountConfig, config } from "@/lib/config";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
-import { Notification, app } from "electron";
+import { Notification } from "electron";
+import { accounts } from "./accounts";
 import { appState } from "./app-state";
-import type { Gmail, GmailMail, GmailNavigationHistory } from "./gmail";
-import type { mailActionCodeMap } from "./gmail/preload/inbox-observer";
-import { config } from "./lib/config";
-import type { Account, Accounts } from "./lib/config/types";
-import type { Main } from "./main";
-import type { Tray } from "./tray";
+import { main } from "./main";
 
 export type IpcMainEvents =
 	| {
-			selectAccount: [selectedAccountId: Account["id"]];
-			addAccount: [addedAccount: Pick<Account, "label">];
-			removeAccount: [removedAccountId: Account["id"]];
-			updateAccount: [updatedAccount: Account];
-			moveAccount: [movedAccountId: Account["id"], direction: "up" | "down"];
+			selectAccount: [selectedAccountId: AccountConfig["id"]];
+			addAccount: [addedAccount: Pick<AccountConfig, "label">];
+			removeAccount: [removedAccountId: AccountConfig["id"]];
+			updateAccount: [updatedAccount: AccountConfig];
+			moveAccount: [
+				movedAccountId: AccountConfig["id"],
+				direction: "up" | "down",
+			];
 			controlWindow: [action: "minimize" | "maximize" | "unmaximize" | "close"];
+			toggleIsSettingsOpen: [];
 			goNavigationHistory: [action: "back" | "forward"];
-			reload: [];
-			toggleGmailVisible: [];
-			"gmail.updateUnreadMails": [count: number];
-			"gmail.receivedNewMails": [mails: GmailMail[]];
+			reloadGmail: [];
+			updateUnreadCount: [unreadCount: number];
+			handleNewMails: [mails: GmailMail[]];
 	  }
 	| {
-			getTitle: () => string;
-			getAccounts: () => Accounts;
-			getWindowMaximized: () => boolean;
-			getNavigationHistory: () => GmailNavigationHistory;
-			getGmailVisible: () => boolean;
-			getUnreadMails: () => Map<string, number>;
-			getAccountsAttentionRequired: () => Map<string, boolean>;
+			getIsSettingsOpen: () => boolean;
+			getAccounts: () => {
+				config: AccountConfig;
+				gmail: { state: GmailState };
+			}[];
+			getIsWindowMaximized: () => boolean;
 	  };
 
 export type IpcRendererEvent = {
-	onTitleChanged: [title: string];
-	onAccountsChanged: [accounts: Accounts];
-	onWindowMaximizedChanged: [maximized: boolean];
-	onNavigationHistoryChanged: [navigationHistory: GmailNavigationHistory];
-	onGmailVisibleChanged: [visible: boolean];
-	onUnreadMailsChanged: [unreadInboxes: Map<string, number>];
-	onAccountsAttentionRequiredChanged: [
-		accountsAttentionRequired: Map<string, boolean>,
+	onIsSettingsOpenChanged: [settingsOpen: boolean];
+	onAccountsChanged: [
+		accounts: {
+			config: AccountConfig;
+			gmail: { state: GmailState };
+		}[],
 	];
-	"gmail.navigateTo": [
+	onWindowMaximizedChanged: [maximized: boolean];
+	navigateTo: [
 		destination:
 			| "inbox"
 			| "starred"
@@ -60,124 +58,64 @@ export type IpcRendererEvent = {
 			| "settings"
 			| "compose",
 	];
-	"gmail.mail.quickAction": [
-		messageId: string,
-		action: keyof typeof mailActionCodeMap,
-	];
-	"gmail.mail.open": [messageId: string];
+	handleMail: [messageId: string, action: keyof typeof mailActionCodeMap];
+	openMail: [messageId: string];
 };
 
 export const ipcMain = new IpcListener<IpcMainEvents>();
 
 export const ipcRenderer = new IpcEmitter<IpcRendererEvent>();
 
-export function initIpc({
-	main,
-	gmail,
-	tray,
-}: { main: Main; gmail: Gmail; tray: Tray }) {
-	ipcMain.handle("getTitle", () => main.title);
+export function initIpc() {
+	ipcMain.handle("getIsSettingsOpen", () => appState.isSettingsOpen);
 
-	main.onTitleChanged((title) => {
-		ipcRenderer.send(main.window.webContents, "onTitleChanged", title);
+	ipcMain.on("toggleIsSettingsOpen", () => {
+		appState.toggleIsSettingsOpen();
 	});
 
-	ipcMain.handle("getAccounts", () => getAccounts());
+	ipcMain.handle("getAccounts", () =>
+		accounts.getAccounts().map((account) => ({
+			config: account.config,
+			gmail: {
+				state: account.gmail.state,
+			},
+		})),
+	);
 
-	config.onDidChange("accounts", (accounts) => {
-		if (accounts) {
-			ipcRenderer.send(main.window.webContents, "onAccountsChanged", accounts);
-		}
+	accounts.on("accounts-changed", (accounts) => {
+		ipcRenderer.send(
+			main.window.webContents,
+			"onAccountsChanged",
+			accounts.map((account) => ({
+				config: account.config,
+				gmail: {
+					state: account.gmail.state,
+				},
+			})),
+		);
 	});
 
 	ipcMain.on("selectAccount", (_event, selectedAccountId) => {
-		selectAccount(selectedAccountId, gmail);
+		accounts.selectAccount(selectedAccountId);
 	});
 
-	ipcMain.on("addAccount", (_event, addedAccount) => {
-		const account: Account = {
-			id: randomUUID(),
-			selected: false,
-			...addedAccount,
-		};
-
-		const accounts = getAccounts();
-
-		accounts.push(account);
-
-		config.set("accounts", accounts);
-
-		gmail.createView(account);
-
-		const { width, height } = main.window.getBounds();
-
-		gmail.setAllViewBounds({
-			width,
-			height,
-			sidebarInset: accounts.length > 1,
-		});
+	ipcMain.on("addAccount", (_event, accountDetails) => {
+		accounts.addAccount(accountDetails);
 	});
 
-	ipcMain.on("removeAccount", (_event, removeAccountId) => {
-		const accounts = config
-			.get("accounts")
-			.filter((account) => account.id !== removeAccountId);
-
-		gmail.removeView(removeAccountId);
-
-		if (accounts.every((account) => account.selected === false)) {
-			accounts[0].selected = true;
-
-			gmail.selectView(accounts[0]);
-		}
-
-		const { width, height } = main.window.getBounds();
-
-		gmail.setAllViewBounds({
-			width,
-			height,
-			sidebarInset: accounts.length > 1,
-		});
-
-		config.set("accounts", accounts);
+	ipcMain.on("removeAccount", (_event, selectedAccountId) => {
+		accounts.removeAccount(selectedAccountId);
 	});
 
 	ipcMain.on("updateAccount", (_event, updatedAccount) => {
-		config.set(
-			"accounts",
-			config
-				.get("accounts")
-				.map((account) =>
-					account.id === updatedAccount.id
-						? { ...account, ...updatedAccount }
-						: account,
-				),
-		);
+		accounts.updateAccount(updatedAccount);
 	});
 
 	ipcMain.on("moveAccount", (_event, movedAccountId, direction) => {
-		const accounts = getAccounts();
-
-		const accountIndex = accounts.findIndex(
-			(account) => account.id === movedAccountId,
-		);
-
-		const account = accounts.splice(accountIndex, 1)[0];
-
-		accounts.splice(
-			direction === "up"
-				? accountIndex - 1
-				: direction === "down"
-					? accountIndex + 1
-					: accountIndex,
-			0,
-			account,
-		);
-
-		config.set("accounts", accounts);
+		accounts.moveAccount(movedAccountId, direction);
 	});
 
-	ipcMain.handle("getWindowMaximized", () => main.window.isMaximized());
+	ipcMain.handle("getIsWindowMaximized", () => main.window.isMaximized());
 
 	ipcMain.on("controlWindow", (_event, action) => {
 		switch (action) {
@@ -216,74 +154,36 @@ export function initIpc({
 			);
 		});
 
-	ipcMain.handle("getNavigationHistory", () => {
-		return gmail.getNavigationHistory();
-	});
-
-	gmail.onNavigationHistoryChanged((navigationHistory) => {
-		ipcRenderer.send(
-			main.window.webContents,
-			"onNavigationHistoryChanged",
-			navigationHistory,
-		);
-	});
-
 	ipcMain.on("goNavigationHistory", (_event, action) => {
-		gmail.go(action);
+		accounts
+			.getSelectedAccount()
+			.gmail.view.webContents.navigationHistory[
+				action === "back" ? "goBack" : "goForward"
+			]();
 	});
 
-	ipcMain.on("reload", () => {
-		gmail.reload();
+	ipcMain.on("reloadGmail", () => {
+		accounts.getSelectedAccount().gmail.view.webContents.reload();
 	});
 
-	ipcMain.handle("getGmailVisible", () => gmail.visible);
-
-	ipcMain.on("toggleGmailVisible", () => {
-		gmail.toggleVisible();
-	});
-
-	gmail.onVisibleChanged((visible) => {
-		ipcRenderer.send(main.window.webContents, "onGmailVisibleChanged", visible);
-	});
-
-	ipcMain.handle("getUnreadMails", () => appState.unreadMails);
-
-	ipcMain.on("gmail.updateUnreadMails", (event, count) => {
-		for (const [accountId, view] of gmail.views.entries()) {
-			if (view.webContents.id === event.sender.id) {
-				appState.unreadMails.set(accountId, count);
-
-				const totalUnreadMails = appState.getTotalUnreadMails();
-
-				if (platform.isMacOS) {
-					app.dock.setBadge(
-						totalUnreadMails ? totalUnreadMails.toString() : "",
-					);
-				}
-
-				tray.updateUnreadStatus(totalUnreadMails);
-
-				ipcRenderer.send(
-					main.window.webContents,
-					"onUnreadMailsChanged",
-					appState.unreadMails,
-				);
-
-				break;
+	ipcMain.on("updateUnreadCount", (event, unreadCount) => {
+		for (const gmail of accounts.gmails.values()) {
+			if (event.sender.id === gmail.view.webContents.id) {
+				gmail.setState({ unreadCount });
 			}
 		}
 	});
 
 	if (Notification.isSupported()) {
-		ipcMain.on("gmail.receivedNewMails", async (event, mails) => {
+		ipcMain.on("handleNewMails", async (event, mails) => {
 			if (!config.get("notifications.enabled")) {
 				return;
 			}
 
 			for (const mail of mails) {
-				for (const [accountId, view] of gmail.views.entries()) {
-					if (view.webContents.id === event.sender.id) {
-						const account = getAccount(accountId);
+				for (const [accountId, gmail] of accounts.gmails) {
+					if (gmail.view.webContents.id === event.sender.id) {
+						const account = accounts.getAccount(accountId);
 
 						let subtitle: string | undefined;
 
@@ -305,7 +205,7 @@ export function initIpc({
 						const notification = new Notification({
 							title: config.get("notifications.showSender")
 								? mail.sender.name
-								: account.label,
+								: account.config.label,
 							subtitle,
 							body,
 							silent: !config.get("notifications.playSound"),
@@ -334,7 +234,7 @@ export function initIpc({
 								case 0: {
 									ipcRenderer.send(
 										event.sender,
-										"gmail.mail.quickAction",
+										"handleMail",
 										mail.messageId,
 										"archive",
 									);
@@ -344,7 +244,7 @@ export function initIpc({
 								case 1: {
 									ipcRenderer.send(
 										event.sender,
-										"gmail.mail.quickAction",
+										"handleMail",
 										mail.messageId,
 										"markAsRead",
 									);
@@ -354,7 +254,7 @@ export function initIpc({
 								case 2: {
 									ipcRenderer.send(
 										event.sender,
-										"gmail.mail.quickAction",
+										"handleMail",
 										mail.messageId,
 										"delete",
 									);
@@ -364,7 +264,7 @@ export function initIpc({
 								case 3: {
 									ipcRenderer.send(
 										event.sender,
-										"gmail.mail.quickAction",
+										"handleMail",
 										mail.messageId,
 										"markAsSpam",
 									);
@@ -377,9 +277,9 @@ export function initIpc({
 						notification.on("click", () => {
 							main.show();
 
-							selectAccount(accountId, gmail);
+							accounts.selectAccount(accountId);
 
-							ipcRenderer.send(event.sender, "gmail.mail.open", mail.messageId);
+							ipcRenderer.send(event.sender, "openMail", mail.messageId);
 						});
 
 						notification.show();
@@ -390,17 +290,4 @@ export function initIpc({
 			}
 		});
 	}
-
-	ipcMain.handle(
-		"getAccountsAttentionRequired",
-		() => appState.accountsAttentionRequired,
-	);
-
-	appState.onAccountsAttentionRequiredChanged((accountsAttentionRequired) => {
-		ipcRenderer.send(
-			main.window.webContents,
-			"onAccountsAttentionRequiredChanged",
-			accountsAttentionRequired,
-		);
-	});
 }

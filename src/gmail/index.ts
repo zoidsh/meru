@@ -1,14 +1,14 @@
+import EventEmitter from "node:events";
 import path from "node:path";
-import { appState } from "@/app-state";
-import { getAccounts, getSelectedAccount } from "@/lib/accounts";
-import type { Account } from "@/lib/config/types";
+import { type AccountConfig, config } from "@/lib/config";
 import {
 	APP_SIDEBAR_WIDTH,
 	APP_TOOLBAR_HEIGHT,
 	GMAIL_URL,
 } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
-import type { Main } from "@/main";
+import { main } from "@/main";
+import { is } from "@electron-toolkit/utils";
 import { WebContentsView, session } from "electron";
 import gmailStyles from "./styles.css" with { type: "text" };
 
@@ -23,65 +23,80 @@ export interface GmailMail {
 	};
 }
 
-export type GmailNavigationHistory = {
-	canGoBack: boolean;
-	canGoForward: boolean;
+export type GmailState = {
+	title: string;
+	navigationHistory: {
+		canGoBack: boolean;
+		canGoForward: boolean;
+	};
+	unreadCount: number;
+	attentionRequired: boolean;
 };
 
-export type GmailNavigationHistoryChangedListener = (
-	navigationHistory: GmailNavigationHistory,
-) => void;
-
-export type GmailVisibleChangedListener = (visible: boolean) => void;
+type GmailEvents = {
+	"state-changed": (newState: GmailState, previousState: GmailState) => void;
+};
 
 export class Gmail {
-	main: Main;
+	private _emitter = new EventEmitter();
 
-	views = new Map<string, WebContentsView>();
-	visible = true;
+	private _view: WebContentsView | undefined;
 
-	unreadCount = new Map<string, number>();
-
-	private listeners = {
-		navigationHistoryChanged: new Set<GmailNavigationHistoryChangedListener>(),
-		visibleChanged: new Set<GmailVisibleChangedListener>(),
+	state: GmailState = {
+		title: "",
+		navigationHistory: {
+			canGoBack: false,
+			canGoForward: false,
+		},
+		unreadCount: 0,
+		attentionRequired: false,
 	};
 
-	constructor({ main }: { main: Main }) {
-		this.main = main;
-
-		const accounts = getAccounts();
-
-		for (const account of accounts) {
-			this.createView(account);
+	get view() {
+		if (!this._view) {
+			throw new Error("View is not initialized");
 		}
 
-		this.main.window.on("resize", () => {
-			const { width, height } = this.main.window.getBounds();
+		return this._view;
+	}
 
-			const accounts = getAccounts();
+	set view(view: WebContentsView) {
+		this._view = view;
+	}
 
-			for (const view of this.views.values()) {
-				this.setViewBounds({
-					view,
-					width,
-					height,
-					sidebarInset: accounts.length > 1,
-				});
-			}
-		});
+	setState(value: Partial<GmailState>) {
+		const previousState = { ...this.state };
 
-		main.window.on("focus", () => {
-			const selectedAccount = getSelectedAccount();
+		this.state = {
+			...previousState,
+			...value,
+		};
 
-			const view = this.getView(selectedAccount);
+		this.emit("state-changed", this.state, previousState);
+	}
 
-			view.webContents.focus();
+	constructor(accountConfig: AccountConfig) {
+		this.createView(accountConfig);
+	}
+
+	private getSessionPartitionKey(accountConfig: AccountConfig) {
+		return `persist:${accountConfig.id}`;
+	}
+
+	updateViewBounds() {
+		const { width, height } = main.window.getBounds();
+		const withSidebarInset = config.get("accounts").length > 1;
+
+		this.view.setBounds({
+			x: withSidebarInset ? APP_SIDEBAR_WIDTH : 0,
+			y: APP_TOOLBAR_HEIGHT,
+			width: withSidebarInset ? width - APP_SIDEBAR_WIDTH : width,
+			height: height - APP_TOOLBAR_HEIGHT,
 		});
 	}
 
-	createView(account: Account) {
-		const sessionPartitionKey = this.getSessionPartitionKey(account);
+	private createView(accountConfig: AccountConfig) {
+		const sessionPartitionKey = this.getSessionPartitionKey(accountConfig);
 
 		session
 			.fromPartition(sessionPartitionKey)
@@ -91,7 +106,7 @@ export class Gmail {
 				}
 			});
 
-		const view = new WebContentsView({
+		this.view = new WebContentsView({
 			webPreferences: {
 				partition: sessionPartitionKey,
 				preload: path.join(
@@ -105,32 +120,21 @@ export class Gmail {
 			},
 		});
 
-		this.main.window.contentView.addChildView(view);
+		main.window.contentView.addChildView(this.view);
 
-		const accounts = getAccounts();
+		this.view.webContents.loadURL(GMAIL_URL);
 
-		const { width, height } = this.main.window.getBounds();
+		this.updateViewBounds();
 
-		this.setViewBounds({
-			view,
-			width,
-			height,
-			sidebarInset: accounts.length > 1,
-		});
-
-		view.setVisible(true);
-
-		view.webContents.once("did-finish-load", () => {
-			view.setVisible(this.visible && account.selected);
-		});
-
-		view.webContents.loadURL(GMAIL_URL);
-
-		if (process.env.NODE_ENV !== "production") {
-			view.webContents.openDevTools();
+		if (is.dev) {
+			this.view.webContents.openDevTools();
 		}
 
-		view.webContents.setWindowOpenHandler(({ url }) => {
+		main.window.on("resize", () => {
+			this.updateViewBounds();
+		});
+
+		this.view.webContents.setWindowOpenHandler(({ url }) => {
 			openExternalUrl(url);
 
 			return {
@@ -138,227 +142,78 @@ export class Gmail {
 			};
 		});
 
-		view.webContents.on("did-navigate", (_event, url) => {
-			appState.setAccountAttentionRequired(
-				account.id,
-				!url.startsWith(GMAIL_URL),
-			);
-		});
-
-		view.webContents.on("dom-ready", () => {
-			if (view.webContents.getURL().startsWith(GMAIL_URL)) {
-				view.webContents.insertCSS(gmailStyles);
+		this.view.webContents.on("dom-ready", () => {
+			if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+				this.view.webContents.insertCSS(gmailStyles);
 			}
 		});
 
-		if (account.selected) {
-			this.setViewListeners(view);
-		}
-
-		this.views.set(account.id, view);
-	}
-
-	getSessionPartitionKey(account: Account) {
-		return `persist:${account.id}`;
-	}
-
-	setViewBounds({
-		view,
-		width,
-		height,
-		sidebarInset,
-	}: {
-		view: WebContentsView;
-		width: number;
-		height: number;
-		sidebarInset: boolean;
-	}) {
-		view.setBounds({
-			x: sidebarInset ? APP_SIDEBAR_WIDTH : 0,
-			y: APP_TOOLBAR_HEIGHT,
-			width: sidebarInset ? width - APP_SIDEBAR_WIDTH : width,
-			height: height - APP_TOOLBAR_HEIGHT,
-		});
-	}
-
-	setAllViewBounds({
-		width,
-		height,
-		sidebarInset,
-	}: { width: number; height: number; sidebarInset: boolean }) {
-		for (const view of this.views.values()) {
-			this.setViewBounds({
-				view,
-				width,
-				height,
-				sidebarInset,
-			});
-
-			if (!this.visible) {
-				view.setVisible(false);
-			}
-		}
-	}
-
-	onVisibleChanged(listener: GmailVisibleChangedListener) {
-		this.listeners.visibleChanged.add(listener);
-
-		return () => {
-			this.listeners.visibleChanged.delete(listener);
-		};
-	}
-
-	notifyVisibleChangedListeners(visible: boolean) {
-		for (const listener of this.listeners.visibleChanged) {
-			listener(visible);
-		}
-	}
-
-	onNavigationHistoryChanged(listener: GmailNavigationHistoryChangedListener) {
-		this.listeners.navigationHistoryChanged.add(listener);
-
-		return () => {
-			this.listeners.navigationHistoryChanged.delete(listener);
-		};
-	}
-
-	notifyNavigationHistoryChangedListeners(
-		navigationHistory: GmailNavigationHistory,
-	) {
-		for (const listener of this.listeners.navigationHistoryChanged) {
-			listener(navigationHistory);
-		}
-	}
-
-	setViewListeners(view: WebContentsView) {
-		view.webContents.on("page-title-updated", (_event, title) => {
-			this.main.setTitle(title);
+		this.view.webContents.on("page-title-updated", (_event, title) => {
+			this.setState({ title });
 		});
 
-		const didNavigateListener = () => {
-			this.notifyNavigationHistoryChangedListeners({
-				canGoBack: view.webContents.navigationHistory.canGoBack(),
-				canGoForward: view.webContents.navigationHistory.canGoForward(),
-			});
-		};
-
-		view.webContents.on("did-navigate", didNavigateListener);
-
-		view.webContents.on("did-navigate-in-page", didNavigateListener);
-	}
-
-	removeViewListeners(view: WebContentsView) {
-		view.removeAllListeners();
-	}
-
-	setVisible(visible: boolean) {
-		this.visible = visible;
-
-		this.notifyVisibleChangedListeners(visible);
-	}
-
-	toggleVisible() {
-		if (this.visible) {
-			this.hide();
-		} else {
-			this.show();
-		}
-
-		return this.visible;
-	}
-
-	hide() {
-		for (const view of this.views.values()) {
-			view.setVisible(false);
-		}
-
-		this.setVisible(false);
-	}
-
-	show() {
-		const selectedAccount = getSelectedAccount();
-
-		if (selectedAccount) {
-			for (const [accountId, view] of this.views) {
-				if (accountId === selectedAccount.id) {
-					view.setVisible(true);
-
-					this.setVisible(true);
-				}
-			}
-		}
-	}
-
-	removeView(accountId: Account["id"]) {
-		const view = this.views.get(accountId);
-
-		if (!view) {
-			throw new Error("View not found");
-		}
-
-		view.webContents.close();
-		view.webContents.removeAllListeners();
-		this.main.window.contentView.removeChildView(view);
-		this.views.delete(accountId);
-	}
-
-	selectView(account: Account) {
-		for (const [accountId, view] of this.views) {
-			view.setVisible(accountId === account.id);
-			view.webContents.focus();
-
-			if (accountId === account.id) {
-				this.setViewListeners(view);
-
-				this.notifyNavigationHistoryChangedListeners({
-					canGoBack: view.webContents.navigationHistory.canGoBack(),
-					canGoForward: view.webContents.navigationHistory.canGoForward(),
+		this.view.webContents.on(
+			"did-navigate",
+			(_event: Electron.Event, url: string) => {
+				this.setState({
+					navigationHistory: {
+						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+						canGoForward:
+							this.view.webContents.navigationHistory.canGoForward(),
+					},
+					attentionRequired: !url.startsWith(GMAIL_URL),
+					unreadCount: url.startsWith(GMAIL_URL) ? this.state.unreadCount : 0,
 				});
+			},
+		);
 
-				this.main.setTitle(view.webContents.getTitle());
-			} else {
-				this.removeViewListeners(view);
-			}
-		}
+		this.view.webContents.on(
+			"did-navigate-in-page",
+			(_event: Electron.Event) => {
+				this.setState({
+					navigationHistory: {
+						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+						canGoForward:
+							this.view.webContents.navigationHistory.canGoForward(),
+					},
+				});
+			},
+		);
 	}
 
-	getView(account: Pick<Account, "id">) {
-		const view = this.views.get(account.id);
+	on<K extends keyof GmailEvents>(event: K, listener: GmailEvents[K]) {
+		this._emitter.on(event, listener);
 
-		if (!view) {
-			throw new Error("Could not find view");
-		}
-
-		return view;
-	}
-
-	getSelectedView() {
-		return this.getView(getSelectedAccount());
-	}
-
-	getNavigationHistory() {
-		const view = this.getSelectedView();
-
-		return {
-			canGoBack: view.webContents.navigationHistory.canGoBack(),
-			canGoForward: view.webContents.navigationHistory.canGoForward(),
+		return () => {
+			this.off(event, listener);
 		};
+	}
+
+	off<K extends keyof GmailEvents>(event: K, listener: GmailEvents[K]) {
+		return this._emitter.off(event, listener);
+	}
+
+	emit<K extends keyof GmailEvents>(
+		event: K,
+		...args: Parameters<GmailEvents[K]>
+	) {
+		return this._emitter.emit(event, ...args);
 	}
 
 	go(action: "back" | "forward") {
 		switch (action) {
 			case "back": {
-				this.getSelectedView().webContents.navigationHistory.goBack();
+				this.view.webContents.navigationHistory.goBack();
 				break;
 			}
 			case "forward": {
-				this.getSelectedView().webContents.navigationHistory.goForward();
+				this.view.webContents.navigationHistory.goForward();
 				break;
 			}
 		}
 	}
 
 	reload() {
-		this.getSelectedView().webContents.reload();
+		this.view.webContents.reload();
 	}
 }

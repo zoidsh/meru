@@ -129,7 +129,7 @@ async function fetchInbox() {
 	}
 
 	if (newMails.length > 0) {
-		ipcMain.send("gmail.receivedNewMails", newMails);
+		ipcMain.send("handleNewMails", newMails);
 	}
 }
 
@@ -154,7 +154,7 @@ async function observeInbox() {
 		const currentUnreadCount = Number(unreadCountElement?.textContent || "0");
 
 		if (previousUnreadCount !== currentUnreadCount) {
-			ipcMain.send("gmail.updateUnreadMails", currentUnreadCount);
+			ipcMain.send("updateUnreadCount", currentUnreadCount);
 
 			fetchInbox();
 
@@ -261,15 +261,12 @@ function refreshInbox() {
 	}
 }
 
-window.document.addEventListener("DOMContentLoaded", () => {
+export function initInboxObserver() {
 	observeInbox();
 
-	ipcRenderer.on(
-		"gmail.mail.quickAction",
-		async (_event, messageId, action) => {
-			await sendMailAction(messageId, action);
+	ipcRenderer.on("handleMail", async (_event, messageId, action) => {
+		await sendMailAction(messageId, action);
 
-			refreshInbox();
-		},
-	);
-});
+		refreshInbox();
+	});
+}

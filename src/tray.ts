@@ -1,47 +1,40 @@
 import path from "node:path";
-import type { Gmail } from "@/gmail";
 import { config } from "@/lib/config";
 import { platform } from "@electron-toolkit/utils";
 import Electron from "electron";
-import { getAccounts } from "./lib/accounts";
-import { Main } from "./main";
+import { accounts } from "./accounts";
+import { main } from "./main";
 
 export class Tray {
-	tray: Electron.Tray | undefined;
+	private _tray: Electron.Tray | undefined;
 
-	icon: Electron.NativeImage | undefined;
-	iconUnread: Electron.NativeImage | undefined;
+	private _menu: Electron.Menu | undefined;
 
-	menu: Electron.Menu | undefined;
+	private _icon: Electron.NativeImage | undefined;
+	private _iconUnread: Electron.NativeImage | undefined;
 
-	main: Main;
-	gmail: Gmail;
-
-	constructor({ main, gmail }: { main: Main; gmail: Gmail }) {
-		this.main = main;
-		this.gmail = gmail;
-
+	init() {
 		if (config.get("trayIconEnabled")) {
-			this.icon = this.createIcon(false);
-			this.iconUnread = this.createIcon(true);
+			this._icon = this.createIcon(false);
+			this._iconUnread = this.createIcon(true);
 
-			this.tray = new Electron.Tray(this.icon);
+			this._tray = new Electron.Tray(this._icon);
 
-			this.tray.setToolTip(Electron.app.name);
+			this._tray.setToolTip(Electron.app.name);
 
-			this.tray.on("click", () => {
-				this.main.show();
+			this._tray.on("click", () => {
+				main.show();
 			});
 
-			this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
-			this.tray.setContextMenu(this.menu);
+			this._tray.setContextMenu(this._menu);
 
-			this.main.window.on("hide", () => {
+			main.window.on("hide", () => {
 				this.updateWindowVisibilityMenuItem("show");
 			});
 
-			this.main.window.on("show", () => {
+			main.window.on("show", () => {
 				this.updateWindowVisibilityMenuItem("hide");
 			});
 		}
@@ -60,37 +53,37 @@ export class Tray {
 	}
 
 	updateMenu() {
-		if (this.tray) {
-			this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+		if (this._tray) {
+			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
-			this.tray.setContextMenu(this.menu);
+			this._tray.setContextMenu(this._menu);
 		}
 	}
 
 	updateWindowVisibilityMenuItem(visibility: "show" | "hide") {
-		if (this.tray && this.menu) {
-			const showWindowMenuItem = this.menu.getMenuItemById("show-win");
+		if (this._tray && this._menu) {
+			const showWindowMenuItem = this._menu.getMenuItemById("show-win");
 
 			if (showWindowMenuItem) {
-				showWindowMenuItem.visible = !this.main.window.isVisible();
+				showWindowMenuItem.visible = !main.window.isVisible();
 			}
 
-			const hideWindowMenuItem = this.menu.getMenuItemById("hide-win");
+			const hideWindowMenuItem = this._menu.getMenuItemById("hide-win");
 
 			if (hideWindowMenuItem) {
-				hideWindowMenuItem.visible = this.main.window.isVisible();
+				hideWindowMenuItem.visible = main.window.isVisible();
 			}
 
-			this.tray.setContextMenu(this.menu);
+			this._tray.setContextMenu(this._menu);
 		}
 	}
 
 	updateUnreadStatus(unreadCount: number) {
-		if (this.tray && this.icon && this.iconUnread) {
-			this.tray.setImage(unreadCount ? this.iconUnread : this.icon);
+		if (this._tray && this._icon && this._iconUnread) {
+			this._tray.setImage(unreadCount ? this._iconUnread : this._icon);
 
 			if (platform.isMacOS) {
-				this.tray.setTitle(unreadCount ? unreadCount.toString() : "");
+				this._tray.setTitle(unreadCount ? unreadCount.toString() : "");
 			}
 		}
 	}
@@ -105,7 +98,7 @@ export class Tray {
 					type: "checkbox",
 					checked: config.get("showDockIcon"),
 					click: ({ checked }: { checked: boolean }) => {
-						if (this.menu) {
+						if (this._menu) {
 							config.set("showDockIcon", checked);
 
 							if (checked) {
@@ -135,11 +128,12 @@ export class Tray {
 		}
 
 		const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-			...getAccounts().map((account) => ({
-				label: account.label,
+			...config.get("accounts").map((accountConfig) => ({
+				label: accountConfig.label,
 				click: () => {
-					this.gmail.selectView(account);
-					this.main.show();
+					accounts.selectAccount(accountConfig.id);
+
+					main.show();
 				},
 			})),
 			{
@@ -147,17 +141,17 @@ export class Tray {
 			},
 			{
 				click: () => {
-					this.main.show();
+					main.show();
 				},
 				label: "Show",
-				visible: Main.shouldLaunchMinimized(),
+				visible: main.shouldLaunchMinimized(),
 				id: "show-win",
 			},
 			{
 				label: "Hide",
-				visible: !Main.shouldLaunchMinimized(),
+				visible: !main.shouldLaunchMinimized(),
 				click: () => {
-					this.main.window.hide();
+					main.window.hide();
 				},
 				id: "hide-win",
 			},
@@ -173,3 +167,5 @@ export class Tray {
 		return trayMenuTemplate;
 	}
 }
+
+export const tray = new Tray();

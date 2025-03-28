@@ -1,38 +1,32 @@
+import { accounts } from "./accounts";
+import { ipcRenderer } from "./ipc";
+import { main } from "./main";
+
 class AppState {
-	isQuitting = false;
+	isQuittingApp = false;
 
-	unreadMails = new Map<string, number>();
+	isSettingsOpen = false;
 
-	accountsAttentionRequired = new Map<string, boolean>();
+	setIsSettingsOpen(value: boolean) {
+		this.isSettingsOpen = value;
 
-	listeners = {
-		accountsAttentionRequiredChanged: new Set<
-			(accountsAttentionRequired: typeof this.accountsAttentionRequired) => void
-		>(),
-	};
-
-	getTotalUnreadMails() {
-		return Array.from(this.unreadMails.values()).reduce((a, b) => a + b, 0);
-	}
-
-	onAccountsAttentionRequiredChanged(
-		listener: (
-			accountsAttentionRequired: typeof this.accountsAttentionRequired,
-		) => void,
-	) {
-		this.listeners.accountsAttentionRequiredChanged.add(listener);
-
-		return () => {
-			this.listeners.accountsAttentionRequiredChanged.delete(listener);
-		};
-	}
-
-	setAccountAttentionRequired(accountId: string, needsAttention: boolean) {
-		this.accountsAttentionRequired.set(accountId, needsAttention);
-
-		for (const listener of this.listeners.accountsAttentionRequiredChanged) {
-			listener(this.accountsAttentionRequired);
+		if (this.isSettingsOpen) {
+			accounts.hide();
+		} else {
+			accounts.show();
 		}
+
+		ipcRenderer.send(
+			main.window.webContents,
+			"onIsSettingsOpenChanged",
+			this.isSettingsOpen,
+		);
+	}
+
+	toggleIsSettingsOpen() {
+		this.isSettingsOpen = !this.isSettingsOpen;
+
+		this.setIsSettingsOpen(this.isSettingsOpen);
 	}
 }
 

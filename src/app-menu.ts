@@ -6,35 +6,35 @@ import {
 	app,
 	dialog,
 	nativeImage,
-	nativeTheme,
 	session,
 	shell,
 } from "electron";
 import log from "electron-log";
-import type { Gmail } from "./gmail";
+import { accounts } from "./accounts";
+import { appState } from "./app-state";
 import { ipcRenderer } from "./ipc";
-import {
-	getAccounts,
-	selectAccount,
-	selectNextAccount,
-	selectPreviousAccount,
-} from "./lib/accounts";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL } from "./lib/constants";
 import { showRestartDialog } from "./lib/dialogs";
 import { openExternalUrl } from "./lib/url";
-import type { Main } from "./main";
+import { main } from "./main";
 
 export class AppMenu {
-	menu: Menu;
+	private _menu: Menu | undefined;
 
-	main: Main;
-	gmail: Gmail;
+	get menu() {
+		if (!this._menu) {
+			throw new Error("Menu not initialized");
+		}
 
-	constructor({ main, gmail }: { main: Main; gmail: Gmail }) {
-		this.main = main;
-		this.gmail = gmail;
+		return this._menu;
+	}
 
+	set menu(menu: Menu) {
+		this._menu = menu;
+	}
+
+	init() {
 		this.menu = this.createMenu();
 
 		Menu.setApplicationMenu(this.menu);
@@ -102,8 +102,8 @@ export class AppMenu {
 								click: ({ checked }) => {
 									config.set("autoHideMenuBar", checked);
 
-									this.main.window.setMenuBarVisibility(!checked);
-									this.main.window.autoHideMenuBar = checked;
+									main.window.setMenuBarVisibility(!checked);
+									main.window.autoHideMenuBar = checked;
 
 									if (checked) {
 										dialog.showMessageBox({
@@ -400,12 +400,12 @@ export class AppMenu {
 						accelerator: "Command+,",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"settings",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -428,12 +428,12 @@ export class AppMenu {
 						label: "Compose",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"compose",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -447,10 +447,10 @@ export class AppMenu {
 			{
 				label: "Accounts",
 				submenu: [
-					...getAccounts().map((account, index) => ({
-						label: account.label,
+					...accounts.getAccounts().map((account, index) => ({
+						label: account.config.label,
 						click: () => {
-							selectAccount(account.id, this.gmail);
+							accounts.selectAccount(account.config.id);
 						},
 						accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
 					})),
@@ -461,9 +461,9 @@ export class AppMenu {
 						label: "Select Next Account",
 						accelerator: "Ctrl+Tab",
 						click: () => {
-							selectNextAccount(this.gmail);
+							accounts.selectNextAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -472,29 +472,29 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							selectNextAccount(this.gmail);
+							accounts.selectNextAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Select Next Account (hidden shortcut 1)",
-						accelerator: "Cmd+Option+Right",
+						accelerator: "Cmd+Option+Down",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							selectNextAccount(this.gmail);
+							accounts.selectNextAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Select Previous Account",
 						accelerator: "Ctrl+Shift+Tab",
 						click: () => {
-							selectPreviousAccount(this.gmail);
+							accounts.selectPreviousAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -503,20 +503,20 @@ export class AppMenu {
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							selectPreviousAccount(this.gmail);
+							accounts.selectPreviousAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Select Previous Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Left",
+						accelerator: "Cmd+Option+Up",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
-							selectPreviousAccount(this.gmail);
+							accounts.selectPreviousAccount();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -525,9 +525,9 @@ export class AppMenu {
 					{
 						label: "Manage Accounts",
 						click: () => {
-							this.gmail.hide();
+							appState.setIsSettingsOpen(true);
 
-							this.main.show();
+							main.show();
 						},
 					},
 				],
@@ -579,29 +579,31 @@ export class AppMenu {
 						label: "Reload",
 						accelerator: "CommandOrControl+R",
 						click: () => {
-							this.gmail.reload();
+							accounts.getSelectedAccount().gmail.view.webContents.reload();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Full Reload",
 						accelerator: "CommandOrControl+Shift+R",
 						click: () => {
-							this.main.load();
+							main.window.webContents.reload();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Developer Tools",
 						accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
 						click: () => {
-							this.main.window.webContents.openDevTools({ mode: "detach" });
+							main.window.webContents.openDevTools({ mode: "detach" });
 
-							this.gmail.getSelectedView().webContents.openDevTools();
+							accounts
+								.getSelectedAccount()
+								.gmail.view.webContents.openDevTools();
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -613,8 +615,8 @@ export class AppMenu {
 						click: () => {
 							const zoomFactor = 1;
 
-							for (const [_accountId, view] of this.gmail.views) {
-								view.webContents.setZoomFactor(zoomFactor);
+							for (const [_accountId, gmail] of accounts.gmails) {
+								gmail.view.webContents.setZoomFactor(zoomFactor);
 							}
 
 							config.set("gmail.zoomFactor", zoomFactor);
@@ -626,8 +628,8 @@ export class AppMenu {
 						click: () => {
 							const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
 
-							for (const [_accountId, view] of this.gmail.views) {
-								view.webContents.setZoomFactor(zoomFactor);
+							for (const [_accountId, gmail] of accounts.gmails) {
+								gmail.view.webContents.setZoomFactor(zoomFactor);
 							}
 
 							config.set("gmail.zoomFactor", zoomFactor);
@@ -640,8 +642,8 @@ export class AppMenu {
 							const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
 
 							if (zoomFactor > 0) {
-								for (const [_accountId, view] of this.gmail.views) {
-									view.webContents.setZoomFactor(zoomFactor);
+								for (const [_accountId, gmail] of accounts.gmails) {
+									gmail.view.webContents.setZoomFactor(zoomFactor);
 								}
 
 								config.set("gmail.zoomFactor", zoomFactor);
@@ -660,48 +662,48 @@ export class AppMenu {
 						label: "Inbox",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"inbox",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Important",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"imp",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Snoozed",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"snoozed",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Starred",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"starred",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -711,60 +713,60 @@ export class AppMenu {
 						label: "Drafts",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"drafts",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Scheduled",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"scheduled",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Sent",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"sent",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Spam",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"spam",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
 						label: "Bin",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"trash",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 					{
@@ -774,12 +776,12 @@ export class AppMenu {
 						label: "All Mail",
 						click: () => {
 							ipcRenderer.send(
-								this.gmail.getSelectedView().webContents,
+								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"all",
 							);
 
-							this.main.show();
+							main.show();
 						},
 					},
 				],
@@ -880,8 +882,10 @@ export class AppMenu {
 							{
 								label: "Clear Cache",
 								click: () => {
-									for (const { id } of getAccounts()) {
-										session.fromPartition(`persist:${id}`).clearCache();
+									for (const account of accounts.getAccounts()) {
+										session
+											.fromPartition(`persist:${account.config.id}`)
+											.clearCache();
 									}
 
 									showRestartDialog();
@@ -890,8 +894,10 @@ export class AppMenu {
 							{
 								label: "Reset App Data",
 								click: () => {
-									for (const { id } of getAccounts()) {
-										session.fromPartition(`persist:${id}`).clearStorageData();
+									for (const account of accounts.getAccounts()) {
+										session
+											.fromPartition(`persist:${account.config.id}`)
+											.clearStorageData();
 									}
 
 									config.clear();
@@ -917,3 +923,5 @@ export class AppMenu {
 		return Menu.buildFromTemplate(template);
 	}
 }
+
+export const appMenu = new AppMenu();

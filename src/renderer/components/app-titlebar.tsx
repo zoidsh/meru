@@ -7,11 +7,9 @@ import {
 import type { HTMLAttributes } from "react";
 import { APP_SIDEBAR_WIDTH, APP_TOOLBAR_HEIGHT } from "../../lib/constants";
 import {
-	useAccounts,
-	useGmailNavigationHistory,
-	useGmailVisible,
+	useIsSettingsOpen,
 	useIsWindowMaximized,
-	useTitle,
+	useSelectedAccount,
 } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
 import { cn } from "../lib/utils";
@@ -67,28 +65,28 @@ function WindowControls() {
 }
 
 function TitlebarTitle() {
-	const title = useTitle();
-	const gmailVisible = useGmailVisible();
+	const selectedAccount = useSelectedAccount();
 
-	if (!gmailVisible.data) {
-		return;
-	}
+	const isSettingsOpen = useIsSettingsOpen();
 
 	return (
 		<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
-			{title.data}
+			{isSettingsOpen.data || !selectedAccount
+				? "Meru"
+				: selectedAccount.gmail.state.title}
 		</div>
 	);
 }
 
 function TitlebarNavigation() {
-	const gmailNavigationHistory = useGmailNavigationHistory();
-	const gmailVisible = useGmailVisible();
+	const selectedAccount = useSelectedAccount();
+
+	const isSettingsOpen = useIsSettingsOpen();
 
 	return (
 		<div
 			className={cn("flex items-center gap-1", {
-				invisible: !gmailVisible.data,
+				invisible: isSettingsOpen.data,
 			})}
 			style={{
 				// @ts-expect-error
@@ -106,7 +104,7 @@ function TitlebarNavigation() {
 				onClick={() => {
 					ipcMain.send("goNavigationHistory", "back");
 				}}
-				disabled={!gmailNavigationHistory.data?.canGoBack}
+				disabled={!selectedAccount?.gmail.state.navigationHistory.canGoBack}
 			>
 				<ArrowLeftIcon />
 			</Button>
@@ -117,7 +115,7 @@ function TitlebarNavigation() {
 				onClick={() => {
 					ipcMain.send("goNavigationHistory", "forward");
 				}}
-				disabled={!gmailNavigationHistory.data?.canGoForward}
+				disabled={!selectedAccount?.gmail.state.navigationHistory.canGoForward}
 			>
 				<ArrowRightIcon />
 			</Button>
@@ -126,7 +124,7 @@ function TitlebarNavigation() {
 				size="icon"
 				className="size-7"
 				onClick={() => {
-					ipcMain.send("reload");
+					ipcMain.send("reloadGmail");
 				}}
 			>
 				<RotateCwIcon />
@@ -136,12 +134,6 @@ function TitlebarNavigation() {
 }
 
 export function AppTitlebar() {
-	const accounts = useAccounts();
-
-	if (!accounts.data) {
-		return;
-	}
-
 	return (
 		<div
 			style={{
@@ -164,7 +156,7 @@ export function AppTitlebar() {
 						size="icon"
 						className="size-7"
 						onClick={() => {
-							ipcMain.send("toggleGmailVisible");
+							ipcMain.send("toggleIsSettingsOpen");
 						}}
 					>
 						<SettingsIcon />

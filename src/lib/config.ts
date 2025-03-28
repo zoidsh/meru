@@ -2,7 +2,55 @@ import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { app } from "electron";
 import Store from "electron-store";
-import type { Config } from "./types";
+
+export type AccountConfig = {
+	id: string;
+	label: string;
+	selected: boolean;
+};
+
+export type AccountConfigs = AccountConfig[];
+
+type ConfigLastWindowState = {
+	bounds: {
+		width: number;
+		height: number;
+		x: number | undefined;
+		y: number | undefined;
+	};
+	fullscreen: boolean;
+	maximized: boolean;
+};
+
+export type Config = {
+	accounts: AccountConfigs;
+	lastWindowState: ConfigLastWindowState;
+	hardwareAccelerationEnabled: boolean;
+	autoHideMenuBar: boolean;
+	launchMinimized: boolean;
+	trayIconEnabled: boolean;
+	titleBarStyle: "system" | "app";
+	"app.confirmExternalLink": boolean;
+	"app.launchMinimized": boolean;
+	"app.launchAtLogin": boolean;
+	"app.hardwareAcceleration": boolean;
+	"gmail.zoomFactor": number;
+	"downloads.saveAs": boolean;
+	"downloads.openFolderWhenDone": boolean;
+	"downloads.location": string;
+	"notifications.enabled": boolean;
+	"notifications.showSender": boolean;
+	"notifications.showSubject": boolean;
+	"notifications.showSummary": boolean;
+	"notifications.playSound": boolean;
+	"trayIcon.enabled": boolean;
+	"blocker.enabled": boolean;
+	"blocker.ads": boolean;
+	"blocker.analytics": boolean;
+	"blocker.trackers": boolean;
+	"updates.autoCheck": boolean;
+	"updates.notifyWhenDownloaded": boolean;
+};
 
 export const config = new Store<Config>({
 	defaults: {
