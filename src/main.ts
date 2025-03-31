@@ -53,7 +53,7 @@ class Main {
 			x: lastWindowState.bounds.x,
 			y: lastWindowState.bounds.y,
 			show: false,
-			titleBarStyle: "hiddenInset",
+			titleBarStyle: platform.isMacOS ? "hiddenInset" : undefined,
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {
 				preload: path.join(

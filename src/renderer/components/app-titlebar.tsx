@@ -30,49 +30,15 @@ function WindowControlButton({
 	);
 }
 
-function WindowControls() {
-	const isWindowMaximized = useIsWindowMaximized();
-
-	return (
-		<div
-			className="flex"
-			// @ts-expect-error
-			style={{ appRegion: "none" }}
-		>
-			<WindowControlButton
-				onClick={() => ipcMain.send("controlWindow", "minimize")}
-			>
-				<MinimizeIcon />
-			</WindowControlButton>
-			<WindowControlButton
-				onClick={() =>
-					ipcMain.send(
-						"controlWindow",
-						isWindowMaximized.data ? "unmaximize" : "maximize",
-					)
-				}
-			>
-				{isWindowMaximized.data ? <RestoreIcon /> : <MaximizeIcon />}
-			</WindowControlButton>
-			<WindowControlButton
-				className="hover:bg-destructive/90"
-				onClick={() => ipcMain.send("controlWindow", "close")}
-			>
-				<CloseIcon />
-			</WindowControlButton>
-		</div>
-	);
-}
-
 function TitlebarTitle() {
 	const selectedAccount = useSelectedAccount();
 
 	const isSettingsOpen = useIsSettingsOpen();
 
 	return (
-		<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
+		<div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground pointer-events-none">
 			{isSettingsOpen.data || !selectedAccount
-				? "Meru"
+				? "Settings"
 				: selectedAccount.gmail.state.title}
 		</div>
 	);
@@ -163,7 +129,6 @@ export function AppTitlebar() {
 					</Button>
 				</div>
 			</div>
-			{window.electron.process.platform !== "darwin" && <WindowControls />}
 		</div>
 	);
 }

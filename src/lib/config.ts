@@ -54,7 +54,7 @@ export type Config = {
 
 export const config = new Store<Config>({
 	defaults: {
-		accounts: [{ id: randomUUID(), label: "Personal", selected: true }],
+		accounts: [{ id: randomUUID(), label: "Default", selected: true }],
 		lastWindowState: {
 			bounds: {
 				width: 1280,
