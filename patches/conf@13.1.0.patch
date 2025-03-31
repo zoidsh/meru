@@ -1,12 +1,36 @@
+diff --git a/node_modules/conf/.bun-tag-7b99c0b91e82e8aa b/.bun-tag-7b99c0b91e82e8aa
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/conf/.bun-tag-bcc25384e8978fe1 b/.bun-tag-bcc25384e8978fe1
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/source/index.d.ts b/dist/source/index.d.ts
-index cc235a0d789462cb5a36e1426f5cc040c192ff11..818b87a2dd14c9a7e33a95693aee7a19e2d586bd 100644
+index cc235a0d789462cb5a36e1426f5cc040c192ff11..60a452737f34a22209b3c5e03038fcfa58c0571e 100644
 --- a/dist/source/index.d.ts
 +++ b/dist/source/index.d.ts
-@@ -12,7 +12,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+@@ -11,8 +11,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+     @param defaultValue - The default value if the item does not exist.
      */
      get<Key extends keyof T>(key: Key): T[Key];
-     get<Key extends keyof T>(key: Key, defaultValue: Required<T>[Key]): Required<T>[Key];
+-    get<Key extends keyof T>(key: Key, defaultValue: Required<T>[Key]): Required<T>[Key];
 -    get<Key extends string, Value = unknown>(key: Exclude<Key, keyof T>, defaultValue?: Value): Value;
      /**
      Set an item or multiple items at once.
+ 
+@@ -20,8 +18,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+     @param value - Must be JSON serializable. Trying to set the type `undefined`, `function`, or `symbol` will result in a `TypeError`.
+     */
+     set<Key extends keyof T>(key: Key, value?: T[Key]): void;
+-    set(key: string, value: unknown): void;
+-    set(object: Partial<T>): void;
+     /**
+     Check if an item exists.
+ 
+@@ -42,7 +38,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+     @param key - The key of the item to delete.
+     */
+     delete<Key extends keyof T>(key: Key): void;
+-    delete(key: string): void;
+     /**
+     Delete all items.
  
