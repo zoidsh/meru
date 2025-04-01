@@ -2,6 +2,7 @@ import { config } from "@/lib/config";
 import { main } from "@/main";
 import { app } from "electron";
 import { accounts } from "./accounts";
+import { initDownloads } from "./downloads";
 import { initIpc } from "./ipc";
 import { appMenu } from "./menu";
 import { appState } from "./state";
@@ -40,4 +41,6 @@ app.whenReady().then(async () => {
 	appTray.init();
 
 	appUpdater.init();
+
+	initDownloads();
 });
