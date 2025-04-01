@@ -1,0 +1,39 @@
+name: release
+
+on:
+  release:
+    types:
+      - prereleased
+      - released
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  build:  
+    needs: ci
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - if: startsWith(matrix.os, 'macos')
+        run: bun run dist:mac -- --publish always
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: startsWith(matrix.os, 'ubuntu')
+        run: bun run dist:linux -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: startsWith(matrix.os, 'windows')
+        run: bun run dist:win -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

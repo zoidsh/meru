@@ -90,6 +90,10 @@
 			"oneClick": false,
 			"perMachine": false,
 			"allowToChangeInstallationDirectory": true
+		},
+		"publish": {
+			"provider": "github",
+			"releaseType": "release"
 		}
 	},
 	"patchedDependencies": {
