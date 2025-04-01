@@ -41,6 +41,7 @@
 		"clsx": "^2.1.1",
 		"electron": "^35.0.2",
 		"electron-builder": "^25.1.8",
+		"electron-context-menu": "^4.0.5",
 		"element-ready": "^7.0.0",
 		"js-cookie": "^3.0.5",
 		"lefthook": "^1.11.3",

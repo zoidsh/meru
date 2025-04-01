@@ -10,6 +10,7 @@ import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
 import { WebContentsView, session } from "electron";
+import electronContextMenu from "electron-context-menu";
 import gmailStyles from "./styles.css" with { type: "text" };
 
 export interface GmailMail {
@@ -123,6 +124,27 @@ export class Gmail {
 		main.window.contentView.addChildView(this.view);
 
 		this.view.webContents.loadURL(GMAIL_URL);
+
+		this.view.webContents.on("did-finish-load", () => {
+			electronContextMenu({
+				// @ts-expect-error: Works with WebContentsView
+				window: this.view,
+				showCopyImageAddress: true,
+				showSaveImageAs: true,
+				showInspectElement: false,
+				append: (_defaultActions, parameters) => [
+					{
+						label: "Inspect Element",
+						click: () => {
+							this.view.webContents.inspectElement(parameters.x, parameters.y);
+							if (this.view.webContents.isDevToolsOpened()) {
+								this.view.webContents.devToolsWebContents?.focus();
+							}
+						},
+					},
+				],
+			});
+		});
 
 		this.updateViewBounds();
 
