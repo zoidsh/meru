@@ -189,6 +189,12 @@ class Accounts {
 	}
 
 	removeAccount(selectedAccountId: string) {
+		const account = this.getAccount(selectedAccountId);
+
+		account.gmail.destroy();
+
+		this.gmails.delete(selectedAccountId);
+
 		const updatedAccounts = config
 			.get("accounts")
 			.filter((account) => account.id !== selectedAccountId);

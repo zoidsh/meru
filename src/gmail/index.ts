@@ -238,4 +238,14 @@ export class Gmail {
 	reload() {
 		this.view.webContents.reload();
 	}
+
+	destroy() {
+		this.view.webContents.removeAllListeners();
+
+		this.view.webContents.close();
+
+		this.view.removeAllListeners();
+
+		main.window.contentView.removeChildView(this.view);
+	}
 }
