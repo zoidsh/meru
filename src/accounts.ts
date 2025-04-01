@@ -139,7 +139,7 @@ class Accounts {
 		);
 
 		const previousAccount = accountConfigs.at(
-			selectedAccountIndex === 0 ? -1 : selectedAccountIndex + 1,
+			selectedAccountIndex === 0 ? -1 : selectedAccountIndex - 1,
 		);
 
 		if (!previousAccount) {
@@ -159,7 +159,7 @@ class Accounts {
 		const nextAccount = accountConfigs.at(
 			selectedAccountIndex === accountConfigs.length - 1
 				? 0
-				: selectedAccountIndex - 1,
+				: selectedAccountIndex + 1,
 		);
 
 		if (!nextAccount) {
