@@ -3,7 +3,7 @@ import path from "node:path";
 import { type AccountConfig, config } from "@/lib/config";
 import {
 	APP_SIDEBAR_WIDTH,
-	APP_TOOLBAR_HEIGHT,
+	APP_TITLEBAR_HEIGHT,
 	GMAIL_URL,
 } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
@@ -89,9 +89,9 @@ export class Gmail {
 
 		this.view.setBounds({
 			x: withSidebarInset ? APP_SIDEBAR_WIDTH : 0,
-			y: APP_TOOLBAR_HEIGHT,
+			y: APP_TITLEBAR_HEIGHT,
 			width: withSidebarInset ? width - APP_SIDEBAR_WIDTH : width,
-			height: height - APP_TOOLBAR_HEIGHT,
+			height: height - APP_TITLEBAR_HEIGHT,
 		});
 	}
 

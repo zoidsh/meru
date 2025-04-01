@@ -6,6 +6,7 @@ import { platform } from "@electron-toolkit/utils";
 import { Notification } from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
+import { appMenu } from "./menu";
 import { appState } from "./state";
 
 export type IpcMainEvents =
@@ -24,6 +25,7 @@ export type IpcMainEvents =
 			reloadGmail: [];
 			updateUnreadCount: [unreadCount: number];
 			handleNewMails: [mails: GmailMail[]];
+			toggleAppMenu: [];
 	  }
 	| {
 			getIsSettingsOpen: () => boolean;
@@ -150,7 +152,7 @@ export function initIpc() {
 			ipcRenderer.send(
 				main.window.webContents,
 				"onWindowMaximizedChanged",
-				true,
+				false,
 			);
 		});
 
@@ -172,6 +174,10 @@ export function initIpc() {
 				gmail.setState({ unreadCount });
 			}
 		}
+	});
+
+	ipcMain.on("toggleAppMenu", () => {
+		appMenu.togglePopup();
 	});
 
 	if (Notification.isSupported()) {

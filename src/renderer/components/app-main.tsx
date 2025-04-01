@@ -1,4 +1,4 @@
-import { APP_TOOLBAR_HEIGHT } from "@/lib/constants";
+import { APP_TITLEBAR_HEIGHT } from "@/lib/constants";
 import { XIcon } from "lucide-react";
 import { useIsSettingsOpen } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
@@ -18,8 +18,8 @@ export function AppMain() {
 			<div
 				className="max-w-md mx-auto"
 				style={{
-					paddingTop: APP_TOOLBAR_HEIGHT,
-					paddingBottom: APP_TOOLBAR_HEIGHT,
+					paddingTop: APP_TITLEBAR_HEIGHT,
+					paddingBottom: APP_TITLEBAR_HEIGHT,
 				}}
 			>
 				<Accounts />

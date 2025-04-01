@@ -22,6 +22,8 @@ import { appState } from "./state";
 export class AppMenu {
 	private _menu: Menu | undefined;
 
+	private _isPopupOpen = false;
+
 	get menu() {
 		if (!this._menu) {
 			throw new Error("Menu not initialized");
@@ -36,6 +38,14 @@ export class AppMenu {
 
 	init() {
 		this.menu = this.createMenu();
+
+		this.menu.on("menu-will-show", () => {
+			this._isPopupOpen = true;
+		});
+
+		this.menu.on("menu-will-close", () => {
+			this._isPopupOpen = false;
+		});
 
 		Menu.setApplicationMenu(this.menu);
 
@@ -838,6 +848,16 @@ export class AppMenu {
 		];
 
 		return Menu.buildFromTemplate(template);
+	}
+
+	togglePopup() {
+		if (this._isPopupOpen) {
+			this.menu.closePopup(main.window);
+		} else {
+			this.menu.popup({
+				window: main.window,
+			});
+		}
 	}
 }
 

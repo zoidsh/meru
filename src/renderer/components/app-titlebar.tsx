@@ -1,11 +1,12 @@
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
+	EllipsisVerticalIcon,
 	RotateCwIcon,
 	SettingsIcon,
 } from "lucide-react";
 import type { HTMLAttributes } from "react";
-import { APP_SIDEBAR_WIDTH, APP_TOOLBAR_HEIGHT } from "../../lib/constants";
+import { APP_SIDEBAR_WIDTH, APP_TITLEBAR_HEIGHT } from "../../lib/constants";
 import {
 	useIsSettingsOpen,
 	useIsWindowMaximized,
@@ -24,9 +25,43 @@ function WindowControlButton({
 		<Button
 			variant="ghost"
 			className={cn("rounded-none", className)}
-			style={{ width: APP_TOOLBAR_HEIGHT, height: APP_TOOLBAR_HEIGHT }}
+			style={{ width: APP_TITLEBAR_HEIGHT, height: APP_TITLEBAR_HEIGHT }}
 			{...props}
 		/>
+	);
+}
+
+function WindowControls() {
+	const isWindowMaximized = useIsWindowMaximized();
+
+	return (
+		<div
+			className="flex"
+			// @ts-expect-error
+			style={{ appRegion: "none" }}
+		>
+			<WindowControlButton
+				onClick={() => ipcMain.send("controlWindow", "minimize")}
+			>
+				<MinimizeIcon />
+			</WindowControlButton>
+			<WindowControlButton
+				onClick={() =>
+					ipcMain.send(
+						"controlWindow",
+						isWindowMaximized.data ? "unmaximize" : "maximize",
+					)
+				}
+			>
+				{isWindowMaximized.data ? <RestoreIcon /> : <MaximizeIcon />}
+			</WindowControlButton>
+			<WindowControlButton
+				className="hover:bg-destructive/90"
+				onClick={() => ipcMain.send("controlWindow", "close")}
+			>
+				<CloseIcon />
+			</WindowControlButton>
+		</div>
 	);
 }
 
@@ -103,14 +138,19 @@ export function AppTitlebar() {
 	return (
 		<div
 			style={{
-				minHeight: APP_TOOLBAR_HEIGHT,
+				minHeight: APP_TITLEBAR_HEIGHT,
 				// @ts-expect-error
 				appRegion: "drag",
 			}}
 			className="flex border-b select-none relative"
 		>
 			<TitlebarTitle />
-			<div className="flex-1 flex justify-between px-2">
+			<div
+				className={cn(
+					"flex-1 flex justify-between",
+					window.electron.process.platform === "darwin" ? "px-2" : "px-3",
+				)}
+			>
 				<TitlebarNavigation />
 				<div
 					className="flex items-center gap-1"
@@ -127,8 +167,19 @@ export function AppTitlebar() {
 					>
 						<SettingsIcon />
 					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7"
+						onClick={() => {
+							ipcMain.send("toggleAppMenu");
+						}}
+					>
+						<EllipsisVerticalIcon />
+					</Button>
 				</div>
 			</div>
+			{window.electron.process.platform !== "darwin" && <WindowControls />}
 		</div>
 	);
 }
