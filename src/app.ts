@@ -13,7 +13,7 @@ if (!app.requestSingleInstanceLock()) {
 
 app.setAppUserModelId("dev.timche.meru");
 
-if (config.get("hardwareAccelerationEnabled") === false) {
+if (config.get("hardwareAcceleration") === false) {
 	app.disableHardwareAcceleration();
 }
 

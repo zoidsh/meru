@@ -11,29 +11,26 @@ export type AccountConfig = {
 
 export type AccountConfigs = AccountConfig[];
 
-type ConfigLastWindowState = {
-	bounds: {
-		width: number;
-		height: number;
-		x: number | undefined;
-		y: number | undefined;
-	};
-	fullscreen: boolean;
-	maximized: boolean;
-};
-
 export type Config = {
 	accounts: AccountConfigs;
-	lastWindowState: ConfigLastWindowState;
-	hardwareAccelerationEnabled: boolean;
+	lastWindowState: {
+		bounds: {
+			width: number;
+			height: number;
+			x: number | undefined;
+			y: number | undefined;
+		};
+		fullscreen: boolean;
+		maximized: boolean;
+	};
 	autoHideMenuBar: boolean;
 	launchMinimized: boolean;
+	launchAtLogin: boolean;
+	hardwareAcceleration: boolean;
 	trayIconEnabled: boolean;
-	titleBarStyle: "system" | "app";
-	"app.confirmExternalLink": boolean;
-	"app.launchMinimized": boolean;
-	"app.launchAtLogin": boolean;
-	"app.hardwareAcceleration": boolean;
+	showDockIcon: boolean;
+	"externalLinks.confirm": boolean;
+	"externalLinks.trustedHosts": string[];
 	"gmail.zoomFactor": number;
 	"downloads.saveAs": boolean;
 	"downloads.openFolderWhenDone": boolean;
@@ -43,11 +40,6 @@ export type Config = {
 	"notifications.showSubject": boolean;
 	"notifications.showSummary": boolean;
 	"notifications.playSound": boolean;
-	"trayIcon.enabled": boolean;
-	"blocker.enabled": boolean;
-	"blocker.ads": boolean;
-	"blocker.analytics": boolean;
-	"blocker.trackers": boolean;
 	"updates.autoCheck": boolean;
 	"updates.notifyWhenDownloaded": boolean;
 };
@@ -65,15 +57,14 @@ export const config = new Store<Config>({
 			fullscreen: false,
 			maximized: false,
 		},
-		hardwareAccelerationEnabled: true,
 		autoHideMenuBar: false,
 		launchMinimized: false,
+		launchAtLogin: false,
+		hardwareAcceleration: false,
 		trayIconEnabled: !platform.isMacOS,
-		titleBarStyle: "app",
-		"app.confirmExternalLink": true,
-		"app.launchMinimized": false,
-		"app.launchAtLogin": false,
-		"app.hardwareAcceleration": false,
+		showDockIcon: true,
+		"externalLinks.confirm": true,
+		"externalLinks.trustedHosts": [],
 		"gmail.zoomFactor": 1,
 		"downloads.saveAs": false,
 		"downloads.openFolderWhenDone": false,
@@ -83,11 +74,6 @@ export const config = new Store<Config>({
 		"notifications.showSubject": true,
 		"notifications.showSummary": true,
 		"notifications.playSound": true,
-		"trayIcon.enabled": true,
-		"blocker.enabled": true,
-		"blocker.ads": true,
-		"blocker.analytics": true,
-		"blocker.trackers": true,
 		"updates.autoCheck": true,
 		"updates.notifyWhenDownloaded": true,
 	},

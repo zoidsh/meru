@@ -116,37 +116,11 @@ export class AppMenu {
 								},
 							},
 							{
-								label: "Title Bar Style",
-								visible: platform.isLinux,
-								submenu: [
-									{
-										label: "App",
-										type: "radio",
-										checked: config.get("titleBarStyle") === "app",
-										click: () => {
-											config.set("titleBarStyle", "app");
-
-											showRestartDialog();
-										},
-									},
-									{
-										label: "System",
-										type: "radio",
-										checked: config.get("titleBarStyle") === "system",
-										click: () => {
-											config.set("titleBarStyle", "system");
-
-											showRestartDialog();
-										},
-									},
-								],
-							},
-							{
 								label: "Confirm External Links before Opening",
 								type: "checkbox",
-								checked: config.get("app.confirmExternalLink"),
+								checked: config.get("externalLinks.confirm"),
 								click: ({ checked }: { checked: boolean }) => {
-									config.set("app.confirmExternalLink", checked);
+									config.set("externalLinks.confirm", checked);
 								},
 							},
 							{
@@ -157,7 +131,7 @@ export class AppMenu {
 										type: "checkbox",
 										checked: config.get("downloads.saveAs"),
 										click: ({ checked }) => {
-											config.set("downloadsSaveAs", checked);
+											config.set("downloads.saveAs", checked);
 
 											showRestartDialog();
 										},
@@ -281,9 +255,9 @@ export class AppMenu {
 									? "Show Menu Bar Icon"
 									: "Show System Tray Icon",
 								type: "checkbox",
-								checked: config.get("trayIcon.enabled"),
+								checked: config.get("trayIconEnabled"),
 								click: ({ checked }: { checked: boolean }) => {
-									config.set("trayIcon.enabled", checked);
+									config.set("trayIconEnabled", checked);
 
 									showRestartDialog();
 								},
@@ -291,9 +265,9 @@ export class AppMenu {
 							{
 								label: "Launch Minimized",
 								type: "checkbox",
-								checked: config.get("app.launchMinimized"),
+								checked: config.get("launchMinimized"),
 								click({ checked }: { checked: boolean }) {
-									config.set("app.launchMinimized", checked);
+									config.set("launchMinimized", checked);
 								},
 							},
 							{
@@ -314,60 +288,12 @@ export class AppMenu {
 							{
 								label: "Hardware Acceleration",
 								type: "checkbox",
-								checked: config.get("app.hardwareAcceleration"),
+								checked: config.get("hardwareAcceleration"),
 								click: ({ checked }: { checked: boolean }) => {
-									config.set("app.hardwareAcceleration", checked);
+									config.set("hardwareAcceleration", checked);
 
 									showRestartDialog();
 								},
-							},
-							{
-								label: "Blocker",
-								submenu: [
-									{
-										label: "Enabled",
-										type: "checkbox",
-										checked: config.get("blocker.enabled"),
-										click: ({ checked }) => {
-											config.set("blocker.enabled", checked);
-
-											showRestartDialog();
-										},
-									},
-									{
-										type: "separator",
-									},
-									{
-										label: "Block Ads",
-										type: "checkbox",
-										checked: config.get("blocker.ads"),
-										click: ({ checked }) => {
-											config.set("blocker.ads", checked);
-
-											showRestartDialog();
-										},
-									},
-									{
-										label: "Block Analytics",
-										type: "checkbox",
-										checked: config.get("blocker.analytics"),
-										click: ({ checked }) => {
-											config.set("blocker.analytics", checked);
-
-											showRestartDialog();
-										},
-									},
-									{
-										label: "Block Trackers",
-										type: "checkbox",
-										checked: config.get("blocker.trackers"),
-										click: ({ checked }) => {
-											config.set("blocker.trackers", checked);
-
-											showRestartDialog();
-										},
-									},
-								],
 							},
 							{
 								label: "Updates",
