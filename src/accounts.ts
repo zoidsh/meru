@@ -5,6 +5,7 @@ import { platform } from "@electron-toolkit/utils";
 import { app } from "electron";
 import { Gmail } from "./gmail";
 import { main } from "./main";
+import { appState } from "./state";
 import { appTray } from "./tray";
 
 type AccountsEvents = {
@@ -176,9 +177,15 @@ class Accounts {
 			...accountDetails,
 		};
 
+		const gmail = new Gmail(createdAccount);
+
+		this.gmails.set(createdAccount.id, gmail);
+
 		config.set("accounts", [...config.get("accounts"), createdAccount]);
 
-		this.gmails.set(createdAccount.id, new Gmail(createdAccount));
+		appState.setIsSettingsOpen(false);
+
+		this.selectAccount(createdAccount.id);
 	}
 
 	removeAccount(selectedAccountId: string) {
