@@ -105,27 +105,6 @@ export class AppMenu {
 						label: "Preferences",
 						submenu: [
 							{
-								label: "Hide Menu bar",
-								visible: !platform.isMacOS,
-								type: "checkbox",
-								checked: config.get("autoHideMenuBar"),
-								click: ({ checked }) => {
-									config.set("autoHideMenuBar", checked);
-
-									main.window.setMenuBarVisibility(!checked);
-									main.window.autoHideMenuBar = checked;
-
-									if (checked) {
-										dialog.showMessageBox({
-											type: "info",
-											buttons: ["OK"],
-											message:
-												"Tip: You can press the Alt key to see the menu bar again.",
-										});
-									}
-								},
-							},
-							{
 								label: "Confirm External Links before Opening",
 								type: "checkbox",
 								checked: config.get("externalLinks.confirm"),
