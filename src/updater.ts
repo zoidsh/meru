@@ -21,6 +21,14 @@ class AppUpdater {
 			1000 * 60 * 60 * 3,
 		);
 	}
+
+	checkForUpdates() {
+		if (is.dev) {
+			return;
+		}
+
+		autoUpdater.checkForUpdatesAndNotify();
+	}
 }
 
 export const appUpdater = new AppUpdater();

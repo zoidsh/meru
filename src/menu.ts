@@ -18,6 +18,7 @@ import { showRestartDialog } from "./lib/dialogs";
 import { openExternalUrl } from "./lib/url";
 import { main } from "./main";
 import { appState } from "./state";
+import { appUpdater } from "./updater";
 
 export class AppMenu {
 	private _menu: Menu | undefined;
@@ -94,8 +95,7 @@ export class AppMenu {
 					{
 						label: "Check for Updates...",
 						click: () => {
-							// @TODO
-							// checkForUpdatesWithFeedback();
+							appUpdater.checkForUpdates();
 						},
 					},
 					{
