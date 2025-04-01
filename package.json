@@ -58,7 +58,7 @@
 	"dependencies": {
 		"electron-log": "^5.3.2",
 		"electron-store": "^10.0.1",
-		"electron-updater": "^6.3.9"
+		"electron-updater": "^6.6.2"
 	},
 	"build": {
 		"files": [

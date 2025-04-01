@@ -21,7 +21,7 @@ class Accounts {
 
 	gmails: Map<string, Gmail> = new Map();
 
-	async init() {
+	init() {
 		for (const accountConfig of config.get("accounts")) {
 			const gmail = new Gmail(accountConfig);
 

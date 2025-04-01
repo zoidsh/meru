@@ -6,6 +6,7 @@ import { appMenu } from "./app-menu";
 import { appState } from "./app-state";
 import { initIpc } from "./ipc";
 import { tray } from "./tray";
+import { updater } from "./updater";
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -37,4 +38,6 @@ app.whenReady().then(async () => {
 	appMenu.init();
 
 	tray.init();
+
+	updater.init();
 });

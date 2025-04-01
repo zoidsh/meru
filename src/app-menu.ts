@@ -305,16 +305,7 @@ export class AppMenu {
 										click: ({ checked }: { checked: boolean }) => {
 											config.set("updates.autoCheck", checked);
 
-											// @TODO
-											// setAutoUpdateCheck(checked);
-										},
-									},
-									{
-										label: "Notify When Update Downloaded",
-										type: "checkbox",
-										checked: config.get("updates.notifyWhenDownloaded"),
-										click({ checked }: { checked: boolean }) {
-											config.set("updates.notifyWhenDownloaded", checked);
+											showRestartDialog();
 										},
 									},
 								],

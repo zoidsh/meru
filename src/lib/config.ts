@@ -41,7 +41,6 @@ export type Config = {
 	"notifications.showSummary": boolean;
 	"notifications.playSound": boolean;
 	"updates.autoCheck": boolean;
-	"updates.notifyWhenDownloaded": boolean;
 };
 
 export const config = new Store<Config>({
@@ -75,7 +74,6 @@ export const config = new Store<Config>({
 		"notifications.showSummary": true,
 		"notifications.playSound": true,
 		"updates.autoCheck": true,
-		"updates.notifyWhenDownloaded": true,
 	},
 	accessPropertiesByDotNotation: false,
 });
