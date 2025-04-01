@@ -167,16 +167,18 @@ export function AppTitlebar() {
 					>
 						<SettingsIcon />
 					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="size-7"
-						onClick={() => {
-							ipcMain.send("toggleAppMenu");
-						}}
-					>
-						<EllipsisVerticalIcon />
-					</Button>
+					{window.electron.process.platform !== "darwin" && (
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-7"
+							onClick={() => {
+								ipcMain.send("toggleAppMenu");
+							}}
+						>
+							<EllipsisVerticalIcon />
+						</Button>
+					)}
 				</div>
 			</div>
 			{window.electron.process.platform !== "darwin" && <WindowControls />}
