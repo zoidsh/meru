@@ -1,7 +1,7 @@
 {
 	"name": "meru",
 	"productName": "Meru",
-	"version": "3.0.0-beta.1",
+	"version": "3.0.0-beta.2",
 	"private": true,
 	"description": "Nifty Gmail desktop app",
 	"author": "Tim Cheung <tim@cheung.io>",
