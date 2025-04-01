@@ -16,7 +16,7 @@
 		"build": "bun run scripts/build.ts",
 		"dist:mac": "electron-builder --mac",
 		"dist:linux": "electron-builder --linux",
-		"dist:window": "electron-builder --win"
+		"dist:win": "electron-builder --win"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
