@@ -85,14 +85,6 @@ class Main {
 			this.window.maximize();
 		}
 
-		if (!platform.isMacOS) {
-			const autoHideMenuBar = config.get("autoHideMenuBar");
-
-			this.window.setMenuBarVisibility(!autoHideMenuBar);
-
-			this.window.autoHideMenuBar = autoHideMenuBar;
-		}
-
 		this.window.on("close", (event) => {
 			// Workaround: Closing the main window when on full screen leaves a black screen
 			// https://github.com/electron/electron/issues/20263

@@ -23,7 +23,6 @@ export type Config = {
 		fullscreen: boolean;
 		maximized: boolean;
 	};
-	autoHideMenuBar: boolean;
 	launchMinimized: boolean;
 	launchAtLogin: boolean;
 	hardwareAcceleration: boolean;
@@ -56,7 +55,6 @@ export const config = new Store<Config>({
 			fullscreen: false,
 			maximized: false,
 		},
-		autoHideMenuBar: false,
 		launchMinimized: false,
 		launchAtLogin: false,
 		hardwareAcceleration: false,
