@@ -2,11 +2,11 @@ import { config } from "@/lib/config";
 import { main } from "@/main";
 import { app } from "electron";
 import { accounts } from "./accounts";
-import { appMenu } from "./app-menu";
-import { appState } from "./app-state";
 import { initIpc } from "./ipc";
-import { tray } from "./tray";
-import { updater } from "./updater";
+import { appMenu } from "./menu";
+import { appState } from "./state";
+import { appTray } from "./tray";
+import { appUpdater } from "./updater";
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
@@ -37,7 +37,7 @@ app.whenReady().then(async () => {
 
 	appMenu.init();
 
-	tray.init();
+	appTray.init();
 
-	updater.init();
+	appUpdater.init();
 });

@@ -3,7 +3,7 @@ import log from "electron-log";
 import { autoUpdater } from "electron-updater";
 import { config } from "./lib/config";
 
-class Updater {
+class AppUpdater {
 	init() {
 		if (is.dev || !config.get("updates.autoCheck")) {
 			return;
@@ -23,4 +23,4 @@ class Updater {
 	}
 }
 
-export const updater = new Updater();
+export const appUpdater = new AppUpdater();

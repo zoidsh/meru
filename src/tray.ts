@@ -5,7 +5,7 @@ import Electron from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
 
-export class Tray {
+export class AppTray {
 	private _tray: Electron.Tray | undefined;
 
 	private _menu: Electron.Menu | undefined;
@@ -168,4 +168,4 @@ export class Tray {
 	}
 }
 
-export const tray = new Tray();
+export const appTray = new AppTray();

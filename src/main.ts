@@ -1,6 +1,6 @@
 import path from "node:path";
-import { appState } from "@/app-state";
 import { config } from "@/lib/config";
+import { appState } from "@/state";
 import { is, platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
 

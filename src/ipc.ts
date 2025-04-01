@@ -5,8 +5,8 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { Notification } from "electron";
 import { accounts } from "./accounts";
-import { appState } from "./app-state";
 import { main } from "./main";
+import { appState } from "./state";
 
 export type IpcMainEvents =
 	| {

@@ -11,13 +11,13 @@ import {
 } from "electron";
 import log from "electron-log";
 import { accounts } from "./accounts";
-import { appState } from "./app-state";
 import { ipcRenderer } from "./ipc";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL } from "./lib/constants";
 import { showRestartDialog } from "./lib/dialogs";
 import { openExternalUrl } from "./lib/url";
 import { main } from "./main";
+import { appState } from "./state";
 
 export class AppMenu {
 	private _menu: Menu | undefined;

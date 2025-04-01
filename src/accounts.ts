@@ -5,7 +5,7 @@ import { platform } from "@electron-toolkit/utils";
 import { app } from "electron";
 import { Gmail } from "./gmail";
 import { main } from "./main";
-import { tray } from "./tray";
+import { appTray } from "./tray";
 
 type AccountsEvents = {
 	"accounts-changed": (
@@ -36,7 +36,7 @@ class Accounts {
 					);
 				}
 
-				tray.updateUnreadStatus(totalUnreadCount);
+				appTray.updateUnreadStatus(totalUnreadCount);
 
 				this.emit("accounts-changed", this.getAccounts());
 			});
