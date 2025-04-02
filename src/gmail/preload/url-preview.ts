@@ -29,10 +29,10 @@ export function initUrlPreview() {
 
 		urlPreviewElement = document.createElement("div");
 
+		urlPreviewElement.style.fontFamily = "system-ui";
 		urlPreviewElement.style.position = "fixed";
 		urlPreviewElement.style.left = "0";
 		urlPreviewElement.style.bottom = "0";
-		urlPreviewElement.style.right = "0";
 		urlPreviewElement.style.maxWidth = "50%";
 		urlPreviewElement.style.padding = "6px";
 		urlPreviewElement.style.fontSize = "0.75rem";
@@ -48,7 +48,7 @@ export function initUrlPreview() {
 
 		timeout = setTimeout(() => {
 			if (urlPreviewElement) {
-				urlPreviewElement.style.maxWidth = "";
+				urlPreviewElement.style.maxWidth = "100%";
 			}
 		}, 2000);
 	});
