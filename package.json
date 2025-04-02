@@ -14,7 +14,7 @@
 		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
 		"types": "tsc",
 		"build:js": "bun run scripts/build.ts",
-		"build:mac": "electron-builder --mac",
+		"build:mac": "electron-builder --mac --universal",
 		"build:linux": "electron-builder --linux",
 		"build:win": "electron-builder --win"
 	},
