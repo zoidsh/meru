@@ -26,21 +26,9 @@ class Accounts {
 		for (const accountConfig of config.get("accounts")) {
 			const gmail = new Gmail(accountConfig);
 
+			this.setGmailStateListener(gmail);
+
 			this.gmails.set(accountConfig.id, gmail);
-
-			gmail.on("state-changed", () => {
-				const totalUnreadCount = this.getTotalUnreadCount();
-
-				if (platform.isMacOS) {
-					app.dock.setBadge(
-						totalUnreadCount ? totalUnreadCount.toString() : "",
-					);
-				}
-
-				appTray.updateUnreadStatus(totalUnreadCount);
-
-				this.emit("accounts-changed", this.getAccounts());
-			});
 
 			gmail.view.webContents.once("did-finish-load", () => {
 				gmail.view.setVisible(accountConfig.selected);
@@ -50,6 +38,20 @@ class Accounts {
 		main.window.contentView.addChildView(this.getSelectedAccount().gmail.view);
 
 		config.onDidChange("accounts", () => {
+			this.emit("accounts-changed", this.getAccounts());
+		});
+	}
+
+	setGmailStateListener(gmail: Gmail) {
+		gmail.on("state-changed", () => {
+			const totalUnreadCount = this.getTotalUnreadCount();
+
+			if (platform.isMacOS) {
+				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
+			}
+
+			appTray.updateUnreadStatus(totalUnreadCount);
+
 			this.emit("accounts-changed", this.getAccounts());
 		});
 	}
@@ -179,13 +181,19 @@ class Accounts {
 
 		const gmail = new Gmail(createdAccount);
 
+		this.setGmailStateListener(gmail);
+
 		this.gmails.set(createdAccount.id, gmail);
 
 		config.set("accounts", [...config.get("accounts"), createdAccount]);
 
-		appState.setIsSettingsOpen(false);
+		for (const account of this.gmails.values()) {
+			account.updateViewBounds();
+		}
 
 		this.selectAccount(createdAccount.id);
+
+		appState.setIsSettingsOpen(false);
 	}
 
 	removeAccount(selectedAccountId: string) {
@@ -199,16 +207,14 @@ class Accounts {
 			.get("accounts")
 			.filter((account) => account.id !== selectedAccountId);
 
+		if (updatedAccounts.every((account) => account.selected === false)) {
+			updatedAccounts[0].selected = true;
+		}
+
 		config.set("accounts", updatedAccounts);
 
 		for (const account of this.gmails.values()) {
 			account.updateViewBounds();
-		}
-
-		if (updatedAccounts.every((account) => account.selected === false)) {
-			this.selectAccount(updatedAccounts[0].id);
-
-			return;
 		}
 	}
 

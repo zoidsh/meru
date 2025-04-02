@@ -433,6 +433,8 @@ export class AppMenu {
 						click: () => {
 							appState.setIsSettingsOpen(true);
 
+							accounts.hide();
+
 							main.show();
 						},
 					},

@@ -118,6 +118,11 @@ function AddAccountButton() {
 
 function EditAccountButton({ account }: { account: AccountConfig }) {
 	const [isOpen, setIsOpen] = useState(false);
+	const accounts = useAccounts();
+
+	if (!accounts.data) {
+		return;
+	}
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -137,15 +142,19 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
 
 						setIsOpen(false);
 					}}
-					onDelete={() => {
-						const confirmed = window.confirm(
-							`Are you sure you want to remove ${account.label}?`,
-						);
+					onDelete={
+						accounts.data.length > 1
+							? () => {
+									const confirmed = window.confirm(
+										`Are you sure you want to remove ${account.label}?`,
+									);
 
-						if (confirmed) {
-							ipcMain.send("removeAccount", account.id);
-						}
-					}}
+									if (confirmed) {
+										ipcMain.send("removeAccount", account.id);
+									}
+								}
+							: undefined
+					}
 				/>
 			</DialogContent>
 		</Dialog>

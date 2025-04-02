@@ -10,12 +10,6 @@ class AppState {
 	setIsSettingsOpen(value: boolean) {
 		this.isSettingsOpen = value;
 
-		if (this.isSettingsOpen) {
-			accounts.hide();
-		} else {
-			accounts.show();
-		}
-
 		ipcRenderer.send(
 			main.window.webContents,
 			"onIsSettingsOpenChanged",

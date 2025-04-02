@@ -73,6 +73,12 @@ export function initIpc() {
 
 	ipcMain.on("toggleIsSettingsOpen", () => {
 		appState.toggleIsSettingsOpen();
+
+		if (appState.isSettingsOpen) {
+			accounts.hide();
+		} else {
+			accounts.show();
+		}
 	});
 
 	ipcMain.handle("getAccounts", () =>

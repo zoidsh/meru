@@ -121,10 +121,6 @@ export class Gmail {
 			},
 		});
 
-		main.window.contentView.addChildView(this.view);
-
-		this.view.webContents.loadURL(GMAIL_URL);
-
 		this.view.webContents.on("did-finish-load", () => {
 			electronContextMenu({
 				// @ts-expect-error: Works with WebContentsView
@@ -144,24 +140,6 @@ export class Gmail {
 					},
 				],
 			});
-		});
-
-		this.updateViewBounds();
-
-		if (is.dev) {
-			this.view.webContents.openDevTools();
-		}
-
-		main.window.on("resize", () => {
-			this.updateViewBounds();
-		});
-
-		this.view.webContents.setWindowOpenHandler(({ url }) => {
-			openExternalUrl(url);
-
-			return {
-				action: "deny",
-			};
 		});
 
 		this.view.webContents.on("dom-ready", () => {
@@ -201,6 +179,28 @@ export class Gmail {
 				});
 			},
 		);
+
+		this.view.webContents.setWindowOpenHandler(({ url }) => {
+			openExternalUrl(url);
+
+			return {
+				action: "deny",
+			};
+		});
+
+		main.window.contentView.addChildView(this.view);
+
+		this.updateViewBounds();
+
+		this.view.webContents.loadURL(GMAIL_URL);
+
+		if (is.dev) {
+			this.view.webContents.openDevTools();
+		}
+
+		main.window.on("resize", () => {
+			this.updateViewBounds();
+		});
 	}
 
 	on<K extends keyof GmailEvents>(event: K, listener: GmailEvents[K]) {
