@@ -22,6 +22,10 @@ if (config.get("hardwareAcceleration") === false) {
 app.whenReady().then(async () => {
 	main.init();
 
+	app.on("activate", () => {
+		main.show();
+	});
+
 	app.on("before-quit", () => {
 		appState.isQuittingApp = true;
 
