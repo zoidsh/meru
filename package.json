@@ -80,7 +80,8 @@
 		},
 		"win": {
 			"verifyUpdateCodeSignature": false,
-			"icon": "build/icon.png"
+			"icon": "build/icon.png",
+			"target": ["nsis", "portable"]
 		},
 		"nsis": {
 			"oneClick": false,
