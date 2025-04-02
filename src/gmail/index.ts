@@ -9,7 +9,7 @@ import {
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
-import { WebContentsView, session } from "electron";
+import { BrowserWindow, WebContentsView, session } from "electron";
 import electronContextMenu from "electron-context-menu";
 import gmailStyles from "./styles.css" with { type: "text" };
 
@@ -181,6 +181,36 @@ export class Gmail {
 		);
 
 		this.view.webContents.setWindowOpenHandler(({ url }) => {
+			if (url === "about:blank") {
+				return {
+					action: "allow",
+					createWindow: (options) => {
+						let view: WebContentsView | null = new WebContentsView(options);
+
+						view.webContents.once("will-navigate", (_event, url) => {
+							openExternalUrl(url);
+
+							if (view) {
+								view.webContents.close();
+
+								view = null;
+							}
+						});
+
+						return view.webContents;
+					},
+				};
+			}
+
+			if (
+				url.startsWith(GMAIL_URL) ||
+				url.includes("googleusercontent.com/viewer/secure/pdf")
+			) {
+				return {
+					action: "allow",
+				};
+			}
+
 			openExternalUrl(url);
 
 			return {
