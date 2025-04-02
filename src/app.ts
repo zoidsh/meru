@@ -32,6 +32,10 @@ import { appUpdater } from "./updater";
 		return;
 	}
 
+	appUpdater.init();
+
+	initDownloads();
+
 	await app.whenReady();
 
 	main.init();
@@ -61,8 +65,4 @@ import { appUpdater } from "./updater";
 	appMenu.init();
 
 	appTray.init();
-
-	appUpdater.init();
-
-	initDownloads();
 })();
