@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { platform } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import { app } from "electron";
 import Store from "electron-store";
 
@@ -44,6 +44,8 @@ export type Config = {
 };
 
 export const config = new Store<Config>({
+	name: is.dev ? "config.dev" : "config",
+	accessPropertiesByDotNotation: false,
 	defaults: {
 		accounts: [{ id: randomUUID(), label: "Default", selected: true }],
 		lastWindowState: {
@@ -75,5 +77,4 @@ export const config = new Store<Config>({
 		"notifications.playSound": true,
 		"updates.autoCheck": true,
 	},
-	accessPropertiesByDotNotation: false,
 });
