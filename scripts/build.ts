@@ -15,20 +15,16 @@ const args = parseArgs({
 	allowPositionals: true,
 });
 
-function cleanup() {
-	return Promise.all(
-		["./out"].map((dir) => rm(dir, { recursive: true, force: true })),
-	);
-}
+await rm("./build-js", { recursive: true, force: true });
 
 function buildAppFiles() {
-	build({
+	return build({
 		entrypoints: [
 			"./src/app.ts",
 			"./src/gmail/preload/index.ts",
 			"./src/renderer/preload.ts",
 		],
-		outdir: "./out",
+		outdir: "./build-js",
 		target: "node",
 		format: "cjs",
 		external: ["electron"],
@@ -52,7 +48,7 @@ async function buildRenderer() {
 
 	await build({
 		entrypoints: ["./src/renderer/index.html"],
-		outdir: "./out/renderer",
+		outdir: "./build-js/renderer",
 		sourcemap: "linked",
 		define: {
 			"process.env.NODE_ENV": JSON.stringify("production"),
@@ -60,14 +56,14 @@ async function buildRenderer() {
 		plugins: [bunPluginTailwind],
 	});
 
-	const appJs = await file("./out/app.js");
+	const appJs = await file("./build-js/app.js");
 
 	await appJs.write(
 		await appJs.text().then((text) => text.replace(/var __dirname.*;/g, "")),
 	);
 }
 
-await Promise.all([cleanup(), buildAppFiles(), buildRenderer()]);
+await Promise.all([buildAppFiles(), buildRenderer()]);
 
 if (args.values.dev) {
 	let electron: Subprocess;
@@ -75,20 +71,22 @@ if (args.values.dev) {
 
 	const startElectron = () => {
 		electron = spawn(["electron", "."], {
-			onExit: () => {
-				if (!isRestartingElectron) {
+			onExit: async () => {
+				if (isRestartingElectron) {
+					isRestartingElectron = false;
+				} else {
+					await electron.exited;
+
 					process.exit(0);
 				}
 			},
 		});
-
-		electron.unref();
 	};
 
-	const stopElectron = async () => {
+	const stopElectron = () => {
 		electron.kill();
 
-		await electron.exited;
+		return electron.exited;
 	};
 
 	const restartElectron = async () => {
@@ -96,9 +94,7 @@ if (args.values.dev) {
 
 		await stopElectron();
 
-		await startElectron();
-
-		isRestartingElectron = false;
+		startElectron();
 	};
 
 	await startElectron();
@@ -109,8 +105,6 @@ if (args.values.dev) {
 		if (event.filename?.includes("renderer")) {
 			continue;
 		}
-
-		await cleanup();
 
 		await buildAppFiles();
 

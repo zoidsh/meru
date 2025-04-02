@@ -22,8 +22,7 @@ class Main {
 	shouldLaunchMinimized() {
 		return (
 			app.commandLine.hasSwitch("launch-minimized") ||
-			config.get("launchMinimized") ||
-			app.getLoginItemSettings().wasOpenedAtLogin
+			config.get("launchMinimized")
 		);
 	}
 
@@ -36,7 +35,7 @@ class Main {
 			});
 		} else {
 			this.window.webContents.loadFile(
-				path.join("out", "renderer", "index.html"),
+				path.join("build-js", "renderer", "index.html"),
 			);
 		}
 	}
@@ -59,7 +58,7 @@ class Main {
 				preload: path.join(
 					...(process.env.NODE_ENV === "production"
 						? [__dirname]
-						: [process.cwd(), "out"]),
+						: [process.cwd(), "build-js"]),
 					"renderer",
 					"preload.js",
 				),

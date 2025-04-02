@@ -113,7 +113,7 @@ export class Gmail {
 				preload: path.join(
 					...(process.env.NODE_ENV === "production"
 						? [__dirname]
-						: [process.cwd(), "out"]),
+						: [process.cwd(), "build-js"]),
 					"gmail",
 					"preload",
 					"index.js",

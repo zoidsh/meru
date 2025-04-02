@@ -6,17 +6,17 @@
 	"description": "Nifty Gmail desktop app",
 	"author": "Tim Cheung <tim@cheung.io>",
 	"repository": "timche/meru",
-	"main": "out/app.js",
+	"main": "build-js/app.js",
 	"scripts": {
 		"postinstall": "electron-builder install-app-deps",
 		"dev": "bun run scripts/build.ts --dev",
 		"lint": "biome check .",
 		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
 		"types": "tsc",
-		"build": "bun run scripts/build.ts",
-		"dist:mac": "electron-builder --mac",
-		"dist:linux": "electron-builder --linux",
-		"dist:win": "electron-builder --win"
+		"build:js": "bun run scripts/build.ts",
+		"build:mac": "electron-builder --mac",
+		"build:linux": "electron-builder --linux",
+		"build:win": "electron-builder --win"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
@@ -61,30 +61,26 @@
 		"zod": "^3.24.2"
 	},
 	"build": {
-		"files": [
-			"!scripts${/*}",
-			"!src${/*}",
-			"!biome.json",
-			"!bun.lock",
-			"!bunfig.toml",
-			"!tsconfig.json"
-		],
+		"files": ["build-js", "static"],
 		"appId": "dev.timche.meru",
 		"mac": {
 			"category": "public.app-category.productivity",
+			"icon": "build/icon.icns",
 			"target": {
 				"target": "default",
 				"arch": ["x64", "arm64"]
 			}
 		},
 		"linux": {
+			"icon": "build/icons/",
 			"target": ["AppImage", "deb"],
 			"synopsis": "Nifty Gmail desktop app",
 			"description": "Meru is an unofficial and security focused Gmail app with many useful features.",
 			"category": "Network;Office"
 		},
 		"win": {
-			"verifyUpdateCodeSignature": false
+			"verifyUpdateCodeSignature": false,
+			"icon": "build/icon.png"
 		},
 		"nsis": {
 			"oneClick": false,
