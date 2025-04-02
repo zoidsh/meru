@@ -9,17 +9,31 @@ import { appState } from "./state";
 import { appTray } from "./tray";
 import { appUpdater } from "./updater";
 
-if (!app.requestSingleInstanceLock()) {
-	app.quit();
-}
+(async () => {
+	app.setAppUserModelId("dev.timche.meru");
 
-app.setAppUserModelId("dev.timche.meru");
+	if (!app.requestSingleInstanceLock()) {
+		app.quit();
 
-if (config.get("hardwareAcceleration") === false) {
-	app.disableHardwareAcceleration();
-}
+		return;
+	}
 
-app.whenReady().then(async () => {
+	if (config.get("hardwareAcceleration") === false) {
+		app.disableHardwareAcceleration();
+	}
+
+	if (config.get("resetConfig")) {
+		config.clear();
+
+		app.relaunch();
+
+		app.quit();
+
+		return;
+	}
+
+	await app.whenReady();
+
 	main.init();
 
 	app.on("second-instance", () => {
@@ -51,4 +65,4 @@ app.whenReady().then(async () => {
 	appUpdater.init();
 
 	initDownloads();
-});
+})();

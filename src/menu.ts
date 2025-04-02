@@ -777,7 +777,7 @@ export class AppMenu {
 							{
 								label: "Reset Config",
 								click: () => {
-									config.clear();
+									config.set("resetConfig", true);
 
 									showRestartDialog();
 								},
