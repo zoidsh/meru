@@ -18,14 +18,12 @@ function lookupHref(target: HTMLElement) {
 export function initUrlPreview() {
 	window.addEventListener("mouseover", (event) => {
 		if (!(event.target instanceof HTMLElement)) {
-			console.warn("Target is not an HTMLElement");
 			return;
 		}
 
 		const href = lookupHref(event.target);
 
 		if (!href || href.startsWith(GMAIL_URL)) {
-			console.warn("URL is not a GMAIL URL");
 			return;
 		}
 
