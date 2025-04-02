@@ -41,6 +41,9 @@ export type Config = {
 	"notifications.showSummary": boolean;
 	"notifications.playSound": boolean;
 	"updates.autoCheck": boolean;
+	"blocker.enabled": boolean;
+	"blocker.ads": boolean;
+	"blocker.tracking": boolean;
 };
 
 export const config = new Store<Config>({
@@ -76,5 +79,8 @@ export const config = new Store<Config>({
 		"notifications.showSummary": true,
 		"notifications.playSound": true,
 		"updates.autoCheck": true,
+		"blocker.enabled": true,
+		"blocker.ads": true,
+		"blocker.tracking": true,
 	},
 });

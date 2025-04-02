@@ -1,5 +1,6 @@
 import EventEmitter from "node:events";
 import path from "node:path";
+import { blocker } from "@/blocker";
 import { type AccountConfig, config } from "@/lib/config";
 import {
 	APP_SIDEBAR_WIDTH,
@@ -9,7 +10,7 @@ import {
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
-import { BrowserWindow, WebContentsView, session } from "electron";
+import { WebContentsView, session } from "electron";
 import electronContextMenu from "electron-context-menu";
 import gmailStyles from "./styles.css" with { type: "text" };
 
@@ -99,13 +100,17 @@ export class Gmail {
 	private createView(accountConfig: AccountConfig) {
 		const sessionPartitionKey = this.getSessionPartitionKey(accountConfig);
 
-		session
-			.fromPartition(sessionPartitionKey)
-			.setPermissionRequestHandler((_webContents, permission, callback) => {
+		const accountSession = session.fromPartition(sessionPartitionKey);
+
+		accountSession.setPermissionRequestHandler(
+			(_webContents, permission, callback) => {
 				if (permission === "notifications") {
 					callback(false);
 				}
-			});
+			},
+		);
+
+		blocker.setupSession(accountSession);
 
 		this.view = new WebContentsView({
 			webPreferences: {

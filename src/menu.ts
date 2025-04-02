@@ -285,6 +285,44 @@ export class AppMenu {
 								},
 							},
 							{
+								label: "Blocker",
+								submenu: [
+									{
+										label: "Enabled",
+										type: "checkbox",
+										checked: config.get("blocker.enabled"),
+										click({ checked }) {
+											config.set("blocker.enabled", checked);
+
+											showRestartDialog();
+										},
+									},
+									{
+										type: "separator",
+									},
+									{
+										label: "Block Ads",
+										type: "checkbox",
+										checked: config.get("blocker.ads"),
+										click({ checked }) {
+											config.set("blocker.ads", checked);
+
+											showRestartDialog();
+										},
+									},
+									{
+										label: "Block Tracking",
+										type: "checkbox",
+										checked: config.get("blocker.tracking"),
+										click({ checked }) {
+											config.set("blocker.tracking", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
 								label: "Updates",
 								submenu: [
 									{

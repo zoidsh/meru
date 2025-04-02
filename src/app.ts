@@ -2,6 +2,7 @@ import { config } from "@/lib/config";
 import { main } from "@/main";
 import { app } from "electron";
 import { accounts } from "./accounts";
+import { blocker } from "./blocker";
 import { initDownloads } from "./downloads";
 import { initIpc } from "./ipc";
 import { appMenu } from "./menu";
@@ -36,7 +37,7 @@ import { appUpdater } from "./updater";
 
 	initDownloads();
 
-	await app.whenReady();
+	await Promise.all([app.whenReady(), blocker.init()]);
 
 	main.init();
 
