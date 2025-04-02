@@ -136,6 +136,7 @@ async function fetchInbox() {
 async function observeInbox() {
 	const inboxAnchorElement = await elementReady(inboxAnchorElementSelector, {
 		stopOnDomReady: false,
+		timeout: 60000,
 	});
 
 	const inboxAnchorContainerElement =
@@ -143,7 +144,7 @@ async function observeInbox() {
 			?.parentElement?.parentElement?.parentElement;
 
 	if (!inboxAnchorContainerElement) {
-		throw new Error("Inbox anchor wrapper element not found");
+		return;
 	}
 
 	const getUnreadCount = () => {
