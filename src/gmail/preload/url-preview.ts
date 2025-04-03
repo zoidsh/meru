@@ -24,6 +24,11 @@ export function initUrlPreview() {
 		const href = lookupHref(event.target);
 
 		if (!href || href.startsWith(GMAIL_URL)) {
+			if (urlPreviewElement) {
+				urlPreviewElement.remove();
+				urlPreviewElement = null;
+			}
+
 			return;
 		}
 
@@ -56,6 +61,7 @@ export function initUrlPreview() {
 	window.addEventListener("mouseout", () => {
 		if (timeout) {
 			clearTimeout(timeout);
+
 			timeout = null;
 		}
 
