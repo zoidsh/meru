@@ -49,6 +49,12 @@ import { appUpdater } from "./updater";
 		main.show();
 	});
 
+	main.window.on("focus", () => {
+		if (!appState.isSettingsOpen) {
+			accounts.getSelectedAccount().gmail.view.webContents.focus();
+		}
+	});
+
 	app.on("before-quit", () => {
 		appState.isQuittingApp = true;
 
