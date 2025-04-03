@@ -3,6 +3,7 @@ import { config } from "@/lib/config";
 import { appState } from "@/state";
 import { is, platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
+import { APP_TITLEBAR_HEIGHT } from "./lib/constants";
 
 class Main {
 	private _window: BrowserWindow | undefined;
@@ -53,6 +54,11 @@ class Main {
 			y: lastWindowState.bounds.y,
 			show: false,
 			titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
+			titleBarOverlay: {
+				color: "#111111",
+				symbolColor: "#fff",
+				height: APP_TITLEBAR_HEIGHT,
+			},
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {
 				preload: path.join(

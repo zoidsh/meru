@@ -19,7 +19,6 @@ export type IpcMainEvents =
 				movedAccountId: AccountConfig["id"],
 				direction: "up" | "down",
 			];
-			controlWindow: [action: "minimize" | "maximize" | "unmaximize" | "close"];
 			toggleIsSettingsOpen: [];
 			goNavigationHistory: [action: "back" | "forward"];
 			reloadGmail: [];
@@ -33,7 +32,6 @@ export type IpcMainEvents =
 				config: AccountConfig;
 				gmail: { state: GmailState };
 			}[];
-			getIsWindowMaximized: () => boolean;
 	  };
 
 export type IpcRendererEvent = {
@@ -44,7 +42,6 @@ export type IpcRendererEvent = {
 			gmail: { state: GmailState };
 		}[],
 	];
-	onWindowMaximizedChanged: [maximized: boolean];
 	navigateTo: [
 		destination:
 			| "inbox"
@@ -122,45 +119,6 @@ export function initIpc() {
 	ipcMain.on("moveAccount", (_event, movedAccountId, direction) => {
 		accounts.moveAccount(movedAccountId, direction);
 	});
-
-	ipcMain.handle("getIsWindowMaximized", () => main.window.isMaximized());
-
-	ipcMain.on("controlWindow", (_event, action) => {
-		switch (action) {
-			case "minimize": {
-				main.window.minimize();
-				break;
-			}
-			case "maximize": {
-				main.window.maximize();
-				break;
-			}
-			case "unmaximize": {
-				main.window.unmaximize();
-				break;
-			}
-			case "close": {
-				main.window.close();
-				break;
-			}
-		}
-	});
-
-	main.window
-		.on("maximize", () => {
-			ipcRenderer.send(
-				main.window.webContents,
-				"onWindowMaximizedChanged",
-				true,
-			);
-		})
-		.on("unmaximize", () => {
-			ipcRenderer.send(
-				main.window.webContents,
-				"onWindowMaximizedChanged",
-				false,
-			);
-		});
 
 	ipcMain.on("goNavigationHistory", (_event, action) => {
 		accounts

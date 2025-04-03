@@ -29,26 +29,6 @@ export function useSelectedAccount() {
 	return selectedAccount;
 }
 
-export function useIsWindowMaximized() {
-	const queryClient = useQueryClient();
-
-	const query = useQuery({
-		queryKey: ["getIsWindowMaximized"],
-		queryFn: () => ipcMain.invoke("getIsWindowMaximized"),
-	});
-
-	useEffect(() => {
-		return ipcRenderer.on(
-			"onWindowMaximizedChanged",
-			(_event, isWindowMaximized) => {
-				queryClient.setQueryData(["getIsWindowMaximized"], isWindowMaximized);
-			},
-		);
-	}, [queryClient]);
-
-	return query;
-}
-
 export function useIsSettingsOpen() {
 	const queryClient = useQueryClient();
 

@@ -5,65 +5,11 @@ import {
 	RotateCwIcon,
 	SettingsIcon,
 } from "lucide-react";
-import type { HTMLAttributes } from "react";
 import { APP_SIDEBAR_WIDTH, APP_TITLEBAR_HEIGHT } from "../../lib/constants";
-import {
-	useIsSettingsOpen,
-	useIsWindowMaximized,
-	useSelectedAccount,
-} from "../lib/hooks";
+import { useIsSettingsOpen, useSelectedAccount } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
-import { CloseIcon, MaximizeIcon, MinimizeIcon, RestoreIcon } from "./ui/icons";
-
-function WindowControlButton({
-	className,
-	...props
-}: HTMLAttributes<HTMLButtonElement>) {
-	return (
-		<Button
-			variant="ghost"
-			className={cn("rounded-none", className)}
-			style={{ width: APP_TITLEBAR_HEIGHT, height: APP_TITLEBAR_HEIGHT }}
-			{...props}
-		/>
-	);
-}
-
-function WindowControls() {
-	const isWindowMaximized = useIsWindowMaximized();
-
-	return (
-		<div
-			className="flex"
-			// @ts-expect-error
-			style={{ appRegion: "none" }}
-		>
-			<WindowControlButton
-				onClick={() => ipcMain.send("controlWindow", "minimize")}
-			>
-				<MinimizeIcon />
-			</WindowControlButton>
-			<WindowControlButton
-				onClick={() =>
-					ipcMain.send(
-						"controlWindow",
-						isWindowMaximized.data ? "unmaximize" : "maximize",
-					)
-				}
-			>
-				{isWindowMaximized.data ? <RestoreIcon /> : <MaximizeIcon />}
-			</WindowControlButton>
-			<WindowControlButton
-				className="hover:bg-destructive/90"
-				onClick={() => ipcMain.send("controlWindow", "close")}
-			>
-				<CloseIcon />
-			</WindowControlButton>
-		</div>
-	);
-}
 
 function TitlebarTitle() {
 	const selectedAccount = useSelectedAccount();
@@ -138,18 +84,26 @@ export function AppTitlebar() {
 	return (
 		<div
 			style={{
-				minHeight: APP_TITLEBAR_HEIGHT,
+				height: APP_TITLEBAR_HEIGHT,
 				// @ts-expect-error
 				appRegion: "drag",
 			}}
-			className="flex border-b select-none relative"
+			className="border-b select-none relative"
 		>
 			<TitlebarTitle />
 			<div
 				className={cn(
-					"flex-1 flex justify-between",
+					"absolute flex justify-between items-center inset-0",
 					window.electron.process.platform === "darwin" ? "px-2" : "px-3",
 				)}
+				style={
+					window.electron.process.platform !== "darwin"
+						? {
+								left: "env(titlebar-area-x, 0)",
+								width: "env(titlebar-area-width, 100%)",
+							}
+						: undefined
+				}
 			>
 				<TitlebarNavigation />
 				<div
@@ -181,7 +135,6 @@ export function AppTitlebar() {
 					)}
 				</div>
 			</div>
-			{window.electron.process.platform !== "darwin" && <WindowControls />}
 		</div>
 	);
 }
