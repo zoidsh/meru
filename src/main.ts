@@ -65,9 +65,9 @@ class Main {
 			show: false,
 			titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
 			titleBarOverlay: {
-				color: "#111111",
-				symbolColor: "#fff",
-				height: APP_TITLEBAR_HEIGHT,
+				color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
+				symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
+				height: APP_TITLEBAR_HEIGHT - 1,
 			},
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {

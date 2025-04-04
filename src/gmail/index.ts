@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import path from "node:path";
 import { blocker } from "@/blocker";
-import { type AccountConfig, config } from "@/lib/config";
+import type { AccountConfig } from "@/lib/config";
 import { APP_TITLEBAR_HEIGHT, GMAIL_URL } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
