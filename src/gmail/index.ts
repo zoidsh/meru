@@ -2,11 +2,7 @@ import EventEmitter from "node:events";
 import path from "node:path";
 import { blocker } from "@/blocker";
 import { type AccountConfig, config } from "@/lib/config";
-import {
-	APP_SIDEBAR_WIDTH,
-	APP_TITLEBAR_HEIGHT,
-	GMAIL_URL,
-} from "@/lib/constants";
+import { APP_TITLEBAR_HEIGHT, GMAIL_URL } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
@@ -87,12 +83,11 @@ export class Gmail {
 
 	updateViewBounds() {
 		const { width, height } = main.window.getBounds();
-		const withSidebarInset = config.get("accounts").length > 1;
 
 		this.view.setBounds({
-			x: withSidebarInset ? APP_SIDEBAR_WIDTH : 0,
+			x: 0,
 			y: APP_TITLEBAR_HEIGHT,
-			width: withSidebarInset ? width - APP_SIDEBAR_WIDTH : width,
+			width,
 			height: height - APP_TITLEBAR_HEIGHT,
 		});
 	}

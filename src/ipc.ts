@@ -3,7 +3,7 @@ import type { mailActionCodeMap } from "@/gmail/preload/inbox-observer";
 import { type AccountConfig, config } from "@/lib/config";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
-import { Notification } from "electron";
+import { Notification, nativeTheme } from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
 import { appMenu } from "./menu";
@@ -59,6 +59,7 @@ export type IpcRendererEvent = {
 	];
 	handleMail: [messageId: string, action: keyof typeof mailActionCodeMap];
 	openMail: [messageId: string];
+	onDarkModeChanged: [darkMode: boolean];
 };
 
 export const ipcMain = new IpcListener<IpcMainEvents>();

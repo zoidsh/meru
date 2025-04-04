@@ -1,138 +1,130 @@
+import { APP_TITLEBAR_HEIGHT } from "@/lib/constants";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
+	CircleAlertIcon,
 	EllipsisVerticalIcon,
 	RotateCwIcon,
-	SettingsIcon,
 } from "lucide-react";
-import { APP_SIDEBAR_WIDTH, APP_TITLEBAR_HEIGHT } from "../../lib/constants";
-import { useIsSettingsOpen, useSelectedAccount } from "../lib/hooks";
+import {
+	useAccounts,
+	useIsSettingsOpen,
+	useSelectedAccount,
+} from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
-function TitlebarTitle() {
-	const selectedAccount = useSelectedAccount();
-
-	const isSettingsOpen = useIsSettingsOpen();
-
-	return (
-		<div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground pointer-events-none">
-			{isSettingsOpen.data || !selectedAccount
-				? "Settings"
-				: selectedAccount.gmail.state.title}
-		</div>
-	);
-}
-
-function TitlebarNavigation() {
-	const selectedAccount = useSelectedAccount();
-
-	const isSettingsOpen = useIsSettingsOpen();
-
-	return (
-		<div
-			className={cn("flex items-center gap-1", {
-				invisible: isSettingsOpen.data,
-			})}
-			style={{
-				// @ts-expect-error
-				appRegion: "none",
-				marginLeft:
-					window.electron.process.platform === "darwin"
-						? APP_SIDEBAR_WIDTH
-						: undefined,
-			}}
-		>
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				onClick={() => {
-					ipcMain.send("goNavigationHistory", "back");
-				}}
-				disabled={!selectedAccount?.gmail.state.navigationHistory.canGoBack}
-			>
-				<ArrowLeftIcon />
-			</Button>
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				onClick={() => {
-					ipcMain.send("goNavigationHistory", "forward");
-				}}
-				disabled={!selectedAccount?.gmail.state.navigationHistory.canGoForward}
-			>
-				<ArrowRightIcon />
-			</Button>
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				onClick={() => {
-					ipcMain.send("reloadGmail");
-				}}
-			>
-				<RotateCwIcon />
-			</Button>
-		</div>
-	);
-}
-
 export function AppTitlebar() {
+	const accounts = useAccounts();
+
+	const selectedAccount = useSelectedAccount();
+
+	const isSettingsOpen = useIsSettingsOpen();
+
+	if (!accounts.data) {
+		return;
+	}
+
 	return (
 		<div
-			style={{
-				height: APP_TITLEBAR_HEIGHT,
-				// @ts-expect-error
-				appRegion: "drag",
-			}}
-			className="border-b select-none relative"
+			className="relative bg-background border-b draggable select-none"
+			style={{ height: APP_TITLEBAR_HEIGHT }}
 		>
-			<TitlebarTitle />
 			<div
 				className={cn(
-					"absolute flex justify-between items-center inset-0",
-					window.electron.process.platform === "darwin" ? "px-2" : "px-3",
+					"absolute top-0 bottom-0 flex items-center gap-4 px-1.5",
+					{
+						"px-4": window.electron.process.platform !== "darwin",
+					},
 				)}
-				style={
-					window.electron.process.platform !== "darwin"
-						? {
-								left: "env(titlebar-area-x, 0)",
-								width: "env(titlebar-area-width, 100%)",
-							}
-						: undefined
-				}
+				style={{
+					left: "env(titlebar-area-x, 0)",
+					width: "env(titlebar-area-width, 100%)",
+				}}
 			>
-				<TitlebarNavigation />
 				<div
-					className="flex items-center gap-1"
-					// @ts-expect-error
-					style={{ appRegion: "none" }}
+					className={cn("flex items-center gap-1", {
+						invisible: isSettingsOpen.data,
+					})}
 				>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7 draggable-none"
+						onClick={() => {
+							ipcMain.send("goNavigationHistory", "back");
+						}}
+						disabled={!selectedAccount?.gmail.state.navigationHistory.canGoBack}
+					>
+						<ArrowLeftIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7 draggable-none"
+						onClick={() => {
+							ipcMain.send("goNavigationHistory", "forward");
+						}}
+						disabled={
+							!selectedAccount?.gmail.state.navigationHistory.canGoForward
+						}
+					>
+						<ArrowRightIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7 draggable-none"
+						onClick={() => {
+							ipcMain.send("reloadGmail");
+						}}
+					>
+						<RotateCwIcon />
+					</Button>
+				</div>
+				<div className="flex-1 flex gap-2">
+					{!isSettingsOpen.data &&
+						accounts.data.length > 1 &&
+						accounts.data.map((account) => (
+							<Button
+								key={account.config.id}
+								variant={account.config.selected ? "secondary" : "ghost"}
+								size="sm"
+								className={cn(
+									"text-xs h-7 flex items-center justify-center gap-1 draggable-none text-muted-foreground",
+									{
+										"text-primary": account.config.selected,
+									},
+								)}
+								onClick={() => {
+									ipcMain.send("selectAccount", account.config.id);
+								}}
+							>
+								{account.config.label}
+								{account.gmail.state.attentionRequired && (
+									<CircleAlertIcon className="size-4 text-yellow-400" />
+								)}
+								{!account.gmail.state.attentionRequired &&
+								account.gmail.state.unreadCount > 0 ? (
+									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-4 h-4 px-1 flex items-center justify-center rounded-full">
+										{account.gmail.state.unreadCount}
+									</div>
+								) : null}
+							</Button>
+						))}
+				</div>
+				<div className="draggable-none">
 					<Button
 						variant="ghost"
 						size="icon"
 						className="size-7"
 						onClick={() => {
-							ipcMain.send("toggleIsSettingsOpen");
+							ipcMain.send("toggleAppMenu");
 						}}
 					>
-						<SettingsIcon />
+						<EllipsisVerticalIcon />
 					</Button>
-					{window.electron.process.platform !== "darwin" && (
-						<Button
-							variant="ghost"
-							size="icon"
-							className="size-7"
-							onClick={() => {
-								ipcMain.send("toggleAppMenu");
-							}}
-						>
-							<EllipsisVerticalIcon />
-						</Button>
-					)}
 				</div>
 			</div>
 		</div>

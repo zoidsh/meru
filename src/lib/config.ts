@@ -29,6 +29,7 @@ export type Config = {
 	trayIconEnabled: boolean;
 	showDockIcon: boolean;
 	resetConfig: boolean;
+	theme: "system" | "light" | "dark";
 	"externalLinks.confirm": boolean;
 	"externalLinks.trustedHosts": string[];
 	"gmail.zoomFactor": number;
@@ -67,6 +68,7 @@ export const config = new Store<Config>({
 		trayIconEnabled: !platform.isMacOS,
 		showDockIcon: true,
 		resetConfig: false,
+		theme: "system",
 		"externalLinks.confirm": true,
 		"externalLinks.trustedHosts": [],
 		"gmail.zoomFactor": 1,

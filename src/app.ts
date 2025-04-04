@@ -7,6 +7,7 @@ import { initDownloads } from "./downloads";
 import { initIpc } from "./ipc";
 import { appMenu } from "./menu";
 import { appState } from "./state";
+import { initTheme } from "./theme";
 import { appTray } from "./tray";
 import { appUpdater } from "./updater";
 
@@ -38,6 +39,8 @@ import { appUpdater } from "./updater";
 	initDownloads();
 
 	await Promise.all([app.whenReady(), blocker.init()]);
+
+	initTheme();
 
 	main.init();
 

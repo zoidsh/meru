@@ -28,8 +28,17 @@ class Main {
 	}
 
 	loadURL() {
+		const searchParams = new URLSearchParams();
+
+		searchParams.set(
+			"darkMode",
+			nativeTheme.shouldUseDarkColors ? "true" : "false",
+		);
+
 		if (is.dev) {
-			this.window.webContents.loadURL("http://localhost:3000");
+			this.window.webContents.loadURL(
+				`http://localhost:3000?${searchParams.toString()}`,
+			);
 
 			this.window.webContents.openDevTools({
 				mode: "detach",
@@ -37,6 +46,7 @@ class Main {
 		} else {
 			this.window.webContents.loadFile(
 				path.join("build-js", "renderer", "index.html"),
+				{ search: searchParams.toString() },
 			);
 		}
 	}

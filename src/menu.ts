@@ -6,6 +6,7 @@ import {
 	app,
 	dialog,
 	nativeImage,
+	nativeTheme,
 	session,
 	shell,
 } from "electron";
@@ -209,6 +210,44 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Blocker",
+								submenu: [
+									{
+										label: "Enabled",
+										type: "checkbox",
+										checked: config.get("blocker.enabled"),
+										click({ checked }) {
+											config.set("blocker.enabled", checked);
+
+											showRestartDialog();
+										},
+									},
+									{
+										type: "separator",
+									},
+									{
+										label: "Block Ads",
+										type: "checkbox",
+										checked: config.get("blocker.ads"),
+										click({ checked }) {
+											config.set("blocker.ads", checked);
+
+											showRestartDialog();
+										},
+									},
+									{
+										label: "Block Tracking",
+										type: "checkbox",
+										checked: config.get("blocker.tracking"),
+										click({ checked }) {
+											config.set("blocker.tracking", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
 								type: "separator",
 							},
 							{
@@ -275,6 +314,41 @@ export class AppMenu {
 								type: "separator",
 							},
 							{
+								label: "Theme",
+								submenu: [
+									{
+										label: "Light",
+										type: "radio",
+										checked: config.get("theme") === "light",
+										click: () => {
+											nativeTheme.themeSource = "light";
+
+											config.set("theme", "light");
+										},
+									},
+									{
+										label: "Dark",
+										type: "radio",
+										checked: config.get("theme") === "dark",
+										click: () => {
+											nativeTheme.themeSource = "dark";
+
+											config.set("theme", "dark");
+										},
+									},
+									{
+										label: "System",
+										type: "radio",
+										checked: config.get("theme") === "system",
+										click: () => {
+											nativeTheme.themeSource = "system";
+
+											config.set("theme", "system");
+										},
+									},
+								],
+							},
+							{
 								label: "Hardware Acceleration",
 								type: "checkbox",
 								checked: config.get("hardwareAcceleration"),
@@ -283,44 +357,6 @@ export class AppMenu {
 
 									showRestartDialog();
 								},
-							},
-							{
-								label: "Blocker",
-								submenu: [
-									{
-										label: "Enabled",
-										type: "checkbox",
-										checked: config.get("blocker.enabled"),
-										click({ checked }) {
-											config.set("blocker.enabled", checked);
-
-											showRestartDialog();
-										},
-									},
-									{
-										type: "separator",
-									},
-									{
-										label: "Block Ads",
-										type: "checkbox",
-										checked: config.get("blocker.ads"),
-										click({ checked }) {
-											config.set("blocker.ads", checked);
-
-											showRestartDialog();
-										},
-									},
-									{
-										label: "Block Tracking",
-										type: "checkbox",
-										checked: config.get("blocker.tracking"),
-										click({ checked }) {
-											config.set("blocker.tracking", checked);
-
-											showRestartDialog();
-										},
-									},
-								],
 							},
 							{
 								label: "Updates",
@@ -423,7 +459,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Next Account (hidden shortcut 1)",
-						accelerator: "Cmd+Option+Down",
+						accelerator: "Cmd+Option+Right",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
@@ -454,7 +490,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Previous Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Up",
+						accelerator: "Cmd+Option+Left",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
