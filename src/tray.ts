@@ -42,10 +42,10 @@ export class AppTray {
 
 	createIcon(unread: boolean): Electron.NativeImage {
 		const iconFileName = platform.isMacOS
-			? "tray-icon.macos.Template.png"
+			? "IconMenuBarTemplate.png"
 			: unread
-				? "tray-icon-unread.png"
-				: "tray-icon.png";
+				? "IconTrayUnread.png"
+				: "IconTray.png";
 
 		return Electron.nativeImage.createFromPath(
 			path.join(__dirname, "..", "static", iconFileName),

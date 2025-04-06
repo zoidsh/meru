@@ -32,12 +32,7 @@ export function AppTitlebar() {
 			style={{ height: APP_TITLEBAR_HEIGHT }}
 		>
 			<div
-				className={cn(
-					"absolute top-0 bottom-0 flex items-center gap-4 px-1.5",
-					{
-						"px-4": window.electron.process.platform !== "darwin",
-					},
-				)}
+				className="absolute top-0 bottom-0 flex items-center gap-4 px-1.5"
 				style={{
 					left: "env(titlebar-area-x, 0)",
 					width: "env(titlebar-area-width, 100%)",

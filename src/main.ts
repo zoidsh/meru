@@ -80,7 +80,7 @@ class Main {
 				),
 			},
 			icon: platform.isLinux
-				? path.join(__dirname, "..", "static", "icon.png")
+				? path.join(__dirname, "..", "static", "Icon.png")
 				: undefined,
 		});
 

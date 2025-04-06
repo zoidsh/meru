@@ -86,7 +86,7 @@ export class AppMenu {
 						click: () => {
 							dialog.showMessageBox({
 								icon: nativeImage.createFromPath(
-									path.join(__dirname, "..", "..", "static", "icon.png"),
+									path.join(__dirname, "..", "..", "static", "Icon.png"),
 								),
 								message: `${app.name}`,
 								detail: `Version: ${app.getVersion()}\n\nCreated by Tim Cheung <tim@cheung.io>\n\nCopyright © 2025 Tim Cheung`,
