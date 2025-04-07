@@ -86,23 +86,18 @@ export function AppTitlebar() {
 								key={account.config.id}
 								variant={account.config.selected ? "secondary" : "ghost"}
 								size="sm"
-								className={cn(
-									"text-xs h-7 flex items-center justify-center gap-1 draggable-none text-muted-foreground",
-									{
-										"text-primary": account.config.selected,
-									},
-								)}
+								className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 								onClick={() => {
 									ipcMain.send("selectAccount", account.config.id);
 								}}
 							>
 								{account.config.label}
 								{account.gmail.state.attentionRequired && (
-									<CircleAlertIcon className="size-4 text-yellow-400" />
+									<CircleAlertIcon className="size-3.5 text-yellow-400" />
 								)}
 								{!account.gmail.state.attentionRequired &&
 								account.gmail.state.unreadCount > 0 ? (
-									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-4 h-4 px-1 flex items-center justify-center rounded-full">
+									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
 										{account.gmail.state.unreadCount}
 									</div>
 								) : null}
