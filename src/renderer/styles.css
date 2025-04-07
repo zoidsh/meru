@@ -144,6 +144,13 @@
 	--font-sans: InterVariable, sans-serif;
 }
 
+@layer base {
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+}
+
 @utility draggable {
 	app-region: drag;
 }

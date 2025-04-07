@@ -29,11 +29,7 @@ const root = createRoot(rootElement);
 
 root.render(
 	<QueryClientProvider client={queryClient}>
-		<div className="flex flex-col h-screen">
-			<AppTitlebar />
-			<div className="flex-1 flex overflow-hidden">
-				<AppMain />
-			</div>
-		</div>
+		<AppTitlebar />
+		<AppMain />
 	</QueryClientProvider>,
 );

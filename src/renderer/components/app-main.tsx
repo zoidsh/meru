@@ -14,12 +14,14 @@ export function AppMain() {
 	}
 
 	return (
-		<ScrollArea className="flex-1">
+		<ScrollArea
+			className="h-full"
+			style={{ height: `calc(100vh - ${APP_TITLEBAR_HEIGHT}px)` }}
+		>
 			<div
 				className="max-w-md mx-auto"
 				style={{
-					paddingTop: APP_TITLEBAR_HEIGHT,
-					paddingBottom: APP_TITLEBAR_HEIGHT,
+					padding: `${APP_TITLEBAR_HEIGHT}px 0`,
 				}}
 			>
 				<Accounts />

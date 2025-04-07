@@ -1,6 +1,11 @@
 import type { AccountConfig } from "@/lib/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowDownIcon, ArrowUpIcon, PencilIcon } from "lucide-react";
+import {
+	ArrowDownIcon,
+	ArrowUpIcon,
+	EllipsisIcon,
+	PencilIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,6 +20,12 @@ import {
 	DialogTrigger,
 } from "./ui/dialog";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "./ui/dropdown";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -23,6 +34,14 @@ import {
 	FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "./ui/table";
 
 export const accountSchema = z.object({
 	id: z.string(),
@@ -34,12 +53,10 @@ function AccountForm({
 	account = { label: "" },
 	placeholder = "Work",
 	onSubmit,
-	onDelete,
 }: {
 	account?: Pick<AccountConfig, "label">;
 	placeholder?: string;
 	onSubmit: (values: Pick<AccountConfig, "label">) => void;
-	onDelete?: () => void;
 }) {
 	const form = useForm<Pick<AccountConfig, "label">>({
 		resolver: zodResolver(accountSchema.pick({ label: true })),
@@ -69,20 +86,7 @@ function AccountForm({
 						</FormItem>
 					)}
 				/>
-				<div className="flex items-center">
-					<div className="flex-1">
-						{onDelete && (
-							<Button
-								type="button"
-								variant="destructive"
-								onClick={() => {
-									onDelete();
-								}}
-							>
-								Remove
-							</Button>
-						)}
-					</div>
+				<div className="flex justify-end items-center">
 					<Button type="submit" className="self-end">
 						Save
 					</Button>
@@ -116,21 +120,42 @@ function AddAccountButton() {
 	);
 }
 
-function EditAccountButton({ account }: { account: AccountConfig }) {
+function AccountMenuButton({
+	account,
+	removable,
+}: { account: AccountConfig; removable: boolean }) {
 	const [isOpen, setIsOpen] = useState(false);
-	const accounts = useAccounts();
-
-	if (!accounts.data) {
-		return;
-	}
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				<Button size="icon" variant="ghost">
-					<PencilIcon />
-				</Button>
-			</DialogTrigger>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button size="icon" className="size-8 p-0" variant="ghost">
+						<EllipsisIcon />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent>
+					<DialogTrigger asChild>
+						<DropdownMenuItem>Edit</DropdownMenuItem>
+					</DialogTrigger>
+					{removable && (
+						<DropdownMenuItem
+							className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
+							onClick={() => {
+								const confirmed = window.confirm(
+									`Are you sure you want to remove ${account.label}?`,
+								);
+
+								if (confirmed) {
+									ipcMain.send("removeAccount", account.id);
+								}
+							}}
+						>
+							Remove
+						</DropdownMenuItem>
+					)}
+				</DropdownMenuContent>
+			</DropdownMenu>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Edit account</DialogTitle>
@@ -142,19 +167,6 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
 
 						setIsOpen(false);
 					}}
-					onDelete={
-						accounts.data.length > 1
-							? () => {
-									const confirmed = window.confirm(
-										`Are you sure you want to remove ${account.label}?`,
-									);
-
-									if (confirmed) {
-										ipcMain.send("removeAccount", account.id);
-									}
-								}
-							: undefined
-					}
 				/>
 			</DialogContent>
 		</Dialog>
@@ -169,55 +181,58 @@ export function Accounts() {
 	}
 
 	return (
-		<div className="py-5 px-6 bg-background border rounded-lg">
+		<>
 			<div className="flex justify-between items-center mb-6">
-				<div className="text-2xl font-bold tracking-tight">Accounts</div>
+				<div className="text-3xl font-bold tracking-tight">Accounts</div>
 				<AddAccountButton />
 			</div>
-			<div className="space-y-4">
-				{accounts.data.map((account, index) => (
-					<div
-						className="flex justify-between items-center"
-						key={account.config.id}
-					>
-						<div className="flex items-center gap-3">
-							<div className="size-8 border rounded-full flex items-center justify-center text-sm font-light">
-								{account.config.label[0].toUpperCase()}
-							</div>
-							<div>{account.config.label}</div>
-						</div>
-						<div className="flex items-center gap-2">
-							{accounts.data.length > 1 && (
-								<>
-									<Button
-										size="icon"
-										className="size-8"
-										variant="ghost"
-										disabled={index + 1 === accounts.data.length}
-										onClick={() => {
-											ipcMain.send("moveAccount", account.config.id, "down");
-										}}
-									>
-										<ArrowDownIcon />
-									</Button>
-									<Button
-										size="icon"
-										className="size-8"
-										variant="ghost"
-										disabled={index === 0}
-										onClick={() => {
-											ipcMain.send("moveAccount", account.config.id, "up");
-										}}
-									>
-										<ArrowUpIcon />
-									</Button>
-								</>
-							)}
-							<EditAccountButton account={account.config} />
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead>Label</TableHead>
+						<TableHead />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{accounts.data.map((account, index) => (
+						<TableRow key={account.config.id}>
+							<TableCell className="w-full">{account.config.label}</TableCell>
+							<TableCell className="flex">
+								{accounts.data.length > 1 && (
+									<>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index + 1 === accounts.data.length}
+											onClick={() => {
+												ipcMain.send("moveAccount", account.config.id, "down");
+											}}
+										>
+											<ArrowDownIcon />
+										</Button>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index === 0}
+											onClick={() => {
+												ipcMain.send("moveAccount", account.config.id, "up");
+											}}
+										>
+											<ArrowUpIcon />
+										</Button>
+									</>
+								)}
+								<AccountMenuButton
+									account={account.config}
+									removable={accounts.data.length > 1}
+								/>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</>
 	);
 }
