@@ -104,18 +104,20 @@ export function AppTitlebar() {
 							</Button>
 						))}
 				</div>
-				<div className="draggable-none">
-					<Button
-						variant="ghost"
-						size="icon"
-						className="size-7"
-						onClick={() => {
-							ipcMain.send("toggleAppMenu");
-						}}
-					>
-						<EllipsisVerticalIcon />
-					</Button>
-				</div>
+				{window.electron.process.platform !== "darwin" && (
+					<div className="draggable-none">
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-7"
+							onClick={() => {
+								ipcMain.send("toggleAppMenu");
+							}}
+						>
+							<EllipsisVerticalIcon />
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
