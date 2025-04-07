@@ -324,6 +324,10 @@ export class AppMenu {
 											nativeTheme.themeSource = "light";
 
 											config.set("theme", "light");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
 										},
 									},
 									{
@@ -334,6 +338,10 @@ export class AppMenu {
 											nativeTheme.themeSource = "dark";
 
 											config.set("theme", "dark");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
 										},
 									},
 									{
@@ -344,6 +352,10 @@ export class AppMenu {
 											nativeTheme.themeSource = "system";
 
 											config.set("theme", "system");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
 										},
 									},
 								],
