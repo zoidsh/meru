@@ -8,6 +8,7 @@ export function useAccounts() {
 	const query = useQuery({
 		queryKey: ["getAccounts"],
 		queryFn: () => ipcMain.invoke("getAccounts"),
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 
 	useEffect(() => {
@@ -35,6 +36,7 @@ export function useIsSettingsOpen() {
 	const query = useQuery({
 		queryKey: ["getIsSettingsOpen"],
 		queryFn: () => ipcMain.invoke("getIsSettingsOpen"),
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 
 	useEffect(() => {
