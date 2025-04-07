@@ -4,8 +4,8 @@
 	"version": "3.0.0-beta.11",
 	"private": true,
 	"description": "Nifty Gmail desktop app",
-	"author": "Tim Cheung <tim@cheung.io>",
-	"repository": "timche/meru",
+	"author": "Tim Cheung <tim@zoid.sh>",
+	"repository": "zoidsh/meru",
 	"main": "build-js/app.js",
 	"scripts": {
 		"postinstall": "electron-builder install-app-deps",

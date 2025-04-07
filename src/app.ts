@@ -12,7 +12,7 @@ import { appTray } from "./tray";
 import { appUpdater } from "./updater";
 
 (async () => {
-	app.setAppUserModelId("dev.timche.meru");
+	app.setAppUserModelId("sh.zoid.meru");
 
 	if (!app.requestSingleInstanceLock()) {
 		app.quit();
