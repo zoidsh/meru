@@ -18,6 +18,8 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

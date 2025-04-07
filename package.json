@@ -64,7 +64,7 @@
 	},
 	"build": {
 		"files": ["build-js", "static"],
-		"appId": "dev.timche.meru",
+		"appId": "sh.zoid.meru",
 		"mac": {
 			"category": "public.app-category.productivity",
 			"icon": "build/icon.icns",
