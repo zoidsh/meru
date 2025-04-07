@@ -35,8 +35,8 @@ export type IpcMainEvents =
 	  };
 
 export type IpcRendererEvent = {
-	onIsSettingsOpenChanged: [settingsOpen: boolean];
-	onAccountsChanged: [
+	isSettingsOpenChanged: [settingsOpen: boolean];
+	accountsChanged: [
 		accounts: {
 			config: AccountConfig;
 			gmail: { state: GmailState };
@@ -59,7 +59,7 @@ export type IpcRendererEvent = {
 	];
 	handleMail: [messageId: string, action: keyof typeof mailActionCodeMap];
 	openMail: [messageId: string];
-	onDarkModeChanged: [darkMode: boolean];
+	darkModeChanged: [darkMode: boolean];
 };
 
 export const ipcMain = new IpcListener<IpcMainEvents>();
@@ -91,7 +91,7 @@ export function initIpc() {
 	accounts.on("accounts-changed", (accounts) => {
 		ipcRenderer.send(
 			main.window.webContents,
-			"onAccountsChanged",
+			"accountsChanged",
 			accounts.map((account) => ({
 				config: account.config,
 				gmail: {

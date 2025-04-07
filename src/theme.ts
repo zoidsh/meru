@@ -9,7 +9,7 @@ export function initTheme() {
 	nativeTheme.on("updated", () => {
 		ipcRenderer.send(
 			main.window.webContents,
-			"onDarkModeChanged",
+			"darkModeChanged",
 			nativeTheme.shouldUseDarkColors,
 		);
 	});

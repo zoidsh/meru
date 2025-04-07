@@ -1,21 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { ipcMain, ipcRenderer } from "./ipc";
+import { ipcMain } from "./ipc";
 
 export function useAccounts() {
-	const queryClient = useQueryClient();
-
 	const query = useQuery({
-		queryKey: ["getAccounts"],
+		queryKey: ["accounts"],
 		queryFn: () => ipcMain.invoke("getAccounts"),
-		staleTime: Number.POSITIVE_INFINITY,
 	});
-
-	useEffect(() => {
-		return ipcRenderer.on("onAccountsChanged", (_event, accounts) => {
-			queryClient.setQueryData(["getAccounts"], accounts);
-		});
-	}, [queryClient]);
 
 	return query;
 }
@@ -31,22 +21,10 @@ export function useSelectedAccount() {
 }
 
 export function useIsSettingsOpen() {
-	const queryClient = useQueryClient();
-
 	const query = useQuery({
-		queryKey: ["getIsSettingsOpen"],
+		queryKey: ["isSettingsOpen"],
 		queryFn: () => ipcMain.invoke("getIsSettingsOpen"),
-		staleTime: Number.POSITIVE_INFINITY,
 	});
-
-	useEffect(() => {
-		return ipcRenderer.on(
-			"onIsSettingsOpenChanged",
-			(_event, isSettingsOpen) => {
-				queryClient.setQueryData(["getIsSettingsOpen"], isSettingsOpen);
-			},
-		);
-	}, [queryClient]);
 
 	return query;
 }

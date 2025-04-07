@@ -7,16 +7,22 @@ import { queryClient } from "./lib/react-query";
 
 const searchParams = new URLSearchParams(window.location.search);
 
-const darkMode = searchParams.get("darkMode");
-
-if (darkMode === "true") {
+if (searchParams.get("darkMode") === "true") {
 	window.document.documentElement.classList.add("dark");
 }
 
-ipcRenderer.on("onDarkModeChanged", (_event, darkMode) => {
+ipcRenderer.on("darkModeChanged", (_event, darkMode) => {
 	window.document.documentElement.classList[darkMode ? "add" : "remove"](
 		"dark",
 	);
+});
+
+ipcRenderer.on("isSettingsOpenChanged", (_event, isSettingsOpen) => {
+	queryClient.setQueryData(["isSettingsOpen"], isSettingsOpen);
+});
+
+ipcRenderer.on("accountsChanged", (_event, accounts) => {
+	queryClient.setQueryData(["accounts"], accounts);
 });
 
 const rootElement = document.getElementById("root");
