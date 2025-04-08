@@ -75,7 +75,16 @@
 		},
 		"linux": {
 			"icon": "build/icons/",
-			"target": ["AppImage", "deb"],
+			"target": [
+				{
+					"target": "AppImage",
+					"arch": ["x64", "arm64"]
+				},
+				{
+					"target": "deb",
+					"arch": ["x64", "arm64"]
+				}
+			],
 			"synopsis": "Nifty Gmail desktop app",
 			"description": "Meru is an unofficial and security focused Gmail app with many useful features.",
 			"category": "Network;Office"
@@ -83,7 +92,16 @@
 		"win": {
 			"verifyUpdateCodeSignature": false,
 			"icon": "build/icon.png",
-			"target": ["nsis", "portable"]
+			"target": [
+				{
+					"target": "nsis",
+					"arch": ["x64", "arm64"]
+				},
+				{
+					"target": "portable",
+					"arch": ["x64", "arm64"]
+				}
+			]
 		},
 		"nsis": {
 			"oneClick": false,
