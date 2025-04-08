@@ -62,6 +62,18 @@ class Main {
 		}
 	}
 
+	getTitlebarOverlayOptions() {
+		return {
+			color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
+			symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
+			height: APP_TITLEBAR_HEIGHT - 1,
+		};
+	}
+
+	updateTitlebarOverlay() {
+		this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
+	}
+
 	init() {
 		const lastWindowState = config.get("lastWindowState");
 
@@ -75,11 +87,7 @@ class Main {
 			y: lastWindowState.bounds.y,
 			show: false,
 			titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
-			titleBarOverlay: {
-				color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
-				symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
-				height: APP_TITLEBAR_HEIGHT - 1,
-			},
+			titleBarOverlay: this.getTitlebarOverlayOptions(),
 			darkTheme: nativeTheme.shouldUseDarkColors,
 			webPreferences: {
 				preload: path.join(
