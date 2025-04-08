@@ -278,18 +278,57 @@ export class AppMenu {
 									}
 								},
 							},
-							{
-								label: platform.isMacOS
-									? "Show Menu Bar Icon"
-									: "Show System Tray Icon",
-								type: "checkbox",
-								checked: config.get("trayIconEnabled"),
-								click: ({ checked }: { checked: boolean }) => {
-									config.set("trayIconEnabled", checked);
+							platform.isMacOS
+								? {
+										label: "Show Menu Bar Icon",
+										type: "checkbox",
+										checked: config.get("tray.enabled"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("tray.enabled", checked);
 
-									showRestartDialog();
-								},
-							},
+											showRestartDialog();
+										},
+									}
+								: {
+										label: "System Tray Icon",
+										submenu: [
+											{
+												label: "Enabled",
+												type: "checkbox",
+												checked: config.get("tray.enabled"),
+												click: ({ checked }: { checked: boolean }) => {
+													config.set("tray.enabled", checked);
+
+													showRestartDialog();
+												},
+											},
+											{
+												label: "Color",
+												submenu: [
+													{
+														label: "Light",
+														type: "radio",
+														checked: config.get("tray.iconColor") === "light",
+														click: () => {
+															config.set("tray.iconColor", "light");
+
+															showRestartDialog();
+														},
+													},
+													{
+														label: "Dark",
+														type: "radio",
+														checked: config.get("tray.iconColor") === "dark",
+														click: () => {
+															config.set("tray.iconColor", "dark");
+
+															showRestartDialog();
+														},
+													},
+												],
+											},
+										],
+									},
 							{
 								label: "Launch Minimized",
 								type: "checkbox",

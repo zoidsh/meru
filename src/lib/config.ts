@@ -26,7 +26,6 @@ export type Config = {
 	launchMinimized: boolean;
 	launchAtLogin: boolean;
 	hardwareAcceleration: boolean;
-	trayIconEnabled: boolean;
 	showDockIcon: boolean;
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
@@ -45,6 +44,8 @@ export type Config = {
 	"blocker.enabled": boolean;
 	"blocker.ads": boolean;
 	"blocker.tracking": boolean;
+	"tray.enabled": boolean;
+	"tray.iconColor": "light" | "dark";
 };
 
 export const config = new Store<Config>({
@@ -65,7 +66,6 @@ export const config = new Store<Config>({
 		launchMinimized: false,
 		launchAtLogin: false,
 		hardwareAcceleration: false,
-		trayIconEnabled: !platform.isMacOS,
 		showDockIcon: true,
 		resetConfig: false,
 		theme: "system",
@@ -84,5 +84,7 @@ export const config = new Store<Config>({
 		"blocker.enabled": true,
 		"blocker.ads": true,
 		"blocker.tracking": true,
+		"tray.enabled": !platform.isMacOS,
+		"tray.iconColor": "light",
 	},
 });

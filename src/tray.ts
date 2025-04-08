@@ -1,7 +1,7 @@
 import path from "node:path";
 import { config } from "@/lib/config";
 import { platform } from "@electron-toolkit/utils";
-import Electron, { nativeTheme } from "electron";
+import Electron from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
 
@@ -14,7 +14,7 @@ export class AppTray {
 	private _iconUnread: Electron.NativeImage | undefined;
 
 	init() {
-		if (config.get("trayIconEnabled")) {
+		if (config.get("tray.enabled")) {
 			this._icon = this.createIcon(false);
 			this._iconUnread = this.createIcon(true);
 
@@ -45,7 +45,7 @@ export class AppTray {
 			? "IconMenuBarTemplate.png"
 			: unread
 				? "IconTrayUnread.png"
-				: `IconTray${nativeTheme.shouldUseDarkColors ? "-Dark" : ""}.png`;
+				: `IconTray-${config.get("tray.iconColor") === "light" ? "Light" : "Dark"}.png`;
 
 		const image = Electron.nativeImage.createFromPath(
 			path.join(__dirname, "..", "static", iconFileName),
@@ -56,14 +56,6 @@ export class AppTray {
 		}
 
 		return image;
-	}
-
-	updateIcon() {
-		if (this._tray) {
-			this._icon = this.createIcon(false);
-
-			this._tray.setImage(this._icon);
-		}
 	}
 
 	updateMenu() {
