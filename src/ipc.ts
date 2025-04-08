@@ -3,45 +3,34 @@ import type { mailActionCodeMap } from "@/gmail/preload/inbox-observer";
 import { type AccountConfig, config } from "@/lib/config";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
-import { Notification, nativeTheme } from "electron";
+import { Notification } from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
 import { appMenu } from "./menu";
 import { appState } from "./state";
 
-export type IpcMainEvents =
-	| {
-			selectAccount: [selectedAccountId: AccountConfig["id"]];
-			addAccount: [addedAccount: Pick<AccountConfig, "label">];
-			removeAccount: [removedAccountId: AccountConfig["id"]];
-			updateAccount: [updatedAccount: AccountConfig];
-			moveAccount: [
-				movedAccountId: AccountConfig["id"],
-				direction: "up" | "down",
-			];
-			toggleIsSettingsOpen: [];
-			goNavigationHistory: [action: "back" | "forward"];
-			reloadGmail: [];
-			updateUnreadCount: [unreadCount: number];
-			handleNewMails: [mails: GmailMail[]];
-			toggleAppMenu: [];
-	  }
-	| {
-			getIsSettingsOpen: () => boolean;
-			getAccounts: () => {
-				config: AccountConfig;
-				gmail: { state: GmailState };
-			}[];
-	  };
+export type IpcMainEvents = {
+	selectAccount: [selectedAccountId: AccountConfig["id"]];
+	addAccount: [addedAccount: Pick<AccountConfig, "label">];
+	removeAccount: [removedAccountId: AccountConfig["id"]];
+	updateAccount: [updatedAccount: AccountConfig];
+	moveAccount: [movedAccountId: AccountConfig["id"], direction: "up" | "down"];
+	toggleIsSettingsOpen: [];
+	goNavigationHistory: [action: "back" | "forward"];
+	reloadGmail: [];
+	updateUnreadCount: [unreadCount: number];
+	handleNewMails: [mails: GmailMail[]];
+	toggleAppMenu: [];
+};
+
+export type Accounts = {
+	config: AccountConfig;
+	gmail: GmailState;
+}[];
 
 export type IpcRendererEvent = {
 	isSettingsOpenChanged: [settingsOpen: boolean];
-	accountsChanged: [
-		accounts: {
-			config: AccountConfig;
-			gmail: { state: GmailState };
-		}[],
-	];
+	accountsChanged: [accounts: Accounts];
 	navigateTo: [
 		destination:
 			| "inbox"
@@ -67,8 +56,6 @@ export const ipcMain = new IpcListener<IpcMainEvents>();
 export const ipcRenderer = new IpcEmitter<IpcRendererEvent>();
 
 export function initIpc() {
-	ipcMain.handle("getIsSettingsOpen", () => appState.isSettingsOpen);
-
 	ipcMain.on("toggleIsSettingsOpen", () => {
 		appState.toggleIsSettingsOpen();
 
@@ -79,24 +66,13 @@ export function initIpc() {
 		}
 	});
 
-	ipcMain.handle("getAccounts", () =>
-		accounts.getAccounts().map((account) => ({
-			config: account.config,
-			gmail: {
-				state: account.gmail.state,
-			},
-		})),
-	);
-
 	accounts.on("accounts-changed", (accounts) => {
 		ipcRenderer.send(
 			main.window.webContents,
 			"accountsChanged",
 			accounts.map((account) => ({
 				config: account.config,
-				gmail: {
-					state: account.gmail.state,
-				},
+				gmail: account.gmail.state,
 			})),
 		);
 	});

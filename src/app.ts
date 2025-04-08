@@ -44,6 +44,16 @@ import { appUpdater } from "./updater";
 
 	main.init();
 
+	accounts.init();
+
+	main.loadURL();
+
+	initIpc();
+
+	appMenu.init();
+
+	appTray.init();
+
 	app.on("second-instance", () => {
 		main.show();
 	});
@@ -67,12 +77,4 @@ import { appUpdater } from "./updater";
 			maximized: main.window.isMaximized(),
 		});
 	});
-
-	accounts.init();
-
-	initIpc();
-
-	appMenu.init();
-
-	appTray.init();
 })();

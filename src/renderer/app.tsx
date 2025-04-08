@@ -1,9 +1,8 @@
-import { QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { AppMain } from "./components/app-main";
 import { AppTitlebar } from "./components/app-titlebar";
 import { ipcRenderer } from "./lib/ipc";
-import { queryClient } from "./lib/react-query";
+import { useAccountsStore, useSettingsStore } from "./lib/stores";
 
 const searchParams = new URLSearchParams(window.location.search);
 
@@ -17,12 +16,18 @@ ipcRenderer.on("darkModeChanged", (_event, darkMode) => {
 	);
 });
 
-ipcRenderer.on("isSettingsOpenChanged", (_event, isSettingsOpen) => {
-	queryClient.setQueryData(["isSettingsOpen"], isSettingsOpen);
-});
+const accountsParam = searchParams.get("accounts");
+
+if (accountsParam) {
+	useAccountsStore.setState({ accounts: JSON.parse(accountsParam) });
+}
 
 ipcRenderer.on("accountsChanged", (_event, accounts) => {
-	queryClient.setQueryData(["accounts"], accounts);
+	useAccountsStore.setState({ accounts });
+});
+
+ipcRenderer.on("isSettingsOpenChanged", (_event, isSettingsOpen) => {
+	useSettingsStore.setState({ isOpen: isSettingsOpen });
 });
 
 const rootElement = document.getElementById("root");
@@ -34,8 +39,8 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 
 root.render(
-	<QueryClientProvider client={queryClient}>
+	<>
 		<AppTitlebar />
 		<AppMain />
-	</QueryClientProvider>,
+	</>,
 );

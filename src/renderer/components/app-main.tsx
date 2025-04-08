@@ -1,15 +1,15 @@
 import { APP_TITLEBAR_HEIGHT } from "@/lib/constants";
 import { XIcon } from "lucide-react";
-import { useIsSettingsOpen } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
+import { useSettingsStore } from "../lib/stores";
 import { Accounts } from "./accounts";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 
 export function AppMain() {
-	const isSettingsOpen = useIsSettingsOpen();
+	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
-	if (isSettingsOpen.data !== true) {
+	if (!isSettingsOpen) {
 		return;
 	}
 

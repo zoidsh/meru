@@ -6,23 +6,19 @@ import {
 	EllipsisVerticalIcon,
 	RotateCwIcon,
 } from "lucide-react";
-import {
-	useAccounts,
-	useIsSettingsOpen,
-	useSelectedAccount,
-} from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
+import { useAccountsStore, useSettingsStore } from "../lib/stores";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
 export function AppTitlebar() {
-	const accounts = useAccounts();
+	const accounts = useAccountsStore((state) => state.accounts);
 
-	const selectedAccount = useSelectedAccount();
+	const selectedAccount = accounts.find((account) => account.config.selected);
 
-	const isSettingsOpen = useIsSettingsOpen();
+	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
-	if (!accounts.data) {
+	if (!accounts) {
 		return;
 	}
 
@@ -40,7 +36,7 @@ export function AppTitlebar() {
 			>
 				<div
 					className={cn("flex items-center gap-1", {
-						invisible: isSettingsOpen.data,
+						invisible: isSettingsOpen,
 					})}
 				>
 					<Button
@@ -50,7 +46,7 @@ export function AppTitlebar() {
 						onClick={() => {
 							ipcMain.send("goNavigationHistory", "back");
 						}}
-						disabled={!selectedAccount?.gmail.state.navigationHistory.canGoBack}
+						disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
 					>
 						<ArrowLeftIcon />
 					</Button>
@@ -61,9 +57,7 @@ export function AppTitlebar() {
 						onClick={() => {
 							ipcMain.send("goNavigationHistory", "forward");
 						}}
-						disabled={
-							!selectedAccount?.gmail.state.navigationHistory.canGoForward
-						}
+						disabled={!selectedAccount?.gmail.navigationHistory.canGoForward}
 					>
 						<ArrowRightIcon />
 					</Button>
@@ -79,9 +73,9 @@ export function AppTitlebar() {
 					</Button>
 				</div>
 				<div className="flex-1 flex gap-2">
-					{!isSettingsOpen.data &&
-						accounts.data.length > 1 &&
-						accounts.data.map((account) => (
+					{!isSettingsOpen &&
+						accounts.length > 1 &&
+						accounts.map((account) => (
 							<Button
 								key={account.config.id}
 								variant={account.config.selected ? "secondary" : "ghost"}
@@ -92,13 +86,13 @@ export function AppTitlebar() {
 								}}
 							>
 								{account.config.label}
-								{account.gmail.state.attentionRequired && (
+								{account.gmail.attentionRequired && (
 									<CircleAlertIcon className="size-3.5 text-yellow-400" />
 								)}
-								{!account.gmail.state.attentionRequired &&
-								account.gmail.state.unreadCount > 0 ? (
+								{!account.gmail.attentionRequired &&
+								account.gmail.unreadCount > 0 ? (
 									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-										{account.gmail.state.unreadCount}
+										{account.gmail.unreadCount}
 									</div>
 								) : null}
 							</Button>

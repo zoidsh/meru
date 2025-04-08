@@ -3,6 +3,7 @@ import { config } from "@/lib/config";
 import { appState } from "@/state";
 import { is, platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
+import { accounts } from "./accounts";
 import { APP_TITLEBAR_HEIGHT } from "./lib/constants";
 
 class Main {
@@ -33,6 +34,16 @@ class Main {
 		searchParams.set(
 			"darkMode",
 			nativeTheme.shouldUseDarkColors ? "true" : "false",
+		);
+
+		searchParams.set(
+			"accounts",
+			JSON.stringify(
+				accounts.getAccounts().map((account) => ({
+					config: account.config,
+					gmail: account.gmail.state,
+				})),
+			),
 		);
 
 		if (is.dev) {
@@ -83,8 +94,6 @@ class Main {
 				? path.join(__dirname, "..", "static", "Icon.png")
 				: undefined,
 		});
-
-		this.loadURL();
 
 		if (!this.shouldLaunchMinimized()) {
 			this.window.once("ready-to-show", () => {

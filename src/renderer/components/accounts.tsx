@@ -1,16 +1,11 @@
 import type { AccountConfig } from "@/lib/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	ArrowDownIcon,
-	ArrowUpIcon,
-	EllipsisIcon,
-	PencilIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useAccounts } from "../lib/hooks";
 import { ipcMain } from "../lib/ipc";
+import { useAccountsStore } from "../lib/stores";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -174,9 +169,9 @@ function AccountMenuButton({
 }
 
 export function Accounts() {
-	const accounts = useAccounts();
+	const accounts = useAccountsStore((state) => state.accounts);
 
-	if (!accounts.data) {
+	if (!accounts.length) {
 		return;
 	}
 
@@ -194,17 +189,17 @@ export function Accounts() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{accounts.data.map((account, index) => (
+					{accounts.map((account, index) => (
 						<TableRow key={account.config.id}>
 							<TableCell className="w-full">{account.config.label}</TableCell>
 							<TableCell className="flex">
-								{accounts.data.length > 1 && (
+								{accounts.length > 1 && (
 									<>
 										<Button
 											size="icon"
 											className="size-8 p-0"
 											variant="ghost"
-											disabled={index + 1 === accounts.data.length}
+											disabled={index + 1 === accounts.length}
 											onClick={() => {
 												ipcMain.send("moveAccount", account.config.id, "down");
 											}}
@@ -226,7 +221,7 @@ export function Accounts() {
 								)}
 								<AccountMenuButton
 									account={account.config}
-									removable={accounts.data.length > 1}
+									removable={accounts.length > 1}
 								/>
 							</TableCell>
 						</TableRow>
