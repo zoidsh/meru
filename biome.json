@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": ["dist", "out"]
+		"ignore": ["dist", "build-js"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -22,6 +22,9 @@
 			"recommended": true,
 			"a11y": {
 				"noSvgWithoutTitle": "off"
+			},
+			"correctness": {
+				"noUnusedImports": "error"
 			}
 		}
 	},

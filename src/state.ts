@@ -1,4 +1,3 @@
-import { accounts } from "./accounts";
 import { ipcRenderer } from "./ipc";
 import { main } from "./main";
 
