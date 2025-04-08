@@ -40,9 +40,9 @@ import { appUpdater } from "./updater";
 
 	await Promise.all([app.whenReady(), blocker.init()]);
 
-	initTheme();
-
 	main.init();
+
+	initTheme();
 
 	accounts.init();
 

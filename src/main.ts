@@ -71,7 +71,9 @@ class Main {
 	}
 
 	updateTitlebarOverlay() {
-		this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
+		if (!platform.isMacOS) {
+			this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
+		}
 	}
 
 	init() {

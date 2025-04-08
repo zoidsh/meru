@@ -47,9 +47,15 @@ export class AppTray {
 				? "IconTrayUnread.png"
 				: `IconTray${nativeTheme.shouldUseDarkColors ? "-Dark" : ""}.png`;
 
-		return Electron.nativeImage.createFromPath(
+		const image = Electron.nativeImage.createFromPath(
 			path.join(__dirname, "..", "static", iconFileName),
 		);
+
+		if (platform.isMacOS) {
+			image.setTemplateImage(true);
+		}
+
+		return image;
 	}
 
 	updateIcon() {
