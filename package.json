@@ -92,16 +92,7 @@
 		"win": {
 			"verifyUpdateCodeSignature": false,
 			"icon": "build/icon.png",
-			"target": [
-				{
-					"target": "nsis",
-					"arch": ["x64", "arm64"]
-				},
-				{
-					"target": "portable",
-					"arch": ["x64", "arm64"]
-				}
-			]
+			"target": ["nsis", "portable"]
 		},
 		"nsis": {
 			"oneClick": false,
