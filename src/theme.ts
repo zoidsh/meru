@@ -2,6 +2,7 @@ import { nativeTheme } from "electron";
 import { ipcRenderer } from "./ipc";
 import { config } from "./lib/config";
 import { main } from "./main";
+import { appTray } from "./tray";
 
 export function initTheme() {
 	nativeTheme.themeSource = config.get("theme");
@@ -14,5 +15,7 @@ export function initTheme() {
 		);
 
 		main.updateTitlebarOverlay();
+
+		appTray.updateIcon();
 	});
 }

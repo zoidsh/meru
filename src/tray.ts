@@ -15,8 +15,11 @@ export class AppTray {
 
 	init() {
 		if (config.get("tray.enabled")) {
-			this._icon = this.createIcon(false);
-			this._iconUnread = this.createIcon(true);
+			this._icon = this.createIcon();
+
+			if (!platform.isMacOS) {
+				this._iconUnread = this.createIcon(true);
+			}
 
 			this._tray = new Electron.Tray(this._icon);
 
@@ -40,7 +43,7 @@ export class AppTray {
 		}
 	}
 
-	createIcon(unread: boolean): Electron.NativeImage {
+	createIcon(unread = false): Electron.NativeImage {
 		let iconFileName: string;
 
 		if (platform.isMacOS) {
@@ -62,6 +65,18 @@ export class AppTray {
 		}
 
 		return image;
+	}
+
+	updateIcon() {
+		if (this._tray && !platform.isMacOS) {
+			this._icon = this.createIcon();
+
+			const unreadCount = accounts.getTotalUnreadCount();
+
+			if (!unreadCount) {
+				this._tray.setImage(this._icon);
+			}
+		}
 	}
 
 	updateMenu() {
@@ -91,8 +106,10 @@ export class AppTray {
 	}
 
 	updateUnreadStatus(unreadCount: number) {
-		if (this._tray && this._icon && this._iconUnread) {
-			this._tray.setImage(unreadCount ? this._iconUnread : this._icon);
+		if (this._tray) {
+			if (this._icon && this._iconUnread) {
+				this._tray.setImage(unreadCount ? this._iconUnread : this._icon);
+			}
 
 			if (platform.isMacOS) {
 				this._tray.setTitle(unreadCount ? unreadCount.toString() : "");
