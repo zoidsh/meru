@@ -306,6 +306,16 @@ export class AppMenu {
 												label: "Color",
 												submenu: [
 													{
+														label: "System",
+														type: "radio",
+														checked: config.get("tray.iconColor") === "system",
+														click: () => {
+															config.set("tray.iconColor", "system");
+
+															showRestartDialog();
+														},
+													},
+													{
 														label: "Light",
 														type: "radio",
 														checked: config.get("tray.iconColor") === "light",

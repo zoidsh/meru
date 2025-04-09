@@ -1,7 +1,7 @@
 import path from "node:path";
 import { config } from "@/lib/config";
 import { platform } from "@electron-toolkit/utils";
-import Electron from "electron";
+import Electron, { nativeTheme } from "electron";
 import { accounts } from "./accounts";
 import { main } from "./main";
 
@@ -41,11 +41,17 @@ export class AppTray {
 	}
 
 	createIcon(unread: boolean): Electron.NativeImage {
-		const iconFileName = platform.isMacOS
-			? "IconMenuBarTemplate.png"
-			: unread
+		let iconFileName: string;
+
+		if (platform.isMacOS) {
+			iconFileName = "IconMenuBarTemplate.png";
+		} else {
+			const iconColor = config.get("tray.iconColor");
+
+			iconFileName = unread
 				? "IconTrayUnread.png"
-				: `IconTray-${config.get("tray.iconColor") === "light" ? "Light" : "Dark"}.png`;
+				: `IconTray-${iconColor === "system" ? (nativeTheme.shouldUseDarkColors ? "Light" : "Dark") : `${iconColor[0].toUpperCase()}${iconColor.slice(1)}`}.png`;
+		}
 
 		const image = Electron.nativeImage.createFromPath(
 			path.join(__dirname, "..", "static", iconFileName),
