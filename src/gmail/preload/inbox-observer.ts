@@ -1,6 +1,5 @@
 import { GMAIL_URL } from "@/lib/constants";
 import elementReady from "element-ready";
-import Cookie from "js-cookie";
 import { $, $$ } from "select-dom";
 import type { GmailMail } from "..";
 import { ipcMain, ipcRenderer } from "./ipc";
@@ -201,7 +200,10 @@ async function sendMailAction(
 		throw new Error("ID key is missing");
 	}
 
-	const gmailActionToken = Cookie.get("GMAIL_AT");
+	const gmailActionToken = document.cookie
+		.split("; ")
+		.find((row) => row.startsWith("GMAIL_AT="))
+		?.split("=")[1];
 
 	if (!gmailActionToken) {
 		throw new Error("Action token is missing");
