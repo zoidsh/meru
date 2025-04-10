@@ -519,7 +519,7 @@ export class AppMenu {
 						},
 					},
 					{
-						label: "Select Next Account (hidden shortcut 1)",
+						label: "Select Next Account (hidden shortcut 2)",
 						accelerator: "Cmd+Option+Right",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
