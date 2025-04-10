@@ -1,7 +1,7 @@
 import { clipboard, dialog, shell } from "electron";
 import { config } from "./config";
 
-export function cleanUrl(url: string): string {
+export function getCleanUrl(url: string): string {
 	if (url.includes("google.com/url")) {
 		return new URL(url).searchParams.get("q") ?? url;
 	}
@@ -10,10 +10,10 @@ export function cleanUrl(url: string): string {
 }
 
 export async function openExternalUrl(url: string) {
-	const cleanURL = cleanUrl(url);
+	const cleanUrl = getCleanUrl(url);
 
 	if (config.get("externalLinks.confirm")) {
-		const { origin } = new URL(cleanURL);
+		const { origin } = new URL(cleanUrl);
 		const trustedHosts = config.get("externalLinks.trustedHosts");
 
 		if (!trustedHosts.includes(origin)) {
@@ -23,15 +23,16 @@ export async function openExternalUrl(url: string) {
 				message:
 					"Do you want to open this external link in your default browser?",
 				checkboxLabel: `Trust all links on ${origin}`,
-				detail: cleanURL,
+				detail: cleanUrl,
 			});
 
-			if (response === 1) {
-				clipboard.writeText(cleanURL);
+			if (response !== 0) {
+				if (response === 1) {
+					clipboard.writeText(cleanUrl);
+				}
+
 				return;
 			}
-
-			if (response !== 0) return;
 
 			if (checkboxChecked) {
 				config.set("externalLinks.trustedHosts", [...trustedHosts, origin]);
@@ -39,5 +40,5 @@ export async function openExternalUrl(url: string) {
 		}
 	}
 
-	shell.openExternal(url);
+	shell.openExternal(cleanUrl);
 }
