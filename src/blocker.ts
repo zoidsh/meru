@@ -1,16 +1,11 @@
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
-import {
-	FiltersEngine,
-	Request,
-	adsAndTrackingLists,
-	adsLists,
-} from "@ghostery/adblocker";
-import { type Session, app } from "electron";
+import { Engine, FilterSet } from "adblock-rs";
+import type { Session } from "electron";
 import { config } from "./lib/config";
 
 export class Blocker {
-	private _engine: FiltersEngine | undefined;
+	private _engine: Engine | undefined;
 
 	get engine() {
 		if (!this._engine) {
@@ -20,40 +15,44 @@ export class Blocker {
 		return this._engine;
 	}
 
-	set engine(engine: FiltersEngine) {
+	set engine(engine: Engine) {
 		this._engine = engine;
 	}
 
 	async init() {
-		if (!config.get("blocker.enabled")) {
+		if (
+			!config.get("blocker.enabled") ||
+			(!config.get("blocker.ads") && !config.get("blocker.tracking"))
+		) {
 			return;
 		}
 
-		const lists =
-			config.get("blocker.ads") && config.get("blocker.tracking")
-				? adsAndTrackingLists
-				: config.get("blocker.ads")
-					? adsLists
-					: config.get("blocker.tracking")
-						? adsAndTrackingLists.filter((list) => !adsLists.includes(list))
-						: [];
+		const debugInfo = true;
+		const filterSet = new FilterSet(debugInfo);
 
-		if (!lists.length) {
-			return;
+		if (config.get("blocker.ads")) {
+			const easylistFilters = fs
+				.readFileSync(
+					path.join(__dirname, "..", "static", "blocker", "easylist.txt"),
+					{ encoding: "utf-8" },
+				)
+				.split("\n");
+
+			filterSet.addFilters(easylistFilters);
 		}
 
-		this.engine = await FiltersEngine.fromLists(
-			fetch,
-			lists,
-			{
-				enableCompression: true,
-			},
-			{
-				path: path.join(app.getPath("userData"), "blocker-engine.bin"),
-				read: fs.readFile,
-				write: fs.writeFile,
-			},
-		);
+		if (config.get("blocker.tracking")) {
+			const easyprivacyFilters = fs
+				.readFileSync(
+					path.join(__dirname, "..", "static", "blocker", "easyprivacy.txt"),
+					{ encoding: "utf-8" },
+				)
+				.split("\n");
+
+			filterSet.addFilters(easyprivacyFilters);
+		}
+
+		this._engine = new Engine(filterSet, true);
 	}
 
 	setupSession(session: Session) {
@@ -63,13 +62,7 @@ export class Blocker {
 
 		session.webRequest.onBeforeRequest(
 			({ url, resourceType, referrer }, callback) => {
-				const { match } = this.engine.match(
-					Request.fromRawDetails({
-						url,
-						type: resourceType,
-						sourceUrl: referrer,
-					}),
-				);
+				const match = this.engine.check(url, referrer, resourceType);
 
 				callback({
 					cancel: match,

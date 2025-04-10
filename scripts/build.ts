@@ -27,7 +27,7 @@ function buildAppFiles() {
 		outdir: "./build-js",
 		target: "node",
 		format: "cjs",
-		external: ["electron"],
+		external: ["electron", "adblock-rs"],
 		sourcemap: "linked",
 		define: !args.values.dev
 			? {
