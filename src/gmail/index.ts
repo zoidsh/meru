@@ -225,7 +225,7 @@ export class Gmail {
 		this.view.webContents.loadURL(GMAIL_URL);
 
 		if (is.dev) {
-			this.view.webContents.openDevTools();
+			this.view.webContents.openDevTools({ mode: "bottom" });
 		}
 
 		main.window.on("resize", () => {
