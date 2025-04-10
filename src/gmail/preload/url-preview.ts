@@ -1,8 +1,5 @@
 import { GMAIL_URL } from "@/lib/constants";
 
-let urlPreviewElement: HTMLDivElement | null = null;
-let timeout: Timer | null = null;
-
 function lookupHref(target: HTMLElement) {
 	if (target instanceof HTMLAnchorElement) {
 		return target.href;
@@ -24,51 +21,35 @@ export function initUrlPreview() {
 		const href = lookupHref(event.target);
 
 		if (!href || href.startsWith(GMAIL_URL)) {
-			if (urlPreviewElement) {
-				urlPreviewElement.remove();
-				urlPreviewElement = null;
-			}
-
 			return;
 		}
 
-		urlPreviewElement = document.createElement("div");
+		const urlPreviewElement = document.createElement("div");
 
-		urlPreviewElement.style.fontFamily = "system-ui";
-		urlPreviewElement.style.position = "fixed";
-		urlPreviewElement.style.left = "0";
-		urlPreviewElement.style.bottom = "0";
-		urlPreviewElement.style.maxWidth = "50%";
-		urlPreviewElement.style.padding = "6px";
-		urlPreviewElement.style.fontSize = "0.75rem";
-		urlPreviewElement.style.textOverflow = "ellipsis";
-		urlPreviewElement.style.overflow = "hidden";
-		urlPreviewElement.style.whiteSpace = "nowrap";
-		urlPreviewElement.style.color = "white";
-		urlPreviewElement.style.background = "black";
+		urlPreviewElement.className = "url-preview";
 
 		urlPreviewElement.textContent = href;
 
 		document.body.append(urlPreviewElement);
 
-		timeout = setTimeout(() => {
-			if (urlPreviewElement) {
-				urlPreviewElement.style.maxWidth = "100%";
-			}
-		}, 2000);
-	});
+		const timeout = setTimeout(() => {
+			urlPreviewElement.setAttribute("data-long-hover", "true");
+		}, 1500);
 
-	window.addEventListener("mouseout", () => {
-		if (timeout) {
+		const removeUrlPreviewElement = () => {
 			clearTimeout(timeout);
 
-			timeout = null;
-		}
+			urlPreviewElement.onanimationend = () => {
+				urlPreviewElement.remove();
+			};
 
-		if (urlPreviewElement) {
-			urlPreviewElement.remove();
+			urlPreviewElement.setAttribute("data-fade-out", "true");
 
-			urlPreviewElement = null;
-		}
+			if (event.target) {
+				event.target.removeEventListener("mouseleave", removeUrlPreviewElement);
+			}
+		};
+
+		event.target.addEventListener("mouseleave", removeUrlPreviewElement);
 	});
 }
