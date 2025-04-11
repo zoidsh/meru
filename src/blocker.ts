@@ -1,80 +1,86 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-	FiltersEngine,
-	Request,
-	adsAndTrackingLists,
-	adsLists,
-} from "@ghostery/adblocker";
-import { type Session, app } from "electron";
+import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { config } from "./lib/config";
 
 export class Blocker {
-	private _engine: FiltersEngine | undefined;
-
-	get engine() {
-		if (!this._engine) {
-			throw new Error("Engine not initialized");
-		}
-
-		return this._engine;
-	}
-
-	set engine(engine: FiltersEngine) {
-		this._engine = engine;
-	}
+	private engine: FiltersEngine | undefined;
 
 	async init() {
 		if (!config.get("blocker.enabled")) {
 			return;
 		}
 
-		const lists =
-			config.get("blocker.ads") && config.get("blocker.tracking")
-				? adsAndTrackingLists
-				: config.get("blocker.ads")
-					? adsLists
-					: config.get("blocker.tracking")
-						? adsAndTrackingLists.filter((list) => !adsLists.includes(list))
-						: [];
+		const lists: Promise<string>[] = [];
+
+		if (config.get("blocker.ads")) {
+			lists.push(
+				fs.readFile(
+					path.join(__dirname, "..", "static", "blocker", "easylist.txt"),
+					"utf-8",
+				),
+			);
+		}
+
+		if (config.get("blocker.tracking")) {
+			lists.push(
+				fs.readFile(
+					path.join(__dirname, "..", "static", "blocker", "easyprivacy.txt"),
+					"utf-8",
+				),
+			);
+		}
 
 		if (!lists.length) {
 			return;
 		}
 
-		this.engine = await FiltersEngine.fromLists(
-			fetch,
-			lists,
-			{
-				enableCompression: true,
-			},
-			{
-				path: path.join(app.getPath("userData"), "blocker-engine.bin"),
-				read: fs.readFile,
-				write: fs.writeFile,
-			},
-		);
+		this.engine = FiltersEngine.parse((await Promise.all(lists)).join("\n"));
 	}
 
-	setupSession(session: Session) {
-		if (!this._engine) {
+	private onBeforeRequest = (
+		details: Electron.OnBeforeRequestListenerDetails,
+		callback: (response: Electron.CallbackResponse) => void,
+	) => {
+		if (!this.engine) {
+			return;
+		}
+
+		const { id, url, resourceType, referrer } = details;
+
+		const { redirect, match } = this.engine.match(
+			Request.fromRawDetails({
+				_originalRequestDetails: details,
+				requestId: `${id}`,
+				url,
+				type: resourceType,
+				sourceUrl: referrer,
+			}),
+		);
+
+		if (redirect) {
+			callback({ redirectURL: redirect.dataUrl });
+
+			return;
+		}
+
+		if (match) {
+			callback({ cancel: true });
+
+			return;
+		}
+
+		callback({});
+	};
+
+	setupSession(session: Electron.Session) {
+		if (!this.engine) {
 			return;
 		}
 
 		session.webRequest.onBeforeRequest(
-			({ url, resourceType, referrer }, callback) => {
-				const { match } = this.engine.match(
-					Request.fromRawDetails({
-						url,
-						type: resourceType,
-						sourceUrl: referrer,
-					}),
-				);
-
-				callback({
-					cancel: match,
-				});
-			},
+			{ urls: ["<all_urls>"] },
+			this.onBeforeRequest,
 		);
 	}
 }
