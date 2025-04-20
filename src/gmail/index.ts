@@ -2,7 +2,11 @@ import EventEmitter from "node:events";
 import path from "node:path";
 import { blocker } from "@/blocker";
 import type { AccountConfig } from "@/lib/config";
-import { APP_TITLEBAR_HEIGHT, GMAIL_URL } from "@/lib/constants";
+import {
+	APP_TITLEBAR_HEIGHT,
+	GMAIL_URL,
+	GOOGLE_ACCOUNTS_URL,
+} from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
@@ -216,6 +220,16 @@ export class Gmail {
 			return {
 				action: "deny",
 			};
+		});
+
+		this.view.webContents.on("will-redirect", (event, url) => {
+			if (url.startsWith("https://www.google.com")) {
+				event.preventDefault();
+
+				this.view.webContents.loadURL(
+					`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`,
+				);
+			}
 		});
 
 		main.window.contentView.addChildView(this.view);
