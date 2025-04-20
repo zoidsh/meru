@@ -631,9 +631,13 @@ export class AppMenu {
 						label: "Full Reload",
 						accelerator: "CommandOrControl+Shift+R",
 						click: () => {
-							main.window.webContents.reload();
-
 							main.show();
+
+							main.loadURL();
+
+							for (const account of accounts.getAccounts()) {
+								account.gmail.view.webContents.reload();
+							}
 						},
 					},
 					{
