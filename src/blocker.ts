@@ -2,12 +2,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { config } from "./lib/config";
+import { appState } from "./state";
 
 export class Blocker {
 	private engine: FiltersEngine | undefined;
 
 	async init() {
-		if (!config.get("blocker.enabled")) {
+		if (!appState.isValidLicenseKey || !config.get("blocker.enabled")) {
 			return;
 		}
 

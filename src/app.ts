@@ -39,7 +39,9 @@ import { appUpdater } from "./updater";
 
 	initDownloads();
 
-	await Promise.all([app.whenReady(), blocker.init(), validateLicenseKey()]);
+	await validateLicenseKey();
+
+	await Promise.all([app.whenReady(), blocker.init()]);
 
 	main.init();
 
