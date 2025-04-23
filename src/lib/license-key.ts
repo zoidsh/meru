@@ -43,7 +43,7 @@ export async function activateLicenseKey(input: {
 			{
 				method: "POST",
 				body: {
-					licenseKey: input.licenseKey,
+					licenseKey: input.licenseKey.trim(),
 					instanceName: await machineId(),
 					force: input.force,
 				},
