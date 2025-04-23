@@ -1,12 +1,12 @@
 import { createRoot } from "react-dom/client";
 import { AppMain } from "./components/app-main";
 import { AppTitlebar } from "./components/app-titlebar";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { ipcRenderer } from "./lib/ipc";
+import { accountsSearchParam, darkModeSearchParam } from "./lib/search-params";
 import { useAccountsStore, useSettingsStore } from "./lib/stores";
 
-const searchParams = new URLSearchParams(window.location.search);
-
-if (searchParams.get("darkMode") === "true") {
+if (darkModeSearchParam === "true") {
 	window.document.documentElement.classList.add("dark");
 }
 
@@ -16,10 +16,8 @@ ipcRenderer.on("darkModeChanged", (_event, darkMode) => {
 	);
 });
 
-const accountsParam = searchParams.get("accounts");
-
-if (accountsParam) {
-	useAccountsStore.setState({ accounts: JSON.parse(accountsParam) });
+if (accountsSearchParam) {
+	useAccountsStore.setState({ accounts: JSON.parse(accountsSearchParam) });
 }
 
 ipcRenderer.on("accountsChanged", (_event, accounts) => {
@@ -39,8 +37,8 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 
 root.render(
-	<>
+	<TooltipProvider delayDuration={0}>
 		<AppTitlebar />
 		<AppMain />
-	</>,
+	</TooltipProvider>,
 );

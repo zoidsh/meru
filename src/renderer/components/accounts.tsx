@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ipcMain } from "../lib/ipc";
+import { licenseKeySearchParam } from "../lib/search-params";
 import { useAccountsStore } from "../lib/stores";
 import { Button } from "./ui/button";
 import {
@@ -37,6 +38,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "./ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export const accountSchema = z.object({
 	id: z.string(),
@@ -94,10 +96,26 @@ function AccountForm({
 function AddAccountButton() {
 	const [isOpen, setIsOpen] = useState(false);
 
+	if (
+		Boolean(licenseKeySearchParam && JSON.parse(licenseKeySearchParam)) ===
+		false
+	) {
+		return (
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<div>
+						<Button disabled>Add</Button>
+					</div>
+				</TooltipTrigger>
+				<TooltipContent>Upgrade to add more accounts</TooltipContent>
+			</Tooltip>
+		);
+	}
+
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm">Add</Button>
+				<Button>Add</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -176,12 +194,11 @@ export function Accounts() {
 	}
 
 	return (
-		<>
-			<div className="flex justify-between items-center mb-6">
+		<div>
+			<div className="flex justify-between items-center mb-4">
 				<div className="text-3xl font-bold tracking-tight">Accounts</div>
-				<AddAccountButton />
 			</div>
-			<Table>
+			<Table className="mb-4">
 				<TableHeader>
 					<TableRow>
 						<TableHead>Label</TableHead>
@@ -228,6 +245,9 @@ export function Accounts() {
 					))}
 				</TableBody>
 			</Table>
-		</>
+			<div className="flex justify-end">
+				<AddAccountButton />
+			</div>
+		</div>
 	);
 }

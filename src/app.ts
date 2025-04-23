@@ -5,6 +5,7 @@ import { accounts } from "./accounts";
 import { blocker } from "./blocker";
 import { initDownloads } from "./downloads";
 import { initIpc } from "./ipc";
+import { validateLicenseKey } from "./lib/license-key";
 import { appMenu } from "./menu";
 import { appState } from "./state";
 import { initTheme } from "./theme";
@@ -38,7 +39,7 @@ import { appUpdater } from "./updater";
 
 	initDownloads();
 
-	await Promise.all([app.whenReady(), blocker.init()]);
+	await Promise.all([app.whenReady(), blocker.init(), validateLicenseKey()]);
 
 	main.init();
 

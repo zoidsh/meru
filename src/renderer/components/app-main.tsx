@@ -3,6 +3,7 @@ import { XIcon } from "lucide-react";
 import { ipcMain } from "../lib/ipc";
 import { useSettingsStore } from "../lib/stores";
 import { Accounts } from "./accounts";
+import { LicenseKey } from "./license-key";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -19,12 +20,13 @@ export function AppMain() {
 			style={{ height: `calc(100vh - ${APP_TITLEBAR_HEIGHT}px)` }}
 		>
 			<div
-				className="max-w-md mx-auto"
+				className="max-w-md mx-auto space-y-10"
 				style={{
 					padding: `${APP_TITLEBAR_HEIGHT}px 0`,
 				}}
 			>
 				<Accounts />
+				<LicenseKey />
 			</div>
 			<Button
 				variant="ghost"

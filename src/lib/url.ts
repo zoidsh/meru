@@ -9,14 +9,14 @@ export function getCleanUrl(url: string): string {
 	return url;
 }
 
-export async function openExternalUrl(url: string) {
+export async function openExternalUrl(url: string, trustedLink?: boolean) {
 	const cleanUrl = getCleanUrl(url);
 
 	if (config.get("externalLinks.confirm")) {
 		const { origin } = new URL(cleanUrl);
 		const trustedHosts = config.get("externalLinks.trustedHosts");
 
-		if (!trustedHosts.includes(origin)) {
+		if (!trustedLink && !trustedHosts.includes(origin)) {
 			const { response, checkboxChecked } = await dialog.showMessageBox({
 				type: "info",
 				buttons: ["Open Link", "Copy Link", "Cancel"],

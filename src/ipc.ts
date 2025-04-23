@@ -5,23 +5,33 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { Notification } from "electron";
 import { accounts } from "./accounts";
+import { activateLicenseKey } from "./lib/license-key";
 import { main } from "./main";
 import { appMenu } from "./menu";
 import { appState } from "./state";
 
-export type IpcMainEvents = {
-	selectAccount: [selectedAccountId: AccountConfig["id"]];
-	addAccount: [addedAccount: Pick<AccountConfig, "label">];
-	removeAccount: [removedAccountId: AccountConfig["id"]];
-	updateAccount: [updatedAccount: AccountConfig];
-	moveAccount: [movedAccountId: AccountConfig["id"], direction: "up" | "down"];
-	toggleIsSettingsOpen: [];
-	goNavigationHistory: [action: "back" | "forward"];
-	reloadGmail: [];
-	updateUnreadCount: [unreadCount: number];
-	handleNewMails: [mails: GmailMail[]];
-	toggleAppMenu: [];
-};
+export type IpcMainEvents =
+	| {
+			selectAccount: [selectedAccountId: AccountConfig["id"]];
+			addAccount: [addedAccount: Pick<AccountConfig, "label">];
+			removeAccount: [removedAccountId: AccountConfig["id"]];
+			updateAccount: [updatedAccount: AccountConfig];
+			moveAccount: [
+				movedAccountId: AccountConfig["id"],
+				direction: "up" | "down",
+			];
+			toggleIsSettingsOpen: [];
+			goNavigationHistory: [action: "back" | "forward"];
+			reloadGmail: [];
+			updateUnreadCount: [unreadCount: number];
+			handleNewMails: [mails: GmailMail[]];
+			toggleAppMenu: [];
+	  }
+	| {
+			activateLicenseKey: (
+				licenseKey: string,
+			) => ReturnType<typeof activateLicenseKey>;
+	  };
 
 export type Accounts = {
 	config: AccountConfig;
@@ -120,6 +130,10 @@ export function initIpc() {
 	ipcMain.on("toggleAppMenu", () => {
 		appMenu.togglePopup();
 	});
+
+	ipcMain.handle("activateLicenseKey", (_event, licenseKey) =>
+		activateLicenseKey({ licenseKey }),
+	);
 
 	if (Notification.isSupported()) {
 		ipcMain.on("handleNewMails", async (event, mails) => {

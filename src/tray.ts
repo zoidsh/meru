@@ -157,7 +157,7 @@ export class AppTray {
 		}
 
 		const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-			...config.get("accounts").map((accountConfig) => ({
+			...accounts.getAccountConfigs().map((accountConfig) => ({
 				label: accountConfig.label,
 				click: () => {
 					accounts.selectAccount(accountConfig.id);

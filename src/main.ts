@@ -5,6 +5,7 @@ import { is, platform } from "@electron-toolkit/utils";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { accounts } from "./accounts";
 import { APP_TITLEBAR_HEIGHT } from "./lib/constants";
+import { openExternalUrl } from "./lib/url";
 
 class Main {
 	private _window: BrowserWindow | undefined;
@@ -45,6 +46,8 @@ class Main {
 				})),
 			),
 		);
+
+		searchParams.set("licenseKey", JSON.stringify(config.get("licenseKey")));
 
 		if (is.dev) {
 			this.window.webContents.loadURL(
@@ -118,6 +121,14 @@ class Main {
 		if (lastWindowState.maximized) {
 			this.window.maximize();
 		}
+
+		this.window.webContents.setWindowOpenHandler(({ url }) => {
+			openExternalUrl(url, true);
+
+			return {
+				action: "deny",
+			};
+		});
 
 		this.window.on("close", (event) => {
 			// Workaround: Closing the main window when on full screen leaves a black screen

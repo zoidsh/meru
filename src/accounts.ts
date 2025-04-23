@@ -23,7 +23,7 @@ class Accounts {
 	gmails: Map<string, Gmail> = new Map();
 
 	init() {
-		for (const accountConfig of config.get("accounts")) {
+		for (const accountConfig of this.getAccountConfigs()) {
 			const gmail = new Gmail(accountConfig);
 
 			this.setGmailStateListener(gmail);
@@ -40,6 +40,20 @@ class Accounts {
 		config.onDidChange("accounts", () => {
 			this.emit("accounts-changed", this.getAccounts());
 		});
+	}
+
+	getAccountConfigs() {
+		const accountConfigs = config.get("accounts");
+
+		if (!appState.isValidLicenseKey && accountConfigs.length > 1) {
+			accountConfigs[0].selected = true;
+
+			config.set("accounts", [accountConfigs[0]]);
+
+			return [accountConfigs[0]];
+		}
+
+		return accountConfigs;
 	}
 
 	setGmailStateListener(gmail: Gmail) {
@@ -65,9 +79,9 @@ class Accounts {
 	}
 
 	getAccount(accountId: string) {
-		const accountConfig = config
-			.get("accounts")
-			.find((account) => account.id === accountId);
+		const accountConfig = this.getAccountConfigs().find(
+			(account) => account.id === accountId,
+		);
 
 		if (!accountConfig) {
 			throw new Error("Could not find account config");
@@ -83,9 +97,7 @@ class Accounts {
 	}
 
 	getAccounts() {
-		const accountConfigs = config.get("accounts");
-
-		return accountConfigs.map((accountConfig) => {
+		return this.getAccountConfigs().map((accountConfig) => {
 			const gmail = this.gmails.get(accountConfig.id);
 
 			if (!gmail) {
@@ -99,7 +111,7 @@ class Accounts {
 	getSelectedAccount() {
 		let selectedAccount: ReturnType<typeof this.getAccount> | undefined;
 
-		for (const accountConfig of config.get("accounts")) {
+		for (const accountConfig of this.getAccountConfigs()) {
 			if (accountConfig.selected) {
 				selectedAccount = this.getAccount(accountConfig.id);
 
@@ -117,7 +129,7 @@ class Accounts {
 	selectAccount(selectedAccountId: string) {
 		config.set(
 			"accounts",
-			config.get("accounts").map((accountConfig) => {
+			this.getAccountConfigs().map((accountConfig) => {
 				return {
 					...accountConfig,
 					selected: accountConfig.id === selectedAccountId,
@@ -135,7 +147,7 @@ class Accounts {
 	}
 
 	selectPreviousAccount() {
-		const accountConfigs = config.get("accounts");
+		const accountConfigs = this.getAccountConfigs();
 
 		const selectedAccountIndex = accountConfigs.findIndex(
 			(accountConfig) => accountConfig.selected,
@@ -153,7 +165,7 @@ class Accounts {
 	}
 
 	selectNextAccount() {
-		const accountConfigs = config.get("accounts");
+		const accountConfigs = this.getAccountConfigs();
 
 		const selectedAccountIndex = accountConfigs.findIndex(
 			(accountConfig) => accountConfig.selected,
@@ -185,7 +197,7 @@ class Accounts {
 
 		this.gmails.set(createdAccount.id, gmail);
 
-		config.set("accounts", [...config.get("accounts"), createdAccount]);
+		config.set("accounts", [...this.getAccountConfigs(), createdAccount]);
 
 		for (const account of this.gmails.values()) {
 			account.updateViewBounds();
@@ -203,9 +215,9 @@ class Accounts {
 
 		this.gmails.delete(selectedAccountId);
 
-		const updatedAccounts = config
-			.get("accounts")
-			.filter((account) => account.id !== selectedAccountId);
+		const updatedAccounts = this.getAccountConfigs().filter(
+			(account) => account.id !== selectedAccountId,
+		);
 
 		if (updatedAccounts.every((account) => account.selected === false)) {
 			updatedAccounts[0].selected = true;
@@ -221,18 +233,16 @@ class Accounts {
 	updateAccount(accountDetails: Pick<AccountConfig, "id" | "label">) {
 		config.set(
 			"accounts",
-			config
-				.get("accounts")
-				.map((account) =>
-					account.id === accountDetails.id
-						? { ...account, ...accountDetails }
-						: account,
-				),
+			this.getAccountConfigs().map((account) =>
+				account.id === accountDetails.id
+					? { ...account, ...accountDetails }
+					: account,
+			),
 		);
 	}
 
 	moveAccount(selectedAccountId: string, direction: "up" | "down") {
-		const accountConfigs = config.get("accounts");
+		const accountConfigs = this.getAccountConfigs();
 
 		const selectedAccountConfigIndex = accountConfigs.findIndex(
 			(account) => account.id === selectedAccountId,

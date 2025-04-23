@@ -46,6 +46,7 @@ export type Config = {
 	"blocker.tracking": boolean;
 	"tray.enabled": boolean;
 	"tray.iconColor": "system" | "light" | "dark";
+	licenseKey: string | null;
 };
 
 export const config = new Store<Config>({
@@ -86,5 +87,6 @@ export const config = new Store<Config>({
 		"blocker.tracking": true,
 		"tray.enabled": !platform.isMacOS,
 		"tray.iconColor": "system",
+		licenseKey: null,
 	},
 });
