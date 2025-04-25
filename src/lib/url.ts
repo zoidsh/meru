@@ -1,3 +1,4 @@
+import { appState } from "@/state";
 import { clipboard, dialog, shell } from "electron";
 import { config } from "./config";
 
@@ -12,7 +13,7 @@ export function getCleanUrl(url: string): string {
 export async function openExternalUrl(url: string, trustedLink?: boolean) {
 	const cleanUrl = getCleanUrl(url);
 
-	if (config.get("externalLinks.confirm")) {
+	if (appState.isValidLicenseKey && config.get("externalLinks.confirm")) {
 		const { origin } = new URL(cleanUrl);
 		const trustedHosts = config.get("externalLinks.trustedHosts");
 
