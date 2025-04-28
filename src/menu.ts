@@ -107,8 +107,11 @@ export class AppMenu {
 						submenu: [
 							{
 								label: "Confirm External Links before Opening",
+								enabled: appState.isValidLicenseKey,
 								type: "checkbox",
-								checked: config.get("externalLinks.confirm"),
+								checked:
+									appState.isValidLicenseKey &&
+									config.get("externalLinks.confirm"),
 								click: ({ checked }: { checked: boolean }) => {
 									config.set("externalLinks.confirm", checked);
 								},
@@ -211,6 +214,7 @@ export class AppMenu {
 							},
 							{
 								label: "Blocker",
+								enabled: appState.isValidLicenseKey,
 								submenu: [
 									{
 										label: "Enabled",
