@@ -9,7 +9,7 @@ class AppUpdater {
 			return;
 		}
 
-		log.transports.file.level = "info";
+		log.transports.file.level = is.dev ? "info" : "error";
 		autoUpdater.logger = log;
 
 		autoUpdater.checkForUpdatesAndNotify();
