@@ -254,34 +254,6 @@ export class AppMenu {
 							{
 								type: "separator",
 							},
-							{
-								label: "Default Mail Client",
-								type: "checkbox",
-								checked: app.isDefaultProtocolClient("mailto"),
-								click({ checked }) {
-									if (checked) {
-										const isSetMailClient =
-											app.setAsDefaultProtocolClient("mailto");
-
-										dialog.showMessageBox({
-											type: "info",
-											message: isSetMailClient
-												? `${app.name} is now set as default mail client.`
-												: `There was a problem with setting ${app.name} as default mail client.`,
-										});
-									} else {
-										const isUnsetMailClient =
-											app.removeAsDefaultProtocolClient("mailto");
-
-										dialog.showMessageBox({
-											type: "info",
-											message: isUnsetMailClient
-												? `${app.name} has been removed as default mail client.`
-												: `There was a problem with removing ${app.name} as default mail client.`,
-										});
-									}
-								},
-							},
 							platform.isMacOS
 								? {
 										label: "Show Menu Bar Icon",
