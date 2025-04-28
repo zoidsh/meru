@@ -37,7 +37,7 @@
 		"bun-plugin-tailwind": "^0.0.14",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"electron": "^35.0.2",
+		"electron": "^35.2.1",
 		"electron-builder": "^26.0.12",
 		"electron-context-menu": "^4.0.5",
 		"electron-dl": "^4.0.0",
