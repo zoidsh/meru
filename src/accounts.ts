@@ -62,7 +62,7 @@ class Accounts {
 		gmail.on("state-changed", () => {
 			const totalUnreadCount = this.getTotalUnreadCount();
 
-			if (platform.isMacOS) {
+			if (platform.isMacOS && app.dock) {
 				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
 			}
 

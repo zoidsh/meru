@@ -127,7 +127,7 @@ export class AppTray {
 					type: "checkbox",
 					checked: config.get("showDockIcon"),
 					click: ({ checked }: { checked: boolean }) => {
-						if (this._menu) {
+						if (this._menu && Electron.app.dock) {
 							config.set("showDockIcon", checked);
 
 							if (checked) {
