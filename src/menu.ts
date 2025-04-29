@@ -14,7 +14,7 @@ import log from "electron-log";
 import { accounts } from "./accounts";
 import { ipcRenderer } from "./ipc";
 import { config } from "./lib/config";
-import { GITHUB_REPO_URL } from "./lib/constants";
+import { GITHUB_REPO_URL, WEBSITE_URL } from "./lib/constants";
 import { showRestartDialog } from "./lib/dialogs";
 import { openExternalUrl } from "./lib/url";
 import { main } from "./main";
@@ -105,17 +105,6 @@ export class AppMenu {
 					{
 						label: "Preferences",
 						submenu: [
-							{
-								label: "Confirm External Links before Opening",
-								enabled: appState.isValidLicenseKey,
-								type: "checkbox",
-								checked:
-									appState.isValidLicenseKey &&
-									config.get("externalLinks.confirm"),
-								click: ({ checked }: { checked: boolean }) => {
-									config.set("externalLinks.confirm", checked);
-								},
-							},
 							{
 								label: "Downloads",
 								submenu: [
@@ -252,6 +241,67 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Phishing Protection",
+								enabled: appState.isValidLicenseKey,
+								submenu: [
+									{
+										label: "Confirm External Links before Opening",
+										type: "checkbox",
+										checked: config.get("externalLinks.confirm"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("externalLinks.confirm", checked);
+										},
+									},
+								],
+							},
+							{
+								label: "Theme",
+								submenu: [
+									{
+										label: "Light",
+										type: "radio",
+										checked: config.get("theme") === "light",
+										click: () => {
+											nativeTheme.themeSource = "light";
+
+											config.set("theme", "light");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
+										},
+									},
+									{
+										label: "Dark",
+										type: "radio",
+										checked: config.get("theme") === "dark",
+										click: () => {
+											nativeTheme.themeSource = "dark";
+
+											config.set("theme", "dark");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
+										},
+									},
+									{
+										label: "System",
+										type: "radio",
+										checked: config.get("theme") === "system",
+										click: () => {
+											nativeTheme.themeSource = "system";
+
+											config.set("theme", "system");
+
+											if (!platform.isMacOS) {
+												showRestartDialog();
+											}
+										},
+									},
+								],
+							},
+							{
 								type: "separator",
 							},
 							platform.isMacOS
@@ -339,53 +389,6 @@ export class AppMenu {
 								type: "separator",
 							},
 							{
-								label: "Theme",
-								submenu: [
-									{
-										label: "Light",
-										type: "radio",
-										checked: config.get("theme") === "light",
-										click: () => {
-											nativeTheme.themeSource = "light";
-
-											config.set("theme", "light");
-
-											if (!platform.isMacOS) {
-												showRestartDialog();
-											}
-										},
-									},
-									{
-										label: "Dark",
-										type: "radio",
-										checked: config.get("theme") === "dark",
-										click: () => {
-											nativeTheme.themeSource = "dark";
-
-											config.set("theme", "dark");
-
-											if (!platform.isMacOS) {
-												showRestartDialog();
-											}
-										},
-									},
-									{
-										label: "System",
-										type: "radio",
-										checked: config.get("theme") === "system",
-										click: () => {
-											nativeTheme.themeSource = "system";
-
-											config.set("theme", "system");
-
-											if (!platform.isMacOS) {
-												showRestartDialog();
-											}
-										},
-									},
-								],
-							},
-							{
 								label: "Hardware Acceleration",
 								type: "checkbox",
 								checked: config.get("hardwareAcceleration"),
@@ -409,6 +412,19 @@ export class AppMenu {
 										},
 									},
 								],
+							},
+							{
+								type: "separator",
+							},
+							{
+								label: "Manage License...",
+								click: () => {
+									appState.setIsSettingsOpen(true);
+
+									accounts.hide();
+
+									main.show();
+								},
 							},
 						],
 					},
@@ -462,96 +478,6 @@ export class AppMenu {
 				],
 			},
 			{
-				label: "Accounts",
-				submenu: [
-					...accounts.getAccounts().map((account, index) => ({
-						label: account.config.label,
-						click: () => {
-							accounts.selectAccount(account.config.id);
-						},
-						accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
-					})),
-					{
-						type: "separator",
-					},
-					{
-						label: "Select Next Account",
-						accelerator: "Ctrl+Tab",
-						click: () => {
-							accounts.selectNextAccount();
-
-							main.show();
-						},
-					},
-					{
-						label: "Select Next Account (hidden shortcut 1)",
-						accelerator: "Cmd+Shift+]",
-						visible: is.dev,
-						acceleratorWorksWhenHidden: true,
-						click: () => {
-							accounts.selectNextAccount();
-
-							main.show();
-						},
-					},
-					{
-						label: "Select Next Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Right",
-						visible: is.dev,
-						acceleratorWorksWhenHidden: true,
-						click: () => {
-							accounts.selectNextAccount();
-
-							main.show();
-						},
-					},
-					{
-						label: "Select Previous Account",
-						accelerator: "Ctrl+Shift+Tab",
-						click: () => {
-							accounts.selectPreviousAccount();
-
-							main.show();
-						},
-					},
-					{
-						label: "Select Previous Account (hidden shortcut 1)",
-						accelerator: "Cmd+Shift+[",
-						visible: is.dev,
-						acceleratorWorksWhenHidden: true,
-						click: () => {
-							accounts.selectPreviousAccount();
-
-							main.show();
-						},
-					},
-					{
-						label: "Select Previous Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Left",
-						visible: is.dev,
-						acceleratorWorksWhenHidden: true,
-						click: () => {
-							accounts.selectPreviousAccount();
-
-							main.show();
-						},
-					},
-					{
-						type: "separator",
-					},
-					{
-						label: "Manage Accounts",
-						click: () => {
-							appState.setIsSettingsOpen(true);
-
-							accounts.hide();
-
-							main.show();
-						},
-					},
-				],
-			},
-			{
 				role: "editMenu",
 				submenu: [
 					{
@@ -595,99 +521,24 @@ export class AppMenu {
 				label: "View",
 				submenu: [
 					{
-						label: "Reload",
-						accelerator: "CommandOrControl+R",
-						click: () => {
-							accounts.getSelectedAccount().gmail.view.webContents.reload();
-
-							main.show();
-						},
-					},
-					{
-						label: "Full Reload",
-						accelerator: "CommandOrControl+Shift+R",
-						click: () => {
-							main.show();
-
-							main.loadURL();
-
-							for (const account of accounts.getAccounts()) {
-								account.gmail.view.webContents.reload();
-							}
-						},
-					},
-					{
-						label: "Developer Tools",
-						accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
-						click: () => {
-							main.window.webContents.openDevTools({ mode: "detach" });
-
-							accounts
-								.getSelectedAccount()
-								.gmail.view.webContents.openDevTools();
-
-							main.show();
-						},
-					},
-					{
-						type: "separator",
-					},
-					{
-						label: "Reset Zoom",
-						accelerator: "CommandOrControl+0",
-						click: () => {
-							const zoomFactor = 1;
-
-							for (const [_accountId, gmail] of accounts.gmails) {
-								gmail.view.webContents.setZoomFactor(zoomFactor);
-							}
-
-							config.set("gmail.zoomFactor", zoomFactor);
-						},
-					},
-					{
-						label: "Zoom In",
-						accelerator: "CommandOrControl+Plus",
-						click: () => {
-							const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
-
-							for (const [_accountId, gmail] of accounts.gmails) {
-								gmail.view.webContents.setZoomFactor(zoomFactor);
-							}
-
-							config.set("gmail.zoomFactor", zoomFactor);
-						},
-					},
-					{
-						label: "Zoom Out",
-						accelerator: "CommandOrControl+-",
-						click: () => {
-							const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
-
-							if (zoomFactor > 0) {
-								for (const [_accountId, gmail] of accounts.gmails) {
-									gmail.view.webContents.setZoomFactor(zoomFactor);
-								}
-
-								config.set("gmail.zoomFactor", zoomFactor);
-							}
-						},
-					},
-				],
-			},
-			{
-				label: "Go",
-				submenu: [
-					{
-						type: "separator",
-					},
-					{
 						label: "Inbox",
 						click: () => {
 							ipcRenderer.send(
 								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"inbox",
+							);
+
+							main.show();
+						},
+					},
+					{
+						label: "Starred",
+						click: () => {
+							ipcRenderer.send(
+								accounts.getSelectedAccount().gmail.view.webContents,
+								"navigateTo",
+								"starred",
 							);
 
 							main.show();
@@ -712,18 +563,6 @@ export class AppMenu {
 								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"snoozed",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Starred",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"starred",
 							);
 
 							main.show();
@@ -807,6 +646,178 @@ export class AppMenu {
 							main.show();
 						},
 					},
+					{
+						type: "separator",
+					},
+					{
+						label: "Reset Zoom",
+						accelerator: "CommandOrControl+0",
+						click: () => {
+							const zoomFactor = 1;
+
+							for (const [_accountId, gmail] of accounts.gmails) {
+								gmail.view.webContents.setZoomFactor(zoomFactor);
+							}
+
+							config.set("gmail.zoomFactor", zoomFactor);
+						},
+					},
+					{
+						label: "Zoom In",
+						accelerator: "CommandOrControl+Plus",
+						click: () => {
+							const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
+
+							for (const [_accountId, gmail] of accounts.gmails) {
+								gmail.view.webContents.setZoomFactor(zoomFactor);
+							}
+
+							config.set("gmail.zoomFactor", zoomFactor);
+						},
+					},
+					{
+						label: "Zoom Out",
+						accelerator: "CommandOrControl+-",
+						click: () => {
+							const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
+
+							if (zoomFactor > 0) {
+								for (const [_accountId, gmail] of accounts.gmails) {
+									gmail.view.webContents.setZoomFactor(zoomFactor);
+								}
+
+								config.set("gmail.zoomFactor", zoomFactor);
+							}
+						},
+					},
+					{
+						type: "separator",
+					},
+					{
+						label: "Reload",
+						accelerator: "CommandOrControl+R",
+						click: () => {
+							accounts.getSelectedAccount().gmail.view.webContents.reload();
+
+							main.show();
+						},
+					},
+					{
+						label: "Full Reload",
+						accelerator: "CommandOrControl+Shift+R",
+						click: () => {
+							main.show();
+
+							main.loadURL();
+
+							for (const account of accounts.getAccounts()) {
+								account.gmail.view.webContents.reload();
+							}
+						},
+					},
+					{
+						label: "Developer Tools",
+						accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
+						click: () => {
+							main.window.webContents.openDevTools({ mode: "detach" });
+
+							accounts
+								.getSelectedAccount()
+								.gmail.view.webContents.openDevTools();
+
+							main.show();
+						},
+					},
+				],
+			},
+			{
+				label: "Accounts",
+				submenu: [
+					...accounts.getAccounts().map((account, index) => ({
+						label: account.config.label,
+						click: () => {
+							accounts.selectAccount(account.config.id);
+						},
+						accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
+					})),
+					{
+						type: "separator",
+					},
+					{
+						label: "Select Next Account",
+						accelerator: "Ctrl+Tab",
+						click: () => {
+							accounts.selectNextAccount();
+
+							main.show();
+						},
+					},
+					{
+						label: "Select Next Account (hidden shortcut 1)",
+						accelerator: "Cmd+Shift+]",
+						visible: is.dev,
+						acceleratorWorksWhenHidden: true,
+						click: () => {
+							accounts.selectNextAccount();
+
+							main.show();
+						},
+					},
+					{
+						label: "Select Next Account (hidden shortcut 2)",
+						accelerator: "Cmd+Option+Right",
+						visible: is.dev,
+						acceleratorWorksWhenHidden: true,
+						click: () => {
+							accounts.selectNextAccount();
+
+							main.show();
+						},
+					},
+					{
+						label: "Select Previous Account",
+						accelerator: "Ctrl+Shift+Tab",
+						click: () => {
+							accounts.selectPreviousAccount();
+
+							main.show();
+						},
+					},
+					{
+						label: "Select Previous Account (hidden shortcut 1)",
+						accelerator: "Cmd+Shift+[",
+						visible: is.dev,
+						acceleratorWorksWhenHidden: true,
+						click: () => {
+							accounts.selectPreviousAccount();
+
+							main.show();
+						},
+					},
+					{
+						label: "Select Previous Account (hidden shortcut 2)",
+						accelerator: "Cmd+Option+Left",
+						visible: is.dev,
+						acceleratorWorksWhenHidden: true,
+						click: () => {
+							accounts.selectPreviousAccount();
+
+							main.show();
+						},
+					},
+					{
+						type: "separator",
+					},
+					{
+						label: "Manage Accounts...",
+						click: () => {
+							appState.setIsSettingsOpen(true);
+
+							accounts.hide();
+
+							main.show();
+						},
+					},
 				],
 			},
 			{
@@ -832,7 +843,7 @@ export class AppMenu {
 					{
 						label: "Website",
 						click: () => {
-							openExternalUrl(GITHUB_REPO_URL);
+							openExternalUrl(WEBSITE_URL);
 						},
 					},
 					{

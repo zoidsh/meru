@@ -1,3 +1,4 @@
+import { WEBSITE_URL } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -149,7 +150,7 @@ export function LicenseKey() {
 					<div className="flex gap-4 justify-end">
 						<ActivateLicenseKeyButton />
 						<Button asChild>
-							<a href="https://meru.so" target="_blank" rel="noreferrer">
+							<a href={WEBSITE_URL} target="_blank" rel="noreferrer">
 								Upgrade
 							</a>
 						</Button>
