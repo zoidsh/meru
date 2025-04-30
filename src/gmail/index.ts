@@ -39,6 +39,11 @@ type GmailEvents = {
 	"state-changed": (newState: GmailState, previousState: GmailState) => void;
 };
 
+const WINDOW_OPEN_URL_WHITELIST = [
+	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
+	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
+];
+
 export class Gmail {
 	private _emitter = new EventEmitter();
 
@@ -208,7 +213,7 @@ export class Gmail {
 
 			if (
 				url.startsWith(GMAIL_URL) ||
-				url.includes("googleusercontent.com/viewer/secure/pdf")
+				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url))
 			) {
 				return {
 					action: "allow",
