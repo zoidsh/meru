@@ -41,6 +41,9 @@ type GmailEvents = {
 
 const WINDOW_OPEN_URL_WHITELIST = [
 	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
+];
+
+const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
 ];
 
@@ -220,7 +223,11 @@ export class Gmail {
 				};
 			}
 
-			openExternalUrl(url);
+			if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
+				this.view.webContents.downloadURL(url);
+			} else {
+				openExternalUrl(url);
+			}
 
 			return {
 				action: "deny",
