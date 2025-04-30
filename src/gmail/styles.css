@@ -1,3 +1,8 @@
+:root {
+	--font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
 /* Gmail Logo */
 header div:has(> div > a[href="#inbox"] > img) {
 	display: none !important;
@@ -27,7 +32,7 @@ header div:has(> div > a[href="#inbox"] > img) {
 }
 
 .url-preview {
-	font-family: system-ui;
+	font-family: var(--font-sans);
 	position: fixed;
 	left: 0;
 	bottom: 0;
