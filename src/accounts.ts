@@ -23,7 +23,15 @@ class Accounts {
 	gmails: Map<string, Gmail> = new Map();
 
 	init() {
-		const accountConfigs = this.getAccountConfigs();
+		let accountConfigs = this.getAccountConfigs();
+
+		if (!appState.isValidLicenseKey && accountConfigs.length > 1) {
+			accountConfigs[0].selected = true;
+
+			accountConfigs = [accountConfigs[0]];
+
+			config.set("accounts", accountConfigs);
+		}
 
 		for (const accountConfig of accountConfigs) {
 			const gmail = new Gmail(accountConfig);
