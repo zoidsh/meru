@@ -1,8 +1,11 @@
 import { rm, watch } from "node:fs/promises";
+import path from "node:path";
 import { parseArgs } from "node:util";
-import rendererHtml from "@/renderer/index.html";
-import { type Subprocess, build, file, serve, spawn } from "bun";
-import bunPluginTailwind from "bun-plugin-tailwind";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { type Subprocess, spawn } from "bun";
+import * as esbuild from "esbuild";
+import * as vite from "vite";
 
 const args = parseArgs({
 	args: Bun.argv,
@@ -18,50 +21,73 @@ const args = parseArgs({
 await rm("./build-js", { recursive: true, force: true });
 
 function buildAppFiles() {
-	return build({
-		entrypoints: [
-			"./src/app.ts",
-			"./src/gmail/preload/index.ts",
-			"./src/renderer/preload.ts",
-		],
+	const config: esbuild.BuildOptions = {
+		bundle: true,
 		outdir: "./build-js",
-		target: "node",
-		format: "cjs",
 		external: ["electron"],
-		sourcemap: "linked",
 		define: !args.values.dev
 			? {
 					"process.env.NODE_ENV": JSON.stringify("production"),
 					"process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
 				}
 			: undefined,
-	});
+		minify: !args.values.dev,
+	};
+
+	return Promise.all([
+		esbuild.build({
+			...config,
+			entryPoints: ["./src/app.ts"],
+			platform: "node",
+			target: "node22",
+			loader: {
+				".css": "text",
+			},
+		}),
+		esbuild.build({
+			...config,
+			entryPoints: [
+				"./src/gmail/preload/index.ts",
+				"./src/renderer/preload.ts",
+			],
+			platform: "browser",
+			target: "chrome136",
+		}),
+	]);
 }
 
 async function buildRenderer() {
+	const viteConfig: vite.InlineConfig = {
+		configFile: false,
+		base: "./",
+		root: path.resolve(process.cwd(), "src", "renderer"),
+		plugins: [react(), tailwindcss()],
+		resolve: {
+			alias: {
+				"@": path.resolve(process.cwd(), "src"),
+			},
+		},
+		server: {
+			port: 3000,
+			strictPort: true,
+		},
+		build: {
+			outDir: path.resolve(process.cwd(), "build-js", "renderer"),
+			target: "chrome136",
+		},
+	};
+
 	if (args.values.dev) {
-		return serve({
-			static: { "/": rendererHtml },
-			development: true,
-			fetch: () => Response.json(null),
-		});
+		const viteServer = await vite.createServer(viteConfig);
+
+		await viteServer.listen();
+
+		viteServer.printUrls();
+
+		return;
 	}
 
-	await build({
-		entrypoints: ["./src/renderer/index.html"],
-		outdir: "./build-js/renderer",
-		sourcemap: "linked",
-		define: {
-			"process.env.NODE_ENV": JSON.stringify("production"),
-		},
-		plugins: [bunPluginTailwind],
-	});
-
-	const appJs = await file("./build-js/app.js");
-
-	await appJs.write(
-		await appJs.text().then((text) => text.replace(/var __dirname.*;/g, "")),
-	);
+	await vite.build(viteConfig);
 }
 
 await Promise.all([buildAppFiles(), buildRenderer()]);

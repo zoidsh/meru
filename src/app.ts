@@ -37,11 +37,11 @@ import { appUpdater } from "./updater";
 
 	await validateLicenseKey();
 
+	await Promise.all([app.whenReady(), blocker.init()]);
+
 	initDownloads();
 
 	initTheme();
-
-	await Promise.all([app.whenReady(), blocker.init()]);
 
 	main.init();
 

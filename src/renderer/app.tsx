@@ -1,3 +1,4 @@
+import "@fontsource-variable/inter";
 import { createRoot } from "react-dom/client";
 import { AppMain } from "./components/app-main";
 import { AppTitlebar } from "./components/app-titlebar";

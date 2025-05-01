@@ -12,7 +12,7 @@ import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
 import { WebContentsView, session } from "electron";
 import electronContextMenu from "electron-context-menu";
-import gmailStyles from "./styles.css" with { type: "text" };
+import gmailStyles from "./styles.css";
 
 export interface GmailMail {
 	messageId: string;

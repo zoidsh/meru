@@ -1,28 +1,15 @@
 {
 	"name": "meru",
-	"productName": "Meru",
 	"version": "3.0.0-beta.17",
-	"private": true,
-	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 	"author": "Tim Cheung <tim@zoid.sh>",
 	"repository": "zoidsh/meru",
 	"main": "build-js/app.js",
-	"scripts": {
-		"postinstall": "electron-builder install-app-deps",
-		"dev": "bun run scripts/build.ts --dev",
-		"lint": "biome check .",
-		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
-		"types": "tsc",
-		"build:js": "MERU_API_URL=https://api.meru.so bun run scripts/build.ts",
-		"build:mac": "electron-builder --mac",
-		"build:linux": "electron-builder --linux",
-		"build:win": "electron-builder --win"
-	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@electron-toolkit/preload": "^3.0.2",
 		"@electron-toolkit/typed-ipc": "^1.0.2",
 		"@electron-toolkit/utils": "^4.0.0",
+		"@fontsource-variable/inter": "^5.2.5",
 		"@ghostery/adblocker": "^2.5.2",
 		"@hookform/resolvers": "^4.1.3",
 		"@radix-ui/react-dialog": "^1.1.6",
@@ -31,9 +18,11 @@
 		"@radix-ui/react-scroll-area": "^1.2.3",
 		"@radix-ui/react-slot": "^1.1.2",
 		"@radix-ui/react-tooltip": "^1.2.4",
+		"@tailwindcss/vite": "^4.1.5",
 		"@types/bun": "^1.2.5",
 		"@types/react-dom": "^19.0.4",
 		"@types/trusted-types": "^2.0.7",
+		"@vitejs/plugin-react": "^4.4.1",
 		"bun-plugin-tailwind": "^0.0.14",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
@@ -45,6 +34,7 @@
 		"electron-store": "^10.0.1",
 		"electron-updater": "^6.6.2",
 		"element-ready": "^7.0.0",
+		"esbuild": "^0.25.3",
 		"lefthook": "^1.11.3",
 		"lucide-react": "^0.475.0",
 		"node-machine-id": "^1.1.12",
@@ -54,14 +44,12 @@
 		"react-hook-form": "^7.54.2",
 		"select-dom": "^9.3.0",
 		"tailwind-merge": "^3.0.2",
-		"tailwindcss": "^4.0.14",
+		"tailwindcss": "^4.1.5",
 		"tw-animate-css": "^1.2.5",
 		"typescript": "^5.8.2",
+		"vite": "^6.3.4",
 		"zod": "^3.24.2",
 		"zustand": "^5.0.3"
-	},
-	"patchedDependencies": {
-		"conf@13.1.0": "patches/conf@13.1.0.patch"
 	},
 	"build": {
 		"files": ["build-js", "static"],
@@ -104,5 +92,22 @@
 			"provider": "github",
 			"releaseType": "release"
 		}
+	},
+	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+	"patchedDependencies": {
+		"conf@13.1.0": "patches/conf@13.1.0.patch"
+	},
+	"private": true,
+	"productName": "Meru",
+	"scripts": {
+		"postinstall": "electron-builder install-app-deps",
+		"dev": "bun run scripts/build.ts --dev",
+		"lint": "biome check .",
+		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+		"types": "tsc",
+		"build:js": "MERU_API_URL=https://api.meru.so bun run scripts/build.ts",
+		"build:mac": "electron-builder --mac",
+		"build:linux": "electron-builder --linux",
+		"build:win": "electron-builder --win"
 	}
 }
