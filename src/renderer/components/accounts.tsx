@@ -107,7 +107,9 @@ function AddAccountButton() {
 						<Button disabled>Add</Button>
 					</div>
 				</TooltipTrigger>
-				<TooltipContent>Upgrade to add more accounts</TooltipContent>
+				<TooltipContent>
+					Upgrade to Meru Pro to add more accounts
+				</TooltipContent>
 			</Tooltip>
 		);
 	}
