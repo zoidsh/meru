@@ -35,17 +35,15 @@ import { appUpdater } from "./updater";
 		return;
 	}
 
-	appUpdater.init();
+	await validateLicenseKey();
 
 	initDownloads();
 
-	await validateLicenseKey();
+	initTheme();
 
 	await Promise.all([app.whenReady(), blocker.init()]);
 
 	main.init();
-
-	initTheme();
 
 	accounts.init();
 
@@ -56,6 +54,8 @@ import { appUpdater } from "./updater";
 	appMenu.init();
 
 	appTray.init();
+
+	appUpdater.init();
 
 	app.on("second-instance", () => {
 		main.show();
