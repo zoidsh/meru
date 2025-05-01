@@ -3,7 +3,7 @@ import { type MessageBoxOptions, app, dialog } from "electron";
 import { machineId } from "node-machine-id";
 import { FetchError, ofetch } from "ofetch";
 import { z } from "zod";
-import { config } from "./config";
+import { config } from "./lib/config";
 
 const licenseKeyActivationSuccessSchema = z.object({
 	activated: z.literal(true),

@@ -5,7 +5,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { Notification } from "electron";
 import { accounts } from "./accounts";
-import { activateLicenseKey } from "./lib/license-key";
+import { activateLicenseKey } from "./license-key";
 import { main } from "./main";
 import { appMenu } from "./menu";
 import { appState } from "./state";

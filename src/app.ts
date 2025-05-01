@@ -5,7 +5,7 @@ import { accounts } from "./accounts";
 import { blocker } from "./blocker";
 import { initDownloads } from "./downloads";
 import { initIpc } from "./ipc";
-import { validateLicenseKey } from "./lib/license-key";
+import { validateLicenseKey } from "./license-key";
 import { appMenu } from "./menu";
 import { appState } from "./state";
 import { initTheme } from "./theme";
