@@ -3,7 +3,7 @@
 	"productName": "Meru",
 	"version": "3.0.0-beta.17",
 	"private": true,
-	"description": "Nifty Gmail desktop app",
+	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 	"author": "Tim Cheung <tim@zoid.sh>",
 	"repository": "zoidsh/meru",
 	"main": "build-js/app.js",
@@ -86,8 +86,8 @@
 					"arch": ["x64", "arm64"]
 				}
 			],
-			"synopsis": "Nifty Gmail desktop app",
-			"description": "Meru is an unofficial and security focused Gmail app with many useful features.",
+			"synopsis": "Meru brings Gmail to your fingertips as a desktop app",
+			"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 			"category": "Network;Office"
 		},
 		"win": {

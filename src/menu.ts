@@ -89,7 +89,7 @@ export class AppMenu {
 									path.join(__dirname, "..", "..", "static", "Icon.png"),
 								),
 								message: `${app.name}`,
-								detail: `Version: ${app.getVersion()}\n\nCreated by Tim Cheung <tim@zoid.sh>\n\nCopyright © ${new Date().getFullYear()} Zoid Ltd`,
+								detail: `Version: ${app.getVersion()}\n\nCreated by Tim Cheung <tim@meru.so>\n\nCopyright © ${new Date().getFullYear()} Meru`,
 							});
 						},
 					},
