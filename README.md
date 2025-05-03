@@ -1,11 +1,10 @@
 <div align="center">
 	<img src="media/icon.svg" width="200" height="200">
-	<h1>Meru</h1>
+	<h1>Meru (formerly Gmail Desktop)</h1>
   <h3>The Gmail experience you deserve</h3>
   <p>
 		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app. Minimalistic, open-source and cross-platform.
 	</p>
-  <h5>Previously Gmail Desktop</h5>
   <p><a href="https://meru.so">Download for macOS, Windows & Linux</a></p>
   <img src="media/screenshot.png">
 </div>
