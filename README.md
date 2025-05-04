@@ -3,7 +3,7 @@
 	<h1>Meru (formerly Gmail Desktop)</h1>
   <h3>The Gmail experience you deserve</h3>
   <p>
-		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app. Minimalistic, open-source and cross-platform.
+		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app. Powerful, open-source and cross-platform.
 	</p>
   <p><a href="https://meru.so">Download for macOS, Windows & Linux</a></p>
   <img src="media/screenshot.png">
