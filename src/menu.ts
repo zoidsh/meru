@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import {
@@ -12,6 +13,7 @@ import {
 } from "electron";
 import log from "electron-log";
 import { accounts } from "./accounts";
+import { Gmail } from "./gmail";
 import { ipcRenderer } from "./ipc";
 import { config } from "./lib/config";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "./lib/constants";
@@ -521,130 +523,19 @@ export class AppMenu {
 				label: "View",
 				submenu: [
 					{
-						label: "Inbox",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"inbox",
-							);
+						label: "Gmail Appearance",
+						submenu: [
+							{
+								label: "Edit User Styles",
+								click: () => {
+									if (!fs.existsSync(Gmail.userStylesPath)) {
+										fs.closeSync(fs.openSync(Gmail.userStylesPath, "w"));
+									}
 
-							main.show();
-						},
-					},
-					{
-						label: "Starred",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"starred",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Important",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"imp",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Snoozed",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"snoozed",
-							);
-
-							main.show();
-						},
-					},
-					{
-						type: "separator",
-					},
-					{
-						label: "Drafts",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"drafts",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Scheduled",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"scheduled",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Sent",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"sent",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Spam",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"spam",
-							);
-
-							main.show();
-						},
-					},
-					{
-						label: "Bin",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"trash",
-							);
-
-							main.show();
-						},
-					},
-					{
-						type: "separator",
-					},
-					{
-						label: "All Mail",
-						click: () => {
-							ipcRenderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
-								"all",
-							);
-
-							main.show();
-						},
+									shell.openPath(Gmail.userStylesPath);
+								},
+							},
+						],
 					},
 					{
 						type: "separator",
@@ -714,6 +605,9 @@ export class AppMenu {
 								account.gmail.view.webContents.reload();
 							}
 						},
+					},
+					{
+						type: "separator",
 					},
 					{
 						label: "Developer Tools",

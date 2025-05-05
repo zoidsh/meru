@@ -1,4 +1,5 @@
 import EventEmitter from "node:events";
+import fs from "node:fs";
 import path from "node:path";
 import { blocker } from "@/blocker";
 import type { AccountConfig } from "@/lib/config";
@@ -10,7 +11,7 @@ import {
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
-import { WebContentsView, session } from "electron";
+import { WebContentsView, app, session } from "electron";
 import electronContextMenu from "electron-context-menu";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
@@ -49,6 +50,11 @@ const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 ];
 
 export class Gmail {
+	static userStylesPath = path.join(
+		app.getPath("userData"),
+		"gmail-user-styles.css",
+	);
+
 	private _emitter = new EventEmitter();
 
 	private _view: WebContentsView | undefined;
@@ -92,6 +98,18 @@ export class Gmail {
 
 	private getSessionPartitionKey(accountConfig: AccountConfig) {
 		return `persist:${accountConfig.id}`;
+	}
+
+	private _userStyles: string | undefined;
+
+	private injectUserStyles() {
+		if (!this._userStyles && fs.existsSync(Gmail.userStylesPath)) {
+			this._userStyles = fs.readFileSync(Gmail.userStylesPath, "utf-8");
+		}
+
+		if (this._userStyles) {
+			this.view.webContents.insertCSS(this._userStyles);
+		}
 	}
 
 	updateViewBounds() {
@@ -156,6 +174,8 @@ export class Gmail {
 		this.view.webContents.on("dom-ready", () => {
 			if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
 				this.view.webContents.insertCSS(gmailCSS);
+
+				this.injectUserStyles();
 			}
 
 			this.view.webContents.insertCSS(meruCSS);
