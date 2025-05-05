@@ -150,6 +150,17 @@ const licenseKeyValidationErrorSchema = z.object({
 	]),
 });
 
+const licenseKeyValidationErrorMessages: Record<
+	z.infer<typeof licenseKeyValidationErrorSchema>["error"],
+	string
+> = {
+	license_key_invalid: "The license key is invalid",
+	license_key_disabled: "The license key has been disabled",
+	license_key_expired: "The license key has expired",
+	license_key_not_activated_for_instance:
+		"The license key is activated on another device",
+};
+
 function showLicenseKeyValidationError(
 	options: Omit<MessageBoxOptions, "type" | "message">,
 ) {
@@ -184,76 +195,41 @@ export async function validateLicenseKey() {
 		appState.isValidLicenseKey = true;
 	} catch (error) {
 		if (error instanceof FetchError) {
-			const activationError = licenseKeyValidationErrorSchema.safeParse(
+			const validationError = licenseKeyValidationErrorSchema.safeParse(
 				error.data,
 			);
 
-			if (!activationError.success) {
+			if (validationError.success) {
 				const { response } = await showLicenseKeyValidationError({
-					detail: `Please restart the app to try again or contact support for further help with the error: ${error.message}`,
-					buttons: ["Restart", "Quit"],
+					detail: `${licenseKeyValidationErrorMessages[validationError.data.error]}. Please use another license key or contact support for further help. Please remove the license to continue.`,
+					buttons: ["Remove License", "Quit"],
 					defaultId: 0,
 					cancelId: 1,
 				});
 
 				if (response === 0) {
+					config.set("licenseKey", null);
+
 					app.relaunch();
 				}
 
 				app.quit();
-			} else {
-				switch (activationError.data.error) {
-					case "license_key_invalid": {
-						await showLicenseKeyValidationError({
-							detail:
-								"The license key is invalid. Please use another license key or contact support for further help. A restart is required to remove the license key.",
-						});
 
-						break;
-					}
-					case "license_key_disabled": {
-						await showLicenseKeyValidationError({
-							detail:
-								"The license key has been disabled. Please use another license key or contact support for further help. A restart is required to remove the license key.",
-						});
-
-						break;
-					}
-					case "license_key_expired": {
-						await showLicenseKeyValidationError({
-							detail:
-								"The license key has expired. Please use another license key or contact support for further help. A restart is required to remove the license key.",
-						});
-
-						break;
-					}
-					case "license_key_not_activated_for_instance": {
-						await showLicenseKeyValidationError({
-							detail:
-								"The license key is activated on another device. Please use another license key, activate the license key on this device or contact support for further help. A restart is required to remove the license key.",
-						});
-					}
-				}
-
-				config.set("licenseKey", null);
-
-				app.relaunch();
-
-				app.quit();
+				return;
 			}
-		} else {
-			const { response } = await showLicenseKeyValidationError({
-				detail: `Please try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
-				buttons: ["Restart", "Quit"],
-				defaultId: 0,
-				cancelId: 1,
-			});
-
-			if (response === 0) {
-				app.relaunch();
-			}
-
-			app.quit();
 		}
+
+		const { response } = await showLicenseKeyValidationError({
+			detail: `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
+			buttons: ["Restart", "Quit"],
+			defaultId: 0,
+			cancelId: 1,
+		});
+
+		if (response === 0) {
+			app.relaunch();
+		}
+
+		app.quit();
 	}
 }
