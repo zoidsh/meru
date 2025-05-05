@@ -110,7 +110,7 @@ class Main {
 
 		if (!this.shouldLaunchMinimized()) {
 			this.window.once("ready-to-show", () => {
-				this.window.show();
+				this.show();
 			});
 		}
 
