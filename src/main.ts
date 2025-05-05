@@ -112,14 +112,14 @@ class Main {
 			this.window.once("ready-to-show", () => {
 				this.show();
 			});
-		}
 
-		if (lastWindowState.fullscreen) {
-			this.window.setFullScreen(true);
-		}
+			if (lastWindowState.fullscreen) {
+				this.window.setFullScreen(true);
+			}
 
-		if (lastWindowState.maximized) {
-			this.window.maximize();
+			if (lastWindowState.maximized) {
+				this.window.maximize();
+			}
 		}
 
 		this.window.webContents.setWindowOpenHandler(({ url }) => {
