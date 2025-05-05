@@ -35,7 +35,9 @@ import { appUpdater } from "./updater";
 		return;
 	}
 
-	await validateLicenseKey();
+	if (!(await validateLicenseKey())) {
+		return;
+	}
 
 	await Promise.all([app.whenReady(), blocker.init()]);
 

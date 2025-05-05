@@ -171,28 +171,28 @@ function showLicenseKeyValidationError(
 	});
 }
 
-export async function validateLicenseKey() {
+export async function validateLicenseKey(): Promise<boolean> {
 	try {
 		const licenseKey = config.get("licenseKey");
 
-		if (!licenseKey) {
-			return;
+		if (licenseKey) {
+			const body = await ofetch(
+				`${process.env.MERU_API_URL}/v1/licenses/validate`,
+				{
+					method: "POST",
+					body: {
+						licenseKey,
+						instanceName: await machineId(),
+					},
+				},
+			);
+
+			licenseKeyValidationSuccessSchema.parse(body);
+
+			appState.isValidLicenseKey = true;
 		}
 
-		const body = await ofetch(
-			`${process.env.MERU_API_URL}/v1/licenses/validate`,
-			{
-				method: "POST",
-				body: {
-					licenseKey,
-					instanceName: await machineId(),
-				},
-			},
-		);
-
-		licenseKeyValidationSuccessSchema.parse(body);
-
-		appState.isValidLicenseKey = true;
+		return true;
 	} catch (error) {
 		if (error instanceof FetchError) {
 			const validationError = licenseKeyValidationErrorSchema.safeParse(
@@ -215,7 +215,7 @@ export async function validateLicenseKey() {
 
 				app.quit();
 
-				return;
+				return false;
 			}
 		}
 
@@ -231,5 +231,7 @@ export async function validateLicenseKey() {
 		}
 
 		app.quit();
+
+		return false;
 	}
 }
