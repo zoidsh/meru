@@ -12,7 +12,8 @@ import { main } from "@/main";
 import { is } from "@electron-toolkit/utils";
 import { WebContentsView, session } from "electron";
 import electronContextMenu from "electron-context-menu";
-import gmailStyles from "./styles.css";
+import gmailCSS from "./gmail.css";
+import meruCSS from "./meru.css";
 
 export interface GmailMail {
 	messageId: string;
@@ -133,31 +134,31 @@ export class Gmail {
 			},
 		});
 
-		this.view.webContents.on("did-finish-load", () => {
-			electronContextMenu({
-				// @ts-expect-error: Works with WebContentsView
-				window: this.view,
-				showCopyImageAddress: true,
-				showSaveImageAs: true,
-				showInspectElement: false,
-				append: (_defaultActions, parameters) => [
-					{
-						label: "Inspect Element",
-						click: () => {
-							this.view.webContents.inspectElement(parameters.x, parameters.y);
-							if (this.view.webContents.isDevToolsOpened()) {
-								this.view.webContents.devToolsWebContents?.focus();
-							}
-						},
+		electronContextMenu({
+			// @ts-expect-error: Works with WebContentsView
+			window: this.view,
+			showCopyImageAddress: true,
+			showSaveImageAs: true,
+			showInspectElement: false,
+			append: (_defaultActions, parameters) => [
+				{
+					label: "Inspect Element",
+					click: () => {
+						this.view.webContents.inspectElement(parameters.x, parameters.y);
+						if (this.view.webContents.isDevToolsOpened()) {
+							this.view.webContents.devToolsWebContents?.focus();
+						}
 					},
-				],
-			});
+				},
+			],
 		});
 
 		this.view.webContents.on("dom-ready", () => {
 			if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
-				this.view.webContents.insertCSS(gmailStyles);
+				this.view.webContents.insertCSS(gmailCSS);
 			}
+
+			this.view.webContents.insertCSS(meruCSS);
 		});
 
 		this.view.webContents.on("page-title-updated", (_event, title) => {

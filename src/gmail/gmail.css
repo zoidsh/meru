@@ -1,0 +1,9 @@
+/* Gmail Logo */
+header div:has(> div > a[href="#inbox"] > img) {
+	display: none !important;
+}
+
+/* Gmail Footer */
+[role="contentinfo"]:has(a[href="https://www.google.com/gmail/about/policy/"]) {
+	display: none !important;
+}

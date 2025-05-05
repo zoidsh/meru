@@ -40,7 +40,7 @@ function createUrlPreviewElement(href: string) {
 	} else {
 		urlPreviewElement = document.createElement("div");
 
-		urlPreviewElement.className = "url-preview";
+		urlPreviewElement.className = "meru-url-preview";
 
 		urlPreviewElement.textContent = href;
 

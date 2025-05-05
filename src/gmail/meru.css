@@ -3,16 +3,6 @@
 		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-/* Gmail Logo */
-header div:has(> div > a[href="#inbox"] > img) {
-	display: none !important;
-}
-
-/* Gmail Footer */
-[role="contentinfo"] {
-	display: none !important;
-}
-
 @keyframes fadeIn {
 	0% {
 		opacity: 0;
@@ -31,7 +21,7 @@ header div:has(> div > a[href="#inbox"] > img) {
 	}
 }
 
-.url-preview {
+.meru-url-preview {
 	font-family: var(--font-sans);
 	position: fixed;
 	left: 0;
@@ -49,10 +39,10 @@ header div:has(> div > a[href="#inbox"] > img) {
 	animation: fadeIn 0.2s;
 }
 
-.url-preview[data-long-hover="true"] {
+.meru-url-preview[data-long-hover="true"] {
 	max-width: 100%;
 }
 
-.url-preview[data-fade-out="true"] {
+.meru-url-preview[data-fade-out="true"] {
 	animation: fadeOut 0.2s;
 }
