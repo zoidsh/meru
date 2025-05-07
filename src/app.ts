@@ -1,6 +1,6 @@
 import { config } from "@/lib/config";
 import { main } from "@/main";
-import { app } from "electron";
+import { app, dialog } from "electron";
 import { accounts } from "./accounts";
 import { blocker } from "./blocker";
 import { initDownloads } from "./downloads";
@@ -59,13 +59,48 @@ import { appUpdater } from "./updater";
 
 	appUpdater.init();
 
-	app.on("second-instance", () => {
+	app.on("second-instance", (_event) => {
 		main.show();
 	});
 
 	app.on("activate", () => {
 		main.show();
 	});
+
+	if (appState.isValidLicenseKey) {
+		app.on("open-url", async (_event, url) => {
+			if (!url.startsWith("mailto")) {
+				return;
+			}
+
+			const accountConfigs = accounts.getAccountConfigs();
+
+			let accountId = accountConfigs[0].id;
+
+			if (accountConfigs.length > 1) {
+				const cancelId = accountConfigs.length + 1;
+
+				const { response } = await dialog.showMessageBox(main.window, {
+					type: "question",
+					message: "Compose new email",
+					detail: "Which account would you like to use?",
+					buttons: [
+						...accountConfigs.map((account) => account.label),
+						"Cancel",
+					],
+					cancelId,
+				});
+
+				if (response === cancelId) {
+					return;
+				}
+
+				accountId = accountConfigs[response].id;
+			}
+
+			accounts.getAccount(accountId).gmail.mailto(url);
+		});
+	}
 
 	main.window.on("focus", () => {
 		if (!appState.isSettingsOpen) {

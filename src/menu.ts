@@ -368,11 +368,23 @@ export class AppMenu {
 										],
 									},
 							{
-								label: "Launch Minimized",
+								label: "Set as Default Mail Client",
+								visible: platform.isMacOS,
+								enabled: appState.isValidLicenseKey,
 								type: "checkbox",
-								checked: config.get("launchMinimized"),
-								click({ checked }: { checked: boolean }) {
-									config.set("launchMinimized", checked);
+								checked: app.isDefaultProtocolClient("mailto"),
+								click: () => {
+									if (process.defaultApp) {
+										if (process.argv.length >= 2) {
+											app.setAsDefaultProtocolClient(
+												"mailto",
+												process.execPath,
+												[path.resolve(process.argv[1])],
+											);
+										}
+									} else {
+										app.setAsDefaultProtocolClient("mailto");
+									}
 								},
 							},
 							{
@@ -385,6 +397,14 @@ export class AppMenu {
 										openAtLogin: menuItem.checked,
 										openAsHidden: menuItem.checked,
 									});
+								},
+							},
+							{
+								label: "Launch Minimized",
+								type: "checkbox",
+								checked: config.get("launchMinimized"),
+								click({ checked }: { checked: boolean }) {
+									config.set("launchMinimized", checked);
 								},
 							},
 							{

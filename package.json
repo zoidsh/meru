@@ -63,6 +63,7 @@
 				"arch": ["x64", "arm64"]
 			},
 			"extendInfo": {
+				"CFBundleURLSchemes": ["mailto"],
 				"NSCameraUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat.",
 				"NSMicrophoneUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat."
 			}

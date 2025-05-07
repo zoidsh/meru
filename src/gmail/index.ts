@@ -53,6 +53,15 @@ const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
 ];
 
+const PRELOAD_PATH = path.join(
+	...(process.env.NODE_ENV === "production"
+		? [__dirname]
+		: [process.cwd(), "build-js"]),
+	"gmail",
+	"preload",
+	"index.js",
+);
+
 export class Gmail {
 	static userStylesPath = path.join(
 		app.getPath("userData"),
@@ -167,6 +176,8 @@ export class Gmail {
 
 						this.registerWindowOpenHandler(window);
 
+						this.setupContextMenu(window);
+
 						return window.webContents;
 					},
 				};
@@ -181,6 +192,27 @@ export class Gmail {
 			return {
 				action: "deny",
 			};
+		});
+	}
+
+	private setupContextMenu(window: WebContentsView | BrowserWindow) {
+		electronContextMenu({
+			// @ts-expect-error: Works with WebContentsView
+			window,
+			showCopyImageAddress: true,
+			showSaveImageAs: true,
+			showInspectElement: false,
+			append: (_defaultActions, parameters) => [
+				{
+					label: "Inspect Element",
+					click: () => {
+						window.webContents.inspectElement(parameters.x, parameters.y);
+						if (window.webContents.isDevToolsOpened()) {
+							window.webContents.devToolsWebContents?.focus();
+						}
+					},
+				},
+			],
 		});
 	}
 
@@ -209,35 +241,11 @@ export class Gmail {
 		this.view = new WebContentsView({
 			webPreferences: {
 				partition: sessionPartitionKey,
-				preload: path.join(
-					...(process.env.NODE_ENV === "production"
-						? [__dirname]
-						: [process.cwd(), "build-js"]),
-					"gmail",
-					"preload",
-					"index.js",
-				),
+				preload: PRELOAD_PATH,
 			},
 		});
 
-		electronContextMenu({
-			// @ts-expect-error: Works with WebContentsView
-			window: this.view,
-			showCopyImageAddress: true,
-			showSaveImageAs: true,
-			showInspectElement: false,
-			append: (_defaultActions, parameters) => [
-				{
-					label: "Inspect Element",
-					click: () => {
-						this.view.webContents.inspectElement(parameters.x, parameters.y);
-						if (this.view.webContents.isDevToolsOpened()) {
-							this.view.webContents.devToolsWebContents?.focus();
-						}
-					},
-				},
-			],
-		});
+		this.setupContextMenu(this.view);
 
 		this.view.webContents.on("dom-ready", () => {
 			if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
@@ -352,5 +360,22 @@ export class Gmail {
 		this.view.removeAllListeners();
 
 		main.window.contentView.removeChildView(this.view);
+	}
+
+	mailto(url: string) {
+		const window = new BrowserWindow({
+			webPreferences: {
+				session: this.view.webContents.session,
+				preload: PRELOAD_PATH,
+			},
+		});
+
+		this.setupContextMenu(window);
+
+		this.registerWindowOpenHandler(window);
+
+		window.webContents.loadURL(
+			`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
+		);
 	}
 }
