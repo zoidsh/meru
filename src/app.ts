@@ -12,6 +12,40 @@ import { initTheme } from "./theme";
 import { appTray } from "./tray";
 import { appUpdater } from "./updater";
 
+async function handleMailto(url: string) {
+	if (!url.startsWith("mailto:") || url === "mailto:") {
+		return;
+	}
+
+	const accountConfigs = accounts.getAccountConfigs();
+
+	let accountId = accountConfigs[0].id;
+
+	if (accountConfigs.length > 1) {
+		const cancelId = accountConfigs.length + 1;
+
+		const { response } = await dialog.showMessageBox(main.window, {
+			type: "question",
+			message: "Compose new email",
+			detail: "Which account would you like to use?",
+			buttons: [...accountConfigs.map((account) => account.label), "Cancel"],
+			cancelId,
+		});
+
+		if (response === cancelId) {
+			return;
+		}
+
+		accountId = accountConfigs[response].id;
+	}
+
+	accounts.getAccount(accountId).gmail.mailto(url);
+}
+
+const mailtoUrl = !platform.isMacOS
+	? process.argv.find((arg) => arg.startsWith("mailto:"))
+	: undefined;
+
 (async () => {
 	app.setAppUserModelId("sh.zoid.meru");
 
@@ -59,8 +93,20 @@ import { appUpdater } from "./updater";
 
 	appUpdater.init();
 
-	app.on("second-instance", (_event) => {
+	if (mailtoUrl) {
+		handleMailto(mailtoUrl);
+	}
+
+	app.on("second-instance", (_event, argv) => {
 		main.show();
+
+		if (!platform.isMacOS && appState.isValidLicenseKey) {
+			const mailtoUrl = argv.find((arg) => arg.startsWith("mailto:"));
+
+			if (mailtoUrl) {
+				handleMailto(mailtoUrl);
+			}
+		}
 	});
 
 	app.on("activate", () => {
@@ -69,36 +115,7 @@ import { appUpdater } from "./updater";
 
 	if (appState.isValidLicenseKey) {
 		app.on("open-url", async (_event, url) => {
-			if (!url.startsWith("mailto")) {
-				return;
-			}
-
-			const accountConfigs = accounts.getAccountConfigs();
-
-			let accountId = accountConfigs[0].id;
-
-			if (accountConfigs.length > 1) {
-				const cancelId = accountConfigs.length + 1;
-
-				const { response } = await dialog.showMessageBox(main.window, {
-					type: "question",
-					message: "Compose new email",
-					detail: "Which account would you like to use?",
-					buttons: [
-						...accountConfigs.map((account) => account.label),
-						"Cancel",
-					],
-					cancelId,
-				});
-
-				if (response === cancelId) {
-					return;
-				}
-
-				accountId = accountConfigs[response].id;
-			}
-
-			accounts.getAccount(accountId).gmail.mailto(url);
+			handleMailto(url);
 		});
 	}
 

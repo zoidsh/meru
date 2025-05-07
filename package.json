@@ -54,6 +54,10 @@
 	"build": {
 		"files": ["build-js", "static"],
 		"appId": "sh.zoid.meru",
+		"protocols": {
+			"name": "Meru",
+			"schemes": ["mailto"]
+		},
 		"mac": {
 			"category": "public.app-category.productivity",
 			"icon": "build/icon.icns",
@@ -82,7 +86,8 @@
 			],
 			"synopsis": "Meru brings Gmail to your fingertips as a desktop app",
 			"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-			"category": "Network;Office"
+			"category": "Network;Office",
+			"mimeTypes": ["x-scheme-handler/mailto"]
 		},
 		"win": {
 			"verifyUpdateCodeSignature": false,

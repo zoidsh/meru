@@ -369,7 +369,6 @@ export class AppMenu {
 									},
 							{
 								label: "Set as Default Mail Client",
-								visible: platform.isMacOS,
 								enabled: appState.isValidLicenseKey,
 								type: "checkbox",
 								checked: app.isDefaultProtocolClient("mailto"),

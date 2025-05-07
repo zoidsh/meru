@@ -378,6 +378,8 @@ export class Gmail {
 			`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
 		);
 
-		window.focus();
+		window.once("ready-to-show", () => {
+			window.focus();
+		});
 	}
 }
