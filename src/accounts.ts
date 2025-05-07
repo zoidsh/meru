@@ -66,6 +66,10 @@ class Accounts {
 				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
 			}
 
+			if (platform.isMacOS || platform.isLinux) {
+				app.badgeCount = totalUnreadCount;
+			}
+
 			appTray.updateUnreadStatus(totalUnreadCount);
 
 			this.emit("accounts-changed", this.getAccounts());
