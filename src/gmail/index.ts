@@ -127,6 +127,63 @@ export class Gmail {
 		});
 	}
 
+	private registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
+		window.webContents.setWindowOpenHandler(({ url }) => {
+			if (url === "about:blank") {
+				return {
+					action: "allow",
+					createWindow: (options) => {
+						let view: WebContentsView | null = new WebContentsView(options);
+
+						view.webContents.once("will-navigate", (_event, url) => {
+							openExternalUrl(url);
+
+							if (view) {
+								view.webContents.close();
+
+								view = null;
+							}
+						});
+
+						return view.webContents;
+					},
+				};
+			}
+
+			if (
+				url.startsWith(GMAIL_URL) ||
+				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
+				(SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url) &&
+					appState.isValidLicenseKey)
+			) {
+				return {
+					action: "allow",
+					createWindow: (options) => {
+						const window = new BrowserWindow({
+							...options,
+							width: 1280,
+							height: 800,
+						});
+
+						this.registerWindowOpenHandler(window);
+
+						return window.webContents;
+					},
+				};
+			}
+
+			if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
+				this.view.webContents.downloadURL(url);
+			} else {
+				openExternalUrl(url);
+			}
+
+			return {
+				action: "deny",
+			};
+		});
+	}
+
 	private createView(accountConfig: AccountConfig) {
 		const sessionPartitionKey = this.getSessionPartitionKey(accountConfig);
 
@@ -224,58 +281,7 @@ export class Gmail {
 			},
 		);
 
-		this.view.webContents.setWindowOpenHandler(({ url }) => {
-			if (url === "about:blank") {
-				return {
-					action: "allow",
-					createWindow: (options) => {
-						let view: WebContentsView | null = new WebContentsView(options);
-
-						view.webContents.once("will-navigate", (_event, url) => {
-							openExternalUrl(url);
-
-							if (view) {
-								view.webContents.close();
-
-								view = null;
-							}
-						});
-
-						return view.webContents;
-					},
-				};
-			}
-
-			if (
-				url.startsWith(GMAIL_URL) ||
-				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-				(SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url) &&
-					appState.isValidLicenseKey)
-			) {
-				return {
-					action: "allow",
-					createWindow: (options) => {
-						const window = new BrowserWindow({
-							...options,
-							width: 1280,
-							height: 800,
-						});
-
-						return window.webContents;
-					},
-				};
-			}
-
-			if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
-				this.view.webContents.downloadURL(url);
-			} else {
-				openExternalUrl(url);
-			}
-
-			return {
-				action: "deny",
-			};
-		});
+		this.registerWindowOpenHandler(this.view);
 
 		this.view.webContents.on("will-redirect", (event, url) => {
 			if (url.startsWith("https://www.google.com")) {
