@@ -12,7 +12,7 @@ import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
 import { appState } from "@/state";
 import { is } from "@electron-toolkit/utils";
-import { WebContentsView, app, session } from "electron";
+import { BrowserWindow, WebContentsView, app, session } from "electron";
 import electronContextMenu from "electron-context-menu";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
@@ -254,6 +254,15 @@ export class Gmail {
 			) {
 				return {
 					action: "allow",
+					createWindow: (options) => {
+						const window = new BrowserWindow({
+							...options,
+							width: 1280,
+							height: 800,
+						});
+
+						return window.webContents;
+					},
 				};
 			}
 
