@@ -1,12 +1,12 @@
 <div align="center">
 	<img src="media/icon.svg" width="200" height="200">
 	<h1>Meru (formerly Gmail Desktop)</h1>
-  <h3>The Gmail desktop app to boost your productivity</h3>
+  <h3>The Gmail experience you deserve</h3>
   <p>
-		Meru is the best way to stay on top of your inboxes and manage multiple Gmail accounts.
+		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app.
 	</p>
-  <p>Available for macOS, Windows & Linux.</p>
-  <p><a href="https://meru.so">Try Demo / Download</a></p>
+  <p>Productive, open-source and cross-platform.</p>
+  <p><a href="https://meru.so">Website / Download</a></p>
   <img src="media/screenshot.png">
 </div>
 
