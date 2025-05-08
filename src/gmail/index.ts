@@ -377,5 +377,7 @@ export class Gmail {
 		window.webContents.loadURL(
 			`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
 		);
+
+		window.focus();
 	}
 }
