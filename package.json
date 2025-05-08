@@ -57,9 +57,14 @@
 		"mac": {
 			"category": "public.app-category.productivity",
 			"icon": "build/icon.icns",
+			"darkModeSupport": true,
 			"target": {
 				"target": "default",
 				"arch": ["x64", "arm64"]
+			},
+			"extendInfo": {
+				"NSCameraUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat.",
+				"NSMicrophoneUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat."
 			}
 		},
 		"linux": {

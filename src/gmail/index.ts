@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants";
 import { openExternalUrl } from "@/lib/url";
 import { main } from "@/main";
+import { appState } from "@/state";
 import { is } from "@electron-toolkit/utils";
 import { WebContentsView, app, session } from "electron";
 import electronContextMenu from "electron-context-menu";
@@ -44,6 +45,9 @@ type GmailEvents = {
 const WINDOW_OPEN_URL_WHITELIST = [
 	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
+
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
+	/(calendar|docs|drive|meet|chat|gemini)\.google\.com/;
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
@@ -130,8 +134,15 @@ export class Gmail {
 
 		accountSession.setPermissionRequestHandler(
 			(_webContents, permission, callback) => {
-				if (permission === "notifications") {
-					callback(false);
+				switch (permission) {
+					case "media": {
+						callback(true);
+						break;
+					}
+					case "notifications": {
+						callback(false);
+						break;
+					}
 				}
 			},
 		);
@@ -237,7 +248,9 @@ export class Gmail {
 
 			if (
 				url.startsWith(GMAIL_URL) ||
-				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url))
+				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
+				(SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url) &&
+					appState.isValidLicenseKey)
 			) {
 				return {
 					action: "allow",
