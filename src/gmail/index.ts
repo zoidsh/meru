@@ -46,8 +46,7 @@ const WINDOW_OPEN_URL_WHITELIST = [
 	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
 
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
-	/(calendar|docs|drive|meet|chat|gemini)\.google\.com/;
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP = /(calendar|docs|drive)\.google\.com/;
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
