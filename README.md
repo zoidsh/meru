@@ -15,6 +15,10 @@
 
 - [Tim Cheung](https://github.com/timche)
 
+### Former
+
+- [Mark Skelton](https://github.com/mskelton)
+
 ## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
