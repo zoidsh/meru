@@ -1,5 +1,6 @@
 import { config } from "@/lib/config";
 import { main } from "@/main";
+import { platform } from "@electron-toolkit/utils";
 import { app, dialog } from "electron";
 import { accounts } from "./accounts";
 import { blocker } from "./blocker";
@@ -113,7 +114,7 @@ const mailtoUrl = !platform.isMacOS
 		main.show();
 	});
 
-	if (appState.isValidLicenseKey) {
+	if (platform.isMacOS && appState.isValidLicenseKey) {
 		app.on("open-url", async (_event, url) => {
 			handleMailto(url);
 		});
