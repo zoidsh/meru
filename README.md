@@ -5,8 +5,9 @@
   <p>
 		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app.
 	</p>
-  <p>Productive, open-source and cross-platform.</p>
-  <p><a href="https://meru.so">Website / Download</a></p>
+  <p><a href="https://meru.so">Website</a></p>
+  <p><a href="https://meru.so/download">Download for macOS, Windows & Linux</a></p>
+  <p><a href="https://meru.so/discord">Discord</a></p>
   <img src="media/screenshot.png">
 </div>
 
