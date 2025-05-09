@@ -71,6 +71,8 @@ export class Gmail {
 
 	private _view: WebContentsView | undefined;
 
+	private _windows: Set<BrowserWindow> = new Set();
+
 	state: GmailState = {
 		title: "",
 		navigationHistory: {
@@ -136,7 +138,7 @@ export class Gmail {
 	}
 
 	private registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
-		window.webContents.setWindowOpenHandler(({ url }) => {
+		window.webContents.setWindowOpenHandler(({ url, disposition }) => {
 			if (url === "about:blank") {
 				return {
 					action: "allow",
@@ -158,12 +160,30 @@ export class Gmail {
 				};
 			}
 
+			const isSupportedGoogleApp = SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url);
+
 			if (
-				url.startsWith(GMAIL_URL) ||
-				WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-				(SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url) &&
-					appState.isValidLicenseKey)
+				(url.startsWith(GMAIL_URL) ||
+					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
+					(isSupportedGoogleApp && appState.isValidLicenseKey)) &&
+				disposition !== "background-tab"
 			) {
+				if (isSupportedGoogleApp && this._windows.size > 0) {
+					const urlHostname = new URL(url).hostname;
+
+					for (const window of this._windows) {
+						if (new URL(window.webContents.getURL()).hostname === urlHostname) {
+							window.loadURL(url);
+
+							window.focus();
+
+							return {
+								action: "deny",
+							};
+						}
+					}
+				}
+
 				return {
 					action: "allow",
 					createWindow: (options) => {
@@ -176,6 +196,12 @@ export class Gmail {
 						this.registerWindowOpenHandler(window);
 
 						this.setupContextMenu(window);
+
+						this._windows.add(window);
+
+						window.once("closed", () => {
+							this._windows.delete(window);
+						});
 
 						return window.webContents;
 					},
