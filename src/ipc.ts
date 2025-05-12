@@ -13,7 +13,7 @@ import { appState } from "./state";
 export type IpcMainEvents =
 	| {
 			selectAccount: [selectedAccountId: AccountConfig["id"]];
-			addAccount: [addedAccount: Pick<AccountConfig, "label">];
+			addAccount: [addedAccount: Pick<AccountConfig, "label" | "unreadBadge">];
 			removeAccount: [removedAccountId: AccountConfig["id"]];
 			updateAccount: [updatedAccount: AccountConfig];
 			moveAccount: [

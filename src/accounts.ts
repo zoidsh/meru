@@ -59,10 +59,12 @@ class Accounts {
 	}
 
 	setGmailStateListener(gmail: Gmail) {
+		const dockUnreadBadge = config.get("dock.unreadBadge");
+
 		gmail.on("state-changed", () => {
 			const totalUnreadCount = this.getTotalUnreadCount();
 
-			if (platform.isMacOS && app.dock) {
+			if (platform.isMacOS && app.dock && dockUnreadBadge) {
 				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
 			}
 
@@ -190,7 +192,7 @@ class Accounts {
 		this.selectAccount(nextAccount.id);
 	}
 
-	addAccount(accountDetails: Pick<AccountConfig, "label">) {
+	addAccount(accountDetails: Pick<AccountConfig, "label" | "unreadBadge">) {
 		const createdAccount: AccountConfig = {
 			id: randomUUID(),
 			selected: false,

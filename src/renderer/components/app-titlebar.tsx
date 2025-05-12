@@ -13,6 +13,7 @@ import { Button } from "./ui/button";
 
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
+	const unreadBadge = useAccountsStore((state) => state.unreadBadge);
 
 	const selectedAccount = accounts.find((account) => account.config.selected);
 
@@ -90,6 +91,8 @@ export function AppTitlebar() {
 									<CircleAlertIcon className="size-3.5 text-yellow-400" />
 								)}
 								{!account.gmail.attentionRequired &&
+								unreadBadge &&
+								account.config.unreadBadge &&
 								account.gmail.unreadCount > 0 ? (
 									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
 										{account.gmail.unreadCount}

@@ -7,12 +7,14 @@ export type AccountConfig = {
 	id: string;
 	label: string;
 	selected: boolean;
+	unreadBadge: boolean;
 };
 
 export type AccountConfigs = AccountConfig[];
 
 export type Config = {
 	accounts: AccountConfigs;
+	"accounts.unreadBadge": boolean;
 	lastWindowState: {
 		bounds: {
 			width: number;
@@ -26,9 +28,10 @@ export type Config = {
 	launchMinimized: boolean;
 	launchAtLogin: boolean;
 	hardwareAcceleration: boolean;
-	showDockIcon: boolean;
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
+	"dock.enabled": boolean;
+	"dock.unreadBadge": boolean;
 	"externalLinks.confirm": boolean;
 	"externalLinks.trustedHosts": string[];
 	"gmail.zoomFactor": number;
@@ -46,6 +49,7 @@ export type Config = {
 	"blocker.tracking": boolean;
 	"tray.enabled": boolean;
 	"tray.iconColor": "system" | "light" | "dark";
+	"tray.unreadCount": boolean;
 	licenseKey: string | null;
 };
 
@@ -53,7 +57,15 @@ export const config = new Store<Config>({
 	name: is.dev ? "config.dev" : "config",
 	accessPropertiesByDotNotation: false,
 	defaults: {
-		accounts: [{ id: randomUUID(), label: "Default", selected: true }],
+		accounts: [
+			{
+				id: randomUUID(),
+				label: "Default",
+				selected: true,
+				unreadBadge: true,
+			},
+		],
+		"accounts.unreadBadge": true,
 		lastWindowState: {
 			bounds: {
 				width: 1280,
@@ -67,9 +79,10 @@ export const config = new Store<Config>({
 		launchMinimized: false,
 		launchAtLogin: false,
 		hardwareAcceleration: false,
-		showDockIcon: true,
 		resetConfig: false,
 		theme: "system",
+		"dock.enabled": true,
+		"dock.unreadBadge": true,
 		"externalLinks.confirm": true,
 		"externalLinks.trustedHosts": [],
 		"gmail.zoomFactor": 1,
@@ -87,6 +100,34 @@ export const config = new Store<Config>({
 		"blocker.tracking": true,
 		"tray.enabled": !platform.isMacOS,
 		"tray.iconColor": "system",
+		"tray.unreadCount": true,
 		licenseKey: null,
+	},
+	migrations: {
+		">=3.4.0": (store) => {
+			// @ts-expect-error: `showDockIcon` is now 'dock.enabled'
+			const showDockIcon = store.get("showDockIcon");
+
+			if (typeof showDockIcon === "boolean") {
+				store.set("dock.enabled", showDockIcon);
+
+				// @ts-expect-error
+				store.delete("showDockIcon");
+			}
+
+			const accounts = store.get("accounts");
+			let accountsMigrated = false;
+
+			for (const account of accounts) {
+				if (typeof account.unreadBadge === "undefined") {
+					account.unreadBadge = true;
+					accountsMigrated = true;
+				}
+			}
+
+			if (accountsMigrated) {
+				store.set("accounts", accounts);
+			}
+		},
 	},
 });

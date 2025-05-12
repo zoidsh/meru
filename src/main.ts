@@ -47,6 +47,11 @@ class Main {
 			),
 		);
 
+		searchParams.set(
+			"accountsUnreadBadge",
+			JSON.stringify(config.get("accounts.unreadBadge")),
+		);
+
 		searchParams.set("licenseKey", JSON.stringify(config.get("licenseKey")));
 
 		if (is.dev) {

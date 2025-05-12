@@ -112,50 +112,16 @@ export class AppTray {
 			}
 
 			if (platform.isMacOS) {
-				this._tray.setTitle(unreadCount ? unreadCount.toString() : "");
+				const trayUnreadCount = config.get("tray.unreadCount");
+
+				if (trayUnreadCount) {
+					this._tray.setTitle(unreadCount ? unreadCount.toString() : "");
+				}
 			}
 		}
 	}
 
 	getMenuTemplate() {
-		const macosMenuItems: Electron.MenuItemConstructorOptions[] = [];
-
-		if (platform.isMacOS) {
-			macosMenuItems.push(
-				{
-					label: "Show Dock Icon",
-					type: "checkbox",
-					checked: config.get("showDockIcon"),
-					click: ({ checked }: { checked: boolean }) => {
-						if (this._menu && Electron.app.dock) {
-							config.set("showDockIcon", checked);
-
-							if (checked) {
-								Electron.app.dock.show();
-							} else {
-								Electron.app.dock.hide();
-							}
-
-							this.updateMenu();
-						}
-					},
-				},
-				{
-					type: "separator",
-				},
-			);
-
-			const applicationMenu = Electron.Menu.getApplicationMenu();
-
-			if (applicationMenu) {
-				macosMenuItems.push({
-					label: "Menu",
-					visible: !config.get("showDockIcon"),
-					submenu: applicationMenu,
-				});
-			}
-		}
-
 		const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
 			...accounts.getAccountConfigs().map((accountConfig) => ({
 				label: accountConfig.label,
@@ -169,22 +135,21 @@ export class AppTray {
 				type: "separator",
 			},
 			{
-				click: () => {
-					main.show();
-				},
 				label: "Show",
 				visible: main.shouldLaunchMinimized(),
 				id: "show-win",
+				click: () => {
+					main.show();
+				},
 			},
 			{
 				label: "Hide",
 				visible: !main.shouldLaunchMinimized(),
+				id: "hide-win",
 				click: () => {
 					main.window.hide();
 				},
-				id: "hide-win",
 			},
-			...macosMenuItems,
 			{
 				type: "separator",
 			},

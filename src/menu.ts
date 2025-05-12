@@ -108,6 +108,34 @@ export class AppMenu {
 						label: "Preferences",
 						submenu: [
 							{
+								label: "Accounts",
+								submenu: [
+									{
+										label: "Show Unread Badge",
+										type: "checkbox",
+										checked: config.get("accounts.unreadBadge"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("accounts.unreadBadge", checked);
+
+											showRestartDialog();
+										},
+									},
+									{
+										type: "separator",
+									},
+									{
+										label: "Manage Accounts...",
+										click: () => {
+											appState.setIsSettingsOpen(true);
+
+											accounts.hide();
+
+											main.show();
+										},
+									},
+								],
+							},
+							{
 								label: "Downloads",
 								submenu: [
 									{
@@ -306,16 +334,53 @@ export class AppMenu {
 							{
 								type: "separator",
 							},
+							...(platform.isMacOS
+								? [
+										{
+											label: "Dock Icon",
+											submenu: [
+												{
+													label: "Show Unread Badge",
+													type: "checkbox",
+													checked: config.get("dock.unreadBadge"),
+													click: ({ checked }: { checked: boolean }) => {
+														config.set("dock.unreadBadge", checked);
+
+														showRestartDialog();
+													},
+												},
+											],
+										} satisfies MenuItemConstructorOptions,
+									]
+								: []),
 							platform.isMacOS
 								? {
-										label: "Show Menu Bar Icon",
-										type: "checkbox",
-										checked: config.get("tray.enabled"),
-										click: ({ checked }: { checked: boolean }) => {
-											config.set("tray.enabled", checked);
+										label: "Menu Bar Icon",
+										submenu: [
+											{
+												label: "Enabled",
+												type: "checkbox",
+												checked: config.get("tray.enabled"),
+												click: ({ checked }: { checked: boolean }) => {
+													config.set("tray.enabled", checked);
 
-											showRestartDialog();
-										},
+													showRestartDialog();
+												},
+											},
+											{
+												type: "separator",
+											},
+											{
+												label: "Show Unread Count",
+												type: "checkbox",
+												checked: config.get("tray.unreadCount"),
+												click: ({ checked }: { checked: boolean }) => {
+													config.set("tray.unreadCount", checked);
+
+													showRestartDialog();
+												},
+											},
+										],
 									}
 								: {
 										label: "System Tray Icon",

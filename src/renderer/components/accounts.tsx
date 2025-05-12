@@ -1,6 +1,11 @@
 import type { AccountConfig } from "@/lib/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
+import {
+	ArrowDownIcon,
+	ArrowUpIcon,
+	CheckIcon,
+	EllipsisIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -8,6 +13,7 @@ import { ipcMain } from "../lib/ipc";
 import { licenseKeySearchParam } from "../lib/search-params";
 import { useAccountsStore } from "../lib/stores";
 import { Button } from "./ui/button";
+import { Checkbox } from "./ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -44,21 +50,25 @@ export const accountSchema = z.object({
 	id: z.string(),
 	label: z.string(),
 	selected: z.boolean(),
+	unreadBadge: z.boolean(),
 });
 
 function AccountForm({
-	account = { label: "" },
+	account = { label: "", unreadBadge: true },
 	placeholder = "Work",
 	onSubmit,
 }: {
-	account?: Pick<AccountConfig, "label">;
+	account?: Pick<AccountConfig, "label" | "unreadBadge">;
 	placeholder?: string;
-	onSubmit: (values: Pick<AccountConfig, "label">) => void;
+	onSubmit: (values: Pick<AccountConfig, "label" | "unreadBadge">) => void;
 }) {
-	const form = useForm<Pick<AccountConfig, "label">>({
-		resolver: zodResolver(accountSchema.pick({ label: true })),
+	const form = useForm<Pick<AccountConfig, "label" | "unreadBadge">>({
+		resolver: zodResolver(
+			accountSchema.pick({ label: true, unreadBadge: true }),
+		),
 		defaultValues: {
 			label: account.label,
+			unreadBadge: account.unreadBadge,
 		},
 	});
 
@@ -79,6 +89,22 @@ function AccountForm({
 							<FormControl>
 								<Input placeholder={placeholder} {...field} />
 							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name="unreadBadge"
+					render={({ field }) => (
+						<FormItem className="flex">
+							<FormControl>
+								<Checkbox
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
+							</FormControl>
+							<FormLabel>Unread badge</FormLabel>
 							<FormMessage />
 						</FormItem>
 					)}
@@ -204,14 +230,18 @@ export function Accounts() {
 				<TableHeader>
 					<TableRow>
 						<TableHead>Label</TableHead>
+						<TableHead>Unread badge</TableHead>
 						<TableHead />
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{accounts.map((account, index) => (
 						<TableRow key={account.config.id}>
-							<TableCell className="w-full">{account.config.label}</TableCell>
-							<TableCell className="flex">
+							<TableCell>{account.config.label}</TableCell>
+							<TableCell>
+								{account.config.unreadBadge && <CheckIcon className="size-4" />}
+							</TableCell>
+							<TableCell className="flex justify-end">
 								{accounts.length > 1 && (
 									<>
 										<Button
