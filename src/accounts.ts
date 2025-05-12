@@ -192,7 +192,12 @@ class Accounts {
 		this.selectAccount(nextAccount.id);
 	}
 
-	addAccount(accountDetails: Pick<AccountConfig, "label" | "unreadBadge">) {
+	addAccount(
+		accountDetails: Pick<
+			AccountConfig,
+			"label" | "unreadBadge" | "notifications"
+		>,
+	) {
 		const createdAccount: AccountConfig = {
 			id: randomUUID(),
 			selected: false,

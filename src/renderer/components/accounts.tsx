@@ -51,24 +51,34 @@ export const accountSchema = z.object({
 	label: z.string(),
 	selected: z.boolean(),
 	unreadBadge: z.boolean(),
+	notifications: z.boolean(),
 });
 
 function AccountForm({
-	account = { label: "", unreadBadge: true },
+	account = { label: "", unreadBadge: true, notifications: true },
 	placeholder = "Work",
 	onSubmit,
 }: {
-	account?: Pick<AccountConfig, "label" | "unreadBadge">;
+	account?: Pick<AccountConfig, "label" | "unreadBadge" | "notifications">;
 	placeholder?: string;
-	onSubmit: (values: Pick<AccountConfig, "label" | "unreadBadge">) => void;
+	onSubmit: (
+		values: Pick<AccountConfig, "label" | "unreadBadge" | "notifications">,
+	) => void;
 }) {
-	const form = useForm<Pick<AccountConfig, "label" | "unreadBadge">>({
+	const form = useForm<
+		Pick<AccountConfig, "label" | "unreadBadge" | "notifications">
+	>({
 		resolver: zodResolver(
-			accountSchema.pick({ label: true, unreadBadge: true }),
+			accountSchema.pick({
+				label: true,
+				unreadBadge: true,
+				notifications: true,
+			}),
 		),
 		defaultValues: {
 			label: account.label,
 			unreadBadge: account.unreadBadge,
+			notifications: account.notifications,
 		},
 	});
 
@@ -105,6 +115,22 @@ function AccountForm({
 								/>
 							</FormControl>
 							<FormLabel>Unread badge</FormLabel>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name="notifications"
+					render={({ field }) => (
+						<FormItem className="flex">
+							<FormControl>
+								<Checkbox
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
+							</FormControl>
+							<FormLabel>Notifications</FormLabel>
 							<FormMessage />
 						</FormItem>
 					)}
@@ -231,6 +257,7 @@ export function Accounts() {
 					<TableRow>
 						<TableHead>Label</TableHead>
 						<TableHead>Unread badge</TableHead>
+						<TableHead>Notifications</TableHead>
 						<TableHead />
 					</TableRow>
 				</TableHeader>
@@ -240,6 +267,11 @@ export function Accounts() {
 							<TableCell>{account.config.label}</TableCell>
 							<TableCell>
 								{account.config.unreadBadge && <CheckIcon className="size-4" />}
+							</TableCell>
+							<TableCell>
+								{account.config.notifications && (
+									<CheckIcon className="size-4" />
+								)}
 							</TableCell>
 							<TableCell className="flex justify-end">
 								{accounts.length > 1 && (

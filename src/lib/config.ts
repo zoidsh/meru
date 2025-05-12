@@ -8,6 +8,7 @@ export type AccountConfig = {
 	label: string;
 	selected: boolean;
 	unreadBadge: boolean;
+	notifications: boolean;
 };
 
 export type AccountConfigs = AccountConfig[];
@@ -63,6 +64,7 @@ export const config = new Store<Config>({
 				label: "Default",
 				selected: true,
 				unreadBadge: true,
+				notifications: true,
 			},
 		],
 		"accounts.unreadBadge": true,
@@ -121,6 +123,11 @@ export const config = new Store<Config>({
 			for (const account of accounts) {
 				if (typeof account.unreadBadge === "undefined") {
 					account.unreadBadge = true;
+					accountsMigrated = true;
+				}
+
+				if (typeof account.notifications === "undefined") {
+					account.notifications = true;
 					accountsMigrated = true;
 				}
 			}

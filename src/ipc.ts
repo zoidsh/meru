@@ -13,7 +13,12 @@ import { appState } from "./state";
 export type IpcMainEvents =
 	| {
 			selectAccount: [selectedAccountId: AccountConfig["id"]];
-			addAccount: [addedAccount: Pick<AccountConfig, "label" | "unreadBadge">];
+			addAccount: [
+				addedAccount: Pick<
+					AccountConfig,
+					"label" | "unreadBadge" | "notifications"
+				>,
+			];
 			removeAccount: [removedAccountId: AccountConfig["id"]];
 			updateAccount: [updatedAccount: AccountConfig];
 			moveAccount: [
@@ -145,6 +150,10 @@ export function initIpc() {
 				for (const [accountId, gmail] of accounts.gmails) {
 					if (gmail.view.webContents.id === event.sender.id) {
 						const account = accounts.getAccount(accountId);
+
+						if (!account.config.notifications) {
+							break;
+						}
 
 						let subtitle: string | undefined;
 
