@@ -433,23 +433,7 @@ export class AppMenu {
 										],
 									},
 							{
-								label: "Set as Default Mail Client",
-								enabled: appState.isValidLicenseKey,
-								type: "checkbox",
-								checked: app.isDefaultProtocolClient("mailto"),
-								click: () => {
-									if (process.defaultApp) {
-										if (process.argv.length >= 2) {
-											app.setAsDefaultProtocolClient(
-												"mailto",
-												process.execPath,
-												[path.resolve(process.argv[1])],
-											);
-										}
-									} else {
-										app.setAsDefaultProtocolClient("mailto");
-									}
-								},
+								type: "separator",
 							},
 							{
 								label: "Launch at Login",
@@ -473,6 +457,25 @@ export class AppMenu {
 							},
 							{
 								type: "separator",
+							},
+							{
+								label: "Set as Default Mail Client",
+								enabled: appState.isValidLicenseKey,
+								type: "checkbox",
+								checked: app.isDefaultProtocolClient("mailto"),
+								click: () => {
+									if (process.defaultApp) {
+										if (process.argv.length >= 2) {
+											app.setAsDefaultProtocolClient(
+												"mailto",
+												process.execPath,
+												[path.resolve(process.argv[1])],
+											);
+										}
+									} else {
+										app.setAsDefaultProtocolClient("mailto");
+									}
+								},
 							},
 							{
 								label: "Hardware Acceleration",
@@ -515,7 +518,7 @@ export class AppMenu {
 						],
 					},
 					{
-						label: "Gmail Settings",
+						label: "Gmail Settings...",
 						accelerator: "Command+,",
 						click: () => {
 							ipcRenderer.send(
