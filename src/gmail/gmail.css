@@ -23,7 +23,7 @@ html.meru.reverse-conversation div[role="list"]:has(div[role="listitem"]) {
 
 html.meru.reverse-conversation
 	div[role="list"]
-	div[role="listitem"]:nth-of-type(2)
+	div[role="listitem"]:nth-of-type(2):not(:last-of-type)
 	.Bk
 	.G2 {
 	border-bottom: 1px solid var(--coversation-border-color) !important;
