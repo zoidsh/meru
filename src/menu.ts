@@ -610,6 +610,26 @@ export class AppMenu {
 						label: "Gmail Appearance",
 						submenu: [
 							{
+								label: "Hide Gmail Logo",
+								type: "checkbox",
+								checked: config.get("gmail.hideGmailLogo"),
+								click: ({ checked }: { checked: boolean }) => {
+									config.set("gmail.hideGmailLogo", checked);
+
+									showRestartDialog();
+								},
+							},
+							{
+								label: "Hide Inbox Footer",
+								type: "checkbox",
+								checked: config.get("gmail.hideInboxFooter"),
+								click: ({ checked }: { checked: boolean }) => {
+									config.set("gmail.hideInboxFooter", checked);
+
+									showRestartDialog();
+								},
+							},
+							{
 								label: "Reverse Conversation",
 								type: "checkbox",
 								enabled: appState.isValidLicenseKey,

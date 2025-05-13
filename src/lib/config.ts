@@ -52,6 +52,8 @@ export type Config = {
 	"tray.enabled": boolean;
 	"tray.iconColor": "system" | "light" | "dark";
 	"tray.unreadCount": boolean;
+	"gmail.hideGmailLogo": boolean;
+	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
 };
 
@@ -105,6 +107,8 @@ export const config = new Store<Config>({
 		"tray.enabled": !platform.isMacOS,
 		"tray.iconColor": "system",
 		"tray.unreadCount": true,
+		"gmail.hideGmailLogo": true,
+		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
 	},
 	migrations: {

@@ -332,13 +332,19 @@ export class Gmail {
 
 		const searchParams = new URLSearchParams();
 
+		if (config.get("gmail.hideGmailLogo")) {
+			searchParams.set("hideGmailLogo", "true");
+		}
+
+		if (config.get("gmail.hideInboxFooter")) {
+			searchParams.set("hideInboxFooter", "true");
+		}
+
 		if (config.get("gmail.reverseConversation") && appState.isValidLicenseKey) {
 			searchParams.set("reverseConversation", "true");
 		}
 
-		this.view.webContents.loadURL(
-			searchParams.size > 0 ? `${GMAIL_URL}/?${searchParams}` : GMAIL_URL,
-		);
+		this.view.webContents.loadURL(`${GMAIL_URL}/?${searchParams}`);
 
 		if (is.dev) {
 			this.view.webContents.openDevTools({ mode: "bottom" });

@@ -3,22 +3,25 @@ html.meru {
 }
 
 /* Gmail Logo */
-header div:has(> div > a[href="#inbox"] > img) {
+html.meru.hide-gmail-logo header div:has(> div > a[href="#inbox"] > img) {
 	display: none !important;
 }
 
-/* Gmail Footer */
-[role="contentinfo"]:has(a[href="https://www.google.com/gmail/about/policy/"]) {
+/* Gmail Inbox Footer */
+html.meru.hide-inbox-footer
+	[role="contentinfo"]:has(
+		a[href="https://www.google.com/gmail/about/policy/"]
+	) {
 	display: none !important;
 }
 
 /* Reverse conversation */
-html.meru-reverse-conversation div[role="list"]:has(div[role="listitem"]) {
+html.meru.reverse-conversation div[role="list"]:has(div[role="listitem"]) {
 	display: flex;
 	flex-direction: column-reverse;
 }
 
-html.meru-reverse-conversation
+html.meru.reverse-conversation
 	div[role="list"]
 	div[role="listitem"]:nth-of-type(2)
 	.Bk
@@ -26,7 +29,7 @@ html.meru-reverse-conversation
 	border-bottom: 1px solid var(--coversation-border-color) !important;
 }
 
-html.meru-reverse-conversation
+html.meru.reverse-conversation
 	div[role="list"]
 	div[role="listitem"]:nth-last-of-type(2)
 	.Bk
@@ -34,7 +37,7 @@ html.meru-reverse-conversation
 	border-top: 1px solid var(--coversation-border-color) !important;
 }
 
-html.meru-reverse-conversation
+html.meru.reverse-conversation
 	div[role="list"]
 	div[role="listitem"]:last-of-type
 	.Bk
