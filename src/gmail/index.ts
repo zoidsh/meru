@@ -2,7 +2,7 @@ import EventEmitter from "node:events";
 import fs from "node:fs";
 import path from "node:path";
 import { blocker } from "@/blocker";
-import type { AccountConfig } from "@/lib/config";
+import { type AccountConfig, config } from "@/lib/config";
 import {
 	APP_TITLEBAR_HEIGHT,
 	GMAIL_URL,
@@ -330,7 +330,15 @@ export class Gmail {
 
 		this.updateViewBounds();
 
-		this.view.webContents.loadURL(GMAIL_URL);
+		const searchParams = new URLSearchParams();
+
+		if (config.get("gmail.reverseConversation") && appState.isValidLicenseKey) {
+			searchParams.set("reverseConversation", "true");
+		}
+
+		this.view.webContents.loadURL(
+			searchParams.size > 0 ? `${GMAIL_URL}/?${searchParams}` : GMAIL_URL,
+		);
 
 		if (is.dev) {
 			this.view.webContents.openDevTools({ mode: "bottom" });

@@ -56,7 +56,7 @@ class Main {
 
 		if (is.dev) {
 			this.window.webContents.loadURL(
-				`http://localhost:3000?${searchParams.toString()}`,
+				`http://localhost:3000/?${searchParams.toString()}`,
 			);
 
 			this.window.webContents.openDevTools({

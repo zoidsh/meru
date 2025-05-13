@@ -31,6 +31,7 @@ export type Config = {
 	hardwareAcceleration: boolean;
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
+	licenseKey: string | null;
 	"dock.enabled": boolean;
 	"dock.unreadBadge": boolean;
 	"externalLinks.confirm": boolean;
@@ -51,7 +52,7 @@ export type Config = {
 	"tray.enabled": boolean;
 	"tray.iconColor": "system" | "light" | "dark";
 	"tray.unreadCount": boolean;
-	licenseKey: string | null;
+	"gmail.reverseConversation": boolean;
 };
 
 export const config = new Store<Config>({
@@ -83,6 +84,7 @@ export const config = new Store<Config>({
 		hardwareAcceleration: false,
 		resetConfig: false,
 		theme: "system",
+		licenseKey: null,
 		"dock.enabled": true,
 		"dock.unreadBadge": true,
 		"externalLinks.confirm": true,
@@ -103,7 +105,7 @@ export const config = new Store<Config>({
 		"tray.enabled": !platform.isMacOS,
 		"tray.iconColor": "system",
 		"tray.unreadCount": true,
-		licenseKey: null,
+		"gmail.reverseConversation": false,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

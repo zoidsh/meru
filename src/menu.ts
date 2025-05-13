@@ -610,6 +610,20 @@ export class AppMenu {
 						label: "Gmail Appearance",
 						submenu: [
 							{
+								label: "Reverse Conversation",
+								type: "checkbox",
+								enabled: appState.isValidLicenseKey,
+								checked: config.get("gmail.reverseConversation"),
+								click: ({ checked }: { checked: boolean }) => {
+									config.set("gmail.reverseConversation", checked);
+
+									showRestartDialog();
+								},
+							},
+							{
+								type: "separator",
+							},
+							{
 								label: "Edit User Styles",
 								click: () => {
 									if (!fs.existsSync(Gmail.userStylesPath)) {
