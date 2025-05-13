@@ -81,7 +81,9 @@ class Accounts {
 	getTotalUnreadCount() {
 		return Array.from(this.gmails.values()).reduce(
 			(totalUnreadCount, account) =>
-				totalUnreadCount + account.state.unreadCount,
+				typeof account.state.unreadCount === "number"
+					? totalUnreadCount + account.state.unreadCount
+					: totalUnreadCount,
 			0,
 		);
 	}

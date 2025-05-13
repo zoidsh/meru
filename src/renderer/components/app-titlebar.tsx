@@ -92,8 +92,7 @@ export function AppTitlebar() {
 								)}
 								{!account.gmail.attentionRequired &&
 								unreadBadge &&
-								account.config.unreadBadge &&
-								account.gmail.unreadCount > 0 ? (
+								account.gmail.unreadCount ? (
 									<div className="bg-[#ec3128] font-normal text-[0.5rem] text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
 										{account.gmail.unreadCount}
 									</div>

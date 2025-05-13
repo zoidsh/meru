@@ -127,7 +127,7 @@ export function initIpc() {
 	ipcMain.on("updateUnreadCount", (event, unreadCount) => {
 		for (const gmail of accounts.gmails.values()) {
 			if (event.sender.id === gmail.view.webContents.id) {
-				gmail.setState({ unreadCount });
+				gmail.setUnreadCount(unreadCount);
 			}
 		}
 	});

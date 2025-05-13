@@ -34,7 +34,7 @@ export type GmailState = {
 		canGoBack: boolean;
 		canGoForward: boolean;
 	};
-	unreadCount: number;
+	unreadCount: number | null;
 	attentionRequired: boolean;
 };
 
@@ -106,7 +106,21 @@ export class Gmail {
 		this.emit("state-changed", this.state, previousState);
 	}
 
+	setUnreadCount(unreadCount: number) {
+		if (typeof this.state.unreadCount === "number") {
+			this.setState({
+				unreadCount,
+			});
+		}
+	}
+
 	constructor(accountConfig: AccountConfig) {
+		if (!accountConfig.unreadBadge) {
+			this.setState({
+				unreadCount: null,
+			});
+		}
+
 		this.createView(accountConfig);
 	}
 
@@ -296,7 +310,13 @@ export class Gmail {
 							this.view.webContents.navigationHistory.canGoForward(),
 					},
 					attentionRequired: !url.startsWith(GMAIL_URL),
-					unreadCount: url.startsWith(GMAIL_URL) ? this.state.unreadCount : 0,
+					...(typeof this.state.unreadCount === "number"
+						? {
+								unreadCount: url.startsWith(GMAIL_URL)
+									? this.state.unreadCount
+									: 0,
+							}
+						: {}),
 				});
 			},
 		);
