@@ -340,6 +340,19 @@ export class AppMenu {
 											label: "Dock Icon",
 											submenu: [
 												{
+													label: "Enabled",
+													type: "checkbox",
+													checked: config.get("dock.enabled"),
+													click: ({ checked }: { checked: boolean }) => {
+														config.set("dock.enabled", checked);
+
+														showRestartDialog();
+													},
+												},
+												{
+													type: "separator",
+												},
+												{
 													label: "Show Unread Badge",
 													type: "checkbox",
 													checked: config.get("dock.unreadBadge"),

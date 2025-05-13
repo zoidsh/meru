@@ -152,6 +152,10 @@ class Main {
 				this.window.blur();
 
 				this.window.hide();
+
+				if (!config.get("dock.enabled")) {
+					app.dock?.hide();
+				}
 			}
 		});
 	}
@@ -161,6 +165,10 @@ class Main {
 			this.window.restore();
 		} else {
 			this.window.show();
+		}
+
+		if (app.dock?.isVisible) {
+			app.dock.show();
 		}
 	}
 }

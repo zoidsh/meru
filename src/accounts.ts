@@ -68,7 +68,7 @@ class Accounts {
 				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
 			}
 
-			if (platform.isMacOS || platform.isLinux) {
+			if (platform.isLinux && dockUnreadBadge) {
 				app.badgeCount = totalUnreadCount;
 			}
 

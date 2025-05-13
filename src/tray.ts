@@ -29,9 +29,11 @@ export class AppTray {
 				main.show();
 			});
 
-			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+			this._tray.on("right-click", () => {
+				this._tray?.popUpContextMenu(this._menu);
+			});
 
-			this._tray.setContextMenu(this._menu);
+			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
 			main.window.on("hide", () => {
 				this.updateWindowVisibilityMenuItem();
@@ -79,14 +81,6 @@ export class AppTray {
 		}
 	}
 
-	updateMenu() {
-		if (this._tray) {
-			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
-
-			this._tray.setContextMenu(this._menu);
-		}
-	}
-
 	updateWindowVisibilityMenuItem() {
 		if (this._tray && this._menu) {
 			const showWindowMenuItem = this._menu.getMenuItemById("show-win");
@@ -100,8 +94,6 @@ export class AppTray {
 			if (hideWindowMenuItem) {
 				hideWindowMenuItem.visible = main.window.isVisible();
 			}
-
-			this._tray.setContextMenu(this._menu);
 		}
 	}
 
