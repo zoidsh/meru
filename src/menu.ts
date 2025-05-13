@@ -661,6 +661,7 @@ export class AppMenu {
 							},
 							{
 								label: "Edit User Styles",
+								enabled: appState.isValidLicenseKey,
 								click: () => {
 									if (!fs.existsSync(Gmail.userStylesPath)) {
 										fs.closeSync(fs.openSync(Gmail.userStylesPath, "w"));

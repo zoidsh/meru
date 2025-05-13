@@ -131,12 +131,14 @@ export class Gmail {
 	private _userStyles: string | undefined;
 
 	private injectUserStyles() {
-		if (!this._userStyles && fs.existsSync(Gmail.userStylesPath)) {
-			this._userStyles = fs.readFileSync(Gmail.userStylesPath, "utf-8");
-		}
+		if (appState.isValidLicenseKey) {
+			if (!this._userStyles && fs.existsSync(Gmail.userStylesPath)) {
+				this._userStyles = fs.readFileSync(Gmail.userStylesPath, "utf-8");
+			}
 
-		if (this._userStyles) {
-			this.view.webContents.insertCSS(this._userStyles);
+			if (this._userStyles) {
+				this.view.webContents.insertCSS(this._userStyles);
+			}
 		}
 	}
 
