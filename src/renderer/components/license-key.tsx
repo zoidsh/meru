@@ -55,10 +55,7 @@ function LicenseKeyForm({
 						<FormItem>
 							<FormLabel>License Key</FormLabel>
 							<FormControl>
-								<Input
-									placeholder="5b03075b-9c65-4656-8ca3-f09af0d4267a"
-									{...field}
-								/>
+								<Input placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -125,7 +122,7 @@ export function LicenseKey() {
 				<>
 					<div className="mb-4">
 						You're using the Pro version of Meru for professional and commercial
-						use.
+						use. Thank you for supporting Meru!
 					</div>
 					<div className="flex justify-end">
 						<Button
@@ -144,8 +141,8 @@ export function LicenseKey() {
 						You're using the free version of Meru for personal use.
 					</div>
 					<div className="mb-4">
-						Upgrade to start using Meru at its fullest for professional and
-						commercial use.
+						Unlock Meru Pro for professional features and commercial use. Your
+						upgrade supports ongoing development.
 					</div>
 					<div className="flex gap-4 justify-end">
 						<ActivateLicenseKeyButton />
