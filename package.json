@@ -1,9 +1,23 @@
 {
 	"name": "meru",
+	"productName": "Meru",
 	"version": "3.4.2",
-	"author": "Tim Cheung <tim@zoid.sh>",
+	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+	"private": true,
+	"author": "Tim Cheung <tim@meru.so>",
 	"repository": "zoidsh/meru",
 	"main": "build-js/app.js",
+	"scripts": {
+		"postinstall": "electron-builder install-app-deps",
+		"dev": "bun run scripts/build.ts --dev",
+		"lint": "biome check .",
+		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+		"types": "tsc",
+		"build:js": "MERU_API_URL=https://api.meru.so bun run scripts/build.ts",
+		"build:mac": "electron-builder --mac",
+		"build:linux": "electron-builder --linux",
+		"build:win": "electron-builder --win"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@electron-toolkit/preload": "^3.0.2",
@@ -24,7 +38,6 @@
 		"@types/react-dom": "^19.0.4",
 		"@types/trusted-types": "^2.0.7",
 		"@vitejs/plugin-react": "^4.4.1",
-		"bun-plugin-tailwind": "^0.0.14",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"electron": "^36.2.0",
@@ -51,6 +64,9 @@
 		"vite": "^6.3.4",
 		"zod": "^3.24.2",
 		"zustand": "^5.0.3"
+	},
+	"patchedDependencies": {
+		"conf@13.1.0": "patches/conf@13.1.0.patch"
 	},
 	"build": {
 		"files": ["build-js", "static"],
@@ -104,22 +120,5 @@
 			"provider": "github",
 			"releaseType": "release"
 		}
-	},
-	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-	"patchedDependencies": {
-		"conf@13.1.0": "patches/conf@13.1.0.patch"
-	},
-	"private": true,
-	"productName": "Meru",
-	"scripts": {
-		"postinstall": "electron-builder install-app-deps",
-		"dev": "bun run scripts/build.ts --dev",
-		"lint": "biome check .",
-		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
-		"types": "tsc",
-		"build:js": "MERU_API_URL=https://api.meru.so bun run scripts/build.ts",
-		"build:mac": "electron-builder --mac",
-		"build:linux": "electron-builder --linux",
-		"build:win": "electron-builder --win"
 	}
 }

@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": ["dist", "build-js"]
+		"ignore": ["dist", "build-js", "package.json"]
 	},
 	"formatter": {
 		"enabled": true,
