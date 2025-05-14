@@ -116,7 +116,7 @@ export class Gmail {
 	}
 
 	updateViewBounds() {
-		const { width, height } = main.window.getBounds();
+		const { width, height } = main.window.getContentBounds();
 
 		this.view.setBounds({
 			x: 0,
