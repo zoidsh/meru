@@ -124,22 +124,25 @@ export const config = new Store<Config>({
 			}
 
 			const accounts = store.get("accounts");
-			let accountsMigrated = false;
 
-			for (const account of accounts) {
-				if (typeof account.unreadBadge === "undefined") {
-					account.unreadBadge = true;
-					accountsMigrated = true;
+			if (Array.isArray(accounts)) {
+				let accountsMigrated = false;
+
+				for (const account of accounts) {
+					if (typeof account.unreadBadge === "undefined") {
+						account.unreadBadge = true;
+						accountsMigrated = true;
+					}
+
+					if (typeof account.notifications === "undefined") {
+						account.notifications = true;
+						accountsMigrated = true;
+					}
 				}
 
-				if (typeof account.notifications === "undefined") {
-					account.notifications = true;
-					accountsMigrated = true;
+				if (accountsMigrated) {
+					store.set("accounts", accounts);
 				}
-			}
-
-			if (accountsMigrated) {
-				store.set("accounts", accounts);
 			}
 		},
 	},
