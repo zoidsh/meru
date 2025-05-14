@@ -37,7 +37,7 @@ function buildAppFiles() {
 	return Promise.all([
 		esbuild.build({
 			...config,
-			entryPoints: ["./src/app.ts"],
+			entryPoints: ["./packages/app/index.ts"],
 			platform: "node",
 			target: "node22",
 			loader: {
@@ -47,8 +47,8 @@ function buildAppFiles() {
 		esbuild.build({
 			...config,
 			entryPoints: [
-				"./src/gmail/preload/index.ts",
-				"./src/renderer/preload.ts",
+				"./packages/gmail-preload/index.ts",
+				"./packages/renderer-preload/index.ts",
 			],
 			platform: "browser",
 			target: "chrome136",
@@ -60,11 +60,11 @@ async function buildRenderer() {
 	const viteConfig: vite.InlineConfig = {
 		configFile: false,
 		base: "./",
-		root: path.resolve(process.cwd(), "src", "renderer"),
+		root: path.resolve(process.cwd(), "packages", "renderer"),
 		plugins: [react(), tailwindcss()],
 		resolve: {
 			alias: {
-				"@": path.resolve(process.cwd(), "src"),
+				"@": path.resolve(process.cwd(), "packages", "renderer"),
 			},
 		},
 		server: {
@@ -126,7 +126,7 @@ if (args.values.dev) {
 
 	await startElectron();
 
-	const watcher = watch("./src", { recursive: true });
+	const watcher = watch("./packages", { recursive: true });
 
 	for await (const event of watcher) {
 		if (event.filename?.includes("renderer")) {

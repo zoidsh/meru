@@ -1,0 +1,11 @@
+@import "../ui/globals.css";
+
+@source "../ui/**/*.{ts,tsx}";
+
+@utility draggable {
+	app-region: drag;
+}
+
+@utility draggable-none {
+	app-region: no-drag;
+}
