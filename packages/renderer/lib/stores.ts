@@ -1,10 +1,10 @@
-import type { AccountInstances } from "@meru/shared/schemas";
-import { create } from "zustand";
-import { ipcRenderer } from "./ipc";
+import { ipcRenderer } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
 	accountsUnreadBadgeSearchParam,
-} from "./search-params";
+} from "@meru/renderer-lib/search-params";
+import type { AccountInstances } from "@meru/shared/schemas";
+import { create } from "zustand";
 
 export const useAccountsStore = create<{
 	accounts: AccountInstances;

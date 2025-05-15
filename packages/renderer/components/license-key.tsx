@@ -1,4 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ipcMain } from "@meru/renderer-lib/ipc";
+import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -21,8 +23,6 @@ import { Input } from "@meru/ui/components/input";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { ipcMain } from "../lib/ipc";
-import { licenseKeySearchParam } from "../lib/search-params";
 
 export const licenseKeySchema = z.object({
 	licenseKey: z.string(),

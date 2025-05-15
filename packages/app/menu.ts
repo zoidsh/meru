@@ -332,6 +332,23 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Screen Share",
+								visible: platform.isMacOS,
+								enabled: appState.isValidLicenseKey,
+								submenu: [
+									{
+										label: "Use System Picker",
+										type: "checkbox",
+										checked: config.get("screenShare.useSystemPicker"),
+										click: ({ checked }) => {
+											config.set("screenShare.useSystemPicker", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
 								type: "separator",
 							},
 							...(platform.isMacOS

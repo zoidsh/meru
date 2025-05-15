@@ -6,8 +6,8 @@ import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
-import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/ipc";
-import { Notification } from "electron";
+import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { Notification, desktopCapturer } from "electron";
 
 export const ipcMain = new IpcListener<IpcMainEvents>();
 
@@ -82,6 +82,20 @@ export function initIpc() {
 	ipcMain.handle("activateLicenseKey", (_event, licenseKey) =>
 		activateLicenseKey({ licenseKey }),
 	);
+
+	ipcMain.handle("desktopSources", async () => {
+		const desktopSources = await desktopCapturer.getSources({
+			types: ["screen", "window"],
+		});
+
+		return desktopSources
+			.filter((source) => !source.name.startsWith("Choose what to share"))
+			.map(({ id, name, thumbnail }) => ({
+				id,
+				name,
+				thumbnail: thumbnail.toDataURL(),
+			}));
+	});
 
 	if (Notification.isSupported()) {
 		ipcMain.on("handleNewMails", async (event, mails) => {

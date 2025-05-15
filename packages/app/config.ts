@@ -46,6 +46,7 @@ export type Config = {
 	"gmail.hideGmailLogo": boolean;
 	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
+	"screenShare.useSystemPicker": boolean;
 };
 
 export const config = new Store<Config>({
@@ -101,6 +102,7 @@ export const config = new Store<Config>({
 		"gmail.hideGmailLogo": true,
 		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
+		"screenShare.useSystemPicker": true,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

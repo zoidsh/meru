@@ -1,0 +1,3 @@
+@import "../ui/globals.css";
+
+@source "../ui/**/*.{ts,tsx}";

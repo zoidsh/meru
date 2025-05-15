@@ -7,6 +7,7 @@ import { type Subprocess, spawn } from "bun";
 import * as esbuild from "esbuild";
 import * as vite from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
+import viteTsconfigPaths from "vite-tsconfig-paths";
 
 const args = parseArgs({
 	args: Bun.argv,
@@ -20,6 +21,8 @@ const args = parseArgs({
 });
 
 await rm("./build-js", { recursive: true, force: true });
+
+const browserTarget = "chrome136";
 
 function buildAppFiles() {
 	const config: esbuild.BuildOptions = {
@@ -52,29 +55,23 @@ function buildAppFiles() {
 				"./packages/renderer-preload/index.ts",
 			],
 			platform: "browser",
-			target: "chrome136",
+			target: browserTarget,
 		}),
 	]);
 }
 
-async function buildRenderer() {
+async function buildRenderer(rendererName: string, port: number) {
 	const viteConfig: vite.InlineConfig = {
 		configFile: false,
-		base: "./",
-		root: path.resolve(process.cwd(), "packages", "renderer"),
-		plugins: [react(), tailwindcss(), viteSingleFile()],
-		resolve: {
-			alias: {
-				"@": path.resolve(process.cwd(), "packages", "renderer"),
-			},
-		},
+		root: path.resolve(process.cwd(), "packages", rendererName),
+		plugins: [react(), tailwindcss(), viteSingleFile(), viteTsconfigPaths()],
 		server: {
-			port: 3000,
+			port,
 			strictPort: true,
 		},
 		build: {
-			outDir: path.resolve(process.cwd(), "build-js", "renderer"),
-			target: "chrome136",
+			outDir: path.resolve(process.cwd(), "build-js", rendererName),
+			target: browserTarget,
 		},
 		clearScreen: false,
 	};
@@ -92,7 +89,11 @@ async function buildRenderer() {
 	await vite.build(viteConfig);
 }
 
-await Promise.all([buildAppFiles(), buildRenderer()]);
+await Promise.all([
+	buildAppFiles(),
+	buildRenderer("renderer", 3000),
+	buildRenderer("desktop-sources", 3001),
+]);
 
 if (args.values.dev) {
 	let electron: Subprocess;
@@ -131,7 +132,11 @@ if (args.values.dev) {
 	const watcher = watch("./packages", { recursive: true });
 
 	for await (const event of watcher) {
-		if (event.filename?.includes("renderer/")) {
+		if (
+			["desktop-sources/", "renderer/", "renderer-lib/", "ui/"].some(
+				(pathname) => event.filename?.includes(pathname),
+			)
+		) {
 			continue;
 		}
 

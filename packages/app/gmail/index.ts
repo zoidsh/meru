@@ -10,11 +10,21 @@ import { is } from "@electron-toolkit/utils";
 import {
 	APP_TITLEBAR_HEIGHT,
 	GOOGLE_ACCOUNTS_URL,
+	GOOGLE_MEET_URL,
 } from "@meru/shared/constants";
 import { GMAIL_URL, type GmailState } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { BrowserWindow, WebContentsView, app, session } from "electron";
+import type { SelectedDesktopSource } from "@meru/shared/types";
+import {
+	BrowserWindow,
+	type IpcMainEvent,
+	WebContentsView,
+	app,
+	nativeTheme,
+	session,
+} from "electron";
 import electronContextMenu from "electron-context-menu";
+import { ipcMain } from "electron/main";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 
@@ -26,7 +36,8 @@ const WINDOW_OPEN_URL_WHITELIST = [
 	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
 
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP = /(calendar|docs|drive)\.google\.com/;
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
+	/(calendar|docs|drive|meet)\.google\.com/;
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
@@ -248,6 +259,84 @@ export class Gmail {
 					}
 				}
 			},
+		);
+
+		accountSession.setDisplayMediaRequestHandler(
+			async (_request, callback) => {
+				const googleMeetWindow = this._windows
+					.values()
+					.find((window) =>
+						window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
+					);
+
+				if (!googleMeetWindow) {
+					callback({});
+
+					return;
+				}
+
+				const desktopSourcesWindow = new BrowserWindow({
+					title: "Choose what to share — Meru",
+					parent: googleMeetWindow,
+					width: 576,
+					height: 512,
+					resizable: false,
+					darkTheme: nativeTheme.shouldUseDarkColors,
+					webPreferences: {
+						preload: path.join(__dirname, "renderer-preload", "index.js"),
+					},
+				});
+
+				const ipcEvent = "selectDesktopSource";
+
+				const ipcListener = (
+					_event: IpcMainEvent,
+					desktopSource: SelectedDesktopSource,
+				) => {
+					desktopSourcesWindow.removeListener(windowEvent, windowListener);
+
+					callback({ video: desktopSource });
+
+					desktopSourcesWindow.destroy();
+				};
+
+				const windowEvent = "closed";
+
+				const windowListener = () => {
+					ipcMain.removeListener(ipcEvent, ipcListener);
+
+					callback({});
+
+					desktopSourcesWindow.destroy();
+				};
+
+				ipcMain.once(ipcEvent, ipcListener);
+
+				desktopSourcesWindow.once(windowEvent, windowListener);
+
+				const searchParams = new URLSearchParams();
+
+				searchParams.set(
+					"darkMode",
+					nativeTheme.shouldUseDarkColors ? "true" : "false",
+				);
+
+				if (is.dev) {
+					desktopSourcesWindow.webContents.loadURL(
+						`http://localhost:3001/?${searchParams}`,
+					);
+
+					desktopSourcesWindow.webContents.openDevTools({
+						mode: "detach",
+					});
+				} else {
+					desktopSourcesWindow.webContents.loadFile(
+						path.join("build-js", "renderer", "index.html"),
+						{ search: searchParams.toString() },
+					);
+				}
+			},
+			{ useSystemPicker: config.get("screenShare.useSystemPicker") },
 		);
 
 		blocker.setupSession(accountSession);

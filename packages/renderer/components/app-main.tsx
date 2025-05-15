@@ -1,8 +1,8 @@
+import { ipcMain } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { XIcon } from "lucide-react";
-import { ipcMain } from "../lib/ipc";
 import { useSettingsStore } from "../lib/stores";
 import { Accounts } from "./accounts";
 import { LicenseKey } from "./license-key";

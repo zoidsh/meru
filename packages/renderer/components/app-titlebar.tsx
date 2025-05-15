@@ -1,3 +1,4 @@
+import { ipcMain } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -8,7 +9,6 @@ import {
 	EllipsisVerticalIcon,
 	RotateCwIcon,
 } from "lucide-react";
-import { ipcMain } from "../lib/ipc";
 import { useAccountsStore, useSettingsStore } from "../lib/stores";
 
 export function AppTitlebar() {

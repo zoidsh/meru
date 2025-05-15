@@ -1,6 +1,7 @@
-import { ipcMain } from "@/lib/ipc";
 import { useAccountsStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ipcMain } from "@meru/renderer-lib/ipc";
+import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
 	type AccountConfigInput,
@@ -51,7 +52,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { licenseKeySearchParam } from "../lib/search-params";
 
 function AccountForm({
 	account = { label: "", unreadBadge: true, notifications: true },

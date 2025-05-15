@@ -5,6 +5,12 @@ import type {
 	AccountInstances,
 } from "./schemas";
 
+export type DesktopSource = { id: string; name: string; thumbnail: string };
+
+export type DesktopSources = DesktopSource[];
+
+export type SelectedDesktopSource = { id: string; name: string };
+
 export type IpcMainEvents =
 	| {
 			selectAccount: [accountId: AccountConfig["id"]];
@@ -18,9 +24,11 @@ export type IpcMainEvents =
 			updateUnreadCount: [unreadCount: number];
 			handleNewMails: [mails: GmailMail[]];
 			toggleAppMenu: [];
+			selectDesktopSource: [desktopSource: SelectedDesktopSource];
 	  }
 	| {
 			activateLicenseKey: (licenseKey: string) => { success: boolean };
+			desktopSources: () => DesktopSources;
 	  };
 
 export type IpcRendererEvent = {
