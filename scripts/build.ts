@@ -76,6 +76,7 @@ async function buildRenderer() {
 			outDir: path.resolve(process.cwd(), "build-js", "renderer"),
 			target: "chrome136",
 		},
+		clearScreen: false,
 	};
 
 	if (args.values.dev) {
