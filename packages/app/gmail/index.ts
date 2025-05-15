@@ -189,6 +189,7 @@ export class Gmail {
 					createWindow: (options) => {
 						const window = new BrowserWindow({
 							...options,
+							autoHideMenuBar: true,
 							width: 1280,
 							height: 800,
 						});
@@ -282,6 +283,7 @@ export class Gmail {
 					height: 512,
 					resizable: false,
 					darkTheme: nativeTheme.shouldUseDarkColors,
+					autoHideMenuBar: true,
 					webPreferences: {
 						preload: path.join(__dirname, "renderer-preload", "index.js"),
 					},
@@ -487,6 +489,7 @@ export class Gmail {
 
 	mailto(url: string) {
 		const window = new BrowserWindow({
+			autoHideMenuBar: true,
 			webPreferences: {
 				session: this.view.webContents.session,
 				preload: PRELOAD_PATH,
