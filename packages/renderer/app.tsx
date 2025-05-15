@@ -1,4 +1,3 @@
-import "@fontsource-variable/inter";
 import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { ipcRenderer } from "@/lib/ipc";

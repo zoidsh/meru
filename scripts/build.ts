@@ -6,6 +6,7 @@ import react from "@vitejs/plugin-react";
 import { type Subprocess, spawn } from "bun";
 import * as esbuild from "esbuild";
 import * as vite from "vite";
+import { viteSingleFile } from "vite-plugin-singlefile";
 
 const args = parseArgs({
 	args: Bun.argv,
@@ -61,7 +62,7 @@ async function buildRenderer() {
 		configFile: false,
 		base: "./",
 		root: path.resolve(process.cwd(), "packages", "renderer"),
-		plugins: [react(), tailwindcss()],
+		plugins: [react(), tailwindcss(), viteSingleFile()],
 		resolve: {
 			alias: {
 				"@": path.resolve(process.cwd(), "packages", "renderer"),
