@@ -130,7 +130,7 @@ if (args.values.dev) {
 	const watcher = watch("./packages", { recursive: true });
 
 	for await (const event of watcher) {
-		if (event.filename?.includes("renderer")) {
+		if (event.filename?.includes("renderer/")) {
 			continue;
 		}
 
