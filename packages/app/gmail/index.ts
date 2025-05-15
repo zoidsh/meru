@@ -331,7 +331,7 @@ export class Gmail {
 					});
 				} else {
 					desktopSourcesWindow.webContents.loadFile(
-						path.join("build-js", "renderer", "index.html"),
+						path.join("build-js", "desktop-sources", "index.html"),
 						{ search: searchParams.toString() },
 					);
 				}
