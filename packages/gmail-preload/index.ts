@@ -4,6 +4,10 @@ import { initIpc } from "./ipc";
 import { initUrlPreview } from "./url-preview";
 
 document.addEventListener("DOMContentLoaded", () => {
+	if (window.location.hostname !== "mail.google.com") {
+		return;
+	}
+
 	const searchParams = new URLSearchParams(window.location.search);
 
 	document.documentElement.classList.add("meru");
