@@ -1,3 +1,5 @@
+export const APP_ID = "sh.zoid.meru";
+
 export const APP_TITLEBAR_HEIGHT = 40;
 
 export const GOOGLE_ACCOUNTS_URL = "https://accounts.google.com";

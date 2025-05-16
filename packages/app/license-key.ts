@@ -171,7 +171,7 @@ function showLicenseKeyValidationError(
 	});
 }
 
-export async function validateLicenseKey(): Promise<boolean> {
+export async function validateLicenseKey() {
 	try {
 		const licenseKey = config.get("licenseKey");
 
@@ -191,8 +191,6 @@ export async function validateLicenseKey(): Promise<boolean> {
 
 			appState.isValidLicenseKey = true;
 		}
-
-		return true;
 	} catch (error) {
 		if (error instanceof FetchError) {
 			const validationError = licenseKeyValidationErrorSchema.safeParse(
@@ -213,9 +211,7 @@ export async function validateLicenseKey(): Promise<boolean> {
 					app.relaunch();
 				}
 
-				app.quit();
-
-				return false;
+				return "failed";
 			}
 		}
 
@@ -230,8 +226,6 @@ export async function validateLicenseKey(): Promise<boolean> {
 			app.relaunch();
 		}
 
-		app.quit();
-
-		return false;
+		return "failed";
 	}
 }

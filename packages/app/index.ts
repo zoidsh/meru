@@ -11,11 +11,12 @@ import { initTheme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { platform } from "@electron-toolkit/utils";
+import { APP_ID } from "@meru/shared/constants";
 import { app } from "electron";
 import { handleMailto, mailtoUrlArg } from "./mailto";
 
 (async () => {
-	app.setAppUserModelId("sh.zoid.meru");
+	app.setAppUserModelId(APP_ID);
 
 	if (!app.requestSingleInstanceLock()) {
 		app.quit();
@@ -37,7 +38,9 @@ import { handleMailto, mailtoUrlArg } from "./mailto";
 		return;
 	}
 
-	if (!(await validateLicenseKey())) {
+	if ((await validateLicenseKey()) === "failed") {
+		app.quit();
+
 		return;
 	}
 
