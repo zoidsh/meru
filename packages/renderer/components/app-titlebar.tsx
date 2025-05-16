@@ -13,7 +13,7 @@ import {
 	RotateCwIcon,
 	XIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import {
 	useAccountsStore,
@@ -27,17 +27,24 @@ function FindInPage() {
 	const totalMatches = useFindInPageStore((state) => state.totalMatches);
 	const deactivate = useFindInPageStore((state) => state.deactivate);
 
+	const inputRef = useRef<HTMLInputElement>(null);
+
 	const [text, setText] = useState("");
 
 	const debouncedOnChange = useDebouncedCallback((text) => {
 		ipcMain.send("findInPage", text, { findNext: true });
 	}, 250);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies:
 	useEffect(() => {
 		if (isActive && text) {
 			ipcMain.send("findInPage", text, { findNext: true });
+
+			if (inputRef.current) {
+				inputRef.current.select();
+			}
 		}
-	}, [isActive, text]);
+	}, [isActive]);
 
 	if (!isActive) {
 		return;
@@ -47,6 +54,7 @@ function FindInPage() {
 		<div className="draggable-none flex items-center gap-4">
 			<div className="relative">
 				<Input
+					ref={inputRef}
 					className="h-7"
 					autoFocus
 					value={text}
