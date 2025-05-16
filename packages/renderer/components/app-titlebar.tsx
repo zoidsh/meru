@@ -1,15 +1,118 @@
 import { ipcMain } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
+import { Input } from "@meru/ui/components/input";
 import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
+	ChevronDownIcon,
+	ChevronUpIcon,
 	CircleAlertIcon,
 	EllipsisVerticalIcon,
 	RotateCwIcon,
+	XIcon,
 } from "lucide-react";
-import { useAccountsStore, useSettingsStore } from "../lib/stores";
+import { useEffect, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import {
+	useAccountsStore,
+	useFindInPageStore,
+	useSettingsStore,
+} from "../lib/stores";
+
+function FindInPage() {
+	const isActive = useFindInPageStore((state) => state.isActive);
+	const activeMatch = useFindInPageStore((state) => state.activeMatch);
+	const totalMatches = useFindInPageStore((state) => state.totalMatches);
+	const deactivate = useFindInPageStore((state) => state.deactivate);
+
+	const [text, setText] = useState("");
+
+	const debouncedOnChange = useDebouncedCallback((text) => {
+		ipcMain.send("findInPage", text, { findNext: true });
+	}, 250);
+
+	useEffect(() => {
+		if (isActive && text) {
+			ipcMain.send("findInPage", text, { findNext: true });
+		}
+	}, [isActive, text]);
+
+	if (!isActive) {
+		return;
+	}
+
+	return (
+		<div className="draggable-none flex items-center gap-4">
+			<div className="relative">
+				<Input
+					className="h-7"
+					autoFocus
+					value={text}
+					onChange={(event) => {
+						setText(event.target.value);
+
+						debouncedOnChange(event.target.value);
+					}}
+					onKeyDown={(event) => {
+						switch (event.key) {
+							case "Enter": {
+								ipcMain.send("findInPage", text, {
+									forward: true,
+									findNext: false,
+								});
+
+								break;
+							}
+							case "Escape": {
+								deactivate();
+
+								break;
+							}
+						}
+					}}
+				/>
+				<div className="absolute top-0 right-0 bottom-0 text-xs text-muted-foreground flex items-center p-2.5">
+					{activeMatch}/{totalMatches}
+				</div>
+			</div>
+			<div className="flex gap-2">
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-7"
+					onClick={() => {
+						ipcMain.send("findInPage", text, {
+							forward: false,
+							findNext: false,
+						});
+					}}
+				>
+					<ChevronUpIcon className="size-4" />
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-7"
+					onClick={() => {
+						ipcMain.send("findInPage", text, { findNext: false });
+					}}
+				>
+					<ChevronDownIcon className="size-4" />
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-7"
+					onClick={deactivate}
+				>
+					<XIcon className="size-4" />
+				</Button>
+			</div>
+		</div>
+	);
+}
 
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
@@ -100,6 +203,7 @@ export function AppTitlebar() {
 							</Button>
 						))}
 				</div>
+				<FindInPage />
 				{window.electron.process.platform !== "darwin" && (
 					<div className="draggable-none">
 						<Button

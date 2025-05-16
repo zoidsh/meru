@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
+import { ipcRenderer } from "@/ipc";
 import { main } from "@/main";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
@@ -410,6 +411,13 @@ export class Gmail {
 					`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`,
 				);
 			}
+		});
+
+		this.view.webContents.on("found-in-page", (_event, result) => {
+			ipcRenderer.send(main.window.webContents, "findInPage.result", {
+				activeMatch: result.activeMatchOrdinal,
+				totalMatches: result.matches,
+			});
 		});
 
 		main.window.contentView.addChildView(this.view);

@@ -650,6 +650,15 @@ export class AppMenu {
 						type: "separator",
 					},
 					{
+						label: "Find...",
+						accelerator: "CommandOrControl+F",
+						click: () => {
+							ipcRenderer.send(main.window.webContents, "findInPage.activate");
+
+							main.window.webContents.focus();
+						},
+					},
+					{
 						label: "Speech",
 						submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
 					},

@@ -97,6 +97,21 @@ export function initIpc() {
 			}));
 	});
 
+	ipcMain.on("findInPage", (_event, text, options) => {
+		const selectedAccount = accounts.getSelectedAccount();
+
+		if (!text) {
+			selectedAccount.gmail.view.webContents.stopFindInPage("clearSelection");
+
+			return;
+		}
+
+		selectedAccount.gmail.view.webContents.findInPage(text, {
+			forward: options?.forward,
+			findNext: options?.findNext,
+		});
+	});
+
 	if (Notification.isSupported()) {
 		ipcMain.on("handleNewMails", async (event, mails) => {
 			if (!config.get("notifications.enabled")) {

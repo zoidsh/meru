@@ -1,4 +1,4 @@
-import { ipcRenderer } from "@meru/renderer-lib/ipc";
+import { ipcMain, ipcRenderer } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
 	accountsUnreadBadgeSearchParam,
@@ -36,4 +36,33 @@ export const useSettingsStore = create<{
 
 ipcRenderer.on("isSettingsOpenChanged", (_event, isSettingsOpen) => {
 	useSettingsStore.setState({ isOpen: isSettingsOpen });
+});
+
+export const useFindInPageStore = create<{
+	isActive: boolean;
+	deactivate: () => void;
+	activeMatch: number;
+	totalMatches: number;
+}>((set) => ({
+	isActive: false,
+	deactivate: () => {
+		ipcMain.send("findInPage", null);
+
+		set({ isActive: false });
+	},
+	activeMatch: 0,
+	totalMatches: 0,
+}));
+
+ipcRenderer.on("findInPage.activate", () => {
+	useFindInPageStore.setState(() => ({
+		isActive: true,
+	}));
+});
+
+ipcRenderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => {
+	useFindInPageStore.setState(() => ({
+		activeMatch,
+		totalMatches,
+	}));
 });

@@ -25,6 +25,10 @@ export type IpcMainEvents =
 			handleNewMails: [mails: GmailMail[]];
 			toggleAppMenu: [];
 			selectDesktopSource: [desktopSource: SelectedDesktopSource];
+			findInPage: [
+				text: string | null,
+				options?: { forward?: boolean; findNext: boolean },
+			];
 	  }
 	| {
 			activateLicenseKey: (licenseKey: string) => { success: boolean };
@@ -52,4 +56,6 @@ export type IpcRendererEvent = {
 	handleMail: [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
 	openMail: [messageId: string];
 	darkModeChanged: [darkMode: boolean];
+	"findInPage.activate": [];
+	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 };
