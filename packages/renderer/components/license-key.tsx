@@ -71,13 +71,15 @@ function LicenseKeyForm({
 	);
 }
 
-function ActivateLicenseKeyButton() {
+function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
-				<Button variant="outline">Activate</Button>
+				<Button variant="outline">
+					{variant === "change" ? "Change" : "Activate"} License Key
+				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -124,7 +126,8 @@ export function LicenseKey() {
 						You're using the Pro version of Meru for professional and commercial
 						use. Thank you for supporting Meru!
 					</div>
-					<div className="flex justify-end">
+					<div className="flex gap-4 justify-end">
+						<ActivateLicenseKeyButton variant="change" />
 						<Button
 							variant="outline"
 							onClick={() => {
@@ -147,8 +150,12 @@ export function LicenseKey() {
 					<div className="flex gap-4 justify-end">
 						<ActivateLicenseKeyButton />
 						<Button asChild>
-							<a href={WEBSITE_URL} target="_blank" rel="noreferrer">
-								Upgrade
+							<a
+								href={`${WEBSITE_URL}#pricing`}
+								target="_blank"
+								rel="noreferrer"
+							>
+								Purchase
 							</a>
 						</Button>
 					</div>
