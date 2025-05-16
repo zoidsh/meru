@@ -7,16 +7,6 @@ import Store from "electron-store";
 export type Config = {
 	accounts: AccountConfigs;
 	"accounts.unreadBadge": boolean;
-	lastWindowState: {
-		bounds: {
-			width: number;
-			height: number;
-			x: number | undefined;
-			y: number | undefined;
-		};
-		fullscreen: boolean;
-		maximized: boolean;
-	};
 	launchMinimized: boolean;
 	launchAtLogin: boolean;
 	hardwareAcceleration: boolean;
@@ -47,6 +37,16 @@ export type Config = {
 	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
 	"screenShare.useSystemPicker": boolean;
+	"window.lastState": {
+		bounds: {
+			width: number;
+			height: number;
+			x: number | undefined;
+			y: number | undefined;
+		};
+		fullscreen: boolean;
+		maximized: boolean;
+	};
 	"window.restrictMinimumSize": boolean;
 };
 
@@ -64,16 +64,6 @@ export const config = new Store<Config>({
 			},
 		],
 		"accounts.unreadBadge": true,
-		lastWindowState: {
-			bounds: {
-				width: 1280,
-				height: 800,
-				x: undefined,
-				y: undefined,
-			},
-			fullscreen: false,
-			maximized: false,
-		},
 		launchMinimized: false,
 		launchAtLogin: false,
 		hardwareAcceleration: false,
@@ -104,6 +94,16 @@ export const config = new Store<Config>({
 		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
 		"screenShare.useSystemPicker": true,
+		"window.lastState": {
+			bounds: {
+				width: 1280,
+				height: 800,
+				x: undefined,
+				y: undefined,
+			},
+			fullscreen: false,
+			maximized: false,
+		},
 		"window.restrictMinimumSize": true,
 	},
 	migrations: {
@@ -138,6 +138,18 @@ export const config = new Store<Config>({
 				if (accountsMigrated) {
 					store.set("accounts", accounts);
 				}
+			}
+		},
+		">=3.5.0": (store) => {
+			// @ts-expect-error: `lastWindowState` is now 'window.lastState'
+			const lastWindowState = store.get("lastWindowState");
+
+			if (lastWindowState) {
+				// @ts-expect-error
+				store.set("window.lastState", lastWindowState);
+
+				// @ts-expect-error
+				store.delete("lastWindowState");
 			}
 		},
 	},

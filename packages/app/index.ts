@@ -99,7 +99,7 @@ import { handleMailto, mailtoUrlArg } from "./mailto";
 	app.on("before-quit", () => {
 		appState.isQuittingApp = true;
 
-		config.set("lastWindowState", {
+		config.set("window.lastState", {
 			bounds: main.window.getBounds(),
 			fullscreen: main.window.isFullScreen(),
 			maximized: main.window.isMaximized(),

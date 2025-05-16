@@ -85,7 +85,7 @@ class Main {
 	}
 
 	init() {
-		const lastWindowState = config.get("lastWindowState");
+		const lastWindowState = config.get("window.lastState");
 		const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
 
 		this.window = new BrowserWindow({
