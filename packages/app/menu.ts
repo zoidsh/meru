@@ -105,7 +105,7 @@ export class AppMenu {
 						type: "separator",
 					},
 					{
-						label: "Preferences",
+						label: "Settings",
 						submenu: [
 							{
 								label: "Accounts",
