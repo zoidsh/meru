@@ -86,12 +86,13 @@ class Main {
 
 	init() {
 		const lastWindowState = config.get("lastWindowState");
+		const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
 
 		this.window = new BrowserWindow({
 			title: app.name,
-			minWidth: 912,
+			minWidth: restrictWindowMinimumSize ? 912 : 320,
 			width: lastWindowState.bounds.width,
-			minHeight: 512,
+			minHeight: restrictWindowMinimumSize ? 512 : 256,
 			height: lastWindowState.bounds.height,
 			x: lastWindowState.bounds.x,
 			y: lastWindowState.bounds.y,

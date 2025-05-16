@@ -47,6 +47,7 @@ export type Config = {
 	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
 	"screenShare.useSystemPicker": boolean;
+	"window.restrictMinimumSize": boolean;
 };
 
 export const config = new Store<Config>({
@@ -103,6 +104,7 @@ export const config = new Store<Config>({
 		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
 		"screenShare.useSystemPicker": true,
+		"window.restrictMinimumSize": true,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

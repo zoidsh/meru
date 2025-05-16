@@ -537,6 +537,21 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Window",
+								submenu: [
+									{
+										label: "Restrict Minimum Size",
+										type: "checkbox",
+										checked: config.get("window.restrictMinimumSize"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("window.restrictMinimumSize", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
 								type: "separator",
 							},
 							{
