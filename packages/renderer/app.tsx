@@ -21,7 +21,7 @@ if (rootElement) {
 	const root = createRoot(rootElement);
 
 	root.render(
-		<TooltipProvider delayDuration={0}>
+		<TooltipProvider>
 			<AppTitlebar />
 			<AppMain />
 		</TooltipProvider>,
