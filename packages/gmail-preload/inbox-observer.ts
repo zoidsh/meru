@@ -152,7 +152,9 @@ async function observeInbox() {
 			`div:has(> ${inboxAnchorElementSelector}) .bsU`,
 		);
 
-		const currentUnreadCount = Number(unreadCountElement?.textContent || "0");
+		const currentUnreadCount = Number(
+			unreadCountElement?.textContent?.replace(/\D/, "") || "0",
+		);
 
 		if (previousUnreadCount !== currentUnreadCount) {
 			ipcMain.send("updateUnreadCount", currentUnreadCount);
