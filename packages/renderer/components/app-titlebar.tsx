@@ -2,7 +2,6 @@ import { ipcMain } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
-import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
@@ -139,79 +138,85 @@ export function AppTitlebar() {
 			className="relative bg-background border-b draggable select-none"
 			style={{ height: APP_TITLEBAR_HEIGHT }}
 		>
+			{isSettingsOpen && (
+				<div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
+					Settings
+				</div>
+			)}
 			<div
-				className="absolute top-0 bottom-0 flex items-center gap-4 px-1.5"
+				className="absolute top-0 bottom-0 flex items-center justify-end gap-4 px-1.5"
 				style={{
 					left: "env(titlebar-area-x, 0)",
 					width: "env(titlebar-area-width, 100%)",
 				}}
 			>
-				<div
-					className={cn("flex items-center gap-1", {
-						invisible: isSettingsOpen,
-					})}
-				>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="size-7 draggable-none"
-						onClick={() => {
-							ipcMain.send("goNavigationHistory", "back");
-						}}
-						disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
-					>
-						<ArrowLeftIcon />
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="size-7 draggable-none"
-						onClick={() => {
-							ipcMain.send("goNavigationHistory", "forward");
-						}}
-						disabled={!selectedAccount?.gmail.navigationHistory.canGoForward}
-					>
-						<ArrowRightIcon />
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="size-7 draggable-none"
-						onClick={() => {
-							ipcMain.send("reloadGmail");
-						}}
-					>
-						<RotateCwIcon />
-					</Button>
-				</div>
-				<div className="flex-1 flex gap-2">
-					{!isSettingsOpen &&
-						accounts.length > 1 &&
-						accounts.map((account) => (
+				{!isSettingsOpen && (
+					<>
+						<div className="flex items-center gap-1">
 							<Button
-								key={account.config.id}
-								variant={account.config.selected ? "secondary" : "ghost"}
-								size="sm"
-								className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
+								variant="ghost"
+								size="icon"
+								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("selectAccount", account.config.id);
+									ipcMain.send("goNavigationHistory", "back");
+								}}
+								disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
+							>
+								<ArrowLeftIcon />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="size-7 draggable-none"
+								onClick={() => {
+									ipcMain.send("goNavigationHistory", "forward");
+								}}
+								disabled={
+									!selectedAccount?.gmail.navigationHistory.canGoForward
+								}
+							>
+								<ArrowRightIcon />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="size-7 draggable-none"
+								onClick={() => {
+									ipcMain.send("reloadGmail");
 								}}
 							>
-								{account.config.label}
-								{account.gmail.attentionRequired && (
-									<CircleAlertIcon className="size-3.5 text-yellow-400" />
-								)}
-								{!account.gmail.attentionRequired &&
-								unreadBadge &&
-								account.gmail.unreadCount ? (
-									<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-										{account.gmail.unreadCount}
-									</div>
-								) : null}
+								<RotateCwIcon />
 							</Button>
-						))}
-				</div>
-				<FindInPage />
+						</div>
+						<div className="flex-1 flex gap-2">
+							{accounts.length > 1 &&
+								accounts.map((account) => (
+									<Button
+										key={account.config.id}
+										variant={account.config.selected ? "secondary" : "ghost"}
+										size="sm"
+										className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
+										onClick={() => {
+											ipcMain.send("selectAccount", account.config.id);
+										}}
+									>
+										{account.config.label}
+										{account.gmail.attentionRequired && (
+											<CircleAlertIcon className="size-3.5 text-yellow-400" />
+										)}
+										{!account.gmail.attentionRequired &&
+										unreadBadge &&
+										account.gmail.unreadCount ? (
+											<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
+												{account.gmail.unreadCount}
+											</div>
+										) : null}
+									</Button>
+								))}
+						</div>
+						<FindInPage />
+					</>
+				)}
 				{window.electron.process.platform !== "darwin" && (
 					<div className="draggable-none">
 						<Button
