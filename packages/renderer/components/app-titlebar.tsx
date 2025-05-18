@@ -208,7 +208,7 @@ export function AppTitlebar() {
 										unreadBadge &&
 										account.gmail.unreadCount ? (
 											<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-												{account.gmail.unreadCount}
+												{account.gmail.unreadCount.toLocaleString()}
 											</div>
 										) : null}
 									</Button>
