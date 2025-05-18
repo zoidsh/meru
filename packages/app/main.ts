@@ -58,6 +58,10 @@ class Main {
 			searchParams.set("licenseKey", JSON.stringify(licenseKey));
 		}
 
+		if (appState.trialDaysLeft) {
+			searchParams.set("trialDaysLeft", JSON.stringify(appState.trialDaysLeft));
+		}
+
 		if (is.dev) {
 			this.window.webContents.loadURL(
 				`http://localhost:3000/?${searchParams.toString()}`,

@@ -14,6 +14,7 @@ import { platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
 import { app } from "electron";
 import { handleMailto, mailtoUrlArg } from "./mailto";
+import { validateTrial } from "./trial";
 
 (async () => {
 	if (platform.isLinux) {
@@ -43,6 +44,12 @@ import { handleMailto, mailtoUrlArg } from "./mailto";
 	}
 
 	if ((await validateLicenseKey()) === "failed") {
+		app.quit();
+
+		return;
+	}
+
+	if ((await validateTrial()) === false) {
 		app.quit();
 
 		return;

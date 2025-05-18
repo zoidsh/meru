@@ -4,6 +4,7 @@ import {
 	accountsUnreadBadgeSearchParam,
 	darkModeSearchParam,
 	licenseKeySearchParam,
+	trialDaysLeftSearchParam,
 } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
@@ -91,3 +92,13 @@ export const useThemeStore = create<{
 }>(() => ({
 	theme: darkModeSearchParam === "true" ? "dark" : "light",
 }));
+
+export const useTrialStore = create<{
+	daysLeft: number;
+}>(() => ({
+	daysLeft: Number(trialDaysLeftSearchParam),
+}));
+
+ipcRenderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
+	useTrialStore.setState({ daysLeft });
+});

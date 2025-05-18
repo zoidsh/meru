@@ -59,4 +59,5 @@ export type IpcRendererEvent = {
 	"accounts.setIsAddAccountDialogOpen": [isOpen: boolean];
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
+	"trial.daysLeftChanged": [daysLeft: number];
 };

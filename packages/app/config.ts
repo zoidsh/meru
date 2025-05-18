@@ -49,6 +49,7 @@ export type Config = {
 		maximized: boolean;
 	};
 	"window.restrictMinimumSize": boolean;
+	"trial.expired": boolean;
 };
 
 export const config = new Store<Config>({
@@ -107,6 +108,7 @@ export const config = new Store<Config>({
 			maximized: false,
 		},
 		"window.restrictMinimumSize": true,
+		"trial.expired": false,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

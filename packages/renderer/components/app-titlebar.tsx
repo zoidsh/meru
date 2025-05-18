@@ -1,7 +1,9 @@
 import { ipcMain } from "@meru/renderer-lib/ipc";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
+import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
@@ -18,7 +20,37 @@ import {
 	useAccountsStore,
 	useFindInPageStore,
 	useSettingsStore,
+	useTrialStore,
 } from "../lib/stores";
+
+function Trial() {
+	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+
+	if (!trialDaysLeft) {
+		return;
+	}
+
+	return (
+		<Badge
+			variant="outline"
+			className={cn(
+				"h-7 text-yellow-600/60 border-yellow-600/60 hover:border-transparent hover:bg-primary hover:text-primary-foreground transition draggable-none group relative",
+				{
+					"text-red-500/50 border-red-500/50": trialDaysLeft <= 3,
+				},
+			)}
+		>
+			<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
+				<span className="group-hover:opacity-0 fade-out">
+					Pro trial expires in {trialDaysLeft} days
+				</span>
+				<span className="opacity-0 absolute inset-0 group-hover:opacity-100 group-hover:inline-flex items-center justify-center fade-in">
+					Upgrade to Pro
+				</span>
+			</a>
+		</Badge>
+	);
+}
 
 function FindInPage() {
 	const isActive = useFindInPageStore((state) => state.isActive);
@@ -215,6 +247,7 @@ export function AppTitlebar() {
 								))}
 						</div>
 						<FindInPage />
+						<Trial />
 					</>
 				)}
 				{window.electron.process.platform !== "darwin" && (
