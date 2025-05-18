@@ -16,6 +16,10 @@ import { app } from "electron";
 import { handleMailto, mailtoUrlArg } from "./mailto";
 
 (async () => {
+	if (platform.isLinux) {
+		app.commandLine.appendSwitch("gtk-version", "3");
+	}
+
 	app.setAppUserModelId(APP_ID);
 
 	if (!app.requestSingleInstanceLock()) {
