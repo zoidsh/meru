@@ -269,7 +269,7 @@ export class Gmail {
 						break;
 					}
 					case "notifications": {
-						callback(false);
+						callback(config.get("notifications.allowFromGoogleApps"));
 						break;
 					}
 				}

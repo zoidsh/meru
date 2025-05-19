@@ -26,6 +26,7 @@ export type Config = {
 	"notifications.showSubject": boolean;
 	"notifications.showSummary": boolean;
 	"notifications.playSound": boolean;
+	"notifications.allowFromGoogleApps": boolean;
 	"updates.autoCheck": boolean;
 	"blocker.enabled": boolean;
 	"blocker.ads": boolean;
@@ -83,6 +84,7 @@ export const config = new Store<Config>({
 		"notifications.showSubject": true,
 		"notifications.showSummary": true,
 		"notifications.playSound": true,
+		"notifications.allowFromGoogleApps": false,
 		"updates.autoCheck": true,
 		"blocker.enabled": true,
 		"blocker.ads": true,

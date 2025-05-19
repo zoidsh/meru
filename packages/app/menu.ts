@@ -191,6 +191,24 @@ export class AppMenu {
 										},
 									},
 									{
+										label: "Allow from Google Apps",
+										enabled: appState.isValidLicenseKey,
+										type: "checkbox",
+										checked: config.get("notifications.allowFromGoogleApps"),
+										click({ checked }) {
+											config.set("notifications.allowFromGoogleApps", checked);
+
+											dialog.showMessageBox({
+												type: "info",
+												message: "Ensure notifications in Gmail are disabled",
+												detail:
+													"To avoid duplicate notifications, please disable notifications in your Gmail settings.",
+											});
+
+											showRestartDialog();
+										},
+									},
+									{
 										type: "separator",
 									},
 									{
