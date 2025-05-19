@@ -39,10 +39,6 @@ export class AppTray {
 				});
 			}
 
-			main.window.on("closed", () => {
-				this.updateWindowVisibilityMenuItem();
-			});
-
 			main.window.on("hide", () => {
 				this.updateWindowVisibilityMenuItem();
 			});
