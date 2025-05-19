@@ -56,6 +56,8 @@ export async function validateTrial() {
 		if (validateTrialInterval) {
 			appState.setTrialDaysLeft(trial.daysLeft);
 		} else {
+			appState.isValidLicenseKey = true;
+
 			appState.trialDaysLeft = trial.daysLeft;
 
 			validateTrialInterval = setInterval(
