@@ -25,15 +25,23 @@ export class AppTray {
 
 			this._tray.setToolTip(Electron.app.name);
 
-			this._tray.on("click", () => {
-				main.show();
-			});
-
-			this._tray.on("right-click", () => {
-				this._tray?.popUpContextMenu(this._menu);
-			});
-
 			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+
+			if (platform.isLinux) {
+				this._tray.setContextMenu(this._menu);
+			} else {
+				this._tray.on("click", () => {
+					main.show();
+				});
+
+				this._tray.on("right-click", () => {
+					this._tray?.popUpContextMenu(this._menu);
+				});
+			}
+
+			main.window.on("closed", () => {
+				this.updateWindowVisibilityMenuItem();
+			});
 
 			main.window.on("hide", () => {
 				this.updateWindowVisibilityMenuItem();
