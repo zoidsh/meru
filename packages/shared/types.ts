@@ -56,6 +56,7 @@ export type IpcRendererEvent = {
 	handleMail: [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
 	openMail: [messageId: string];
 	darkModeChanged: [darkMode: boolean];
+	"accounts.setIsAddAccountDialogOpen": [isOpen: boolean];
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 };

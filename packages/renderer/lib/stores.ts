@@ -2,14 +2,19 @@ import { ipcMain, ipcRenderer } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
 	accountsUnreadBadgeSearchParam,
+	darkModeSearchParam,
+	licenseKeySearchParam,
 } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
+import { toast } from "sonner";
 import { create } from "zustand";
 
 export const useAccountsStore = create<{
 	accounts: AccountInstances;
 	unreadBadge: boolean;
-}>(() => {
+	isAddAccountDialogOpen: boolean;
+	setIsAddAccountDialogOpen: (isOpen: boolean) => void;
+}>((set) => {
 	if (!accountsSearchParam) {
 		throw new Error("No accounts found in search params");
 	}
@@ -21,11 +26,25 @@ export const useAccountsStore = create<{
 	return {
 		accounts: JSON.parse(accountsSearchParam),
 		unreadBadge: JSON.parse(accountsUnreadBadgeSearchParam),
+		isAddAccountDialogOpen: false,
+		setIsAddAccountDialogOpen: (isOpen) => {
+			set({ isAddAccountDialogOpen: isOpen });
+		},
 	};
 });
 
 ipcRenderer.on("accountsChanged", (_event, accounts) => {
 	useAccountsStore.setState({ accounts });
+});
+
+ipcRenderer.on("accounts.setIsAddAccountDialogOpen", (_event, isOpen) => {
+	if (licenseKeySearchParam) {
+		useAccountsStore.setState({ isAddAccountDialogOpen: isOpen });
+	} else {
+		toast.error("Meru Pro required", {
+			description: "Please upgrade to Meru Pro to add more accounts.",
+		});
+	}
 });
 
 export const useSettingsStore = create<{
@@ -66,3 +85,9 @@ ipcRenderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => {
 		totalMatches,
 	}));
 });
+
+export const useThemeStore = create<{
+	theme: "light" | "dark";
+}>(() => ({
+	theme: darkModeSearchParam === "true" ? "dark" : "light",
+}));

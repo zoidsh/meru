@@ -1,6 +1,7 @@
 import EventEmitter from "node:events";
 import fs from "node:fs";
 import path from "node:path";
+import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
 import { ipcRenderer } from "@/ipc";
@@ -210,7 +211,19 @@ export class Gmail {
 				};
 			}
 
-			if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
+			if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
+				appState.setIsSettingsOpen(true);
+
+				accounts.hide();
+
+				ipcRenderer.send(
+					main.window.webContents,
+					"accounts.setIsAddAccountDialogOpen",
+					true,
+				);
+			} else if (
+				WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))
+			) {
 				this.view.webContents.downloadURL(url);
 			} else {
 				openExternalUrl(url);

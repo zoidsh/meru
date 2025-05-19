@@ -131,7 +131,13 @@ function AccountForm({
 }
 
 function AddAccountButton() {
-	const [isOpen, setIsOpen] = useState(false);
+	const isDialogOpen = useAccountsStore(
+		(state) => state.isAddAccountDialogOpen,
+	);
+
+	const setIsDialogOpen = useAccountsStore(
+		(state) => state.setIsAddAccountDialogOpen,
+	);
 
 	if (
 		Boolean(licenseKeySearchParam && JSON.parse(licenseKeySearchParam)) ===
@@ -152,7 +158,7 @@ function AddAccountButton() {
 	}
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
+		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 			<DialogTrigger asChild>
 				<Button>Add</Button>
 			</DialogTrigger>
@@ -164,7 +170,7 @@ function AddAccountButton() {
 					onSubmit={(account) => {
 						ipcMain.send("addAccount", account);
 
-						setIsOpen(false);
+						setIsDialogOpen(false);
 					}}
 				/>
 			</DialogContent>

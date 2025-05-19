@@ -52,7 +52,11 @@ class Main {
 			JSON.stringify(config.get("accounts.unreadBadge")),
 		);
 
-		searchParams.set("licenseKey", JSON.stringify(config.get("licenseKey")));
+		const licenseKey = config.get("licenseKey");
+
+		if (licenseKey) {
+			searchParams.set("licenseKey", JSON.stringify(licenseKey));
+		}
 
 		if (is.dev) {
 			this.window.webContents.loadURL(
