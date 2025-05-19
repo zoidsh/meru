@@ -1,4 +1,4 @@
-import { useAccountsStore } from "@/lib/stores";
+import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipcMain } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
@@ -139,9 +139,12 @@ function AddAccountButton() {
 		(state) => state.setIsAddAccountDialogOpen,
 	);
 
+	const isTrialActive = useTrialStore((state) => state.isActive);
+
 	if (
+		!isTrialActive &&
 		Boolean(licenseKeySearchParam && JSON.parse(licenseKeySearchParam)) ===
-		false
+			false
 	) {
 		return (
 			<Tooltip>

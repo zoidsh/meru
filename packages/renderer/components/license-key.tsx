@@ -1,3 +1,4 @@
+import { useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipcMain } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
@@ -108,6 +109,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 
 export function LicenseKey() {
 	const [licenseKey, setLicenseKey] = useState<string | null>(null);
+	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
 	useEffect(() => {
 		if (licenseKeySearchParam) {
@@ -115,37 +117,17 @@ export function LicenseKey() {
 		}
 	}, []);
 
-	return (
-		<div>
-			<div className="flex justify-between items-center mb-4">
-				<div className="text-3xl font-bold tracking-tight">License</div>
-			</div>
-			{licenseKey ? (
-				<>
-					<div className="mb-4">
-						You're using the Pro version of Meru for professional and commercial
-						use. Thank you for supporting Meru!
-					</div>
-					<div className="flex gap-4 justify-end">
-						<ActivateLicenseKeyButton variant="change" />
-						<Button
-							variant="outline"
-							onClick={() => {
-								navigator.clipboard.writeText(licenseKey);
-							}}
-						>
-							Copy License Key
-						</Button>
-					</div>
-				</>
-			) : (
+	const renderContent = () => {
+		if (trialDaysLeft) {
+			return (
 				<>
 					<div className="mb-2">
-						You're using the free version of Meru for personal use.
+						You're using a Meru Pro trial with {trialDaysLeft} day
+						{trialDaysLeft > 1 ? "s" : ""} left.
 					</div>
 					<div className="mb-4">
-						Unlock Meru Pro for professional features and commercial use. Your
-						upgrade supports ongoing development.
+						Purchase Meru Pro before your trial expires to continue using all
+						features.
 					</div>
 					<div className="flex gap-4 justify-end">
 						<ActivateLicenseKeyButton />
@@ -160,7 +142,58 @@ export function LicenseKey() {
 						</Button>
 					</div>
 				</>
-			)}
+			);
+		}
+
+		if (licenseKey) {
+			return (
+				<>
+					<div className="mb-4">
+						You're using Meru Pro with professional features and for commercial
+						use. Thank you for supporting Meru!
+					</div>
+					<div className="flex gap-4 justify-end">
+						<ActivateLicenseKeyButton variant="change" />
+						<Button
+							variant="outline"
+							onClick={() => {
+								navigator.clipboard.writeText(licenseKey);
+							}}
+						>
+							Copy License Key
+						</Button>
+					</div>
+				</>
+			);
+		}
+
+		return (
+			<>
+				<div className="mb-2">
+					You're using the free version of Meru for personal use.
+				</div>
+				<div className="mb-4">
+					Unlock Meru Pro for professional features and commercial use. Your
+					upgrade supports ongoing development.
+				</div>
+				<div className="flex gap-4 justify-end">
+					<ActivateLicenseKeyButton />
+					<Button asChild>
+						<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
+							Purchase
+						</a>
+					</Button>
+				</div>
+			</>
+		);
+	};
+
+	return (
+		<div>
+			<div className="flex justify-between items-center mb-4">
+				<div className="text-3xl font-bold tracking-tight">License</div>
+			</div>
+			{renderContent()}
 		</div>
 	);
 }

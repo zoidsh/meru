@@ -94,11 +94,17 @@ export const useThemeStore = create<{
 }));
 
 export const useTrialStore = create<{
+	isActive: boolean;
 	daysLeft: number;
-}>(() => ({
-	daysLeft: Number(trialDaysLeftSearchParam),
-}));
+}>(() => {
+	const daysLeft = Number(trialDaysLeftSearchParam);
+
+	return {
+		isActive: Boolean(daysLeft),
+		daysLeft,
+	};
+});
 
 ipcRenderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
-	useTrialStore.setState({ daysLeft });
+	useTrialStore.setState({ isActive: Boolean(daysLeft), daysLeft });
 });
