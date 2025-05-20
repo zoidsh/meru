@@ -6,7 +6,7 @@ class AppState {
 
 	isSettingsOpen = false;
 
-	isValidLicenseKey = false;
+	isLicenseKeyValid = false;
 
 	trialDaysLeft = 0;
 

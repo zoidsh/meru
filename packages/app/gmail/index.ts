@@ -117,7 +117,7 @@ export class Gmail {
 	private _userStyles: string | undefined;
 
 	private injectUserStyles() {
-		if (appState.isValidLicenseKey) {
+		if (appState.isLicenseKeyValid) {
 			if (!this._userStyles && fs.existsSync(Gmail.userStylesPath)) {
 				this._userStyles = fs.readFileSync(Gmail.userStylesPath, "utf-8");
 			}
@@ -167,7 +167,7 @@ export class Gmail {
 			if (
 				(url.startsWith(GMAIL_URL) ||
 					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-					(isSupportedGoogleApp && appState.isValidLicenseKey)) &&
+					(isSupportedGoogleApp && appState.isLicenseKeyValid)) &&
 				disposition !== "background-tab"
 			) {
 				if (isSupportedGoogleApp && this._windows.size > 0) {
@@ -447,7 +447,7 @@ export class Gmail {
 			searchParams.set("hideInboxFooter", "true");
 		}
 
-		if (config.get("gmail.reverseConversation") && appState.isValidLicenseKey) {
+		if (config.get("gmail.reverseConversation") && appState.isLicenseKeyValid) {
 			searchParams.set("reverseConversation", "true");
 		}
 

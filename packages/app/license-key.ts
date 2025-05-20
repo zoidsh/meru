@@ -189,7 +189,7 @@ export async function validateLicenseKey() {
 
 			licenseKeyValidationSuccessSchema.parse(body);
 
-			appState.isValidLicenseKey = true;
+			appState.isLicenseKeyValid = true;
 		}
 	} catch (error) {
 		if (error instanceof FetchError) {

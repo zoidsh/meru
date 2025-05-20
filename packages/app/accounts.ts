@@ -26,7 +26,7 @@ class Accounts {
 	init() {
 		let accountConfigs = this.getAccountConfigs();
 
-		if (!appState.isValidLicenseKey && accountConfigs.length > 1) {
+		if (!appState.isLicenseKeyValid && accountConfigs.length > 1) {
 			if (!accountConfigs[0]) {
 				throw new Error("Could not find first account");
 			}

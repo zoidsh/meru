@@ -82,7 +82,7 @@ import { validateTrial } from "./trial";
 	app.on("second-instance", (_event, argv) => {
 		main.show();
 
-		if (!platform.isMacOS && appState.isValidLicenseKey) {
+		if (!platform.isMacOS && appState.isLicenseKeyValid) {
 			const mailtoUrlArg = argv.find((arg) => arg.startsWith("mailto:"));
 
 			if (mailtoUrlArg) {
@@ -95,7 +95,7 @@ import { validateTrial } from "./trial";
 		main.show();
 	});
 
-	if (platform.isMacOS && appState.isValidLicenseKey) {
+	if (platform.isMacOS && appState.isLicenseKeyValid) {
 		app.on("open-url", async (_event, url) => {
 			handleMailto(url);
 		});

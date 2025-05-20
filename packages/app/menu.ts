@@ -192,7 +192,7 @@ export class AppMenu {
 									},
 									{
 										label: "Allow from Google Apps",
-										enabled: appState.isValidLicenseKey,
+										enabled: appState.isLicenseKeyValid,
 										type: "checkbox",
 										checked: config.get("notifications.allowFromGoogleApps"),
 										click({ checked }) {
@@ -251,7 +251,7 @@ export class AppMenu {
 							},
 							{
 								label: "Blocker",
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								submenu: [
 									{
 										label: "Enabled",
@@ -290,7 +290,7 @@ export class AppMenu {
 							},
 							{
 								label: "Phishing Protection",
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								submenu: [
 									{
 										label: "Confirm External Links before Opening",
@@ -352,7 +352,7 @@ export class AppMenu {
 							{
 								label: "Screen Share",
 								visible: platform.isMacOS,
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								submenu: [
 									{
 										label: "Use System Picker",
@@ -508,7 +508,7 @@ export class AppMenu {
 							},
 							{
 								label: "Set as Default Mail Client",
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								type: "checkbox",
 								checked: app.isDefaultProtocolClient("mailto"),
 								click: () => {
@@ -711,7 +711,7 @@ export class AppMenu {
 							{
 								label: "Reverse Conversation",
 								type: "checkbox",
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								checked: config.get("gmail.reverseConversation"),
 								click: ({ checked }: { checked: boolean }) => {
 									config.set("gmail.reverseConversation", checked);
@@ -724,7 +724,7 @@ export class AppMenu {
 							},
 							{
 								label: "Edit User Styles",
-								enabled: appState.isValidLicenseKey,
+								enabled: appState.isLicenseKeyValid,
 								click: () => {
 									if (!fs.existsSync(Gmail.userStylesPath)) {
 										fs.closeSync(fs.openSync(Gmail.userStylesPath, "w"));

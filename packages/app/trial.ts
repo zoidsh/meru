@@ -15,7 +15,7 @@ const validateTrialSuccessSchema = z.object({
 let validateTrialInterval: Timer | undefined;
 
 export async function validateTrial() {
-	if (appState.isValidLicenseKey || config.get("trial.expired")) {
+	if (appState.isLicenseKeyValid || config.get("trial.expired")) {
 		return;
 	}
 
@@ -56,7 +56,7 @@ export async function validateTrial() {
 		if (validateTrialInterval) {
 			appState.setTrialDaysLeft(trial.daysLeft);
 		} else {
-			appState.isValidLicenseKey = true;
+			appState.isLicenseKeyValid = true;
 
 			appState.trialDaysLeft = trial.daysLeft;
 

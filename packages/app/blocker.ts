@@ -8,7 +8,7 @@ export class Blocker {
 	private engine: FiltersEngine | undefined;
 
 	async init() {
-		if (!appState.isValidLicenseKey || !config.get("blocker.enabled")) {
+		if (!appState.isLicenseKeyValid || !config.get("blocker.enabled")) {
 			return;
 		}
 
