@@ -22,6 +22,7 @@ import {
 	type IpcMainEvent,
 	WebContentsView,
 	app,
+	dialog,
 	nativeTheme,
 	session,
 } from "electron";
@@ -383,6 +384,16 @@ export class Gmail {
 		this.view.webContents.on(
 			"did-navigate",
 			(_event: Electron.Event, url: string) => {
+				if (
+					/accounts\.google.com\/v3\/signin\/challenge\/pk\/presend/.test(url)
+				) {
+					dialog.showMessageBox({
+						type: "info",
+						message: "Passkey sign-in not supported yet",
+						detail: "Please use password to sign in.",
+					});
+				}
+
 				this.setState({
 					navigationHistory: {
 						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
