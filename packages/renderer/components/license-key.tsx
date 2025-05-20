@@ -126,8 +126,7 @@ export function LicenseKey() {
 						{trialDaysLeft > 1 ? "s" : ""} left.
 					</div>
 					<div className="mb-4">
-						Purchase Meru Pro before your trial expires to continue using all
-						features.
+						Purchase Meru Pro before your trial ends to keep using all features.
 					</div>
 					<div className="flex gap-4 justify-end">
 						<ActivateLicenseKeyButton />

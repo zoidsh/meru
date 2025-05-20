@@ -14,7 +14,7 @@ import { platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
 import { app } from "electron";
 import { handleMailto, mailtoUrlArg } from "./mailto";
-import { validateTrial } from "./trial";
+import { trial } from "./trial";
 
 (async () => {
 	if (platform.isLinux) {
@@ -49,7 +49,7 @@ import { validateTrial } from "./trial";
 		return;
 	}
 
-	if ((await validateTrial()) === false) {
+	if ((await trial.validate()) === false) {
 		app.quit();
 
 		return;

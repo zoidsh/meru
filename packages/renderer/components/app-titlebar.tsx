@@ -34,15 +34,15 @@ function Trial() {
 		<Badge
 			variant="outline"
 			className={cn(
-				"h-7 text-yellow-600/60 border-yellow-600/60 hover:border-transparent hover:bg-primary hover:text-primary-foreground transition draggable-none group relative",
+				"h-7 text-yellow-600/60 border-yellow-600/60 hover:border-transparent hover:bg-secondary hover:text-secondary-foreground transition draggable-none group relative",
 				{
-					"text-red-500/50 border-red-500/50": trialDaysLeft <= 3,
+					"text-red-400/50 border-red-400/50": trialDaysLeft <= 3,
 				},
 			)}
 		>
 			<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
 				<span className="group-hover:opacity-0 fade-out">
-					Pro trial expires in {trialDaysLeft} days
+					Pro trial ends in {trialDaysLeft} days
 				</span>
 				<span className="opacity-0 absolute inset-0 group-hover:opacity-100 group-hover:inline-flex items-center justify-center fade-in">
 					Upgrade to Pro

@@ -139,13 +139,9 @@ function AddAccountButton() {
 		(state) => state.setIsAddAccountDialogOpen,
 	);
 
-	const isTrialActive = useTrialStore((state) => state.isActive);
+	const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
 
-	if (
-		!isTrialActive &&
-		Boolean(licenseKeySearchParam && JSON.parse(licenseKeySearchParam)) ===
-			false
-	) {
+	if (!isTrialActive && !licenseKeySearchParam) {
 		return (
 			<Tooltip>
 				<TooltipTrigger asChild>

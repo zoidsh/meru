@@ -6,6 +6,7 @@ import { openExternalUrl } from "@/url";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { BrowserWindow, app, nativeTheme } from "electron";
+import { trial } from "./trial";
 
 class Main {
 	private _window: BrowserWindow | undefined;
@@ -58,8 +59,8 @@ class Main {
 			searchParams.set("licenseKey", JSON.stringify(licenseKey));
 		}
 
-		if (appState.trialDaysLeft) {
-			searchParams.set("trialDaysLeft", JSON.stringify(appState.trialDaysLeft));
+		if (trial.daysLeft) {
+			searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
 		}
 
 		if (is.dev) {
