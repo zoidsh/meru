@@ -43,6 +43,8 @@ import { trial } from "./trial";
 		return;
 	}
 
+	initDownloads();
+
 	if ((await validateLicenseKey()) === "failed") {
 		app.quit();
 
@@ -56,8 +58,6 @@ import { trial } from "./trial";
 	}
 
 	await Promise.all([app.whenReady(), blocker.init()]);
-
-	initDownloads();
 
 	initTheme();
 

@@ -1,4 +1,5 @@
 import { Notification } from "electron";
+import { config } from "./config";
 
 export function createNotification(
 	title: string,
@@ -12,6 +13,7 @@ export function createNotification(
 	const notification = new Notification({
 		body,
 		title,
+		silent: config.get("notifications.playSound"),
 	});
 
 	if (action) {
