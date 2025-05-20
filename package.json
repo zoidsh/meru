@@ -1,7 +1,7 @@
 {
 	"name": "meru",
 	"productName": "Meru",
-	"version": "3.6.3",
+	"version": "3.6.4",
 	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 	"private": true,
 	"author": "Tim Cheung <tim@meru.so>",
