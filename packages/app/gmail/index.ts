@@ -262,6 +262,7 @@ export class Gmail {
 		accountSession.setPermissionRequestHandler(
 			(_webContents, permission, callback) => {
 				switch (permission) {
+					case "clipboard-sanitized-write":
 					case "media": {
 						callback(true);
 						break;
