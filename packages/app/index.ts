@@ -1,7 +1,7 @@
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
-import { initDownloads } from "@/downloads";
+import { downloads } from "@/downloads";
 import { initIpc } from "@/ipc";
 import { validateLicenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -43,7 +43,7 @@ import { trial } from "./trial";
 		return;
 	}
 
-	initDownloads();
+	downloads.init();
 
 	if ((await validateLicenseKey()) === "failed") {
 		app.quit();
