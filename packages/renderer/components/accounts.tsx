@@ -1,6 +1,6 @@
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ipcMain } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
@@ -167,7 +167,7 @@ function AddAccountButton() {
 				</DialogHeader>
 				<AccountForm
 					onSubmit={(account) => {
-						ipcMain.send("accounts.addAccount", account);
+						ipc.main.send("accounts.addAccount", account);
 
 						setIsDialogOpen(false);
 					}}
@@ -204,7 +204,7 @@ function AccountMenuButton({
 								);
 
 								if (confirmed) {
-									ipcMain.send("accounts.removeAccount", account.id);
+									ipc.main.send("accounts.removeAccount", account.id);
 								}
 							}}
 						>
@@ -220,7 +220,7 @@ function AccountMenuButton({
 				<AccountForm
 					account={account}
 					onSubmit={(values) => {
-						ipcMain.send("accounts.updateAccount", { ...account, ...values });
+						ipc.main.send("accounts.updateAccount", { ...account, ...values });
 
 						setIsOpen(false);
 					}}
@@ -272,7 +272,7 @@ export function Accounts() {
 											variant="ghost"
 											disabled={index + 1 === accounts.length}
 											onClick={() => {
-												ipcMain.send(
+												ipc.main.send(
 													"accounts.moveAccount",
 													account.config.id,
 													"down",
@@ -287,7 +287,7 @@ export function Accounts() {
 											variant="ghost"
 											disabled={index === 0}
 											onClick={() => {
-												ipcMain.send(
+												ipc.main.send(
 													"accounts.moveAccount",
 													account.config.id,
 													"up",

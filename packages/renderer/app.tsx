@@ -1,6 +1,6 @@
 import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
-import { ipcRenderer } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import { darkModeSearchParam } from "@meru/renderer-lib/search-params";
 import { Toaster } from "@meru/ui/components/sonner";
 import { TooltipProvider } from "@meru/ui/components/tooltip";
@@ -10,7 +10,7 @@ if (darkModeSearchParam === "true") {
 	window.document.documentElement.classList.add("dark");
 }
 
-ipcRenderer.on("theme.darkModeChanged", (_event, darkMode) => {
+ipc.renderer.on("theme.darkModeChanged", (_event, darkMode) => {
 	window.document.documentElement.classList[darkMode ? "add" : "remove"](
 		"dark",
 	);

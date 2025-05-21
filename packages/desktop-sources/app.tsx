@@ -1,4 +1,4 @@
-import { ipcMain } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import type { DesktopSource, DesktopSources } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
@@ -18,7 +18,7 @@ export function App() {
 
 	useEffect(() => {
 		(async () => {
-			setDesktopSources(await ipcMain.invoke("desktopSources.getSources"));
+			setDesktopSources(await ipc.main.invoke("desktopSources.getSources"));
 		})();
 	}, []);
 
@@ -91,7 +91,7 @@ export function App() {
 							throw new Error("Couldn't find selected desktop source");
 						}
 
-						ipcMain.send("desktopSources.select", selectedDesktopSource);
+						ipc.main.send("desktopSources.select", selectedDesktopSource);
 					}}
 				>
 					Share

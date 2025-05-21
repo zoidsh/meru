@@ -1,4 +1,4 @@
-import { ipcMain } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -63,13 +63,13 @@ function FindInPage() {
 	const [text, setText] = useState("");
 
 	const debouncedOnChange = useDebouncedCallback((text) => {
-		ipcMain.send("findInPage", text, { findNext: true });
+		ipc.main.send("findInPage", text, { findNext: true });
 	}, 250);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies:
 	useEffect(() => {
 		if (isActive && text) {
-			ipcMain.send("findInPage", text, { findNext: true });
+			ipc.main.send("findInPage", text, { findNext: true });
 
 			if (inputRef.current) {
 				inputRef.current.select();
@@ -97,7 +97,7 @@ function FindInPage() {
 					onKeyDown={(event) => {
 						switch (event.key) {
 							case "Enter": {
-								ipcMain.send("findInPage", text, {
+								ipc.main.send("findInPage", text, {
 									forward: true,
 									findNext: false,
 								});
@@ -122,7 +122,7 @@ function FindInPage() {
 					size="icon"
 					className="size-7"
 					onClick={() => {
-						ipcMain.send("findInPage", text, {
+						ipc.main.send("findInPage", text, {
 							forward: false,
 							findNext: false,
 						});
@@ -135,7 +135,7 @@ function FindInPage() {
 					size="icon"
 					className="size-7"
 					onClick={() => {
-						ipcMain.send("findInPage", text, { findNext: false });
+						ipc.main.send("findInPage", text, { findNext: false });
 					}}
 				>
 					<ChevronDownIcon className="size-4" />
@@ -190,7 +190,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("gmail.moveNavigationHistory", "back");
+									ipc.main.send("gmail.moveNavigationHistory", "back");
 								}}
 								disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
 							>
@@ -201,7 +201,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("gmail.moveNavigationHistory", "forward");
+									ipc.main.send("gmail.moveNavigationHistory", "forward");
 								}}
 								disabled={
 									!selectedAccount?.gmail.navigationHistory.canGoForward
@@ -214,7 +214,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("gmail.reload");
+									ipc.main.send("gmail.reload");
 								}}
 							>
 								<RotateCwIcon />
@@ -229,7 +229,10 @@ export function AppTitlebar() {
 										size="sm"
 										className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 										onClick={() => {
-											ipcMain.send("accounts.selectAccount", account.config.id);
+											ipc.main.send(
+												"accounts.selectAccount",
+												account.config.id,
+											);
 										}}
 									>
 										{account.config.label}
@@ -257,7 +260,7 @@ export function AppTitlebar() {
 							size="icon"
 							className="size-7"
 							onClick={() => {
-								ipcMain.send("titleBar.toggleAppMenu");
+								ipc.main.send("titleBar.toggleAppMenu");
 							}}
 						>
 							<EllipsisVerticalIcon />

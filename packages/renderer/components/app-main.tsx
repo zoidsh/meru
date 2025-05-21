@@ -1,4 +1,4 @@
-import { ipcMain } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
@@ -33,7 +33,7 @@ export function AppMain() {
 				size="icon"
 				className="size-7 absolute top-1.5 right-2"
 				onClick={() => {
-					ipcMain.send("settings.toggleIsOpen");
+					ipc.main.send("settings.toggleIsOpen");
 				}}
 			>
 				<XIcon />

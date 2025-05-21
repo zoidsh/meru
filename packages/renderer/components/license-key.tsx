@@ -1,6 +1,6 @@
 import { useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ipcMain } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
@@ -92,7 +92,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 				</DialogDescription>
 				<LicenseKeyForm
 					onSubmit={async (licenseKey) => {
-						const { success } = await ipcMain.invoke(
+						const { success } = await ipc.main.invoke(
 							"licenseKey.activate",
 							licenseKey,
 						);

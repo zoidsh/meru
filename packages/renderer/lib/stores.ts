@@ -1,4 +1,4 @@
-import { ipcMain, ipcRenderer } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
 	accountsUnreadBadgeSearchParam,
@@ -34,11 +34,11 @@ export const useAccountsStore = create<{
 	};
 });
 
-ipcRenderer.on("accounts.changed", (_event, accounts) => {
+ipc.renderer.on("accounts.changed", (_event, accounts) => {
 	useAccountsStore.setState({ accounts });
 });
 
-ipcRenderer.on("accounts.openAddAccountDialog", (_event) => {
+ipc.renderer.on("accounts.openAddAccountDialog", (_event) => {
 	if (!licenseKeySearchParam && !useTrialStore.getState().daysLeft) {
 		toast.error("Meru Pro required", {
 			description: "Please upgrade to Meru Pro to add more accounts.",
@@ -56,7 +56,7 @@ export const useSettingsStore = create<{
 	isOpen: false,
 }));
 
-ipcRenderer.on("settings.setIsOpen", (_event, isOpen) => {
+ipc.renderer.on("settings.setIsOpen", (_event, isOpen) => {
 	useSettingsStore.setState({ isOpen });
 });
 
@@ -68,7 +68,7 @@ export const useFindInPageStore = create<{
 }>((set) => ({
 	isActive: false,
 	deactivate: () => {
-		ipcMain.send("findInPage", null);
+		ipc.main.send("findInPage", null);
 
 		set({ isActive: false });
 	},
@@ -76,18 +76,21 @@ export const useFindInPageStore = create<{
 	totalMatches: 0,
 }));
 
-ipcRenderer.on("findInPage.activate", () => {
+ipc.renderer.on("findInPage.activate", () => {
 	useFindInPageStore.setState(() => ({
 		isActive: true,
 	}));
 });
 
-ipcRenderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => {
-	useFindInPageStore.setState(() => ({
-		activeMatch,
-		totalMatches,
-	}));
-});
+ipc.renderer.on(
+	"findInPage.result",
+	(_event, { activeMatch, totalMatches }) => {
+		useFindInPageStore.setState(() => ({
+			activeMatch,
+			totalMatches,
+		}));
+	},
+);
 
 export const useThemeStore = create<{
 	theme: "light" | "dark";
@@ -105,6 +108,6 @@ export const useTrialStore = create<{
 	};
 });
 
-ipcRenderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
+ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
 	useTrialStore.setState({ daysLeft });
 });
