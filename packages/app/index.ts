@@ -108,12 +108,8 @@ import { trial } from "./trial";
 	});
 
 	app.on("before-quit", () => {
-		appState.isQuittingApp = true;
+		main.saveWindowState();
 
-		config.set("window.lastState", {
-			bounds: main.window.getBounds(),
-			fullscreen: main.window.isFullScreen(),
-			maximized: main.window.isMaximized(),
-		});
+		appState.isQuittingApp = true;
 	});
 })();

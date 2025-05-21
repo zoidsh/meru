@@ -159,6 +159,24 @@ class Main {
 				}
 			}
 		});
+
+		if (platform.isWindows) {
+			this.window.on("resized", () => {
+				this.saveWindowState();
+			});
+
+			this.window.on("moved", () => {
+				this.saveWindowState();
+			});
+
+			this.window.on("maximize", () => {
+				this.saveWindowState();
+			});
+
+			this.window.on("unmaximize", () => {
+				this.saveWindowState();
+			});
+		}
 	}
 
 	show() {
@@ -171,6 +189,14 @@ class Main {
 		if (app.dock?.isVisible) {
 			app.dock.show();
 		}
+	}
+
+	saveWindowState() {
+		config.set("window.lastState", {
+			bounds: main.window.getBounds(),
+			fullscreen: main.window.isFullScreen(),
+			maximized: main.window.isMaximized(),
+		});
 	}
 }
 
