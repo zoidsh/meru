@@ -238,7 +238,6 @@ export class Gmail {
 
 	private setupContextMenu(window: WebContentsView | BrowserWindow) {
 		electronContextMenu({
-			// @ts-expect-error: Works with WebContentsView
 			window,
 			showCopyImageAddress: true,
 			showSaveImageAs: true,
