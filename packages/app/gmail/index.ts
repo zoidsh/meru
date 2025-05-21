@@ -46,19 +46,21 @@ const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
 ];
 
-const PRELOAD_PATH = path.join(__dirname, "gmail-preload", "index.js");
+const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload", "index.js");
+
+export const GMAIL_USER_STYLES_PATH = path.join(
+	app.getPath("userData"),
+	"gmail-user-styles.css",
+);
+
+const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
+	? fs.readFileSync(GMAIL_USER_STYLES_PATH, "utf-8")
+	: null;
 
 export class Gmail {
-	static userStylesPath = path.join(
-		app.getPath("userData"),
-		"gmail-user-styles.css",
-	);
+	private emitter = new EventEmitter();
 
-	private _emitter = new EventEmitter();
-
-	private _view: WebContentsView | undefined;
-
-	private _windows: Set<BrowserWindow> = new Set();
+	private windows: Set<BrowserWindow> = new Set();
 
 	state: GmailState = {
 		title: "",
@@ -69,6 +71,8 @@ export class Gmail {
 		unreadCount: 0,
 		attentionRequired: false,
 	};
+
+	private _view: WebContentsView | undefined;
 
 	get view() {
 		if (!this._view) {
@@ -115,16 +119,10 @@ export class Gmail {
 		return `persist:${accountConfig.id}`;
 	}
 
-	private _userStyles: string | undefined;
-
 	private injectUserStyles() {
 		if (appState.isLicenseKeyValid) {
-			if (!this._userStyles && fs.existsSync(Gmail.userStylesPath)) {
-				this._userStyles = fs.readFileSync(Gmail.userStylesPath, "utf-8");
-			}
-
-			if (this._userStyles) {
-				this.view.webContents.insertCSS(this._userStyles);
+			if (GMAIL_USER_STYLES) {
+				this.view.webContents.insertCSS(GMAIL_USER_STYLES);
 			}
 		}
 	}
@@ -171,10 +169,10 @@ export class Gmail {
 					(isSupportedGoogleApp && appState.isLicenseKeyValid)) &&
 				disposition !== "background-tab"
 			) {
-				if (isSupportedGoogleApp && this._windows.size > 0) {
+				if (isSupportedGoogleApp && this.windows.size > 0) {
 					const urlHostname = new URL(url).hostname;
 
-					for (const window of this._windows) {
+					for (const window of this.windows) {
 						if (new URL(window.webContents.getURL()).hostname === urlHostname) {
 							window.loadURL(url);
 
@@ -201,10 +199,10 @@ export class Gmail {
 
 						this.setupContextMenu(window);
 
-						this._windows.add(window);
+						this.windows.add(window);
 
 						window.once("closed", () => {
-							this._windows.delete(window);
+							this.windows.delete(window);
 						});
 
 						return window.webContents;
@@ -278,7 +276,7 @@ export class Gmail {
 
 		accountSession.setDisplayMediaRequestHandler(
 			async (_request, callback) => {
-				const googleMeetWindow = this._windows
+				const googleMeetWindow = this.windows
 					.values()
 					.find((window) =>
 						window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
@@ -360,7 +358,7 @@ export class Gmail {
 		this.view = new WebContentsView({
 			webPreferences: {
 				partition: sessionPartitionKey,
-				preload: PRELOAD_PATH,
+				preload: GMAIL_PRELOAD_PATH,
 			},
 		});
 
@@ -473,7 +471,7 @@ export class Gmail {
 	}
 
 	on<K extends keyof GmailEvents>(event: K, listener: GmailEvents[K]) {
-		this._emitter.on(event, listener);
+		this.emitter.on(event, listener);
 
 		return () => {
 			this.off(event, listener);
@@ -481,14 +479,14 @@ export class Gmail {
 	}
 
 	off<K extends keyof GmailEvents>(event: K, listener: GmailEvents[K]) {
-		return this._emitter.off(event, listener);
+		return this.emitter.off(event, listener);
 	}
 
 	emit<K extends keyof GmailEvents>(
 		event: K,
 		...args: Parameters<GmailEvents[K]>
 	) {
-		return this._emitter.emit(event, ...args);
+		return this.emitter.emit(event, ...args);
 	}
 
 	go(action: "back" | "forward") {
@@ -502,10 +500,6 @@ export class Gmail {
 				break;
 			}
 		}
-	}
-
-	reload() {
-		this.view.webContents.reload();
 	}
 
 	destroy() {
@@ -523,7 +517,7 @@ export class Gmail {
 			autoHideMenuBar: true,
 			webPreferences: {
 				session: this.view.webContents.session,
-				preload: PRELOAD_PATH,
+				preload: GMAIL_PRELOAD_PATH,
 			},
 		});
 

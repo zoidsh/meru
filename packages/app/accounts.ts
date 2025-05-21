@@ -19,7 +19,7 @@ type AccountsEvents = {
 };
 
 class Accounts {
-	private _emitter = new EventEmitter();
+	private emitter = new EventEmitter();
 
 	gmails: Map<string, Gmail> = new Map();
 
@@ -307,7 +307,7 @@ class Accounts {
 	}
 
 	on<K extends keyof AccountsEvents>(event: K, listener: AccountsEvents[K]) {
-		this._emitter.on(event, listener);
+		this.emitter.on(event, listener);
 
 		return () => {
 			this.off(event, listener);
@@ -315,14 +315,14 @@ class Accounts {
 	}
 
 	off<K extends keyof AccountsEvents>(event: K, listener: AccountsEvents[K]) {
-		return this._emitter.off(event, listener);
+		return this.emitter.off(event, listener);
 	}
 
 	emit<K extends keyof AccountsEvents>(
 		event: K,
 		...args: Parameters<AccountsEvents[K]>
 	) {
-		return this._emitter.emit(event, ...args);
+		return this.emitter.emit(event, ...args);
 	}
 }
 

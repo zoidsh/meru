@@ -3,7 +3,7 @@ import path from "node:path";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
-import { Gmail } from "@/gmail";
+import { GMAIL_USER_STYLES_PATH } from "@/gmail";
 import { ipcRenderer } from "@/ipc";
 import { main } from "@/main";
 import { appState } from "@/state";
@@ -726,11 +726,11 @@ export class AppMenu {
 								label: "Edit User Styles",
 								enabled: appState.isLicenseKeyValid,
 								click: () => {
-									if (!fs.existsSync(Gmail.userStylesPath)) {
-										fs.closeSync(fs.openSync(Gmail.userStylesPath, "w"));
+									if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
+										fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));
 									}
 
-									shell.openPath(Gmail.userStylesPath);
+									shell.openPath(GMAIL_USER_STYLES_PATH);
 								},
 							},
 						],

@@ -6,36 +6,36 @@ import { platform } from "@electron-toolkit/utils";
 import Electron, { nativeTheme } from "electron";
 
 export class AppTray {
-	private _tray: Electron.Tray | undefined;
+	private tray: Electron.Tray | undefined;
 
-	private _menu: Electron.Menu | undefined;
+	private menu: Electron.Menu | undefined;
 
-	private _icon: Electron.NativeImage | undefined;
-	private _iconUnread: Electron.NativeImage | undefined;
+	private icon: Electron.NativeImage | undefined;
+	private iconUnread: Electron.NativeImage | undefined;
 
 	init() {
 		if (config.get("tray.enabled")) {
-			this._icon = this.createIcon();
+			this.icon = this.createIcon();
 
 			if (!platform.isMacOS) {
-				this._iconUnread = this.createIcon(true);
+				this.iconUnread = this.createIcon(true);
 			}
 
-			this._tray = new Electron.Tray(this._icon);
+			this.tray = new Electron.Tray(this.icon);
 
-			this._tray.setToolTip(Electron.app.name);
+			this.tray.setToolTip(Electron.app.name);
 
-			this._menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+			this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
 			if (platform.isLinux) {
-				this._tray.setContextMenu(this._menu);
+				this.tray.setContextMenu(this.menu);
 			} else {
-				this._tray.on("click", () => {
+				this.tray.on("click", () => {
 					main.show();
 				});
 
-				this._tray.on("right-click", () => {
-					this._tray?.popUpContextMenu(this._menu);
+				this.tray.on("right-click", () => {
+					this.tray?.popUpContextMenu(this.menu);
 				});
 			}
 
@@ -74,26 +74,26 @@ export class AppTray {
 	}
 
 	updateIcon() {
-		if (this._tray && !platform.isMacOS) {
-			this._icon = this.createIcon();
+		if (this.tray && !platform.isMacOS) {
+			this.icon = this.createIcon();
 
 			const unreadCount = accounts.getTotalUnreadCount();
 
 			if (!unreadCount) {
-				this._tray.setImage(this._icon);
+				this.tray.setImage(this.icon);
 			}
 		}
 	}
 
 	updateWindowVisibilityMenuItem() {
-		if (this._tray && this._menu) {
-			const showWindowMenuItem = this._menu.getMenuItemById("show-win");
+		if (this.tray && this.menu) {
+			const showWindowMenuItem = this.menu.getMenuItemById("show-win");
 
 			if (showWindowMenuItem) {
 				showWindowMenuItem.visible = !main.window.isVisible();
 			}
 
-			const hideWindowMenuItem = this._menu.getMenuItemById("hide-win");
+			const hideWindowMenuItem = this.menu.getMenuItemById("hide-win");
 
 			if (hideWindowMenuItem) {
 				hideWindowMenuItem.visible = main.window.isVisible();
@@ -102,16 +102,16 @@ export class AppTray {
 	}
 
 	updateUnreadStatus(unreadCount: number) {
-		if (this._tray) {
-			if (this._icon && this._iconUnread) {
-				this._tray.setImage(unreadCount ? this._iconUnread : this._icon);
+		if (this.tray) {
+			if (this.icon && this.iconUnread) {
+				this.tray.setImage(unreadCount ? this.iconUnread : this.icon);
 			}
 
 			if (platform.isMacOS) {
 				const trayUnreadCount = config.get("tray.unreadCount");
 
 				if (trayUnreadCount) {
-					this._tray.setTitle(unreadCount ? unreadCount.toString() : "");
+					this.tray.setTitle(unreadCount ? unreadCount.toString() : "");
 				}
 			}
 		}
@@ -132,7 +132,7 @@ export class AppTray {
 			},
 			{
 				label: "Show",
-				visible: main.shouldLaunchMinimized(),
+				visible: main.shouldLaunchMinimized,
 				id: "show-win",
 				click: () => {
 					main.show();
@@ -140,7 +140,7 @@ export class AppTray {
 			},
 			{
 				label: "Hide",
-				visible: !main.shouldLaunchMinimized(),
+				visible: !main.shouldLaunchMinimized,
 				id: "hide-win",
 				click: () => {
 					main.window.hide();

@@ -23,12 +23,9 @@ class Main {
 		this._window = browserWindow;
 	}
 
-	shouldLaunchMinimized() {
-		return (
-			app.commandLine.hasSwitch("launch-minimized") ||
-			config.get("launchMinimized")
-		);
-	}
+	shouldLaunchMinimized =
+		app.commandLine.hasSwitch("launch-minimized") ||
+		config.get("launchMinimized");
 
 	loadURL() {
 		const searchParams = new URLSearchParams();
@@ -117,7 +114,7 @@ class Main {
 				: undefined,
 		});
 
-		if (!this.shouldLaunchMinimized()) {
+		if (!this.shouldLaunchMinimized) {
 			this.window.once("ready-to-show", () => {
 				this.show();
 			});
