@@ -7,7 +7,7 @@ import { validateLicenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
-import { initTheme } from "@/theme";
+import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { platform } from "@electron-toolkit/utils";
@@ -59,7 +59,7 @@ import { trial } from "./trial";
 
 	await Promise.all([app.whenReady(), blocker.init()]);
 
-	initTheme();
+	theme.init();
 
 	main.init();
 

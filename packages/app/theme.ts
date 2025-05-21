@@ -4,18 +4,22 @@ import { main } from "@/main";
 import { appTray } from "@/tray";
 import { nativeTheme } from "electron";
 
-export function initTheme() {
-	nativeTheme.themeSource = config.get("theme");
+class Theme {
+	init() {
+		nativeTheme.themeSource = config.get("theme");
 
-	nativeTheme.on("updated", () => {
-		ipcRenderer.send(
-			main.window.webContents,
-			"darkModeChanged",
-			nativeTheme.shouldUseDarkColors,
-		);
+		nativeTheme.on("updated", () => {
+			ipcRenderer.send(
+				main.window.webContents,
+				"darkModeChanged",
+				nativeTheme.shouldUseDarkColors,
+			);
 
-		main.updateTitlebarOverlay();
+			main.updateTitlebarOverlay();
 
-		appTray.updateIcon();
-	});
+			appTray.updateIcon();
+		});
+	}
 }
+
+export const theme = new Theme();
