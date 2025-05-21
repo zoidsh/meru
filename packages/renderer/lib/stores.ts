@@ -39,13 +39,15 @@ ipcRenderer.on("accountsChanged", (_event, accounts) => {
 });
 
 ipcRenderer.on("accounts.setIsAddAccountDialogOpen", (_event, isOpen) => {
-	if (licenseKeySearchParam) {
-		useAccountsStore.setState({ isAddAccountDialogOpen: isOpen });
-	} else {
+	if (!licenseKeySearchParam && !useTrialStore.getState().daysLeft) {
 		toast.error("Meru Pro required", {
 			description: "Please upgrade to Meru Pro to add more accounts.",
 		});
+
+		return;
 	}
+
+	useAccountsStore.setState({ isAddAccountDialogOpen: isOpen });
 });
 
 export const useSettingsStore = create<{
