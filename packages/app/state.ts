@@ -1,4 +1,4 @@
-import { ipcRenderer } from "@/ipc";
+import { ipc } from "@/ipc";
 import { main } from "@/main";
 
 class AppState {
@@ -11,7 +11,7 @@ class AppState {
 	setIsSettingsOpen(value: boolean) {
 		this.isSettingsOpen = value;
 
-		ipcRenderer.send(
+		ipc.renderer.send(
 			main.window.webContents,
 			"isSettingsOpenChanged",
 			this.isSettingsOpen,

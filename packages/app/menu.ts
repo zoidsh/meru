@@ -4,7 +4,7 @@ import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
 import { GMAIL_USER_STYLES_PATH } from "@/gmail";
-import { ipcRenderer } from "@/ipc";
+import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appState } from "@/state";
 import { appUpdater } from "@/updater";
@@ -588,7 +588,7 @@ export class AppMenu {
 						label: "Gmail Settings...",
 						accelerator: "Command+,",
 						click: () => {
-							ipcRenderer.send(
+							ipc.renderer.send(
 								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"settings",
@@ -616,7 +616,7 @@ export class AppMenu {
 					{
 						label: "Compose",
 						click: () => {
-							ipcRenderer.send(
+							ipc.renderer.send(
 								accounts.getSelectedAccount().gmail.view.webContents,
 								"navigateTo",
 								"compose",
@@ -671,7 +671,7 @@ export class AppMenu {
 						label: "Find...",
 						accelerator: "CommandOrControl+F",
 						click: () => {
-							ipcRenderer.send(main.window.webContents, "findInPage.activate");
+							ipc.renderer.send(main.window.webContents, "findInPage.activate");
 
 							main.window.webContents.focus();
 						},

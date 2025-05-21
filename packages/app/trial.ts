@@ -3,7 +3,7 @@ import { machineId } from "node-machine-id";
 import { ofetch } from "ofetch";
 import { z } from "zod";
 import { config } from "./config";
-import { ipcRenderer } from "./ipc";
+import { ipc } from "./ipc";
 import { main } from "./main";
 import { appState } from "./state";
 import { openExternalUrl } from "./url";
@@ -104,7 +104,7 @@ class Trial {
 	setDaysLeft(daysLeft: number) {
 		this.daysLeft = daysLeft;
 
-		ipcRenderer.send(
+		ipc.renderer.send(
 			main.window.webContents,
 			"trial.daysLeftChanged",
 			daysLeft,

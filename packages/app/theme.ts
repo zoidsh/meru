@@ -1,5 +1,5 @@
 import { config } from "@/config";
-import { ipcRenderer } from "@/ipc";
+import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appTray } from "@/tray";
 import { nativeTheme } from "electron";
@@ -9,7 +9,7 @@ class Theme {
 		nativeTheme.themeSource = config.get("theme");
 
 		nativeTheme.on("updated", () => {
-			ipcRenderer.send(
+			ipc.renderer.send(
 				main.window.webContents,
 				"darkModeChanged",
 				nativeTheme.shouldUseDarkColors,

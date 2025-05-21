@@ -4,7 +4,7 @@ import path from "node:path";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
-import { ipcRenderer } from "@/ipc";
+import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
@@ -215,7 +215,7 @@ export class Gmail {
 
 				accounts.hide();
 
-				ipcRenderer.send(
+				ipc.renderer.send(
 					main.window.webContents,
 					"accounts.setIsAddAccountDialogOpen",
 					true,
@@ -435,7 +435,7 @@ export class Gmail {
 		});
 
 		this.view.webContents.on("found-in-page", (_event, result) => {
-			ipcRenderer.send(main.window.webContents, "findInPage.result", {
+			ipc.renderer.send(main.window.webContents, "findInPage.result", {
 				activeMatch: result.activeMatchOrdinal,
 				totalMatches: result.matches,
 			});

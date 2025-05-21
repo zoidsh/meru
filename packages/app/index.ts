@@ -2,7 +2,7 @@ import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
-import { initIpc } from "@/ipc";
+import { ipc } from "@/ipc";
 import { validateLicenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -67,7 +67,7 @@ import { trial } from "./trial";
 
 	main.loadURL();
 
-	initIpc();
+	ipc.init();
 
 	appMenu.init();
 
