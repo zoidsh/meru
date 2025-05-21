@@ -18,7 +18,7 @@ export function App() {
 
 	useEffect(() => {
 		(async () => {
-			setDesktopSources(await ipcMain.invoke("desktopSources"));
+			setDesktopSources(await ipcMain.invoke("desktopSources.getSources"));
 		})();
 	}, []);
 
@@ -91,7 +91,7 @@ export function App() {
 							throw new Error("Couldn't find selected desktop source");
 						}
 
-						ipcMain.send("selectDesktopSource", selectedDesktopSource);
+						ipcMain.send("desktopSources.select", selectedDesktopSource);
 					}}
 				>
 					Share

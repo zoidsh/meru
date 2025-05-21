@@ -167,7 +167,7 @@ function AddAccountButton() {
 				</DialogHeader>
 				<AccountForm
 					onSubmit={(account) => {
-						ipcMain.send("addAccount", account);
+						ipcMain.send("accounts.addAccount", account);
 
 						setIsDialogOpen(false);
 					}}
@@ -204,7 +204,7 @@ function AccountMenuButton({
 								);
 
 								if (confirmed) {
-									ipcMain.send("removeAccount", account.id);
+									ipcMain.send("accounts.removeAccount", account.id);
 								}
 							}}
 						>
@@ -220,7 +220,7 @@ function AccountMenuButton({
 				<AccountForm
 					account={account}
 					onSubmit={(values) => {
-						ipcMain.send("updateAccount", { ...account, ...values });
+						ipcMain.send("accounts.updateAccount", { ...account, ...values });
 
 						setIsOpen(false);
 					}}
@@ -272,7 +272,11 @@ export function Accounts() {
 											variant="ghost"
 											disabled={index + 1 === accounts.length}
 											onClick={() => {
-												ipcMain.send("moveAccount", account.config.id, "down");
+												ipcMain.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"down",
+												);
 											}}
 										>
 											<ArrowDownIcon />
@@ -283,7 +287,11 @@ export function Accounts() {
 											variant="ghost"
 											disabled={index === 0}
 											onClick={() => {
-												ipcMain.send("moveAccount", account.config.id, "up");
+												ipcMain.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"up",
+												);
 											}}
 										>
 											<ArrowUpIcon />

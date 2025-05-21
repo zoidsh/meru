@@ -129,7 +129,7 @@ async function fetchInbox() {
 	}
 
 	if (newMails.length > 0) {
-		ipcMain.send("handleNewMails", newMails);
+		ipcMain.send("gmail.handleNewMessages", newMails);
 	}
 }
 
@@ -157,7 +157,7 @@ async function observeInbox() {
 		);
 
 		if (previousUnreadCount !== currentUnreadCount) {
-			ipcMain.send("updateUnreadCount", currentUnreadCount);
+			ipcMain.send("gmail.setUnreadCount", currentUnreadCount);
 
 			fetchInbox();
 
@@ -263,7 +263,7 @@ function refreshInbox() {
 export function initInboxObserver() {
 	observeInbox();
 
-	ipcRenderer.on("handleMail", async (_event, messageId, action) => {
+	ipcRenderer.on("gmail.handleMessage", async (_event, messageId, action) => {
 		await sendMailAction(messageId, action);
 
 		refreshInbox();

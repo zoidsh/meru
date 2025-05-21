@@ -218,8 +218,7 @@ export class Gmail {
 
 				ipc.renderer.send(
 					main.window.webContents,
-					"accounts.setIsAddAccountDialogOpen",
-					true,
+					"accounts.openAddAccountDialog",
 				);
 			} else if (
 				WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))
@@ -302,7 +301,7 @@ export class Gmail {
 					},
 				});
 
-				const ipcEvent = "selectDesktopSource";
+				const ipcEvent = "desktopSources.select";
 
 				const ipcListener = (
 					_event: IpcMainEvent,

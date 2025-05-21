@@ -34,11 +34,11 @@ export const useAccountsStore = create<{
 	};
 });
 
-ipcRenderer.on("accountsChanged", (_event, accounts) => {
+ipcRenderer.on("accounts.changed", (_event, accounts) => {
 	useAccountsStore.setState({ accounts });
 });
 
-ipcRenderer.on("accounts.setIsAddAccountDialogOpen", (_event, isOpen) => {
+ipcRenderer.on("accounts.openAddAccountDialog", (_event) => {
 	if (!licenseKeySearchParam && !useTrialStore.getState().daysLeft) {
 		toast.error("Meru Pro required", {
 			description: "Please upgrade to Meru Pro to add more accounts.",
@@ -47,7 +47,7 @@ ipcRenderer.on("accounts.setIsAddAccountDialogOpen", (_event, isOpen) => {
 		return;
 	}
 
-	useAccountsStore.setState({ isAddAccountDialogOpen: isOpen });
+	useAccountsStore.setState({ isAddAccountDialogOpen: true });
 });
 
 export const useSettingsStore = create<{
@@ -56,8 +56,8 @@ export const useSettingsStore = create<{
 	isOpen: false,
 }));
 
-ipcRenderer.on("isSettingsOpenChanged", (_event, isSettingsOpen) => {
-	useSettingsStore.setState({ isOpen: isSettingsOpen });
+ipcRenderer.on("settings.setIsOpen", (_event, isOpen) => {
+	useSettingsStore.setState({ isOpen });
 });
 
 export const useFindInPageStore = create<{

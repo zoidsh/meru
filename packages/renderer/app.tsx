@@ -10,7 +10,7 @@ if (darkModeSearchParam === "true") {
 	window.document.documentElement.classList.add("dark");
 }
 
-ipcRenderer.on("darkModeChanged", (_event, darkMode) => {
+ipcRenderer.on("theme.darkModeChanged", (_event, darkMode) => {
 	window.document.documentElement.classList[darkMode ? "add" : "remove"](
 		"dark",
 	);

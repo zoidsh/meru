@@ -15,7 +15,7 @@ class Ipc {
 	renderer = new IpcEmitter<IpcRendererEvent>();
 
 	init() {
-		this.main.on("toggleIsSettingsOpen", () => {
+		this.main.on("settings.toggleIsOpen", () => {
 			appState.toggleIsSettingsOpen();
 
 			if (appState.isSettingsOpen) {
@@ -28,7 +28,7 @@ class Ipc {
 		accounts.on("accounts-changed", (accounts) => {
 			this.renderer.send(
 				main.window.webContents,
-				"accountsChanged",
+				"accounts.changed",
 				accounts.map((account) => ({
 					config: account.config,
 					gmail: account.gmail.state,
@@ -36,27 +36,30 @@ class Ipc {
 			);
 		});
 
-		this.main.on("selectAccount", (_event, selectedAccountId) => {
+		this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
 			accounts.selectAccount(selectedAccountId);
 		});
 
-		this.main.on("addAccount", (_event, accountDetails) => {
+		this.main.on("accounts.addAccount", (_event, accountDetails) => {
 			accounts.addAccount(accountDetails);
 		});
 
-		this.main.on("removeAccount", (_event, selectedAccountId) => {
+		this.main.on("accounts.removeAccount", (_event, selectedAccountId) => {
 			accounts.removeAccount(selectedAccountId);
 		});
 
-		this.main.on("updateAccount", (_event, updatedAccount) => {
+		this.main.on("accounts.updateAccount", (_event, updatedAccount) => {
 			accounts.updateAccount(updatedAccount);
 		});
 
-		this.main.on("moveAccount", (_event, movedAccountId, direction) => {
-			accounts.moveAccount(movedAccountId, direction);
-		});
+		this.main.on(
+			"accounts.moveAccount",
+			(_event, movedAccountId, direction) => {
+				accounts.moveAccount(movedAccountId, direction);
+			},
+		);
 
-		this.main.on("goNavigationHistory", (_event, action) => {
+		this.main.on("gmail.moveNavigationHistory", (_event, action) => {
 			accounts
 				.getSelectedAccount()
 				.gmail.view.webContents.navigationHistory[
@@ -64,11 +67,11 @@ class Ipc {
 				]();
 		});
 
-		this.main.on("reloadGmail", () => {
+		this.main.on("gmail.reload", () => {
 			accounts.getSelectedAccount().gmail.view.webContents.reload();
 		});
 
-		this.main.on("updateUnreadCount", (event, unreadCount) => {
+		this.main.on("gmail.setUnreadCount", (event, unreadCount) => {
 			for (const gmail of accounts.gmails.values()) {
 				if (event.sender.id === gmail.view.webContents.id) {
 					gmail.setUnreadCount(unreadCount);
@@ -76,15 +79,15 @@ class Ipc {
 			}
 		});
 
-		this.main.on("toggleAppMenu", () => {
+		this.main.on("titleBar.toggleAppMenu", () => {
 			appMenu.togglePopup();
 		});
 
-		this.main.handle("activateLicenseKey", (_event, input) =>
+		this.main.handle("licenseKey.activate", (_event, input) =>
 			licenseKey.activate({ licenseKey: input }),
 		);
 
-		this.main.handle("desktopSources", async () => {
+		this.main.handle("desktopSources.getSources", async () => {
 			const desktopSources = await desktopCapturer.getSources({
 				types: ["screen", "window"],
 			});
@@ -114,7 +117,7 @@ class Ipc {
 		});
 
 		if (Notification.isSupported()) {
-			this.main.on("handleNewMails", async (event, mails) => {
+			this.main.on("gmail.handleNewMessages", async (event, mails) => {
 				if (!config.get("notifications.enabled")) {
 					return;
 				}
@@ -177,7 +180,7 @@ class Ipc {
 									case 0: {
 										this.renderer.send(
 											event.sender,
-											"handleMail",
+											"gmail.handleMessage",
 											mail.messageId,
 											"archive",
 										);
@@ -187,7 +190,7 @@ class Ipc {
 									case 1: {
 										this.renderer.send(
 											event.sender,
-											"handleMail",
+											"gmail.handleMessage",
 											mail.messageId,
 											"markAsRead",
 										);
@@ -197,7 +200,7 @@ class Ipc {
 									case 2: {
 										this.renderer.send(
 											event.sender,
-											"handleMail",
+											"gmail.handleMessage",
 											mail.messageId,
 											"delete",
 										);
@@ -207,7 +210,7 @@ class Ipc {
 									case 3: {
 										this.renderer.send(
 											event.sender,
-											"handleMail",
+											"gmail.handleMessage",
 											mail.messageId,
 											"markAsSpam",
 										);
@@ -222,7 +225,11 @@ class Ipc {
 
 								accounts.selectAccount(accountId);
 
-								this.renderer.send(event.sender, "openMail", mail.messageId);
+								this.renderer.send(
+									event.sender,
+									"gmail.openMessage",
+									mail.messageId,
+								);
 							});
 
 							notification.show();

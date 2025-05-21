@@ -190,7 +190,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("goNavigationHistory", "back");
+									ipcMain.send("gmail.moveNavigationHistory", "back");
 								}}
 								disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
 							>
@@ -201,7 +201,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("goNavigationHistory", "forward");
+									ipcMain.send("gmail.moveNavigationHistory", "forward");
 								}}
 								disabled={
 									!selectedAccount?.gmail.navigationHistory.canGoForward
@@ -214,7 +214,7 @@ export function AppTitlebar() {
 								size="icon"
 								className="size-7 draggable-none"
 								onClick={() => {
-									ipcMain.send("reloadGmail");
+									ipcMain.send("gmail.reload");
 								}}
 							>
 								<RotateCwIcon />
@@ -229,7 +229,7 @@ export function AppTitlebar() {
 										size="sm"
 										className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 										onClick={() => {
-											ipcMain.send("selectAccount", account.config.id);
+											ipcMain.send("accounts.selectAccount", account.config.id);
 										}}
 									>
 										{account.config.label}
@@ -257,7 +257,7 @@ export function AppTitlebar() {
 							size="icon"
 							className="size-7"
 							onClick={() => {
-								ipcMain.send("toggleAppMenu");
+								ipcMain.send("titleBar.toggleAppMenu");
 							}}
 						>
 							<EllipsisVerticalIcon />

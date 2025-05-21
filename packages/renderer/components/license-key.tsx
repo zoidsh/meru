@@ -93,7 +93,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 				<LicenseKeyForm
 					onSubmit={async (licenseKey) => {
 						const { success } = await ipcMain.invoke(
-							"activateLicenseKey",
+							"licenseKey.activate",
 							licenseKey,
 						);
 

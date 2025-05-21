@@ -6,11 +6,11 @@ export const ipcRenderer = new IpcListener<IpcRendererEvent>();
 export const ipcMain = new IpcEmitter<IpcMainEvents>();
 
 export function initIpc() {
-	ipcRenderer.on("navigateTo", (_event, destination) => {
+	ipcRenderer.on("gmail.navigateTo", (_event, destination) => {
 		window.location.hash = `#${destination}`;
 	});
 
-	ipcRenderer.on("openMail", (_event, messageId: string) => {
+	ipcRenderer.on("gmail.openMessage", (_event, messageId: string) => {
 		window.location.hash = `#inbox/${messageId}`;
 	});
 }

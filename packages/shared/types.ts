@@ -13,32 +13,34 @@ export type SelectedDesktopSource = { id: string; name: string };
 
 export type IpcMainEvents =
 	| {
-			selectAccount: [accountId: AccountConfig["id"]];
-			addAccount: [account: AccountConfigInput];
-			removeAccount: [accountId: AccountConfig["id"]];
-			updateAccount: [account: AccountConfig];
-			moveAccount: [accountId: AccountConfig["id"], direction: "up" | "down"];
-			toggleIsSettingsOpen: [];
-			goNavigationHistory: [action: "back" | "forward"];
-			reloadGmail: [];
-			updateUnreadCount: [unreadCount: number];
-			handleNewMails: [mails: GmailMail[]];
-			toggleAppMenu: [];
-			selectDesktopSource: [desktopSource: SelectedDesktopSource];
+			"accounts.selectAccount": [accountId: AccountConfig["id"]];
+			"accounts.addAccount": [account: AccountConfigInput];
+			"accounts.removeAccount": [accountId: AccountConfig["id"]];
+			"accounts.updateAccount": [account: AccountConfig];
+			"accounts.moveAccount": [
+				accountId: AccountConfig["id"],
+				direction: "up" | "down",
+			];
+			"settings.toggleIsOpen": [];
+			"gmail.moveNavigationHistory": [move: "back" | "forward"];
+			"gmail.reload": [];
+			"gmail.setUnreadCount": [unreadCount: number];
+			"gmail.handleNewMessages": [mails: GmailMail[]];
+			"titleBar.toggleAppMenu": [];
+			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [
 				text: string | null,
 				options?: { forward?: boolean; findNext: boolean },
 			];
 	  }
 	| {
-			activateLicenseKey: (licenseKey: string) => { success: boolean };
-			desktopSources: () => DesktopSources;
+			"licenseKey.activate": (licenseKey: string) => { success: boolean };
+			"desktopSources.getSources": () => DesktopSources;
 	  };
 
 export type IpcRendererEvent = {
-	isSettingsOpenChanged: [settingsOpen: boolean];
-	accountsChanged: [accounts: AccountInstances];
-	navigateTo: [
+	"settings.setIsOpen": [isOpen: boolean];
+	"gmail.navigateTo": [
 		destination:
 			| "inbox"
 			| "starred"
@@ -53,10 +55,14 @@ export type IpcRendererEvent = {
 			| "settings"
 			| "compose",
 	];
-	handleMail: [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
-	openMail: [messageId: string];
-	darkModeChanged: [darkMode: boolean];
-	"accounts.setIsAddAccountDialogOpen": [isOpen: boolean];
+	"gmail.handleMessage": [
+		messageId: string,
+		action: keyof typeof GMAIL_ACTION_CODE_MAP,
+	];
+	"gmail.openMessage": [messageId: string];
+	"theme.darkModeChanged": [darkMode: boolean];
+	"accounts.changed": [accounts: AccountInstances];
+	"accounts.openAddAccountDialog": [];
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 	"trial.daysLeftChanged": [daysLeft: number];

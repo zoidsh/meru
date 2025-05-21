@@ -591,7 +591,7 @@ export class AppMenu {
 						click: () => {
 							ipc.renderer.send(
 								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
+								"gmail.navigateTo",
 								"settings",
 							);
 
@@ -619,7 +619,7 @@ export class AppMenu {
 						click: () => {
 							ipc.renderer.send(
 								accounts.getSelectedAccount().gmail.view.webContents,
-								"navigateTo",
+								"gmail.navigateTo",
 								"compose",
 							);
 

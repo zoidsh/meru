@@ -11,7 +11,7 @@ class AppState {
 
 		ipc.renderer.send(
 			main.window.webContents,
-			"isSettingsOpenChanged",
+			"settings.setIsOpen",
 			this.isSettingsOpen,
 		);
 	}

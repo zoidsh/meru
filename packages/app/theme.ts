@@ -11,7 +11,7 @@ class Theme {
 		nativeTheme.on("updated", () => {
 			ipc.renderer.send(
 				main.window.webContents,
-				"darkModeChanged",
+				"theme.darkModeChanged",
 				nativeTheme.shouldUseDarkColors,
 			);
 

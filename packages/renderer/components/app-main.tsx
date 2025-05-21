@@ -33,7 +33,7 @@ export function AppMain() {
 				size="icon"
 				className="size-7 absolute top-1.5 right-2"
 				onClick={() => {
-					ipcMain.send("toggleIsSettingsOpen");
+					ipcMain.send("settings.toggleIsOpen");
 				}}
 			>
 				<XIcon />
