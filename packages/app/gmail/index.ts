@@ -5,6 +5,7 @@ import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
@@ -120,7 +121,7 @@ export class Gmail {
 	}
 
 	private injectUserStyles() {
-		if (appState.isLicenseKeyValid) {
+		if (licenseKey.isValid) {
 			if (GMAIL_USER_STYLES) {
 				this.view.webContents.insertCSS(GMAIL_USER_STYLES);
 			}
@@ -166,7 +167,7 @@ export class Gmail {
 			if (
 				(url.startsWith(GMAIL_URL) ||
 					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-					(isSupportedGoogleApp && appState.isLicenseKeyValid)) &&
+					(isSupportedGoogleApp && licenseKey.isValid)) &&
 				disposition !== "background-tab"
 			) {
 				if (isSupportedGoogleApp && this.windows.size > 0) {
@@ -455,7 +456,7 @@ export class Gmail {
 			searchParams.set("hideInboxFooter", "true");
 		}
 
-		if (config.get("gmail.reverseConversation") && appState.isLicenseKeyValid) {
+		if (config.get("gmail.reverseConversation") && licenseKey.isValid) {
 			searchParams.set("reverseConversation", "true");
 		}
 

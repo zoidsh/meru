@@ -1,6 +1,6 @@
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { activateLicenseKey } from "@/license-key";
+import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
@@ -80,8 +80,8 @@ class Ipc {
 			appMenu.togglePopup();
 		});
 
-		this.main.handle("activateLicenseKey", (_event, licenseKey) =>
-			activateLicenseKey({ licenseKey }),
+		this.main.handle("activateLicenseKey", (_event, input) =>
+			licenseKey.activate({ licenseKey: input }),
 		);
 
 		this.main.handle("desktopSources", async () => {

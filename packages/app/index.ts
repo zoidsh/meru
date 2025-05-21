@@ -3,7 +3,7 @@ import { blocker } from "@/blocker";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
-import { validateLicenseKey } from "@/license-key";
+import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
@@ -45,7 +45,7 @@ import { trial } from "./trial";
 
 	downloads.init();
 
-	if ((await validateLicenseKey()) === "failed") {
+	if ((await licenseKey.validate()) === "failed") {
 		app.quit();
 
 		return;
@@ -82,7 +82,7 @@ import { trial } from "./trial";
 	app.on("second-instance", (_event, argv) => {
 		main.show();
 
-		if (!platform.isMacOS && appState.isLicenseKeyValid) {
+		if (!platform.isMacOS && licenseKey.isValid) {
 			const mailtoUrlArg = argv.find((arg) => arg.startsWith("mailto:"));
 
 			if (mailtoUrlArg) {
@@ -95,7 +95,7 @@ import { trial } from "./trial";
 		main.show();
 	});
 
-	if (platform.isMacOS && appState.isLicenseKeyValid) {
+	if (platform.isMacOS && licenseKey.isValid) {
 		app.on("open-url", async (_event, url) => {
 			handleMailto(url);
 		});

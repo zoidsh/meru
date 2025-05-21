@@ -6,8 +6,6 @@ class AppState {
 
 	isSettingsOpen = false;
 
-	isLicenseKeyValid = false;
-
 	setIsSettingsOpen(value: boolean) {
 		this.isSettingsOpen = value;
 

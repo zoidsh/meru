@@ -22,6 +22,7 @@ import {
 	shell,
 } from "electron";
 import log from "electron-log";
+import { licenseKey } from "./license-key";
 
 export class AppMenu {
 	private _menu: Menu | undefined;
@@ -192,7 +193,7 @@ export class AppMenu {
 									},
 									{
 										label: "Allow from Google Apps",
-										enabled: appState.isLicenseKeyValid,
+										enabled: licenseKey.isValid,
 										type: "checkbox",
 										checked: config.get("notifications.allowFromGoogleApps"),
 										click({ checked }) {
@@ -251,7 +252,7 @@ export class AppMenu {
 							},
 							{
 								label: "Blocker",
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								submenu: [
 									{
 										label: "Enabled",
@@ -290,7 +291,7 @@ export class AppMenu {
 							},
 							{
 								label: "Phishing Protection",
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								submenu: [
 									{
 										label: "Confirm External Links before Opening",
@@ -352,7 +353,7 @@ export class AppMenu {
 							{
 								label: "Screen Share",
 								visible: platform.isMacOS,
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								submenu: [
 									{
 										label: "Use System Picker",
@@ -508,7 +509,7 @@ export class AppMenu {
 							},
 							{
 								label: "Set as Default Mail Client",
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								type: "checkbox",
 								checked: app.isDefaultProtocolClient("mailto"),
 								click: () => {
@@ -711,7 +712,7 @@ export class AppMenu {
 							{
 								label: "Reverse Conversation",
 								type: "checkbox",
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								checked: config.get("gmail.reverseConversation"),
 								click: ({ checked }: { checked: boolean }) => {
 									config.set("gmail.reverseConversation", checked);
@@ -724,7 +725,7 @@ export class AppMenu {
 							},
 							{
 								label: "Edit User Styles",
-								enabled: appState.isLicenseKeyValid,
+								enabled: licenseKey.isValid,
 								click: () => {
 									if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
 										fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));

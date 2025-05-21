@@ -1,6 +1,6 @@
 import { config } from "@/config";
-import { appState } from "@/state";
 import { clipboard, dialog, shell } from "electron";
+import { licenseKey } from "./license-key";
 
 export function getCleanUrl(url: string): string {
 	if (url.includes("google.com/url")) {
@@ -13,7 +13,7 @@ export function getCleanUrl(url: string): string {
 export async function openExternalUrl(url: string, trustedLink?: boolean) {
 	const cleanUrl = getCleanUrl(url);
 
-	if (appState.isLicenseKeyValid && config.get("externalLinks.confirm")) {
+	if (licenseKey.isValid && config.get("externalLinks.confirm")) {
 		const { origin } = new URL(cleanUrl);
 		const trustedHosts = config.get("externalLinks.trustedHosts");
 

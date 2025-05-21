@@ -8,6 +8,7 @@ import { appTray } from "@/tray";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { app } from "electron";
+import { licenseKey } from "./license-key";
 
 type AccountsEvents = {
 	"accounts-changed": (
@@ -26,7 +27,7 @@ class Accounts {
 	init() {
 		let accountConfigs = this.getAccountConfigs();
 
-		if (!appState.isLicenseKeyValid && accountConfigs.length > 1) {
+		if (!licenseKey.isValid && accountConfigs.length > 1) {
 			if (!accountConfigs[0]) {
 				throw new Error("Could not find first account");
 			}

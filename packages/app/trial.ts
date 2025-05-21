@@ -4,8 +4,8 @@ import { ofetch } from "ofetch";
 import { z } from "zod";
 import { config } from "./config";
 import { ipc } from "./ipc";
+import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 import { openExternalUrl } from "./url";
 
 const validateTrialSuccessSchema = z.object({
@@ -20,7 +20,7 @@ class Trial {
 	daysLeft = 0;
 
 	async validate() {
-		if (appState.isLicenseKeyValid || config.get("trial.expired")) {
+		if (licenseKey.isValid || config.get("trial.expired")) {
 			return;
 		}
 
@@ -73,7 +73,7 @@ class Trial {
 				return;
 			}
 
-			appState.isLicenseKeyValid = true;
+			licenseKey.isValid = true;
 
 			this.daysLeft = trial.daysLeft;
 
