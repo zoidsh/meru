@@ -20,7 +20,7 @@ export function AppMain() {
 			style={{ height: `calc(100vh - ${APP_TITLEBAR_HEIGHT}px)` }}
 		>
 			<div
-				className="max-w-md mx-auto space-y-10"
+				className="max-w-lg mx-auto space-y-10"
 				style={{
 					padding: `${APP_TITLEBAR_HEIGHT}px 0`,
 				}}

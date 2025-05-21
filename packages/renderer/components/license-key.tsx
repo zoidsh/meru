@@ -5,6 +5,13 @@ import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@meru/ui/components/card";
+import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -121,14 +128,17 @@ export function LicenseKey() {
 		if (trialDaysLeft) {
 			return (
 				<>
-					<div className="mb-2">
-						You're using a Meru Pro trial with {trialDaysLeft} day
-						{trialDaysLeft > 1 ? "s" : ""} left.
-					</div>
-					<div className="mb-4">
-						Purchase Meru Pro before your trial ends to keep using all features.
-					</div>
-					<div className="flex gap-4 justify-end">
+					<CardContent className="space-y-2">
+						<div>
+							You're using a Meru Pro trial with {trialDaysLeft} day
+							{trialDaysLeft > 1 ? "s" : ""} left.
+						</div>
+						<div>
+							Purchase Meru Pro before your trial ends to keep using all
+							features.
+						</div>
+					</CardContent>
+					<CardFooter className="gap-4 justify-end">
 						<ActivateLicenseKeyButton />
 						<Button asChild>
 							<a
@@ -139,7 +149,7 @@ export function LicenseKey() {
 								Purchase
 							</a>
 						</Button>
-					</div>
+					</CardFooter>
 				</>
 			);
 		}
@@ -147,11 +157,11 @@ export function LicenseKey() {
 		if (licenseKey) {
 			return (
 				<>
-					<div className="mb-4">
+					<CardContent>
 						You're using Meru Pro with professional features and for commercial
 						use. Thank you for supporting Meru!
-					</div>
-					<div className="flex gap-4 justify-end">
+					</CardContent>
+					<CardFooter className="gap-4 justify-end">
 						<ActivateLicenseKeyButton variant="change" />
 						<Button
 							variant="outline"
@@ -161,38 +171,38 @@ export function LicenseKey() {
 						>
 							Copy License Key
 						</Button>
-					</div>
+					</CardFooter>
 				</>
 			);
 		}
 
 		return (
 			<>
-				<div className="mb-2">
-					You're using the free version of Meru for personal use.
-				</div>
-				<div className="mb-4">
-					Unlock Meru Pro for professional features and commercial use. Your
-					upgrade supports ongoing development.
-				</div>
-				<div className="flex gap-4 justify-end">
+				<CardContent className="space-y-2">
+					<div>You're using the free version of Meru for personal use.</div>
+					<div>
+						Unlock Meru Pro for professional features and commercial use. Your
+						upgrade supports ongoing development.
+					</div>
+				</CardContent>
+				<CardFooter className="gap-4 justify-end">
 					<ActivateLicenseKeyButton />
 					<Button asChild>
 						<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
 							Purchase
 						</a>
 					</Button>
-				</div>
+				</CardFooter>
 			</>
 		);
 	};
 
 	return (
-		<div>
-			<div className="flex justify-between items-center mb-4">
-				<div className="text-3xl font-bold tracking-tight">License</div>
-			</div>
+		<Card>
+			<CardHeader>
+				<CardTitle>License</CardTitle>
+			</CardHeader>
 			{renderContent()}
-		</div>
+		</Card>
 	);
 }
