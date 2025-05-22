@@ -25,13 +25,16 @@ class Ipc {
 			}
 		});
 
-		accounts.on("accounts-changed", (accounts) => {
+		config.onDidChange("accounts", () => {
 			this.renderer.send(
 				main.window.webContents,
 				"accounts.changed",
-				accounts.map((account) => ({
+				accounts.getAccounts().map((account) => ({
 					config: account.config,
-					gmail: account.gmail.state,
+					gmail: {
+						...account.instance.gmail.store.getState(),
+						...account.instance.gmail.viewStore.getState(),
+					},
 				})),
 			);
 		});
@@ -62,15 +65,15 @@ class Ipc {
 		this.main.on("gmail.moveNavigationHistory", (_event, action) => {
 			accounts
 				.getSelectedAccount()
-				.gmail.view.webContents.navigationHistory[
+				.instance.gmail.view.webContents.navigationHistory[
 					action === "back" ? "goBack" : "goForward"
 				]();
 		});
 
 		this.main.on("gmail.setUnreadCount", (event, unreadCount) => {
-			for (const gmail of accounts.gmails.values()) {
-				if (event.sender.id === gmail.view.webContents.id) {
-					gmail.setUnreadCount(unreadCount);
+			for (const accountInstance of accounts.instances.values()) {
+				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
+					accountInstance.gmail.setUnreadCount(unreadCount);
 				}
 			}
 		});
@@ -101,12 +104,14 @@ class Ipc {
 			const selectedAccount = accounts.getSelectedAccount();
 
 			if (!text) {
-				selectedAccount.gmail.view.webContents.stopFindInPage("clearSelection");
+				selectedAccount.instance.gmail.view.webContents.stopFindInPage(
+					"clearSelection",
+				);
 
 				return;
 			}
 
-			selectedAccount.gmail.view.webContents.findInPage(text, {
+			selectedAccount.instance.gmail.view.webContents.findInPage(text, {
 				forward: options?.forward,
 				findNext: options?.findNext,
 			});
@@ -119,8 +124,8 @@ class Ipc {
 				}
 
 				for (const mail of mails) {
-					for (const [accountId, gmail] of accounts.gmails) {
-						if (gmail.view.webContents.id === event.sender.id) {
+					for (const [accountId, instance] of accounts.instances) {
+						if (instance.gmail.view.webContents.id === event.sender.id) {
 							const account = accounts.getAccount(accountId);
 
 							if (!account.config.notifications) {

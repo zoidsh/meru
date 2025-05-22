@@ -19,7 +19,6 @@ export interface GmailMail {
 }
 
 export type GmailState = {
-	title: string;
 	navigationHistory: {
 		canGoBack: boolean;
 		canGoForward: boolean;

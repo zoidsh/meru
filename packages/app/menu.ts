@@ -590,7 +590,7 @@ export class AppMenu {
 						accelerator: "Command+,",
 						click: () => {
 							ipc.renderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
+								accounts.getSelectedAccount().instance.gmail.view.webContents,
 								"gmail.navigateTo",
 								"settings",
 							);
@@ -618,7 +618,7 @@ export class AppMenu {
 						label: "Compose",
 						click: () => {
 							ipc.renderer.send(
-								accounts.getSelectedAccount().gmail.view.webContents,
+								accounts.getSelectedAccount().instance.gmail.view.webContents,
 								"gmail.navigateTo",
 								"compose",
 							);
@@ -745,8 +745,8 @@ export class AppMenu {
 						click: () => {
 							const zoomFactor = 1;
 
-							for (const [_accountId, gmail] of accounts.gmails) {
-								gmail.view.webContents.setZoomFactor(zoomFactor);
+							for (const [_accountId, instance] of accounts.instances) {
+								instance.gmail.view.webContents.setZoomFactor(zoomFactor);
 							}
 
 							config.set("gmail.zoomFactor", zoomFactor);
@@ -758,8 +758,8 @@ export class AppMenu {
 						click: () => {
 							const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
 
-							for (const [_accountId, gmail] of accounts.gmails) {
-								gmail.view.webContents.setZoomFactor(zoomFactor);
+							for (const [_accountId, instance] of accounts.instances) {
+								instance.gmail.view.webContents.setZoomFactor(zoomFactor);
 							}
 
 							config.set("gmail.zoomFactor", zoomFactor);
@@ -772,8 +772,8 @@ export class AppMenu {
 							const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
 
 							if (zoomFactor > 0) {
-								for (const [_accountId, gmail] of accounts.gmails) {
-									gmail.view.webContents.setZoomFactor(zoomFactor);
+								for (const [_accountId, instance] of accounts.instances) {
+									instance.gmail.view.webContents.setZoomFactor(zoomFactor);
 								}
 
 								config.set("gmail.zoomFactor", zoomFactor);
@@ -787,7 +787,9 @@ export class AppMenu {
 						label: "Reload",
 						accelerator: "CommandOrControl+R",
 						click: () => {
-							accounts.getSelectedAccount().gmail.view.webContents.reload();
+							accounts
+								.getSelectedAccount()
+								.instance.gmail.view.webContents.reload();
 
 							main.show();
 						},
@@ -801,7 +803,7 @@ export class AppMenu {
 							main.loadURL();
 
 							for (const account of accounts.getAccounts()) {
-								account.gmail.view.webContents.reload();
+								account.instance.gmail.view.webContents.reload();
 							}
 						},
 					},
@@ -816,7 +818,7 @@ export class AppMenu {
 
 							accounts
 								.getSelectedAccount()
-								.gmail.view.webContents.openDevTools();
+								.instance.gmail.view.webContents.openDevTools();
 
 							main.show();
 						},

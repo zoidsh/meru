@@ -5,7 +5,19 @@ import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { licenseKey } from "./license-key";
 
 export class Blocker {
-	private engine: FiltersEngine | undefined;
+	private _engine: FiltersEngine | undefined;
+
+	get engine() {
+		if (!this._engine) {
+			throw new Error("Blocker engine is not initialized");
+		}
+
+		return this._engine;
+	}
+
+	set engine(engine: FiltersEngine) {
+		this._engine = engine;
+	}
 
 	async init() {
 		if (!licenseKey.isValid || !config.get("blocker.enabled")) {
@@ -43,10 +55,6 @@ export class Blocker {
 		details: Electron.OnBeforeRequestListenerDetails,
 		callback: (response: Electron.CallbackResponse) => void,
 	) => {
-		if (!this.engine) {
-			return;
-		}
-
 		const { id, url, resourceType, referrer } = details;
 
 		const { redirect, match } = this.engine.match(
@@ -75,14 +83,12 @@ export class Blocker {
 	};
 
 	setupSession(session: Electron.Session) {
-		if (!this.engine) {
-			return;
+		if (this._engine) {
+			session.webRequest.onBeforeRequest(
+				{ urls: ["<all_urls>"] },
+				this.onBeforeRequest,
+			);
 		}
-
-		session.webRequest.onBeforeRequest(
-			{ urls: ["<all_urls>"] },
-			this.onBeforeRequest,
-		);
 	}
 }
 

@@ -1,31 +1,16 @@
 import { randomUUID } from "node:crypto";
-import EventEmitter from "node:events";
-import { config } from "@/config";
-import { Gmail } from "@/gmail";
-import { main } from "@/main";
-import { appState } from "@/state";
-import { appTray } from "@/tray";
-import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { app } from "electron";
+import { Account } from "./account";
+import { config } from "./config";
 import { licenseKey } from "./license-key";
-
-type AccountsEvents = {
-	"accounts-changed": (
-		accounts: {
-			config: AccountConfig;
-			gmail: Gmail;
-		}[],
-	) => void;
-};
+import { main } from "./main";
+import { appState } from "./state";
 
 class Accounts {
-	private emitter = new EventEmitter();
-
-	gmails: Map<string, Gmail> = new Map();
+	instances: Map<string, Account> = new Map();
 
 	init() {
-		let accountConfigs = this.getAccountConfigs();
+		let accountConfigs = config.get("accounts");
 
 		if (!licenseKey.isValid && accountConfigs.length > 1) {
 			if (!accountConfigs[0]) {
@@ -40,58 +25,20 @@ class Accounts {
 		}
 
 		for (const accountConfig of accountConfigs) {
-			const gmail = new Gmail(accountConfig);
+			const account = new Account(accountConfig);
 
-			this.setGmailStateListener(gmail);
-
-			this.gmails.set(accountConfig.id, gmail);
-
-			gmail.view.webContents.once("did-finish-load", () => {
-				gmail.view.setVisible(accountConfig.selected);
-			});
+			this.instances.set(accountConfig.id, account);
 		}
 
-		main.window.contentView.addChildView(this.getSelectedAccount().gmail.view);
-
-		config.onDidChange("accounts", () => {
-			this.emit("accounts-changed", this.getAccounts());
-		});
+		main.window.contentView.addChildView(
+			this.getSelectedAccount().instance.gmail.view,
+		);
 	}
 
 	getAccountConfigs() {
 		const accountConfigs = config.get("accounts");
 
 		return accountConfigs;
-	}
-
-	setGmailStateListener(gmail: Gmail) {
-		const dockUnreadBadge = config.get("dock.unreadBadge");
-
-		gmail.on("state-changed", () => {
-			const totalUnreadCount = this.getTotalUnreadCount();
-
-			if (platform.isMacOS && app.dock && dockUnreadBadge) {
-				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
-			}
-
-			if (platform.isLinux && dockUnreadBadge) {
-				app.badgeCount = totalUnreadCount;
-			}
-
-			appTray.updateUnreadStatus(totalUnreadCount);
-
-			this.emit("accounts-changed", this.getAccounts());
-		});
-	}
-
-	getTotalUnreadCount() {
-		return Array.from(this.gmails.values()).reduce(
-			(totalUnreadCount, account) =>
-				typeof account.state.unreadCount === "number"
-					? totalUnreadCount + account.state.unreadCount
-					: totalUnreadCount,
-			0,
-		);
 	}
 
 	getAccount(accountId: string) {
@@ -103,24 +50,30 @@ class Accounts {
 			throw new Error("Could not find account config");
 		}
 
-		const gmail = this.gmails.get(accountId);
+		const instance = this.instances.get(accountId);
 
-		if (!gmail) {
+		if (!instance) {
 			throw new Error("Could not find account instance");
 		}
 
-		return { config: accountConfig, gmail };
+		return {
+			config: accountConfig,
+			instance,
+		};
 	}
 
 	getAccounts() {
 		return this.getAccountConfigs().map((accountConfig) => {
-			const gmail = this.gmails.get(accountConfig.id);
+			const instance = this.instances.get(accountConfig.id);
 
-			if (!gmail) {
+			if (!instance) {
 				throw new Error("Could not find account instance");
 			}
 
-			return { config: accountConfig, gmail };
+			return {
+				config: accountConfig,
+				instance,
+			};
 		});
 	}
 
@@ -153,11 +106,10 @@ class Accounts {
 			}),
 		);
 
-		for (const [accountId, account] of this.gmails) {
-			account.view.setVisible(accountId === selectedAccountId);
-
+		for (const [accountId, account] of this.instances) {
 			if (accountId === selectedAccountId) {
-				account.view.webContents.focus();
+				main.window.contentView.addChildView(account.gmail.view);
+				account.gmail.view.webContents.focus();
 			}
 		}
 	}
@@ -212,19 +164,15 @@ class Accounts {
 			...accountDetails,
 		};
 
-		const gmail = new Gmail(createdAccount);
+		const instance = new Account(createdAccount);
 
-		this.setGmailStateListener(gmail);
-
-		this.gmails.set(createdAccount.id, gmail);
+		this.instances.set(createdAccount.id, instance);
 
 		config.set("accounts", [...this.getAccountConfigs(), createdAccount]);
 
-		for (const account of this.gmails.values()) {
-			account.updateViewBounds();
-		}
-
 		this.selectAccount(createdAccount.id);
+
+		this.show();
 
 		appState.setIsSettingsOpen(false);
 	}
@@ -232,9 +180,9 @@ class Accounts {
 	removeAccount(selectedAccountId: string) {
 		const account = this.getAccount(selectedAccountId);
 
-		account.gmail.destroy();
+		account.instance.gmail.destroy();
 
-		this.gmails.delete(selectedAccountId);
+		this.instances.delete(selectedAccountId);
 
 		const updatedAccounts = this.getAccountConfigs().filter(
 			(account) => account.id !== selectedAccountId,
@@ -250,8 +198,8 @@ class Accounts {
 
 		config.set("accounts", updatedAccounts);
 
-		for (const account of this.gmails.values()) {
-			account.updateViewBounds();
+		for (const account of this.instances.values()) {
+			account.gmail.updateViewBounds();
 		}
 	}
 
@@ -296,34 +244,28 @@ class Accounts {
 	}
 
 	hide() {
-		for (const account of this.gmails.values()) {
-			account.view.setVisible(false);
+		for (const account of this.instances.values()) {
+			account.gmail.view.setVisible(false);
 		}
 	}
 
 	show() {
-		const selectedAccount = this.getSelectedAccount();
-
-		this.selectAccount(selectedAccount.config.id);
+		for (const account of this.instances.values()) {
+			account.gmail.view.setVisible(true);
+		}
 	}
 
-	on<K extends keyof AccountsEvents>(event: K, listener: AccountsEvents[K]) {
-		this.emitter.on(event, listener);
+	getTotalUnreadCount() {
+		return Array.from(accounts.instances.values()).reduce(
+			(totalUnreadCount, instance) => {
+				const unreadCount = instance.gmail.store.getState().unreadCount;
 
-		return () => {
-			this.off(event, listener);
-		};
-	}
-
-	off<K extends keyof AccountsEvents>(event: K, listener: AccountsEvents[K]) {
-		return this.emitter.off(event, listener);
-	}
-
-	emit<K extends keyof AccountsEvents>(
-		event: K,
-		...args: Parameters<AccountsEvents[K]>
-	) {
-		return this.emitter.emit(event, ...args);
+				return typeof unreadCount === "number"
+					? totalUnreadCount + unreadCount
+					: totalUnreadCount;
+			},
+			0,
+		);
 	}
 }
 
