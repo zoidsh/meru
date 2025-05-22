@@ -155,7 +155,7 @@ function AddAccountButton() {
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<div>
-						<Button disabled>Add Account</Button>
+						<Button disabled>Add</Button>
 					</div>
 				</TooltipTrigger>
 				<TooltipContent>
@@ -168,7 +168,7 @@ function AddAccountButton() {
 	return (
 		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 			<DialogTrigger asChild>
-				<Button>Add Account</Button>
+				<Button>Add</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>

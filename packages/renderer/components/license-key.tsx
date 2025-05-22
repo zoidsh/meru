@@ -30,6 +30,7 @@ import {
 import { Input } from "@meru/ui/components/input";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 export const licenseKeySchema = z.object({
@@ -86,7 +87,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
 				<Button variant="outline">
-					{variant === "change" ? "Change" : "Activate"} License Key
+					{variant === "change" ? "Change License Key" : "Activate"}
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
@@ -125,6 +126,30 @@ export function LicenseKey() {
 	}, []);
 
 	const renderContent = () => {
+		if (licenseKey) {
+			return (
+				<>
+					<CardContent>
+						You're using Meru Pro with professional features and for commercial
+						use. Thank you for supporting Meru!
+					</CardContent>
+					<CardFooter className="gap-4 justify-end">
+						<ActivateLicenseKeyButton variant="change" />
+						<Button
+							variant="outline"
+							onClick={() => {
+								navigator.clipboard.writeText(licenseKey);
+
+								toast("Copied license key to clipboard");
+							}}
+						>
+							Copy License Key
+						</Button>
+					</CardFooter>
+				</>
+			);
+		}
+
 		if (trialDaysLeft) {
 			return (
 				<>
@@ -148,28 +173,6 @@ export function LicenseKey() {
 							>
 								Purchase
 							</a>
-						</Button>
-					</CardFooter>
-				</>
-			);
-		}
-
-		if (licenseKey) {
-			return (
-				<>
-					<CardContent>
-						You're using Meru Pro with professional features and for commercial
-						use. Thank you for supporting Meru!
-					</CardContent>
-					<CardFooter className="gap-4 justify-end">
-						<ActivateLicenseKeyButton variant="change" />
-						<Button
-							variant="outline"
-							onClick={() => {
-								navigator.clipboard.writeText(licenseKey);
-							}}
-						>
-							Copy License Key
 						</Button>
 					</CardFooter>
 				</>
