@@ -11,7 +11,6 @@ import {
 	ChevronUpIcon,
 	CircleAlertIcon,
 	EllipsisVerticalIcon,
-	RotateCwIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -208,16 +207,6 @@ export function AppTitlebar() {
 								}
 							>
 								<ArrowRightIcon />
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="size-7 draggable-none"
-								onClick={() => {
-									ipc.main.send("gmail.reload");
-								}}
-							>
-								<RotateCwIcon />
 							</Button>
 						</div>
 						<div className="flex-1 flex gap-2">

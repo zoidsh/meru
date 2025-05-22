@@ -67,10 +67,6 @@ class Ipc {
 				]();
 		});
 
-		this.main.on("gmail.reload", () => {
-			accounts.getSelectedAccount().gmail.view.webContents.reload();
-		});
-
 		this.main.on("gmail.setUnreadCount", (event, unreadCount) => {
 			for (const gmail of accounts.gmails.values()) {
 				if (event.sender.id === gmail.view.webContents.id) {

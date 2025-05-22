@@ -23,7 +23,6 @@ export type IpcMainEvents =
 			];
 			"settings.toggleIsOpen": [];
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
-			"gmail.reload": [];
 			"gmail.setUnreadCount": [unreadCount: number];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
 			"titleBar.toggleAppMenu": [];
