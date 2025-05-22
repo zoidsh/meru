@@ -170,11 +170,9 @@ class Accounts {
 
 		config.set("accounts", [...this.getAccountConfigs(), createdAccount]);
 
-		for (const account of this.instances.values()) {
-			account.gmail.updateViewBounds();
-		}
-
 		this.selectAccount(createdAccount.id);
+
+		this.show();
 
 		appState.setIsSettingsOpen(false);
 	}

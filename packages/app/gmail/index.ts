@@ -32,10 +32,8 @@ export class Gmail extends GoogleApp {
 	store = createStore(
 		subscribeWithSelector<{
 			unreadCount: number;
-			attentionRequired: boolean;
 		}>(() => ({
 			unreadCount: 0,
-			attentionRequired: false,
 		})),
 	);
 
@@ -52,7 +50,7 @@ export class Gmail extends GoogleApp {
 
 		this.unreadCountEnabled = unreadCountEnabled;
 
-		this.registerUnreadCountListener();
+		this.subscribeToStore();
 
 		this.setupCSSInjection();
 
@@ -67,7 +65,21 @@ export class Gmail extends GoogleApp {
 		this.store.setState({ unreadCount });
 	}
 
-	registerUnreadCountListener() {
+	subscribeToStore() {
+		this.viewStore.subscribe(() => {
+			ipc.renderer.send(
+				main.window.webContents,
+				"accounts.changed",
+				accounts.getAccounts().map((account) => ({
+					config: account.config,
+					gmail: {
+						...account.instance.gmail.store.getState(),
+						...account.instance.gmail.viewStore.getState(),
+					},
+				})),
+			);
+		});
+
 		if (!this.unreadCountEnabled) {
 			return;
 		}
