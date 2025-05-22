@@ -252,9 +252,9 @@ class Accounts {
 	}
 
 	show() {
-		const selectedAccount = this.getSelectedAccount();
-
-		this.selectAccount(selectedAccount.config.id);
+		for (const account of this.instances.values()) {
+			account.gmail.view.setVisible(true);
+		}
 	}
 
 	getTotalUnreadCount() {
