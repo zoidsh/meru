@@ -35,7 +35,7 @@ function Trial() {
 			className={cn(
 				"h-7 text-yellow-600/60 border-yellow-600/60 hover:border-transparent hover:bg-secondary hover:text-secondary-foreground transition draggable-none group relative",
 				{
-					"text-red-400/50 border-red-400/50": trialDaysLeft <= 3,
+					"text-red-600/60 border-red-600/60": trialDaysLeft <= 3,
 				},
 			)}
 		>
