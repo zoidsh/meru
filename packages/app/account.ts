@@ -1,39 +1,20 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { GOOGLE_ACCOUNTS_URL, GOOGLE_MEET_URL } from "@meru/shared/constants";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
 	BrowserWindow,
 	type IpcMainEvent,
 	type Session,
-	WebContentsView,
+	type WebContentsView,
 	ipcMain,
 	nativeTheme,
 	session,
 } from "electron";
-import { accounts } from "./accounts";
 import { blocker } from "./blocker";
 import { config } from "./config";
-import { setupWindowContextMenu } from "./context-menu";
 import { Gmail } from "./gmail";
-import { ipc } from "./ipc";
-import { licenseKey } from "./license-key";
-import { main } from "./main";
-import { appState } from "./state";
-import { openExternalUrl } from "./url";
-
-const WINDOW_OPEN_URL_WHITELIST = [
-	/googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
-];
-
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
-	/(calendar|docs|drive|meet|contacts)\.google\.com/;
-
-const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
-	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
-];
 
 export class Account {
 	session: Session;
@@ -52,11 +33,10 @@ export class Account {
 		blocker.setupSession(this.session);
 
 		this.gmail = new Gmail({
+			accountId: accountConfig.id,
 			session: this.session,
 			unreadCountEnabled: accountConfig.unreadBadge,
 		});
-
-		this.registerWindowOpenHandler(this.gmail.view);
 	}
 
 	private registerSessionPermissionsRequestsHandler() {
@@ -156,121 +136,5 @@ export class Account {
 			},
 			{ useSystemPicker: config.get("screenShare.useSystemPicker") },
 		);
-	}
-
-	private registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
-		window.webContents.setWindowOpenHandler(({ url, disposition }) => {
-			if (url === "about:blank") {
-				return {
-					action: "allow",
-					createWindow: (options) => {
-						let view: WebContentsView | null = new WebContentsView(options);
-
-						view.webContents.once("will-navigate", (_event, url) => {
-							openExternalUrl(url);
-
-							if (view) {
-								view.webContents.close();
-
-								view = null;
-							}
-						});
-
-						return view.webContents;
-					},
-				};
-			}
-
-			const isSupportedGoogleApp = SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url);
-
-			if (
-				(url.startsWith(GMAIL_URL) ||
-					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-					(isSupportedGoogleApp && licenseKey.isValid)) &&
-				disposition !== "background-tab"
-			) {
-				if (isSupportedGoogleApp && this.windows.size > 0) {
-					const urlHostname = new URL(url).hostname;
-
-					for (const window of this.windows) {
-						if (new URL(window.webContents.getURL()).hostname === urlHostname) {
-							window.webContents.loadURL(url);
-
-							window.webContents.focus();
-
-							return {
-								action: "deny",
-							};
-						}
-					}
-				}
-
-				return {
-					action: "allow",
-					createWindow: (options) => {
-						const window = new BrowserWindow({
-							...options,
-							autoHideMenuBar: true,
-							width: 1280,
-							height: 800,
-						});
-
-						this.registerWindowOpenHandler(window);
-
-						setupWindowContextMenu(window);
-
-						this.windows.add(window);
-
-						window.once("closed", () => {
-							this.windows.delete(window);
-						});
-
-						return window.webContents;
-					},
-				};
-			}
-
-			if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-				appState.setIsSettingsOpen(true);
-
-				accounts.hide();
-
-				ipc.renderer.send(
-					main.window.webContents,
-					"accounts.openAddAccountDialog",
-				);
-			} else if (
-				WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))
-			) {
-				window.webContents.downloadURL(url);
-			} else {
-				openExternalUrl(url);
-			}
-
-			return {
-				action: "deny",
-			};
-		});
-	}
-
-	createGmailComposeWindow(url: string) {
-		const window = new BrowserWindow({
-			autoHideMenuBar: true,
-			webPreferences: {
-				session: this.session,
-			},
-		});
-
-		setupWindowContextMenu(window);
-
-		this.registerWindowOpenHandler(window);
-
-		window.webContents.loadURL(
-			`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
-		);
-
-		window.once("ready-to-show", () => {
-			window.focus();
-		});
 	}
 }

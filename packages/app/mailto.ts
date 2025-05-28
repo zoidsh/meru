@@ -44,5 +44,5 @@ export async function handleMailto(url: string) {
 		throw new Error("Could not determine account id");
 	}
 
-	accounts.getAccount(accountId).instance.createGmailComposeWindow(url);
+	accounts.getAccount(accountId).instance.gmail.createComposeWindow(url);
 }

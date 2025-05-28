@@ -29,10 +29,24 @@ class Accounts {
 
 			this.instances.set(accountConfig.id, account);
 		}
+	}
 
-		main.window.contentView.addChildView(
-			this.getSelectedAccount().instance.gmail.view,
-		);
+	createViews() {
+		const accounts = this.getAccounts().sort((a, b) => {
+			if (a.config.selected && !b.config.selected) {
+				return 1;
+			}
+
+			if (!a.config.selected && b.config.selected) {
+				return -1;
+			}
+
+			return 0;
+		});
+
+		for (const account of accounts) {
+			account.instance.gmail.createView();
+		}
 	}
 
 	getAccountConfigs() {
@@ -165,6 +179,8 @@ class Accounts {
 		};
 
 		const instance = new Account(createdAccount);
+
+		instance.gmail.createView();
 
 		this.instances.set(createdAccount.id, instance);
 

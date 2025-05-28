@@ -61,11 +61,13 @@ import { trial } from "./trial";
 
 	theme.init();
 
-	main.init();
-
 	accounts.init();
 
+	main.init();
+
 	main.loadURL();
+
+	accounts.createViews();
 
 	ipc.init();
 

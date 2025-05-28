@@ -2,14 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { GoogleApp } from "@/google-app";
+import { setupWindowContextMenu } from "@/context-menu";
+import { GoogleApp, type GoogleAppOptions } from "@/google-app";
 import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appTray } from "@/tray";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import { GMAIL_URL } from "@meru/shared/gmail";
-import { type Session, app } from "electron";
+import { BrowserWindow, app } from "electron";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import gmailCSS from "./gmail.css";
@@ -38,23 +39,55 @@ export class Gmail extends GoogleApp {
 	);
 
 	constructor({
+		accountId,
 		session,
 		unreadCountEnabled,
-	}: { session: Session; unreadCountEnabled: boolean }) {
-		super(GMAIL_URL, {
-			webPreferences: {
-				preload: GMAIL_PRELOAD_PATH,
-				session,
+	}: { unreadCountEnabled: boolean } & Omit<GoogleAppOptions, "url">) {
+		const searchParams = new URLSearchParams();
+
+		if (config.get("gmail.hideGmailLogo")) {
+			searchParams.set("hideGmailLogo", "true");
+		}
+
+		if (config.get("gmail.hideInboxFooter")) {
+			searchParams.set("hideInboxFooter", "true");
+		}
+
+		if (config.get("gmail.reverseConversation") && licenseKey.isValid) {
+			searchParams.set("reverseConversation", "true");
+		}
+
+		super({
+			accountId,
+			url: `${GMAIL_URL}/?${searchParams}`,
+			session,
+			webContentsViewOptions: {
+				webPreferences: {
+					preload: GMAIL_PRELOAD_PATH,
+				},
+			},
+			hooks: {
+				beforeLoadUrl: [
+					(view) => {
+						view.webContents.on("dom-ready", () => {
+							if (view.webContents.getURL().startsWith(GMAIL_URL)) {
+								view.webContents.insertCSS(gmailCSS);
+
+								if (licenseKey.isValid && GMAIL_USER_STYLES) {
+									view.webContents.insertCSS(GMAIL_USER_STYLES);
+								}
+							}
+
+							view.webContents.insertCSS(meruCSS);
+						});
+					},
+				],
 			},
 		});
 
 		this.unreadCountEnabled = unreadCountEnabled;
 
 		this.subscribeToStore();
-
-		this.setupCSSInjection();
-
-		this.load();
 	}
 
 	setUnreadCount(unreadCount: number) {
@@ -118,39 +151,24 @@ export class Gmail extends GoogleApp {
 		);
 	}
 
-	private setupCSSInjection() {
-		this.view.webContents.on("dom-ready", () => {
-			if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
-				this.view.webContents.insertCSS(gmailCSS);
-
-				if (licenseKey.isValid && GMAIL_USER_STYLES) {
-					this.view.webContents.insertCSS(GMAIL_USER_STYLES);
-				}
-			}
-
-			this.view.webContents.insertCSS(meruCSS);
+	createComposeWindow(url: string) {
+		const window = new BrowserWindow({
+			autoHideMenuBar: true,
+			webPreferences: {
+				session: this.session,
+			},
 		});
-	}
 
-	private load() {
-		const searchParams = new URLSearchParams();
+		setupWindowContextMenu(window);
 
-		if (config.get("gmail.hideGmailLogo")) {
-			searchParams.set("hideGmailLogo", "true");
-		}
+		this.registerWindowOpenHandler(window);
 
-		if (config.get("gmail.hideInboxFooter")) {
-			searchParams.set("hideInboxFooter", "true");
-		}
+		window.webContents.loadURL(
+			`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
+		);
 
-		if (config.get("gmail.reverseConversation") && licenseKey.isValid) {
-			searchParams.set("reverseConversation", "true");
-		}
-
-		this.view.webContents.loadURL(`${GMAIL_URL}/?${searchParams}`);
-
-		if (is.dev) {
-			this.view.webContents.openDevTools({ mode: "bottom" });
-		}
+		window.once("ready-to-show", () => {
+			window.focus();
+		});
 	}
 }
