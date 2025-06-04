@@ -115,7 +115,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 	);
 }
 
-export function LicenseKey() {
+export function License() {
 	const [licenseKey, setLicenseKey] = useState<string | null>(null);
 	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
@@ -129,7 +129,7 @@ export function LicenseKey() {
 		if (licenseKey) {
 			return (
 				<>
-					<CardContent>
+					<CardContent className="text-sm">
 						You're using Meru Pro with professional features and for commercial
 						use. Thank you for supporting Meru!
 					</CardContent>
@@ -153,7 +153,7 @@ export function LicenseKey() {
 		if (trialDaysLeft) {
 			return (
 				<>
-					<CardContent className="space-y-2">
+					<CardContent className="space-y-2 text-sm">
 						<div>
 							You're using a Meru Pro trial with {trialDaysLeft} day
 							{trialDaysLeft > 1 ? "s" : ""} left.
@@ -181,7 +181,7 @@ export function LicenseKey() {
 
 		return (
 			<>
-				<CardContent className="space-y-2">
+				<CardContent className="space-y-2 text-sm">
 					<div>You're using the free version of Meru for personal use.</div>
 					<div>
 						Unlock Meru Pro for professional features and commercial use. Your

@@ -11,6 +11,14 @@ export type DesktopSources = DesktopSource[];
 
 export type SelectedDesktopSource = { id: string; name: string };
 
+export type DownloadItem = {
+	id: string;
+	createdAt: number;
+	fileName: string;
+	filePath: string;
+	exists: boolean;
+};
+
 export type IpcMainEvents =
 	| {
 			"accounts.selectAccount": [accountId: AccountConfig["id"]];
@@ -31,13 +39,23 @@ export type IpcMainEvents =
 				text: string | null,
 				options?: { forward?: boolean; findNext: boolean },
 			];
+			"downloads.removeHistoryItem": [itemId: string];
+			"downloads.clearHistory": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
 			"desktopSources.getSources": () => DesktopSources;
+			"downloads.getHistory": () => DownloadItem[];
+			"downloads.openFile": (filePath: string) => { error: string | null };
+			"downloads.showFileInFolder": (filePath: string) => {
+				error: string | null;
+			};
 	  };
 
 export type IpcRendererEvent = {
+	navigate: [to: string];
+	"downloads.historyChanged": [downloadHistory: DownloadItem[]];
+	"downloads.itemCompleted": [itemId: string];
 	"settings.setIsOpen": [isOpen: boolean];
 	"gmail.navigateTo": [
 		destination:

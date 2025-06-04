@@ -6,6 +6,7 @@ import { openExternalUrl } from "@/url";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { BrowserWindow, app, nativeTheme } from "electron";
+import { ipc } from "./ipc";
 import { trial } from "./trial";
 
 class Main {
@@ -200,6 +201,10 @@ class Main {
 			fullscreen: main.window.isFullScreen(),
 			maximized: main.window.isMaximized(),
 		});
+	}
+
+	navigate(to: string) {
+		ipc.renderer.send(main.window.webContents, "navigate", to);
 	}
 }
 

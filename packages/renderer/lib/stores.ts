@@ -7,6 +7,7 @@ import {
 	trialDaysLeftSearchParam,
 } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
+import type { DownloadItem } from "@meru/shared/types";
 import { toast } from "sonner";
 import { create } from "zustand";
 
@@ -110,4 +111,30 @@ export const useTrialStore = create<{
 
 ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
 	useTrialStore.setState({ daysLeft });
+});
+
+export const useDownloadsStore = create<{
+	history: DownloadItem[];
+	itemCompleted: string | null;
+}>(() => ({
+	history: [],
+	itemCompleted: null,
+}));
+
+ipc.main.invoke("downloads.getHistory").then((downloadHistory) => {
+	useDownloadsStore.setState(() => ({
+		history: downloadHistory,
+	}));
+});
+
+ipc.renderer.on("downloads.historyChanged", (_event, downloadHistory) => {
+	useDownloadsStore.setState(() => ({
+		history: downloadHistory,
+	}));
+});
+
+ipc.renderer.on("downloads.itemCompleted", (_event, itemId) => {
+	useDownloadsStore.setState(() => ({
+		itemCompleted: itemId,
+	}));
 });

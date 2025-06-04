@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
 import type { AccountConfigs } from "@meru/shared/schemas";
+import type { DownloadItem } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
 
@@ -21,6 +22,7 @@ export type Config = {
 	"downloads.saveAs": boolean;
 	"downloads.openFolderWhenDone": boolean;
 	"downloads.location": string;
+	"downloads.history": DownloadItem[];
 	"notifications.enabled": boolean;
 	"notifications.showSender": boolean;
 	"notifications.showSubject": boolean;
@@ -80,6 +82,7 @@ export const config = new Store<Config>({
 		"downloads.saveAs": false,
 		"downloads.openFolderWhenDone": false,
 		"downloads.location": app.getPath("downloads"),
+		"downloads.history": [],
 		"notifications.enabled": true,
 		"notifications.showSender": true,
 		"notifications.showSubject": true,

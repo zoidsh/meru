@@ -23,8 +23,10 @@ export function App() {
 
 	return (
 		<TooltipProvider>
-			<AppTitlebar />
-			<AppMain />
+			<div className="h-screen flex flex-col">
+				<AppTitlebar />
+				<AppMain />
+			</div>
 			<Toaster theme={theme} />
 		</TooltipProvider>
 	);

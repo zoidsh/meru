@@ -129,6 +129,8 @@ export class AppMenu {
 										click: () => {
 											appState.setIsSettingsOpen(true);
 
+											main.navigate("/accounts");
+
 											accounts.hide();
 
 											main.show();
@@ -578,6 +580,8 @@ export class AppMenu {
 								click: () => {
 									appState.setIsSettingsOpen(true);
 
+									main.navigate("/license");
+
 									accounts.hide();
 
 									main.show();
@@ -735,6 +739,22 @@ export class AppMenu {
 								},
 							},
 						],
+					},
+					{
+						type: "separator",
+					},
+					{
+						label: "Downloads",
+						accelerator: "CommandOrControl+Alt+L",
+						click: () => {
+							main.navigate("/download-history");
+
+							appState.setIsSettingsOpen(true);
+
+							accounts.hide();
+
+							main.show();
+						},
 					},
 					{
 						type: "separator",
@@ -907,6 +927,8 @@ export class AppMenu {
 						label: "Manage Accounts...",
 						click: () => {
 							appState.setIsSettingsOpen(true);
+
+							main.navigate("/accounts");
 
 							accounts.hide();
 

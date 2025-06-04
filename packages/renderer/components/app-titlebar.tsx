@@ -1,5 +1,6 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
+import type { DownloadItem } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
@@ -10,17 +11,102 @@ import {
 	ChevronDownIcon,
 	ChevronUpIcon,
 	CircleAlertIcon,
+	DownloadIcon,
 	EllipsisVerticalIcon,
+	FileCheckIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { useHashLocation } from "wouter/use-hash-location";
 import {
 	useAccountsStore,
+	useDownloadsStore,
 	useFindInPageStore,
 	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
+
+function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
+	const [fadeOut, setFadeOut] = useState(false);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+
+	useEffect(() => {
+		const handleAnimationEnd = () => {
+			if (useDownloadsStore.getState().itemCompleted === item.id) {
+				useDownloadsStore.setState({
+					itemCompleted: null,
+				});
+			}
+		};
+
+		const timer = setTimeout(() => {
+			buttonRef.current?.addEventListener("animationend", handleAnimationEnd);
+
+			setFadeOut(true);
+		}, 10000);
+
+		return () => {
+			clearTimeout(timer);
+
+			buttonRef.current?.removeEventListener(
+				"animationend",
+				handleAnimationEnd,
+			);
+		};
+	}, [item]);
+
+	return (
+		<Button
+			ref={buttonRef}
+			variant="ghost"
+			size="sm"
+			className={cn("text-xs h-7 max-w-56 animate-in fade-in", {
+				"animate-out fade-out": fadeOut,
+			})}
+			onClick={() => {
+				ipc.main.invoke("downloads.openFile", item.filePath);
+
+				useDownloadsStore.setState({
+					itemCompleted: null,
+				});
+			}}
+		>
+			<FileCheckIcon className="size-4" />
+			<div className="truncate">{item.fileName}</div>
+		</Button>
+	);
+}
+
+function Download() {
+	const [_location, navigate] = useHashLocation();
+
+	const completedDownloadItem = useDownloadsStore(
+		(state) =>
+			(state.itemCompleted &&
+				state.history.find((item) => item.id === state.itemCompleted)) ||
+			null,
+	);
+
+	return (
+		<div className="draggable-none flex items-center gap-1">
+			{completedDownloadItem && (
+				<RecentlyDownloadedItem item={completedDownloadItem} />
+			)}
+			<Button
+				variant="ghost"
+				size="icon"
+				className="size-7"
+				onClick={() => {
+					navigate("/download-history");
+					ipc.main.send("settings.toggleIsOpen");
+				}}
+			>
+				<DownloadIcon className="size-4" />
+			</Button>
+		</div>
+	);
+}
 
 function Trial() {
 	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
@@ -171,7 +257,7 @@ export function AppTitlebar() {
 		>
 			{isSettingsOpen && (
 				<div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
-					Settings
+					Meru
 				</div>
 			)}
 			<div
@@ -238,8 +324,9 @@ export function AppTitlebar() {
 									</Button>
 								))}
 						</div>
-						<FindInPage />
 						<Trial />
+						<FindInPage />
+						<Download />
 					</>
 				)}
 				{window.electron.process.platform !== "darwin" && (
