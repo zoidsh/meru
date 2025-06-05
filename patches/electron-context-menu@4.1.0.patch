@@ -1,0 +1,36 @@
+diff --git a/index.js b/index.js
+index 8ec2624b2ed049733788311aed0852432dbefb42..d3612be48cf19ee8a6cf2ad7f8ad2a3267137fdf 100644
+--- a/index.js
++++ b/index.js
+@@ -117,6 +117,23 @@ const create = (win, options) => {
+ 					}
+ 				},
+ 			}),
++			pasteAndMatchStyle: decorateMenuItem({
++				id: 'pasteAndMatchStyle',
++				label: '&Paste And Match Style',
++				enabled: editFlags.canPaste,
++				visible: properties.isEditable,
++				click(menuItem) {
++					const target = webContents(win);
++
++					if (menuItem.transform) {
++						let clipboardContent = electron.clipboard.readText(properties.selectionText);
++						clipboardContent = menuItem.transform ? menuItem.transform(clipboardContent) : clipboardContent;
++						target.insertText(clipboardContent);
++					} else {
++						target.pasteAndMatchStyle();
++					}
++				},
++			}),
+ 			selectAll: decorateMenuItem({
+ 				id: 'selectAll',
+ 				label: 'Select &All',
+@@ -277,6 +294,7 @@ const create = (win, options) => {
+ 			defaultActions.cut(),
+ 			defaultActions.copy(),
+ 			defaultActions.paste(),
++			defaultActions.pasteAndMatchStyle(),
+ 			shouldShowSelectAll && defaultActions.selectAll(),
+ 			defaultActions.separator(),
+ 			options.showSaveImage && defaultActions.saveImage(),
