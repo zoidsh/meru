@@ -19,6 +19,14 @@ export type DownloadItem = {
 	exists: boolean;
 };
 
+export type NotificationSound =
+	| "bell"
+	| "bubble"
+	| "long-pop"
+	| "magic-marimba"
+	| "magic-ring"
+	| "retro-game";
+
 export type IpcMainEvents =
 	| {
 			"accounts.selectAccount": [accountId: AccountConfig["id"]];
@@ -83,4 +91,5 @@ export type IpcRendererEvent = {
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 	"trial.daysLeftChanged": [daysLeft: number];
+	"notifications.playSound": [sound: NotificationSound];
 };

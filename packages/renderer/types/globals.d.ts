@@ -1,7 +1,4 @@
-import type { ElectronAPI } from "@electron-toolkit/preload";
-
-declare global {
-	interface Window {
-		electron: ElectronAPI;
-	}
+declare module "*.wav?inline" {
+	const content: string;
+	export default content;
 }

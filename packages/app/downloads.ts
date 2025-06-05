@@ -50,8 +50,12 @@ class Downloads {
 					id,
 				);
 
-				createNotification(`Download ${state}`, fileName, () => {
-					shell.openPath(filePath);
+				createNotification({
+					title: `Download ${state}`,
+					body: fileName,
+					click: () => {
+						shell.openPath(filePath);
+					},
 				});
 			});
 		};

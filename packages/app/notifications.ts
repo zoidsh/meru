@@ -1,24 +1,48 @@
-import { Notification } from "electron";
+import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
+import { ipc } from "./ipc";
+import { licenseKey } from "./license-key";
+import { main } from "./main";
 
-export function createNotification(
-	title: string,
-	body: string,
-	action?: () => void,
-): void {
+export function createNotification({
+	click,
+	action,
+	...options
+}: NotificationConstructorOptions & {
+	click?: () => void;
+	action?: (index: number) => void;
+}) {
 	if (!Notification.isSupported()) {
 		return;
 	}
 
+	const sound = config.get("notifications.sound");
+	const playSound = config.get("notifications.playSound");
+
 	const notification = new Notification({
-		body,
-		title,
-		silent: config.get("notifications.playSound"),
+		silent: licenseKey.isValid && sound === "system" ? !playSound : true,
+		...options,
 	});
 
+	if (click) {
+		notification.once("click", click);
+	}
+
 	if (action) {
-		notification.on("click", action);
+		notification.once("action", (_event, index) => {
+			action?.(index);
+		});
 	}
 
 	notification.show();
+
+	if (sound !== "system" && playSound) {
+		ipc.renderer.send(
+			main.window.webContents,
+			"notifications.playSound",
+			licenseKey.isValid ? sound : "bell",
+		);
+	}
+
+	return notification;
 }

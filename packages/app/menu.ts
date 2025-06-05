@@ -250,6 +250,36 @@ export class AppMenu {
 											config.set("notifications.playSound", checked);
 										},
 									},
+									{
+										label: "Sound",
+										enabled: licenseKey.isValid,
+										submenu: (
+											[
+												{ value: "bell", label: "Bell" },
+												{ value: "bubble", label: "Bubble" },
+												{ value: "long-pop", label: "Long Pop" },
+												{ value: "magic-marimba", label: "Magic Marimba" },
+												{ value: "magic-ring", label: "Magic Ring" },
+												{ value: "retro-game", label: "Retro Game" },
+												{ value: "system", label: "System" },
+											] as const
+										).map(({ value, label }) => ({
+											label,
+											type: "radio" as const,
+											checked: config.get("notifications.sound") === value,
+											click: () => {
+												config.set("notifications.sound", value);
+
+												if (value !== "system") {
+													ipc.renderer.send(
+														main.window.webContents,
+														"notifications.playSound",
+														value,
+													);
+												}
+											},
+										})),
+									},
 								],
 							},
 							{

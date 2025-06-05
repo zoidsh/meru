@@ -8,6 +8,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { Notification, desktopCapturer } from "electron";
+import { createNotification } from "./notifications";
 
 class Ipc {
 	main = new IpcListener<IpcMainEvents>();
@@ -149,13 +150,12 @@ class Ipc {
 								body = mail.subject;
 							}
 
-							const notification = new Notification({
+							createNotification({
 								title: config.get("notifications.showSender")
 									? mail.sender.name
 									: account.config.label,
 								subtitle,
 								body,
-								silent: !config.get("notifications.playSound"),
 								actions: [
 									{
 										text: "Archive",
@@ -174,66 +174,62 @@ class Ipc {
 										type: "button",
 									},
 								],
+								click: () => {
+									main.show();
+
+									accounts.selectAccount(accountId);
+
+									this.renderer.send(
+										event.sender,
+										"gmail.openMessage",
+										mail.messageId,
+									);
+								},
+								action: (index) => {
+									switch (index) {
+										case 0: {
+											this.renderer.send(
+												event.sender,
+												"gmail.handleMessage",
+												mail.messageId,
+												"archive",
+											);
+
+											break;
+										}
+										case 1: {
+											this.renderer.send(
+												event.sender,
+												"gmail.handleMessage",
+												mail.messageId,
+												"markAsRead",
+											);
+
+											break;
+										}
+										case 2: {
+											this.renderer.send(
+												event.sender,
+												"gmail.handleMessage",
+												mail.messageId,
+												"delete",
+											);
+
+											break;
+										}
+										case 3: {
+											this.renderer.send(
+												event.sender,
+												"gmail.handleMessage",
+												mail.messageId,
+												"markAsSpam",
+											);
+
+											break;
+										}
+									}
+								},
 							});
-
-							notification.on("action", (_event, index) => {
-								switch (index) {
-									case 0: {
-										this.renderer.send(
-											event.sender,
-											"gmail.handleMessage",
-											mail.messageId,
-											"archive",
-										);
-
-										break;
-									}
-									case 1: {
-										this.renderer.send(
-											event.sender,
-											"gmail.handleMessage",
-											mail.messageId,
-											"markAsRead",
-										);
-
-										break;
-									}
-									case 2: {
-										this.renderer.send(
-											event.sender,
-											"gmail.handleMessage",
-											mail.messageId,
-											"delete",
-										);
-
-										break;
-									}
-									case 3: {
-										this.renderer.send(
-											event.sender,
-											"gmail.handleMessage",
-											mail.messageId,
-											"markAsSpam",
-										);
-
-										break;
-									}
-								}
-							});
-
-							notification.on("click", () => {
-								main.show();
-
-								accounts.selectAccount(accountId);
-
-								this.renderer.send(
-									event.sender,
-									"gmail.openMessage",
-									mail.messageId,
-								);
-							});
-
-							notification.show();
 
 							break;
 						}

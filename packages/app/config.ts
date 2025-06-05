@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
 import type { AccountConfigs } from "@meru/shared/schemas";
-import type { DownloadItem } from "@meru/shared/types";
+import type { DownloadItem, NotificationSound } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
 
@@ -29,6 +29,7 @@ export type Config = {
 	"notifications.showSummary": boolean;
 	"notifications.playSound": boolean;
 	"notifications.allowFromGoogleApps": boolean;
+	"notifications.sound": "system" | NotificationSound;
 	"updates.autoCheck": boolean;
 	"blocker.enabled": boolean;
 	"blocker.ads": boolean;
@@ -89,6 +90,7 @@ export const config = new Store<Config>({
 		"notifications.showSummary": true,
 		"notifications.playSound": true,
 		"notifications.allowFromGoogleApps": false,
+		"notifications.sound": "bell",
 		"updates.autoCheck": true,
 		"blocker.enabled": true,
 		"blocker.ads": true,
