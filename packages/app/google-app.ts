@@ -1,4 +1,4 @@
-import { is } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import {
 	APP_TITLEBAR_HEIGHT,
 	GOOGLE_ACCOUNTS_URL,
@@ -203,7 +203,8 @@ export class GoogleApp {
 	}
 
 	updateViewBounds() {
-		const { width, height } = main.window.getContentBounds();
+		const { width, height } =
+			main.window[platform.isWindows ? "getContentBounds" : "getBounds"]();
 
 		this.view.setBounds({
 			x: 0,
