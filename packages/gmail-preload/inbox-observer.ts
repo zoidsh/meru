@@ -80,6 +80,13 @@ function parseNewMails(feedDocument: Document) {
 		if (currentDate - issuedDate < 60000) {
 			previousNewMails.add(messageId);
 
+			setTimeout(
+				() => {
+					previousNewMails.delete(messageId);
+				},
+				1000 * 60 * 5,
+			);
+
 			const newMail = {
 				messageId,
 				link,
