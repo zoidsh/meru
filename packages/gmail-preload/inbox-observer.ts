@@ -1,5 +1,5 @@
 import { GMAIL_URL } from "@meru/shared/gmail";
-import type { GmailMail } from "@meru/shared/gmail";
+import type { GmailMessage } from "@meru/shared/gmail";
 import { GMAIL_ACTION_CODE_MAP } from "@meru/shared/gmail";
 import elementReady from "element-ready";
 import { $, $$ } from "select-dom";
@@ -29,8 +29,8 @@ let inboxAnchorContainerElementObserver: MutationObserver;
 let feedVersion = 0;
 let previousModifiedFeedDate = 0;
 let currentModifiedFeedDate = 0;
-let isInitialNewMailsFetch = true;
-const previousNewMails = new Set<string>();
+let initialized = false;
+const previousNewMessages = new Set<string>();
 
 function getTextContentFromNode(node: Document | Element, selector: string) {
 	return node.querySelector(selector)?.textContent?.trim() ?? "";
@@ -53,8 +53,8 @@ async function fetchGmail(
 	return fetch(`${GMAIL_URL}${path}`, fetchOptions);
 }
 
-function parseNewMails(feedDocument: Document) {
-	const newMails: GmailMail[] = [];
+function parseFeed(feedDocument: Document) {
+	const newMessages: GmailMessage[] = [];
 	const mails = $$("entry", feedDocument);
 	const currentDate = Date.now();
 
@@ -71,24 +71,24 @@ function parseNewMails(feedDocument: Document) {
 			throw new Error("Message ID not found");
 		}
 
-		if (previousNewMails.has(messageId)) {
+		if (previousNewMessages.has(messageId)) {
 			continue;
 		}
 
 		const issuedDate = getDateFromNode(mail, "issued");
 
 		if (currentDate - issuedDate < 60000) {
-			previousNewMails.add(messageId);
+			previousNewMessages.add(messageId);
 
 			setTimeout(
 				() => {
-					previousNewMails.delete(messageId);
+					previousNewMessages.delete(messageId);
 				},
 				1000 * 60 * 5,
 			);
 
-			const newMail = {
-				messageId,
+			newMessages.push({
+				id: messageId,
 				link,
 				subject: getTextContentFromNode(mail, "title"),
 				summary: getTextContentFromNode(mail, "summary"),
@@ -96,13 +96,11 @@ function parseNewMails(feedDocument: Document) {
 					name: getTextContentFromNode(mail, "name"),
 					email: getTextContentFromNode(mail, "email"),
 				},
-			};
-
-			newMails.push(newMail);
+			});
 		}
 	}
 
-	return newMails;
+	return newMessages;
 }
 
 async function fetchInbox() {
@@ -127,16 +125,16 @@ async function fetchInbox() {
 		return;
 	}
 
-	const newMails = parseNewMails(feedDocument);
-
-	if (isInitialNewMailsFetch) {
-		isInitialNewMailsFetch = false;
+	if (!initialized) {
+		initialized = true;
 
 		return;
 	}
 
-	if (newMails.length > 0) {
-		ipcMain.send("gmail.handleNewMessages", newMails);
+	const newMessages = parseFeed(feedDocument);
+
+	if (newMessages.length > 0) {
+		ipcMain.send("gmail.notifyNewMessages", newMessages);
 	}
 }
 

@@ -1,4 +1,4 @@
-import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
+import type { GMAIL_ACTION_CODE_MAP, GmailMessage } from "./gmail";
 import type {
 	AccountConfig,
 	AccountConfigInput,
@@ -37,10 +37,12 @@ export type IpcMainEvents =
 				accountId: AccountConfig["id"],
 				direction: "up" | "down",
 			];
-			"settings.toggleIsOpen": [];
+			"accounts.show": [];
+			"accounts.hide": [];
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
 			"gmail.setUnreadCount": [unreadCount: number];
-			"gmail.handleNewMessages": [mails: GmailMail[]];
+			"gmail.updateFeed": [messages: GmailMessage[]];
+			"gmail.notifyNewMessages": [messages: GmailMessage[]];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [

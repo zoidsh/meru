@@ -14,6 +14,7 @@ import {
 	DownloadIcon,
 	EllipsisVerticalIcon,
 	FileCheckIcon,
+	HouseIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -23,7 +24,6 @@ import {
 	useAccountsStore,
 	useDownloadsStore,
 	useFindInPageStore,
-	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
 
@@ -78,7 +78,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 	);
 }
 
-function Download() {
+function DownloadHistoryButton() {
 	const [_location, navigate] = useHashLocation();
 
 	const completedDownloadItem = useDownloadsStore(
@@ -99,7 +99,7 @@ function Download() {
 				className="size-7"
 				onClick={() => {
 					navigate("/download-history");
-					ipc.main.send("settings.toggleIsOpen");
+					ipc.main.send("accounts.hide");
 				}}
 			>
 				<DownloadIcon className="size-4" />
@@ -238,13 +238,34 @@ function FindInPage() {
 	);
 }
 
+export function HomeButton() {
+	const [_location, navigate] = useHashLocation();
+
+	return (
+		<Button
+			variant="ghost"
+			size="icon"
+			className="size-7 draggable-none"
+			onClick={() => {
+				navigate("/home");
+
+				ipc.main.send("accounts.hide");
+			}}
+		>
+			<HouseIcon />
+		</Button>
+	);
+}
+
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
 	const unreadBadge = useAccountsStore((state) => state.unreadBadge);
 
 	const selectedAccount = accounts.find((account) => account.config.selected);
 
-	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+	const [location] = useHashLocation();
+
+	const showTitleOnly = location !== "/";
 
 	if (!accounts) {
 		return;
@@ -255,7 +276,7 @@ export function AppTitlebar() {
 			className="relative bg-background border-b draggable select-none"
 			style={{ height: APP_TITLEBAR_HEIGHT }}
 		>
-			{isSettingsOpen && (
+			{showTitleOnly && (
 				<div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
 					Meru
 				</div>
@@ -267,7 +288,7 @@ export function AppTitlebar() {
 					width: "env(titlebar-area-width, 100%)",
 				}}
 			>
-				{!isSettingsOpen && (
+				{!showTitleOnly && (
 					<>
 						<div className="flex items-center gap-1">
 							<Button
@@ -294,6 +315,7 @@ export function AppTitlebar() {
 							>
 								<ArrowRightIcon />
 							</Button>
+							<HomeButton />
 						</div>
 						<div className="flex-1 flex gap-2">
 							{accounts.length > 1 &&
@@ -326,7 +348,7 @@ export function AppTitlebar() {
 						</div>
 						<Trial />
 						<FindInPage />
-						<Download />
+						<DownloadHistoryButton />
 					</>
 				)}
 				{window.electron.process.platform !== "darwin" && (
