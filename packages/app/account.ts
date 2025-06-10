@@ -12,6 +12,7 @@ import {
 	session,
 	type WebContentsView,
 } from "electron";
+import { accounts } from "./accounts";
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
@@ -23,7 +24,23 @@ export class Account {
 
 	windows: Set<BrowserWindow | WebContentsView> = new Set();
 
+	accountId: string;
+
+	get config() {
+		const config = accounts
+			.getAccountConfigs()
+			.find((config) => config.id === this.accountId);
+
+		if (!config) {
+			throw new Error("Could not find account config");
+		}
+
+		return config;
+	}
+
 	constructor(accountConfig: AccountConfig) {
+		this.accountId = accountConfig.id;
+
 		this.session = session.fromPartition(`persist:${accountConfig.id}`);
 
 		this.registerSessionPermissionsRequestsHandler();

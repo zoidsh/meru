@@ -76,6 +76,7 @@ export const config = new Store<Config>({
 				selected: true,
 				unreadBadge: true,
 				notifications: true,
+				unifiedInbox: true,
 			},
 		],
 		"accounts.unreadBadge": true,
@@ -167,6 +168,24 @@ export const config = new Store<Config>({
 
 				// @ts-expect-error
 				store.delete("lastWindowState");
+			}
+		},
+		">=3.10.0": (store) => {
+			const accounts = store.get("accounts");
+
+			if (Array.isArray(accounts)) {
+				let accountsMigrated = false;
+
+				for (const account of accounts) {
+					if (typeof account.unifiedInbox === "undefined") {
+						account.unifiedInbox = true;
+						accountsMigrated = true;
+					}
+				}
+
+				if (accountsMigrated) {
+					store.set("accounts", accounts);
+				}
 			}
 		},
 	},

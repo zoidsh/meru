@@ -18,7 +18,6 @@ import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 import { openExternalUrl } from "./url";
 
 const WINDOW_OPEN_URL_WHITELIST = [
@@ -161,13 +160,19 @@ export class GoogleApp {
 					});
 				}
 
+				const attentionRequired = !url.startsWith(this.baseUrl);
+
+				if (attentionRequired) {
+					accounts.selectAccount(this.accountId);
+				}
+
 				this.viewStore.setState({
 					navigationHistory: {
 						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
 						canGoForward:
 							this.view.webContents.navigationHistory.canGoForward(),
 					},
-					attentionRequired: !url.startsWith(this.baseUrl),
+					attentionRequired,
 				});
 			},
 		);
@@ -186,6 +191,10 @@ export class GoogleApp {
 		);
 
 		this.view.webContents.on("will-redirect", (event, url) => {
+			if (new URL(url).searchParams.has("meruSelectAccount")) {
+				accounts.selectAccount(this.accountId);
+			}
+
 			if (url.startsWith("https://www.google.com")) {
 				event.preventDefault();
 
@@ -310,8 +319,6 @@ export class GoogleApp {
 			}
 
 			if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-				appState.setIsSettingsOpen(true);
-
 				accounts.hide();
 
 				ipc.renderer.send(
