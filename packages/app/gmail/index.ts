@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import { GMAIL_URL, type GmailMessage } from "@meru/shared/gmail";
 import { app, BrowserWindow } from "electron";
-import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -30,13 +29,13 @@ const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload", "index.js");
 export class Gmail extends GoogleApp {
 	unreadCountEnabled = true;
 
-	store = createStore(
-		subscribeWithSelector<{
-			unreadCount: number;
-		}>(() => ({
-			unreadCount: 0,
-		})),
-	);
+	store = createStore<{
+		unreadCount: number;
+		feed: GmailMessage[];
+	}>(() => ({
+		unreadCount: 0,
+		feed: [],
+	}));
 
 	constructor({
 		accountId,
@@ -119,36 +118,31 @@ export class Gmail extends GoogleApp {
 
 		const dockUnreadBadge = config.get("dock.unreadBadge");
 
-		this.store.subscribe(
-			(state) => state.unreadCount,
-			() => {
-				const totalUnreadCount = accounts.getTotalUnreadCount();
+		this.store.subscribe(() => {
+			const totalUnreadCount = accounts.getTotalUnreadCount();
 
-				if (platform.isMacOS && app.dock && dockUnreadBadge) {
-					app.dock.setBadge(
-						totalUnreadCount ? totalUnreadCount.toString() : "",
-					);
-				}
+			if (platform.isMacOS && app.dock && dockUnreadBadge) {
+				app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
+			}
 
-				if (platform.isLinux && dockUnreadBadge) {
-					app.badgeCount = totalUnreadCount;
-				}
+			if (platform.isLinux && dockUnreadBadge) {
+				app.badgeCount = totalUnreadCount;
+			}
 
-				appTray.updateUnreadStatus(totalUnreadCount);
+			appTray.updateUnreadStatus(totalUnreadCount);
 
-				ipc.renderer.send(
-					main.window.webContents,
-					"accounts.changed",
-					accounts.getAccounts().map((account) => ({
-						config: account.config,
-						gmail: {
-							...account.instance.gmail.store.getState(),
-							...account.instance.gmail.viewStore.getState(),
-						},
-					})),
-				);
-			},
-		);
+			ipc.renderer.send(
+				main.window.webContents,
+				"accounts.changed",
+				accounts.getAccounts().map((account) => ({
+					config: account.config,
+					gmail: {
+						...account.instance.gmail.store.getState(),
+						...account.instance.gmail.viewStore.getState(),
+					},
+				})),
+			);
+		});
 	}
 
 	createComposeWindow(url: string) {

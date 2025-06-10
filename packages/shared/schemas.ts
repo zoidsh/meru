@@ -7,6 +7,7 @@ export const accountConfigSchema = z.object({
 	selected: z.boolean(),
 	unreadBadge: z.boolean(),
 	notifications: z.boolean(),
+	unifiedInbox: z.boolean(),
 });
 
 export type AccountConfig = z.infer<typeof accountConfigSchema>;
@@ -17,6 +18,7 @@ export const accountConfigInputSchema = accountConfigSchema.pick({
 	label: true,
 	unreadBadge: true,
 	notifications: true,
+	unifiedInbox: true,
 });
 
 export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;

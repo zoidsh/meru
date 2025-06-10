@@ -51,16 +51,6 @@ ipc.renderer.on("accounts.openAddAccountDialog", (_event) => {
 	useAccountsStore.setState({ isAddAccountDialogOpen: true });
 });
 
-export const useSettingsStore = create<{
-	isOpen: boolean;
-}>(() => ({
-	isOpen: false,
-}));
-
-ipc.renderer.on("settings.setIsOpen", (_event, isOpen) => {
-	useSettingsStore.setState({ isOpen });
-});
-
 export const useFindInPageStore = create<{
 	isActive: boolean;
 	deactivate: () => void;

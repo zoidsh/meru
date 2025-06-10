@@ -104,7 +104,7 @@ import { trial } from "./trial";
 	}
 
 	main.window.on("focus", () => {
-		if (!appState.isSettingsOpen) {
+		if (accounts.getVisible()) {
 			accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
 		}
 	});

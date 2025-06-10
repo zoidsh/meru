@@ -1,8 +1,8 @@
-import type { GmailMail } from "@meru/shared/gmail";
+import type { GmailMessage } from "@meru/shared/gmail";
 import { GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "@meru/shared/gmail";
 import elementReady from "element-ready";
 import { $, $$ } from "select-dom";
-import { ipcMain, ipcRenderer } from "./ipc";
+import { ipc } from "./ipc";
 
 declare global {
 	interface Window {
@@ -26,10 +26,8 @@ const inboxAnchorElementSelector = 'span > a[href*="#inbox"]';
 let previousUnreadCount: null | number = null;
 let inboxAnchorContainerElementObserver: MutationObserver;
 let feedVersion = 0;
-let previousModifiedFeedDate = 0;
-let currentModifiedFeedDate = 0;
-let isInitialNewMailsFetch = true;
-const previousNewMails = new Set<string>();
+let initialized = false;
+const previousNewMessages = new Set<string>();
 
 function getTextContentFromNode(node: Document | Element, selector: string) {
 	return node.querySelector(selector)?.textContent?.trim() ?? "";
@@ -52,9 +50,12 @@ async function fetchGmail(
 	return fetch(`${GMAIL_URL}${path}`, fetchOptions);
 }
 
-function parseNewMails(feedDocument: Document) {
-	const newMails: GmailMail[] = [];
+function parseFeed(feedDocument: Document) {
+	const messages: GmailMessage[] = [];
+	const newMessages: GmailMessage[] = [];
+
 	const mails = $$("entry", feedDocument);
+
 	const currentDate = Date.now();
 
 	for (const mail of mails) {
@@ -70,41 +71,41 @@ function parseNewMails(feedDocument: Document) {
 			throw new Error("Message ID not found");
 		}
 
-		if (previousNewMails.has(messageId)) {
-			continue;
-		}
+		const message: GmailMessage = {
+			id: messageId,
+			link,
+			issuedAt: getDateFromNode(mail, "issued"),
+			subject: getTextContentFromNode(mail, "title"),
+			summary: getTextContentFromNode(mail, "summary"),
+			sender: {
+				name: getTextContentFromNode(mail, "name"),
+				email: getTextContentFromNode(mail, "email"),
+			},
+		};
 
-		const issuedDate = getDateFromNode(mail, "issued");
+		messages.push(message);
 
-		if (currentDate - issuedDate < 60000) {
-			previousNewMails.add(messageId);
+		if (
+			!previousNewMessages.has(message.id) &&
+			currentDate - message.issuedAt < 60000
+		) {
+			previousNewMessages.add(message.id);
 
 			setTimeout(
 				() => {
-					previousNewMails.delete(messageId);
+					previousNewMessages.delete(message.id);
 				},
 				1000 * 60 * 5,
 			);
 
-			const newMail = {
-				messageId,
-				link,
-				subject: getTextContentFromNode(mail, "title"),
-				summary: getTextContentFromNode(mail, "summary"),
-				sender: {
-					name: getTextContentFromNode(mail, "name"),
-					email: getTextContentFromNode(mail, "email"),
-				},
-			};
-
-			newMails.push(newMail);
+			newMessages.push(message);
 		}
 	}
 
-	return newMails;
+	return { messages, newMessages };
 }
 
-async function fetchInbox() {
+async function fetchInbox(unreadCount: number, retryAttempt = 0) {
 	const isInboxSectioned = window.GM_INBOX_TYPE === "SECTIONED";
 	const label = isInboxSectioned ? "/^sq_ig_i_personal" : "";
 	const version = ++feedVersion;
@@ -117,25 +118,26 @@ async function fetchInbox() {
 			return domParser.parseFromString(String(trustedXmlString), "text/xml");
 		});
 
-	previousModifiedFeedDate = currentModifiedFeedDate;
-	currentModifiedFeedDate = getDateFromNode(feedDocument, "modified");
+	const { messages, newMessages } = parseFeed(feedDocument);
 
-	const isFeedModified = previousModifiedFeedDate !== currentModifiedFeedDate;
+	if (messages.length !== unreadCount && retryAttempt < 3) {
+		await new Promise((res) => {
+			setTimeout(res, 500);
+		});
 
-	if (!isFeedModified) {
+		return fetchInbox(unreadCount, retryAttempt + 1);
+	}
+
+	ipc.main.send("gmail.updateFeed", messages);
+
+	if (!initialized) {
+		initialized = true;
+
 		return;
 	}
 
-	const newMails = parseNewMails(feedDocument);
-
-	if (isInitialNewMailsFetch) {
-		isInitialNewMailsFetch = false;
-
-		return;
-	}
-
-	if (newMails.length > 0) {
-		ipcMain.send("gmail.handleNewMessages", newMails);
+	if (newMessages.length > 0) {
+		ipc.main.send("gmail.notifyNewMessages", newMessages);
 	}
 }
 
@@ -163,9 +165,9 @@ async function observeInbox() {
 		);
 
 		if (previousUnreadCount !== currentUnreadCount) {
-			ipcMain.send("gmail.setUnreadCount", currentUnreadCount);
+			ipc.main.send("gmail.setUnreadCount", currentUnreadCount);
 
-			fetchInbox();
+			fetchInbox(currentUnreadCount);
 
 			previousUnreadCount = currentUnreadCount;
 		}
@@ -249,7 +251,9 @@ async function sendMailAction(
 		},
 	);
 
-	await res.text();
+	if ((await res.text()).includes("spreauth")) {
+		window.location.href = "https://mail.google.com/mail/u/0/spreauth";
+	}
 }
 
 function getInboxAnchorElement() {
@@ -269,7 +273,7 @@ function refreshInbox() {
 export function initInboxObserver() {
 	observeInbox();
 
-	ipcRenderer.on("gmail.handleMessage", async (_event, messageId, action) => {
+	ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
 		await sendMailAction(messageId, action);
 
 		refreshInbox();

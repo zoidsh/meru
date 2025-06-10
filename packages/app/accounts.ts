@@ -4,7 +4,6 @@ import { Account } from "./account";
 import { config } from "./config";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 
 class Accounts {
 	instances: Map<string, Account> = new Map();
@@ -123,9 +122,16 @@ class Accounts {
 		for (const [accountId, account] of this.instances) {
 			if (accountId === selectedAccountId) {
 				main.window.contentView.addChildView(account.gmail.view);
+
+				if (!account.gmail.view.getVisible()) {
+					account.gmail.view.setVisible(true);
+				}
+
 				account.gmail.view.webContents.focus();
 			}
 		}
+
+		main.navigate("/");
 	}
 
 	selectPreviousAccount() {
@@ -169,7 +175,7 @@ class Accounts {
 	addAccount(
 		accountDetails: Pick<
 			AccountConfig,
-			"label" | "unreadBadge" | "notifications"
+			"label" | "unreadBadge" | "notifications" | "unifiedInbox"
 		>,
 	) {
 		const createdAccount: AccountConfig = {
@@ -189,8 +195,6 @@ class Accounts {
 		this.selectAccount(createdAccount.id);
 
 		this.show();
-
-		appState.setIsSettingsOpen(false);
 	}
 
 	removeAccount(selectedAccountId: string) {
@@ -269,6 +273,18 @@ class Accounts {
 		for (const account of this.instances.values()) {
 			account.gmail.view.setVisible(true);
 		}
+	}
+
+	getVisible() {
+		for (const account of this.instances.values()) {
+			const visible = account.gmail.view.getVisible();
+
+			if (visible) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	getTotalUnreadCount() {

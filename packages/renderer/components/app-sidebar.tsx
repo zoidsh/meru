@@ -1,7 +1,7 @@
 import { Button } from "@meru/ui/components/button";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
-import { useLocation } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 
 const navItems: NavItemProps[] = [
 	{ label: "Download History", href: "/download-history" },
@@ -18,7 +18,7 @@ type NavItemProps = {
 };
 
 export function AppSidebar() {
-	const [location, navigate] = useLocation();
+	const [location, navigate] = useHashLocation();
 
 	const renderNavItem = ({ label, href }: NavItemProps) => {
 		return (

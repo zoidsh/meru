@@ -7,7 +7,6 @@ import { config } from "@/config";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
-import { appState } from "@/state";
 import { createNotification } from "./notifications";
 
 class Ipc {
@@ -16,16 +15,6 @@ class Ipc {
 	renderer = new IpcEmitter<IpcRendererEvent>();
 
 	init() {
-		this.main.on("settings.toggleIsOpen", () => {
-			appState.toggleIsSettingsOpen();
-
-			if (appState.isSettingsOpen) {
-				accounts.hide();
-			} else {
-				accounts.show();
-			}
-		});
-
 		config.onDidChange("accounts", () => {
 			this.renderer.send(
 				main.window.webContents,
@@ -63,6 +52,30 @@ class Ipc {
 			},
 		);
 
+		this.main.on("accounts.openMessage", (_event, accountId, messageId) => {
+			accounts.selectAccount(accountId);
+
+			const account = accounts.getAccount(accountId);
+
+			account.instance.gmail.view.webContents.send(
+				"gmail.openMessage",
+				messageId,
+			);
+		});
+
+		this.main.on(
+			"accounts.handleMessage",
+			(_event, accountId, messageId, action) => {
+				const account = accounts.getAccount(accountId);
+
+				account.instance.gmail.view.webContents.send(
+					"gmail.handleMessage",
+					messageId,
+					action,
+				);
+			},
+		);
+
 		this.main.on("gmail.moveNavigationHistory", (_event, action) => {
 			accounts
 				.getSelectedAccount()
@@ -75,6 +88,14 @@ class Ipc {
 			for (const accountInstance of accounts.instances.values()) {
 				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
 					accountInstance.gmail.setUnreadCount(unreadCount);
+				}
+			}
+		});
+
+		this.main.on("gmail.updateFeed", (event, feed) => {
+			for (const accountInstance of accounts.instances.values()) {
+				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
+					accountInstance.gmail.store.setState({ feed });
 				}
 			}
 		});
@@ -118,13 +139,21 @@ class Ipc {
 			});
 		});
 
+		this.main.on("accounts.show", () => {
+			accounts.show();
+		});
+
+		this.main.on("accounts.hide", () => {
+			accounts.hide();
+		});
+
 		if (Notification.isSupported()) {
-			this.main.on("gmail.handleNewMessages", async (event, mails) => {
+			this.main.on("gmail.notifyNewMessages", async (event, messages) => {
 				if (!config.get("notifications.enabled")) {
 					return;
 				}
 
-				for (const mail of mails) {
+				for (const message of messages) {
 					for (const [accountId, instance] of accounts.instances) {
 						if (instance.gmail.view.webContents.id === event.sender.id) {
 							const account = accounts.getAccount(accountId);
@@ -136,23 +165,23 @@ class Ipc {
 							let subtitle: string | undefined;
 
 							if (platform.isMacOS && config.get("notifications.showSubject")) {
-								subtitle = mail.subject;
+								subtitle = message.subject;
 							}
 
 							let body: string | undefined;
 
 							if (platform.isMacOS && config.get("notifications.showSummary")) {
-								body = mail.summary;
+								body = message.summary;
 							} else if (
 								!platform.isMacOS &&
 								config.get("notifications.showSubject")
 							) {
-								body = mail.subject;
+								body = message.subject;
 							}
 
 							createNotification({
 								title: config.get("notifications.showSender")
-									? mail.sender.name
+									? message.sender.name
 									: account.config.label,
 								subtitle,
 								body,
@@ -182,7 +211,7 @@ class Ipc {
 									this.renderer.send(
 										event.sender,
 										"gmail.openMessage",
-										mail.messageId,
+										message.id,
 									);
 								},
 								action: (index) => {
@@ -191,7 +220,7 @@ class Ipc {
 											this.renderer.send(
 												event.sender,
 												"gmail.handleMessage",
-												mail.messageId,
+												message.id,
 												"archive",
 											);
 
@@ -201,7 +230,7 @@ class Ipc {
 											this.renderer.send(
 												event.sender,
 												"gmail.handleMessage",
-												mail.messageId,
+												message.id,
 												"markAsRead",
 											);
 
@@ -211,7 +240,7 @@ class Ipc {
 											this.renderer.send(
 												event.sender,
 												"gmail.handleMessage",
-												mail.messageId,
+												message.id,
 												"delete",
 											);
 
@@ -221,7 +250,7 @@ class Ipc {
 											this.renderer.send(
 												event.sender,
 												"gmail.handleMessage",
-												mail.messageId,
+												message.id,
 												"markAsSpam",
 											);
 

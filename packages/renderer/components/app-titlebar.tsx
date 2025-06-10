@@ -14,6 +14,7 @@ import {
 	DownloadIcon,
 	EllipsisVerticalIcon,
 	FileCheckIcon,
+	HouseIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -23,9 +24,16 @@ import {
 	useAccountsStore,
 	useDownloadsStore,
 	useFindInPageStore,
-	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
+
+function UnreadBadge({ children }: { children: number }) {
+	return (
+		<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
+			{children.toLocaleString()}
+		</div>
+	);
+}
 
 function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 	const [fadeOut, setFadeOut] = useState(false);
@@ -78,7 +86,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 	);
 }
 
-function Download() {
+function DownloadHistoryButton() {
 	const [_location, navigate] = useHashLocation();
 
 	const completedDownloadItem = useDownloadsStore(
@@ -99,7 +107,7 @@ function Download() {
 				className="size-7"
 				onClick={() => {
 					navigate("/download-history");
-					ipc.main.send("settings.toggleIsOpen");
+					ipc.main.send("accounts.hide");
 				}}
 			>
 				<DownloadIcon className="size-4" />
@@ -237,13 +245,44 @@ function FindInPage() {
 	);
 }
 
+export function HomeButton() {
+	const [location, navigate] = useHashLocation();
+	const accounts = useAccountsStore((state) => state.accounts);
+
+	const totalUnreadCount = accounts
+		.filter((account) => account.config.unifiedInbox)
+		.reduce(
+			(totalUnreadCount, account) =>
+				totalUnreadCount + account.gmail.unreadCount,
+			0,
+		);
+
+	return (
+		<Button
+			variant={location === "/home" ? "secondary" : "ghost"}
+			size="sm"
+			className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
+			onClick={() => {
+				navigate("/home");
+
+				ipc.main.send("accounts.hide");
+			}}
+		>
+			<HouseIcon />
+			{totalUnreadCount > 0 && <UnreadBadge>{totalUnreadCount}</UnreadBadge>}
+		</Button>
+	);
+}
+
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
 	const unreadBadge = useAccountsStore((state) => state.unreadBadge);
 
 	const selectedAccount = accounts.find((account) => account.config.selected);
 
-	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+	const [location] = useHashLocation();
+
+	const showTitleOnly = !["/", "/home"].includes(location);
 
 	if (!accounts) {
 		return;
@@ -251,10 +290,10 @@ export function AppTitlebar() {
 
 	return (
 		<div
-			className="relative bg-background border-b draggable select-none"
+			className="fixed top-0 left-0 right-0 z-50 bg-background border-b draggable select-none"
 			style={{ height: APP_TITLEBAR_HEIGHT }}
 		>
-			{isSettingsOpen && (
+			{showTitleOnly && (
 				<div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
 					Meru
 				</div>
@@ -266,7 +305,7 @@ export function AppTitlebar() {
 					width: "env(titlebar-area-width, 100%)",
 				}}
 			>
-				{!isSettingsOpen && (
+				{!showTitleOnly && (
 					<>
 						<div className="flex items-center gap-1">
 							<Button
@@ -276,7 +315,10 @@ export function AppTitlebar() {
 								onClick={() => {
 									ipc.main.send("gmail.moveNavigationHistory", "back");
 								}}
-								disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
+								disabled={
+									!selectedAccount?.gmail.navigationHistory.canGoBack ||
+									location === "/home"
+								}
 							>
 								<ArrowLeftIcon />
 							</Button>
@@ -288,18 +330,24 @@ export function AppTitlebar() {
 									ipc.main.send("gmail.moveNavigationHistory", "forward");
 								}}
 								disabled={
-									!selectedAccount?.gmail.navigationHistory.canGoForward
+									!selectedAccount?.gmail.navigationHistory.canGoForward ||
+									location === "/home"
 								}
 							>
 								<ArrowRightIcon />
 							</Button>
+							{accounts.length > 1 && <HomeButton />}
 						</div>
 						<div className="flex-1 flex gap-2">
 							{accounts.length > 1 &&
 								accounts.map((account) => (
 									<Button
 										key={account.config.id}
-										variant={account.config.selected ? "secondary" : "ghost"}
+										variant={
+											account.config.selected && location !== "/home"
+												? "secondary"
+												: "ghost"
+										}
 										size="sm"
 										className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 										onClick={() => {
@@ -316,16 +364,14 @@ export function AppTitlebar() {
 										{!account.gmail.attentionRequired &&
 										unreadBadge &&
 										account.gmail.unreadCount ? (
-											<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-												{account.gmail.unreadCount.toLocaleString()}
-											</div>
+											<UnreadBadge>{account.gmail.unreadCount}</UnreadBadge>
 										) : null}
 									</Button>
 								))}
 						</div>
 						<Trial />
 						<FindInPage />
-						<Download />
+						<DownloadHistoryButton />
 					</>
 				)}
 				{window.electron.process.platform !== "darwin" && (

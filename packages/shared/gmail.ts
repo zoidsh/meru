@@ -7,8 +7,9 @@ export const GMAIL_ACTION_CODE_MAP = {
 
 export const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
-export interface GmailMail {
-	messageId: string;
+export interface GmailMessage {
+	id: string;
+	issuedAt: number;
 	subject: string;
 	summary: string;
 	link: string;
@@ -23,6 +24,7 @@ export type GmailState = {
 		canGoBack: boolean;
 		canGoForward: boolean;
 	};
-	unreadCount: number | null;
+	unreadCount: number;
+	feed: GmailMessage[];
 	attentionRequired: boolean;
 };
