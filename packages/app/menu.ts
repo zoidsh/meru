@@ -585,6 +585,14 @@ export class AppMenu {
 											showRestartDialog();
 										},
 									},
+									{
+										label: "Show Update Notifications",
+										type: "checkbox",
+										checked: config.get("updates.showNotifications"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("updates.showNotifications", checked);
+										},
+									},
 								],
 							},
 							{

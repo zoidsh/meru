@@ -4,6 +4,14 @@ import log from "electron-log";
 import { autoUpdater } from "electron-updater";
 
 class AppUpdater {
+	private performUpdateCheck() {
+		if (config.get("updates.showNotifications")) {
+			autoUpdater.checkForUpdatesAndNotify();
+		} else {
+			autoUpdater.checkForUpdates();
+		}
+	}
+
 	init() {
 		if (is.dev || !config.get("updates.autoCheck")) {
 			return;
@@ -12,14 +20,11 @@ class AppUpdater {
 		log.transports.file.level = is.dev ? "info" : "error";
 		autoUpdater.logger = log;
 
-		autoUpdater.checkForUpdatesAndNotify();
+		this.performUpdateCheck();
 
-		setInterval(
-			() => {
-				autoUpdater.checkForUpdatesAndNotify();
-			},
-			1000 * 60 * 60 * 3,
-		);
+		setInterval(() => {
+			this.performUpdateCheck();
+		}, 1000 * 60 * 60 * 3);
 	}
 
 	checkForUpdates() {
@@ -27,7 +32,7 @@ class AppUpdater {
 			return;
 		}
 
-		autoUpdater.checkForUpdatesAndNotify();
+		this.performUpdateCheck();
 	}
 }
 
