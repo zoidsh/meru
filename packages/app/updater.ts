@@ -13,8 +13,22 @@ class AppUpdater {
 		log.transports.file.level = is.dev ? "info" : "error";
 		autoUpdater.logger = log;
 
-		// Set up event handlers for manual notification control
-		this.setupEventHandlers();
+		// Check if notifications should be shown and set up event handlers
+		if (config.get("updates.showNotifications")) {
+			autoUpdater.on("update-available", () => {
+				createNotification({
+					title: "Update Available",
+					body: "A new version is being downloaded in the background.",
+				});
+			});
+
+			autoUpdater.on("update-downloaded", () => {
+				createNotification({
+					title: "Update Ready",
+					body: "Update downloaded. It will be installed on restart.",
+				});
+			});
+		}
 
 		// Use checkForUpdates instead of checkForUpdatesAndNotify for manual control
 		autoUpdater.checkForUpdates();
@@ -25,28 +39,6 @@ class AppUpdater {
 			},
 			1000 * 60 * 60 * 3,
 		);
-	}
-
-	private setupEventHandlers() {
-		const showNotifications = config.get("updates.showNotifications");
-
-		if (!showNotifications) {
-			return;
-		}
-
-		autoUpdater.on("update-available", () => {
-			createNotification({
-				title: "Update Available",
-				body: "A new version is being downloaded in the background.",
-			});
-		});
-
-		autoUpdater.on("update-downloaded", () => {
-			createNotification({
-				title: "Update Ready",
-				body: "Update downloaded. It will be installed on restart.",
-			});
-		});
 	}
 
 	checkForUpdates() {
