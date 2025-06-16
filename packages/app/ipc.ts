@@ -52,6 +52,30 @@ class Ipc {
 			},
 		);
 
+		this.main.on("accounts.openMessage", (_event, accountId, messageId) => {
+			accounts.selectAccount(accountId);
+
+			const account = accounts.getAccount(accountId);
+
+			account.instance.gmail.view.webContents.send(
+				"gmail.openMessage",
+				messageId,
+			);
+		});
+
+		this.main.on(
+			"accounts.handleMessage",
+			(_event, accountId, messageId, action) => {
+				const account = accounts.getAccount(accountId);
+
+				account.instance.gmail.view.webContents.send(
+					"gmail.handleMessage",
+					messageId,
+					action,
+				);
+			},
+		);
+
 		this.main.on("gmail.moveNavigationHistory", (_event, action) => {
 			accounts
 				.getSelectedAccount()
@@ -64,6 +88,14 @@ class Ipc {
 			for (const accountInstance of accounts.instances.values()) {
 				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
 					accountInstance.gmail.setUnreadCount(unreadCount);
+				}
+			}
+		});
+
+		this.main.on("gmail.updateFeed", (event, feed) => {
+			for (const accountInstance of accounts.instances.values()) {
+				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
+					accountInstance.gmail.store.setState({ feed });
 				}
 			}
 		});

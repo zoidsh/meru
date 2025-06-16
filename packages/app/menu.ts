@@ -6,7 +6,6 @@ import { showRestartDialog } from "@/dialogs";
 import { GMAIL_USER_STYLES_PATH } from "@/gmail";
 import { ipc } from "@/ipc";
 import { main } from "@/main";
-import { appState } from "@/state";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { is, platform } from "@electron-toolkit/utils";
@@ -127,8 +126,6 @@ export class AppMenu {
 									{
 										label: "Manage Accounts...",
 										click: () => {
-											appState.setIsSettingsOpen(true);
-
 											main.navigate("/accounts");
 
 											accounts.hide();
@@ -616,8 +613,6 @@ export class AppMenu {
 							{
 								label: "Manage License...",
 								click: () => {
-									appState.setIsSettingsOpen(true);
-
 									main.navigate("/license");
 
 									accounts.hide();
@@ -782,12 +777,21 @@ export class AppMenu {
 						type: "separator",
 					},
 					{
+						label: "Home",
+						accelerator: platform.isMacOS ? "Command+Shift+H" : "Alt+Home",
+						click: () => {
+							main.navigate("/home");
+
+							accounts.hide();
+
+							main.show();
+						},
+					},
+					{
 						label: "Downloads",
 						accelerator: "CommandOrControl+Alt+L",
 						click: () => {
 							main.navigate("/download-history");
-
-							appState.setIsSettingsOpen(true);
 
 							accounts.hide();
 
@@ -964,8 +968,6 @@ export class AppMenu {
 					{
 						label: "Manage Accounts...",
 						click: () => {
-							appState.setIsSettingsOpen(true);
-
 							main.navigate("/accounts");
 
 							accounts.hide();

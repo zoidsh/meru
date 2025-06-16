@@ -39,9 +39,15 @@ export type IpcMainEvents =
 			];
 			"accounts.show": [];
 			"accounts.hide": [];
+			"accounts.openMessage": [accountId: string, messageId: string];
+			"accounts.handleMessage": [
+				accountId: string,
+				messageId: string,
+				action: keyof typeof GMAIL_ACTION_CODE_MAP,
+			];
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
 			"gmail.setUnreadCount": [unreadCount: number];
-			"gmail.updateFeed": [messages: GmailMessage[]];
+			"gmail.updateFeed": [feed: GmailMessage[]];
 			"gmail.notifyNewMessages": [messages: GmailMessage[]];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];

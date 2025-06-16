@@ -61,7 +61,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 function AccountForm({
-	account = { label: "", unreadBadge: true, notifications: true },
+	account = {
+		label: "",
+		unreadBadge: true,
+		notifications: true,
+		unifiedInbox: true,
+	},
 	placeholder = "Work",
 	onSubmit,
 	type,
@@ -125,6 +130,22 @@ function AccountForm({
 								/>
 							</FormControl>
 							<FormLabel>Notifications</FormLabel>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name="unifiedInbox"
+					render={({ field }) => (
+						<FormItem className="flex">
+							<FormControl>
+								<Checkbox
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
+							</FormControl>
+							<FormLabel>Include in Unified Inbox</FormLabel>
 							<FormMessage />
 						</FormItem>
 					)}
@@ -260,6 +281,7 @@ export function Accounts() {
 							<TableHead>Label</TableHead>
 							<TableHead>Unread Badge</TableHead>
 							<TableHead>Notifications</TableHead>
+							<TableHead>Unified Inbox</TableHead>
 							<TableHead />
 						</TableRow>
 					</TableHeader>
@@ -274,6 +296,11 @@ export function Accounts() {
 								</TableCell>
 								<TableCell>
 									{account.config.notifications && (
+										<CheckIcon className="size-4" />
+									)}
+								</TableCell>
+								<TableCell>
+									{account.config.unifiedInbox && (
 										<CheckIcon className="size-4" />
 									)}
 								</TableCell>
