@@ -42,7 +42,7 @@ function MessageActions({
 	return (
 		<div className="justify-end gap-2 hidden fade-in group-hover:flex group-hover:animate-in group-hover:fade-in">
 			<Tooltip delayDuration={700}>
-				<TooltipTrigger>
+				<TooltipTrigger asChild>
 					<Button
 						size="icon"
 						variant="outline"
@@ -71,7 +71,7 @@ function MessageActions({
 				<TooltipContent side="bottom">Archive</TooltipContent>
 			</Tooltip>
 			<Tooltip delayDuration={700}>
-				<TooltipTrigger>
+				<TooltipTrigger asChild>
 					<Button
 						size="icon"
 						variant="outline"
@@ -100,7 +100,7 @@ function MessageActions({
 				<TooltipContent side="bottom">Delete</TooltipContent>
 			</Tooltip>
 			<Tooltip delayDuration={700}>
-				<TooltipTrigger>
+				<TooltipTrigger asChild>
 					<Button
 						size="icon"
 						variant="outline"
@@ -129,7 +129,7 @@ function MessageActions({
 				<TooltipContent side="bottom">Mark as read</TooltipContent>
 			</Tooltip>
 			<Tooltip delayDuration={700}>
-				<TooltipTrigger>
+				<TooltipTrigger asChild>
 					<Button
 						size="icon"
 						variant="outline"

@@ -175,7 +175,7 @@ class Accounts {
 	addAccount(
 		accountDetails: Pick<
 			AccountConfig,
-			"label" | "unreadBadge" | "notifications"
+			"label" | "unreadBadge" | "notifications" | "unifiedInbox"
 		>,
 	) {
 		const createdAccount: AccountConfig = {
@@ -273,6 +273,18 @@ class Accounts {
 		for (const account of this.instances.values()) {
 			account.gmail.view.setVisible(true);
 		}
+	}
+
+	getVisible() {
+		for (const account of this.instances.values()) {
+			const visible = account.gmail.view.getVisible();
+
+			if (visible) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	getTotalUnreadCount() {
