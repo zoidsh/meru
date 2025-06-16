@@ -22,9 +22,12 @@ class AppUpdater {
 
 		this.performUpdateCheck();
 
-		setInterval(() => {
-			this.performUpdateCheck();
-		}, 1000 * 60 * 60 * 3);
+		setInterval(
+			() => {
+				this.performUpdateCheck();
+			},
+			1000 * 60 * 60 * 3,
+		);
 	}
 
 	checkForUpdates() {
