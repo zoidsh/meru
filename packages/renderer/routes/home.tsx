@@ -219,14 +219,14 @@ export function Home() {
 						>
 							<CardHeader className="flex items-center gap-2">
 								<CardTitle>{account.config.label}</CardTitle>
-								<Badge variant="secondary">{account.gmail.unreadCount}</Badge>
+								<Badge variant="secondary">{account.gmail.feed.length}</Badge>
 							</CardHeader>
 							<CardContent>
 								{account.gmail.feed.length === 0 ? (
 									<div className="text-muted-foreground text-center text-sm">
-										All caught up! No unread messages.
+										All caught up! No unread emails.
 									</div>
-								) : account.gmail.feed.length > 5 ? (
+								) : account.gmail.feed.length > 4 ? (
 									<ScrollArea className="h-48">{table}</ScrollArea>
 								) : (
 									table

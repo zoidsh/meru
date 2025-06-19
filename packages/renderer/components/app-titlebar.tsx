@@ -337,7 +337,7 @@ export function AppTitlebar() {
 							>
 								<ArrowRightIcon />
 							</Button>
-							<HomeButton />
+							{accounts.length > 1 && <HomeButton />}
 						</div>
 						<div className="flex-1 flex gap-2">
 							{accounts.length > 1 &&
