@@ -25,7 +25,7 @@ const WINDOW_OPEN_URL_WHITELIST = [
 ];
 
 const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
-	/(calendar|docs|drive|meet|contacts)\.google\.com/;
+	/(calendar|docs|sheets|slides|drive|meet|contacts|voice|gemini|chat|forms|sites|keep|tasks|groups|myaccount)\.google\.com/;
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [
 	/chat\.google\.com\/u\/\d\/api\/get_attachment_url/,
