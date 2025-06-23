@@ -54,6 +54,7 @@ export type Config = {
 	};
 	"window.restrictMinimumSize": boolean;
 	"trial.expired": boolean;
+	"googleApps.openInExternalBrowser": boolean;
 };
 
 export const config = new Store<Config>({
@@ -116,6 +117,7 @@ export const config = new Store<Config>({
 		},
 		"window.restrictMinimumSize": true,
 		"trial.expired": false,
+		"googleApps.openInExternalBrowser": false,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

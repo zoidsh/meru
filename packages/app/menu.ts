@@ -383,6 +383,20 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Google Apps",
+								enabled: licenseKey.isValid,
+								submenu: [
+									{
+										label: "Open in External Browser",
+										type: "checkbox",
+										checked: config.get("googleApps.openInExternalBrowser"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("googleApps.openInExternalBrowser", checked);
+										},
+									},
+								],
+							},
+							{
 								type: "separator",
 							},
 							...(platform.isMacOS

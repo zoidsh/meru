@@ -13,6 +13,7 @@ import {
 } from "electron";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "./accounts";
+import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
@@ -252,7 +253,9 @@ export class GoogleApp {
 			if (
 				(url.startsWith(GMAIL_URL) ||
 					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-					(isSupportedGoogleApp && licenseKey.isValid)) &&
+					(isSupportedGoogleApp &&
+						!config.get("googleApps.openInExternalBrowser") &&
+						licenseKey.isValid)) &&
 				disposition !== "background-tab"
 			) {
 				if (isSupportedGoogleApp) {
@@ -318,7 +321,7 @@ export class GoogleApp {
 			) {
 				window.webContents.downloadURL(url);
 			} else {
-				openExternalUrl(url);
+				openExternalUrl(url, isSupportedGoogleApp);
 			}
 
 			return {
