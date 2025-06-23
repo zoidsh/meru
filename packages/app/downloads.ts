@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { config } from "@/config";
-import { createNotification } from "@/notifications";
 import type { DownloadItem } from "@meru/shared/types";
 import { shell } from "electron";
 import electronDl from "electron-dl";
+import { config } from "@/config";
+import { createNotification } from "@/notifications";
 import { ipc } from "./ipc";
 import { main } from "./main";
 

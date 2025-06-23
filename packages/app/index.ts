@@ -1,3 +1,6 @@
+import { platform } from "@electron-toolkit/utils";
+import { APP_ID } from "@meru/shared/constants";
+import { app } from "electron";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
@@ -10,9 +13,6 @@ import { appState } from "@/state";
 import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
-import { platform } from "@electron-toolkit/utils";
-import { APP_ID } from "@meru/shared/constants";
-import { app } from "electron";
 import { handleMailto, mailtoUrlArg } from "./mailto";
 import { trial } from "./trial";
 

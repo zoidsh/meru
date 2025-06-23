@@ -1,6 +1,5 @@
-import { GMAIL_URL } from "@meru/shared/gmail";
 import type { GmailMail } from "@meru/shared/gmail";
-import { GMAIL_ACTION_CODE_MAP } from "@meru/shared/gmail";
+import { GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "@meru/shared/gmail";
 import elementReady from "element-ready";
 import { $, $$ } from "select-dom";
 import { ipcMain, ipcRenderer } from "./ipc";

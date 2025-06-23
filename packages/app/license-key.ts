@@ -1,8 +1,8 @@
-import { config } from "@/config";
-import { type MessageBoxOptions, app, dialog } from "electron";
+import { app, dialog, type MessageBoxOptions } from "electron";
 import { machineId } from "node-machine-id";
 import { FetchError, ofetch } from "ofetch";
 import { z } from "zod";
+import { config } from "@/config";
 
 class LicenseKey {
 	isValid = false;

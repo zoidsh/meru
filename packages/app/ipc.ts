@@ -1,13 +1,13 @@
+import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
+import { platform } from "@electron-toolkit/utils";
+import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { desktopCapturer, Notification } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
-import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { platform } from "@electron-toolkit/utils";
-import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { Notification, desktopCapturer } from "electron";
 import { createNotification } from "./notifications";
 
 class Ipc {

@@ -1,5 +1,3 @@
-import { date } from "@/lib/date";
-import { useDownloadsStore } from "@/lib/stores";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { Button } from "@meru/ui/components/button";
 import { Card, CardContent } from "@meru/ui/components/card";
@@ -11,6 +9,8 @@ import {
 import { FolderIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { date } from "@/lib/date";
+import { useDownloadsStore } from "@/lib/stores";
 
 function DateFromNow({ timestamp }: { timestamp: number }) {
 	const [timeAgo, setTimeAgo] = useState(date.unix(timestamp).fromNow());

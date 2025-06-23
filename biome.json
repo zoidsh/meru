@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.0.4/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -7,22 +7,21 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": ["dist", "build-js", "package.json"]
+		"includes": ["**", "!**/dist", "!**/build-js", "!**/package.json"]
 	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab"
 	},
-	"organizeImports": {
-		"enabled": true
-	},
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"recommended": true,
 			"a11y": {
 				"noSvgWithoutTitle": "off",
-				"useKeyWithClickEvents": "off"
+				"useKeyWithClickEvents": "off",
+				"noStaticElementInteractions": "off"
 			},
 			"correctness": {
 				"noUnusedImports": "error"

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { config } from "@/config";
 import { FiltersEngine, Request } from "@ghostery/adblocker";
+import { config } from "@/config";
 import { licenseKey } from "./license-key";
 
 export class Blocker {

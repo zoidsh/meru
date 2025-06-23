@@ -21,7 +21,7 @@
 		"build:win": "electron-builder --win"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
+		"@biomejs/biome": "^2.0.4",
 		"@electron-toolkit/preload": "^3.0.2",
 		"@electron-toolkit/typed-ipc": "^1.0.2",
 		"@electron-toolkit/utils": "^4.0.0",
@@ -126,7 +126,7 @@
 				{
 					"target": "nsis",
 					"arch": ["x64", "arm64"]
-				}, 
+				},
 				{
 					"target": "portable",
 					"arch": ["x64", "arm64"]

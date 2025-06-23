@@ -1,11 +1,11 @@
 import path from "node:path";
+import { is, platform } from "@electron-toolkit/utils";
+import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { app, BrowserWindow, nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
-import { is, platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { BrowserWindow, app, nativeTheme } from "electron";
 import { ipc } from "./ipc";
 import { trial } from "./trial";
 

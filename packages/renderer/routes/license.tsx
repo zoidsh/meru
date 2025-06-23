@@ -1,4 +1,3 @@
-import { useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
@@ -32,6 +31,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({
 	licenseKey: z.string(),

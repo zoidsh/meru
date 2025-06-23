@@ -1,7 +1,3 @@
-import { useSettingsStore } from "@/lib/stores";
-import { Accounts } from "@/routes/accounts";
-import { DownloadHistory } from "@/routes/download-history";
-import { License } from "@/routes/license";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
@@ -9,6 +5,10 @@ import { XIcon } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Route, Router } from "wouter";
 import { navigate, useHashLocation } from "wouter/use-hash-location";
+import { useSettingsStore } from "@/lib/stores";
+import { Accounts } from "@/routes/accounts";
+import { DownloadHistory } from "@/routes/download-history";
+import { License } from "@/routes/license";
 import { AppSidebar } from "./app-sidebar";
 
 ipc.renderer.on("navigate", (_event, to) => {

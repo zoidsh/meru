@@ -1,9 +1,9 @@
 import path from "node:path";
+import { platform } from "@electron-toolkit/utils";
+import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { main } from "@/main";
-import { platform } from "@electron-toolkit/utils";
-import Electron, { nativeTheme } from "electron";
 
 export class AppTray {
 	private tray: Electron.Tray | undefined;

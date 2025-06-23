@@ -6,10 +6,10 @@ import {
 import { GMAIL_URL } from "@meru/shared/gmail";
 import {
 	BrowserWindow,
+	dialog,
 	type Session,
 	WebContentsView,
 	type WebContentsViewConstructorOptions,
-	dialog,
 } from "electron";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "./accounts";

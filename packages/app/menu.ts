@@ -1,5 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
+import { is, platform } from "@electron-toolkit/utils";
+import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import {
+	app,
+	dialog,
+	Menu,
+	type MenuItemConstructorOptions,
+	nativeImage,
+	nativeTheme,
+	session,
+	shell,
+} from "electron";
+import log from "electron-log";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
@@ -9,19 +22,6 @@ import { main } from "@/main";
 import { appState } from "@/state";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
-import { is, platform } from "@electron-toolkit/utils";
-import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
-import {
-	Menu,
-	type MenuItemConstructorOptions,
-	app,
-	dialog,
-	nativeImage,
-	nativeTheme,
-	session,
-	shell,
-} from "electron";
-import log from "electron-log";
 import { licenseKey } from "./license-key";
 
 export class AppMenu {

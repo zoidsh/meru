@@ -1,5 +1,5 @@
-import { config } from "@/config";
 import { clipboard, dialog, shell } from "electron";
+import { config } from "@/config";
 import { licenseKey } from "./license-key";
 
 export function getCleanUrl(url: string): string {

@@ -6,11 +6,11 @@ import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
 	BrowserWindow,
 	type IpcMainEvent,
-	type Session,
-	type WebContentsView,
 	ipcMain,
 	nativeTheme,
+	type Session,
 	session,
+	type WebContentsView,
 } from "electron";
 import { blocker } from "./blocker";
 import { config } from "./config";

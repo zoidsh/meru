@@ -1,5 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
+import { platform } from "@electron-toolkit/utils";
+import { GMAIL_URL } from "@meru/shared/gmail";
+import { app, BrowserWindow } from "electron";
+import { subscribeWithSelector } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
@@ -8,11 +13,6 @@ import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appTray } from "@/tray";
-import { platform } from "@electron-toolkit/utils";
-import { GMAIL_URL } from "@meru/shared/gmail";
-import { BrowserWindow, app } from "electron";
-import { subscribeWithSelector } from "zustand/middleware";
-import { createStore } from "zustand/vanilla";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 

@@ -151,7 +151,6 @@ function FindInPage() {
 		ipc.main.send("findInPage", text, { findNext: true });
 	}, 250);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies:
 	useEffect(() => {
 		if (isActive && text) {
 			ipc.main.send("findInPage", text, { findNext: true });

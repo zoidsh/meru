@@ -1,7 +1,7 @@
-import { config } from "@/config";
 import { is } from "@electron-toolkit/utils";
 import log from "electron-log";
 import { autoUpdater } from "electron-updater";
+import { config } from "@/config";
 
 class AppUpdater {
 	private performUpdateCheck() {

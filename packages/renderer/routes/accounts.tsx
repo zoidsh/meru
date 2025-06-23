@@ -1,4 +1,3 @@
-import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
@@ -59,6 +58,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useAccountsStore, useTrialStore } from "@/lib/stores";
 
 function AccountForm({
 	account = { label: "", unreadBadge: true, notifications: true },
@@ -190,7 +190,10 @@ function AddAccountButton() {
 function AccountMenuButton({
 	account,
 	removable,
-}: { account: AccountConfig; removable: boolean }) {
+}: {
+	account: AccountConfig;
+	removable: boolean;
+}) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (

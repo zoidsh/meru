@@ -1,8 +1,8 @@
+import { nativeTheme } from "electron";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appTray } from "@/tray";
-import { nativeTheme } from "electron";
 
 class Theme {
 	init() {
