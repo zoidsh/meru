@@ -383,23 +383,6 @@ export class AppMenu {
 								],
 							},
 							{
-								label: "Screen Share",
-								visible: platform.isMacOS,
-								enabled: licenseKey.isValid,
-								submenu: [
-									{
-										label: "Use System Picker",
-										type: "checkbox",
-										checked: config.get("screenShare.useSystemPicker"),
-										click: ({ checked }) => {
-											config.set("screenShare.useSystemPicker", checked);
-
-											showRestartDialog();
-										},
-									},
-								],
-							},
-							{
 								type: "separator",
 							},
 							...(platform.isMacOS
@@ -573,6 +556,38 @@ export class AppMenu {
 								},
 							},
 							{
+								label: "Window",
+								submenu: [
+									{
+										label: "Restrict Minimum Size",
+										type: "checkbox",
+										checked: config.get("window.restrictMinimumSize"),
+										click: ({ checked }: { checked: boolean }) => {
+											config.set("window.restrictMinimumSize", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
+								label: "Screen Share",
+								visible: platform.isMacOS,
+								enabled: licenseKey.isValid,
+								submenu: [
+									{
+										label: "Use System Picker",
+										type: "checkbox",
+										checked: config.get("screenShare.useSystemPicker"),
+										click: ({ checked }) => {
+											config.set("screenShare.useSystemPicker", checked);
+
+											showRestartDialog();
+										},
+									},
+								],
+							},
+							{
 								label: "Updates",
 								submenu: [
 									{
@@ -591,21 +606,6 @@ export class AppMenu {
 										checked: config.get("updates.showNotifications"),
 										click: ({ checked }: { checked: boolean }) => {
 											config.set("updates.showNotifications", checked);
-										},
-									},
-								],
-							},
-							{
-								label: "Window",
-								submenu: [
-									{
-										label: "Restrict Minimum Size",
-										type: "checkbox",
-										checked: config.get("window.restrictMinimumSize"),
-										click: ({ checked }: { checked: boolean }) => {
-											config.set("window.restrictMinimumSize", checked);
-
-											showRestartDialog();
 										},
 									},
 								],
