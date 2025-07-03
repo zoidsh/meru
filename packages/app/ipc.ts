@@ -2,6 +2,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { desktopCapturer, Notification } from "electron";
+import log from "electron-log";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
@@ -118,8 +119,12 @@ class Ipc {
 			});
 		});
 
+		log.info("notifications supported:", Notification.isSupported());
+
 		if (Notification.isSupported()) {
 			this.main.on("gmail.handleNewMessages", async (event, mails) => {
+				log.info("new gmail messages:", mails);
+
 				if (!config.get("notifications.enabled")) {
 					return;
 				}
