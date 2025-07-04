@@ -60,11 +60,9 @@ export class Account {
 	private registerSessionDisplayMediaRequestHandler() {
 		this.session.setDisplayMediaRequestHandler(
 			async (_request, callback) => {
-				const googleMeetApp = this.windows
-					.values()
-					.find((window) =>
-						window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
-					);
+				const googleMeetApp = Array.from(this.windows).find((window) =>
+					window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
+				);
 
 				if (!googleMeetApp) {
 					callback({});
