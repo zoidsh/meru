@@ -107,11 +107,13 @@ export class GoogleApp {
 		}
 	}
 
-	createView() {
+	createView(options?: WebContentsViewConstructorOptions) {
 		this.view = new WebContentsView({
 			...this.webContentsViewOptions,
+			...options,
 			webPreferences: {
 				...this.webContentsViewOptions?.webPreferences,
+				...options?.webPreferences,
 				session: this.session,
 			},
 		});
@@ -138,11 +140,11 @@ export class GoogleApp {
 			}
 		}
 
-		this.view.webContents.loadURL(this.url);
-
 		if (is.dev) {
 			this.view.webContents.openDevTools({ mode: "bottom" });
 		}
+
+		return this.view.webContents.loadURL(this.url);
 	}
 
 	private registerNavigationHandler() {
