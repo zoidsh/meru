@@ -46,7 +46,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"dayjs": "^1.11.13",
-		"electron": "^36.2.1",
+		"electron": "^37.2.0",
 		"electron-builder": "^26.0.12",
 		"electron-context-menu": "^4.1.0",
 		"electron-dl": "^4.0.0",
