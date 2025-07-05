@@ -31,7 +31,7 @@ class Accounts {
 		}
 	}
 
-	createViews() {
+	async createViews() {
 		const accounts = this.getAccounts().sort((a, b) => {
 			if (a.config.selected && !b.config.selected) {
 				return 1;
@@ -44,8 +44,18 @@ class Accounts {
 			return 0;
 		});
 
+		await Promise.all(
+			accounts.map((account) =>
+				account.instance.gmail.createView({
+					webPreferences: {
+						backgroundThrottling: false,
+					},
+				}),
+			),
+		);
+
 		for (const account of accounts) {
-			account.instance.gmail.createView();
+			account.instance.gmail.view.webContents.setBackgroundThrottling(true);
 		}
 	}
 
