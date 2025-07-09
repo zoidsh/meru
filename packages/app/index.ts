@@ -104,7 +104,10 @@ import { trial } from "./trial";
 	}
 
 	main.window.on("focus", () => {
-		if (!appState.isSettingsOpen) {
+		if (
+			!appState.isSettingsOpen &&
+			!process.argv.includes("--disable-bring-to-top-on-focus")
+		) {
 			accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
 		}
 	});
