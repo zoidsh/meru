@@ -1,9 +1,9 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { app, BrowserWindow, nativeTheme } from "electron";
+import { app, BrowserWindow, nativeTheme, screen } from "electron";
 import { accounts } from "@/accounts";
-import { config } from "@/config";
+import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -97,6 +97,15 @@ class Main {
 	init() {
 		const lastWindowState = config.get("window.lastState");
 		const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
+
+		if (
+			typeof lastWindowState.displayId === "number" &&
+			!screen
+				.getAllDisplays()
+				.some((display) => display.id === lastWindowState.displayId)
+		) {
+			lastWindowState.bounds = DEFAULT_WINDOW_STATE_BOUNDS;
+		}
 
 		this.window = new BrowserWindow({
 			title: app.name,
@@ -196,10 +205,14 @@ class Main {
 	}
 
 	saveWindowState() {
+		const bounds = main.window.getBounds();
+		const display = screen.getDisplayMatching(bounds);
+
 		config.set("window.lastState", {
 			bounds: main.window.getBounds(),
 			fullscreen: main.window.isFullScreen(),
 			maximized: main.window.isMaximized(),
+			displayId: display.id >= 0 ? display.id : null,
 		});
 	}
 

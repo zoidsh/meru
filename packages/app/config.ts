@@ -51,10 +51,18 @@ export type Config = {
 		};
 		fullscreen: boolean;
 		maximized: boolean;
+		displayId: number | null;
 	};
 	"window.restrictMinimumSize": boolean;
 	"trial.expired": boolean;
 	"googleApps.openInExternalBrowser": boolean;
+};
+
+export const DEFAULT_WINDOW_STATE_BOUNDS = {
+	width: 1280,
+	height: 800,
+	x: undefined,
+	y: undefined,
 };
 
 export const config = new Store<Config>({
@@ -106,14 +114,10 @@ export const config = new Store<Config>({
 		"gmail.reverseConversation": false,
 		"screenShare.useSystemPicker": true,
 		"window.lastState": {
-			bounds: {
-				width: 1280,
-				height: 800,
-				x: undefined,
-				y: undefined,
-			},
+			bounds: DEFAULT_WINDOW_STATE_BOUNDS,
 			fullscreen: false,
 			maximized: false,
+			displayId: null,
 		},
 		"window.restrictMinimumSize": true,
 		"trial.expired": false,
