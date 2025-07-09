@@ -103,11 +103,13 @@ import { trial } from "./trial";
 		});
 	}
 
-	main.window.on("focus", () => {
-		if (!appState.isSettingsOpen) {
-			accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
-		}
-	});
+	if (!app.commandLine.hasSwitch("disable-bring-to-top-on-focus")) {
+		main.window.on("focus", () => {
+			if (!appState.isSettingsOpen) {
+				accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
+			}
+		});
+	}
 
 	app.on("before-quit", () => {
 		main.saveWindowState();
