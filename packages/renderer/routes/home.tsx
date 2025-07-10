@@ -230,9 +230,13 @@ export function Home() {
 							</TableCell>
 							<TableCell className="w-48">{message.sender.name}</TableCell>
 							<TableCell>
-								<div className="truncate text-muted-foreground space-x-1.5">
-									<div className="text-foreground">{message.subject}</div>
-									<div>{message.summary}</div>
+								<div className="space-x-1.5">
+									<div className="text-foreground truncate">
+										{message.subject}
+									</div>
+									<div className="text-muted-foreground truncate">
+										{message.summary}
+									</div>
 								</div>
 							</TableCell>
 							<TableCell className="w-48">
