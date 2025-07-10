@@ -38,6 +38,7 @@
 		"@radix-ui/react-tabs": "^1.1.11",
 		"@radix-ui/react-tooltip": "^1.2.4",
 		"@tailwindcss/vite": "^4.1.5",
+		"@tanstack/react-table": "^8.21.3",
 		"@total-typescript/tsconfig": "^1.0.4",
 		"@types/bun": "^1.2.18",
 		"@types/react-dom": "^19.0.4",

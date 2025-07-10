@@ -3,13 +3,6 @@ import type { GMAIL_ACTION_CODE_MAP } from "@meru/shared/gmail";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
-import { ScrollArea } from "@meru/ui/components/scroll-area";
-import {
 	Table,
 	TableBody,
 	TableCell,
@@ -22,6 +15,7 @@ import {
 } from "@meru/ui/components/tooltip";
 import {
 	ArchiveIcon,
+	InboxIcon,
 	LoaderCircleIcon,
 	MailOpenIcon,
 	MailWarningIcon,
@@ -193,71 +187,75 @@ export function Home() {
 			);
 		}
 
-		return accounts
-			.filter((account) => account.config.unifiedInbox)
-			.map((account) => {
-				const table = (
-					<Table className="table-fixed">
-						<TableBody>
-							{account.gmail.feed.map((message) => (
-								<TableRow
-									key={message.id}
-									className="group hover:cursor-pointer"
-									onClick={() => {
-										ipc.main.send(
-											"accounts.openMessage",
-											account.config.id,
-											message.id,
-										);
-									}}
-								>
-									<TableCell className="w-48">
-										<div className="truncate">{message.sender.name}</div>
-									</TableCell>
-									<TableCell>
-										<div className="truncate text-muted-foreground space-x-1.5">
-											<span className="text-foreground">{message.subject}</span>
-											<span>{message.summary}</span>
-										</div>
-									</TableCell>
-									<TableCell className="w-48">
-										<div className="h-7 flex items-center justify-end">
-											<MessageActions
-												accountId={account.config.id}
-												messageId={message.id}
-											/>
-											<div className="text-muted-foreground group-hover:hidden group-hover:animate-out group-hover:fade-out">
-												{date(message.issuedAt).calendar()}
-											</div>
-										</div>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				);
+		let unifiedInbox = [];
 
-				return (
-					<Card key={account.config.id} className="min-w-4xl max-w-7xl mx-auto">
-						<CardHeader className="flex items-center gap-2">
-							<CardTitle>{account.config.label}</CardTitle>
-							<Badge variant="secondary">{account.gmail.feed.length}</Badge>
-						</CardHeader>
-						<CardContent>
-							{account.gmail.feed.length === 0 ? (
-								<div className="text-muted-foreground text-center text-sm">
-									All caught up! No unread emails.
+		for (const account of unifiedInboxAccounts) {
+			for (const message of account.gmail.feed) {
+				unifiedInbox.push({
+					account: account.config,
+					message,
+				});
+			}
+		}
+
+		unifiedInbox = unifiedInbox.sort((a, b) => {
+			return (
+				new Date(b.message.issuedAt).getTime() -
+				new Date(a.message.issuedAt).getTime()
+			);
+		});
+
+		if (unifiedInbox.length === 0) {
+			return (
+				<div className="absolute inset-0 flex flex-col justify-center items-center gap-2 text-muted-foreground">
+					<InboxIcon className="size-8" />
+					<div className="text-sm">All caught up! No unread emails.</div>
+				</div>
+			);
+		}
+
+		return (
+			<Table className="table-fixed">
+				<TableBody>
+					{unifiedInbox.map(({ account, message }) => (
+						<TableRow
+							key={message.id}
+							className="group hover:cursor-pointer"
+							onClick={() => {
+								ipc.main.send("accounts.openMessage", account.id, message.id);
+							}}
+						>
+							<TableCell className="w-32">
+								<Badge variant="secondary">{account.label}</Badge>
+							</TableCell>
+							<TableCell className="w-48">{message.sender.name}</TableCell>
+							<TableCell>
+								<div className="truncate text-muted-foreground space-x-1.5">
+									<div className="text-foreground">{message.subject}</div>
+									<div>{message.summary}</div>
 								</div>
-							) : account.gmail.feed.length > 4 ? (
-								<ScrollArea className="h-48">{table}</ScrollArea>
-							) : (
-								table
-							)}
-						</CardContent>
-					</Card>
-				);
-			});
+							</TableCell>
+							<TableCell className="w-48">
+								<div className="h-7 flex items-center justify-end">
+									<MessageActions
+										accountId={account.id}
+										messageId={message.id}
+									/>
+									<div className="text-muted-foreground group-hover:hidden group-hover:animate-out group-hover:fade-out">
+										{date(message.issuedAt).calendar()}
+									</div>
+								</div>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		);
 	};
 
-	return <div className="p-8 space-y-8">{renderContent()}</div>;
+	return (
+		<div className="p-8 absolute inset-0 flex items-center justify-center">
+			<div className="max-w-7xl">{renderContent()}</div>
+		</div>
+	);
 }
