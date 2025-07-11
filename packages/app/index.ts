@@ -21,7 +21,9 @@ import { trial } from "./trial";
 		app.commandLine.appendSwitch("gtk-version", "3");
 	}
 
-	app.setAppUserModelId(APP_ID);
+	if (platform.isWindows) {
+		app.setAppUserModelId(APP_ID);
+	}
 
 	if (!app.requestSingleInstanceLock()) {
 		app.quit();
@@ -54,6 +56,8 @@ import { trial } from "./trial";
 
 		return;
 	}
+
+	downloads.init();
 
 	await Promise.all([app.whenReady(), blocker.init()]);
 
