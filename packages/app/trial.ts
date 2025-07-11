@@ -19,9 +19,9 @@ class Trial {
 
 	daysLeft = 0;
 
-	async validate() {
+	async validate(): Promise<boolean> {
 		if (licenseKey.isValid || config.get("trial.expired")) {
-			return;
+			return true;
 		}
 
 		try {
@@ -64,13 +64,13 @@ class Trial {
 					return false;
 				}
 
-				return;
+				return true;
 			}
 
 			if (this.validationInterval) {
 				this.setDaysLeft(trial.daysLeft);
 
-				return;
+				return true;
 			}
 
 			licenseKey.isValid = true;
@@ -83,6 +83,8 @@ class Trial {
 				},
 				1000 * 60 * 60 * 3,
 			);
+
+			return true;
 		} catch (error) {
 			const { response } = await dialog.showMessageBox({
 				type: "error",

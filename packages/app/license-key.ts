@@ -132,7 +132,7 @@ class LicenseKey {
 		}
 	}
 
-	async validate() {
+	async validate(): Promise<boolean> {
 		try {
 			const licenseKey = config.get("licenseKey");
 
@@ -160,6 +160,8 @@ class LicenseKey {
 
 				this.isValid = true;
 			}
+
+			return true;
 		} catch (error) {
 			const showValidationError = (
 				options: Omit<MessageBoxOptions, "type" | "message">,
@@ -209,7 +211,7 @@ class LicenseKey {
 						app.relaunch();
 					}
 
-					return "failed";
+					return false;
 				}
 			}
 
@@ -224,7 +226,7 @@ class LicenseKey {
 				app.relaunch();
 			}
 
-			return "failed";
+			return false;
 		}
 	}
 }

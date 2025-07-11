@@ -43,15 +43,13 @@ import { trial } from "./trial";
 		return;
 	}
 
-	downloads.init();
-
-	if ((await licenseKey.validate()) === "failed") {
+	if (!(await licenseKey.validate())) {
 		app.quit();
 
 		return;
 	}
 
-	if ((await trial.validate()) === false) {
+	if (!(await trial.validate())) {
 		app.quit();
 
 		return;
