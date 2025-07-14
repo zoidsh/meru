@@ -172,7 +172,7 @@ export const config = new Store<Config>({
 		">=3.9.3": (store) => {
 			const lastWindowState = store.get("window.lastState");
 
-			if (typeof lastWindowState.displayId === "undefined") {
+			if (lastWindowState && typeof lastWindowState.displayId === "undefined") {
 				lastWindowState.displayId = null;
 
 				store.set("window.lastState", lastWindowState);
