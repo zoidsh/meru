@@ -68,7 +68,7 @@
 		"tailwind-merge": "^3.0.2",
 		"tailwindcss": "^4.1.5",
 		"tw-animate-css": "^1.2.5",
-		"typescript": "^5.8.2",
+		"typescript": "^5.8.3",
 		"use-debounce": "^10.0.4",
 		"vite": "^6.3.4",
 		"vite-plugin-singlefile": "^2.2.0",
