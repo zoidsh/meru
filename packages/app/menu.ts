@@ -921,7 +921,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Next Account (hidden shortcut 1)",
-						accelerator: "Cmd+Shift+]",
+						accelerator: "Command+Shift+]",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
@@ -932,7 +932,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Next Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Right",
+						accelerator: "Command+Option+Right",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
@@ -952,7 +952,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Previous Account (hidden shortcut 1)",
-						accelerator: "Cmd+Shift+[",
+						accelerator: "Command+Shift+[",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
@@ -963,7 +963,7 @@ export class AppMenu {
 					},
 					{
 						label: "Select Previous Account (hidden shortcut 2)",
-						accelerator: "Cmd+Option+Left",
+						accelerator: "Command+Option+Left",
 						visible: is.dev,
 						acceleratorWorksWhenHidden: true,
 						click: () => {
