@@ -80,6 +80,28 @@ export class AppMenu {
 			},
 		];
 
+		const zoomIn = () => {
+			const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
+
+			for (const [_accountId, instance] of accounts.instances) {
+				instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+			}
+
+			config.set("gmail.zoomFactor", zoomFactor);
+		};
+
+		const zoomOut = () => {
+			const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
+
+			if (zoomFactor > 0) {
+				for (const [_accountId, instance] of accounts.instances) {
+					instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+				}
+
+				config.set("gmail.zoomFactor", zoomFactor);
+			}
+		};
+
 		const template: MenuItemConstructorOptions[] = [
 			{
 				label: app.name,
@@ -827,30 +849,24 @@ export class AppMenu {
 					{
 						label: "Zoom In",
 						accelerator: "CommandOrControl+Plus",
-						click: () => {
-							const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
-
-							for (const [_accountId, instance] of accounts.instances) {
-								instance.gmail.view.webContents.setZoomFactor(zoomFactor);
-							}
-
-							config.set("gmail.zoomFactor", zoomFactor);
-						},
+						click: zoomIn,
+					},
+					{
+						label: "Zoom In (hidden shortcut 1)",
+						visible: is.dev,
+						acceleratorWorksWhenHidden: true,
+						accelerator: "CommandOrControl+numadd",
+						click: zoomIn,
 					},
 					{
 						label: "Zoom Out",
 						accelerator: "CommandOrControl+-",
-						click: () => {
-							const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
-
-							if (zoomFactor > 0) {
-								for (const [_accountId, instance] of accounts.instances) {
-									instance.gmail.view.webContents.setZoomFactor(zoomFactor);
-								}
-
-								config.set("gmail.zoomFactor", zoomFactor);
-							}
-						},
+						click: zoomOut,
+					},
+					{
+						label: "Zoom Out (hidden shortcut 1)",
+						accelerator: "CommandOrControl+numsub",
+						click: zoomOut,
 					},
 					{
 						type: "separator",
