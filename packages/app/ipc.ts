@@ -44,6 +44,14 @@ class Ipc {
 			accounts.selectAccount(selectedAccountId);
 		});
 
+		this.main.on("accounts.selectPreviousAccount", () => {
+			accounts.selectPreviousAccount();
+		});
+
+		this.main.on("accounts.selectNextAccount", () => {
+			accounts.selectNextAccount();
+		});
+
 		this.main.on("accounts.addAccount", (_event, accountDetails) => {
 			accounts.addAccount(accountDetails);
 		});

@@ -30,6 +30,8 @@ export type NotificationSound =
 export type IpcMainEvents =
 	| {
 			"accounts.selectAccount": [accountId: AccountConfig["id"]];
+			"accounts.selectNextAccount": [];
+			"accounts.selectPreviousAccount": [];
 			"accounts.addAccount": [account: AccountConfigInput];
 			"accounts.removeAccount": [accountId: AccountConfig["id"]];
 			"accounts.updateAccount": [account: AccountConfig];
