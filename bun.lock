@@ -96,6 +96,7 @@
     },
   },
   "patchedDependencies": {
+    "conf@14.0.0": "patches/conf@14.0.0.patch",
     "electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch",
   },
   "packages": {

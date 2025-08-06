@@ -126,8 +126,8 @@
 	},
 	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 	"patchedDependencies": {
-		"conf@13.1.0": "patches/conf@13.1.0.patch",
-		"electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch"
+		"electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch",
+		"conf@14.0.0": "patches/conf@14.0.0.patch"
 	},
 	"private": true,
 	"productName": "Meru",
