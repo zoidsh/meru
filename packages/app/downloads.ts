@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
 import path from "node:path";
+import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
 import { shell } from "electron";
 import electronDl from "electron-dl";
@@ -68,54 +68,23 @@ class Downloads {
 			onStarted: openFolderWhenDone ? undefined : handleStarted,
 		});
 
-		ipc.main.handle("downloads.getHistory", () =>
-			config.get("downloads.history"),
-		);
+		const cleanupDownloadsHistory = () => {
+			const history = config.get("downloads.history");
 
-		ipc.main.handle("downloads.openFile", async (_event, filePath) => {
-			const error = await shell.openPath(filePath);
+			const now = Date.now();
 
-			return {
-				error: error
-					? fs.existsSync(filePath)
-						? error
-						: "File does not exist"
-					: null,
-			};
-		});
-
-		ipc.main.handle("downloads.showFileInFolder", (_event, filePath) => {
-			if (!fs.existsSync(filePath)) {
-				return {
-					error: "File does not exist",
-				};
-			}
-
-			shell.showItemInFolder(filePath);
-
-			return { error: null };
-		});
-
-		ipc.main.on("downloads.removeHistoryItem", (_event, itemId) => {
-			config.set(
-				"downloads.history",
-				config.get("downloads.history").filter((item) => item.id !== itemId),
+			const cleanedUpHistory = history.filter(
+				(item) => now - item.createdAt * 1000 < ms("30d"),
 			);
-		});
 
-		ipc.main.on("downloads.clearHistory", () => {
-			config.set("downloads.history", []);
-		});
-
-		config.onDidChange("downloads.history", (downloadHistory) => {
-			if (downloadHistory) {
-				ipc.renderer.send(
-					main.window.webContents,
-					"downloads.historyChanged",
-					downloadHistory,
-				);
+			if (cleanedUpHistory.length !== history.length) {
+				config.set("downloads.history", cleanedUpHistory);
 			}
-		});
+		};
+
+		cleanupDownloadsHistory();
+
+		setInterval(cleanupDownloadsHistory, ms("24h"));
 	}
 }
 

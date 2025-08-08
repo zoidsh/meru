@@ -1,7 +1,8 @@
+import fs from "node:fs";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { desktopCapturer, Notification } from "electron";
+import { desktopCapturer, Notification, shell } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
@@ -245,6 +246,55 @@ class Ipc {
 				}
 			});
 		}
+
+		ipc.main.handle("downloads.getHistory", () =>
+			config.get("downloads.history"),
+		);
+
+		ipc.main.handle("downloads.openFile", async (_event, filePath) => {
+			const error = await shell.openPath(filePath);
+
+			return {
+				error: error
+					? fs.existsSync(filePath)
+						? error
+						: "File does not exist"
+					: null,
+			};
+		});
+
+		ipc.main.handle("downloads.showFileInFolder", (_event, filePath) => {
+			if (!fs.existsSync(filePath)) {
+				return {
+					error: "File does not exist",
+				};
+			}
+
+			shell.showItemInFolder(filePath);
+
+			return { error: null };
+		});
+
+		ipc.main.on("downloads.removeHistoryItem", (_event, itemId) => {
+			config.set(
+				"downloads.history",
+				config.get("downloads.history").filter((item) => item.id !== itemId),
+			);
+		});
+
+		ipc.main.on("downloads.clearHistory", () => {
+			config.set("downloads.history", []);
+		});
+
+		config.onDidChange("downloads.history", (downloadHistory) => {
+			if (downloadHistory) {
+				ipc.renderer.send(
+					main.window.webContents,
+					"downloads.historyChanged",
+					downloadHistory,
+				);
+			}
+		});
 	}
 }
 
