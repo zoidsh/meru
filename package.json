@@ -39,7 +39,7 @@
 		"electron-store": "^10.0.1",
 		"electron-updater": "^6.6.2",
 		"element-ready": "^7.0.0",
-		"esbuild": "^0.25.8",
+		"esbuild": "^0.25.10",
 		"lefthook": "^1.11.3",
 		"lucide-react": "^0.475.0",
 		"node-machine-id": "^1.1.12",
