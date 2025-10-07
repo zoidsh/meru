@@ -57,6 +57,20 @@ class Accounts {
 		for (const account of accounts) {
 			account.instance.gmail.view.webContents.setBackgroundThrottling(true);
 		}
+
+		// When launching minimized, the selected account view doesn't render
+		// unless we remove and re-add it after the window is shown
+		if (main.shouldLaunchMinimized) {
+			main.window.once("show", () => {
+				main.window.contentView.removeChildView(
+					this.getSelectedAccount().instance.gmail.view,
+				);
+
+				main.window.contentView.addChildView(
+					this.getSelectedAccount().instance.gmail.view,
+				);
+			});
+		}
 	}
 
 	getAccountConfigs() {
