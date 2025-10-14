@@ -3,7 +3,10 @@ import {
 	APP_TITLEBAR_HEIGHT,
 	GOOGLE_ACCOUNTS_URL,
 } from "@meru/shared/constants";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import {
+	GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
+	GMAIL_URL,
+} from "@meru/shared/gmail";
 import {
 	BrowserWindow,
 	dialog,
@@ -280,6 +283,62 @@ export class GoogleApp {
 							}
 						}
 					}
+				}
+
+				const gmailDelegatedAccountId = url.match(
+					GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
+				)?.[1];
+
+				if (gmailDelegatedAccountId) {
+					window.webContents.loadURL(url);
+
+					config.set(
+						"accounts",
+						config.get("accounts").map((account) => {
+							if (account.id === this.accountId) {
+								return {
+									...account,
+									gmail: {
+										delegatedAccountId: gmailDelegatedAccountId,
+									},
+								};
+							}
+
+							return account;
+						}),
+					);
+
+					return {
+						action: "deny",
+					};
+				}
+
+				if (url === `${GMAIL_URL}/`) {
+					window.webContents.loadURL(url);
+
+					const account = accounts.getAccount(this.accountId);
+
+					if (account.config.gmail.delegatedAccountId) {
+						config.set(
+							"accounts",
+							config.get("accounts").map((account) => {
+								if (account.id === this.accountId) {
+									return {
+										...account,
+										gmail: {
+											delegatedAccountId: null,
+										},
+									};
+								}
+
+								return account;
+							}),
+						);
+					}
+
+					return {
+						action: "deny",
+					};
 				}
 
 				return {

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import { createGmailDelegatedAccountUrl, GMAIL_URL } from "@meru/shared/gmail";
 import { app, BrowserWindow } from "electron";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -42,7 +42,11 @@ export class Gmail extends GoogleApp {
 		accountId,
 		session,
 		unreadCountEnabled,
-	}: { unreadCountEnabled: boolean } & Omit<GoogleAppOptions, "url">) {
+		delegatedAccountId,
+	}: { unreadCountEnabled: boolean; delegatedAccountId: string | null } & Omit<
+		GoogleAppOptions,
+		"url"
+	>) {
 		const searchParams = new URLSearchParams();
 
 		if (config.get("gmail.hideGmailLogo")) {
@@ -59,7 +63,11 @@ export class Gmail extends GoogleApp {
 
 		super({
 			accountId,
-			url: `${GMAIL_URL}/?${searchParams}`,
+			url: `${
+				delegatedAccountId
+					? createGmailDelegatedAccountUrl(delegatedAccountId)
+					: GMAIL_URL
+			}/?${searchParams}`,
 			session,
 			webContentsViewOptions: {
 				webPreferences: {

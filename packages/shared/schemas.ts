@@ -7,6 +7,9 @@ export const accountConfigSchema = z.object({
 	selected: z.boolean(),
 	unreadBadge: z.boolean(),
 	notifications: z.boolean(),
+	gmail: z.object({
+		delegatedAccountId: z.string().nullable(),
+	}),
 });
 
 export type AccountConfig = z.infer<typeof accountConfigSchema>;

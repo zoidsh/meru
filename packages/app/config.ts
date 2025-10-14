@@ -76,6 +76,9 @@ export const config = new Store<Config>({
 				selected: true,
 				unreadBadge: true,
 				notifications: true,
+				gmail: {
+					delegatedAccountId: null,
+				},
 			},
 		],
 		"accounts.unreadBadge": true,
@@ -176,6 +179,27 @@ export const config = new Store<Config>({
 				lastWindowState.displayId = null;
 
 				store.set("window.lastState", lastWindowState);
+			}
+		},
+		">=3.11.0": (store) => {
+			const accounts = store.get("accounts");
+
+			if (Array.isArray(accounts)) {
+				let accountsMigrated = false;
+
+				for (const account of accounts) {
+					if (typeof account.gmail === "undefined") {
+						account.gmail = {
+							delegatedAccountId: null,
+						};
+
+						accountsMigrated = true;
+					}
+				}
+
+				if (accountsMigrated) {
+					store.set("accounts", accounts);
+				}
 			}
 		},
 	},

@@ -36,6 +36,7 @@ export class Account {
 			accountId: accountConfig.id,
 			session: this.session,
 			unreadCountEnabled: accountConfig.unreadBadge,
+			delegatedAccountId: accountConfig.gmail.delegatedAccountId,
 		});
 	}
 

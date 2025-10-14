@@ -199,6 +199,9 @@ class Accounts {
 		const createdAccount: AccountConfig = {
 			id: randomUUID(),
 			selected: false,
+			gmail: {
+				delegatedAccountId: null,
+			},
 			...accountDetails,
 		};
 

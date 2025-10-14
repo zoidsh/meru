@@ -7,6 +7,14 @@ export const GMAIL_ACTION_CODE_MAP = {
 
 export const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
+export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(
+	`${GMAIL_URL}/d/([^/]+)`,
+);
+
+export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
+	return `${GMAIL_URL}/d/${delegatedAccountId}`;
+}
+
 export interface GmailMail {
 	messageId: string;
 	subject: string;
