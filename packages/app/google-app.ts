@@ -373,6 +373,8 @@ export class GoogleApp {
 
 				accounts.hide();
 
+				main.navigate("/accounts");
+
 				ipc.renderer.send(
 					main.window.webContents,
 					"accounts.openAddAccountDialog",
