@@ -1,6 +1,6 @@
 {
 	"name": "meru",
-	"version": "3.10.2",
+	"version": "3.11.0",
 	"author": "Tim Cheung <tim@meru.so>",
 	"repository": "zoidsh/meru",
 	"main": "build-js/index.js",
