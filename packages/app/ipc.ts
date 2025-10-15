@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { desktopCapturer, Notification, shell } from "electron";
+import { desktopCapturer, Notification, nativeImage, shell } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
@@ -294,6 +294,13 @@ class Ipc {
 					downloadHistory,
 				);
 			}
+		});
+
+		ipc.main.on("taskbar.setOverlayIcon", (_event, dataUrl) => {
+			main.window.setOverlayIcon(
+				nativeImage.createFromDataURL(dataUrl),
+				"You have unread messages",
+			);
 		});
 	}
 }

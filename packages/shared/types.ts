@@ -51,6 +51,7 @@ export type IpcMainEvents =
 			];
 			"downloads.removeHistoryItem": [itemId: string];
 			"downloads.clearHistory": [];
+			"taskbar.setOverlayIcon": [dataUrl: string];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
@@ -94,4 +95,5 @@ export type IpcRendererEvent = {
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 	"trial.daysLeftChanged": [daysLeft: number];
 	"notifications.playSound": [sound: NotificationSound];
+	"taskbar.setOverlayIcon": [unreadCount: number];
 };

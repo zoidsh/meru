@@ -132,14 +132,24 @@ export class Gmail extends GoogleApp {
 			() => {
 				const totalUnreadCount = accounts.getTotalUnreadCount();
 
-				if (platform.isMacOS && app.dock && dockUnreadBadge) {
-					app.dock.setBadge(
-						totalUnreadCount ? totalUnreadCount.toString() : "",
-					);
-				}
-
-				if (platform.isLinux && dockUnreadBadge) {
-					app.badgeCount = totalUnreadCount;
+				if (dockUnreadBadge) {
+					if (platform.isMacOS && app.dock) {
+						app.dock.setBadge(
+							totalUnreadCount ? totalUnreadCount.toString() : "",
+						);
+					} else if (platform.isLinux) {
+						app.badgeCount = totalUnreadCount;
+					} else if (platform.isWindows) {
+						if (totalUnreadCount) {
+							ipc.renderer.send(
+								main.window.webContents,
+								"taskbar.setOverlayIcon",
+								totalUnreadCount,
+							);
+						} else {
+							main.window.setOverlayIcon(null, "");
+						}
+					}
 				}
 
 				appTray.updateUnreadStatus(totalUnreadCount);
