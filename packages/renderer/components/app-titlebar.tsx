@@ -21,6 +21,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
 import {
 	useAccountsStore,
+	useAppUpdaterStore,
 	useDownloadsStore,
 	useFindInPageStore,
 	useSettingsStore,
@@ -245,89 +246,116 @@ export function AppTitlebar() {
 
 	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
+	const appUpdateVersion = useAppUpdaterStore((state) => state.version);
+	const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
+
 	if (!accounts) {
 		return;
 	}
 
-	return (
-		<div
-			className="relative bg-background border-b draggable select-none"
-			style={{ height: APP_TITLEBAR_HEIGHT }}
-		>
-			{isSettingsOpen && (
-				<div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
+	const renderContent = () => {
+		if (appUpdateVersion) {
+			return (
+				<div className="h-full flex justify-center items-center text-xs gap-4">
+					<div>An update for Meru is available and ready to install.</div>
+					<div className="flex gap-2">
+						<Button
+							size="sm"
+							className="text-xs h-7 draggable-none"
+							onClick={() => {
+								ipc.main.send("appUpdater.quitAndInstall");
+							}}
+						>
+							Restart Now
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							className="text-xs h-7 draggable-none"
+							onClick={() => {
+								dismissAppUpdate();
+							}}
+						>
+							Later
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="text-xs h-7 draggable-none"
+							onClick={() => {
+								ipc.main.send("appUpdater.openReleaseNotes", appUpdateVersion);
+							}}
+						>
+							What's New?
+						</Button>
+					</div>
+				</div>
+			);
+		}
+
+		if (isSettingsOpen) {
+			return (
+				<div className="h-full flex items-center justify-center text-xs font-medium text-muted-foreground">
 					Meru
 				</div>
-			)}
-			<div
-				className="absolute top-0 bottom-0 flex items-center justify-end gap-4 px-1.5"
-				style={{
-					left: "env(titlebar-area-x, 0)",
-					width: "env(titlebar-area-width, 100%)",
-				}}
-			>
-				{!isSettingsOpen && (
-					<>
-						<div className="flex items-center gap-1">
+			);
+		}
+
+		return (
+			<div className="h-full flex items-center justify-end gap-4">
+				<div className="flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7 draggable-none"
+						onClick={() => {
+							ipc.main.send("gmail.moveNavigationHistory", "back");
+						}}
+						disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
+					>
+						<ArrowLeftIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7 draggable-none"
+						onClick={() => {
+							ipc.main.send("gmail.moveNavigationHistory", "forward");
+						}}
+						disabled={!selectedAccount?.gmail.navigationHistory.canGoForward}
+					>
+						<ArrowRightIcon />
+					</Button>
+				</div>
+				<div className="flex-1 flex gap-2">
+					{accounts.length > 1 &&
+						accounts.map((account) => (
 							<Button
-								variant="ghost"
-								size="icon"
-								className="size-7 draggable-none"
+								key={account.config.id}
+								variant={account.config.selected ? "secondary" : "ghost"}
+								size="sm"
+								className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 								onClick={() => {
-									ipc.main.send("gmail.moveNavigationHistory", "back");
+									ipc.main.send("accounts.selectAccount", account.config.id);
 								}}
-								disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
 							>
-								<ArrowLeftIcon />
+								{account.config.label}
+								{account.gmail.attentionRequired && (
+									<CircleAlertIcon className="size-3.5 text-yellow-400" />
+								)}
+								{!account.gmail.attentionRequired &&
+								unreadBadge &&
+								account.gmail.unreadCount ? (
+									<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
+										{account.gmail.unreadCount.toLocaleString()}
+									</div>
+								) : null}
 							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="size-7 draggable-none"
-								onClick={() => {
-									ipc.main.send("gmail.moveNavigationHistory", "forward");
-								}}
-								disabled={
-									!selectedAccount?.gmail.navigationHistory.canGoForward
-								}
-							>
-								<ArrowRightIcon />
-							</Button>
-						</div>
-						<div className="flex-1 flex gap-2">
-							{accounts.length > 1 &&
-								accounts.map((account) => (
-									<Button
-										key={account.config.id}
-										variant={account.config.selected ? "secondary" : "ghost"}
-										size="sm"
-										className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
-										onClick={() => {
-											ipc.main.send(
-												"accounts.selectAccount",
-												account.config.id,
-											);
-										}}
-									>
-										{account.config.label}
-										{account.gmail.attentionRequired && (
-											<CircleAlertIcon className="size-3.5 text-yellow-400" />
-										)}
-										{!account.gmail.attentionRequired &&
-										unreadBadge &&
-										account.gmail.unreadCount ? (
-											<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-												{account.gmail.unreadCount.toLocaleString()}
-											</div>
-										) : null}
-									</Button>
-								))}
-						</div>
-						<Trial />
-						<FindInPage />
-						<Download />
-					</>
-				)}
+						))}
+				</div>
+				<Trial />
+				<FindInPage />
+				<Download />
 				{window.electron.process.platform !== "darwin" && (
 					<div className="draggable-none">
 						<Button
@@ -342,6 +370,23 @@ export function AppTitlebar() {
 						</Button>
 					</div>
 				)}
+			</div>
+		);
+	};
+
+	return (
+		<div
+			className="relative bg-background border-b draggable select-none"
+			style={{ height: APP_TITLEBAR_HEIGHT }}
+		>
+			<div
+				className="absolute top-0 bottom-0 px-1.5"
+				style={{
+					left: "env(titlebar-area-x, 0)",
+					width: "env(titlebar-area-width, 100%)",
+				}}
+			>
+				{renderContent()}
 			</div>
 		</div>
 	);

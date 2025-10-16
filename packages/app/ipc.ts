@@ -10,6 +10,8 @@ import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { createNotification } from "./notifications";
+import { appUpdater } from "./updater";
+import { openExternalUrl } from "./url";
 
 class Ipc {
 	main = new IpcListener<IpcMainEvents>();
@@ -300,6 +302,17 @@ class Ipc {
 			main.window.setOverlayIcon(
 				nativeImage.createFromDataURL(dataUrl),
 				"You have unread messages",
+			);
+		});
+
+		ipc.main.on("appUpdater.quitAndInstall", () => {
+			appUpdater.quitAndInstall();
+		});
+
+		ipc.main.on("appUpdater.openReleaseNotes", (_event, version) => {
+			openExternalUrl(
+				`https://github.com/zoidsh/meru/releases/tag/${version}`,
+				true,
 			);
 		});
 	}

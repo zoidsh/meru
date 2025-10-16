@@ -138,3 +138,17 @@ ipc.renderer.on("downloads.itemCompleted", (_event, itemId) => {
 		itemCompleted: itemId,
 	}));
 });
+
+export const useAppUpdaterStore = create<{
+	version: string | null;
+	dismiss: () => void;
+}>((set) => ({
+	version: null,
+	dismiss: () => {
+		set({ version: null });
+	},
+}));
+
+ipc.renderer.on("appUpdater.updateAvailable", (_event, version) => {
+	useAppUpdaterStore.setState({ version });
+});

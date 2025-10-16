@@ -52,6 +52,8 @@ export type IpcMainEvents =
 			"downloads.removeHistoryItem": [itemId: string];
 			"downloads.clearHistory": [];
 			"taskbar.setOverlayIcon": [dataUrl: string];
+			"appUpdater.quitAndInstall": [];
+			"appUpdater.openReleaseNotes": [version: string];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
@@ -96,4 +98,5 @@ export type IpcRendererEvent = {
 	"trial.daysLeftChanged": [daysLeft: number];
 	"notifications.playSound": [sound: NotificationSound];
 	"taskbar.setOverlayIcon": [unreadCount: number];
+	"appUpdater.updateAvailable": [version: string];
 };

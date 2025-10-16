@@ -2,13 +2,22 @@ import { is } from "@electron-toolkit/utils";
 import log from "electron-log";
 import { autoUpdater } from "electron-updater";
 import { config } from "@/config";
+import { ipc } from "./ipc";
+import { main } from "./main";
 
 class AppUpdater {
-	private performUpdateCheck() {
-		if (config.get("updates.showNotifications")) {
-			autoUpdater.checkForUpdatesAndNotify();
-		} else {
-			autoUpdater.checkForUpdates();
+	private async performUpdateCheck() {
+		const updateCheckResult = await autoUpdater.checkForUpdates();
+
+		if (
+			updateCheckResult?.isUpdateAvailable &&
+			config.get("updates.showNotifications")
+		) {
+			ipc.renderer.send(
+				main.window.webContents,
+				"appUpdater.updateAvailable",
+				updateCheckResult.updateInfo.version,
+			);
 		}
 	}
 
@@ -36,6 +45,10 @@ class AppUpdater {
 		}
 
 		this.performUpdateCheck();
+	}
+
+	quitAndInstall() {
+		autoUpdater.quitAndInstall();
 	}
 }
 
