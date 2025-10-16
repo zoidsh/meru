@@ -108,4 +108,6 @@ export type IpcRendererEvent = {
 	"notifications.playSound": [sound: NotificationSound];
 	"taskbar.setOverlayIcon": [unreadCount: number];
 	"appUpdater.updateAvailable": [version: string];
+	"googleMeet.toggleMicrophone": [];
+	"googleMeet.toggleCamera": [];
 };

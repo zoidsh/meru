@@ -1,3 +1,4 @@
+import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import {
 	APP_TITLEBAR_HEIGHT,
@@ -10,6 +11,7 @@ import {
 import {
 	BrowserWindow,
 	dialog,
+	globalShortcut,
 	type Session,
 	WebContentsView,
 	type WebContentsViewConstructorOptions,
@@ -230,6 +232,14 @@ export class GoogleApp {
 		main.window.contentView.removeChildView(this.view);
 	}
 
+	private getGoogleAppPreloadScriptPath(googleApp: string) {
+		switch (googleApp) {
+			case "meet": {
+				return path.join(__dirname, `google-${googleApp}-preload`, "index.js");
+			}
+		}
+	}
+
 	registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
 		window.webContents.setWindowOpenHandler(({ url, disposition }) => {
 			if (url === "about:blank") {
@@ -253,17 +263,19 @@ export class GoogleApp {
 				};
 			}
 
-			const isSupportedGoogleApp = SUPPORTED_GOOGLE_APPS_URL_REGEXP.test(url);
+			const supportedGoogleAppMatch = url.match(
+				SUPPORTED_GOOGLE_APPS_URL_REGEXP,
+			);
 
 			if (
 				(url.startsWith(GMAIL_URL) ||
 					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-					(isSupportedGoogleApp &&
+					(supportedGoogleAppMatch &&
 						!config.get("googleApps.openInExternalBrowser") &&
 						licenseKey.isValid)) &&
 				disposition !== "background-tab"
 			) {
-				if (isSupportedGoogleApp) {
+				if (supportedGoogleAppMatch) {
 					const account = accounts.getAccount(this.accountId);
 
 					if (account.instance.windows.size > 0) {
@@ -341,6 +353,8 @@ export class GoogleApp {
 					};
 				}
 
+				const googleApp = supportedGoogleAppMatch?.[1];
+
 				return {
 					action: "allow",
 					createWindow: (options) => {
@@ -349,6 +363,11 @@ export class GoogleApp {
 							autoHideMenuBar: true,
 							width: 1280,
 							height: 800,
+							webPreferences: {
+								preload: googleApp
+									? this.getGoogleAppPreloadScriptPath(googleApp)
+									: undefined,
+							},
 						});
 
 						this.registerWindowOpenHandler(window);
@@ -359,8 +378,31 @@ export class GoogleApp {
 
 						account.instance.windows.add(window);
 
+						if (googleApp === "meet") {
+							window.once("show", () => {
+								globalShortcut.register("CommandOrControl+Shift+1", () => {
+									ipc.renderer.send(
+										window.webContents,
+										"googleMeet.toggleMicrophone",
+									);
+								});
+
+								globalShortcut.register("CommandOrControl+Shift+2", () => {
+									ipc.renderer.send(
+										window.webContents,
+										"googleMeet.toggleCamera",
+									);
+								});
+							});
+						}
+
 						window.once("closed", () => {
 							account.instance.windows.delete(window);
+
+							if (googleApp === "meet") {
+								globalShortcut.unregister("CommandOrControl+Shift+1");
+								globalShortcut.unregister("CommandOrControl+Shift+2");
+							}
 						});
 
 						return window.webContents;
@@ -384,7 +426,7 @@ export class GoogleApp {
 			) {
 				window.webContents.downloadURL(url);
 			} else {
-				openExternalUrl(url, isSupportedGoogleApp);
+				openExternalUrl(url, Boolean(supportedGoogleAppMatch));
 			}
 
 			return {

@@ -19,6 +19,7 @@ import { trial } from "./trial";
 (async () => {
 	if (platform.isLinux) {
 		app.commandLine.appendSwitch("gtk-version", "3");
+		app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
 	}
 
 	if (platform.isWindows) {

@@ -76,6 +76,10 @@
       "name": "@meru/gmail-preload",
       "version": "0.0.0",
     },
+    "packages/google-meet-preload": {
+      "name": "@meru/meet-preload",
+      "version": "0.0.0",
+    },
     "packages/renderer": {
       "name": "@meru/renderer",
       "version": "0.0.0",
@@ -287,6 +291,8 @@
     "@meru/desktop-sources": ["@meru/desktop-sources@workspace:packages/desktop-sources"],
 
     "@meru/gmail-preload": ["@meru/gmail-preload@workspace:packages/gmail-preload"],
+
+    "@meru/meet-preload": ["@meru/meet-preload@workspace:packages/google-meet-preload"],
 
     "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 
