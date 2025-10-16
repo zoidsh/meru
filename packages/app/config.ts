@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
-import type { AccountConfigs } from "@meru/shared/schemas";
+import type { AccountConfigs, GmailSavedSearches } from "@meru/shared/schemas";
 import type { DownloadItem, NotificationSound } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
@@ -41,6 +41,7 @@ export type Config = {
 	"gmail.hideGmailLogo": boolean;
 	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
+	"gmail.savedSearches": GmailSavedSearches;
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {
@@ -115,6 +116,7 @@ export const config = new Store<Config>({
 		"gmail.hideGmailLogo": true,
 		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
+		"gmail.savedSearches": [],
 		"screenShare.useSystemPicker": true,
 		"window.lastState": {
 			bounds: DEFAULT_WINDOW_STATE_BOUNDS,

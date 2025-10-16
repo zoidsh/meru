@@ -189,4 +189,10 @@ export class Gmail extends GoogleApp {
 			window.focus();
 		});
 	}
+
+	search(query: string) {
+		this.view.webContents.executeJavaScript(
+			`window.location.hash = "#search/${query}"`,
+		);
+	}
 }

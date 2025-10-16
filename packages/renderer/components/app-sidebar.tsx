@@ -1,9 +1,15 @@
+import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { Button } from "@meru/ui/components/button";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
 import { useLocation } from "wouter";
 
 const navItems: NavItemProps[] = [
+	{
+		label: "Saved Searches",
+		href: "/saved-searches",
+		disabled: !licenseKeySearchParam,
+	},
 	{ label: "Download History", href: "/download-history" },
 ];
 
@@ -15,12 +21,13 @@ const navSettingsItems: NavItemProps[] = [
 type NavItemProps = {
 	label: string;
 	href: string;
+	disabled?: boolean;
 };
 
 export function AppSidebar() {
 	const [location, navigate] = useLocation();
 
-	const renderNavItem = ({ label, href }: NavItemProps) => {
+	const renderNavItem = ({ label, href, disabled }: NavItemProps) => {
 		return (
 			<li key={label}>
 				<Button
@@ -32,6 +39,7 @@ export function AppSidebar() {
 							location !== href,
 					})}
 					variant={location === href ? "secondary" : "ghost"}
+					disabled={disabled}
 				>
 					{label}
 				</Button>

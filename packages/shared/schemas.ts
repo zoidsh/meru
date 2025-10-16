@@ -30,3 +30,19 @@ export type AccountInstance = {
 };
 
 export type AccountInstances = AccountInstance[];
+
+export const gmailSavedSearchSchema = z.object({
+	id: z.string(),
+	label: z.string().min(1),
+	query: z.string().min(1),
+});
+
+export const gmailSavedSearchInputSchema = gmailSavedSearchSchema.omit({
+	id: true,
+});
+
+export type GmailSavedSearchInput = z.infer<typeof gmailSavedSearchInputSchema>;
+
+export type GmailSavedSearch = z.infer<typeof gmailSavedSearchSchema>;
+
+export type GmailSavedSearches = GmailSavedSearch[];

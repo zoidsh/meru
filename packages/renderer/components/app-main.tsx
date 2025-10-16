@@ -9,6 +9,7 @@ import { useSettingsStore } from "@/lib/stores";
 import { Accounts } from "@/routes/accounts";
 import { DownloadHistory } from "@/routes/download-history";
 import { License } from "@/routes/license";
+import { SavedSearches } from "@/routes/saved-searches";
 import { AppSidebar } from "./app-sidebar";
 
 ipc.renderer.on("navigate", (_event, to) => {
@@ -42,6 +43,7 @@ export function AppMain() {
 				<div className="flex justify-center gap-12 py-8">
 					<AppSidebar />
 					<div className="w-xl space-y-6">
+						<Route path="/saved-searches" component={SavedSearches} />
 						<Route path="/download-history" component={DownloadHistory} />
 						<Route path="/accounts" component={Accounts} />
 						<Route path="/license" component={License} />

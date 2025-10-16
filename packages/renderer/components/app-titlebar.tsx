@@ -1,4 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
+import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import type { DownloadItem } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
@@ -11,9 +12,11 @@ import {
 	ChevronDownIcon,
 	ChevronUpIcon,
 	CircleAlertIcon,
+	CircleXIcon,
 	DownloadIcon,
 	EllipsisVerticalIcon,
 	FileCheckIcon,
+	MailSearchIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -24,6 +27,7 @@ import {
 	useAppUpdaterStore,
 	useDownloadsStore,
 	useFindInPageStore,
+	useGmailSavedSearchesStore,
 	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
@@ -249,9 +253,58 @@ export function AppTitlebar() {
 	const appUpdateVersion = useAppUpdaterStore((state) => state.version);
 	const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
 
+	const savedSearches = useGmailSavedSearchesStore(
+		(state) => state.savedSearches,
+	);
+
+	const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] =
+		useState(false);
+
 	if (!accounts) {
 		return;
 	}
+
+	const renderAccounts = () => {
+		if (isGmailSavedSearchesOpen) {
+			return savedSearches.map((savedSearch) => (
+				<Button
+					key={savedSearch.id}
+					variant="outline"
+					size="sm"
+					className="text-xs h-7 draggable-none"
+					onClick={() => {
+						ipc.main.send("gmail.search", savedSearch.query);
+					}}
+				>
+					{savedSearch.label}
+				</Button>
+			));
+		}
+
+		return accounts.map((account) => (
+			<Button
+				key={account.config.id}
+				variant={account.config.selected ? "secondary" : "ghost"}
+				size="sm"
+				className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
+				onClick={() => {
+					ipc.main.send("accounts.selectAccount", account.config.id);
+				}}
+			>
+				{account.config.label}
+				{account.gmail.attentionRequired && (
+					<CircleAlertIcon className="size-3.5 text-yellow-400" />
+				)}
+				{!account.gmail.attentionRequired &&
+				unreadBadge &&
+				account.gmail.unreadCount ? (
+					<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
+						{account.gmail.unreadCount.toLocaleString()}
+					</div>
+				) : null}
+			</Button>
+		));
+	};
 
 	const renderContent = () => {
 		if (appUpdateVersion) {
@@ -326,33 +379,20 @@ export function AppTitlebar() {
 					>
 						<ArrowRightIcon />
 					</Button>
+					{savedSearches.length > 0 && licenseKeySearchParam && (
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-7 draggable-none"
+							onClick={() => {
+								setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+							}}
+						>
+							{isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
+						</Button>
+					)}
 				</div>
-				<div className="flex-1 flex gap-2">
-					{accounts.length > 1 &&
-						accounts.map((account) => (
-							<Button
-								key={account.config.id}
-								variant={account.config.selected ? "secondary" : "ghost"}
-								size="sm"
-								className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
-								onClick={() => {
-									ipc.main.send("accounts.selectAccount", account.config.id);
-								}}
-							>
-								{account.config.label}
-								{account.gmail.attentionRequired && (
-									<CircleAlertIcon className="size-3.5 text-yellow-400" />
-								)}
-								{!account.gmail.attentionRequired &&
-								unreadBadge &&
-								account.gmail.unreadCount ? (
-									<div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
-										{account.gmail.unreadCount.toLocaleString()}
-									</div>
-								) : null}
-							</Button>
-						))}
-				</div>
+				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
 				<Trial />
 				<FindInPage />
 				<Download />

@@ -3,6 +3,8 @@ import type {
 	AccountConfig,
 	AccountConfigInput,
 	AccountInstances,
+	GmailSavedSearch,
+	GmailSavedSearches,
 } from "./schemas";
 
 export type DesktopSource = { id: string; name: string; thumbnail: string };
@@ -43,6 +45,11 @@ export type IpcMainEvents =
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
 			"gmail.setUnreadCount": [unreadCount: number];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
+			"gmail.addSavedSearch": [savedSearch: Omit<GmailSavedSearch, "id">];
+			"gmail.updateSavedSearch": [savedSearch: GmailSavedSearch];
+			"gmail.deleteSavedSearch": [savedSearchId: string];
+			"gmail.moveSavedSearch": [savedSearchId: string, move: "up" | "down"];
+			"gmail.search": [searchQuery: string];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [
@@ -63,6 +70,7 @@ export type IpcMainEvents =
 			"downloads.showFileInFolder": (filePath: string) => {
 				error: string | null;
 			};
+			"gmail.getSavedSearches": () => GmailSavedSearches;
 	  };
 
 export type IpcRendererEvent = {
@@ -90,6 +98,7 @@ export type IpcRendererEvent = {
 		action: keyof typeof GMAIL_ACTION_CODE_MAP,
 	];
 	"gmail.openMessage": [messageId: string];
+	"gmail.savedSearchesChanged": [savedSearches: GmailSavedSearches];
 	"theme.darkModeChanged": [darkMode: boolean];
 	"accounts.changed": [accounts: AccountInstances];
 	"accounts.openAddAccountDialog": [];

@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { arrayMove } from "@meru/shared/utils";
 import { desktopCapturer, Notification, nativeImage, shell } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -314,6 +316,74 @@ class Ipc {
 				`https://github.com/zoidsh/meru/releases/tag/${version}`,
 				true,
 			);
+		});
+
+		ipc.main.handle("gmail.getSavedSearches", () =>
+			config.get("gmail.savedSearches"),
+		);
+
+		ipc.main.on("gmail.addSavedSearch", (_event, savedSearch) => {
+			const updatedSavedSearches = [
+				...config.get("gmail.savedSearches"),
+				{ id: randomUUID(), ...savedSearch },
+			];
+
+			config.set("gmail.savedSearches", updatedSavedSearches);
+		});
+
+		ipc.main.on("gmail.search", (_event, searchQuery) => {
+			const selectedAccount = accounts.getSelectedAccount();
+
+			selectedAccount.instance.gmail.search(searchQuery);
+		});
+
+		ipc.main.on("gmail.moveSavedSearch", (_event, moveSavedSearchId, move) => {
+			const savedSearches = config.get("gmail.savedSearches");
+
+			const savedSearchIndex = savedSearches.findIndex(
+				(savedSearch) => savedSearch.id === moveSavedSearchId,
+			);
+
+			config.set(
+				"gmail.savedSearches",
+				arrayMove(
+					savedSearches,
+					savedSearchIndex,
+					move === "up" ? savedSearchIndex - 1 : savedSearchIndex + 1,
+				),
+			);
+		});
+
+		ipc.main.on("gmail.updateSavedSearch", (_event, updatedSavedSearch) => {
+			config.set(
+				"gmail.savedSearches",
+				config
+					.get("gmail.savedSearches")
+					.map((savedSearch) =>
+						savedSearch.id === updatedSavedSearch.id
+							? updatedSavedSearch
+							: savedSearch,
+					),
+			);
+		});
+
+		ipc.main.on("gmail.deleteSavedSearch", (_event, deleteSavedSearchId) => {
+			config.set(
+				"gmail.savedSearches",
+				config
+					.get("gmail.savedSearches")
+					.filter((savedSearch) => savedSearch.id !== deleteSavedSearchId),
+			);
+		});
+
+		config.onDidChange("gmail.savedSearches", (savedSearches) => {
+			if (savedSearches) {
+				ipc.renderer.send(
+					main.window.webContents,
+					"gmail.savedSearchesChanged",
+					savedSearches,
+				);
+			}
 		});
 	}
 }

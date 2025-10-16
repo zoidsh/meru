@@ -419,6 +419,19 @@ export class AppMenu {
 								],
 							},
 							{
+								label: "Saved Searches...",
+								enabled: licenseKey.isValid,
+								click: () => {
+									appState.setIsSettingsOpen(true);
+
+									main.navigate("/saved-searches");
+
+									accounts.hide();
+
+									main.show();
+								},
+							},
+							{
 								type: "separator",
 							},
 							...(platform.isMacOS
