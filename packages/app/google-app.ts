@@ -379,20 +379,18 @@ export class GoogleApp {
 						account.instance.windows.add(window);
 
 						if (googleApp === "meet") {
-							window.once("show", () => {
-								globalShortcut.register("CommandOrControl+Shift+1", () => {
-									ipc.renderer.send(
-										window.webContents,
-										"googleMeet.toggleMicrophone",
-									);
-								});
+							globalShortcut.register("CommandOrControl+Shift+1", () => {
+								ipc.renderer.send(
+									window.webContents,
+									"googleMeet.toggleMicrophone",
+								);
+							});
 
-								globalShortcut.register("CommandOrControl+Shift+2", () => {
-									ipc.renderer.send(
-										window.webContents,
-										"googleMeet.toggleCamera",
-									);
-								});
+							globalShortcut.register("CommandOrControl+Shift+2", () => {
+								ipc.renderer.send(
+									window.webContents,
+									"googleMeet.toggleCamera",
+								);
 							});
 						}
 
