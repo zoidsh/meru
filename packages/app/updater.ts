@@ -4,6 +4,7 @@ import { autoUpdater } from "electron-updater";
 import { config } from "@/config";
 import { ipc } from "./ipc";
 import { main } from "./main";
+import { appState } from "./state";
 
 class AppUpdater {
 	private async performUpdateCheck() {
@@ -48,6 +49,8 @@ class AppUpdater {
 	}
 
 	quitAndInstall() {
+		appState.isQuittingApp = true;
+
 		autoUpdater.quitAndInstall();
 	}
 }
