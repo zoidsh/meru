@@ -7,34 +7,29 @@ import { main } from "./main";
 import { appState } from "./state";
 
 class AppUpdater {
-	private async performUpdateCheck() {
-		const updateCheckResult = await autoUpdater.checkForUpdates();
-
-		if (
-			updateCheckResult?.isUpdateAvailable &&
-			config.get("updates.showNotifications")
-		) {
-			ipc.renderer.send(
-				main.window.webContents,
-				"appUpdater.updateAvailable",
-				updateCheckResult.updateInfo.version,
-			);
-		}
-	}
-
 	init() {
+		log.transports.file.level = is.dev ? "info" : "error";
+		autoUpdater.logger = log;
+
+		if (config.get("updates.showNotifications")) {
+			autoUpdater.on("update-downloaded", (updateInfo) => {
+				ipc.renderer.send(
+					main.window.webContents,
+					"appUpdater.updateAvailable",
+					`v${updateInfo.version}`,
+				);
+			});
+		}
+
 		if (is.dev || !config.get("updates.autoCheck")) {
 			return;
 		}
 
-		log.transports.file.level = is.dev ? "info" : "error";
-		autoUpdater.logger = log;
-
-		this.performUpdateCheck();
+		autoUpdater.checkForUpdates();
 
 		setInterval(
 			() => {
-				this.performUpdateCheck();
+				autoUpdater.checkForUpdates();
 			},
 			1000 * 60 * 60 * 3,
 		);
@@ -45,7 +40,7 @@ class AppUpdater {
 			return;
 		}
 
-		this.performUpdateCheck();
+		autoUpdater.checkForUpdates();
 	}
 
 	quitAndInstall() {
