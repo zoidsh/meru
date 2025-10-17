@@ -229,7 +229,7 @@ function SavedSearchMenuButton({
 			</DropdownMenu>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Edit Account</DialogTitle>
+					<DialogTitle>Edit Saved Search</DialogTitle>
 				</DialogHeader>
 				<SavedSearchForm
 					savedSearch={savedSearch}
