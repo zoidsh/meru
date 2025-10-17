@@ -190,10 +190,8 @@ export function AddSavedSearchButton() {
 
 function SavedSearchMenuButton({
 	savedSearch,
-	deletable,
 }: {
 	savedSearch: GmailSavedSearch;
-	deletable: boolean;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -209,22 +207,20 @@ function SavedSearchMenuButton({
 					<DialogTrigger asChild>
 						<DropdownMenuItem>Edit</DropdownMenuItem>
 					</DialogTrigger>
-					{deletable && (
-						<DropdownMenuItem
-							className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
-							onClick={() => {
-								const confirmed = window.confirm(
-									`Are you sure you want to delete ${savedSearch.label}?`,
-								);
+					<DropdownMenuItem
+						className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
+						onClick={() => {
+							const confirmed = window.confirm(
+								`Are you sure you want to delete ${savedSearch.label}?`,
+							);
 
-								if (confirmed) {
-									ipc.main.send("gmail.deleteSavedSearch", savedSearch.id);
-								}
-							}}
-						>
-							Delete
-						</DropdownMenuItem>
-					)}
+							if (confirmed) {
+								ipc.main.send("gmail.deleteSavedSearch", savedSearch.id);
+							}
+						}}
+					>
+						Delete
+					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<DialogContent>
@@ -310,10 +306,7 @@ export function SavedSearches() {
 											</Button>
 										</>
 									)}
-									<SavedSearchMenuButton
-										savedSearch={savedSearch}
-										deletable={savedSearches.length > 1}
-									/>
+									<SavedSearchMenuButton savedSearch={savedSearch} />
 								</TableCell>
 							</TableRow>
 						))}
