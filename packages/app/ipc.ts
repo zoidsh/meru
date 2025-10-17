@@ -313,7 +313,7 @@ class Ipc {
 
 		ipc.main.on("appUpdater.openReleaseNotes", (_event, version) => {
 			openExternalUrl(
-				`https://github.com/zoidsh/meru/releases/tag/${version}`,
+				`https://github.com/zoidsh/meru/releases/tag/v${version}`,
 				true,
 			);
 		});
