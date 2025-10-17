@@ -380,14 +380,14 @@ export class GoogleApp {
 
 						if (googleApp === "meet") {
 							window.once("show", () => {
-								globalShortcut.register("CommandOrControl+Shift+1", () => {
+								globalShortcut.register("CommandOrControl+Shift+8", () => {
 									ipc.renderer.send(
 										window.webContents,
 										"googleMeet.toggleMicrophone",
 									);
 								});
 
-								globalShortcut.register("CommandOrControl+Shift+2", () => {
+								globalShortcut.register("CommandOrControl+Shift+9", () => {
 									ipc.renderer.send(
 										window.webContents,
 										"googleMeet.toggleCamera",
@@ -400,8 +400,8 @@ export class GoogleApp {
 							account.instance.windows.delete(window);
 
 							if (googleApp === "meet") {
-								globalShortcut.unregister("CommandOrControl+Shift+1");
-								globalShortcut.unregister("CommandOrControl+Shift+2");
+								globalShortcut.unregister("CommandOrControl+Shift+8");
+								globalShortcut.unregister("CommandOrControl+Shift+9");
 							}
 						});
 
