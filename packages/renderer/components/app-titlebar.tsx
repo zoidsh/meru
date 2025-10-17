@@ -281,6 +281,10 @@ export function AppTitlebar() {
 			));
 		}
 
+		if (accounts.length === 1) {
+			return;
+		}
+
 		return accounts.map((account) => (
 			<Button
 				key={account.config.id}
