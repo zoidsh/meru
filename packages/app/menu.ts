@@ -432,6 +432,19 @@ export class AppMenu {
 								},
 							},
 							{
+								label: "Verification Codes...",
+								enabled: licenseKey.isValid,
+								click: () => {
+									appState.setIsSettingsOpen(true);
+
+									main.navigate("/verification-codes");
+
+									accounts.hide();
+
+									main.show();
+								},
+							},
+							{
 								type: "separator",
 							},
 							...(platform.isMacOS

@@ -19,3 +19,16 @@ export function arrayMove<ValueType>(
 
 	return newArray;
 }
+
+export function extractVerificationCodeFromText(text: string) {
+	const hasVerificationCodeContext =
+		/\b(?:code|otp|pin|verification|passcode|security)\b/i.test(text);
+
+	if (!hasVerificationCodeContext) {
+		return;
+	}
+
+	const verificationCodeMatch = text.match(/\b([A-Z0-9]{4,8})\b/i);
+
+	return verificationCodeMatch?.[1];
+}

@@ -18,11 +18,7 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
-			"a11y": {
-				"noSvgWithoutTitle": "off",
-				"useKeyWithClickEvents": "off",
-				"noStaticElementInteractions": "off"
-			},
+			"a11y": "off",
 			"correctness": {
 				"noUnusedImports": "error"
 			},

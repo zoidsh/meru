@@ -5,7 +5,7 @@ import type { DownloadItem, NotificationSound } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
 
-export type Config = {
+type Config = {
 	accounts: AccountConfigs;
 	"accounts.unreadBadge": boolean;
 	launchMinimized: boolean;
@@ -57,6 +57,8 @@ export type Config = {
 	"window.restrictMinimumSize": boolean;
 	"trial.expired": boolean;
 	"googleApps.openInExternalBrowser": boolean;
+	"verificationCodes.autoCopy": boolean;
+	"verificationCodes.autoDelete": boolean;
 };
 
 export const DEFAULT_WINDOW_STATE_BOUNDS = {
@@ -127,6 +129,8 @@ export const config = new Store<Config>({
 		"window.restrictMinimumSize": true,
 		"trial.expired": false,
 		"googleApps.openInExternalBrowser": false,
+		"verificationCodes.autoCopy": false,
+		"verificationCodes.autoDelete": false,
 	},
 	migrations: {
 		">=3.4.0": (store) => {

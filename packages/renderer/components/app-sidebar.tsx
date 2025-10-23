@@ -11,6 +11,11 @@ const navItems: NavItemProps[] = [
 		disabled: !licenseKeySearchParam,
 	},
 	{ label: "Download History", href: "/download-history" },
+	{
+		label: "Verification Codes",
+		href: "/verification-codes",
+		disabled: !licenseKeySearchParam,
+	},
 ];
 
 const navSettingsItems: NavItemProps[] = [

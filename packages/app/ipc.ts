@@ -3,8 +3,14 @@ import fs from "node:fs";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { arrayMove } from "@meru/shared/utils";
-import { desktopCapturer, Notification, nativeImage, shell } from "electron";
+import { arrayMove, extractVerificationCodeFromText } from "@meru/shared/utils";
+import {
+	clipboard,
+	desktopCapturer,
+	Notification,
+	nativeImage,
+	shell,
+} from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
@@ -161,6 +167,37 @@ class Ipc {
 								config.get("notifications.showSubject")
 							) {
 								body = mail.subject;
+							}
+
+							if (
+								licenseKey.isValid &&
+								config.get("verificationCodes.autoCopy")
+							) {
+								const verificationCode =
+									(subtitle && extractVerificationCodeFromText(subtitle)) ||
+									(body && extractVerificationCodeFromText(body));
+
+								if (verificationCode) {
+									clipboard.writeText(verificationCode);
+
+									createNotification({
+										title: config.get("notifications.showSender")
+											? mail.sender.name
+											: account.config.label,
+										body: `Verification code ${verificationCode} copied.`,
+									});
+
+									if (config.get("verificationCodes.autoDelete")) {
+										this.renderer.send(
+											event.sender,
+											"gmail.handleMessage",
+											mail.messageId,
+											"delete",
+										);
+									}
+
+									return;
+								}
 							}
 
 							createNotification({
@@ -384,6 +421,19 @@ class Ipc {
 					savedSearches,
 				);
 			}
+		});
+
+		ipc.main.handle("verificationCodes.getConfig", () => ({
+			autoCopy: config.get("verificationCodes.autoCopy"),
+			autoDelete: config.get("verificationCodes.autoDelete"),
+		}));
+
+		ipc.main.handle("verificationCodes.setAutoCopy", (_event, value) => {
+			config.set("verificationCodes.autoCopy", value);
+		});
+
+		ipc.main.handle("verificationCodes.setAutoDelete", (_event, value) => {
+			config.set("verificationCodes.autoDelete", value);
 		});
 	}
 }
