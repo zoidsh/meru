@@ -2,11 +2,18 @@ import { ipc } from "@meru/renderer-lib/ipc";
 import { Button } from "@meru/ui/components/button";
 import { Card, CardContent } from "@meru/ui/components/card";
 import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@meru/ui/components/empty";
+import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@meru/ui/components/tooltip";
-import { FolderIcon, XIcon } from "lucide-react";
+import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { date } from "@/lib/date";
@@ -43,9 +50,21 @@ export function DownloadHistory() {
 
 	if (downloadHistory.length === 0) {
 		return (
-			<div className="text-muted-foreground text-sm">
-				Files you download will appear here.
-			</div>
+			<Empty>
+				<EmptyHeader>
+					<EmptyMedia variant="icon">
+						<DownloadIcon />
+					</EmptyMedia>
+					<EmptyTitle>No downloads yet</EmptyTitle>
+					<EmptyDescription>
+						Your downloaded files will appear here.
+					</EmptyDescription>
+					<EmptyDescription>
+						Downloads older than 30 days will be automatically removed from the
+						history.
+					</EmptyDescription>
+				</EmptyHeader>
+			</Empty>
 		);
 	}
 
