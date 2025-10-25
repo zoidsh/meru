@@ -2,6 +2,7 @@ import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
 import type {
 	AccountConfig,
 	AccountConfigInput,
+	AccountConfigs,
 	AccountInstances,
 	GmailSavedSearch,
 	GmailSavedSearches,
@@ -28,6 +29,64 @@ export type NotificationSound =
 	| "magic-marimba"
 	| "magic-ring"
 	| "retro-game";
+
+export type Config = {
+	accounts: AccountConfigs;
+	"accounts.unreadBadge": boolean;
+	launchMinimized: boolean;
+	launchAtLogin: boolean;
+	hardwareAcceleration: boolean;
+	resetConfig: boolean;
+	theme: "system" | "light" | "dark";
+	licenseKey: string | null;
+	"dock.enabled": boolean;
+	"dock.unreadBadge": boolean;
+	"externalLinks.confirm": boolean;
+	"externalLinks.trustedHosts": string[];
+	"gmail.zoomFactor": number;
+	"downloads.saveAs": boolean;
+	"downloads.openFolderWhenDone": boolean;
+	"downloads.location": string;
+	"downloads.history": DownloadItem[];
+	"notifications.enabled": boolean;
+	"notifications.showSender": boolean;
+	"notifications.showSubject": boolean;
+	"notifications.showSummary": boolean;
+	"notifications.playSound": boolean;
+	"notifications.allowFromGoogleApps": boolean;
+	"notifications.sound": "system" | NotificationSound;
+	"notifications.volume": number;
+	"notifications.downloadCompleted": boolean;
+	"updates.autoCheck": boolean;
+	"updates.showNotifications": boolean;
+	"blocker.enabled": boolean;
+	"blocker.ads": boolean;
+	"blocker.tracking": boolean;
+	"tray.enabled": boolean;
+	"tray.iconColor": "system" | "light" | "dark";
+	"tray.unreadCount": boolean;
+	"gmail.hideGmailLogo": boolean;
+	"gmail.hideInboxFooter": boolean;
+	"gmail.reverseConversation": boolean;
+	"gmail.savedSearches": GmailSavedSearches;
+	"screenShare.useSystemPicker": boolean;
+	"window.lastState": {
+		bounds: {
+			width: number;
+			height: number;
+			x: number | undefined;
+			y: number | undefined;
+		};
+		fullscreen: boolean;
+		maximized: boolean;
+		displayId: number | null;
+	};
+	"window.restrictMinimumSize": boolean;
+	"trial.expired": boolean;
+	"googleApps.openInExternalBrowser": boolean;
+	"verificationCodes.autoCopy": boolean;
+	"verificationCodes.autoDelete": boolean;
+};
 
 export type IpcMainEvents =
 	| {
@@ -77,6 +136,8 @@ export type IpcMainEvents =
 			};
 			"verificationCodes.setAutoCopy": (autoCopy: boolean) => void;
 			"verificationCodes.setAutoDelete": (autoDelete: boolean) => void;
+			"config.getConfig": () => Config;
+			"config.setConfig": (config: Partial<Config>) => void;
 	  };
 
 export type IpcRendererEvent = {
@@ -116,4 +177,5 @@ export type IpcRendererEvent = {
 	"appUpdater.updateAvailable": [version: string];
 	"googleMeet.toggleMicrophone": [];
 	"googleMeet.toggleCamera": [];
+	"config.configChanged": [config: Config];
 };

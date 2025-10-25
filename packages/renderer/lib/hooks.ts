@@ -1,5 +1,6 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { useEffect } from "react";
+import { useConfig } from "./react-query";
 
 export function useMouseAccountSwitching() {
 	useEffect(() => {
@@ -19,4 +20,10 @@ export function useMouseAccountSwitching() {
 			document.removeEventListener("mousedown", handleMouseBackAndForward);
 		};
 	}, []);
+}
+
+export function useIsLicenseKeyValid() {
+	const { config } = useConfig();
+
+	return Boolean(config?.licenseKey);
 }

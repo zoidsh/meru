@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./app";
-import "./notifications";
+import "./lib/notifications";
 import "./dark-mode";
 import "./ipc";
 

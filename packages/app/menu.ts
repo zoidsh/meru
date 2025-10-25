@@ -205,106 +205,6 @@ export class AppMenu {
 								],
 							},
 							{
-								label: "Notifications",
-								submenu: [
-									{
-										label: "Enabled",
-										type: "checkbox",
-										checked: config.get("notifications.enabled"),
-										click({ checked }) {
-											config.set("notifications.enabled", checked);
-										},
-									},
-									{
-										label: "Allow from Google Apps",
-										enabled: licenseKey.isValid,
-										type: "checkbox",
-										checked: config.get("notifications.allowFromGoogleApps"),
-										click({ checked }) {
-											config.set("notifications.allowFromGoogleApps", checked);
-
-											dialog.showMessageBox({
-												type: "info",
-												message: "Ensure notifications in Gmail are disabled",
-												detail:
-													"To avoid duplicate notifications, please disable notifications in your Gmail settings.",
-											});
-
-											showRestartDialog();
-										},
-									},
-									{
-										type: "separator",
-									},
-									{
-										label: "Show Sender",
-										type: "checkbox",
-										checked: config.get("notifications.showSender"),
-										click({ checked }) {
-											config.set("notifications.showSender", checked);
-										},
-									},
-									{
-										label: "Show Subject",
-										type: "checkbox",
-										checked: config.get("notifications.showSubject"),
-										click({ checked }) {
-											config.set("notifications.showSubject", checked);
-										},
-									},
-									{
-										label: "Show Summary",
-										type: "checkbox",
-										visible: platform.isMacOS,
-										checked: config.get("notifications.showSummary"),
-										click({ checked }) {
-											config.set("notifications.showSummary", checked);
-										},
-									},
-									{
-										type: "separator",
-									},
-									{
-										label: "Play Sound",
-										type: "checkbox",
-										checked: config.get("notifications.playSound"),
-										click({ checked }) {
-											config.set("notifications.playSound", checked);
-										},
-									},
-									{
-										label: "Sound",
-										enabled: licenseKey.isValid,
-										submenu: (
-											[
-												{ value: "bell", label: "Bell" },
-												{ value: "bubble", label: "Bubble" },
-												{ value: "long-pop", label: "Long Pop" },
-												{ value: "magic-marimba", label: "Magic Marimba" },
-												{ value: "magic-ring", label: "Magic Ring" },
-												{ value: "retro-game", label: "Retro Game" },
-												{ value: "system", label: "System" },
-											] as const
-										).map(({ value, label }) => ({
-											label,
-											type: "radio" as const,
-											checked: config.get("notifications.sound") === value,
-											click: () => {
-												config.set("notifications.sound", value);
-
-												if (value !== "system") {
-													ipc.renderer.send(
-														main.window.webContents,
-														"notifications.playSound",
-														value,
-													);
-												}
-											},
-										})),
-									},
-								],
-							},
-							{
 								label: "Blocker",
 								enabled: licenseKey.isValid,
 								submenu: [
@@ -417,6 +317,18 @@ export class AppMenu {
 										},
 									},
 								],
+							},
+							{
+								label: "Notifications...",
+								click: () => {
+									appState.setIsSettingsOpen(true);
+
+									main.navigate("/settings/notifications");
+
+									accounts.hide();
+
+									main.show();
+								},
 							},
 							{
 								label: "Saved Searches...",

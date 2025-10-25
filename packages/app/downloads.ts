@@ -50,13 +50,15 @@ class Downloads {
 					id,
 				);
 
-				createNotification({
-					title: `Download ${state}`,
-					body: fileName,
-					click: () => {
-						shell.openPath(filePath);
-					},
-				});
+				if (config.get("notifications.downloadCompleted")) {
+					createNotification({
+						title: `Download ${state}`,
+						body: fileName,
+						click: () => {
+							shell.openPath(filePath);
+						},
+					});
+				}
 			});
 		};
 

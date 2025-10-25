@@ -435,6 +435,14 @@ class Ipc {
 		ipc.main.handle("verificationCodes.setAutoDelete", (_event, value) => {
 			config.set("verificationCodes.autoDelete", value);
 		});
+
+		ipc.main.handle("config.getConfig", () => config.store);
+
+		ipc.main.handle("config.setConfig", (_event, keyValues) => {
+			Object.entries(keyValues).forEach(([key, value]) => {
+				config.set(key as keyof typeof keyValues, value);
+			});
+		});
 	}
 }
 

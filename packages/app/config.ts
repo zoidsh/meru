@@ -1,65 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
-import type { AccountConfigs, GmailSavedSearches } from "@meru/shared/schemas";
-import type { DownloadItem, NotificationSound } from "@meru/shared/types";
+import type { Config } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
-
-type Config = {
-	accounts: AccountConfigs;
-	"accounts.unreadBadge": boolean;
-	launchMinimized: boolean;
-	launchAtLogin: boolean;
-	hardwareAcceleration: boolean;
-	resetConfig: boolean;
-	theme: "system" | "light" | "dark";
-	licenseKey: string | null;
-	"dock.enabled": boolean;
-	"dock.unreadBadge": boolean;
-	"externalLinks.confirm": boolean;
-	"externalLinks.trustedHosts": string[];
-	"gmail.zoomFactor": number;
-	"downloads.saveAs": boolean;
-	"downloads.openFolderWhenDone": boolean;
-	"downloads.location": string;
-	"downloads.history": DownloadItem[];
-	"notifications.enabled": boolean;
-	"notifications.showSender": boolean;
-	"notifications.showSubject": boolean;
-	"notifications.showSummary": boolean;
-	"notifications.playSound": boolean;
-	"notifications.allowFromGoogleApps": boolean;
-	"notifications.sound": "system" | NotificationSound;
-	"updates.autoCheck": boolean;
-	"updates.showNotifications": boolean;
-	"blocker.enabled": boolean;
-	"blocker.ads": boolean;
-	"blocker.tracking": boolean;
-	"tray.enabled": boolean;
-	"tray.iconColor": "system" | "light" | "dark";
-	"tray.unreadCount": boolean;
-	"gmail.hideGmailLogo": boolean;
-	"gmail.hideInboxFooter": boolean;
-	"gmail.reverseConversation": boolean;
-	"gmail.savedSearches": GmailSavedSearches;
-	"screenShare.useSystemPicker": boolean;
-	"window.lastState": {
-		bounds: {
-			width: number;
-			height: number;
-			x: number | undefined;
-			y: number | undefined;
-		};
-		fullscreen: boolean;
-		maximized: boolean;
-		displayId: number | null;
-	};
-	"window.restrictMinimumSize": boolean;
-	"trial.expired": boolean;
-	"googleApps.openInExternalBrowser": boolean;
-	"verificationCodes.autoCopy": boolean;
-	"verificationCodes.autoDelete": boolean;
-};
 
 export const DEFAULT_WINDOW_STATE_BOUNDS = {
 	width: 1280,
@@ -107,6 +50,8 @@ export const config = new Store<Config>({
 		"notifications.playSound": true,
 		"notifications.allowFromGoogleApps": false,
 		"notifications.sound": "bell",
+		"notifications.volume": 0.9,
+		"notifications.downloadCompleted": true,
 		"updates.autoCheck": true,
 		"updates.showNotifications": true,
 		"blocker.enabled": true,

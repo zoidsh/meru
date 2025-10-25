@@ -16,6 +16,10 @@ const navItems: NavItemProps[] = [
 		href: "/verification-codes",
 		disabled: !licenseKeySearchParam,
 	},
+	{
+		label: "Notifications",
+		href: "/settings/notifications",
+	},
 ];
 
 const navSettingsItems: NavItemProps[] = [
