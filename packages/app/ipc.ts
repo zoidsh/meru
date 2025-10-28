@@ -348,11 +348,8 @@ class Ipc {
 			appUpdater.quitAndInstall();
 		});
 
-		ipc.main.on("appUpdater.openReleaseNotes", (_event, version) => {
-			openExternalUrl(
-				`https://github.com/zoidsh/meru/releases/tag/v${version}`,
-				true,
-			);
+		ipc.main.on("appUpdater.openReleaseNotes", () => {
+			openExternalUrl("https://github.com/zoidsh/meru/releases", true);
 		});
 
 		ipc.main.handle("gmail.getSavedSearches", () =>

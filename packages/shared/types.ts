@@ -119,7 +119,7 @@ export type IpcMainEvents =
 			"downloads.clearHistory": [];
 			"taskbar.setOverlayIcon": [dataUrl: string];
 			"appUpdater.quitAndInstall": [];
-			"appUpdater.openReleaseNotes": [version: string];
+			"appUpdater.openReleaseNotes": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
