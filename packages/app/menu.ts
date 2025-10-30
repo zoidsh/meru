@@ -19,7 +19,6 @@ import { showRestartDialog } from "@/dialogs";
 import { GMAIL_USER_STYLES_PATH } from "@/gmail";
 import { ipc } from "@/ipc";
 import { main } from "@/main";
-import { appState } from "@/state";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { licenseKey } from "./license-key";
@@ -149,13 +148,7 @@ export class AppMenu {
 									{
 										label: "Manage Accounts...",
 										click: () => {
-											appState.setIsSettingsOpen(true);
-
-											main.navigate("/accounts");
-
-											accounts.hide();
-
-											main.show();
+											main.open("/accounts");
 										},
 									},
 								],
@@ -321,39 +314,21 @@ export class AppMenu {
 							{
 								label: "Notifications...",
 								click: () => {
-									appState.setIsSettingsOpen(true);
-
-									main.navigate("/settings/notifications");
-
-									accounts.hide();
-
-									main.show();
+									main.open("/settings/notifications");
 								},
 							},
 							{
 								label: "Saved Searches...",
 								enabled: licenseKey.isValid,
 								click: () => {
-									appState.setIsSettingsOpen(true);
-
-									main.navigate("/saved-searches");
-
-									accounts.hide();
-
-									main.show();
+									main.open("/saved-searches");
 								},
 							},
 							{
 								label: "Verification Codes...",
 								enabled: licenseKey.isValid,
 								click: () => {
-									appState.setIsSettingsOpen(true);
-
-									main.navigate("/verification-codes");
-
-									accounts.hide();
-
-									main.show();
+									main.open("/verification-codes");
 								},
 							},
 							{
@@ -590,13 +565,7 @@ export class AppMenu {
 							{
 								label: "Manage License...",
 								click: () => {
-									appState.setIsSettingsOpen(true);
-
-									main.navigate("/license");
-
-									accounts.hide();
-
-									main.show();
+									main.open("/license");
 								},
 							},
 						],
@@ -759,13 +728,7 @@ export class AppMenu {
 						label: "Downloads",
 						accelerator: "CommandOrControl+Alt+L",
 						click: () => {
-							main.navigate("/download-history");
-
-							appState.setIsSettingsOpen(true);
-
-							accounts.hide();
-
-							main.show();
+							main.open("/download-history");
 						},
 					},
 					{
@@ -932,13 +895,7 @@ export class AppMenu {
 					{
 						label: "Manage Accounts...",
 						click: () => {
-							appState.setIsSettingsOpen(true);
-
-							main.navigate("/accounts");
-
-							accounts.hide();
-
-							main.show();
+							main.open("/accounts");
 						},
 					},
 				],

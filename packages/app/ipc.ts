@@ -19,7 +19,6 @@ import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { createNotification } from "./notifications";
 import { appUpdater } from "./updater";
-import { openExternalUrl } from "./url";
 
 class Ipc {
 	main = new IpcListener<IpcMainEvents>();
@@ -348,8 +347,8 @@ class Ipc {
 			appUpdater.quitAndInstall();
 		});
 
-		ipc.main.on("appUpdater.openReleaseNotes", () => {
-			openExternalUrl("https://github.com/zoidsh/meru/releases", true);
+		ipc.main.on("appUpdater.openVersionHistory", () => {
+			main.open("/version-history");
 		});
 
 		ipc.main.handle("gmail.getSavedSearches", () =>

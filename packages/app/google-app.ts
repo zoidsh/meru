@@ -23,7 +23,6 @@ import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 import { openExternalUrl } from "./url";
 
 const WINDOW_OPEN_URL_WHITELIST = [
@@ -409,16 +408,7 @@ export class GoogleApp {
 			}
 
 			if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-				appState.setIsSettingsOpen(true);
-
-				accounts.hide();
-
-				main.navigate("/accounts");
-
-				ipc.renderer.send(
-					main.window.webContents,
-					"accounts.openAddAccountDialog",
-				);
+				main.open("/accounts");
 			} else if (
 				WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))
 			) {

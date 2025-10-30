@@ -340,7 +340,7 @@ export function AppTitlebar() {
 							size="sm"
 							className="text-xs h-7 draggable-none"
 							onClick={() => {
-								ipc.main.send("appUpdater.openReleaseNotes");
+								ipc.main.send("appUpdater.openVersionHistory");
 							}}
 						>
 							What's New?

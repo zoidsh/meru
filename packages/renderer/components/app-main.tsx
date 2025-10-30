@@ -12,6 +12,7 @@ import { License } from "@/routes/license";
 import { SavedSearches } from "@/routes/saved-searches";
 import { NotificationsSettings } from "@/routes/settings/notifications";
 import { VerificationCodes } from "@/routes/verification-codes";
+import { VersionHistory } from "@/routes/version-history";
 import { AppSidebar } from "./app-sidebar";
 
 ipc.renderer.on("navigate", (_event, to) => {
@@ -44,7 +45,7 @@ export function AppMain() {
 			<div className="relative flex-1 overflow-y-auto px-4">
 				<div className="flex justify-center gap-12 py-8">
 					<AppSidebar />
-					<div className="w-xl space-y-6">
+					<div className="w-xl space-y-12">
 						<Route path="/saved-searches" component={SavedSearches} />
 						<Route path="/download-history" component={DownloadHistory} />
 						<Route path="/verification-codes" component={VerificationCodes} />
@@ -53,6 +54,7 @@ export function AppMain() {
 						</Route>
 						<Route path="/accounts" component={Accounts} />
 						<Route path="/license" component={License} />
+						<Route path="/version-history" component={VersionHistory} />
 					</div>
 				</div>
 				<div

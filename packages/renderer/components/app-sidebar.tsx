@@ -25,6 +25,7 @@ const navItems: NavItemProps[] = [
 const navSettingsItems: NavItemProps[] = [
 	{ label: "Accounts", href: "/accounts" },
 	{ label: "License", href: "/license" },
+	{ label: "What's New", href: "/version-history" },
 ];
 
 type NavItemProps = {

@@ -216,8 +216,14 @@ class Main {
 		});
 	}
 
-	navigate(to: string) {
+	open(to: string) {
+		appState.setIsSettingsOpen(true);
+
 		ipc.renderer.send(main.window.webContents, "navigate", to);
+
+		accounts.hide();
+
+		this.show();
 	}
 }
 
