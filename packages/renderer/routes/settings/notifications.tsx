@@ -120,7 +120,9 @@ export function NotificationsSettings() {
 									<SelectContent>
 										{Object.entries(NOTIFICATION_SOUNDS).map(
 											([sound, { label }]) => (
-												<SelectItem value={sound}>{label}</SelectItem>
+												<SelectItem key={sound} value={sound}>
+													{label}
+												</SelectItem>
 											),
 										)}
 										<SelectSeparator />
