@@ -17,6 +17,7 @@ import {
 	EllipsisVerticalIcon,
 	FileCheckIcon,
 	MailSearchIcon,
+	SparklesIcon,
 	XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -260,6 +261,8 @@ export function AppTitlebar() {
 	const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] =
 		useState(false);
 
+	const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
+
 	if (!accounts) {
 		return;
 	}
@@ -311,10 +314,10 @@ export function AppTitlebar() {
 	};
 
 	const renderContent = () => {
-		if (appUpdateVersion) {
+		if (isAppUpdateDetailsOpen) {
 			return (
 				<div className="h-full flex justify-center items-center text-xs gap-4">
-					<div>An update for Meru is available and ready to install.</div>
+					<div>Meru {appUpdateVersion} is available and ready to install</div>
 					<div className="flex gap-2">
 						<Button
 							size="sm"
@@ -331,6 +334,7 @@ export function AppTitlebar() {
 							className="text-xs h-7 draggable-none"
 							onClick={() => {
 								dismissAppUpdate();
+								setIsAppUpdateDetailsOpen(false);
 							}}
 						>
 							Later
@@ -400,6 +404,17 @@ export function AppTitlebar() {
 				<Trial />
 				<FindInPage />
 				<Download />
+				{appUpdateVersion && (
+					<Button
+						size="sm"
+						className="text-xs h-7 draggable-none"
+						onClick={() => {
+							setIsAppUpdateDetailsOpen(true);
+						}}
+					>
+						<SparklesIcon /> Update Available
+					</Button>
+				)}
 				{window.electron.process.platform !== "darwin" && (
 					<div className="draggable-none">
 						<Button
