@@ -5,6 +5,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { useLocation } from "wouter";
 
 const navItems: NavItemProps[] = [
+	{ label: "Accounts", href: "/accounts" },
 	{
 		label: "Saved Searches",
 		href: "/saved-searches",
@@ -20,49 +21,57 @@ const navItems: NavItemProps[] = [
 		label: "Notifications",
 		href: "/settings/notifications",
 	},
-];
-
-const navSettingsItems: NavItemProps[] = [
-	{ label: "Accounts", href: "/accounts" },
+	{ type: "separator" },
 	{ label: "License", href: "/license" },
 	{ label: "What's New", href: "/version-history" },
 ];
 
-type NavItemProps = {
-	label: string;
-	href: string;
-	disabled?: boolean;
-};
+type NavItemProps =
+	| {
+			type?: "item";
+			label: string;
+			href: string;
+			disabled?: boolean;
+	  }
+	| {
+			type: "separator";
+			label?: undefined;
+			href?: undefined;
+			disabled?: undefined;
+	  };
 
 export function AppSidebar() {
 	const [location, navigate] = useLocation();
 
-	const renderNavItem = ({ label, href, disabled }: NavItemProps) => {
-		return (
-			<li key={label}>
-				<Button
-					onClick={() => {
-						navigate(href);
-					}}
-					className={cn("w-full justify-start font-normal", {
-						"text-muted-foreground hover:text-muted-foreground":
-							location !== href,
-					})}
-					variant={location === href ? "secondary" : "ghost"}
-					disabled={disabled}
-				>
-					{label}
-				</Button>
-			</li>
-		);
-	};
-
 	return (
 		<div className="w-56">
 			<div className="sticky top-8">
-				<ul className="space-y-2">{navItems.map(renderNavItem)}</ul>
-				<Separator className="my-4" />
-				<ul className="space-y-2">{navSettingsItems.map(renderNavItem)}</ul>
+				<div className="space-y-2">
+					{navItems.map(({ type, label, href, disabled }, index) => {
+						if (type === "separator") {
+							// biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
+							return <Separator key={index} />;
+						}
+
+						return (
+							<Button
+								// biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
+								key={index}
+								onClick={() => {
+									navigate(href);
+								}}
+								className={cn("w-full justify-start font-normal", {
+									"text-muted-foreground hover:text-muted-foreground":
+										location !== href,
+								})}
+								variant={location === href ? "secondary" : "ghost"}
+								disabled={disabled}
+							>
+								{label}
+							</Button>
+						);
+					})}
+				</div>
 			</div>
 		</div>
 	);
