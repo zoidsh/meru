@@ -1,5 +1,4 @@
 import { ipc } from "@meru/renderer-lib/ipc";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import { XIcon } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -27,9 +26,17 @@ function CloseButton() {
 	useHotkeys("esc", closeSettings);
 
 	return (
-		<Button variant="secondary" size="icon" onClick={closeSettings}>
-			<XIcon />
-		</Button>
+		<div className="flex flex-col items-center gap-2">
+			<Button
+				variant="outline"
+				size="icon"
+				onClick={closeSettings}
+				className="rounded-full"
+			>
+				<XIcon />
+			</Button>
+			<div className="text-muted-foreground text-xs font-semibold">ESC</div>
+		</div>
 	);
 }
 
@@ -56,12 +63,11 @@ export function AppMain() {
 						<Route path="/license" component={License} />
 						<Route path="/version-history" component={VersionHistory} />
 					</div>
-				</div>
-				<div
-					className="fixed top-8 right-8"
-					style={{ marginTop: APP_TITLEBAR_HEIGHT }}
-				>
-					<CloseButton />
+					<div>
+						<div className="sticky top-8">
+							<CloseButton />
+						</div>
+					</div>
 				</div>
 			</div>
 		</Router>
