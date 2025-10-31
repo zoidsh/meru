@@ -31,13 +31,11 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
 
 	const fontWidth = ctx.measureText(text).width;
 	const fontScale =
-		(Math.cos(Math.atan(fontSize / fontWidth)) * radius * 1.66) / fontWidth;
+		(Math.cos(Math.atan(fontSize / fontWidth)) * radius * 1.33) / fontWidth;
 
-	ctx.save();
-	ctx.translate(radius, radius);
-	ctx.scale(fontScale, fontScale);
+	ctx.setTransform(fontScale, 0, 0, fontScale, radius, radius);
 	ctx.fillText(text, 0, 0);
-	ctx.restore();
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
 
 	ipc.main.send("taskbar.setOverlayIcon", canvas.toDataURL());
 });
