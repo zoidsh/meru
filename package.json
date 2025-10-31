@@ -87,6 +87,7 @@
 				"arch": ["x64", "arm64"]
 			},
 			"extendInfo": {
+				"CFBundleIconName": "AppIcon",
 				"CFBundleURLSchemes": ["mailto"],
 				"NSCameraUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat.",
 				"NSMicrophoneUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat."
@@ -131,7 +132,8 @@
 		"publish": {
 			"provider": "github",
 			"releaseType": "release"
-		}
+		},
+		"afterPack": "./build/hooks/afterPack.js"
 	},
 	"description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
 	"patchedDependencies": {

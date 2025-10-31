@@ -1,5 +1,5 @@
 <div align="center">
-	<img src="media/icon.svg" width="200" height="200">
+	<img src="media/logo.svg" width="200" height="200">
 	<h1>Meru (formerly Gmail Desktop)</h1>
   <h3>The Gmail experience you deserve</h3>
   <p>
