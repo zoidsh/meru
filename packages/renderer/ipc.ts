@@ -18,7 +18,7 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
 	}
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = "#c42c1d";
+	ctx.fillStyle = "#F0413A";
 	ctx.beginPath();
 	ctx.arc(radius, radius, radius, 0, Math.PI * 2);
 	ctx.fill();

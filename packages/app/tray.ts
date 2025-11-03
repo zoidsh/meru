@@ -57,9 +57,7 @@ export class AppTray {
 		} else {
 			const iconColor = config.get("tray.iconColor");
 
-			iconFileName = unread
-				? "IconTrayUnread.png"
-				: `IconTray-${iconColor === "system" ? (nativeTheme.shouldUseDarkColors ? "Light" : "Dark") : `${iconColor[0]?.toUpperCase()}${iconColor.slice(1)}`}.png`;
+			iconFileName = `IconTray${unread ? "Unread" : ""}-${iconColor === "system" ? (nativeTheme.shouldUseDarkColors ? "Light" : "Dark") : `${iconColor[0]?.toUpperCase()}${iconColor.slice(1)}`}.png`;
 		}
 
 		const image = Electron.nativeImage.createFromPath(
