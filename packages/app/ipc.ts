@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { arrayMove, extractVerificationCodeFromText } from "@meru/shared/utils";
+import { arrayMove } from "@meru/shared/utils";
 import {
 	clipboard,
 	desktopCapturer,
@@ -17,6 +17,7 @@ import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
+import { extractVerificationCode } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { appUpdater } from "./updater";
 
@@ -172,9 +173,9 @@ class Ipc {
 								licenseKey.isValid &&
 								config.get("verificationCodes.autoCopy")
 							) {
-								const verificationCode =
-									(subtitle && extractVerificationCodeFromText(subtitle)) ||
-									(body && extractVerificationCodeFromText(body));
+								const verificationCode = extractVerificationCode(
+									[subtitle, body].filter((text) => typeof text === "string"),
+								);
 
 								if (verificationCode) {
 									clipboard.writeText(verificationCode);
