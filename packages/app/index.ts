@@ -115,8 +115,10 @@ import { trial } from "./trial";
 	}
 
 	app.on("before-quit", () => {
-		main.saveWindowState();
+		if (!appState.isQuittingApp) {
+			main.saveWindowState();
 
-		appState.isQuittingApp = true;
+			appState.isQuittingApp = true;
+		}
 	});
 })();

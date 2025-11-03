@@ -4,6 +4,7 @@ import { autoUpdater } from "electron-updater";
 import { config } from "@/config";
 import { ipc } from "./ipc";
 import { main } from "./main";
+import { appState } from "./state";
 
 class AppUpdater {
 	init() {
@@ -43,6 +44,10 @@ class AppUpdater {
 	}
 
 	quitAndInstall() {
+		main.saveWindowState();
+
+		appState.isQuittingApp = true;
+
 		autoUpdater.quitAndInstall();
 	}
 }
