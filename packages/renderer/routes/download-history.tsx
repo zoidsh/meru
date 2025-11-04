@@ -69,10 +69,10 @@ export function DownloadHistory() {
 	}
 
 	return (
-		<>
-			<div className="flex justify-end">
+		<div>
+			<div className="flex justify-end mb-8">
 				<Button
-					variant="secondary"
+					variant="outline"
 					onClick={() => {
 						ipc.main.send("downloads.clearHistory");
 					}}
@@ -80,81 +80,83 @@ export function DownloadHistory() {
 					Clear all
 				</Button>
 			</div>
-			{downloadHistory.map(({ id, fileName, filePath, createdAt }) => (
-				<Card key={id}>
-					<CardContent className="flex gap-4 items-center text-sm">
-						<div className="flex-1 space-y-1">
-							<div className="text-muted-foreground first-letter:capitalize">
-								<DateFromNow timestamp={createdAt} />
+			<div className="space-y-4">
+				{downloadHistory.map(({ id, fileName, filePath, createdAt }) => (
+					<Card key={id}>
+						<CardContent className="flex gap-4 items-center text-sm">
+							<div className="flex-1 space-y-1">
+								<div className="text-muted-foreground first-letter:capitalize">
+									<DateFromNow timestamp={createdAt} />
+								</div>
+								<Tooltip delayDuration={700}>
+									<TooltipTrigger asChild>
+										<button
+											className="font-semibold hover:underline underline-offset-4"
+											type="button"
+											onClick={async () => {
+												const { error } = await ipc.main.invoke(
+													"downloads.openFile",
+													filePath,
+												);
+
+												if (error) {
+													toast("Failed to open file", {
+														description: error,
+													});
+												}
+											}}
+										>
+											{fileName}
+										</button>
+									</TooltipTrigger>
+									<TooltipContent side="bottom">Open file</TooltipContent>
+								</Tooltip>
 							</div>
-							<Tooltip delayDuration={700}>
-								<TooltipTrigger asChild>
-									<button
-										className="font-semibold hover:underline underline-offset-4"
-										type="button"
-										onClick={async () => {
-											const { error } = await ipc.main.invoke(
-												"downloads.openFile",
-												filePath,
-											);
+							<div className="flex gap-2">
+								<Tooltip delayDuration={700}>
+									<TooltipTrigger asChild>
+										<Button
+											size="icon"
+											variant="ghost"
+											onClick={async () => {
+												const { error } = await ipc.main.invoke(
+													"downloads.showFileInFolder",
+													filePath,
+												);
 
-											if (error) {
-												toast("Failed to open file", {
-													description: error,
-												});
-											}
-										}}
-									>
-										{fileName}
-									</button>
-								</TooltipTrigger>
-								<TooltipContent side="bottom">Open file</TooltipContent>
-							</Tooltip>
-						</div>
-						<div className="flex gap-2">
-							<Tooltip delayDuration={700}>
-								<TooltipTrigger asChild>
-									<Button
-										size="icon"
-										variant="ghost"
-										onClick={async () => {
-											const { error } = await ipc.main.invoke(
-												"downloads.showFileInFolder",
-												filePath,
-											);
-
-											if (error) {
-												toast("Failed to show file in folder", {
-													description: error,
-												});
-											}
-										}}
-									>
-										<FolderIcon />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent side="bottom">Show in folder</TooltipContent>
-							</Tooltip>
-							<Tooltip delayDuration={700}>
-								<TooltipTrigger asChild>
-									<Button
-										size="icon"
-										variant="ghost"
-										onClick={() => {
-											ipc.main.send("downloads.removeHistoryItem", id);
-										}}
-									>
-										<XIcon />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent side="bottom">
-									Remove from history
-								</TooltipContent>
-							</Tooltip>
-						</div>
-					</CardContent>
-				</Card>
-			))}
-		</>
+												if (error) {
+													toast("Failed to show file in folder", {
+														description: error,
+													});
+												}
+											}}
+										>
+											<FolderIcon />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent side="bottom">Show in folder</TooltipContent>
+								</Tooltip>
+								<Tooltip delayDuration={700}>
+									<TooltipTrigger asChild>
+										<Button
+											size="icon"
+											variant="ghost"
+											onClick={() => {
+												ipc.main.send("downloads.removeHistoryItem", id);
+											}}
+										>
+											<XIcon />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent side="bottom">
+										Remove from history
+									</TooltipContent>
+								</Tooltip>
+							</div>
+						</CardContent>
+					</Card>
+				))}
+			</div>
+		</div>
 	);
 }
