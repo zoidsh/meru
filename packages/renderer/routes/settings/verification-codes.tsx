@@ -14,12 +14,14 @@ export function VerificationCodesSettings() {
 					description="Verification codes received via email will be automatically copied
 							to your clipboard for easy pasting."
 					configKey="verificationCodes.autoCopy"
+					licenseKeyRequired
 				/>
 				<ConfigSwitchField
 					label="Automatically delete emails after copying"
 					description="Emails containing verification codes will be automatically deleted
 							after the code has been copied to your clipboard."
 					configKey="verificationCodes.autoDelete"
+					licenseKeyRequired
 				/>
 			</FieldGroup>
 		</>

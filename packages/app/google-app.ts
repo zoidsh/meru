@@ -270,7 +270,7 @@ export class GoogleApp {
 				(url.startsWith(GMAIL_URL) ||
 					WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
 					(supportedGoogleAppMatch &&
-						!config.get("googleApps.openInExternalBrowser") &&
+						config.get("googleApps.openInApp") &&
 						licenseKey.isValid)) &&
 				disposition !== "background-tab"
 			) {

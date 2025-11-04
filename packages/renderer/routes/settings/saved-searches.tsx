@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
-import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import {
 	type GmailSavedSearch,
 	type GmailSavedSearchInput,
@@ -56,7 +55,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import {
+	SettingsContent,
+	SettingsHeader,
+	SettingsTitle,
+} from "@/components/settings";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useGmailSavedSearchesStore } from "@/lib/stores";
 
 export function SavedSearchForm({
@@ -154,6 +159,8 @@ export function SavedSearchForm({
 export function AddSavedSearchButton() {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+	const isLicenseKeyValid = useIsLicenseKeyValid();
+
 	return (
 		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 			<DialogTrigger asChild>
@@ -161,6 +168,7 @@ export function AddSavedSearchButton() {
 					onClick={() => {
 						setIsDialogOpen(true);
 					}}
+					disabled={!isLicenseKeyValid}
 				>
 					Add
 				</Button>
@@ -243,72 +251,71 @@ export function SavedSearchesSettings() {
 		(state) => state.savedSearches,
 	);
 
-	if (!licenseKeySearchParam) {
-		return null;
-	}
-
 	return (
 		<>
 			<SettingsHeader>
 				<SettingsTitle>Saved Searches</SettingsTitle>
 			</SettingsHeader>
-			<Table className="mb-4">
-				<TableHeader>
-					<TableRow>
-						<TableHead>Label</TableHead>
-						<TableHead>Query</TableHead>
-						<TableHead />
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{savedSearches.map((savedSearch, index) => (
-						<TableRow key={savedSearch.id}>
-							<TableCell>{savedSearch.label}</TableCell>
-							<TableCell>{savedSearch.query}</TableCell>
-							<TableCell className="flex justify-end">
-								{savedSearches.length > 1 && (
-									<>
-										<Button
-											size="icon"
-											className="size-8 p-0"
-											variant="ghost"
-											disabled={index + 1 === savedSearches.length}
-											onClick={() => {
-												ipc.main.send(
-													"gmail.moveSavedSearch",
-													savedSearch.id,
-													"down",
-												);
-											}}
-										>
-											<ArrowDownIcon />
-										</Button>
-										<Button
-											size="icon"
-											className="size-8 p-0"
-											variant="ghost"
-											disabled={index === 0}
-											onClick={() => {
-												ipc.main.send(
-													"gmail.moveSavedSearch",
-													savedSearch.id,
-													"up",
-												);
-											}}
-										>
-											<ArrowUpIcon />
-										</Button>
-									</>
-								)}
-								<SavedSearchMenuButton savedSearch={savedSearch} />
-							</TableCell>
+			<SettingsContent>
+				<LicenseKeyRequiredBanner />
+				<Table className="mb-4">
+					<TableHeader>
+						<TableRow>
+							<TableHead>Label</TableHead>
+							<TableHead>Query</TableHead>
+							<TableHead />
 						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-			<div className="flex justify-end">
-				<AddSavedSearchButton />
-			</div>
+					</TableHeader>
+					<TableBody>
+						{savedSearches.map((savedSearch, index) => (
+							<TableRow key={savedSearch.id}>
+								<TableCell>{savedSearch.label}</TableCell>
+								<TableCell>{savedSearch.query}</TableCell>
+								<TableCell className="flex justify-end">
+									{savedSearches.length > 1 && (
+										<>
+											<Button
+												size="icon"
+												className="size-8 p-0"
+												variant="ghost"
+												disabled={index + 1 === savedSearches.length}
+												onClick={() => {
+													ipc.main.send(
+														"gmail.moveSavedSearch",
+														savedSearch.id,
+														"down",
+													);
+												}}
+											>
+												<ArrowDownIcon />
+											</Button>
+											<Button
+												size="icon"
+												className="size-8 p-0"
+												variant="ghost"
+												disabled={index === 0}
+												onClick={() => {
+													ipc.main.send(
+														"gmail.moveSavedSearch",
+														savedSearch.id,
+														"up",
+													);
+												}}
+											>
+												<ArrowUpIcon />
+											</Button>
+										</>
+									)}
+									<SavedSearchMenuButton savedSearch={savedSearch} />
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+				<div className="flex justify-end">
+					<AddSavedSearchButton />
+				</div>
+			</SettingsContent>
 		</>
 	);
 }

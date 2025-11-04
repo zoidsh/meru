@@ -1,5 +1,4 @@
 import type { Config } from "@meru/shared/types";
-import { Badge } from "@meru/ui/components/badge";
 import {
 	Field,
 	FieldContent,
@@ -9,21 +8,33 @@ import {
 import { Switch } from "@meru/ui/components/switch";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { restartRequiredToast } from "@/lib/toast";
+import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
 
 export function ConfigSwitchField({
 	configKey,
 	label,
 	description,
 	licenseKeyRequired,
+	disabled,
+	restartRequired,
 }: {
 	configKey: keyof Config;
 	label: string;
 	description: string;
 	licenseKeyRequired?: boolean;
+	disabled?: boolean;
+	restartRequired?: boolean;
 }) {
 	const { config } = useConfig();
 
-	const configMutation = useConfigMutation();
+	const configMutation = useConfigMutation({
+		onSuccess: () => {
+			if (restartRequired) {
+				restartRequiredToast();
+			}
+		},
+	});
 
 	const isLicenseKeyValid = useIsLicenseKeyValid();
 
@@ -44,16 +55,20 @@ export function ConfigSwitchField({
 			<FieldContent>
 				<FieldLabel htmlFor={configKey} className="flex items-center gap-2">
 					{label}
-					{licenseKeyRequired && !isLicenseKeyValid && (
-						<Badge variant="secondary">Meru Pro Required</Badge>
-					)}
+					{licenseKeyRequired && <LicenseKeyRequiredFieldBadge />}
 				</FieldLabel>
 				<FieldDescription>{description}</FieldDescription>
 			</FieldContent>
 			<Switch
 				id={configKey}
-				checked={licenseKeyRequired && !isLicenseKeyValid ? false : checked}
-				disabled={licenseKeyRequired && !isLicenseKeyValid}
+				checked={
+					disabled
+						? false
+						: licenseKeyRequired && !isLicenseKeyValid
+							? false
+							: checked
+				}
+				disabled={disabled || (licenseKeyRequired && !isLicenseKeyValid)}
 				onCheckedChange={(checked) => {
 					configMutation.mutate({
 						[configKey]: checked,

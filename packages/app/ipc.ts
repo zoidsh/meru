@@ -1,14 +1,18 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { arrayMove } from "@meru/shared/utils";
 import {
+	app,
 	clipboard,
 	desktopCapturer,
+	dialog,
 	Notification,
 	nativeImage,
+	nativeTheme,
 	shell,
 } from "electron";
 import { accounts } from "@/accounts";
@@ -426,6 +430,69 @@ class Ipc {
 			Object.entries(keyValues).forEach(([key, value]) => {
 				config.set(key as keyof typeof keyValues, value);
 			});
+		});
+
+		config.onDidAnyChange(() => {
+			ipc.renderer.send(
+				main.window.webContents,
+				"config.configChanged",
+				config.store,
+			);
+		});
+
+		ipc.main.handle("downloads.setLocation", async () => {
+			const { canceled, filePaths } = await dialog.showOpenDialog({
+				properties: ["openDirectory"],
+				buttonLabel: "Select",
+				defaultPath: config.get("downloads.location"),
+			});
+
+			if (canceled) {
+				return { canceled: true };
+			}
+
+			config.set("downloads.location", filePaths[0]);
+
+			return { canceled: false };
+		});
+
+		ipc.main.on("app.relaunch", () => {
+			app.relaunch();
+			app.quit();
+		});
+
+		ipc.main.on("theme.setTheme", (_event, theme) => {
+			nativeTheme.themeSource = theme;
+
+			config.set("theme", theme);
+		});
+
+		ipc.main.handle("app.getLoginItemSettings", () =>
+			app.getLoginItemSettings(),
+		);
+
+		ipc.main.handle("app.setLoginItemSettings", (_event, settings) => {
+			app.setLoginItemSettings(settings);
+		});
+
+		ipc.main.handle("app.getIsDefaultMailtoClient", () =>
+			app.isDefaultProtocolClient("mailto"),
+		);
+
+		ipc.main.handle("app.setAsDefaultMailtoClient", () => {
+			if (process.defaultApp) {
+				if (process.argv.length >= 2) {
+					if (!process.argv[1]) {
+						throw new Error('Could not find "process.argv[1]"');
+					}
+
+					app.setAsDefaultProtocolClient("mailto", process.execPath, [
+						path.resolve(process.argv[1]),
+					]);
+				}
+			} else {
+				app.setAsDefaultProtocolClient("mailto");
+			}
 		});
 	}
 }

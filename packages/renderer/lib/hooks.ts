@@ -1,6 +1,7 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { useEffect } from "react";
 import { useConfig } from "./react-query";
+import { useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
 	useEffect(() => {
@@ -25,5 +26,7 @@ export function useMouseAccountSwitching() {
 export function useIsLicenseKeyValid() {
 	const { config } = useConfig();
 
-	return Boolean(config?.licenseKey);
+	const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
+
+	return isTrialActive || Boolean(config?.licenseKey);
 }

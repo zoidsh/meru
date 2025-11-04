@@ -20,12 +20,14 @@ export function useConfig() {
 	};
 }
 
-export function useConfigMutation() {
+export function useConfigMutation({
+	onSuccess,
+}: {
+	onSuccess?: () => void;
+} = {}) {
 	return useMutation({
 		mutationFn: (config: Partial<Config>) =>
 			ipc.main.invoke("config.setConfig", config),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["config"] });
-		},
+		onSuccess,
 	});
 }

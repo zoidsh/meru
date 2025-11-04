@@ -1,3 +1,4 @@
+import type { LoginItemSettings } from "electron";
 import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
 import type {
 	AccountConfig,
@@ -83,7 +84,7 @@ export type Config = {
 	};
 	"window.restrictMinimumSize": boolean;
 	"trial.expired": boolean;
-	"googleApps.openInExternalBrowser": boolean;
+	"googleApps.openInApp": boolean;
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
 };
@@ -120,6 +121,8 @@ export type IpcMainEvents =
 			"taskbar.setOverlayIcon": [dataUrl: string];
 			"appUpdater.quitAndInstall": [];
 			"appUpdater.openVersionHistory": [];
+			"app.relaunch": [];
+			"theme.setTheme": [theme: "system" | "light" | "dark"];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
@@ -132,6 +135,13 @@ export type IpcMainEvents =
 			"gmail.getSavedSearches": () => GmailSavedSearches;
 			"config.getConfig": () => Config;
 			"config.setConfig": (config: Partial<Config>) => void;
+			"downloads.setLocation": () => { canceled: boolean };
+			"app.getLoginItemSettings": () => LoginItemSettings;
+			"app.setLoginItemSettings": (
+				settings: Partial<LoginItemSettings>,
+			) => void;
+			"app.getIsDefaultMailtoClient": () => boolean;
+			"app.setAsDefaultMailtoClient": () => void;
 	  };
 
 export type IpcRendererEvent = {

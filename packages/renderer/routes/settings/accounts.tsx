@@ -39,11 +39,6 @@ import {
 	TableRow,
 } from "@meru/ui/components/table";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@meru/ui/components/tooltip";
-import {
 	ArrowDownIcon,
 	ArrowUpIcon,
 	CheckIcon,
@@ -51,7 +46,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import {
+	SettingsContent,
+	SettingsHeader,
+	SettingsTitle,
+} from "@/components/settings";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 
 function AccountForm({
@@ -145,18 +145,7 @@ function AddAccountButton() {
 	const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
 
 	if (!isTrialActive && !licenseKeySearchParam) {
-		return (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<div>
-						<Button disabled>Add</Button>
-					</div>
-				</TooltipTrigger>
-				<TooltipContent>
-					Upgrade to Meru Pro to add more accounts
-				</TooltipContent>
-			</Tooltip>
-		);
+		return <Button disabled>Add</Button>;
 	}
 
 	return (
@@ -250,74 +239,83 @@ export function AccountsSettings() {
 			<SettingsHeader>
 				<SettingsTitle>Accounts</SettingsTitle>
 			</SettingsHeader>
-			<Table className="mb-4">
-				<TableHeader>
-					<TableRow>
-						<TableHead>Label</TableHead>
-						<TableHead>Unread Badge</TableHead>
-						<TableHead>Notifications</TableHead>
-						<TableHead />
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{accounts.map((account, index) => (
-						<TableRow key={account.config.id}>
-							<TableCell>{account.config.label}</TableCell>
-							<TableCell>
-								{account.config.unreadBadge && <CheckIcon className="size-4" />}
-							</TableCell>
-							<TableCell>
-								{account.config.notifications && (
-									<CheckIcon className="size-4" />
-								)}
-							</TableCell>
-							<TableCell className="flex justify-end">
-								{accounts.length > 1 && (
-									<>
-										<Button
-											size="icon"
-											className="size-8 p-0"
-											variant="ghost"
-											disabled={index + 1 === accounts.length}
-											onClick={() => {
-												ipc.main.send(
-													"accounts.moveAccount",
-													account.config.id,
-													"down",
-												);
-											}}
-										>
-											<ArrowDownIcon />
-										</Button>
-										<Button
-											size="icon"
-											className="size-8 p-0"
-											variant="ghost"
-											disabled={index === 0}
-											onClick={() => {
-												ipc.main.send(
-													"accounts.moveAccount",
-													account.config.id,
-													"up",
-												);
-											}}
-										>
-											<ArrowUpIcon />
-										</Button>
-									</>
-								)}
-								<AccountMenuButton
-									account={account.config}
-									removable={accounts.length > 1}
-								/>
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-			<div className="flex justify-end">
-				<AddAccountButton />
-			</div>
+			<SettingsContent>
+				<LicenseKeyRequiredBanner>
+					Upgrade to Meru Pro to add more accounts.
+				</LicenseKeyRequiredBanner>
+				<div>
+					<Table className="mb-4">
+						<TableHeader>
+							<TableRow>
+								<TableHead>Label</TableHead>
+								<TableHead>Unread Badge</TableHead>
+								<TableHead>Notifications</TableHead>
+								<TableHead />
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{accounts.map((account, index) => (
+								<TableRow key={account.config.id}>
+									<TableCell>{account.config.label}</TableCell>
+									<TableCell>
+										{account.config.unreadBadge && (
+											<CheckIcon className="size-4" />
+										)}
+									</TableCell>
+									<TableCell>
+										{account.config.notifications && (
+											<CheckIcon className="size-4" />
+										)}
+									</TableCell>
+									<TableCell className="flex justify-end">
+										{accounts.length > 1 && (
+											<>
+												<Button
+													size="icon"
+													className="size-8 p-0"
+													variant="ghost"
+													disabled={index + 1 === accounts.length}
+													onClick={() => {
+														ipc.main.send(
+															"accounts.moveAccount",
+															account.config.id,
+															"down",
+														);
+													}}
+												>
+													<ArrowDownIcon />
+												</Button>
+												<Button
+													size="icon"
+													className="size-8 p-0"
+													variant="ghost"
+													disabled={index === 0}
+													onClick={() => {
+														ipc.main.send(
+															"accounts.moveAccount",
+															account.config.id,
+															"up",
+														);
+													}}
+												>
+													<ArrowUpIcon />
+												</Button>
+											</>
+										)}
+										<AccountMenuButton
+											account={account.config}
+											removable={accounts.length > 1}
+										/>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+					<div className="flex justify-end">
+						<AddAccountButton />
+					</div>
+				</div>
+			</SettingsContent>
 		</>
 	);
 }

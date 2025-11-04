@@ -43,7 +43,7 @@ export function AppMain() {
 
 	return (
 		<div className="flex-1 flex relative bg-sidebar">
-			<ScrollArea className="flex-1 bg-background rounded-xl m-4 relative overflow-hidden border dark:border-none">
+			<ScrollArea className="flex-1 bg-background rounded-xl m-4 ml-0 relative overflow-hidden border dark:border-none">
 				<div className="w-3xl mx-auto py-8 px-28">
 					{sidebarNavItems
 						.filter((navItem) => navItem.type !== "separator")

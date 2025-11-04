@@ -73,7 +73,7 @@ export const config = new Store<Config>({
 		},
 		"window.restrictMinimumSize": true,
 		"trial.expired": false,
-		"googleApps.openInExternalBrowser": false,
+		"googleApps.openInApp": true,
 		"verificationCodes.autoCopy": false,
 		"verificationCodes.autoDelete": false,
 	},
@@ -151,6 +151,16 @@ export const config = new Store<Config>({
 				if (accountsMigrated) {
 					store.set("accounts", accounts);
 				}
+			}
+		},
+		">=3.15.0": (store) => {
+			const openGoogleAppsInExternalBrowser = store.get(
+				// @ts-expect-error: `googleApps.openInExternalBrowser` is now 'googleApps.openInApp'
+				"googleApps.openInExternalBrowser",
+			);
+
+			if (typeof openGoogleAppsInExternalBrowser === "boolean") {
+				store.set("googleApps.openInApp", !openGoogleAppsInExternalBrowser);
 			}
 		},
 	},

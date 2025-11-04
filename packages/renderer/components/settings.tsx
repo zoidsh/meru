@@ -10,3 +10,11 @@ export function SettingsHeader({ className, ...props }: ComponentProps<"div">) {
 export function SettingsTitle({ className, ...props }: ComponentProps<"div">) {
 	return <div className={cn("text-2xl font-semibold", className)} {...props} />;
 }
+
+export function SettingsContent(props: ComponentProps<"div">) {
+	return <div {...props} />;
+}
+
+export function Settings(props: ComponentProps<"div">) {
+	return <div {...props} />;
+}
