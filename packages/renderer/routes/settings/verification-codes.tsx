@@ -2,7 +2,7 @@ import { FieldGroup } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 
-export function VerificationCodes() {
+export function VerificationCodesSettings() {
 	return (
 		<>
 			<SettingsHeader>

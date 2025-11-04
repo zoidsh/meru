@@ -21,7 +21,7 @@ import z from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { date } from "@/lib/date";
 
-export function VersionHistory() {
+export function VersionHistorySettings() {
 	const { data, isPending, isError, refetch } = useQuery({
 		queryKey: ["github", "releases"],
 		queryFn: async () => {

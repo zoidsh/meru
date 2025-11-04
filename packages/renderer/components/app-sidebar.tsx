@@ -3,42 +3,65 @@ import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
-import { useLocation } from "wouter";
+import { type RouteProps, useLocation } from "wouter";
+import { AccountsSettings } from "@/routes/settings/accounts";
+import { DownloadHistorySettings } from "@/routes/settings/download-history";
+import { LicenseSettings } from "@/routes/settings/license";
+import { NotificationsSettings } from "@/routes/settings/notifications";
+import { SavedSearchesSettings } from "@/routes/settings/saved-searches";
+import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
+import { VersionHistorySettings } from "@/routes/settings/version-history";
 
-const navItems: NavItemProps[] = [
-	{ label: "Accounts", href: "/accounts" },
+export const sidebarNavItems: SidebarNavItemProps[] = [
 	{
-		label: "Saved Searches",
-		href: "/saved-searches",
-		disabled: !licenseKeySearchParam,
+		label: "Download History",
+		path: "/settings/download-history",
+		component: DownloadHistorySettings,
 	},
-	{ label: "Download History", href: "/download-history" },
 	{
-		label: "Verification Codes",
-		href: "/verification-codes",
-		disabled: !licenseKeySearchParam,
+		type: "separator",
 	},
+	{ label: "Accounts", path: "/accounts", component: AccountsSettings },
 	{
 		label: "Notifications",
-		href: "/settings/notifications",
+		path: "/settings/notifications",
+		component: NotificationsSettings,
+	},
+	{
+		label: "Saved Searches",
+		path: "/settings/saved-searches",
+		disabled: !licenseKeySearchParam,
+		component: SavedSearchesSettings,
+	},
+	{
+		label: "Verification Codes",
+		path: "/settings/verification-codes",
+		disabled: !licenseKeySearchParam,
+		component: VerificationCodesSettings,
 	},
 	{ type: "separator" },
-	{ label: "License", href: "/license" },
-	{ label: "What's New", href: "/version-history" },
+	{ label: "License", path: "/settings/license", component: LicenseSettings },
+	{
+		label: "What's New",
+		path: "/settings/version-history",
+		component: VersionHistorySettings,
+	},
 ];
 
-type NavItemProps =
+type SidebarNavItemProps =
 	| {
 			type?: "item";
 			label: string;
-			href: string;
+			path: string;
 			disabled?: boolean;
+			component: RouteProps["component"];
 	  }
 	| {
 			type: "separator";
 			label?: undefined;
-			href?: undefined;
+			path?: undefined;
 			disabled?: undefined;
+			component?: undefined;
 	  };
 
 export function AppSidebar() {
@@ -47,7 +70,7 @@ export function AppSidebar() {
 	return (
 		<ScrollArea className="w-56 bg-sidebar p-4">
 			<div className="space-y-2">
-				{navItems.map(({ type, label, href, disabled }, index) => {
+				{sidebarNavItems.map(({ type, label, path, disabled }, index) => {
 					if (type === "separator") {
 						// biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
 						return <Separator key={index} />;
@@ -58,13 +81,13 @@ export function AppSidebar() {
 							// biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
 							key={index}
 							onClick={() => {
-								navigate(href);
+								navigate(path);
 							}}
 							className={cn("w-full justify-start font-normal", {
 								"text-muted-foreground hover:text-muted-foreground":
-									location !== href,
+									location !== path,
 							})}
-							variant={location === href ? "secondary" : "ghost"}
+							variant={location === path ? "secondary" : "ghost"}
 							disabled={disabled}
 						>
 							{label}

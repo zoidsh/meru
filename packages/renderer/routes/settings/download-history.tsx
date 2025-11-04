@@ -40,7 +40,7 @@ function DateFromNow({ timestamp }: { timestamp: number }) {
 	);
 }
 
-export function DownloadHistory() {
+export function DownloadHistorySettings() {
 	const downloadHistory = useDownloadsStore((state) => state.history);
 
 	useEffect(() => {

@@ -104,7 +104,7 @@ function Download() {
 				size="icon"
 				className="size-7"
 				onClick={() => {
-					navigate("/download-history");
+					navigate("/settings/download-history");
 					ipc.main.send("settings.toggleIsOpen");
 				}}
 			>

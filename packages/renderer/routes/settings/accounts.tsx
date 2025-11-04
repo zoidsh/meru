@@ -238,7 +238,7 @@ function AccountMenuButton({
 	);
 }
 
-export function Accounts() {
+export function AccountsSettings() {
 	const accounts = useAccountsStore((state) => state.accounts);
 
 	if (!accounts.length) {

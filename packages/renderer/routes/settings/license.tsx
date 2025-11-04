@@ -109,7 +109,7 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 	);
 }
 
-export function License() {
+export function LicenseSettings() {
 	const [licenseKey, setLicenseKey] = useState<string | null>(null);
 	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 

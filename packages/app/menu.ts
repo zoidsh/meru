@@ -148,7 +148,7 @@ export class AppMenu {
 									{
 										label: "Manage Accounts...",
 										click: () => {
-											main.open("/accounts");
+											main.navigate("/settings/accounts");
 										},
 									},
 								],
@@ -314,21 +314,21 @@ export class AppMenu {
 							{
 								label: "Notifications...",
 								click: () => {
-									main.open("/settings/notifications");
+									main.navigate("/settings/notifications");
 								},
 							},
 							{
 								label: "Saved Searches...",
 								enabled: licenseKey.isValid,
 								click: () => {
-									main.open("/saved-searches");
+									main.navigate("/settings/saved-searches");
 								},
 							},
 							{
 								label: "Verification Codes...",
 								enabled: licenseKey.isValid,
 								click: () => {
-									main.open("/verification-codes");
+									main.navigate("/settings/verification-codes");
 								},
 							},
 							{
@@ -565,7 +565,7 @@ export class AppMenu {
 							{
 								label: "Manage License...",
 								click: () => {
-									main.open("/license");
+									main.navigate("/settings/license");
 								},
 							},
 						],
@@ -728,7 +728,7 @@ export class AppMenu {
 						label: "Downloads",
 						accelerator: "CommandOrControl+Alt+L",
 						click: () => {
-							main.open("/download-history");
+							main.navigate("/settings/download-history");
 						},
 					},
 					{
@@ -895,7 +895,7 @@ export class AppMenu {
 					{
 						label: "Manage Accounts...",
 						click: () => {
-							main.open("/accounts");
+							main.navigate("/settings/accounts");
 						},
 					},
 				],

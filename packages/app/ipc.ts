@@ -349,7 +349,7 @@ class Ipc {
 		});
 
 		ipc.main.on("appUpdater.openVersionHistory", () => {
-			main.open("/version-history");
+			main.navigate("/settings/version-history");
 		});
 
 		ipc.main.handle("gmail.getSavedSearches", () =>

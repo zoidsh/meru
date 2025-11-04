@@ -408,7 +408,7 @@ export class GoogleApp {
 			}
 
 			if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-				main.open("/accounts");
+				main.navigate("/settings/accounts");
 			} else if (
 				WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))
 			) {

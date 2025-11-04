@@ -216,7 +216,7 @@ class Main {
 		});
 	}
 
-	open(to: string) {
+	navigate(to: string) {
 		appState.setIsSettingsOpen(true);
 
 		ipc.renderer.send(main.window.webContents, "navigate", to);

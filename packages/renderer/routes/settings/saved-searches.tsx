@@ -238,7 +238,7 @@ function SavedSearchMenuButton({
 	);
 }
 
-export function SavedSearches() {
+export function SavedSearchesSettings() {
 	const savedSearches = useGmailSavedSearchesStore(
 		(state) => state.savedSearches,
 	);

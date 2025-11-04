@@ -6,13 +6,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { Route } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useSettingsStore } from "@/lib/stores";
-import { Accounts } from "@/routes/accounts";
-import { DownloadHistory } from "@/routes/download-history";
-import { License } from "@/routes/license";
-import { SavedSearches } from "@/routes/saved-searches";
-import { NotificationsSettings } from "@/routes/settings/notifications";
-import { VerificationCodes } from "@/routes/verification-codes";
-import { VersionHistory } from "@/routes/version-history";
+import { sidebarNavItems } from "./app-sidebar";
 
 ipc.renderer.on("navigate", (_event, to) => {
 	navigate(to);
@@ -51,15 +45,11 @@ export function AppMain() {
 		<div className="flex-1 flex relative bg-sidebar">
 			<ScrollArea className="flex-1 bg-background rounded-xl m-4 relative overflow-hidden border dark:border-none">
 				<div className="w-3xl mx-auto py-8 px-28">
-					<Route path="/saved-searches" component={SavedSearches} />
-					<Route path="/download-history" component={DownloadHistory} />
-					<Route path="/verification-codes" component={VerificationCodes} />
-					<Route path="/settings" nest>
-						<Route path="/notifications" component={NotificationsSettings} />
-					</Route>
-					<Route path="/accounts" component={Accounts} />
-					<Route path="/license" component={License} />
-					<Route path="/version-history" component={VersionHistory} />
+					{sidebarNavItems
+						.filter((navItem) => navItem.type !== "separator")
+						.map(({ path, component }) => (
+							<Route key={path} path={path} component={component} />
+						))}
 				</div>
 				<div className="absolute top-8 right-8">
 					<CloseButton />
