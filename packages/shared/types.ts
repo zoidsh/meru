@@ -130,12 +130,6 @@ export type IpcMainEvents =
 				error: string | null;
 			};
 			"gmail.getSavedSearches": () => GmailSavedSearches;
-			"verificationCodes.getConfig": () => {
-				autoCopy: boolean;
-				autoDelete: boolean;
-			};
-			"verificationCodes.setAutoCopy": (autoCopy: boolean) => void;
-			"verificationCodes.setAutoDelete": (autoDelete: boolean) => void;
 			"config.getConfig": () => Config;
 			"config.setConfig": (config: Partial<Config>) => void;
 	  };

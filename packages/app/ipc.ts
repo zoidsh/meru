@@ -420,19 +420,6 @@ class Ipc {
 			}
 		});
 
-		ipc.main.handle("verificationCodes.getConfig", () => ({
-			autoCopy: config.get("verificationCodes.autoCopy"),
-			autoDelete: config.get("verificationCodes.autoDelete"),
-		}));
-
-		ipc.main.handle("verificationCodes.setAutoCopy", (_event, value) => {
-			config.set("verificationCodes.autoCopy", value);
-		});
-
-		ipc.main.handle("verificationCodes.setAutoDelete", (_event, value) => {
-			config.set("verificationCodes.autoDelete", value);
-		});
-
 		ipc.main.handle("config.getConfig", () => config.store);
 
 		ipc.main.handle("config.setConfig", (_event, keyValues) => {
