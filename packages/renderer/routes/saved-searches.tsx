@@ -8,13 +8,6 @@ import {
 } from "@meru/shared/schemas";
 import { Button } from "@meru/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
-import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
@@ -63,6 +56,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useGmailSavedSearchesStore } from "@/lib/stores";
 
 export function SavedSearchForm({
@@ -254,68 +248,67 @@ export function SavedSearches() {
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Saved Searches</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Label</TableHead>
-							<TableHead>Query</TableHead>
+		<>
+			<SettingsHeader>
+				<SettingsTitle>Saved Searches</SettingsTitle>
+			</SettingsHeader>
+			<Table className="mb-4">
+				<TableHeader>
+					<TableRow>
+						<TableHead>Label</TableHead>
+						<TableHead>Query</TableHead>
+						<TableHead />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{savedSearches.map((savedSearch, index) => (
+						<TableRow key={savedSearch.id}>
+							<TableCell>{savedSearch.label}</TableCell>
+							<TableCell>{savedSearch.query}</TableCell>
+							<TableCell className="flex justify-end">
+								{savedSearches.length > 1 && (
+									<>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index + 1 === savedSearches.length}
+											onClick={() => {
+												ipc.main.send(
+													"gmail.moveSavedSearch",
+													savedSearch.id,
+													"down",
+												);
+											}}
+										>
+											<ArrowDownIcon />
+										</Button>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index === 0}
+											onClick={() => {
+												ipc.main.send(
+													"gmail.moveSavedSearch",
+													savedSearch.id,
+													"up",
+												);
+											}}
+										>
+											<ArrowUpIcon />
+										</Button>
+									</>
+								)}
+								<SavedSearchMenuButton savedSearch={savedSearch} />
+							</TableCell>
 						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{savedSearches.map((savedSearch, index) => (
-							<TableRow key={savedSearch.id}>
-								<TableCell>{savedSearch.label}</TableCell>
-								<TableCell>{savedSearch.query}</TableCell>
-								<TableCell>
-									{savedSearches.length > 1 && (
-										<>
-											<Button
-												size="icon"
-												className="size-8 p-0"
-												variant="ghost"
-												disabled={index + 1 === savedSearches.length}
-												onClick={() => {
-													ipc.main.send(
-														"gmail.moveSavedSearch",
-														savedSearch.id,
-														"down",
-													);
-												}}
-											>
-												<ArrowDownIcon />
-											</Button>
-											<Button
-												size="icon"
-												className="size-8 p-0"
-												variant="ghost"
-												disabled={index === 0}
-												onClick={() => {
-													ipc.main.send(
-														"gmail.moveSavedSearch",
-														savedSearch.id,
-														"up",
-													);
-												}}
-											>
-												<ArrowUpIcon />
-											</Button>
-										</>
-									)}
-									<SavedSearchMenuButton savedSearch={savedSearch} />
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</CardContent>
-			<CardFooter className="justify-end">
+					))}
+				</TableBody>
+			</Table>
+			<div className="flex justify-end">
 				<AddSavedSearchButton />
-			</CardFooter>
-		</Card>
+			</div>
+		</>
 	);
 }

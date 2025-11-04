@@ -146,7 +146,7 @@
 		"postinstall": "electron-builder install-app-deps",
 		"dev": "bun run scripts/build.ts --dev",
 		"lint": "biome check .",
-		"lint:write": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+		"lint:write": "biome check --write --unsafe --no-errors-on-unmatched --files-ignore-unknown=true",
 		"types": "tsc && bun run --filter='*' --elide-lines=0 types",
 		"types:ci": "tsc && bun run --filter='*' types",
 		"build:js": "MERU_API_URL=https://api.meru.so bun run scripts/build.ts",

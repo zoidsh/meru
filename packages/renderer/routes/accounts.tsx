@@ -7,13 +7,6 @@ import {
 	accountConfigInputSchema,
 } from "@meru/shared/schemas";
 import { Button } from "@meru/ui/components/button";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
 import { Checkbox } from "@meru/ui/components/checkbox";
 import {
 	Dialog,
@@ -58,6 +51,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 
 function AccountForm({
@@ -252,82 +246,78 @@ export function Accounts() {
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Accounts</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<Table className="mb-4">
-					<TableHeader>
-						<TableRow>
-							<TableHead>Label</TableHead>
-							<TableHead>Unread Badge</TableHead>
-							<TableHead>Notifications</TableHead>
-							<TableHead />
+		<>
+			<SettingsHeader>
+				<SettingsTitle>Accounts</SettingsTitle>
+			</SettingsHeader>
+			<Table className="mb-4">
+				<TableHeader>
+					<TableRow>
+						<TableHead>Label</TableHead>
+						<TableHead>Unread Badge</TableHead>
+						<TableHead>Notifications</TableHead>
+						<TableHead />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{accounts.map((account, index) => (
+						<TableRow key={account.config.id}>
+							<TableCell>{account.config.label}</TableCell>
+							<TableCell>
+								{account.config.unreadBadge && <CheckIcon className="size-4" />}
+							</TableCell>
+							<TableCell>
+								{account.config.notifications && (
+									<CheckIcon className="size-4" />
+								)}
+							</TableCell>
+							<TableCell className="flex justify-end">
+								{accounts.length > 1 && (
+									<>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index + 1 === accounts.length}
+											onClick={() => {
+												ipc.main.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"down",
+												);
+											}}
+										>
+											<ArrowDownIcon />
+										</Button>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="ghost"
+											disabled={index === 0}
+											onClick={() => {
+												ipc.main.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"up",
+												);
+											}}
+										>
+											<ArrowUpIcon />
+										</Button>
+									</>
+								)}
+								<AccountMenuButton
+									account={account.config}
+									removable={accounts.length > 1}
+								/>
+							</TableCell>
 						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{accounts.map((account, index) => (
-							<TableRow key={account.config.id}>
-								<TableCell>{account.config.label}</TableCell>
-								<TableCell>
-									{account.config.unreadBadge && (
-										<CheckIcon className="size-4" />
-									)}
-								</TableCell>
-								<TableCell>
-									{account.config.notifications && (
-										<CheckIcon className="size-4" />
-									)}
-								</TableCell>
-								<TableCell className="flex justify-end">
-									{accounts.length > 1 && (
-										<>
-											<Button
-												size="icon"
-												className="size-8 p-0"
-												variant="ghost"
-												disabled={index + 1 === accounts.length}
-												onClick={() => {
-													ipc.main.send(
-														"accounts.moveAccount",
-														account.config.id,
-														"down",
-													);
-												}}
-											>
-												<ArrowDownIcon />
-											</Button>
-											<Button
-												size="icon"
-												className="size-8 p-0"
-												variant="ghost"
-												disabled={index === 0}
-												onClick={() => {
-													ipc.main.send(
-														"accounts.moveAccount",
-														account.config.id,
-														"up",
-													);
-												}}
-											>
-												<ArrowUpIcon />
-											</Button>
-										</>
-									)}
-									<AccountMenuButton
-										account={account.config}
-										removable={accounts.length > 1}
-									/>
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</CardContent>
-			<CardFooter className="justify-end">
+					))}
+				</TableBody>
+			</Table>
+			<div className="flex justify-end">
 				<AddAccountButton />
-			</CardFooter>
-		</Card>
+			</div>
+		</>
 	);
 }

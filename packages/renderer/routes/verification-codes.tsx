@@ -1,18 +1,14 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
-import {
 	Field,
 	FieldContent,
 	FieldDescription,
+	FieldGroup,
 	FieldLabel,
 } from "@meru/ui/components/field";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { queryClient } from "@/lib/react-query";
 
 const queryKey = ["verificationCodesConfig"];
@@ -44,11 +40,11 @@ export function VerificationCodes() {
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Verification Codes</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-6">
+		<>
+			<SettingsHeader>
+				<SettingsTitle>Verification Codes</SettingsTitle>
+			</SettingsHeader>
+			<FieldGroup>
 				<Field orientation="horizontal">
 					<FieldContent>
 						<FieldLabel htmlFor="auto-copy">
@@ -85,7 +81,7 @@ export function VerificationCodes() {
 						}}
 					/>
 				</Field>
-			</CardContent>
-		</Card>
+			</FieldGroup>
+		</>
 	);
 }

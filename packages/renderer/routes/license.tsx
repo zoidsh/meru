@@ -4,13 +4,6 @@ import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
-import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -31,6 +24,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({
@@ -129,11 +123,11 @@ export function License() {
 		if (licenseKey) {
 			return (
 				<>
-					<CardContent className="text-sm">
+					<div className="text-sm mb-4">
 						You're using Meru Pro with professional features and for commercial
 						use. Thank you for supporting Meru!
-					</CardContent>
-					<CardFooter className="gap-4 justify-end">
+					</div>
+					<div className="flex gap-4">
 						<ActivateLicenseKeyButton variant="change" />
 						<Button
 							variant="outline"
@@ -145,7 +139,7 @@ export function License() {
 						>
 							Copy License Key
 						</Button>
-					</CardFooter>
+					</div>
 				</>
 			);
 		}
@@ -153,7 +147,7 @@ export function License() {
 		if (trialDaysLeft) {
 			return (
 				<>
-					<CardContent className="space-y-2 text-sm">
+					<div className="space-y-2 text-sm mb-4">
 						<div>
 							You're using a Meru Pro trial with {trialDaysLeft} day
 							{trialDaysLeft > 1 ? "s" : ""} left.
@@ -162,8 +156,8 @@ export function License() {
 							Purchase Meru Pro before your trial ends to keep using all
 							features.
 						</div>
-					</CardContent>
-					<CardFooter className="gap-4 justify-end">
+					</div>
+					<div className="flex gap-4">
 						<ActivateLicenseKeyButton />
 						<Button asChild>
 							<a
@@ -174,38 +168,38 @@ export function License() {
 								Purchase
 							</a>
 						</Button>
-					</CardFooter>
+					</div>
 				</>
 			);
 		}
 
 		return (
 			<>
-				<CardContent className="space-y-2 text-sm">
+				<div className="space-y-2 text-sm mb-4">
 					<div>You're using the free version of Meru for personal use.</div>
 					<div>
 						Unlock Meru Pro for professional features and commercial use. Your
 						upgrade supports ongoing development.
 					</div>
-				</CardContent>
-				<CardFooter className="gap-4 justify-end">
+				</div>
+				<div className="flex gap-4">
 					<ActivateLicenseKeyButton />
 					<Button asChild>
 						<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
 							Purchase
 						</a>
 					</Button>
-				</CardFooter>
+				</div>
 			</>
 		);
 	};
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>License</CardTitle>
-			</CardHeader>
+		<>
+			<SettingsHeader>
+				<SettingsTitle>License</SettingsTitle>
+			</SettingsHeader>
 			{renderContent()}
-		</Card>
+		</>
 	);
 }

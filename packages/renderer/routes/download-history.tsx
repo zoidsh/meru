@@ -16,6 +16,7 @@ import {
 import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { date } from "@/lib/date";
 import { useDownloadsStore } from "@/lib/stores";
 
@@ -48,38 +49,28 @@ export function DownloadHistory() {
 		});
 	}, []);
 
-	if (downloadHistory.length === 0) {
-		return (
-			<Empty>
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<DownloadIcon />
-					</EmptyMedia>
-					<EmptyTitle>No downloads yet</EmptyTitle>
-					<EmptyDescription>
-						Your downloaded files will appear here.
-					</EmptyDescription>
-					<EmptyDescription>
-						Downloads older than 30 days will be automatically removed from the
-						history.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
-		);
-	}
+	const renderContent = () => {
+		if (downloadHistory.length === 0) {
+			return (
+				<Empty>
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<DownloadIcon />
+						</EmptyMedia>
+						<EmptyTitle>No downloads yet</EmptyTitle>
+						<EmptyDescription>
+							Your downloaded files will appear here.
+						</EmptyDescription>
+						<EmptyDescription>
+							Downloads older than 30 days will be automatically removed from
+							the history.
+						</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
+			);
+		}
 
-	return (
-		<div>
-			<div className="flex justify-end mb-8">
-				<Button
-					variant="outline"
-					onClick={() => {
-						ipc.main.send("downloads.clearHistory");
-					}}
-				>
-					Clear all
-				</Button>
-			</div>
+		return (
 			<div className="space-y-4">
 				{downloadHistory.map(({ id, fileName, filePath, createdAt }) => (
 					<Card key={id}>
@@ -157,6 +148,24 @@ export function DownloadHistory() {
 					</Card>
 				))}
 			</div>
-		</div>
+		);
+	};
+
+	return (
+		<>
+			<SettingsHeader>
+				<SettingsTitle>Download History</SettingsTitle>
+				<Button
+					variant="outline"
+					onClick={() => {
+						ipc.main.send("downloads.clearHistory");
+					}}
+					disabled={downloadHistory.length === 0}
+				>
+					Clear all
+				</Button>
+			</SettingsHeader>
+			{renderContent()}
+		</>
 	);
 }

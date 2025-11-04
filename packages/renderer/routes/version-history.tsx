@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { date } from "@/lib/date";
 
 export function VersionHistory() {
@@ -41,54 +42,65 @@ export function VersionHistory() {
 		},
 	});
 
-	if (isPending) {
-		return (
-			<>
-				<Skeleton className="h-64" />
-				<Skeleton className="h-64" />
-				<Skeleton className="h-64" />
-			</>
-		);
-	}
+	const renderContent = () => {
+		if (isPending) {
+			return (
+				<>
+					<Skeleton className="h-64" />
+					<Skeleton className="h-64" />
+					<Skeleton className="h-64" />
+				</>
+			);
+		}
 
-	if (isError) {
-		return (
-			<Empty>
-				<EmptyHeader>
-					<EmptyTitle>Failed to load version history</EmptyTitle>
-				</EmptyHeader>
-				<EmptyContent>
-					<Button
-						onClick={() => {
-							refetch();
+		if (isError) {
+			return (
+				<Empty>
+					<EmptyHeader>
+						<EmptyTitle>Failed to load version history</EmptyTitle>
+					</EmptyHeader>
+					<EmptyContent>
+						<Button
+							onClick={() => {
+								refetch();
+							}}
+						>
+							Try Again
+						</Button>
+					</EmptyContent>
+				</Empty>
+			);
+		}
+
+		return data.map((release) => (
+			<Card key={release.id}>
+				<CardHeader>
+					<CardTitle>{release.tag_name}</CardTitle>
+					<CardDescription>
+						{date(release.published_at).fromNow()}
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white">
+					<Markdown
+						rehypePlugins={[rehypeRaw]}
+						components={{
+							h2: "h3",
+							kbd: Kbd,
 						}}
 					>
-						Try Again
-					</Button>
-				</EmptyContent>
-			</Empty>
-		);
-	}
+						{release.body}
+					</Markdown>
+				</CardContent>
+			</Card>
+		));
+	};
 
-	return data.map((release) => (
-		<Card key={release.id}>
-			<CardHeader>
-				<CardTitle>{release.tag_name}</CardTitle>
-				<CardDescription>
-					{date(release.published_at).fromNow()}
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white">
-				<Markdown
-					rehypePlugins={[rehypeRaw]}
-					components={{
-						h2: "h3",
-						kbd: Kbd,
-					}}
-				>
-					{release.body}
-				</Markdown>
-			</CardContent>
-		</Card>
-	));
+	return (
+		<>
+			<SettingsHeader>
+				<SettingsTitle>Version History</SettingsTitle>
+			</SettingsHeader>
+			<div className="space-y-8">{renderContent()}</div>
+		</>
+	);
 }
