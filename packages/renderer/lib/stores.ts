@@ -1,7 +1,6 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
-	accountsUnreadBadgeSearchParam,
 	darkModeSearchParam,
 	licenseKeySearchParam,
 	trialDaysLeftSearchParam,
@@ -12,7 +11,6 @@ import { create } from "zustand";
 
 export const useAccountsStore = create<{
 	accounts: AccountInstances;
-	unreadBadge: boolean;
 	isAddAccountDialogOpen: boolean;
 	setIsAddAccountDialogOpen: (isOpen: boolean) => void;
 }>((set) => {
@@ -20,13 +18,8 @@ export const useAccountsStore = create<{
 		throw new Error("No accounts found in search params");
 	}
 
-	if (!accountsUnreadBadgeSearchParam) {
-		throw new Error("No accounts unread badge found in search params");
-	}
-
 	return {
 		accounts: JSON.parse(accountsSearchParam),
-		unreadBadge: JSON.parse(accountsUnreadBadgeSearchParam),
 		isAddAccountDialogOpen: false,
 		setIsAddAccountDialogOpen: (isOpen) => {
 			set({ isAddAccountDialogOpen: isOpen });
