@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ipc } from "@meru/renderer-lib/ipc";
 import {
 	type GmailSavedSearch,
 	type GmailSavedSearchInput,
 	gmailSavedSearchInputSchema,
 } from "@meru/shared/schemas";
+import { arrayMove } from "@meru/shared/utils";
 import { Button } from "@meru/ui/components/button";
 import {
 	Dialog,
@@ -62,7 +62,7 @@ import {
 	SettingsTitle,
 } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useGmailSavedSearchesStore } from "@/lib/stores";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 export function SavedSearchForm({
 	savedSearch = { label: "", query: "" },
@@ -156,7 +156,11 @@ export function SavedSearchForm({
 	);
 }
 
-export function AddSavedSearchButton() {
+export function AddSavedSearchButton({
+	onAdd,
+}: {
+	onAdd: (savedSearch: GmailSavedSearchInput) => void;
+}) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -180,7 +184,7 @@ export function AddSavedSearchButton() {
 				<SavedSearchForm
 					type="add"
 					onSubmit={(values) => {
-						ipc.main.send("gmail.addSavedSearch", values);
+						onAdd(values);
 
 						setIsDialogOpen(false);
 					}}
@@ -192,8 +196,12 @@ export function AddSavedSearchButton() {
 
 function SavedSearchMenuButton({
 	savedSearch,
+	onDelete,
+	onEdit,
 }: {
 	savedSearch: GmailSavedSearch;
+	onDelete: () => void;
+	onEdit: (editedSavedSearch: GmailSavedSearch) => void;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -217,7 +225,7 @@ function SavedSearchMenuButton({
 							);
 
 							if (confirmed) {
-								ipc.main.send("gmail.deleteSavedSearch", savedSearch.id);
+								onDelete();
 							}
 						}}
 					>
@@ -232,7 +240,7 @@ function SavedSearchMenuButton({
 				<SavedSearchForm
 					savedSearch={savedSearch}
 					onSubmit={(values) => {
-						ipc.main.send("gmail.updateSavedSearch", {
+						onEdit({
 							...savedSearch,
 							...values,
 						});
@@ -247,9 +255,27 @@ function SavedSearchMenuButton({
 }
 
 export function SavedSearchesSettings() {
-	const savedSearches = useGmailSavedSearchesStore(
-		(state) => state.savedSearches,
-	);
+	const { config } = useConfig();
+
+	const configMutation = useConfigMutation();
+
+	if (!config) {
+		return;
+	}
+
+	const moveSavedSearch = (savedSearchId: string, direction: "up" | "down") => {
+		const savedSearchIndex = config["gmail.savedSearches"].findIndex(
+			(savedSearch) => savedSearch.id === savedSearchId,
+		);
+
+		configMutation.mutate({
+			"gmail.savedSearches": arrayMove(
+				config["gmail.savedSearches"],
+				savedSearchIndex,
+				direction === "up" ? savedSearchIndex - 1 : savedSearchIndex + 1,
+			),
+		});
+	};
 
 	return (
 		<>
@@ -267,24 +293,22 @@ export function SavedSearchesSettings() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{savedSearches.map((savedSearch, index) => (
+						{config["gmail.savedSearches"].map((savedSearch, index) => (
 							<TableRow key={savedSearch.id}>
 								<TableCell>{savedSearch.label}</TableCell>
 								<TableCell>{savedSearch.query}</TableCell>
 								<TableCell className="flex justify-end">
-									{savedSearches.length > 1 && (
+									{config["gmail.savedSearches"].length > 1 && (
 										<>
 											<Button
 												size="icon"
 												className="size-8 p-0"
 												variant="ghost"
-												disabled={index + 1 === savedSearches.length}
+												disabled={
+													index + 1 === config["gmail.savedSearches"].length
+												}
 												onClick={() => {
-													ipc.main.send(
-														"gmail.moveSavedSearch",
-														savedSearch.id,
-														"down",
-													);
+													moveSavedSearch(savedSearch.id, "down");
 												}}
 											>
 												<ArrowDownIcon />
@@ -295,25 +319,58 @@ export function SavedSearchesSettings() {
 												variant="ghost"
 												disabled={index === 0}
 												onClick={() => {
-													ipc.main.send(
-														"gmail.moveSavedSearch",
-														savedSearch.id,
-														"up",
-													);
+													moveSavedSearch(savedSearch.id, "up");
 												}}
 											>
 												<ArrowUpIcon />
 											</Button>
 										</>
 									)}
-									<SavedSearchMenuButton savedSearch={savedSearch} />
+									<SavedSearchMenuButton
+										savedSearch={savedSearch}
+										onDelete={() => {
+											const deleteSavedSearchId = savedSearch.id;
+
+											configMutation.mutate({
+												"gmail.savedSearches": config[
+													"gmail.savedSearches"
+												].filter(
+													(savedSearch) =>
+														savedSearch.id !== deleteSavedSearchId,
+												),
+											});
+										}}
+										onEdit={(editedSavedSearch) => {
+											configMutation.mutate({
+												"gmail.savedSearches": config[
+													"gmail.savedSearches"
+												].map((savedSearch) =>
+													savedSearch.id === editedSavedSearch.id
+														? editedSavedSearch
+														: savedSearch,
+												),
+											});
+										}}
+									/>
 								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 				<div className="flex justify-end">
-					<AddSavedSearchButton />
+					<AddSavedSearchButton
+						onAdd={(savedSearch) => {
+							configMutation.mutate({
+								"gmail.savedSearches": [
+									...config["gmail.savedSearches"],
+									{
+										id: crypto.randomUUID(),
+										...savedSearch,
+									},
+								],
+							});
+						}}
+					/>
 				</div>
 			</SettingsContent>
 		</>

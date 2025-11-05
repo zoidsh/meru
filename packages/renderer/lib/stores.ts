@@ -6,10 +6,7 @@ import {
 	licenseKeySearchParam,
 	trialDaysLeftSearchParam,
 } from "@meru/renderer-lib/search-params";
-import type {
-	AccountInstances,
-	GmailSavedSearches,
-} from "@meru/shared/schemas";
+import type { AccountInstances } from "@meru/shared/schemas";
 import type { DownloadItem } from "@meru/shared/types";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -154,20 +151,4 @@ export const useAppUpdaterStore = create<{
 
 ipc.renderer.on("appUpdater.updateAvailable", (_event, version) => {
 	useAppUpdaterStore.setState({ version });
-});
-
-export const useGmailSavedSearchesStore = create<{
-	savedSearches: GmailSavedSearches;
-}>(() => ({
-	savedSearches: [],
-}));
-
-ipc.main.invoke("gmail.getSavedSearches").then((savedSearches) => {
-	useGmailSavedSearchesStore.setState({ savedSearches });
-});
-
-ipc.renderer.on("gmail.savedSearchesChanged", (_event, savedSearches) => {
-	useGmailSavedSearchesStore.setState({
-		savedSearches,
-	});
 });

@@ -23,12 +23,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
+import { useConfig } from "@/lib/react-query";
 import {
 	useAccountsStore,
 	useAppUpdaterStore,
 	useDownloadsStore,
 	useFindInPageStore,
-	useGmailSavedSearchesStore,
 	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
@@ -254,22 +254,20 @@ export function AppTitlebar() {
 	const appUpdateVersion = useAppUpdaterStore((state) => state.version);
 	const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
 
-	const savedSearches = useGmailSavedSearchesStore(
-		(state) => state.savedSearches,
-	);
+	const { config } = useConfig();
 
 	const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] =
 		useState(false);
 
 	const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
 
-	if (!accounts) {
+	if (!config || !accounts) {
 		return;
 	}
 
 	const renderAccounts = () => {
 		if (isGmailSavedSearchesOpen) {
-			return savedSearches.map((savedSearch) => (
+			return config["gmail.savedSearches"].map((savedSearch) => (
 				<Button
 					key={savedSearch.id}
 					variant="outline"
@@ -387,18 +385,23 @@ export function AppTitlebar() {
 					>
 						<ArrowRightIcon />
 					</Button>
-					{savedSearches.length > 0 && licenseKeySearchParam && (
-						<Button
-							variant="ghost"
-							size="icon"
-							className="size-7 draggable-none"
-							onClick={() => {
-								setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-							}}
-						>
-							{isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
-						</Button>
-					)}
+					{config["gmail.savedSearches"].length > 0 &&
+						licenseKeySearchParam && (
+							<Button
+								variant="ghost"
+								size="icon"
+								className="size-7 draggable-none"
+								onClick={() => {
+									setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+								}}
+							>
+								{isGmailSavedSearchesOpen ? (
+									<CircleXIcon />
+								) : (
+									<MailSearchIcon />
+								)}
+							</Button>
+						)}
 				</div>
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
 				<Trial />

@@ -5,7 +5,6 @@ import type {
 	AccountConfigInput,
 	AccountConfigs,
 	AccountInstances,
-	GmailSavedSearch,
 	GmailSavedSearches,
 } from "./schemas";
 
@@ -105,10 +104,6 @@ export type IpcMainEvents =
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
 			"gmail.setUnreadCount": [unreadCount: number];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
-			"gmail.addSavedSearch": [savedSearch: Omit<GmailSavedSearch, "id">];
-			"gmail.updateSavedSearch": [savedSearch: GmailSavedSearch];
-			"gmail.deleteSavedSearch": [savedSearchId: string];
-			"gmail.moveSavedSearch": [savedSearchId: string, move: "up" | "down"];
 			"gmail.search": [searchQuery: string];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
@@ -132,7 +127,6 @@ export type IpcMainEvents =
 			"downloads.showFileInFolder": (filePath: string) => {
 				error: string | null;
 			};
-			"gmail.getSavedSearches": () => GmailSavedSearches;
 			"config.getConfig": () => Config;
 			"config.setConfig": (config: Partial<Config>) => void;
 			"downloads.setLocation": () => { canceled: boolean };
@@ -169,7 +163,6 @@ export type IpcRendererEvent = {
 		action: keyof typeof GMAIL_ACTION_CODE_MAP,
 	];
 	"gmail.openMessage": [messageId: string];
-	"gmail.savedSearchesChanged": [savedSearches: GmailSavedSearches];
 	"theme.darkModeChanged": [darkMode: boolean];
 	"accounts.changed": [accounts: AccountInstances];
 	"accounts.openAddAccountDialog": [];
