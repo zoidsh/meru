@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 export default async (context) => {
-	if (process.platform === "darwin") {
+	if (context.packager.platform.name === "mac") {
 		console.log("\n---------\n");
 		console.log("Copying Assets.car file for macOS");
 
