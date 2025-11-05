@@ -290,10 +290,6 @@ class Ipc {
 			});
 		}
 
-		ipc.main.handle("downloads.getHistory", () =>
-			config.get("downloads.history"),
-		);
-
 		ipc.main.handle("downloads.openFile", async (_event, filePath) => {
 			const error = await shell.openPath(filePath);
 
@@ -316,27 +312,6 @@ class Ipc {
 			shell.showItemInFolder(filePath);
 
 			return { error: null };
-		});
-
-		ipc.main.on("downloads.removeHistoryItem", (_event, itemId) => {
-			config.set(
-				"downloads.history",
-				config.get("downloads.history").filter((item) => item.id !== itemId),
-			);
-		});
-
-		ipc.main.on("downloads.clearHistory", () => {
-			config.set("downloads.history", []);
-		});
-
-		config.onDidChange("downloads.history", (downloadHistory) => {
-			if (downloadHistory) {
-				ipc.renderer.send(
-					main.window.webContents,
-					"downloads.historyChanged",
-					downloadHistory,
-				);
-			}
 		});
 
 		ipc.main.on("taskbar.setOverlayIcon", (_event, dataUrl) => {

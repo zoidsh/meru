@@ -111,8 +111,6 @@ export type IpcMainEvents =
 				text: string | null,
 				options?: { forward?: boolean; findNext: boolean },
 			];
-			"downloads.removeHistoryItem": [itemId: string];
-			"downloads.clearHistory": [];
 			"taskbar.setOverlayIcon": [dataUrl: string];
 			"appUpdater.quitAndInstall": [];
 			"appUpdater.openVersionHistory": [];
@@ -122,7 +120,6 @@ export type IpcMainEvents =
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
 			"desktopSources.getSources": () => DesktopSources;
-			"downloads.getHistory": () => DownloadItem[];
 			"downloads.openFile": (filePath: string) => { error: string | null };
 			"downloads.showFileInFolder": (filePath: string) => {
 				error: string | null;
@@ -140,7 +137,6 @@ export type IpcMainEvents =
 
 export type IpcRendererEvent = {
 	navigate: [to: string];
-	"downloads.historyChanged": [downloadHistory: DownloadItem[]];
 	"downloads.itemCompleted": [itemId: string];
 	"settings.setIsOpen": [isOpen: boolean];
 	"gmail.navigateTo": [

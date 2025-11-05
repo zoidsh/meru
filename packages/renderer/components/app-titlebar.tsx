@@ -87,10 +87,14 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 function Download() {
 	const [_location, navigate] = useHashLocation();
 
+	const { config } = useConfig();
+
 	const completedDownloadItem = useDownloadsStore(
 		(state) =>
 			(state.itemCompleted &&
-				state.history.find((item) => item.id === state.itemCompleted)) ||
+				config?.["downloads.history"].find(
+					(item) => item.id === state.itemCompleted,
+				)) ||
 			null,
 	);
 
