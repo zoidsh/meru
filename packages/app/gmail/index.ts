@@ -125,48 +125,50 @@ export class Gmail extends GoogleApp {
 			return;
 		}
 
-		const dockUnreadBadge = config.get("dock.unreadBadge");
+		if (config.get("accounts.unreadBadge")) {
+			const dockUnreadBadge = config.get("dock.unreadBadge");
 
-		this.store.subscribe(
-			(state) => state.unreadCount,
-			() => {
-				const totalUnreadCount = accounts.getTotalUnreadCount();
+			this.store.subscribe(
+				(state) => state.unreadCount,
+				() => {
+					const totalUnreadCount = accounts.getTotalUnreadCount();
 
-				if (dockUnreadBadge) {
-					if (platform.isMacOS && app.dock) {
-						app.dock.setBadge(
-							totalUnreadCount ? totalUnreadCount.toString() : "",
-						);
-					} else if (platform.isLinux) {
-						app.badgeCount = totalUnreadCount;
-					} else if (platform.isWindows) {
-						if (totalUnreadCount) {
-							ipc.renderer.send(
-								main.window.webContents,
-								"taskbar.setOverlayIcon",
-								totalUnreadCount,
+					if (dockUnreadBadge) {
+						if (platform.isMacOS && app.dock) {
+							app.dock.setBadge(
+								totalUnreadCount ? totalUnreadCount.toString() : "",
 							);
-						} else {
-							main.window.setOverlayIcon(null, "");
+						} else if (platform.isLinux) {
+							app.badgeCount = totalUnreadCount;
+						} else if (platform.isWindows) {
+							if (totalUnreadCount) {
+								ipc.renderer.send(
+									main.window.webContents,
+									"taskbar.setOverlayIcon",
+									totalUnreadCount,
+								);
+							} else {
+								main.window.setOverlayIcon(null, "");
+							}
 						}
 					}
-				}
 
-				appTray.updateUnreadStatus(totalUnreadCount);
+					appTray.updateUnreadStatus(totalUnreadCount);
 
-				ipc.renderer.send(
-					main.window.webContents,
-					"accounts.changed",
-					accounts.getAccounts().map((account) => ({
-						config: account.config,
-						gmail: {
-							...account.instance.gmail.store.getState(),
-							...account.instance.gmail.viewStore.getState(),
-						},
-					})),
-				);
-			},
-		);
+					ipc.renderer.send(
+						main.window.webContents,
+						"accounts.changed",
+						accounts.getAccounts().map((account) => ({
+							config: account.config,
+							gmail: {
+								...account.instance.gmail.store.getState(),
+								...account.instance.gmail.viewStore.getState(),
+							},
+						})),
+					);
+				},
+			);
+		}
 	}
 
 	createComposeWindow(url: string) {
