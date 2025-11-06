@@ -3,9 +3,15 @@ import { machineId } from "node-machine-id";
 import { FetchError, ofetch } from "ofetch";
 import { z } from "zod";
 import { config } from "@/config";
+import { openExternalUrl } from "./url";
 
 class LicenseKey {
 	isValid = false;
+
+	instance = {
+		name: "",
+		label: "",
+	};
 
 	async activate(input: {
 		licenseKey: string;
@@ -105,17 +111,16 @@ class LicenseKey {
 						case "max_activations_reached": {
 							const { response } = await showActivationError({
 								detail:
-									"This license key is already activated on another device. Do you want to deactivate the other device and try again?",
-								buttons: ["Confirm", "Cancel"],
+									"This license key has reached its maximum number of activations. Manage the activations in the License Manager to remove a device or contact support for further help.",
+								buttons: ["Open License Manager", "Cancel"],
 								defaultId: 0,
 								cancelId: 1,
 							});
 
 							if (response === 0) {
-								return this.activate({
-									licenseKey: input.licenseKey,
-									force: true,
-								});
+								openExternalUrl("https://portal.meru.so");
+
+								return { success: false };
 							}
 
 							break;
@@ -154,9 +159,15 @@ class LicenseKey {
 					licenseKey: z.object({
 						key: z.string(),
 					}),
+					instance: z.object({
+						name: z.string(),
+						label: z.string(),
+					}),
 				});
 
 				validationSuccessSchema.parse(body);
+
+				this.instance = body.instance;
 
 				this.isValid = true;
 			}

@@ -12,6 +12,13 @@ import {
 	DialogTrigger,
 } from "@meru/ui/components/dialog";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown";
+import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -20,7 +27,9 @@ import {
 	FormMessage,
 } from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { MoreHorizontalIcon } from "lucide-react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -74,19 +83,19 @@ function LicenseKeyForm({
 	);
 }
 
-function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
-	const [isOpen, setIsOpen] = useState(false);
-
+function ActivateLicenseDialog({
+	variant = "activate",
+	children,
+	...props
+}: { variant?: "activate" | "change" } & ComponentProps<typeof Dialog>) {
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">
-					{variant === "change" ? "Change License Key" : "Activate"}
-				</Button>
-			</DialogTrigger>
+		<Dialog {...props}>
+			{children}
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Activate License Key</DialogTitle>
+					<DialogTitle>
+						{variant === "activate" ? "Activate" : "Change"} License Key
+					</DialogTitle>
 				</DialogHeader>
 				<DialogDescription>
 					Please enter the license key you received at your email address after
@@ -99,8 +108,8 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 							licenseKey,
 						);
 
-						if (success) {
-							setIsOpen(false);
+						if (success && props.onOpenChange) {
+							props.onOpenChange(false);
 						}
 					}}
 				/>
@@ -109,9 +118,31 @@ function ActivateLicenseKeyButton({ variant }: { variant?: "change" }) {
 	);
 }
 
+function ActivateLicenseKeyButton() {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<ActivateLicenseDialog open={isOpen} onOpenChange={setIsOpen}>
+			<DialogTrigger asChild>
+				<Button variant="outline">Activate</Button>
+			</DialogTrigger>
+		</ActivateLicenseDialog>
+	);
+}
+
 export function LicenseSettings() {
 	const [licenseKey, setLicenseKey] = useState<string | null>(null);
 	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+
+	const { data: licenseKeyStatus } = useQuery({
+		queryKey: ["license-key-status"],
+		queryFn: () => ipc.main.invoke("licenseKey.getStatus"),
+	});
+
+	const [isChangeLicenseDialogOpen, setIsChangeLicenseDialogOpen] =
+		useState(false);
+
+	const [isLicenseKeyRevealed, setIsLicenseKeyRevealed] = useState(false);
 
 	useEffect(() => {
 		if (licenseKeySearchParam) {
@@ -119,28 +150,73 @@ export function LicenseSettings() {
 		}
 	}, []);
 
+	if (!licenseKeyStatus) {
+		return;
+	}
+
 	const renderContent = () => {
 		if (licenseKey) {
 			return (
-				<>
-					<div className="text-sm mb-4">
+				<div className="space-y-4">
+					<div className="text-sm">
 						You're using Meru Pro with professional features and for commercial
 						use. Thank you for supporting Meru!
 					</div>
-					<div className="flex gap-4">
-						<ActivateLicenseKeyButton variant="change" />
-						<Button
-							variant="outline"
-							onClick={() => {
-								navigator.clipboard.writeText(licenseKey);
+					<div>
+						<FieldGroup>
+							<Field>
+								<FieldLabel>License Key</FieldLabel>
+								<div className="flex gap-2">
+									<Input
+										placeholder="Click to reveal license key"
+										value={isLicenseKeyRevealed ? licenseKey : ""}
+										onFocus={() => {
+											setIsLicenseKeyRevealed(true);
+										}}
+										onBlur={() => {
+											setIsLicenseKeyRevealed(false);
+										}}
+										readOnly
+									/>
+									<DropdownMenu>
+										<DropdownMenuTrigger>
+											<Button size="icon" variant="secondary">
+												<MoreHorizontalIcon />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent>
+											<DropdownMenuItem
+												onClick={() => {
+													navigator.clipboard.writeText(licenseKey);
 
-								toast("Copied license key to clipboard");
-							}}
-						>
-							Copy License Key
-						</Button>
+													toast("Copied license key to clipboard");
+												}}
+											>
+												Copy
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={() => {
+													setIsChangeLicenseDialogOpen(true);
+												}}
+											>
+												Change
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
+									<ActivateLicenseDialog
+										variant="change"
+										open={isChangeLicenseDialogOpen}
+										onOpenChange={setIsChangeLicenseDialogOpen}
+									/>
+								</div>
+							</Field>
+							<Field>
+								<FieldLabel>Device Name</FieldLabel>
+								<Input value={licenseKeyStatus.instance.label} readOnly />
+							</Field>
+						</FieldGroup>
 					</div>
-				</>
+				</div>
 			);
 		}
 

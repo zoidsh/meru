@@ -405,6 +405,11 @@ class Ipc {
 				app.setAsDefaultProtocolClient("mailto");
 			}
 		});
+
+		ipc.main.handle("licenseKey.getStatus", () => ({
+			isValid: licenseKey.isValid,
+			instance: licenseKey.instance,
+		}));
 	}
 }
 

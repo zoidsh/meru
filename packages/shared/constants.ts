@@ -9,3 +9,5 @@ export const GOOGLE_MEET_URL = "https://meet.google.com";
 export const GITHUB_REPO_URL = "https://github.com/zoidsh/meru";
 
 export const WEBSITE_URL = "https://meru.so";
+
+export const MERU_PORTAL_URL = "https://portal.meru.so";

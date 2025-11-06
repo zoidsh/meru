@@ -120,6 +120,10 @@ export type IpcMainEvents =
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
+			"licenseKey.getStatus": () => {
+				isValid: boolean;
+				instance: { name: string; label: string };
+			};
 			"desktopSources.getSources": () => DesktopSources;
 			"downloads.openFile": (filePath: string) => { error: string | null };
 			"downloads.showFileInFolder": (filePath: string) => {
