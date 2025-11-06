@@ -158,9 +158,15 @@ async function observeInbox() {
 			`div:has(> ${inboxAnchorElementSelector}) .bsU`,
 		);
 
-		const currentUnreadCount = Number(
-			unreadCountElement?.textContent?.replace(/\D/, "") || "0",
-		);
+		const currentUnreadCount =
+			unreadCountElement?.textContent
+				?.replace(/\D/, "")
+				.match(/\d+/g)
+				?.reduce((total, countString) => {
+					const count = Number(countString);
+
+					return Number.isNaN(count) ? total : total + count;
+				}, 0) || 0;
 
 		if (previousUnreadCount !== currentUnreadCount) {
 			ipcMain.send("gmail.setUnreadCount", currentUnreadCount);
