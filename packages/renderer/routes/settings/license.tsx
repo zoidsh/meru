@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
-import { WEBSITE_URL } from "@meru/shared/constants";
+import { MERU_PORTAL_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
 	Dialog,
@@ -15,6 +15,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown";
 import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
@@ -200,6 +201,16 @@ export function LicenseSettings() {
 												}}
 											>
 												Change
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem>
+												<a
+													href={MERU_PORTAL_URL}
+													target="_blank"
+													rel="noreferrer"
+												>
+													Open License Manager
+												</a>
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
