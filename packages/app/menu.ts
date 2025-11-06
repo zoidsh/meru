@@ -327,6 +327,7 @@ export class AppMenu {
 					},
 					{
 						label: "Zoom Out (hidden shortcut 1)",
+						visible: is.dev,
 						accelerator: "CommandOrControl+numsub",
 						click: zoomOut,
 					},
