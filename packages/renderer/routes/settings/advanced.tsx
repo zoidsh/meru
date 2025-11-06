@@ -1,4 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
+import { platform } from "@meru/renderer-lib/utils";
 import {
 	Field,
 	FieldContent,
@@ -44,7 +45,7 @@ function LaunchAtLoginField() {
 
 	const fieldId = useId();
 
-	if (!loginItemSettings) {
+	if (platform.isLinux || !loginItemSettings) {
 		return;
 	}
 
@@ -148,18 +149,20 @@ export function AdvancedSettings() {
 						/>
 					</FieldSet>
 					<FieldSeparator />
-					<FieldSet>
-						<FieldLegend>Screen Sharing</FieldLegend>
-						<FieldGroup>
-							<ConfigSwitchField
-								label="Use System Picker"
-								description="Use the system's native screen sharing picker when sharing your screen."
-								configKey="screenShare.useSystemPicker"
-								licenseKeyRequired
-								restartRequired
-							/>
-						</FieldGroup>
-					</FieldSet>
+					{platform.isMacOS && (
+						<FieldSet>
+							<FieldLegend>Screen Sharing</FieldLegend>
+							<FieldGroup>
+								<ConfigSwitchField
+									label="Use System Picker"
+									description="Use the system's native screen sharing picker when sharing your screen."
+									configKey="screenShare.useSystemPicker"
+									licenseKeyRequired
+									restartRequired
+								/>
+							</FieldGroup>
+						</FieldSet>
+					)}
 					<FieldSeparator />
 					<FieldSet>
 						<FieldLegend>Miscellaneous</FieldLegend>
