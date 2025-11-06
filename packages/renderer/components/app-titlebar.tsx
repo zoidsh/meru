@@ -17,13 +17,15 @@ import {
 	EllipsisVerticalIcon,
 	FileCheckIcon,
 	MailSearchIcon,
+	MoonIcon,
 	SparklesIcon,
 	XIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
-import { useConfig } from "@/lib/react-query";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 import {
 	useAccountsStore,
 	useAppUpdaterStore,
@@ -32,6 +34,20 @@ import {
 	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
+
+function TitlebarIconButton({
+	className,
+	...props
+}: ComponentProps<typeof Button>) {
+	return (
+		<Button
+			variant="ghost"
+			size="sm"
+			className={cn("size-7 draggable-none", className)}
+			{...props}
+		/>
+	);
+}
 
 function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 	const [fadeOut, setFadeOut] = useState(false);
@@ -247,6 +263,34 @@ function FindInPage() {
 	);
 }
 
+function DoNotDisturb() {
+	const { config } = useConfig();
+
+	const configMutation = useConfigMutation();
+
+	const isLicenseKeyValid = useIsLicenseKeyValid();
+
+	if (!config || !isLicenseKeyValid) {
+		return;
+	}
+
+	return (
+		<TitlebarIconButton
+			onClick={() => {
+				configMutation.mutate({
+					"app.doNotDisturb": !config["app.doNotDisturb"],
+				});
+			}}
+		>
+			<MoonIcon
+				className={cn({
+					"text-violet-600": config["app.doNotDisturb"],
+				})}
+			/>
+		</TitlebarIconButton>
+	);
+}
+
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
 
@@ -409,7 +453,10 @@ export function AppTitlebar() {
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
 				<Trial />
 				<FindInPage />
-				<Download />
+				<div className="flex gap-2">
+					<Download />
+					<DoNotDisturb />
+				</div>
 				{appUpdateVersion && (
 					<Button
 						size="sm"

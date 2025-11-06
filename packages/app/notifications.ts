@@ -12,7 +12,11 @@ export function createNotification({
 	click?: () => void;
 	action?: (index: number) => void;
 }) {
-	if (!Notification.isSupported()) {
+	if (
+		!config.get("notifications.enabled") ||
+		config.get("app.doNotDisturb") ||
+		!Notification.isSupported()
+	) {
 		return;
 	}
 

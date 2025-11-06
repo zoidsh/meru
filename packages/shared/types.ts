@@ -39,6 +39,7 @@ export type Config = {
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
 	licenseKey: string | null;
+	"app.doNotDisturb": boolean;
 	"dock.enabled": boolean;
 	"dock.unreadBadge": boolean;
 	"externalLinks.confirm": boolean;

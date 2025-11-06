@@ -34,6 +34,7 @@ export const config = new Store<Config>({
 		resetConfig: false,
 		theme: "system",
 		licenseKey: null,
+		"app.doNotDisturb": false,
 		"dock.enabled": true,
 		"dock.unreadBadge": true,
 		"externalLinks.confirm": true,
