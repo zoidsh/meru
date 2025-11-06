@@ -12,6 +12,7 @@ import {
 	BrowserWindow,
 	dialog,
 	globalShortcut,
+	powerSaveBlocker,
 	type Session,
 	WebContentsView,
 	type WebContentsViewConstructorOptions,
@@ -377,7 +378,13 @@ export class GoogleApp {
 
 						account.instance.windows.add(window);
 
+						let powerSaveBlockerId: number | undefined;
+
 						if (googleApp === "meet") {
+							powerSaveBlockerId = powerSaveBlocker.start(
+								"prevent-display-sleep",
+							);
+
 							globalShortcut.register("CommandOrControl+Shift+1", () => {
 								ipc.renderer.send(
 									window.webContents,
@@ -399,6 +406,10 @@ export class GoogleApp {
 							if (googleApp === "meet") {
 								globalShortcut.unregister("CommandOrControl+Shift+1");
 								globalShortcut.unregister("CommandOrControl+Shift+2");
+							}
+
+							if (typeof powerSaveBlockerId === "number") {
+								powerSaveBlocker.stop(powerSaveBlockerId);
 							}
 						});
 
