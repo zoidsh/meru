@@ -2,7 +2,7 @@ export function extractVerificationCode(texts: string[]) {
 	let hasVerificationCodeContext = false;
 
 	for (const text of texts) {
-		if (/(?:verification code)\b/i.test(text)) {
+		if (/(?:verification)\b/i.test(text)) {
 			hasVerificationCodeContext = true;
 
 			break;
