@@ -278,7 +278,10 @@ export class GoogleApp {
 				if (supportedGoogleAppMatch) {
 					const account = accounts.getAccount(this.accountId);
 
-					if (account.instance.windows.size > 0) {
+					if (
+						!config.get("googleApps.openAppsInNewWindow") &&
+						account.instance.windows.size > 0
+					) {
 						const urlHostname = new URL(url).hostname;
 
 						for (const window of account.instance.windows) {

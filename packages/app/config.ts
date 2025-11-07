@@ -75,6 +75,7 @@ export const config = new Store<Config>({
 		"window.restrictMinimumSize": true,
 		"trial.expired": false,
 		"googleApps.openInApp": true,
+		"googleApps.openAppsInNewWindow": false,
 		"verificationCodes.autoCopy": false,
 		"verificationCodes.autoDelete": false,
 	},

@@ -85,6 +85,7 @@ export type Config = {
 	"window.restrictMinimumSize": boolean;
 	"trial.expired": boolean;
 	"googleApps.openInApp": boolean;
+	"googleApps.openAppsInNewWindow": boolean;
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
 };
