@@ -165,5 +165,14 @@ export const config = new Store<Config>({
 				store.set("googleApps.openInApp", !openGoogleAppsInExternalBrowser);
 			}
 		},
+		">=3.17.0": (store) => {
+			// @ts-expect-error: `googleApps.openInExternalBrowser` is now 'googleApps.openInApp'
+			if (typeof store.get("googleApps.openInExternalBrowser") === "boolean") {
+				store.delete(
+					// @ts-expect-error
+					"googleApps.openInExternalBrowser",
+				);
+			}
+		},
 	},
 });
