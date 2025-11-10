@@ -1,6 +1,8 @@
+import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
 import type { Config } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
+import { Button } from "@meru/ui/components/button";
 import {
 	Field,
 	FieldDescription,
@@ -54,22 +56,43 @@ export function NotificationsSettings() {
 							description="Show notifications for new emails."
 							configKey="notifications.enabled"
 						/>
-						<ConfigSwitchField
-							label="Show Sender"
-							description="Display the email sender's name in notifications."
-							configKey="notifications.showSender"
-						/>
-						<ConfigSwitchField
-							label="Show Subject"
-							description="Display the email subject in notifications."
-							configKey="notifications.showSubject"
-						/>
-						{platform.isMacOS && (
-							<ConfigSwitchField
-								label="Show Summary"
-								description="Display the email summary in notifications."
-								configKey="notifications.showSummary"
-							/>
+						{config["notifications.enabled"] && (
+							<>
+								<ConfigSwitchField
+									label="Show Sender"
+									description="Display the email sender's name in notifications."
+									configKey="notifications.showSender"
+								/>
+								<ConfigSwitchField
+									label="Show Subject"
+									description="Display the email subject in notifications."
+									configKey="notifications.showSubject"
+								/>
+								{platform.isMacOS && (
+									<ConfigSwitchField
+										label="Show Summary"
+										description="Display the email summary in notifications."
+										configKey="notifications.showSummary"
+									/>
+								)}
+								<Field>
+									<FieldLabel>Test Notification</FieldLabel>
+									<FieldDescription>
+										Show a test notification to see how notifications will
+										appear.
+									</FieldDescription>
+									<div>
+										<Button
+											variant="outline"
+											onClick={() => {
+												ipc.main.send("notifications.showTestNotification");
+											}}
+										>
+											Show Test Notification
+										</Button>
+									</div>
+								</Field>
+							</>
 						)}
 					</FieldGroup>
 				</FieldSet>

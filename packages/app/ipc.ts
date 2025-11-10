@@ -410,6 +410,14 @@ class Ipc {
 			isValid: licenseKey.isValid,
 			instance: licenseKey.instance,
 		}));
+
+		ipc.main.on("notifications.showTestNotification", () => {
+			createNotification({
+				title: "Tim from Meru",
+				subtitle: "Your Test Notification Request",
+				body: "This is a test notification to show how notifications will appear.",
+			});
+		});
 	}
 }
 

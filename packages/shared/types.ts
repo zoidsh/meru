@@ -118,6 +118,7 @@ export type IpcMainEvents =
 			"appUpdater.openVersionHistory": [];
 			"app.relaunch": [];
 			"theme.setTheme": [theme: "system" | "light" | "dark"];
+			"notifications.showTestNotification": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
