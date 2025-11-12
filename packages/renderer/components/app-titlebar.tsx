@@ -34,6 +34,7 @@ import {
 	useSettingsStore,
 	useTrialStore,
 } from "../lib/stores";
+import { GoogleAppIcon } from "./google-app-icon";
 
 function TitlebarIconButton({
 	className,
@@ -291,6 +292,31 @@ function DoNotDisturb() {
 	);
 }
 
+function PinnedGoogleApps() {
+	const { config } = useConfig();
+
+	const isLicenseKeyValid = useIsLicenseKeyValid();
+
+	if (!config || !isLicenseKeyValid) {
+		return;
+	}
+
+	return (
+		<div className="flex gap-2 border-r pr-2 not-first:border-l not-first:pl-2">
+			{config["googleApps.pinnedApps"].sort().map((app) => (
+				<TitlebarIconButton
+					key={app}
+					onClick={() => {
+						ipc.main.send("googleApps.openApp", app);
+					}}
+				>
+					<GoogleAppIcon app={app} />
+				</TitlebarIconButton>
+			))}
+		</div>
+	);
+}
+
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
 
@@ -451,9 +477,10 @@ export function AppTitlebar() {
 						)}
 				</div>
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
-				<Trial />
-				<FindInPage />
 				<div className="flex gap-2">
+					<Trial />
+					<FindInPage />
+					<PinnedGoogleApps />
 					<Download />
 					<DoNotDisturb />
 				</div>

@@ -30,6 +30,22 @@ export type NotificationSound =
 	| "magic-ring"
 	| "retro-game";
 
+export const googleAppsPinnedApps = {
+	calendar: "Calendar",
+	chat: "Chat",
+	docs: "Docs",
+	drive: "Drive",
+	forms: "Forms",
+	gemini: "Gemini",
+	keep: "Keep",
+	meet: "Meet",
+	tasks: "Tasks",
+	sheets: "Sheets",
+	slides: "Slides",
+} as const;
+
+export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
+
 export type Config = {
 	accounts: AccountConfigs;
 	"accounts.unreadBadge": boolean;
@@ -86,6 +102,7 @@ export type Config = {
 	"trial.expired": boolean;
 	"googleApps.openInApp": boolean;
 	"googleApps.openAppsInNewWindow": boolean;
+	"googleApps.pinnedApps": GoogleAppsPinnedApp[];
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
 };
@@ -119,6 +136,7 @@ export type IpcMainEvents =
 			"app.relaunch": [];
 			"theme.setTheme": [theme: "system" | "light" | "dark"];
 			"notifications.showTestNotification": [];
+			"googleApps.openApp": [app: GoogleAppsPinnedApp];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };

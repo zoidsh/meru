@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { createGmailDelegatedAccountUrl, GMAIL_URL } from "@meru/shared/gmail";
+import { getGoogleAppUrl } from "@meru/shared/google";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import { app, BrowserWindow } from "electron";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -195,6 +197,12 @@ export class Gmail extends GoogleApp {
 	search(query: string) {
 		this.view.webContents.executeJavaScript(
 			`window.location.hash = "#search/${query}"`,
+		);
+	}
+
+	openGoogleApp(app: GoogleAppsPinnedApp) {
+		this.view.webContents.executeJavaScript(
+			`window.open("${getGoogleAppUrl(app)}", "_blank")`,
 		);
 	}
 }

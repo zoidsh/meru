@@ -418,6 +418,10 @@ class Ipc {
 				body: "This is a test notification to show how notifications will appear.",
 			});
 		});
+
+		ipc.main.on("googleApps.openApp", (_event, app) => {
+			accounts.getSelectedAccount().instance.gmail.openGoogleApp(app);
+		});
 	}
 }
 

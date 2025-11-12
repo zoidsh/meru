@@ -76,6 +76,7 @@ export const config = new Store<Config>({
 		"trial.expired": false,
 		"googleApps.openInApp": true,
 		"googleApps.openAppsInNewWindow": false,
+		"googleApps.pinnedApps": [],
 		"verificationCodes.autoCopy": false,
 		"verificationCodes.autoDelete": false,
 	},
