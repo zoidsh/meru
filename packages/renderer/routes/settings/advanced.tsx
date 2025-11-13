@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LoginItemSettings } from "electron";
 import { useId } from "react";
 import { ConfigSwitchField } from "@/components/config-switch-field";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import {
 	Settings,
@@ -131,6 +132,7 @@ export function AdvancedSettings() {
 				<SettingsTitle>Advanced</SettingsTitle>
 			</SettingsHeader>
 			<SettingsContent>
+				<LicenseKeyRequiredBanner />
 				<FieldGroup>
 					<FieldSet>
 						<FieldLegend>General</FieldLegend>

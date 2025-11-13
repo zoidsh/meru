@@ -4,11 +4,8 @@ import {
 	Item,
 	ItemActions,
 	ItemContent,
-	ItemDescription,
-	ItemMedia,
 	ItemTitle,
 } from "@meru/ui/components/item";
-import { CircleArrowUpIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 
@@ -24,14 +21,10 @@ export function LicenseKeyRequiredBanner({
 
 	return (
 		<Item variant="muted" className="mb-8" {...props}>
-			<ItemMedia variant="icon">
-				<CircleArrowUpIcon />
-			</ItemMedia>
 			<ItemContent>
-				<ItemTitle>Meru Pro Required</ItemTitle>
-				<ItemDescription>
-					{children || "Upgrade to Meru Pro to use this feature."}
-				</ItemDescription>
+				<ItemTitle>
+					{children || "Upgrade to Meru Pro to unlock all options"}
+				</ItemTitle>
 			</ItemContent>
 			<ItemActions>
 				<Button size="sm" asChild>

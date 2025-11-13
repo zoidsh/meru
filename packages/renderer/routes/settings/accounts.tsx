@@ -241,7 +241,7 @@ export function AccountsSettings() {
 			</SettingsHeader>
 			<SettingsContent>
 				<LicenseKeyRequiredBanner>
-					Upgrade to Meru Pro to add more accounts.
+					Upgrade to Meru Pro to add more accounts
 				</LicenseKeyRequiredBanner>
 				<div>
 					<Table className="mb-4">

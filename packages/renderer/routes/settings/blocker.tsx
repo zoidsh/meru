@@ -1,5 +1,6 @@
 import { FieldGroup, FieldSeparator } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import {
 	Settings,
 	SettingsContent,
@@ -21,6 +22,7 @@ export function BlockerSettings() {
 				<SettingsTitle>Blocker</SettingsTitle>
 			</SettingsHeader>
 			<SettingsContent>
+				<LicenseKeyRequiredBanner />
 				<FieldGroup>
 					<ConfigSwitchField
 						label="Enable Blocker"

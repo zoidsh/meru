@@ -11,6 +11,7 @@ import {
 import { Label } from "@meru/ui/components/label";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import {
 	Settings,
@@ -38,6 +39,7 @@ export function GoogleAppsSettings() {
 				<SettingsTitle>Google Apps</SettingsTitle>
 			</SettingsHeader>
 			<SettingsContent>
+				<LicenseKeyRequiredBanner />
 				<FieldGroup>
 					<ConfigSwitchField
 						label="Open in App"

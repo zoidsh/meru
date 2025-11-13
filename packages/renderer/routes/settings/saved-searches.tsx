@@ -283,7 +283,9 @@ export function SavedSearchesSettings() {
 				<SettingsTitle>Saved Searches</SettingsTitle>
 			</SettingsHeader>
 			<SettingsContent>
-				<LicenseKeyRequiredBanner />
+				<LicenseKeyRequiredBanner>
+					Upgrade to Meru Pro to add saved searches
+				</LicenseKeyRequiredBanner>
 				<Table className="mb-4">
 					<TableHeader>
 						<TableRow>
