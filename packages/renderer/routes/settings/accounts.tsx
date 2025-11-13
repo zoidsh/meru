@@ -21,6 +21,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown";
+import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import {
 	Form,
 	FormControl,
@@ -84,9 +85,17 @@ function AccountForm({
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel>Label</FormLabel>
-							<FormControl>
-								<Input placeholder={placeholder} {...field} />
-							</FormControl>
+							<div className="flex gap-2">
+								<FormControl>
+									<Input placeholder={placeholder} {...field} />
+								</FormControl>
+								<EmojiPickerButton
+									onEmojiSelect={({ emoji }) => {
+										form.setValue("label", `${form.getValues().label}${emoji}`);
+									}}
+									modal
+								/>
+							</div>
 							<FormMessage />
 						</FormItem>
 					)}

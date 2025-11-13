@@ -19,12 +19,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown";
-import {
-	EmojiPicker,
-	EmojiPickerContent,
-	EmojiPickerFooter,
-	EmojiPickerSearch,
-} from "@meru/ui/components/emoji-picker";
+import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import {
 	Form,
 	FormControl,
@@ -35,11 +30,6 @@ import {
 } from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@meru/ui/components/popover";
-import {
 	Table,
 	TableBody,
 	TableCell,
@@ -47,12 +37,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@meru/ui/components/table";
-import {
-	ArrowDownIcon,
-	ArrowUpIcon,
-	EllipsisIcon,
-	SmileIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -82,8 +67,6 @@ export function SavedSearchForm({
 		defaultValues: savedSearch,
 	});
 
-	const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-
 	return (
 		<Form {...form}>
 			<form
@@ -102,34 +85,12 @@ export function SavedSearchForm({
 								<FormControl>
 									<Input placeholder={labelPlaceholder} {...field} />
 								</FormControl>
-								<Popover
-									onOpenChange={setIsEmojiPickerOpen}
-									open={isEmojiPickerOpen}
+								<EmojiPickerButton
+									onEmojiSelect={({ emoji }) => {
+										form.setValue("label", `${form.getValues().label}${emoji}`);
+									}}
 									modal
-								>
-									<PopoverTrigger asChild>
-										<Button variant="outline">
-											<SmileIcon />
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent>
-										<EmojiPicker
-											className="h-[264px]"
-											onEmojiSelect={({ emoji }) => {
-												setIsEmojiPickerOpen(false);
-
-												form.setValue(
-													"label",
-													`${form.getValues().label}${emoji}`,
-												);
-											}}
-										>
-											<EmojiPickerSearch />
-											<EmojiPickerContent />
-											<EmojiPickerFooter />
-										</EmojiPicker>
-									</PopoverContent>
-								</Popover>
+								/>
 							</div>
 							<FormMessage />
 						</FormItem>
