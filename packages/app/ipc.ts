@@ -8,6 +8,8 @@ import {
 	clipboard,
 	desktopCapturer,
 	dialog,
+	Menu,
+	type MenuItemConstructorOptions,
 	Notification,
 	nativeImage,
 	nativeTheme,
@@ -19,6 +21,7 @@ import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
+import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { extractVerificationCode } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { appUpdater } from "./updater";
@@ -421,6 +424,40 @@ class Ipc {
 
 		ipc.main.on("googleApps.openApp", (_event, app) => {
 			accounts.getSelectedAccount().instance.gmail.openGoogleApp(app);
+		});
+
+		ipc.main.on("doNotDisturb.toggle", () => {
+			doNotDisturb.toggle();
+		});
+
+		ipc.main.on("doNotDisturb.showOptions", () => {
+			const options: MenuItemConstructorOptions[] = DoNotDisturb.options.map(
+				({ label, duration }) => ({
+					label,
+					type: "checkbox",
+					checked: config.get("doNotDisturb.duration") === duration,
+					click: () => {
+						doNotDisturb.enable(duration);
+					},
+				}),
+			);
+
+			const menu = Menu.buildFromTemplate(
+				config.get("doNotDisturb.enabled")
+					? [
+							{
+								label: "Disable",
+								click: () => {
+									doNotDisturb.disable();
+								},
+							},
+							{ type: "separator" },
+							...options,
+						]
+					: options,
+			);
+
+			menu.popup();
 		});
 	}
 }

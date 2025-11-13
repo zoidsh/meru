@@ -34,7 +34,6 @@ export const config = new Store<Config>({
 		resetConfig: false,
 		theme: "system",
 		licenseKey: null,
-		"app.doNotDisturb": false,
 		"dock.enabled": true,
 		"dock.unreadBadge": true,
 		"externalLinks.confirm": true,
@@ -79,6 +78,9 @@ export const config = new Store<Config>({
 		"googleApps.pinnedApps": [],
 		"verificationCodes.autoCopy": false,
 		"verificationCodes.autoDelete": false,
+		"doNotDisturb.enabled": false,
+		"doNotDisturb.duration": null,
+		"doNotDisturb.until": null,
 	},
 	migrations: {
 		">=3.4.0": (store) => {
@@ -173,6 +175,13 @@ export const config = new Store<Config>({
 					// @ts-expect-error
 					"googleApps.openInExternalBrowser",
 				);
+			}
+		},
+		">=3.18.0": (store) => {
+			// @ts-expect-error: `app.doNotDisturb` is now 'doNotDisturb.enabled'
+			if (typeof store.get("app.doNotDisturb") !== "undefined") {
+				// @ts-expect-error
+				store.delete("app.doNotDisturb");
 			}
 		},
 	},

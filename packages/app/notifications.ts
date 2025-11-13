@@ -14,7 +14,7 @@ export function createNotification({
 }) {
 	if (
 		!config.get("notifications.enabled") ||
-		config.get("app.doNotDisturb") ||
+		config.get("doNotDisturb.enabled") ||
 		!Notification.isSupported()
 	) {
 		return;

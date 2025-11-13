@@ -25,7 +25,7 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig } from "@/lib/react-query";
 import {
 	useAccountsStore,
 	useAppUpdaterStore,
@@ -267,8 +267,6 @@ function FindInPage() {
 function DoNotDisturb() {
 	const { config } = useConfig();
 
-	const configMutation = useConfigMutation();
-
 	const isLicenseKeyValid = useIsLicenseKeyValid();
 
 	if (!config || !isLicenseKeyValid) {
@@ -278,14 +276,17 @@ function DoNotDisturb() {
 	return (
 		<TitlebarIconButton
 			onClick={() => {
-				configMutation.mutate({
-					"app.doNotDisturb": !config["app.doNotDisturb"],
-				});
+				ipc.main.send("doNotDisturb.toggle");
+			}}
+			onContextMenu={(event) => {
+				event.preventDefault();
+
+				ipc.main.send("doNotDisturb.showOptions");
 			}}
 		>
 			<MoonIcon
 				className={cn({
-					"text-violet-600": config["app.doNotDisturb"],
+					"text-violet-600": config["doNotDisturb.enabled"],
 				})}
 			/>
 		</TitlebarIconButton>

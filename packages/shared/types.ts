@@ -55,7 +55,6 @@ export type Config = {
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
 	licenseKey: string | null;
-	"app.doNotDisturb": boolean;
 	"dock.enabled": boolean;
 	"dock.unreadBadge": boolean;
 	"externalLinks.confirm": boolean;
@@ -105,6 +104,9 @@ export type Config = {
 	"googleApps.pinnedApps": GoogleAppsPinnedApp[];
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
+	"doNotDisturb.enabled": boolean;
+	"doNotDisturb.duration": string | null;
+	"doNotDisturb.until": number | null;
 };
 
 export type IpcMainEvents =
@@ -137,6 +139,8 @@ export type IpcMainEvents =
 			"theme.setTheme": [theme: "system" | "light" | "dark"];
 			"notifications.showTestNotification": [];
 			"googleApps.openApp": [app: GoogleAppsPinnedApp];
+			"doNotDisturb.toggle": [];
+			"doNotDisturb.showOptions": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };

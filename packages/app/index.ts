@@ -13,6 +13,7 @@ import { appState } from "@/state";
 import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
+import { doNotDisturb } from "./do-not-disturb";
 import { handleMailto, mailtoUrlArg } from "./mailto";
 import { trial } from "./trial";
 
@@ -79,6 +80,8 @@ import { trial } from "./trial";
 	appTray.init();
 
 	appUpdater.init();
+
+	doNotDisturb.init();
 
 	if (mailtoUrlArg) {
 		handleMailto(mailtoUrlArg);
