@@ -355,21 +355,6 @@ export function AccountsSettings() {
 													size="icon"
 													className="size-8 p-0"
 													variant="ghost"
-													disabled={index + 1 === accounts.length}
-													onClick={() => {
-														ipc.main.send(
-															"accounts.moveAccount",
-															account.config.id,
-															"down",
-														);
-													}}
-												>
-													<ArrowDownIcon />
-												</Button>
-												<Button
-													size="icon"
-													className="size-8 p-0"
-													variant="ghost"
 													disabled={index === 0}
 													onClick={() => {
 														ipc.main.send(
@@ -380,6 +365,21 @@ export function AccountsSettings() {
 													}}
 												>
 													<ArrowUpIcon />
+												</Button>
+												<Button
+													size="icon"
+													className="size-8 p-0"
+													variant="ghost"
+													disabled={index + 1 === accounts.length}
+													onClick={() => {
+														ipc.main.send(
+															"accounts.moveAccount",
+															account.config.id,
+															"down",
+														);
+													}}
+												>
+													<ArrowDownIcon />
 												</Button>
 											</>
 										)}

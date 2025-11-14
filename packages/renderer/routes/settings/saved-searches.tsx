@@ -267,6 +267,17 @@ export function SavedSearchesSettings() {
 												size="icon"
 												className="size-8 p-0"
 												variant="ghost"
+												disabled={index === 0}
+												onClick={() => {
+													moveSavedSearch(savedSearch.id, "up");
+												}}
+											>
+												<ArrowUpIcon />
+											</Button>
+											<Button
+												size="icon"
+												className="size-8 p-0"
+												variant="ghost"
 												disabled={
 													index + 1 === config["gmail.savedSearches"].length
 												}
@@ -275,17 +286,6 @@ export function SavedSearchesSettings() {
 												}}
 											>
 												<ArrowDownIcon />
-											</Button>
-											<Button
-												size="icon"
-												className="size-8 p-0"
-												variant="ghost"
-												disabled={index === 0}
-												onClick={() => {
-													moveSavedSearch(savedSearch.id, "up");
-												}}
-											>
-												<ArrowUpIcon />
 											</Button>
 										</>
 									)}
