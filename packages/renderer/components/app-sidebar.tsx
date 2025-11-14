@@ -9,6 +9,7 @@ import { AppearanceSettings } from "@/routes/settings/appearance";
 import { BlockerSettings } from "@/routes/settings/blocker";
 import { DownloadHistorySettings } from "@/routes/settings/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
+import { GmailSettings } from "@/routes/settings/gmail";
 import { GoogleAppsSettings } from "@/routes/settings/google-apps";
 import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
@@ -42,6 +43,11 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
 		label: "Downloads",
 		path: "/settings/downloads",
 		component: DownloadsSettings,
+	},
+	{
+		label: "Gmail",
+		path: "/settings/gmail",
+		component: GmailSettings,
 	},
 	{
 		label: "Google Apps",

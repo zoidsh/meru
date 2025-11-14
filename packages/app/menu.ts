@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
@@ -15,12 +14,10 @@ import log from "electron-log";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
-import { GMAIL_USER_STYLES_PATH } from "@/gmail";
 import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
-import { licenseKey } from "./license-key";
 
 export class AppMenu {
 	private _menu: Menu | undefined;
@@ -232,59 +229,6 @@ export class AppMenu {
 			{
 				label: "View",
 				submenu: [
-					{
-						label: "Gmail Appearance",
-						submenu: [
-							{
-								label: "Hide Gmail Logo",
-								type: "checkbox",
-								checked: config.get("gmail.hideGmailLogo"),
-								click: ({ checked }: { checked: boolean }) => {
-									config.set("gmail.hideGmailLogo", checked);
-
-									showRestartDialog();
-								},
-							},
-							{
-								label: "Hide Inbox Footer",
-								type: "checkbox",
-								checked: config.get("gmail.hideInboxFooter"),
-								click: ({ checked }: { checked: boolean }) => {
-									config.set("gmail.hideInboxFooter", checked);
-
-									showRestartDialog();
-								},
-							},
-							{
-								label: "Reverse Conversation",
-								type: "checkbox",
-								enabled: licenseKey.isValid,
-								checked: config.get("gmail.reverseConversation"),
-								click: ({ checked }: { checked: boolean }) => {
-									config.set("gmail.reverseConversation", checked);
-
-									showRestartDialog();
-								},
-							},
-							{
-								type: "separator",
-							},
-							{
-								label: "Edit User Styles",
-								enabled: licenseKey.isValid,
-								click: () => {
-									if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
-										fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));
-									}
-
-									shell.openPath(GMAIL_USER_STYLES_PATH);
-								},
-							},
-						],
-					},
-					{
-						type: "separator",
-					},
 					{
 						label: "Downloads",
 						accelerator: "CommandOrControl+Alt+L",

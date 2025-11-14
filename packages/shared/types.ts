@@ -126,6 +126,7 @@ export type IpcMainEvents =
 			"gmail.setUnreadCount": [unreadCount: number];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
 			"gmail.search": [searchQuery: string];
+			"gmail.openUserStylesInEditor": [];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [

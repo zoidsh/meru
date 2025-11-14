@@ -22,6 +22,7 @@ import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
+import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { extractVerificationCode } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { appUpdater } from "./updater";
@@ -458,6 +459,14 @@ class Ipc {
 			);
 
 			menu.popup();
+		});
+
+		ipc.main.on("gmail.openUserStylesInEditor", () => {
+			if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
+				fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));
+			}
+
+			shell.openPath(GMAIL_USER_STYLES_PATH);
 		});
 	}
 }
