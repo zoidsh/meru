@@ -315,7 +315,11 @@ function PinnedGoogleApps() {
 
 	const isLicenseKeyValid = useIsLicenseKeyValid();
 
-	if (!config || !isLicenseKeyValid) {
+	if (
+		!config ||
+		!isLicenseKeyValid ||
+		config["googleApps.pinnedApps"].length === 0
+	) {
 		return;
 	}
 
