@@ -5,6 +5,11 @@ import type { DownloadItem } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@meru/ui/components/tooltip";
 import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowLeftIcon,
@@ -122,17 +127,22 @@ function Download() {
 			{completedDownloadItem && (
 				<RecentlyDownloadedItem item={completedDownloadItem} />
 			)}
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				onClick={() => {
-					navigate("/settings/download-history");
-					ipc.main.send("settings.toggleIsOpen");
-				}}
-			>
-				<DownloadIcon className="size-4" />
-			</Button>
+			<Tooltip delayDuration={1000}>
+				<TooltipTrigger asChild>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-7"
+						onClick={() => {
+							navigate("/settings/download-history");
+							ipc.main.send("settings.toggleIsOpen");
+						}}
+					>
+						<DownloadIcon className="size-4" />
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent side="left">Downloads</TooltipContent>
+			</Tooltip>
 		</div>
 	);
 }
@@ -276,22 +286,27 @@ function DoNotDisturb() {
 	}
 
 	return (
-		<TitlebarIconButton
-			onClick={() => {
-				ipc.main.send("doNotDisturb.toggle");
-			}}
-			onContextMenu={(event) => {
-				event.preventDefault();
+		<Tooltip delayDuration={1000}>
+			<TooltipTrigger asChild>
+				<TitlebarIconButton
+					onClick={() => {
+						ipc.main.send("doNotDisturb.toggle");
+					}}
+					onContextMenu={(event) => {
+						event.preventDefault();
 
-				ipc.main.send("doNotDisturb.showOptions");
-			}}
-		>
-			<MoonIcon
-				className={cn({
-					"text-violet-600": config["doNotDisturb.enabled"],
-				})}
-			/>
-		</TitlebarIconButton>
+						ipc.main.send("doNotDisturb.showOptions");
+					}}
+				>
+					<MoonIcon
+						className={cn({
+							"text-violet-600": config["doNotDisturb.enabled"],
+						})}
+					/>
+				</TitlebarIconButton>
+			</TooltipTrigger>
+			<TooltipContent side="left">Do Not Disturb</TooltipContent>
+		</Tooltip>
 	);
 }
 
@@ -486,20 +501,25 @@ export function AppTitlebar() {
 					</Button>
 					{config["gmail.savedSearches"].length > 0 &&
 						licenseKeySearchParam && (
-							<Button
-								variant="ghost"
-								size="icon"
-								className="size-7 draggable-none"
-								onClick={() => {
-									setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-								}}
-							>
-								{isGmailSavedSearchesOpen ? (
-									<CircleXIcon />
-								) : (
-									<MailSearchIcon />
-								)}
-							</Button>
+							<Tooltip delayDuration={1000}>
+								<TooltipTrigger asChild>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="size-7 draggable-none"
+										onClick={() => {
+											setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+										}}
+									>
+										{isGmailSavedSearchesOpen ? (
+											<CircleXIcon />
+										) : (
+											<MailSearchIcon />
+										)}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent side="right">Saved Searches</TooltipContent>
+							</Tooltip>
 						)}
 				</div>
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
