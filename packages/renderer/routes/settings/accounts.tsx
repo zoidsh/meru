@@ -32,6 +32,13 @@ import {
 } from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@meru/ui/components/select";
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -39,24 +46,28 @@ import {
 	TableHeader,
 	TableRow,
 } from "@meru/ui/components/table";
+import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowDownIcon,
 	ArrowUpIcon,
 	CheckIcon,
 	EllipsisIcon,
+	XIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import {
 	SettingsContent,
 	SettingsHeader,
 	SettingsTitle,
 } from "@/components/settings";
+import { accountColorsMap } from "@/lib/account";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 
 function AccountForm({
-	account = { label: "", unreadBadge: true, notifications: true },
+	account = { label: "", color: null, unreadBadge: true, notifications: true },
 	placeholder = "Work",
 	onSubmit,
 	type,
@@ -81,9 +92,60 @@ function AccountForm({
 			>
 				<FormField
 					control={form.control}
+					name="color"
+					render={({ field: { onChange, value, ...field } }) => (
+						<FormItem>
+							<FormLabel>Color</FormLabel>
+							<div className="flex gap-2">
+								<FormControl>
+									<Select
+										onValueChange={onChange}
+										value={value || ""}
+										{...field}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Optional" />
+										</SelectTrigger>
+										<SelectContent>
+											{(
+												Object.entries(accountColorsMap) as Entries<
+													typeof accountColorsMap
+												>
+											).map(([colorKey, { label, value }]) => (
+												<SelectItem
+													key={colorKey}
+													value={colorKey}
+													className="flex items-center gap-2"
+												>
+													<div className={`size-2 rounded-full ${value}`} />
+													{label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</FormControl>
+								{form.getValues().color && (
+									<Button
+										size="icon"
+										variant="outline"
+										onClick={(event) => {
+											event.preventDefault();
+
+											form.setValue("color", null);
+										}}
+									>
+										<XIcon />
+									</Button>
+								)}
+							</div>
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
 					name="label"
 					render={({ field }) => (
-						<FormItem>
+						<FormItem className="flex-1">
 							<FormLabel>Label</FormLabel>
 							<div className="flex gap-2">
 								<FormControl>
@@ -256,6 +318,7 @@ export function AccountsSettings() {
 					<Table className="mb-4">
 						<TableHeader>
 							<TableRow>
+								<TableHead>Color</TableHead>
 								<TableHead>Label</TableHead>
 								<TableHead>Unread Badge</TableHead>
 								<TableHead>Notifications</TableHead>
@@ -265,6 +328,15 @@ export function AccountsSettings() {
 						<TableBody>
 							{accounts.map((account, index) => (
 								<TableRow key={account.config.id}>
+									<TableCell>
+										<div
+											className={cn(
+												"size-2 rounded-full",
+												account.config.color &&
+													`${accountColorsMap[account.config.color].value}`,
+											)}
+										/>
+									</TableCell>
 									<TableCell>{account.config.label}</TableCell>
 									<TableCell>
 										{account.config.unreadBadge && (

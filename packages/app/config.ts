@@ -19,6 +19,7 @@ export const config = new Store<Config>({
 			{
 				id: randomUUID(),
 				label: "Default",
+				color: null,
 				selected: true,
 				unreadBadge: true,
 				notifications: true,
@@ -182,6 +183,25 @@ export const config = new Store<Config>({
 			if (typeof store.get("app.doNotDisturb") !== "undefined") {
 				// @ts-expect-error
 				store.delete("app.doNotDisturb");
+			}
+		},
+		">=3.19.0": (store) => {
+			const accounts = store.get("accounts");
+
+			if (Array.isArray(accounts)) {
+				let accountsMigrated = false;
+
+				for (const account of accounts) {
+					if (typeof account.color === "undefined") {
+						account.color = null;
+
+						accountsMigrated = true;
+					}
+				}
+
+				if (accountsMigrated) {
+					store.set("accounts", accounts);
+				}
 			}
 		},
 	},

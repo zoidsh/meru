@@ -22,8 +22,10 @@ import {
 	XIcon,
 } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
+import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
+import { accountColorsMap } from "@/lib/account";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
@@ -370,6 +372,29 @@ export function AppTitlebar() {
 					ipc.main.send("accounts.selectAccount", account.config.id);
 				}}
 			>
+				{account.config.color && (
+					<div
+						className={cn(
+							"size-2 rounded-full",
+							(
+								Object.entries(accountColorsMap) as Entries<
+									typeof accountColorsMap
+								>
+							).reduce<
+								Partial<
+									Record<
+										(typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
+										boolean
+									>
+								>
+							>((acc, [colorKey, { value }]) => {
+								acc[value] = account.config.color === colorKey;
+
+								return acc;
+							}, {}),
+						)}
+					/>
+				)}
 				{account.config.label}
 				{account.gmail.attentionRequired && (
 					<CircleAlertIcon className="size-3.5 text-yellow-400" />

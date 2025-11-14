@@ -193,7 +193,7 @@ class Accounts {
 	addAccount(
 		accountDetails: Pick<
 			AccountConfig,
-			"label" | "unreadBadge" | "notifications"
+			"label" | "unreadBadge" | "notifications" | "color"
 		>,
 	) {
 		const createdAccount: AccountConfig = {

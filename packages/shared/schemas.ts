@@ -1,9 +1,28 @@
 import { z } from "zod";
 import type { GmailState } from "./gmail";
 
+export const accountColors = [
+	"orange",
+	"amber",
+	"yellow",
+	"lime",
+	"green",
+	"emerald",
+	"teal",
+	"cyan",
+	"sky",
+	"blue",
+	"indigo",
+	"violet",
+	"purple",
+	"fuchsia",
+	"pink",
+] as const;
+
 export const accountConfigSchema = z.object({
 	id: z.string(),
 	label: z.string(),
+	color: z.enum(accountColors).nullable(),
 	selected: z.boolean(),
 	unreadBadge: z.boolean(),
 	notifications: z.boolean(),
@@ -18,6 +37,7 @@ export type AccountConfigs = AccountConfig[];
 
 export const accountConfigInputSchema = accountConfigSchema.pick({
 	label: true,
+	color: true,
 	unreadBadge: true,
 	notifications: true,
 });
