@@ -6,8 +6,8 @@ import {
 	type AccountConfigInput,
 	accountConfigInputSchema,
 } from "@meru/shared/schemas";
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { Checkbox } from "@meru/ui/components/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -32,28 +32,22 @@ import {
 } from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemTitle,
+} from "@meru/ui/components/item";
+import { Label } from "@meru/ui/components/label";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
 } from "@meru/ui/components/select";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@meru/ui/components/table";
+import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
-import {
-	ArrowDownIcon,
-	ArrowUpIcon,
-	CheckIcon,
-	EllipsisIcon,
-	XIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Entries } from "type-fest";
@@ -162,13 +156,14 @@ function AccountForm({
 						</FormItem>
 					)}
 				/>
+				<Label>Options</Label>
 				<FormField
 					control={form.control}
 					name="unreadBadge"
 					render={({ field }) => (
 						<FormItem className="flex">
 							<FormControl>
-								<Checkbox
+								<Switch
 									checked={field.value}
 									onCheckedChange={field.onChange}
 								/>
@@ -184,7 +179,7 @@ function AccountForm({
 					render={({ field }) => (
 						<FormItem className="flex">
 							<FormControl>
-								<Checkbox
+								<Switch
 									checked={field.value}
 									onCheckedChange={field.onChange}
 								/>
@@ -254,7 +249,7 @@ function AccountMenuButton({
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button size="icon" className="size-8 p-0" variant="ghost">
+					<Button size="icon" className="size-8 p-0" variant="outline">
 						<EllipsisIcon />
 					</Button>
 				</DropdownMenuTrigger>
@@ -309,92 +304,81 @@ export function AccountsSettings() {
 		<>
 			<SettingsHeader>
 				<SettingsTitle>Accounts</SettingsTitle>
+				<AddAccountButton />
 			</SettingsHeader>
 			<SettingsContent>
 				<LicenseKeyRequiredBanner>
 					Upgrade to Meru Pro to add more accounts
 				</LicenseKeyRequiredBanner>
-				<div>
-					<Table className="mb-4">
-						<TableHeader>
-							<TableRow>
-								<TableHead>Color</TableHead>
-								<TableHead>Label</TableHead>
-								<TableHead>Unread Badge</TableHead>
-								<TableHead>Notifications</TableHead>
-								<TableHead />
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{accounts.map((account, index) => (
-								<TableRow key={account.config.id}>
-									<TableCell>
-										<div
-											className={cn(
-												"size-2 rounded-full",
-												account.config.color &&
-													`${accountColorsMap[account.config.color].value}`,
-											)}
-										/>
-									</TableCell>
-									<TableCell>{account.config.label}</TableCell>
-									<TableCell>
+				<div className="space-y-4">
+					{accounts.map((account, index) => (
+						<Item key={account.config.id} variant="muted">
+							<ItemContent className="gap-2">
+								<ItemTitle>
+									<div
+										className={cn(
+											"size-2 rounded-full",
+											account.config.color
+												? `${accountColorsMap[account.config.color].value}`
+												: "border",
+										)}
+									/>
+									{account.config.label}
+								</ItemTitle>
+								{(account.config.unreadBadge ||
+									account.config.notifications) && (
+									<div className="flex gap-2">
 										{account.config.unreadBadge && (
-											<CheckIcon className="size-4" />
+											<Badge variant="outline">Unread Badge</Badge>
 										)}
-									</TableCell>
-									<TableCell>
 										{account.config.notifications && (
-											<CheckIcon className="size-4" />
+											<Badge variant="outline">Notifications</Badge>
 										)}
-									</TableCell>
-									<TableCell className="flex justify-end">
-										{accounts.length > 1 && (
-											<>
-												<Button
-													size="icon"
-													className="size-8 p-0"
-													variant="ghost"
-													disabled={index === 0}
-													onClick={() => {
-														ipc.main.send(
-															"accounts.moveAccount",
-															account.config.id,
-															"up",
-														);
-													}}
-												>
-													<ArrowUpIcon />
-												</Button>
-												<Button
-													size="icon"
-													className="size-8 p-0"
-													variant="ghost"
-													disabled={index + 1 === accounts.length}
-													onClick={() => {
-														ipc.main.send(
-															"accounts.moveAccount",
-															account.config.id,
-															"down",
-														);
-													}}
-												>
-													<ArrowDownIcon />
-												</Button>
-											</>
-										)}
-										<AccountMenuButton
-											account={account.config}
-											removable={accounts.length > 1}
-										/>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-					<div className="flex justify-end">
-						<AddAccountButton />
-					</div>
+									</div>
+								)}
+							</ItemContent>
+							<ItemActions>
+								{accounts.length > 1 && (
+									<>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="outline"
+											disabled={index === 0}
+											onClick={() => {
+												ipc.main.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"up",
+												);
+											}}
+										>
+											<ArrowUpIcon />
+										</Button>
+										<Button
+											size="icon"
+											className="size-8 p-0"
+											variant="outline"
+											disabled={index + 1 === accounts.length}
+											onClick={() => {
+												ipc.main.send(
+													"accounts.moveAccount",
+													account.config.id,
+													"down",
+												);
+											}}
+										>
+											<ArrowDownIcon />
+										</Button>
+									</>
+								)}
+								<AccountMenuButton
+									account={account.config}
+									removable={accounts.length > 1}
+								/>
+							</ItemActions>
+						</Item>
+					))}
 				</div>
 			</SettingsContent>
 		</>
