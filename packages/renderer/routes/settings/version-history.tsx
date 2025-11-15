@@ -1,17 +1,16 @@
 import { Button } from "@meru/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@meru/ui/components/card";
-import {
 	Empty,
 	EmptyContent,
 	EmptyHeader,
 	EmptyTitle,
 } from "@meru/ui/components/empty";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemTitle,
+} from "@meru/ui/components/item";
 import { Kbd } from "@meru/ui/components/kbd";
 import { Skeleton } from "@meru/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
@@ -73,25 +72,27 @@ export function VersionHistorySettings() {
 		}
 
 		return data.map((release) => (
-			<Card key={release.id}>
-				<CardHeader>
-					<CardTitle>{release.tag_name}</CardTitle>
-					<CardDescription>
+			<Item key={release.id} variant="muted">
+				<ItemContent>
+					<ItemTitle className="text-2xl font-semibold">
+						{release.tag_name}
+					</ItemTitle>
+					<ItemDescription>
 						{date(release.published_at).fromNow()}
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white">
-					<Markdown
-						rehypePlugins={[rehypeRaw]}
-						components={{
-							h2: "h3",
-							kbd: Kbd,
-						}}
-					>
-						{release.body}
-					</Markdown>
-				</CardContent>
-			</Card>
+					</ItemDescription>
+					<div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 text-sm mt-6">
+						<Markdown
+							rehypePlugins={[rehypeRaw]}
+							components={{
+								h2: "h3",
+								kbd: Kbd,
+							}}
+						>
+							{release.body}
+						</Markdown>
+					</div>
+				</ItemContent>
+			</Item>
 		));
 	};
 
