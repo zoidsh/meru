@@ -59,6 +59,7 @@ import {
 } from "@/components/settings";
 import { accountColorsMap } from "@/lib/account";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
+import { restartRequiredToast } from "@/lib/toast";
 
 function AccountForm({
 	account = { label: "", color: null, unreadBadge: true, notifications: true },
@@ -285,6 +286,13 @@ function AccountMenuButton({
 						ipc.main.send("accounts.updateAccount", { ...account, ...values });
 
 						setIsOpen(false);
+
+						if (
+							account.unreadBadge !== values.unreadBadge ||
+							account.notifications !== values.notifications
+						) {
+							restartRequiredToast();
+						}
 					}}
 					type="edit"
 				/>
