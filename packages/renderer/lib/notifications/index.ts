@@ -33,15 +33,16 @@ export const NOTIFICATION_SOUNDS: Record<
 	},
 };
 
-export function playNotificationSound(
-	sound: NotificationSound,
-	volume?: number,
-) {
+export function playNotificationSound({
+	sound,
+	volume,
+}: {
+	sound: NotificationSound;
+	volume: number;
+}) {
 	const audio = new Audio(NOTIFICATION_SOUNDS[sound].file);
 
-	if (typeof volume === "number") {
-		audio.volume = volume;
-	}
+	audio.volume = volume;
 
 	audio.play();
 }

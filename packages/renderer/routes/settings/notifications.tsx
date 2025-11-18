@@ -150,7 +150,10 @@ export function NotificationsSettings() {
 												});
 
 												if (value !== "system") {
-													playNotificationSound(value);
+													playNotificationSound({
+														sound: value,
+														volume: config["notifications.volume"],
+													});
 												}
 											}}
 											disabled={!isLicenseKeyValid}
@@ -200,10 +203,10 @@ export function NotificationsSettings() {
 														volume &&
 														config["notifications.sound"] !== "system"
 													) {
-														playNotificationSound(
-															config["notifications.sound"],
+														playNotificationSound({
+															sound: config["notifications.sound"],
 															volume,
-														);
+														});
 													}
 												}}
 											/>

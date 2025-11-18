@@ -40,6 +40,6 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
 	ipc.main.send("taskbar.setOverlayIcon", canvas.toDataURL());
 });
 
-ipc.renderer.on("notifications.playSound", (_event, sound) => {
-	playNotificationSound(sound);
+ipc.renderer.on("notifications.playSound", (_event, { sound, volume }) => {
+	playNotificationSound({ sound, volume });
 });

@@ -41,11 +41,10 @@ export function createNotification({
 	notification.show();
 
 	if (sound !== "system" && playSound) {
-		ipc.renderer.send(
-			main.window.webContents,
-			"notifications.playSound",
-			licenseKey.isValid ? sound : "bell",
-		);
+		ipc.renderer.send(main.window.webContents, "notifications.playSound", {
+			sound: licenseKey.isValid ? sound : "bell",
+			volume: config.get("notifications.volume"),
+		});
 	}
 
 	return notification;

@@ -195,7 +195,9 @@ export type IpcRendererEvent = {
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 	"trial.daysLeftChanged": [daysLeft: number];
-	"notifications.playSound": [sound: NotificationSound];
+	"notifications.playSound": [
+		options: { sound: NotificationSound; volume: number },
+	];
 	"taskbar.setOverlayIcon": [unreadCount: number];
 	"appUpdater.updateAvailable": [version: string];
 	"googleMeet.toggleMicrophone": [];
