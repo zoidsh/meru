@@ -74,6 +74,7 @@ export class Gmail extends GoogleApp {
 			webContentsViewOptions: {
 				webPreferences: {
 					preload: GMAIL_PRELOAD_PATH,
+					backgroundThrottling: false,
 				},
 			},
 			hooks: {

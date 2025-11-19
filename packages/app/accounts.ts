@@ -45,18 +45,8 @@ class Accounts {
 		});
 
 		await Promise.all(
-			accounts.map((account) =>
-				account.instance.gmail.createView({
-					webPreferences: {
-						backgroundThrottling: false,
-					},
-				}),
-			),
+			accounts.map((account) => account.instance.gmail.createView()),
 		);
-
-		for (const account of accounts) {
-			account.instance.gmail.view.webContents.setBackgroundThrottling(true);
-		}
 
 		// When launching minimized, the selected account view doesn't render
 		// unless we remove and re-add it after the window is shown
