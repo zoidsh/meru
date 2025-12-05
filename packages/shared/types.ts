@@ -33,6 +33,7 @@ export type NotificationSound =
 export const googleAppsPinnedApps = {
 	calendar: "Calendar",
 	chat: "Chat",
+	classroom: "Classroom",
 	docs: "Docs",
 	drive: "Drive",
 	forms: "Forms",
