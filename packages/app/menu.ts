@@ -203,6 +203,12 @@ export class AppMenu {
 						accelerator: "CommandOrControl+Shift+V",
 					},
 					{
+						role: "pasteAndMatchStyle",
+						accelerator: "CommandOrControl+Option+Shift+V",
+						visible: false,
+						acceleratorWorksWhenHidden: platform.isMacOS,
+					},
+					{
 						role: "delete",
 					},
 					{
