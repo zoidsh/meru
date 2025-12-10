@@ -166,7 +166,12 @@ function Trial() {
 		>
 			<a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
 				<span className="group-hover:opacity-0 fade-out">
-					Pro trial ends in {trialDaysLeft} days
+					Pro trial ends in{" "}
+					{trialDaysLeft >= 2
+						? `${trialDaysLeft} days`
+						: trialDaysLeft >= 1
+							? `${trialDaysLeft} day`
+							: "less than a day"}
 				</span>
 				<span className="opacity-0 absolute inset-0 group-hover:opacity-100 group-hover:inline-flex items-center justify-center fade-in">
 					Upgrade to Pro
