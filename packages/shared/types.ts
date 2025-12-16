@@ -34,6 +34,7 @@ export const googleAppsPinnedApps = {
 	calendar: "Calendar",
 	chat: "Chat",
 	classroom: "Classroom",
+	contacts: "Contacts",
 	docs: "Docs",
 	drive: "Drive",
 	forms: "Forms",
