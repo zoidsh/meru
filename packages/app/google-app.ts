@@ -358,66 +358,60 @@ export class GoogleApp {
 
 				const googleApp = supportedGoogleAppMatch?.[1];
 
-				return {
-					action: "allow",
-					createWindow: (options) => {
-						const window = new BrowserWindow({
-							...options,
-							autoHideMenuBar: true,
-							width: 1280,
-							height: 800,
-							webPreferences: {
-								preload: googleApp
-									? this.getGoogleAppPreloadScriptPath(googleApp)
-									: undefined,
-							},
-						});
-
-						this.registerWindowOpenHandler(window);
-
-						setupWindowContextMenu(window);
-
-						const account = accounts.getAccount(this.accountId);
-
-						account.instance.windows.add(window);
-
-						let powerSaveBlockerId: number | undefined;
-
-						if (googleApp === "meet") {
-							powerSaveBlockerId = powerSaveBlocker.start(
-								"prevent-display-sleep",
-							);
-
-							globalShortcut.register("CommandOrControl+Shift+1", () => {
-								ipc.renderer.send(
-									window.webContents,
-									"googleMeet.toggleMicrophone",
-								);
-							});
-
-							globalShortcut.register("CommandOrControl+Shift+2", () => {
-								ipc.renderer.send(
-									window.webContents,
-									"googleMeet.toggleCamera",
-								);
-							});
-						}
-
-						window.once("closed", () => {
-							account.instance.windows.delete(window);
-
-							if (googleApp === "meet") {
-								globalShortcut.unregister("CommandOrControl+Shift+1");
-								globalShortcut.unregister("CommandOrControl+Shift+2");
-							}
-
-							if (typeof powerSaveBlockerId === "number") {
-								powerSaveBlocker.stop(powerSaveBlockerId);
-							}
-						});
-
-						return window.webContents;
+				const newGoogleAppWindow = new BrowserWindow({
+					autoHideMenuBar: true,
+					width: 1280,
+					height: 800,
+					webPreferences: {
+						session: this.session,
+						preload: googleApp
+							? this.getGoogleAppPreloadScriptPath(googleApp)
+							: undefined,
 					},
+				});
+
+				newGoogleAppWindow.loadURL(url);
+
+				this.registerWindowOpenHandler(newGoogleAppWindow);
+
+				setupWindowContextMenu(newGoogleAppWindow);
+
+				const account = accounts.getAccount(this.accountId);
+
+				account.instance.windows.add(newGoogleAppWindow);
+
+				let powerSaveBlockerId: number | undefined;
+
+				if (googleApp === "meet") {
+					powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
+
+					globalShortcut.register("CommandOrControl+Shift+1", () => {
+						ipc.renderer.send(
+							window.webContents,
+							"googleMeet.toggleMicrophone",
+						);
+					});
+
+					globalShortcut.register("CommandOrControl+Shift+2", () => {
+						ipc.renderer.send(window.webContents, "googleMeet.toggleCamera");
+					});
+				}
+
+				newGoogleAppWindow.once("closed", () => {
+					account.instance.windows.delete(newGoogleAppWindow);
+
+					if (googleApp === "meet") {
+						globalShortcut.unregister("CommandOrControl+Shift+1");
+						globalShortcut.unregister("CommandOrControl+Shift+2");
+					}
+
+					if (typeof powerSaveBlockerId === "number") {
+						powerSaveBlocker.stop(powerSaveBlockerId);
+					}
+				});
+
+				return {
+					action: "deny",
 				};
 			}
 
