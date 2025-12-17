@@ -39,6 +39,17 @@ export function GoogleAppIcon({
 				</svg>
 			);
 		}
+		case "contacts": {
+			return (
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+					<title>Google Contacts</title>
+					<path
+						fill="currentColor"
+						d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 3.6a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 0 1 0-7.2zm0 16.8c-3.003 0-5.64-1.534-7.2-3.857 0-2.394 4.8-3.703 7.2-3.703s7.2 1.309 7.2 3.703c-1.56 2.323-4.197 3.857-7.2 3.857z"
+					/>
+				</svg>
+			);
+		}
 		case "docs": {
 			return (
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
