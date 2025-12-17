@@ -23,7 +23,7 @@ const domParser = new DOMParser();
 
 const inboxAnchorElementSelector = 'span > a[href*="#inbox"]';
 
-let previousUnreadCount: null | number = null;
+let previousUnreadCountString: string | null = "";
 let inboxAnchorContainerElementObserver: MutationObserver;
 let feedVersion = 0;
 let previousModifiedFeedDate = 0;
@@ -154,26 +154,16 @@ async function observeInbox() {
 	}
 
 	const getUnreadCount = () => {
-		const unreadCountElement = document.querySelector(
-			`div:has(> ${inboxAnchorElementSelector}) .bsU`,
-		);
+		const currentUnreadCountString =
+			document.querySelector(`div:has(> ${inboxAnchorElementSelector}) .bsU`)
+				?.textContent || "";
 
-		const currentUnreadCount =
-			unreadCountElement?.textContent
-				?.replace(/\D/, "")
-				.match(/\d+/g)
-				?.reduce((total, countString) => {
-					const count = Number(countString);
-
-					return Number.isNaN(count) ? total : total + count;
-				}, 0) || 0;
-
-		if (previousUnreadCount !== currentUnreadCount) {
-			ipcMain.send("gmail.setUnreadCount", currentUnreadCount);
+		if (previousUnreadCountString !== currentUnreadCountString) {
+			ipcMain.send("gmail.setUnreadCount", currentUnreadCountString);
 
 			fetchInbox();
 
-			previousUnreadCount = currentUnreadCount;
+			previousUnreadCountString = currentUnreadCountString;
 		}
 	};
 

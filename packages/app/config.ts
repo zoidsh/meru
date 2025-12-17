@@ -65,6 +65,7 @@ export const config = new Store<Config>({
 		"gmail.hideInboxFooter": true,
 		"gmail.reverseConversation": false,
 		"gmail.savedSearches": [],
+		"gmail.unreadCountPreference": "default",
 		"screenShare.useSystemPicker": true,
 		"window.lastState": {
 			bounds: DEFAULT_WINDOW_STATE_BOUNDS,

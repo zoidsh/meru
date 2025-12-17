@@ -87,6 +87,7 @@ export type Config = {
 	"gmail.hideInboxFooter": boolean;
 	"gmail.reverseConversation": boolean;
 	"gmail.savedSearches": GmailSavedSearches;
+	"gmail.unreadCountPreference": "default" | "first-section" | "inbox";
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {
@@ -125,7 +126,7 @@ export type IpcMainEvents =
 			];
 			"settings.toggleIsOpen": [];
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
-			"gmail.setUnreadCount": [unreadCount: number];
+			"gmail.setUnreadCount": [unreadCountString: string];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
 			"gmail.search": [searchQuery: string];
 			"gmail.openUserStylesInEditor": [];

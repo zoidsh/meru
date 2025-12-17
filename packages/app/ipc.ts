@@ -23,7 +23,7 @@ import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
-import { extractVerificationCode } from "./lib/utils";
+import { extractVerificationCode, parseUnreadCountString } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { appUpdater } from "./updater";
 
@@ -96,7 +96,9 @@ class Ipc {
 				]();
 		});
 
-		this.main.on("gmail.setUnreadCount", (event, unreadCount) => {
+		this.main.on("gmail.setUnreadCount", (event, unreadCountString) => {
+			const unreadCount = parseUnreadCountString(unreadCountString);
+
 			for (const accountInstance of accounts.instances.values()) {
 				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
 					accountInstance.gmail.setUnreadCount(unreadCount);

@@ -1,3 +1,5 @@
+import { config } from "@/config";
+
 export function extractVerificationCode(texts: string[]) {
 	let hasVerificationCodeContext = false;
 
@@ -32,4 +34,22 @@ export function extractVerificationCode(texts: string[]) {
 	}
 
 	return null;
+}
+
+export function parseUnreadCountString(unreadCountString: string) {
+	const unreadCounts = unreadCountString
+		.split(":")
+		.map((count) => Number(count.replace(/\D/g, "")) || 0);
+
+	if (unreadCounts.length === 2) {
+		const unreadCountPreference = config.get("gmail.unreadCountPreference");
+
+		if (unreadCountPreference !== "default") {
+			return (
+				unreadCounts[unreadCountPreference === "first-section" ? 0 : 1] || 0
+			);
+		}
+	}
+
+	return unreadCounts.reduce((total, count) => total + count, 0);
 }
