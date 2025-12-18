@@ -41,6 +41,7 @@ export const googleAppsPinnedApps = {
 	gemini: "Gemini",
 	keep: "Keep",
 	meet: "Meet",
+	notebooklm: "NotebookLM",
 	tasks: "Tasks",
 	sheets: "Sheets",
 	slides: "Slides",
