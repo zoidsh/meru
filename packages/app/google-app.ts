@@ -356,59 +356,92 @@ export class GoogleApp {
 					};
 				}
 
+				const setupNewWindow = (newWindow: BrowserWindow) => {
+					this.registerWindowOpenHandler(newWindow);
+
+					setupWindowContextMenu(newWindow);
+
+					const account = accounts.getAccount(this.accountId);
+
+					account.instance.windows.add(newWindow);
+
+					let powerSaveBlockerId: number | undefined;
+
+					if (googleApp === "meet") {
+						powerSaveBlockerId = powerSaveBlocker.start(
+							"prevent-display-sleep",
+						);
+
+						globalShortcut.register("CommandOrControl+Shift+1", () => {
+							ipc.renderer.send(
+								newWindow.webContents,
+								"googleMeet.toggleMicrophone",
+							);
+						});
+
+						globalShortcut.register("CommandOrControl+Shift+2", () => {
+							ipc.renderer.send(
+								newWindow.webContents,
+								"googleMeet.toggleCamera",
+							);
+						});
+					}
+
+					newWindow.once("closed", () => {
+						account.instance.windows.delete(newWindow);
+
+						if (googleApp === "meet") {
+							globalShortcut.unregister("CommandOrControl+Shift+1");
+							globalShortcut.unregister("CommandOrControl+Shift+2");
+						}
+
+						if (typeof powerSaveBlockerId === "number") {
+							powerSaveBlocker.stop(powerSaveBlockerId);
+						}
+					});
+				};
+
 				const googleApp = supportedGoogleAppMatch?.[1];
 
-				const newGoogleAppWindow = new BrowserWindow({
+				const newWindowOptions = {
 					autoHideMenuBar: true,
-					width: 1280,
-					height: 800,
 					webPreferences: {
 						session: this.session,
 						preload: googleApp
 							? this.getGoogleAppPreloadScriptPath(googleApp)
 							: undefined,
 					},
-				});
+				};
 
-				newGoogleAppWindow.loadURL(url);
+				if (url.startsWith(GMAIL_URL)) {
+					return {
+						action: "allow",
+						createWindow: (inheritedOptions) => {
+							const newWindow = new BrowserWindow({
+								...inheritedOptions,
+								...newWindowOptions,
+								webPreferences: {
+									...inheritedOptions.webPreferences,
+									...newWindowOptions.webPreferences,
+								},
+							});
 
-				this.registerWindowOpenHandler(newGoogleAppWindow);
+							setupNewWindow(newWindow);
 
-				setupWindowContextMenu(newGoogleAppWindow);
-
-				const account = accounts.getAccount(this.accountId);
-
-				account.instance.windows.add(newGoogleAppWindow);
-
-				let powerSaveBlockerId: number | undefined;
-
-				if (googleApp === "meet") {
-					powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
-
-					globalShortcut.register("CommandOrControl+Shift+1", () => {
-						ipc.renderer.send(
-							window.webContents,
-							"googleMeet.toggleMicrophone",
-						);
-					});
-
-					globalShortcut.register("CommandOrControl+Shift+2", () => {
-						ipc.renderer.send(window.webContents, "googleMeet.toggleCamera");
-					});
+							return newWindow.webContents;
+						},
+					};
 				}
 
-				newGoogleAppWindow.once("closed", () => {
-					account.instance.windows.delete(newGoogleAppWindow);
-
-					if (googleApp === "meet") {
-						globalShortcut.unregister("CommandOrControl+Shift+1");
-						globalShortcut.unregister("CommandOrControl+Shift+2");
-					}
-
-					if (typeof powerSaveBlockerId === "number") {
-						powerSaveBlocker.stop(powerSaveBlockerId);
-					}
+				const newGoogleAppWindow = new BrowserWindow({
+					...newWindowOptions,
+					width: 1280,
+					height: 800,
 				});
+
+				setupNewWindow(newGoogleAppWindow);
+
+				newGoogleAppWindow.loadURL(url);
 
 				return {
 					action: "deny",
