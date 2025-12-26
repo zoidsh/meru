@@ -32,7 +32,13 @@ function buildAppFiles() {
 		define: !args.values.dev
 			? {
 					"process.env.NODE_ENV": JSON.stringify("production"),
-					"process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
+					...(process.env.MERU_API_URL
+						? {
+								"process.env.MERU_API_URL": JSON.stringify(
+									process.env.MERU_API_URL,
+								),
+							}
+						: {}),
 				}
 			: undefined,
 		minify: !args.values.dev,

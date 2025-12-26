@@ -1,217 +1,123 @@
 import { app, dialog, type MessageBoxOptions } from "electron";
 import { machineId } from "node-machine-id";
-import { FetchError, ofetch } from "ofetch";
-import { z } from "zod";
 import { config } from "@/config";
+import { apiClient } from "./api-client";
+import { openExternalUrl } from "./url";
 
 class LicenseKey {
 	isValid = false;
 
-	instance = {
-		name: "",
+	device = {
+		deviceId: "",
 		label: "",
 	};
 
-	async activate(input: {
-		licenseKey: string;
-		force?: boolean;
-	}): Promise<{ success: boolean }> {
-		try {
-			const body = await ofetch(
-				`${process.env.MERU_API_URL}/v1/licenses/activate`,
-				{
-					method: "POST",
-					body: {
-						licenseKey: input.licenseKey.trim(),
-						instanceName: await machineId(),
-						force: input.force,
-					},
-				},
-			);
+	showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
+		return dialog.showMessageBox({
+			type: "warning",
+			message: "Failed to activate license key",
+			...options,
+		});
+	}
 
-			const activationSuccessSchema = z.object({
-				activated: z.literal(true),
-				error: z.null(),
-				licenseKey: z.object({
-					key: z.string(),
-				}),
-			});
+	async activate(input: { licenseKey: string; force?: boolean }) {
+		const [error, data, isDefinedError] = await apiClient.v2.license.activate({
+			licenseKey: input.licenseKey.trim(),
+			deviceId: await machineId(),
+		});
 
-			const activation = activationSuccessSchema.parse(body);
+		if (error) {
+			if (isDefinedError) {
+				const errorMessages: Omit<
+					Record<typeof error.code, string>,
+					"MAX_DEVICE_ACTIVATIONS_REACHED"
+				> = {
+					LICENSE_KEY_INVALID: "This license key is invalid",
+					LICENSE_DISABLED: "This license key has been disabled",
+					LICENSE_EXPIRED: "This license key has expired",
+				};
 
-			config.set("licenseKey", activation.licenseKey.key);
-
-			const { response } = await dialog.showMessageBox({
-				type: "info",
-				message: "License key activated",
-				detail: "A restart is required to apply the changes.",
-				buttons: ["Restart", "Later"],
-				defaultId: 0,
-				cancelId: 1,
-			});
-
-			if (response === 0) {
-				app.relaunch();
-				app.quit();
-			}
-
-			return { success: true };
-		} catch (error) {
-			const showActivationError = (
-				options: Omit<MessageBoxOptions, "type" | "message">,
-			) => {
-				return dialog.showMessageBox({
-					type: "warning",
-					message: "Failed to activate license key",
-					...options,
-				});
-			};
-
-			if (error instanceof FetchError) {
-				const activationErrorSchema = z.object({
-					activated: z.literal(false),
-					error: z.enum([
-						"license_key_invalid",
-						"license_key_disabled",
-						"license_key_expired",
-						"max_activations_reached",
-					]),
-				});
-
-				const activationError = activationErrorSchema.safeParse(error.data);
-
-				if (!activationError.success) {
-					await showActivationError({
-						detail: `Please try again or contact support for further help with the error: ${error.message}`,
+				if (error.code === "MAX_DEVICE_ACTIVATIONS_REACHED") {
+					const { response } = await this.showActivationError({
+						detail:
+							"This license key has reached its maximum number of device activations. Go to the Meru Portal to remove a device linked to this license key or contact support for further help.",
+						buttons: ["Open Meru Portal", "Cancel"],
+						defaultId: 0,
+						cancelId: 1,
 					});
-				} else {
-					switch (activationError.data.error) {
-						case "license_key_invalid":
-							await showActivationError({
-								detail:
-									"This license key is invalid. Please try another license key or contact support for further help.",
-							});
 
-							break;
-						case "license_key_disabled":
-							await showActivationError({
-								detail:
-									"This license key is disabled. Please try another license key or contact support for further help.",
-							});
-
-							break;
-						case "license_key_expired":
-							await showActivationError({
-								detail:
-									"This license key is expired. Please try another license key or contact support for further help.",
-							});
-
-							break;
-						case "max_activations_reached": {
-							const { response } = await showActivationError({
-								detail:
-									"This license key is already activated on another device. Do you want to deactivate the other device and try again?",
-								buttons: ["Confirm", "Cancel"],
-								defaultId: 0,
-								cancelId: 1,
-							});
-
-							if (response === 0) {
-								return this.activate({
-									licenseKey: input.licenseKey,
-									force: true,
-								});
-							}
-
-							break;
-						}
+					if (response === 0) {
+						openExternalUrl("https://portal.meru.so");
 					}
+				} else {
+					await this.showActivationError({
+						detail: `${errorMessages[error.code]}. Please use another license key or contact support for further help.`,
+					});
 				}
 			} else {
-				await showActivationError({
-					detail: `Please try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
+				await this.showActivationError({
+					detail: `Please try again or contact support for further help with the error: ${error.message}`,
 				});
 			}
 
 			return { success: false };
 		}
+
+		config.set("licenseKey", data.licenseKey);
+
+		const { response } = await dialog.showMessageBox({
+			type: "info",
+			message: "License key activated",
+			detail: "A restart is required to apply the changes.",
+			buttons: ["Restart", "Later"],
+			defaultId: 0,
+			cancelId: 1,
+		});
+
+		if (response === 0) {
+			app.relaunch();
+			app.quit();
+		}
+
+		return { success: true };
 	}
 
-	async validate(): Promise<boolean> {
-		try {
-			const licenseKey = config.get("licenseKey");
+	showValidationError(options: Omit<MessageBoxOptions, "type" | "message">) {
+		return dialog.showMessageBox({
+			type: "warning",
+			message: "Failed to validate license key",
+			...options,
+		});
+	}
 
-			if (licenseKey) {
-				const body = await ofetch(
-					`${process.env.MERU_API_URL}/v1/licenses/validate`,
-					{
-						method: "POST",
-						body: {
-							licenseKey,
-							instanceName: await machineId(),
-						},
-					},
-				);
+	async validate() {
+		const licenseKey = config.get("licenseKey");
 
-				const validationSuccessSchema = z.object({
-					valid: z.literal(true),
-					error: z.null(),
-					licenseKey: z.object({
-						key: z.string(),
-					}),
-					instance: z.object({
-						name: z.string(),
-						label: z.string(),
-					}),
-				});
-
-				validationSuccessSchema.parse(body);
-
-				this.instance = body.instance;
-
-				this.isValid = true;
-			}
-
+		if (!licenseKey) {
 			return true;
-		} catch (error) {
-			const showValidationError = (
-				options: Omit<MessageBoxOptions, "type" | "message">,
-			) => {
-				return dialog.showMessageBox({
-					type: "warning",
-					message: "Failed to validate license key",
-					...options,
-				});
-			};
+		}
 
-			if (error instanceof FetchError) {
-				const validationErrorSchema = z.object({
-					valid: z.literal(false),
-					error: z.enum([
-						"license_key_invalid",
-						"license_key_expired",
-						"license_key_disabled",
-						"license_key_not_activated_for_instance",
-					]),
-				});
+		if (licenseKey) {
+			const [error, data, isDefinedError] = await apiClient.v2.license.validate(
+				{
+					licenseKey,
+					deviceId: await machineId(),
+				},
+			);
 
-				const validationErrorMessages: Record<
-					z.infer<typeof validationErrorSchema>["error"],
-					string
-				> = {
-					license_key_invalid: "The license key is invalid",
-					license_key_disabled: "The license key has been disabled",
-					license_key_expired: "The license key has expired",
-					license_key_not_activated_for_instance:
-						"The license key is activated on another device",
-				};
+			if (error) {
+				if (isDefinedError) {
+					const errorMessages: Record<typeof error.code, string> = {
+						LICENSE_KEY_INVALID: "The license key is invalid",
+						LICENSE_DISABLED: "The license key has been disabled",
+						LICENSE_EXPIRED: "The license key has expired",
+						DEVICE_NOT_ACTIVATED:
+							"The license key is not activated for this device",
+					};
 
-				const validationError = validationErrorSchema.safeParse(error.data);
-
-				if (validationError.success) {
-					const { response } = await showValidationError({
-						detail: `${validationErrorMessages[validationError.data.error]}. Please use another license key or contact support for further help. Please remove the license to continue.`,
-						buttons: ["Remove License", "Quit"],
+					const { response } = await this.showValidationError({
+						detail: `${errorMessages[error.code]} and will be removed on this device. Contact support if you need further help.`,
+						buttons: ["Continue", "Quit"],
 						defaultId: 0,
 						cancelId: 1,
 					});
@@ -221,24 +127,28 @@ class LicenseKey {
 
 						app.relaunch();
 					}
+				} else {
+					const { response } = await this.showValidationError({
+						detail: `Please restart the app to try again or contact support for further help with the error: ${error.message}`,
+						buttons: ["Restart", "Quit"],
+						defaultId: 0,
+						cancelId: 1,
+					});
 
-					return false;
+					if (response === 0) {
+						app.relaunch();
+					}
 				}
+
+				return false;
 			}
 
-			const { response } = await showValidationError({
-				detail: `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
-				buttons: ["Restart", "Quit"],
-				defaultId: 0,
-				cancelId: 1,
-			});
+			this.device = data.device;
 
-			if (response === 0) {
-				app.relaunch();
-			}
-
-			return false;
+			this.isValid = true;
 		}
+
+		return true;
 	}
 }
 
