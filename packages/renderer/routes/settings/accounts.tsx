@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
-import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
 	type AccountConfigInput,
@@ -58,6 +57,7 @@ import {
 	SettingsTitle,
 } from "@/components/settings";
 import { accountColorsMap } from "@/lib/account";
+import { useConfig } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 
@@ -211,7 +211,13 @@ function AddAccountButton() {
 
 	const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
 
-	if (!isTrialActive && !licenseKeySearchParam) {
+	const { config } = useConfig();
+
+	if (!config) {
+		return;
+	}
+
+	if (!isTrialActive && !config.licenseKey) {
 		return <Button disabled>Add</Button>;
 	}
 

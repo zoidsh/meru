@@ -412,11 +412,6 @@ class Ipc {
 			}
 		});
 
-		ipc.main.handle("licenseKey.getStatus", () => ({
-			isValid: licenseKey.isValid,
-			instance: licenseKey.instance,
-		}));
-
 		ipc.main.on("notifications.showTestNotification", () => {
 			createNotification({
 				title: "Tim from Meru",
@@ -470,6 +465,12 @@ class Ipc {
 
 			shell.openPath(GMAIL_USER_STYLES_PATH);
 		});
+
+		ipc.main.handle("license.getDeviceInfo", () => licenseKey.getDeviceInfo());
+
+		ipc.main.handle("license.updateDeviceInfo", (_event, input) =>
+			licenseKey.updateDeviceInfo(input),
+		);
 	}
 }
 

@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
-import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -17,7 +16,12 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown";
-import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
+import {
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@meru/ui/components/field";
 import {
 	Form,
 	FormControl,
@@ -27,13 +31,21 @@ import {
 	FormMessage,
 } from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@meru/ui/components/input-group";
+import { Spinner } from "@meru/ui/components/spinner";
+import { useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontalIcon } from "lucide-react";
-import { type ComponentProps, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type ComponentProps, useState } from "react";
+import { useForm as useHookForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useConfig } from "@/lib/react-query";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({
@@ -45,7 +57,7 @@ function LicenseKeyForm({
 }: {
 	onSubmit: (key: z.infer<typeof licenseKeySchema>["licenseKey"]) => void;
 }) {
-	const form = useForm<z.infer<typeof licenseKeySchema>>({
+	const form = useHookForm<z.infer<typeof licenseKeySchema>>({
 		resolver: zodResolver(licenseKeySchema),
 		defaultValues: {
 			licenseKey: "",
@@ -131,31 +143,50 @@ function ActivateLicenseKeyButton() {
 }
 
 export function LicenseSettings() {
-	const [licenseKey, setLicenseKey] = useState<string | null>(null);
 	const trialDaysLeft = useTrialStore((state) => state.daysLeft);
-
-	const { data: licenseKeyStatus } = useQuery({
-		queryKey: ["license-key-status"],
-		queryFn: () => ipc.main.invoke("licenseKey.getStatus"),
-	});
 
 	const [isChangeLicenseDialogOpen, setIsChangeLicenseDialogOpen] =
 		useState(false);
 
 	const [isLicenseKeyRevealed, setIsLicenseKeyRevealed] = useState(false);
 
-	useEffect(() => {
-		if (licenseKeySearchParam) {
-			setLicenseKey(JSON.parse(licenseKeySearchParam));
-		}
-	}, []);
+	const { config } = useConfig();
 
-	if (!licenseKeyStatus) {
+	const deviceInfoQueryKey = ["license.getDeviceInfo"];
+
+	const { data: deviceInfo, refetch: refetchDeviceInfo } = useQuery({
+		queryKey: deviceInfoQueryKey,
+		queryFn: () => ipc.main.invoke("license.getDeviceInfo"),
+	});
+
+	const deviceInfoForm = useTanStackForm({
+		defaultValues: {
+			label: deviceInfo?.label || "",
+		},
+		validators: {
+			onSubmit: z.object({
+				label: z.string().min(1, "Device label is required"),
+			}),
+		},
+		onSubmit: async ({ value, formApi }) => {
+			await ipc.main.invoke("license.updateDeviceInfo", {
+				label: value.label,
+			});
+
+			await refetchDeviceInfo();
+
+			formApi.reset();
+
+			toast("Device label updated successfully");
+		},
+	});
+
+	if (!config) {
 		return;
 	}
 
 	const renderContent = () => {
-		if (licenseKey) {
+		if (config.licenseKey) {
 			return (
 				<div className="space-y-4">
 					<div className="text-sm">
@@ -169,7 +200,7 @@ export function LicenseSettings() {
 								<div className="flex gap-2">
 									<Input
 										placeholder="Click to reveal license key"
-										value={isLicenseKeyRevealed ? licenseKey : ""}
+										value={isLicenseKeyRevealed ? config.licenseKey : ""}
 										onFocus={() => {
 											setIsLicenseKeyRevealed(true);
 										}}
@@ -179,7 +210,7 @@ export function LicenseSettings() {
 										readOnly
 									/>
 									<DropdownMenu>
-										<DropdownMenuTrigger>
+										<DropdownMenuTrigger asChild>
 											<Button size="icon" variant="secondary">
 												<MoreHorizontalIcon />
 											</Button>
@@ -187,9 +218,11 @@ export function LicenseSettings() {
 										<DropdownMenuContent>
 											<DropdownMenuItem
 												onClick={() => {
-													navigator.clipboard.writeText(licenseKey);
+													if (config.licenseKey) {
+														navigator.clipboard.writeText(config.licenseKey);
 
-													toast("Copied license key to clipboard");
+														toast("Copied license key to clipboard");
+													}
 												}}
 											>
 												Copy
@@ -210,10 +243,68 @@ export function LicenseSettings() {
 									/>
 								</div>
 							</Field>
-							<Field>
-								<FieldLabel>Device Name</FieldLabel>
-								<Input value={licenseKeyStatus.instance.label} readOnly />
-							</Field>
+							<form
+								onSubmit={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+
+									deviceInfoForm.handleSubmit();
+								}}
+							>
+								<deviceInfoForm.Field name="label">
+									{(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>
+													Device Label
+												</FieldLabel>
+												<div className="flex gap-2 items-end">
+													<InputGroup>
+														<InputGroupInput
+															id={field.name}
+															name={field.name}
+															value={field.state.value}
+															onBlur={field.handleBlur}
+															onChange={(event) =>
+																field.handleChange(event.target.value)
+															}
+															aria-invalid={isInvalid}
+															disabled={!deviceInfo}
+														/>
+														{!deviceInfo && (
+															<InputGroupAddon>
+																<Spinner />
+															</InputGroupAddon>
+														)}
+													</InputGroup>
+													<deviceInfoForm.Subscribe
+														selector={(state) => [
+															state.isPristine,
+															state.isSubmitting,
+														]}
+													>
+														{([isPristine, isSubmitting]) => (
+															<Button
+																variant="secondary"
+																disabled={isPristine || isSubmitting}
+															>
+																{isSubmitting && <Spinner />}
+																Save
+															</Button>
+														)}
+													</deviceInfoForm.Subscribe>
+												</div>
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
+								</deviceInfoForm.Field>
+							</form>
 						</FieldGroup>
 					</div>
 				</div>

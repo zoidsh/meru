@@ -7,11 +7,6 @@ import { openExternalUrl } from "./url";
 class LicenseKey {
 	isValid = false;
 
-	device = {
-		deviceId: "",
-		label: "",
-	};
-
 	showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
 		return dialog.showMessageBox({
 			type: "warning",
@@ -20,14 +15,16 @@ class LicenseKey {
 		});
 	}
 
-	async activate(input: { licenseKey: string; force?: boolean }) {
-		const [error, data, isDefinedError] = await apiClient.v2.license.activate({
-			licenseKey: input.licenseKey.trim(),
+	async activate(input: { licenseKey: string }) {
+		const licenseKey = input.licenseKey.trim();
+
+		const { error, isDefined } = await apiClient.v2.license.activate({
+			licenseKey,
 			deviceId: await machineId(),
 		});
 
 		if (error) {
-			if (isDefinedError) {
+			if (isDefined) {
 				const errorMessages: Omit<
 					Record<typeof error.code, string>,
 					"MAX_DEVICE_ACTIVATIONS_REACHED"
@@ -63,7 +60,7 @@ class LicenseKey {
 			return { success: false };
 		}
 
-		config.set("licenseKey", data.licenseKey);
+		config.set("licenseKey", licenseKey);
 
 		const { response } = await dialog.showMessageBox({
 			type: "info",
@@ -98,15 +95,13 @@ class LicenseKey {
 		}
 
 		if (licenseKey) {
-			const [error, data, isDefinedError] = await apiClient.v2.license.validate(
-				{
-					licenseKey,
-					deviceId: await machineId(),
-				},
-			);
+			const { error, isDefined } = await apiClient.v2.license.validate({
+				licenseKey,
+				deviceId: await machineId(),
+			});
 
 			if (error) {
-				if (isDefinedError) {
+				if (isDefined) {
 					const errorMessages: Record<typeof error.code, string> = {
 						LICENSE_KEY_INVALID: "The license key is invalid",
 						LICENSE_DISABLED: "The license key has been disabled",
@@ -143,12 +138,47 @@ class LicenseKey {
 				return false;
 			}
 
-			this.device = data.device;
-
 			this.isValid = true;
 		}
 
 		return true;
+	}
+
+	async getDeviceInfo() {
+		const licenseKey = config.get("licenseKey");
+
+		if (!licenseKey) {
+			throw new Error("No license key available");
+		}
+
+		const { error, data } = await apiClient.v2.license.getDeviceInfo({
+			licenseKey: licenseKey,
+			deviceId: await machineId(),
+		});
+
+		if (error) {
+			throw new Error(`Failed to get device info: ${error.message}`);
+		}
+
+		return data;
+	}
+
+	async updateDeviceInfo(input: { label: string }) {
+		const licenseKey = config.get("licenseKey");
+
+		if (!licenseKey) {
+			throw new Error("No license key available");
+		}
+
+		const { error } = await apiClient.v2.license.updateDeviceInfo({
+			licenseKey: licenseKey,
+			deviceId: await machineId(),
+			label: input.label,
+		});
+
+		if (error) {
+			throw new Error(`Failed to update device info: ${error.message}`);
+		}
 	}
 }
 

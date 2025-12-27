@@ -54,12 +54,6 @@ class Main {
 			JSON.stringify(config.get("accounts.unreadBadge")),
 		);
 
-		const licenseKey = config.get("licenseKey");
-
-		if (licenseKey) {
-			searchParams.set("licenseKey", JSON.stringify(licenseKey));
-		}
-
 		if (trial.daysLeft) {
 			searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
 		}

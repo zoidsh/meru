@@ -2,12 +2,12 @@ import { ipc } from "@meru/renderer-lib/ipc";
 import {
 	accountsSearchParam,
 	darkModeSearchParam,
-	licenseKeySearchParam,
 	trialDaysLeftSearchParam,
 } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
+import { getConfig } from "./react-query";
 
 export const useAccountsStore = create<{
 	accounts: AccountInstances;
@@ -31,8 +31,10 @@ ipc.renderer.on("accounts.changed", (_event, accounts) => {
 	useAccountsStore.setState({ accounts });
 });
 
-ipc.renderer.on("accounts.openAddAccountDialog", (_event) => {
-	if (!licenseKeySearchParam && !useTrialStore.getState().daysLeft) {
+ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
+	const config = await getConfig();
+
+	if (!config.licenseKey && !useTrialStore.getState().daysLeft) {
 		toast.error("Meru Pro required", {
 			description: "Please upgrade to Meru Pro to add more accounts.",
 		});

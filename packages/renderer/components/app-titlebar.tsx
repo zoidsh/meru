@@ -1,5 +1,4 @@
 import { ipc } from "@meru/renderer-lib/ipc";
-import { licenseKeySearchParam } from "@meru/renderer-lib/search-params";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import type { DownloadItem } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
@@ -493,23 +492,18 @@ export function AppTitlebar() {
 					>
 						<ArrowRightIcon />
 					</Button>
-					{config["gmail.savedSearches"].length > 0 &&
-						licenseKeySearchParam && (
-							<Button
-								variant="ghost"
-								size="icon"
-								className="size-7 draggable-none"
-								onClick={() => {
-									setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-								}}
-							>
-								{isGmailSavedSearchesOpen ? (
-									<CircleXIcon />
-								) : (
-									<MailSearchIcon />
-								)}
-							</Button>
-						)}
+					{config["gmail.savedSearches"].length > 0 && config.licenseKey && (
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-7 draggable-none"
+							onClick={() => {
+								setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+							}}
+						>
+							{isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
+						</Button>
+					)}
 				</div>
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
 				<div className="flex gap-2">
