@@ -31,6 +31,12 @@ export class AppTray {
 				this.tray.setContextMenu(this.menu);
 			} else {
 				this.tray.on("click", () => {
+					const accountWithUnread = accounts.getFirstAccountWithUnread();
+
+					if (accountWithUnread) {
+						accounts.selectAccount(accountWithUnread.id);
+					}
+
 					main.show();
 				});
 
