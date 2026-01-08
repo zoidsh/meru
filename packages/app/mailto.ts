@@ -1,6 +1,7 @@
 import { platform } from "@electron-toolkit/utils";
 import { dialog } from "electron";
 import { accounts } from "./accounts";
+import { licenseKey } from "./license-key";
 import { main } from "./main";
 
 export const mailtoUrlArg = !platform.isMacOS
@@ -8,6 +9,15 @@ export const mailtoUrlArg = !platform.isMacOS
 	: undefined;
 
 export async function handleMailto(url: string) {
+	if (!licenseKey.isValid) {
+		dialog.showMessageBox(main.window, {
+			type: "warning",
+			message: "Meru Pro is required to use Meru as default mail client",
+		});
+
+		return;
+	}
+
 	if (!url.startsWith("mailto:") || url === "mailto:") {
 		return;
 	}
