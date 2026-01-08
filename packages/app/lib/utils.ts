@@ -1,17 +1,26 @@
 import { config } from "@/config";
 
 export function extractVerificationCode(texts: string[]) {
-	let hasVerificationCodeContext = false;
+	let textIncludesVerificationKeyword = false;
+	let textIncludesCodeKeyword = false;
 
 	for (const text of texts) {
 		if (/(?:verification|sign[- ]in)\b/i.test(text)) {
-			hasVerificationCodeContext = true;
+			textIncludesVerificationKeyword = true;
 
 			break;
 		}
 	}
 
-	if (!hasVerificationCodeContext) {
+	for (const text of texts) {
+		if (/\bcode\b/i.test(text)) {
+			textIncludesCodeKeyword = true;
+
+			break;
+		}
+	}
+
+	if (!textIncludesVerificationKeyword || !textIncludesCodeKeyword) {
 		return null;
 	}
 
