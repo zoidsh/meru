@@ -310,6 +310,20 @@ class Accounts {
 			0,
 		);
 	}
+
+	getFirstAccountWithUnread() {
+		for (const accountConfig of this.getAccountConfigs()) {
+			const instance = this.instances.get(accountConfig.id);
+
+			if (instance) {
+				const unreadCount = instance.gmail.store.getState().unreadCount;
+
+				if (typeof unreadCount === "number" && unreadCount > 0) {
+					return accountConfig;
+				}
+			}
+		}
+	}
 }
 
 export const accounts = new Accounts();
