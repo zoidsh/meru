@@ -10,6 +10,8 @@ export function getCleanUrl(url: string): string {
 	return url;
 }
 
+const MAX_EXTERNAL_URL_LENGTH = 256;
+
 export async function openExternalUrl(url: string, trustedLink?: boolean) {
 	const cleanUrl = getCleanUrl(url);
 
@@ -24,7 +26,10 @@ export async function openExternalUrl(url: string, trustedLink?: boolean) {
 				message:
 					"Do you want to open this external link in your default browser?",
 				checkboxLabel: `Trust all links on ${origin}`,
-				detail: cleanUrl,
+				detail:
+					cleanUrl.length > MAX_EXTERNAL_URL_LENGTH
+						? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 3)}...`
+						: cleanUrl,
 			});
 
 			if (response !== 0) {
