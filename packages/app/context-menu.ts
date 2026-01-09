@@ -9,6 +9,7 @@ export function setupWindowContextMenu(
 		showCopyImageAddress: true,
 		showSaveImageAs: true,
 		showInspectElement: false,
+		showCopyEmailAddress: true,
 		append: (_defaultActions, parameters) => [
 			{
 				label: "Inspect Element",

@@ -1,5 +1,29 @@
+diff --git a/node_modules/electron-context-menu/.bun-tag-82a8a449178bd38a b/.bun-tag-82a8a449178bd38a
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/electron-context-menu/.bun-tag-912468a398585a31 b/.bun-tag-912468a398585a31
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/index.d.ts b/index.d.ts
+index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..7a52ea17aec36bcab6e2e0640c8fadb3d0782b2a 100644
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -227,6 +227,13 @@ export type Options = {
+ 	*/
+ 	readonly showCopyVideoAddress?: boolean;
+ 
++	/**
++	Show the `Copy Video Address` menu item when right-clicking on a video.
++
++	@default false
++	*/
++	readonly showCopyEmailAddress?: boolean;
++
+ 	/**
+ 	Show the `Save Video` menu item when right-clicking on a video.
+ 
 diff --git a/index.js b/index.js
-index 8ec2624b2ed049733788311aed0852432dbefb42..d3612be48cf19ee8a6cf2ad7f8ad2a3267137fdf 100644
+index 8ec2624b2ed049733788311aed0852432dbefb42..4aa5b48fef3d9d07a624c763ce6a45e7ceeaa8b2 100644
 --- a/index.js
 +++ b/index.js
 @@ -117,6 +117,23 @@ const create = (win, options) => {
@@ -26,7 +50,31 @@ index 8ec2624b2ed049733788311aed0852432dbefb42..d3612be48cf19ee8a6cf2ad7f8ad2a32
  			selectAll: decorateMenuItem({
  				id: 'selectAll',
  				label: 'Select &All',
-@@ -277,6 +294,7 @@ const create = (win, options) => {
+@@ -216,6 +233,23 @@ const create = (win, options) => {
+ 					});
+ 				},
+ 			}),
++			copyEmailAddress: decorateMenuItem({
++				id: "copyEmailAddress",
++				label: "Copy Email Address",
++				visible: properties.linkURL.startsWith("mailto:"),
++				click(menuItem) {
++					let emailAddress = properties.linkURL.replace("mailto:", "");
++
++					emailAddress = menuItem.transform
++						? menuItem.transform(emailAddress)
++						: emailAddress;
++
++					electron.clipboard.write({
++						bookmark: emailAddress,
++						text: emailAddress,
++					});
++				},
++			}),
+ 			inspect: () => ({
+ 				id: 'inspect',
+ 				label: 'I&nspect Element',
+@@ -277,6 +311,7 @@ const create = (win, options) => {
  			defaultActions.cut(),
  			defaultActions.copy(),
  			defaultActions.paste(),
@@ -34,3 +82,11 @@ index 8ec2624b2ed049733788311aed0852432dbefb42..d3612be48cf19ee8a6cf2ad7f8ad2a32
  			shouldShowSelectAll && defaultActions.selectAll(),
  			defaultActions.separator(),
  			options.showSaveImage && defaultActions.saveImage(),
+@@ -286,6 +321,7 @@ const create = (win, options) => {
+ 			options.showSaveVideo && defaultActions.saveVideo(),
+ 			options.showSaveVideoAs && defaultActions.saveVideoAs(),
+ 			options.showCopyVideoAddress && defaultActions.copyVideoAddress(),
++			options.showCopyEmailAddress && defaultActions.copyEmailAddress(),
+ 			defaultActions.separator(),
+ 			options.showCopyLink !== false && defaultActions.copyLink(),
+ 			options.showSaveLinkAs && defaultActions.saveLinkAs(),
