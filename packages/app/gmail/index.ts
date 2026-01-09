@@ -63,6 +63,10 @@ export class Gmail extends GoogleApp {
 			searchParams.set("reverseConversation", "true");
 		}
 
+		if (config.get("gmail.openComposeInNewWindow") && licenseKey.isValid) {
+			searchParams.set("openComposeInNewWindow", "true");
+		}
+
 		super({
 			accountId,
 			url: `${

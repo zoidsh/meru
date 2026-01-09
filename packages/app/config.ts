@@ -66,6 +66,7 @@ export const config = new Store<Config>({
 		"gmail.reverseConversation": false,
 		"gmail.savedSearches": [],
 		"gmail.unreadCountPreference": "default",
+		"gmail.openComposeInNewWindow": false,
 		"screenShare.useSystemPicker": true,
 		"window.lastState": {
 			bounds: DEFAULT_WINDOW_STATE_BOUNDS,

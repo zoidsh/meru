@@ -51,6 +51,15 @@ export function GmailSettings() {
 				<LicenseKeyRequiredBanner />
 				<FieldGroup>
 					<FieldSet>
+						<FieldLegend>General</FieldLegend>
+						<ConfigSwitchField
+							label="Always Compose New Emails in New Window"
+							description="Opens a new window for composing emails instead of inside Gmail."
+							configKey="gmail.openComposeInNewWindow"
+							restartRequired
+						/>
+					</FieldSet>
+					<FieldSet>
 						<FieldLegend>Appearance</FieldLegend>
 						<ConfigSwitchField
 							label="Hide Gmail Logo"

@@ -89,6 +89,7 @@ export type Config = {
 	"gmail.reverseConversation": boolean;
 	"gmail.savedSearches": GmailSavedSearches;
 	"gmail.unreadCountPreference": "default" | "first-section" | "inbox";
+	"gmail.openComposeInNewWindow": boolean;
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {
