@@ -246,19 +246,28 @@ export class GoogleApp {
 				return {
 					action: "allow",
 					createWindow: (options) => {
-						let view: WebContentsView | null = new WebContentsView(options);
+						let newWindow: BrowserWindow | null = new BrowserWindow({
+							...options,
+							show: false,
+						});
 
-						view.webContents.once("will-navigate", (_event, url) => {
-							openExternalUrl(url);
+						newWindow.webContents.once("will-navigate", (_event, url) => {
+							if (newWindow) {
+								if (url.startsWith("https://accounts.google.com")) {
+									newWindow.show();
 
-							if (view) {
-								view.webContents.close();
+									return;
+								}
 
-								view = null;
+								openExternalUrl(url);
+
+								newWindow.webContents.close();
+
+								newWindow = null;
 							}
 						});
 
-						return view.webContents;
+						return newWindow.webContents;
 					},
 				};
 			}
