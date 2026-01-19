@@ -58,6 +58,7 @@ export type Config = {
 	resetConfig: boolean;
 	theme: "system" | "light" | "dark";
 	licenseKey: string | null;
+	customUserAgent: boolean;
 	"dock.enabled": boolean;
 	"dock.unreadBadge": boolean;
 	"externalLinks.confirm": boolean;

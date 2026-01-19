@@ -175,6 +175,14 @@ export function AdvancedSettings() {
 								configKey="hardwareAcceleration"
 								restartRequired
 							/>
+							{platform.isMacOS && (
+								<ConfigSwitchField
+									label="Use Custom User Agent"
+									description="Some Gmail or Google app features may not work with the default user agent. Enabling this option will use a custom user agent and may help resolve issues, but can also cause others. Disable this option if you experience instability."
+									configKey="customUserAgent"
+									restartRequired
+								/>
+							)}
 						</FieldGroup>
 					</FieldSet>
 				</FieldGroup>

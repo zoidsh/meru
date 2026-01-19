@@ -1,5 +1,5 @@
 import path from "node:path";
-import { is } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
@@ -26,6 +26,8 @@ export class Account {
 	constructor(accountConfig: AccountConfig) {
 		this.session = session.fromPartition(`persist:${accountConfig.id}`);
 
+		this.setCustomUserAgent();
+
 		this.registerSessionPermissionsRequestsHandler();
 
 		this.registerSessionDisplayMediaRequestHandler();
@@ -38,6 +40,14 @@ export class Account {
 			unreadCountEnabled: accountConfig.unreadBadge,
 			delegatedAccountId: accountConfig.gmail.delegatedAccountId,
 		});
+	}
+
+	private setCustomUserAgent() {
+		if (platform.isMacOS && config.get("customUserAgent")) {
+			this.session.setUserAgent(
+				"Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+			);
+		}
 	}
 
 	private registerSessionPermissionsRequestsHandler() {
