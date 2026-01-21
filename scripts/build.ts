@@ -58,7 +58,7 @@ function buildAppFiles() {
 			...config,
 			entryPoints: [
 				"./packages/gmail-preload/index.ts",
-				"./packages/google-meet-preload/index.ts",
+				"./packages/google-app-preload/index.ts",
 				"./packages/renderer-preload/index.ts",
 			],
 			platform: "browser",

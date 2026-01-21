@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
+import { accountColorsMap } from "@meru/shared/accounts";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
 	type AccountConfigInput,
@@ -56,7 +57,6 @@ import {
 	SettingsHeader,
 	SettingsTitle,
 } from "@/components/settings";
-import { accountColorsMap } from "@/lib/account";
 import { useConfig } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
@@ -106,13 +106,13 @@ function AccountForm({
 												Object.entries(accountColorsMap) as Entries<
 													typeof accountColorsMap
 												>
-											).map(([colorKey, { label, value }]) => (
+											).map(([colorKey, { label, className }]) => (
 												<SelectItem
 													key={colorKey}
 													value={colorKey}
 													className="flex items-center gap-2"
 												>
-													<div className={`size-2 rounded-full ${value}`} />
+													<div className={`size-2 rounded-full ${className}`} />
 													{label}
 												</SelectItem>
 											))}
@@ -333,7 +333,7 @@ export function AccountsSettings() {
 										className={cn(
 											"size-2 rounded-full",
 											account.config.color
-												? `${accountColorsMap[account.config.color].value}`
+												? `${accountColorsMap[account.config.color].className}`
 												: "border",
 										)}
 									/>

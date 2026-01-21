@@ -54,6 +54,13 @@ export function GoogleAppsSettings() {
 						licenseKeyRequired
 					/>
 					<FieldSeparator />
+					<ConfigSwitchField
+						label="Show Account Color Indicator"
+						description="Show a colored indicator on top of Google Apps windows to indicate which account is being used when an account has a color configured."
+						configKey="googleApps.showAccountColor"
+						licenseKeyRequired
+					/>
+					<FieldSeparator />
 					<Field>
 						<FieldContent>
 							<FieldLabel className="flex items-center gap-2">

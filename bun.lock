@@ -86,7 +86,7 @@
       "name": "@meru/gmail-preload",
       "version": "0.0.0",
     },
-    "packages/google-meet-preload": {
+    "packages/google-app-preload": {
       "name": "@meru/meet-preload",
       "version": "0.0.0",
     },
@@ -302,7 +302,7 @@
 
     "@meru/gmail-preload": ["@meru/gmail-preload@workspace:packages/gmail-preload"],
 
-    "@meru/meet-preload": ["@meru/meet-preload@workspace:packages/google-meet-preload"],
+    "@meru/meet-preload": ["@meru/meet-preload@workspace:packages/google-app-preload"],
 
     "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 

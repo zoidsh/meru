@@ -1,6 +1,6 @@
 import elementReady from "element-ready";
 import "./electron-api";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import { GMAIL_COMPOSE_URL } from "@meru/shared/gmail";
 import { initInboxObserver } from "./inbox-observer";
 import { initIpc } from "./ipc";
 import { initUrlPreview } from "./url-preview";
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			composeButtonElement.addEventListener("click", (event) => {
 				event.stopPropagation();
 
-				window.open(`${GMAIL_URL}/?view=cm&fs=1`);
+				window.open(GMAIL_COMPOSE_URL);
 			});
 		}
 	}

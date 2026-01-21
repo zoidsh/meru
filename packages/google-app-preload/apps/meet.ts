@@ -1,10 +1,5 @@
-import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
-import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { $$ } from "select-dom";
-
-export const ipcRenderer = new IpcListener<IpcRendererEvent>();
-
-export const ipcMain = new IpcEmitter<IpcMainEvents>();
+import { ipcRenderer } from "@/ipc";
 
 function toggleMuteButton(button: "microphone" | "camera") {
 	const muteButtons = $$("button[data-is-muted]");
@@ -16,7 +11,7 @@ function toggleMuteButton(button: "microphone" | "camera") {
 	}
 }
 
-export function initIpc() {
+export function initMeetPreload() {
 	ipcRenderer.on("googleMeet.toggleMicrophone", () => {
 		toggleMuteButton("microphone");
 	});

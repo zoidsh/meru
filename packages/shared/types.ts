@@ -1,4 +1,5 @@
 import type { LoginItemSettings } from "electron";
+import type { accountColorsMap } from "./accounts";
 import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
 import type {
 	AccountConfig,
@@ -108,6 +109,7 @@ export type Config = {
 	"googleApps.openInApp": boolean;
 	"googleApps.openAppsInNewWindow": boolean;
 	"googleApps.pinnedApps": GoogleAppsPinnedApp[];
+	"googleApps.showAccountColor": boolean;
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
 	"doNotDisturb.enabled": boolean;
@@ -206,5 +208,8 @@ export type IpcRendererEvent = {
 	"appUpdater.updateAvailable": [version: string];
 	"googleMeet.toggleMicrophone": [];
 	"googleMeet.toggleCamera": [];
+	"googleApp.showAccountColor": [
+		value: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
+	];
 	"config.configChanged": [config: Config];
 };

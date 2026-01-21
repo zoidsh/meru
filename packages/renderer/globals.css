@@ -1,6 +1,7 @@
 @import "../ui/globals.css";
 
 @source "../ui/**/*.{ts,tsx}";
+@source "../shared/**/*.{ts,tsx}";
 
 @utility draggable {
 	app-region: drag;

@@ -1,15 +1,18 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
+import { accountColorsMap } from "@meru/shared/accounts";
 import {
 	APP_TITLEBAR_HEIGHT,
 	GOOGLE_ACCOUNTS_URL,
 } from "@meru/shared/constants";
 import {
+	GMAIL_COMPOSE_URL,
 	GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
 	GMAIL_URL,
 } from "@meru/shared/gmail";
 import {
 	BrowserWindow,
+	type BrowserWindowConstructorOptions,
 	dialog,
 	globalShortcut,
 	powerSaveBlocker,
@@ -232,14 +235,6 @@ export class GoogleApp {
 		main.window.contentView.removeChildView(this.view);
 	}
 
-	private getGoogleAppPreloadScriptPath(googleApp: string) {
-		switch (googleApp) {
-			case "meet": {
-				return path.join(__dirname, `google-${googleApp}-preload`, "index.js");
-			}
-		}
-	}
-
 	registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
 		window.webContents.setWindowOpenHandler(({ url, disposition }) => {
 			if (url === "about:blank") {
@@ -374,6 +369,22 @@ export class GoogleApp {
 
 					account.instance.windows.add(newWindow);
 
+					if (config.get("googleApps.showAccountColor")) {
+						newWindow.webContents.on("dom-ready", () => {
+							if (account.config.color) {
+								const { value } = accountColorsMap[account.config.color];
+
+								ipc.renderer.send(
+									newWindow.webContents,
+									"googleApp.showAccountColor",
+									value,
+								);
+							}
+						});
+					}
+
+					const googleApp = supportedGoogleAppMatch?.[1];
+
 					let powerSaveBlockerId: number | undefined;
 
 					if (googleApp === "meet") {
@@ -410,19 +421,15 @@ export class GoogleApp {
 					});
 				};
 
-				const googleApp = supportedGoogleAppMatch?.[1];
-
-				const newWindowOptions = {
+				const newWindowOptions: BrowserWindowConstructorOptions = {
 					autoHideMenuBar: true,
 					webPreferences: {
 						session: this.session,
-						preload: googleApp
-							? this.getGoogleAppPreloadScriptPath(googleApp)
-							: undefined,
+						preload: path.join(__dirname, "google-app-preload", "index.js"),
 					},
 				};
 
-				if (url.startsWith(GMAIL_URL)) {
+				if (url.startsWith(GMAIL_URL) && url.includes("/popout")) {
 					return {
 						action: "allow",
 						createWindow: (inheritedOptions) => {
@@ -442,10 +449,12 @@ export class GoogleApp {
 					};
 				}
 
+				const isGmailComposeUrl = url === GMAIL_COMPOSE_URL;
+
 				const newGoogleAppWindow = new BrowserWindow({
 					...newWindowOptions,
-					width: 1280,
-					height: 800,
+					width: isGmailComposeUrl ? 800 : 1280,
+					height: isGmailComposeUrl ? 600 : 800,
 				});
 
 				setupNewWindow(newGoogleAppWindow);

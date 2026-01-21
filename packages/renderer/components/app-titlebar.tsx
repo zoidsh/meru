@@ -1,4 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
+import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import type { DownloadItem } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
@@ -24,7 +25,6 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
-import { accountColorsMap } from "@/lib/account";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
@@ -391,12 +391,12 @@ export function AppTitlebar() {
 							).reduce<
 								Partial<
 									Record<
-										(typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
+										(typeof accountColorsMap)[keyof typeof accountColorsMap]["className"],
 										boolean
 									>
 								>
-							>((acc, [colorKey, { value }]) => {
-								acc[value] = account.config.color === colorKey;
+							>((acc, [colorKey, { className }]) => {
+								acc[className] = account.config.color === colorKey;
 
 								return acc;
 							}, {}),
