@@ -55,7 +55,13 @@ export function GoogleAppsSettings() {
 					/>
 					<FieldSeparator />
 					<ConfigSwitchField
-						label="Show Account Color Indicator"
+						label="Show Account Label"
+						description="Show the account label in the titlebar of Google Apps windows if using more than one account."
+						configKey="googleApps.showAccountLabel"
+						licenseKeyRequired
+					/>
+					<ConfigSwitchField
+						label="Show Account Color"
 						description="Show a colored indicator on top of Google Apps windows to indicate which account is being used when an account has a color configured."
 						configKey="googleApps.showAccountColor"
 						licenseKeyRequired

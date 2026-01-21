@@ -110,6 +110,7 @@ export type Config = {
 	"googleApps.openAppsInNewWindow": boolean;
 	"googleApps.pinnedApps": GoogleAppsPinnedApp[];
 	"googleApps.showAccountColor": boolean;
+	"googleApps.showAccountLabel": boolean;
 	"verificationCodes.autoCopy": boolean;
 	"verificationCodes.autoDelete": boolean;
 	"doNotDisturb.enabled": boolean;

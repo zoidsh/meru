@@ -81,6 +81,7 @@ export const config = new Store<Config>({
 		"googleApps.openAppsInNewWindow": false,
 		"googleApps.pinnedApps": [],
 		"googleApps.showAccountColor": true,
+		"googleApps.showAccountLabel": true,
 		"verificationCodes.autoCopy": false,
 		"verificationCodes.autoDelete": false,
 		"doNotDisturb.enabled": false,

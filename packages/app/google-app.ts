@@ -369,7 +369,21 @@ export class GoogleApp {
 
 					account.instance.windows.add(newWindow);
 
-					if (config.get("googleApps.showAccountColor")) {
+					const isUsingMultipleAccounts = accounts.getAccounts().length > 1;
+
+					if (
+						config.get("googleApps.showAccountLabel") &&
+						isUsingMultipleAccounts
+					) {
+						newWindow.webContents.on("page-title-updated", (_event, title) => {
+							newWindow.setTitle(`[${account.config.label}] ${title}`);
+						});
+					}
+
+					if (
+						config.get("googleApps.showAccountColor") &&
+						isUsingMultipleAccounts
+					) {
 						newWindow.webContents.on("dom-ready", () => {
 							if (account.config.color) {
 								const { value } = accountColorsMap[account.config.color];
