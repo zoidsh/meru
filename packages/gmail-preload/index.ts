@@ -3,6 +3,7 @@ import "./electron-api";
 import { GMAIL_COMPOSE_URL } from "@meru/shared/gmail";
 import { initInboxObserver } from "./inbox-observer";
 import { initIpc } from "./ipc";
+import { initOutOfOfficeDetection } from "./out-of-office";
 import { initSenderIcons } from "./sender-icons";
 import { initUrlPreview } from "./url-preview";
 
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initIpc();
 	initUrlPreview();
 	initInboxObserver();
+	initOutOfOfficeDetection();
 
 	if (process.argv.includes("--show-sender-icons")) {
 		initSenderIcons();

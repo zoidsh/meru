@@ -35,8 +35,10 @@ export class Gmail extends GoogleApp {
 	store = createStore(
 		subscribeWithSelector<{
 			unreadCount: number;
+			outOfOffice: boolean;
 		}>(() => ({
 			unreadCount: 0,
+			outOfOffice: false,
 		})),
 	);
 

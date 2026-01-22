@@ -135,6 +135,7 @@ export type IpcMainEvents =
 			"settings.toggleIsOpen": [];
 			"gmail.moveNavigationHistory": [move: "back" | "forward"];
 			"gmail.setUnreadCount": [unreadCountString: string];
+			"gmail.setOutOfOffice": [outOfOffice: boolean];
 			"gmail.handleNewMessages": [mails: GmailMail[]];
 			"gmail.search": [searchQuery: string];
 			"gmail.openUserStylesInEditor": [];

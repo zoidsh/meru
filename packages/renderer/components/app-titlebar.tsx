@@ -9,6 +9,7 @@ import { cn } from "@meru/ui/lib/utils";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
+	BriefcaseIcon,
 	ChevronDownIcon,
 	ChevronUpIcon,
 	CircleAlertIcon,
@@ -345,6 +346,8 @@ export function AppTitlebar() {
 
 	const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
 
+	const isLicenseKeyValid = useIsLicenseKeyValid();
+
 	if (!config || !accounts) {
 		return;
 	}
@@ -402,6 +405,9 @@ export function AppTitlebar() {
 							}, {}),
 						)}
 					/>
+				)}
+				{account.gmail.outOfOffice && isLicenseKeyValid && (
+					<BriefcaseIcon className="size-3.5" />
 				)}
 				{account.config.label}
 				{account.gmail.attentionRequired && (

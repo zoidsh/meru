@@ -34,5 +34,6 @@ export type GmailState = {
 		canGoForward: boolean;
 	};
 	unreadCount: number | null;
+	outOfOffice: boolean;
 	attentionRequired: boolean;
 };

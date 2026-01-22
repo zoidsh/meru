@@ -106,6 +106,16 @@ class Ipc {
 			}
 		});
 
+		this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
+			for (const accountInstance of accounts.instances.values()) {
+				if (event.sender.id === accountInstance.gmail.view.webContents.id) {
+					accountInstance.gmail.store.setState({
+						outOfOffice,
+					});
+				}
+			}
+		});
+
 		this.main.on("titleBar.toggleAppMenu", () => {
 			appMenu.togglePopup();
 		});
