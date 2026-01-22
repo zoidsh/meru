@@ -74,6 +74,13 @@ export function GmailSettings() {
 							restartRequired
 						/>
 						<ConfigSwitchField
+							label="Show Sender Icons"
+							description="Show sender icons next to the senders in your inbox."
+							configKey="gmail.showSenderIcons"
+							restartRequired
+							licenseKeyRequired
+						/>
+						<ConfigSwitchField
 							label="Reverse Conversation"
 							description="Displays email conversations in reverse order, showing the latest message at the top."
 							configKey="gmail.reverseConversation"

@@ -78,6 +78,11 @@ export class Gmail extends GoogleApp {
 			webContentsViewOptions: {
 				webPreferences: {
 					preload: GMAIL_PRELOAD_PATH,
+					additionalArguments: [
+						config.get("gmail.showSenderIcons") &&
+							licenseKey.isValid &&
+							"--show-sender-icons",
+					].filter((flag) => typeof flag === "string"),
 				},
 			},
 			hooks: {

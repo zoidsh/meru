@@ -92,6 +92,7 @@ export type Config = {
 	"gmail.savedSearches": GmailSavedSearches;
 	"gmail.unreadCountPreference": "default" | "first-section" | "inbox";
 	"gmail.openComposeInNewWindow": boolean;
+	"gmail.showSenderIcons": boolean;
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {

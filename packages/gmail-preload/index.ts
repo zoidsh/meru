@@ -3,6 +3,7 @@ import "./electron-api";
 import { GMAIL_COMPOSE_URL } from "@meru/shared/gmail";
 import { initInboxObserver } from "./inbox-observer";
 import { initIpc } from "./ipc";
+import { initSenderIcons } from "./sender-icons";
 import { initUrlPreview } from "./url-preview";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,6 +30,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initIpc();
 	initUrlPreview();
 	initInboxObserver();
+
+	if (process.argv.includes("--show-sender-icons")) {
+		initSenderIcons();
+	}
 
 	if (searchParams.get("openComposeInNewWindow") === "true") {
 		const composeButtonElement = await elementReady(".T-I.T-I-KE.L3", {
