@@ -212,8 +212,8 @@ export type IpcRendererEvent = {
 	"appUpdater.updateAvailable": [version: string];
 	"googleMeet.toggleMicrophone": [];
 	"googleMeet.toggleCamera": [];
-	"googleApp.showAccountColor": [
-		value: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
+	"googleApp.initAccountColorIndicator": [
+		color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
 	];
 	"config.configChanged": [config: Config];
 };

@@ -390,7 +390,7 @@ export class GoogleApp {
 
 								ipc.renderer.send(
 									newWindow.webContents,
-									"googleApp.showAccountColor",
+									"googleApp.initAccountColorIndicator",
 									value,
 								);
 							}
