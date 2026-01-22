@@ -82,6 +82,9 @@ export class Gmail extends GoogleApp {
 						config.get("gmail.showSenderIcons") &&
 							licenseKey.isValid &&
 							"--show-sender-icons",
+						config.get("gmail.hideOutOfOfficeBanner") &&
+							licenseKey.isValid &&
+							"--hide-out-of-office-banner",
 					].filter((flag) => typeof flag === "string"),
 				},
 			},

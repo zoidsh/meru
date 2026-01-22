@@ -68,6 +68,13 @@ export function GmailSettings() {
 							restartRequired
 						/>
 						<ConfigSwitchField
+							label="Hide Out of Office Banner"
+							description="Hides the out of office banner at the top of the window."
+							configKey="gmail.hideOutOfOfficeBanner"
+							restartRequired
+							licenseKeyRequired
+						/>
+						<ConfigSwitchField
 							label="Hide Inbox Footer"
 							description="Hides the footer at the bottom of the inbox."
 							configKey="gmail.hideInboxFooter"

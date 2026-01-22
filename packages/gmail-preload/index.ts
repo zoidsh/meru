@@ -27,6 +27,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 		document.documentElement.classList.add("reverse-conversation");
 	}
 
+	if (process.argv.includes("--hide-out-of-office-banner")) {
+		document.documentElement.classList.add("hide-out-of-office-banner");
+	}
+
 	initIpc();
 	initUrlPreview();
 	initInboxObserver();

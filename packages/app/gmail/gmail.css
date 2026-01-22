@@ -41,3 +41,7 @@ html.meru.reverse-conversation div[role="list"]:has(div[role="listitem"]) {
 	display: flex;
 	flex-direction: column-reverse;
 }
+
+html.meru.hide-out-of-office-banner #\:7 {
+	display: none !important;
+}

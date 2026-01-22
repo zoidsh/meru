@@ -88,6 +88,7 @@ export type Config = {
 	"tray.unreadCount": boolean;
 	"gmail.hideGmailLogo": boolean;
 	"gmail.hideInboxFooter": boolean;
+	"gmail.hideOutOfOfficeBanner": boolean;
 	"gmail.reverseConversation": boolean;
 	"gmail.savedSearches": GmailSavedSearches;
 	"gmail.unreadCountPreference": "default" | "first-section" | "inbox";
