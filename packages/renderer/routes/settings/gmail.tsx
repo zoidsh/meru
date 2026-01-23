@@ -58,9 +58,6 @@ export function GmailSettings() {
 							configKey="gmail.openComposeInNewWindow"
 							restartRequired
 						/>
-					</FieldSet>
-					<FieldSet>
-						<FieldLegend>Appearance</FieldLegend>
 						<ConfigSwitchField
 							label="Hide Gmail Logo"
 							description="Hides the Gmail logo on the top left corner."
@@ -74,6 +71,28 @@ export function GmailSettings() {
 							restartRequired
 							licenseKeyRequired
 						/>
+					</FieldSet>
+					<FieldSeparator />
+					<FieldSet>
+						<FieldLegend>Conversation</FieldLegend>
+						<ConfigSwitchField
+							label="Reverse Conversation"
+							description="Displays email conversations in reverse order, showing the latest message at the top."
+							configKey="gmail.reverseConversation"
+							restartRequired
+							licenseKeyRequired
+						/>
+						<ConfigSwitchField
+							label="Move Attachments to Top"
+							description="Moves email attachments to the top of the email."
+							configKey="gmail.moveAttachmentsToTop"
+							restartRequired
+							licenseKeyRequired
+						/>
+					</FieldSet>
+					<FieldSeparator />
+					<FieldSet>
+						<FieldLegend>Inbox</FieldLegend>
 						<ConfigSwitchField
 							label="Hide Inbox Footer"
 							description="Hides the footer at the bottom of the inbox."
@@ -87,40 +106,6 @@ export function GmailSettings() {
 							restartRequired
 							licenseKeyRequired
 						/>
-						<ConfigSwitchField
-							label="Reverse Conversation"
-							description="Displays email conversations in reverse order, showing the latest message at the top."
-							configKey="gmail.reverseConversation"
-							restartRequired
-							licenseKeyRequired
-						/>
-						<Field>
-							<FieldContent>
-								<FieldLabel className="flex items-center gap-2">
-									User Styles
-									<LicenseKeyRequiredFieldBadge />
-								</FieldLabel>
-								<FieldDescription>
-									Add your own custom CSS to further personalize the Gmail
-									interface. A restart is required after making changes.
-								</FieldDescription>
-							</FieldContent>
-							<div>
-								<Button
-									variant="outline"
-									onClick={() => {
-										ipc.main.send("gmail.openUserStylesInEditor");
-									}}
-									disabled={!isLicenseKeyValid}
-								>
-									Open in Editor
-								</Button>
-							</div>
-						</Field>
-					</FieldSet>
-					<FieldSeparator />
-					<FieldSet>
-						<FieldLegend>Inbox</FieldLegend>
 						<Field>
 							<FieldContent>
 								<FieldLabel className="flex items-center gap-2">
@@ -159,6 +144,33 @@ export function GmailSettings() {
 									<SelectItem value="inbox">Inbox Only</SelectItem>
 								</SelectContent>
 							</Select>
+						</Field>
+					</FieldSet>
+					<FieldSeparator />
+					<FieldSet>
+						<FieldLegend>Advanced</FieldLegend>
+						<Field>
+							<FieldContent>
+								<FieldLabel className="flex items-center gap-2">
+									User Styles
+									<LicenseKeyRequiredFieldBadge />
+								</FieldLabel>
+								<FieldDescription>
+									Add your own custom CSS to further personalize the Gmail
+									interface. A restart is required after making changes.
+								</FieldDescription>
+							</FieldContent>
+							<div>
+								<Button
+									variant="outline"
+									onClick={() => {
+										ipc.main.send("gmail.openUserStylesInEditor");
+									}}
+									disabled={!isLicenseKeyValid}
+								>
+									Open in Editor
+								</Button>
+							</div>
 						</Field>
 					</FieldSet>
 				</FieldGroup>

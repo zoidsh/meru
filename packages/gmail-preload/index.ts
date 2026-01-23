@@ -1,4 +1,5 @@
 import "./electron-api";
+import { initAttachments } from "./attachments";
 import { initCompose } from "./compose";
 import { initCss } from "./css";
 import { initInboxObserver } from "./inbox-observer";
@@ -19,4 +20,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initOutOfOffice();
 	initSenderIcons();
 	initCompose();
+	initAttachments();
 });

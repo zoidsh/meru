@@ -81,6 +81,10 @@ export class Gmail extends GoogleApp {
 			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner);
 		}
 
+		if (config.get("gmail.moveAttachmentsToTop") && licenseKey.isValid) {
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop);
+		}
+
 		super({
 			accountId,
 			url: delegatedAccountId

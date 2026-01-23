@@ -94,6 +94,7 @@ export type Config = {
 	"gmail.unreadCountPreference": "default" | "first-section" | "inbox";
 	"gmail.openComposeInNewWindow": boolean;
 	"gmail.showSenderIcons": boolean;
+	"gmail.moveAttachmentsToTop": boolean;
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {

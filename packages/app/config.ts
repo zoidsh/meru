@@ -70,6 +70,7 @@ export const config = new Store<Config>({
 		"gmail.unreadCountPreference": "default",
 		"gmail.openComposeInNewWindow": false,
 		"gmail.showSenderIcons": true,
+		"gmail.moveAttachmentsToTop": false,
 		"screenShare.useSystemPicker": true,
 		"window.lastState": {
 			bounds: DEFAULT_WINDOW_STATE_BOUNDS,
