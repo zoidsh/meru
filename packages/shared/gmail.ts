@@ -13,6 +13,15 @@ export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(
 	`${GMAIL_URL}/d/([^/]+)`,
 );
 
+export const GMAIL_PRELOAD_ARGUMENTS = {
+	hideGmailLogo: "--meru-hide-gmail-logo",
+	hideInboxFooter: "--meru-hide-inbox-footer",
+	reverseConversation: "--meru-reverse-conversation",
+	openComposeInNewWindow: "--meru-open-compose-in-new-window",
+	showSenderIcons: "--meru-show-sender-icons",
+	hideOutOfOfficeBanner: "--meru-hide-out-of-office-banner",
+};
+
 export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
 	return `${GMAIL_URL}/d/${delegatedAccountId}`;
 }

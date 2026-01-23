@@ -7,7 +7,7 @@ function detectOutOfOfficeBanner() {
 	ipcMain.send("gmail.setOutOfOffice", Boolean(outOfOfficeElement));
 }
 
-export function initOutOfOfficeDetection() {
+export function initOutOfOffice() {
 	detectOutOfOfficeBanner();
 
 	const observer = new MutationObserver(() => {

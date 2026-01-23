@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { createGmailDelegatedAccountUrl, GMAIL_URL } from "@meru/shared/gmail";
+import {
+	createGmailDelegatedAccountUrl,
+	GMAIL_PRELOAD_ARGUMENTS,
+	GMAIL_URL,
+} from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
 import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import { app, BrowserWindow } from "electron";
@@ -51,43 +55,42 @@ export class Gmail extends GoogleApp {
 		GoogleAppOptions,
 		"url"
 	>) {
-		const searchParams = new URLSearchParams();
+		const additionalArguments: string[] = [];
 
 		if (config.get("gmail.hideGmailLogo")) {
-			searchParams.set("hideGmailLogo", "true");
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideGmailLogo);
 		}
 
 		if (config.get("gmail.hideInboxFooter")) {
-			searchParams.set("hideInboxFooter", "true");
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideInboxFooter);
 		}
 
 		if (config.get("gmail.reverseConversation") && licenseKey.isValid) {
-			searchParams.set("reverseConversation", "true");
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.reverseConversation);
 		}
 
 		if (config.get("gmail.openComposeInNewWindow") && licenseKey.isValid) {
-			searchParams.set("openComposeInNewWindow", "true");
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow);
+		}
+
+		if (config.get("gmail.showSenderIcons") && licenseKey.isValid) {
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons);
+		}
+
+		if (config.get("gmail.hideOutOfOfficeBanner") && licenseKey.isValid) {
+			additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner);
 		}
 
 		super({
 			accountId,
-			url: `${
-				delegatedAccountId
-					? createGmailDelegatedAccountUrl(delegatedAccountId)
-					: GMAIL_URL
-			}/?${searchParams}`,
+			url: delegatedAccountId
+				? createGmailDelegatedAccountUrl(delegatedAccountId)
+				: GMAIL_URL,
 			session,
 			webContentsViewOptions: {
 				webPreferences: {
 					preload: GMAIL_PRELOAD_PATH,
-					additionalArguments: [
-						config.get("gmail.showSenderIcons") &&
-							licenseKey.isValid &&
-							"--show-sender-icons",
-						config.get("gmail.hideOutOfOfficeBanner") &&
-							licenseKey.isValid &&
-							"--hide-out-of-office-banner",
-					].filter((flag) => typeof flag === "string"),
+					additionalArguments,
 				},
 			},
 			hooks: {

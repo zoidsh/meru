@@ -1,3 +1,4 @@
+import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $, $$, elementExists } from "select-dom";
 
 const senderIconSize = 16;
@@ -62,6 +63,10 @@ function addSenderIcons() {
 }
 
 export function initSenderIcons() {
+	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons)) {
+		return;
+	}
+
 	addSenderIcons();
 
 	const observer = new MutationObserver(() => {
