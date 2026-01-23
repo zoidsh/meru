@@ -64,14 +64,12 @@ function addSenderIcons() {
 
 export function initSenderIcons() {
 	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons)) {
-		return;
-	}
-
-	addSenderIcons();
-
-	const observer = new MutationObserver(() => {
 		addSenderIcons();
-	});
 
-	observer.observe(document.body, { childList: true, subtree: true });
+		const observer = new MutationObserver(() => {
+			addSenderIcons();
+		});
+
+		observer.observe(document.body, { childList: true, subtree: true });
+	}
 }

@@ -33,15 +33,13 @@ function moveAttachmentsToTop() {
 }
 
 export function initAttachments() {
-	if (!process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop)) {
-		return;
-	}
-
-	moveAttachmentsToTop();
-
-	const observer = new MutationObserver(() => {
+	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop)) {
 		moveAttachmentsToTop();
-	});
 
-	observer.observe(document.body, { childList: true, subtree: true });
+		const observer = new MutationObserver(() => {
+			moveAttachmentsToTop();
+		});
+
+		observer.observe(document.body, { childList: true, subtree: true });
+	}
 }
