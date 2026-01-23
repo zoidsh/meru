@@ -62,12 +62,40 @@ function addSenderIcons() {
 	}
 }
 
+function expandMessagePreview() {
+	const messageElements = $$(".xS[role='link']:has(.y6):has(.y2)");
+
+	for (const messageElement of messageElements) {
+		const previewElement = $(".y2", messageElement);
+
+		if (!previewElement || messageElement.lastChild === previewElement) {
+			continue;
+		}
+
+		const separatorElement = $(".Zt", previewElement);
+
+		if (separatorElement) {
+			separatorElement.remove();
+		}
+
+		previewElement.style.display = "-webkit-box";
+		previewElement.style.webkitBoxOrient = "vertical";
+		previewElement.style.whiteSpace = "normal";
+		previewElement.style.overflow = "hidden";
+		previewElement.style.webkitLineClamp = "2";
+
+		messageElement.append(previewElement);
+	}
+}
+
 export function initSenderIcons() {
 	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons)) {
 		addSenderIcons();
+		expandMessagePreview();
 
 		const observer = new MutationObserver(() => {
 			addSenderIcons();
+			expandMessagePreview();
 		});
 
 		observer.observe(document.body, { childList: true, subtree: true });
