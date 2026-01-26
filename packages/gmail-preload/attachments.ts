@@ -5,7 +5,15 @@ const attachmentsSelector = ".hq.gt";
 const messageWithAttachmentsSelector = `div:has(> ${attachmentsSelector})`;
 const horizontalLineClassName = "hp";
 
-function moveAttachmentsToTop() {
+const isMoveAttachmentsToTopEnabled = process.argv.includes(
+	GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop,
+);
+
+export function moveAttachmentsToTop() {
+	if (!isMoveAttachmentsToTopEnabled) {
+		return;
+	}
+
 	const messageWithAttachmentsElements = $$(messageWithAttachmentsSelector);
 
 	for (const messageWithAttachmentsElement of messageWithAttachmentsElements) {
@@ -29,17 +37,5 @@ function moveAttachmentsToTop() {
 		attachmentsElement.append(horizontalLineElement);
 
 		messageWithAttachmentsElement.prepend(attachmentsElement);
-	}
-}
-
-export function initAttachments() {
-	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop)) {
-		moveAttachmentsToTop();
-
-		const observer = new MutationObserver(() => {
-			moveAttachmentsToTop();
-		});
-
-		observer.observe(document.body, { childList: true, subtree: true });
 	}
 }

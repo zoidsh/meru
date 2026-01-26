@@ -4,7 +4,15 @@ import { $, $$, elementExists } from "select-dom";
 const senderIconSize = 16;
 const senderIconsElementId = "meru-sender-icons";
 
-function addSenderIcons() {
+const isSenderIconsEnabled = process.argv.includes(
+	GMAIL_PRELOAD_ARGUMENTS.showSenderIcons,
+);
+
+export function addSenderIcons() {
+	if (!isSenderIconsEnabled) {
+		return;
+	}
+
 	const emailElements = $$("tr[id]:has(span[email*='@'])");
 
 	for (const emailElement of emailElements) {
@@ -59,17 +67,5 @@ function addSenderIcons() {
 		}
 
 		emailElement.insertBefore(senderIconsElement, senderColumnElement);
-	}
-}
-
-export function initSenderIcons() {
-	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons)) {
-		addSenderIcons();
-
-		const observer = new MutationObserver(() => {
-			addSenderIcons();
-		});
-
-		observer.observe(document.body, { childList: true, subtree: true });
 	}
 }

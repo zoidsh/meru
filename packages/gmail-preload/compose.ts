@@ -1,18 +1,40 @@
 import { GMAIL_COMPOSE_URL, GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
-import elementReady from "element-ready";
+import { $ } from "select-dom";
+import {
+	createElementNotProcessedSelector,
+	createElementProcessedAttributeFromPreloadArgument,
+} from "./lib/utils";
 
-export async function initCompose() {
-	if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow)) {
-		const composeButtonElement = await elementReady(".T-I.T-I-KE.L3", {
-			stopOnDomReady: false,
-		});
+const isOpenComposeInNewWindowEnabled = process.argv.includes(
+	GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
+);
 
-		if (composeButtonElement) {
-			composeButtonElement.addEventListener("click", (event) => {
-				event.stopPropagation();
+const composeButtonProcessedAttribute =
+	createElementProcessedAttributeFromPreloadArgument(
+		GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
+	);
 
-				window.open(GMAIL_COMPOSE_URL);
-			});
-		}
+const composeButtonElementSelector = createElementNotProcessedSelector(
+	".T-I.T-I-KE.L3",
+	composeButtonProcessedAttribute,
+);
+
+export async function openComposeInNewWindow() {
+	if (!isOpenComposeInNewWindowEnabled) {
+		return;
 	}
+
+	const composeButtonElement = $(composeButtonElementSelector);
+
+	if (!composeButtonElement) {
+		return;
+	}
+
+	composeButtonElement.setAttribute(composeButtonProcessedAttribute, "");
+
+	composeButtonElement.addEventListener("click", (event) => {
+		event.stopPropagation();
+
+		window.open(GMAIL_COMPOSE_URL);
+	});
 }

@@ -1,21 +1,8 @@
 import { $ } from "select-dom";
 import { ipcMain } from "./ipc";
 
-function detectOutOfOfficeBanner() {
+export function observeOutOfOfficeBanner() {
 	const outOfOfficeElement = $("#\\:7:has(div#\\:k)");
 
 	ipcMain.send("gmail.setOutOfOffice", Boolean(outOfOfficeElement));
-}
-
-export function initOutOfOffice() {
-	detectOutOfOfficeBanner();
-
-	const observer = new MutationObserver(() => {
-		detectOutOfOfficeBanner();
-	});
-
-	observer.observe(document.body, {
-		childList: true,
-		subtree: true,
-	});
 }
