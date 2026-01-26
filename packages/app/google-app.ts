@@ -267,6 +267,12 @@ export class GoogleApp {
 				};
 			}
 
+			if (url.startsWith(GMAIL_URL) && url.includes("view=pt")) {
+				return {
+					action: "allow",
+				};
+			}
+
 			const supportedGoogleAppMatch = url.match(
 				SUPPORTED_GOOGLE_APPS_URL_REGEXP,
 			);
