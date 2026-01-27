@@ -50,6 +50,20 @@ export const googleAppsPinnedApps = {
 
 export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
 
+type GmailHashLocation =
+	| "inbox"
+	| "starred"
+	| "snoozed"
+	| "sent"
+	| "drafts"
+	| "imp"
+	| "scheduled"
+	| "all"
+	| "trash"
+	| "spam"
+	| "settings"
+	| "compose";
+
 export type Config = {
 	accounts: AccountConfigs;
 	"accounts.unreadBadge": boolean;
@@ -140,6 +154,7 @@ export type IpcMainEvents =
 			"gmail.handleNewMessages": [mails: GmailMail[]];
 			"gmail.search": [searchQuery: string];
 			"gmail.openUserStylesInEditor": [];
+			"gmail.navigateTo": [hashLocation: GmailHashLocation];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [
@@ -180,21 +195,7 @@ export type IpcRendererEvent = {
 	navigate: [to: string];
 	"downloads.itemCompleted": [itemId: string];
 	"settings.setIsOpen": [isOpen: boolean];
-	"gmail.navigateTo": [
-		destination:
-			| "inbox"
-			| "starred"
-			| "snoozed"
-			| "sent"
-			| "drafts"
-			| "imp"
-			| "scheduled"
-			| "all"
-			| "trash"
-			| "spam"
-			| "settings"
-			| "compose",
-	];
+	"gmail.navigateTo": [hashLocation: GmailHashLocation];
 	"gmail.handleMessage": [
 		messageId: string,
 		action: keyof typeof GMAIL_ACTION_CODE_MAP,

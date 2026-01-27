@@ -510,6 +510,22 @@ export function AppTitlebar() {
 							{isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
 						</Button>
 					)}
+					{accounts.length === 1 &&
+						accounts[0]?.gmail.outOfOffice &&
+						config["gmail.hideOutOfOfficeBanner"] &&
+						isLicenseKeyValid && (
+							<Button
+								variant="ghost"
+								size="icon"
+								className="size-7 draggable-none"
+								title="Out of Office"
+								onClick={() => {
+									ipc.main.send("gmail.navigateTo", "settings");
+								}}
+							>
+								<BriefcaseIcon />
+							</Button>
+						)}
 				</div>
 				<div className="flex-1 flex gap-2">{renderAccounts()}</div>
 				<div className="flex gap-2">

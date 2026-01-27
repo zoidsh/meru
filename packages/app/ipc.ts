@@ -481,6 +481,14 @@ class Ipc {
 		ipc.main.handle("license.updateDeviceInfo", (_event, input) =>
 			licenseKey.updateDeviceInfo(input),
 		);
+
+		ipc.main.on("gmail.navigateTo", (_event, hashLocation) => {
+			ipc.renderer.send(
+				accounts.getSelectedAccount().instance.gmail.view.webContents,
+				"gmail.navigateTo",
+				hashLocation,
+			);
+		});
 	}
 }
 
