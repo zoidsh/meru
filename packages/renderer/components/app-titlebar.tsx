@@ -1,7 +1,7 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
-import type { DownloadItem } from "@meru/shared/types";
+import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
@@ -130,6 +130,7 @@ function Download() {
 					navigate("/settings/download-history");
 					ipc.main.send("settings.toggleIsOpen");
 				}}
+				title="Download History"
 			>
 				<DownloadIcon className="size-4" />
 			</Button>
@@ -245,6 +246,7 @@ function FindInPage() {
 							findNext: false,
 						});
 					}}
+					title="Find Previous Match"
 				>
 					<ChevronUpIcon className="size-4" />
 				</Button>
@@ -255,6 +257,7 @@ function FindInPage() {
 					onClick={() => {
 						ipc.main.send("findInPage", text, { findNext: false });
 					}}
+					title="Find Next Match"
 				>
 					<ChevronDownIcon className="size-4" />
 				</Button>
@@ -263,6 +266,7 @@ function FindInPage() {
 					size="icon"
 					className="size-7"
 					onClick={deactivate}
+					title="Close Find in Page"
 				>
 					<XIcon className="size-4" />
 				</Button>
@@ -290,6 +294,7 @@ function DoNotDisturb() {
 
 				ipc.main.send("doNotDisturb.showOptions");
 			}}
+			title="Do Not Disturb"
 		>
 			<MoonIcon
 				className={cn({
@@ -321,6 +326,7 @@ function PinnedGoogleApps() {
 					onClick={() => {
 						ipc.main.send("googleApps.openApp", app);
 					}}
+					title={googleAppsPinnedApps[app]}
 				>
 					<GoogleAppIcon app={app} />
 				</TitlebarIconButton>
@@ -484,6 +490,7 @@ export function AppTitlebar() {
 							ipc.main.send("gmail.moveNavigationHistory", "back");
 						}}
 						disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
+						title="Go Back"
 					>
 						<ArrowLeftIcon />
 					</Button>
@@ -495,6 +502,7 @@ export function AppTitlebar() {
 							ipc.main.send("gmail.moveNavigationHistory", "forward");
 						}}
 						disabled={!selectedAccount?.gmail.navigationHistory.canGoForward}
+						title="Go Forward"
 					>
 						<ArrowRightIcon />
 					</Button>
@@ -506,6 +514,7 @@ export function AppTitlebar() {
 							onClick={() => {
 								setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
 							}}
+							title="Saved Searches"
 						>
 							{isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
 						</Button>
