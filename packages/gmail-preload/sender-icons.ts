@@ -43,7 +43,8 @@ export function addSenderIcons() {
 		senderIconsElement.id = senderIconsElementId;
 		senderIconsElement.className = "xY";
 		senderIconsElement.style.minWidth = `${senderIconSize * 2}px`;
-		senderIconsElement.style.marginRight = `${senderIconSize / 4}px`;
+		senderIconsElement.style.marginRight = `${senderIconSize / 2}px`;
+		senderIconsElement.style.justifyContent = "flex-end";
 
 		let senderIconIndex = 0;
 
