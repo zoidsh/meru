@@ -1,14 +1,15 @@
 import "./electron-api";
+import "./ipc";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
-import { initInboxObserver } from "./inbox-observer";
-import { initIpc } from "./ipc";
+import { getUnreadCount } from "./inbox";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { addSenderIcons } from "./sender-icons";
 import { initUrlPreview } from "./url-preview";
 
 const features = [
+	getUnreadCount,
 	observeOutOfOfficeBanner,
 	addSenderIcons,
 	moveAttachmentsToTop,
@@ -31,9 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	initCss();
-	initIpc();
 	initUrlPreview();
-	initInboxObserver();
 
 	const observer = new MutationObserver(() => {
 		runFeatures();

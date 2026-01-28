@@ -74,12 +74,14 @@ export function GmailSettings() {
 							description="Opens a new window for composing emails instead of inside Gmail."
 							configKey="gmail.openComposeInNewWindow"
 							restartRequired
+							licenseKeyRequired
 						/>
 						<ConfigSwitchField
 							label="Close Compose Window After Send"
 							description="Automatically closes the compose window after pressing the send button. Note: Unsending emails won't be possible with this enabled since the undo notification will be dismissed immediately."
 							configKey="gmail.closeComposeWindowAfterSend"
 							restartRequired
+							licenseKeyRequired
 						/>
 					</FieldSet>
 					<FieldSeparator />
