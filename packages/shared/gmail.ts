@@ -21,6 +21,7 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
 	showSenderIcons: "--meru-show-sender-icons",
 	hideOutOfOfficeBanner: "--meru-hide-out-of-office-banner",
 	moveAttachmentsToTop: "--meru-move-attachments-to-top",
+	closeComposeWindowAfterSend: "--meru-close-compose-after-send",
 };
 
 export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {

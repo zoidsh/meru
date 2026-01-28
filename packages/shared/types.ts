@@ -109,6 +109,7 @@ export type Config = {
 	"gmail.openComposeInNewWindow": boolean;
 	"gmail.showSenderIcons": boolean;
 	"gmail.moveAttachmentsToTop": boolean;
+	"gmail.closeComposeWindowAfterSend": boolean;
 	"screenShare.useSystemPicker": boolean;
 	"window.lastState": {
 		bounds: {
@@ -155,6 +156,7 @@ export type IpcMainEvents =
 			"gmail.search": [searchQuery: string];
 			"gmail.openUserStylesInEditor": [];
 			"gmail.navigateTo": [hashLocation: GmailHashLocation];
+			"gmail.closeComposeWindow": [];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [

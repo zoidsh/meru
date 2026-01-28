@@ -5,6 +5,7 @@ import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
 	app,
+	BrowserWindow,
 	clipboard,
 	desktopCapturer,
 	dialog,
@@ -488,6 +489,19 @@ class Ipc {
 				"gmail.navigateTo",
 				hashLocation,
 			);
+		});
+
+		ipc.main.on("gmail.closeComposeWindow", (event) => {
+			for (const accountInstance of accounts.instances.values()) {
+				for (const window of accountInstance.windows) {
+					if (
+						window instanceof BrowserWindow &&
+						window.webContents.id === event.sender.id
+					) {
+						window.hide();
+					}
+				}
+			}
 		});
 	}
 }

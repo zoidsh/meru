@@ -53,12 +53,6 @@ export function GmailSettings() {
 					<FieldSet>
 						<FieldLegend>General</FieldLegend>
 						<ConfigSwitchField
-							label="Always Compose New Emails in New Window"
-							description="Opens a new window for composing emails instead of inside Gmail."
-							configKey="gmail.openComposeInNewWindow"
-							restartRequired
-						/>
-						<ConfigSwitchField
 							label="Hide Gmail Logo"
 							description="Hides the Gmail logo on the top left corner."
 							configKey="gmail.hideGmailLogo"
@@ -70,6 +64,22 @@ export function GmailSettings() {
 							configKey="gmail.hideOutOfOfficeBanner"
 							restartRequired
 							licenseKeyRequired
+						/>
+					</FieldSet>
+					<FieldSeparator />
+					<FieldSet>
+						<FieldLegend>Compose</FieldLegend>
+						<ConfigSwitchField
+							label="Always Compose New Emails in New Window"
+							description="Opens a new window for composing emails instead of inside Gmail."
+							configKey="gmail.openComposeInNewWindow"
+							restartRequired
+						/>
+						<ConfigSwitchField
+							label="Close Compose Window After Send"
+							description="Automatically closes the compose window after pressing the send button. Note: Unsending emails won't be possible with this enabled since the undo notification will be dismissed immediately."
+							configKey="gmail.closeComposeWindowAfterSend"
+							restartRequired
 						/>
 					</FieldSet>
 					<FieldSeparator />

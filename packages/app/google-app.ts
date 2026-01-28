@@ -8,6 +8,7 @@ import {
 import {
 	GMAIL_COMPOSE_URL,
 	GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
+	GMAIL_PRELOAD_ARGUMENTS,
 	GMAIL_URL,
 } from "@meru/shared/gmail";
 import {
@@ -441,11 +442,24 @@ export class GoogleApp {
 					});
 				};
 
+				const additionalArguments: string[] = [];
+
+				if (
+					url.startsWith(GMAIL_URL) &&
+					config.get("gmail.closeComposeWindowAfterSend") &&
+					licenseKey.isValid
+				) {
+					additionalArguments.push(
+						GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend,
+					);
+				}
+
 				const newWindowOptions: BrowserWindowConstructorOptions = {
 					autoHideMenuBar: true,
 					webPreferences: {
 						session: this.session,
 						preload: path.join(__dirname, "google-app-preload", "index.js"),
+						additionalArguments,
 					},
 				};
 
@@ -459,6 +473,7 @@ export class GoogleApp {
 								webPreferences: {
 									...inheritedOptions.webPreferences,
 									...newWindowOptions.webPreferences,
+									additionalArguments,
 								},
 							});
 
