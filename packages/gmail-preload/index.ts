@@ -6,6 +6,7 @@ import { initCss } from "./css";
 import { getUnreadCount } from "./inbox";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { addSenderIcons } from "./sender-icons";
+import { initToaster } from "./toaster";
 import { initUrlPreview } from "./url-preview";
 
 const features = [
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	initCss();
 	initUrlPreview();
+	initToaster();
 
 	const observer = new MutationObserver(() => {
 		runFeatures();

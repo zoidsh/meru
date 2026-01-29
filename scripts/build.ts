@@ -1,10 +1,14 @@
 import { rm, watch } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import postcssTailwind from "@tailwindcss/postcss";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { type Subprocess, spawn } from "bun";
 import * as esbuild from "esbuild";
+import inlineImportPlugin from "esbuild-plugin-inline-import";
+import postcss from "postcss";
+import postcssImport from "postcss-import";
 import * as vite from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 import viteTsconfigPaths from "vite-tsconfig-paths";
@@ -63,6 +67,29 @@ function buildAppFiles() {
 			],
 			platform: "browser",
 			target: browserTarget,
+			plugins: [
+				inlineImportPlugin({
+					filter: /\?inline$/,
+					transform: async (contents) => {
+						const css = await postcss()
+							.use(postcssImport())
+							.use(postcssTailwind())
+							.process(contents, {
+								from: undefined,
+							})
+							.then((result) => result.css);
+
+						return args.values.dev
+							? css
+							: (
+									await esbuild.transform(css, {
+										loader: "css",
+										minify: true,
+									})
+								).code;
+					},
+				}),
+			],
 		}),
 	]);
 }

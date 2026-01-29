@@ -499,9 +499,41 @@ class Ipc {
 						window.webContents.id === event.sender.id
 					) {
 						window.hide();
+
+						const browserWindowId = window.id;
+
+						window.once("closed", () => {
+							ipc.renderer.send(
+								accountInstance.gmail.view.webContents,
+								"gmail.dismissMessageSentNotification",
+								browserWindowId,
+							);
+						});
+
+						ipc.renderer.send(
+							accountInstance.gmail.view.webContents,
+							"gmail.showMessageSentNotification",
+							browserWindowId,
+						);
+
+						return;
 					}
 				}
 			}
+		});
+
+		ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {
+			const composeWindow = BrowserWindow.fromId(browserWindowId);
+
+			if (!composeWindow) {
+				throw new Error(
+					'Could not find compose window with the given "browserWindowId"',
+				);
+			}
+
+			composeWindow.show();
+
+			ipc.renderer.send(composeWindow.webContents, "gmail.undoMessageSent");
 		});
 	}
 }

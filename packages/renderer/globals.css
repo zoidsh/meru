@@ -1,4 +1,7 @@
+@import "sonner/dist/styles.css";
 @import "../ui/globals.css";
+
+@plugin "@tailwindcss/typography";
 
 @source "../ui/**/*.{ts,tsx}";
 @source "../shared/**/*.{ts,tsx}";

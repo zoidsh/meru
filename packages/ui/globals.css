@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@plugin "@tailwindcss/typography";
 
 @font-face {
 	font-family: "Inter Variable";
@@ -15,7 +14,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
+:root,
+:host {
 	--radius: 0.625rem;
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);

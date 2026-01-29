@@ -1,0 +1,5 @@
+@import "@meru/ui/globals.css";
+@import "sonner/dist/styles.css";
+
+@source "../ui/**/*.{ts,tsx}";
+@source "../shared/**/*.{ts,tsx}";

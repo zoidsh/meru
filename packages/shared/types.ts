@@ -157,6 +157,7 @@ export type IpcMainEvents =
 			"gmail.openUserStylesInEditor": [];
 			"gmail.navigateTo": [hashLocation: GmailHashLocation];
 			"gmail.closeComposeWindow": [];
+			"gmail.undoMessageSent": [browserWindowId: number];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [
@@ -203,6 +204,9 @@ export type IpcRendererEvent = {
 		action: keyof typeof GMAIL_ACTION_CODE_MAP,
 	];
 	"gmail.openMessage": [messageId: string];
+	"gmail.showMessageSentNotification": [browserWindowId: number];
+	"gmail.dismissMessageSentNotification": [browserWindowId: number];
+	"gmail.undoMessageSent": [];
 	"theme.darkModeChanged": [darkMode: boolean];
 	"accounts.changed": [accounts: AccountInstances];
 	"accounts.openAddAccountDialog": [];
