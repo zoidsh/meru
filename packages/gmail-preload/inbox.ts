@@ -73,7 +73,7 @@ function parseNewMails(feedDocument: Document) {
 
 		const issuedDate = getDateFromNode(mail, "issued");
 
-		if (currentDate - issuedDate < 5000) {
+		if (currentDate - issuedDate < 10000) {
 			previousNewMails.set(messageId, Date.now());
 
 			const newMail = {
