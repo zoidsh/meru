@@ -38,13 +38,14 @@ export function addSenderIcons() {
 			}
 		}
 
-		const senderIconsElement = document.createElement("td");
+		const senderIconsElement = document.createElement("div");
 
 		senderIconsElement.id = senderIconsElementId;
-		senderIconsElement.className = "xY";
-		senderIconsElement.style.minWidth = `${senderIconSize * 2}px`;
 		senderIconsElement.style.marginRight = `${senderIconSize / 2}px`;
+		senderIconsElement.style.display = "flex";
+		senderIconsElement.style.alignItems = "center";
 		senderIconsElement.style.justifyContent = "flex-end";
+		senderIconsElement.style.minWidth = `${senderIconSize * 2 - senderIconSize / 2}px`;
 
 		let senderIconIndex = 0;
 
@@ -67,6 +68,6 @@ export function addSenderIcons() {
 			senderIconIndex++;
 		}
 
-		emailElement.insertBefore(senderIconsElement, senderColumnElement);
+		senderColumnElement.appendChild(senderIconsElement);
 	}
 }
