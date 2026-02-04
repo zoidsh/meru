@@ -24,9 +24,9 @@ export const accountConfigSchema = z.object({
 	label: z.string(),
 	color: z.enum(accountColors).nullable(),
 	selected: z.boolean(),
-	unreadBadge: z.boolean(),
 	notifications: z.boolean(),
 	gmail: z.object({
+		unreadBadge: z.boolean(),
 		delegatedAccountId: z.string().nullable(),
 	}),
 });
@@ -35,12 +35,15 @@ export type AccountConfig = z.infer<typeof accountConfigSchema>;
 
 export type AccountConfigs = AccountConfig[];
 
-export const accountConfigInputSchema = accountConfigSchema.pick({
-	label: true,
-	color: true,
-	unreadBadge: true,
-	notifications: true,
-});
+export const accountConfigInputSchema = accountConfigSchema
+	.pick({
+		label: true,
+		color: true,
+		notifications: true,
+	})
+	.extend({
+		gmail: accountConfigSchema.shape.gmail.pick({ unreadBadge: true }),
+	});
 
 export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;
 

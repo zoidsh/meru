@@ -62,7 +62,12 @@ import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 
 function AccountForm({
-	account = { label: "", color: null, unreadBadge: true, notifications: true },
+	account = {
+		label: "",
+		color: null,
+		gmail: { unreadBadge: true },
+		notifications: true,
+	},
 	placeholder = "Work",
 	onSubmit,
 	type,
@@ -160,7 +165,7 @@ function AccountForm({
 				<Label>Options</Label>
 				<FormField
 					control={form.control}
-					name="unreadBadge"
+					name="gmail.unreadBadge"
 					render={({ field }) => (
 						<FormItem className="flex">
 							<FormControl>
@@ -289,12 +294,16 @@ function AccountMenuButton({
 				<AccountForm
 					account={account}
 					onSubmit={(values) => {
-						ipc.main.send("accounts.updateAccount", { ...account, ...values });
+						ipc.main.send("accounts.updateAccount", {
+							...account,
+							...values,
+							gmail: { ...account.gmail, ...values.gmail },
+						});
 
 						setIsOpen(false);
 
 						if (
-							account.unreadBadge !== values.unreadBadge ||
+							account.gmail.unreadBadge !== values.gmail.unreadBadge ||
 							account.notifications !== values.notifications
 						) {
 							restartRequiredToast();
@@ -339,10 +348,10 @@ export function AccountsSettings() {
 									/>
 									{account.config.label}
 								</ItemTitle>
-								{(account.config.unreadBadge ||
+								{(account.config.gmail.unreadBadge ||
 									account.config.notifications) && (
 									<div className="flex gap-2">
-										{account.config.unreadBadge && (
+										{account.config.gmail.unreadBadge && (
 											<Badge variant="outline">Unread Badge</Badge>
 										)}
 										{account.config.notifications && (

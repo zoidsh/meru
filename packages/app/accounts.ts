@@ -191,18 +191,18 @@ class Accounts {
 	}
 
 	addAccount(
-		accountDetails: Pick<
-			AccountConfig,
-			"label" | "unreadBadge" | "notifications" | "color"
-		>,
+		accountDetails: Pick<AccountConfig, "label" | "notifications" | "color"> & {
+			gmail: Pick<AccountConfig["gmail"], "unreadBadge">;
+		},
 	) {
 		const createdAccount: AccountConfig = {
+			...accountDetails,
 			id: randomUUID(),
 			selected: false,
 			gmail: {
+				unreadBadge: accountDetails.gmail.unreadBadge,
 				delegatedAccountId: null,
 			},
-			...accountDetails,
 		};
 
 		const instance = new Account(createdAccount);
