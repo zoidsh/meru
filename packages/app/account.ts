@@ -37,7 +37,7 @@ export class Account {
 		this.gmail = new Gmail({
 			accountId: accountConfig.id,
 			session: this.session,
-			unreadCountEnabled: accountConfig.unreadBadge,
+			unreadCountEnabled: accountConfig.gmail.unreadBadge,
 			delegatedAccountId: accountConfig.gmail.delegatedAccountId,
 		});
 	}

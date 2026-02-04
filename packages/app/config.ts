@@ -21,9 +21,9 @@ export const config = new Store<Config>({
 				label: "Default",
 				color: null,
 				selected: true,
-				unreadBadge: true,
 				notifications: true,
 				gmail: {
+					unreadBadge: true,
 					delegatedAccountId: null,
 				},
 			},
@@ -110,7 +110,9 @@ export const config = new Store<Config>({
 				let accountsMigrated = false;
 
 				for (const account of accounts) {
+					// @ts-expect-error: `unreadBadge` is now under 'gmail'
 					if (typeof account.unreadBadge === "undefined") {
+						// @ts-expect-error
 						account.unreadBadge = true;
 						accountsMigrated = true;
 					}
@@ -155,6 +157,7 @@ export const config = new Store<Config>({
 
 				for (const account of accounts) {
 					if (typeof account.gmail === "undefined") {
+						// @ts-expect-error: `unreadBadge` is now under 'gmail'
 						account.gmail = {
 							delegatedAccountId: null,
 						};
@@ -203,6 +206,33 @@ export const config = new Store<Config>({
 				for (const account of accounts) {
 					if (typeof account.color === "undefined") {
 						account.color = null;
+
+						accountsMigrated = true;
+					}
+				}
+
+				if (accountsMigrated) {
+					store.set("accounts", accounts);
+				}
+			}
+		},
+		">=3.32.0": (store) => {
+			const accounts = store.get("accounts");
+
+			if (Array.isArray(accounts)) {
+				let accountsMigrated = false;
+
+				for (const account of accounts) {
+					if (
+						// @ts-expect-error: `unreadBadge` is now under 'gmail'
+						typeof account.unreadBadge === "boolean" &&
+						typeof account.gmail.unreadBadge === "undefined"
+					) {
+						// @ts-expect-error
+						account.gmail.unreadBadge = account.unreadBadge;
+
+						// @ts-expect-error
+						delete account.unreadBadge;
 
 						accountsMigrated = true;
 					}

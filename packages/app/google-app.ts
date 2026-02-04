@@ -325,6 +325,7 @@ export class GoogleApp {
 								return {
 									...account,
 									gmail: {
+										...account.gmail,
 										delegatedAccountId: gmailDelegatedAccountId,
 									},
 								};
@@ -352,6 +353,7 @@ export class GoogleApp {
 									return {
 										...account,
 										gmail: {
+											...account.gmail,
 											delegatedAccountId: null,
 										},
 									};
