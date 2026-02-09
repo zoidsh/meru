@@ -6,7 +6,6 @@ import {
 	GOOGLE_ACCOUNTS_URL,
 } from "@meru/shared/constants";
 import {
-	GMAIL_COMPOSE_URL,
 	GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
 	GMAIL_PRELOAD_ARGUMENTS,
 	GMAIL_URL,
@@ -472,6 +471,8 @@ export class GoogleApp {
 							const newWindow = new BrowserWindow({
 								...inheritedOptions,
 								...newWindowOptions,
+								width: 800,
+								height: 600,
 								webPreferences: {
 									...inheritedOptions.webPreferences,
 									...newWindowOptions.webPreferences,
@@ -486,12 +487,10 @@ export class GoogleApp {
 					};
 				}
 
-				const isGmailComposeUrl = url === GMAIL_COMPOSE_URL;
-
 				const newGoogleAppWindow = new BrowserWindow({
 					...newWindowOptions,
-					width: isGmailComposeUrl ? 800 : 1280,
-					height: isGmailComposeUrl ? 600 : 800,
+					width: 1280,
+					height: 800,
 				});
 
 				setupNewWindow(newGoogleAppWindow);

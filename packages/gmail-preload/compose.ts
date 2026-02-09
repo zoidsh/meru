@@ -1,4 +1,4 @@
-import { GMAIL_COMPOSE_URL, GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
+import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import {
 	createElementNotProcessedSelector,
@@ -32,9 +32,26 @@ export async function openComposeInNewWindow() {
 
 	composeButtonElement.setAttribute(composeButtonProcessedAttribute, "");
 
+	let isClicked = false;
+
 	composeButtonElement.addEventListener("click", (event) => {
+		if (isClicked) {
+			isClicked = false;
+
+			return;
+		}
+
+		isClicked = true;
+
 		event.stopPropagation();
 
-		window.open(GMAIL_COMPOSE_URL);
+		const clickEvent = new MouseEvent("click", {
+			bubbles: true,
+			cancelable: true,
+			view: window,
+			shiftKey: true,
+		});
+
+		composeButtonElement.dispatchEvent(clickEvent);
 	});
 }
