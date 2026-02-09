@@ -111,6 +111,43 @@ export class Gmail extends GoogleApp {
 
 							view.webContents.insertCSS(meruCSS);
 						});
+
+						view.webContents.on("did-navigate", (_event, url) => {
+							ipc.renderer.send(
+								main.window.webContents,
+								"accounts.updateState",
+								this.accountId,
+								{
+									gmail: {
+										navigationHistory: {
+											canGoBack:
+												this.view.webContents.navigationHistory.canGoBack(),
+											canGoForward:
+												this.view.webContents.navigationHistory.canGoForward(),
+										},
+										attentionRequired: !url.startsWith(this.baseUrl),
+									},
+								},
+							);
+						});
+
+						view.webContents.on("did-navigate-in-page", () => {
+							ipc.renderer.send(
+								main.window.webContents,
+								"accounts.updateState",
+								this.accountId,
+								{
+									gmail: {
+										navigationHistory: {
+											canGoBack:
+												this.view.webContents.navigationHistory.canGoBack(),
+											canGoForward:
+												this.view.webContents.navigationHistory.canGoForward(),
+										},
+									},
+								},
+							);
+						});
 					},
 				],
 			},
@@ -121,29 +158,7 @@ export class Gmail extends GoogleApp {
 		this.subscribeToStore();
 	}
 
-	setUnreadCount(unreadCount: number) {
-		if (!this.unreadCountEnabled) {
-			return;
-		}
-
-		this.store.setState({ unreadCount });
-	}
-
 	subscribeToStore() {
-		this.viewStore.subscribe(() => {
-			ipc.renderer.send(
-				main.window.webContents,
-				"accounts.changed",
-				accounts.getAccounts().map((account) => ({
-					config: account.config,
-					gmail: {
-						...account.instance.gmail.store.getState(),
-						...account.instance.gmail.viewStore.getState(),
-					},
-				})),
-			);
-		});
-
 		if (!this.unreadCountEnabled) {
 			return;
 		}
@@ -177,18 +192,6 @@ export class Gmail extends GoogleApp {
 					}
 
 					appTray.updateUnreadStatus(totalUnreadCount);
-
-					ipc.renderer.send(
-						main.window.webContents,
-						"accounts.changed",
-						accounts.getAccounts().map((account) => ({
-							config: account.config,
-							gmail: {
-								...account.instance.gmail.store.getState(),
-								...account.instance.gmail.viewStore.getState(),
-							},
-						})),
-					);
 				},
 			);
 		}

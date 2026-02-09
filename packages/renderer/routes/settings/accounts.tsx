@@ -57,6 +57,7 @@ import {
 	SettingsHeader,
 	SettingsTitle,
 } from "@/components/settings";
+import { useAccounts } from "@/lib/accounts";
 import { useConfig } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
@@ -317,7 +318,7 @@ function AccountMenuButton({
 }
 
 export function AccountsSettings() {
-	const accounts = useAccountsStore((state) => state.accounts);
+	const accounts = useAccounts();
 
 	if (!accounts.length) {
 		return;
@@ -335,26 +336,25 @@ export function AccountsSettings() {
 				</LicenseKeyRequiredBanner>
 				<div className="space-y-4">
 					{accounts.map((account, index) => (
-						<Item key={account.config.id} variant="muted">
+						<Item key={account.id} variant="muted">
 							<ItemContent className="gap-2">
 								<ItemTitle>
 									<div
 										className={cn(
 											"size-2 rounded-full",
-											account.config.color
-												? `${accountColorsMap[account.config.color].className}`
+											account.color
+												? `${accountColorsMap[account.color].className}`
 												: "border",
 										)}
 									/>
-									{account.config.label}
+									{account.label}
 								</ItemTitle>
-								{(account.config.gmail.unreadBadge ||
-									account.config.notifications) && (
+								{(account.gmail.unreadBadge || account.notifications) && (
 									<div className="flex gap-2">
-										{account.config.gmail.unreadBadge && (
+										{account.gmail.unreadBadge && (
 											<Badge variant="outline">Unread Badge</Badge>
 										)}
-										{account.config.notifications && (
+										{account.notifications && (
 											<Badge variant="outline">Notifications</Badge>
 										)}
 									</div>
@@ -369,11 +369,7 @@ export function AccountsSettings() {
 											variant="outline"
 											disabled={index === 0}
 											onClick={() => {
-												ipc.main.send(
-													"accounts.moveAccount",
-													account.config.id,
-													"up",
-												);
+												ipc.main.send("accounts.moveAccount", account.id, "up");
 											}}
 										>
 											<ArrowUpIcon />
@@ -386,7 +382,7 @@ export function AccountsSettings() {
 											onClick={() => {
 												ipc.main.send(
 													"accounts.moveAccount",
-													account.config.id,
+													account.id,
 													"down",
 												);
 											}}
@@ -396,7 +392,7 @@ export function AccountsSettings() {
 									</>
 								)}
 								<AccountMenuButton
-									account={account.config}
+									account={account}
 									removable={accounts.length > 1}
 								/>
 							</ItemActions>

@@ -1,11 +1,11 @@
 import type { LoginItemSettings } from "electron";
-import type { accountColorsMap } from "./accounts";
+import type { PartialDeep } from "type-fest";
+import type { AccountState, accountColorsMap } from "./accounts";
 import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
 import type {
 	AccountConfig,
 	AccountConfigInput,
 	AccountConfigs,
-	AccountInstances,
 	GmailSavedSearches,
 } from "./schemas";
 
@@ -173,6 +173,7 @@ export type IpcMainEvents =
 			"googleApps.openApp": [app: GoogleAppsPinnedApp];
 			"doNotDisturb.toggle": [];
 			"doNotDisturb.showOptions": [];
+			"renderer.ready": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };
@@ -208,8 +209,11 @@ export type IpcRendererEvent = {
 	"gmail.dismissMessageSentNotification": [browserWindowId: number];
 	"gmail.undoMessageSent": [];
 	"theme.darkModeChanged": [darkMode: boolean];
-	"accounts.changed": [accounts: AccountInstances];
 	"accounts.openAddAccountDialog": [];
+	"accounts.updateState": [
+		accountId: string,
+		updatedAccountState: PartialDeep<AccountState>,
+	];
 	"findInPage.activate": [];
 	"findInPage.result": [result: { activeMatch: number; totalMatches: number }];
 	"trial.daysLeftChanged": [daysLeft: number];

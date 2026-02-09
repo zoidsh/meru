@@ -65,15 +65,15 @@ import { trial } from "./trial";
 
 	theme.init();
 
-	accounts.init();
+	ipc.init();
 
 	main.init();
 
-	main.loadURL();
+	await main.loadURL();
+
+	accounts.init();
 
 	accounts.createViews();
-
-	ipc.init();
 
 	appMenu.init();
 

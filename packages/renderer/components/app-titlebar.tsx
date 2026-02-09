@@ -26,10 +26,10 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
+import { useAccounts } from "@/lib/accounts";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
-	useAccountsStore,
 	useAppUpdaterStore,
 	useDownloadsStore,
 	useFindInPageStore,
@@ -336,9 +336,9 @@ function PinnedGoogleApps() {
 }
 
 export function AppTitlebar() {
-	const accounts = useAccountsStore((state) => state.accounts);
+	const accounts = useAccounts();
 
-	const selectedAccount = accounts.find((account) => account.config.selected);
+	const selectedAccount = accounts.find((account) => account.selected);
 
 	const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
@@ -381,15 +381,15 @@ export function AppTitlebar() {
 
 		return accounts.map((account) => (
 			<Button
-				key={account.config.id}
-				variant={account.config.selected ? "secondary" : "ghost"}
+				key={account.id}
+				variant={account.selected ? "secondary" : "ghost"}
 				size="sm"
 				className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
 				onClick={() => {
-					ipc.main.send("accounts.selectAccount", account.config.id);
+					ipc.main.send("accounts.selectAccount", account.id);
 				}}
 			>
-				{account.config.color && (
+				{account.color && (
 					<div
 						className={cn(
 							"size-2 rounded-full",
@@ -405,7 +405,7 @@ export function AppTitlebar() {
 									>
 								>
 							>((acc, [colorKey, { className }]) => {
-								acc[className] = account.config.color === colorKey;
+								acc[className] = account.color === colorKey;
 
 								return acc;
 							}, {}),
@@ -415,7 +415,7 @@ export function AppTitlebar() {
 				{account.gmail.outOfOffice && isLicenseKeyValid && (
 					<BriefcaseIcon className="size-3.5" />
 				)}
-				{account.config.label}
+				{account.label}
 				{account.gmail.attentionRequired && (
 					<CircleAlertIcon className="size-3.5 text-yellow-400" />
 				)}

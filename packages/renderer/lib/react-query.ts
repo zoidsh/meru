@@ -13,14 +13,14 @@ ipc.renderer.on("config.configChanged", (_event, config) => {
 	queryClient.setQueryData(["config"], config);
 });
 
-const configOptions = queryOptions({
+export const configQueryOptions = queryOptions({
 	queryKey: ["config"],
 	queryFn: () => ipc.main.invoke("config.getConfig"),
 	staleTime: Number.POSITIVE_INFINITY,
 });
 
 export function useConfig() {
-	const { data } = useQuery(configOptions);
+	const { data } = useQuery(configQueryOptions);
 
 	return {
 		config: data,
@@ -28,7 +28,7 @@ export function useConfig() {
 }
 
 export function getConfig() {
-	return queryClient.fetchQuery(configOptions);
+	return queryClient.fetchQuery(configQueryOptions);
 }
 
 export function useConfigMutation({

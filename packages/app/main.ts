@@ -1,7 +1,7 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { app, BrowserWindow, nativeTheme, screen } from "electron";
+import Electron, { app, BrowserWindow, nativeTheme, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
 import { appState } from "@/state";
@@ -36,42 +36,30 @@ class Main {
 			nativeTheme.shouldUseDarkColors ? "true" : "false",
 		);
 
-		searchParams.set(
-			"accounts",
-			JSON.stringify(
-				accounts.getAccounts().map((account) => ({
-					config: account.config,
-					gmail: {
-						...account.instance.gmail.store.getState(),
-						...account.instance.gmail.viewStore.getState(),
-					},
-				})),
-			),
-		);
-
-		searchParams.set(
-			"accountsUnreadBadge",
-			JSON.stringify(config.get("accounts.unreadBadge")),
-		);
-
 		if (trial.daysLeft) {
 			searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
 		}
 
-		if (is.dev) {
-			this.window.webContents.loadURL(
-				`http://localhost:3000/?${searchParams.toString()}`,
-			);
-
-			this.window.webContents.openDevTools({
-				mode: "detach",
+		return new Promise<void>((resolve) => {
+			Electron.ipcMain.once("renderer.ready", () => {
+				resolve();
 			});
-		} else {
-			this.window.webContents.loadFile(
-				path.join("build-js", "renderer", "index.html"),
-				{ search: searchParams.toString() },
-			);
-		}
+
+			if (is.dev) {
+				this.window.webContents.loadURL(
+					`http://localhost:3000/?${searchParams.toString()}`,
+				);
+
+				this.window.webContents.openDevTools({
+					mode: "detach",
+				});
+			} else {
+				this.window.webContents.loadFile(
+					path.join("build-js", "renderer", "index.html"),
+					{ search: searchParams.toString() },
+				);
+			}
+		});
 	}
 
 	getTitlebarOverlayOptions() {

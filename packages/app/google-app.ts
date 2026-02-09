@@ -21,7 +21,6 @@ import {
 	WebContentsView,
 	type WebContentsViewConstructorOptions,
 } from "electron";
-import { createStore } from "zustand/vanilla";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
@@ -79,20 +78,6 @@ export class GoogleApp {
 	set view(view: WebContentsView) {
 		this._view = view;
 	}
-
-	viewStore = createStore<{
-		navigationHistory: {
-			canGoBack: boolean;
-			canGoForward: boolean;
-		};
-		attentionRequired: boolean;
-	}>(() => ({
-		navigationHistory: {
-			canGoBack: false,
-			canGoForward: false,
-		},
-		attentionRequired: false,
-	}));
 
 	constructor({
 		accountId,
@@ -169,28 +154,6 @@ export class GoogleApp {
 						detail: "Please use password to sign in.",
 					});
 				}
-
-				this.viewStore.setState({
-					navigationHistory: {
-						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-						canGoForward:
-							this.view.webContents.navigationHistory.canGoForward(),
-					},
-					attentionRequired: !url.startsWith(this.baseUrl),
-				});
-			},
-		);
-
-		this.view.webContents.on(
-			"did-navigate-in-page",
-			(_event: Electron.Event) => {
-				this.viewStore.setState({
-					navigationHistory: {
-						canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-						canGoForward:
-							this.view.webContents.navigationHistory.canGoForward(),
-					},
-				});
 			},
 		);
 

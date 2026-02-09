@@ -84,3 +84,15 @@ export const accountColorsMap: Record<
 		value: "oklch(65.6% 0.241 354.308)",
 	},
 };
+
+export type AccountState = {
+	gmail: {
+		unreadCount: number;
+		outOfOffice: boolean;
+		navigationHistory: {
+			canGoBack: boolean;
+			canGoForward: boolean;
+		};
+		attentionRequired: boolean;
+	};
+};

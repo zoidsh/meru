@@ -112,6 +112,10 @@ type SidebarNavItemProps =
 export function AppSidebar() {
 	const [location, navigate] = useLocation();
 
+	if (location === "/") {
+		return;
+	}
+
 	return (
 		<div className="bg-sidebar p-4">
 			<ScrollArea className="w-56 h-full">

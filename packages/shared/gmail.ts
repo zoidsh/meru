@@ -40,11 +40,6 @@ export interface GmailMail {
 }
 
 export type GmailState = {
-	navigationHistory: {
-		canGoBack: boolean;
-		canGoForward: boolean;
-	};
 	unreadCount: number | null;
 	outOfOffice: boolean;
-	attentionRequired: boolean;
 };
