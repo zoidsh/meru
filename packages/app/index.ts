@@ -40,6 +40,7 @@ import { trial } from "./trial";
 	}
 
 	if (process.defaultApp) {
+		// Handles dev mode
 		if (process.argv[1]) {
 			app.setAsDefaultProtocolClient("meru", process.execPath, [
 				path.resolve(process.argv[1]),

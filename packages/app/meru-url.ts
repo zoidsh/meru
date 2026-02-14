@@ -4,10 +4,12 @@ import { accounts } from "./accounts";
 import { ipc } from "./ipc";
 import { main } from "./main";
 
+// Windows/Linux receives command-line argument, MacOS uses "open-url"
 export const meruUrlArg = !platform.isMacOS
 	? process.argv.find((arg) => arg.startsWith("meru://"))
 	: undefined;
 
+// Fetches account email from gmail DOM
 async function getAccountEmail(
 	webContents: WebContents,
 ): Promise<string | null> {
@@ -22,6 +24,7 @@ async function getAccountEmail(
 	);
 }
 
+// Processes meru:// URLs and activates correct account and message
 export async function handleMeruUrl(url: string) {
 	if (!url.startsWith("meru://")) {
 		return;
