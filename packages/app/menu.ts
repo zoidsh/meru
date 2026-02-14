@@ -20,10 +20,16 @@ import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 
+function isMessageHash(hash: string) {
+	return /^#[^/]+\/[A-Za-z0-9]{15,}$/.test(hash);
+}
+
 export class AppMenu {
 	private _menu: Menu | undefined;
 
 	private _isPopupOpen = false;
+
+	private registeredWebContentsIds = new Set<number>();
 
 	get menu() {
 		if (!this._menu) {
@@ -54,7 +60,42 @@ export class AppMenu {
 			this.menu = this.createMenu();
 
 			Menu.setApplicationMenu(this.menu);
+
+			this.registerNavigationListeners();
 		});
+
+		this.registerNavigationListeners();
+	}
+
+	private isCopyMessageUrlEnabled(): boolean {
+		try {
+			const hash = new URL(
+				accounts.getSelectedAccount().instance.gmail.view.webContents.getURL(),
+			).hash;
+			return isMessageHash(hash);
+		} catch {
+			return false;
+		}
+	}
+
+	private updateCopyMessageUrlEnabled() {
+		const menuItem =
+			Menu.getApplicationMenu()?.getMenuItemById("copyMessageUrl");
+		if (!menuItem) return;
+
+		menuItem.enabled = this.isCopyMessageUrlEnabled();
+	}
+
+	private registerNavigationListeners() {
+		for (const instance of accounts.instances.values()) {
+			const wc = instance.gmail.view.webContents;
+			if (this.registeredWebContentsIds.has(wc.id)) continue;
+			this.registeredWebContentsIds.add(wc.id);
+
+			wc.on("did-navigate-in-page", () => {
+				this.updateCopyMessageUrlEnabled();
+			});
+		}
 	}
 
 	createMenu() {
@@ -197,17 +238,13 @@ export class AppMenu {
 						role: "copy",
 					},
 					{
+						id: "copyMessageUrl",
 						label: "Copy Message URL",
 						accelerator: "CommandOrControl+Shift+C",
+						enabled: this.isCopyMessageUrlEnabled(),
 						click: async () => {
 							const account = accounts.getSelectedAccount();
 							const webContents = account.instance.gmail.view.webContents;
-							const url = webContents.getURL();
-							const hash = new URL(url).hash;
-
-							if (!/^#[^/]+\/[A-Za-z0-9]{15,}$/.test(hash)) {
-								return;
-							}
 
 							const email = await webContents.executeJavaScript(
 								`document.querySelector("meta[name='og-profile-acct']")?.getAttribute("content")`,
@@ -221,6 +258,8 @@ export class AppMenu {
 								return;
 							}
 
+							const url = webContents.getURL();
+							const hash = new URL(url).hash;
 							const messageId = hash.split("/").pop();
 							clipboard.writeText(`meru://message/${email}/${messageId}`);
 						},
