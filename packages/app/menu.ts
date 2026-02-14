@@ -3,6 +3,7 @@ import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import {
 	app,
+	clipboard,
 	dialog,
 	Menu,
 	type MenuItemConstructorOptions,
@@ -194,6 +195,28 @@ export class AppMenu {
 					},
 					{
 						role: "copy",
+					},
+					{
+						label: "Copy Message URL",
+						accelerator: "CommandOrControl+Shift+C",
+						click: async () => {
+							const account = accounts.getSelectedAccount();
+							const webContents = account.instance.gmail.view.webContents;
+							const url = webContents.getURL();
+							const hash = new URL(url).hash;
+
+							if (!/^#[^/]+\/[A-Za-z0-9]{15,}$/.test(hash)) {
+								return;
+							}
+
+							const email = await webContents.executeJavaScript(
+								`document.querySelector("meta[name='og-profile-acct']")?.getAttribute("content")`,
+							);
+
+							if (email) {
+								clipboard.writeText(url.replace(/\/u\/\d+/, `/u/${email}`));
+							}
+						},
 					},
 					{
 						role: "paste",
