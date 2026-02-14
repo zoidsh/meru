@@ -213,9 +213,16 @@ export class AppMenu {
 								`document.querySelector("meta[name='og-profile-acct']")?.getAttribute("content")`,
 							);
 
-							if (email) {
-								clipboard.writeText(url.replace(/\/u\/\d+/, `/u/${email}`));
+							if (!email) {
+								dialog.showErrorBox(
+									"Copy Message URL",
+									"Could not determine account email",
+								);
+								return;
 							}
+
+							const messageId = hash.split("/").pop();
+							clipboard.writeText(`meru://message/${email}/${messageId}`);
 						},
 					},
 					{
