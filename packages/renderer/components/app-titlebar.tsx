@@ -19,6 +19,7 @@ import {
 	FileCheckIcon,
 	MailSearchIcon,
 	MoonIcon,
+	ShareIcon,
 	SparklesIcon,
 	XIcon,
 } from "lucide-react";
@@ -335,6 +336,21 @@ function PinnedGoogleApps() {
 	);
 }
 
+function Share() {
+	return (
+		<TitlebarIconButton
+			onClick={(event) => {
+				event.preventDefault();
+
+				ipc.main.send("share.showOptions");
+			}}
+			title="Share"
+		>
+			<ShareIcon />
+		</TitlebarIconButton>
+	);
+}
+
 export function AppTitlebar() {
 	const accounts = useAccountsStore((state) => state.accounts);
 
@@ -543,6 +559,7 @@ export function AppTitlebar() {
 					<PinnedGoogleApps />
 					<Download />
 					<DoNotDisturb />
+					<Share />
 				</div>
 				{appUpdateVersion && (
 					<Button

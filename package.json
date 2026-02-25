@@ -83,7 +83,7 @@
 		"appId": "sh.zoid.meru",
 		"protocols": {
 			"name": "Meru",
-			"schemes": ["mailto"]
+			"schemes": ["meru", "mailto"]
 		},
 		"mac": {
 			"category": "public.app-category.productivity",
@@ -95,7 +95,7 @@
 			},
 			"extendInfo": {
 				"CFBundleIconName": "AppIcon",
-				"CFBundleURLSchemes": ["mailto"],
+				"CFBundleURLSchemes": ["meru", "mailto"],
 				"NSCameraUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat.",
 				"NSMicrophoneUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat."
 			}

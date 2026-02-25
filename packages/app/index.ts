@@ -14,7 +14,17 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
-import { handleMailto, mailtoUrlArg } from "./mailto";
+import {
+	findMailtoUrlArg,
+	findMeruUrlArg,
+	handleMailtoUrl,
+	handleMeruUrl,
+	isMailtoUrl,
+	isMeruUrl,
+	PROCESS_MAILTO_URL_ARG,
+	PROCESS_MERU_URL_ARG,
+	setMeruProtocolClient,
+} from "./protocol";
 import { trial } from "./trial";
 
 (async () => {
@@ -26,6 +36,8 @@ import { trial } from "./trial";
 	if (platform.isWindows) {
 		app.setAppUserModelId(APP_ID);
 	}
+
+	setMeruProtocolClient();
 
 	if (!app.requestSingleInstanceLock()) {
 		app.quit();
@@ -83,18 +95,32 @@ import { trial } from "./trial";
 
 	doNotDisturb.init();
 
-	if (mailtoUrlArg) {
-		handleMailto(mailtoUrlArg);
+	if (!platform.isMacOS) {
+		if (PROCESS_MAILTO_URL_ARG) {
+			handleMailtoUrl(PROCESS_MAILTO_URL_ARG);
+		} else if (PROCESS_MERU_URL_ARG) {
+			handleMeruUrl(PROCESS_MERU_URL_ARG);
+		}
 	}
 
 	app.on("second-instance", (_event, argv) => {
 		main.show();
 
 		if (!platform.isMacOS) {
-			const mailtoUrlArg = argv.find((arg) => arg.startsWith("mailto:"));
+			const mailtoUrlArg = findMailtoUrlArg(argv);
 
 			if (mailtoUrlArg) {
-				handleMailto(mailtoUrlArg);
+				handleMailtoUrl(mailtoUrlArg);
+
+				return;
+			}
+
+			const meruUrlArg = findMeruUrlArg(argv);
+
+			if (meruUrlArg) {
+				handleMeruUrl(meruUrlArg);
+
+				return;
 			}
 		}
 	});
@@ -104,8 +130,14 @@ import { trial } from "./trial";
 	});
 
 	if (platform.isMacOS) {
-		app.on("open-url", async (_event, url) => {
-			handleMailto(url);
+		app.on("open-url", (_event, url) => {
+			if (isMailtoUrl(url)) {
+				handleMailtoUrl(url);
+			}
+
+			if (isMeruUrl(url)) {
+				handleMeruUrl(url);
+			}
 		});
 	}
 

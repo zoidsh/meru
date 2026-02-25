@@ -46,3 +46,5 @@ export type GmailState = {
 	outOfOffice: boolean;
 	attentionRequired: boolean;
 };
+
+export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;

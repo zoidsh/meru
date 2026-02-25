@@ -158,6 +158,7 @@ export type IpcMainEvents =
 			"gmail.navigateTo": [hashLocation: GmailHashLocation];
 			"gmail.closeComposeWindow": [];
 			"gmail.undoMessageSent": [browserWindowId: number];
+			"gmail.setUserEmail": [email: string];
 			"titleBar.toggleAppMenu": [];
 			"desktopSources.select": [desktopSource: SelectedDesktopSource];
 			findInPage: [
@@ -173,6 +174,7 @@ export type IpcMainEvents =
 			"googleApps.openApp": [app: GoogleAppsPinnedApp];
 			"doNotDisturb.toggle": [];
 			"doNotDisturb.showOptions": [];
+			"share.showOptions": [];
 	  }
 	| {
 			"licenseKey.activate": (licenseKey: string) => { success: boolean };

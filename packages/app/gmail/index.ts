@@ -34,6 +34,8 @@ const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
 const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload", "index.js");
 
 export class Gmail extends GoogleApp {
+	userEmail: string | null = null;
+
 	unreadCountEnabled = true;
 
 	store = createStore(

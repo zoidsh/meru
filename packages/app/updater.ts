@@ -8,7 +8,6 @@ import { appState } from "./state";
 
 class AppUpdater {
 	init() {
-		log.transports.file.level = is.dev ? "info" : "error";
 		autoUpdater.logger = log;
 
 		if (config.get("updates.showNotifications")) {

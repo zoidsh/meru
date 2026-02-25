@@ -26,6 +26,7 @@ import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { extractVerificationCode, parseUnreadCountString } from "./lib/utils";
 import { createNotification } from "./notifications";
+import { MAILTO_PROTOCOL, MERU_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 
 class Ipc {
@@ -404,7 +405,7 @@ class Ipc {
 		});
 
 		ipc.main.handle("app.getIsDefaultMailtoClient", () =>
-			app.isDefaultProtocolClient("mailto"),
+			app.isDefaultProtocolClient(MAILTO_PROTOCOL),
 		);
 
 		ipc.main.handle("app.setAsDefaultMailtoClient", () => {
@@ -414,12 +415,12 @@ class Ipc {
 						throw new Error('Could not find "process.argv[1]"');
 					}
 
-					app.setAsDefaultProtocolClient("mailto", process.execPath, [
+					app.setAsDefaultProtocolClient(MAILTO_PROTOCOL, process.execPath, [
 						path.resolve(process.argv[1]),
 					]);
 				}
 			} else {
-				app.setAsDefaultProtocolClient("mailto");
+				app.setAsDefaultProtocolClient(MAILTO_PROTOCOL);
 			}
 		});
 
@@ -534,6 +535,59 @@ class Ipc {
 			composeWindow.show();
 
 			ipc.renderer.send(composeWindow.webContents, "gmail.undoMessageSent");
+		});
+
+		ipc.main.on("share.showOptions", () => {
+			const selectedAccount = accounts.getSelectedAccount();
+
+			const currentUrl = new URL(
+				selectedAccount.instance.gmail.view.webContents.getURL(),
+			);
+
+			const [_, messageHash] =
+				currentUrl.hash.match(/#[^/]+\/([A-Za-z0-9]{15,})$/) || [];
+
+			const menu = Menu.buildFromTemplate([
+				{
+					label: "Copy Message link",
+					enabled: Boolean(messageHash),
+					click: () => {
+						if (!selectedAccount.instance.gmail.userEmail) {
+							dialog.showErrorBox(
+								"Could not copy message link",
+								"User email not found for the selected account.",
+							);
+
+							return;
+						}
+
+						if (!messageHash) {
+							dialog.showErrorBox(
+								"Could not copy message link",
+								"Could not extract message ID from the current URL.",
+							);
+
+							return;
+						}
+
+						clipboard.writeText(
+							`${MERU_PROTOCOL}://${selectedAccount.instance.gmail.userEmail}/message/${messageHash}`,
+						);
+					},
+				},
+			]);
+
+			menu.popup();
+		});
+
+		ipc.main.on("gmail.setUserEmail", (event, email) => {
+			for (const accountInstance of accounts.instances.values()) {
+				if (accountInstance.gmail.view.webContents.id === event.sender.id) {
+					accountInstance.gmail.userEmail = email;
+
+					return;
+				}
+			}
 		});
 	}
 }
