@@ -5,104 +5,98 @@ let urlPreviewElement: HTMLElement | null = null;
 let removeUrlPreviewElementTimeout: Timer | null = null;
 
 function removeUrlPreviewElement() {
-	if (urlPreviewElement) {
-		urlPreviewElement.remove();
-		urlPreviewElement = null;
-	}
+  if (urlPreviewElement) {
+    urlPreviewElement.remove();
+    urlPreviewElement = null;
+  }
 }
 
 function fadeOutUrlPreviewElement() {
-	if (removeUrlPreviewElementTimeout) {
-		clearTimeout(removeUrlPreviewElementTimeout);
+  if (removeUrlPreviewElementTimeout) {
+    clearTimeout(removeUrlPreviewElementTimeout);
 
-		removeUrlPreviewElementTimeout = null;
-	}
+    removeUrlPreviewElementTimeout = null;
+  }
 
-	if (urlPreviewElement) {
-		urlPreviewElement.addEventListener("animationend", removeUrlPreviewElement);
+  if (urlPreviewElement) {
+    urlPreviewElement.addEventListener("animationend", removeUrlPreviewElement);
 
-		urlPreviewElement.setAttribute("data-fade-out", "true");
-	}
+    urlPreviewElement.setAttribute("data-fade-out", "true");
+  }
 }
 
 function createUrlPreviewElement(href: string) {
-	if (urlPreviewElement) {
-		urlPreviewElement.textContent = href;
+  if (urlPreviewElement) {
+    urlPreviewElement.textContent = href;
 
-		if (urlPreviewElement.hasAttribute("data-fade-out")) {
-			urlPreviewElement.removeEventListener(
-				"animationend",
-				removeUrlPreviewElement,
-			);
+    if (urlPreviewElement.hasAttribute("data-fade-out")) {
+      urlPreviewElement.removeEventListener("animationend", removeUrlPreviewElement);
 
-			urlPreviewElement.removeAttribute("data-fade-out");
-		}
-	} else {
-		urlPreviewElement = document.createElement("div");
+      urlPreviewElement.removeAttribute("data-fade-out");
+    }
+  } else {
+    urlPreviewElement = document.createElement("div");
 
-		urlPreviewElement.className = "meru-url-preview";
+    urlPreviewElement.className = "meru-url-preview";
 
-		urlPreviewElement.textContent = href;
+    urlPreviewElement.textContent = href;
 
-		document.body.append(urlPreviewElement);
-	}
+    document.body.append(urlPreviewElement);
+  }
 
-	if (removeUrlPreviewElementTimeout) {
-		clearTimeout(removeUrlPreviewElementTimeout);
+  if (removeUrlPreviewElementTimeout) {
+    clearTimeout(removeUrlPreviewElementTimeout);
 
-		removeUrlPreviewElementTimeout = null;
-	}
+    removeUrlPreviewElementTimeout = null;
+  }
 
-	removeUrlPreviewElementTimeout = setTimeout(() => {
-		if (urlPreviewElement) {
-			urlPreviewElement.setAttribute("data-long-hover", "true");
-		}
-	}, 1500);
+  removeUrlPreviewElementTimeout = setTimeout(() => {
+    if (urlPreviewElement) {
+      urlPreviewElement.setAttribute("data-long-hover", "true");
+    }
+  }, 1500);
 }
 
 function lookupHref(target: HTMLElement) {
-	if (target instanceof HTMLAnchorElement) {
-		return target.href;
-	}
+  if (target instanceof HTMLAnchorElement) {
+    return target.href;
+  }
 
-	if (target.parentElement) {
-		return lookupHref(target.parentElement);
-	}
+  if (target.parentElement) {
+    return lookupHref(target.parentElement);
+  }
 
-	return null;
+  return null;
 }
 
 export function initUrlPreview() {
-	window.addEventListener("mouseover", (event) => {
-		if (!(event.target instanceof HTMLElement)) {
-			fadeOutUrlPreviewElement();
+  window.addEventListener("mouseover", (event) => {
+    if (!(event.target instanceof HTMLElement)) {
+      fadeOutUrlPreviewElement();
 
-			return;
-		}
+      return;
+    }
 
-		const href = lookupHref(event.target);
+    const href = lookupHref(event.target);
 
-		if (!href || href.startsWith(GMAIL_URL)) {
-			fadeOutUrlPreviewElement();
+    if (!href || href.startsWith(GMAIL_URL)) {
+      fadeOutUrlPreviewElement();
 
-			return;
-		}
+      return;
+    }
 
-		if (urlPreviewElement) {
-			urlPreviewElement.textContent = href;
+    if (urlPreviewElement) {
+      urlPreviewElement.textContent = href;
 
-			if (urlPreviewElement.hasAttribute("data-fade-out")) {
-				urlPreviewElement.removeEventListener(
-					"animationend",
-					removeUrlPreviewElement,
-				);
+      if (urlPreviewElement.hasAttribute("data-fade-out")) {
+        urlPreviewElement.removeEventListener("animationend", removeUrlPreviewElement);
 
-				urlPreviewElement.removeAttribute("data-fade-out");
-			}
+        urlPreviewElement.removeAttribute("data-fade-out");
+      }
 
-			return;
-		}
+      return;
+    }
 
-		createUrlPreviewElement(href);
-	});
+    createUrlPreviewElement(href);
+  });
 }

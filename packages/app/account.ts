@@ -4,146 +4,135 @@ import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
-	BrowserWindow,
-	type IpcMainEvent,
-	ipcMain,
-	nativeTheme,
-	type Session,
-	session,
-	type WebContentsView,
+  BrowserWindow,
+  type IpcMainEvent,
+  ipcMain,
+  nativeTheme,
+  type Session,
+  session,
+  type WebContentsView,
 } from "electron";
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
 
 export class Account {
-	session: Session;
+  session: Session;
 
-	gmail: Gmail;
+  gmail: Gmail;
 
-	windows: Set<BrowserWindow | WebContentsView> = new Set();
+  windows: Set<BrowserWindow | WebContentsView> = new Set();
 
-	constructor(accountConfig: AccountConfig) {
-		this.session = session.fromPartition(`persist:${accountConfig.id}`);
+  constructor(accountConfig: AccountConfig) {
+    this.session = session.fromPartition(`persist:${accountConfig.id}`);
 
-		this.setCustomUserAgent();
+    this.setCustomUserAgent();
 
-		this.registerSessionPermissionsRequestsHandler();
+    this.registerSessionPermissionsRequestsHandler();
 
-		this.registerSessionDisplayMediaRequestHandler();
+    this.registerSessionDisplayMediaRequestHandler();
 
-		blocker.setupSession(this.session);
+    blocker.setupSession(this.session);
 
-		this.gmail = new Gmail({
-			accountId: accountConfig.id,
-			session: this.session,
-			unreadCountEnabled: accountConfig.gmail.unreadBadge,
-			delegatedAccountId: accountConfig.gmail.delegatedAccountId,
-		});
-	}
+    this.gmail = new Gmail({
+      accountId: accountConfig.id,
+      session: this.session,
+      unreadCountEnabled: accountConfig.gmail.unreadBadge,
+      delegatedAccountId: accountConfig.gmail.delegatedAccountId,
+    });
+  }
 
-	private setCustomUserAgent() {
-		if (platform.isMacOS && config.get("customUserAgent")) {
-			this.session.setUserAgent(
-				"Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
-			);
-		}
-	}
+  private setCustomUserAgent() {
+    if (platform.isMacOS && config.get("customUserAgent")) {
+      this.session.setUserAgent(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+      );
+    }
+  }
 
-	private registerSessionPermissionsRequestsHandler() {
-		this.session.setPermissionRequestHandler(
-			(_webContents, permission, callback) => {
-				switch (permission) {
-					case "clipboard-sanitized-write":
-					case "media": {
-						callback(true);
-						break;
-					}
-					case "notifications": {
-						callback(config.get("notifications.allowFromGoogleApps"));
-						break;
-					}
-				}
-			},
-		);
-	}
+  private registerSessionPermissionsRequestsHandler() {
+    this.session.setPermissionRequestHandler((_webContents, permission, callback) => {
+      switch (permission) {
+        case "clipboard-sanitized-write":
+        case "media": {
+          callback(true);
+          break;
+        }
+        case "notifications": {
+          callback(config.get("notifications.allowFromGoogleApps"));
+          break;
+        }
+      }
+    });
+  }
 
-	private registerSessionDisplayMediaRequestHandler() {
-		this.session.setDisplayMediaRequestHandler(
-			async (_request, callback) => {
-				const googleMeetApp = Array.from(this.windows).find((window) =>
-					window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
-				);
+  private registerSessionDisplayMediaRequestHandler() {
+    this.session.setDisplayMediaRequestHandler(
+      async (_request, callback) => {
+        const googleMeetApp = Array.from(this.windows).find((window) =>
+          window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
+        );
 
-				if (!googleMeetApp) {
-					callback({});
+        if (!googleMeetApp) {
+          callback({});
 
-					return;
-				}
+          return;
+        }
 
-				const desktopSourcesWindow = new BrowserWindow({
-					title: "Choose what to share",
-					parent:
-						googleMeetApp instanceof BrowserWindow ? googleMeetApp : undefined,
-					width: 576,
-					height: 512,
-					resizable: false,
-					autoHideMenuBar: true,
-					webPreferences: {
-						preload: path.join(__dirname, "renderer-preload", "index.js"),
-					},
-				});
+        const desktopSourcesWindow = new BrowserWindow({
+          title: "Choose what to share",
+          parent: googleMeetApp instanceof BrowserWindow ? googleMeetApp : undefined,
+          width: 576,
+          height: 512,
+          resizable: false,
+          autoHideMenuBar: true,
+          webPreferences: {
+            preload: path.join(__dirname, "renderer-preload", "index.js"),
+          },
+        });
 
-				const windowEvent = "closed";
+        const windowEvent = "closed";
 
-				const ipcEvent = "desktopSources.select";
+        const ipcEvent = "desktopSources.select";
 
-				const ipcListener = (
-					_event: IpcMainEvent,
-					desktopSource: SelectedDesktopSource,
-				) => {
-					desktopSourcesWindow.removeListener(windowEvent, windowListener);
+        const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+          desktopSourcesWindow.removeListener(windowEvent, windowListener);
 
-					callback({ video: desktopSource });
+          callback({ video: desktopSource });
 
-					desktopSourcesWindow.destroy();
-				};
+          desktopSourcesWindow.destroy();
+        };
 
-				const windowListener = () => {
-					ipcMain.removeListener(ipcEvent, ipcListener);
+        const windowListener = () => {
+          ipcMain.removeListener(ipcEvent, ipcListener);
 
-					callback({});
+          callback({});
 
-					desktopSourcesWindow.destroy();
-				};
+          desktopSourcesWindow.destroy();
+        };
 
-				ipcMain.once(ipcEvent, ipcListener);
+        ipcMain.once(ipcEvent, ipcListener);
 
-				desktopSourcesWindow.once(windowEvent, windowListener);
+        desktopSourcesWindow.once(windowEvent, windowListener);
 
-				const searchParams = new URLSearchParams();
+        const searchParams = new URLSearchParams();
 
-				searchParams.set(
-					"darkMode",
-					nativeTheme.shouldUseDarkColors ? "true" : "false",
-				);
+        searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
-				if (is.dev) {
-					desktopSourcesWindow.webContents.loadURL(
-						`http://localhost:3001/?${searchParams}`,
-					);
+        if (is.dev) {
+          desktopSourcesWindow.webContents.loadURL(`http://localhost:3001/?${searchParams}`);
 
-					desktopSourcesWindow.webContents.openDevTools({
-						mode: "detach",
-					});
-				} else {
-					desktopSourcesWindow.webContents.loadFile(
-						path.join("build-js", "desktop-sources", "index.html"),
-						{ search: searchParams.toString() },
-					);
-				}
-			},
-			{ useSystemPicker: config.get("screenShare.useSystemPicker") },
-		);
-	}
+          desktopSourcesWindow.webContents.openDevTools({
+            mode: "detach",
+          });
+        } else {
+          desktopSourcesWindow.webContents.loadFile(
+            path.join("build-js", "desktop-sources", "index.html"),
+            { search: searchParams.toString() },
+          );
+        }
+      },
+      { useSystemPicker: config.get("screenShare.useSystemPicker") },
+    );
+  }
 }

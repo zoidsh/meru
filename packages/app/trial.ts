@@ -8,95 +8,90 @@ import { main } from "./main";
 import { openExternalUrl } from "./url";
 
 class Trial {
-	private validationInterval: Timer | undefined;
+  private validationInterval: Timer | undefined;
 
-	daysLeft = 0;
+  daysLeft = 0;
 
-	async validate(): Promise<boolean> {
-		if (licenseKey.isValid || config.get("trial.expired")) {
-			return true;
-		}
+  async validate(): Promise<boolean> {
+    if (licenseKey.isValid || config.get("trial.expired")) {
+      return true;
+    }
 
-		const { error, data } = await apiClient.v2.license.trial({
-			deviceId: await machineId(),
-		});
+    const { error, data } = await apiClient.v2.license.trial({
+      deviceId: await machineId(),
+    });
 
-		if (error) {
-			const { response } = await dialog.showMessageBox({
-				type: "error",
-				message: "Failed to validate Meru Pro trial",
-				detail: `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
-				buttons: ["Restart", "Quit"],
-				defaultId: 0,
-				cancelId: 1,
-			});
+    if (error) {
+      const { response } = await dialog.showMessageBox({
+        type: "error",
+        message: "Failed to validate Meru Pro trial",
+        detail: `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
+        buttons: ["Restart", "Quit"],
+        defaultId: 0,
+        cancelId: 1,
+      });
 
-			if (response === 0) {
-				app.relaunch();
-			}
+      if (response === 0) {
+        app.relaunch();
+      }
 
-			return false;
-		}
+      return false;
+    }
 
-		if (data.expired) {
-			if (this.validationInterval) {
-				clearInterval(this.validationInterval);
+    if (data.expired) {
+      if (this.validationInterval) {
+        clearInterval(this.validationInterval);
 
-				this.validationInterval = undefined;
-			}
+        this.validationInterval = undefined;
+      }
 
-			config.set("trial.expired", true);
+      config.set("trial.expired", true);
 
-			const { response } = await dialog.showMessageBox({
-				type: "info",
-				message: "Your Meru Pro trial has ended",
-				detail:
-					"Upgrade to Pro to keep using all features or continue with the free version.",
-				buttons: ["Upgrade to Pro", "Continue with Free", "Quit"],
-				defaultId: 0,
-				cancelId: 2,
-			});
+      const { response } = await dialog.showMessageBox({
+        type: "info",
+        message: "Your Meru Pro trial has ended",
+        detail: "Upgrade to Pro to keep using all features or continue with the free version.",
+        buttons: ["Upgrade to Pro", "Continue with Free", "Quit"],
+        defaultId: 0,
+        cancelId: 2,
+      });
 
-			if (response === 0) {
-				openExternalUrl("https://meru.so/#pricing", true);
-			}
+      if (response === 0) {
+        openExternalUrl("https://meru.so/#pricing", true);
+      }
 
-			if (response === 2) {
-				return false;
-			}
+      if (response === 2) {
+        return false;
+      }
 
-			return true;
-		}
+      return true;
+    }
 
-		if (this.validationInterval) {
-			this.setDaysLeft(data.daysLeft);
+    if (this.validationInterval) {
+      this.setDaysLeft(data.daysLeft);
 
-			return true;
-		}
+      return true;
+    }
 
-		licenseKey.isValid = true;
+    licenseKey.isValid = true;
 
-		this.daysLeft = data.daysLeft;
+    this.daysLeft = data.daysLeft;
 
-		this.validationInterval = setInterval(
-			() => {
-				this.validate();
-			},
-			1000 * 60 * 60 * 3,
-		);
+    this.validationInterval = setInterval(
+      () => {
+        this.validate();
+      },
+      1000 * 60 * 60 * 3,
+    );
 
-		return true;
-	}
+    return true;
+  }
 
-	setDaysLeft(daysLeft: number) {
-		this.daysLeft = daysLeft;
+  setDaysLeft(daysLeft: number) {
+    this.daysLeft = daysLeft;
 
-		ipc.renderer.send(
-			main.window.webContents,
-			"trial.daysLeftChanged",
-			daysLeft,
-		);
-	}
+    ipc.renderer.send(main.window.webContents, "trial.daysLeftChanged", daysLeft);
+  }
 }
 
 export const trial = new Trial();

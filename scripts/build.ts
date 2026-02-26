@@ -14,14 +14,14 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 import viteTsconfigPaths from "vite-tsconfig-paths";
 
 const args = parseArgs({
-	args: Bun.argv,
-	options: {
-		dev: {
-			type: "boolean",
-		},
-	},
-	strict: true,
-	allowPositionals: true,
+  args: Bun.argv,
+  options: {
+    dev: {
+      type: "boolean",
+    },
+  },
+  strict: true,
+  allowPositionals: true,
 });
 
 await rm("./build-js", { recursive: true, force: true });
@@ -29,153 +29,151 @@ await rm("./build-js", { recursive: true, force: true });
 const browserTarget = "chrome136";
 
 function buildAppFiles() {
-	const config: esbuild.BuildOptions = {
-		bundle: true,
-		outdir: "./build-js",
-		external: ["electron"],
-		define: !args.values.dev
-			? {
-					"process.env.NODE_ENV": JSON.stringify("production"),
-					...(process.env.MERU_API_URL
-						? {
-								"process.env.MERU_API_URL": JSON.stringify(
-									process.env.MERU_API_URL,
-								),
-							}
-						: {}),
-				}
-			: undefined,
-		minify: !args.values.dev,
-	};
+  const config: esbuild.BuildOptions = {
+    bundle: true,
+    outdir: "./build-js",
+    external: ["electron"],
+    define: !args.values.dev
+      ? {
+          "process.env.NODE_ENV": JSON.stringify("production"),
+          ...(process.env.MERU_API_URL
+            ? {
+                "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
+              }
+            : {}),
+        }
+      : undefined,
+    minify: !args.values.dev,
+  };
 
-	return Promise.all([
-		esbuild.build({
-			...config,
-			entryPoints: ["./packages/app/index.ts"],
-			platform: "node",
-			target: "node22",
-			loader: {
-				".css": "text",
-			},
-		}),
-		esbuild.build({
-			...config,
-			entryPoints: [
-				"./packages/gmail-preload/index.ts",
-				"./packages/google-app-preload/index.ts",
-				"./packages/renderer-preload/index.ts",
-			],
-			platform: "browser",
-			target: browserTarget,
-			plugins: [
-				inlineImportPlugin({
-					filter: /\?inline$/,
-					transform: async (contents) => {
-						const css = await postcss()
-							.use(postcssImport())
-							.use(postcssTailwind())
-							.process(contents, {
-								from: undefined,
-							})
-							.then((result) => result.css);
+  return Promise.all([
+    esbuild.build({
+      ...config,
+      entryPoints: ["./packages/app/index.ts"],
+      platform: "node",
+      target: "node22",
+      loader: {
+        ".css": "text",
+      },
+    }),
+    esbuild.build({
+      ...config,
+      entryPoints: [
+        "./packages/gmail-preload/index.ts",
+        "./packages/google-app-preload/index.ts",
+        "./packages/renderer-preload/index.ts",
+      ],
+      platform: "browser",
+      target: browserTarget,
+      plugins: [
+        inlineImportPlugin({
+          filter: /\?inline$/,
+          transform: async (contents) => {
+            const css = await postcss()
+              .use(postcssImport())
+              .use(postcssTailwind())
+              .process(contents, {
+                from: undefined,
+              })
+              .then((result) => result.css);
 
-						return args.values.dev
-							? css
-							: (
-									await esbuild.transform(css, {
-										loader: "css",
-										minify: true,
-									})
-								).code;
-					},
-				}),
-			],
-		}),
-	]);
+            return args.values.dev
+              ? css
+              : (
+                  await esbuild.transform(css, {
+                    loader: "css",
+                    minify: true,
+                  })
+                ).code;
+          },
+        }),
+      ],
+    }),
+  ]);
 }
 
 async function buildRenderer(rendererName: string, port: number) {
-	const viteConfig: vite.InlineConfig = {
-		configFile: false,
-		root: path.resolve(process.cwd(), "packages", rendererName),
-		plugins: [react(), tailwindcss(), viteSingleFile(), viteTsconfigPaths()],
-		server: {
-			port,
-			strictPort: true,
-		},
-		build: {
-			outDir: path.resolve(process.cwd(), "build-js", rendererName),
-			target: browserTarget,
-		},
-		clearScreen: false,
-	};
+  const viteConfig: vite.InlineConfig = {
+    configFile: false,
+    root: path.resolve(process.cwd(), "packages", rendererName),
+    plugins: [react(), tailwindcss(), viteSingleFile(), viteTsconfigPaths()],
+    server: {
+      port,
+      strictPort: true,
+    },
+    build: {
+      outDir: path.resolve(process.cwd(), "build-js", rendererName),
+      target: browserTarget,
+    },
+    clearScreen: false,
+  };
 
-	if (args.values.dev) {
-		const viteServer = await vite.createServer(viteConfig);
+  if (args.values.dev) {
+    const viteServer = await vite.createServer(viteConfig);
 
-		await viteServer.listen();
+    await viteServer.listen();
 
-		viteServer.printUrls();
+    viteServer.printUrls();
 
-		return;
-	}
+    return;
+  }
 
-	await vite.build(viteConfig);
+  await vite.build(viteConfig);
 }
 
 await Promise.all([
-	buildAppFiles(),
-	buildRenderer("renderer", 3000),
-	buildRenderer("desktop-sources", 3001),
+  buildAppFiles(),
+  buildRenderer("renderer", 3000),
+  buildRenderer("desktop-sources", 3001),
 ]);
 
 if (args.values.dev) {
-	let electron: Subprocess;
-	let isRestartingElectron = false;
+  let electron: Subprocess;
+  let isRestartingElectron = false;
 
-	const startElectron = () => {
-		electron = spawn(["electron", "."], {
-			onExit: async () => {
-				if (isRestartingElectron) {
-					isRestartingElectron = false;
-				} else {
-					await electron.exited;
+  const startElectron = () => {
+    electron = spawn(["electron", "."], {
+      onExit: async () => {
+        if (isRestartingElectron) {
+          isRestartingElectron = false;
+        } else {
+          await electron.exited;
 
-					process.exit(0);
-				}
-			},
-		});
-	};
+          process.exit(0);
+        }
+      },
+    });
+  };
 
-	const stopElectron = () => {
-		electron.kill();
+  const stopElectron = () => {
+    electron.kill();
 
-		return electron.exited;
-	};
+    return electron.exited;
+  };
 
-	const restartElectron = async () => {
-		isRestartingElectron = true;
+  const restartElectron = async () => {
+    isRestartingElectron = true;
 
-		await stopElectron();
+    await stopElectron();
 
-		startElectron();
-	};
+    startElectron();
+  };
 
-	await startElectron();
+  await startElectron();
 
-	const watcher = watch("./packages", { recursive: true });
+  const watcher = watch("./packages", { recursive: true });
 
-	for await (const event of watcher) {
-		if (
-			["desktop-sources/", "renderer/", "renderer-lib/", "ui/"].some(
-				(pathname) => event.filename?.includes(pathname),
-			)
-		) {
-			continue;
-		}
+  for await (const event of watcher) {
+    if (
+      ["desktop-sources/", "renderer/", "renderer-lib/", "ui/"].some((pathname) =>
+        event.filename?.includes(pathname),
+      )
+    ) {
+      continue;
+    }
 
-		await buildAppFiles();
+    await buildAppFiles();
 
-		await restartElectron();
-	}
+    await restartElectron();
+  }
 }

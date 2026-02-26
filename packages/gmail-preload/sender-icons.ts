@@ -4,70 +4,68 @@ import { $, $$, elementExists } from "select-dom";
 const senderIconSize = 16;
 const senderIconsElementId = "meru-sender-icons";
 
-const isSenderIconsEnabled = process.argv.includes(
-	GMAIL_PRELOAD_ARGUMENTS.showSenderIcons,
-);
+const isSenderIconsEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons);
 
 export function addSenderIcons() {
-	if (!isSenderIconsEnabled) {
-		return;
-	}
+  if (!isSenderIconsEnabled) {
+    return;
+  }
 
-	const emailElements = $$("tr[id]:has(span[email*='@'])");
+  const emailElements = $$("tr[id]:has(span[email*='@'])");
 
-	for (const emailElement of emailElements) {
-		if (elementExists(`#${senderIconsElementId}`, emailElement)) {
-			continue;
-		}
+  for (const emailElement of emailElements) {
+    if (elementExists(`#${senderIconsElementId}`, emailElement)) {
+      continue;
+    }
 
-		const senderColumnElement = $("td:has(span[email*='@'])", emailElement);
+    const senderColumnElement = $("td:has(span[email*='@'])", emailElement);
 
-		if (!senderColumnElement) {
-			continue;
-		}
+    if (!senderColumnElement) {
+      continue;
+    }
 
-		const senderElements = $$("span[email*='@']", senderColumnElement);
+    const senderElements = $$("span[email*='@']", senderColumnElement);
 
-		const senderDomains = new Set<string>();
+    const senderDomains = new Set<string>();
 
-		for (const senderElement of senderElements) {
-			const senderDomain = senderElement.getAttribute("email")?.split("@")[1];
+    for (const senderElement of senderElements) {
+      const senderDomain = senderElement.getAttribute("email")?.split("@")[1];
 
-			if (senderDomain) {
-				senderDomains.add(senderDomain);
-			}
-		}
+      if (senderDomain) {
+        senderDomains.add(senderDomain);
+      }
+    }
 
-		const senderIconsElement = document.createElement("div");
+    const senderIconsElement = document.createElement("div");
 
-		senderIconsElement.id = senderIconsElementId;
-		senderIconsElement.style.marginRight = `${senderIconSize / 2}px`;
-		senderIconsElement.style.display = "flex";
-		senderIconsElement.style.alignItems = "center";
-		senderIconsElement.style.justifyContent = "flex-end";
-		senderIconsElement.style.minWidth = `${senderIconSize * 2 - senderIconSize / 2}px`;
+    senderIconsElement.id = senderIconsElementId;
+    senderIconsElement.style.marginRight = `${senderIconSize / 2}px`;
+    senderIconsElement.style.display = "flex";
+    senderIconsElement.style.alignItems = "center";
+    senderIconsElement.style.justifyContent = "flex-end";
+    senderIconsElement.style.minWidth = `${senderIconSize * 2 - senderIconSize / 2}px`;
 
-		let senderIconIndex = 0;
+    let senderIconIndex = 0;
 
-		for (const senderDomain of senderDomains) {
-			const senderIconElement = document.createElement("img");
+    for (const senderDomain of senderDomains) {
+      const senderIconElement = document.createElement("img");
 
-			senderIconElement.src = `https://www.google.com/s2/favicons?domain=${senderDomain}&sz=${senderIconSize * 2}`;
-			senderIconElement.title = senderDomain;
-			senderIconElement.style.width = `${senderIconSize}px`;
-			senderIconElement.style.height = `${senderIconSize}px`;
-			senderIconElement.style.borderRadius = "50%";
-			senderIconElement.style.backgroundColor = "#ffffff";
+      senderIconElement.src = `https://www.google.com/s2/favicons?domain=${senderDomain}&sz=${senderIconSize * 2}`;
+      senderIconElement.title = senderDomain;
+      senderIconElement.style.width = `${senderIconSize}px`;
+      senderIconElement.style.height = `${senderIconSize}px`;
+      senderIconElement.style.borderRadius = "50%";
+      senderIconElement.style.backgroundColor = "#ffffff";
 
-			if (senderIconIndex > 0) {
-				senderIconElement.style.marginLeft = `-${senderIconSize / 2}px`;
-			}
+      if (senderIconIndex > 0) {
+        senderIconElement.style.marginLeft = `-${senderIconSize / 2}px`;
+      }
 
-			senderIconsElement.appendChild(senderIconElement);
+      senderIconsElement.appendChild(senderIconElement);
 
-			senderIconIndex++;
-		}
+      senderIconIndex++;
+    }
 
-		senderColumnElement.appendChild(senderIconsElement);
-	}
+    senderColumnElement.appendChild(senderIconsElement);
+  }
 }

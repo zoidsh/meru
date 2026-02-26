@@ -11,24 +11,24 @@ import { queryClient } from "./lib/react-query";
 import { useThemeStore } from "./lib/stores";
 
 export function App() {
-	const theme = useThemeStore((state) => state.theme);
+  const theme = useThemeStore((state) => state.theme);
 
-	useMouseAccountSwitching();
+  useMouseAccountSwitching();
 
-	return (
-		<QueryClientProvider client={queryClient}>
-			<TooltipProvider>
-				<Router hook={useHashLocation}>
-					<div className="h-screen flex flex-col">
-						<AppTitlebar />
-						<div className="flex-1 flex overflow-hidden">
-							<AppSidebar />
-							<AppMain />
-						</div>
-					</div>
-					<Toaster theme={theme} />
-				</Router>
-			</TooltipProvider>
-		</QueryClientProvider>
-	);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Router hook={useHashLocation}>
+          <div className="h-screen flex flex-col">
+            <AppTitlebar />
+            <div className="flex-1 flex overflow-hidden">
+              <AppSidebar />
+              <AppMain />
+            </div>
+          </div>
+          <Toaster theme={theme} />
+        </Router>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
 }

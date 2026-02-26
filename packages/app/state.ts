@@ -2,25 +2,21 @@ import { ipc } from "@/ipc";
 import { main } from "@/main";
 
 class AppState {
-	isQuittingApp = false;
+  isQuittingApp = false;
 
-	isSettingsOpen = false;
+  isSettingsOpen = false;
 
-	setIsSettingsOpen(value: boolean) {
-		this.isSettingsOpen = value;
+  setIsSettingsOpen(value: boolean) {
+    this.isSettingsOpen = value;
 
-		ipc.renderer.send(
-			main.window.webContents,
-			"settings.setIsOpen",
-			this.isSettingsOpen,
-		);
-	}
+    ipc.renderer.send(main.window.webContents, "settings.setIsOpen", this.isSettingsOpen);
+  }
 
-	toggleIsSettingsOpen() {
-		this.isSettingsOpen = !this.isSettingsOpen;
+  toggleIsSettingsOpen() {
+    this.isSettingsOpen = !this.isSettingsOpen;
 
-		this.setIsSettingsOpen(this.isSettingsOpen);
-	}
+    this.setIsSettingsOpen(this.isSettingsOpen);
+  }
 }
 
 export const appState = new AppState();

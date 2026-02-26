@@ -3,48 +3,47 @@ import { config } from "@/config";
 import { licenseKey } from "./license-key";
 
 export function getCleanUrl(url: string): string {
-	if (url.includes("google.com/url")) {
-		return new URL(url).searchParams.get("q") ?? url;
-	}
+  if (url.includes("google.com/url")) {
+    return new URL(url).searchParams.get("q") ?? url;
+  }
 
-	return url;
+  return url;
 }
 
 const MAX_EXTERNAL_URL_LENGTH = 256;
 
 export async function openExternalUrl(url: string, trustedLink?: boolean) {
-	const cleanUrl = getCleanUrl(url);
+  const cleanUrl = getCleanUrl(url);
 
-	if (licenseKey.isValid && config.get("externalLinks.confirm")) {
-		const { origin } = new URL(cleanUrl);
-		const trustedHosts = config.get("externalLinks.trustedHosts");
+  if (licenseKey.isValid && config.get("externalLinks.confirm")) {
+    const { origin } = new URL(cleanUrl);
+    const trustedHosts = config.get("externalLinks.trustedHosts");
 
-		if (!trustedLink && !trustedHosts.includes(origin)) {
-			const { response, checkboxChecked } = await dialog.showMessageBox({
-				type: "info",
-				buttons: ["Open Link", "Copy Link", "Cancel"],
-				message:
-					"Do you want to open this external link in your default browser?",
-				checkboxLabel: `Trust all links on ${origin}`,
-				detail:
-					cleanUrl.length > MAX_EXTERNAL_URL_LENGTH
-						? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 3)}...`
-						: cleanUrl,
-			});
+    if (!trustedLink && !trustedHosts.includes(origin)) {
+      const { response, checkboxChecked } = await dialog.showMessageBox({
+        type: "info",
+        buttons: ["Open Link", "Copy Link", "Cancel"],
+        message: "Do you want to open this external link in your default browser?",
+        checkboxLabel: `Trust all links on ${origin}`,
+        detail:
+          cleanUrl.length > MAX_EXTERNAL_URL_LENGTH
+            ? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 3)}...`
+            : cleanUrl,
+      });
 
-			if (response !== 0) {
-				if (response === 1) {
-					clipboard.writeText(cleanUrl);
-				}
+      if (response !== 0) {
+        if (response === 1) {
+          clipboard.writeText(cleanUrl);
+        }
 
-				return;
-			}
+        return;
+      }
 
-			if (checkboxChecked) {
-				config.set("externalLinks.trustedHosts", [...trustedHosts, origin]);
-			}
-		}
-	}
+      if (checkboxChecked) {
+        config.set("externalLinks.trustedHosts", [...trustedHosts, origin]);
+      }
+    }
+  }
 
-	shell.openExternal(cleanUrl);
+  shell.openExternal(cleanUrl);
 }

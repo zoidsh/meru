@@ -1,49 +1,49 @@
 :root {
-	--font-sans:
-		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-		"Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
 }
 
 @keyframes fadeIn {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-	0% {
-		opacity: 1;
-	}
-	100% {
-		opacity: 0;
-	}
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .meru-url-preview {
-	font-family: var(--font-sans);
-	position: fixed;
-	left: 0;
-	bottom: 0;
-	max-width: 50%;
-	padding: 6px;
-	font-size: 0.75rem;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-	background: oklch(0.145 0 0);
-	color: oklch(0.985 0 0);
-	transition: max-width 0.1s;
-	z-index: 9999;
-	animation: fadeIn 0.2s;
+  font-family: var(--font-sans);
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  max-width: 50%;
+  padding: 6px;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  background: oklch(0.145 0 0);
+  color: oklch(0.985 0 0);
+  transition: max-width 0.1s;
+  z-index: 9999;
+  animation: fadeIn 0.2s;
 }
 
 .meru-url-preview[data-long-hover="true"] {
-	max-width: 100%;
+  max-width: 100%;
 }
 
 .meru-url-preview[data-fade-out="true"] {
-	animation: fadeOut 0.2s;
+  animation: fadeOut 0.2s;
 }

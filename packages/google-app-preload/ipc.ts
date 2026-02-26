@@ -7,5 +7,5 @@ export const ipcRenderer = new IpcListener<IpcRendererEvent>();
 export const ipcMain = new IpcEmitter<IpcMainEvents>();
 
 ipcRenderer.on("googleApp.initAccountColorIndicator", (_event, color) => {
-	initAccountColorIndicator(color);
+  initAccountColorIndicator(color);
 });

@@ -9,7 +9,7 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
-  build:  
+  build:
     needs: ci
     runs-on: ${{ matrix.os }}
     strategy:

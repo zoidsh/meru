@@ -1,57 +1,56 @@
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import {
-	createElementNotProcessedSelector,
-	createElementProcessedAttributeFromPreloadArgument,
+  createElementNotProcessedSelector,
+  createElementProcessedAttributeFromPreloadArgument,
 } from "./lib/utils";
 
 const isOpenComposeInNewWindowEnabled = process.argv.includes(
-	GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
+  GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
 );
 
-const composeButtonProcessedAttribute =
-	createElementProcessedAttributeFromPreloadArgument(
-		GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
-	);
+const composeButtonProcessedAttribute = createElementProcessedAttributeFromPreloadArgument(
+  GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
+);
 
 const composeButtonElementSelector = createElementNotProcessedSelector(
-	".T-I.T-I-KE.L3",
-	composeButtonProcessedAttribute,
+  ".T-I.T-I-KE.L3",
+  composeButtonProcessedAttribute,
 );
 
 export async function openComposeInNewWindow() {
-	if (!isOpenComposeInNewWindowEnabled) {
-		return;
-	}
+  if (!isOpenComposeInNewWindowEnabled) {
+    return;
+  }
 
-	const composeButtonElement = $(composeButtonElementSelector);
+  const composeButtonElement = $(composeButtonElementSelector);
 
-	if (!composeButtonElement) {
-		return;
-	}
+  if (!composeButtonElement) {
+    return;
+  }
 
-	composeButtonElement.setAttribute(composeButtonProcessedAttribute, "");
+  composeButtonElement.setAttribute(composeButtonProcessedAttribute, "");
 
-	let isClicked = false;
+  let isClicked = false;
 
-	composeButtonElement.addEventListener("click", (event) => {
-		if (isClicked) {
-			isClicked = false;
+  composeButtonElement.addEventListener("click", (event) => {
+    if (isClicked) {
+      isClicked = false;
 
-			return;
-		}
+      return;
+    }
 
-		isClicked = true;
+    isClicked = true;
 
-		event.stopPropagation();
+    event.stopPropagation();
 
-		const clickEvent = new MouseEvent("click", {
-			bubbles: true,
-			cancelable: true,
-			view: window,
-			shiftKey: true,
-		});
+    const clickEvent = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      shiftKey: true,
+    });
 
-		composeButtonElement.dispatchEvent(clickEvent);
-	});
+    composeButtonElement.dispatchEvent(clickEvent);
+  });
 }

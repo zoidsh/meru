@@ -13,56 +13,56 @@ import { initToaster } from "./toaster";
 import { initUrlPreview } from "./url-preview";
 
 const features = [
-	getUnreadCount,
-	observeOutOfOfficeBanner,
-	addSenderIcons,
-	moveAttachmentsToTop,
-	openComposeInNewWindow,
-	setUserEmail,
+  getUnreadCount,
+  observeOutOfOfficeBanner,
+  addSenderIcons,
+  moveAttachmentsToTop,
+  openComposeInNewWindow,
+  setUserEmail,
 ];
 
 function runFeatures() {
-	for (const feature of features) {
-		try {
-			feature();
-		} catch (error) {
-			console.error("Error running feature:", error);
-		}
-	}
+  for (const feature of features) {
+    try {
+      feature();
+    } catch (error) {
+      console.error("Error running feature:", error);
+    }
+  }
 }
 
 const userEmailElementProcessedAttribute = "data-meru-user-email";
 
 function setUserEmail() {
-	const userEmail = $(
-		createElementNotProcessedSelector(
-			"meta[name='og-profile-acct']",
-			userEmailElementProcessedAttribute,
-		),
-	)?.getAttribute("content");
+  const userEmail = $(
+    createElementNotProcessedSelector(
+      "meta[name='og-profile-acct']",
+      userEmailElementProcessedAttribute,
+    ),
+  )?.getAttribute("content");
 
-	if (!userEmail) {
-		return;
-	}
+  if (!userEmail) {
+    return;
+  }
 
-	ipcMain.send("gmail.setUserEmail", userEmail);
+  ipcMain.send("gmail.setUserEmail", userEmail);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	if (window.location.hostname !== "mail.google.com") {
-		return;
-	}
+  if (window.location.hostname !== "mail.google.com") {
+    return;
+  }
 
-	initCss();
-	initUrlPreview();
-	initToaster();
+  initCss();
+  initUrlPreview();
+  initToaster();
 
-	const observer = new MutationObserver(() => {
-		runFeatures();
-	});
+  const observer = new MutationObserver(() => {
+    runFeatures();
+  });
 
-	observer.observe(document.body, {
-		childList: true,
-		subtree: true,
-	});
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 });

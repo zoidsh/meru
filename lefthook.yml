@@ -1,5 +1,5 @@
 pre-commit:
   commands:
     check:
-      run: bun lint:write {staged_files}
+      run: bun fmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true

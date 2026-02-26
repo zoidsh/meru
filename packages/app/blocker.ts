@@ -6,95 +6,86 @@ import { EMAIL_TRACKERS_REGEXP } from "./lib/trackers";
 import { licenseKey } from "./license-key";
 
 export class Blocker {
-	private _engine: FiltersEngine | undefined;
+  private _engine: FiltersEngine | undefined;
 
-	blockTracking = false;
+  blockTracking = false;
 
-	get engine() {
-		if (!this._engine) {
-			throw new Error("Blocker engine is not initialized");
-		}
+  get engine() {
+    if (!this._engine) {
+      throw new Error("Blocker engine is not initialized");
+    }
 
-		return this._engine;
-	}
+    return this._engine;
+  }
 
-	set engine(engine: FiltersEngine) {
-		this._engine = engine;
-	}
+  set engine(engine: FiltersEngine) {
+    this._engine = engine;
+  }
 
-	async init() {
-		if (!licenseKey.isValid || !config.get("blocker.enabled")) {
-			return;
-		}
+  async init() {
+    if (!licenseKey.isValid || !config.get("blocker.enabled")) {
+      return;
+    }
 
-		const lists: Promise<string>[] = [];
+    const lists: Promise<string>[] = [];
 
-		if (config.get("blocker.ads")) {
-			lists.push(
-				fs.readFile(
-					path.join(__dirname, "..", "static", "blocker", "easylist.txt"),
-					"utf-8",
-				),
-			);
-		}
+    if (config.get("blocker.ads")) {
+      lists.push(
+        fs.readFile(path.join(__dirname, "..", "static", "blocker", "easylist.txt"), "utf-8"),
+      );
+    }
 
-		this.blockTracking = config.get("blocker.tracking");
+    this.blockTracking = config.get("blocker.tracking");
 
-		if (this.blockTracking) {
-			lists.push(
-				fs.readFile(
-					path.join(__dirname, "..", "static", "blocker", "easyprivacy.txt"),
-					"utf-8",
-				),
-			);
-		}
+    if (this.blockTracking) {
+      lists.push(
+        fs.readFile(path.join(__dirname, "..", "static", "blocker", "easyprivacy.txt"), "utf-8"),
+      );
+    }
 
-		if (!lists.length) {
-			return;
-		}
+    if (!lists.length) {
+      return;
+    }
 
-		this.engine = FiltersEngine.parse((await Promise.all(lists)).join("\n"));
-	}
+    this.engine = FiltersEngine.parse((await Promise.all(lists)).join("\n"));
+  }
 
-	private onBeforeRequest = (
-		details: Electron.OnBeforeRequestListenerDetails,
-		callback: (response: Electron.CallbackResponse) => void,
-	) => {
-		const { id, url, resourceType, referrer } = details;
+  private onBeforeRequest = (
+    details: Electron.OnBeforeRequestListenerDetails,
+    callback: (response: Electron.CallbackResponse) => void,
+  ) => {
+    const { id, url, resourceType, referrer } = details;
 
-		const { redirect, match } = this.engine.match(
-			Request.fromRawDetails({
-				_originalRequestDetails: details,
-				requestId: `${id}`,
-				url,
-				type: resourceType,
-				sourceUrl: referrer,
-			}),
-		);
+    const { redirect, match } = this.engine.match(
+      Request.fromRawDetails({
+        _originalRequestDetails: details,
+        requestId: `${id}`,
+        url,
+        type: resourceType,
+        sourceUrl: referrer,
+      }),
+    );
 
-		if (redirect) {
-			callback({ redirectURL: redirect.dataUrl });
+    if (redirect) {
+      callback({ redirectURL: redirect.dataUrl });
 
-			return;
-		}
+      return;
+    }
 
-		if (match || (this.blockTracking && EMAIL_TRACKERS_REGEXP.test(url))) {
-			callback({ cancel: true });
+    if (match || (this.blockTracking && EMAIL_TRACKERS_REGEXP.test(url))) {
+      callback({ cancel: true });
 
-			return;
-		}
+      return;
+    }
 
-		callback({});
-	};
+    callback({});
+  };
 
-	setupSession(session: Electron.Session) {
-		if (this._engine) {
-			session.webRequest.onBeforeRequest(
-				{ urls: ["<all_urls>"] },
-				this.onBeforeRequest,
-			);
-		}
-	}
+  setupSession(session: Electron.Session) {
+    if (this._engine) {
+      session.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, this.onBeforeRequest);
+    }
+  }
 }
 
 export const blocker = new Blocker();

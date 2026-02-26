@@ -6,36 +6,30 @@ const messageWithAttachmentsSelector = `div:has(> ${attachmentsSelector})`;
 const horizontalLineClassName = "hp";
 
 const isMoveAttachmentsToTopEnabled = process.argv.includes(
-	GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop,
+  GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop,
 );
 
 export function moveAttachmentsToTop() {
-	if (!isMoveAttachmentsToTopEnabled) {
-		return;
-	}
+  if (!isMoveAttachmentsToTopEnabled) {
+    return;
+  }
 
-	const messageWithAttachmentsElements = $$(messageWithAttachmentsSelector);
+  const messageWithAttachmentsElements = $$(messageWithAttachmentsSelector);
 
-	for (const messageWithAttachmentsElement of messageWithAttachmentsElements) {
-		const attachmentsElement = $(
-			attachmentsSelector,
-			messageWithAttachmentsElement,
-		);
+  for (const messageWithAttachmentsElement of messageWithAttachmentsElements) {
+    const attachmentsElement = $(attachmentsSelector, messageWithAttachmentsElement);
 
-		if (
-			!attachmentsElement ||
-			messageWithAttachmentsElement.firstChild === attachmentsElement
-		) {
-			continue;
-		}
+    if (!attachmentsElement || messageWithAttachmentsElement.firstChild === attachmentsElement) {
+      continue;
+    }
 
-		const horizontalLineElement = document.createElement("div");
+    const horizontalLineElement = document.createElement("div");
 
-		horizontalLineElement.className = horizontalLineClassName;
-		horizontalLineElement.style.marginTop = "16px";
+    horizontalLineElement.className = horizontalLineClassName;
+    horizontalLineElement.style.marginTop = "16px";
 
-		attachmentsElement.append(horizontalLineElement);
+    attachmentsElement.append(horizontalLineElement);
 
-		messageWithAttachmentsElement.prepend(attachmentsElement);
-	}
+    messageWithAttachmentsElement.prepend(attachmentsElement);
+  }
 }

@@ -8,39 +8,33 @@ export const ipcRenderer = new IpcListener<IpcRendererEvent>();
 export const ipcMain = new IpcEmitter<IpcMainEvents>();
 
 ipcRenderer.on("gmail.navigateTo", (_event, destination) => {
-	window.location.hash = `#${destination}`;
+  window.location.hash = `#${destination}`;
 });
 
 ipcRenderer.on("gmail.openMessage", (_event, messageId: string) => {
-	window.location.hash = `#inbox/${messageId}`;
+  window.location.hash = `#inbox/${messageId}`;
 });
 
 ipcRenderer.on("gmail.handleMessage", async (_event, messageId, action) => {
-	await sendMailAction(messageId, action);
+  await sendMailAction(messageId, action);
 
-	refreshInbox();
+  refreshInbox();
 });
 
-ipcRenderer.on(
-	"gmail.showMessageSentNotification",
-	(_event, browserWindowId: number) => {
-		toast.success("Message sent", {
-			id: browserWindowId,
-			duration: Number.POSITIVE_INFINITY,
-			closeButton: true,
-			action: {
-				label: "Undo",
-				onClick: () => {
-					ipcMain.send("gmail.undoMessageSent", browserWindowId);
-				},
-			},
-		});
-	},
-);
+ipcRenderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
+  toast.success("Message sent", {
+    id: browserWindowId,
+    duration: Number.POSITIVE_INFINITY,
+    closeButton: true,
+    action: {
+      label: "Undo",
+      onClick: () => {
+        ipcMain.send("gmail.undoMessageSent", browserWindowId);
+      },
+    },
+  });
+});
 
-ipcRenderer.on(
-	"gmail.dismissMessageSentNotification",
-	(_event, browserWindowId: number) => {
-		toast.dismiss(browserWindowId);
-	},
-);
+ipcRenderer.on("gmail.dismissMessageSentNotification", (_event, browserWindowId: number) => {
+  toast.dismiss(browserWindowId);
+});

@@ -7,48 +7,48 @@ import { main } from "./main";
 import { appState } from "./state";
 
 class AppUpdater {
-	init() {
-		autoUpdater.logger = log;
+  init() {
+    autoUpdater.logger = log;
 
-		if (config.get("updates.showNotifications")) {
-			autoUpdater.on("update-downloaded", (updateInfo) => {
-				ipc.renderer.send(
-					main.window.webContents,
-					"appUpdater.updateAvailable",
-					`v${updateInfo.version}`,
-				);
-			});
-		}
+    if (config.get("updates.showNotifications")) {
+      autoUpdater.on("update-downloaded", (updateInfo) => {
+        ipc.renderer.send(
+          main.window.webContents,
+          "appUpdater.updateAvailable",
+          `v${updateInfo.version}`,
+        );
+      });
+    }
 
-		if (is.dev || !config.get("updates.autoCheck")) {
-			return;
-		}
+    if (is.dev || !config.get("updates.autoCheck")) {
+      return;
+    }
 
-		autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdates();
 
-		setInterval(
-			() => {
-				autoUpdater.checkForUpdates();
-			},
-			1000 * 60 * 60 * 3,
-		);
-	}
+    setInterval(
+      () => {
+        autoUpdater.checkForUpdates();
+      },
+      1000 * 60 * 60 * 3,
+    );
+  }
 
-	checkForUpdates() {
-		if (is.dev) {
-			return;
-		}
+  checkForUpdates() {
+    if (is.dev) {
+      return;
+    }
 
-		autoUpdater.checkForUpdates();
-	}
+    autoUpdater.checkForUpdates();
+  }
 
-	quitAndInstall() {
-		main.saveWindowState();
+  quitAndInstall() {
+    main.saveWindowState();
 
-		appState.isQuittingApp = true;
+    appState.isQuittingApp = true;
 
-		autoUpdater.quitAndInstall();
-	}
+    autoUpdater.quitAndInstall();
+  }
 }
 
 export const appUpdater = new AppUpdater();

@@ -1,4 +1,4 @@
 {
-	"extends": "@total-typescript/tsconfig/bundler/no-dom",
-	"exclude": ["packages"]
+  "extends": "@total-typescript/tsconfig/bundler/no-dom",
+  "exclude": ["packages"]
 }
