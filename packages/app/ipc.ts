@@ -516,7 +516,7 @@ class Ipc {
 
       const menu = Menu.buildFromTemplate([
         {
-          label: "Copy Message link",
+          label: "Copy Message Link",
           enabled: Boolean(messageHash),
           click: () => {
             if (!selectedAccount.instance.gmail.userEmail) {
