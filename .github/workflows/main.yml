@@ -21,7 +21,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run build:js
       - if: startsWith(matrix.os, 'macos')
         run: bun run build:mac -- --publish never
         env:
