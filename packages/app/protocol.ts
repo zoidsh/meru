@@ -9,7 +9,7 @@ import { main } from "./main";
 export const MAILTO_PROTOCOL = "mailto";
 
 export function findMailtoUrlArg(argv: string[]) {
-  return argv.find((arg) => arg.startsWith(`${MAILTO_PROTOCOL}://`));
+  return argv.find((arg) => arg.startsWith(`${MAILTO_PROTOCOL}:`));
 }
 
 export const PROCESS_MAILTO_URL_ARG = !platform.isMacOS
@@ -17,7 +17,7 @@ export const PROCESS_MAILTO_URL_ARG = !platform.isMacOS
   : undefined;
 
 export function isMailtoUrl(url: string) {
-  return url.startsWith(`${MAILTO_PROTOCOL}://`);
+  return url.startsWith(`${MAILTO_PROTOCOL}:`);
 }
 
 export async function handleMailtoUrl(url: string) {
