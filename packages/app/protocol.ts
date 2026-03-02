@@ -108,8 +108,10 @@ export function handleMeruUrl(url: string) {
     const email = paths[0];
 
     if (paths[1] === "message" && paths[2]) {
-      for (const [_accountId, account] of accounts.instances) {
+      for (const [accountId, account] of accounts.instances) {
         if (account.gmail.userEmail === email) {
+          accounts.selectAccount(accountId);
+
           ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", paths[2]);
 
           return;
