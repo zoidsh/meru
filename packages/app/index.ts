@@ -136,6 +136,8 @@ import { trial } from "./trial";
       }
 
       if (isMeruUrl(url)) {
+        main.show();
+
         handleMeruUrl(url);
       }
     });
