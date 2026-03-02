@@ -1,5 +1,6 @@
 pre-commit:
-  commands:
-    check:
+  jobs:
+    - name: fmt
       run: bun fmt --no-error-on-unmatched-pattern {staged_files}
-      stage_fixed: true
+    - name: lint
+      run: bun lint:fix {staged_files}
