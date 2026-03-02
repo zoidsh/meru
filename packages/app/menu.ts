@@ -3,6 +3,7 @@ import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import {
   app,
+  clipboard,
   dialog,
   Menu,
   type MenuItemConstructorOptions,
@@ -18,11 +19,18 @@ import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
+import { MERU_PROTOCOL } from "./protocol";
 
 export class AppMenu {
+  private _menuItemIds = {
+    copyMessageLink: "copy-message-link",
+  };
+
   private _menu: Menu | undefined;
 
   private _isPopupOpen = false;
+
+  private _unsubscribeToSelectedAccount: (() => void) | null = null;
 
   get menu() {
     if (!this._menu) {
@@ -39,6 +47,8 @@ export class AppMenu {
   init() {
     this.menu = this.createMenu();
 
+    this._subscribeToSelectedAccount();
+
     this.menu.on("menu-will-show", () => {
       this._isPopupOpen = true;
     });
@@ -52,8 +62,29 @@ export class AppMenu {
     config.onDidChange("accounts", () => {
       this.menu = this.createMenu();
 
+      this._subscribeToSelectedAccount();
+
       Menu.setApplicationMenu(this.menu);
     });
+  }
+
+  private _subscribeToSelectedAccount() {
+    if (this._unsubscribeToSelectedAccount) {
+      this._unsubscribeToSelectedAccount();
+    }
+
+    this._unsubscribeToSelectedAccount = accounts
+      .getSelectedAccount()
+      .instance.gmail.store.subscribe(
+        (state) => state.messageId,
+        (messageId) => {
+          const menuItem = this.menu.getMenuItemById(this._menuItemIds.copyMessageLink);
+
+          if (menuItem) {
+            menuItem.enabled = Boolean(messageId);
+          }
+        },
+      );
   }
 
   createMenu() {
@@ -229,6 +260,28 @@ export class AppMenu {
           {
             label: "Speech",
             submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
+          },
+        ],
+      },
+      {
+        label: "Message",
+        submenu: [
+          {
+            id: this._menuItemIds.copyMessageLink,
+            label: "Copy Message Link",
+            enabled: Boolean(
+              accounts.getSelectedAccount().instance.gmail.store.getState().messageId,
+            ),
+            accelerator: "CommandOrControl+Shift+C",
+            click: () => {
+              const selectedAccount = accounts.getSelectedAccount();
+              const userEmail = selectedAccount.instance.gmail.userEmail;
+              const messageId = selectedAccount.instance.gmail.store.getState().messageId;
+
+              if (userEmail && messageId) {
+                clipboard.writeText(`${MERU_PROTOCOL}://${userEmail}/message/${messageId}`);
+              }
+            },
           },
         ],
       },

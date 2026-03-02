@@ -168,7 +168,6 @@ export type IpcMainEvents =
       "googleApps.openApp": [app: GoogleAppsPinnedApp];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
-      "share.showOptions": [];
     }
   | {
       "licenseKey.activate": (licenseKey: string) => { success: boolean };

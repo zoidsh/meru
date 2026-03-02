@@ -39,9 +39,11 @@ export class Gmail extends GoogleApp {
     subscribeWithSelector<{
       unreadCount: number;
       outOfOffice: boolean;
+      messageId: string | null;
     }>(() => ({
       unreadCount: 0,
       outOfOffice: false,
+      messageId: null,
     })),
   );
 
@@ -107,6 +109,14 @@ export class Gmail extends GoogleApp {
               }
 
               view.webContents.insertCSS(meruCSS);
+            });
+
+            view.webContents.on("did-navigate-in-page", (_event, url) => {
+              const hash = new URL(url).hash;
+
+              const messageIdMatch = hash.match(/#[^/]+\/([A-Za-z0-9]{15,})$/);
+
+              this.store.setState({ messageId: messageIdMatch?.[1] || null });
             });
           },
         ],
