@@ -98,6 +98,15 @@ export function isMeruUrl(url: string) {
 }
 
 export function handleMeruUrl(url: string) {
+  if (!licenseKey.isValid) {
+    dialog.showMessageBox(main.window, {
+      type: "warning",
+      message: "Meru Pro is required to open Meru links",
+    });
+
+    return;
+  }
+
   if (!isMeruUrl(url)) {
     return;
   }

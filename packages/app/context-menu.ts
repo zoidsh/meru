@@ -7,6 +7,7 @@ import {
 import electronContextMenu from "electron-context-menu";
 import { accounts } from "./accounts";
 import { createMeruMessageUrl } from "./protocol";
+import { licenseKey } from "./license-key";
 
 export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) {
   electronContextMenu({
@@ -20,7 +21,11 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
       const selectedAccount = accounts.getSelectedAccount();
 
-      if (parameters.pageURL && selectedAccount.instance.gmail.view.webContents.getURL()) {
+      if (
+        licenseKey.isValid &&
+        parameters.pageURL &&
+        selectedAccount.instance.gmail.view.webContents.getURL()
+      ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;
         const messageId = selectedAccount.instance.gmail.store.getState().messageId;
 

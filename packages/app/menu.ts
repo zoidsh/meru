@@ -20,6 +20,7 @@ import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { createMeruMessageUrl } from "./protocol";
+import { licenseKey } from "./license-key";
 
 export class AppMenu {
   private _menuItemIds = {
@@ -265,13 +266,14 @@ export class AppMenu {
       },
       {
         label: "Message",
+        visible: licenseKey.isValid,
         submenu: [
           {
             id: this._menuItemIds.copyMessageLink,
             label: "Copy Message Link",
-            enabled: Boolean(
-              accounts.getSelectedAccount().instance.gmail.store.getState().messageId,
-            ),
+            enabled:
+              licenseKey.isValid &&
+              Boolean(accounts.getSelectedAccount().instance.gmail.store.getState().messageId),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
               const selectedAccount = accounts.getSelectedAccount();
