@@ -1,5 +1,12 @@
-import type { BrowserWindow, WebContentsView } from "electron";
+import {
+  clipboard,
+  type BrowserWindow,
+  type MenuItemConstructorOptions,
+  type WebContentsView,
+} from "electron";
 import electronContextMenu from "electron-context-menu";
+import { accounts } from "./accounts";
+import { createMeruMessageUrl } from "./protocol";
 
 export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) {
   electronContextMenu({
@@ -8,8 +15,31 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
     showSaveImageAs: true,
     showInspectElement: false,
     showCopyEmailAddress: true,
-    append: (_defaultActions, parameters) => [
-      {
+    append: (_defaultActions, parameters) => {
+      const menuItems: MenuItemConstructorOptions[] = [];
+
+      const selectedAccount = accounts.getSelectedAccount();
+
+      if (parameters.pageURL && selectedAccount.instance.gmail.view.webContents.getURL()) {
+        const userEmail = selectedAccount.instance.gmail.userEmail;
+        const messageId = selectedAccount.instance.gmail.store.getState().messageId;
+
+        if (userEmail && messageId) {
+          menuItems.push(
+            {
+              label: "Copy Message Link",
+              click: () => {
+                clipboard.writeText(createMeruMessageUrl(userEmail, messageId));
+              },
+            },
+            {
+              type: "separator",
+            },
+          );
+        }
+      }
+
+      menuItems.push({
         label: "Inspect Element",
         click: () => {
           window.webContents.inspectElement(parameters.x, parameters.y);
@@ -18,7 +48,9 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
             window.webContents.devToolsWebContents?.focus();
           }
         },
-      },
-    ],
+      });
+
+      return menuItems;
+    },
   });
 }

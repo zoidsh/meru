@@ -120,3 +120,7 @@ export function handleMeruUrl(url: string) {
     }
   }
 }
+
+export function createMeruMessageUrl(userEmail: string, messageId: string) {
+  return `${MERU_PROTOCOL}://${userEmail}/message/${messageId}`;
+}

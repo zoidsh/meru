@@ -19,7 +19,7 @@ import { ipc } from "@/ipc";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
-import { MERU_PROTOCOL } from "./protocol";
+import { createMeruMessageUrl } from "./protocol";
 
 export class AppMenu {
   private _menuItemIds = {
@@ -279,7 +279,7 @@ export class AppMenu {
               const messageId = selectedAccount.instance.gmail.store.getState().messageId;
 
               if (userEmail && messageId) {
-                clipboard.writeText(`${MERU_PROTOCOL}://${userEmail}/message/${messageId}`);
+                clipboard.writeText(createMeruMessageUrl(userEmail, messageId));
               }
             },
           },
