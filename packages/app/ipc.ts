@@ -193,7 +193,7 @@ class Ipc {
                     title: config.get("notifications.showSender")
                       ? mail.sender.name
                       : account.config.label,
-                    body: `Verification code ${verificationCode} copied.`,
+                    body: `Copied verification code ${verificationCode}`,
                   });
 
                   if (config.get("verificationCodes.autoDelete")) {

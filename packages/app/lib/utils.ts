@@ -1,44 +1,102 @@
 import { config } from "@/config";
 
 export function extractVerificationCode(texts: string[]) {
-  let textIncludesVerificationKeyword = false;
-  let textIncludesCodeKeyword = false;
+  let textIncludesHighConfidenceContext = false;
+  let textIncludesPositiveContext = false;
 
   for (const text of texts) {
-    if (/(?:verification|sign[- ]in)\b/i.test(text)) {
-      textIncludesVerificationKeyword = true;
+    if (
+      /verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication/i.test(
+        text,
+      )
+    ) {
+      textIncludesHighConfidenceContext = true;
 
       break;
     }
   }
 
   for (const text of texts) {
-    if (/\bcode\b/i.test(text)) {
-      textIncludesCodeKeyword = true;
+    if (/code/i.test(text)) {
+      textIncludesPositiveContext = true;
 
       break;
     }
   }
 
-  if (!textIncludesVerificationKeyword || !textIncludesCodeKeyword) {
+  if (!textIncludesHighConfidenceContext || !textIncludesPositiveContext) {
     return null;
   }
 
+  // 6-digit codes
   for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{4,8})\b/);
+    const verificationCodeMatch = text.match(/\b([0-9]{6})\b/);
 
-    if (verificationCodeMatch) {
-      return verificationCodeMatch[1] || null;
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1];
+    }
+  }
+
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{3}[\s-][0-9]{3})\b/);
+
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+    }
+  }
+
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2})\b/);
+
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+    }
+  }
+
+  // 8-digit codes
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{8})\b/);
+
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1];
+    }
+  }
+
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{4}[\s-][0-9]{4})\b/);
+
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1].replace(/[\s-]/g, "");
     }
   }
 
   for (const text of texts) {
     const verificationCodeMatch = text.match(
-      /\b(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*[0-9])([A-Z0-9]{4,8})\b/,
+      /\b([0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2})\b/,
     );
 
-    if (verificationCodeMatch) {
-      return verificationCodeMatch[1] || null;
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+    }
+  }
+
+  // 4-digit codes
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{4})\b/);
+
+    if (
+      verificationCodeMatch?.[1] &&
+      verificationCodeMatch[1] !== new Date().getFullYear().toString()
+    ) {
+      return verificationCodeMatch[1];
+    }
+  }
+
+  for (const text of texts) {
+    const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2})\b/);
+
+    if (verificationCodeMatch?.[1]) {
+      return verificationCodeMatch[1].replace(/[\s-]/g, "");
     }
   }
 
