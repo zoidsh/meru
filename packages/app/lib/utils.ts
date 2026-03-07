@@ -6,7 +6,7 @@ export function extractVerificationCode(texts: string[]) {
 
   for (const text of texts) {
     if (
-      /verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication/i.test(
+      /\b(verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication)\b/i.test(
         text,
       )
     ) {
@@ -17,7 +17,7 @@ export function extractVerificationCode(texts: string[]) {
   }
 
   for (const text of texts) {
-    if (/code/i.test(text)) {
+    if (/\bcode\b/i.test(text)) {
       textIncludesPositiveContext = true;
 
       break;
