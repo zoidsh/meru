@@ -23,18 +23,25 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
       if (
         licenseKey.isValid &&
-        parameters.pageURL &&
-        selectedAccount.instance.gmail.view.webContents.getURL()
+        parameters.pageURL === selectedAccount.instance.gmail.view.webContents.getURL()
       ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;
         const messageId = selectedAccount.instance.gmail.store.getState().messageId;
 
         if (userEmail && messageId) {
+          const meruMessageUrl = createMeruMessageUrl(userEmail, messageId);
+
           menuItems.push(
             {
               label: "Copy Message Link",
               click: () => {
-                clipboard.writeText(createMeruMessageUrl(userEmail, messageId));
+                clipboard.writeText(meruMessageUrl);
+              },
+            },
+            {
+              role: "shareMenu",
+              sharingItem: {
+                urls: [meruMessageUrl],
               },
             },
             {

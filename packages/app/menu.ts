@@ -78,12 +78,10 @@ export class AppMenu {
       .getSelectedAccount()
       .instance.gmail.store.subscribe(
         (state) => state.messageId,
-        (messageId) => {
-          const menuItem = this.menu.getMenuItemById(this._menuItemIds.copyMessageLink);
+        () => {
+          this.menu = this.createMenu();
 
-          if (menuItem) {
-            menuItem.enabled = Boolean(messageId);
-          }
+          Menu.setApplicationMenu(this.menu);
         },
       );
   }
@@ -128,6 +126,36 @@ export class AppMenu {
         config.set("gmail.zoomFactor", zoomFactor);
       }
     };
+
+    const selectedAccount = accounts.getSelectedAccount();
+    const userEmail = selectedAccount.instance.gmail.userEmail;
+    const messageId = selectedAccount.instance.gmail.store.getState().messageId;
+
+    const copyOrShareMessageLink =
+      userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
+
+    const messageSubmenu: MenuItemConstructorOptions[] = [
+      {
+        id: this._menuItemIds.copyMessageLink,
+        label: "Copy Message Link",
+        enabled: licenseKey.isValid && Boolean(copyOrShareMessageLink),
+        accelerator: "CommandOrControl+Shift+C",
+        click: () => {
+          if (copyOrShareMessageLink) {
+            clipboard.writeText(copyOrShareMessageLink);
+          }
+        },
+      },
+    ];
+
+    if (copyOrShareMessageLink) {
+      messageSubmenu.push({
+        role: "shareMenu",
+        sharingItem: {
+          urls: [copyOrShareMessageLink],
+        },
+      });
+    }
 
     const template: MenuItemConstructorOptions[] = [
       {
@@ -267,25 +295,7 @@ export class AppMenu {
       {
         label: "Message",
         visible: licenseKey.isValid,
-        submenu: [
-          {
-            id: this._menuItemIds.copyMessageLink,
-            label: "Copy Message Link",
-            enabled:
-              licenseKey.isValid &&
-              Boolean(accounts.getSelectedAccount().instance.gmail.store.getState().messageId),
-            accelerator: "CommandOrControl+Shift+C",
-            click: () => {
-              const selectedAccount = accounts.getSelectedAccount();
-              const userEmail = selectedAccount.instance.gmail.userEmail;
-              const messageId = selectedAccount.instance.gmail.store.getState().messageId;
-
-              if (userEmail && messageId) {
-                clipboard.writeText(createMeruMessageUrl(userEmail, messageId));
-              }
-            },
-          },
-        ],
+        submenu: messageSubmenu,
       },
       {
         label: "View",
