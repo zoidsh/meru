@@ -131,6 +131,7 @@ export type Config = {
   "googleApps.showAccountLabel": boolean;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
+  "verificationCodes.confidence": "high" | "medium";
   "doNotDisturb.enabled": boolean;
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;

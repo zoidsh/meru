@@ -88,6 +88,7 @@ export const config = new Store<Config>({
     "googleApps.showAccountLabel": true,
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
+    "verificationCodes.confidence": "high",
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,

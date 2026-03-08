@@ -1,30 +1,47 @@
 import { config } from "@/config";
 
 export function extractVerificationCode(texts: string[]) {
-  let textIncludesHighConfidenceContext = false;
-  let textIncludesPositiveContext = false;
+  const confidence = config.get("verificationCodes.confidence");
 
-  for (const text of texts) {
-    if (
-      /\b(verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication)\b/i.test(
-        text,
-      )
-    ) {
-      textIncludesHighConfidenceContext = true;
+  let textIncludesHighConfidencePattern = false;
+  let textIncludesMediumConfidencePattern = false;
+  let textIncludesNegativePattern = false;
 
-      break;
+  if (confidence === "high") {
+    for (const text of texts) {
+      if (
+        /\b(verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication)\b/i.test(
+          text,
+        )
+      ) {
+        textIncludesHighConfidencePattern = true;
+
+        break;
+      }
     }
   }
 
   for (const text of texts) {
     if (/\bcode\b/i.test(text)) {
-      textIncludesPositiveContext = true;
+      textIncludesMediumConfidencePattern = true;
 
       break;
     }
   }
 
-  if (!textIncludesHighConfidenceContext || !textIncludesPositiveContext) {
+  for (const text of texts) {
+    if (/\b(pick[-\s]up|delivery|collection)\b/i.test(text)) {
+      textIncludesNegativePattern = true;
+
+      break;
+    }
+  }
+
+  if (
+    (confidence === "high" && !textIncludesHighConfidencePattern) ||
+    !textIncludesMediumConfidencePattern ||
+    textIncludesNegativePattern
+  ) {
     return null;
   }
 
