@@ -154,18 +154,10 @@ class Ipc {
 
     if (Notification.isSupported()) {
       this.main.on("gmail.handleNewMessages", async (event, mails) => {
-        if (!config.get("notifications.enabled")) {
-          return;
-        }
-
         for (const mail of mails) {
           for (const [accountId, instance] of accounts.instances) {
             if (instance.gmail.view.webContents.id === event.sender.id) {
               const account = accounts.getAccount(accountId);
-
-              if (!account.config.notifications) {
-                break;
-              }
 
               let subtitle: string | undefined;
 
@@ -205,8 +197,12 @@ class Ipc {
                     );
                   }
 
-                  return;
+                  continue;
                 }
+              }
+
+              if (!config.get("notifications.enabled") || !account.config.notifications) {
+                continue;
               }
 
               createNotification({
@@ -286,7 +282,7 @@ class Ipc {
                 },
               });
 
-              break;
+              continue;
             }
           }
         }
