@@ -188,6 +188,15 @@ class Ipc {
                     body: `Copied verification code ${verificationCode}`,
                   });
 
+                  if (config.get("verificationCodes.autoMarkAsRead")) {
+                    this.renderer.send(
+                      event.sender,
+                      "gmail.handleMessage",
+                      mail.messageId,
+                      "markAsRead",
+                    );
+                  }
+
                   if (config.get("verificationCodes.autoDelete")) {
                     this.renderer.send(
                       event.sender,

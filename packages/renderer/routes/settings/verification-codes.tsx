@@ -67,6 +67,13 @@ export function VerificationCodesSettings() {
             </Select>
           </Field>
           <ConfigSwitchField
+            label="Automatically Mark Email as Read After Copying Verification Code"
+            description="Email containing verification code will be automatically marked as read
+							after the code has been copied to your clipboard."
+            configKey="verificationCodes.autoMarkAsRead"
+            licenseKeyRequired
+          />
+          <ConfigSwitchField
             label="Automatically Delete Email After Copying Verification Code"
             description="Email containing verification code will be automatically deleted
 							after the code has been copied to your clipboard."
