@@ -71,7 +71,7 @@
     "frimousse": "^0.3.0",
     "lefthook": "^2.1.2",
     "lucide-react": "^0.475.0",
-    "meru-api-client": "^2.0.0",
+    "meru-api-client": "^2.1.1",
     "node-machine-id": "^1.1.12",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
