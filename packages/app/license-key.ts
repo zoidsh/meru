@@ -3,6 +3,7 @@ import { machineId } from "node-machine-id";
 import { config } from "@/config";
 import { apiClient } from "./api-client";
 import { openExternalUrl } from "./url";
+import isOnline from "is-online";
 
 class LicenseKey {
   isValid = false;
@@ -53,7 +54,9 @@ class LicenseKey {
         }
       } else {
         await this.showActivationError({
-          detail: `Please try again or contact support for further help with the error: ${error.message}`,
+          detail: (await isOnline())
+            ? `Please try again or contact support for further help with the error: ${error.message} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+            : "It seems you are currently offline. Please connect to the internet and try again or contact support for further help.",
         });
       }
 
@@ -123,7 +126,9 @@ class LicenseKey {
           }
         } else {
           const { response } = await this.showValidationError({
-            detail: `Please restart the app to try again or contact support for further help with the error: ${error.message}`,
+            detail: (await isOnline())
+              ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+              : "It seems you are currently offline. Please connect to the internet and restart the app to try again or contact support for further help.",
             buttons: ["Restart", "Quit"],
             defaultId: 0,
             cancelId: 1,

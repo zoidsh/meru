@@ -6,6 +6,7 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
+import isOnline from "is-online";
 
 class Trial {
   private validationInterval: Timer | undefined;
@@ -25,7 +26,9 @@ class Trial {
       const { response } = await dialog.showMessageBox({
         type: "error",
         message: "Failed to validate Meru Pro trial",
-        detail: `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error}`,
+        detail: (await isOnline())
+          ? `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+          : "It seems you are currently offline. Please connect to the internet and restart the app to try again.",
         buttons: ["Restart", "Quit"],
         defaultId: 0,
         cancelId: 1,

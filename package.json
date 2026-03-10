@@ -69,6 +69,7 @@
     "esbuild": "^0.25.10",
     "esbuild-plugin-inline-import": "^1.1.0",
     "frimousse": "^0.3.0",
+    "is-online": "^12.0.2",
     "lefthook": "^2.1.2",
     "lucide-react": "^0.475.0",
     "meru-api-client": "^2.1.1",
