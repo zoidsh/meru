@@ -51,8 +51,8 @@ export const config = new Store<Config>({
     "notifications.showSummary": true,
     "notifications.playSound": true,
     "notifications.allowFromGoogleApps": false,
-    "notifications.sound": "bell",
-    "notifications.volume": 0.9,
+    "notifications.sound": "linen",
+    "notifications.volume": 1,
     "notifications.downloadCompleted": true,
     "updates.autoCheck": true,
     "updates.showNotifications": true,
@@ -244,6 +244,15 @@ export const config = new Store<Config>({
           store.set("accounts", accounts);
         }
       }
+    },
+    ">=3.35.0": (store) => {
+      const notificationSound = store.get("notifications.sound");
+
+      if (["system", "breeze", "chime", "duet", "knock", "linen"].includes(notificationSound)) {
+        return;
+      }
+
+      store.set("notifications.sound", "linen");
     },
   },
 });

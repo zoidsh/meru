@@ -23,13 +23,7 @@ export type DownloadItem = {
   exists: boolean;
 };
 
-export type NotificationSound =
-  | "bell"
-  | "bubble"
-  | "long-pop"
-  | "magic-marimba"
-  | "magic-ring"
-  | "retro-game";
+export type NotificationSound = "breeze" | "chime" | "duet" | "knock" | "linen";
 
 export const googleAppsPinnedApps = {
   calendar: "Calendar",

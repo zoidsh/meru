@@ -38,7 +38,7 @@ export function createNotification({
 
   if (sound !== "system" && playSound) {
     ipc.renderer.send(main.window.webContents, "notifications.playSound", {
-      sound: licenseKey.isValid ? sound : "bell",
+      sound: licenseKey.isValid ? sound : "linen",
       volume: config.get("notifications.volume"),
     });
   }

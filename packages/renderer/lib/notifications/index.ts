@@ -1,33 +1,16 @@
 import type { NotificationSound } from "@meru/shared/types";
-import bell from "./sounds/bell.wav?inline";
-import bubble from "./sounds/bubble.wav?inline";
-import longPop from "./sounds/long-pop.wav?inline";
-import magicMarimba from "./sounds/magic-marimba.wav?inline";
-import magicRing from "./sounds/magic-ring.wav?inline";
-import retroGame from "./sounds/retro-game.wav?inline";
+import breeze from "./sounds/breeze.wav?inline";
+import chime from "./sounds/chime.wav?inline";
+import duet from "./sounds/duet.wav?inline";
+import knock from "./sounds/knock.wav?inline";
+import linen from "./sounds/linen.wav?inline";
 
 export const NOTIFICATION_SOUNDS: Record<NotificationSound, { label: string; file: string }> = {
-  bell: {
-    label: "Bell",
-    file: bell,
-  },
-  bubble: {
-    label: "Bubble",
-    file: bubble,
-  },
-  "long-pop": { label: "Long Pop", file: longPop },
-  "magic-marimba": {
-    label: "Magic Marimba",
-    file: magicMarimba,
-  },
-  "magic-ring": {
-    label: "Magic Ring",
-    file: magicRing,
-  },
-  "retro-game": {
-    label: "Retro Game",
-    file: retroGame,
-  },
+  breeze: { label: "Breeze", file: breeze },
+  chime: { label: "Chime", file: chime },
+  duet: { label: "Duet", file: duet },
+  knock: { label: "Knock", file: knock },
+  linen: { label: "Linen", file: linen },
 };
 
 export function playNotificationSound({
