@@ -18,6 +18,7 @@ import { SavedSearchesSettings } from "@/routes/settings/saved-searches";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
 import { VersionHistorySettings } from "@/routes/settings/version-history";
+import { useSettingsStore } from "@/lib/stores";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
@@ -111,6 +112,12 @@ type SidebarNavItemProps =
 
 export function AppSidebar() {
   const [location, navigate] = useLocation();
+
+  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+
+  if (!isSettingsOpen) {
+    return;
+  }
 
   return (
     <div className="bg-sidebar p-4">
