@@ -5,6 +5,7 @@ import { config } from "./config";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
+import { platform } from "@electron-toolkit/utils";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -58,13 +59,23 @@ class Accounts {
       account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
-    // When launching minimized, the selected account view doesn't render
-    // unless we remove and re-add it after the window is shown
-    if (main.shouldLaunchMinimized) {
-      main.window.once("show", () => {
-        main.window.contentView.removeChildView(this.getSelectedAccount().instance.gmail.view);
+    // When launching minimized, the selected account view sometimes doesn't render
+    if (main.shouldLaunchMinimized || platform.isWindows) {
+      main.window[platform.isWindows ? "on" : "once"]("show", () => {
+        const selectedAccount = this.getSelectedAccount();
 
-        main.window.contentView.addChildView(this.getSelectedAccount().instance.gmail.view);
+        main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
+        main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+      });
+    }
+
+    // When window is minimized, the selected account view sometimes doesn't render
+    if (platform.isWindows) {
+      main.window.on("restore", () => {
+        const selectedAccount = this.getSelectedAccount();
+
+        main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
+        main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
       });
     }
   }
