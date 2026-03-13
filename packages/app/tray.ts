@@ -119,18 +119,24 @@ export class AppTray {
         }
       }
     }
+
+    this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
   }
 
   getMenuTemplate() {
     const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-      ...accounts.getAccountConfigs().map((accountConfig) => ({
-        label: accountConfig.label,
-        click: () => {
-          accounts.selectAccount(accountConfig.id);
+      ...accounts.getAccounts().map(({ config, instance }) => {
+        const unreadCount = instance.gmail.store.getState().unreadCount;
 
-          main.show();
-        },
-      })),
+        return {
+          label: unreadCount ? `${config.label} (${unreadCount})` : config.label,
+          click: () => {
+            accounts.selectAccount(config.id);
+
+            main.show();
+          },
+        };
+      }),
       {
         type: "separator",
       },
