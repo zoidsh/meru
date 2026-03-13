@@ -85,10 +85,6 @@
       "name": "@meru/app",
       "version": "0.0.0",
     },
-    "packages/desktop-sources": {
-      "name": "@meru/desktop-sources",
-      "version": "0.0.0",
-    },
     "packages/gmail-preload": {
       "name": "@meru/gmail-preload",
       "version": "0.0.0",
@@ -103,6 +99,10 @@
     },
     "packages/renderer-lib": {
       "name": "@meru/renderer-lib",
+      "version": "0.0.0",
+    },
+    "packages/renderer-popup": {
+      "name": "@meru/renderer-popup",
       "version": "0.0.0",
     },
     "packages/renderer-preload": {
@@ -292,8 +292,6 @@
 
     "@meru/app": ["@meru/app@workspace:packages/app"],
 
-    "@meru/desktop-sources": ["@meru/desktop-sources@workspace:packages/desktop-sources"],
-
     "@meru/gmail-preload": ["@meru/gmail-preload@workspace:packages/gmail-preload"],
 
     "@meru/meet-preload": ["@meru/meet-preload@workspace:packages/google-app-preload"],
@@ -301,6 +299,8 @@
     "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 
     "@meru/renderer-lib": ["@meru/renderer-lib@workspace:packages/renderer-lib"],
+
+    "@meru/renderer-popup": ["@meru/renderer-popup@workspace:packages/renderer-popup"],
 
     "@meru/renderer-preload": ["@meru/renderer-preload@workspace:packages/renderer-preload"],
 

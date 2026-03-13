@@ -36,7 +36,7 @@ import { useForm as useHookForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@/lib/react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({

@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import type { Config } from "@meru/shared/types";
 
 export function VerificationCodesSettings() {

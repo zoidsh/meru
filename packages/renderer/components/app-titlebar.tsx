@@ -27,7 +27,7 @@ import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
 import { useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig } from "@/lib/react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import {
   useAccountsStore,
   useAppUpdaterStore,

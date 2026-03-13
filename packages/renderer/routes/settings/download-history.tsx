@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { date } from "@/lib/date";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { useDownloadsStore } from "@/lib/stores";
 
 function DateFromNow({ timestamp }: { timestamp: number }) {

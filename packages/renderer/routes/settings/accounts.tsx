@@ -45,7 +45,7 @@ import { useForm } from "react-hook-form";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@/lib/react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 

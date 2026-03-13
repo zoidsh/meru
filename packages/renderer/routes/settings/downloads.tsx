@@ -4,7 +4,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@meru/ui/compon
 import { Input } from "@meru/ui/components/input";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@/lib/react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 export function DownloadsSettings() {

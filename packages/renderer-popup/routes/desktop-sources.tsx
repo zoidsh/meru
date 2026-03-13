@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@meru/ui/components/ta
 import { cn } from "@meru/ui/lib/utils";
 import { useEffect, useState } from "react";
 
-export function App() {
+export function DesktopSources() {
   const [desktopSources, setDesktopSources] = useState<DesktopSources>([]);
   const [selectedDesktopSourceId, setSelectedDesktopSourceId] = useState<string>("");
 

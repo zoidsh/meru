@@ -1,6 +1,6 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { useEffect } from "react";
-import { useConfig } from "./react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import { useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {

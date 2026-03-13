@@ -15,7 +15,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 
 export function GoogleAppsSettings() {
   const { config } = useConfig();

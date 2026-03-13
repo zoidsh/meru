@@ -120,15 +120,17 @@ export class Account {
         searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
         if (is.dev) {
-          desktopSourcesWindow.webContents.loadURL(`http://localhost:3001/?${searchParams}`);
+          desktopSourcesWindow.webContents.loadURL(
+            `http://localhost:3001/?${searchParams}#desktop-sources`,
+          );
 
           desktopSourcesWindow.webContents.openDevTools({
             mode: "detach",
           });
         } else {
           desktopSourcesWindow.webContents.loadFile(
-            path.join("build-js", "desktop-sources", "index.html"),
-            { search: searchParams.toString() },
+            path.join("build-js", "renderer-popup", "index.html"),
+            { hash: "desktop-sources", search: searchParams.toString() },
           );
         }
       },

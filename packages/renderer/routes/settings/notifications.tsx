@@ -27,7 +27,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 
 export function NotificationsSettings() {
   const { config } = useConfig();

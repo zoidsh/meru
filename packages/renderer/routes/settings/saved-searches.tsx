@@ -43,7 +43,7 @@ import { useForm } from "react-hook-form";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 
 export function SavedSearchForm({
   savedSearch = { label: "", query: "" },

@@ -20,7 +20,7 @@ import {
 } from "@meru/ui/components/select";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 export function AppearanceSettings() {

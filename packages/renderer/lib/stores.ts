@@ -7,7 +7,7 @@ import {
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
-import { getConfig } from "./react-query";
+import { getConfig } from "@meru/renderer-lib/react-query";
 
 export const useAccountsStore = create<{
   accounts: AccountInstances;

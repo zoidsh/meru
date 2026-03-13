@@ -1,0 +1,5 @@
+@import "sonner/dist/styles.css";
+@import "../ui/globals.css";
+
+@source "../ui/**/*.{ts,tsx}";
+@source "../shared/**/*.{ts,tsx}";

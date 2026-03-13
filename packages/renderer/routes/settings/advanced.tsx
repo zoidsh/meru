@@ -19,7 +19,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { queryClient } from "@/lib/react-query";
+import { queryClient } from "@meru/renderer-lib/react-query";
 
 function LaunchAtLoginField() {
   const queryKey = ["login-item-settings"];

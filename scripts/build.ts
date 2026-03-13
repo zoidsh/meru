@@ -124,7 +124,7 @@ async function buildRenderer(rendererName: string, port: number) {
 await Promise.all([
   buildAppFiles(),
   buildRenderer("renderer", 3000),
-  buildRenderer("desktop-sources", 3001),
+  buildRenderer("renderer-popup", 3001),
 ]);
 
 if (args.values.dev) {
@@ -165,7 +165,7 @@ if (args.values.dev) {
 
   for await (const event of watcher) {
     if (
-      ["desktop-sources/", "renderer/", "renderer-lib/", "ui/"].some((pathname) =>
+      ["renderer/", "renderer-popup/", "renderer-lib/", "ui/"].some((pathname) =>
         event.filename?.includes(pathname),
       )
     ) {

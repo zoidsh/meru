@@ -7,7 +7,7 @@ import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { useMouseAccountSwitching } from "./lib/hooks";
-import { queryClient } from "./lib/react-query";
+import { queryClient } from "@meru/renderer-lib/react-query";
 import { useThemeStore } from "./lib/stores";
 
 export function App() {
