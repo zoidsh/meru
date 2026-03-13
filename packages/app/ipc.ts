@@ -521,6 +521,15 @@ class Ipc {
         }
       }
     });
+
+    ipc.main.handle("downloads.dragFile", (event, filePath) => {
+      event.sender.startDrag({
+        file: filePath,
+        icon: nativeImage.createFromDataURL(
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAAJRJREFUeAHtleEJgCAQhY8maIRWbILaoDZwtNpAN3gpGImU3inYHx+cCL53n4ogUWsBWGxp5OU8ytYkab5BroMNwbPzKeMLm/Mhd4rrc01FECnAz2PIyApyAS8QxQ4mfKlXpkPvQGWabZ0fa/VXJMmXnoCtDuiADvgBYNwAyTfoFWRMyrSiXjtldrKD9+nHcpmVWusCljS3BE1jBC0AAAAASUVORK5CYII=",
+        ),
+      });
+    });
   }
 }
 

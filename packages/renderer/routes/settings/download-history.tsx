@@ -75,26 +75,27 @@ export function DownloadHistorySettings() {
                 <div className="text-muted-foreground first-letter:capitalize">
                   <DateFromNow timestamp={createdAt} />
                 </div>
-                <Tooltip delayDuration={700}>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="font-semibold hover:underline underline-offset-4"
-                      type="button"
-                      onClick={async () => {
-                        const { error } = await ipc.main.invoke("downloads.openFile", filePath);
+                <button
+                  className="font-semibold hover:underline underline-offset-4"
+                  type="button"
+                  onClick={async () => {
+                    const { error } = await ipc.main.invoke("downloads.openFile", filePath);
 
-                        if (error) {
-                          toast("Failed to open file", {
-                            description: error,
-                          });
-                        }
-                      }}
-                    >
-                      {fileName}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Open file</TooltipContent>
-                </Tooltip>
+                    if (error) {
+                      toast("Failed to open file", {
+                        description: error,
+                      });
+                    }
+                  }}
+                  onDragStart={(event) => {
+                    event.preventDefault();
+
+                    ipc.main.invoke("downloads.dragFile", filePath);
+                  }}
+                  draggable
+                >
+                  {fileName}
+                </button>
               </div>
               <div className="flex gap-2">
                 <Tooltip delayDuration={700}>

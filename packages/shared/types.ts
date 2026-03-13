@@ -174,6 +174,7 @@ export type IpcMainEvents =
       "downloads.showFileInFolder": (filePath: string) => {
         error: string | null;
       };
+      "downloads.dragFile": (filePath: string) => void;
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
       "downloads.setLocation": () => { canceled: boolean };
