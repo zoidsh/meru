@@ -4,6 +4,9 @@ index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2
 diff --git a/node_modules/electron-context-menu/.bun-tag-912468a398585a31 b/.bun-tag-912468a398585a31
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/electron-context-menu/.bun-tag-b553a854f9ef0c9f b/.bun-tag-b553a854f9ef0c9f
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/index.d.ts b/index.d.ts
 index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..7a52ea17aec36bcab6e2e0640c8fadb3d0782b2a 100644
 --- a/index.d.ts
@@ -23,7 +26,7 @@ index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..7a52ea17aec36bcab6e2e0640c8fadb3
  	Show the `Save Video` menu item when right-clicking on a video.
  
 diff --git a/index.js b/index.js
-index 8ec2624b2ed049733788311aed0852432dbefb42..4aa5b48fef3d9d07a624c763ce6a45e7ceeaa8b2 100644
+index 8ec2624b2ed049733788311aed0852432dbefb42..1274e0d8e2b125821689cc214dc0b8c08ba01fdd 100644
 --- a/index.js
 +++ b/index.js
 @@ -117,6 +117,23 @@ const create = (win, options) => {
@@ -90,3 +93,12 @@ index 8ec2624b2ed049733788311aed0852432dbefb42..4aa5b48fef3d9d07a624c763ce6a45e7
  			defaultActions.separator(),
  			options.showCopyLink !== false && defaultActions.copyLink(),
  			options.showSaveLinkAs && defaultActions.saveLinkAs(),
+@@ -354,7 +390,7 @@ const create = (win, options) => {
+ 			return;
+ 		}
+ 
+-		webContents(win).removeListener('context-menu', handleContextMenu);
++		webContents(win)?.removeListener('context-menu', handleContextMenu);
+ 	};
+ };
+ 
