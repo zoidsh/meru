@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { platform } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -348,7 +348,9 @@ class Ipc {
     });
 
     config.onDidAnyChange(() => {
-      ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
+      for (const browserWindow of BrowserWindow.getAllWindows()) {
+        ipc.renderer.send(browserWindow.webContents, "config.configChanged", config.store);
+      }
     });
 
     ipc.main.handle("downloads.setLocation", async () => {
@@ -529,6 +531,37 @@ class Ipc {
           "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAAJRJREFUeAHtleEJgCAQhY8maIRWbILaoDZwtNpAN3gpGImU3inYHx+cCL53n4ogUWsBWGxp5OU8ytYkab5BroMNwbPzKeMLm/Mhd4rrc01FECnAz2PIyApyAS8QxQ4mfKlXpkPvQGWabZ0fa/VXJMmXnoCtDuiADvgBYNwAyTfoFWRMyrSiXjtldrKD9+nHcpmVWusCljS3BE1jBC0AAAAASUVORK5CYII=",
         ),
       });
+    });
+
+    ipc.main.on("downloads.openPopup", () => {
+      const popupWindow = new BrowserWindow({
+        title: "Download History",
+        width: 640,
+        height: 480,
+        autoHideMenuBar: true,
+        webPreferences: {
+          preload: path.join(__dirname, "renderer-preload", "index.js"),
+        },
+      });
+
+      const searchParams = new URLSearchParams();
+
+      searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
+
+      const hash = "download-history";
+
+      if (is.dev) {
+        popupWindow.webContents.loadURL(`http://localhost:3001/?${searchParams}#${hash}`);
+
+        popupWindow.webContents.openDevTools({
+          mode: "detach",
+        });
+      } else {
+        popupWindow.webContents.loadFile(path.join("build-js", "renderer-popup", "index.html"), {
+          hash,
+          search: searchParams.toString(),
+        });
+      }
     });
   }
 }

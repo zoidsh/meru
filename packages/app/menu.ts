@@ -304,7 +304,7 @@ export class AppMenu {
             label: "Downloads",
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
-              main.navigate("/settings/download-history");
+              main.navigate("/download-history");
             },
           },
           {

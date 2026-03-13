@@ -8,7 +8,7 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { date } from "@/lib/date";
+import { date } from "@meru/renderer-lib/date";
 
 export function VersionHistorySettings() {
   const { data, isPending, isError, refetch } = useQuery({

@@ -7,7 +7,7 @@ import { AccountsSettings } from "@/routes/settings/accounts";
 import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
 import { BlockerSettings } from "@/routes/settings/blocker";
-import { DownloadHistorySettings } from "@/routes/settings/download-history";
+import { DownloadHistory } from "@/routes/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
 import { GmailSettings } from "@/routes/settings/gmail";
 import { GoogleAppsSettings } from "@/routes/settings/google-apps";
@@ -23,8 +23,8 @@ import { useSettingsStore } from "@/lib/stores";
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
     label: "Download History",
-    path: "/settings/download-history",
-    component: DownloadHistorySettings,
+    path: "/download-history",
+    component: DownloadHistory,
   },
   {
     type: "separator",

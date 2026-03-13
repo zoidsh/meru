@@ -45,6 +45,7 @@ export const config = new Store<Config>({
     "downloads.openFolderWhenDone": false,
     "downloads.location": app.getPath("downloads"),
     "downloads.history": [],
+    "downloadHistory.alwaysOpenInNewWindow": false,
     "notifications.enabled": true,
     "notifications.showSender": true,
     "notifications.showSubject": true,

@@ -102,6 +102,10 @@ function Download() {
 
   const { config } = useConfig();
 
+  if (!config) {
+    return;
+  }
+
   const completedDownloadItem = useDownloadsStore(
     (state) =>
       (state.itemCompleted &&
@@ -116,9 +120,13 @@ function Download() {
         variant="ghost"
         size="icon"
         className="size-7"
-        onClick={() => {
-          navigate("/settings/download-history");
-          ipc.main.send("settings.toggleIsOpen");
+        onClick={(event) => {
+          if (config["downloadHistory.alwaysOpenInNewWindow"] || event.metaKey || event.ctrlKey) {
+            ipc.main.send("downloads.openPopup");
+          } else {
+            navigate("/download-history");
+            ipc.main.send("settings.toggleIsOpen");
+          }
         }}
         title="Download History"
       >
