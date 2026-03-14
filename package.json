@@ -153,10 +153,7 @@
       ],
       "synopsis": "The Gmail experience you deserve",
       "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-      "category": "Network;Office",
-      "mimeTypes": [
-        "x-scheme-handler/mailto"
-      ]
+      "category": "Network;Office"
     },
     "win": {
       "verifyUpdateCodeSignature": false,
