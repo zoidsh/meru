@@ -27,10 +27,12 @@ export class AppTray {
 
       this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
-      if (platform.isLinux) {
-        this.tray.setContextMenu(this.menu);
-      } else {
-        this.tray.on("click", () => {
+      this.tray.setContextMenu(this.menu);
+
+      this.tray.on("click", () => {
+        if (main.window.isVisible() && !main.window.isMinimized()) {
+          main.window.hide();
+        } else {
           const accountWithUnread = accounts.getFirstAccountWithUnread();
 
           if (accountWithUnread) {
@@ -38,12 +40,12 @@ export class AppTray {
           }
 
           main.show();
-        });
+        }
+      });
 
-        this.tray.on("right-click", () => {
-          this.tray?.popUpContextMenu(this.menu);
-        });
-      }
+      config.onDidChange("accounts", () => {
+        this.updateWindowVisibilityMenuItem();
+      });
 
       main.window.on("hide", () => {
         this.updateWindowVisibilityMenuItem();
@@ -90,18 +92,9 @@ export class AppTray {
   }
 
   updateWindowVisibilityMenuItem() {
-    if (this.tray && this.menu) {
-      const showWindowMenuItem = this.menu.getMenuItemById("show-win");
-
-      if (showWindowMenuItem) {
-        showWindowMenuItem.visible = !main.window.isVisible();
-      }
-
-      const hideWindowMenuItem = this.menu.getMenuItemById("hide-win");
-
-      if (hideWindowMenuItem) {
-        hideWindowMenuItem.visible = main.window.isVisible();
-      }
+    if (this.tray) {
+      this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+      this.tray.setContextMenu(this.menu);
     }
   }
 
@@ -121,6 +114,7 @@ export class AppTray {
     }
 
     this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+    this.tray?.setContextMenu(this.menu);
   }
 
   getMenuTemplate() {
@@ -142,7 +136,7 @@ export class AppTray {
       },
       {
         label: "Show",
-        visible: main.shouldLaunchMinimized,
+        visible: !main.window.isVisible(),
         id: "show-win",
         click: () => {
           main.show();
@@ -150,7 +144,7 @@ export class AppTray {
       },
       {
         label: "Hide",
-        visible: !main.shouldLaunchMinimized,
+        visible: main.window.isVisible(),
         id: "hide-win",
         click: () => {
           main.window.hide();
