@@ -8,7 +8,7 @@ import { main } from "@/main";
 export class AppTray {
   private tray: Electron.Tray | undefined;
 
-  private menu: Electron.Menu | undefined;
+  private contextMenu: Electron.Menu | undefined;
 
   private icon: Electron.NativeImage | undefined;
   private iconUnread: Electron.NativeImage | undefined;
@@ -25,33 +25,41 @@ export class AppTray {
 
       this.tray.setToolTip(Electron.app.name);
 
-      this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+      this.createOrUpdateContextMenu();
 
-      if (platform.isLinux) {
-        this.tray.setContextMenu(this.menu);
-      } else {
-        this.tray.on("click", () => {
-          const accountWithUnread = accounts.getFirstAccountWithUnread();
+      this.tray.on("click", () => {
+        this.toggleWindow();
+      });
 
-          if (accountWithUnread) {
-            accounts.selectAccount(accountWithUnread.id);
-          }
+      this.tray.on("right-click", () => {
+        this.tray?.popUpContextMenu(this.contextMenu);
+      });
 
-          main.show();
-        });
-
-        this.tray.on("right-click", () => {
-          this.tray?.popUpContextMenu(this.menu);
-        });
-      }
+      config.onDidChange("accounts", () => {
+        this.createOrUpdateContextMenu();
+      });
 
       main.window.on("hide", () => {
-        this.updateWindowVisibilityMenuItem();
+        this.createOrUpdateContextMenu();
       });
 
       main.window.on("show", () => {
-        this.updateWindowVisibilityMenuItem();
+        this.createOrUpdateContextMenu();
       });
+    }
+  }
+
+  toggleWindow() {
+    if (main.window.isVisible()) {
+      main.window.hide();
+    } else {
+      const accountWithUnread = accounts.getFirstAccountWithUnread();
+
+      if (accountWithUnread) {
+        accounts.selectAccount(accountWithUnread.id);
+      }
+
+      main.show();
     }
   }
 
@@ -89,19 +97,11 @@ export class AppTray {
     }
   }
 
-  updateWindowVisibilityMenuItem() {
-    if (this.tray && this.menu) {
-      const showWindowMenuItem = this.menu.getMenuItemById("show-win");
+  createOrUpdateContextMenu() {
+    this.contextMenu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
 
-      if (showWindowMenuItem) {
-        showWindowMenuItem.visible = !main.window.isVisible();
-      }
-
-      const hideWindowMenuItem = this.menu.getMenuItemById("hide-win");
-
-      if (hideWindowMenuItem) {
-        hideWindowMenuItem.visible = main.window.isVisible();
-      }
+    if (platform.isLinux && this.tray) {
+      this.tray.setContextMenu(this.contextMenu);
     }
   }
 
@@ -120,10 +120,12 @@ export class AppTray {
       }
     }
 
-    this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+    this.createOrUpdateContextMenu();
   }
 
   getMenuTemplate() {
+    const mainWindowIsVisible = main.window.isVisible();
+
     const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
       ...accounts.getAccounts().map(({ config, instance }) => {
         const unreadCount = instance.gmail.store.getState().unreadCount;
@@ -141,19 +143,9 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: "Show",
-        visible: main.shouldLaunchMinimized,
-        id: "show-win",
+        label: mainWindowIsVisible ? "Hide" : "Show",
         click: () => {
-          main.show();
-        },
-      },
-      {
-        label: "Hide",
-        visible: !main.shouldLaunchMinimized,
-        id: "hide-win",
-        click: () => {
-          main.window.hide();
+          main.window[mainWindowIsVisible ? "hide" : "show"]();
         },
       },
       {
