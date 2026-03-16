@@ -79,7 +79,7 @@ import { trial } from "./trial";
 
   accounts.init();
 
-  main.init();
+  await main.init();
 
   main.loadURL();
 

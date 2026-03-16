@@ -1,18 +1,23 @@
 import { platform } from "@electron-toolkit/utils";
-import { execFileSync } from "node:child_process";
+import * as childProcess from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 
-function getGtkDecorationLayout() {
+const execFile = promisify(childProcess.execFile);
+
+let isLinuxWindowControlsEnabled: boolean | null = null;
+
+async function getGtkDecorationLayout() {
   try {
-    const layout = execFileSync(
+    const { stdout: layout } = await execFile(
       "gsettings",
       ["get", "org.gnome.desktop.wm.preferences", "button-layout"],
-      { encoding: "utf8", timeout: 1000 },
-    ).trim();
+      { timeout: 3000 },
+    );
 
-    return layout.replace(/^'|'$/g, "");
+    return layout.trim().replace(/^'|'$/g, "");
   } catch {
     // gsettings not available or schema not installed
   }
@@ -41,16 +46,19 @@ function getGtkDecorationLayout() {
   return null;
 }
 
-export function shouldShowWindowControls() {
+export async function getIsLinuxWindowControlsEnabled() {
   if (!platform.isLinux) {
-    return;
+    throw new Error("getIsLinuxWindowControlsEnabled is only supported on Linux");
   }
 
-  const layout = getGtkDecorationLayout();
-
-  if (layout === null) {
-    return true;
+  if (typeof isLinuxWindowControlsEnabled === "boolean") {
+    return isLinuxWindowControlsEnabled;
   }
 
-  return /close|minimize|maximize/.test(layout);
+  const gtkDecorationLayout = await getGtkDecorationLayout();
+
+  isLinuxWindowControlsEnabled =
+    gtkDecorationLayout === null ? true : /close|minimize|maximize/.test(gtkDecorationLayout);
+
+  return isLinuxWindowControlsEnabled;
 }
