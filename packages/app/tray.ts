@@ -8,7 +8,7 @@ import { main } from "@/main";
 export class AppTray {
   private tray: Electron.Tray | undefined;
 
-  private menu: Electron.Menu | undefined;
+  private contextMenu: Electron.Menu | undefined;
 
   private icon: Electron.NativeImage | undefined;
   private iconUnread: Electron.NativeImage | undefined;
@@ -25,35 +25,41 @@ export class AppTray {
 
       this.tray.setToolTip(Electron.app.name);
 
-      this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
-
-      this.tray.setContextMenu(this.menu);
+      this.createOrUpdateContextMenu();
 
       this.tray.on("click", () => {
-        if (main.window.isVisible() && !main.window.isMinimized()) {
-          main.window.hide();
-        } else {
-          const accountWithUnread = accounts.getFirstAccountWithUnread();
+        this.toggleWindow();
+      });
 
-          if (accountWithUnread) {
-            accounts.selectAccount(accountWithUnread.id);
-          }
-
-          main.show();
-        }
+      this.tray.on("right-click", () => {
+        this.tray?.popUpContextMenu(this.contextMenu);
       });
 
       config.onDidChange("accounts", () => {
-        this.updateWindowVisibilityMenuItem();
+        this.createOrUpdateContextMenu();
       });
 
       main.window.on("hide", () => {
-        this.updateWindowVisibilityMenuItem();
+        this.createOrUpdateContextMenu();
       });
 
       main.window.on("show", () => {
-        this.updateWindowVisibilityMenuItem();
+        this.createOrUpdateContextMenu();
       });
+    }
+  }
+
+  toggleWindow() {
+    if (main.window.isVisible()) {
+      main.window.hide();
+    } else {
+      const accountWithUnread = accounts.getFirstAccountWithUnread();
+
+      if (accountWithUnread) {
+        accounts.selectAccount(accountWithUnread.id);
+      }
+
+      main.show();
     }
   }
 
@@ -91,10 +97,11 @@ export class AppTray {
     }
   }
 
-  updateWindowVisibilityMenuItem() {
-    if (this.tray) {
-      this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
-      this.tray.setContextMenu(this.menu);
+  createOrUpdateContextMenu() {
+    this.contextMenu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
+
+    if (platform.isLinux && this.tray) {
+      this.tray.setContextMenu(this.contextMenu);
     }
   }
 
@@ -113,11 +120,12 @@ export class AppTray {
       }
     }
 
-    this.menu = Electron.Menu.buildFromTemplate(this.getMenuTemplate());
-    this.tray?.setContextMenu(this.menu);
+    this.createOrUpdateContextMenu();
   }
 
   getMenuTemplate() {
+    const mainWindowIsVisible = main.window.isVisible();
+
     const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
       ...accounts.getAccounts().map(({ config, instance }) => {
         const unreadCount = instance.gmail.store.getState().unreadCount;
@@ -135,19 +143,9 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: "Show",
-        visible: !main.window.isVisible(),
-        id: "show-win",
+        label: mainWindowIsVisible ? "Hide" : "Show",
         click: () => {
-          main.show();
-        },
-      },
-      {
-        label: "Hide",
-        visible: main.window.isVisible(),
-        id: "hide-win",
-        click: () => {
-          main.window.hide();
+          main.window[mainWindowIsVisible ? "hide" : "show"]();
         },
       },
       {
