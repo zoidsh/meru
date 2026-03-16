@@ -1,9 +1,10 @@
+import { platform } from "@electron-toolkit/utils";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-function getGtkDecorationLayout(): string | null {
+function getGtkDecorationLayout() {
   try {
     const layout = execFileSync(
       "gsettings",
@@ -40,7 +41,11 @@ function getGtkDecorationLayout(): string | null {
   return null;
 }
 
-export function shouldShowWindowControls(): boolean {
+export function shouldShowWindowControls() {
+  if (!platform.isLinux) {
+    return;
+  }
+
   const layout = getGtkDecorationLayout();
 
   if (layout === null) {
