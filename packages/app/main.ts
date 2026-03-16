@@ -4,7 +4,7 @@ import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { app, BrowserWindow, nativeTheme, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
-import { shouldShowWindowControls } from "@/lib/platform";
+import { shouldShowWindowControls } from "@/lib/linux";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
