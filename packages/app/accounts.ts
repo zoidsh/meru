@@ -60,8 +60,8 @@ class Accounts {
     }
 
     // When launching minimized, the selected account view sometimes doesn't render
-    if (main.shouldLaunchMinimized || platform.isWindows) {
-      main.window[platform.isWindows ? "on" : "once"]("show", () => {
+    if (main.shouldLaunchMinimized) {
+      main.window.once("show", () => {
         const selectedAccount = this.getSelectedAccount();
 
         main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
@@ -69,13 +69,12 @@ class Accounts {
       });
     }
 
-    // When window is minimized, the selected account view sometimes doesn't render
+    // When window is minimized, the account views sometimes don't render after restoring window
     if (platform.isWindows) {
       main.window.on("restore", () => {
-        const selectedAccount = this.getSelectedAccount();
-
-        main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
-        main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+        for (const [_accountId, account] of this.instances) {
+          account.gmail.updateViewBounds();
+        }
       });
     }
   }
