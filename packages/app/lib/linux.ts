@@ -1,6 +1,6 @@
 import { platform } from "@electron-toolkit/utils";
 import * as childProcess from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -32,7 +32,7 @@ async function getGtkDecorationLayout() {
 
   for (const file of settingsFiles) {
     try {
-      const content = readFileSync(file, "utf8");
+      const content = await readFile(file, "utf8");
       const match = content.match(/gtk-decoration-layout\s*=\s*(.*)/);
 
       if (match?.[1]) {
