@@ -3,11 +3,6 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-/**
- * Reads the effective `gtk-decoration-layout`, checking GSettings first
- * (the authoritative source on most desktops), then falling back to
- * GTK settings files.
- */
 function getGtkDecorationLayout(): string | null {
   try {
     const layout = execFileSync(
@@ -16,12 +11,12 @@ function getGtkDecorationLayout(): string | null {
       { encoding: "utf8", timeout: 1000 },
     ).trim();
 
-    // gsettings wraps the value in single quotes
     return layout.replace(/^'|'$/g, "");
   } catch {
     // gsettings not available or schema not installed
   }
 
+  // Fallback
   const settingsFiles = [
     join(homedir(), ".config", "gtk-3.0", "settings.ini"),
     join(homedir(), ".config", "gtk-4.0", "settings.ini"),
@@ -45,10 +40,6 @@ function getGtkDecorationLayout(): string | null {
   return null;
 }
 
-/**
- * Returns whether CSD window control buttons (close, minimize, maximize)
- * should be shown, based on the `gtk-decoration-layout` setting.
- */
 export function shouldShowWindowControls(): boolean {
   const layout = getGtkDecorationLayout();
 
