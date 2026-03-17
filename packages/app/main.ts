@@ -209,6 +209,10 @@ class Main {
 
     this.show();
   }
+
+  getWindowBounds() {
+    return this.window[platform.isWindows ? "getContentBounds" : "getBounds"]();
+  }
 }
 
 export const main = new Main();

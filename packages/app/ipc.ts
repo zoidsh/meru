@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -28,6 +28,9 @@ import { extractVerificationCode, parseUnreadCountString } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
+import { downloads } from "./downloads";
+import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import { fileExists } from "./lib/fs";
 
 class Ipc {
   main = new IpcListener<IpcMainEvents>();
@@ -42,6 +45,18 @@ class Ipc {
         accounts.hide();
       } else {
         accounts.show();
+      }
+    });
+
+    config.onDidAnyChange(() => {
+      ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
+
+      if (downloads.recentDownloadHistoryPopup) {
+        ipc.renderer.send(
+          downloads.recentDownloadHistoryPopup.webContents,
+          "config.configChanged",
+          config.store,
+        );
       }
     });
 
@@ -298,24 +313,44 @@ class Ipc {
       });
     }
 
-    ipc.main.handle("downloads.openFile", async (_event, filePath) => {
-      const error = await shell.openPath(filePath);
+    ipc.main.on("downloads.openFile", async (_event, { id, filePath }) => {
+      if (!(await fileExists(filePath))) {
+        const downloadHistory = config.get("downloads.history");
 
-      return {
-        error: error ? (fs.existsSync(filePath) ? error : "File does not exist") : null,
-      };
+        for (const item of downloadHistory) {
+          if (item.id === id) {
+            item.exists = false;
+
+            break;
+          }
+        }
+
+        config.set("downloads.history", downloadHistory);
+
+        return;
+      }
+
+      shell.openPath(filePath);
     });
 
-    ipc.main.handle("downloads.showFileInFolder", (_event, filePath) => {
-      if (!fs.existsSync(filePath)) {
-        return {
-          error: "File does not exist",
-        };
+    ipc.main.on("downloads.showFileInFolder", async (_event, { id, filePath }) => {
+      if (!(await fileExists(filePath))) {
+        const downloadHistory = config.get("downloads.history");
+
+        for (const item of downloadHistory) {
+          if (item.id === id) {
+            item.exists = false;
+
+            break;
+          }
+        }
+
+        config.set("downloads.history", downloadHistory);
+
+        return;
       }
 
       shell.showItemInFolder(filePath);
-
-      return { error: null };
     });
 
     ipc.main.on("taskbar.setOverlayIcon", (_event, dataUrl) => {
@@ -345,12 +380,6 @@ class Ipc {
       Object.entries(keyValues).forEach(([key, value]) => {
         config.set(key as keyof typeof keyValues, value);
       });
-    });
-
-    config.onDidAnyChange(() => {
-      for (const browserWindow of BrowserWindow.getAllWindows()) {
-        ipc.renderer.send(browserWindow.webContents, "config.configChanged", config.store);
-      }
     });
 
     ipc.main.handle("downloads.setLocation", async () => {
@@ -524,44 +553,49 @@ class Ipc {
       }
     });
 
-    ipc.main.handle("downloads.dragFile", (event, filePath) => {
+    ipc.main.on("downloads.dragFile", async (event, { id, filePath }) => {
+      if (!(await fileExists(filePath))) {
+        const downloadHistory = config.get("downloads.history");
+
+        for (const item of downloadHistory) {
+          if (item.id === id) {
+            item.exists = false;
+
+            break;
+          }
+        }
+
+        config.set("downloads.history", downloadHistory);
+
+        return;
+      }
+
       event.sender.startDrag({
         file: filePath,
         icon: nativeImage.createFromDataURL(
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAAJRJREFUeAHtleEJgCAQhY8maIRWbILaoDZwtNpAN3gpGImU3inYHx+cCL53n4ogUWsBWGxp5OU8ytYkab5BroMNwbPzKeMLm/Mhd4rrc01FECnAz2PIyApyAS8QxQ4mfKlXpkPvQGWabZ0fa/VXJMmXnoCtDuiADvgBYNwAyTfoFWRMyrSiXjtldrKD9+nHcpmVWusCljS3BE1jBC0AAAAASUVORK5CYII=",
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABFklEQVR4nN3RzysEcRjH8afd1kE5ODg4ODgoBwcHRSFEfs0f4V9x9D+478HZqCmllB+llFLYqG1mWzTM0jhY6vtWa5GDnhnPiXe9Ls/38Dl8Rf5d3j3LXoPIa8CPEpyXcOElrOQemI+JFu4gs5jVXAOzt6CpNKGcwtzH7Ya1zAPTddA8vLqWjdQx075N1TOOTESgiV/cp/KjY7J9H69l+JOxKmium+6b9cS17qNVztWBkSvQ7KeO6PnLwZN7f7vEqQPDFbAQraEzsBCtwVOwEK2BE7AQrf5jsBCtviOwEK3eQ7AQrZ49sBCt7l2wEK2uHbAQrc5tsBCtUkDUEcBvlAJCdaDos1TwCQtbkItPWNxkUR34c70BSSmcO++HIKkAAAAASUVORK5CYII=",
         ),
       });
     });
 
-    ipc.main.on("downloads.openPopup", () => {
-      const popupWindow = new BrowserWindow({
-        title: "Download History",
-        width: 640,
-        height: 480,
-        autoHideMenuBar: true,
-        webPreferences: {
-          preload: path.join(__dirname, "renderer-preload", "index.js"),
-        },
-      });
-
-      const searchParams = new URLSearchParams();
-
-      searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
-
-      const hash = "download-history";
-
-      if (is.dev) {
-        popupWindow.webContents.loadURL(`http://localhost:3001/?${searchParams}#${hash}`);
-
-        popupWindow.webContents.openDevTools({
-          mode: "detach",
-        });
-      } else {
-        popupWindow.webContents.loadFile(path.join("build-js", "renderer-popup", "index.html"), {
-          hash,
-          search: searchParams.toString(),
-        });
+    ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", () => {
+      if (downloads.toggleRecentDownloadHistoryPopup()) {
+        downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
+    });
+
+    ipc.main.on("downloads.closeRecentDownloadHistoryPopup", () => {
+      downloads.closeRecentDownloadHistoryPopup();
+    });
+
+    ipc.main.on("downloads.setDownloadHistoryPopupOnBlurEnabled", (_event, enabled) => {
+      downloads.downloadHistoryPopupOnBlurEnabled = enabled;
+    });
+
+    ipc.main.on("downloads.openDownloadHistory", () => {
+      main.navigate("/download-history");
+
+      downloads.checkDownloadHistoryItems();
     });
   }
 }

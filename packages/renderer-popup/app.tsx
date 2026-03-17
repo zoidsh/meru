@@ -5,10 +5,14 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "@meru/renderer-lib/react-query";
 import { Route } from "wouter";
 import { DesktopSources } from "./routes/desktop-sources";
-import { DownloadHistory } from "./routes/download-history";
+import { RecentDownloadHistory } from "./routes/recent-download-history";
 import { useHotkeys } from "react-hotkeys-hook";
+import { Toaster } from "@meru/ui/components/sonner";
+import { useThemeStore } from "@meru/renderer-lib/stores";
 
 export function App() {
+  const theme = useThemeStore((state) => state.theme);
+
   useHotkeys("esc", () => window.close());
 
   return (
@@ -16,10 +20,9 @@ export function App() {
       <TooltipProvider>
         <Router hook={useHashLocation}>
           <Route path="/desktop-sources" component={DesktopSources} />
-          <div className="p-4">
-            <Route path="/download-history" component={DownloadHistory} />
-          </div>
+          <Route path="/recent-download-history" component={RecentDownloadHistory} />
         </Router>
+        <Toaster theme={theme} />
       </TooltipProvider>
     </QueryClientProvider>
   );

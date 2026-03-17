@@ -84,7 +84,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
         "animate-out fade-out": fadeOut,
       })}
       onClick={() => {
-        ipc.main.invoke("downloads.openFile", item.filePath);
+        ipc.main.send("downloads.openFile", item);
 
         useDownloadsStore.setState({
           itemCompleted: null,
@@ -98,7 +98,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 }
 
 function Download() {
-  const [_location, navigate] = useHashLocation();
+  const [_location] = useHashLocation();
 
   const { config } = useConfig();
 
@@ -120,13 +120,14 @@ function Download() {
         variant="ghost"
         size="icon"
         className="size-7"
-        onClick={(event) => {
-          if (config["downloadHistory.alwaysOpenInNewWindow"] || event.metaKey || event.ctrlKey) {
-            ipc.main.send("downloads.openPopup");
-          } else {
-            navigate("/download-history");
-            ipc.main.send("settings.toggleIsOpen");
-          }
+        onClick={() => {
+          ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
+        }}
+        onMouseEnter={() => {
+          ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
+        }}
+        onMouseLeave={() => {
+          ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
         }}
         title="Download History"
       >

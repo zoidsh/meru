@@ -165,18 +165,19 @@ export type IpcMainEvents =
       "googleApps.openApp": [app: GoogleAppsPinnedApp];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
-      "downloads.openPopup": [];
+      "downloads.toggleRecentDownloadHistoryPopup": [];
+      "downloads.closeRecentDownloadHistoryPopup": [];
+      "downloads.setDownloadHistoryPopupOnBlurEnabled": [enabled: boolean];
+      "downloads.openDownloadHistory": [];
+      "downloads.openFile": [item: Pick<DownloadItem, "id" | "filePath">];
+      "downloads.showFileInFolder": [item: Pick<DownloadItem, "id" | "filePath">];
+      "downloads.dragFile": [item: Pick<DownloadItem, "id" | "filePath">];
     }
   | {
       "licenseKey.activate": (licenseKey: string) => { success: boolean };
       "license.getDeviceInfo": () => { label: string };
       "license.updateDeviceInfo": (input: { label: string }) => void;
       "desktopSources.getSources": () => DesktopSources;
-      "downloads.openFile": (filePath: string) => { error: string | null };
-      "downloads.showFileInFolder": (filePath: string) => {
-        error: string | null;
-      };
-      "downloads.dragFile": (filePath: string) => void;
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
       "downloads.setLocation": () => { canceled: boolean };

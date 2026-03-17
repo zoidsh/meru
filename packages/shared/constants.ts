@@ -1,6 +1,8 @@
 export const APP_ID = "sh.zoid.meru";
 
-export const APP_TITLEBAR_HEIGHT = 40;
+export const BASE_SPACING = 8;
+
+export const APP_TITLEBAR_HEIGHT = BASE_SPACING * 5;
 
 export const GOOGLE_ACCOUNTS_URL = "https://accounts.google.com";
 
@@ -11,3 +13,5 @@ export const GITHUB_REPO_URL = "https://github.com/zoidsh/meru";
 export const WEBSITE_URL = "https://meru.so";
 
 export const MERU_PORTAL_URL = "https://portal.meru.so";
+
+export const MAX_RECENT_DOWNLOAD_HISTORY_ITEMS = 10;

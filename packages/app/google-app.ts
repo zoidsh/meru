@@ -1,5 +1,5 @@
 import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
+import { is } from "@electron-toolkit/utils";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import {
@@ -191,7 +191,7 @@ export class GoogleApp {
   }
 
   updateViewBounds() {
-    const { width, height } = main.window[platform.isWindows ? "getContentBounds" : "getBounds"]();
+    const { width, height } = main.getWindowBounds();
 
     this.view.setBounds({
       x: 0,

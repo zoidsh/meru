@@ -1,9 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
-import {
-  accountsSearchParam,
-  darkModeSearchParam,
-  trialDaysLeftSearchParam,
-} from "@meru/renderer-lib/search-params";
+import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -83,12 +79,6 @@ ipc.renderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => 
     totalMatches,
   }));
 });
-
-export const useThemeStore = create<{
-  theme: "light" | "dark";
-}>(() => ({
-  theme: darkModeSearchParam === "true" ? "dark" : "light",
-}));
 
 export const useTrialStore = create<{
   daysLeft: number;
