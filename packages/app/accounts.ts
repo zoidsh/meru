@@ -59,13 +59,12 @@ class Accounts {
       account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
-    // When launching minimized, the selected account view sometimes doesn't render
-    if (main.shouldLaunchMinimized) {
-      main.window.once("show", () => {
-        const selectedAccount = this.getSelectedAccount();
-
-        main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
-        main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+    // When launching minimized/window is closed, the account views sometimes don't render after opening window
+    if (platform.isWindows || main.shouldLaunchMinimized) {
+      main.window[platform.isWindows ? "on" : "once"]("show", () => {
+        for (const [_accountId, account] of this.instances) {
+          account.gmail.updateViewBounds();
+        }
       });
     }
 
