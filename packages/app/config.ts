@@ -45,7 +45,6 @@ export const config = new Store<Config>({
     "downloads.openFolderWhenDone": false,
     "downloads.location": app.getPath("downloads"),
     "downloads.history": [],
-    "downloadHistory.alwaysOpenInNewWindow": false,
     "notifications.enabled": true,
     "notifications.showSender": true,
     "notifications.showSubject": true,
@@ -254,6 +253,13 @@ export const config = new Store<Config>({
       }
 
       store.set("notifications.sound", "linen");
+    },
+    ">3.38.0": (store) => {
+      // @ts-expect-error: `downloadHistory.alwaysOpenInNewWindow` has been removed
+      if (typeof store.get("downloadHistory.alwaysOpenInNewWindow") === "boolean") {
+        // @ts-expect-error
+        store.delete("downloadHistory.alwaysOpenInNewWindow");
+      }
     },
   },
 });

@@ -77,7 +77,6 @@ export type Config = {
   "downloads.openFolderWhenDone": boolean;
   "downloads.location": string;
   "downloads.history": DownloadItem[];
-  "downloadHistory.alwaysOpenInNewWindow": boolean;
   "notifications.enabled": boolean;
   "notifications.showSender": boolean;
   "notifications.showSubject": boolean;

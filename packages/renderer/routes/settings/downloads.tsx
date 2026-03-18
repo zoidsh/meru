@@ -6,7 +6,6 @@ import {
   FieldGroup,
   FieldLabel,
   FieldLegend,
-  FieldSeparator,
   FieldSet,
 } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
@@ -14,7 +13,6 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
-import { platform } from "@meru/renderer-lib/utils";
 
 export function DownloadsSettings() {
   const { config } = useConfig();
@@ -64,15 +62,6 @@ export function DownloadsSettings() {
               </Button>
             </div>
           </Field>
-        </FieldSet>
-        <FieldSeparator />
-        <FieldSet>
-          <FieldLegend>Download History</FieldLegend>
-          <ConfigSwitchField
-            label="Always Open In A New Window"
-            description={`Always open the download history in a new window instead of the main window. Hint: You can also open the download history in a new window by holding ${platform.isMacOS ? "Cmd" : "Ctrl"} while clicking the download history button in the app title bar.`}
-            configKey="downloadHistory.alwaysOpenInNewWindow"
-          />
         </FieldSet>
       </FieldGroup>
     </>
