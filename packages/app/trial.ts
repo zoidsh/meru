@@ -27,7 +27,7 @@ class Trial {
         type: "error",
         message: "Failed to validate Meru Pro trial",
         detail: (await isOnline())
-          ? `Please restart the app to try again or contact support for further help with the error: ${error instanceof Error ? error.message : error} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+          ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
           : "It seems you are currently offline. Please connect to the internet and restart the app to try again.",
         buttons: ["Restart", "Quit"],
         defaultId: 0,

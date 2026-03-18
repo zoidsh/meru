@@ -55,7 +55,7 @@ class LicenseKey {
       } else {
         await this.showActivationError({
           detail: (await isOnline())
-            ? `Please try again or contact support for further help with the error: ${error.message} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+            ? `Please try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
             : "It seems you are currently offline. Please connect to the internet and try again or contact support for further help.",
         });
       }
@@ -127,7 +127,7 @@ class LicenseKey {
         } else {
           const { response } = await this.showValidationError({
             detail: (await isOnline())
-              ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (Are you potentially using a VPN or firewall that could be blocking the connection?)`
+              ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
               : "It seems you are currently offline. Please connect to the internet and restart the app to try again or contact support for further help.",
             buttons: ["Restart", "Quit"],
             defaultId: 0,
