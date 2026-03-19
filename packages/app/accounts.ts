@@ -5,7 +5,6 @@ import { config } from "./config";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
-import { platform } from "@electron-toolkit/utils";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -59,23 +58,26 @@ class Accounts {
       account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
-    // When launching minimized/window is closed, the account views sometimes don't render after opening window
-    if (platform.isWindows || main.shouldLaunchMinimized) {
-      main.window[platform.isWindows ? "on" : "once"]("show", () => {
-        for (const [_accountId, account] of this.instances) {
-          account.gmail.updateViewBounds();
-        }
-      });
-    }
+    // When window is closed/minimized, the account views sometimes don't render after showing/restoring window
+    main.window.on("show", () => {
+      const selectedAccount = this.getSelectedAccount();
 
-    // When window is minimized, the account views sometimes don't render after restoring window
-    if (platform.isWindows) {
-      main.window.on("restore", () => {
-        for (const [_accountId, account] of this.instances) {
-          account.gmail.updateViewBounds();
-        }
-      });
-    }
+      main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
+      main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+
+      selectedAccount.instance.gmail.updateViewBounds();
+      selectedAccount.instance.gmail.view.webContents.focus();
+    });
+
+    main.window.on("restore", () => {
+      const selectedAccount = this.getSelectedAccount();
+
+      main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
+      main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+
+      selectedAccount.instance.gmail.updateViewBounds();
+      selectedAccount.instance.gmail.view.webContents.focus();
+    });
   }
 
   getAccountConfigs() {
@@ -149,7 +151,9 @@ class Accounts {
 
     for (const [accountId, account] of this.instances) {
       if (accountId === selectedAccountId) {
+        main.window.contentView.removeChildView(account.gmail.view);
         main.window.contentView.addChildView(account.gmail.view);
+        account.gmail.updateViewBounds();
         account.gmail.view.webContents.focus();
       }
     }
