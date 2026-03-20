@@ -4,16 +4,16 @@ import { $ } from "select-dom";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
-import { getUnreadCount } from "./inbox";
 import { ipcMain } from "./ipc";
 import { createElementNotProcessedSelector } from "./lib/utils";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { addSenderIcons } from "./sender-icons";
 import { initToaster } from "./toaster";
 import { initUrlPreview } from "./url-preview";
+import { observeUnreadCount } from "./unread-count";
 
 const features = [
-  getUnreadCount,
+  observeUnreadCount,
   observeOutOfOfficeBanner,
   addSenderIcons,
   moveAttachmentsToTop,

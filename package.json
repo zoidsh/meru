@@ -68,6 +68,7 @@
     "element-ready": "^7.0.0",
     "esbuild": "^0.25.10",
     "esbuild-plugin-inline-import": "^1.1.0",
+    "fast-xml-parser": "^5.5.7",
     "frimousse": "^0.3.0",
     "is-online": "^12.0.2",
     "lefthook": "^2.1.2",

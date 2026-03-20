@@ -7,6 +7,8 @@ export const GMAIL_ACTION_CODE_MAP = {
 
 export const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
+export const GMAIL_INBOX_FEED_URL = `${GMAIL_URL}/feed/atom`;
+
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
 export const GMAIL_PRELOAD_ARGUMENTS = {
@@ -33,6 +35,7 @@ export interface GmailMail {
     name: string;
     email: string;
   };
+  receivedAt: number;
 }
 
 export type GmailState = {

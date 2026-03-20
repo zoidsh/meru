@@ -1,6 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import type { GMAIL_ACTION_CODE_MAP, GmailMail } from "./gmail";
+import type { GMAIL_ACTION_CODE_MAP } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -143,9 +143,8 @@ export type IpcMainEvents =
       "accounts.moveAccount": [accountId: AccountConfig["id"], direction: "up" | "down"];
       "settings.toggleIsOpen": [];
       "gmail.moveNavigationHistory": [move: "back" | "forward"];
-      "gmail.setUnreadCount": [unreadCountString: string];
+      "gmail.unreadCountChanged": [unreadCountString: string, inboxType: "CLASSIC" | "SECTIONED"];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
-      "gmail.handleNewMessages": [mails: GmailMail[]];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStylesInEditor": [];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];

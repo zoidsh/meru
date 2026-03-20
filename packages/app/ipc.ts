@@ -1,17 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
   BrowserWindow,
-  clipboard,
   desktopCapturer,
   dialog,
   Menu,
   type MenuItemConstructorOptions,
-  Notification,
   nativeImage,
   nativeTheme,
   shell,
@@ -24,7 +21,6 @@ import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
-import { extractVerificationCode, parseUnreadCountString } from "./lib/utils";
 import { createNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
@@ -110,16 +106,6 @@ class Ipc {
         ]();
     });
 
-    this.main.on("gmail.setUnreadCount", (event, unreadCountString) => {
-      const unreadCount = parseUnreadCountString(unreadCountString);
-
-      for (const accountInstance of accounts.instances.values()) {
-        if (event.sender.id === accountInstance.gmail.view.webContents.id) {
-          accountInstance.gmail.setUnreadCount(unreadCount);
-        }
-      }
-    });
-
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
       for (const accountInstance of accounts.instances.values()) {
         if (event.sender.id === accountInstance.gmail.view.webContents.id) {
@@ -166,152 +152,6 @@ class Ipc {
         findNext: options?.findNext,
       });
     });
-
-    if (Notification.isSupported()) {
-      this.main.on("gmail.handleNewMessages", async (event, mails) => {
-        for (const mail of mails) {
-          for (const [accountId, instance] of accounts.instances) {
-            if (instance.gmail.view.webContents.id === event.sender.id) {
-              const account = accounts.getAccount(accountId);
-
-              let subtitle: string | undefined;
-
-              if (platform.isMacOS && config.get("notifications.showSubject")) {
-                subtitle = mail.subject;
-              }
-
-              let body: string | undefined;
-
-              if (platform.isMacOS && config.get("notifications.showSummary")) {
-                body = mail.summary;
-              } else if (!platform.isMacOS && config.get("notifications.showSubject")) {
-                body = mail.subject;
-              }
-
-              if (licenseKey.isValid && config.get("verificationCodes.autoCopy")) {
-                const verificationCode = extractVerificationCode(
-                  [subtitle, body].filter((text) => typeof text === "string"),
-                );
-
-                if (verificationCode) {
-                  clipboard.writeText(verificationCode);
-
-                  createNotification({
-                    title: config.get("notifications.showSender")
-                      ? mail.sender.name
-                      : account.config.label,
-                    body: `Copied verification code ${verificationCode}`,
-                  });
-
-                  if (config.get("verificationCodes.autoMarkAsRead")) {
-                    this.renderer.send(
-                      event.sender,
-                      "gmail.handleMessage",
-                      mail.messageId,
-                      "markAsRead",
-                    );
-                  }
-
-                  if (config.get("verificationCodes.autoDelete")) {
-                    this.renderer.send(
-                      event.sender,
-                      "gmail.handleMessage",
-                      mail.messageId,
-                      "delete",
-                    );
-                  }
-
-                  continue;
-                }
-              }
-
-              if (!config.get("notifications.enabled") || !account.config.notifications) {
-                continue;
-              }
-
-              createNotification({
-                title: config.get("notifications.showSender")
-                  ? mail.sender.name
-                  : account.config.label,
-                subtitle,
-                body,
-                actions: [
-                  {
-                    text: "Archive",
-                    type: "button",
-                  },
-                  {
-                    text: "Mark as read",
-                    type: "button",
-                  },
-                  {
-                    text: "Delete",
-                    type: "button",
-                  },
-                  {
-                    text: "Mark as spam",
-                    type: "button",
-                  },
-                ],
-                click: () => {
-                  main.show();
-
-                  accounts.selectAccount(accountId);
-
-                  this.renderer.send(event.sender, "gmail.openMessage", mail.messageId);
-                },
-                action: (index) => {
-                  switch (index) {
-                    case 0: {
-                      this.renderer.send(
-                        event.sender,
-                        "gmail.handleMessage",
-                        mail.messageId,
-                        "archive",
-                      );
-
-                      break;
-                    }
-                    case 1: {
-                      this.renderer.send(
-                        event.sender,
-                        "gmail.handleMessage",
-                        mail.messageId,
-                        "markAsRead",
-                      );
-
-                      break;
-                    }
-                    case 2: {
-                      this.renderer.send(
-                        event.sender,
-                        "gmail.handleMessage",
-                        mail.messageId,
-                        "delete",
-                      );
-
-                      break;
-                    }
-                    case 3: {
-                      this.renderer.send(
-                        event.sender,
-                        "gmail.handleMessage",
-                        mail.messageId,
-                        "markAsSpam",
-                      );
-
-                      break;
-                    }
-                  }
-                },
-              });
-
-              continue;
-            }
-          }
-        }
-      });
-    }
 
     ipc.main.on("downloads.openFile", async (_event, { id, filePath }) => {
       if (!(await fileExists(filePath))) {
@@ -596,6 +436,33 @@ class Ipc {
       main.navigate("/download-history");
 
       downloads.checkDownloadHistoryItems();
+    });
+
+    this.main.on("gmail.unreadCountChanged", (event, unreadCountString, inboxType) => {
+      let unreadCount = 0;
+
+      const parsedUnreadCountString = unreadCountString
+        .split(":")
+        .map((count) => Number(count.replace(/\D/g, "")) || 0);
+
+      const unreadCountPreference = config.get("gmail.unreadCountPreference");
+
+      if (parsedUnreadCountString.length === 2 && unreadCountPreference !== "default") {
+        unreadCount =
+          parsedUnreadCountString[unreadCountPreference === "first-section" ? 0 : 1] || 0;
+      } else {
+        unreadCount = parsedUnreadCountString.reduce((total, count) => total + count, 0);
+      }
+
+      for (const account of accounts.instances.values()) {
+        if (event.sender.id === account.gmail.view.webContents.id) {
+          account.gmail.setUnreadCount(unreadCount);
+
+          account.gmail.fetchInboxFeed(inboxType);
+
+          break;
+        }
+      }
     });
   }
 }
