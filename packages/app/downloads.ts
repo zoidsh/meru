@@ -123,7 +123,7 @@ class Downloads {
 
     this.recentDownloadHistoryPopup = new WebContentsView({
       webPreferences: {
-        preload: path.join(__dirname, "renderer-preload", "index.js"),
+        preload: path.join(__dirname, "renderer-preload.js"),
       },
     });
 

@@ -408,7 +408,7 @@ export class GoogleApp {
           autoHideMenuBar: true,
           webPreferences: {
             session: this.session,
-            preload: path.join(__dirname, "google-app-preload", "index.js"),
+            preload: path.join(__dirname, "google-app-preload.js"),
             additionalArguments,
           },
         };

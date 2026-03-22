@@ -1,6 +1,6 @@
 import { Toaster } from "@meru/ui/components/sonner";
 import { createRoot } from "react-dom/client";
-import globalStyles from "./globals.css?inline";
+import globalStyles from "./globals.css";
 
 const ROOT_ELEMENT_ID = "meru-toaster";
 

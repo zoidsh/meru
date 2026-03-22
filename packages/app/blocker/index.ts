@@ -1,9 +1,9 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { config } from "@/config";
-import { EMAIL_TRACKERS_REGEXP } from "./lib/trackers";
-import { licenseKey } from "./license-key";
+import { EMAIL_TRACKERS_REGEXP } from "./trackers";
+import { licenseKey } from "../license-key";
+import easylist from "./lists/easylist.txt";
+import easyprivacy from "./lists/easyprivacy.txt";
 
 export class Blocker {
   private _engine: FiltersEngine | undefined;
@@ -27,27 +27,23 @@ export class Blocker {
       return;
     }
 
-    const lists: Promise<string>[] = [];
+    const lists: string[] = [];
 
     if (config.get("blocker.ads")) {
-      lists.push(
-        fs.readFile(path.join(__dirname, "..", "static", "blocker", "easylist.txt"), "utf-8"),
-      );
+      lists.push(easylist);
     }
 
     this.blockTracking = config.get("blocker.tracking");
 
     if (this.blockTracking) {
-      lists.push(
-        fs.readFile(path.join(__dirname, "..", "static", "blocker", "easyprivacy.txt"), "utf-8"),
-      );
+      lists.push(easyprivacy);
     }
 
     if (!lists.length) {
       return;
     }
 
-    this.engine = FiltersEngine.parse((await Promise.all(lists)).join("\n"));
+    this.engine = FiltersEngine.parse(lists.join("\n"));
   }
 
   private onBeforeRequest = (

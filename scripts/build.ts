@@ -2,16 +2,13 @@ import { rm, watch } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import postcssTailwind from "@tailwindcss/postcss";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import viteTailwindcss from "@tailwindcss/vite";
+import viteReact from "@vitejs/plugin-react";
 import { type Subprocess, spawn } from "bun";
-import * as esbuild from "esbuild";
-import inlineImportPlugin from "esbuild-plugin-inline-import";
-import postcss from "postcss";
-import postcssImport from "postcss-import";
 import * as vite from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
-import viteTsconfigPaths from "vite-tsconfig-paths";
+import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
+import postcss from "postcss";
 
 const args = parseArgs({
   args: Bun.argv,
@@ -26,83 +23,101 @@ const args = parseArgs({
 
 await rm("./build-js", { recursive: true, force: true });
 
-const browserTarget = "chrome136";
+// Keep in sync with Electron
+const browserTarget = "chrome146";
 
 function buildAppFiles() {
-  const config: esbuild.BuildOptions = {
-    bundle: true,
-    outdir: "./build-js",
+  const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
-    define: !args.values.dev
-      ? {
-          "process.env.NODE_ENV": JSON.stringify("production"),
-          ...(process.env.MERU_API_URL
-            ? {
-                "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
-              }
-            : {}),
-        }
-      : undefined,
-    minify: !args.values.dev,
-  };
+    transform: {
+      define: !args.values.dev
+        ? {
+            "process.env.NODE_ENV": JSON.stringify("production"),
+            ...(process.env.MERU_API_URL
+              ? {
+                  "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
+                }
+              : {}),
+          }
+        : undefined,
+    },
+  });
 
-  return Promise.all([
-    esbuild.build({
-      ...config,
-      entryPoints: ["./packages/app/index.ts"],
-      platform: "node",
-      target: "node22",
-      loader: {
-        ".css": "text",
-      },
-    }),
-    esbuild.build({
-      ...config,
-      entryPoints: [
-        "./packages/gmail-preload/index.ts",
-        "./packages/google-app-preload/index.ts",
-        "./packages/renderer-preload/index.ts",
-      ],
+  const buildPreloadFile = (preloadName: string) =>
+    rolldown({
+      ...rolldownOptions,
+      input: `./packages/${preloadName}/index.ts`,
       platform: "browser",
-      target: browserTarget,
+      transform: {
+        ...rolldownOptions.transform,
+        target: browserTarget,
+      },
       plugins: [
-        inlineImportPlugin({
-          filter: /\?inline$/,
-          transform: async (contents) => {
-            const css = await postcss()
-              .use(postcssImport())
+        {
+          name: "css-loader",
+          load: async (id) => {
+            if (!id.endsWith(".css")) {
+              return null;
+            }
+
+            const content = await postcss()
               .use(postcssTailwind())
-              .process(contents, {
-                from: undefined,
-              })
+              .process(await Bun.file(id).text(), { from: id })
               .then((result) => result.css);
 
-            return args.values.dev
-              ? css
-              : (
-                  await esbuild.transform(css, {
-                    loader: "css",
-                    minify: true,
-                  })
-                ).code;
+            return {
+              code: `export default \`${content}\`;`,
+              moduleType: "js",
+            };
           },
-        }),
+        },
       ],
-    }),
+    }).then((bundle) =>
+      bundle.write({
+        file: path.join(process.cwd(), "build-js", `${preloadName}.js`),
+        codeSplitting: false,
+        format: "cjs",
+      }),
+    );
+
+  return Promise.all([
+    rolldown({
+      ...rolldownOptions,
+      input: "./packages/app/index.ts",
+      platform: "node",
+      transform: {
+        ...rolldownOptions.transform,
+        target: "node24",
+      },
+      moduleTypes: {
+        ".css": "text",
+      },
+    }).then((bundle) =>
+      bundle.write({
+        file: path.join(process.cwd(), "build-js", "app.js"),
+        format: "cjs",
+      }),
+    ),
+    buildPreloadFile("gmail-preload"),
+    buildPreloadFile("google-app-preload"),
+    buildPreloadFile("renderer-preload"),
   ]);
 }
 
 async function buildRenderer(rendererName: string, port: number) {
   const viteConfig: vite.InlineConfig = {
     configFile: false,
-    root: path.resolve(process.cwd(), "packages", rendererName),
-    plugins: [react(), tailwindcss(), viteSingleFile(), viteTsconfigPaths()],
+    root: path.join(process.cwd(), "packages", rendererName),
+    plugins: [viteReact(), viteTailwindcss(), viteSingleFile()],
+    resolve: {
+      tsconfigPaths: true,
+    },
     server: {
       port,
       strictPort: true,
     },
     build: {
-      outDir: path.resolve(process.cwd(), "build-js", rendererName),
+      outDir: path.join(process.cwd(), "build-js", rendererName),
       target: browserTarget,
     },
     clearScreen: false,
@@ -114,11 +129,9 @@ async function buildRenderer(rendererName: string, port: number) {
     await viteServer.listen();
 
     viteServer.printUrls();
-
-    return;
+  } else {
+    await vite.build(viteConfig);
   }
-
-  await vite.build(viteConfig);
 }
 
 await Promise.all([

@@ -106,7 +106,7 @@ class Main {
           : false,
       darkTheme: nativeTheme.shouldUseDarkColors,
       webPreferences: {
-        preload: path.join(__dirname, "renderer-preload", "index.js"),
+        preload: path.join(__dirname, "renderer-preload.js"),
       },
       icon: platform.isLinux ? path.join(__dirname, "..", "static", "Icon.png") : undefined,
     });
