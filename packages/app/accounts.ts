@@ -12,19 +12,15 @@ class Accounts {
   init() {
     let accountConfigs = config.get("accounts");
 
-    if (!licenseKey.isValid && accountConfigs.length > 1) {
-      if (!accountConfigs[0]) {
-        throw new Error("Could not find first account");
+    if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
+      for (const [index, accountConfig] of accountConfigs.entries()) {
+        accountConfig.selected = index === 0;
       }
-
-      accountConfigs[0].selected = true;
-
-      accountConfigs = [accountConfigs[0]];
 
       config.set("accounts", accountConfigs);
     }
 
-    for (const accountConfig of accountConfigs) {
+    for (const accountConfig of this.getAccountConfigs()) {
       const account = new Account(accountConfig);
 
       this.instances.set(accountConfig.id, account);
@@ -82,6 +78,10 @@ class Accounts {
 
   getAccountConfigs() {
     const accountConfigs = config.get("accounts");
+
+    if (!licenseKey.isValid) {
+      return accountConfigs.slice(0, 1);
+    }
 
     return accountConfigs;
   }
@@ -216,7 +216,7 @@ class Accounts {
 
     this.instances.set(createdAccount.id, instance);
 
-    config.set("accounts", [...this.getAccountConfigs(), createdAccount]);
+    config.set("accounts", [...config.get("accounts"), createdAccount]);
 
     this.selectAccount(createdAccount.id);
 
@@ -232,9 +232,9 @@ class Accounts {
 
     this.instances.delete(selectedAccountId);
 
-    const updatedAccounts = this.getAccountConfigs().filter(
-      (account) => account.id !== selectedAccountId,
-    );
+    const updatedAccounts = config
+      .get("accounts")
+      .filter((account) => account.id !== selectedAccountId);
 
     if (updatedAccounts.every((account) => account.selected === false)) {
       if (!updatedAccounts[0]) {
@@ -254,14 +254,16 @@ class Accounts {
   updateAccount(accountDetails: AccountConfig) {
     config.set(
       "accounts",
-      this.getAccountConfigs().map((account) =>
-        account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
-      ),
+      config
+        .get("accounts")
+        .map((account) =>
+          account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
+        ),
     );
   }
 
   moveAccount(selectedAccountId: string, direction: "up" | "down") {
-    const accountConfigs = this.getAccountConfigs();
+    const accountConfigs = config.get("accounts");
 
     const selectedAccountConfigIndex = accountConfigs.findIndex(
       (account) => account.id === selectedAccountId,
