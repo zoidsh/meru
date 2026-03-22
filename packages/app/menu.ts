@@ -23,10 +23,6 @@ import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
 
 export class AppMenu {
-  private _menuItemIds = {
-    copyMessageLink: "copy-message-link",
-  };
-
   private _menu: Menu | undefined;
 
   private _isPopupOpen = false;
@@ -133,29 +129,6 @@ export class AppMenu {
 
     const copyOrShareMessageLink =
       userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
-
-    const messageSubmenu: MenuItemConstructorOptions[] = [
-      {
-        id: this._menuItemIds.copyMessageLink,
-        label: "Copy Message Link",
-        enabled: licenseKey.isValid && Boolean(copyOrShareMessageLink),
-        accelerator: "CommandOrControl+Shift+C",
-        click: () => {
-          if (copyOrShareMessageLink) {
-            clipboard.writeText(copyOrShareMessageLink);
-          }
-        },
-      },
-    ];
-
-    if (copyOrShareMessageLink) {
-      messageSubmenu.push({
-        role: "shareMenu",
-        sharingItem: {
-          urls: [copyOrShareMessageLink],
-        },
-      });
-    }
 
     const template: MenuItemConstructorOptions[] = [
       {
@@ -295,7 +268,30 @@ export class AppMenu {
       {
         label: "Message",
         visible: licenseKey.isValid,
-        submenu: messageSubmenu,
+        submenu: [
+          {
+            label: "Copy Message Link",
+            enabled: Boolean(copyOrShareMessageLink),
+            accelerator: "CommandOrControl+Shift+C",
+            click: () => {
+              if (copyOrShareMessageLink) {
+                clipboard.writeText(copyOrShareMessageLink);
+              }
+            },
+          },
+          copyOrShareMessageLink
+            ? {
+                role: "shareMenu",
+                sharingItem: {
+                  urls: [copyOrShareMessageLink],
+                },
+              }
+            : {
+                label: "Share",
+                enabled: false,
+                submenu: [],
+              },
+        ],
       },
       {
         label: "View",
