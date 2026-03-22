@@ -1,5 +1,5 @@
 @import "sonner/dist/styles.css";
-@import "../ui/globals.css";
+@import "../ui/styles/globals.css";
 
 @plugin "@tailwindcss/typography";
 

@@ -1,6 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
-import type { Config } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -130,17 +129,23 @@ export function NotificationsSettings() {
                     </FieldLabel>
                     <FieldDescription>Select the sound to play for notifications.</FieldDescription>
                     <Select
+                      items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
+                        value: sound,
+                        label,
+                      }))}
                       value={config["notifications.sound"]}
-                      onValueChange={(value: Config["notifications.sound"]) => {
-                        configMutation.mutate({
-                          "notifications.sound": value,
-                        });
-
-                        if (value !== "system") {
-                          playNotificationSound({
-                            sound: value,
-                            volume: config["notifications.volume"],
+                      onValueChange={(value) => {
+                        if (value) {
+                          configMutation.mutate({
+                            "notifications.sound": value,
                           });
+
+                          if (value !== "system") {
+                            playNotificationSound({
+                              sound: value,
+                              volume: config["notifications.volume"],
+                            });
+                          }
                         }
                       }}
                       disabled={!isLicenseKeyValid}
@@ -172,7 +177,11 @@ export function NotificationsSettings() {
                         step={5}
                         value={[config["notifications.volume"] * 100]}
                         onValueChange={(value) => {
-                          const volume = value[0] && value[0] / 100;
+                          if (typeof value !== "number") {
+                            return;
+                          }
+
+                          const volume = value / 100;
 
                           if (volume) {
                             configMutation.mutate({
@@ -180,8 +189,12 @@ export function NotificationsSettings() {
                             });
                           }
                         }}
-                        onValueCommit={(value) => {
-                          const volume = value[0] && value[0] / 100;
+                        onValueCommitted={(value) => {
+                          if (typeof value !== "number") {
+                            return;
+                          }
+
+                          const volume = value / 100;
 
                           if (volume && config["notifications.sound"] !== "system") {
                             playNotificationSound({

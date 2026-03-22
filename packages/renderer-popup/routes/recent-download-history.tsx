@@ -46,7 +46,7 @@ export function RecentDownloadHistory() {
                 variant="outline"
                 key={id}
                 className={cn({
-                  "hover:bg-muted/50 transition-colors cursor-pointer": exists,
+                  "hover:bg-muted/50 transition-colors": exists,
                 })}
                 onClick={
                   exists

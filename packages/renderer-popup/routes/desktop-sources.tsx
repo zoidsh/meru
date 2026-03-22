@@ -21,7 +21,7 @@ export function DesktopSources() {
       <div
         key={window.id}
         className={cn(
-          "px-3 py-2 border rounded-md text-sm transition hover:bg-accent select-none cursor-pointer",
+          "px-3 py-2 border rounded-md text-sm transition hover:bg-accent select-none",
           {
             "bg-accent text-accent-foreground font-semibold": selectedDesktopSourceId === window.id,
           },

@@ -18,14 +18,16 @@ export function EmojiPickerButton({
 
   return (
     <Popover onOpenChange={setIsOpen} open={isOpen} {...props}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="icon">
-          <SmileIcon />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button variant="outline" size="icon">
+            <SmileIcon />
+          </Button>
+        }
+      />
       <PopoverContent>
         <EmojiPicker
-          className="h-[264px]"
+          className="h-66"
           onEmojiSelect={(emoji) => {
             setIsOpen(false);
 

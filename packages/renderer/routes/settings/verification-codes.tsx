@@ -16,7 +16,11 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
-import type { Config } from "@meru/shared/types";
+
+const verificationCodeConfidenceItems = [
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+];
 
 export function VerificationCodesSettings() {
   const { config } = useConfig();
@@ -50,19 +54,25 @@ export function VerificationCodesSettings() {
               </FieldDescription>
             </FieldContent>
             <Select
+              items={verificationCodeConfidenceItems}
               value={config["verificationCodes.confidence"]}
-              onValueChange={(value: Config["verificationCodes.confidence"]) => {
-                configMutation.mutate({
-                  "verificationCodes.confidence": value,
-                });
+              onValueChange={(value) => {
+                if (value) {
+                  configMutation.mutate({
+                    "verificationCodes.confidence": value,
+                  });
+                }
               }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select confidence" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
+                {verificationCodeConfidenceItems.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>

@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -17,19 +16,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown";
+} from "@meru/ui/components/dropdown-menu";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemTitle } from "@meru/ui/components/item";
-import { Label } from "@meru/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -41,13 +31,14 @@ import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@meru/renderer-lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
+import { useForm } from "@tanstack/react-form";
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@meru/ui/components/field";
 
 function AccountForm({
   account = {
@@ -65,119 +56,146 @@ function AccountForm({
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
 }) {
-  const form = useForm<AccountConfigInput>({
-    resolver: zodResolver(accountConfigInputSchema),
+  const form = useForm({
     defaultValues: account,
+    validators: {
+      onSubmit: accountConfigInputSchema,
+    },
+    onSubmit: ({ value }) => {
+      onSubmit(value);
+    },
   });
 
   return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit((values) => {
-          onSubmit(values);
-        })}
-      >
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field: { onChange, value, ...field } }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <div className="flex gap-2">
-                <FormControl>
-                  <Select onValueChange={onChange} value={value || ""} {...field}>
+    <form
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        form.handleSubmit();
+      }}
+    >
+      <FieldGroup>
+        <FieldSet>
+          <form.Field name="color">
+            {(field) => (
+              <Field>
+                <FieldLabel>Color</FieldLabel>
+                <div className="flex gap-2">
+                  <Select
+                    name={field.name}
+                    value={field.state.value}
+                    onValueChange={field.handleChange}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Optional" />
+                      <SelectValue>
+                        {(value: keyof typeof accountColorsMap | null) => {
+                          if (!value) {
+                            return "Optional";
+                          }
+
+                          const { label, className } = accountColorsMap[value];
+
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className={`size-2 rounded-full ${className}`} />
+                              {label}
+                            </div>
+                          );
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {(Object.entries(accountColorsMap) as Entries<typeof accountColorsMap>).map(
                         ([colorKey, { label, className }]) => (
-                          <SelectItem
-                            key={colorKey}
-                            value={colorKey}
-                            className="flex items-center gap-2"
-                          >
-                            <div className={`size-2 rounded-full ${className}`} />
-                            {label}
+                          <SelectItem key={colorKey} value={colorKey}>
+                            <div className="flex items-center gap-2">
+                              <div className={`size-2 rounded-full ${className}`} />
+                              {label}
+                            </div>
                           </SelectItem>
                         ),
                       )}
                     </SelectContent>
                   </Select>
-                </FormControl>
-                {form.getValues().color && (
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={(event) => {
-                      event.preventDefault();
+                  {field.state.value && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        form.setFieldValue("color", null);
+                      }}
+                    >
+                      <XIcon />
+                    </Button>
+                  )}
+                </div>
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="label">
+            {(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
-                      form.setValue("color", null);
-                    }}
-                  >
-                    <XIcon />
-                  </Button>
-                )}
-              </div>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="label"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>Label</FormLabel>
-              <div className="flex gap-2">
-                <FormControl>
-                  <Input placeholder={placeholder} {...field} />
-                </FormControl>
-                <EmojiPickerButton
-                  onEmojiSelect={({ emoji }) => {
-                    form.setValue("label", `${form.getValues().label}${emoji}`);
-                  }}
-                  modal
+              return (
+                <Field>
+                  <FieldLabel>Label</FieldLabel>
+                  <div className="flex gap-2">
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder={placeholder}
+                    />
+                    <EmojiPickerButton
+                      onEmojiSelect={({ emoji }) => {
+                        form.setFieldValue("label", `${form.getFieldValue("label")}${emoji}`);
+                      }}
+                      modal
+                    />
+                  </div>
+                </Field>
+              );
+            }}
+          </form.Field>
+        </FieldSet>
+        <FieldSet>
+          <FieldLegend>Options</FieldLegend>
+          <form.Field name="gmail.unreadBadge">
+            {(field) => (
+              <Field>
+                <FieldLabel>Unread Badge</FieldLabel>
+                <Switch
+                  id={field.name}
+                  name={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={field.handleChange}
                 />
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Label>Options</Label>
-        <FormField
-          control={form.control}
-          name="gmail.unreadBadge"
-          render={({ field }) => (
-            <FormItem className="flex">
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <FormLabel>Unread Badge</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="notifications"
-          render={({ field }) => (
-            <FormItem className="flex">
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <FormLabel>Notifications</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end items-center">
-          <Button type="submit" className="self-end">
-            {type === "add" ? "Add" : "Save"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="notifications">
+            {(field) => (
+              <Field>
+                <FieldLabel>Notifications</FieldLabel>
+                <Switch
+                  id={field.name}
+                  name={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={field.handleChange}
+                />
+              </Field>
+            )}
+          </form.Field>
+        </FieldSet>
+      </FieldGroup>
+      <div className="flex justify-end items-center">
+        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+      </div>
+    </form>
   );
 }
 
@@ -200,9 +218,7 @@ function AddAccountButton() {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button>Add</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button>Add</Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Account</DialogTitle>
@@ -226,15 +242,21 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" className="size-8 p-0" variant="outline">
-            <EllipsisIcon />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button size="icon" className="size-8 p-0" variant="outline">
+              <EllipsisIcon />
+            </Button>
+          }
+        />
         <DropdownMenuContent>
-          <DialogTrigger asChild>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-          </DialogTrigger>
+          <DropdownMenuItem
+            onClick={() => {
+              setIsOpen(true);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
           {removable && (
             <DropdownMenuItem
               className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"

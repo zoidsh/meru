@@ -74,7 +74,7 @@ function DownloadHistoryContent() {
             <div className="flex-1 space-y-1">
               <div
                 className={cn("font-medium", {
-                  "cursor-pointer hover:underline underline-offset-4": exists,
+                  "hover:underline underline-offset-4": exists,
                   "line-through text-muted-foreground": !exists,
                 })}
                 onClick={

@@ -1,6 +1,5 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
-import type { Config } from "@meru/shared/types";
 import {
   Field,
   FieldContent,
@@ -22,6 +21,18 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
+
+const themeItems = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+];
+
+const systemTrayIconColorItems = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+];
 
 export function AppearanceSettings() {
   const { config } = useConfig();
@@ -91,27 +102,32 @@ export function AppearanceSettings() {
             <FieldDescription>Choose the color of the system tray icon.</FieldDescription>
           </FieldContent>
           <Select
+            items={systemTrayIconColorItems}
             value={config["tray.iconColor"]}
-            onValueChange={(color: Config["tray.iconColor"]) => {
-              configMutation.mutate(
-                {
-                  "tray.iconColor": color,
-                },
-                {
-                  onSuccess: () => {
-                    restartRequiredToast();
+            onValueChange={(value) => {
+              if (value) {
+                configMutation.mutate(
+                  {
+                    "tray.iconColor": value,
                   },
-                },
-              );
+                  {
+                    onSuccess: () => {
+                      restartRequiredToast();
+                    },
+                  },
+                );
+              }
             }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select color" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">Light</SelectItem>
-              <SelectItem value="dark">Dark</SelectItem>
-              <SelectItem value="system">System</SelectItem>
+              {systemTrayIconColorItems.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>
@@ -134,12 +150,15 @@ export function AppearanceSettings() {
                 <FieldDescription>Select the application theme.</FieldDescription>
               </FieldContent>
               <Select
+                items={themeItems}
                 value={config.theme}
-                onValueChange={(theme: Config["theme"]) => {
-                  ipc.main.send("theme.setTheme", theme);
+                onValueChange={(value) => {
+                  if (value) {
+                    ipc.main.send("theme.setTheme", value);
 
-                  if (!platform.isMacOS) {
-                    restartRequiredToast();
+                    if (!platform.isMacOS) {
+                      restartRequiredToast();
+                    }
                   }
                 }}
               >
@@ -147,9 +166,11 @@ export function AppearanceSettings() {
                   <SelectValue placeholder="Select theme" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  {themeItems.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>

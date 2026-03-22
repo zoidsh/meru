@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -18,16 +17,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown";
+} from "@meru/ui/components/dropdown-menu";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import {
   Table,
@@ -39,11 +30,12 @@ import {
 } from "@meru/ui/components/table";
 import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useForm } from "@tanstack/react-form";
+import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
 
 export function SavedSearchForm({
   savedSearch = { label: "", query: "" },
@@ -58,58 +50,69 @@ export function SavedSearchForm({
   type: "add" | "edit";
   onSubmit: (savedSearch: GmailSavedSearchInput) => void;
 }) {
-  const form = useForm<GmailSavedSearchInput>({
-    resolver: zodResolver(gmailSavedSearchInputSchema),
+  const form = useForm({
     defaultValues: savedSearch,
+    validators: {
+      onSubmit: gmailSavedSearchInputSchema,
+    },
+    onSubmit: ({ value }) => {
+      onSubmit(value);
+    },
   });
 
   return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit((values) => {
-          onSubmit(values);
-        })}
-      >
-        <FormField
-          control={form.control}
-          name="label"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Label</FormLabel>
+    <form
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        form.handleSubmit();
+      }}
+    >
+      <FieldGroup>
+        <form.Field name="label">
+          {(field) => (
+            <Field>
+              <FieldLabel>Label</FieldLabel>
               <div className="flex gap-2">
-                <FormControl>
-                  <Input placeholder={labelPlaceholder} {...field} />
-                </FormControl>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  placeholder={labelPlaceholder}
+                />
                 <EmojiPickerButton
                   onEmojiSelect={({ emoji }) => {
-                    form.setValue("label", `${form.getValues().label}${emoji}`);
+                    form.setFieldValue("label", `${form.getFieldValue("label")}${emoji}`);
                   }}
                   modal
                 />
               </div>
-              <FormMessage />
-            </FormItem>
+            </Field>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="query"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Query</FormLabel>
-              <FormControl>
-                <Input placeholder={queryPlaceholder} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </form.Field>
+        <form.Field name="query">
+          {(field) => (
+            <Field>
+              <FieldLabel>Query</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                placeholder={queryPlaceholder}
+              />
+            </Field>
           )}
-        />
-        <div className="flex justify-end">
-          <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
-        </div>
-      </form>
-    </Form>
+        </form.Field>
+      </FieldGroup>
+      <div className="flex justify-end">
+        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+      </div>
+    </form>
   );
 }
 
@@ -124,16 +127,18 @@ export function AddSavedSearchButton({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button
-          onClick={() => {
-            setIsDialogOpen(true);
-          }}
-          disabled={!isLicenseKeyValid}
-        >
-          Add
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            onClick={() => {
+              setIsDialogOpen(true);
+            }}
+            disabled={!isLicenseKeyValid}
+          >
+            Add
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Saved Search</DialogTitle>
@@ -165,15 +170,21 @@ function SavedSearchMenuButton({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" className="size-8 p-0" variant="ghost">
-            <EllipsisIcon />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button size="icon" className="size-8 p-0" variant="ghost">
+              <EllipsisIcon />
+            </Button>
+          }
+        />
         <DropdownMenuContent>
-          <DialogTrigger asChild>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-          </DialogTrigger>
+          <DropdownMenuItem
+            onClick={() => {
+              setIsOpen(true);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
             onClick={() => {

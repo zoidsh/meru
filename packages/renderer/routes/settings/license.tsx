@@ -1,7 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { WEBSITE_URL } from "@meru/shared/constants";
-import { Button } from "@meru/ui/components/button";
+import { Button, buttonVariants } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -15,24 +14,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown";
+} from "@meru/ui/components/dropdown-menu";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@meru/ui/components/field";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@meru/ui/components/form";
 import { Input } from "@meru/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@meru/ui/components/input-group";
 import { Spinner } from "@meru/ui/components/spinner";
-import { useForm as useTanStackForm } from "@tanstack/react-form";
+import { useForm, useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontalIcon } from "lucide-react";
-import { type ComponentProps, useState } from "react";
-import { useForm as useHookForm } from "react-hook-form";
+import { type ComponentProps, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -46,43 +36,53 @@ export const licenseKeySchema = z.object({
 function LicenseKeyForm({
   onSubmit,
 }: {
-  onSubmit: (key: z.infer<typeof licenseKeySchema>["licenseKey"]) => void;
+  onSubmit: (values: { licenseKey: z.infer<typeof licenseKeySchema>["licenseKey"] }) => void;
 }) {
-  const form = useHookForm<z.infer<typeof licenseKeySchema>>({
-    resolver: zodResolver(licenseKeySchema),
+  const form = useForm({
     defaultValues: {
       licenseKey: "",
+    },
+    validators: {
+      onSubmit: licenseKeySchema,
+    },
+    onSubmit: ({ value }) => {
+      onSubmit(value);
     },
   });
 
   return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(({ licenseKey }) => {
-          onSubmit(licenseKey);
-        })}
-      >
-        <FormField
-          control={form.control}
-          name="licenseKey"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>License Key</FormLabel>
-              <FormControl>
-                <Input placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end items-center">
-          <Button type="submit" className="self-end">
-            Activate
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <form
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        form.handleSubmit();
+      }}
+    >
+      <FieldGroup>
+        <form.Field name="licenseKey">
+          {(field) => {
+            return (
+              <Field>
+                <FieldLabel>License Key</FieldLabel>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  aria-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
+                  placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
+                />
+              </Field>
+            );
+          }}
+        </form.Field>
+      </FieldGroup>
+      <div className="flex justify-end items-center">
+        <Button type="submit">Activate</Button>
+      </div>
+    </form>
   );
 }
 
@@ -90,7 +90,11 @@ function ActivateLicenseDialog({
   variant = "activate",
   children,
   ...props
-}: { variant?: "activate" | "change" } & ComponentProps<typeof Dialog>) {
+}: {
+  children?: ReactNode;
+  variant?: "activate" | "change";
+  onOpenChange: (open: boolean) => void;
+} & Omit<ComponentProps<typeof Dialog>, "children" | "onOpenChange">) {
   return (
     <Dialog {...props}>
       {children}
@@ -102,7 +106,7 @@ function ActivateLicenseDialog({
           Please enter the license key you received at your email address after your purchase.
         </DialogDescription>
         <LicenseKeyForm
-          onSubmit={async (licenseKey) => {
+          onSubmit={async ({ licenseKey }) => {
             const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
 
             if (success && props.onOpenChange) {
@@ -120,9 +124,7 @@ function ActivateLicenseKeyButton() {
 
   return (
     <ActivateLicenseDialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Activate</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="outline">Activate</Button>} />
     </ActivateLicenseDialog>
   );
 }
@@ -194,11 +196,13 @@ export function LicenseSettings() {
                     readOnly
                   />
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="secondary">
-                        <MoreHorizontalIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button size="icon" variant="secondary">
+                          <MoreHorizontalIcon />
+                        </Button>
+                      }
+                    />
                     <DropdownMenuContent>
                       <DropdownMenuItem
                         onClick={() => {
@@ -294,11 +298,14 @@ export function LicenseSettings() {
           </div>
           <div className="flex gap-4">
             <ActivateLicenseKeyButton />
-            <Button asChild>
-              <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
-                Purchase
-              </a>
-            </Button>
+            <a
+              href={`${WEBSITE_URL}#pricing`}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants()}
+            >
+              Purchase
+            </a>
           </div>
         </>
       );
@@ -315,11 +322,14 @@ export function LicenseSettings() {
         </div>
         <div className="flex gap-4">
           <ActivateLicenseKeyButton />
-          <Button asChild>
-            <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
-              Purchase
-            </a>
-          </Button>
+          <a
+            href={`${WEBSITE_URL}#pricing`}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonVariants()}
+          >
+            Purchase
+          </a>
         </div>
       </>
     );

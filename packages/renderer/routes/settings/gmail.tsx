@@ -1,5 +1,4 @@
 import { ipc } from "@meru/renderer-lib/ipc";
-import type { Config } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -25,6 +24,12 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
+
+const unreadCountPreferenceItems = [
+  { value: "default", label: "Default" },
+  { value: "first-section", label: "First Section Only" },
+  { value: "inbox", label: "Inbox Only" },
+];
 
 export function GmailSettings() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -124,16 +129,19 @@ export function GmailSettings() {
                 </FieldDescription>
               </FieldContent>
               <Select
+                items={unreadCountPreferenceItems}
                 value={config["gmail.unreadCountPreference"]}
-                onValueChange={(value: Config["gmail.unreadCountPreference"]) => {
-                  configMutation.mutate(
-                    {
-                      "gmail.unreadCountPreference": value,
-                    },
-                    {
-                      onSuccess: restartRequiredToast,
-                    },
-                  );
+                onValueChange={(value) => {
+                  if (value) {
+                    configMutation.mutate(
+                      {
+                        "gmail.unreadCountPreference": value,
+                      },
+                      {
+                        onSuccess: restartRequiredToast,
+                      },
+                    );
+                  }
                 }}
                 disabled={!isLicenseKeyValid}
               >
@@ -141,9 +149,11 @@ export function GmailSettings() {
                   <SelectValue placeholder="Select unread count preference" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="first-section">First Section Only</SelectItem>
-                  <SelectItem value="inbox">Inbox Only</SelectItem>
+                  {unreadCountPreferenceItems.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
