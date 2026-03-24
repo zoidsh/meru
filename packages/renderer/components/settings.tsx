@@ -9,6 +9,10 @@ export function SettingsTitle({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("text-2xl font-semibold", className)} {...props} />;
 }
 
+export function SettingsDescription({ className, ...props }: ComponentProps<"div">) {
+  return <div className={cn("text-muted-foreground text-sm", className)} {...props} />;
+}
+
 export function SettingsContent(props: ComponentProps<"div">) {
   return <div {...props} />;
 }

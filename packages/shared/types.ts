@@ -130,6 +130,7 @@ export type Config = {
   "doNotDisturb.enabled": boolean;
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;
+  "unifiedInbox.rowsPerPage": number;
 };
 
 export type IpcMainEvents =
@@ -141,7 +142,7 @@ export type IpcMainEvents =
       "accounts.removeAccount": [accountId: AccountConfig["id"]];
       "accounts.updateAccount": [account: AccountConfig];
       "accounts.moveAccount": [accountId: AccountConfig["id"], direction: "up" | "down"];
-      "settings.toggleIsOpen": [];
+      "settings.toggleIsOpen": [open?: boolean];
       "gmail.moveNavigationHistory": [move: "back" | "forward"];
       "gmail.unreadCountChanged": [unreadCountString: string, inboxType: "CLASSIC" | "SECTIONED"];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
@@ -151,6 +152,7 @@ export type IpcMainEvents =
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
       "gmail.setUserEmail": [email: string];
+      "gmail.openMessage": [messageId: string];
       "titleBar.toggleAppMenu": [];
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];

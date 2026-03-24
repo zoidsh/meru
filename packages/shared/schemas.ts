@@ -28,6 +28,7 @@ export const accountConfigSchema = z.object({
   gmail: z.object({
     unreadBadge: z.boolean(),
     delegatedAccountId: z.string().nullable(),
+    unifiedInbox: z.boolean(),
   }),
 });
 
@@ -42,7 +43,7 @@ export const accountConfigInputSchema = accountConfigSchema
     notifications: true,
   })
   .extend({
-    gmail: accountConfigSchema.shape.gmail.pick({ unreadBadge: true }),
+    gmail: accountConfigSchema.shape.gmail.pick({ unreadBadge: true, unifiedInbox: true }),
   });
 
 export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;

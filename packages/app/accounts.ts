@@ -155,8 +155,12 @@ class Accounts {
         main.window.contentView.addChildView(account.gmail.view);
         account.gmail.updateViewBounds();
         account.gmail.view.webContents.focus();
+
+        return account;
       }
     }
+
+    throw new Error("Could not find account to select");
   }
 
   selectPreviousAccount() {
@@ -197,7 +201,7 @@ class Accounts {
 
   addAccount(
     accountDetails: Pick<AccountConfig, "label" | "notifications" | "color"> & {
-      gmail: Pick<AccountConfig["gmail"], "unreadBadge">;
+      gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox">;
     },
   ) {
     const createdAccount: AccountConfig = {
@@ -206,6 +210,7 @@ class Accounts {
       selected: false,
       gmail: {
         unreadBadge: accountDetails.gmail.unreadBadge,
+        unifiedInbox: accountDetails.gmail.unifiedInbox,
         delegatedAccountId: null,
       },
     };

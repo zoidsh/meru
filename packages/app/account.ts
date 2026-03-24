@@ -38,6 +38,7 @@ export class Account {
       accountId: accountConfig.id,
       session: this.session,
       unreadCountEnabled: accountConfig.gmail.unreadBadge,
+      unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
     });
   }

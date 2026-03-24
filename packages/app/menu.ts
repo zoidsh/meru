@@ -426,6 +426,8 @@ export class AppMenu {
             label: account.config.label,
             click: () => {
               accounts.selectAccount(account.config.id);
+
+              main.show();
             },
             accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
           })),

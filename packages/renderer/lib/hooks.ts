@@ -1,7 +1,9 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { useEffect } from "react";
 import { useConfig } from "@meru/renderer-lib/react-query";
-import { useTrialStore } from "./stores";
+import { useAccountsStore, useTrialStore } from "./stores";
+import type { GmailInboxMessage } from "@meru/shared/gmail";
+import type { AccountConfig } from "@meru/shared/schemas";
 
 export function useMouseAccountSwitching() {
   useEffect(() => {
@@ -27,4 +29,28 @@ export function useIsLicenseKeyValid() {
   const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
 
   return isTrialActive || Boolean(config?.licenseKey);
+}
+
+export type UnifiedInboxMessage = GmailInboxMessage & {
+  account: Pick<AccountConfig, "id" | "label" | "color">;
+};
+
+export function useUnifiedInbox() {
+  const accounts = useAccountsStore((state) => state.accounts);
+
+  const messages: UnifiedInboxMessage[] = accounts
+    .map((account) =>
+      account.gmail.unreadInbox.map((mail) => ({
+        account: {
+          id: account.config.id,
+          label: account.config.label,
+          color: account.config.color,
+        },
+        ...mail,
+      })),
+    )
+    .flat()
+    .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
+  console.log(messages);
+  return { messages };
 }

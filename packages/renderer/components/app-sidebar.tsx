@@ -120,7 +120,7 @@ export function AppSidebar() {
   }
 
   return (
-    <div className="bg-sidebar p-4">
+    <div className="bg-sidebar p-4 pr-0">
       <ScrollArea className="w-56 h-full">
         <div className="space-y-2">
           {sidebarNavItems.map(({ type, label, path }, index) => {

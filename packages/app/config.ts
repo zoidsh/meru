@@ -25,6 +25,7 @@ export const config = new Store<Config>({
         gmail: {
           unreadBadge: true,
           delegatedAccountId: null,
+          unifiedInbox: true,
         },
       },
     ],
@@ -93,6 +94,7 @@ export const config = new Store<Config>({
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
+    "unifiedInbox.rowsPerPage": 10,
   },
   migrations: {
     ">=3.4.0": (store) => {
@@ -259,6 +261,25 @@ export const config = new Store<Config>({
       if (typeof store.get("downloadHistory.alwaysOpenInNewWindow") === "boolean") {
         // @ts-expect-error
         store.delete("downloadHistory.alwaysOpenInNewWindow");
+      }
+    },
+    ">3.38.4": (store) => {
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        let accountsMigrated = false;
+
+        for (const account of accounts) {
+          if (typeof account.gmail.unifiedInbox !== "boolean") {
+            account.gmail.unifiedInbox = true;
+
+            accountsMigrated = true;
+          }
+        }
+
+        if (accountsMigrated) {
+          store.set("accounts", accounts);
+        }
       }
     },
   },

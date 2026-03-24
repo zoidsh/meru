@@ -38,13 +38,14 @@ import { useConfig } from "@meru/renderer-lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 import { useForm } from "@tanstack/react-form";
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@meru/ui/components/field";
+import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
+import { navigate } from "wouter/use-hash-location";
 
 function AccountForm({
   account = {
     label: "",
     color: null,
-    gmail: { unreadBadge: true },
+    gmail: { unreadBadge: true, unifiedInbox: true },
     notifications: true,
   },
   placeholder = "Work",
@@ -163,30 +164,43 @@ function AccountForm({
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLegend>Options</FieldLegend>
+          <FieldLabel>Options</FieldLabel>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
-              <Field>
-                <FieldLabel>Unread Badge</FieldLabel>
+              <Field orientation="horizontal" className="w-fit">
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
+                <FieldLabel>Unread Badge</FieldLabel>
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="gmail.unifiedInbox">
+            {(field) => (
+              <Field orientation="horizontal" className="w-fit">
+                <Switch
+                  id={field.name}
+                  name={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={field.handleChange}
+                />
+                <FieldLabel>Unified Inbox</FieldLabel>
               </Field>
             )}
           </form.Field>
           <form.Field name="notifications">
             {(field) => (
-              <Field>
-                <FieldLabel>Notifications</FieldLabel>
+              <Field orientation="horizontal" className="w-fit">
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
+                <FieldLabel>Notifications</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -228,6 +242,8 @@ function AddAccountButton() {
             ipc.main.send("accounts.addAccount", account);
 
             setIsDialogOpen(false);
+
+            navigate("/");
           }}
           type="add"
         />
@@ -292,6 +308,7 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
 
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
+              account.gmail.unifiedInbox !== values.gmail.unifiedInbox ||
               account.notifications !== values.notifications
             ) {
               restartRequiredToast();
@@ -340,6 +357,9 @@ export function AccountsSettings() {
                   <div className="flex gap-2">
                     {account.config.gmail.unreadBadge && (
                       <Badge variant="outline">Unread Badge</Badge>
+                    )}
+                    {account.config.gmail.unifiedInbox && (
+                      <Badge variant="outline">Unified Inbox</Badge>
                     )}
                     {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
                   </div>

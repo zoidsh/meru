@@ -19,3 +19,7 @@ export function arrayMove<ValueType>(
 
   return newArray;
 }
+
+export function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

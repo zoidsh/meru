@@ -30,7 +30,7 @@ export function isGmailComposeWindowUrl(url: string) {
   return url.startsWith(GMAIL_URL) && url.includes("/popout");
 }
 
-export interface GmailMail {
+export interface GmailInboxMessage {
   id: string;
   subject: string;
   summary: string;
@@ -47,6 +47,7 @@ export type GmailState = {
     canGoForward: boolean;
   };
   unreadCount: number | null;
+  unreadInbox: GmailInboxMessage[];
   outOfOffice: boolean;
   attentionRequired: boolean;
 };

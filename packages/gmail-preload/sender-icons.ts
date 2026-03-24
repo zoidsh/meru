@@ -1,5 +1,6 @@
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $, $$, elementExists } from "select-dom";
+import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 
 const senderIconSize = 16;
 const senderIconsElementId = "meru-sender-icons";
@@ -50,7 +51,7 @@ export function addSenderIcons() {
     for (const senderDomain of senderDomains) {
       const senderIconElement = document.createElement("img");
 
-      senderIconElement.src = `https://www.google.com/s2/favicons?domain=${senderDomain}&sz=${senderIconSize * 2}`;
+      senderIconElement.src = getGoogleDomainFaviconUrl(senderDomain, senderIconSize * 2);
       senderIconElement.title = senderDomain;
       senderIconElement.style.width = `${senderIconSize}px`;
       senderIconElement.style.height = `${senderIconSize}px`;

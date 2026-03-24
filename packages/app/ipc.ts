@@ -34,8 +34,12 @@ class Ipc {
   renderer = new IpcEmitter<IpcRendererEvent>();
 
   init() {
-    this.main.on("settings.toggleIsOpen", () => {
-      appState.toggleIsSettingsOpen();
+    this.main.on("settings.toggleIsOpen", (_event, open) => {
+      if (typeof open === "boolean") {
+        appState.setIsSettingsOpen(open);
+      } else {
+        appState.toggleIsSettingsOpen();
+      }
 
       if (appState.isSettingsOpen) {
         accounts.hide();
@@ -458,11 +462,21 @@ class Ipc {
         if (event.sender.id === account.gmail.view.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
-          account.gmail.fetchInboxFeed(inboxType);
+          account.gmail.fetchInboxFeed(inboxType, unreadCount);
 
           break;
         }
       }
+    });
+
+    this.main.on("gmail.openMessage", (_event, messageId) => {
+      const selectedAccount = accounts.getSelectedAccount();
+
+      ipc.renderer.send(
+        selectedAccount.instance.gmail.view.webContents,
+        "gmail.openMessage",
+        messageId,
+      );
     });
   }
 }
