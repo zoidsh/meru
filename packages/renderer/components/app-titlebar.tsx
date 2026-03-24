@@ -40,12 +40,7 @@ import { GoogleAppIcon } from "./google-app-icon";
 
 function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn("size-7 draggable-none", className)}
-      {...props}
-    />
+    <Button variant="ghost" size="sm" className={cn("draggable-none", className)} {...props} />
   );
 }
 
@@ -80,7 +75,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
       ref={buttonRef}
       variant="ghost"
       size="sm"
-      className={cn("text-xs h-7 max-w-56 animate-in fade-in", {
+      className={cn("max-w-56 animate-in fade-in", {
         "animate-out fade-out": fadeOut,
       })}
       onClick={() => {
@@ -91,7 +86,7 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
         });
       }}
     >
-      <FileCheckIcon className="size-4" />
+      <FileCheckIcon />
       <div className="truncate">{item.fileName}</div>
     </Button>
   );
@@ -118,8 +113,7 @@ function Download() {
       {completedDownloadItem && <RecentlyDownloadedItem item={completedDownloadItem} />}
       <Button
         variant="ghost"
-        size="icon"
-        className="size-7"
+        size="icon-sm"
         onClick={() => {
           ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
         }}
@@ -131,7 +125,7 @@ function Download() {
         }}
         title="Download History"
       >
-        <DownloadIcon className="size-4" />
+        <DownloadIcon />
       </Button>
     </div>
   );
@@ -237,8 +231,7 @@ function FindInPage() {
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7"
+          size="icon-sm"
           onClick={() => {
             ipc.main.send("findInPage", text, {
               forward: false,
@@ -247,27 +240,20 @@ function FindInPage() {
           }}
           title="Find Previous Match"
         >
-          <ChevronUpIcon className="size-4" />
+          <ChevronUpIcon />
         </Button>
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7"
+          size="icon-sm"
           onClick={() => {
             ipc.main.send("findInPage", text, { findNext: false });
           }}
           title="Find Next Match"
         >
-          <ChevronDownIcon className="size-4" />
+          <ChevronDownIcon />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          onClick={deactivate}
-          title="Close Find in Page"
-        >
-          <XIcon className="size-4" />
+        <Button variant="ghost" size="icon-sm" onClick={deactivate} title="Close Find in Page">
+          <XIcon />
         </Button>
       </div>
     </div>
@@ -359,7 +345,7 @@ export function AppTitlebar() {
           key={savedSearch.id}
           variant="outline"
           size="sm"
-          className="text-xs h-7 draggable-none"
+          className="draggable-none"
           onClick={() => {
             ipc.main.send("gmail.search", savedSearch.query);
           }}
@@ -378,7 +364,7 @@ export function AppTitlebar() {
         key={account.config.id}
         variant={account.config.selected ? "secondary" : "ghost"}
         size="sm"
-        className="text-xs h-7 flex items-center justify-center gap-1 draggable-none"
+        className="draggable-none"
         onClick={() => {
           ipc.main.send("accounts.selectAccount", account.config.id);
         }}
@@ -402,11 +388,9 @@ export function AppTitlebar() {
             )}
           />
         )}
-        {account.gmail.outOfOffice && isLicenseKeyValid && <BriefcaseIcon className="size-3.5" />}
+        {account.gmail.outOfOffice && isLicenseKeyValid && <BriefcaseIcon />}
         {account.config.label}
-        {account.gmail.attentionRequired && (
-          <CircleAlertIcon className="size-3.5 text-yellow-400" />
-        )}
+        {account.gmail.attentionRequired && <CircleAlertIcon className="text-yellow-400" />}
         {!account.gmail.attentionRequired &&
         config["accounts.unreadBadge"] &&
         account.gmail.unreadCount ? (
@@ -426,7 +410,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="text-xs h-7 draggable-none"
+              className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.quitAndInstall");
               }}
@@ -436,7 +420,7 @@ export function AppTitlebar() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs h-7 draggable-none"
+              className="draggable-none"
               onClick={() => {
                 dismissAppUpdate();
                 setIsAppUpdateDetailsOpen(false);
@@ -447,7 +431,7 @@ export function AppTitlebar() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs h-7 draggable-none"
+              className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.openVersionHistory");
               }}
@@ -472,8 +456,8 @@ export function AppTitlebar() {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
-            className="size-7 draggable-none"
+            size="icon-sm"
+            className="draggable-none"
             onClick={() => {
               ipc.main.send("gmail.moveNavigationHistory", "back");
             }}
@@ -484,8 +468,8 @@ export function AppTitlebar() {
           </Button>
           <Button
             variant="ghost"
-            size="icon"
-            className="size-7 draggable-none"
+            size="icon-sm"
+            className="draggable-none"
             onClick={() => {
               ipc.main.send("gmail.moveNavigationHistory", "forward");
             }}
@@ -497,8 +481,8 @@ export function AppTitlebar() {
           {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
             <Button
               variant="ghost"
-              size="icon"
-              className="size-7 draggable-none"
+              size="icon-sm"
+              className="draggable-none"
               onClick={() => {
                 setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
               }}
@@ -513,8 +497,8 @@ export function AppTitlebar() {
             isLicenseKeyValid && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-7 draggable-none"
+                size="icon-sm"
+                className="draggable-none"
                 title="Out of Office"
                 onClick={() => {
                   ipc.main.send("gmail.navigateTo", "settings");
@@ -535,7 +519,7 @@ export function AppTitlebar() {
         {appUpdateVersion && (
           <Button
             size="sm"
-            className="text-xs h-7 draggable-none"
+            className="draggable-none"
             onClick={() => {
               setIsAppUpdateDetailsOpen(true);
             }}
@@ -547,8 +531,7 @@ export function AppTitlebar() {
           <div className="draggable-none">
             <Button
               variant="ghost"
-              size="icon"
-              className="size-7"
+              size="icon-sm"
               onClick={() => {
                 ipc.main.send("titleBar.toggleAppMenu");
               }}
