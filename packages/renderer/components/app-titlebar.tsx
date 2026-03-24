@@ -17,6 +17,7 @@ import {
   DownloadIcon,
   EllipsisVerticalIcon,
   FileCheckIcon,
+  InboxIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
@@ -25,7 +26,7 @@ import {
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
-import { useHashLocation } from "wouter/use-hash-location";
+import { navigate, useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@meru/renderer-lib/react-query";
 import {
@@ -33,10 +34,10 @@ import {
   useAppUpdaterStore,
   useDownloadsStore,
   useFindInPageStore,
-  useSettingsStore,
   useTrialStore,
 } from "../lib/stores";
 import { GoogleAppIcon } from "./google-app-icon";
+import { useRoute } from "wouter";
 
 function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
@@ -321,7 +322,8 @@ export function AppTitlebar() {
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
-  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+  const [matchSettingsRoute] = useRoute("/settings/*");
+  const [matchAllInboxesRoute] = useRoute("/all-inboxes");
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
@@ -362,10 +364,14 @@ export function AppTitlebar() {
     return accounts.map((account) => (
       <Button
         key={account.config.id}
-        variant={account.config.selected ? "secondary" : "ghost"}
+        variant={account.config.selected && !matchAllInboxesRoute ? "secondary" : "ghost"}
         size="sm"
         className="draggable-none"
         onClick={() => {
+          navigate("/");
+
+          ipc.main.send("settings.toggleIsOpen");
+
           ipc.main.send("accounts.selectAccount", account.config.id);
         }}
       >
@@ -443,7 +449,7 @@ export function AppTitlebar() {
       );
     }
 
-    if (isSettingsOpen) {
+    if (matchSettingsRoute) {
       return (
         <div className="h-full flex items-center justify-center text-xs font-medium text-muted-foreground">
           Meru
@@ -478,6 +484,19 @@ export function AppTitlebar() {
           >
             <ArrowRightIcon />
           </Button>
+          <Button
+            variant={matchAllInboxesRoute ? "secondary" : "ghost"}
+            size="icon"
+            className="size-7 draggable-none"
+            onClick={() => {
+              navigate("/all-inboxes");
+
+              ipc.main.send("settings.toggleIsOpen");
+            }}
+            title="All Unread Inboxes"
+          >
+            <InboxIcon />
+          </Button>
           {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
             <Button
               variant="ghost"
@@ -487,6 +506,7 @@ export function AppTitlebar() {
                 setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
               }}
               title="Saved Searches"
+              disabled={matchAllInboxesRoute}
             >
               {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
             </Button>

@@ -1,7 +1,7 @@
 import { ipc } from "@meru/renderer-lib/ipc";
 import { useEffect } from "react";
 import { useConfig } from "@meru/renderer-lib/react-query";
-import { useTrialStore } from "./stores";
+import { useAccountsStore, useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
   useEffect(() => {
@@ -27,4 +27,21 @@ export function useIsLicenseKeyValid() {
   const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
 
   return isTrialActive || Boolean(config?.licenseKey);
+}
+
+export function useAllUnreadInboxes() {
+  const accounts = useAccountsStore((state) => state.accounts);
+
+  return accounts
+    .map((account) =>
+      account.gmail.unreadInbox.map((mail) => ({
+        account: {
+          id: account.config.id,
+          label: account.config.label,
+          color: account.config.color,
+        },
+        ...mail,
+      })),
+    )
+    .flat();
 }
