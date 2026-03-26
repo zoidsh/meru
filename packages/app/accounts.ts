@@ -155,8 +155,12 @@ class Accounts {
         main.window.contentView.addChildView(account.gmail.view);
         account.gmail.updateViewBounds();
         account.gmail.view.webContents.focus();
+
+        return account;
       }
     }
+
+    throw new Error("Could not find account to select");
   }
 
   selectPreviousAccount() {

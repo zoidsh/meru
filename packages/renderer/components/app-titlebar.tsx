@@ -370,7 +370,7 @@ export function AppTitlebar() {
         onClick={() => {
           navigate("/");
 
-          ipc.main.send("settings.toggleIsOpen");
+          ipc.main.send("settings.toggleIsOpen", false);
 
           ipc.main.send("accounts.selectAccount", account.config.id);
         }}
@@ -459,7 +459,7 @@ export function AppTitlebar() {
 
     return (
       <div className="h-full flex items-center justify-end gap-4">
-        <div className="flex items-center gap-1">
+        <div className="flex-1 flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -467,7 +467,7 @@ export function AppTitlebar() {
             onClick={() => {
               ipc.main.send("gmail.moveNavigationHistory", "back");
             }}
-            disabled={!selectedAccount?.gmail.navigationHistory.canGoBack}
+            disabled={matchAllInboxesRoute || !selectedAccount?.gmail.navigationHistory.canGoBack}
             title="Go Back"
           >
             <ArrowLeftIcon />
@@ -479,7 +479,9 @@ export function AppTitlebar() {
             onClick={() => {
               ipc.main.send("gmail.moveNavigationHistory", "forward");
             }}
-            disabled={!selectedAccount?.gmail.navigationHistory.canGoForward}
+            disabled={
+              matchAllInboxesRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
+            }
             title="Go Forward"
           >
             <ArrowRightIcon />
@@ -491,7 +493,9 @@ export function AppTitlebar() {
             onClick={() => {
               navigate("/all-inboxes");
 
-              ipc.main.send("settings.toggleIsOpen");
+              ipc.main.send("settings.toggleIsOpen", true);
+
+              setIsGmailSavedSearchesOpen(false);
             }}
             title="All Unread Inboxes"
           >
@@ -527,8 +531,8 @@ export function AppTitlebar() {
                 <BriefcaseIcon />
               </Button>
             )}
+          {renderAccounts()}
         </div>
-        <div className="flex-1 flex gap-2">{renderAccounts()}</div>
         <div className="flex gap-2">
           <Trial />
           <FindInPage />

@@ -3,10 +3,12 @@ import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { XIcon } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { Route } from "wouter";
+import { Route, useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useSettingsStore } from "@/lib/stores";
 import { sidebarNavItems } from "./app-sidebar";
+import { AllInboxes } from "@/routes/all-inboxes";
+import { cn } from "@meru/ui/lib/utils";
 
 ipc.renderer.on("navigate", (_event, to) => {
   navigate(to);
@@ -32,6 +34,8 @@ function CloseButton() {
 }
 
 export function AppMain() {
+  const [matchAllInboxesRoute] = useRoute("/all-inboxes");
+
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   if (!isSettingsOpen) {
@@ -40,17 +44,26 @@ export function AppMain() {
 
   return (
     <div className="flex-1 flex relative bg-sidebar">
-      <ScrollArea className="flex-1 bg-background rounded-xl m-4 relative overflow-hidden border dark:border-none">
-        <div className="w-3xl mx-auto py-8 px-28">
-          {sidebarNavItems
-            .filter((navItem) => navItem.type !== "separator")
-            .map(({ path, component }) => (
-              <Route key={path} path={path} component={component} />
-            ))}
+      <ScrollArea
+        className={cn(
+          "flex-1 bg-background relative overflow-hidden border dark:border-none",
+          !matchAllInboxesRoute && "rounded-xl m-4",
+        )}
+      >
+        <div className={cn("mx-auto py-8", matchAllInboxesRoute ? "w-6xl px-8" : "w-3xl px-28")}>
+          {matchAllInboxesRoute ? (
+            <AllInboxes />
+          ) : (
+            sidebarNavItems
+              .filter((navItem) => navItem.type !== "separator")
+              .map(({ path, component }) => <Route key={path} path={path} component={component} />)
+          )}
         </div>
-        <div className="absolute top-8 right-8">
-          <CloseButton />
-        </div>
+        {!matchAllInboxesRoute && (
+          <div className="absolute top-8 right-8">
+            <CloseButton />
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
