@@ -27,10 +27,9 @@ export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
 }
 
 export interface GmailMail {
-  messageId: string;
+  id: string;
   subject: string;
   summary: string;
-  link: string;
   sender: {
     name: string;
     email: string;

@@ -40,7 +40,9 @@ const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload.js");
 const inboxFeedEntrySchema = z.object({
   title: z.coerce.string(),
   summary: z.coerce.string(),
-  link: z.string(),
+  link: z.object({
+    "@_href": z.string(),
+  }),
   modified: z.string(),
   issued: z.string(),
   id: z.string(),
@@ -55,7 +57,6 @@ const inboxFeedSchema = z.object({
     title: z.string(),
     tagline: z.string(),
     fullcount: z.number(),
-    link: z.string(),
     modified: z.string(),
     entry: z.union([inboxFeedEntrySchema, z.array(inboxFeedEntrySchema)]).optional(),
   }),
@@ -320,11 +321,15 @@ export class Gmail extends GoogleApp {
         ? feed.entry
         : [feed.entry]
       ).entries()) {
+        const messageId = new URLSearchParams(link["@_href"]).get("message_id");
         const receivedAt = new Date(issued).getTime();
 
+        if (!messageId) {
+          throw new Error("Message ID not found in inbox feed entry");
+        }
+
         unreadInbox.push({
-          messageId: id,
-          link,
+          id: messageId,
           subject: title,
           summary,
           sender: {
@@ -385,18 +390,13 @@ export class Gmail extends GoogleApp {
               ipc.renderer.send(
                 this.view.webContents,
                 "gmail.handleMessage",
-                newMail.messageId,
+                newMail.id,
                 "markAsRead",
               );
             }
 
             if (config.get("verificationCodes.autoDelete")) {
-              ipc.renderer.send(
-                this.view.webContents,
-                "gmail.handleMessage",
-                newMail.messageId,
-                "delete",
-              );
+              ipc.renderer.send(this.view.webContents, "gmail.handleMessage", newMail.id, "delete");
             }
 
             continue;
@@ -436,7 +436,7 @@ export class Gmail extends GoogleApp {
 
             accounts.selectAccount(this.accountId);
 
-            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.messageId);
+            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
           },
           action: (index) => {
             switch (index) {
@@ -444,7 +444,7 @@ export class Gmail extends GoogleApp {
                 ipc.renderer.send(
                   this.view.webContents,
                   "gmail.handleMessage",
-                  newMail.messageId,
+                  newMail.id,
                   "archive",
                 );
 
@@ -454,7 +454,7 @@ export class Gmail extends GoogleApp {
                 ipc.renderer.send(
                   this.view.webContents,
                   "gmail.handleMessage",
-                  newMail.messageId,
+                  newMail.id,
                   "markAsRead",
                 );
 
@@ -464,7 +464,7 @@ export class Gmail extends GoogleApp {
                 ipc.renderer.send(
                   this.view.webContents,
                   "gmail.handleMessage",
-                  newMail.messageId,
+                  newMail.id,
                   "delete",
                 );
 
@@ -474,7 +474,7 @@ export class Gmail extends GoogleApp {
                 ipc.renderer.send(
                   this.view.webContents,
                   "gmail.handleMessage",
-                  newMail.messageId,
+                  newMail.id,
                   "markAsSpam",
                 );
 
