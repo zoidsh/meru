@@ -4,12 +4,11 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import {
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
-  GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
+  isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
 import {
   BrowserWindow,
-  type BrowserWindowConstructorOptions,
   dialog,
   globalShortcut,
   powerSaveBlocker,
@@ -394,26 +393,15 @@ export class GoogleApp {
           });
         };
 
-        const additionalArguments: string[] = [];
-
-        if (
-          url.startsWith(GMAIL_URL) &&
-          config.get("gmail.closeComposeWindowAfterSend") &&
-          licenseKey.isValid
-        ) {
-          additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend);
-        }
-
-        const newWindowOptions: BrowserWindowConstructorOptions = {
+        const newWindowOptions = {
           autoHideMenuBar: true,
           webPreferences: {
             session: this.session,
             preload: path.join(__dirname, "google-app-preload.js"),
-            additionalArguments,
           },
         };
 
-        if (url.startsWith(GMAIL_URL) && url.includes("/popout")) {
+        if (isGmailComposeWindowUrl(url)) {
           return {
             action: "allow",
             createWindow: (inheritedOptions) => {
@@ -425,7 +413,6 @@ export class GoogleApp {
                 webPreferences: {
                   ...inheritedOptions.webPreferences,
                   ...newWindowOptions.webPreferences,
-                  additionalArguments,
                 },
               });
 

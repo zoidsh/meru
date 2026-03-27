@@ -224,24 +224,30 @@ export class Gmail extends GoogleApp {
       additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideInboxFooter);
     }
 
-    if (config.get("gmail.reverseConversation") && licenseKey.isValid) {
-      additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.reverseConversation);
-    }
+    if (licenseKey.isValid) {
+      if (config.get("gmail.reverseConversation")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.reverseConversation);
+      }
 
-    if (config.get("gmail.openComposeInNewWindow") && licenseKey.isValid) {
-      additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow);
-    }
+      if (config.get("gmail.openComposeInNewWindow")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow);
+      }
 
-    if (config.get("gmail.showSenderIcons") && licenseKey.isValid) {
-      additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons);
-    }
+      if (config.get("gmail.showSenderIcons")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.showSenderIcons);
+      }
 
-    if (config.get("gmail.hideOutOfOfficeBanner") && licenseKey.isValid) {
-      additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner);
-    }
+      if (config.get("gmail.hideOutOfOfficeBanner")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner);
+      }
 
-    if (config.get("gmail.moveAttachmentsToTop") && licenseKey.isValid) {
-      additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop);
+      if (config.get("gmail.moveAttachmentsToTop")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop);
+      }
+
+      if (config.get("gmail.closeComposeWindowAfterSend")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend);
+      }
     }
 
     super({

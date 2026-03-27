@@ -5,7 +5,7 @@ export const GMAIL_ACTION_CODE_MAP = {
   markAsSpam: 7,
 };
 
-export const GMAIL_URL = "https://mail.google.com/mail/u/0";
+export const GMAIL_URL = "https://mail.google.com/mail";
 
 export const GMAIL_INBOX_FEED_URL = `${GMAIL_URL}/feed/atom`;
 
@@ -24,6 +24,10 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
 
 export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
   return `${GMAIL_URL}/d/${delegatedAccountId}`;
+}
+
+export function isGmailComposeWindowUrl(url: string) {
+  return url.startsWith(GMAIL_URL) && url.includes("/popout");
 }
 
 export interface GmailMail {
