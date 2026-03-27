@@ -1,6 +1,6 @@
 import { ipc } from "@meru/renderer-lib/ipc";
-import { useEffect } from "react";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useEffect, useState } from "react";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { useAccountsStore, useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
@@ -29,10 +29,40 @@ export function useIsLicenseKeyValid() {
   return isTrialActive || Boolean(config?.licenseKey);
 }
 
-export function useAllUnreadInboxes() {
+export function useUnifiedInbox() {
+  const [page, setPage] = useState(1);
+
+  const { config } = useConfig();
+
+  const configMutation = useConfigMutation();
+
   const accounts = useAccountsStore((state) => state.accounts);
 
-  return accounts
+  const goToFirstPage = () => setPage(1);
+
+  const goToLastPage = () => setPage((prev) => prev + 1);
+
+  const previousPage = () => setPage((prev) => Math.max(prev - 1, 1));
+
+  const nextPage = () => setPage((prev) => prev + 1);
+
+  const setRowsPerPage = (rowsPerPage: number) => {
+    configMutation.mutate({ "unifiedInbox.rowsPerPage": rowsPerPage });
+  };
+
+  if (!config) {
+    return {
+      rowsPerPage: 0,
+      setRowsPerPage,
+      goToFirstPage,
+      previousPage,
+      nextPage,
+      goToLastPage,
+      messages: [],
+    };
+  }
+
+  const messages = accounts
     .map((account) =>
       account.gmail.unreadInbox.map((mail) => ({
         account: {
@@ -43,5 +73,21 @@ export function useAllUnreadInboxes() {
         ...mail,
       })),
     )
-    .flat();
+    .flat()
+    .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1))
+    .slice(
+      (page - 1) * config["unifiedInbox.rowsPerPage"],
+      page * config["unifiedInbox.rowsPerPage"],
+    );
+
+  return {
+    rowsPerPage: config["unifiedInbox.rowsPerPage"],
+    setRowsPerPage,
+    page,
+    goToFirstPage,
+    previousPage,
+    nextPage,
+    goToLastPage,
+    messages,
+  };
 }

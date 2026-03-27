@@ -93,6 +93,7 @@ export const config = new Store<Config>({
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
+    "unifiedInbox.rowsPerPage": 10,
   },
   migrations: {
     ">=3.4.0": (store) => {
