@@ -27,7 +27,7 @@ export class AppMenu {
 
   private _isPopupOpen = false;
 
-  private _unsubscribeToSelectedAccount: (() => void) | null = null;
+  private _selectedAccountUnsubscribeFns: Set<() => void> = new Set();
 
   get menu() {
     if (!this._menu) {
@@ -66,20 +66,33 @@ export class AppMenu {
   }
 
   private _subscribeToSelectedAccount() {
-    if (this._unsubscribeToSelectedAccount) {
-      this._unsubscribeToSelectedAccount();
+    for (const unsubscribe of this._selectedAccountUnsubscribeFns) {
+      unsubscribe();
     }
 
-    this._unsubscribeToSelectedAccount = accounts
-      .getSelectedAccount()
-      .instance.gmail.store.subscribe(
+    const selectedAccount = accounts.getSelectedAccount();
+
+    this._selectedAccountUnsubscribeFns.add(
+      selectedAccount.instance.gmail.viewStore.subscribe(
+        (state) => state.navigationHistory,
+        () => {
+          this.menu = this.createMenu();
+
+          Menu.setApplicationMenu(this.menu);
+        },
+      ),
+    );
+
+    this._selectedAccountUnsubscribeFns.add(
+      selectedAccount.instance.gmail.store.subscribe(
         (state) => state.messageId,
         () => {
           this.menu = this.createMenu();
 
           Menu.setApplicationMenu(this.menu);
         },
-      );
+      ),
+    );
   }
 
   createMenu() {
@@ -124,6 +137,8 @@ export class AppMenu {
     };
 
     const selectedAccount = accounts.getSelectedAccount();
+    const selectedAccountViewState = selectedAccount.instance.gmail.viewStore.getState();
+
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.store.getState().messageId;
 
@@ -166,7 +181,7 @@ export class AppMenu {
             accelerator: "Command+,",
             click: () => {
               ipc.renderer.send(
-                accounts.getSelectedAccount().instance.gmail.view.webContents,
+                selectedAccount.instance.gmail.view.webContents,
                 "gmail.navigateTo",
                 "settings",
               );
@@ -194,7 +209,7 @@ export class AppMenu {
             label: "Compose",
             click: () => {
               ipc.renderer.send(
-                accounts.getSelectedAccount().instance.gmail.view.webContents,
+                selectedAccount.instance.gmail.view.webContents,
                 "gmail.navigateTo",
                 "compose",
               );
@@ -349,7 +364,7 @@ export class AppMenu {
             label: "Reload",
             accelerator: "CommandOrControl+R",
             click: () => {
-              accounts.getSelectedAccount().instance.gmail.view.webContents.reload();
+              selectedAccount.instance.gmail.view.webContents.reload();
 
               main.show();
             },
@@ -376,9 +391,30 @@ export class AppMenu {
             click: () => {
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              accounts.getSelectedAccount().instance.gmail.view.webContents.openDevTools();
+              selectedAccount.instance.gmail.view.webContents.openDevTools();
 
               main.show();
+            },
+          },
+        ],
+      },
+      {
+        label: "History",
+        submenu: [
+          {
+            label: "Back",
+            enabled: selectedAccountViewState.navigationHistory.canGoBack,
+            accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
+            click: () => {
+              selectedAccount.instance.gmail.view.webContents.navigationHistory.goBack();
+            },
+          },
+          {
+            label: "Forward",
+            enabled: selectedAccountViewState.navigationHistory.canGoForward,
+            accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
+            click: () => {
+              selectedAccount.instance.gmail.view.webContents.navigationHistory.goForward();
             },
           },
         ],

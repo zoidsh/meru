@@ -24,6 +24,7 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
+import { subscribeWithSelector } from "zustand/middleware";
 
 const WINDOW_OPEN_URL_WHITELIST = [
   /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
@@ -73,19 +74,21 @@ export class GoogleApp {
     this._view = view;
   }
 
-  viewStore = createStore<{
-    navigationHistory: {
-      canGoBack: boolean;
-      canGoForward: boolean;
-    };
-    attentionRequired: boolean;
-  }>(() => ({
-    navigationHistory: {
-      canGoBack: false,
-      canGoForward: false,
-    },
-    attentionRequired: false,
-  }));
+  viewStore = createStore(
+    subscribeWithSelector<{
+      navigationHistory: {
+        canGoBack: boolean;
+        canGoForward: boolean;
+      };
+      attentionRequired: boolean;
+    }>(() => ({
+      navigationHistory: {
+        canGoBack: false,
+        canGoForward: false,
+      },
+      attentionRequired: false,
+    })),
+  );
 
   constructor({ accountId, url, session, webContentsViewOptions, hooks }: GoogleAppOptions) {
     this.accountId = accountId;
