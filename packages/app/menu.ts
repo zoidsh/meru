@@ -384,6 +384,29 @@ export class AppMenu {
         ],
       },
       {
+        label: "History",
+        submenu: [
+          {
+            label: "Back",
+            accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
+            click: () => {
+              accounts
+                .getSelectedAccount()
+                .instance.gmail.view.webContents.navigationHistory.goBack();
+            },
+          },
+          {
+            label: "Forward",
+            accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
+            click: () => {
+              accounts
+                .getSelectedAccount()
+                .instance.gmail.view.webContents.navigationHistory.goForward();
+            },
+          },
+        ],
+      },
+      {
         label: "Accounts",
         submenu: [
           ...accounts.getAccounts().map((account, index) => ({
