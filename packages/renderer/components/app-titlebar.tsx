@@ -24,7 +24,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
-import type { Entries } from "type-fest";
 import { useDebouncedCallback } from "use-debounce";
 import { navigate, useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
@@ -41,7 +40,7 @@ import { useRoute } from "wouter";
 
 function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
-    <Button variant="ghost" size="sm" className={cn("draggable-none", className)} {...props} />
+    <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
   );
 }
 
@@ -377,21 +376,7 @@ export function AppTitlebar() {
       >
         {account.config.color && (
           <div
-            className={cn(
-              "size-2 rounded-full",
-              (Object.entries(accountColorsMap) as Entries<typeof accountColorsMap>).reduce<
-                Partial<
-                  Record<
-                    (typeof accountColorsMap)[keyof typeof accountColorsMap]["className"],
-                    boolean
-                  >
-                >
-              >((acc, [colorKey, { className }]) => {
-                acc[className] = account.config.color === colorKey;
-
-                return acc;
-              }, {}),
-            )}
+            className={cn("size-2 rounded-full", accountColorsMap[account.config.color].className)}
           />
         )}
         {account.gmail.outOfOffice && isLicenseKeyValid && <BriefcaseIcon />}
