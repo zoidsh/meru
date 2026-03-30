@@ -79,8 +79,7 @@ const columns = [
       );
     },
   }),
-  columnHelper.accessor((row) => `${row.subject} - ${row.summary}`, {
-    id: "subjectAndSummary",
+  columnHelper.accessor("subject", {
     cell: (props) => (
       <div className="flex-1 flex gap-2 overflow-hidden">
         <div className="truncate shrink-0 max-w-sm font-medium" title={props.getValue()}>
