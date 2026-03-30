@@ -94,7 +94,10 @@ const columns = [
   }),
   columnHelper.accessor("receivedAt", {
     cell: (props) => (
-      <div className="text-muted-foreground whitespace-nowrap">
+      <div
+        className="text-muted-foreground whitespace-nowrap"
+        title={date(props.getValue()).format("llll")}
+      >
         {date(props.getValue()).calendar()}
       </div>
     ),
