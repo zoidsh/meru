@@ -125,6 +125,10 @@ export class GoogleApp {
 
     this.registerWindowOpenHandler(this.view);
 
+    this.view.webContents.on("dom-ready", () => {
+      this.view.webContents.setVisualZoomLevelLimits(1, 3);
+    });
+
     setupWindowContextMenu(this.view);
 
     this.updateViewBounds();
