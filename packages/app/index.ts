@@ -75,8 +75,6 @@ import { trial } from "./trial";
 
   await Promise.all([app.whenReady(), blocker.init()]);
 
-  theme.init();
-
   accounts.init();
 
   await main.init();
@@ -86,6 +84,8 @@ import { trial } from "./trial";
   accounts.createViews();
 
   ipc.init();
+
+  theme.init();
 
   appMenu.init();
 
