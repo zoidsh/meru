@@ -27,6 +27,7 @@ import { appUpdater } from "./updater";
 import { downloads } from "./downloads";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
+import log from "electron-log";
 
 class Ipc {
   main = new IpcListener<IpcMainEvents>();
@@ -433,19 +434,21 @@ class Ipc {
     });
 
     this.main.on("gmail.unreadCountChanged", (event, unreadCountString, inboxType) => {
-      let unreadCount = 0;
-
       const parsedUnreadCountString = unreadCountString
         .split(":")
         .map((count) => Number(count.replace(/\D/g, "")) || 0);
 
       const unreadCountPreference = config.get("gmail.unreadCountPreference");
 
-      if (parsedUnreadCountString.length === 2 && unreadCountPreference !== "default") {
-        unreadCount =
-          parsedUnreadCountString[unreadCountPreference === "first-section" ? 0 : 1] || 0;
-      } else {
-        unreadCount = parsedUnreadCountString.reduce((total, count) => total + count, 0);
+      const unreadCount =
+        parsedUnreadCountString.length === 2
+          ? parsedUnreadCountString[unreadCountPreference === "first-section" ? 0 : 1]
+          : parsedUnreadCountString[0];
+
+      if (typeof unreadCount !== "number") {
+        log.error(`Received invalid "unreadCount" from renderer:`, unreadCountString);
+
+        return;
       }
 
       for (const account of accounts.instances.values()) {

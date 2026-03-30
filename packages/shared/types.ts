@@ -99,7 +99,7 @@ export type Config = {
   "gmail.hideOutOfOfficeBanner": boolean;
   "gmail.reverseConversation": boolean;
   "gmail.savedSearches": GmailSavedSearches;
-  "gmail.unreadCountPreference": "default" | "first-section" | "inbox";
+  "gmail.unreadCountPreference": "first-section" | "inbox";
   "gmail.openComposeInNewWindow": boolean;
   "gmail.showSenderIcons": boolean;
   "gmail.moveAttachmentsToTop": boolean;

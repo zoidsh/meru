@@ -68,7 +68,7 @@ export const config = new Store<Config>({
     "gmail.hideOutOfOfficeBanner": false,
     "gmail.reverseConversation": false,
     "gmail.savedSearches": [],
-    "gmail.unreadCountPreference": "default",
+    "gmail.unreadCountPreference": "inbox",
     "gmail.openComposeInNewWindow": false,
     "gmail.showSenderIcons": true,
     "gmail.moveAttachmentsToTop": false,
@@ -280,6 +280,12 @@ export const config = new Store<Config>({
         if (accountsMigrated) {
           store.set("accounts", accounts);
         }
+      }
+    },
+    ">3.39.0": (store) => {
+      // @ts-expect-error: `gmail.unreadCountPreference` default value has been changed to 'inbox'
+      if (store.get("gmail.unreadCountPreference") === "default") {
+        store.set("gmail.unreadCountPreference", "inbox");
       }
     },
   },

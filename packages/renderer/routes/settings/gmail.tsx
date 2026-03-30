@@ -26,7 +26,6 @@ import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 const unreadCountPreferenceItems = [
-  { value: "default", label: "Default" },
   { value: "first-section", label: "First Section Only" },
   { value: "inbox", label: "Inbox Only" },
 ];
