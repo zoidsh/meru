@@ -204,7 +204,7 @@ export class Gmail extends GoogleApp {
     })),
   );
 
-  private previousInboxFeedModifiedDate: string | null = null;
+  private previousInboxFeedTotalEntries: number | null = null;
 
   private previousNewMessages: Map<string, number> = new Map();
 
@@ -307,41 +307,35 @@ export class Gmail extends GoogleApp {
     }, ms("5m"));
   }
 
-  async fetchInboxFeed(inboxType: "CLASSIC" | "SECTIONED", unreadCount: number, fetchAttempt = 1) {
+  async fetchInboxFeed(inboxType: "CLASSIC" | "SECTIONED", fetchAttempt = 1) {
     try {
       const body = await this.session
-        .fetch(`${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}?}`)
+        .fetch(`${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}`)
         .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
 
-      if (feed.modified === this.previousInboxFeedModifiedDate) {
-        return;
-      }
+      const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 
-      this.previousInboxFeedModifiedDate = feed.modified;
+      if (feedEntries.length === this.previousInboxFeedTotalEntries) {
+        if (fetchAttempt > 10) {
+          log.error("Inbox feed did not change after 10 attempts", {
+            inboxType,
+            feedEntriesLength: feedEntries.length,
+            feedEntries,
+          });
 
-      if (!feed.entry) {
-        if (this.getIsUnifiedInboxEnabled()) {
-          this.store.setState({ unreadInbox: [] });
-        }
-
-        return;
-      }
-
-      const feedEntries = Array.isArray(feed.entry) ? feed.entry : [feed.entry];
-
-      if (feedEntries.length !== unreadCount) {
-        if (fetchAttempt >= 3) {
           return;
         }
 
         await wait(ms("1s"));
 
-        this.fetchInboxFeed(inboxType, unreadCount, fetchAttempt + 1);
+        this.fetchInboxFeed(inboxType, fetchAttempt + 1);
 
         return;
       }
+
+      this.previousInboxFeedTotalEntries = feedEntries.length;
 
       const unreadInbox: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
@@ -374,7 +368,7 @@ export class Gmail extends GoogleApp {
         }
       }
 
-      if (this.getIsUnifiedInboxEnabled()) {
+      if (this.unifiedInboxEnabled) {
         this.store.setState({ unreadInbox });
       }
 
@@ -519,10 +513,6 @@ export class Gmail extends GoogleApp {
     }
   }
 
-  getIsUnifiedInboxEnabled() {
-    return this.unifiedInboxEnabled;
-  }
-
   getIsUnreadCountEnabled() {
     if (!config.get("accounts.unreadBadge")) {
       return false;
@@ -539,17 +529,7 @@ export class Gmail extends GoogleApp {
 
   subscribeToStore() {
     this.viewStore.subscribe(() => {
-      ipc.renderer.send(
-        main.window.webContents,
-        "accounts.changed",
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: {
-            ...account.instance.gmail.store.getState(),
-            ...account.instance.gmail.viewStore.getState(),
-          },
-        })),
-      );
+      accounts.sendAccountsChangedToRenderer();
     });
 
     if (this.getIsUnreadCountEnabled()) {
@@ -595,21 +575,11 @@ export class Gmail extends GoogleApp {
       );
     }
 
-    if (this.getIsUnifiedInboxEnabled()) {
+    if (this.unifiedInboxEnabled) {
       this.store.subscribe(
         (state) => state.unreadInbox,
         () => {
-          ipc.renderer.send(
-            main.window.webContents,
-            "accounts.changed",
-            accounts.getAccounts().map((account) => ({
-              config: account.config,
-              gmail: {
-                ...account.instance.gmail.store.getState(),
-                ...account.instance.gmail.viewStore.getState(),
-              },
-            })),
-          );
+          accounts.sendAccountsChangedToRenderer();
         },
       );
     }

@@ -51,6 +51,6 @@ export function useUnifiedInbox() {
     )
     .flat()
     .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
-  console.log(messages);
+
   return { messages };
 }

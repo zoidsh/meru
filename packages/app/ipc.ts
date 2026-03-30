@@ -61,17 +61,7 @@ class Ipc {
     });
 
     config.onDidChange("accounts", () => {
-      this.renderer.send(
-        main.window.webContents,
-        "accounts.changed",
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: {
-            ...account.instance.gmail.store.getState(),
-            ...account.instance.gmail.viewStore.getState(),
-          },
-        })),
-      );
+      accounts.sendAccountsChangedToRenderer();
     });
 
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
@@ -462,7 +452,7 @@ class Ipc {
         if (event.sender.id === account.gmail.view.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
-          account.gmail.fetchInboxFeed(inboxType, unreadCount);
+          account.gmail.fetchInboxFeed(inboxType);
 
           break;
         }

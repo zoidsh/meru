@@ -5,6 +5,7 @@ import { config } from "./config";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
+import { ipc } from "./ipc";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -325,6 +326,20 @@ class Accounts {
         }
       }
     }
+  }
+
+  sendAccountsChangedToRenderer() {
+    ipc.renderer.send(
+      main.window.webContents,
+      "accounts.changed",
+      this.getAccounts().map((account) => ({
+        config: account.config,
+        gmail: {
+          ...account.instance.gmail.store.getState(),
+          ...account.instance.gmail.viewStore.getState(),
+        },
+      })),
+    );
   }
 }
 
