@@ -100,6 +100,13 @@ export function GmailSettings() {
               restartRequired
               licenseKeyRequired
             />
+            <ConfigSwitchField
+              label="Always Reply/Forward in Pop-Out"
+              description="Opens reply and forward in a pop-out instead of below the message."
+              configKey="gmail.replyForwardInPopOut"
+              restartRequired
+              licenseKeyRequired
+            />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>

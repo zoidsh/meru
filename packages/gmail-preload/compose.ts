@@ -1,19 +1,19 @@
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import {
-  createElementNotProcessedSelector,
-  createElementProcessedAttributeFromPreloadArgument,
+  createNotMatchingAttributeSelector,
+  createElementAttributeFromPreloadArgument,
 } from "./lib/utils";
 
 const isOpenComposeInNewWindowEnabled = process.argv.includes(
   GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
 );
 
-const composeButtonProcessedAttribute = createElementProcessedAttributeFromPreloadArgument(
+const composeButtonProcessedAttribute = createElementAttributeFromPreloadArgument(
   GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow,
 );
 
-const composeButtonElementSelector = createElementNotProcessedSelector(
+const composeButtonElementSelector = createNotMatchingAttributeSelector(
   ".T-I.T-I-KE.L3",
   composeButtonProcessedAttribute,
 );

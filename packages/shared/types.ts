@@ -104,6 +104,7 @@ export type Config = {
   "gmail.showSenderIcons": boolean;
   "gmail.moveAttachmentsToTop": boolean;
   "gmail.closeComposeWindowAfterSend": boolean;
+  "gmail.replyForwardInPopOut": boolean;
   "screenShare.useSystemPicker": boolean;
   "window.lastState": {
     bounds: {

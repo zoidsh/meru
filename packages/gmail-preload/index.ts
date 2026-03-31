@@ -5,12 +5,13 @@ import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
 import { ipcMain } from "./ipc";
-import { createElementNotProcessedSelector } from "./lib/utils";
+import { createNotMatchingAttributeSelector } from "./lib/utils";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { addSenderIcons } from "./sender-icons";
 import { initToaster } from "./toaster";
 import { initUrlPreview } from "./url-preview";
 import { observeUnreadCount } from "./unread-count";
+import { replyForwardInPopOut } from "./reply-forward";
 
 const features = [
   observeUnreadCount,
@@ -19,6 +20,7 @@ const features = [
   moveAttachmentsToTop,
   openComposeInNewWindow,
   setUserEmail,
+  replyForwardInPopOut,
 ];
 
 function runFeatures() {
@@ -35,7 +37,7 @@ const userEmailElementProcessedAttribute = "data-meru-user-email";
 
 function setUserEmail() {
   const userEmail = $(
-    createElementNotProcessedSelector(
+    createNotMatchingAttributeSelector(
       "meta[name='og-profile-acct']",
       userEmailElementProcessedAttribute,
     ),

@@ -253,6 +253,10 @@ export class Gmail extends GoogleApp {
       if (config.get("gmail.closeComposeWindowAfterSend")) {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend);
       }
+
+      if (config.get("gmail.replyForwardInPopOut")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.replyForwardInPopOut);
+      }
     }
 
     super({

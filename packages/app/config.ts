@@ -73,6 +73,7 @@ export const config = new Store<Config>({
     "gmail.showSenderIcons": true,
     "gmail.moveAttachmentsToTop": false,
     "gmail.closeComposeWindowAfterSend": false,
+    "gmail.replyForwardInPopOut": false,
     "screenShare.useSystemPicker": true,
     "window.lastState": {
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,

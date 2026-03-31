@@ -1,7 +1,7 @@
-export function createElementProcessedAttributeFromPreloadArgument(preloadArgument: string) {
+export function createElementAttributeFromPreloadArgument(preloadArgument: string) {
   return preloadArgument.replace("--", "data-");
 }
 
-export function createElementNotProcessedSelector(selector: string, processedAttribute: string) {
-  return `${selector}:not([${processedAttribute}])`;
+export function createNotMatchingAttributeSelector(selector: string, attribute: string) {
+  return `${selector}:not([${attribute}])`;
 }
