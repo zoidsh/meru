@@ -204,7 +204,7 @@ export class Gmail extends GoogleApp {
     })),
   );
 
-  private previousInboxFeedTotalEntries: number | null = null;
+  private previousInboxFeedTotalEntries: number = 0;
 
   private previousNewMessages: Map<string, number> = new Map();
 
@@ -310,7 +310,9 @@ export class Gmail extends GoogleApp {
   async fetchInboxFeed(inboxType: "CLASSIC" | "SECTIONED", fetchAttempt = 1) {
     try {
       const body = await this.session
-        .fetch(`${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}`)
+        .fetch(
+          `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
+        )
         .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
@@ -319,7 +321,7 @@ export class Gmail extends GoogleApp {
 
       if (feedEntries.length === this.previousInboxFeedTotalEntries) {
         if (fetchAttempt > 10) {
-          log.error("Inbox feed did not change after 10 attempts", {
+          log.warn("Inbox feed did not change after 10 attempts", {
             inboxType,
             feedEntriesLength: feedEntries.length,
             feedEntries,
