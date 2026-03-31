@@ -1,17 +1,15 @@
 import "./electron-api";
 import "./ipc";
-import { $ } from "select-dom";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
-import { ipcMain } from "./ipc";
-import { createNotMatchingAttributeSelector } from "./lib/utils";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { addSenderIcons } from "./sender-icons";
 import { initToaster } from "./toaster";
 import { initUrlPreview } from "./url-preview";
 import { observeUnreadCount } from "./unread-count";
 import { replyForwardInPopOut } from "./reply-forward";
+import { setUserEmail } from "./user-email";
 
 const features = [
   observeUnreadCount,
@@ -31,23 +29,6 @@ function runFeatures() {
       console.error("Error running feature:", error);
     }
   }
-}
-
-const userEmailElementProcessedAttribute = "data-meru-user-email";
-
-function setUserEmail() {
-  const userEmail = $(
-    createNotMatchingAttributeSelector(
-      "meta[name='og-profile-acct']",
-      userEmailElementProcessedAttribute,
-    ),
-  )?.getAttribute("content");
-
-  if (!userEmail) {
-    return;
-  }
-
-  ipcMain.send("gmail.setUserEmail", userEmail);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
