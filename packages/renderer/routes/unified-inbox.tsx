@@ -119,6 +119,7 @@ function UnifiedInboxTable({
     data: messages,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
     getPaginationRowModel: getPaginationRowModel(),
     state: {
       pagination,
