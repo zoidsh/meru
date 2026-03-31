@@ -145,6 +145,8 @@ export class AppMenu {
     const copyOrShareMessageLink =
       userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
 
+    const allAccounts = accounts.getAccounts();
+
     const template: MenuItemConstructorOptions[] = [
       {
         label: app.name,
@@ -312,6 +314,14 @@ export class AppMenu {
         label: "View",
         submenu: [
           {
+            label: "Unified Inbox",
+            enabled: allAccounts.length > 1,
+            accelerator: "CommandOrControl+Shift+I",
+            click: () => {
+              main.navigate("/unified-inbox");
+            },
+          },
+          {
             label: "Downloads",
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
@@ -422,7 +432,7 @@ export class AppMenu {
       {
         label: "Accounts",
         submenu: [
-          ...accounts.getAccounts().map((account, index) => ({
+          ...allAccounts.map((account, index) => ({
             label: account.config.label,
             click: () => {
               accounts.selectAccount(account.config.id);
