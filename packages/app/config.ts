@@ -63,6 +63,7 @@ export const config = new Store<Config>({
     "tray.enabled": !platform.isMacOS,
     "tray.iconColor": "system",
     "tray.unreadCount": true,
+    "tray.selectAccountWithUnread": false,
     "gmail.hideGmailLogo": true,
     "gmail.hideInboxFooter": true,
     "gmail.hideOutOfOfficeBanner": false,

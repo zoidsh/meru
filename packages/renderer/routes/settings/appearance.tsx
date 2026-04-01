@@ -44,6 +44,15 @@ export function AppearanceSettings() {
   }
 
   const renderPlatformIconSettings = () => {
+    const selectAccountWithUnreadField = (
+      <ConfigSwitchField
+        label="Select Account with Unread on Click"
+        description={`Automatically select the first account with unread emails when clicking the ${platform.isMacOS ? "menu bar" : "system tray"} icon.`}
+        configKey="tray.selectAccountWithUnread"
+        disabled={!config["tray.enabled"]}
+      />
+    );
+
     if (platform.isMacOS) {
       return (
         <>
@@ -81,6 +90,7 @@ export function AppearanceSettings() {
                 disabled={!config["tray.enabled"]}
                 restartRequired
               />
+              {selectAccountWithUnreadField}
             </FieldGroup>
           </FieldSet>
         </>
@@ -131,6 +141,7 @@ export function AppearanceSettings() {
             </SelectContent>
           </Select>
         </Field>
+        {selectAccountWithUnreadField}
       </FieldSet>
     );
   };

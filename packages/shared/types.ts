@@ -94,6 +94,7 @@ export type Config = {
   "tray.enabled": boolean;
   "tray.iconColor": "system" | "light" | "dark";
   "tray.unreadCount": boolean;
+  "tray.selectAccountWithUnread": boolean;
   "gmail.hideGmailLogo": boolean;
   "gmail.hideInboxFooter": boolean;
   "gmail.hideOutOfOfficeBanner": boolean;

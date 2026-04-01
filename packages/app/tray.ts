@@ -4,6 +4,7 @@ import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { main } from "@/main";
+import { appState } from "./state";
 
 export class AppTray {
   private tray: Electron.Tray | undefined;
@@ -53,10 +54,14 @@ export class AppTray {
     if (main.window.isVisible()) {
       main.window.hide();
     } else {
-      const accountWithUnread = accounts.getFirstAccountWithUnread();
+      if (config.get("tray.selectAccountWithUnread")) {
+        const accountWithUnread = accounts.getFirstAccountWithUnread();
 
-      if (accountWithUnread) {
-        accounts.selectAccount(accountWithUnread.id);
+        if (accountWithUnread) {
+          accounts.selectAccount(accountWithUnread.id);
+
+          appState.setIsSettingsOpen(false);
+        }
       }
 
       main.show();
