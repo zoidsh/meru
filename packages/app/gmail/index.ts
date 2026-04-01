@@ -204,6 +204,8 @@ export class Gmail extends GoogleApp {
     })),
   );
 
+  private isInitialInboxFeedFetch = true;
+
   private previousInboxFeedTotalEntries: number = 0;
 
   private previousNewMessages: Map<string, number> = new Map();
@@ -367,7 +369,7 @@ export class Gmail extends GoogleApp {
           receivedAt,
         });
 
-        if (now - receivedAt < 10000 && !this.previousNewMessages.has(id)) {
+        if (now - receivedAt < ms("1m") && !this.previousNewMessages.has(id)) {
           newMailIndexes.push(index);
 
           this.previousNewMessages.set(id, now);
@@ -376,6 +378,12 @@ export class Gmail extends GoogleApp {
 
       if (this.unifiedInboxEnabled) {
         this.store.setState({ unreadInbox });
+      }
+
+      if (this.isInitialInboxFeedFetch) {
+        this.isInitialInboxFeedFetch = false;
+
+        return;
       }
 
       const account = accounts.getAccount(this.accountId);
