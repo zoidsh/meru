@@ -63,6 +63,8 @@ const inboxFeedSchema = z.object({
   }),
 });
 
+const inboxTypeSchema = z.string();
+
 function extractVerificationCode(texts: string[]) {
   const confidence = config.get("verificationCodes.confidence");
 
@@ -313,8 +315,12 @@ export class Gmail extends GoogleApp {
     }, ms("5m"));
   }
 
-  async fetchInboxFeed(inboxType: "CLASSIC" | "SECTIONED", fetchAttempt = 1) {
+  async fetchInboxFeed(fetchAttempt = 1) {
     try {
+      const inboxType = inboxTypeSchema.parse(
+        await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
+      );
+
       const body = await this.session
         .fetch(
           `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
@@ -338,7 +344,7 @@ export class Gmail extends GoogleApp {
 
         await wait(ms("1s"));
 
-        this.fetchInboxFeed(inboxType, fetchAttempt + 1);
+        this.fetchInboxFeed(fetchAttempt + 1);
 
         return;
       }

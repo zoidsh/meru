@@ -145,7 +145,7 @@ export type IpcMainEvents =
       "accounts.moveAccount": [accountId: AccountConfig["id"], direction: "up" | "down"];
       "settings.toggleIsOpen": [open?: boolean];
       "gmail.moveNavigationHistory": [move: "back" | "forward"];
-      "gmail.unreadCountChanged": [unreadCountString: string, inboxType: "CLASSIC" | "SECTIONED"];
+      "gmail.unreadCountChanged": [unreadCountString: string];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStylesInEditor": [];

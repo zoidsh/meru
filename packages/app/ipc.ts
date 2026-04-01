@@ -433,7 +433,7 @@ class Ipc {
       downloads.checkDownloadHistoryItems();
     });
 
-    this.main.on("gmail.unreadCountChanged", (event, unreadCountString, inboxType) => {
+    this.main.on("gmail.unreadCountChanged", (event, unreadCountString) => {
       const parsedUnreadCountString = unreadCountString
         .split(":")
         .map((count) => Number(count.replace(/\D/g, "")) || 0);
@@ -455,7 +455,7 @@ class Ipc {
         if (event.sender.id === account.gmail.view.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
-          account.gmail.fetchInboxFeed(inboxType);
+          account.gmail.fetchInboxFeed();
 
           break;
         }
