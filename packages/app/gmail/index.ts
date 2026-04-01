@@ -323,7 +323,7 @@ export class Gmail extends GoogleApp {
 
       const body = await this.session
         .fetch(
-          `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
+          `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
         )
         .then((res) => res.text());
 

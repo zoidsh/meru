@@ -30,6 +30,11 @@ const unreadCountPreferenceItems = [
   { value: "inbox", label: "Inbox Only" },
 ];
 
+const inboxCategoriesToMonitorItems = [
+  { value: "primary", label: "Primary Only" },
+  { value: "all", label: "All Categories" },
+];
+
 export function GmailSettings() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
@@ -156,6 +161,46 @@ export function GmailSettings() {
                 </SelectTrigger>
                 <SelectContent>
                   {unreadCountPreferenceItems.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldContent>
+                <FieldLabel className="flex items-center gap-2">
+                  Categories to Monitor
+                  <LicenseKeyRequiredFieldBadge />
+                </FieldLabel>
+                <FieldDescription>
+                  If using an inbox with categories, choose which inbox categories are monitored for
+                  new email notifications and included in the unified inbox.
+                </FieldDescription>
+              </FieldContent>
+              <Select
+                items={inboxCategoriesToMonitorItems}
+                value={config["gmail.inboxCategoriesToMonitor"]}
+                onValueChange={(value) => {
+                  if (value) {
+                    configMutation.mutate(
+                      {
+                        "gmail.inboxCategoriesToMonitor": value,
+                      },
+                      {
+                        onSuccess: restartRequiredToast,
+                      },
+                    );
+                  }
+                }}
+                disabled={!isLicenseKeyValid}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select inbox categories to monitor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inboxCategoriesToMonitorItems.map(({ value, label }) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
