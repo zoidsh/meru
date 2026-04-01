@@ -33,6 +33,7 @@ import {
   useAppUpdaterStore,
   useDownloadsStore,
   useFindInPageStore,
+  useSettingsStore,
   useTrialStore,
 } from "../lib/stores";
 import { GoogleAppIcon } from "./google-app-icon";
@@ -321,11 +322,12 @@ export function AppTitlebar() {
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
-  const [matchSettingsRoute] = useRoute("/settings/*");
   const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
+
+  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   const { config } = useConfig();
 
@@ -363,12 +365,14 @@ export function AppTitlebar() {
     return accounts.map((account) => (
       <Button
         key={account.config.id}
-        variant={account.config.selected && !matchUnifiedInboxRoute ? "secondary" : "ghost"}
+        variant={
+          account.config.selected && !matchUnifiedInboxRoute && !isSettingsOpen
+            ? "secondary"
+            : "ghost"
+        }
         size="sm"
         className="draggable-none"
         onClick={() => {
-          navigate("/");
-
           ipc.main.send("settings.toggleIsOpen", false);
 
           ipc.main.send("accounts.selectAccount", account.config.id);
@@ -430,14 +434,6 @@ export function AppTitlebar() {
               What's New?
             </Button>
           </div>
-        </div>
-      );
-    }
-
-    if (matchSettingsRoute) {
-      return (
-        <div className="h-full flex items-center justify-center text-xs font-medium text-muted-foreground">
-          Meru
         </div>
       );
     }

@@ -21,7 +21,6 @@ import {
   InboxIcon,
 } from "lucide-react";
 import { Fragment, useState } from "react";
-import { navigate } from "wouter/use-hash-location";
 import {
   type PaginationState,
   createColumnHelper,
@@ -137,8 +136,6 @@ function UnifiedInboxTable({
             key={row.id}
             className="flex items-center gap-6 not-last:border-b p-3 whitespace-nowrap hover:bg-muted/50 transition-colors cursor-default"
             onClick={() => {
-              navigate("/");
-
               ipc.main.send("settings.toggleIsOpen", false);
 
               ipc.main.send("accounts.selectAccount", row.original.account.id);

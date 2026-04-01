@@ -1,5 +1,6 @@
 import { ipc } from "@/ipc";
 import { main } from "@/main";
+import { accounts } from "./accounts";
 
 class AppState {
   isQuittingApp = false;
@@ -10,12 +11,24 @@ class AppState {
     this.isSettingsOpen = value;
 
     ipc.renderer.send(main.window.webContents, "settings.setIsOpen", this.isSettingsOpen);
+
+    if (this.isSettingsOpen) {
+      accounts.hide();
+    } else {
+      accounts.show();
+    }
   }
 
   toggleIsSettingsOpen() {
     this.isSettingsOpen = !this.isSettingsOpen;
 
-    this.setIsSettingsOpen(this.isSettingsOpen);
+    ipc.renderer.send(main.window.webContents, "settings.setIsOpen", this.isSettingsOpen);
+
+    if (this.isSettingsOpen) {
+      accounts.hide();
+    } else {
+      accounts.show();
+    }
   }
 }
 

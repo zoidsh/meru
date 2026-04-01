@@ -4,6 +4,7 @@ import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { getConfig } from "@meru/renderer-lib/react-query";
+import { navigate } from "wouter/use-hash-location";
 
 export const useAccountsStore = create<{
   accounts: AccountInstances;
@@ -49,6 +50,10 @@ export const useSettingsStore = create<{
 
 ipc.renderer.on("settings.setIsOpen", (_event, isOpen) => {
   useSettingsStore.setState({ isOpen });
+
+  if (!isOpen) {
+    navigate("/");
+  }
 });
 
 export const useFindInPageStore = create<{

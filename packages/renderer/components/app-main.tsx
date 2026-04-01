@@ -16,9 +16,7 @@ ipc.renderer.on("navigate", (_event, to) => {
 
 function CloseButton() {
   const closeSettings = () => {
-    ipc.main.send("settings.toggleIsOpen");
-
-    navigate("/");
+    ipc.main.send("settings.toggleIsOpen", false);
   };
 
   useHotkeys("esc", closeSettings);

@@ -205,8 +205,6 @@ class Main {
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 
-    accounts.hide();
-
     this.show();
   }
 

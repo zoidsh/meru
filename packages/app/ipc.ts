@@ -41,12 +41,6 @@ class Ipc {
       } else {
         appState.toggleIsSettingsOpen();
       }
-
-      if (appState.isSettingsOpen) {
-        accounts.hide();
-      } else {
-        accounts.show();
-      }
     });
 
     config.onDidAnyChange(() => {

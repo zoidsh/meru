@@ -39,7 +39,6 @@ import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 import { useForm } from "@tanstack/react-form";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
-import { navigate } from "wouter/use-hash-location";
 
 function AccountForm({
   account = {
@@ -242,8 +241,6 @@ function AddAccountButton() {
             ipc.main.send("accounts.addAccount", account);
 
             setIsDialogOpen(false);
-
-            navigate("/");
           }}
           type="add"
         />

@@ -21,6 +21,7 @@ import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
+import { appState } from "./state";
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -437,6 +438,8 @@ export class AppMenu {
             click: () => {
               accounts.selectAccount(account.config.id);
 
+              appState.setIsSettingsOpen(false);
+
               main.show();
             },
             accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
@@ -450,6 +453,8 @@ export class AppMenu {
             click: () => {
               accounts.selectNextAccount();
 
+              appState.setIsSettingsOpen(false);
+
               main.show();
             },
           },
@@ -460,6 +465,8 @@ export class AppMenu {
             acceleratorWorksWhenHidden: true,
             click: () => {
               accounts.selectNextAccount();
+
+              appState.setIsSettingsOpen(false);
 
               main.show();
             },
@@ -472,6 +479,8 @@ export class AppMenu {
             click: () => {
               accounts.selectNextAccount();
 
+              appState.setIsSettingsOpen(false);
+
               main.show();
             },
           },
@@ -480,6 +489,8 @@ export class AppMenu {
             accelerator: "Ctrl+Shift+Tab",
             click: () => {
               accounts.selectPreviousAccount();
+
+              appState.setIsSettingsOpen(false);
 
               main.show();
             },
@@ -492,6 +503,8 @@ export class AppMenu {
             click: () => {
               accounts.selectPreviousAccount();
 
+              appState.setIsSettingsOpen(false);
+
               main.show();
             },
           },
@@ -502,6 +515,8 @@ export class AppMenu {
             acceleratorWorksWhenHidden: true,
             click: () => {
               accounts.selectPreviousAccount();
+
+              appState.setIsSettingsOpen(false);
 
               main.show();
             },
