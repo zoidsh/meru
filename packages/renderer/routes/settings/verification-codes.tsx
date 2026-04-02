@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { Badge } from "@meru/ui/components/badge";
 
 const verificationCodeConfidenceItems = [
   { value: "high", label: "High" },
@@ -25,6 +27,8 @@ const verificationCodeConfidenceItems = [
 export function VerificationCodesSettings() {
   const { config } = useConfig();
   const configMutation = useConfigMutation();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
 
   if (!config) {
     return;
@@ -47,7 +51,10 @@ export function VerificationCodesSettings() {
           />
           <Field>
             <FieldContent>
-              <FieldLabel>Verification Code Detection Confidence</FieldLabel>
+              <FieldLabel className="flex items-center gap-2">
+                Verification Code Detection Confidence
+                {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+              </FieldLabel>
               <FieldDescription>
                 Choose the confidence level for detecting verification codes. Medium may result in
                 false positives, while High checks for explicit keywords, but may miss some codes.
@@ -63,6 +70,7 @@ export function VerificationCodesSettings() {
                   });
                 }
               }}
+              disabled={!isLicenseKeyValid}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select confidence" />
