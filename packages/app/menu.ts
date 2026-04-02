@@ -381,16 +381,12 @@ export class AppMenu {
             },
           },
           {
-            label: "Full Reload",
+            label: "Hard Reload",
             accelerator: "CommandOrControl+Shift+R",
-            click: () => {
+            click: async () => {
               main.show();
 
-              main.loadURL();
-
-              for (const account of accounts.getAccounts()) {
-                account.instance.gmail.view.webContents.reload();
-              }
+              selectedAccount.instance.gmail.view.webContents.reloadIgnoringCache();
             },
           },
           {
