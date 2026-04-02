@@ -1,6 +1,6 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
-import { app } from "electron";
+import { app, session } from "electron";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
@@ -27,6 +27,26 @@ import {
 } from "./protocol";
 import { trial } from "./trial";
 
+async function resetApp() {
+  const accounts = config.get("accounts");
+
+  await app.whenReady();
+
+  await Promise.all(
+    accounts.map((account) => {
+      const accountSession = session.fromPartition(`persist:${account.id}`);
+
+      return Promise.all([accountSession.clearCache(), accountSession.clearStorageData()]);
+    }),
+  );
+
+  config.clear();
+
+  app.relaunch();
+
+  app.quit();
+}
+
 (async () => {
   if (platform.isLinux) {
     app.commandLine.appendSwitch("gtk-version", "3");
@@ -49,12 +69,18 @@ import { trial } from "./trial";
     app.disableHardwareAcceleration();
   }
 
-  if (config.get("resetConfig")) {
+  if (config.get("reset") === "config") {
     config.clear();
 
     app.relaunch();
 
     app.quit();
+
+    return;
+  }
+
+  if (config.get("reset") === "app") {
+    await resetApp();
 
     return;
   }

@@ -33,7 +33,7 @@ export const config = new Store<Config>({
     launchMinimized: false,
     launchAtLogin: false,
     hardwareAcceleration: false,
-    resetConfig: false,
+    resetApp: false,
     theme: "system",
     licenseKey: null,
     customUserAgent: false,

@@ -8,7 +8,6 @@ import {
   Menu,
   type MenuItemConstructorOptions,
   nativeImage,
-  session,
   shell,
 } from "electron";
 import log from "electron-log";
@@ -611,7 +610,7 @@ export class AppMenu {
               {
                 label: "Reset Config",
                 click: () => {
-                  config.set("resetConfig", true);
+                  config.set("reset", "config");
 
                   showRestartDialog();
                 },
@@ -630,15 +629,27 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset App Data",
-                click: () => {
-                  for (const account of accounts.getAccounts()) {
-                    session.fromPartition(`persist:${account.config.id}`).clearStorageData();
+                label: "Reset App",
+                click: async () => {
+                  const { response } = await dialog.showMessageBox({
+                    type: "warning",
+                    buttons: ["Cancel", "Reset"],
+                    defaultId: 1,
+                    title: "Reset App",
+                    message: "Are you sure you want to reset the app?",
+                    detail:
+                      "This will clear all your accounts, settings, and data. This action cannot be undone.",
+                  });
+
+                  if (response === 0) {
+                    return;
                   }
 
-                  config.clear();
+                  config.set("reset", "app");
 
-                  showRestartDialog();
+                  app.relaunch();
+
+                  app.quit();
                 },
               },
               {
