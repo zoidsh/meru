@@ -47,7 +47,7 @@ async function resetApp() {
   app.quit();
 }
 
-(async () => {
+async function init() {
   if (platform.isLinux) {
     app.commandLine.appendSwitch("gtk-version", "3");
     app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
@@ -174,4 +174,6 @@ async function resetApp() {
       appState.isQuittingApp = true;
     }
   });
-})();
+}
+
+init();
