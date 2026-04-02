@@ -22,7 +22,7 @@ export class Blocker {
     this._engine = engine;
   }
 
-  async init() {
+  init() {
     if (!licenseKey.isValid || !config.get("blocker.enabled")) {
       return;
     }

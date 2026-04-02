@@ -89,7 +89,9 @@ async function init() {
 
   downloads.init();
 
-  await Promise.all([app.whenReady(), blocker.init()]);
+  blocker.init();
+
+  await app.whenReady();
 
   accounts.init();
 
