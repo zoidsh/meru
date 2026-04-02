@@ -621,10 +621,10 @@ export class AppMenu {
               },
               {
                 label: "Clear Cache",
-                click: () => {
-                  for (const account of accounts.getAccounts()) {
-                    session.fromPartition(`persist:${account.config.id}`).clearCache();
-                  }
+                click: async () => {
+                  await Promise.all(
+                    accounts.getAccounts().map((account) => account.instance.session.clearCache()),
+                  );
 
                   showRestartDialog();
                 },
