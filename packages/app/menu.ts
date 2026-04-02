@@ -608,14 +608,6 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset Config",
-                click: () => {
-                  config.set("reset", "config");
-
-                  showRestartDialog();
-                },
-              },
-              {
                 type: "separator",
               },
               {
@@ -645,7 +637,7 @@ export class AppMenu {
                     return;
                   }
 
-                  config.set("reset", "app");
+                  config.set("resetApp", true);
 
                   app.relaunch();
 

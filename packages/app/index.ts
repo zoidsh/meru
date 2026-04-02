@@ -69,17 +69,7 @@ async function resetApp() {
     app.disableHardwareAcceleration();
   }
 
-  if (config.get("reset") === "config") {
-    config.clear();
-
-    app.relaunch();
-
-    app.quit();
-
-    return;
-  }
-
-  if (config.get("reset") === "app") {
+  if (config.get("resetApp") === true) {
     await resetApp();
 
     return;

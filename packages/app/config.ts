@@ -291,5 +291,12 @@ export const config = new Store<Config>({
         store.set("gmail.unreadCountPreference", "inbox");
       }
     },
+    ">3.42.0": (store) => {
+      // @ts-expect-error: `resetConfig` has been removed
+      if (store.has("resetConfig")) {
+        // @ts-expect-error
+        store.delete("resetConfig");
+      }
+    },
   },
 });

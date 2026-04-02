@@ -64,7 +64,7 @@ export type Config = {
   launchMinimized: boolean;
   launchAtLogin: boolean;
   hardwareAcceleration: boolean;
-  reset: "config" | "app" | null;
+  resetApp: boolean;
   theme: "system" | "light" | "dark";
   licenseKey: string | null;
   customUserAgent: boolean;
