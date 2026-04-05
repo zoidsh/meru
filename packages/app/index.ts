@@ -75,6 +75,12 @@ async function init() {
     return;
   }
 
+  downloads.init();
+
+  blocker.init();
+
+  await app.whenReady();
+
   if (!(await licenseKey.validate())) {
     app.quit();
 
@@ -86,12 +92,6 @@ async function init() {
 
     return;
   }
-
-  downloads.init();
-
-  blocker.init();
-
-  await app.whenReady();
 
   accounts.init();
 
