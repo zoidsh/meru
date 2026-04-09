@@ -27,6 +27,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { toast } from "sonner";
 
 export function NotificationsSettings() {
   const { config } = useConfig();
@@ -83,6 +84,14 @@ export function NotificationsSettings() {
                       <Button
                         variant="outline"
                         onClick={() => {
+                          if (config["doNotDisturb.enabled"]) {
+                            toast.error(
+                              "Unable show test notification while Do Not Disturb is enabled.",
+                            );
+
+                            return;
+                          }
+
                           ipc.main.send("notifications.showTestNotification");
                         }}
                       >
