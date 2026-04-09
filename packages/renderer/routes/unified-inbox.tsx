@@ -81,7 +81,7 @@ const columns = [
   columnHelper.accessor("subject", {
     cell: (props) => (
       <div className="flex-1 flex gap-2 overflow-hidden">
-        <div className="truncate shrink-0 max-w-sm font-medium" title={props.getValue()}>
+        <div className="truncate shrink-0 max-w-sm" title={props.getValue()}>
           {props.getValue()}
         </div>
         <div className="text-muted-foreground truncate min-w-0" title={props.row.original.summary}>
