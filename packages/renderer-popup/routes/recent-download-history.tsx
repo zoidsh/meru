@@ -9,10 +9,17 @@ import {
   ItemTitle,
 } from "@meru/ui/components/item";
 import { DateFromNow } from "@meru/renderer/components/date-from-now";
-import { FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
+import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { cn } from "@meru/ui/lib/utils";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@meru/ui/components/empty";
 
 export function RecentDownloadHistory() {
   const { config } = useConfig();
@@ -23,20 +30,25 @@ export function RecentDownloadHistory() {
     return;
   }
 
-  return (
-    <div className="h-screen flex flex-col border rounded-2xl">
-      <div className="font-semibold p-4">Recent Download History</div>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute top-2 right-2 size-7"
-        onClick={() => {
-          ipc.main.send("downloads.closeRecentDownloadHistoryPopup");
-        }}
-        title="Close"
-      >
-        <XIcon />
-      </Button>
+  const renderContent = () => {
+    if (config["downloads.history"].length === 0) {
+      return (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <DownloadIcon />
+            </EmptyMedia>
+            <EmptyTitle>No downloads yet</EmptyTitle>
+            <EmptyDescription>Your downloaded files will appear here.</EmptyDescription>
+            <EmptyDescription>
+              Downloads older than 30 days will be automatically removed from the history.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      );
+    }
+
+    return (
       <ScrollArea className="flex-1 px-4 overflow-hidden">
         <div className="space-y-2">
           {config["downloads.history"]
@@ -115,6 +127,24 @@ export function RecentDownloadHistory() {
             ))}
         </div>
       </ScrollArea>
+    );
+  };
+
+  return (
+    <div className="h-screen flex flex-col border rounded-2xl">
+      <div className="font-semibold p-4">Recent Download History</div>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="absolute top-2 right-2 size-7"
+        onClick={() => {
+          ipc.main.send("downloads.closeRecentDownloadHistoryPopup");
+        }}
+        title="Close"
+      >
+        <XIcon />
+      </Button>
+      {renderContent()}
       <div className="bg-muted/50 border-t p-4 mt-4 flex justify-end">
         <Button
           size="sm"
