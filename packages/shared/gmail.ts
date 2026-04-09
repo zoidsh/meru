@@ -35,10 +35,14 @@ export interface GmailInboxMessage {
   id: string;
   subject: string;
   summary: string;
-  sender: {
+  author: {
     name: string;
     email: string;
   };
+  contributors: {
+    name: string;
+    email: string;
+  }[];
   receivedAt: number;
 }
 

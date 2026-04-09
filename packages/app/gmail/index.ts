@@ -38,6 +38,11 @@ const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
 
 const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload.js");
 
+const inboxFeedEntryAuthorSchema = z.object({
+  name: z.coerce.string(),
+  email: z.string(),
+});
+
 const inboxFeedEntrySchema = z.object({
   title: z.coerce.string(),
   summary: z.coerce.string(),
@@ -47,10 +52,10 @@ const inboxFeedEntrySchema = z.object({
   modified: z.string(),
   issued: z.string(),
   id: z.string(),
-  author: z.object({
-    name: z.coerce.string(),
-    email: z.string(),
-  }),
+  author: inboxFeedEntryAuthorSchema,
+  contributor: z
+    .union([inboxFeedEntryAuthorSchema, z.array(inboxFeedEntryAuthorSchema)])
+    .optional(),
 });
 
 const inboxFeedSchema = z.object({
@@ -350,7 +355,10 @@ export class Gmail extends GoogleApp {
 
       const now = Date.now();
 
-      for (const [index, { id, link, title, summary, author, issued }] of feedEntries.entries()) {
+      for (const [
+        index,
+        { id, link, title, summary, author, contributor, issued },
+      ] of feedEntries.entries()) {
         const messageId = new URLSearchParams(link["@_href"]).get("message_id");
         const receivedAt = new Date(issued).getTime();
 
@@ -362,10 +370,11 @@ export class Gmail extends GoogleApp {
           id: messageId,
           subject: title,
           summary,
-          sender: {
+          author: {
             name: author.name,
             email: author.email,
           },
+          contributors: Array.isArray(contributor) ? contributor : contributor ? [contributor] : [],
           receivedAt,
         });
 
@@ -419,7 +428,7 @@ export class Gmail extends GoogleApp {
 
             createNotification({
               title: config.get("notifications.showSender")
-                ? newMail.sender.name
+                ? newMail.author.name
                 : account.config.label,
               body: `Copied verification code ${verificationCode}`,
             });
@@ -447,7 +456,7 @@ export class Gmail extends GoogleApp {
 
         createNotification({
           title: config.get("notifications.showSender")
-            ? newMail.sender.name
+            ? newMail.author.name
             : account.config.label,
           subtitle,
           body,

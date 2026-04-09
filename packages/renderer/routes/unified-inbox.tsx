@@ -30,7 +30,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
-import { Avatar, AvatarFallback, AvatarImage } from "@meru/ui/components/avatar";
+import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@meru/ui/components/avatar";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import {
   Empty,
@@ -60,20 +60,45 @@ const columns = [
       </div>
     ),
   }),
-  columnHelper.accessor("sender.name", {
+  columnHelper.accessor("author.name", {
     cell: (props) => {
-      const domain = props.row.original.sender.email.split("@")[1];
+      const domain = props.row.original.author.email.split("@")[1];
 
       return (
         <div
           className="w-36 flex items-center gap-2"
-          title={`${props.row.original.sender.name} <${props.row.original.sender.email}>`}
+          title={[props.row.original.author, ...props.row.original.contributors]
+            .map(({ name, email }) => `${name} <${email}>`)
+            .join(", ")}
         >
-          <Avatar className="size-4">
-            {domain && <AvatarImage src={getGoogleDomainFaviconUrl(domain, 32)} />}
-            <AvatarFallback />
-          </Avatar>
-          <div className="truncate">{props.row.original.sender.name}</div>
+          <AvatarGroup>
+            <Avatar className="size-4">
+              {domain && <AvatarImage src={getGoogleDomainFaviconUrl(domain, 32)} />}
+              <AvatarFallback />
+            </Avatar>
+            {props.row.original.contributors.slice(0, 2).map((contributor) => {
+              const contributorDomain = contributor.email.split("@")[1];
+
+              return (
+                <Avatar key={contributor.email} className="size-4">
+                  {contributorDomain && (
+                    <AvatarImage src={getGoogleDomainFaviconUrl(contributorDomain, 32)} />
+                  )}
+                  <AvatarFallback />
+                </Avatar>
+              );
+            })}
+          </AvatarGroup>
+          <div className="truncate">
+            {props.row.original.contributors.length === 0
+              ? props.row.original.author.name
+              : [
+                  props.row.original.author.name.split(" ")[0],
+                  ...props.row.original.contributors.map(
+                    (contributor) => contributor.name.split(" ")[0],
+                  ),
+                ].join(", ")}
+          </div>
         </div>
       );
     },
