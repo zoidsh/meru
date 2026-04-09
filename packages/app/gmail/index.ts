@@ -333,12 +333,6 @@ export class Gmail extends GoogleApp {
 
       if (feedEntries.length === this.previousInboxFeedTotalEntries) {
         if (fetchAttempt > 10) {
-          log.warn("Inbox feed did not change after 10 attempts", {
-            inboxType,
-            feedEntriesLength: feedEntries.length,
-            feedEntries,
-          });
-
           return;
         }
 
