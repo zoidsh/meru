@@ -1,6 +1,6 @@
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
-import { date } from "@meru/renderer-lib/date";
+import { createDateTimeFormatter, dayjs } from "@meru/renderer-lib/date";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { Badge } from "@meru/ui/components/badge";
@@ -91,14 +91,34 @@ const columns = [
     ),
   }),
   columnHelper.accessor("receivedAt", {
-    cell: (props) => (
-      <div
-        className="text-muted-foreground whitespace-nowrap"
-        title={date(props.getValue()).format("llll")}
-      >
-        {date(props.getValue()).calendar()}
-      </div>
-    ),
+    cell: (props) => {
+      const date = dayjs(props.getValue());
+
+      return (
+        <div
+          className="text-muted-foreground whitespace-nowrap"
+          title={createDateTimeFormatter({
+            hour: "2-digit",
+            minute: "2-digit",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }).format(date.toDate())}
+        >
+          {date.isToday()
+            ? createDateTimeFormatter({
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(date.toDate())
+            : date.isSame(dayjs(), "year")
+              ? createDateTimeFormatter({
+                  month: "short",
+                  day: "numeric",
+                }).format(date.toDate())
+              : createDateTimeFormatter().format(date.toDate())}
+        </div>
+      );
+    },
   }),
 ];
 
