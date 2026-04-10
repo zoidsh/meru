@@ -3,6 +3,7 @@ import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import {
   app,
+  BrowserWindow,
   clipboard,
   dialog,
   Menu,
@@ -21,6 +22,7 @@ import { openExternalUrl } from "@/url";
 import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
 import { appState } from "./state";
+import { clamp } from "@meru/shared/utils";
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -63,6 +65,12 @@ export class AppMenu {
 
       Menu.setApplicationMenu(this.menu);
     });
+
+    app.on("browser-window-focus", () => {
+      this.menu = this.createMenu();
+
+      Menu.setApplicationMenu(this.menu);
+    });
   }
 
   private _subscribeToSelectedAccount() {
@@ -71,17 +79,6 @@ export class AppMenu {
     }
 
     const selectedAccount = accounts.getSelectedAccount();
-
-    this._selectedAccountUnsubscribeFns.add(
-      selectedAccount.instance.gmail.viewStore.subscribe(
-        (state) => state.navigationHistory,
-        () => {
-          this.menu = this.createMenu();
-
-          Menu.setApplicationMenu(this.menu);
-        },
-      ),
-    );
 
     this._selectedAccountUnsubscribeFns.add(
       selectedAccount.instance.gmail.store.subscribe(
@@ -114,7 +111,20 @@ export class AppMenu {
       },
     ];
 
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+
+    const MIN_ZOOM_FACTOR = 0.1;
+    const MAX_ZOOM_FACTOR = 3;
+
     const zoomIn = () => {
+      if (focusedWindow && focusedWindow !== main.window) {
+        focusedWindow.webContents.setZoomFactor(
+          clamp(focusedWindow.webContents.getZoomFactor() + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        );
+
+        return;
+      }
+
       const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
 
       for (const [_accountId, instance] of accounts.instances) {
@@ -125,6 +135,14 @@ export class AppMenu {
     };
 
     const zoomOut = () => {
+      if (focusedWindow && focusedWindow !== main.window) {
+        focusedWindow.webContents.setZoomFactor(
+          clamp(focusedWindow.webContents.getZoomFactor() - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        );
+
+        return;
+      }
+
       const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
 
       if (zoomFactor > 0) {
@@ -137,7 +155,6 @@ export class AppMenu {
     };
 
     const selectedAccount = accounts.getSelectedAccount();
-    const selectedAccountViewState = selectedAccount.instance.gmail.viewStore.getState();
 
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.store.getState().messageId;
@@ -288,7 +305,7 @@ export class AppMenu {
         submenu: [
           {
             label: "Copy Message Link",
-            enabled: Boolean(copyOrShareMessageLink),
+            enabled: focusedWindow === main.window && Boolean(copyOrShareMessageLink),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
               if (copyOrShareMessageLink) {
@@ -296,7 +313,7 @@ export class AppMenu {
               }
             },
           },
-          copyOrShareMessageLink
+          focusedWindow === main.window && copyOrShareMessageLink
             ? {
                 role: "shareMenu",
                 sharingItem: {
@@ -335,13 +352,19 @@ export class AppMenu {
             label: "Reset Zoom",
             accelerator: "CommandOrControl+0",
             click: () => {
-              const zoomFactor = 1;
+              const defaultZoomFactor = 1;
 
-              for (const [_accountId, instance] of accounts.instances) {
-                instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.setZoomFactor(defaultZoomFactor);
+
+                return;
               }
 
-              config.set("gmail.zoomFactor", zoomFactor);
+              for (const [_accountId, instance] of accounts.instances) {
+                instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
+              }
+
+              config.set("gmail.zoomFactor", defaultZoomFactor);
             },
           },
           {
@@ -374,16 +397,24 @@ export class AppMenu {
             label: "Reload",
             accelerator: "CommandOrControl+R",
             click: () => {
-              selectedAccount.instance.gmail.view.webContents.reload();
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.reload();
 
-              main.show();
+                return;
+              }
+
+              selectedAccount.instance.gmail.view.webContents.reload();
             },
           },
           {
             label: "Hard Reload",
             accelerator: "CommandOrControl+Shift+R",
             click: async () => {
-              main.show();
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.reloadIgnoringCache();
+
+                return;
+              }
 
               selectedAccount.instance.gmail.view.webContents.reloadIgnoringCache();
             },
@@ -395,11 +426,15 @@ export class AppMenu {
             label: "Developer Tools",
             accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
             click: () => {
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.openDevTools();
+
+                return;
+              }
+
               main.window.webContents.openDevTools({ mode: "detach" });
 
               selectedAccount.instance.gmail.view.webContents.openDevTools();
-
-              main.show();
             },
           },
         ],
@@ -409,17 +444,27 @@ export class AppMenu {
         submenu: [
           {
             label: "Back",
-            enabled: selectedAccountViewState.navigationHistory.canGoBack,
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.navigationHistory.goBack();
+
+                return;
+              }
+
               selectedAccount.instance.gmail.view.webContents.navigationHistory.goBack();
             },
           },
           {
             label: "Forward",
-            enabled: selectedAccountViewState.navigationHistory.canGoForward,
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
+              if (focusedWindow && focusedWindow !== main.window) {
+                focusedWindow.webContents.navigationHistory.goForward();
+
+                return;
+              }
+
               selectedAccount.instance.gmail.view.webContents.navigationHistory.goForward();
             },
           },
