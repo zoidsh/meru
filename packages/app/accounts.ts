@@ -231,10 +231,12 @@ class Accounts {
     appState.setIsSettingsOpen(false);
   }
 
-  removeAccount(selectedAccountId: string) {
+  async removeAccount(selectedAccountId: string) {
     const account = this.getAccount(selectedAccountId);
 
     account.instance.gmail.destroy();
+
+    await account.instance.session.clearData();
 
     this.instances.delete(selectedAccountId);
 
