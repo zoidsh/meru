@@ -36,6 +36,8 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@meru/ui/components/tabs";
+import { useAccountsStore } from "@/lib/stores";
 
 export function SavedSearchForm({
   savedSearch = { label: "", query: "" },
@@ -227,6 +229,8 @@ export function SavedSearchesSettings() {
 
   const configMutation = useConfigMutation();
 
+  const accounts = useAccountsStore((state) => state.accounts);
+
   if (!config) {
     return;
   }
@@ -252,87 +256,111 @@ export function SavedSearchesSettings() {
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
-          Upgrade to Meru Pro to add saved searches
+          Upgrade to Meru Pro to use saved searches
         </LicenseKeyRequiredBanner>
-        <Table className="mb-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Query</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {config["gmail.savedSearches"].map((savedSearch, index) => (
-              <TableRow key={savedSearch.id}>
-                <TableCell>{savedSearch.label}</TableCell>
-                <TableCell>{savedSearch.query}</TableCell>
-                <TableCell className="flex justify-end">
-                  {config["gmail.savedSearches"].length > 1 && (
-                    <>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index === 0}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "up");
-                        }}
-                      >
-                        <ArrowUpIcon />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index + 1 === config["gmail.savedSearches"].length}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "down");
-                        }}
-                      >
-                        <ArrowDownIcon />
-                      </Button>
-                    </>
-                  )}
-                  <SavedSearchMenuButton
-                    savedSearch={savedSearch}
-                    onDelete={() => {
-                      const deleteSavedSearchId = savedSearch.id;
+        <Tabs>
+          <TabsList variant="line">
+            <TabsTrigger value="global">Global</TabsTrigger>
+            {accounts.map((account) => (
+              <TabsTrigger key={account.config.id} value={account.config.id}>
+                {account.config.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {["global", ...accounts.map((account) => account.config.id)].map((tabValue) => {
+            const savedSearches =
+              tabValue === "global"
+                ? config["gmail.savedSearches"]
+                : accounts.find((account) => account.config.id === tabValue)?.config
+                    .savedSearches || [];
 
+            return (
+              <TabsContent value={tabValue} key={tabValue}>
+                <Table className="mb-4">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Label</TableHead>
+                      <TableHead>Query</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {savedSearches.map((savedSearch, index) => (
+                      <TableRow key={savedSearch.id}>
+                        <TableCell>{savedSearch.label}</TableCell>
+                        <TableCell>{savedSearch.query}</TableCell>
+                        <TableCell className="flex justify-end">
+                          {savedSearches.length > 1 && (
+                            <>
+                              <Button
+                                size="icon"
+                                className="size-8 p-0"
+                                variant="ghost"
+                                disabled={index === 0}
+                                onClick={() => {
+                                  moveSavedSearch(savedSearch.id, "up");
+                                }}
+                              >
+                                <ArrowUpIcon />
+                              </Button>
+                              <Button
+                                size="icon"
+                                className="size-8 p-0"
+                                variant="ghost"
+                                disabled={index + 1 === savedSearches.length}
+                                onClick={() => {
+                                  moveSavedSearch(savedSearch.id, "down");
+                                }}
+                              >
+                                <ArrowDownIcon />
+                              </Button>
+                            </>
+                          )}
+                          <SavedSearchMenuButton
+                            savedSearch={savedSearch}
+                            onDelete={() => {
+                              const deleteSavedSearchId = savedSearch.id;
+
+                              configMutation.mutate({
+                                "gmail.savedSearches": savedSearches.filter(
+                                  (savedSearch) => savedSearch.id !== deleteSavedSearchId,
+                                ),
+                              });
+                            }}
+                            onEdit={(editedSavedSearch) => {
+                              configMutation.mutate({
+                                "gmail.savedSearches": savedSearches.map((savedSearch) =>
+                                  savedSearch.id === editedSavedSearch.id
+                                    ? editedSavedSearch
+                                    : savedSearch,
+                                ),
+                              });
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="flex justify-end">
+                  <AddSavedSearchButton
+                    onAdd={(savedSearch) => {
                       configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].filter(
-                          (savedSearch) => savedSearch.id !== deleteSavedSearchId,
-                        ),
-                      });
-                    }}
-                    onEdit={(editedSavedSearch) => {
-                      configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
-                          savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
-                        ),
+                        "gmail.savedSearches": [
+                          ...savedSearches,
+                          {
+                            id: crypto.randomUUID(),
+                            ...savedSearch,
+                          },
+                        ],
                       });
                     }}
                   />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="flex justify-end">
-          <AddSavedSearchButton
-            onAdd={(savedSearch) => {
-              configMutation.mutate({
-                "gmail.savedSearches": [
-                  ...config["gmail.savedSearches"],
-                  {
-                    id: crypto.randomUUID(),
-                    ...savedSearch,
-                  },
-                ],
-              });
-            }}
-          />
-        </div>
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
       </SettingsContent>
     </>
   );

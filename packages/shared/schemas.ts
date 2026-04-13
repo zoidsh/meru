@@ -1,6 +1,22 @@
 import { z } from "zod";
 import type { GmailState } from "./gmail";
 
+export const gmailSavedSearchSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1),
+  query: z.string().min(1),
+});
+
+export const gmailSavedSearchInputSchema = gmailSavedSearchSchema.omit({
+  id: true,
+});
+
+export type GmailSavedSearchInput = z.infer<typeof gmailSavedSearchInputSchema>;
+
+export type GmailSavedSearch = z.infer<typeof gmailSavedSearchSchema>;
+
+export type GmailSavedSearches = GmailSavedSearch[];
+
 export const accountColors = [
   "orange",
   "amber",
@@ -30,6 +46,7 @@ export const accountConfigSchema = z.object({
     delegatedAccountId: z.string().nullable(),
     unifiedInbox: z.boolean(),
   }),
+  savedSearches: z.array(gmailSavedSearchSchema),
 });
 
 export type AccountConfig = z.infer<typeof accountConfigSchema>;
@@ -54,19 +71,3 @@ export type AccountInstance = {
 };
 
 export type AccountInstances = AccountInstance[];
-
-export const gmailSavedSearchSchema = z.object({
-  id: z.string(),
-  label: z.string().min(1),
-  query: z.string().min(1),
-});
-
-export const gmailSavedSearchInputSchema = gmailSavedSearchSchema.omit({
-  id: true,
-});
-
-export type GmailSavedSearchInput = z.infer<typeof gmailSavedSearchInputSchema>;
-
-export type GmailSavedSearch = z.infer<typeof gmailSavedSearchSchema>;
-
-export type GmailSavedSearches = GmailSavedSearch[];
