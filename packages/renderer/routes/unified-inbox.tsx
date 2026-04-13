@@ -1,4 +1,4 @@
-import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
 import { createDateTimeFormatter, dayjs } from "@meru/renderer-lib/date";
 import { ipc } from "@meru/renderer-lib/ipc";
@@ -303,12 +303,7 @@ export function UnifiedInbox() {
   return (
     <>
       <SettingsHeader className="flex-col">
-        <SettingsTitle className="flex gap-2 items-center">
-          Unified Inbox<Badge variant="outline">Beta</Badge>
-        </SettingsTitle>
-        <SettingsDescription>
-          Please report any issues you encounter or share your feedback to help us improve it.
-        </SettingsDescription>
+        <SettingsTitle>Unified Inbox</SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>
