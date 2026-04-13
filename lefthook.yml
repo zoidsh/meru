@@ -4,5 +4,5 @@ pre-commit:
       run: bun fmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     lint:
-      run: bun lint:fix {staged_files}
+      run: bun lint:fix --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
