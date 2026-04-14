@@ -82,7 +82,7 @@ export function GmailSettings() {
             />
             <ConfigSwitchField
               label="Close Compose Window After Send"
-              description="Automatically closes the compose window after pressing the send button. Note: Unsending emails won't be possible with this enabled since the undo notification will be dismissed immediately."
+              description="Automatically closes the compose window after pressing the send button."
               configKey="gmail.closeComposeWindowAfterSend"
               restartRequired
               licenseKeyRequired
