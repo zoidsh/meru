@@ -34,14 +34,16 @@ export function createNotification({
     });
   }
 
-  notification.show();
-
   if (sound !== "system" && playSound) {
-    ipc.renderer.send(main.window.webContents, "notifications.playSound", {
-      sound: licenseKey.isValid ? sound : "linen",
-      volume: config.get("notifications.volume"),
+    notification.once("show", () => {
+      ipc.renderer.send(main.window.webContents, "notifications.playSound", {
+        sound: licenseKey.isValid ? sound : "linen",
+        volume: config.get("notifications.volume"),
+      });
     });
   }
+
+  notification.show();
 
   return notification;
 }
