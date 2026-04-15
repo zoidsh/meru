@@ -119,7 +119,7 @@ export class GoogleApp {
 
     main.window.contentView.addChildView(this.view);
 
-    this.registerNavigationHandler();
+    this.registerNavigationHandler(this.view);
 
     this.registerFoundInPageHandler();
 
@@ -150,9 +150,9 @@ export class GoogleApp {
     return this.view.webContents.loadURL(this.url);
   }
 
-  private registerNavigationHandler() {
-    this.view.webContents.on("did-navigate", (_event: Electron.Event, url: string) => {
-      if (/accounts\.google.com\/v3\/signin\/challenge\/pk\/presend/.test(url)) {
+  private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
+    window.webContents.on("did-navigate", (_event, url) => {
+      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
         dialog.showMessageBox({
           type: "info",
           message: "Passkey sign-in not supported yet",
@@ -160,29 +160,36 @@ export class GoogleApp {
         });
       }
 
-      this.viewStore.setState({
-        navigationHistory: {
-          canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-          canGoForward: this.view.webContents.navigationHistory.canGoForward(),
-        },
-        attentionRequired: !url.startsWith(this.baseUrl),
-      });
+      if (window === this.view) {
+        this.viewStore.setState({
+          navigationHistory: {
+            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+          },
+          attentionRequired: !url.startsWith(this.baseUrl),
+        });
+      }
     });
 
-    this.view.webContents.on("did-navigate-in-page", (_event: Electron.Event) => {
-      this.viewStore.setState({
-        navigationHistory: {
-          canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-          canGoForward: this.view.webContents.navigationHistory.canGoForward(),
-        },
+    if (window === this.view) {
+      window.webContents.on("did-navigate-in-page", (_event: Electron.Event) => {
+        this.viewStore.setState({
+          navigationHistory: {
+            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+          },
+        });
       });
-    });
+    }
 
-    this.view.webContents.on("will-redirect", (event, url) => {
-      if (url.startsWith("https://www.google.com")) {
+    window.webContents.on("will-redirect", (event, url) => {
+      if (
+        url.startsWith("https://www.google.com") ||
+        url.startsWith("https://workspace.google.com")
+      ) {
         event.preventDefault();
 
-        this.view.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+        window.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
       }
     });
   }
@@ -230,7 +237,7 @@ export class GoogleApp {
 
             newWindow.webContents.once("will-navigate", (_event, url) => {
               if (newWindow) {
-                if (url.startsWith("https://accounts.google.com")) {
+                if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
                   newWindow.show();
 
                   return;
@@ -249,7 +256,10 @@ export class GoogleApp {
         };
       }
 
-      if (url.startsWith(GMAIL_URL) && url.includes("view=pt")) {
+      if (
+        (url.startsWith(GMAIL_URL) && url.includes("view=pt")) ||
+        url.startsWith(GOOGLE_ACCOUNTS_URL)
+      ) {
         return {
           action: "allow",
         };
@@ -340,6 +350,8 @@ export class GoogleApp {
         }
 
         const setupNewWindow = (newWindow: BrowserWindow) => {
+          this.registerNavigationHandler(newWindow);
+
           this.registerWindowOpenHandler(newWindow);
 
           setupWindowContextMenu(newWindow);
