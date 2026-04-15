@@ -322,6 +322,10 @@ export class Gmail extends GoogleApp {
 
   async fetchInboxFeed(fetchAttempt = 1) {
     try {
+      if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+        return;
+      }
+
       const inboxType = inboxTypeSchema.parse(
         await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
       );
