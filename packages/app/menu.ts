@@ -593,15 +593,18 @@ export class AppMenu {
         role: "help",
         submenu: [
           {
-            label: "Website",
+            label: "Version History",
             click: () => {
-              openExternalUrl(WEBSITE_URL);
+              main.navigate("/settings/version-history");
             },
           },
           {
-            label: "Release Notes",
+            type: "separator",
+          },
+          {
+            label: "Website",
             click: () => {
-              openExternalUrl(`${GITHUB_REPO_URL}/releases`);
+              openExternalUrl(WEBSITE_URL);
             },
           },
           {
@@ -623,25 +626,29 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Ask Questions",
+            label: "Ask Question",
             click: () => {
-              openExternalUrl(`${GITHUB_REPO_URL}/discussions/categories/q-a`);
+              selectedAccount.instance.gmail.createComposeWindow("mailto:tim@meru.so");
             },
           },
           {
-            label: "Request Features",
+            label: "Request Feature",
             click: () => {
-              openExternalUrl(`${GITHUB_REPO_URL}/discussions/categories/feature-requests`);
+              selectedAccount.instance.gmail.createComposeWindow(
+                "mailto:tim@meru.so?subject=Feature%20Request:%20",
+              );
             },
-          },
-          {
-            type: "separator",
           },
           {
             label: "Report Issue",
             click: () => {
-              openExternalUrl(`${GITHUB_REPO_URL}/issues/new/choose`);
+              selectedAccount.instance.gmail.createComposeWindow(
+                "mailto:tim@meru.so?subject=Report Issue:%20",
+              );
             },
+          },
+          {
+            type: "separator",
           },
           {
             label: "Troubleshooting",
