@@ -36,6 +36,11 @@
 - Store time values as `"HH:mm"` 24-hour strings internally regardless of display format.
 - Use `input[type="time"]` for time inputs — Chromium auto-adapts display to the OS locale (12h/24h), no extra handling needed.
 
+## Formatting Tool
+
+- Always run `bun fmt` after making code changes. It uses oxfmt to auto-format all files.
+- Run `bun fmt:check` to verify formatting without making changes.
+
 ## General
 
 - Follow the patterns and naming of the existing codebase. When in doubt, find a similar example in the codebase and match it exactly.
