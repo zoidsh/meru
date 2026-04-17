@@ -4,20 +4,28 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
-function timeToMinutes(t: string) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
 }
 
 function isWithinNotificationTimes(): boolean {
   const times = config.get("notifications.times");
-  if (!times.length) return true;
+
+  if (!times.length) {
+    return true;
+  }
+
   const now = new Date();
   const current = now.getHours() * 60 + now.getMinutes();
+
   return times.some(({ start, end }) => {
-    const s = timeToMinutes(start);
-    const e = timeToMinutes(end);
-    return e > s ? current >= s && current < e : current >= s || current < e;
+    const startMinutes = timeToMinutes(start);
+    const endMinutes = timeToMinutes(end);
+
+    return endMinutes > startMinutes
+      ? current >= startMinutes && current < endMinutes
+      : current >= startMinutes || current < endMinutes;
   });
 }
 
