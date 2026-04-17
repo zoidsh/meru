@@ -77,21 +77,26 @@ export function NotificationsSettings() {
   function addTime() {
     const newEntry: NotificationTime = { id: crypto.randomUUID(), start: "09:00", end: "17:00" };
     const newTimes = [...times, newEntry];
+
     if (hasOverlap(newTimes)) {
       toast.error("Notification times overlap. Please adjust existing windows first.");
       return;
     }
+
     setTimes(newTimes);
     configMutation.mutate({ "notifications.times": newTimes });
   }
 
   function updateTime(id: string, field: "start" | "end", value: string) {
     const newTimes = times.map((t) => (t.id === id ? { ...t, [field]: value } : t));
+
     setTimes(newTimes);
+
     if (hasOverlap(newTimes)) {
       toast.error("Notification times overlap. Please adjust the time windows.");
       return;
     }
+
     configMutation.mutate({ "notifications.times": newTimes });
   }
 
