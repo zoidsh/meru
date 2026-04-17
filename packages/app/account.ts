@@ -4,6 +4,7 @@ import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
+  app,
   BrowserWindow,
   type IpcMainEvent,
   ipcMain,
@@ -48,7 +49,16 @@ export class Account {
   }
 
   setSpellCheckerLanguages() {
-    this.session.setSpellCheckerLanguages(config.get("spellchecker.languages"));
+    const additional = config.get("spellchecker.languages");
+
+    if (additional.length === 0) {
+      return;
+    }
+
+    const osLocale = app.getLocale();
+    const languages = [...new Set([osLocale, ...additional])];
+
+    this.session.setSpellCheckerLanguages(languages);
   }
 
   private setCustomUserAgent() {

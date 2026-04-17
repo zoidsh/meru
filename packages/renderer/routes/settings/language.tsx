@@ -1,6 +1,12 @@
-import { Checkbox } from "@meru/ui/components/checkbox";
+import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@meru/ui/components/field";
-import { Label } from "@meru/ui/components/label";
+import { ChevronDownIcon } from "lucide-react";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 
@@ -55,6 +61,20 @@ const SPELLCHECKER_LANGUAGES = [
   { code: "cy", label: "Welsh" },
 ];
 
+function getTriggerLabel(selected: string[]) {
+  if (selected.length === 0) {
+    return "No additional languages";
+  }
+
+  if (selected.length <= 2) {
+    return selected
+      .map((code) => SPELLCHECKER_LANGUAGES.find((l) => l.code === code)?.label ?? code)
+      .join(", ");
+  }
+
+  return `${selected.length} additional languages`;
+}
+
 export function LanguageSettings() {
   const { config } = useConfig();
 
@@ -64,16 +84,10 @@ export function LanguageSettings() {
     return;
   }
 
-  const selectedLanguages = config["spellchecker.languages"];
+  const selected = config["spellchecker.languages"];
 
   function toggleLanguage(code: string, checked: boolean) {
-    const updated = checked
-      ? [...selectedLanguages, code]
-      : selectedLanguages.filter((l) => l !== code);
-
-    if (updated.length === 0) {
-      return;
-    }
+    const updated = checked ? [...selected, code] : selected.filter((l) => l !== code);
 
     configMutation.mutate({ "spellchecker.languages": updated });
   }
@@ -88,19 +102,30 @@ export function LanguageSettings() {
           <FieldSet>
             <FieldLegend>Spellchecker</FieldLegend>
             <FieldDescription>
-              Select one or more languages to use for spellchecking in email compose.
+              Select additional languages for spellchecking alongside the system language.
             </FieldDescription>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              {SPELLCHECKER_LANGUAGES.map(({ code, label }) => (
-                <Label key={code} className="flex items-center gap-2 font-normal cursor-pointer">
-                  <Checkbox
-                    checked={selectedLanguages.includes(code)}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" className="w-full justify-between font-normal">
+                    <span className="truncate">{getTriggerLabel(selected)}</span>
+                    <ChevronDownIcon className="text-muted-foreground size-4 shrink-0" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="start">
+                {SPELLCHECKER_LANGUAGES.map(({ code, label }) => (
+                  <DropdownMenuCheckboxItem
+                    key={code}
+                    checked={selected.includes(code)}
                     onCheckedChange={(checked) => toggleLanguage(code, checked)}
-                  />
-                  {label}
-                </Label>
-              ))}
-            </div>
+                    closeOnClick={false}
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </FieldSet>
         </FieldGroup>
       </SettingsContent>

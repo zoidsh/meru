@@ -98,7 +98,7 @@ export const config = new Store<Config>({
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
     "unifiedInbox.rowsPerPage": 10,
-    "spellchecker.languages": ["en-US"],
+    "spellchecker.languages": [],
   },
   migrations: {
     ">=3.4.0": (store) => {
