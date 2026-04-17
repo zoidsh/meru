@@ -4,6 +4,23 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
+function timeToMinutes(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function isWithinNotificationTimes(): boolean {
+  const times = config.get("notifications.times");
+  if (!times.length) return true;
+  const now = new Date();
+  const current = now.getHours() * 60 + now.getMinutes();
+  return times.some(({ start, end }) => {
+    const s = timeToMinutes(start);
+    const e = timeToMinutes(end);
+    return e > s ? current >= s && current < e : current >= s || current < e;
+  });
+}
+
 export function createNotification({
   click,
   action,
@@ -12,7 +29,7 @@ export function createNotification({
   click?: () => void;
   action?: (index: number) => void;
 }) {
-  if (!Notification.isSupported() || config.get("doNotDisturb.enabled")) {
+  if (!Notification.isSupported() || config.get("doNotDisturb.enabled") || !isWithinNotificationTimes()) {
     return;
   }
 

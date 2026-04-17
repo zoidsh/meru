@@ -12,6 +12,7 @@ import {
   FieldSet,
   FieldTitle,
 } from "@meru/ui/components/field";
+import { Input } from "@meru/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -27,7 +28,28 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import type { NotificationTime } from "@meru/shared/types";
+import { Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+function timeToMinutes(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function hasOverlap(times: NotificationTime[]): boolean {
+  for (let i = 0; i < times.length; i++) {
+    for (let j = i + 1; j < times.length; j++) {
+      const aS = timeToMinutes(times[i].start);
+      const aE = timeToMinutes(times[i].end);
+      const bS = timeToMinutes(times[j].start);
+      const bE = timeToMinutes(times[j].end);
+      if (aS < bE && bS < aE) return true;
+    }
+  }
+  return false;
+}
 
 export function NotificationsSettings() {
   const { config } = useConfig();
@@ -36,8 +58,43 @@ export function NotificationsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const [times, setTimes] = useState<NotificationTime[]>([]);
+
+  useEffect(() => {
+    if (config) {
+      setTimes(config["notifications.times"]);
+    }
+  }, [config]);
+
   if (!config) {
     return;
+  }
+
+  function addTime() {
+    const newEntry: NotificationTime = { id: crypto.randomUUID(), start: "09:00", end: "17:00" };
+    const newTimes = [...times, newEntry];
+    if (hasOverlap(newTimes)) {
+      toast.error("Notification times overlap. Please adjust existing windows first.");
+      return;
+    }
+    setTimes(newTimes);
+    configMutation.mutate({ "notifications.times": newTimes });
+  }
+
+  function updateTime(id: string, field: "start" | "end", value: string) {
+    const newTimes = times.map((t) => (t.id === id ? { ...t, [field]: value } : t));
+    setTimes(newTimes);
+    if (hasOverlap(newTimes)) {
+      toast.error("Notification times overlap. Please adjust the time windows.");
+      return;
+    }
+    configMutation.mutate({ "notifications.times": newTimes });
+  }
+
+  function removeTime(id: string) {
+    const newTimes = times.filter((t) => t.id !== id);
+    setTimes(newTimes);
+    configMutation.mutate({ "notifications.times": newTimes });
   }
 
   return (
@@ -217,6 +274,41 @@ export function NotificationsSettings() {
                   )}
                 </>
               )}
+            </FieldGroup>
+          </FieldSet>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLabel>Notification Times</FieldLabel>
+            <FieldGroup>
+              <Field>
+                <FieldDescription>
+                  Configure time windows when notifications are active. Outside these windows,
+                  notifications will be silenced. Leave empty to always allow notifications.
+                </FieldDescription>
+              </Field>
+              {times.map((time) => (
+                <div key={time.id} className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={time.start}
+                    onChange={(e) => updateTime(time.id, "start", e.target.value)}
+                  />
+                  <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                  <Input
+                    type="time"
+                    value={time.end}
+                    onChange={(e) => updateTime(time.id, "end", e.target.value)}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeTime(time.id)}>
+                    <X />
+                  </Button>
+                </div>
+              ))}
+              <div>
+                <Button variant="outline" onClick={addTime}>
+                  <Plus /> Add Time Window
+                </Button>
+              </div>
             </FieldGroup>
           </FieldSet>
         </FieldGroup>
