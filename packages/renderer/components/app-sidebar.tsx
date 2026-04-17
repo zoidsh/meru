@@ -2,6 +2,7 @@ import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
+import { platform } from "@meru/renderer-lib/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { AccountsSettings } from "@/routes/settings/accounts";
 import { AdvancedSettings } from "@/routes/settings/advanced";
@@ -11,6 +12,7 @@ import { DownloadHistory } from "@/routes/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
 import { GmailSettings } from "@/routes/settings/gmail";
 import { GoogleAppsSettings } from "@/routes/settings/google-apps";
+import { LanguageSettings } from "@/routes/settings/language";
 import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
 import { PhishingProtectionSettings } from "@/routes/settings/phishing-protection";
@@ -54,6 +56,12 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     label: "Google Apps",
     path: "/settings/google-apps",
     component: GoogleAppsSettings,
+  },
+  {
+    label: "Language",
+    path: "/settings/language",
+    component: LanguageSettings,
+    hidden: platform.isMacOS,
   },
   {
     label: "Notifications",
@@ -100,6 +108,7 @@ type SidebarNavItemProps =
       label: string;
       path: string;
       disabled?: boolean;
+      hidden?: boolean;
       component: RouteProps["component"];
     }
   | {
@@ -107,6 +116,7 @@ type SidebarNavItemProps =
       label?: undefined;
       path?: undefined;
       disabled?: undefined;
+      hidden?: undefined;
       component?: undefined;
     };
 
@@ -123,7 +133,7 @@ export function AppSidebar() {
     <div className="bg-sidebar p-4 pr-0">
       <ScrollArea className="w-56 h-full">
         <div className="space-y-2">
-          {sidebarNavItems.map(({ type, label, path }, index) => {
+          {sidebarNavItems.filter((item) => !item.hidden).map(({ type, label, path }, index) => {
             if (type === "separator") {
               // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
               return <Separator key={index} />;

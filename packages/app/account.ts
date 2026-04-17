@@ -32,6 +32,10 @@ export class Account {
 
     this.registerSessionDisplayMediaRequestHandler();
 
+    if (!platform.isMacOS) {
+      this.setSpellCheckerLanguages();
+    }
+
     blocker.setupSession(this.session);
 
     this.gmail = new Gmail({
@@ -41,6 +45,10 @@ export class Account {
       unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
     });
+  }
+
+  setSpellCheckerLanguages() {
+    this.session.setSpellCheckerLanguages(config.get("spellchecker.languages"));
   }
 
   private setCustomUserAgent() {

@@ -134,6 +134,7 @@ export type Config = {
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;
   "unifiedInbox.rowsPerPage": number;
+  "spellchecker.languages": string[];
 };
 
 export type IpcMainEvents =
