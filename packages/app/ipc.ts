@@ -60,6 +60,10 @@ class Ipc {
     });
 
     if (process.platform !== "darwin") {
+      for (const account of accounts.instances.values()) {
+        account.setSpellCheckerLanguages();
+      }
+
       config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
           account.setSpellCheckerLanguages();

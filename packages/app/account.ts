@@ -33,10 +33,6 @@ export class Account {
 
     this.registerSessionDisplayMediaRequestHandler();
 
-    if (!platform.isMacOS) {
-      this.setSpellCheckerLanguages();
-    }
-
     blocker.setupSession(this.session);
 
     this.gmail = new Gmail({
