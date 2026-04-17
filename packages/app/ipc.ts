@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
+import { platform } from "@electron-toolkit/utils";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -11,6 +12,7 @@ import {
   type MenuItemConstructorOptions,
   nativeImage,
   nativeTheme,
+  session,
   shell,
 } from "electron";
 import { accounts } from "@/accounts";
@@ -59,7 +61,7 @@ class Ipc {
       accounts.sendAccountsChangedToRenderer();
     });
 
-    if (process.platform !== "darwin") {
+    if (!platform.isMacOS) {
       config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
           account.setSpellCheckerLanguages();
@@ -212,6 +214,10 @@ class Ipc {
     });
 
     ipc.main.handle("config.getConfig", () => config.store);
+
+    ipc.main.handle("spellchecker.getAvailableLanguages", () =>
+      session.defaultSession.availableSpellCheckerLanguages,
+    );
 
     ipc.main.handle("config.setConfig", (_event, keyValues) => {
       Object.entries(keyValues).forEach(([key, value]) => {
