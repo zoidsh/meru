@@ -59,13 +59,13 @@ class Ipc {
       accounts.sendAccountsChangedToRenderer();
     });
 
-    config.onDidChange("spellchecker.languages", () => {
-      if (process.platform !== "darwin") {
+    if (process.platform !== "darwin") {
+      config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
           account.setSpellCheckerLanguages();
         }
-      }
-    });
+      });
+    }
 
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
       accounts.selectAccount(selectedAccountId);
