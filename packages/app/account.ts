@@ -35,9 +35,7 @@ export class Account {
 
     blocker.setupSession(this.session);
 
-    if (!platform.isMacOS) {
-      this.setSpellCheckerLanguages();
-    }
+    this.setSpellCheckerLanguages();
 
     this.gmail = new Gmail({
       accountId: accountConfig.id,
@@ -49,16 +47,19 @@ export class Account {
   }
 
   setSpellCheckerLanguages() {
-    const additional = config.get("spellchecker.languages");
+    if (platform.isMacOS) {
+      return;
+    }
 
-    if (additional.length === 0) {
+    const additionalLanguages = config.get("spellchecker.languages");
+
+    if (additionalLanguages.length === 0) {
       return;
     }
 
     const osLocale = app.getLocale();
-    const languages = [osLocale, ...additional];
 
-    this.session.setSpellCheckerLanguages(languages);
+    this.session.setSpellCheckerLanguages([osLocale, ...additionalLanguages]);
   }
 
   private setCustomUserAgent() {

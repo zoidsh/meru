@@ -14,7 +14,7 @@ class Spellchecker {
     if (savedLanguages.includes(osLocale)) {
       config.set(
         "spellchecker.languages",
-        savedLanguages.filter((l) => l !== osLocale),
+        savedLanguages.filter((language) => language !== osLocale),
       );
     }
   }
