@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
-import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@meru/ui/components/field";
+import { FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
 import { ChevronDownIcon } from "lucide-react";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -73,7 +73,7 @@ export function LanguageSettings() {
       <SettingsContent>
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Spellchecker</FieldLegend>
+            <FieldLabel>Spellchecker</FieldLabel>
             <FieldDescription>
               Select additional languages for spellchecking alongside the system language.
             </FieldDescription>
