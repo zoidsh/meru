@@ -33,21 +33,25 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-function timeToMinutes(t: string) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
 }
 
 function hasOverlap(times: NotificationTime[]): boolean {
   for (let i = 0; i < times.length; i++) {
     for (let j = i + 1; j < times.length; j++) {
-      const aS = timeToMinutes(times[i].start);
-      const aE = timeToMinutes(times[i].end);
-      const bS = timeToMinutes(times[j].start);
-      const bE = timeToMinutes(times[j].end);
-      if (aS < bE && bS < aE) return true;
+      const aStart = timeToMinutes(times[i].start);
+      const aEnd = timeToMinutes(times[i].end);
+      const bStart = timeToMinutes(times[j].start);
+      const bEnd = timeToMinutes(times[j].end);
+
+      if (aStart < bEnd && bStart < aEnd) {
+        return true;
+      }
     }
   }
+
   return false;
 }
 
