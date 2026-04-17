@@ -1,9 +1,11 @@
 import { app, dialog, type MessageBoxOptions } from "electron";
 import { machineId } from "node-machine-id";
 import { config } from "@/config";
-import { apiClient } from "./api-client";
+import { apiClient, apiFallbackClient } from "./api-client";
 import { openExternalUrl } from "./url";
 import isOnline from "is-online";
+import log from "electron-log";
+import { serializeError } from "serialize-error";
 
 class LicenseKey {
   isValid = false;
@@ -16,10 +18,15 @@ class LicenseKey {
     });
   }
 
-  async activate(input: { licenseKey: string }) {
+  async activate(
+    input: { licenseKey: string },
+    { useFallback }: { useFallback?: boolean } = {},
+  ): Promise<{ success: boolean }> {
     const licenseKey = input.licenseKey.trim();
 
-    const { error, isDefined } = await apiClient.v2.license.activate({
+    const { error, isDefined } = await (
+      useFallback ? apiFallbackClient : apiClient
+    ).v2.license.activate({
       licenseKey,
       deviceId: await machineId(),
     });
@@ -53,6 +60,16 @@ class LicenseKey {
           });
         }
       } else {
+        if (!useFallback) {
+          log.error("Failed to activate license key, retrying with fallback API client", {
+            error: serializeError(error),
+          });
+
+          return this.activate(input, { useFallback: true });
+        }
+
+        log.error("Failed to activate license key", { error: serializeError(error) });
+
         await this.showActivationError({
           detail: (await isOnline())
             ? `Please try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
@@ -90,7 +107,7 @@ class LicenseKey {
     });
   }
 
-  async validate() {
+  async validate({ useFallback }: { useFallback?: boolean } = {}): Promise<boolean> {
     const licenseKey = config.get("licenseKey");
 
     if (!licenseKey) {
@@ -98,7 +115,9 @@ class LicenseKey {
     }
 
     if (licenseKey) {
-      const { error, isDefined } = await apiClient.v2.license.validate({
+      const { error, isDefined } = await (
+        useFallback ? apiFallbackClient : apiClient
+      ).v2.license.validate({
         licenseKey,
         deviceId: await machineId(),
       });
@@ -125,6 +144,16 @@ class LicenseKey {
             app.relaunch();
           }
         } else {
+          if (!useFallback) {
+            log.error("Failed to validate license key, retrying with fallback API client", {
+              error: serializeError(error),
+            });
+
+            return this.validate({ useFallback: true });
+          }
+
+          log.error("Failed to validate license key", { error: serializeError(error) });
+
           const { response } = await this.showValidationError({
             detail: (await isOnline())
               ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
@@ -148,39 +177,68 @@ class LicenseKey {
     return true;
   }
 
-  async getDeviceInfo() {
+  async getDeviceInfo({ useFallback }: { useFallback?: boolean } = {}): Promise<{
+    label: string;
+  }> {
     const licenseKey = config.get("licenseKey");
 
     if (!licenseKey) {
       throw new Error("No license key available");
     }
 
-    const { error, data } = await apiClient.v2.license.getDeviceInfo({
+    const { error, data } = await (
+      useFallback ? apiFallbackClient : apiClient
+    ).v2.license.getDeviceInfo({
       licenseKey: licenseKey,
       deviceId: await machineId(),
     });
 
     if (error) {
+      if (!useFallback) {
+        log.error("Failed to get device info, retrying with fallback API client", {
+          error: serializeError(error),
+        });
+
+        return this.getDeviceInfo({ useFallback: true });
+      }
+
+      log.error("Failed to get device info", { error: serializeError(error) });
+
       throw new Error(`Failed to get device info: ${error.message}`);
     }
 
     return data;
   }
 
-  async updateDeviceInfo(input: { label: string }) {
+  async updateDeviceInfo(
+    input: { label: string },
+    { useFallback }: { useFallback?: boolean } = {},
+  ): Promise<void> {
     const licenseKey = config.get("licenseKey");
 
     if (!licenseKey) {
       throw new Error("No license key available");
     }
 
-    const { error } = await apiClient.v2.license.updateDeviceInfo({
+    const { error } = await (
+      useFallback ? apiFallbackClient : apiClient
+    ).v2.license.updateDeviceInfo({
       licenseKey: licenseKey,
       deviceId: await machineId(),
       label: input.label,
     });
 
     if (error) {
+      if (!useFallback) {
+        log.error("Failed to update device info, retrying with fallback API client", {
+          error: serializeError(error),
+        });
+
+        return this.updateDeviceInfo(input, { useFallback: true });
+      }
+
+      log.error("Failed to update device info", { error: serializeError(error) });
+
       throw new Error(`Failed to update device info: ${error.message}`);
     }
   }
