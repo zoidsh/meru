@@ -62,16 +62,6 @@ class Ipc {
     });
 
     if (!platform.isMacOS) {
-      const osLocale = app.getLocale();
-      const savedLanguages = config.get("spellchecker.languages");
-
-      if (savedLanguages.includes(osLocale)) {
-        config.set(
-          "spellchecker.languages",
-          savedLanguages.filter((l) => l !== osLocale),
-        );
-      }
-
       config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
           account.setSpellCheckerLanguages();

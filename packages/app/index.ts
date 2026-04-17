@@ -14,6 +14,7 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
+import { initSpellchecker } from "./spellchecker";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
@@ -102,6 +103,8 @@ async function init() {
   accounts.createViews();
 
   ipc.init();
+
+  initSpellchecker();
 
   theme.init();
 
