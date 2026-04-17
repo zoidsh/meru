@@ -185,6 +185,7 @@ export type IpcMainEvents =
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
       "spellchecker.getAvailableLanguages": () => string[];
+      "spellchecker.getOsLocale": () => string;
       "downloads.setLocation": () => { canceled: boolean };
       "app.getLoginItemSettings": () => LoginItemSettings;
       "app.setLoginItemSettings": (settings: Partial<LoginItemSettings>) => void;

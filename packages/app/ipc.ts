@@ -62,6 +62,16 @@ class Ipc {
     });
 
     if (!platform.isMacOS) {
+      const osLocale = app.getLocale();
+      const savedLanguages = config.get("spellchecker.languages");
+
+      if (savedLanguages.includes(osLocale)) {
+        config.set(
+          "spellchecker.languages",
+          savedLanguages.filter((l) => l !== osLocale),
+        );
+      }
+
       config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
           account.setSpellCheckerLanguages();
@@ -218,6 +228,8 @@ class Ipc {
     ipc.main.handle("spellchecker.getAvailableLanguages", () =>
       session.defaultSession.availableSpellCheckerLanguages,
     );
+
+    ipc.main.handle("spellchecker.getOsLocale", () => app.getLocale());
 
     ipc.main.handle("config.setConfig", (_event, keyValues) => {
       Object.entries(keyValues).forEach(([key, value]) => {

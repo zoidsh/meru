@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
 import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@meru/ui/components/field";
@@ -41,15 +42,22 @@ export function LanguageSettings() {
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  const languages = availableLanguages
-    .map((code) => ({ code, label: getLanguageLabel(code) }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const { data: osLocale = "" } = useQuery({
+    queryKey: ["spellchecker.osLocale"],
+    queryFn: () => ipc.main.invoke("spellchecker.getOsLocale"),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 
   if (!config) {
     return;
   }
 
   const selected = config["spellchecker.languages"];
+
+  const languages = availableLanguages
+    .filter((code) => code !== osLocale)
+    .map((code) => ({ code, label: getLanguageLabel(code) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   function toggleLanguage(code: string, checked: boolean) {
     const updated = checked ? [...selected, code] : selected.filter((l) => l !== code);
@@ -79,6 +87,14 @@ export function LanguageSettings() {
                 }
               />
               <DropdownMenuContent align="start">
+                {osLocale && (
+                  <>
+                    <DropdownMenuCheckboxItem checked disabled>
+                      {getLanguageLabel(osLocale)}
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {languages.map(({ code, label }) => (
                   <DropdownMenuCheckboxItem
                     key={code}
