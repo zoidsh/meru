@@ -96,6 +96,8 @@ async function init() {
 
   accounts.init();
 
+  spellchecker.init();
+
   await main.init();
 
   main.loadURL();
@@ -103,8 +105,6 @@ async function init() {
   accounts.createViews();
 
   ipc.init();
-
-  spellchecker.init();
 
   theme.init();
 
