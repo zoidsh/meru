@@ -94,9 +94,9 @@ async function init() {
 
   blocker.init();
 
-  accounts.init();
-
   spellchecker.init();
+
+  accounts.init();
 
   await main.init();
 
