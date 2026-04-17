@@ -14,7 +14,7 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
-import { initSpellchecker } from "./spellchecker";
+import { spellchecker } from "./spellchecker";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
@@ -104,7 +104,7 @@ async function init() {
 
   ipc.init();
 
-  initSpellchecker();
+  spellchecker.init();
 
   theme.init();
 
