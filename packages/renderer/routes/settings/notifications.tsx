@@ -84,6 +84,7 @@ export function NotificationsSettings() {
     }
 
     setTimes(newTimes);
+
     configMutation.mutate({ "notifications.times": newTimes });
   }
 
@@ -102,7 +103,9 @@ export function NotificationsSettings() {
 
   function removeTime(id: string) {
     const newTimes = times.filter((t) => t.id !== id);
+
     setTimes(newTimes);
+
     configMutation.mutate({ "notifications.times": newTimes });
   }
 
