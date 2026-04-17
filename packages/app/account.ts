@@ -35,6 +35,10 @@ export class Account {
 
     blocker.setupSession(this.session);
 
+    if (!platform.isMacOS) {
+      this.setSpellCheckerLanguages();
+    }
+
     this.gmail = new Gmail({
       accountId: accountConfig.id,
       session: this.session,

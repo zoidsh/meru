@@ -218,10 +218,6 @@ class Accounts {
 
     const instance = new Account(createdAccount);
 
-    if (process.platform !== "darwin") {
-      instance.setSpellCheckerLanguages();
-    }
-
     instance.gmail.createView();
 
     this.instances.set(createdAccount.id, instance);
