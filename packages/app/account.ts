@@ -56,7 +56,7 @@ export class Account {
     }
 
     const osLocale = app.getLocale();
-    const languages = [...new Set([osLocale, ...additional])];
+    const languages = [osLocale, ...additional];
 
     this.session.setSpellCheckerLanguages(languages);
   }
