@@ -162,7 +162,10 @@ export function NotificationsSettings() {
                     />
                   )}
                   <Field>
-                    <FieldLabel>Notification Times</FieldLabel>
+                    <FieldLabel className="flex items-center gap-2">
+                      Notification Times
+                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                    </FieldLabel>
                     <FieldDescription>
                       Configure time windows when notifications are active. Outside these windows,
                       notifications will be silenced. Leave empty to always allow notifications.
@@ -174,6 +177,7 @@ export function NotificationsSettings() {
                           value={time.start}
                           onChange={(event) => updateTime(time.id, "start", event.target.value)}
                           className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                          disabled={!isLicenseKeyValid}
                         />
                         <span className="text-muted-foreground shrink-0 text-sm">to</span>
                         <Input
@@ -181,14 +185,20 @@ export function NotificationsSettings() {
                           value={time.end}
                           onChange={(event) => updateTime(time.id, "end", event.target.value)}
                           className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                          disabled={!isLicenseKeyValid}
                         />
-                        <Button variant="ghost" size="icon" onClick={() => removeTime(time.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeTime(time.id)}
+                          disabled={!isLicenseKeyValid}
+                        >
                           <X />
                         </Button>
                       </div>
                     ))}
                     <div>
-                      <Button variant="outline" onClick={addTime}>
+                      <Button variant="outline" onClick={addTime} disabled={!isLicenseKeyValid}>
                         <Plus /> Add Time Window
                       </Button>
                     </div>
