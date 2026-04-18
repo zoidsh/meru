@@ -4,12 +4,12 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
-function timeToMinutes(time: string): number {
+function timeToMinutes(time: string) {
   const colonIndex = time.indexOf(":");
   return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
 }
 
-function isWithinNotificationTimes(): boolean {
+function isWithinNotificationTimes() {
   const times = config.get("notifications.times");
 
   if (!times.length) {

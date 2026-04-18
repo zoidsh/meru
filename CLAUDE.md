@@ -59,6 +59,10 @@
 
 - Always run `bun install --frozen-lockfile` at the start of any work session to ensure dependencies are installed. This also runs postinstall scripts including the lefthook pre-commit hook.
 
+## TypeScript
+
+- Do not add explicit return types unless necessary — rely on inference.
+
 ## Linting
 
 - Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
