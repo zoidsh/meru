@@ -73,6 +73,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Do not add explicit return types unless necessary — rely on inference.
 
+## Shared Utilities
+
+- For time/duration values, import `ms` from `@meru/shared/ms` — do not install or import the `ms` npm package. Example: `import { ms } from "@meru/shared/ms"; const delay = ms("1d");`
+
 ## Linting
 
 - Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
