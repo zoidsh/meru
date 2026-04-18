@@ -30,7 +30,6 @@ import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications"
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import type { NotificationTime } from "@meru/shared/types";
 import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 function timeToMinutes(time: string): number {
@@ -89,17 +88,11 @@ export function NotificationsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const [times, setTimes] = useState<NotificationTime[]>([]);
-
-  useEffect(() => {
-    if (config) {
-      setTimes(config["notifications.times"]);
-    }
-  }, [config]);
-
   if (!config) {
     return;
   }
+
+  const times = config["notifications.times"];
 
   const addTime = () => {
     const slot = findFreeSlot(times);
@@ -110,17 +103,12 @@ export function NotificationsSettings() {
     }
 
     const newEntry: NotificationTime = { id: crypto.randomUUID(), ...slot };
-    const newTimes = [...times, newEntry];
 
-    setTimes(newTimes);
-
-    configMutation.mutate({ "notifications.times": newTimes });
+    configMutation.mutate({ "notifications.times": [...times, newEntry] });
   };
 
   const updateTime = (id: string, field: "start" | "end", value: string) => {
     const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
-
-    setTimes(newTimes);
 
     if (hasOverlap(newTimes)) {
       toast.error("Notification times overlap. Please adjust the time windows.");
@@ -131,11 +119,9 @@ export function NotificationsSettings() {
   };
 
   const removeTime = (id: string) => {
-    const newTimes = times.filter((time) => time.id !== id);
-
-    setTimes(newTimes);
-
-    configMutation.mutate({ "notifications.times": newTimes });
+    configMutation.mutate({
+      "notifications.times": times.filter((time) => time.id !== id),
+    });
   };
 
   return (

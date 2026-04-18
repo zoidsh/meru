@@ -50,15 +50,11 @@
 
 ## Dependencies
 
-- Always run `bun install --frozen-lockfile` before running any package.json scripts. This installs dependencies and runs postinstall scripts including the lefthook pre-commit hook.
+- Always run `bun install --frozen-lockfile` at the start of any work session to ensure dependencies are installed. This also runs postinstall scripts including the lefthook pre-commit hook.
 
 ## Linting
 
 - Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
-
-## Pre-commit Hooks
-
-- Run `bun lefthook run pre-commit` before committing. This auto-formats staged files with oxfmt and auto-fixes lint errors with oxlint.
 
 ## Formatting Tool
 
