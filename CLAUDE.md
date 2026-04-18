@@ -68,6 +68,15 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## Config Keys
 
 - Follow the existing `"section.camelCase"` dot-notation pattern (e.g. `"notifications.times"`).
+- When combining a global config check with more specific conditions (e.g. per-account flags, counts, or local state), always check the global setting first so it short-circuits the rest:
+
+  ```ts
+  // correct
+  if (config.get("unifiedInbox.enabled") && accounts.length > 1) { ... }
+
+  // wrong
+  if (accounts.length > 1 && config.get("unifiedInbox.enabled")) { ... }
+  ```
 
 ## TypeScript
 
