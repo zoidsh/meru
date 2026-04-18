@@ -145,6 +145,38 @@ export function NotificationsSettings() {
                     />
                   )}
                   <Field>
+                    <FieldLabel>Notification Times</FieldLabel>
+                    <FieldDescription>
+                      Configure time windows when notifications are active. Outside these windows,
+                      notifications will be silenced. Leave empty to always allow notifications.
+                    </FieldDescription>
+                    {times.map((time) => (
+                      <div key={time.id} className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={time.start}
+                          onChange={(event) => updateTime(time.id, "start", event.target.value)}
+                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                        />
+                        <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                        <Input
+                          type="time"
+                          value={time.end}
+                          onChange={(event) => updateTime(time.id, "end", event.target.value)}
+                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => removeTime(time.id)}>
+                          <X />
+                        </Button>
+                      </div>
+                    ))}
+                    <div>
+                      <Button variant="outline" onClick={addTime}>
+                        <Plus /> Add Time Window
+                      </Button>
+                    </div>
+                  </Field>
+                  <Field>
                     <FieldLabel>Test Notification</FieldLabel>
                     <FieldDescription>
                       Show a test notification to see how notifications will appear.
@@ -286,41 +318,6 @@ export function NotificationsSettings() {
                   )}
                 </>
               )}
-            </FieldGroup>
-          </FieldSet>
-          <FieldSeparator />
-          <FieldSet>
-            <FieldLabel>Notification Times</FieldLabel>
-            <FieldGroup>
-              <Field>
-                <FieldDescription>
-                  Configure time windows when notifications are active. Outside these windows,
-                  notifications will be silenced. Leave empty to always allow notifications.
-                </FieldDescription>
-              </Field>
-              {times.map((time) => (
-                <div key={time.id} className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={time.start}
-                    onChange={(e) => updateTime(time.id, "start", e.target.value)}
-                  />
-                  <span className="text-muted-foreground shrink-0 text-sm">to</span>
-                  <Input
-                    type="time"
-                    value={time.end}
-                    onChange={(e) => updateTime(time.id, "end", e.target.value)}
-                  />
-                  <Button variant="ghost" size="icon" onClick={() => removeTime(time.id)}>
-                    <X />
-                  </Button>
-                </div>
-              ))}
-              <div>
-                <Button variant="outline" onClick={addTime}>
-                  <Plus /> Add Time Window
-                </Button>
-              </div>
             </FieldGroup>
           </FieldSet>
         </FieldGroup>
