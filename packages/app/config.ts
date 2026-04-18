@@ -58,6 +58,7 @@ export const config = new Store<Config>({
     "notifications.times": [],
     "updates.autoCheck": true,
     "updates.showNotifications": true,
+    "updates.notificationDelay": "next-day",
     "blocker.enabled": true,
     "blocker.ads": true,
     "blocker.tracking": true,
