@@ -1,5 +1,15 @@
 # Meru – Claude Code Guidelines
 
+## FIRST STEP — Required Before Any Work
+
+**Run this before doing anything else in a session, no exceptions:**
+
+```sh
+bun install --frozen-lockfile
+```
+
+This installs dependencies and runs postinstall scripts (including the lefthook pre-commit hook). Skipping this causes missing packages, broken type checks, and unwanted build artifacts.
+
 ## Variable Naming
 
 - Always use descriptive names. Never use single-letter or abbreviated names anywhere — including callback parameters.
@@ -54,10 +64,6 @@
 ## Config Keys
 
 - Follow the existing `"section.camelCase"` dot-notation pattern (e.g. `"notifications.times"`).
-
-## Dependencies
-
-- Always run `bun install --frozen-lockfile` at the start of any work session to ensure dependencies are installed. This also runs postinstall scripts including the lefthook pre-commit hook.
 
 ## TypeScript
 
