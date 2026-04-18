@@ -59,6 +59,7 @@
     "lefthook": "^2.1.2",
     "lucide-react": "^0.475.0",
     "meru-api-client": "2.1.1",
+    "ms": "^2.1.3",
     "node-machine-id": "^1.1.12",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",

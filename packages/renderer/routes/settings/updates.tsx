@@ -50,10 +50,9 @@ export function UpdatesSettings() {
           />
           <Field>
             <FieldContent>
-              <FieldLabel>When To Notify About New Versions</FieldLabel>
+              <FieldLabel>Notification Delay</FieldLabel>
               <FieldDescription>
-                Wait this long after a new version is downloaded before notifying you, so rapid
-                bug-fix releases settle into a single prompt. Urgent updates always notify
+                Batch rapid back-to-back releases into a single prompt. Urgent updates always notify
                 immediately.
               </FieldDescription>
             </FieldContent>
