@@ -2,35 +2,17 @@ import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
+import { checkWithinNotificationTimes } from "./lib/notification-times";
 import { main } from "./main";
 
-function timeToMinutes(time: string) {
-  const colonIndex = time.indexOf(":");
-  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
-}
+export { checkWithinNotificationTimes };
 
 export function isWithinNotificationTimes() {
   if (!licenseKey.isValid) {
     return true;
   }
 
-  const times = config.get("notifications.times");
-
-  if (!times.length) {
-    return true;
-  }
-
-  const now = new Date();
-  const current = now.getHours() * 60 + now.getMinutes();
-
-  return times.some(({ start, end }) => {
-    const startMinutes = timeToMinutes(start);
-    const endMinutes = timeToMinutes(end);
-
-    return endMinutes > startMinutes
-      ? current >= startMinutes && current < endMinutes
-      : current >= startMinutes || current < endMinutes;
-  });
+  return checkWithinNotificationTimes(config.get("notifications.times"), new Date());
 }
 
 export function createNotification({

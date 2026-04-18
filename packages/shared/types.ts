@@ -29,6 +29,7 @@ export type NotificationTime = {
   id: string;
   start: string; // "HH:mm" 24-hour
   end: string; // "HH:mm" 24-hour
+  days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
 export const googleAppsPinnedApps = {

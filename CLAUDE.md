@@ -48,6 +48,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   function handleClick() { ... }
   ```
 
+## UI Components
+
+- Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components (e.g. `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`). Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.
+
 ## Settings UI Patterns
 
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
