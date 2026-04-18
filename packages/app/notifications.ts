@@ -10,6 +10,10 @@ function timeToMinutes(time: string) {
 }
 
 function isWithinNotificationTimes() {
+  if (!licenseKey.isValid) {
+    return true;
+  }
+
   const times = config.get("notifications.times");
 
   if (!times.length) {
