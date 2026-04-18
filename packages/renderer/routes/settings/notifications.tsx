@@ -120,6 +120,23 @@ export function NotificationsSettings() {
     configMutation.mutate({ "notifications.times": newTimes });
   };
 
+  const updateTimeDays = (id: string, dayIndex: number) => {
+    const newTimes = times.map((time) => {
+      if (time.id !== id) {
+        return time;
+      }
+
+      const currentDays = time.days ?? [];
+      const days = currentDays.includes(dayIndex)
+        ? currentDays.filter((day) => day !== dayIndex)
+        : [...currentDays, dayIndex];
+
+      return { ...time, days };
+    });
+
+    configMutation.mutate({ "notifications.times": newTimes });
+  };
+
   const removeTime = (id: string) => {
     configMutation.mutate({
       "notifications.times": times.filter((time) => time.id !== id),
@@ -171,30 +188,51 @@ export function NotificationsSettings() {
                       notifications will be silenced. Leave empty to always allow notifications.
                     </FieldDescription>
                     {times.map((time) => (
-                      <div key={time.id} className="flex items-center gap-2">
-                        <Input
-                          type="time"
-                          value={time.start}
-                          onChange={(event) => updateTime(time.id, "start", event.target.value)}
-                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          disabled={!isLicenseKeyValid}
-                        />
-                        <span className="text-muted-foreground shrink-0 text-sm">to</span>
-                        <Input
-                          type="time"
-                          value={time.end}
-                          onChange={(event) => updateTime(time.id, "end", event.target.value)}
-                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          disabled={!isLicenseKeyValid}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeTime(time.id)}
-                          disabled={!isLicenseKeyValid}
-                        >
-                          <X />
-                        </Button>
+                      <div key={time.id} className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            value={time.start}
+                            onChange={(event) => updateTime(time.id, "start", event.target.value)}
+                            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            disabled={!isLicenseKeyValid}
+                          />
+                          <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                          <Input
+                            type="time"
+                            value={time.end}
+                            onChange={(event) => updateTime(time.id, "end", event.target.value)}
+                            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            disabled={!isLicenseKeyValid}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeTime(time.id)}
+                            disabled={!isLicenseKeyValid}
+                          >
+                            <X />
+                          </Button>
+                        </div>
+                        <div className="flex gap-1">
+                          {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
+                            const dayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+                            const isActive = (time.days ?? []).includes(dayIndex);
+
+                            return (
+                              <Button
+                                key={dayIndex}
+                                variant={isActive ? "default" : "outline"}
+                                size="sm"
+                                className="w-9 px-0"
+                                onClick={() => updateTimeDays(time.id, dayIndex)}
+                                disabled={!isLicenseKeyValid}
+                              >
+                                {dayLabels[position]}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                     <div>

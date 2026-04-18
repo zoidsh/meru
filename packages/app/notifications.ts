@@ -1,4 +1,5 @@
 import { Notification, type NotificationConstructorOptions } from "electron";
+import type { NotificationTime } from "@meru/shared/types";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
@@ -9,28 +10,40 @@ function timeToMinutes(time: string) {
   return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
 }
 
+export function checkWithinNotificationTimes(times: NotificationTime[], now: Date) {
+  if (!times.length) {
+    return true;
+  }
+
+  const current = now.getHours() * 60 + now.getMinutes();
+
+  return times.some(({ start, end, days }) => {
+    const startMinutes = timeToMinutes(start);
+    const endMinutes = timeToMinutes(end);
+
+    const withinTime =
+      endMinutes > startMinutes
+        ? current >= startMinutes && current < endMinutes
+        : current >= startMinutes || current < endMinutes;
+
+    if (!withinTime) {
+      return false;
+    }
+
+    if (!days || days.length === 0) {
+      return true;
+    }
+
+    return days.includes(now.getDay());
+  });
+}
+
 export function isWithinNotificationTimes() {
   if (!licenseKey.isValid) {
     return true;
   }
 
-  const times = config.get("notifications.times");
-
-  if (!times.length) {
-    return true;
-  }
-
-  const now = new Date();
-  const current = now.getHours() * 60 + now.getMinutes();
-
-  return times.some(({ start, end }) => {
-    const startMinutes = timeToMinutes(start);
-    const endMinutes = timeToMinutes(end);
-
-    return endMinutes > startMinutes
-      ? current >= startMinutes && current < endMinutes
-      : current >= startMinutes || current < endMinutes;
-  });
+  return checkWithinNotificationTimes(config.get("notifications.times"), new Date());
 }
 
 export function createNotification({
