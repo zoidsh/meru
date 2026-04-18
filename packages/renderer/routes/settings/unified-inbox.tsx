@@ -21,7 +21,7 @@ export function UnifiedInboxSettings() {
           />
           <ConfigSwitchField
             label="Show Sender Icons"
-            description="Display sender avatars next to each message in the unified inbox."
+            description="Show sender icons next to the senders in the unified inbox."
             configKey="unifiedInbox.showSenderIcons"
             licenseKeyRequired
           />
