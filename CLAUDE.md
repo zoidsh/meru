@@ -2,10 +2,11 @@
 
 ## Variable Naming
 
-- Always use descriptive names. Never use single-letter or abbreviated names.
+- Always use descriptive names. Never use single-letter or abbreviated names anywhere — including callback parameters.
   - `time` not `t`, `hours`/`minutes` not `h`/`m`
   - `startMinutes`/`endMinutes` not `s`/`e`
   - `aStart`/`aEnd`/`bStart`/`bEnd` not `aS`/`aE`/`bS`/`bE`
+  - `event` not `e`, `error` not `err`, `index` not `i` (unless in a for loop counter)
 
 ## Code Formatting
 
@@ -25,6 +26,18 @@
 - Add an empty line before `if` blocks when preceded by other statements.
 - Add empty lines around state updates (e.g. `setTimes(...)`) when they appear between other operations.
 
+## Functions Inside Components
+
+- Never use `function` declarations inside a React component or another function. Always use `const` arrow functions:
+
+  ```ts
+  // correct
+  const handleClick = () => { ... };
+
+  // wrong
+  function handleClick() { ... }
+  ```
+
 ## Settings UI Patterns
 
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
@@ -39,6 +52,10 @@
 
 - Always run `bun fmt` after making code changes. It uses oxfmt to auto-format all files.
 - Run `bun fmt:check` to verify formatting without making changes.
+
+## Type Checking
+
+- Always run `bun types:ci` after making code changes to verify there are no type errors.
 
 ## General
 
