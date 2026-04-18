@@ -24,7 +24,7 @@
   ```
 
 - Add an empty line before `if` blocks when preceded by other statements.
-- Add empty lines around state updates (e.g. `setTimes(...)`) when they appear between other operations.
+- Add an empty line before `return` statements when preceded by other statements.
 
 ## Functions Inside Components
 
@@ -43,15 +43,29 @@
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
 - Access config via `useConfig()` and persist changes via `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
+- Always guard against unloaded config with an early return before accessing config values:
+
+  ```ts
+  if (!config) {
+    return;
+  }
+  ```
 
 ## Config Keys
 
 - Follow the existing `"section.camelCase"` dot-notation pattern (e.g. `"notifications.times"`).
 
-## Formatting Tool
+## Dependencies
 
-- Always run `bun fmt` after making code changes. It uses oxfmt to auto-format all files.
-- Run `bun fmt:check` to verify formatting without making changes.
+- Always run `bun install --frozen-lockfile` at the start of any work session to ensure dependencies are installed. This also runs postinstall scripts including the lefthook pre-commit hook.
+
+## TypeScript
+
+- Do not add explicit return types unless necessary — rely on inference.
+
+## Linting
+
+- Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
 
 ## Type Checking
 

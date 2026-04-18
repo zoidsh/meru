@@ -55,6 +55,7 @@ export const config = new Store<Config>({
     "notifications.sound": "linen",
     "notifications.volume": 1,
     "notifications.downloadCompleted": true,
+    "notifications.times": [],
     "updates.autoCheck": true,
     "updates.showNotifications": true,
     "blocker.enabled": true,

@@ -4,6 +4,31 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
+function timeToMinutes(time: string) {
+  const colonIndex = time.indexOf(":");
+  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
+}
+
+function isWithinNotificationTimes() {
+  const times = config.get("notifications.times");
+
+  if (!times.length) {
+    return true;
+  }
+
+  const now = new Date();
+  const current = now.getHours() * 60 + now.getMinutes();
+
+  return times.some(({ start, end }) => {
+    const startMinutes = timeToMinutes(start);
+    const endMinutes = timeToMinutes(end);
+
+    return endMinutes > startMinutes
+      ? current >= startMinutes && current < endMinutes
+      : current >= startMinutes || current < endMinutes;
+  });
+}
+
 export function createNotification({
   click,
   action,
@@ -12,7 +37,11 @@ export function createNotification({
   click?: () => void;
   action?: (index: number) => void;
 }) {
-  if (!Notification.isSupported() || config.get("doNotDisturb.enabled")) {
+  if (
+    !Notification.isSupported() ||
+    config.get("doNotDisturb.enabled") ||
+    !isWithinNotificationTimes()
+  ) {
     return;
   }
 

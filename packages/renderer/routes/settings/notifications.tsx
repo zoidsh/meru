@@ -12,6 +12,7 @@ import {
   FieldSet,
   FieldTitle,
 } from "@meru/ui/components/field";
+import { Input } from "@meru/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -27,7 +28,58 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import type { NotificationTime } from "@meru/shared/types";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
+
+function timeToMinutes(time: string) {
+  const colonIndex = time.indexOf(":");
+  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
+}
+
+function hasOverlap(times: NotificationTime[]) {
+  return times.some((timeA, index) =>
+    times.slice(index + 1).some((timeB) => {
+      const aStart = timeToMinutes(timeA.start);
+      const aEnd = timeToMinutes(timeA.end);
+      const bStart = timeToMinutes(timeB.start);
+      const bEnd = timeToMinutes(timeB.end);
+
+      return aStart < bEnd && bStart < aEnd;
+    }),
+  );
+}
+
+function minutesToTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function findFreeSlot(existingTimes: NotificationTime[]) {
+  if (existingTimes.length === 0) {
+    return { start: "09:00", end: "17:00" };
+  }
+
+  for (let hour = 0; hour < 24; hour++) {
+    const startMinutes = hour * 60;
+    const endMinutes = startMinutes + 60;
+
+    if (endMinutes > 24 * 60) {
+      break;
+    }
+
+    const start = minutesToTime(startMinutes);
+    const end = minutesToTime(endMinutes);
+    const candidate: NotificationTime = { id: "", start, end };
+
+    if (!hasOverlap([...existingTimes, candidate])) {
+      return { start, end };
+    }
+  }
+
+  return null;
+}
 
 export function NotificationsSettings() {
   const { config } = useConfig();
@@ -39,6 +91,40 @@ export function NotificationsSettings() {
   if (!config) {
     return;
   }
+
+  const times = config["notifications.times"];
+
+  const addTime = () => {
+    const slot = findFreeSlot(times);
+
+    if (!slot) {
+      toast.error("No free time slot available to add a new window.");
+
+      return;
+    }
+
+    const newEntry: NotificationTime = { id: crypto.randomUUID(), ...slot };
+
+    configMutation.mutate({ "notifications.times": [...times, newEntry] });
+  };
+
+  const updateTime = (id: string, field: "start" | "end", value: string) => {
+    const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
+
+    if (hasOverlap(newTimes)) {
+      toast.error("Notification times overlap. Please adjust the time windows.");
+
+      return;
+    }
+
+    configMutation.mutate({ "notifications.times": newTimes });
+  };
+
+  const removeTime = (id: string) => {
+    configMutation.mutate({
+      "notifications.times": times.filter((time) => time.id !== id),
+    });
+  };
 
   return (
     <Settings>
@@ -75,6 +161,38 @@ export function NotificationsSettings() {
                       configKey="notifications.showSummary"
                     />
                   )}
+                  <Field>
+                    <FieldLabel>Notification Times</FieldLabel>
+                    <FieldDescription>
+                      Configure time windows when notifications are active. Outside these windows,
+                      notifications will be silenced. Leave empty to always allow notifications.
+                    </FieldDescription>
+                    {times.map((time) => (
+                      <div key={time.id} className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={time.start}
+                          onChange={(event) => updateTime(time.id, "start", event.target.value)}
+                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                        />
+                        <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                        <Input
+                          type="time"
+                          value={time.end}
+                          onChange={(event) => updateTime(time.id, "end", event.target.value)}
+                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => removeTime(time.id)}>
+                          <X />
+                        </Button>
+                      </div>
+                    ))}
+                    <div>
+                      <Button variant="outline" onClick={addTime}>
+                        <Plus /> Add Time Window
+                      </Button>
+                    </div>
+                  </Field>
                   <Field>
                     <FieldLabel>Test Notification</FieldLabel>
                     <FieldDescription>

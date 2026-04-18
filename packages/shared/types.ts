@@ -25,6 +25,12 @@ export type DownloadItem = {
 
 export type NotificationSound = "breeze" | "chime" | "duet" | "knock" | "linen";
 
+export type NotificationTime = {
+  id: string;
+  start: string; // "HH:mm" 24-hour
+  end: string; // "HH:mm" 24-hour
+};
+
 export const googleAppsPinnedApps = {
   calendar: "Calendar",
   chat: "Chat",
@@ -86,6 +92,7 @@ export type Config = {
   "notifications.sound": "system" | NotificationSound;
   "notifications.volume": number;
   "notifications.downloadCompleted": boolean;
+  "notifications.times": NotificationTime[];
   "updates.autoCheck": boolean;
   "updates.showNotifications": boolean;
   "blocker.enabled": boolean;
