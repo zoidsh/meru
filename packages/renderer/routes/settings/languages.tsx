@@ -13,6 +13,9 @@ import { ipc } from "@meru/renderer-lib/ipc";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { cn } from "@meru/ui/lib/utils";
+import { Badge } from "@meru/ui/components/badge";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 
 const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
 
@@ -36,6 +39,8 @@ export function LanguagesSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
 
   const { data: availableLanguages = [] } = useQuery({
     queryKey: ["spellchecker.availableLanguages"],
@@ -72,9 +77,13 @@ export function LanguagesSettings() {
         <SettingsTitle>Languages</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
+        <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLabel>Spellchecker</FieldLabel>
+            <FieldLabel className="flex items-center gap-2">
+              Spellchecker
+              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+            </FieldLabel>
             <FieldDescription>
               Select additional languages for spellchecking alongside the system language.
             </FieldDescription>
@@ -83,6 +92,7 @@ export function LanguagesSettings() {
                 render={
                   <Button
                     variant="outline"
+                    disabled={!isLicenseKeyValid}
                     className={cn(
                       "w-full justify-between font-normal",
                       selected.length === 0 && "text-muted-foreground",

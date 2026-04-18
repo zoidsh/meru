@@ -16,6 +16,7 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
+import { licenseKey } from "./license-key";
 
 export class Account {
   session: Session;
@@ -48,6 +49,10 @@ export class Account {
 
   setSpellCheckerLanguages() {
     if (platform.isMacOS) {
+      return;
+    }
+
+    if (!licenseKey.isValid) {
       return;
     }
 
