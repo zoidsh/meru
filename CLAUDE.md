@@ -52,6 +52,14 @@
 
 - Always run `bun install --frozen-lockfile --ignore-scripts` before running any package.json scripts.
 
+## Linting
+
+- Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
+
+## Pre-commit Hooks
+
+- Run `bun lefthook run pre-commit` before committing. This auto-formats staged files with oxfmt and auto-fixes lint errors with oxlint.
+
 ## Formatting Tool
 
 - Always run `bun fmt` after making code changes. It uses oxfmt to auto-format all files.
@@ -60,7 +68,6 @@
 ## Type Checking
 
 - Always run `bun types:ci` after making code changes to verify there are no type errors.
-- Never use `!` non-null assertions in TypeScript. Refactor the code to avoid them instead.
 
 ## General
 
