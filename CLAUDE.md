@@ -24,7 +24,7 @@
   ```
 
 - Add an empty line before `if` blocks when preceded by other statements.
-- Add empty lines around state updates (e.g. `setTimes(...)`) when they appear between other operations.
+- Add an empty line before `return` statements when preceded by other statements.
 
 ## Functions Inside Components
 

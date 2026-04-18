@@ -99,6 +99,7 @@ export function NotificationsSettings() {
 
     if (!slot) {
       toast.error("No free time slot available to add a new window.");
+
       return;
     }
 
@@ -112,6 +113,7 @@ export function NotificationsSettings() {
 
     if (hasOverlap(newTimes)) {
       toast.error("Notification times overlap. Please adjust the time windows.");
+
       return;
     }
 
