@@ -467,7 +467,7 @@ export function AppTitlebar() {
           >
             <ArrowRightIcon />
           </Button>
-          {config["unifiedInbox.enabled"] && accounts.length > 1 && (
+          {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
             <Button
               variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
               size="icon"
