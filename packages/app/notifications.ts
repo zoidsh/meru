@@ -9,7 +9,7 @@ function timeToMinutes(time: string) {
   return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
 }
 
-function isWithinNotificationTimes() {
+export function isWithinNotificationTimes() {
   if (!licenseKey.isValid) {
     return true;
   }
@@ -41,11 +41,7 @@ export function createNotification({
   click?: () => void;
   action?: (index: number) => void;
 }) {
-  if (
-    !Notification.isSupported() ||
-    config.get("doNotDisturb.enabled") ||
-    !isWithinNotificationTimes()
-  ) {
+  if (!Notification.isSupported()) {
     return;
   }
 

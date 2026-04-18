@@ -25,7 +25,7 @@ import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
-import { createNotification } from "@/notifications";
+import { createNotification, isWithinNotificationTimes } from "@/notifications";
 import { ms } from "@meru/shared/ms";
 import log from "electron-log";
 import { wait } from "@meru/shared/utils";
@@ -454,7 +454,12 @@ export class Gmail extends GoogleApp {
           }
         }
 
-        if (!config.get("notifications.enabled") || !account.config.notifications) {
+        if (
+          !config.get("notifications.enabled") ||
+          !account.config.notifications ||
+          config.get("doNotDisturb.enabled") ||
+          !isWithinNotificationTimes()
+        ) {
           continue;
         }
 
