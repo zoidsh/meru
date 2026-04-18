@@ -43,6 +43,13 @@
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
 - Access config via `useConfig()` and persist changes via `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
+- Always guard against unloaded config with an early return before accessing config values:
+
+  ```ts
+  if (!config) {
+    return;
+  }
+  ```
 
 ## Config Keys
 
