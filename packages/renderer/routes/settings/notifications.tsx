@@ -189,8 +189,8 @@ export function NotificationsSettings() {
                       notifications will be silenced. Leave empty to always allow notifications.
                     </FieldDescription>
                     {times.map((time) => (
-                      <Item key={time.id} variant="outline">
-                        <ItemContent>
+                      <Item key={time.id} variant="muted">
+                        <ItemContent className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Input
                               type="time"
@@ -208,7 +208,7 @@ export function NotificationsSettings() {
                               disabled={!isLicenseKeyValid}
                             />
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2">
                             {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
                               const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
                               const isActive = (time.days ?? []).includes(dayIndex);
