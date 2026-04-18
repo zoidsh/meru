@@ -50,7 +50,7 @@
 
 ## Dependencies
 
-- Always run `bun install --frozen-lockfile --ignore-scripts` before running any package.json scripts.
+- Always run `bun install --frozen-lockfile` before running any package.json scripts. This installs dependencies and runs postinstall scripts including the lefthook pre-commit hook.
 
 ## Linting
 
