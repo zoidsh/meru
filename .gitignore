@@ -176,5 +176,5 @@ dist
 
 # Meru
 build-js
-packages/app/**/*.js
+packages/**/*.js
 scripts/**/*.js

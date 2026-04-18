@@ -4,9 +4,9 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
-function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
+function timeToMinutes(time: string): number {
+  const colonIndex = time.indexOf(":");
+  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
 }
 
 function isWithinNotificationTimes(): boolean {
@@ -37,7 +37,11 @@ export function createNotification({
   click?: () => void;
   action?: (index: number) => void;
 }) {
-  if (!Notification.isSupported() || config.get("doNotDisturb.enabled") || !isWithinNotificationTimes()) {
+  if (
+    !Notification.isSupported() ||
+    config.get("doNotDisturb.enabled") ||
+    !isWithinNotificationTimes()
+  ) {
     return;
   }
 
