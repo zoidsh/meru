@@ -12,7 +12,7 @@ import { DownloadHistory } from "@/routes/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
 import { GmailSettings } from "@/routes/settings/gmail";
 import { GoogleAppsSettings } from "@/routes/settings/google-apps";
-import { LanguageSettings } from "@/routes/settings/language";
+import { LanguagesSettings } from "@/routes/settings/languages";
 import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
 import { PhishingProtectionSettings } from "@/routes/settings/phishing-protection";
@@ -58,9 +58,9 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     component: GoogleAppsSettings,
   },
   {
-    label: "Language",
-    path: "/settings/language",
-    component: LanguageSettings,
+    label: "Languages",
+    path: "/settings/languages",
+    component: LanguagesSettings,
     hidden: platform.isMacOS,
   },
   {
@@ -133,28 +133,30 @@ export function AppSidebar() {
     <div className="bg-sidebar p-4 pr-0">
       <ScrollArea className="w-56 h-full">
         <div className="space-y-2">
-          {sidebarNavItems.filter((item) => !item.hidden).map(({ type, label, path }, index) => {
-            if (type === "separator") {
-              // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
-              return <Separator key={index} />;
-            }
-
-            return (
-              <Button
+          {sidebarNavItems
+            .filter((item) => !item.hidden)
+            .map(({ type, label, path }, index) => {
+              if (type === "separator") {
                 // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
-                key={index}
-                onClick={() => {
-                  navigate(path);
-                }}
-                className={cn("w-full justify-start font-normal", {
-                  "text-muted-foreground hover:text-muted-foreground": location !== path,
-                })}
-                variant={location === path ? "secondary" : "ghost"}
-              >
-                {label}
-              </Button>
-            );
-          })}
+                return <Separator key={index} />;
+              }
+
+              return (
+                <Button
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
+                  key={index}
+                  onClick={() => {
+                    navigate(path);
+                  }}
+                  className={cn("w-full justify-start font-normal", {
+                    "text-muted-foreground hover:text-muted-foreground": location !== path,
+                  })}
+                  variant={location === path ? "secondary" : "ghost"}
+                >
+                  {label}
+                </Button>
+              );
+            })}
         </div>
       </ScrollArea>
     </div>

@@ -12,6 +12,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { cn } from "@meru/ui/lib/utils";
 
 const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
 
@@ -21,7 +22,7 @@ function getLanguageLabel(code: string) {
 
 function getTriggerLabel(selected: string[]) {
   if (selected.length === 0) {
-    return "No additional languages";
+    return "No additional languages selected";
   }
 
   if (selected.length <= 2) {
@@ -31,7 +32,7 @@ function getTriggerLabel(selected: string[]) {
   return `${selected.length} additional languages`;
 }
 
-export function LanguageSettings() {
+export function LanguagesSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -68,7 +69,7 @@ export function LanguageSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Language</SettingsTitle>
+        <SettingsTitle>Languages</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>
@@ -80,7 +81,13 @@ export function LanguageSettings() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" className="w-full justify-between font-normal">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-between font-normal",
+                      selected.length === 0 && "text-muted-foreground",
+                    )}
+                  >
                     <span className="truncate">{getTriggerLabel(selected)}</span>
                     <ChevronDownIcon className="text-muted-foreground size-4 shrink-0" />
                   </Button>
