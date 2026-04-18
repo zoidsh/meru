@@ -479,7 +479,7 @@ export function AppTitlebar() {
 
                 setIsGmailSavedSearchesOpen(false);
               }}
-              title="All Unread Inboxes"
+              title="Unified Inbox"
             >
               <InboxIcon />
             </Button>
