@@ -217,7 +217,7 @@ export function NotificationsSettings() {
                         </div>
                         <div className="flex gap-1">
                           {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
-                            const dayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+                            const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
                             const isActive = (time.days ?? []).includes(dayIndex);
 
                             return (
