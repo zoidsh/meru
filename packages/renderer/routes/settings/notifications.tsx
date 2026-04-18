@@ -13,6 +13,7 @@ import {
   FieldTitle,
 } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
+import { Item } from "@meru/ui/components/item";
 import {
   Select,
   SelectContent,
@@ -188,7 +189,7 @@ export function NotificationsSettings() {
                       notifications will be silenced. Leave empty to always allow notifications.
                     </FieldDescription>
                     {times.map((time) => (
-                      <div key={time.id} className="flex flex-col gap-1">
+                      <Item key={time.id} variant="outline" className="flex-col items-start">
                         <div className="flex items-center gap-2">
                           <Input
                             type="time"
@@ -233,7 +234,7 @@ export function NotificationsSettings() {
                             );
                           })}
                         </div>
-                      </div>
+                      </Item>
                     ))}
                     <div>
                       <Button variant="outline" onClick={addTime} disabled={!isLicenseKeyValid}>
