@@ -389,7 +389,7 @@ export class Gmail extends GoogleApp {
         }
       }
 
-      if (this.unifiedInboxEnabled) {
+      if (this.unifiedInboxEnabled && config.get("unifiedInbox.enabled")) {
         this.store.setState({ unreadInbox });
       }
 
@@ -607,7 +607,7 @@ export class Gmail extends GoogleApp {
       );
     }
 
-    if (this.unifiedInboxEnabled) {
+    if (this.unifiedInboxEnabled && config.get("unifiedInbox.enabled")) {
       this.store.subscribe(
         (state) => state.unreadInbox,
         () => {
