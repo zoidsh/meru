@@ -1,13 +1,6 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import type { NotificationTime } from "@meru/shared/types";
-
-mock.module("electron", () => ({ Notification: class {} }));
-mock.module("./config", () => ({ config: { get: () => [] } }));
-mock.module("./ipc", () => ({ ipc: { renderer: { send: () => {} } } }));
-mock.module("./license-key", () => ({ licenseKey: { isValid: false } }));
-mock.module("./main", () => ({ main: { window: { webContents: {} } } }));
-
-const { checkWithinNotificationTimes } = await import("./notifications");
+import { checkWithinNotificationTimes } from "./lib/notification-times";
 
 const makeTime = (start: string, end: string, days?: number[]): NotificationTime => ({
   id: "test-id",
