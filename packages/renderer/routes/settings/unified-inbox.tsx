@@ -12,7 +12,7 @@ export function UnifiedInboxSettings() {
         <FieldGroup>
           <ConfigSwitchField
             label="Enabled"
-            description="Show all unread messages from every account in a single unified inbox."
+            description="Combine unread messages from all accounts into one inbox, accessible from the toolbar when multiple accounts are connected."
             configKey="unifiedInbox.enabled"
             restartRequired
           />

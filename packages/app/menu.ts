@@ -332,7 +332,7 @@ export class AppMenu {
         submenu: [
           {
             label: "Unified Inbox",
-            enabled: allAccounts.length > 1 && config.get("unifiedInbox.enabled"),
+            enabled: config.get("unifiedInbox.enabled") && allAccounts.length > 1,
             accelerator: "CommandOrControl+Shift+I",
             click: () => {
               main.navigate("/unified-inbox");
