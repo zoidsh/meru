@@ -134,6 +134,7 @@ export type Config = {
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;
   "unifiedInbox.rowsPerPage": number;
+  "spellchecker.languages": string[];
 };
 
 export type IpcMainEvents =
@@ -183,6 +184,8 @@ export type IpcMainEvents =
       "desktopSources.getSources": () => DesktopSources;
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
+      "spellchecker.getAvailableLanguages": () => string[];
+      "spellchecker.getOsLocale": () => string;
       "downloads.setLocation": () => { canceled: boolean };
       "app.getLoginItemSettings": () => LoginItemSettings;
       "app.setLoginItemSettings": (settings: Partial<LoginItemSettings>) => void;

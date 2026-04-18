@@ -1,0 +1,132 @@
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
+import { FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
+import { ChevronDownIcon } from "lucide-react";
+import { ipc } from "@meru/renderer-lib/ipc";
+import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { cn } from "@meru/ui/lib/utils";
+import { Badge } from "@meru/ui/components/badge";
+import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
+
+const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
+
+function getLanguageLabel(code: string) {
+  return displayNames.of(code) ?? code;
+}
+
+function getTriggerLabel(selected: string[]) {
+  if (selected.length === 0) {
+    return "No additional languages selected";
+  }
+
+  if (selected.length <= 2) {
+    return selected.map(getLanguageLabel).join(", ");
+  }
+
+  return `${selected.length} additional languages`;
+}
+
+export function LanguagesSettings() {
+  const { config } = useConfig();
+
+  const configMutation = useConfigMutation();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const { data: availableLanguages = [] } = useQuery({
+    queryKey: ["spellchecker.availableLanguages"],
+    queryFn: () => ipc.main.invoke("spellchecker.getAvailableLanguages"),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
+  const { data: osLocale = "" } = useQuery({
+    queryKey: ["spellchecker.osLocale"],
+    queryFn: () => ipc.main.invoke("spellchecker.getOsLocale"),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
+  if (!config) {
+    return;
+  }
+
+  const selected = config["spellchecker.languages"];
+
+  const languages = availableLanguages
+    .filter((code) => code !== osLocale)
+    .map((code) => ({ code, label: getLanguageLabel(code) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  function toggleLanguage(code: string, checked: boolean) {
+    const updated = checked ? [...selected, code] : selected.filter((l) => l !== code);
+
+    configMutation.mutate({ "spellchecker.languages": updated });
+  }
+
+  return (
+    <Settings>
+      <SettingsHeader>
+        <SettingsTitle>Languages</SettingsTitle>
+      </SettingsHeader>
+      <SettingsContent>
+        <LicenseKeyRequiredBanner />
+        <FieldGroup>
+          <FieldSet>
+            <FieldLabel className="flex items-center gap-2">
+              Spellchecker
+              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+            </FieldLabel>
+            <FieldDescription>
+              Select additional languages for spellchecking alongside the system language.
+            </FieldDescription>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    disabled={!isLicenseKeyValid}
+                    className={cn(
+                      "w-full justify-between font-normal",
+                      selected.length === 0 && "text-muted-foreground",
+                    )}
+                  >
+                    <span className="truncate">{getTriggerLabel(selected)}</span>
+                    <ChevronDownIcon className="text-muted-foreground size-4 shrink-0" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="start">
+                {osLocale && (
+                  <>
+                    <DropdownMenuCheckboxItem checked disabled>
+                      {getLanguageLabel(osLocale)}
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {languages.map(({ code, label }) => (
+                  <DropdownMenuCheckboxItem
+                    key={code}
+                    checked={selected.includes(code)}
+                    onCheckedChange={(checked) => toggleLanguage(code, checked)}
+                    closeOnClick={false}
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </FieldSet>
+        </FieldGroup>
+      </SettingsContent>
+    </Settings>
+  );
+}
