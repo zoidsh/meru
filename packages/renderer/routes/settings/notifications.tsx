@@ -55,6 +55,37 @@ function hasOverlap(times: NotificationTime[]): boolean {
   return false;
 }
 
+function minutesToTime(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function findFreeSlot(existingTimes: NotificationTime[]): { start: string; end: string } | null {
+  if (existingTimes.length === 0) {
+    return { start: "09:00", end: "17:00" };
+  }
+
+  for (let hour = 0; hour < 24; hour++) {
+    const startMinutes = hour * 60;
+    const endMinutes = startMinutes + 60;
+
+    if (endMinutes > 24 * 60) {
+      break;
+    }
+
+    const start = minutesToTime(startMinutes);
+    const end = minutesToTime(endMinutes);
+    const candidate: NotificationTime = { id: "", start, end };
+
+    if (!hasOverlap([...existingTimes, candidate])) {
+      return { start, end };
+    }
+  }
+
+  return null;
+}
+
 export function NotificationsSettings() {
   const { config } = useConfig();
 
@@ -74,22 +105,24 @@ export function NotificationsSettings() {
     return;
   }
 
-  function addTime() {
-    const newEntry: NotificationTime = { id: crypto.randomUUID(), start: "09:00", end: "17:00" };
-    const newTimes = [...times, newEntry];
+  const addTime = () => {
+    const slot = findFreeSlot(times);
 
-    if (hasOverlap(newTimes)) {
-      toast.error("Notification times overlap. Please adjust existing windows first.");
+    if (!slot) {
+      toast.error("No free time slot available to add a new window.");
       return;
     }
+
+    const newEntry: NotificationTime = { id: crypto.randomUUID(), ...slot };
+    const newTimes = [...times, newEntry];
 
     setTimes(newTimes);
 
     configMutation.mutate({ "notifications.times": newTimes });
-  }
+  };
 
-  function updateTime(id: string, field: "start" | "end", value: string) {
-    const newTimes = times.map((t) => (t.id === id ? { ...t, [field]: value } : t));
+  const updateTime = (id: string, field: "start" | "end", value: string) => {
+    const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
 
     setTimes(newTimes);
 
@@ -99,15 +132,15 @@ export function NotificationsSettings() {
     }
 
     configMutation.mutate({ "notifications.times": newTimes });
-  }
+  };
 
-  function removeTime(id: string) {
-    const newTimes = times.filter((t) => t.id !== id);
+  const removeTime = (id: string) => {
+    const newTimes = times.filter((time) => time.id !== id);
 
     setTimes(newTimes);
 
     configMutation.mutate({ "notifications.times": newTimes });
-  }
+  };
 
   return (
     <Settings>
