@@ -2,6 +2,7 @@ import { is } from "@electron-toolkit/utils";
 import type { UpdateDownloadedEvent } from "electron-updater";
 import log from "electron-log";
 import { autoUpdater } from "electron-updater";
+import ms from "ms";
 import { config } from "@/config";
 import { ipc } from "./ipc";
 import { main } from "./main";
@@ -11,8 +12,8 @@ const URGENT_MARKERS = ["<!-- urgent -->", "[urgent]"];
 
 const NOTIFICATION_DELAY_MS = {
   immediate: 0,
-  "few-hours": 1000 * 60 * 60 * 4,
-  "next-day": 1000 * 60 * 60 * 24,
+  "few-hours": ms("4h"),
+  "next-day": ms("1d"),
 } as const;
 
 type ReleaseNotes = UpdateDownloadedEvent["releaseNotes"];
