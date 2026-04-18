@@ -96,6 +96,7 @@ export type Config = {
   "notifications.times": NotificationTime[];
   "updates.autoCheck": boolean;
   "updates.showNotifications": boolean;
+  "updates.notificationDelay": "immediate" | "few-hours" | "next-day";
   "blocker.enabled": boolean;
   "blocker.ads": boolean;
   "blocker.tracking": boolean;
