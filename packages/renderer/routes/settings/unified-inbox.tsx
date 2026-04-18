@@ -19,6 +19,12 @@ export function UnifiedInboxSettings() {
             licenseKeyRequired
             restartRequired
           />
+          <ConfigSwitchField
+            label="Show Sender Icons"
+            description="Display sender avatars next to each message in the unified inbox."
+            configKey="unifiedInbox.showSenderIcons"
+            licenseKeyRequired
+          />
         </FieldGroup>
       </SettingsContent>
     </Settings>

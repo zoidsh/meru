@@ -20,7 +20,7 @@ import {
   ChevronsRightIcon,
   InboxIcon,
 } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   type PaginationState,
   createColumnHelper,
@@ -42,7 +42,7 @@ import {
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
-const columns = [
+const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   columnHelper.accessor("account.label", {
     cell: (props) => (
       <div className="w-20">
@@ -71,24 +71,26 @@ const columns = [
             .map(({ name, email }) => `${name} <${email}>`)
             .join(", ")}
         >
-          <AvatarGroup>
-            <Avatar className="size-4">
-              {domain && <AvatarImage src={getGoogleDomainFaviconUrl(domain, 32)} />}
-              <AvatarFallback />
-            </Avatar>
-            {props.row.original.contributors.slice(0, 2).map((contributor) => {
-              const contributorDomain = contributor.email.split("@")[1];
+          {showSenderIcons && (
+            <AvatarGroup>
+              <Avatar className="size-4">
+                {domain && <AvatarImage src={getGoogleDomainFaviconUrl(domain, 32)} />}
+                <AvatarFallback />
+              </Avatar>
+              {props.row.original.contributors.slice(0, 2).map((contributor) => {
+                const contributorDomain = contributor.email.split("@")[1];
 
-              return (
-                <Avatar key={contributor.email} className="size-4">
-                  {contributorDomain && (
-                    <AvatarImage src={getGoogleDomainFaviconUrl(contributorDomain, 32)} />
-                  )}
-                  <AvatarFallback />
-                </Avatar>
-              );
-            })}
-          </AvatarGroup>
+                return (
+                  <Avatar key={contributor.email} className="size-4">
+                    {contributorDomain && (
+                      <AvatarImage src={getGoogleDomainFaviconUrl(contributorDomain, 32)} />
+                    )}
+                    <AvatarFallback />
+                  </Avatar>
+                );
+              })}
+            </AvatarGroup>
+          )}
           <div className="truncate">
             {props.row.original.contributors.length === 0
               ? props.row.original.author.name
@@ -150,14 +152,18 @@ const columns = [
 function UnifiedInboxTable({
   messages,
   rowsPerPage,
+  showSenderIcons,
 }: {
   messages: UnifiedInboxMessage[];
   rowsPerPage: number;
+  showSenderIcons: boolean;
 }) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: rowsPerPage,
   });
+
+  const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
 
   const table = useReactTable({
     data: messages,
@@ -296,6 +302,7 @@ export function UnifiedInbox() {
       <UnifiedInboxTable
         messages={unifiedInbox.messages}
         rowsPerPage={config["unifiedInbox.rowsPerPage"]}
+        showSenderIcons={config["unifiedInbox.showSenderIcons"]}
       />
     );
   };
