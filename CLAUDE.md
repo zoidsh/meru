@@ -48,6 +48,10 @@
 
 - Follow the existing `"section.camelCase"` dot-notation pattern (e.g. `"notifications.times"`).
 
+## Dependencies
+
+- Always run `bun install --frozen-lockfile --ignore-scripts` before running any package.json scripts.
+
 ## Formatting Tool
 
 - Always run `bun fmt` after making code changes. It uses oxfmt to auto-format all files.
@@ -56,6 +60,7 @@
 ## Type Checking
 
 - Always run `bun types:ci` after making code changes to verify there are no type errors.
+- Never use `!` non-null assertions in TypeScript. Refactor the code to avoid them instead.
 
 ## General
 

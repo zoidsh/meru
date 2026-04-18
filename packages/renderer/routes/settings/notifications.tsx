@@ -39,20 +39,16 @@ function timeToMinutes(time: string): number {
 }
 
 function hasOverlap(times: NotificationTime[]): boolean {
-  for (let i = 0; i < times.length; i++) {
-    for (let j = i + 1; j < times.length; j++) {
-      const aStart = timeToMinutes(times[i]!.start);
-      const aEnd = timeToMinutes(times[i]!.end);
-      const bStart = timeToMinutes(times[j]!.start);
-      const bEnd = timeToMinutes(times[j]!.end);
+  return times.some((timeA, index) =>
+    times.slice(index + 1).some((timeB) => {
+      const aStart = timeToMinutes(timeA.start);
+      const aEnd = timeToMinutes(timeA.end);
+      const bStart = timeToMinutes(timeB.start);
+      const bEnd = timeToMinutes(timeB.end);
 
-      if (aStart < bEnd && bStart < aEnd) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+      return aStart < bEnd && bStart < aEnd;
+    }),
+  );
 }
 
 function minutesToTime(totalMinutes: number): string {
