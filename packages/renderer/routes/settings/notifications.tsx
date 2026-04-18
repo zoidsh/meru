@@ -13,7 +13,7 @@ import {
   FieldTitle,
 } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
-import { Item } from "@meru/ui/components/item";
+import { Item, ItemActions, ItemContent } from "@meru/ui/components/item";
 import {
   Select,
   SelectContent,
@@ -189,23 +189,46 @@ export function NotificationsSettings() {
                       notifications will be silenced. Leave empty to always allow notifications.
                     </FieldDescription>
                     {times.map((time) => (
-                      <Item key={time.id} variant="outline" className="flex-col items-start">
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            value={time.start}
-                            onChange={(event) => updateTime(time.id, "start", event.target.value)}
-                            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                            disabled={!isLicenseKeyValid}
-                          />
-                          <span className="text-muted-foreground shrink-0 text-sm">to</span>
-                          <Input
-                            type="time"
-                            value={time.end}
-                            onChange={(event) => updateTime(time.id, "end", event.target.value)}
-                            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                            disabled={!isLicenseKeyValid}
-                          />
+                      <Item key={time.id} variant="outline">
+                        <ItemContent>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              value={time.start}
+                              onChange={(event) => updateTime(time.id, "start", event.target.value)}
+                              className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              disabled={!isLicenseKeyValid}
+                            />
+                            <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                            <Input
+                              type="time"
+                              value={time.end}
+                              onChange={(event) => updateTime(time.id, "end", event.target.value)}
+                              className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              disabled={!isLicenseKeyValid}
+                            />
+                          </div>
+                          <div className="flex gap-1">
+                            {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
+                              const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                              const isActive = (time.days ?? []).includes(dayIndex);
+
+                              return (
+                                <Button
+                                  key={dayIndex}
+                                  variant={isActive ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-9 px-0"
+                                  onClick={() => updateTimeDays(time.id, dayIndex)}
+                                  disabled={!isLicenseKeyValid}
+                                >
+                                  {dayLabels[position]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </ItemContent>
+                        <ItemActions>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -214,26 +237,7 @@ export function NotificationsSettings() {
                           >
                             <X />
                           </Button>
-                        </div>
-                        <div className="flex gap-1">
-                          {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
-                            const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-                            const isActive = (time.days ?? []).includes(dayIndex);
-
-                            return (
-                              <Button
-                                key={dayIndex}
-                                variant={isActive ? "default" : "outline"}
-                                size="sm"
-                                className="w-9 px-0"
-                                onClick={() => updateTimeDays(time.id, dayIndex)}
-                                disabled={!isLicenseKeyValid}
-                              >
-                                {dayLabels[position]}
-                              </Button>
-                            );
-                          })}
-                        </div>
+                        </ItemActions>
                       </Item>
                     ))}
                     <div>
