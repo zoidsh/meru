@@ -467,7 +467,7 @@ export function AppTitlebar() {
           >
             <ArrowRightIcon />
           </Button>
-          {accounts.length > 1 && (
+          {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
             <Button
               variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
               size="icon"
@@ -479,7 +479,7 @@ export function AppTitlebar() {
 
                 setIsGmailSavedSearchesOpen(false);
               }}
-              title="All Unread Inboxes"
+              title="Unified Inbox"
             >
               <InboxIcon />
             </Button>

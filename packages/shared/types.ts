@@ -141,6 +141,8 @@ export type Config = {
   "doNotDisturb.enabled": boolean;
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;
+  "unifiedInbox.enabled": boolean;
+  "unifiedInbox.showSenderIcons": boolean;
   "unifiedInbox.rowsPerPage": number;
 };
 

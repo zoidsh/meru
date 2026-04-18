@@ -98,6 +98,8 @@ export const config = new Store<Config>({
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
+    "unifiedInbox.enabled": true,
+    "unifiedInbox.showSenderIcons": true,
     "unifiedInbox.rowsPerPage": 10,
   },
   migrations: {
