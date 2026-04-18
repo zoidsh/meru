@@ -215,8 +215,9 @@ class Ipc {
 
     ipc.main.handle("config.getConfig", () => config.store);
 
-    ipc.main.handle("spellchecker.getAvailableLanguages", () =>
-      session.defaultSession.availableSpellCheckerLanguages,
+    ipc.main.handle(
+      "spellchecker.getAvailableLanguages",
+      () => session.defaultSession.availableSpellCheckerLanguages,
     );
 
     ipc.main.handle("spellchecker.getOsLocale", () => app.getLocale());
