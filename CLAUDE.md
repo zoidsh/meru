@@ -11,6 +11,7 @@
 
 - Separate logically distinct operations with empty lines. Only group lines that belong to the same context.
 - Always use block-style `if` statements — never inline single-line returns:
+
   ```ts
   // correct
   if (!times.length) {
@@ -20,12 +21,12 @@
   // wrong
   if (!times.length) return true;
   ```
+
 - Add an empty line before `if` blocks when preceded by other statements.
 - Add empty lines around state updates (e.g. `setTimes(...)`) when they appear between other operations.
 
 ## Settings UI Patterns
 
-- Use `FieldLabel` for new section headers inside `FieldSet` (not `FieldLegend`).
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
 - Access config via `useConfig()` and persist changes via `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
@@ -33,8 +34,6 @@
 ## Config Keys
 
 - Follow the existing `"section.camelCase"` dot-notation pattern (e.g. `"notifications.times"`).
-- Store time values as `"HH:mm"` 24-hour strings internally regardless of display format.
-- Use `input[type="time"]` for time inputs — Chromium auto-adapts display to the OS locale (12h/24h), no extra handling needed.
 
 ## Formatting Tool
 
