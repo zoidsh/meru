@@ -48,11 +48,7 @@ export class Account {
   }
 
   setSpellCheckerLanguages() {
-    if (platform.isMacOS) {
-      return;
-    }
-
-    if (!licenseKey.isValid) {
+    if (platform.isMacOS || !licenseKey.isValid) {
       return;
     }
 
