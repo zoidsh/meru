@@ -23,6 +23,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
       if (
         licenseKey.isValid &&
+        !selectedAccount.instance.gmail.isAsleep &&
         parameters.pageURL === selectedAccount.instance.gmail.view.webContents.getURL()
       ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;

@@ -62,6 +62,8 @@ export class GoogleApp {
 
   private _view: WebContentsView | undefined;
 
+  private resizeListenerRegistered = false;
+
   get view() {
     if (!this._view) {
       throw new Error("View has not been created yet");
@@ -81,12 +83,14 @@ export class GoogleApp {
         canGoForward: boolean;
       };
       attentionRequired: boolean;
+      isAsleep: boolean;
     }>(() => ({
       navigationHistory: {
         canGoBack: false,
         canGoForward: false,
       },
       attentionRequired: false,
+      isAsleep: false,
     })),
   );
 
@@ -133,9 +137,15 @@ export class GoogleApp {
 
     this.updateViewBounds();
 
-    main.window.on("resize", () => {
-      this.updateViewBounds();
-    });
+    if (!this.resizeListenerRegistered) {
+      main.window.on("resize", () => {
+        if (this._view) {
+          this.updateViewBounds();
+        }
+      });
+
+      this.resizeListenerRegistered = true;
+    }
 
     if (this.hooks.beforeLoadUrl) {
       for (const hook of this.hooks.beforeLoadUrl) {
@@ -215,13 +225,19 @@ export class GoogleApp {
   }
 
   destroy() {
-    this.view.webContents.removeAllListeners();
+    if (!this._view) {
+      return;
+    }
 
-    this.view.webContents.close();
+    this._view.webContents.removeAllListeners();
 
-    this.view.removeAllListeners();
+    this._view.webContents.close();
 
-    main.window.contentView.removeChildView(this.view);
+    this._view.removeAllListeners();
+
+    main.window.contentView.removeChildView(this._view);
+
+    this._view = undefined;
   }
 
   registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {

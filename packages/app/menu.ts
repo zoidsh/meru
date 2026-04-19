@@ -128,7 +128,9 @@ export class AppMenu {
       const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
 
       for (const [_accountId, instance] of accounts.instances) {
-        instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+        if (!instance.gmail.isAsleep) {
+          instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+        }
       }
 
       config.set("gmail.zoomFactor", zoomFactor);
@@ -147,7 +149,9 @@ export class AppMenu {
 
       if (zoomFactor > 0) {
         for (const [_accountId, instance] of accounts.instances) {
-          instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+          if (!instance.gmail.isAsleep) {
+            instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+          }
         }
 
         config.set("gmail.zoomFactor", zoomFactor);
@@ -199,6 +203,10 @@ export class AppMenu {
             label: "Gmail Settings...",
             accelerator: "Command+,",
             click: () => {
+              if (selectedAccount.instance.gmail.isAsleep) {
+                return;
+              }
+
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
                 "gmail.navigateTo",
@@ -227,6 +235,10 @@ export class AppMenu {
           {
             label: "Compose",
             click: () => {
+              if (selectedAccount.instance.gmail.isAsleep) {
+                return;
+              }
+
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
                 "gmail.navigateTo",
@@ -362,7 +374,9 @@ export class AppMenu {
               }
 
               for (const [_accountId, instance] of accounts.instances) {
-                instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
+                if (!instance.gmail.isAsleep) {
+                  instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
+                }
               }
 
               config.set("gmail.zoomFactor", defaultZoomFactor);
@@ -404,6 +418,10 @@ export class AppMenu {
                 return;
               }
 
+              if (selectedAccount.instance.gmail.isAsleep) {
+                return;
+              }
+
               selectedAccount.instance.gmail.view.webContents.reload();
             },
           },
@@ -414,6 +432,10 @@ export class AppMenu {
               if (focusedWindow && focusedWindow !== main.window) {
                 focusedWindow.webContents.reloadIgnoringCache();
 
+                return;
+              }
+
+              if (selectedAccount.instance.gmail.isAsleep) {
                 return;
               }
 
@@ -435,7 +457,9 @@ export class AppMenu {
 
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              selectedAccount.instance.gmail.view.webContents.openDevTools();
+              if (!selectedAccount.instance.gmail.isAsleep) {
+                selectedAccount.instance.gmail.view.webContents.openDevTools();
+              }
             },
           },
         ],
@@ -453,6 +477,10 @@ export class AppMenu {
                 return;
               }
 
+              if (selectedAccount.instance.gmail.isAsleep) {
+                return;
+              }
+
               selectedAccount.instance.gmail.view.webContents.navigationHistory.goBack();
             },
           },
@@ -463,6 +491,10 @@ export class AppMenu {
               if (focusedWindow && focusedWindow !== main.window) {
                 focusedWindow.webContents.navigationHistory.goForward();
 
+                return;
+              }
+
+              if (selectedAccount.instance.gmail.isAsleep) {
                 return;
               }
 

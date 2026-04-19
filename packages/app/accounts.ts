@@ -29,17 +29,19 @@ class Accounts {
   }
 
   async createViews() {
-    const accounts = this.getAccounts().sort((a, b) => {
-      if (a.config.selected && !b.config.selected) {
-        return 1;
-      }
+    const accounts = this.getAccounts()
+      .filter((account) => !account.instance.gmail.isAsleep)
+      .sort((a, b) => {
+        if (a.config.selected && !b.config.selected) {
+          return 1;
+        }
 
-      if (!a.config.selected && b.config.selected) {
-        return -1;
-      }
+        if (!a.config.selected && b.config.selected) {
+          return -1;
+        }
 
-      return 0;
-    });
+        return 0;
+      });
 
     await Promise.all(
       accounts.map((account) =>
@@ -59,22 +61,58 @@ class Accounts {
     main.window.on("show", () => {
       const selectedAccount = this.getSelectedAccount();
 
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
+
       main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
       main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
 
       selectedAccount.instance.gmail.updateViewBounds();
       selectedAccount.instance.gmail.view.webContents.focus();
+
+      if (selectedAccount.config.onDemand) {
+        selectedAccount.instance.gmail.cancelSleep();
+      }
     });
 
     main.window.on("restore", () => {
       const selectedAccount = this.getSelectedAccount();
 
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
+
       main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
       main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
 
       selectedAccount.instance.gmail.updateViewBounds();
       selectedAccount.instance.gmail.view.webContents.focus();
     });
+
+    main.window.on("focus", () => {
+      const selectedAccount = this.getSelectedAccount();
+
+      if (selectedAccount.config.onDemand && !selectedAccount.instance.gmail.isAsleep) {
+        selectedAccount.instance.gmail.cancelSleep();
+      }
+    });
+
+    main.window.on("blur", () => {
+      this.scheduleSleepForOnDemandAccounts();
+    });
+
+    main.window.on("hide", () => {
+      this.scheduleSleepForOnDemandAccounts();
+    });
+  }
+
+  private scheduleSleepForOnDemandAccounts() {
+    for (const account of this.getAccounts()) {
+      if (account.config.onDemand && !account.instance.gmail.isAsleep) {
+        account.instance.gmail.scheduleSleep();
+      }
+    }
   }
 
   getAccountConfigs() {
@@ -139,7 +177,9 @@ class Accounts {
     return selectedAccount;
   }
 
-  selectAccount(selectedAccountId: string) {
+  async selectAccount(selectedAccountId: string) {
+    const previouslySelectedAccount = this.getAccounts().find((account) => account.config.selected);
+
     config.set(
       "accounts",
       this.getAccountConfigs().map((accountConfig) => {
@@ -150,18 +190,33 @@ class Accounts {
       }),
     );
 
-    for (const [accountId, account] of this.instances) {
-      if (accountId === selectedAccountId) {
-        main.window.contentView.removeChildView(account.gmail.view);
-        main.window.contentView.addChildView(account.gmail.view);
-        account.gmail.updateViewBounds();
-        account.gmail.view.webContents.focus();
+    const selectedAccount = this.instances.get(selectedAccountId);
 
-        return account;
-      }
+    if (!selectedAccount) {
+      throw new Error("Could not find account to select");
     }
 
-    throw new Error("Could not find account to select");
+    if (selectedAccount.gmail.isAsleep) {
+      await selectedAccount.gmail.wake();
+    }
+
+    selectedAccount.gmail.cancelSleep();
+
+    main.window.contentView.removeChildView(selectedAccount.gmail.view);
+    main.window.contentView.addChildView(selectedAccount.gmail.view);
+    selectedAccount.gmail.updateViewBounds();
+    selectedAccount.gmail.view.webContents.focus();
+
+    if (
+      previouslySelectedAccount &&
+      previouslySelectedAccount.config.id !== selectedAccountId &&
+      previouslySelectedAccount.config.onDemand &&
+      !previouslySelectedAccount.instance.gmail.isAsleep
+    ) {
+      previouslySelectedAccount.instance.gmail.scheduleSleep();
+    }
+
+    return selectedAccount;
   }
 
   selectPreviousAccount() {
@@ -201,7 +256,7 @@ class Accounts {
   }
 
   addAccount(
-    accountDetails: Pick<AccountConfig, "label" | "notifications" | "color"> & {
+    accountDetails: Pick<AccountConfig, "label" | "notifications" | "color" | "onDemand"> & {
       gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox">;
     },
   ) {
@@ -218,7 +273,9 @@ class Accounts {
 
     const instance = new Account(createdAccount);
 
-    instance.gmail.createView();
+    if (!createdAccount.onDemand) {
+      instance.gmail.createView();
+    }
 
     this.instances.set(createdAccount.id, instance);
 
@@ -255,11 +312,17 @@ class Accounts {
     config.set("accounts", updatedAccounts);
 
     for (const account of this.instances.values()) {
-      account.gmail.updateViewBounds();
+      if (!account.gmail.isAsleep) {
+        account.gmail.updateViewBounds();
+      }
     }
   }
 
   updateAccount(accountDetails: AccountConfig) {
+    const previousConfig = config
+      .get("accounts")
+      .find((account) => account.id === accountDetails.id);
+
     config.set(
       "accounts",
       config
@@ -268,6 +331,22 @@ class Accounts {
           account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
         ),
     );
+
+    if (previousConfig && previousConfig.onDemand !== accountDetails.onDemand) {
+      const instance = this.instances.get(accountDetails.id);
+
+      if (instance) {
+        if (accountDetails.onDemand) {
+          if (!accountDetails.selected && !instance.gmail.isAsleep) {
+            instance.gmail.sleep();
+          }
+        } else {
+          if (instance.gmail.isAsleep) {
+            instance.gmail.wake();
+          }
+        }
+      }
+    }
   }
 
   moveAccount(selectedAccountId: string, direction: "up" | "down") {
@@ -298,18 +377,26 @@ class Accounts {
 
   hide() {
     for (const account of this.instances.values()) {
-      account.gmail.view.setVisible(false);
+      if (!account.gmail.isAsleep) {
+        account.gmail.view.setVisible(false);
+      }
     }
   }
 
   show() {
     for (const account of this.instances.values()) {
-      account.gmail.view.setVisible(true);
+      if (!account.gmail.isAsleep) {
+        account.gmail.view.setVisible(true);
+      }
     }
   }
 
   getTotalUnreadCount() {
     return Array.from(accounts.instances.values()).reduce((totalUnreadCount, instance) => {
+      if (instance.gmail.isAsleep) {
+        return totalUnreadCount;
+      }
+
       const unreadCount = instance.gmail.store.getState().unreadCount;
 
       return typeof unreadCount === "number" ? totalUnreadCount + unreadCount : totalUnreadCount;
@@ -320,7 +407,7 @@ class Accounts {
     for (const accountConfig of this.getAccountConfigs()) {
       const instance = this.instances.get(accountConfig.id);
 
-      if (instance) {
+      if (instance && !instance.gmail.isAsleep) {
         const unreadCount = instance.gmail.store.getState().unreadCount;
 
         if (typeof unreadCount === "number" && unreadCount > 0) {

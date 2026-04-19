@@ -22,6 +22,7 @@ export const config = new Store<Config>({
         color: null,
         selected: true,
         notifications: true,
+        onDemand: false,
         gmail: {
           unreadBadge: true,
           delegatedAccountId: null,
@@ -299,6 +300,25 @@ export const config = new Store<Config>({
       if (store.has("resetConfig")) {
         // @ts-expect-error
         store.delete("resetConfig");
+      }
+    },
+    ">=3.45.0": (store) => {
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        let accountsMigrated = false;
+
+        for (const account of accounts) {
+          if (typeof account.onDemand !== "boolean") {
+            account.onDemand = false;
+
+            accountsMigrated = true;
+          }
+        }
+
+        if (accountsMigrated) {
+          store.set("accounts", accounts);
+        }
       }
     },
   },

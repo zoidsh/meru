@@ -25,6 +25,7 @@ export const accountConfigSchema = z.object({
   color: z.enum(accountColors).nullable(),
   selected: z.boolean(),
   notifications: z.boolean(),
+  onDemand: z.boolean(),
   gmail: z.object({
     unreadBadge: z.boolean(),
     delegatedAccountId: z.string().nullable(),
@@ -41,6 +42,7 @@ export const accountConfigInputSchema = accountConfigSchema
     label: true,
     color: true,
     notifications: true,
+    onDemand: true,
   })
   .extend({
     gmail: accountConfigSchema.shape.gmail.pick({ unreadBadge: true, unifiedInbox: true }),

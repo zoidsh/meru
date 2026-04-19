@@ -191,11 +191,15 @@ function extractVerificationCode(texts: string[]) {
 }
 
 export class Gmail extends GoogleApp {
+  static SLEEP_DELAY_MS = 5 * 60 * 1000;
+
   userEmail: string | null = null;
 
   unreadCountEnabled = true;
 
   unifiedInboxEnabled = true;
+
+  private sleepTimer: NodeJS.Timeout | null = null;
 
   store = createStore(
     subscribeWithSelector<{
@@ -223,10 +227,12 @@ export class Gmail extends GoogleApp {
     unreadCountEnabled,
     unifiedInboxEnabled,
     delegatedAccountId,
+    onDemand,
   }: {
     unreadCountEnabled: boolean;
     unifiedInboxEnabled: boolean;
     delegatedAccountId: string | null;
+    onDemand: boolean;
   } & Omit<GoogleAppOptions, "url">) {
     const additionalArguments: string[] = [];
 
@@ -309,6 +315,10 @@ export class Gmail extends GoogleApp {
 
     this.unifiedInboxEnabled = unifiedInboxEnabled;
 
+    if (onDemand) {
+      this.viewStore.setState({ isAsleep: true });
+    }
+
     this.subscribeToStore();
 
     setInterval(() => {
@@ -320,7 +330,77 @@ export class Gmail extends GoogleApp {
     }, ms("5m"));
   }
 
+  get isAsleep() {
+    return this.viewStore.getState().isAsleep;
+  }
+
+  async wake() {
+    if (!this.isAsleep) {
+      return;
+    }
+
+    this.cancelSleep();
+
+    await this.createView({
+      webPreferences: {
+        backgroundThrottling: false,
+      },
+    });
+
+    this.view.webContents.setBackgroundThrottling(true);
+
+    this.viewStore.setState({ isAsleep: false });
+
+    accounts.sendAccountsChangedToRenderer();
+  }
+
+  sleep() {
+    if (this.isAsleep) {
+      return;
+    }
+
+    this.cancelSleep();
+
+    super.destroy();
+
+    this.isInitialInboxFeedFetch = true;
+
+    this.previousInboxFeedTotalEntries = 0;
+
+    this.store.setState({ unreadCount: 0, unreadInbox: [], messageId: null });
+
+    this.viewStore.setState({ isAsleep: true });
+
+    accounts.sendAccountsChangedToRenderer();
+  }
+
+  scheduleSleep() {
+    if (this.isAsleep) {
+      return;
+    }
+
+    this.cancelSleep();
+
+    this.sleepTimer = setTimeout(() => {
+      this.sleepTimer = null;
+
+      this.sleep();
+    }, Gmail.SLEEP_DELAY_MS);
+  }
+
+  cancelSleep() {
+    if (this.sleepTimer) {
+      clearTimeout(this.sleepTimer);
+
+      this.sleepTimer = null;
+    }
+  }
+
   async fetchInboxFeed(fetchAttempt = 1) {
+    if (this.isAsleep) {
+      return;
+    }
+
     try {
       if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
         return;
@@ -487,10 +567,10 @@ export class Gmail extends GoogleApp {
               type: "button",
             },
           ],
-          click: () => {
+          click: async () => {
             main.show();
 
-            accounts.selectAccount(this.accountId);
+            await accounts.selectAccount(this.accountId);
 
             ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
           },

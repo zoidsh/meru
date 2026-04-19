@@ -88,15 +88,23 @@ class Ipc {
     });
 
     this.main.on("gmail.moveNavigationHistory", (_event, action) => {
-      accounts
-        .getSelectedAccount()
-        .instance.gmail.view.webContents.navigationHistory[
-          action === "back" ? "goBack" : "goForward"
-        ]();
+      const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
+
+      selectedAccount.instance.gmail.view.webContents.navigationHistory[
+        action === "back" ? "goBack" : "goForward"
+      ]();
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
       for (const accountInstance of accounts.instances.values()) {
+        if (accountInstance.gmail.isAsleep) {
+          continue;
+        }
+
         if (event.sender.id === accountInstance.gmail.view.webContents.id) {
           accountInstance.gmail.store.setState({
             outOfOffice,
@@ -129,6 +137,10 @@ class Ipc {
 
     this.main.on("findInPage", (_event, text, options) => {
       const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
 
       if (!text) {
         selectedAccount.instance.gmail.view.webContents.stopFindInPage("clearSelection");
@@ -199,6 +211,10 @@ class Ipc {
 
     ipc.main.on("gmail.search", (_event, searchQuery) => {
       const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
 
       selectedAccount.instance.gmail.search(searchQuery);
     });
@@ -273,7 +289,13 @@ class Ipc {
     });
 
     ipc.main.on("googleApps.openApp", (_event, app) => {
-      accounts.getSelectedAccount().instance.gmail.openGoogleApp(app);
+      const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
+
+      selectedAccount.instance.gmail.openGoogleApp(app);
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {
@@ -325,8 +347,14 @@ class Ipc {
     );
 
     ipc.main.on("gmail.navigateTo", (_event, hashLocation) => {
+      const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
+
       ipc.renderer.send(
-        accounts.getSelectedAccount().instance.gmail.view.webContents,
+        selectedAccount.instance.gmail.view.webContents,
         "gmail.navigateTo",
         hashLocation,
       );
@@ -339,6 +367,10 @@ class Ipc {
             window.hide();
 
             const browserWindowId = window.id;
+
+            if (accountInstance.gmail.isAsleep) {
+              return;
+            }
 
             window.once("closed", () => {
               ipc.renderer.send(
@@ -374,6 +406,10 @@ class Ipc {
 
     ipc.main.on("gmail.setUserEmail", (event, email) => {
       for (const accountInstance of accounts.instances.values()) {
+        if (accountInstance.gmail.isAsleep) {
+          continue;
+        }
+
         if (accountInstance.gmail.view.webContents.id === event.sender.id) {
           accountInstance.gmail.userEmail = email;
 
@@ -446,6 +482,10 @@ class Ipc {
       }
 
       for (const account of accounts.instances.values()) {
+        if (account.gmail.isAsleep) {
+          continue;
+        }
+
         if (event.sender.id === account.gmail.view.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
@@ -458,6 +498,10 @@ class Ipc {
 
     this.main.on("gmail.openMessage", (_event, messageId) => {
       const selectedAccount = accounts.getSelectedAccount();
+
+      if (selectedAccount.instance.gmail.isAsleep) {
+        return;
+      }
 
       ipc.renderer.send(
         selectedAccount.instance.gmail.view.webContents,

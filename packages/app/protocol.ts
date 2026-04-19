@@ -97,7 +97,7 @@ export function isMeruUrl(url: string) {
   return url.startsWith(`${MERU_PROTOCOL}://`);
 }
 
-export function handleMeruUrl(url: string) {
+export async function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
     dialog.showMessageBox(main.window, {
       type: "warning",
@@ -119,7 +119,7 @@ export function handleMeruUrl(url: string) {
     if (paths[1] === "message" && paths[2]) {
       for (const [accountId, account] of accounts.instances) {
         if (account.gmail.userEmail === email) {
-          accounts.selectAccount(accountId);
+          await accounts.selectAccount(accountId);
 
           ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", paths[2]);
 

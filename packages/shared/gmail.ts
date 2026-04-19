@@ -55,6 +55,7 @@ export type GmailState = {
   unreadInbox: GmailInboxMessage[];
   outOfOffice: boolean;
   attentionRequired: boolean;
+  isAsleep: boolean;
 };
 
 export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;

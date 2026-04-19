@@ -46,6 +46,7 @@ function AccountForm({
     color: null,
     gmail: { unreadBadge: true, unifiedInbox: true },
     notifications: true,
+    onDemand: false,
   },
   placeholder = "Work",
   onSubmit,
@@ -203,6 +204,19 @@ function AccountForm({
               </Field>
             )}
           </form.Field>
+          <form.Field name="onDemand">
+            {(field) => (
+              <Field orientation="horizontal" className="w-fit">
+                <Switch
+                  id={field.name}
+                  name={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={field.handleChange}
+                />
+                <FieldLabel>On-demand</FieldLabel>
+              </Field>
+            )}
+          </form.Field>
         </FieldSet>
       </FieldGroup>
       <div className="flex justify-end items-center">
@@ -350,7 +364,9 @@ export function AccountsSettings() {
                   />
                   {account.config.label}
                 </ItemTitle>
-                {(account.config.gmail.unreadBadge || account.config.notifications) && (
+                {(account.config.gmail.unreadBadge ||
+                  account.config.notifications ||
+                  account.config.onDemand) && (
                   <div className="flex gap-2">
                     {account.config.gmail.unreadBadge && (
                       <Badge variant="outline">Unread Badge</Badge>
@@ -359,6 +375,7 @@ export function AccountsSettings() {
                       <Badge variant="outline">Unified Inbox</Badge>
                     )}
                     {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
+                    {account.config.onDemand && <Badge variant="outline">On-demand</Badge>}
                   </div>
                 )}
               </ItemContent>

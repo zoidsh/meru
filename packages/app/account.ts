@@ -40,6 +40,7 @@ export class Account {
       unreadCountEnabled: accountConfig.gmail.unreadBadge,
       unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
+      onDemand: accountConfig.onDemand,
     });
   }
 

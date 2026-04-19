@@ -20,6 +20,7 @@ import {
   InboxIcon,
   MailSearchIcon,
   MoonIcon,
+  MoonStarIcon,
   SparklesIcon,
   XIcon,
 } from "lucide-react";
@@ -371,7 +372,9 @@ export function AppTitlebar() {
             : "ghost"
         }
         size="sm"
-        className="draggable-none"
+        className={cn("draggable-none", {
+          "opacity-60": account.gmail.isAsleep,
+        })}
         onClick={() => {
           ipc.main.send("settings.toggleIsOpen", false);
 
@@ -383,10 +386,16 @@ export function AppTitlebar() {
             className={cn("size-2 rounded-full", accountColorsMap[account.config.color].className)}
           />
         )}
-        {account.gmail.outOfOffice && isLicenseKeyValid && <BriefcaseIcon />}
+        {account.gmail.isAsleep && <MoonStarIcon className="text-muted-foreground" />}
+        {!account.gmail.isAsleep && account.gmail.outOfOffice && isLicenseKeyValid && (
+          <BriefcaseIcon />
+        )}
         {account.config.label}
-        {account.gmail.attentionRequired && <CircleAlertIcon className="text-yellow-400" />}
-        {!account.gmail.attentionRequired &&
+        {!account.gmail.isAsleep && account.gmail.attentionRequired && (
+          <CircleAlertIcon className="text-yellow-400" />
+        )}
+        {!account.gmail.isAsleep &&
+        !account.gmail.attentionRequired &&
         config["accounts.unreadBadge"] &&
         account.gmail.unreadCount ? (
           <div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
@@ -448,7 +457,11 @@ export function AppTitlebar() {
             onClick={() => {
               ipc.main.send("gmail.moveNavigationHistory", "back");
             }}
-            disabled={matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack}
+            disabled={
+              matchUnifiedInboxRoute ||
+              selectedAccount?.gmail.isAsleep ||
+              !selectedAccount?.gmail.navigationHistory.canGoBack
+            }
             title="Go Back"
           >
             <ArrowLeftIcon />
@@ -461,7 +474,9 @@ export function AppTitlebar() {
               ipc.main.send("gmail.moveNavigationHistory", "forward");
             }}
             disabled={
-              matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
+              matchUnifiedInboxRoute ||
+              selectedAccount?.gmail.isAsleep ||
+              !selectedAccount?.gmail.navigationHistory.canGoForward
             }
             title="Go Forward"
           >
@@ -499,6 +514,7 @@ export function AppTitlebar() {
             </Button>
           )}
           {accounts.length === 1 &&
+            !accounts[0]?.gmail.isAsleep &&
             accounts[0]?.gmail.outOfOffice &&
             config["gmail.hideOutOfOfficeBanner"] &&
             isLicenseKeyValid && (
