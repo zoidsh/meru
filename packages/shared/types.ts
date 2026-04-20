@@ -41,15 +41,15 @@ export const supportedGoogleApps = {
   drive: "Drive",
   forms: "Forms",
   gemini: "Gemini",
+  groups: "Groups",
   keep: "Keep",
   meet: "Meet",
-  notebooklm: "NotebookLM",
-  tasks: "Tasks",
-  sheets: "Sheets",
-  slides: "Slides",
-  groups: "Groups",
   myaccount: "My Account",
+  notebooklm: "NotebookLM",
+  sheets: "Sheets",
   sites: "Sites",
+  slides: "Slides",
+  tasks: "Tasks",
   voice: "Voice",
 } as const;
 
@@ -67,9 +67,9 @@ const googleAppsPinnedAppKeys = [
   "keep",
   "meet",
   "notebooklm",
-  "tasks",
   "sheets",
   "slides",
+  "tasks",
 ] as const satisfies readonly SupportedGoogleApp[];
 
 export type GoogleAppsPinnedApp = (typeof googleAppsPinnedAppKeys)[number];
