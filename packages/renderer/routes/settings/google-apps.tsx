@@ -61,7 +61,7 @@ function SortablePinnedAppItem({
       </Button>
       <ItemContent>
         <ItemTitle>
-          <GoogleAppIcon app={app} className="size-4" />
+          <GoogleAppIcon app={app} className="size-3.5" />
           {googleAppsPinnedApps[app]}
         </ItemTitle>
       </ItemContent>
@@ -198,7 +198,7 @@ export function GoogleAppsSettings() {
                       <Item key={app} variant="outline" size="xs">
                         <ItemContent>
                           <ItemTitle>
-                            <GoogleAppIcon app={app} className="size-4" />
+                            <GoogleAppIcon app={app} className="size-3.5" />
                             {googleAppsPinnedApps[app]}
                           </ItemTitle>
                         </ItemContent>
