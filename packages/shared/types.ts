@@ -55,24 +55,28 @@ export const supportedGoogleApps = {
 
 export type SupportedGoogleApp = keyof typeof supportedGoogleApps;
 
-export const googleAppsPinnedApps = {
-  calendar: supportedGoogleApps.calendar,
-  chat: supportedGoogleApps.chat,
-  classroom: supportedGoogleApps.classroom,
-  contacts: supportedGoogleApps.contacts,
-  docs: supportedGoogleApps.docs,
-  drive: supportedGoogleApps.drive,
-  forms: supportedGoogleApps.forms,
-  gemini: supportedGoogleApps.gemini,
-  keep: supportedGoogleApps.keep,
-  meet: supportedGoogleApps.meet,
-  notebooklm: supportedGoogleApps.notebooklm,
-  tasks: supportedGoogleApps.tasks,
-  sheets: supportedGoogleApps.sheets,
-  slides: supportedGoogleApps.slides,
-} as const;
+const googleAppsPinnedAppKeys = [
+  "calendar",
+  "chat",
+  "classroom",
+  "contacts",
+  "docs",
+  "drive",
+  "forms",
+  "gemini",
+  "keep",
+  "meet",
+  "notebooklm",
+  "tasks",
+  "sheets",
+  "slides",
+] as const satisfies readonly SupportedGoogleApp[];
 
-export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
+export type GoogleAppsPinnedApp = (typeof googleAppsPinnedAppKeys)[number];
+
+export const googleAppsPinnedApps = Object.fromEntries(
+  googleAppsPinnedAppKeys.map((key) => [key, supportedGoogleApps[key]]),
+) as Pick<typeof supportedGoogleApps, GoogleAppsPinnedApp>;
 
 type GmailHashLocation =
   | "inbox"
