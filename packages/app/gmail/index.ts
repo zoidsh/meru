@@ -620,8 +620,8 @@ export class Gmail extends GoogleApp {
 
   createComposeWindow(url: string) {
     const window = new BrowserWindow({
-      autoHideMenuBar: true,
       ...getCascadedWindowBounds({ width: 800, height: 600 }),
+      autoHideMenuBar: true,
       webPreferences: {
         session: this.session,
       },
