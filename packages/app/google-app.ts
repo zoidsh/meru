@@ -33,8 +33,6 @@ const WINDOW_OPEN_URL_WHITELIST = [
   /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
 
-// `drive` also serves content under `drive.usercontent.google.com`, which should be matched but
-// captured as `drive`.
 const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
   `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
