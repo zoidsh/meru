@@ -34,9 +34,7 @@ const WINDOW_OPEN_URL_WHITELIST = [
 ];
 
 const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedGoogleApps)
-    .map((app) => (app === "drive" ? "drive(\\.usercontent)?" : app))
-    .join("|")})\\.google\\.com`,
+  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
@@ -271,16 +269,15 @@ export class GoogleApp {
         };
       }
 
-      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1];
+      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
+        | SupportedGoogleApp
+        | undefined;
 
       const isGoogleAppEnabledToOpenInApp =
         matchedSupportedGoogleApp &&
         config.get("googleApps.openInApp") &&
         licenseKey.isValid &&
-        (!Object.hasOwn(supportedGoogleApps, matchedSupportedGoogleApp) ||
-          !config
-            .get("googleApps.openInAppExcludedApps")
-            .includes(matchedSupportedGoogleApp as SupportedGoogleApp));
+        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
 
       if (
         (url.startsWith(GMAIL_URL) ||
