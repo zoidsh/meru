@@ -271,19 +271,16 @@ export class GoogleApp {
         };
       }
 
-      const supportedGoogleAppMatch = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP);
-
-      const matchedGoogleApp = supportedGoogleAppMatch?.[1];
+      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1];
 
       const isGoogleAppEnabledToOpenInApp =
-        supportedGoogleAppMatch &&
+        matchedSupportedGoogleApp &&
         config.get("googleApps.openInApp") &&
         licenseKey.isValid &&
-        (!matchedGoogleApp ||
-          !Object.hasOwn(supportedGoogleApps, matchedGoogleApp) ||
+        (!Object.hasOwn(supportedGoogleApps, matchedSupportedGoogleApp) ||
           !config
             .get("googleApps.openInAppExcludedApps")
-            .includes(matchedGoogleApp as SupportedGoogleApp));
+            .includes(matchedSupportedGoogleApp as SupportedGoogleApp));
 
       if (
         (url.startsWith(GMAIL_URL) ||
@@ -291,7 +288,7 @@ export class GoogleApp {
           isGoogleAppEnabledToOpenInApp) &&
         disposition !== "background-tab"
       ) {
-        if (supportedGoogleAppMatch) {
+        if (matchedSupportedGoogleApp) {
           const account = accounts.getAccount(this.accountId);
 
           if (!config.get("googleApps.openAppsInNewWindow") && account.instance.windows.size > 0) {
@@ -400,11 +397,9 @@ export class GoogleApp {
             });
           }
 
-          const googleApp = supportedGoogleAppMatch?.[1];
-
           let powerSaveBlockerId: number | undefined;
 
-          if (googleApp === "meet") {
+          if (matchedSupportedGoogleApp === "meet") {
             powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
             globalShortcut.register("CommandOrControl+Shift+1", () => {
@@ -419,7 +414,7 @@ export class GoogleApp {
           newWindow.once("closed", () => {
             account.instance.windows.delete(newWindow);
 
-            if (googleApp === "meet") {
+            if (matchedSupportedGoogleApp === "meet") {
               globalShortcut.unregister("CommandOrControl+Shift+1");
               globalShortcut.unregister("CommandOrControl+Shift+2");
             }
@@ -478,7 +473,7 @@ export class GoogleApp {
       } else if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
         window.webContents.downloadURL(url);
       } else {
-        openExternalUrl(url, Boolean(supportedGoogleAppMatch));
+        openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
       }
 
       return {
