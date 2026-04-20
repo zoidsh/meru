@@ -36,17 +36,30 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Add an empty line before `if` blocks when preceded by other statements.
 - Add an empty line before `return` statements when preceded by other statements.
 
-## Functions Inside Components
+## Functions
 
-- Never use `function` declarations inside a React component or another function. Always use `const` arrow functions:
+- Root-level functions (including React components) use `function` declarations.
+- Nested functions (inside a component or another function) use `const` arrow functions:
 
   ```ts
   // correct
-  const handleClick = () => { ... };
+  function MyComponent() {
+    const handleClick = () => { ... };
+
+    return <button onClick={handleClick} />;
+  }
 
   // wrong
-  function handleClick() { ... }
+  const MyComponent = () => {
+    function handleClick() { ... }
+
+    return <button onClick={handleClick} />;
+  };
   ```
+
+## Dependencies
+
+- Install packages with `bun add <package>` (or `bun add -d <package>` for dev dependencies). Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
 
 ## UI Components
 

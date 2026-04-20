@@ -2,7 +2,6 @@ import {
   closestCenter,
   DndContext,
   type DragEndEvent,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -10,7 +9,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -42,15 +40,15 @@ import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 
-const SortablePinnedAppItem = ({
+function SortablePinnedAppItem({
   app,
   onUnpin,
   disabled,
 }: {
   app: GoogleAppsPinnedApp;
-  onUnpin: (app: GoogleAppsPinnedApp) => void;
+  onUnpin: () => void;
   disabled: boolean;
-}) => {
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: app,
   });
@@ -63,40 +61,38 @@ const SortablePinnedAppItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
-      <Item variant="outline" size="sm">
+    <Item ref={setNodeRef} style={style} variant="outline" size="xs">
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        className="cursor-grab touch-none"
+        disabled={disabled}
+        aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon />
+      </Button>
+      <ItemMedia variant="icon">
+        <GoogleAppIcon app={app} className="size-3" />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{googleAppsPinnedApps[app]}</ItemTitle>
+      </ItemContent>
+      <ItemActions>
         <Button
-          size="icon-sm"
+          size="icon-xs"
           variant="ghost"
-          className="cursor-grab touch-none"
+          onClick={onUnpin}
           disabled={disabled}
-          aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
-          {...attributes}
-          {...listeners}
+          aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
         >
-          <GripVerticalIcon />
+          <XIcon />
         </Button>
-        <ItemMedia variant="icon">
-          <GoogleAppIcon app={app} />
-        </ItemMedia>
-        <ItemContent>
-          <ItemTitle>{googleAppsPinnedApps[app]}</ItemTitle>
-        </ItemContent>
-        <ItemActions>
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            onClick={() => onUnpin(app)}
-            disabled={disabled}
-            aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
-          >
-            <XIcon />
-          </Button>
-        </ItemActions>
-      </Item>
-    </div>
+      </ItemActions>
+    </Item>
   );
-};
+}
 
 export function GoogleAppsSettings() {
   const { config } = useConfig();
@@ -105,10 +101,7 @@ export function GoogleAppsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor));
 
   if (!config) {
     return;
@@ -119,18 +112,6 @@ export function GoogleAppsSettings() {
   const availableApps = (Object.keys(googleAppsPinnedApps) as GoogleAppsPinnedApp[]).filter(
     (app) => !pinnedApps.includes(app),
   );
-
-  const handlePin = (app: GoogleAppsPinnedApp) => {
-    configMutation.mutate({
-      "googleApps.pinnedApps": [...pinnedApps, app],
-    });
-  };
-
-  const handleUnpin = (app: GoogleAppsPinnedApp) => {
-    configMutation.mutate({
-      "googleApps.pinnedApps": pinnedApps.filter((value) => value !== app),
-    });
-  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -210,7 +191,13 @@ export function GoogleAppsSettings() {
                           <SortablePinnedAppItem
                             key={app}
                             app={app}
-                            onUnpin={handleUnpin}
+                            onUnpin={() => {
+                              configMutation.mutate({
+                                "googleApps.pinnedApps": pinnedApps.filter(
+                                  (value) => value !== app,
+                                ),
+                              });
+                            }}
                             disabled={!isLicenseKeyValid}
                           />
                         ))}
@@ -224,18 +211,22 @@ export function GoogleAppsSettings() {
                   <div className="text-xs font-medium text-muted-foreground">Available</div>
                   <ItemGroup>
                     {availableApps.map((app) => (
-                      <Item key={app} variant="outline" size="sm">
+                      <Item key={app} variant="outline" size="xs">
                         <ItemMedia variant="icon">
-                          <GoogleAppIcon app={app} />
+                          <GoogleAppIcon app={app} className="size-3" />
                         </ItemMedia>
                         <ItemContent>
                           <ItemTitle>{googleAppsPinnedApps[app]}</ItemTitle>
                         </ItemContent>
                         <ItemActions>
                           <Button
-                            size="icon-sm"
+                            size="icon-xs"
                             variant="ghost"
-                            onClick={() => handlePin(app)}
+                            onClick={() => {
+                              configMutation.mutate({
+                                "googleApps.pinnedApps": [...pinnedApps, app],
+                              });
+                            }}
                             disabled={!isLicenseKeyValid}
                             aria-label={`Pin ${googleAppsPinnedApps[app]}`}
                           >
