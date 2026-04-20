@@ -7,7 +7,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
-import { type GoogleAppsPinnedApp, googleAppsPinnedApps } from "@meru/shared/types";
+import {
+  type GoogleAppsPinnedApp,
+  googleAppsPinnedApps,
+  type SupportedGoogleApp,
+  supportedGoogleApps,
+} from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -108,9 +113,9 @@ export function GoogleAppsSettings() {
 
   const excludedApps = config["googleApps.openInAppExcludedApps"];
 
-  const excludedAppLabels = (Object.keys(googleAppsPinnedApps) as GoogleAppsPinnedApp[])
+  const excludedAppLabels = (Object.keys(supportedGoogleApps) as SupportedGoogleApp[])
     .filter((app) => excludedApps.includes(app))
-    .map((app) => googleAppsPinnedApps[app]);
+    .map((app) => supportedGoogleApps[app]);
 
   const visibleExcludedAppLabels = excludedAppLabels.slice(0, 3);
 
@@ -167,7 +172,7 @@ export function GoogleAppsSettings() {
                   />
                   <DropdownMenuContent align="end">
                     {(
-                      Object.entries(googleAppsPinnedApps) as Entries<typeof googleAppsPinnedApps>
+                      Object.entries(supportedGoogleApps) as Entries<typeof supportedGoogleApps>
                     ).map(([app, label]) => (
                       <DropdownMenuCheckboxItem
                         key={app}

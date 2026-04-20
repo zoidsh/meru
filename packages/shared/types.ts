@@ -51,6 +51,16 @@ export const googleAppsPinnedApps = {
 
 export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
 
+export const supportedGoogleApps = {
+  ...googleAppsPinnedApps,
+  groups: "Groups",
+  myaccount: "My Account",
+  sites: "Sites",
+  voice: "Voice",
+} as const;
+
+export type SupportedGoogleApp = keyof typeof supportedGoogleApps;
+
 type GmailHashLocation =
   | "inbox"
   | "starred"
@@ -130,7 +140,7 @@ export type Config = {
   "window.restrictMinimumSize": boolean;
   "trial.expired": boolean;
   "googleApps.openInApp": boolean;
-  "googleApps.openInAppExcludedApps": GoogleAppsPinnedApp[];
+  "googleApps.openInAppExcludedApps": SupportedGoogleApp[];
   "googleApps.openAppsInNewWindow": boolean;
   "googleApps.pinnedApps": GoogleAppsPinnedApp[];
   "googleApps.showAccountColor": boolean;

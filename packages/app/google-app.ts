@@ -7,8 +7,8 @@ import {
   GMAIL_URL,
   isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
-import { googleAppsPinnedApps } from "@meru/shared/types";
-import type { GoogleAppsPinnedApp } from "@meru/shared/types";
+import { supportedGoogleApps } from "@meru/shared/types";
+import type { SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
   dialog,
@@ -33,8 +33,11 @@ const WINDOW_OPEN_URL_WHITELIST = [
   /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
 
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
-  /(calendar|docs|sheets|slides|drive(\.usercontent)?|meet|contacts|voice|gemini|chat|forms|sites|keep|tasks|groups|myaccount|classroom|notebooklm)\.google\.com/;
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
+  `(${Object.keys(supportedGoogleApps)
+    .map((app) => (app === "drive" ? "drive(\\.usercontent)?" : app))
+    .join("|")})\\.google\\.com`,
+);
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
 
@@ -277,10 +280,10 @@ export class GoogleApp {
         config.get("googleApps.openInApp") &&
         licenseKey.isValid &&
         (!matchedGoogleApp ||
-          !Object.hasOwn(googleAppsPinnedApps, matchedGoogleApp) ||
+          !Object.hasOwn(supportedGoogleApps, matchedGoogleApp) ||
           !config
             .get("googleApps.openInAppExcludedApps")
-            .includes(matchedGoogleApp as GoogleAppsPinnedApp));
+            .includes(matchedGoogleApp as SupportedGoogleApp));
 
       if (
         (url.startsWith(GMAIL_URL) ||
