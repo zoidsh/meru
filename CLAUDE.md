@@ -111,13 +111,14 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Do not add explicit return types unless necessary — rely on inference.
 
-## Linting
+## Linting and Formatting
 
 - Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
+- Do not run `bun run lint` or `bun run fmt:check` manually. The lefthook pre-commit hook runs `oxfmt` and `oxlint --fix` on staged files on every commit, so formatting and linting are enforced automatically.
 
 ## Type Checking
 
-- Always run `bun types:ci` after making code changes to verify there are no type errors.
+- Always run `bun types:ci` after making code changes to verify there are no type errors. (Type checks are NOT part of the pre-commit hook.)
 
 ## General
 
