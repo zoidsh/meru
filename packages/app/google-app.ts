@@ -21,6 +21,7 @@ import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
+import { getCascadedWindowBounds } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
@@ -427,8 +428,7 @@ export class GoogleApp {
               const newWindow = new BrowserWindow({
                 ...inheritedOptions,
                 ...newWindowOptions,
-                width: 800,
-                height: 600,
+                ...getCascadedWindowBounds({ width: 800, height: 600 }),
                 webPreferences: {
                   ...inheritedOptions.webPreferences,
                   ...newWindowOptions.webPreferences,
@@ -444,8 +444,7 @@ export class GoogleApp {
 
         const newGoogleAppWindow = new BrowserWindow({
           ...newWindowOptions,
-          width: 1280,
-          height: 800,
+          ...getCascadedWindowBounds({ width: 1280, height: 800 }),
         });
 
         setupNewWindow(newGoogleAppWindow);

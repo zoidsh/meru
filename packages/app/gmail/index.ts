@@ -23,6 +23,7 @@ import { main } from "@/main";
 import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
+import { getCascadedWindowBounds } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
@@ -619,6 +620,7 @@ export class Gmail extends GoogleApp {
 
   createComposeWindow(url: string) {
     const window = new BrowserWindow({
+      ...getCascadedWindowBounds({ width: 800, height: 600 }),
       autoHideMenuBar: true,
       webPreferences: {
         session: this.session,
