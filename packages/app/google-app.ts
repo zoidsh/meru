@@ -7,6 +7,8 @@ import {
   GMAIL_URL,
   isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
+import { supportedGoogleApps } from "@meru/shared/types";
+import type { SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
   dialog,
@@ -31,8 +33,9 @@ const WINDOW_OPEN_URL_WHITELIST = [
   /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
 
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP =
-  /(calendar|docs|sheets|slides|drive(\.usercontent)?|meet|contacts|voice|gemini|chat|forms|sites|keep|tasks|groups|myaccount|classroom|notebooklm)\.google\.com/;
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
+  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+);
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
 
@@ -266,15 +269,23 @@ export class GoogleApp {
         };
       }
 
-      const supportedGoogleAppMatch = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP);
+      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
+        | SupportedGoogleApp
+        | undefined;
+
+      const isGoogleAppEnabledToOpenInApp =
+        licenseKey.isValid &&
+        matchedSupportedGoogleApp &&
+        config.get("googleApps.openInApp") &&
+        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
 
       if (
         (url.startsWith(GMAIL_URL) ||
           WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-          (supportedGoogleAppMatch && config.get("googleApps.openInApp") && licenseKey.isValid)) &&
+          isGoogleAppEnabledToOpenInApp) &&
         disposition !== "background-tab"
       ) {
-        if (supportedGoogleAppMatch) {
+        if (matchedSupportedGoogleApp) {
           const account = accounts.getAccount(this.accountId);
 
           if (!config.get("googleApps.openAppsInNewWindow") && account.instance.windows.size > 0) {
@@ -383,11 +394,9 @@ export class GoogleApp {
             });
           }
 
-          const googleApp = supportedGoogleAppMatch?.[1];
-
           let powerSaveBlockerId: number | undefined;
 
-          if (googleApp === "meet") {
+          if (matchedSupportedGoogleApp === "meet") {
             powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
             globalShortcut.register("CommandOrControl+Shift+1", () => {
@@ -402,7 +411,7 @@ export class GoogleApp {
           newWindow.once("closed", () => {
             account.instance.windows.delete(newWindow);
 
-            if (googleApp === "meet") {
+            if (matchedSupportedGoogleApp === "meet") {
               globalShortcut.unregister("CommandOrControl+Shift+1");
               globalShortcut.unregister("CommandOrControl+Shift+2");
             }
@@ -461,7 +470,7 @@ export class GoogleApp {
       } else if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
         window.webContents.downloadURL(url);
       } else {
-        openExternalUrl(url, Boolean(supportedGoogleAppMatch));
+        openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
       }
 
       return {

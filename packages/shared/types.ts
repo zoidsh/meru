@@ -32,7 +32,7 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-export const googleAppsPinnedApps = {
+export const supportedGoogleApps = {
   calendar: "Calendar",
   chat: "Chat",
   classroom: "Classroom",
@@ -41,15 +41,42 @@ export const googleAppsPinnedApps = {
   drive: "Drive",
   forms: "Forms",
   gemini: "Gemini",
+  groups: "Groups",
   keep: "Keep",
   meet: "Meet",
+  myaccount: "My Account",
   notebooklm: "NotebookLM",
-  tasks: "Tasks",
   sheets: "Sheets",
+  sites: "Sites",
   slides: "Slides",
+  tasks: "Tasks",
+  voice: "Voice",
 } as const;
 
-export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
+export type SupportedGoogleApp = keyof typeof supportedGoogleApps;
+
+const googleAppsPinnedAppKeys = [
+  "calendar",
+  "chat",
+  "classroom",
+  "contacts",
+  "docs",
+  "drive",
+  "forms",
+  "gemini",
+  "keep",
+  "meet",
+  "notebooklm",
+  "sheets",
+  "slides",
+  "tasks",
+] as const satisfies readonly SupportedGoogleApp[];
+
+export type GoogleAppsPinnedApp = (typeof googleAppsPinnedAppKeys)[number];
+
+export const googleAppsPinnedApps = Object.fromEntries(
+  googleAppsPinnedAppKeys.map((key) => [key, supportedGoogleApps[key]]),
+) as Pick<typeof supportedGoogleApps, GoogleAppsPinnedApp>;
 
 type GmailHashLocation =
   | "inbox"
@@ -130,6 +157,7 @@ export type Config = {
   "window.restrictMinimumSize": boolean;
   "trial.expired": boolean;
   "googleApps.openInApp": boolean;
+  "googleApps.openInAppExcludedApps": SupportedGoogleApp[];
   "googleApps.openAppsInNewWindow": boolean;
   "googleApps.pinnedApps": GoogleAppsPinnedApp[];
   "googleApps.showAccountColor": boolean;

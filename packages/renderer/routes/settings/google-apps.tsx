@@ -7,8 +7,19 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
-import { type GoogleAppsPinnedApp, googleAppsPinnedApps } from "@meru/shared/types";
+import {
+  type GoogleAppsPinnedApp,
+  googleAppsPinnedApps,
+  type SupportedGoogleApp,
+  supportedGoogleApps,
+} from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import {
   Field,
   FieldContent,
@@ -18,7 +29,8 @@ import {
   FieldSeparator,
 } from "@meru/ui/components/field";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
-import { GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
+import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { GoogleAppIcon } from "@/components/google-app-icon";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -99,6 +111,23 @@ export function GoogleAppsSettings() {
     (app) => !pinnedApps.includes(app),
   );
 
+  const excludedApps = config["googleApps.openInAppExcludedApps"];
+
+  const excludedAppLabels = (Object.keys(supportedGoogleApps) as SupportedGoogleApp[])
+    .filter((app) => excludedApps.includes(app))
+    .map((app) => supportedGoogleApps[app]);
+
+  const visibleExcludedAppLabels = excludedAppLabels.slice(0, 3);
+
+  const remainingExcludedAppCount = excludedAppLabels.length - visibleExcludedAppLabels.length;
+
+  const excludedAppsSummary =
+    excludedAppLabels.length === 0
+      ? "None"
+      : remainingExcludedAppCount > 0
+        ? `${visibleExcludedAppLabels.join(", ")} +${remainingExcludedAppCount} excluded`
+        : visibleExcludedAppLabels.join(", ");
+
   return (
     <Settings>
       <SettingsHeader>
@@ -113,12 +142,60 @@ export function GoogleAppsSettings() {
             configKey="googleApps.openInApp"
             licenseKeyRequired
           />
-          <ConfigSwitchField
-            label="Always Open in New Window"
-            description="Always open Google Apps in a new window instead of reusing the same window if it is already open."
-            configKey="googleApps.openAppsInNewWindow"
-            licenseKeyRequired
-          />
+          {config["googleApps.openInApp"] && (
+            <>
+              <ConfigSwitchField
+                label="Always Open in New Window"
+                description="Always open Google Apps in a new window instead of reusing the same window if it is already open."
+                configKey="googleApps.openAppsInNewWindow"
+                licenseKeyRequired
+              />
+              <Field>
+                <FieldContent>
+                  <FieldLabel className="flex items-center gap-2">
+                    Excluded Apps
+                    {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
+                  </FieldLabel>
+                  <FieldDescription>
+                    Select which Google Apps should open in the external browser instead of the app.
+                  </FieldDescription>
+                </FieldContent>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    disabled={!isLicenseKeyValid}
+                    render={
+                      <Button variant="outline" className="justify-between font-normal">
+                        {isLicenseKeyValid ? excludedAppsSummary : "None"}
+                        <ChevronDownIcon className="opacity-50" />
+                      </Button>
+                    }
+                  />
+                  <DropdownMenuContent align="end">
+                    {(
+                      Object.entries(supportedGoogleApps) as Entries<typeof supportedGoogleApps>
+                    ).map(([app, label]) => (
+                      <DropdownMenuCheckboxItem
+                        key={app}
+                        checked={config["googleApps.openInAppExcludedApps"].includes(app)}
+                        closeOnClick={false}
+                        onCheckedChange={(checked) => {
+                          configMutation.mutate({
+                            "googleApps.openInAppExcludedApps": checked
+                              ? [...config["googleApps.openInAppExcludedApps"], app]
+                              : config["googleApps.openInAppExcludedApps"].filter(
+                                  (value) => value !== app,
+                                ),
+                          });
+                        }}
+                      >
+                        {label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Field>
+            </>
+          )}
           <FieldSeparator />
           <ConfigSwitchField
             label="Show Account Label"
