@@ -17,14 +17,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from "@meru/ui/components/item";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import { GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { GoogleAppIcon } from "@/components/google-app-icon";
@@ -66,11 +59,11 @@ function SortablePinnedAppItem({
       >
         <GripVerticalIcon />
       </Button>
-      <ItemMedia variant="icon">
-        <GoogleAppIcon app={app} className="size-3" />
-      </ItemMedia>
       <ItemContent>
-        <ItemTitle>{googleAppsPinnedApps[app]}</ItemTitle>
+        <ItemTitle>
+          <GoogleAppIcon app={app} className="size-3" />
+          {googleAppsPinnedApps[app]}
+        </ItemTitle>
       </ItemContent>
       <ItemActions>
         <Button
@@ -200,14 +193,14 @@ export function GoogleAppsSettings() {
               {availableApps.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <div className="text-xs font-medium text-muted-foreground">Available</div>
-                  <ItemGroup>
+                  <ItemGroup className="grid grid-cols-2">
                     {availableApps.map((app) => (
                       <Item key={app} variant="outline" size="xs">
-                        <ItemMedia variant="icon">
-                          <GoogleAppIcon app={app} className="size-3" />
-                        </ItemMedia>
                         <ItemContent>
-                          <ItemTitle>{googleAppsPinnedApps[app]}</ItemTitle>
+                          <ItemTitle>
+                            <GoogleAppIcon app={app} className="size-3" />
+                            {googleAppsPinnedApps[app]}
+                          </ItemTitle>
                         </ItemContent>
                         <ItemActions>
                           <Button
