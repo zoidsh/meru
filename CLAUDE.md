@@ -36,16 +36,45 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Add an empty line before `if` blocks when preceded by other statements.
 - Add an empty line before `return` statements when preceded by other statements.
 
-## Functions Inside Components
+## Functions
 
-- Never use `function` declarations inside a React component or another function. Always use `const` arrow functions:
+- Root-level functions (including React components) use `function` declarations.
+- Nested functions (inside a component or another function) use `const` arrow functions:
 
   ```ts
   // correct
-  const handleClick = () => { ... };
+  function MyComponent() {
+    const handleClick = () => { ... };
+
+    return <button onClick={handleClick} />;
+  }
 
   // wrong
-  function handleClick() { ... }
+  const MyComponent = () => {
+    function handleClick() { ... }
+
+    return <button onClick={handleClick} />;
+  };
+  ```
+
+## Dependencies
+
+- Install packages with `bun add <package>` (or `bun add -d <package>` for dev dependencies). Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
+
+## Inline Single-Use Values
+
+- Don't declare a variable (including a handler function) if it's only used once — inline it at the call site. Prop names like `onClick` or `onDragEnd` already describe what the function does.
+- Only extract a named variable when the logic is complex enough that a name meaningfully improves readability.
+
+  ```ts
+  // correct — inlined
+  <DndContext onDragEnd={(event) => {
+    // ...
+  }} />
+
+  // wrong — named but only used once
+  const handleDragEnd = (event) => { ... };
+  <DndContext onDragEnd={handleDragEnd} />
   ```
 
 ## UI Components
@@ -82,13 +111,14 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Do not add explicit return types unless necessary — rely on inference.
 
-## Linting
+## Linting and Formatting
 
 - Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
+- Do not run `bun run lint` or `bun run fmt:check` manually. The lefthook pre-commit hook runs `oxfmt` and `oxlint --fix` on staged files on every commit, so formatting and linting are enforced automatically.
 
 ## Type Checking
 
-- Always run `bun types:ci` after making code changes to verify there are no type errors.
+- Always run `bun types:ci` after making code changes to verify there are no type errors. (Type checks are NOT part of the pre-commit hook.)
 
 ## General
 
