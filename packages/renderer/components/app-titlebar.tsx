@@ -302,7 +302,7 @@ function PinnedGoogleApps() {
 
   return (
     <div className="flex gap-2 border-r pr-2 not-first:border-l not-first:pl-2">
-      {config["googleApps.pinnedApps"].sort().map((app) => (
+      {config["googleApps.pinnedApps"].map((app) => (
         <TitlebarIconButton
           key={app}
           onClick={() => {
