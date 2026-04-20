@@ -1,4 +1,4 @@
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext, PointerSensor, useSensor } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
@@ -61,7 +61,7 @@ function SortablePinnedAppItem({
       </Button>
       <ItemContent>
         <ItemTitle>
-          <GoogleAppIcon app={app} className="size-3" />
+          <GoogleAppIcon app={app} className="size-4" />
           {googleAppsPinnedApps[app]}
         </ItemTitle>
       </ItemContent>
@@ -87,7 +87,7 @@ export function GoogleAppsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const pointerSensor = useSensor(PointerSensor);
 
   if (!config) {
     return;
@@ -152,7 +152,7 @@ export function GoogleAppsSettings() {
                   </p>
                 ) : (
                   <DndContext
-                    sensors={sensors}
+                    sensors={[pointerSensor]}
                     collisionDetection={closestCenter}
                     onDragEnd={(event) => {
                       const { active, over } = event;
@@ -198,7 +198,7 @@ export function GoogleAppsSettings() {
                       <Item key={app} variant="outline" size="xs">
                         <ItemContent>
                           <ItemTitle>
-                            <GoogleAppIcon app={app} className="size-3" />
+                            <GoogleAppIcon app={app} className="size-4" />
                             {googleAppsPinnedApps[app]}
                           </ItemTitle>
                         </ItemContent>
