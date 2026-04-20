@@ -18,7 +18,7 @@ const NOTIFICATION_DELAY_MS = {
 
 type ReleaseNotes = UpdateDownloadedEvent["releaseNotes"];
 
-const flattenReleaseNotes = (releaseNotes: ReleaseNotes) => {
+function flattenReleaseNotes(releaseNotes: ReleaseNotes) {
   if (!releaseNotes) {
     return "";
   }
@@ -28,13 +28,13 @@ const flattenReleaseNotes = (releaseNotes: ReleaseNotes) => {
   }
 
   return releaseNotes.map((entry) => entry.note ?? "").join("\n");
-};
+}
 
-const isUrgentRelease = (releaseNotes: ReleaseNotes) => {
+function isUrgentRelease(releaseNotes: ReleaseNotes) {
   const text = flattenReleaseNotes(releaseNotes).toLowerCase();
 
   return URGENT_MARKERS.some((marker) => text.includes(marker));
-};
+}
 
 class AppUpdater {
   private pendingVersion: string | null = null;
