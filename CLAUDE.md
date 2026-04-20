@@ -127,3 +127,20 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## General
 
 - Follow the patterns and naming of the existing codebase. When in doubt, find a similar example in the codebase and match it exactly.
+
+## Release Notes
+
+- Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
+- Output the release notes in chat for pasting into the GitHub release — do not write them to a file in the repo.
+- Structure: use `## Added`, `## Changed`, `## Fixed`, `## Internal Changes` sections (in that order, omit unused ones). Skip `## Internal Changes` entirely when nothing affects end users (e.g. CI, CLAUDE.md, repo tooling).
+- Classify each change correctly:
+  - `Added` — new feature or capability
+  - `Changed` — intentional change to existing behavior, rename, or default
+  - `Fixed` — resolves a bug or unintended behavior (e.g. windows stacking awkwardly)
+- Write user-facing, not commit-facing. Describe what changed for the user, not the commit history or implementation. Merge multiple commits for one feature into a single bullet.
+- Lead with outcome, not mechanism. "New windows no longer stack on top of each other" beats "Added cascading window positioning". Avoid internal jargon like "patch-burst" or "debounce".
+- Prefix Pro-only features with `**Meru Pro:**`.
+- Skip changes that aren't user-observable given existing constraints (e.g. don't mention gating a feature behind Pro if free-tier limits already made it inaccessible).
+- Reference settings paths as `Settings... → Section → Option`.
+- Group related bullets next to each other (e.g. all Google Apps changes together).
+- Use sub-bullets for details: options list, defaults, keyboard shortcuts, behavior nuances. Always state the default for new options.
