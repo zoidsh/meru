@@ -80,16 +80,9 @@ class AppUpdater {
   }
 
   private handleUpdateDownloaded(updateInfo: UpdateDownloadedEvent) {
-    if (isUrgentRelease(updateInfo.releaseNotes)) {
-      this.clearPendingNotification();
-      this.notifyRenderer(updateInfo.version);
-
-      return;
-    }
-
     const delayMs = NOTIFICATION_DELAY_MS[config.get("updates.notificationDelay")];
 
-    if (delayMs === 0) {
+    if (delayMs === 0 || isUrgentRelease(updateInfo.releaseNotes)) {
       this.clearPendingNotification();
       this.notifyRenderer(updateInfo.version);
 
