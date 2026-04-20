@@ -87,6 +87,7 @@ export const config = new Store<Config>({
     "window.restrictMinimumSize": true,
     "trial.expired": false,
     "googleApps.openInApp": true,
+    "googleApps.openInAppExcludedApps": [],
     "googleApps.openAppsInNewWindow": false,
     "googleApps.pinnedApps": [],
     "googleApps.showAccountColor": true,

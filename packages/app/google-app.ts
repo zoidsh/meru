@@ -7,6 +7,8 @@ import {
   GMAIL_URL,
   isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
+import { googleAppsPinnedApps } from "@meru/shared/types";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import {
   BrowserWindow,
   dialog,
@@ -268,10 +270,22 @@ export class GoogleApp {
 
       const supportedGoogleAppMatch = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP);
 
+      const matchedGoogleApp = supportedGoogleAppMatch?.[1];
+
+      const isGoogleAppEnabledToOpenInApp =
+        supportedGoogleAppMatch &&
+        config.get("googleApps.openInApp") &&
+        licenseKey.isValid &&
+        (!matchedGoogleApp ||
+          !Object.hasOwn(googleAppsPinnedApps, matchedGoogleApp) ||
+          !config
+            .get("googleApps.openInAppExcludedApps")
+            .includes(matchedGoogleApp as GoogleAppsPinnedApp));
+
       if (
         (url.startsWith(GMAIL_URL) ||
           WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-          (supportedGoogleAppMatch && config.get("googleApps.openInApp") && licenseKey.isValid)) &&
+          isGoogleAppEnabledToOpenInApp) &&
         disposition !== "background-tab"
       ) {
         if (supportedGoogleAppMatch) {

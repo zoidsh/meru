@@ -130,6 +130,7 @@ export type Config = {
   "window.restrictMinimumSize": boolean;
   "trial.expired": boolean;
   "googleApps.openInApp": boolean;
+  "googleApps.openInAppExcludedApps": GoogleAppsPinnedApp[];
   "googleApps.openAppsInNewWindow": boolean;
   "googleApps.pinnedApps": GoogleAppsPinnedApp[];
   "googleApps.showAccountColor": boolean;
