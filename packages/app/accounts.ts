@@ -6,6 +6,7 @@ import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
 import { ipc } from "./ipc";
+import { platform } from "@electron-toolkit/utils";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -25,6 +26,14 @@ class Accounts {
       const account = new Account(accountConfig);
 
       this.instances.set(accountConfig.id, account);
+    }
+
+    if (!platform.isMacOS) {
+      config.onDidChange("spellchecker.languages", () => {
+        for (const account of accounts.instances.values()) {
+          account.setSpellCheckerLanguages();
+        }
+      });
     }
   }
 

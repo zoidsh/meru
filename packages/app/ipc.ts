@@ -11,6 +11,7 @@ import {
   type MenuItemConstructorOptions,
   nativeImage,
   nativeTheme,
+  session,
   shell,
 } from "electron";
 import { accounts } from "@/accounts";
@@ -204,6 +205,13 @@ class Ipc {
     });
 
     ipc.main.handle("config.getConfig", () => config.store);
+
+    ipc.main.handle(
+      "spellchecker.getAvailableLanguages",
+      () => session.defaultSession.availableSpellCheckerLanguages,
+    );
+
+    ipc.main.handle("spellchecker.getOsLocale", () => app.getLocale());
 
     ipc.main.handle("config.setConfig", (_event, keyValues) => {
       Object.entries(keyValues).forEach(([key, value]) => {

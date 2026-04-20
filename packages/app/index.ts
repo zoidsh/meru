@@ -14,6 +14,7 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
+import { spellchecker } from "./spellchecker";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
@@ -92,6 +93,8 @@ async function init() {
   }
 
   blocker.init();
+
+  spellchecker.init();
 
   accounts.init();
 

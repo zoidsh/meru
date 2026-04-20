@@ -103,6 +103,7 @@ export const config = new Store<Config>({
     "unifiedInbox.enabled": true,
     "unifiedInbox.showSenderIcons": true,
     "unifiedInbox.rowsPerPage": 10,
+    "spellchecker.languages": [],
   },
   migrations: {
     ">=3.4.0": (store) => {

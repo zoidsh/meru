@@ -4,6 +4,7 @@ import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
+  app,
   BrowserWindow,
   type IpcMainEvent,
   ipcMain,
@@ -15,6 +16,7 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
+import { licenseKey } from "./license-key";
 
 export class Account {
   session: Session;
@@ -34,6 +36,8 @@ export class Account {
 
     blocker.setupSession(this.session);
 
+    this.setSpellCheckerLanguages();
+
     this.gmail = new Gmail({
       accountId: accountConfig.id,
       session: this.session,
@@ -41,6 +45,22 @@ export class Account {
       unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
     });
+  }
+
+  setSpellCheckerLanguages() {
+    if (platform.isMacOS || !licenseKey.isValid) {
+      return;
+    }
+
+    const additionalLanguages = config.get("spellchecker.languages");
+
+    if (additionalLanguages.length === 0) {
+      return;
+    }
+
+    const osLocale = app.getLocale();
+
+    this.session.setSpellCheckerLanguages([osLocale, ...additionalLanguages]);
   }
 
   private setCustomUserAgent() {
