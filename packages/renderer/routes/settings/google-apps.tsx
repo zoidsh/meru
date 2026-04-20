@@ -43,8 +43,8 @@ export function GoogleAppsSettings() {
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Open Google Apps in New Window"
-            description="Open Google Apps in a new window instead of reusing the same window if it is already open."
+            label="Always Open in New Window"
+            description="Always open Google Apps in a new window instead of reusing the same window if it is already open."
             configKey="googleApps.openAppsInNewWindow"
             licenseKeyRequired
           />
