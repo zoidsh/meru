@@ -32,7 +32,7 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-export const googleAppsPinnedApps = {
+export const supportedGoogleApps = {
   calendar: "Calendar",
   chat: "Chat",
   classroom: "Classroom",
@@ -47,12 +47,6 @@ export const googleAppsPinnedApps = {
   tasks: "Tasks",
   sheets: "Sheets",
   slides: "Slides",
-} as const;
-
-export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
-
-export const supportedGoogleApps = {
-  ...googleAppsPinnedApps,
   groups: "Groups",
   myaccount: "My Account",
   sites: "Sites",
@@ -60,6 +54,25 @@ export const supportedGoogleApps = {
 } as const;
 
 export type SupportedGoogleApp = keyof typeof supportedGoogleApps;
+
+export const googleAppsPinnedApps = {
+  calendar: supportedGoogleApps.calendar,
+  chat: supportedGoogleApps.chat,
+  classroom: supportedGoogleApps.classroom,
+  contacts: supportedGoogleApps.contacts,
+  docs: supportedGoogleApps.docs,
+  drive: supportedGoogleApps.drive,
+  forms: supportedGoogleApps.forms,
+  gemini: supportedGoogleApps.gemini,
+  keep: supportedGoogleApps.keep,
+  meet: supportedGoogleApps.meet,
+  notebooklm: supportedGoogleApps.notebooklm,
+  tasks: supportedGoogleApps.tasks,
+  sheets: supportedGoogleApps.sheets,
+  slides: supportedGoogleApps.slides,
+} as const;
+
+export type GoogleAppsPinnedApp = keyof typeof googleAppsPinnedApps;
 
 type GmailHashLocation =
   | "inbox"
