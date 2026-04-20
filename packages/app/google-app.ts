@@ -422,15 +422,13 @@ export class GoogleApp {
         };
 
         if (isGmailComposeWindowUrl(url)) {
-          const composeBounds = getCascadedWindowBounds({ width: 800, height: 600 });
-
           return {
             action: "allow",
             createWindow: (inheritedOptions) => {
               const newWindow = new BrowserWindow({
                 ...inheritedOptions,
                 ...newWindowOptions,
-                ...composeBounds,
+                ...getCascadedWindowBounds({ width: 800, height: 600 }),
                 webPreferences: {
                   ...inheritedOptions.webPreferences,
                   ...newWindowOptions.webPreferences,
