@@ -61,6 +61,22 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Install packages with `bun add <package>` (or `bun add -d <package>` for dev dependencies). Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
 
+## Inline Single-Use Values
+
+- Don't declare a variable (including a handler function) if it's only used once — inline it at the call site. Prop names like `onClick` or `onDragEnd` already describe what the function does.
+- Only extract a named variable when the logic is complex enough that a name meaningfully improves readability.
+
+  ```ts
+  // correct — inlined
+  <DndContext onDragEnd={(event) => {
+    // ...
+  }} />
+
+  // wrong — named but only used once
+  const handleDragEnd = (event) => { ... };
+  <DndContext onDragEnd={handleDragEnd} />
+  ```
+
 ## UI Components
 
 - Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components (e.g. `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`). Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.

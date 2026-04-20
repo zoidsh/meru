@@ -1,11 +1,4 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
+import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
@@ -113,21 +106,6 @@ export function GoogleAppsSettings() {
     (app) => !pinnedApps.includes(app),
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = pinnedApps.indexOf(active.id as GoogleAppsPinnedApp);
-    const newIndex = pinnedApps.indexOf(over.id as GoogleAppsPinnedApp);
-
-    configMutation.mutate({
-      "googleApps.pinnedApps": arrayMove(pinnedApps, oldIndex, newIndex),
-    });
-  };
-
   return (
     <Settings>
       <SettingsHeader>
@@ -183,7 +161,20 @@ export function GoogleAppsSettings() {
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
+                    onDragEnd={(event) => {
+                      const { active, over } = event;
+
+                      if (!over || active.id === over.id) {
+                        return;
+                      }
+
+                      const oldIndex = pinnedApps.indexOf(active.id as GoogleAppsPinnedApp);
+                      const newIndex = pinnedApps.indexOf(over.id as GoogleAppsPinnedApp);
+
+                      configMutation.mutate({
+                        "googleApps.pinnedApps": arrayMove(pinnedApps, oldIndex, newIndex),
+                      });
+                    }}
                   >
                     <SortableContext items={pinnedApps} strategy={verticalListSortingStrategy}>
                       <ItemGroup>
