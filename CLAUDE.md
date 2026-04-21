@@ -61,11 +61,12 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Name boolean-returning functions with the bare predicate prefix — `is`, `has`, `can`, `should`, `did`, `will` — matching Node.js, Lodash, React, and typescript-eslint's `naming-convention` rule (e.g. `isMacOSDoNotDisturbActive`, `hasUnreadMessages`, `canEdit`). Don't prefix with `get` to dodge a variable-name collision. Avoid the collision one of these ways instead:
   - Inline single-use calls — `if (!isMacOSDoNotDisturbActive()) { ... }` needs no local.
   - If a local is needed, name it for its purpose rather than mirroring the function — `const shouldSuppressSound = isMacOSDoNotDisturbActive();`.
-  - Inside the defining module, name the internal cache `cached<FullFunctionName>` — e.g. `cachedIsLinuxWindowControlsEnabled` caches `isLinuxWindowControlsEnabled()`, `cachedIsMacOSDoNotDisturbActive` caches `isMacOSDoNotDisturbActive()`. Don't abbreviate (`cachedWindowControlsEnabled`) or go generic (`cachedValue`) — mirroring the full function name keeps the cache obviously tied to its producer.
+  - Inside the defining module, name the internal cache `cached<FullFunctionName>` — e.g. `cachedIsLinuxWindowControlsEnabled` caches `isLinuxWindowControlsEnabled()`. Don't abbreviate (`cachedWindowControlsEnabled`) or go generic (`cachedValue`) — mirroring the full function name keeps the cache obviously tied to its producer. Exception: when the file/directory path already scopes the context (e.g. `lib/macos/do-not-disturb.ts`), the cache can drop the redundant qualifier — `cachedIsActive` is fine there because the path disambiguates.
 
 ## File Naming
 
 - Name files by the domain/topic they cover, not by the single function they currently contain. Prefer generic, higher-level names (`macos.ts`, `linux.ts`) over function-specific ones (`macos-dnd.ts`, `linux-window-controls.ts`) so related helpers can accrete into the same file over time instead of each living in its own tiny file. Only split when a file grows large enough that the current topic is clearly two topics.
+- When a platform/domain namespace would host more than one topic, use a nested directory (`lib/macos/do-not-disturb.ts`, `lib/macos/screen-lock.ts`) rather than a flat file with every internal identifier prefixed by the shared qualifier. The directory carries the namespace; the file carries the topic; variables inside stay short.
 
 ## Dependencies
 

@@ -2,7 +2,7 @@ import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
-import { isMacOSDoNotDisturbActive } from "./lib/macos";
+import { isMacOSDoNotDisturbActive } from "./lib/macos/do-not-disturb";
 import { checkWithinNotificationTimes } from "./lib/notification-times";
 import { main } from "./main";
 
