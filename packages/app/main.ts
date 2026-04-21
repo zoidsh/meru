@@ -4,7 +4,7 @@ import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { app, BrowserWindow, nativeTheme, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
-import { getIsLinuxWindowControlsEnabled } from "@/lib/linux";
+import { isLinuxWindowControlsEnabled } from "@/lib/linux";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -74,7 +74,7 @@ class Main {
   }
 
   async updateTitlebarOverlay() {
-    if (!platform.isLinux || (await getIsLinuxWindowControlsEnabled())) {
+    if (!platform.isLinux || (await isLinuxWindowControlsEnabled())) {
       this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
     }
   }
@@ -101,7 +101,7 @@ class Main {
       show: false,
       titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
       titleBarOverlay:
-        !platform.isLinux || (await getIsLinuxWindowControlsEnabled())
+        !platform.isLinux || (await isLinuxWindowControlsEnabled())
           ? this.getTitlebarOverlayOptions()
           : false,
       darkTheme: nativeTheme.shouldUseDarkColors,
