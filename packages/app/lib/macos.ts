@@ -8,22 +8,23 @@ const ASSERTIONS_PATH = join(homedir(), "Library", "DoNotDisturb", "DB", "Assert
 
 const CACHE_TTL_MS = 5_000;
 
-let cachedDoNotDisturbActive = false;
+let cachedIsMacOSDoNotDisturbActive = false;
 let cachedAt = 0;
 let hasWarnedOnParseFailure = false;
 
 function readDoNotDisturbState() {
-  const raw = readFileSync(ASSERTIONS_PATH, "utf8");
-  const parsed = JSON.parse(raw);
+  const assertionsFileContents = readFileSync(ASSERTIONS_PATH, "utf8");
+  const assertionsData = JSON.parse(assertionsFileContents);
 
-  const storeAssertionRecords = parsed?.data?.[0]?.storeAssertionRecords;
+  const storeAssertionRecords = assertionsData?.data?.[0]?.storeAssertionRecords;
 
   if (!Array.isArray(storeAssertionRecords)) {
     return false;
   }
 
   return storeAssertionRecords.some(
-    (record) => typeof record?.assertionDetails?.assertionDetailsModeIdentifier === "string",
+    (assertionRecord) =>
+      typeof assertionRecord?.assertionDetails?.assertionDetailsModeIdentifier === "string",
   );
 }
 
@@ -35,11 +36,11 @@ export function isMacOSDoNotDisturbActive() {
   const now = Date.now();
 
   if (now - cachedAt < CACHE_TTL_MS) {
-    return cachedDoNotDisturbActive;
+    return cachedIsMacOSDoNotDisturbActive;
   }
 
   try {
-    cachedDoNotDisturbActive = readDoNotDisturbState();
+    cachedIsMacOSDoNotDisturbActive = readDoNotDisturbState();
   } catch (error) {
     // File missing (no Focus ever configured) is expected — stay silent.
     // Unexpected parse/schema errors are worth a one-time warning, but we
@@ -54,10 +55,10 @@ export function isMacOSDoNotDisturbActive() {
       log.warn("Failed to read macOS Do Not Disturb state:", error);
     }
 
-    cachedDoNotDisturbActive = false;
+    cachedIsMacOSDoNotDisturbActive = false;
   }
 
   cachedAt = now;
 
-  return cachedDoNotDisturbActive;
+  return cachedIsMacOSDoNotDisturbActive;
 }

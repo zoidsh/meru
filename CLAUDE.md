@@ -17,6 +17,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   - `startMinutes`/`endMinutes` not `s`/`e`
   - `aStart`/`aEnd`/`bStart`/`bEnd` not `aS`/`aE`/`bS`/`bE`
   - `event` not `e`, `error` not `err`, `index` not `i` (unless in a for loop counter)
+- Avoid generic/contextless names even when they're full words — pick a name that carries the domain. `raw`, `data`, `parsed`, `record`, `result`, `value`, `item`, `obj`, `tmp` are all red flags on their own. Prefer `assertionsFileContents` over `raw`, `assertionsData` over `parsed`, `assertionRecord` over `record`, `gtkDecorationLayout` over `data`. This lets a reader understand a line without tracing back to where the value came from.
 
 ## Code Formatting
 
@@ -60,7 +61,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Name boolean-returning functions with the bare predicate prefix — `is`, `has`, `can`, `should`, `did`, `will` — matching Node.js, Lodash, React, and typescript-eslint's `naming-convention` rule (e.g. `isMacOSDoNotDisturbActive`, `hasUnreadMessages`, `canEdit`). Don't prefix with `get` to dodge a variable-name collision. Avoid the collision one of these ways instead:
   - Inline single-use calls — `if (!isMacOSDoNotDisturbActive()) { ... }` needs no local.
   - If a local is needed, name it for its purpose rather than mirroring the function — `const shouldSuppressSound = isMacOSDoNotDisturbActive();`.
-  - Inside the defining module, prefix the internal cache with `cached` and describe what's cached (e.g. `cachedDoNotDisturbActive`, `cachedWindowControlsEnabled`) — not generic like `cachedValue` — so the exported function owns the predicate name and the cache is self-documenting.
+  - Inside the defining module, name the internal cache `cached<FullFunctionName>` — e.g. `cachedIsLinuxWindowControlsEnabled` caches `isLinuxWindowControlsEnabled()`, `cachedIsMacOSDoNotDisturbActive` caches `isMacOSDoNotDisturbActive()`. Don't abbreviate (`cachedWindowControlsEnabled`) or go generic (`cachedValue`) — mirroring the full function name keeps the cache obviously tied to its producer.
 
 ## File Naming
 
