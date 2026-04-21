@@ -28,7 +28,7 @@ import { appUpdater } from "./updater";
 import { downloads } from "./downloads";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
-import log from "electron-log";
+import { log } from "./lib/log";
 
 class Ipc {
   main = new IpcListener<IpcMainEvents>();

@@ -1,10 +1,10 @@
 import { is } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
 import type { UpdateDownloadedEvent } from "electron-updater";
-import log from "electron-log";
 import { autoUpdater } from "electron-updater";
 import { config } from "@/config";
 import { ipc } from "./ipc";
+import { log } from "./lib/log";
 import { main } from "./main";
 import { appState } from "./state";
 

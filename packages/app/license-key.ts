@@ -2,9 +2,9 @@ import { app, dialog, type MessageBoxOptions } from "electron";
 import { machineId } from "node-machine-id";
 import { config } from "@/config";
 import { apiClient, apiFallbackClient } from "./api-client";
+import { log } from "./lib/log";
 import { openExternalUrl } from "./url";
 import isOnline from "is-online";
-import log from "electron-log";
 import { serializeError } from "serialize-error";
 
 class LicenseKey {

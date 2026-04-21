@@ -11,11 +11,11 @@ import {
   nativeImage,
   shell,
 } from "electron";
-import log from "electron-log";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
 import { ipc } from "@/ipc";
+import { log } from "@/lib/log";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";

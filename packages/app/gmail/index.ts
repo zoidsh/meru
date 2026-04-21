@@ -23,12 +23,12 @@ import { main } from "@/main";
 import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
+import { log } from "@/lib/log";
 import { getCascadedWindowBounds } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
 import { ms } from "@meru/shared/ms";
-import log from "electron-log";
 import { wait } from "@meru/shared/utils";
 
 export const GMAIL_USER_STYLES_PATH = path.join(app.getPath("userData"), "gmail-user-styles.css");
