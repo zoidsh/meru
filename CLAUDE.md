@@ -66,7 +66,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## File Naming
 
 - Name files by the domain/topic they cover, not by the single function they currently contain. Prefer generic, higher-level names (`macos.ts`, `linux.ts`) over function-specific ones (`macos-dnd.ts`, `linux-window-controls.ts`) so related helpers can accrete into the same file over time instead of each living in its own tiny file. Only split when a file grows large enough that the current topic is clearly two topics.
-- When a platform/domain namespace would host more than one topic, use a nested directory (`lib/macos/do-not-disturb.ts`, `lib/macos/screen-lock.ts`) rather than a flat file with every internal identifier prefixed by the shared qualifier. The directory carries the namespace; the file carries the topic; variables inside stay short.
+- If the internal identifiers in a flat file would otherwise need to carry a topic qualifier (e.g. `lib/macos.ts` forcing `cachedIsMacOSDoNotDisturbActive`, `doNotDisturbAssertionsPath`, `doNotDisturbCacheTtl`, `hasWarnedOnDoNotDisturbParseFailure`), move the file into a nested directory whose path carries the qualifier instead — `lib/macos/do-not-disturb.ts` — so internals stay short (`cachedIsActive`, `ASSERTIONS_PATH`, `CACHE_TTL`, `hasWarnedOnParseFailure`). The directory carries the namespace; the file carries the topic; creating a new file is cheaper than prefixing every variable.
 
 ## Dependencies
 
