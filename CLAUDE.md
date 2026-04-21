@@ -57,6 +57,24 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   };
   ```
 
+- Prefix boolean-returning query functions with `get` (e.g. `getIsMacOSDoNotDisturbActive`, `getIsLinuxWindowControlsEnabled`) rather than using the bare predicate form (`isMacOSDoNotDisturbActive`). This frees the predicate name for the local variable holding the result and avoids a function/variable name collision at the call site:
+
+  ```ts
+  // correct
+  const isMacOSDoNotDisturbActive = getIsMacOSDoNotDisturbActive();
+
+  if (!isMacOSDoNotDisturbActive) {
+    playSound();
+  }
+
+  // wrong — function name collides with the natural variable name
+  const dndActive = isMacOSDoNotDisturbActive();
+  ```
+
+## File Naming
+
+- Name files by the domain/topic they cover, not by the single function they currently contain. Prefer generic, higher-level names (`macos.ts`, `linux.ts`) over function-specific ones (`macos-dnd.ts`, `linux-window-controls.ts`) so related helpers can accrete into the same file over time instead of each living in its own tiny file. Only split when a file grows large enough that the current topic is clearly two topics.
+
 ## Dependencies
 
 - Install packages with `bun add <package>` (or `bun add -d <package>` for dev dependencies). Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
