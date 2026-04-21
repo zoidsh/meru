@@ -1,3 +1,4 @@
+import { I18nProvider } from "@meru/i18n/provider";
 import { TooltipProvider } from "@meru/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Router } from "wouter";
@@ -16,14 +17,16 @@ export function App() {
   useHotkeys("esc", () => window.close());
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router hook={useHashLocation}>
-          <Route path="/desktop-sources" component={DesktopSources} />
-          <Route path="/recent-download-history" component={RecentDownloadHistory} />
-        </Router>
-        <Toaster theme={theme} />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Router hook={useHashLocation}>
+            <Route path="/desktop-sources" component={DesktopSources} />
+            <Route path="/recent-download-history" component={RecentDownloadHistory} />
+          </Router>
+          <Toaster theme={theme} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }

@@ -48,7 +48,7 @@ describe("locale metadata", () => {
   });
 });
 
-const collectKeys = (value: unknown, prefix = ""): string[] => {
+function collectKeys(value: unknown, prefix = ""): string[] {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return [prefix];
   }
@@ -61,7 +61,7 @@ const collectKeys = (value: unknown, prefix = ""): string[] => {
   }
 
   return keys;
-};
+}
 
 describe("locale structural parity", () => {
   const baseKeys = collectKeys(en).sort();

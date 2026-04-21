@@ -1,3 +1,4 @@
+import { I18nProvider } from "@meru/i18n/provider";
 import { Toaster } from "@meru/ui/components/sonner";
 import { TooltipProvider } from "@meru/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,31 +17,33 @@ export function App() {
   useMouseAccountSwitching();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router hook={useHashLocation}>
-          <Switch>
-            <Route path="/unified-inbox">
-              <div className="h-screen flex flex-col">
-                <AppTitlebar />
-                <div className="flex-1 flex overflow-hidden">
-                  <AppMain />
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Router hook={useHashLocation}>
+            <Switch>
+              <Route path="/unified-inbox">
+                <div className="h-screen flex flex-col">
+                  <AppTitlebar />
+                  <div className="flex-1 flex overflow-hidden">
+                    <AppMain />
+                  </div>
                 </div>
-              </div>
-            </Route>
-            <Route>
-              <div className="h-screen flex flex-col">
-                <AppTitlebar />
-                <div className="flex-1 flex overflow-hidden">
-                  <AppSidebar />
-                  <AppMain />
+              </Route>
+              <Route>
+                <div className="h-screen flex flex-col">
+                  <AppTitlebar />
+                  <div className="flex-1 flex overflow-hidden">
+                    <AppSidebar />
+                    <AppMain />
+                  </div>
                 </div>
-              </div>
-              <Toaster theme={theme} />
-            </Route>
-          </Switch>
-        </Router>
-      </TooltipProvider>
-    </QueryClientProvider>
+                <Toaster theme={theme} />
+              </Route>
+            </Switch>
+          </Router>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }
