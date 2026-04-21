@@ -27,3 +27,7 @@ export function getCascadedWindowBounds({ width, height }: { width: number; heig
 
   return { x, y, width, height };
 }
+
+export function getSenderBrowserWindow(event: Electron.IpcMainEvent) {
+  return BrowserWindow.fromWebContents(event.sender);
+}

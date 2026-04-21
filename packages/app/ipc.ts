@@ -5,6 +5,7 @@ import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
   BrowserWindow,
+  clipboard,
   desktopCapturer,
   dialog,
   Menu,
@@ -29,6 +30,8 @@ import { downloads } from "./downloads";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
 import { log } from "./lib/log";
+import { getSenderBrowserWindow } from "./lib/window";
+import { openExternalUrl } from "./url";
 
 class Ipc {
   main = new IpcListener<IpcMainEvents>();
@@ -94,6 +97,56 @@ class Ipc {
         .instance.gmail.view.webContents.navigationHistory[
           action === "back" ? "goBack" : "goForward"
         ]();
+    });
+
+    this.main.on("googleApp.goBack", (event) => {
+      const window = getSenderBrowserWindow(event);
+
+      if (!window) {
+        return;
+      }
+
+      window.webContents.navigationHistory.goBack();
+    });
+
+    this.main.on("googleApp.goForward", (event) => {
+      const window = getSenderBrowserWindow(event);
+
+      if (!window) {
+        return;
+      }
+
+      window.webContents.navigationHistory.goForward();
+    });
+
+    this.main.on("googleApp.reload", (event) => {
+      const window = getSenderBrowserWindow(event);
+
+      if (!window) {
+        return;
+      }
+
+      window.webContents.reload();
+    });
+
+    this.main.on("googleApp.copyUrl", (event) => {
+      const window = getSenderBrowserWindow(event);
+
+      if (!window) {
+        return;
+      }
+
+      clipboard.writeText(window.webContents.getURL());
+    });
+
+    this.main.on("googleApp.openInDefaultBrowser", (event) => {
+      const window = getSenderBrowserWindow(event);
+
+      if (!window) {
+        return;
+      }
+
+      openExternalUrl(window.webContents.getURL());
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {

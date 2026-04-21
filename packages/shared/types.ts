@@ -206,6 +206,11 @@ export type IpcMainEvents =
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
       "googleApps.openApp": [app: GoogleAppsPinnedApp];
+      "googleApp.goBack": [];
+      "googleApp.goForward": [];
+      "googleApp.reload": [];
+      "googleApp.copyUrl": [];
+      "googleApp.openInDefaultBrowser": [];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
