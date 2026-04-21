@@ -59,7 +59,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 ## Dependencies
 
-- Install packages with `bun add <package>` (or `bun add -d <package>` for dev dependencies). Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
+- Always install packages as dev dependencies with `bun add -d <package>`. Rolldown/Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly. Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
 
 ## Inline Single-Use Values
 
