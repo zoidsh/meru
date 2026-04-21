@@ -57,19 +57,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   };
   ```
 
-- Prefix boolean-returning query functions with `get` (e.g. `getIsMacOSDoNotDisturbActive`, `getIsLinuxWindowControlsEnabled`) rather than using the bare predicate form (`isMacOSDoNotDisturbActive`). This frees the predicate name for the local variable holding the result and avoids a function/variable name collision at the call site:
-
-  ```ts
-  // correct
-  const isMacOSDoNotDisturbActive = getIsMacOSDoNotDisturbActive();
-
-  if (!isMacOSDoNotDisturbActive) {
-    playSound();
-  }
-
-  // wrong — function name collides with the natural variable name
-  const dndActive = isMacOSDoNotDisturbActive();
-  ```
+- Name boolean-returning functions with the bare predicate prefix — `is`, `has`, `can`, `should`, `did`, `will` — matching Node.js, Lodash, React, and typescript-eslint's `naming-convention` rule (e.g. `isMacOSDoNotDisturbActive`, `hasUnreadMessages`, `canEdit`). Don't prefix with `get` to dodge a variable-name collision. Avoid the collision one of these ways instead:
+  - Inline single-use calls — `if (!isMacOSDoNotDisturbActive()) { ... }` needs no local.
+  - If a local is needed, name it for its purpose rather than mirroring the function — `const shouldSuppressSound = isMacOSDoNotDisturbActive();`.
+  - Inside the defining module, name the internal cache `cachedValue` (or similar) instead of the predicate form, so the exported function owns the predicate name.
 
 ## File Naming
 

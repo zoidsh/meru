@@ -26,7 +26,7 @@ function readDoNotDisturbState() {
   );
 }
 
-export function getIsMacOSDoNotDisturbActive() {
+export function isMacOSDoNotDisturbActive() {
   if (!platform.isMacOS) {
     return false;
   }
