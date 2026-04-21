@@ -326,6 +326,14 @@ class Ipc {
       shell.openPath(GMAIL_USER_STYLES_PATH);
     });
 
+    ipc.main.on("gmail.openUserStylesInFolder", () => {
+      if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
+        fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));
+      }
+
+      shell.showItemInFolder(GMAIL_USER_STYLES_PATH);
+    });
+
     ipc.main.handle("license.getDeviceInfo", () => licenseKey.getDeviceInfo());
 
     ipc.main.handle("license.updateDeviceInfo", (_event, input) =>

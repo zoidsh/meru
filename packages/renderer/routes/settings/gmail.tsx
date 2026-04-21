@@ -223,7 +223,7 @@ export function GmailSettings() {
                   required after making changes.
                 </FieldDescription>
               </FieldContent>
-              <div>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -232,6 +232,15 @@ export function GmailSettings() {
                   disabled={!isLicenseKeyValid}
                 >
                   Open in Editor
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    ipc.main.send("gmail.openUserStylesInFolder");
+                  }}
+                  disabled={!isLicenseKeyValid}
+                >
+                  Open in Folder
                 </Button>
               </div>
             </Field>
