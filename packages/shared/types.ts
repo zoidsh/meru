@@ -190,7 +190,7 @@ export type IpcMainEvents =
       "gmail.unreadCountChanged": [unreadCountString: string];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
-      "gmail.openUserStylesInEditor": [];
+      "gmail.openUserStyles": [openIn: "editor" | "folder"];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];

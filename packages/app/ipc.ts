@@ -318,12 +318,16 @@ class Ipc {
       menu.popup();
     });
 
-    ipc.main.on("gmail.openUserStylesInEditor", () => {
+    ipc.main.on("gmail.openUserStyles", (_event, openIn) => {
       if (!fs.existsSync(GMAIL_USER_STYLES_PATH)) {
         fs.closeSync(fs.openSync(GMAIL_USER_STYLES_PATH, "w"));
       }
 
-      shell.openPath(GMAIL_USER_STYLES_PATH);
+      if (openIn === "editor") {
+        shell.openPath(GMAIL_USER_STYLES_PATH);
+      } else {
+        shell.showItemInFolder(GMAIL_USER_STYLES_PATH);
+      }
     });
 
     ipc.main.handle("license.getDeviceInfo", () => licenseKey.getDeviceInfo());
