@@ -2,12 +2,13 @@ import { platform } from "@electron-toolkit/utils";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { log } from "./log";
 
-const ASSERTIONS_PATH = join(homedir(), "Library/DoNotDisturb/DB/Assertions.json");
+const ASSERTIONS_PATH = join(homedir(), "Library", "DoNotDisturb", "DB", "Assertions.json");
 
 const CACHE_TTL_MS = 5_000;
 
-let cachedValue = false;
+let cachedDoNotDisturbActive = false;
 let cachedAt = 0;
 let hasWarnedOnParseFailure = false;
 
@@ -34,11 +35,11 @@ export function isMacOSDoNotDisturbActive() {
   const now = Date.now();
 
   if (now - cachedAt < CACHE_TTL_MS) {
-    return cachedValue;
+    return cachedDoNotDisturbActive;
   }
 
   try {
-    cachedValue = readDoNotDisturbState();
+    cachedDoNotDisturbActive = readDoNotDisturbState();
   } catch (error) {
     // File missing (no Focus ever configured) is expected — stay silent.
     // Unexpected parse/schema errors are worth a one-time warning, but we
@@ -50,13 +51,13 @@ export function isMacOSDoNotDisturbActive() {
     ) {
       hasWarnedOnParseFailure = true;
 
-      console.warn("Failed to read macOS Do Not Disturb state:", error);
+      log.warn("Failed to read macOS Do Not Disturb state:", error);
     }
 
-    cachedValue = false;
+    cachedDoNotDisturbActive = false;
   }
 
   cachedAt = now;
 
-  return cachedValue;
+  return cachedDoNotDisturbActive;
 }
