@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import {
   Field,
   FieldContent,
@@ -16,13 +17,9 @@ import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 
-const notificationDelayItems = [
-  { value: "next-day", label: "Next day (recommended)" },
-  { value: "few-hours", label: "After a few hours" },
-  { value: "immediate", label: "Immediately" },
-];
-
 export function UpdatesSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
   const configMutation = useConfigMutation();
 
@@ -30,30 +27,35 @@ export function UpdatesSettings() {
     return;
   }
 
+  const notificationDelayItems = [
+    { value: "next-day", label: t("settings.updates.delays.nextDay") },
+    { value: "few-hours", label: t("settings.updates.delays.fewHours") },
+    { value: "immediate", label: t("settings.updates.delays.immediate") },
+  ];
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Updates</SettingsTitle>
+        <SettingsTitle>{t("settings.updates.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>
           <ConfigSwitchField
-            label="Check For Updates Automatically"
-            description="Automatically check for updates periodically."
+            label={t("settings.updates.autoCheck")}
+            description={t("settings.updates.autoCheckDescription")}
             configKey="updates.autoCheck"
             restartRequired
           />
           <ConfigSwitchField
-            label="Notify When Updates Are Available"
-            description="Receive notifications when updates are available."
+            label={t("settings.updates.notify")}
+            description={t("settings.updates.notifyDescription")}
             configKey="updates.showNotifications"
           />
           <Field>
             <FieldContent>
-              <FieldLabel>Notification Delay</FieldLabel>
+              <FieldLabel>{t("settings.updates.notificationDelay")}</FieldLabel>
               <FieldDescription>
-                Batch rapid back-to-back releases into a single prompt. Urgent updates always notify
-                immediately.
+                {t("settings.updates.notificationDelayDescription")}
               </FieldDescription>
             </FieldContent>
             <Select
@@ -68,7 +70,7 @@ export function UpdatesSettings() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select when to notify" />
+                <SelectValue placeholder={t("settings.updates.selectNotifyWhen")} />
               </SelectTrigger>
               <SelectContent>
                 {notificationDelayItems.map(({ value, label }) => (

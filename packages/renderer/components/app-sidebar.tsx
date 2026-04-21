@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
@@ -25,7 +26,7 @@ import { useSettingsStore } from "@/lib/stores";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
-    label: "Download History",
+    labelKey: "downloadHistory",
     path: "/download-history",
     component: DownloadHistory,
   },
@@ -33,76 +34,76 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     type: "separator",
   },
   {
-    label: "Accounts",
+    labelKey: "accounts",
     path: "/settings/accounts",
     component: AccountsSettings,
   },
   {
-    label: "Appearance",
+    labelKey: "appearance",
     path: "/settings/appearance",
     component: AppearanceSettings,
   },
-  { label: "Blocker", path: "/settings/blocker", component: BlockerSettings },
+  { labelKey: "blocker", path: "/settings/blocker", component: BlockerSettings },
   {
-    label: "Downloads",
+    labelKey: "downloads",
     path: "/settings/downloads",
     component: DownloadsSettings,
   },
   {
-    label: "Gmail",
+    labelKey: "gmail",
     path: "/settings/gmail",
     component: GmailSettings,
   },
   {
-    label: "Google Apps",
+    labelKey: "googleApps",
     path: "/settings/google-apps",
     component: GoogleAppsSettings,
   },
   {
-    label: "Languages",
+    labelKey: "languages",
     path: "/settings/languages",
     component: LanguagesSettings,
     hidden: platform.isMacOS,
   },
   {
-    label: "Notifications",
+    labelKey: "notifications",
     path: "/settings/notifications",
     component: NotificationsSettings,
   },
   {
-    label: "Phishing Protection",
+    labelKey: "phishingProtection",
     path: "/settings/phishing-protection",
     component: PhishingProtectionSettings,
   },
   {
-    label: "Saved Searches",
+    labelKey: "savedSearches",
     path: "/settings/saved-searches",
     component: SavedSearchesSettings,
   },
   {
-    label: "Unified Inbox",
+    labelKey: "unifiedInbox",
     path: "/settings/unified-inbox",
     component: UnifiedInboxSettings,
   },
   {
-    label: "Updates",
+    labelKey: "updates",
     path: "/settings/updates",
     component: UpdatesSettings,
   },
   {
-    label: "Verification Codes",
+    labelKey: "verificationCodes",
     path: "/settings/verification-codes",
     component: VerificationCodesSettings,
   },
   {
-    label: "Advanced",
+    labelKey: "advanced",
     path: "/settings/advanced",
     component: AdvancedSettings,
   },
   { type: "separator" },
-  { label: "License", path: "/settings/license", component: LicenseSettings },
+  { labelKey: "license", path: "/settings/license", component: LicenseSettings },
   {
-    label: "What's New",
+    labelKey: "whatsNew",
     path: "/settings/version-history",
     component: VersionHistorySettings,
   },
@@ -111,7 +112,7 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
 type SidebarNavItemProps =
   | {
       type?: "item";
-      label: string;
+      labelKey: string;
       path: string;
       disabled?: boolean;
       hidden?: boolean;
@@ -119,7 +120,7 @@ type SidebarNavItemProps =
     }
   | {
       type: "separator";
-      label?: undefined;
+      labelKey?: undefined;
       path?: undefined;
       disabled?: undefined;
       hidden?: undefined;
@@ -127,6 +128,8 @@ type SidebarNavItemProps =
     };
 
 export function AppSidebar() {
+  const { t } = useTranslation();
+
   const [location, navigate] = useLocation();
 
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
@@ -141,7 +144,7 @@ export function AppSidebar() {
         <div className="space-y-2">
           {sidebarNavItems
             .filter((item) => !item.hidden)
-            .map(({ type, label, path }, index) => {
+            .map(({ type, labelKey, path }, index) => {
               if (type === "separator") {
                 // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
                 return <Separator key={index} />;
@@ -159,7 +162,7 @@ export function AppSidebar() {
                   })}
                   variant={location === path ? "secondary" : "ghost"}
                 >
-                  {label}
+                  {t(`sidebar.${labelKey}`)}
                 </Button>
               );
             })}

@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -15,6 +16,8 @@ import { useConfig } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 export function DownloadsSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   if (!config) {
@@ -24,27 +27,27 @@ export function DownloadsSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Downloads</SettingsTitle>
+        <SettingsTitle>{t("settings.downloads.title")}</SettingsTitle>
       </SettingsHeader>
       <FieldGroup>
         <FieldSet>
-          <FieldLegend>General</FieldLegend>
+          <FieldLegend>{t("settings.downloads.general")}</FieldLegend>
           <ConfigSwitchField
-            label="Show Save As Dialog Before Downloading"
-            description="Prompt for a location each time before a file is downloaded."
+            label={t("settings.downloads.saveAs")}
+            description={t("settings.downloads.saveAsDescription")}
             configKey="downloads.saveAs"
             restartRequired
           />
           <ConfigSwitchField
-            label="Open Folder When Done"
-            description="Automatically open the folder containing the downloaded file when the download is complete."
+            label={t("settings.downloads.openFolderWhenDone")}
+            description={t("settings.downloads.openFolderWhenDoneDescription")}
             configKey="downloads.openFolderWhenDone"
             restartRequired
           />
           <Field>
-            <FieldLabel>Default Download Location</FieldLabel>
+            <FieldLabel>{t("settings.downloads.defaultLocation")}</FieldLabel>
             <FieldDescription>
-              This is the default location where downloaded files are saved.
+              {t("settings.downloads.defaultLocationDescription")}
             </FieldDescription>
             <div className="flex gap-2">
               <Input value={config["downloads.location"]} readOnly />
@@ -58,7 +61,7 @@ export function DownloadsSettings() {
                   }
                 }}
               >
-                Change
+                {t("settings.downloads.change")}
               </Button>
             </div>
           </Field>

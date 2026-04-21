@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button, buttonVariants } from "@meru/ui/components/button";
@@ -38,6 +39,8 @@ function LicenseKeyForm({
 }: {
   onSubmit: (values: { licenseKey: z.infer<typeof licenseKeySchema>["licenseKey"] }) => void;
 }) {
+  const { t } = useTranslation();
+
   const form = useForm({
     defaultValues: {
       licenseKey: "",
@@ -64,7 +67,7 @@ function LicenseKeyForm({
           {(field) => {
             return (
               <Field>
-                <FieldLabel>License Key</FieldLabel>
+                <FieldLabel>{t("settings.license.licenseKey")}</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -72,7 +75,7 @@ function LicenseKeyForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
-                  placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
+                  placeholder={t("settings.license.licenseKeyPlaceholder")}
                 />
               </Field>
             );
@@ -80,7 +83,7 @@ function LicenseKeyForm({
         </form.Field>
       </FieldGroup>
       <div className="flex justify-end items-center">
-        <Button type="submit">Activate</Button>
+        <Button type="submit">{t("settings.license.activate")}</Button>
       </div>
     </form>
   );
@@ -95,16 +98,20 @@ function ActivateLicenseDialog({
   variant?: "activate" | "change";
   onOpenChange: (open: boolean) => void;
 } & Omit<ComponentProps<typeof Dialog>, "children" | "onOpenChange">) {
+  const { t } = useTranslation();
+
   return (
     <Dialog {...props}>
       {children}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{variant === "activate" ? "Activate" : "Change"} License Key</DialogTitle>
+          <DialogTitle>
+            {variant === "activate"
+              ? t("settings.license.activateLicenseKey")
+              : t("settings.license.changeLicenseKey")}
+          </DialogTitle>
         </DialogHeader>
-        <DialogDescription>
-          Please enter the license key you received at your email address after your purchase.
-        </DialogDescription>
+        <DialogDescription>{t("settings.license.enterKeyDescription")}</DialogDescription>
         <LicenseKeyForm
           onSubmit={async ({ licenseKey }) => {
             const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
@@ -120,16 +127,20 @@ function ActivateLicenseDialog({
 }
 
 function ActivateLicenseKeyButton() {
+  const { t } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <ActivateLicenseDialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button variant="outline">Activate</Button>} />
+      <DialogTrigger render={<Button variant="outline">{t("settings.license.activate")}</Button>} />
     </ActivateLicenseDialog>
   );
 }
 
 export function LicenseSettings() {
+  const { t } = useTranslation();
+
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
   const [isChangeLicenseDialogOpen, setIsChangeLicenseDialogOpen] = useState(false);
@@ -151,7 +162,7 @@ export function LicenseSettings() {
     },
     validators: {
       onSubmit: z.object({
-        label: z.string().min(1, "Device label is required"),
+        label: z.string().min(1, t("settings.license.deviceLabelRequired")),
       }),
     },
     onSubmit: async ({ value, formApi }) => {
@@ -163,7 +174,7 @@ export function LicenseSettings() {
 
       formApi.reset();
 
-      toast("Device label updated successfully");
+      toast(t("settings.license.deviceLabelUpdated"));
     },
   });
 
@@ -175,17 +186,14 @@ export function LicenseSettings() {
     if (config.licenseKey) {
       return (
         <div className="space-y-4">
-          <div className="text-sm">
-            You're using Meru Pro with professional features and for commercial use. Thank you for
-            supporting Meru!
-          </div>
+          <div className="text-sm">{t("settings.license.activeDescription")}</div>
           <div>
             <FieldGroup>
               <Field>
-                <FieldLabel>License Key</FieldLabel>
+                <FieldLabel>{t("settings.license.licenseKey")}</FieldLabel>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Click to reveal license key"
+                    placeholder={t("settings.license.clickToReveal")}
                     value={isLicenseKeyRevealed ? config.licenseKey : ""}
                     onFocus={() => {
                       setIsLicenseKeyRevealed(true);
@@ -209,18 +217,18 @@ export function LicenseSettings() {
                           if (config.licenseKey) {
                             navigator.clipboard.writeText(config.licenseKey);
 
-                            toast("Copied license key to clipboard");
+                            toast(t("settings.license.copiedToClipboard"));
                           }
                         }}
                       >
-                        Copy
+                        {t("settings.license.copy")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
                           setIsChangeLicenseDialogOpen(true);
                         }}
                       >
-                        Change
+                        {t("settings.license.change")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -245,7 +253,9 @@ export function LicenseSettings() {
 
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Device Label</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("settings.license.deviceLabel")}
+                        </FieldLabel>
                         <div className="flex gap-2 items-end">
                           <InputGroup>
                             <InputGroupInput
@@ -269,7 +279,7 @@ export function LicenseSettings() {
                             {([isPristine, isSubmitting]) => (
                               <Button variant="secondary" disabled={isPristine || isSubmitting}>
                                 {isSubmitting && <Spinner />}
-                                Save
+                                {t("settings.license.save")}
                               </Button>
                             )}
                           </deviceInfoForm.Subscribe>
@@ -290,11 +300,8 @@ export function LicenseSettings() {
       return (
         <>
           <div className="space-y-2 text-sm mb-4">
-            <div>
-              You're using a Meru Pro trial with {trialDaysLeft} day
-              {trialDaysLeft > 1 ? "s" : ""} left.
-            </div>
-            <div>Purchase Meru Pro before your trial ends to keep using all features.</div>
+            <div>{t("settings.license.trialDaysLeft", { count: trialDaysLeft })}</div>
+            <div>{t("settings.license.trialPurchaseReminder")}</div>
           </div>
           <div className="flex gap-4">
             <ActivateLicenseKeyButton />
@@ -304,7 +311,7 @@ export function LicenseSettings() {
               rel="noreferrer"
               className={buttonVariants()}
             >
-              Purchase
+              {t("settings.license.purchase")}
             </a>
           </div>
         </>
@@ -314,11 +321,8 @@ export function LicenseSettings() {
     return (
       <>
         <div className="space-y-2 text-sm mb-4">
-          <div>You're using the free version of Meru for personal use.</div>
-          <div>
-            Unlock Meru Pro for professional features and commercial use. Your upgrade supports
-            ongoing development.
-          </div>
+          <div>{t("settings.license.freeDescriptionLine1")}</div>
+          <div>{t("settings.license.freeDescriptionLine2")}</div>
         </div>
         <div className="flex gap-4">
           <ActivateLicenseKeyButton />
@@ -328,7 +332,7 @@ export function LicenseSettings() {
             rel="noreferrer"
             className={buttonVariants()}
           >
-            Purchase
+            {t("settings.license.purchase")}
           </a>
         </div>
       </>
@@ -338,7 +342,7 @@ export function LicenseSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>License</SettingsTitle>
+        <SettingsTitle>{t("settings.license.title")}</SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>

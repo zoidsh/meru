@@ -1,5 +1,6 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
+import { initI18n } from "@meru/i18n";
 import { app, session } from "electron";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
@@ -57,6 +58,8 @@ async function init() {
   if (platform.isWindows) {
     app.setAppUserModelId(APP_ID);
   }
+
+  initI18n();
 
   setMeruProtocolClient();
 

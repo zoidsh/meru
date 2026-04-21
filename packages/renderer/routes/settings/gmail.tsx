@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -25,17 +26,9 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
-const unreadCountPreferenceItems = [
-  { value: "first-section", label: "First Section Only" },
-  { value: "inbox", label: "Inbox Only" },
-];
-
-const inboxCategoriesToMonitorItems = [
-  { value: "primary", label: "Primary Only" },
-  { value: "all", label: "All Categories" },
-];
-
 export function GmailSettings() {
+  const { t } = useTranslation();
+
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   const { config } = useConfig();
@@ -46,25 +39,35 @@ export function GmailSettings() {
     return;
   }
 
+  const unreadCountPreferenceItems = [
+    { value: "first-section", label: t("settings.gmail.unreadCountPreferences.firstSection") },
+    { value: "inbox", label: t("settings.gmail.unreadCountPreferences.inbox") },
+  ];
+
+  const inboxCategoriesToMonitorItems = [
+    { value: "primary", label: t("settings.gmail.inboxCategories.primary") },
+    { value: "all", label: t("settings.gmail.inboxCategories.all") },
+  ];
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Gmail</SettingsTitle>
+        <SettingsTitle>{t("settings.gmail.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>General</FieldLegend>
+            <FieldLegend>{t("settings.gmail.general")}</FieldLegend>
             <ConfigSwitchField
-              label="Hide Gmail Logo"
-              description="Hides the Gmail logo on the top left corner."
+              label={t("settings.gmail.hideGmailLogo")}
+              description={t("settings.gmail.hideGmailLogoDescription")}
               configKey="gmail.hideGmailLogo"
               restartRequired
             />
             <ConfigSwitchField
-              label="Hide Out of Office Banner"
-              description="Hides the out of office banner at the top of the window."
+              label={t("settings.gmail.hideOutOfOffice")}
+              description={t("settings.gmail.hideOutOfOfficeDescription")}
               configKey="gmail.hideOutOfOfficeBanner"
               restartRequired
               licenseKeyRequired
@@ -72,17 +75,17 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Compose</FieldLegend>
+            <FieldLegend>{t("settings.gmail.compose")}</FieldLegend>
             <ConfigSwitchField
-              label="Always Compose New Emails in New Window"
-              description="Opens a new window for composing emails instead of inside Gmail."
+              label={t("settings.gmail.composeInNewWindow")}
+              description={t("settings.gmail.composeInNewWindowDescription")}
               configKey="gmail.openComposeInNewWindow"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Close Compose Window After Send"
-              description="Automatically closes the compose window after pressing the send button."
+              label={t("settings.gmail.closeComposeAfterSend")}
+              description={t("settings.gmail.closeComposeAfterSendDescription")}
               configKey="gmail.closeComposeWindowAfterSend"
               restartRequired
               licenseKeyRequired
@@ -90,24 +93,24 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Conversation</FieldLegend>
+            <FieldLegend>{t("settings.gmail.conversation")}</FieldLegend>
             <ConfigSwitchField
-              label="Reverse Conversation"
-              description="Displays email conversations in reverse order, showing the latest message at the top."
+              label={t("settings.gmail.reverseConversation")}
+              description={t("settings.gmail.reverseConversationDescription")}
               configKey="gmail.reverseConversation"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Move Attachments to Top"
-              description="Moves email attachments to the top of the email."
+              label={t("settings.gmail.moveAttachmentsToTop")}
+              description={t("settings.gmail.moveAttachmentsToTopDescription")}
               configKey="gmail.moveAttachmentsToTop"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Always Reply/Forward in Pop-Out"
-              description="Opens reply and forward in a pop-out instead of below the message."
+              label={t("settings.gmail.replyForwardInPopOut")}
+              description={t("settings.gmail.replyForwardInPopOutDescription")}
               configKey="gmail.replyForwardInPopOut"
               restartRequired
               licenseKeyRequired
@@ -115,16 +118,16 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Inbox</FieldLegend>
+            <FieldLegend>{t("settings.gmail.inbox")}</FieldLegend>
             <ConfigSwitchField
-              label="Hide Inbox Footer"
-              description="Hides the footer at the bottom of the inbox."
+              label={t("settings.gmail.hideInboxFooter")}
+              description={t("settings.gmail.hideInboxFooterDescription")}
               configKey="gmail.hideInboxFooter"
               restartRequired
             />
             <ConfigSwitchField
-              label="Show Sender Icons"
-              description="Show sender icons next to the senders in your inbox."
+              label={t("settings.gmail.showSenderIcons")}
+              description={t("settings.gmail.showSenderIconsDescription")}
               configKey="gmail.showSenderIcons"
               restartRequired
               licenseKeyRequired
@@ -132,11 +135,10 @@ export function GmailSettings() {
             <Field>
               <FieldContent>
                 <FieldLabel className="flex items-center gap-2">
-                  Unread Count Preference <LicenseKeyRequiredFieldBadge />
+                  {t("settings.gmail.unreadCountPreference")} <LicenseKeyRequiredFieldBadge />
                 </FieldLabel>
                 <FieldDescription>
-                  When using multiple inboxes, sets which sections contribute to the unread count
-                  shown on the app. Default combines all sections.
+                  {t("settings.gmail.unreadCountPreferenceDescription")}
                 </FieldDescription>
               </FieldContent>
               <Select
@@ -157,7 +159,7 @@ export function GmailSettings() {
                 disabled={!isLicenseKeyValid}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select unread count preference" />
+                  <SelectValue placeholder={t("settings.gmail.selectUnreadCountPreference")} />
                 </SelectTrigger>
                 <SelectContent>
                   {unreadCountPreferenceItems.map(({ value, label }) => (
@@ -171,12 +173,11 @@ export function GmailSettings() {
             <Field>
               <FieldContent>
                 <FieldLabel className="flex items-center gap-2">
-                  Categories to Monitor
+                  {t("settings.gmail.categoriesToMonitor")}
                   <LicenseKeyRequiredFieldBadge />
                 </FieldLabel>
                 <FieldDescription>
-                  If using an inbox with categories, choose which inbox categories are monitored for
-                  new email notifications and included in the unified inbox.
+                  {t("settings.gmail.categoriesToMonitorDescription")}
                 </FieldDescription>
               </FieldContent>
               <Select
@@ -197,7 +198,7 @@ export function GmailSettings() {
                 disabled={!isLicenseKeyValid}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select inbox categories to monitor" />
+                  <SelectValue placeholder={t("settings.gmail.selectCategoriesToMonitor")} />
                 </SelectTrigger>
                 <SelectContent>
                   {inboxCategoriesToMonitorItems.map(({ value, label }) => (
@@ -211,17 +212,14 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Advanced</FieldLegend>
+            <FieldLegend>{t("settings.gmail.advanced")}</FieldLegend>
             <Field>
               <FieldContent>
                 <FieldLabel className="flex items-center gap-2">
-                  User Styles
+                  {t("settings.gmail.userStyles")}
                   <LicenseKeyRequiredFieldBadge />
                 </FieldLabel>
-                <FieldDescription>
-                  Add your own custom CSS to further personalize the Gmail interface. A restart is
-                  required after making changes.
-                </FieldDescription>
+                <FieldDescription>{t("settings.gmail.userStylesDescription")}</FieldDescription>
               </FieldContent>
               <div>
                 <Button
@@ -231,7 +229,7 @@ export function GmailSettings() {
                   }}
                   disabled={!isLicenseKeyValid}
                 >
-                  Open in Editor
+                  {t("settings.gmail.openInEditor")}
                 </Button>
               </div>
             </Field>

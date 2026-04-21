@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
 import { createDateTimeFormatter, dayjs } from "@meru/renderer-lib/date";
@@ -158,6 +159,8 @@ function UnifiedInboxTable({
   rowsPerPage: number;
   showSenderIcons: boolean;
 }) {
+  const { t } = useTranslation();
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: rowsPerPage,
@@ -204,7 +207,7 @@ function UnifiedInboxTable({
       </div>
       <div className="flex justify-between mt-4">
         <div className="flex gap-2 items-center">
-          <div className="text-sm">Rows per page</div>
+          <div className="text-sm">{t("unifiedInbox.rowsPerPage")}</div>
           <Select
             value={rowsPerPage}
             onValueChange={(value) => {
@@ -229,7 +232,10 @@ function UnifiedInboxTable({
         </div>
         <div className="flex gap-2 items-center">
           <div className="text-sm">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            {t("unifiedInbox.pageOf", {
+              current: table.getState().pagination.pageIndex + 1,
+              total: table.getPageCount(),
+            })}
           </div>
           <Button
             size="icon"
@@ -270,6 +276,8 @@ function UnifiedInboxTable({
 }
 
 export function UnifiedInbox() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const unifiedInbox = useUnifiedInbox();
@@ -287,11 +295,8 @@ export function UnifiedInbox() {
               <EmptyMedia variant="icon">
                 <InboxIcon />
               </EmptyMedia>
-              <EmptyTitle>No Unread Messages</EmptyTitle>
-              <EmptyDescription>
-                Your unified inbox will show all your unread messages in one place. Once you read a
-                message, it will disappear from the unified inbox.
-              </EmptyDescription>
+              <EmptyTitle>{t("unifiedInbox.noUnread")}</EmptyTitle>
+              <EmptyDescription>{t("unifiedInbox.noUnreadDescription")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </div>
@@ -310,7 +315,7 @@ export function UnifiedInbox() {
   return (
     <>
       <SettingsHeader className="flex-col">
-        <SettingsTitle>Unified Inbox</SettingsTitle>
+        <SettingsTitle>{t("unifiedInbox.title")}</SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>

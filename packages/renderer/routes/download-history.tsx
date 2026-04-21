@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { useEffect } from "react";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useDownloadsStore } from "@/lib/stores";
@@ -17,6 +18,8 @@ import { DateFromNow } from "@/components/date-from-now";
 import { cn } from "@meru/ui/lib/utils";
 
 function DownloadHistoryClearAllButton() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -35,12 +38,14 @@ function DownloadHistoryClearAllButton() {
       }}
       disabled={config["downloads.history"].length === 0}
     >
-      Clear all
+      {t("downloadHistory.clearAll")}
     </Button>
   );
 }
 
 function DownloadHistoryContent() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -56,11 +61,9 @@ function DownloadHistoryContent() {
           <EmptyMedia variant="icon">
             <DownloadIcon />
           </EmptyMedia>
-          <EmptyTitle>No downloads yet</EmptyTitle>
-          <EmptyDescription>Your downloaded files will appear here.</EmptyDescription>
-          <EmptyDescription>
-            Downloads older than 30 days will be automatically removed from the history.
-          </EmptyDescription>
+          <EmptyTitle>{t("downloadHistory.emptyTitle")}</EmptyTitle>
+          <EmptyDescription>{t("downloadHistory.emptyDescription")}</EmptyDescription>
+          <EmptyDescription>{t("downloadHistory.emptyRetention")}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -98,7 +101,7 @@ function DownloadHistoryContent() {
                 {fileName}
               </div>
               <div className="text-muted-foreground first-letter:capitalize">
-                {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
+                {exists ? <DateFromNow timestamp={createdAt} /> : t("downloadHistory.fileNotFound")}
               </div>
             </div>
             <div className="flex gap-2">
@@ -106,7 +109,7 @@ function DownloadHistoryContent() {
                 <Button
                   size="icon"
                   variant="ghost"
-                  title="Show in folder"
+                  title={t("downloadHistory.showInFolder")}
                   onClick={() => {
                     ipc.main.send("downloads.showFileInFolder", { id, filePath });
                   }}
@@ -117,7 +120,7 @@ function DownloadHistoryContent() {
               <Button
                 size="icon"
                 variant="ghost"
-                title="Remove from history"
+                title={t("downloadHistory.removeFromHistory")}
                 onClick={() => {
                   configMutation.mutate({
                     "downloads.history": config["downloads.history"].filter(
@@ -137,6 +140,8 @@ function DownloadHistoryContent() {
 }
 
 export function DownloadHistory() {
+  const { t } = useTranslation();
+
   useEffect(() => {
     useDownloadsStore.setState({
       itemCompleted: null,
@@ -146,7 +151,7 @@ export function DownloadHistory() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Download History</SettingsTitle>
+        <SettingsTitle>{t("downloadHistory.title")}</SettingsTitle>
         <DownloadHistoryClearAllButton />
       </SettingsHeader>
       <DownloadHistoryContent />

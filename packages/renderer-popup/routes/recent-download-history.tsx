@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
@@ -22,6 +23,8 @@ import {
 } from "@meru/ui/components/empty";
 
 export function RecentDownloadHistory() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -38,11 +41,9 @@ export function RecentDownloadHistory() {
             <EmptyMedia variant="icon">
               <DownloadIcon />
             </EmptyMedia>
-            <EmptyTitle>No downloads yet</EmptyTitle>
-            <EmptyDescription>Your downloaded files will appear here.</EmptyDescription>
-            <EmptyDescription>
-              Downloads older than 30 days will be automatically removed from the history.
-            </EmptyDescription>
+            <EmptyTitle>{t("popup.downloadHistory.emptyTitle")}</EmptyTitle>
+            <EmptyDescription>{t("popup.downloadHistory.emptyDescription")}</EmptyDescription>
+            <EmptyDescription>{t("popup.downloadHistory.emptyRetention")}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       );
@@ -88,7 +89,11 @@ export function RecentDownloadHistory() {
                     {fileName}
                   </ItemTitle>
                   <ItemDescription className="first-letter:capitalize">
-                    {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
+                    {exists ? (
+                      <DateFromNow timestamp={createdAt} />
+                    ) : (
+                      t("popup.downloadHistory.fileNotFound")
+                    )}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
@@ -96,7 +101,7 @@ export function RecentDownloadHistory() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      title="Show in folder"
+                      title={t("popup.downloadHistory.showInFolder")}
                       onClick={(event) => {
                         event.stopPropagation();
 
@@ -109,7 +114,7 @@ export function RecentDownloadHistory() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    title="Remove from history"
+                    title={t("popup.downloadHistory.removeFromHistory")}
                     onClick={(event) => {
                       event.stopPropagation();
 
@@ -132,7 +137,7 @@ export function RecentDownloadHistory() {
 
   return (
     <div className="h-screen flex flex-col border rounded-2xl">
-      <div className="font-semibold p-4">Recent Download History</div>
+      <div className="font-semibold p-4">{t("popup.downloadHistory.title")}</div>
       <Button
         size="icon"
         variant="ghost"
@@ -140,7 +145,7 @@ export function RecentDownloadHistory() {
         onClick={() => {
           ipc.main.send("downloads.closeRecentDownloadHistoryPopup");
         }}
-        title="Close"
+        title={t("popup.downloadHistory.close")}
       >
         <XIcon />
       </Button>
@@ -153,7 +158,7 @@ export function RecentDownloadHistory() {
             ipc.main.send("downloads.openDownloadHistory");
           }}
         >
-          <SquareArrowOutUpRightIcon /> Full Download History
+          <SquareArrowOutUpRightIcon /> {t("popup.downloadHistory.full")}
         </Button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
+import { t } from "@meru/i18n";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { toast } from "sonner";
 import { refreshInbox, sendMailAction } from "./inbox";
@@ -22,12 +23,12 @@ ipcRenderer.on("gmail.handleMessage", async (_event, messageId, action) => {
 });
 
 ipcRenderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
-  toast.success("Message sent", {
+  toast.success(t("toast.messageSent"), {
     id: browserWindowId,
     duration: Number.POSITIVE_INFINITY,
     closeButton: true,
     action: {
-      label: "Undo",
+      label: t("toast.undo"),
       onClick: () => {
         ipcMain.send("gmail.undoMessageSent", browserWindowId);
       },

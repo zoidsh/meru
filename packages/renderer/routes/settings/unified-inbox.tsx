@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { FieldGroup } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -5,6 +6,8 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useConfig } from "@meru/renderer-lib/react-query";
 
 export function UnifiedInboxSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   if (!config) {
@@ -14,22 +17,22 @@ export function UnifiedInboxSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Unified Inbox</SettingsTitle>
+        <SettingsTitle>{t("settings.unifiedInbox.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Enabled"
-            description="Show all unread messages from every account in a single unified inbox."
+            label={t("settings.unifiedInbox.enabled")}
+            description={t("settings.unifiedInbox.enabledDescription")}
             configKey="unifiedInbox.enabled"
             licenseKeyRequired
             restartRequired
           />
           {config["unifiedInbox.enabled"] && (
             <ConfigSwitchField
-              label="Show Sender Icons"
-              description="Show sender icons next to the senders in the unified inbox."
+              label={t("settings.unifiedInbox.showSenderIcons")}
+              description={t("settings.unifiedInbox.showSenderIconsDescription")}
               configKey="unifiedInbox.showSenderIcons"
               licenseKeyRequired
             />

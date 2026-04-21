@@ -1,5 +1,6 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
+import { t } from "@meru/i18n";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import {
   app,
@@ -95,15 +96,15 @@ export class AppMenu {
   createMenu() {
     const macOSWindowItems: MenuItemConstructorOptions[] = [
       {
-        label: `Hide ${app.name}`,
+        label: t("menu.app.hide", { appName: app.name }),
         role: "hide",
       },
       {
-        label: "Hide Others",
+        label: t("menu.app.hideOthers"),
         role: "hideOthers",
       },
       {
-        label: "Show All",
+        label: t("menu.app.showAll"),
         role: "unhide",
       },
       {
@@ -169,19 +170,22 @@ export class AppMenu {
         label: app.name,
         submenu: [
           {
-            label: `About ${app.name}`,
+            label: t("menu.app.about", { appName: app.name }),
             click: () => {
               dialog.showMessageBox({
                 icon: nativeImage.createFromPath(
                   path.join(__dirname, "..", "..", "static", "Icon.png"),
                 ),
                 message: `${app.name}`,
-                detail: `Version: ${app.getVersion()}\n\nCreated by Tim Cheung <tim@meru.so>\n\nCopyright © ${new Date().getFullYear()} Meru`,
+                detail: t("menu.app.aboutDetail", {
+                  version: app.getVersion(),
+                  year: new Date().getFullYear(),
+                }),
               });
             },
           },
           {
-            label: "Check for Updates...",
+            label: t("menu.app.checkForUpdates"),
             click: () => {
               appUpdater.checkForUpdates();
             },
@@ -190,13 +194,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Settings...",
+            label: t("menu.app.settings"),
             click: () => {
               main.navigate("/settings/accounts");
             },
           },
           {
-            label: "Gmail Settings...",
+            label: t("menu.app.gmailSettings"),
             accelerator: "Command+,",
             click: () => {
               ipc.renderer.send(
@@ -213,7 +217,7 @@ export class AppMenu {
           },
           ...(platform.isMacOS ? macOSWindowItems : []),
           {
-            label: `Quit ${app.name}`,
+            label: t("menu.app.quit", { appName: app.name }),
             accelerator: "CommandOrControl+Q",
             click: () => {
               app.quit();
@@ -225,7 +229,7 @@ export class AppMenu {
         role: "fileMenu",
         submenu: [
           {
-            label: "Compose",
+            label: t("menu.file.compose"),
             click: () => {
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
@@ -285,7 +289,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Find...",
+            label: t("menu.edit.find"),
             accelerator: "CommandOrControl+F",
             click: () => {
               ipc.renderer.send(main.window.webContents, "findInPage.activate");
@@ -294,17 +298,17 @@ export class AppMenu {
             },
           },
           {
-            label: "Speech",
+            label: t("menu.edit.speech"),
             submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
           },
         ],
       },
       {
-        label: "Message",
+        label: t("menu.message.title"),
         visible: licenseKey.isValid,
         submenu: [
           {
-            label: "Copy Message Link",
+            label: t("menu.message.copyMessageLink"),
             enabled: focusedWindow === main.window && Boolean(copyOrShareMessageLink),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
@@ -321,17 +325,17 @@ export class AppMenu {
                 },
               }
             : {
-                label: "Share",
+                label: t("menu.message.share"),
                 enabled: false,
                 submenu: [],
               },
         ],
       },
       {
-        label: "View",
+        label: t("menu.view.title"),
         submenu: [
           {
-            label: "Unified Inbox",
+            label: t("menu.view.unifiedInbox"),
             enabled:
               licenseKey.isValid && config.get("unifiedInbox.enabled") && allAccounts.length > 1,
             accelerator: "CommandOrControl+Shift+I",
@@ -340,7 +344,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Downloads",
+            label: t("menu.view.downloads"),
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
               main.navigate("/download-history");
@@ -350,7 +354,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Reset Zoom",
+            label: t("menu.view.resetZoom"),
             accelerator: "CommandOrControl+0",
             click: () => {
               const defaultZoomFactor = 1;
@@ -369,24 +373,24 @@ export class AppMenu {
             },
           },
           {
-            label: "Zoom In",
+            label: t("menu.view.zoomIn"),
             accelerator: "CommandOrControl+Plus",
             click: zoomIn,
           },
           {
-            label: "Zoom In (hidden shortcut 1)",
+            label: t("menu.view.zoomInHidden1"),
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
             accelerator: "CommandOrControl+numadd",
             click: zoomIn,
           },
           {
-            label: "Zoom Out",
+            label: t("menu.view.zoomOut"),
             accelerator: "CommandOrControl+-",
             click: zoomOut,
           },
           {
-            label: "Zoom Out (hidden shortcut 1)",
+            label: t("menu.view.zoomOutHidden1"),
             visible: is.dev,
             accelerator: "CommandOrControl+numsub",
             click: zoomOut,
@@ -395,7 +399,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Reload",
+            label: t("menu.view.reload"),
             accelerator: "CommandOrControl+R",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -408,7 +412,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Hard Reload",
+            label: t("menu.view.hardReload"),
             accelerator: "CommandOrControl+Shift+R",
             click: async () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -424,7 +428,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Developer Tools",
+            label: t("menu.view.developerTools"),
             accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -441,10 +445,10 @@ export class AppMenu {
         ],
       },
       {
-        label: "History",
+        label: t("menu.history.title"),
         submenu: [
           {
-            label: "Back",
+            label: t("menu.history.back"),
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -457,7 +461,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Forward",
+            label: t("menu.history.forward"),
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -472,7 +476,7 @@ export class AppMenu {
         ],
       },
       {
-        label: "Accounts",
+        label: t("menu.accounts.title"),
         submenu: [
           ...allAccounts.map((account, index) => ({
             label: account.config.label,
@@ -489,7 +493,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Select Next Account",
+            label: t("menu.accounts.selectNext"),
             accelerator: "Ctrl+Tab",
             click: () => {
               accounts.selectNextAccount();
@@ -500,7 +504,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Next Account (hidden shortcut 1)",
+            label: t("menu.accounts.selectNextHidden1"),
             accelerator: "Command+Shift+]",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -513,7 +517,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Next Account (hidden shortcut 2)",
+            label: t("menu.accounts.selectNextHidden2"),
             accelerator: "Command+Option+Right",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -526,7 +530,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account",
+            label: t("menu.accounts.selectPrevious"),
             accelerator: "Ctrl+Shift+Tab",
             click: () => {
               accounts.selectPreviousAccount();
@@ -537,7 +541,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account (hidden shortcut 1)",
+            label: t("menu.accounts.selectPreviousHidden1"),
             accelerator: "Command+Shift+[",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -550,7 +554,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account (hidden shortcut 2)",
+            label: t("menu.accounts.selectPreviousHidden2"),
             accelerator: "Command+Option+Left",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -566,7 +570,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Manage Accounts...",
+            label: t("menu.accounts.manageAccounts"),
             click: () => {
               main.navigate("/settings/accounts");
             },
@@ -574,27 +578,27 @@ export class AppMenu {
         ],
       },
       {
-        label: "Window",
+        label: t("menu.window.title"),
         role: "window",
         submenu: [
           {
-            label: "Minimize",
+            label: t("menu.window.minimize"),
             accelerator: "CommandOrControl+M",
             role: "minimize",
           },
           {
-            label: "Close",
+            label: t("menu.window.close"),
             accelerator: "CommandOrControl+W",
             role: "close",
           },
         ],
       },
       {
-        label: "Help",
+        label: t("menu.help.title"),
         role: "help",
         submenu: [
           {
-            label: "Version History",
+            label: t("menu.help.versionHistory"),
             click: () => {
               main.navigate("/settings/version-history");
             },
@@ -603,13 +607,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Website",
+            label: t("menu.help.website"),
             click: () => {
               openExternalUrl(WEBSITE_URL);
             },
           },
           {
-            label: "Source Code",
+            label: t("menu.help.sourceCode"),
             click: () => {
               openExternalUrl(GITHUB_REPO_URL);
             },
@@ -618,7 +622,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Gmail Keyboard Shortcuts",
+            label: t("menu.help.gmailKeyboardShortcuts"),
             click: () => {
               openExternalUrl("https://support.google.com/mail/answer/6594");
             },
@@ -627,13 +631,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Ask Question",
+            label: t("menu.help.askQuestion"),
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow("mailto:tim@meru.so");
             },
           },
           {
-            label: "Request Feature",
+            label: t("menu.help.requestFeature"),
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Feature%20Request:%20",
@@ -641,7 +645,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Report Issue",
+            label: t("menu.help.reportIssue"),
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Report Issue:%20",
@@ -652,10 +656,10 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Troubleshooting",
+            label: t("menu.help.troubleshooting"),
             submenu: [
               {
-                label: "Edit Config",
+                label: t("menu.help.editConfig"),
                 click: () => {
                   config.openInEditor();
                 },
@@ -664,7 +668,7 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "Clear Cache",
+                label: t("menu.help.clearCache"),
                 click: async () => {
                   await Promise.all(
                     accounts.getAccounts().map((account) => account.instance.session.clearCache()),
@@ -674,16 +678,18 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset App",
+                label: t("menu.help.resetApp"),
                 click: async () => {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
-                    buttons: ["Cancel", "Reset"],
+                    buttons: [
+                      t("menu.help.resetAppDialog.cancel"),
+                      t("menu.help.resetAppDialog.reset"),
+                    ],
                     defaultId: 1,
-                    title: "Reset App",
-                    message: "Are you sure you want to reset the app?",
-                    detail:
-                      "This will clear all your accounts, settings, and data. This action cannot be undone.",
+                    title: t("menu.help.resetAppDialog.title"),
+                    message: t("menu.help.resetAppDialog.message"),
+                    detail: t("menu.help.resetAppDialog.detail"),
                   });
 
                   if (response === 0) {
@@ -701,7 +707,7 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "View Logs",
+                label: t("menu.help.viewLogs"),
                 click: () => {
                   shell.openPath(log.transports.file.getFile().path);
                 },

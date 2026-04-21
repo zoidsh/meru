@@ -6,6 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "@meru/i18n/provider";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import {
   type GoogleAppsPinnedApp,
@@ -47,6 +48,8 @@ function SortablePinnedAppItem({
   onUnpin: () => void;
   disabled: boolean;
 }) {
+  const { t } = useTranslation();
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: app,
   });
@@ -65,7 +68,7 @@ function SortablePinnedAppItem({
         variant="ghost"
         className="cursor-grab touch-none"
         disabled={disabled}
-        aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
+        aria-label={t("settings.googleApps.dragToReorder", { app: googleAppsPinnedApps[app] })}
         {...attributes}
         {...listeners}
       >
@@ -83,7 +86,7 @@ function SortablePinnedAppItem({
           variant="ghost"
           onClick={onUnpin}
           disabled={disabled}
-          aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
+          aria-label={t("settings.googleApps.unpin", { app: googleAppsPinnedApps[app] })}
         >
           <XIcon />
         </Button>
@@ -93,6 +96,8 @@ function SortablePinnedAppItem({
 }
 
 export function GoogleAppsSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -123,41 +128,44 @@ export function GoogleAppsSettings() {
 
   const excludedAppsSummary =
     excludedAppLabels.length === 0
-      ? "None"
+      ? t("settings.googleApps.none")
       : remainingExcludedAppCount > 0
-        ? `${visibleExcludedAppLabels.join(", ")} +${remainingExcludedAppCount} excluded`
+        ? t("settings.googleApps.excludedSummary", {
+            list: visibleExcludedAppLabels.join(", "),
+            count: remainingExcludedAppCount,
+          })
         : visibleExcludedAppLabels.join(", ");
 
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Google Apps</SettingsTitle>
+        <SettingsTitle>{t("settings.googleApps.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Open in App"
-            description="Open Google Apps in app instead of external browser."
+            label={t("settings.googleApps.openInApp")}
+            description={t("settings.googleApps.openInAppDescription")}
             configKey="googleApps.openInApp"
             licenseKeyRequired
           />
           {config["googleApps.openInApp"] && (
             <>
               <ConfigSwitchField
-                label="Always Open in New Window"
-                description="Always open Google Apps in a new window instead of reusing the same window if it is already open."
+                label={t("settings.googleApps.openInNewWindow")}
+                description={t("settings.googleApps.openInNewWindowDescription")}
                 configKey="googleApps.openAppsInNewWindow"
                 licenseKeyRequired
               />
               <Field>
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">
-                    Excluded Apps
+                    {t("settings.googleApps.excludedApps")}
                     {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
                   </FieldLabel>
                   <FieldDescription>
-                    Select which Google Apps should open in the external browser instead of the app.
+                    {t("settings.googleApps.excludedAppsDescription")}
                   </FieldDescription>
                 </FieldContent>
                 <DropdownMenu>
@@ -165,7 +173,7 @@ export function GoogleAppsSettings() {
                     disabled={!isLicenseKeyValid}
                     render={
                       <Button variant="outline" className="justify-between font-normal">
-                        {isLicenseKeyValid ? excludedAppsSummary : "None"}
+                        {isLicenseKeyValid ? excludedAppsSummary : t("settings.googleApps.none")}
                         <ChevronDownIcon className="opacity-50" />
                       </Button>
                     }
@@ -198,14 +206,14 @@ export function GoogleAppsSettings() {
           )}
           <FieldSeparator />
           <ConfigSwitchField
-            label="Show Account Label"
-            description="Show the account label in the titlebar of Google Apps windows if using more than one account."
+            label={t("settings.googleApps.showAccountLabel")}
+            description={t("settings.googleApps.showAccountLabelDescription")}
             configKey="googleApps.showAccountLabel"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Show Account Color"
-            description="Show a colored indicator on top of Google Apps windows to indicate which account is being used when an account has a color configured."
+            label={t("settings.googleApps.showAccountColor")}
+            description={t("settings.googleApps.showAccountColorDescription")}
             configKey="googleApps.showAccountColor"
             licenseKeyRequired
           />
@@ -213,19 +221,19 @@ export function GoogleAppsSettings() {
           <Field>
             <FieldContent>
               <FieldLabel className="flex items-center gap-2">
-                Pinned Apps
+                {t("settings.googleApps.pinnedApps")}
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
-              <FieldDescription>
-                Pin Google Apps to the titlebar and drag to reorder.
-              </FieldDescription>
+              <FieldDescription>{t("settings.googleApps.pinnedAppsDescription")}</FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Pinned</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t("settings.googleApps.pinned")}
+                </div>
                 {pinnedApps.length === 0 ? (
                   <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    No pinned apps. Add apps from Available below.
+                    {t("settings.googleApps.noPinnedApps")}
                   </p>
                 ) : (
                   <DndContext
@@ -269,7 +277,9 @@ export function GoogleAppsSettings() {
               </div>
               {availableApps.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <div className="text-xs font-medium text-muted-foreground">Available</div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {t("settings.googleApps.available")}
+                  </div>
                   <ItemGroup className="grid grid-cols-2">
                     {availableApps.map((app) => (
                       <Item key={app} variant="outline" size="xs">
@@ -289,7 +299,9 @@ export function GoogleAppsSettings() {
                               });
                             }}
                             disabled={!isLicenseKeyValid}
-                            aria-label={`Pin ${googleAppsPinnedApps[app]}`}
+                            aria-label={t("settings.googleApps.pin", {
+                              app: googleAppsPinnedApps[app],
+                            })}
                           >
                             <PlusIcon />
                           </Button>

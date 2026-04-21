@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
@@ -94,6 +95,8 @@ function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
 }
 
 function Download() {
+  const { t } = useTranslation();
+
   const [_location] = useHashLocation();
 
   const { config } = useConfig();
@@ -124,7 +127,7 @@ function Download() {
         onMouseLeave={() => {
           ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
         }}
-        title="Download History"
+        title={t("titlebar.downloadHistory")}
       >
         <DownloadIcon />
       </Button>
@@ -133,11 +136,20 @@ function Download() {
 }
 
 function Trial() {
+  const { t } = useTranslation();
+
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
   if (!trialDaysLeft) {
     return;
   }
+
+  const endsLabel =
+    trialDaysLeft >= 2
+      ? t("titlebar.trialEndsIn", { count: trialDaysLeft })
+      : trialDaysLeft >= 1
+        ? t("titlebar.trialEndsInOneDay")
+        : t("titlebar.trialEndsInLessThanDay");
 
   return (
     <Badge
@@ -150,16 +162,9 @@ function Trial() {
       )}
     >
       <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
-        <span className="group-hover:opacity-0 fade-out">
-          Pro trial ends in{" "}
-          {trialDaysLeft >= 2
-            ? `${trialDaysLeft} days`
-            : trialDaysLeft >= 1
-              ? `${trialDaysLeft} day`
-              : "less than a day"}
-        </span>
+        <span className="group-hover:opacity-0 fade-out">{endsLabel}</span>
         <span className="opacity-0 absolute inset-0 group-hover:opacity-100 group-hover:inline-flex items-center justify-center fade-in">
-          Upgrade to Pro
+          {t("titlebar.upgradeToPro")}
         </span>
       </a>
     </Badge>
@@ -167,6 +172,8 @@ function Trial() {
 }
 
 function FindInPage() {
+  const { t } = useTranslation();
+
   const isActive = useFindInPageStore((state) => state.isActive);
   const activeMatch = useFindInPageStore((state) => state.activeMatch);
   const totalMatches = useFindInPageStore((state) => state.totalMatches);
@@ -239,7 +246,7 @@ function FindInPage() {
               findNext: false,
             });
           }}
-          title="Find Previous Match"
+          title={t("titlebar.findPrevious")}
         >
           <ChevronUpIcon />
         </Button>
@@ -249,11 +256,11 @@ function FindInPage() {
           onClick={() => {
             ipc.main.send("findInPage", text, { findNext: false });
           }}
-          title="Find Next Match"
+          title={t("titlebar.findNext")}
         >
           <ChevronDownIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={deactivate} title="Close Find in Page">
+        <Button variant="ghost" size="icon-sm" onClick={deactivate} title={t("titlebar.closeFind")}>
           <XIcon />
         </Button>
       </div>
@@ -262,6 +269,8 @@ function FindInPage() {
 }
 
 function DoNotDisturb() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -280,7 +289,7 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title="Do Not Disturb"
+      title={t("titlebar.doNotDisturb")}
     >
       <MoonIcon
         className={cn({
@@ -318,6 +327,8 @@ function PinnedGoogleApps() {
 }
 
 export function AppTitlebar() {
+  const { t } = useTranslation();
+
   const accounts = useAccountsStore((state) => state.accounts);
 
   const selectedAccount = accounts.find((account) => account.config.selected);
@@ -401,7 +412,7 @@ export function AppTitlebar() {
     if (isAppUpdateDetailsOpen) {
       return (
         <div className="h-full flex justify-center items-center text-xs gap-4">
-          <div>Meru {appUpdateVersion} is available and ready to install</div>
+          <div>{t("titlebar.updateAvailableMessage", { version: appUpdateVersion })}</div>
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -410,7 +421,7 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.quitAndInstall");
               }}
             >
-              Restart Now
+              {t("titlebar.restartNow")}
             </Button>
             <Button
               variant="outline"
@@ -421,7 +432,7 @@ export function AppTitlebar() {
                 setIsAppUpdateDetailsOpen(false);
               }}
             >
-              Later
+              {t("titlebar.later")}
             </Button>
             <Button
               variant="ghost"
@@ -431,7 +442,7 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.openVersionHistory");
               }}
             >
-              What's New?
+              {t("titlebar.whatsNew")}
             </Button>
           </div>
         </div>
@@ -449,7 +460,7 @@ export function AppTitlebar() {
               ipc.main.send("gmail.moveNavigationHistory", "back");
             }}
             disabled={matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack}
-            title="Go Back"
+            title={t("titlebar.goBack")}
           >
             <ArrowLeftIcon />
           </Button>
@@ -463,7 +474,7 @@ export function AppTitlebar() {
             disabled={
               matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
             }
-            title="Go Forward"
+            title={t("titlebar.goForward")}
           >
             <ArrowRightIcon />
           </Button>
@@ -479,7 +490,7 @@ export function AppTitlebar() {
 
                 setIsGmailSavedSearchesOpen(false);
               }}
-              title="Unified Inbox"
+              title={t("titlebar.unifiedInbox")}
             >
               <InboxIcon />
             </Button>
@@ -492,7 +503,7 @@ export function AppTitlebar() {
               onClick={() => {
                 setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
               }}
-              title="Saved Searches"
+              title={t("titlebar.savedSearches")}
               disabled={matchUnifiedInboxRoute}
             >
               {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
@@ -506,7 +517,7 @@ export function AppTitlebar() {
                 variant="ghost"
                 size="icon-sm"
                 className="draggable-none"
-                title="Out of Office"
+                title={t("titlebar.outOfOffice")}
                 onClick={() => {
                   ipc.main.send("gmail.navigateTo", "settings");
                 }}
@@ -531,7 +542,7 @@ export function AppTitlebar() {
               setIsAppUpdateDetailsOpen(true);
             }}
           >
-            <SparklesIcon /> Update Available
+            <SparklesIcon /> {t("titlebar.updateAvailable")}
           </Button>
         )}
         {window.electron.process.platform !== "darwin" && (

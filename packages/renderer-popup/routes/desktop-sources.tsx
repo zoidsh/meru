@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import type { DesktopSource, DesktopSources } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
@@ -7,6 +8,8 @@ import { cn } from "@meru/ui/lib/utils";
 import { useEffect, useState } from "react";
 
 export function DesktopSources() {
+  const { t } = useTranslation();
+
   const [desktopSources, setDesktopSources] = useState<DesktopSources>([]);
   const [selectedDesktopSourceId, setSelectedDesktopSourceId] = useState<string>("");
 
@@ -49,8 +52,8 @@ export function DesktopSources() {
       <Tabs defaultValue="windows" className="flex-1 overflow-hidden gap-0">
         <div className="border-b px-4 py-3.5">
           <TabsList className="w-full">
-            <TabsTrigger value="windows">Windows</TabsTrigger>
-            <TabsTrigger value="screens">Screens</TabsTrigger>
+            <TabsTrigger value="windows">{t("popup.desktopSources.windows")}</TabsTrigger>
+            <TabsTrigger value="screens">{t("popup.desktopSources.screens")}</TabsTrigger>
           </TabsList>
         </div>
         <ScrollArea className="flex-1 overflow-hidden">
@@ -69,7 +72,7 @@ export function DesktopSources() {
             window.close();
           }}
         >
-          Cancel
+          {t("popup.desktopSources.cancel")}
         </Button>
         <Button
           disabled={!selectedDesktopSourceId}
@@ -85,7 +88,7 @@ export function DesktopSources() {
             ipc.main.send("desktopSources.select", selectedDesktopSource);
           }}
         >
-          Share
+          {t("popup.desktopSources.share")}
         </Button>
       </div>
     </div>

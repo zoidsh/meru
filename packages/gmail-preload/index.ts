@@ -1,5 +1,6 @@
 import "./electron-api";
 import "./ipc";
+import { initI18n } from "@meru/i18n";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
@@ -36,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  initI18n();
   initCss();
   initUrlPreview();
   initToaster();

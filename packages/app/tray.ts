@@ -1,5 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { t } from "@meru/i18n";
 import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -148,7 +149,7 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: mainWindowIsVisible ? "Hide" : "Show",
+        label: mainWindowIsVisible ? t("tray.hide") : t("tray.show"),
         click: () => {
           main.window[mainWindowIsVisible ? "hide" : "show"]();
         },

@@ -1,3 +1,4 @@
+import { t } from "@meru/i18n";
 import { app, dialog } from "electron";
 import { machineId } from "node-machine-id";
 import { apiClient, apiFallbackClient } from "./api-client";
@@ -37,11 +38,14 @@ class Trial {
 
       const { response } = await dialog.showMessageBox({
         type: "error",
-        message: "Failed to validate Meru Pro trial",
+        message: t("trial.validationFailed.message"),
         detail: (await isOnline())
-          ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
-          : "It seems you are currently offline. Please connect to the internet and restart the app to try again.",
-        buttons: ["Restart", "Quit"],
+          ? t("trial.validationFailed.detailOnline", {
+              message: error.message,
+              cause: error.cause,
+            })
+          : t("trial.validationFailed.detailOffline"),
+        buttons: [t("trial.validationFailed.restart"), t("trial.validationFailed.quit")],
         defaultId: 0,
         cancelId: 1,
       });
@@ -64,9 +68,13 @@ class Trial {
 
       const { response } = await dialog.showMessageBox({
         type: "info",
-        message: "Your Meru Pro trial has ended",
-        detail: "Upgrade to Pro to keep using all features or continue with the free version.",
-        buttons: ["Upgrade to Pro", "Continue with Free", "Quit"],
+        message: t("trial.expired.message"),
+        detail: t("trial.expired.detail"),
+        buttons: [
+          t("trial.expired.upgradeToPro"),
+          t("trial.expired.continueWithFree"),
+          t("trial.expired.quit"),
+        ],
         defaultId: 0,
         cancelId: 2,
       });

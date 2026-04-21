@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -50,6 +51,8 @@ export function SavedSearchForm({
   type: "add" | "edit";
   onSubmit: (savedSearch: GmailSavedSearchInput) => void;
 }) {
+  const { t } = useTranslation();
+
   const form = useForm({
     defaultValues: savedSearch,
     validators: {
@@ -73,7 +76,7 @@ export function SavedSearchForm({
         <form.Field name="label">
           {(field) => (
             <Field>
-              <FieldLabel>Label</FieldLabel>
+              <FieldLabel>{t("settings.savedSearches.label")}</FieldLabel>
               <div className="flex gap-2">
                 <Input
                   id={field.name}
@@ -96,7 +99,7 @@ export function SavedSearchForm({
         <form.Field name="query">
           {(field) => (
             <Field>
-              <FieldLabel>Query</FieldLabel>
+              <FieldLabel>{t("settings.savedSearches.query")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -110,7 +113,9 @@ export function SavedSearchForm({
         </form.Field>
       </FieldGroup>
       <div className="flex justify-end">
-        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+        <Button type="submit">
+          {type === "add" ? t("settings.savedSearches.add") : t("settings.savedSearches.save")}
+        </Button>
       </div>
     </form>
   );
@@ -121,6 +126,8 @@ export function AddSavedSearchButton({
 }: {
   onAdd: (savedSearch: GmailSavedSearchInput) => void;
 }) {
+  const { t } = useTranslation();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -135,13 +142,13 @@ export function AddSavedSearchButton({
             }}
             disabled={!isLicenseKeyValid}
           >
-            Add
+            {t("settings.savedSearches.add")}
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Saved Search</DialogTitle>
+          <DialogTitle>{t("settings.savedSearches.addSavedSearch")}</DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           type="add"
@@ -165,6 +172,8 @@ function SavedSearchMenuButton({
   onDelete: () => void;
   onEdit: (editedSavedSearch: GmailSavedSearch) => void;
 }) {
+  const { t } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -183,13 +192,13 @@ function SavedSearchMenuButton({
               setIsOpen(true);
             }}
           >
-            Edit
+            {t("settings.savedSearches.edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
             onClick={() => {
               const confirmed = window.confirm(
-                `Are you sure you want to delete ${savedSearch.label}?`,
+                t("settings.savedSearches.deleteConfirm", { label: savedSearch.label }),
               );
 
               if (confirmed) {
@@ -197,13 +206,13 @@ function SavedSearchMenuButton({
               }
             }}
           >
-            Delete
+            {t("settings.savedSearches.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Saved Search</DialogTitle>
+          <DialogTitle>{t("settings.savedSearches.editSavedSearch")}</DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           savedSearch={savedSearch}
@@ -223,6 +232,8 @@ function SavedSearchMenuButton({
 }
 
 export function SavedSearchesSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -248,17 +259,17 @@ export function SavedSearchesSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Saved Searches</SettingsTitle>
+        <SettingsTitle>{t("settings.savedSearches.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
-          Upgrade to Meru Pro to add saved searches
+          {t("settings.savedSearches.upgradeBanner")}
         </LicenseKeyRequiredBanner>
         <Table className="mb-4">
           <TableHeader>
             <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Query</TableHead>
+              <TableHead>{t("settings.savedSearches.label")}</TableHead>
+              <TableHead>{t("settings.savedSearches.query")}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>

@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -56,6 +57,8 @@ function AccountForm({
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
 }) {
+  const { t } = useTranslation();
+
   const form = useForm({
     defaultValues: account,
     validators: {
@@ -80,7 +83,7 @@ function AccountForm({
           <form.Field name="color">
             {(field) => (
               <Field>
-                <FieldLabel>Color</FieldLabel>
+                <FieldLabel>{t("settings.accounts.color")}</FieldLabel>
                 <div className="flex gap-2">
                   <Select
                     name={field.name}
@@ -91,7 +94,7 @@ function AccountForm({
                       <SelectValue>
                         {(value: keyof typeof accountColorsMap | null) => {
                           if (!value) {
-                            return "Optional";
+                            return t("settings.accounts.colorOptional");
                           }
 
                           const { label, className } = accountColorsMap[value];
@@ -139,7 +142,7 @@ function AccountForm({
 
               return (
                 <Field>
-                  <FieldLabel>Label</FieldLabel>
+                  <FieldLabel>{t("settings.accounts.label")}</FieldLabel>
                   <div className="flex gap-2">
                     <Input
                       id={field.name}
@@ -163,7 +166,7 @@ function AccountForm({
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLabel>Options</FieldLabel>
+          <FieldLabel>{t("settings.accounts.options")}</FieldLabel>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
               <Field orientation="horizontal" className="w-fit">
@@ -173,7 +176,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unread Badge</FieldLabel>
+                <FieldLabel>{t("settings.accounts.unreadBadge")}</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -186,7 +189,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unified Inbox</FieldLabel>
+                <FieldLabel>{t("settings.accounts.unifiedInbox")}</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -199,20 +202,24 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Notifications</FieldLabel>
+                <FieldLabel>{t("settings.accounts.notifications")}</FieldLabel>
               </Field>
             )}
           </form.Field>
         </FieldSet>
       </FieldGroup>
       <div className="flex justify-end items-center">
-        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+        <Button type="submit">
+          {type === "add" ? t("settings.accounts.add") : t("settings.accounts.save")}
+        </Button>
       </div>
     </form>
   );
 }
 
 function AddAccountButton() {
+  const { t } = useTranslation();
+
   const isDialogOpen = useAccountsStore((state) => state.isAddAccountDialogOpen);
 
   const setIsDialogOpen = useAccountsStore((state) => state.setIsAddAccountDialogOpen);
@@ -226,15 +233,15 @@ function AddAccountButton() {
   }
 
   if (!isTrialActive && !config.licenseKey) {
-    return <Button disabled>Add</Button>;
+    return <Button disabled>{t("settings.accounts.add")}</Button>;
   }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger render={<Button>Add</Button>} />
+      <DialogTrigger render={<Button>{t("settings.accounts.add")}</Button>} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Account</DialogTitle>
+          <DialogTitle>{t("settings.accounts.addAccount")}</DialogTitle>
         </DialogHeader>
         <AccountForm
           onSubmit={(account) => {
@@ -250,6 +257,8 @@ function AddAccountButton() {
 }
 
 function AccountMenuButton({ account, removable }: { account: AccountConfig; removable: boolean }) {
+  const { t } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -268,14 +277,14 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
               setIsOpen(true);
             }}
           >
-            Edit
+            {t("settings.accounts.edit")}
           </DropdownMenuItem>
           {removable && (
             <DropdownMenuItem
               className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
               onClick={() => {
                 const confirmed = window.confirm(
-                  `Are you sure you want to remove ${account.label}?`,
+                  t("settings.accounts.removeConfirm", { label: account.label }),
                 );
 
                 if (confirmed) {
@@ -283,14 +292,14 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
                 }
               }}
             >
-              Remove
+              {t("settings.accounts.remove")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Account</DialogTitle>
+          <DialogTitle>{t("settings.accounts.editAccount")}</DialogTitle>
         </DialogHeader>
         <AccountForm
           account={account}
@@ -319,6 +328,8 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
 }
 
 export function AccountsSettings() {
+  const { t } = useTranslation();
+
   const accounts = useAccountsStore((state) => state.accounts);
 
   if (!accounts.length) {
@@ -328,12 +339,12 @@ export function AccountsSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Accounts</SettingsTitle>
+        <SettingsTitle>{t("settings.accounts.title")}</SettingsTitle>
         <AddAccountButton />
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
-          Upgrade to Meru Pro to add more accounts
+          {t("settings.accounts.upgradeToAddMore")}
         </LicenseKeyRequiredBanner>
         <div className="space-y-4">
           {accounts.map((account, index) => (
@@ -353,12 +364,14 @@ export function AccountsSettings() {
                 {(account.config.gmail.unreadBadge || account.config.notifications) && (
                   <div className="flex gap-2">
                     {account.config.gmail.unreadBadge && (
-                      <Badge variant="outline">Unread Badge</Badge>
+                      <Badge variant="outline">{t("settings.accounts.unreadBadge")}</Badge>
                     )}
                     {account.config.gmail.unifiedInbox && (
-                      <Badge variant="outline">Unified Inbox</Badge>
+                      <Badge variant="outline">{t("settings.accounts.unifiedInbox")}</Badge>
                     )}
-                    {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
+                    {account.config.notifications && (
+                      <Badge variant="outline">{t("settings.accounts.notifications")}</Badge>
+                    )}
                   </div>
                 )}
               </ItemContent>

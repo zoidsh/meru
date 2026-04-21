@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -14,6 +15,8 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 
 export function PhishingProtectionSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -27,14 +30,14 @@ export function PhishingProtectionSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Phishing Protection</SettingsTitle>
+        <SettingsTitle>{t("settings.phishingProtection.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Confirm External Links Before Opening"
-            description="Prompt for confirmation before opening links from untrusted hosts in your browser."
+            label={t("settings.phishingProtection.confirmExternalLinks")}
+            description={t("settings.phishingProtection.confirmExternalLinksDescription")}
             configKey="externalLinks.confirm"
             licenseKeyRequired
           />
@@ -43,9 +46,11 @@ export function PhishingProtectionSettings() {
               <FieldSeparator />
               <Field>
                 <FieldContent>
-                  <FieldLabel>Trusted Hosts</FieldLabel>
+                  <FieldLabel>{t("settings.phishingProtection.trustedHosts")}</FieldLabel>
                   {config["externalLinks.trustedHosts"].length === 0 && (
-                    <FieldDescription>No trusted hosts added.</FieldDescription>
+                    <FieldDescription>
+                      {t("settings.phishingProtection.noTrustedHosts")}
+                    </FieldDescription>
                   )}
                 </FieldContent>
                 {config["externalLinks.trustedHosts"].length > 0 && (
@@ -64,7 +69,7 @@ export function PhishingProtectionSettings() {
                             });
                           }}
                         >
-                          Remove
+                          {t("settings.phishingProtection.remove")}
                         </Button>
                       </div>
                     ))}

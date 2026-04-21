@@ -1,0 +1,548 @@
+{
+  "menu": {
+    "app": {
+      "about": "About {{appName}}",
+      "aboutDetail": "Version: {{version}}\n\nCreated by Tim Cheung <tim@meru.so>\n\nCopyright © {{year}} Meru",
+      "checkForUpdates": "Check for Updates...",
+      "settings": "Settings...",
+      "gmailSettings": "Gmail Settings...",
+      "hide": "Hide {{appName}}",
+      "hideOthers": "Hide Others",
+      "showAll": "Show All",
+      "quit": "Quit {{appName}}"
+    },
+    "file": {
+      "compose": "Compose"
+    },
+    "edit": {
+      "find": "Find...",
+      "speech": "Speech"
+    },
+    "message": {
+      "title": "Message",
+      "copyMessageLink": "Copy Message Link",
+      "share": "Share"
+    },
+    "view": {
+      "title": "View",
+      "unifiedInbox": "Unified Inbox",
+      "downloads": "Downloads",
+      "resetZoom": "Reset Zoom",
+      "zoomIn": "Zoom In",
+      "zoomInHidden1": "Zoom In (hidden shortcut 1)",
+      "zoomOut": "Zoom Out",
+      "zoomOutHidden1": "Zoom Out (hidden shortcut 1)",
+      "reload": "Reload",
+      "hardReload": "Hard Reload",
+      "developerTools": "Developer Tools"
+    },
+    "history": {
+      "title": "History",
+      "back": "Back",
+      "forward": "Forward"
+    },
+    "accounts": {
+      "title": "Accounts",
+      "selectNext": "Select Next Account",
+      "selectNextHidden1": "Select Next Account (hidden shortcut 1)",
+      "selectNextHidden2": "Select Next Account (hidden shortcut 2)",
+      "selectPrevious": "Select Previous Account",
+      "selectPreviousHidden1": "Select Previous Account (hidden shortcut 1)",
+      "selectPreviousHidden2": "Select Previous Account (hidden shortcut 2)",
+      "manageAccounts": "Manage Accounts..."
+    },
+    "window": {
+      "title": "Window",
+      "minimize": "Minimize",
+      "close": "Close"
+    },
+    "help": {
+      "title": "Help",
+      "versionHistory": "Version History",
+      "website": "Website",
+      "sourceCode": "Source Code",
+      "gmailKeyboardShortcuts": "Gmail Keyboard Shortcuts",
+      "askQuestion": "Ask Question",
+      "requestFeature": "Request Feature",
+      "reportIssue": "Report Issue",
+      "troubleshooting": "Troubleshooting",
+      "editConfig": "Edit Config",
+      "clearCache": "Clear Cache",
+      "resetApp": "Reset App",
+      "resetAppDialog": {
+        "title": "Reset App",
+        "message": "Are you sure you want to reset the app?",
+        "detail": "This will clear all your accounts, settings, and data. This action cannot be undone.",
+        "cancel": "Cancel",
+        "reset": "Reset"
+      },
+      "viewLogs": "View Logs"
+    }
+  },
+  "tray": {
+    "hide": "Hide",
+    "show": "Show"
+  },
+  "contextMenu": {
+    "copyMessageLink": "Copy Message Link",
+    "inspectElement": "Inspect Element"
+  },
+  "dialogs": {
+    "restart": {
+      "message": "Restart required to apply changes",
+      "detail": "Do you want to restart the app now?",
+      "restart": "Restart",
+      "later": "Later"
+    }
+  },
+  "trial": {
+    "validationFailed": {
+      "message": "Failed to validate Meru Pro trial",
+      "detailOnline": "Please restart the app to try again or contact support for further help with the error: {{message}} ({{cause}}) - Hint: Could a VPN or firewall block the connection?",
+      "detailOffline": "It seems you are currently offline. Please connect to the internet and restart the app to try again.",
+      "restart": "Restart",
+      "quit": "Quit"
+    },
+    "expired": {
+      "message": "Your Meru Pro trial has ended",
+      "detail": "Upgrade to Pro to keep using all features or continue with the free version.",
+      "upgradeToPro": "Upgrade to Pro",
+      "continueWithFree": "Continue with Free",
+      "quit": "Quit"
+    }
+  },
+  "doNotDisturb": {
+    "disable": "Disable",
+    "options": {
+      "indefinite": "Indefinitely",
+      "5m": "5 Minutes",
+      "10m": "10 Minutes",
+      "15m": "15 Minutes",
+      "30m": "30 Minutes",
+      "1h": "1 Hour",
+      "2h": "2 Hours",
+      "4h": "4 Hours",
+      "8h": "8 Hours",
+      "12h": "12 Hours",
+      "untilTomorrow": "Until Tomorrow"
+    }
+  },
+  "ipc": {
+    "overlayIcon": {
+      "unreadTooltip": "You have unread messages"
+    },
+    "testNotification": {
+      "title": "Tim from Meru",
+      "subtitle": "Your Test Notification Request",
+      "body": "This is a test notification to show how notifications will appear."
+    },
+    "downloads": {
+      "selectFolder": "Select"
+    }
+  },
+  "toast": {
+    "messageSent": "Message sent",
+    "undo": "Undo",
+    "restartRequired": {
+      "message": "A restart is required for the changes to take full effect.",
+      "restartNow": "Restart Now",
+      "later": "Later"
+    },
+    "meruProRequired": {
+      "title": "Meru Pro required",
+      "description": "Please upgrade to Meru Pro to add more accounts."
+    }
+  },
+  "popup": {
+    "desktopSources": {
+      "windows": "Windows",
+      "screens": "Screens",
+      "cancel": "Cancel",
+      "share": "Share"
+    },
+    "downloadHistory": {
+      "title": "Recent Download History",
+      "close": "Close",
+      "full": "Full Download History",
+      "emptyTitle": "No downloads yet",
+      "emptyDescription": "Your downloaded files will appear here.",
+      "emptyRetention": "Downloads older than 30 days will be automatically removed from the history.",
+      "fileNotFound": "File not found",
+      "showInFolder": "Show in folder",
+      "removeFromHistory": "Remove from history"
+    }
+  },
+  "components": {
+    "licenseBanner": {
+      "upgradeAll": "Upgrade to Meru Pro to unlock all options",
+      "purchase": "Purchase"
+    }
+  },
+  "unifiedInbox": {
+    "title": "Unified Inbox",
+    "rowsPerPage": "Rows per page",
+    "pageOf": "Page {{current}} of {{total}}",
+    "noUnread": "No Unread Messages",
+    "noUnreadDescription": "Your unified inbox will show all your unread messages in one place. Once you read a message, it will disappear from the unified inbox."
+  },
+  "downloadHistory": {
+    "title": "Download History",
+    "clearAll": "Clear all",
+    "emptyTitle": "No downloads yet",
+    "emptyDescription": "Your downloaded files will appear here.",
+    "emptyRetention": "Downloads older than 30 days will be automatically removed from the history.",
+    "fileNotFound": "File not found",
+    "showInFolder": "Show in folder",
+    "removeFromHistory": "Remove from history"
+  },
+  "titlebar": {
+    "downloadHistory": "Download History",
+    "trialEndsIn_one": "Pro trial ends in {{count}} day",
+    "trialEndsIn_other": "Pro trial ends in {{count}} days",
+    "trialEndsInOneDay": "Pro trial ends in 1 day",
+    "trialEndsInLessThanDay": "Pro trial ends in less than a day",
+    "upgradeToPro": "Upgrade to Pro",
+    "findPrevious": "Find Previous Match",
+    "findNext": "Find Next Match",
+    "closeFind": "Close Find in Page",
+    "doNotDisturb": "Do Not Disturb",
+    "updateAvailableMessage": "Meru {{version}} is available and ready to install",
+    "restartNow": "Restart Now",
+    "later": "Later",
+    "whatsNew": "What's New?",
+    "goBack": "Go Back",
+    "goForward": "Go Forward",
+    "unifiedInbox": "Unified Inbox",
+    "savedSearches": "Saved Searches",
+    "outOfOffice": "Out of Office",
+    "updateAvailable": "Update Available"
+  },
+  "sidebar": {
+    "downloadHistory": "Download History",
+    "accounts": "Accounts",
+    "appearance": "Appearance",
+    "blocker": "Blocker",
+    "downloads": "Downloads",
+    "gmail": "Gmail",
+    "googleApps": "Google Apps",
+    "languages": "Languages",
+    "notifications": "Notifications",
+    "phishingProtection": "Phishing Protection",
+    "savedSearches": "Saved Searches",
+    "unifiedInbox": "Unified Inbox",
+    "updates": "Updates",
+    "verificationCodes": "Verification Codes",
+    "advanced": "Advanced",
+    "license": "License",
+    "whatsNew": "What's New"
+  },
+  "settings": {
+    "common": {
+      "meruProRequired": "Meru Pro Required"
+    },
+    "languages": {
+      "title": "Languages",
+      "spellchecker": "Spellchecker",
+      "spellcheckerDescription": "Select additional languages for spellchecking alongside the system language.",
+      "triggerEmpty": "No additional languages selected",
+      "triggerMany": "{{count}} additional languages"
+    },
+    "accounts": {
+      "title": "Accounts",
+      "color": "Color",
+      "colorOptional": "Optional",
+      "label": "Label",
+      "options": "Options",
+      "unreadBadge": "Unread Badge",
+      "unifiedInbox": "Unified Inbox",
+      "notifications": "Notifications",
+      "add": "Add",
+      "save": "Save",
+      "addAccount": "Add Account",
+      "editAccount": "Edit Account",
+      "edit": "Edit",
+      "remove": "Remove",
+      "removeConfirm": "Are you sure you want to remove {{label}}?",
+      "upgradeToAddMore": "Upgrade to Meru Pro to add more accounts"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "general": "General",
+      "theme": "Theme",
+      "themeDescription": "Select the application theme.",
+      "selectTheme": "Select theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "accounts": "Accounts",
+      "showUnreadBadges": "Show Unread Badges",
+      "showUnreadBadgesDescription": "Hide all unread badges if disabled regardless of individual account settings.",
+      "dockIcon": "Dock Icon",
+      "enableDockIcon": "Enable Dock Icon",
+      "enableDockIconDescription": "Show the application icon in the dock.",
+      "showUnreadBadge": "Show Unread Badge",
+      "showUnreadBadgeDescription": "Show an unread badge on the dock icon when there are unread emails.",
+      "menuBarIcon": "Menu Bar Icon",
+      "enableMenuBarIcon": "Enable Menu Bar Icon",
+      "enableMenuBarIconDescription": "Show the application icon in the menu bar.",
+      "showUnreadCount": "Show Unread Count",
+      "showUnreadCountDescription": "Show an unread count next to the menu bar icon when there are unread emails.",
+      "systemTrayIcon": "System Tray Icon",
+      "enableSystemTrayIcon": "Enable System Tray Icon",
+      "enableSystemTrayIconDescription": "Show the application icon in the system tray.",
+      "color": "Color",
+      "colorDescription": "Choose the color of the system tray icon.",
+      "selectColor": "Select color",
+      "trayColors": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "selectAccountWithUnread": "Select Account with Unread on Click",
+      "selectAccountWithUnreadDescriptionMenuBar": "Automatically select the first account with unread emails when clicking the menu bar icon.",
+      "selectAccountWithUnreadDescriptionTray": "Automatically select the first account with unread emails when clicking the system tray icon.",
+      "window": "Window",
+      "restrictMinimumSize": "Restrict Minimum Window Size",
+      "restrictMinimumSizeDescription": "Limit the minimum size of the application window to prevent it from being too small."
+    },
+    "license": {
+      "title": "License",
+      "licenseKey": "License Key",
+      "licenseKeyPlaceholder": "MERU-XXXX-XXXX-XXXX-XXXX-XXXX",
+      "activate": "Activate",
+      "activateLicenseKey": "Activate License Key",
+      "changeLicenseKey": "Change License Key",
+      "enterKeyDescription": "Please enter the license key you received at your email address after your purchase.",
+      "activeDescription": "You're using Meru Pro with professional features and for commercial use. Thank you for supporting Meru!",
+      "clickToReveal": "Click to reveal license key",
+      "copy": "Copy",
+      "change": "Change",
+      "copiedToClipboard": "Copied license key to clipboard",
+      "deviceLabel": "Device Label",
+      "deviceLabelRequired": "Device label is required",
+      "deviceLabelUpdated": "Device label updated successfully",
+      "save": "Save",
+      "trialDaysLeft_one": "You're using a Meru Pro trial with {{count}} day left.",
+      "trialDaysLeft_other": "You're using a Meru Pro trial with {{count}} days left.",
+      "trialPurchaseReminder": "Purchase Meru Pro before your trial ends to keep using all features.",
+      "freeDescriptionLine1": "You're using the free version of Meru for personal use.",
+      "freeDescriptionLine2": "Unlock Meru Pro for professional features and commercial use. Your upgrade supports ongoing development.",
+      "purchase": "Purchase"
+    },
+    "updates": {
+      "title": "Updates",
+      "autoCheck": "Check For Updates Automatically",
+      "autoCheckDescription": "Automatically check for updates periodically.",
+      "notify": "Notify When Updates Are Available",
+      "notifyDescription": "Receive notifications when updates are available.",
+      "notificationDelay": "Notification Delay",
+      "notificationDelayDescription": "Batch rapid back-to-back releases into a single prompt. Urgent updates always notify immediately.",
+      "selectNotifyWhen": "Select when to notify",
+      "delays": {
+        "nextDay": "Next day (recommended)",
+        "fewHours": "After a few hours",
+        "immediate": "Immediately"
+      }
+    },
+    "blocker": {
+      "title": "Blocker",
+      "enable": "Enable Blocker",
+      "enableDescription": "Use blocker to improve your privacy by blocking unwanted content and network requests.",
+      "blockAds": "Block Ads",
+      "blockAdsDescription": "Remove disruptive advertisements.",
+      "blockTrackers": "Block Trackers",
+      "blockTrackersDescription": "Enhance your privacy."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "general": "General",
+      "saveAs": "Show Save As Dialog Before Downloading",
+      "saveAsDescription": "Prompt for a location each time before a file is downloaded.",
+      "openFolderWhenDone": "Open Folder When Done",
+      "openFolderWhenDoneDescription": "Automatically open the folder containing the downloaded file when the download is complete.",
+      "defaultLocation": "Default Download Location",
+      "defaultLocationDescription": "This is the default location where downloaded files are saved.",
+      "change": "Change"
+    },
+    "gmail": {
+      "title": "Gmail",
+      "general": "General",
+      "compose": "Compose",
+      "conversation": "Conversation",
+      "inbox": "Inbox",
+      "advanced": "Advanced",
+      "hideGmailLogo": "Hide Gmail Logo",
+      "hideGmailLogoDescription": "Hides the Gmail logo on the top left corner.",
+      "hideOutOfOffice": "Hide Out of Office Banner",
+      "hideOutOfOfficeDescription": "Hides the out of office banner at the top of the window.",
+      "composeInNewWindow": "Always Compose New Emails in New Window",
+      "composeInNewWindowDescription": "Opens a new window for composing emails instead of inside Gmail.",
+      "closeComposeAfterSend": "Close Compose Window After Send",
+      "closeComposeAfterSendDescription": "Automatically closes the compose window after pressing the send button.",
+      "reverseConversation": "Reverse Conversation",
+      "reverseConversationDescription": "Displays email conversations in reverse order, showing the latest message at the top.",
+      "moveAttachmentsToTop": "Move Attachments to Top",
+      "moveAttachmentsToTopDescription": "Moves email attachments to the top of the email.",
+      "replyForwardInPopOut": "Always Reply/Forward in Pop-Out",
+      "replyForwardInPopOutDescription": "Opens reply and forward in a pop-out instead of below the message.",
+      "hideInboxFooter": "Hide Inbox Footer",
+      "hideInboxFooterDescription": "Hides the footer at the bottom of the inbox.",
+      "showSenderIcons": "Show Sender Icons",
+      "showSenderIconsDescription": "Show sender icons next to the senders in your inbox.",
+      "unreadCountPreference": "Unread Count Preference",
+      "unreadCountPreferenceDescription": "When using multiple inboxes, sets which sections contribute to the unread count shown on the app. Default combines all sections.",
+      "selectUnreadCountPreference": "Select unread count preference",
+      "unreadCountPreferences": {
+        "firstSection": "First Section Only",
+        "inbox": "Inbox Only"
+      },
+      "categoriesToMonitor": "Categories to Monitor",
+      "categoriesToMonitorDescription": "If using an inbox with categories, choose which inbox categories are monitored for new email notifications and included in the unified inbox.",
+      "selectCategoriesToMonitor": "Select inbox categories to monitor",
+      "inboxCategories": {
+        "primary": "Primary Only",
+        "all": "All Categories"
+      },
+      "userStyles": "User Styles",
+      "userStylesDescription": "Add your own custom CSS to further personalize the Gmail interface. A restart is required after making changes.",
+      "openInEditor": "Open in Editor"
+    },
+    "googleApps": {
+      "title": "Google Apps",
+      "openInApp": "Open in App",
+      "openInAppDescription": "Open Google Apps in app instead of external browser.",
+      "openInNewWindow": "Always Open in New Window",
+      "openInNewWindowDescription": "Always open Google Apps in a new window instead of reusing the same window if it is already open.",
+      "excludedApps": "Excluded Apps",
+      "excludedAppsDescription": "Select which Google Apps should open in the external browser instead of the app.",
+      "none": "None",
+      "excludedSummary": "{{list}} +{{count}} excluded",
+      "showAccountLabel": "Show Account Label",
+      "showAccountLabelDescription": "Show the account label in the titlebar of Google Apps windows if using more than one account.",
+      "showAccountColor": "Show Account Color",
+      "showAccountColorDescription": "Show a colored indicator on top of Google Apps windows to indicate which account is being used when an account has a color configured.",
+      "pinnedApps": "Pinned Apps",
+      "pinnedAppsDescription": "Pin Google Apps to the titlebar and drag to reorder.",
+      "pinned": "Pinned",
+      "available": "Available",
+      "noPinnedApps": "No pinned apps. Add apps from Available below.",
+      "dragToReorder": "Drag {{app}} to reorder",
+      "unpin": "Unpin {{app}}",
+      "pin": "Pin {{app}}"
+    },
+    "unifiedInbox": {
+      "title": "Unified Inbox",
+      "enabled": "Enabled",
+      "enabledDescription": "Show all unread messages from every account in a single unified inbox.",
+      "showSenderIcons": "Show Sender Icons",
+      "showSenderIconsDescription": "Show sender icons next to the senders in the unified inbox."
+    },
+    "phishingProtection": {
+      "title": "Phishing Protection",
+      "confirmExternalLinks": "Confirm External Links Before Opening",
+      "confirmExternalLinksDescription": "Prompt for confirmation before opening links from untrusted hosts in your browser.",
+      "trustedHosts": "Trusted Hosts",
+      "noTrustedHosts": "No trusted hosts added.",
+      "remove": "Remove"
+    },
+    "savedSearches": {
+      "title": "Saved Searches",
+      "upgradeBanner": "Upgrade to Meru Pro to add saved searches",
+      "label": "Label",
+      "query": "Query",
+      "add": "Add",
+      "save": "Save",
+      "addSavedSearch": "Add Saved Search",
+      "editSavedSearch": "Edit Saved Search",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete {{label}}?"
+    },
+    "verificationCodes": {
+      "title": "Verification Codes",
+      "autoCopy": "Automatically Copy Verification Code to Clipboard",
+      "autoCopyDescription": "Verification code received via email will be automatically copied to your clipboard for easy and instant pasting.",
+      "detectionConfidence": "Verification Code Detection Confidence",
+      "detectionConfidenceDescription": "Choose the confidence level for detecting verification codes. Medium may result in false positives, while High checks for explicit keywords, but may miss some codes.",
+      "selectConfidence": "Select confidence",
+      "confidenceHigh": "High",
+      "confidenceMedium": "Medium",
+      "autoMarkAsRead": "Automatically Mark Email as Read After Copying Verification Code",
+      "autoMarkAsReadDescription": "Email containing verification code will be automatically marked as read after the code has been copied to your clipboard.",
+      "autoDelete": "Automatically Delete Email After Copying Verification Code",
+      "autoDeleteDescription": "Email containing verification code will be automatically deleted after the code has been copied to your clipboard."
+    },
+    "versionHistory": {
+      "title": "Version History",
+      "loadFailed": "Failed to load version history",
+      "tryAgain": "Try Again"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "general": "General",
+      "startup": "Startup",
+      "screenSharing": "Screen Sharing",
+      "miscellaneous": "Miscellaneous",
+      "launchAtLogin": "Launch at Login",
+      "launchAtLoginDescription": "Enable this option to automatically start the application when you log into your computer.",
+      "defaultMailClient": "Default Mail Client",
+      "defaultMailClientActive": "Meru is set as default mail client.",
+      "defaultMailClientDescription": "Set Meru as the default mail client to handle email links and related protocols.",
+      "launchMinimized": "Launch Minimized",
+      "launchMinimizedDescription": "Enable this option to start the application in a minimized state.",
+      "useSystemPicker": "Use System Picker",
+      "useSystemPickerDescription": "Use the system's native screen sharing picker when sharing your screen.",
+      "hardwareAcceleration": "Hardware Acceleration",
+      "hardwareAccelerationDescription": "Enabling hardware acceleration can improve performance but can also cause compatibility issues on some systems.",
+      "customUserAgent": "Use Custom User Agent",
+      "customUserAgentDescription": "Some Gmail or Google app features may not work with the default user agent. Enabling this option will use a custom user agent and may help resolve issues, but can also cause others. Disable this option if you experience instability."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "emails": "Emails",
+      "newEmails": "New Emails",
+      "newEmailsDescription": "Show notifications for new emails.",
+      "showSender": "Show Sender",
+      "showSenderDescription": "Display the email sender's name in notifications.",
+      "showSubject": "Show Subject",
+      "showSubjectDescription": "Display the email subject in notifications.",
+      "showSummary": "Show Summary",
+      "showSummaryDescription": "Display the email summary in notifications.",
+      "notificationTimes": "Notification Times",
+      "notificationTimesDescription": "Configure time windows when notifications are active. Outside these windows, notifications will be silenced. Leave empty to always allow notifications.",
+      "to": "to",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "addTimeWindow": "Add Time Window",
+      "testNotification": "Test Notification",
+      "testNotificationDescription": "Show a test notification to see how notifications will appear.",
+      "showTestNotification": "Show Test Notification",
+      "dndBlocksTest": "Unable show test notification while Do Not Disturb is enabled.",
+      "others": "Others",
+      "downloads": "Downloads",
+      "downloadsDescription": "Show a notification when a download is completed, cancelled or failed.",
+      "googleApps": "Google Apps",
+      "googleAppsDescription": "Allow notifications from Google Apps like Calendar, Meet, Chat, etc.",
+      "sound": "Sound",
+      "playSound": "Play Sound",
+      "playSoundDescription": "Play a sound when showing a notification.",
+      "soundField": "Sound",
+      "soundFieldDescription": "Select the sound to play for notifications.",
+      "selectSound": "Select sound",
+      "system": "System",
+      "volume": "Volume {{percent}}%",
+      "volumeDescription": "Set the volume level for notification sounds.",
+      "noFreeSlot": "No free time slot available to add a new window.",
+      "timesOverlap": "Notification times overlap. Please adjust the time windows."
+    }
+  }
+}

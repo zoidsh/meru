@@ -1,3 +1,4 @@
+import { t } from "@meru/i18n";
 import {
   clipboard,
   type BrowserWindow,
@@ -33,7 +34,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
           menuItems.push(
             {
-              label: "Copy Message Link",
+              label: t("contextMenu.copyMessageLink"),
               click: () => {
                 clipboard.writeText(meruMessageUrl);
               },
@@ -52,7 +53,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       }
 
       menuItems.push({
-        label: "Inspect Element",
+        label: t("contextMenu.inspectElement"),
         click: () => {
           window.webContents.inspectElement(parameters.x, parameters.y);
 

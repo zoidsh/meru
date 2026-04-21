@@ -1,3 +1,4 @@
+import { t } from "@meru/i18n";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/renderer-lib/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
@@ -32,8 +33,8 @@ ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
   const config = await getConfig();
 
   if (!config.licenseKey && !useTrialStore.getState().daysLeft) {
-    toast.error("Meru Pro required", {
-      description: "Please upgrade to Meru Pro to add more accounts.",
+    toast.error(t("toast.meruProRequired.title"), {
+      description: t("toast.meruProRequired.description"),
     });
 
     return;

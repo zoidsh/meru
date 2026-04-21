@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
 import {
@@ -22,6 +23,8 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient } from "@meru/renderer-lib/react-query";
 
 function LaunchAtLoginField() {
+  const { t } = useTranslation();
+
   const queryKey = ["login-item-settings"];
 
   const { data: loginItemSettings } = useQuery({
@@ -48,10 +51,8 @@ function LaunchAtLoginField() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>Launch at Login</FieldLabel>
-        <FieldDescription>
-          Enable this option to automatically start the application when you log into your computer.
-        </FieldDescription>
+        <FieldLabel htmlFor={fieldId}>{t("settings.advanced.launchAtLogin")}</FieldLabel>
+        <FieldDescription>{t("settings.advanced.launchAtLoginDescription")}</FieldDescription>
       </FieldContent>
       <Switch
         id={fieldId}
@@ -67,6 +68,8 @@ function LaunchAtLoginField() {
 }
 
 function DefaultMailClientField() {
+  const { t } = useTranslation();
+
   const queryKey = ["default-mailto-client"];
 
   const { data: isDefaultMailtoClient } = useQuery({
@@ -95,12 +98,12 @@ function DefaultMailClientField() {
     <Field orientation="horizontal">
       <FieldContent>
         <FieldLabel htmlFor={fieldId}>
-          Default Mail Client <LicenseKeyRequiredFieldBadge />
+          {t("settings.advanced.defaultMailClient")} <LicenseKeyRequiredFieldBadge />
         </FieldLabel>
         <FieldDescription>
           {isDefaultMailtoClient
-            ? "Meru is set as default mail client."
-            : "Set Meru as the default mail client to handle email links and related protocols."}
+            ? t("settings.advanced.defaultMailClientActive")
+            : t("settings.advanced.defaultMailClientDescription")}
         </FieldDescription>
       </FieldContent>
       {!isDefaultMailtoClient && (
@@ -120,38 +123,40 @@ function DefaultMailClientField() {
 }
 
 export function AdvancedSettings() {
+  const { t } = useTranslation();
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Advanced</SettingsTitle>
+        <SettingsTitle>{t("settings.advanced.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>General</FieldLegend>
+            <FieldLegend>{t("settings.advanced.general")}</FieldLegend>
             <FieldGroup>
               <DefaultMailClientField />
             </FieldGroup>
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Startup</FieldLegend>
+            <FieldLegend>{t("settings.advanced.startup")}</FieldLegend>
             <LaunchAtLoginField />
             <ConfigSwitchField
-              label="Launch Minimized"
-              description="Enable this option to start the application in a minimized state."
+              label={t("settings.advanced.launchMinimized")}
+              description={t("settings.advanced.launchMinimizedDescription")}
               configKey="launchMinimized"
             />
           </FieldSet>
           <FieldSeparator />
           {platform.isMacOS && (
             <FieldSet>
-              <FieldLegend>Screen Sharing</FieldLegend>
+              <FieldLegend>{t("settings.advanced.screenSharing")}</FieldLegend>
               <FieldGroup>
                 <ConfigSwitchField
-                  label="Use System Picker"
-                  description="Use the system's native screen sharing picker when sharing your screen."
+                  label={t("settings.advanced.useSystemPicker")}
+                  description={t("settings.advanced.useSystemPickerDescription")}
                   configKey="screenShare.useSystemPicker"
                   licenseKeyRequired
                   restartRequired
@@ -161,18 +166,18 @@ export function AdvancedSettings() {
           )}
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Miscellaneous</FieldLegend>
+            <FieldLegend>{t("settings.advanced.miscellaneous")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Hardware Acceleration"
-                description="Enabling hardware acceleration can improve performance but can also cause compatibility issues on some systems."
+                label={t("settings.advanced.hardwareAcceleration")}
+                description={t("settings.advanced.hardwareAccelerationDescription")}
                 configKey="hardwareAcceleration"
                 restartRequired
               />
               {platform.isMacOS && (
                 <ConfigSwitchField
-                  label="Use Custom User Agent"
-                  description="Some Gmail or Google app features may not work with the default user agent. Enabling this option will use a custom user agent and may help resolve issues, but can also cause others. Disable this option if you experience instability."
+                  label={t("settings.advanced.customUserAgent")}
+                  description={t("settings.advanced.customUserAgentDescription")}
                   configKey="customUserAgent"
                   restartRequired
                 />

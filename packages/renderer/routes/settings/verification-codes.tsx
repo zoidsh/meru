@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import {
   Field,
   FieldContent,
@@ -19,12 +20,9 @@ import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { Badge } from "@meru/ui/components/badge";
 
-const verificationCodeConfidenceItems = [
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-];
-
 export function VerificationCodesSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
   const configMutation = useConfigMutation();
 
@@ -34,30 +32,35 @@ export function VerificationCodesSettings() {
     return;
   }
 
+  const verificationCodeConfidenceItems = [
+    { value: "high", label: t("settings.verificationCodes.confidenceHigh") },
+    { value: "medium", label: t("settings.verificationCodes.confidenceMedium") },
+  ];
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Verification Codes</SettingsTitle>
+        <SettingsTitle>{t("settings.verificationCodes.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Automatically Copy Verification Code to Clipboard"
-            description="Verification code received via email will be automatically copied
-							to your clipboard for easy and instant pasting."
+            label={t("settings.verificationCodes.autoCopy")}
+            description={t("settings.verificationCodes.autoCopyDescription")}
             configKey="verificationCodes.autoCopy"
             licenseKeyRequired
           />
           <Field>
             <FieldContent>
               <FieldLabel className="flex items-center gap-2">
-                Verification Code Detection Confidence
-                {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                {t("settings.verificationCodes.detectionConfidence")}
+                {!isLicenseKeyValid && (
+                  <Badge variant="secondary">{t("settings.common.meruProRequired")}</Badge>
+                )}
               </FieldLabel>
               <FieldDescription>
-                Choose the confidence level for detecting verification codes. Medium may result in
-                false positives, while High checks for explicit keywords, but may miss some codes.
+                {t("settings.verificationCodes.detectionConfidenceDescription")}
               </FieldDescription>
             </FieldContent>
             <Select
@@ -73,7 +76,7 @@ export function VerificationCodesSettings() {
               disabled={!isLicenseKeyValid}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select confidence" />
+                <SelectValue placeholder={t("settings.verificationCodes.selectConfidence")} />
               </SelectTrigger>
               <SelectContent>
                 {verificationCodeConfidenceItems.map(({ value, label }) => (
@@ -85,16 +88,14 @@ export function VerificationCodesSettings() {
             </Select>
           </Field>
           <ConfigSwitchField
-            label="Automatically Mark Email as Read After Copying Verification Code"
-            description="Email containing verification code will be automatically marked as read
-							after the code has been copied to your clipboard."
+            label={t("settings.verificationCodes.autoMarkAsRead")}
+            description={t("settings.verificationCodes.autoMarkAsReadDescription")}
             configKey="verificationCodes.autoMarkAsRead"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Automatically Delete Email After Copying Verification Code"
-            description="Email containing verification code will be automatically deleted
-							after the code has been copied to your clipboard."
+            label={t("settings.verificationCodes.autoDelete")}
+            description={t("settings.verificationCodes.autoDeleteDescription")}
             configKey="verificationCodes.autoDelete"
             licenseKeyRequired
           />

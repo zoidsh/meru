@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
+import { t } from "@meru/i18n";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -186,7 +187,7 @@ class Ipc {
     ipc.main.on("taskbar.setOverlayIcon", (_event, dataUrl) => {
       main.window.setOverlayIcon(
         nativeImage.createFromDataURL(dataUrl),
-        "You have unread messages",
+        t("ipc.overlayIcon.unreadTooltip"),
       );
     });
 
@@ -222,7 +223,7 @@ class Ipc {
     ipc.main.handle("downloads.setLocation", async () => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         properties: ["openDirectory"],
-        buttonLabel: "Select",
+        buttonLabel: t("ipc.downloads.selectFolder"),
         defaultPath: config.get("downloads.location"),
       });
 
@@ -274,9 +275,9 @@ class Ipc {
 
     ipc.main.on("notifications.showTestNotification", () => {
       createNotification({
-        title: "Tim from Meru",
-        subtitle: "Your Test Notification Request",
-        body: "This is a test notification to show how notifications will appear.",
+        title: t("ipc.testNotification.title"),
+        subtitle: t("ipc.testNotification.subtitle"),
+        body: t("ipc.testNotification.body"),
       });
     });
 
@@ -290,8 +291,8 @@ class Ipc {
 
     ipc.main.on("doNotDisturb.showOptions", () => {
       const options: MenuItemConstructorOptions[] = DoNotDisturb.options.map(
-        ({ label, duration }) => ({
-          label,
+        ({ labelKey, duration }) => ({
+          label: t(`doNotDisturb.options.${labelKey}`),
           type: "checkbox",
           checked: config.get("doNotDisturb.duration") === duration,
           click: () => {
@@ -304,7 +305,7 @@ class Ipc {
         config.get("doNotDisturb.enabled")
           ? [
               {
-                label: "Disable",
+                label: t("doNotDisturb.disable"),
                 click: () => {
                   doNotDisturb.disable();
                 },

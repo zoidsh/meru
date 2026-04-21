@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
 import { Badge } from "@meru/ui/components/badge";
@@ -83,6 +84,8 @@ function findFreeSlot(existingTimes: NotificationTime[]) {
 }
 
 export function NotificationsSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -99,7 +102,7 @@ export function NotificationsSettings() {
     const slot = findFreeSlot(times);
 
     if (!slot) {
-      toast.error("No free time slot available to add a new window.");
+      toast.error(t("settings.notifications.noFreeSlot"));
 
       return;
     }
@@ -113,7 +116,7 @@ export function NotificationsSettings() {
     const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
 
     if (hasOverlap(newTimes)) {
-      toast.error("Notification times overlap. Please adjust the time windows.");
+      toast.error(t("settings.notifications.timesOverlap"));
 
       return;
     }
@@ -147,46 +150,47 @@ export function NotificationsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Notifications</SettingsTitle>
+        <SettingsTitle>{t("settings.notifications.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Emails</FieldLegend>
+            <FieldLegend>{t("settings.notifications.emails")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="New Emails"
-                description="Show notifications for new emails."
+                label={t("settings.notifications.newEmails")}
+                description={t("settings.notifications.newEmailsDescription")}
                 configKey="notifications.enabled"
               />
               {config["notifications.enabled"] && (
                 <>
                   <ConfigSwitchField
-                    label="Show Sender"
-                    description="Display the email sender's name in notifications."
+                    label={t("settings.notifications.showSender")}
+                    description={t("settings.notifications.showSenderDescription")}
                     configKey="notifications.showSender"
                   />
                   <ConfigSwitchField
-                    label="Show Subject"
-                    description="Display the email subject in notifications."
+                    label={t("settings.notifications.showSubject")}
+                    description={t("settings.notifications.showSubjectDescription")}
                     configKey="notifications.showSubject"
                   />
                   {platform.isMacOS && (
                     <ConfigSwitchField
-                      label="Show Summary"
-                      description="Display the email summary in notifications."
+                      label={t("settings.notifications.showSummary")}
+                      description={t("settings.notifications.showSummaryDescription")}
                       configKey="notifications.showSummary"
                     />
                   )}
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
-                      Notification Times
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                      {t("settings.notifications.notificationTimes")}
+                      {!isLicenseKeyValid && (
+                        <Badge variant="secondary">{t("settings.common.meruProRequired")}</Badge>
+                      )}
                     </FieldLabel>
                     <FieldDescription>
-                      Configure time windows when notifications are active. Outside these windows,
-                      notifications will be silenced. Leave empty to always allow notifications.
+                      {t("settings.notifications.notificationTimesDescription")}
                     </FieldDescription>
                     {times.map((time) => (
                       <Item key={time.id} variant="muted">
@@ -199,7 +203,9 @@ export function NotificationsSettings() {
                               className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                               disabled={!isLicenseKeyValid}
                             />
-                            <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                            <span className="text-muted-foreground shrink-0 text-sm">
+                              {t("settings.notifications.to")}
+                            </span>
                             <Input
                               type="time"
                               value={time.end}
@@ -210,7 +216,15 @@ export function NotificationsSettings() {
                           </div>
                           <div className="flex gap-2">
                             {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
-                              const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                              const dayKeys = [
+                                "mon",
+                                "tue",
+                                "wed",
+                                "thu",
+                                "fri",
+                                "sat",
+                                "sun",
+                              ] as const;
                               const isActive = (time.days ?? []).includes(dayIndex);
 
                               return (
@@ -222,7 +236,7 @@ export function NotificationsSettings() {
                                   onClick={() => updateTimeDays(time.id, dayIndex)}
                                   disabled={!isLicenseKeyValid}
                                 >
-                                  {dayLabels[position]}
+                                  {t(`settings.notifications.days.${dayKeys[position]}`)}
                                 </Button>
                               );
                             })}
@@ -242,23 +256,21 @@ export function NotificationsSettings() {
                     ))}
                     <div>
                       <Button variant="outline" onClick={addTime} disabled={!isLicenseKeyValid}>
-                        <Plus /> Add Time Window
+                        <Plus /> {t("settings.notifications.addTimeWindow")}
                       </Button>
                     </div>
                   </Field>
                   <Field>
-                    <FieldLabel>Test Notification</FieldLabel>
+                    <FieldLabel>{t("settings.notifications.testNotification")}</FieldLabel>
                     <FieldDescription>
-                      Show a test notification to see how notifications will appear.
+                      {t("settings.notifications.testNotificationDescription")}
                     </FieldDescription>
                     <div>
                       <Button
                         variant="outline"
                         onClick={() => {
                           if (config["doNotDisturb.enabled"]) {
-                            toast.error(
-                              "Unable show test notification while Do Not Disturb is enabled.",
-                            );
+                            toast.error(t("settings.notifications.dndBlocksTest"));
 
                             return;
                           }
@@ -266,7 +278,7 @@ export function NotificationsSettings() {
                           ipc.main.send("notifications.showTestNotification");
                         }}
                       >
-                        Show Test Notification
+                        {t("settings.notifications.showTestNotification")}
                       </Button>
                     </div>
                   </Field>
@@ -276,16 +288,16 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Others</FieldLegend>
+            <FieldLegend>{t("settings.notifications.others")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Downloads"
-                description="Show a notification when a download is completed, cancelled or failed."
+                label={t("settings.notifications.downloads")}
+                description={t("settings.notifications.downloadsDescription")}
                 configKey="notifications.downloadCompleted"
               />
               <ConfigSwitchField
-                label="Google Apps"
-                description="Allow notifications from Google Apps like Calendar, Meet, Chat, etc."
+                label={t("settings.notifications.googleApps")}
+                description={t("settings.notifications.googleAppsDescription")}
                 configKey="notifications.allowFromGoogleApps"
                 licenseKeyRequired
               />
@@ -293,21 +305,25 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Sound</FieldLegend>
+            <FieldLegend>{t("settings.notifications.sound")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Play Sound"
-                description="Play a sound when showing a notification."
+                label={t("settings.notifications.playSound")}
+                description={t("settings.notifications.playSoundDescription")}
                 configKey="notifications.playSound"
               />
               {config["notifications.playSound"] && (
                 <>
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
-                      Sound
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                      {t("settings.notifications.soundField")}
+                      {!isLicenseKeyValid && (
+                        <Badge variant="secondary">{t("settings.common.meruProRequired")}</Badge>
+                      )}
                     </FieldLabel>
-                    <FieldDescription>Select the sound to play for notifications.</FieldDescription>
+                    <FieldDescription>
+                      {t("settings.notifications.soundFieldDescription")}
+                    </FieldDescription>
                     <Select
                       items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
                         value: sound,
@@ -331,7 +347,7 @@ export function NotificationsSettings() {
                       disabled={!isLicenseKeyValid}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select sound" />
+                        <SelectValue placeholder={t("settings.notifications.selectSound")} />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => (
@@ -340,17 +356,19 @@ export function NotificationsSettings() {
                           </SelectItem>
                         ))}
                         <SelectSeparator />
-                        <SelectItem value="system">System</SelectItem>
+                        <SelectItem value="system">{t("settings.notifications.system")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                   {config["notifications.sound"] !== "system" && (
                     <Field>
                       <FieldTitle>
-                        Volume {(config["notifications.volume"] * 100).toFixed(0)}%
+                        {t("settings.notifications.volume", {
+                          percent: (config["notifications.volume"] * 100).toFixed(0),
+                        })}
                       </FieldTitle>
                       <FieldDescription>
-                        Set the volume level for notification sounds.
+                        {t("settings.notifications.volumeDescription")}
                       </FieldDescription>
                       <Slider
                         className="my-2"

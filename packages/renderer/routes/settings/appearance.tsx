@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { ipc } from "@meru/renderer-lib/ipc";
 import { platform } from "@meru/renderer-lib/utils";
 import {
@@ -22,19 +23,9 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
-const themeItems = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
-];
-
-const systemTrayIconColorItems = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
-];
-
 export function AppearanceSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -43,11 +34,27 @@ export function AppearanceSettings() {
     return;
   }
 
+  const themeItems = [
+    { value: "light", label: t("settings.appearance.themes.light") },
+    { value: "dark", label: t("settings.appearance.themes.dark") },
+    { value: "system", label: t("settings.appearance.themes.system") },
+  ];
+
+  const systemTrayIconColorItems = [
+    { value: "light", label: t("settings.appearance.trayColors.light") },
+    { value: "dark", label: t("settings.appearance.trayColors.dark") },
+    { value: "system", label: t("settings.appearance.trayColors.system") },
+  ];
+
   const renderPlatformIconSettings = () => {
     const selectAccountWithUnreadField = (
       <ConfigSwitchField
-        label="Select Account with Unread on Click"
-        description={`Automatically select the first account with unread emails when clicking the ${platform.isMacOS ? "menu bar" : "system tray"} icon.`}
+        label={t("settings.appearance.selectAccountWithUnread")}
+        description={
+          platform.isMacOS
+            ? t("settings.appearance.selectAccountWithUnreadDescriptionMenuBar")
+            : t("settings.appearance.selectAccountWithUnreadDescriptionTray")
+        }
         configKey="tray.selectAccountWithUnread"
         disabled={!config["tray.enabled"]}
       />
@@ -57,17 +64,17 @@ export function AppearanceSettings() {
       return (
         <>
           <FieldSet>
-            <FieldLegend>Dock Icon</FieldLegend>
+            <FieldLegend>{t("settings.appearance.dockIcon")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Enable Dock Icon"
-                description="Show the application icon in the dock."
+                label={t("settings.appearance.enableDockIcon")}
+                description={t("settings.appearance.enableDockIconDescription")}
                 configKey="dock.enabled"
                 restartRequired
               />
               <ConfigSwitchField
-                label="Show Unread Badge"
-                description="Show an unread badge on the dock icon when there are unread emails."
+                label={t("settings.appearance.showUnreadBadge")}
+                description={t("settings.appearance.showUnreadBadgeDescription")}
                 configKey="dock.unreadBadge"
                 restartRequired
               />
@@ -75,17 +82,17 @@ export function AppearanceSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Menu Bar Icon</FieldLegend>
+            <FieldLegend>{t("settings.appearance.menuBarIcon")}</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Enable Menu Bar Icon"
-                description="Show the application icon in the menu bar."
+                label={t("settings.appearance.enableMenuBarIcon")}
+                description={t("settings.appearance.enableMenuBarIconDescription")}
                 configKey="tray.enabled"
                 restartRequired
               />
               <ConfigSwitchField
-                label="Show Unread Count"
-                description="Show an unread count next to the menu bar icon when there are unread emails."
+                label={t("settings.appearance.showUnreadCount")}
+                description={t("settings.appearance.showUnreadCountDescription")}
                 configKey="tray.unreadCount"
                 disabled={!config["tray.enabled"]}
                 restartRequired
@@ -99,17 +106,17 @@ export function AppearanceSettings() {
 
     return (
       <FieldSet>
-        <FieldLegend>System Tray Icon</FieldLegend>
+        <FieldLegend>{t("settings.appearance.systemTrayIcon")}</FieldLegend>
         <ConfigSwitchField
-          label="Enable System Tray Icon"
-          description="Show the application icon in the system tray."
+          label={t("settings.appearance.enableSystemTrayIcon")}
+          description={t("settings.appearance.enableSystemTrayIconDescription")}
           configKey="tray.enabled"
           restartRequired
         />
         <Field>
           <FieldContent>
-            <FieldLabel>Color</FieldLabel>
-            <FieldDescription>Choose the color of the system tray icon.</FieldDescription>
+            <FieldLabel>{t("settings.appearance.color")}</FieldLabel>
+            <FieldDescription>{t("settings.appearance.colorDescription")}</FieldDescription>
           </FieldContent>
           <Select
             items={systemTrayIconColorItems}
@@ -130,7 +137,7 @@ export function AppearanceSettings() {
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select color" />
+              <SelectValue placeholder={t("settings.appearance.selectColor")} />
             </SelectTrigger>
             <SelectContent>
               {systemTrayIconColorItems.map(({ value, label }) => (
@@ -149,16 +156,16 @@ export function AppearanceSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Appearance</SettingsTitle>
+        <SettingsTitle>{t("settings.appearance.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>General</FieldLegend>
+            <FieldLegend>{t("settings.appearance.general")}</FieldLegend>
             <Field>
               <FieldContent>
-                <FieldLabel>Theme</FieldLabel>
-                <FieldDescription>Select the application theme.</FieldDescription>
+                <FieldLabel>{t("settings.appearance.theme")}</FieldLabel>
+                <FieldDescription>{t("settings.appearance.themeDescription")}</FieldDescription>
               </FieldContent>
               <Select
                 items={themeItems}
@@ -174,7 +181,7 @@ export function AppearanceSettings() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select theme" />
+                  <SelectValue placeholder={t("settings.appearance.selectTheme")} />
                 </SelectTrigger>
                 <SelectContent>
                   {themeItems.map(({ value, label }) => (
@@ -188,10 +195,10 @@ export function AppearanceSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Accounts</FieldLegend>
+            <FieldLegend>{t("settings.appearance.accounts")}</FieldLegend>
             <ConfigSwitchField
-              label="Show Unread Badges"
-              description="Hide all unread badges if disabled regardless of individual account settings."
+              label={t("settings.appearance.showUnreadBadges")}
+              description={t("settings.appearance.showUnreadBadgesDescription")}
               configKey="accounts.unreadBadge"
               restartRequired
             />
@@ -200,10 +207,10 @@ export function AppearanceSettings() {
           {renderPlatformIconSettings()}
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Window</FieldLegend>
+            <FieldLegend>{t("settings.appearance.window")}</FieldLegend>
             <ConfigSwitchField
-              label="Restrict Minimum Window Size"
-              description="Limit the minimum size of the application window to prevent it from being too small."
+              label={t("settings.appearance.restrictMinimumSize")}
+              description={t("settings.appearance.restrictMinimumSizeDescription")}
               configKey="window.restrictMinimumSize"
             />
           </FieldSet>

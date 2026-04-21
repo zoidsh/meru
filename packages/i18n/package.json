@@ -1,0 +1,9 @@
+{
+  "name": "@meru/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "bun test",
+    "types": "tsc"
+  }
+}

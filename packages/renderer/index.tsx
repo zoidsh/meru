@@ -1,3 +1,4 @@
+import { I18nProvider } from "@meru/i18n/provider";
 import { createRoot } from "react-dom/client";
 import { App } from "./app";
 import "./lib/notifications";
@@ -9,5 +10,9 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   const root = createRoot(rootElement);
 
-  root.render(<App />);
+  root.render(
+    <I18nProvider>
+      <App />
+    </I18nProvider>,
+  );
 }

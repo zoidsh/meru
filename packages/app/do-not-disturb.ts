@@ -5,47 +5,47 @@ import { config } from "./config";
 export class DoNotDisturb {
   static options = [
     {
-      label: "Indefinitely",
+      labelKey: "indefinite",
       duration: "indefinite",
     },
     {
-      label: "5 Minutes",
+      labelKey: "5m",
       duration: "5m",
     },
     {
-      label: "10 Minutes",
+      labelKey: "10m",
       duration: "10m",
     },
     {
-      label: "15 Minutes",
+      labelKey: "15m",
       duration: "15m",
     },
     {
-      label: "30 Minutes",
+      labelKey: "30m",
       duration: "30m",
     },
     {
-      label: "1 Hour",
+      labelKey: "1h",
       duration: "1h",
     },
     {
-      label: "2 Hours",
+      labelKey: "2h",
       duration: "2h",
     },
     {
-      label: "4 Hours",
+      labelKey: "4h",
       duration: "4h",
     },
     {
-      label: "8 Hours",
+      labelKey: "8h",
       duration: "8h",
     },
     {
-      label: "12 Hours",
+      labelKey: "12h",
       duration: "12h",
     },
     {
-      label: "Until Tomorrow",
+      labelKey: "untilTomorrow",
       duration: "until tomorrow",
     },
   ] as const;

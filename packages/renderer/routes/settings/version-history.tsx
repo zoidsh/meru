@@ -1,3 +1,4 @@
+import { useTranslation } from "@meru/i18n/provider";
 import { Button } from "@meru/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@meru/ui/components/empty";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@meru/ui/components/item";
@@ -11,6 +12,8 @@ import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { dayjs } from "@meru/renderer-lib/date";
 
 export function VersionHistorySettings() {
+  const { t } = useTranslation();
+
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["github", "releases"],
     queryFn: async () => {
@@ -46,7 +49,7 @@ export function VersionHistorySettings() {
       return (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Failed to load version history</EmptyTitle>
+            <EmptyTitle>{t("settings.versionHistory.loadFailed")}</EmptyTitle>
           </EmptyHeader>
           <EmptyContent>
             <Button
@@ -54,7 +57,7 @@ export function VersionHistorySettings() {
                 refetch();
               }}
             >
-              Try Again
+              {t("settings.versionHistory.tryAgain")}
             </Button>
           </EmptyContent>
         </Empty>
@@ -85,7 +88,7 @@ export function VersionHistorySettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Version History</SettingsTitle>
+        <SettingsTitle>{t("settings.versionHistory.title")}</SettingsTitle>
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>
     </>

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "@meru/i18n/provider";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -23,24 +24,26 @@ function getLanguageLabel(code: string) {
   return displayNames.of(code) ?? code;
 }
 
-function getTriggerLabel(selected: string[]) {
-  if (selected.length === 0) {
-    return "No additional languages selected";
-  }
-
-  if (selected.length <= 2) {
-    return selected.map(getLanguageLabel).join(", ");
-  }
-
-  return `${selected.length} additional languages`;
-}
-
 export function LanguagesSettings() {
+  const { t } = useTranslation();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const getTriggerLabel = (selected: string[]) => {
+    if (selected.length === 0) {
+      return t("settings.languages.triggerEmpty");
+    }
+
+    if (selected.length <= 2) {
+      return selected.map(getLanguageLabel).join(", ");
+    }
+
+    return t("settings.languages.triggerMany", { count: selected.length });
+  };
 
   const { data: availableLanguages = [] } = useQuery({
     queryKey: ["spellchecker.availableLanguages"],
@@ -74,19 +77,19 @@ export function LanguagesSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Languages</SettingsTitle>
+        <SettingsTitle>{t("settings.languages.title")}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
             <FieldLabel className="flex items-center gap-2">
-              Spellchecker
-              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+              {t("settings.languages.spellchecker")}
+              {!isLicenseKeyValid && (
+                <Badge variant="secondary">{t("settings.common.meruProRequired")}</Badge>
+              )}
             </FieldLabel>
-            <FieldDescription>
-              Select additional languages for spellchecking alongside the system language.
-            </FieldDescription>
+            <FieldDescription>{t("settings.languages.spellcheckerDescription")}</FieldDescription>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
