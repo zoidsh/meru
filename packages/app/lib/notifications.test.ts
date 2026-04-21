@@ -1,13 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import type { NotificationTime } from "@meru/shared/types";
-import { checkWithinNotificationTimes } from "./lib/notification-times";
+import { checkWithinNotificationTimes } from "./notifications";
 
-const makeTime = (start: string, end: string, days?: number[]): NotificationTime => ({
-  id: "test-id",
-  start,
-  end,
-  days,
-});
+function makeTime(start: string, end: string, days?: number[]): NotificationTime {
+  return {
+    id: "test-id",
+    start,
+    end,
+    days,
+  };
+}
 
 // Jan 1 2024 was a Monday (getDay() = 1), so offset dayOfWeek by 1 to get correct days
 const makeDate = (dayOfWeek: number, hours: number, minutes: number) => {

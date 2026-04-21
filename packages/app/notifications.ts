@@ -2,7 +2,7 @@ import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
-import { checkWithinNotificationTimes } from "./lib/notification-times";
+import { checkWithinNotificationTimes } from "./lib/notifications";
 import { main } from "./main";
 
 export { checkWithinNotificationTimes };
