@@ -2,6 +2,7 @@ import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
+import { isMacOSDoNotDisturbActive } from "./lib/macos-dnd";
 import { checkWithinNotificationTimes } from "./lib/notification-times";
 import { main } from "./main";
 
@@ -45,7 +46,7 @@ export function createNotification({
     });
   }
 
-  if (sound !== "system" && playSound) {
+  if (sound !== "system" && playSound && !isMacOSDoNotDisturbActive()) {
     notification.once("show", () => {
       ipc.renderer.send(main.window.webContents, "notifications.playSound", {
         sound: licenseKey.isValid ? sound : "linen",
