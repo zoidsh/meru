@@ -137,6 +137,13 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Follow the patterns and naming of the existing codebase. When in doubt, find a similar example in the codebase and match it exactly.
 
+## Scope and Review Bandwidth
+
+- Keep the initial slice of a feature small and self-contained. Split larger work into incremental changes the user can read one at a time — mental bandwidth to review is a real constraint, and a sprawling change across many files is harder to absorb than three smaller ones.
+- When the full feature spans several concerns (e.g. IPC wiring, UI, state broadcasting), land the plumbing first, then each consumer in its own turn. Track the follow-ups inline in the conversation and/or in the PR description so they aren't lost.
+- `TODO.md` (at the repo root) is reserved for work that should be picked up in a **new session** — items unrelated enough to the current feature's goal that they shouldn't ride along with it. Do not use `TODO.md` as a backlog for the in-progress feature itself.
+- This is not about doing less work overall — it's about staging it so each step is easy to read, question, and approve.
+
 ## Release Notes
 
 - Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
