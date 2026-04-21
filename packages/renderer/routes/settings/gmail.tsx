@@ -227,7 +227,7 @@ export function GmailSettings() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    ipc.main.send("gmail.openUserStylesInEditor");
+                    ipc.main.send("gmail.openUserStyles", "editor");
                   }}
                   disabled={!isLicenseKeyValid}
                 >
@@ -236,7 +236,7 @@ export function GmailSettings() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    ipc.main.send("gmail.openUserStylesInFolder");
+                    ipc.main.send("gmail.openUserStyles", "folder");
                   }}
                   disabled={!isLicenseKeyValid}
                 >
