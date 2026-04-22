@@ -10,20 +10,13 @@ import {
   FieldSeparator,
   FieldSet,
 } from "@meru/ui/components/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@meru/ui/components/select";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
-import { restartRequiredToast } from "@/lib/toast";
+import { useConfig } from "@meru/renderer-lib/react-query";
 
 const unreadCountPreferenceItems = [
   { value: "first-section", label: "First Section Only" },
@@ -39,8 +32,6 @@ export function GmailSettings() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   const { config } = useConfig();
-
-  const configMutation = useConfigMutation();
 
   if (!config) {
     return;
@@ -129,85 +120,24 @@ export function GmailSettings() {
               restartRequired
               licenseKeyRequired
             />
-            <Field>
-              <FieldContent>
-                <FieldLabel className="flex items-center gap-2">
-                  Unread Count Preference <LicenseKeyRequiredFieldBadge />
-                </FieldLabel>
-                <FieldDescription>
-                  When using multiple inboxes, sets which sections contribute to the unread count
-                  shown on the app. Default combines all sections.
-                </FieldDescription>
-              </FieldContent>
-              <Select
-                items={unreadCountPreferenceItems}
-                value={config["gmail.unreadCountPreference"]}
-                onValueChange={(value) => {
-                  if (value) {
-                    configMutation.mutate(
-                      {
-                        "gmail.unreadCountPreference": value,
-                      },
-                      {
-                        onSuccess: restartRequiredToast,
-                      },
-                    );
-                  }
-                }}
-                disabled={!isLicenseKeyValid}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unread count preference" />
-                </SelectTrigger>
-                <SelectContent>
-                  {unreadCountPreferenceItems.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldContent>
-                <FieldLabel className="flex items-center gap-2">
-                  Categories to Monitor
-                  <LicenseKeyRequiredFieldBadge />
-                </FieldLabel>
-                <FieldDescription>
-                  If using an inbox with categories, choose which inbox categories are monitored for
-                  new email notifications and included in the unified inbox.
-                </FieldDescription>
-              </FieldContent>
-              <Select
-                items={inboxCategoriesToMonitorItems}
-                value={config["gmail.inboxCategoriesToMonitor"]}
-                onValueChange={(value) => {
-                  if (value) {
-                    configMutation.mutate(
-                      {
-                        "gmail.inboxCategoriesToMonitor": value,
-                      },
-                      {
-                        onSuccess: restartRequiredToast,
-                      },
-                    );
-                  }
-                }}
-                disabled={!isLicenseKeyValid}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select inbox categories to monitor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {inboxCategoriesToMonitorItems.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+            <ConfigSelectField
+              configKey="gmail.unreadCountPreference"
+              label="Unread Count Preference"
+              description="When using multiple inboxes, sets which sections contribute to the unread count shown on the app. Default combines all sections."
+              items={unreadCountPreferenceItems}
+              placeholder="Select unread count preference"
+              licenseKeyRequired
+              restartRequired
+            />
+            <ConfigSelectField
+              configKey="gmail.inboxCategoriesToMonitor"
+              label="Categories to Monitor"
+              description="If using an inbox with categories, choose which inbox categories are monitored for new email notifications and included in the unified inbox."
+              items={inboxCategoriesToMonitorItems}
+              placeholder="Select inbox categories to monitor"
+              licenseKeyRequired
+              restartRequired
+            />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
