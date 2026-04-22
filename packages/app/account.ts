@@ -14,7 +14,7 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
-import { getPreloadPath, loadRenderer } from "./lib/window";
+import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
 
 export class Account {
@@ -99,7 +99,7 @@ export class Account {
           return;
         }
 
-        const desktopSourcesWindow = new BrowserWindow({
+        const desktopSourcesWindow = createBrowserWindow({
           title: "Choose what to share",
           parent: googleMeetApp instanceof BrowserWindow ? googleMeetApp : undefined,
           width: 576,

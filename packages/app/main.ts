@@ -1,11 +1,9 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { app, BrowserWindow, nativeTheme, screen } from "electron";
+import { app, BrowserWindow, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
-import { isLinuxWindowControlsEnabled } from "@/lib/linux";
-import { getPreloadPath, loadRenderer } from "@/lib/window";
+import { getCommonBrowserWindowOptions, getTitleBarOptions, loadRenderer } from "@/lib/window";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -58,18 +56,14 @@ class Main {
     });
   }
 
-  getTitlebarOverlayOptions() {
-    return {
-      color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
-      symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
-      height: APP_TITLEBAR_HEIGHT - 1,
-    };
-  }
-
   updateTitlebarOverlay() {
-    if (!platform.isLinux || isLinuxWindowControlsEnabled()) {
-      this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
+    const { titleBarOverlay } = getTitleBarOptions();
+
+    if (typeof titleBarOverlay === "boolean") {
+      return;
     }
+
+    this.window.setTitleBarOverlay(titleBarOverlay);
   }
 
   init() {
@@ -92,15 +86,7 @@ class Main {
       x: lastWindowState.bounds.x,
       y: lastWindowState.bounds.y,
       show: false,
-      titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
-      titleBarOverlay:
-        !platform.isLinux || isLinuxWindowControlsEnabled()
-          ? this.getTitlebarOverlayOptions()
-          : false,
-      darkTheme: nativeTheme.shouldUseDarkColors,
-      webPreferences: {
-        preload: getPreloadPath("renderer"),
-      },
+      ...getCommonBrowserWindowOptions(),
       icon: platform.isLinux ? path.join(__dirname, "..", "static", "Icon.png") : undefined,
     });
 
