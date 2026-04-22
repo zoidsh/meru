@@ -317,6 +317,14 @@ class Accounts {
     }
   }
 
+  getByGmailWebContentsId(webContentsId: number) {
+    for (const account of this.instances.values()) {
+      if (account.gmail.view.webContents.id === webContentsId) {
+        return account;
+      }
+    }
+  }
+
   getTotalUnreadCount() {
     return Array.from(accounts.instances.values()).reduce((totalUnreadCount, instance) => {
       const unreadCount = instance.gmail.store.getState().unreadCount;

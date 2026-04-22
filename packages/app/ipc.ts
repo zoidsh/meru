@@ -97,13 +97,9 @@ class Ipc {
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (event.sender.id === accountInstance.gmail.view.webContents.id) {
-          accountInstance.gmail.store.setState({
-            outOfOffice,
-          });
-        }
-      }
+      accounts.getByGmailWebContentsId(event.sender.id)?.gmail.store.setState({
+        outOfOffice,
+      });
     });
 
     this.main.on("titleBar.toggleAppMenu", () => {
@@ -145,17 +141,7 @@ class Ipc {
 
     ipc.main.on("downloads.openFile", async (_event, { id, filePath }) => {
       if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
+        downloads.markHistoryItemMissing(id);
 
         return;
       }
@@ -165,17 +151,7 @@ class Ipc {
 
     ipc.main.on("downloads.showFileInFolder", async (_event, { id, filePath }) => {
       if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
+        downloads.markHistoryItemMissing(id);
 
         return;
       }
@@ -385,28 +361,16 @@ class Ipc {
     });
 
     ipc.main.on("gmail.setUserEmail", (event, email) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (accountInstance.gmail.view.webContents.id === event.sender.id) {
-          accountInstance.gmail.userEmail = email;
+      const account = accounts.getByGmailWebContentsId(event.sender.id);
 
-          return;
-        }
+      if (account) {
+        account.gmail.userEmail = email;
       }
     });
 
     ipc.main.on("downloads.dragFile", async (event, { id, filePath }) => {
       if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
+        downloads.markHistoryItemMissing(id);
 
         return;
       }
@@ -457,14 +421,12 @@ class Ipc {
         return;
       }
 
-      for (const account of accounts.instances.values()) {
-        if (event.sender.id === account.gmail.view.webContents.id) {
-          account.gmail.setUnreadCount(unreadCount);
+      const account = accounts.getByGmailWebContentsId(event.sender.id);
 
-          account.gmail.fetchInboxFeed();
+      if (account) {
+        account.gmail.setUnreadCount(unreadCount);
 
-          break;
-        }
+        account.gmail.fetchInboxFeed();
       }
     });
 

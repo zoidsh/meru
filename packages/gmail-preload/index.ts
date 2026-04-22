@@ -1,4 +1,4 @@
-import "./electron-api";
+import "@meru/shared/electron-api";
 import "./ipc";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";

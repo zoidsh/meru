@@ -31,6 +31,20 @@ class Downloads {
     return item;
   }
 
+  markHistoryItemMissing(id: string) {
+    const downloadHistory = config.get("downloads.history");
+
+    for (const item of downloadHistory) {
+      if (item.id === id) {
+        item.exists = false;
+
+        break;
+      }
+    }
+
+    config.set("downloads.history", downloadHistory);
+  }
+
   init() {
     const openFolderWhenDone = config.get("downloads.openFolderWhenDone");
 

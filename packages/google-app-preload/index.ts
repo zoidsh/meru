@@ -1,4 +1,4 @@
-import "./electron-api";
+import "@meru/shared/electron-api";
 import { initMailPreload } from "./apps/mail";
 import { initMeetPreload } from "./apps/meet";
 
