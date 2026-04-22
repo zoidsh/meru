@@ -1,3 +1,4 @@
+import { observeBodyMutations } from "@meru/shared/dom";
 import { GMAIL_PRELOAD_ARGUMENTS, isGmailComposeWindowUrl } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import { ipcMain, ipcRenderer } from "@/ipc";
@@ -39,11 +40,7 @@ function closeComposeWindowAfterSend() {
 export function initMailPreload() {
   if (isGmailComposeWindowUrl(window.location.href)) {
     document.addEventListener("DOMContentLoaded", () => {
-      const observer = new MutationObserver(() => {
-        closeComposeWindowAfterSend();
-      });
-
-      observer.observe(document.body, { childList: true, subtree: true });
+      observeBodyMutations(closeComposeWindowAfterSend);
     });
 
     return;

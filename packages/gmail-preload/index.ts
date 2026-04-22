@@ -1,5 +1,6 @@
 import "./electron-api";
 import "./ipc";
+import { observeBodyMutations } from "@meru/shared/dom";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
@@ -40,12 +41,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initUrlPreview();
   initToaster();
 
-  const observer = new MutationObserver(() => {
-    runFeatures();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  observeBodyMutations(runFeatures);
 });
