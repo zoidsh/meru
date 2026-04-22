@@ -31,6 +31,26 @@ class Downloads {
     return item;
   }
 
+  async markDownloadMissingIfGone(id: string, filePath: string) {
+    if (await fileExists(filePath)) {
+      return false;
+    }
+
+    const downloadHistory = config.get("downloads.history");
+
+    for (const item of downloadHistory) {
+      if (item.id === id) {
+        item.exists = false;
+
+        break;
+      }
+    }
+
+    config.set("downloads.history", downloadHistory);
+
+    return true;
+  }
+
   init() {
     const openFolderWhenDone = config.get("downloads.openFolderWhenDone");
 
