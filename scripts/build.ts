@@ -98,9 +98,9 @@ function buildAppFiles() {
         format: "cjs",
       }),
     ),
-    buildPreloadFile("gmail-preload"),
-    buildPreloadFile("google-app-preload"),
-    buildPreloadFile("renderer-preload"),
+    buildPreloadFile("preload-gmail"),
+    buildPreloadFile("preload-google-app"),
+    buildPreloadFile("preload-renderer"),
   ]);
 }
 

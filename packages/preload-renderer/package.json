@@ -1,5 +1,5 @@
 {
-  "name": "@meru/renderer-preload",
+  "name": "@meru/preload-renderer",
   "version": "0.0.0",
   "private": true,
   "scripts": {

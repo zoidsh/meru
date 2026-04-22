@@ -108,7 +108,7 @@ export class Account {
           resizable: false,
           autoHideMenuBar: true,
           webPreferences: {
-            preload: path.join(__dirname, "renderer-preload.js"),
+            preload: path.join(__dirname, "preload-renderer.js"),
           },
         });
 

@@ -37,7 +37,7 @@ const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
   ? fs.readFileSync(GMAIL_USER_STYLES_PATH, "utf-8")
   : null;
 
-const GMAIL_PRELOAD_PATH = path.join(__dirname, "gmail-preload.js");
+const GMAIL_PRELOAD_PATH = path.join(__dirname, "preload-gmail.js");
 
 const inboxFeedEntryAuthorSchema = z.object({
   name: z.coerce.string(),
