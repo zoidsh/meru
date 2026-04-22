@@ -59,7 +59,7 @@ class Main {
         mode: "detach",
       });
     } else {
-      this.window.webContents.loadFile(path.join("build-js", "renderer", "index.html"), {
+      this.window.webContents.loadFile(path.join("build-js", "renderer-main", "index.html"), {
         search: searchParams.toString(),
       });
     }

@@ -81,8 +81,8 @@
       "name": "@meru/meet-preload",
       "version": "0.0.0",
     },
-    "packages/renderer": {
-      "name": "@meru/renderer",
+    "packages/renderer-main": {
+      "name": "@meru/renderer-main",
       "version": "0.0.0",
     },
     "packages/renderer-popup": {
@@ -332,7 +332,7 @@
 
     "@meru/meet-preload": ["@meru/meet-preload@workspace:packages/google-app-preload"],
 
-    "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
+    "@meru/renderer-main": ["@meru/renderer-main@workspace:packages/renderer-main"],
 
     "@meru/renderer-popup": ["@meru/renderer-popup@workspace:packages/renderer-popup"],
 
