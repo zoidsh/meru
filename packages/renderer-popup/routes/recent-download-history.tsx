@@ -8,7 +8,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@meru/ui/components/item";
-import { DateFromNow } from "@meru/renderer/components/date-from-now";
+import { DateFromNow } from "@meru/renderer-main/components/date-from-now";
 import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { cn } from "@meru/ui/lib/utils";
