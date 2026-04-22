@@ -38,19 +38,19 @@ const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
 
 const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
 
-type GoogleAppHooks = {
+type GoogleAppLegacyHooks = {
   beforeLoadUrl?: ((view: WebContentsView) => void)[];
 };
 
-export type GoogleAppOptions = {
+export type GoogleAppLegacyOptions = {
   accountId: string;
   url: string;
   session: Session;
   webContentsViewOptions?: WebContentsViewConstructorOptions;
-  hooks?: GoogleAppHooks;
+  hooks?: GoogleAppLegacyHooks;
 };
 
-export class GoogleApp {
+export class GoogleAppLegacy {
   accountId: string;
 
   url: string;
@@ -61,7 +61,7 @@ export class GoogleApp {
 
   webContentsViewOptions: WebContentsViewConstructorOptions | undefined;
 
-  hooks: GoogleAppHooks = {};
+  hooks: GoogleAppLegacyHooks = {};
 
   private _view: WebContentsView | undefined;
 
@@ -93,7 +93,7 @@ export class GoogleApp {
     })),
   );
 
-  constructor({ accountId, url, session, webContentsViewOptions, hooks }: GoogleAppOptions) {
+  constructor({ accountId, url, session, webContentsViewOptions, hooks }: GoogleAppLegacyOptions) {
     this.accountId = accountId;
 
     this.url = url;
