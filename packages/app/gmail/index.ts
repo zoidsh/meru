@@ -16,7 +16,7 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
-import { GoogleApp, type GoogleAppOptions } from "@/google-app";
+import { GoogleAppLegacy, type GoogleAppLegacyOptions } from "@/google-app-legacy";
 import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -189,7 +189,7 @@ function extractVerificationCode(texts: string[]) {
   return null;
 }
 
-export class Gmail extends GoogleApp {
+export class Gmail extends GoogleAppLegacy {
   userEmail: string | null = null;
 
   unreadCountEnabled = true;
@@ -226,7 +226,7 @@ export class Gmail extends GoogleApp {
     unreadCountEnabled: boolean;
     unifiedInboxEnabled: boolean;
     delegatedAccountId: string | null;
-  } & Omit<GoogleAppOptions, "url">) {
+  } & Omit<GoogleAppLegacyOptions, "url">) {
     const additionalArguments: string[] = [];
 
     if (config.get("gmail.hideGmailLogo")) {
