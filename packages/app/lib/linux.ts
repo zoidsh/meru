@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 
 const execFile = promisify(childProcess.execFile);
 
-let cachedIsLinuxWindowControlsEnabled: boolean | null = null;
+let linuxWindowControlsEnabled: boolean | null = null;
 
 async function getGtkDecorationLayout() {
   try {
@@ -46,19 +46,25 @@ async function getGtkDecorationLayout() {
   return null;
 }
 
-export async function isLinuxWindowControlsEnabled() {
+export async function initLinuxWindowControls() {
   if (!platform.isLinux) {
-    throw new Error("isLinuxWindowControlsEnabled is only supported on Linux");
-  }
-
-  if (typeof cachedIsLinuxWindowControlsEnabled === "boolean") {
-    return cachedIsLinuxWindowControlsEnabled;
+    return;
   }
 
   const gtkDecorationLayout = await getGtkDecorationLayout();
 
-  cachedIsLinuxWindowControlsEnabled =
+  linuxWindowControlsEnabled =
     gtkDecorationLayout === null ? true : /close|minimize|maximize/.test(gtkDecorationLayout);
+}
 
-  return cachedIsLinuxWindowControlsEnabled;
+export function isLinuxWindowControlsEnabled() {
+  if (!platform.isLinux) {
+    throw new Error("isLinuxWindowControlsEnabled is only supported on Linux");
+  }
+
+  if (linuxWindowControlsEnabled === null) {
+    throw new Error("initLinuxWindowControls must be called first");
+  }
+
+  return linuxWindowControlsEnabled;
 }

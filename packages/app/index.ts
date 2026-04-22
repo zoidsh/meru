@@ -6,6 +6,7 @@ import { blocker } from "@/blocker";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
+import { initLinuxWindowControls } from "@/lib/linux";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -98,7 +99,9 @@ async function init() {
 
   accounts.init();
 
-  await main.init();
+  await initLinuxWindowControls();
+
+  main.init();
 
   main.loadURL();
 
