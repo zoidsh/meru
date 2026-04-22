@@ -3,7 +3,6 @@
 
 @plugin "@tailwindcss/typography";
 
-@source "../ui/**/*.{ts,tsx}";
 @source "../shared/**/*.{ts,tsx}";
 
 @utility draggable {
