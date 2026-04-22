@@ -178,9 +178,7 @@ if (args.values.dev) {
 
   for await (const event of watcher) {
     if (
-      ["renderer/", "renderer-popup/", "renderer-lib/", "ui/"].some((pathname) =>
-        event.filename?.includes(pathname),
-      )
+      ["renderer/", "renderer-popup/", "ui/"].some((pathname) => event.filename?.includes(pathname))
     ) {
       continue;
     }

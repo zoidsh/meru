@@ -1,6 +1,6 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { useEffect } from "react";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { useAccountsStore, useTrialStore } from "./stores";
 import type { GmailInboxMessage } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";

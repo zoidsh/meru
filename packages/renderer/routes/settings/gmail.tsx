@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -16,7 +16,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 
 const unreadCountPreferenceItems = [
   { value: "first-section", label: "First Section Only" },

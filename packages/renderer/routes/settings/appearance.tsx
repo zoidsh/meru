@@ -1,5 +1,5 @@
-import { ipc } from "@meru/renderer-lib/ipc";
-import { platform } from "@meru/renderer-lib/utils";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { platform } from "@meru/shared/renderer/utils";
 import {
   Field,
   FieldContent,
@@ -20,7 +20,7 @@ import {
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 const themeItems = [

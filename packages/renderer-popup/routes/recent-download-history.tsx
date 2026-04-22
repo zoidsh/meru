@@ -1,4 +1,4 @@
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@meru/ui/components/item";
 import { DateFromNow } from "@meru/renderer/components/date-from-now";
 import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { cn } from "@meru/ui/lib/utils";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import {

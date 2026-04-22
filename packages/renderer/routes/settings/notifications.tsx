@@ -1,5 +1,5 @@
-import { ipc } from "@meru/renderer-lib/ipc";
-import { platform } from "@meru/renderer-lib/utils";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { platform } from "@meru/shared/renderer/utils";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -28,7 +28,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
 import { Plus, X } from "lucide-react";

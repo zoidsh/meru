@@ -6,7 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
   type GoogleAppsPinnedApp,
   googleAppsPinnedApps,

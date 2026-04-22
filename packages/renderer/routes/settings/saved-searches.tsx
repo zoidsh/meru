@@ -33,7 +33,7 @@ import { useState } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
 

@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
 

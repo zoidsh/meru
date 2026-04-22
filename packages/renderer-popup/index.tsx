@@ -1,4 +1,4 @@
-import { renderApp } from "@meru/renderer-lib/react";
+import { renderApp } from "@meru/shared/renderer/react";
 import { App } from "./app";
 
 renderApp(App);

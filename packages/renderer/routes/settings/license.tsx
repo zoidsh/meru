@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { Button, buttonVariants } from "@meru/ui/components/button";
 import {
@@ -26,7 +26,7 @@ import { type ComponentProps, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({

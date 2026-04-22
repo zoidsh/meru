@@ -5,7 +5,7 @@ import { DesktopSources } from "./routes/desktop-sources";
 import { RecentDownloadHistory } from "./routes/recent-download-history";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Toaster } from "@meru/ui/components/sonner";
-import { useThemeStore } from "@meru/renderer-lib/theme";
+import { useThemeStore } from "@meru/shared/renderer/theme";
 
 export function App() {
   const theme = useThemeStore((state) => state.theme);

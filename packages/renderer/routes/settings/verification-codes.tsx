@@ -3,7 +3,7 @@ import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 
 const verificationCodeConfidenceItems = [
   { value: "high", label: "High" },
