@@ -1,9 +1,9 @@
-import { ipc } from "@meru/renderer-lib/ipc";
-import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/renderer-lib/search-params";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/shared/renderer/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
-import { getConfig } from "@meru/renderer-lib/react-query";
+import { getConfig } from "@meru/shared/renderer/react-query";
 import { navigate } from "wouter/use-hash-location";
 
 export const useAccountsStore = create<{

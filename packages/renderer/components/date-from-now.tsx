@@ -1,4 +1,4 @@
-import { dayjs } from "@meru/renderer-lib/date";
+import { dayjs } from "@meru/shared/renderer/date";
 import { useEffect, useState } from "react";
 
 export function DateFromNow({

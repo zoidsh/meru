@@ -1,5 +1,5 @@
-import { ipc } from "@meru/renderer-lib/ipc";
-import { platform } from "@meru/renderer-lib/utils";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { platform } from "@meru/shared/renderer/utils";
 import {
   Field,
   FieldContent,
@@ -19,7 +19,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { queryClient } from "@meru/renderer-lib/react-query";
+import { queryClient } from "@meru/shared/renderer/react-query";
 
 function LaunchAtLoginField() {
   const queryKey = ["login-item-settings"];

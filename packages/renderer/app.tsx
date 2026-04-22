@@ -5,7 +5,7 @@ import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { useMouseAccountSwitching } from "./lib/hooks";
-import { useThemeStore } from "@meru/renderer-lib/theme";
+import { useThemeStore } from "@meru/shared/renderer/theme";
 
 export function App() {
   const theme = useThemeStore((state) => state.theme);

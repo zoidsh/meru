@@ -2,7 +2,7 @@ import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
-import { platform } from "@meru/renderer-lib/utils";
+import { platform } from "@meru/shared/renderer/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { AccountsSettings } from "@/routes/settings/accounts";
 import { AdvancedSettings } from "@/routes/settings/advanced";

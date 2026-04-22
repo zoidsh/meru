@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { XIcon } from "lucide-react";

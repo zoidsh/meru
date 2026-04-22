@@ -8,7 +8,7 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { dayjs } from "@meru/renderer-lib/date";
+import { dayjs } from "@meru/shared/renderer/date";
 
 export function VersionHistorySettings() {
   const { data, isPending, isError, refetch } = useQuery({

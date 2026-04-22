@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useDownloadsStore } from "@/lib/stores";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
   Empty,
@@ -12,7 +12,7 @@ import {
 } from "@meru/ui/components/empty";
 import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
 import { Card, CardContent } from "@meru/ui/components/card";
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { DateFromNow } from "@/components/date-from-now";
 import { cn } from "@meru/ui/lib/utils";
 

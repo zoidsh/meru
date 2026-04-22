@@ -9,9 +9,9 @@ import {
 } from "@meru/ui/components/dropdown-menu";
 import { FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
 import { ChevronDownIcon } from "lucide-react";
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { cn } from "@meru/ui/lib/utils";
 import { Badge } from "@meru/ui/components/badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";

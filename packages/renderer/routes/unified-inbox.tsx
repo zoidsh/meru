@@ -1,7 +1,7 @@
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
-import { createDateTimeFormatter, dayjs } from "@meru/renderer-lib/date";
-import { ipc } from "@meru/renderer-lib/ipc";
+import { createDateTimeFormatter, dayjs } from "@meru/shared/renderer/date";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -29,7 +29,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@meru/ui/components/avatar";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import {

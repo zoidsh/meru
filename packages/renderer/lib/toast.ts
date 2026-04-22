@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { toast } from "sonner";
 
 export function restartRequiredToast() {

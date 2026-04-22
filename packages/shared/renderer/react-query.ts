@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import type { Config } from "@meru/shared/types";
 import { QueryClient, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 

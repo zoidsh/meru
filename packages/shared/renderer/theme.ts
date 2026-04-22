@@ -1,4 +1,4 @@
-import { ipc } from "@meru/renderer-lib/ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { create } from "zustand";
 import { darkModeSearchParam } from "./search-params";
 
