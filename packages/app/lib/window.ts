@@ -1,6 +1,14 @@
 import path from "node:path";
-import { is } from "@electron-toolkit/utils";
-import { BrowserWindow, nativeTheme, screen, WebContentsView } from "electron";
+import { is, platform } from "@electron-toolkit/utils";
+import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import {
+  BrowserWindow,
+  type BrowserWindowConstructorOptions,
+  nativeTheme,
+  screen,
+  WebContentsView,
+} from "electron";
+import { isLinuxWindowControlsEnabled } from "./linux";
 
 const CASCADE_OFFSET = 30;
 
@@ -32,6 +40,45 @@ export function getCascadedWindowBounds({ width, height }: { width: number; heig
 
 export function getPreloadPath(name: string) {
   return path.join(__dirname, `preload-${name}.js`);
+}
+
+export function getTitleBarOptions() {
+  const titleBarOverlay =
+    !platform.isLinux || isLinuxWindowControlsEnabled()
+      ? {
+          color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
+          symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
+          height: APP_TITLEBAR_HEIGHT - 1,
+        }
+      : false;
+
+  return {
+    titleBarStyle: platform.isMacOS ? ("hiddenInset" as const) : ("hidden" as const),
+    titleBarOverlay,
+  };
+}
+
+export function getCommonBrowserWindowOptions() {
+  return {
+    ...getTitleBarOptions(),
+    darkTheme: nativeTheme.shouldUseDarkColors,
+    webPreferences: {
+      preload: getPreloadPath("renderer"),
+    },
+  };
+}
+
+export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
+  const browserWindow = new BrowserWindow({
+    show: false,
+    ...options,
+  });
+
+  browserWindow.once("ready-to-show", () => {
+    browserWindow.show();
+  });
+
+  return browserWindow;
 }
 
 type LoadRendererOptions = {
