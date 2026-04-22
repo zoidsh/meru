@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AccountConfig } from "@meru/shared/schemas";
+import { BrowserWindow } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
 import { licenseKey } from "./license-key";
@@ -146,6 +147,24 @@ class Accounts {
     }
 
     return selectedAccount;
+  }
+
+  findInstanceByGmailWebContentsId(webContentsId: number) {
+    for (const account of this.instances.values()) {
+      if (account.gmail.view.webContents.id === webContentsId) {
+        return account;
+      }
+    }
+  }
+
+  findComposeWindowByWebContentsId(webContentsId: number) {
+    for (const account of this.instances.values()) {
+      for (const window of account.windows) {
+        if (window instanceof BrowserWindow && window.webContents.id === webContentsId) {
+          return { account, window };
+        }
+      }
+    }
   }
 
   selectAccount(selectedAccountId: string) {

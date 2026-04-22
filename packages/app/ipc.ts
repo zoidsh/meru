@@ -97,12 +97,12 @@ class Ipc {
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (event.sender.id === accountInstance.gmail.view.webContents.id) {
-          accountInstance.gmail.store.setState({
-            outOfOffice,
-          });
-        }
+      const accountInstance = accounts.findInstanceByGmailWebContentsId(event.sender.id);
+
+      if (accountInstance) {
+        accountInstance.gmail.store.setState({
+          outOfOffice,
+        });
       }
     });
 
@@ -345,31 +345,31 @@ class Ipc {
     });
 
     ipc.main.on("gmail.closeComposeWindow", (event) => {
-      for (const accountInstance of accounts.instances.values()) {
-        for (const window of accountInstance.windows) {
-          if (window instanceof BrowserWindow && window.webContents.id === event.sender.id) {
-            window.hide();
+      const match = accounts.findComposeWindowByWebContentsId(event.sender.id);
 
-            const browserWindowId = window.id;
-
-            window.once("closed", () => {
-              ipc.renderer.send(
-                accountInstance.gmail.view.webContents,
-                "gmail.dismissMessageSentNotification",
-                browserWindowId,
-              );
-            });
-
-            ipc.renderer.send(
-              accountInstance.gmail.view.webContents,
-              "gmail.showMessageSentNotification",
-              browserWindowId,
-            );
-
-            return;
-          }
-        }
+      if (!match) {
+        return;
       }
+
+      const { account: accountInstance, window } = match;
+
+      window.hide();
+
+      const browserWindowId = window.id;
+
+      window.once("closed", () => {
+        ipc.renderer.send(
+          accountInstance.gmail.view.webContents,
+          "gmail.dismissMessageSentNotification",
+          browserWindowId,
+        );
+      });
+
+      ipc.renderer.send(
+        accountInstance.gmail.view.webContents,
+        "gmail.showMessageSentNotification",
+        browserWindowId,
+      );
     });
 
     ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {
@@ -385,12 +385,10 @@ class Ipc {
     });
 
     ipc.main.on("gmail.setUserEmail", (event, email) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (accountInstance.gmail.view.webContents.id === event.sender.id) {
-          accountInstance.gmail.userEmail = email;
+      const accountInstance = accounts.findInstanceByGmailWebContentsId(event.sender.id);
 
-          return;
-        }
+      if (accountInstance) {
+        accountInstance.gmail.userEmail = email;
       }
     });
 
