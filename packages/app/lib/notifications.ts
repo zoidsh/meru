@@ -1,9 +1,5 @@
+import { timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
-
-function timeToMinutes(time: string) {
-  const colonIndex = time.indexOf(":");
-  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
-}
 
 export function checkWithinNotificationTimes(times: NotificationTime[], now: Date) {
   if (!times.length) {
