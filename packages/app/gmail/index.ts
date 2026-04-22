@@ -24,7 +24,7 @@ import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
-import { getCascadedWindowBounds } from "@/lib/window";
+import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
@@ -36,8 +36,6 @@ export const GMAIL_USER_STYLES_PATH = path.join(app.getPath("userData"), "gmail-
 const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
   ? fs.readFileSync(GMAIL_USER_STYLES_PATH, "utf-8")
   : null;
-
-const GMAIL_PRELOAD_PATH = path.join(__dirname, "preload-gmail.js");
 
 const inboxFeedEntryAuthorSchema = z.object({
   name: z.coerce.string(),
@@ -275,7 +273,7 @@ export class Gmail extends GoogleApp {
       session,
       webContentsViewOptions: {
         webPreferences: {
-          preload: GMAIL_PRELOAD_PATH,
+          preload: getPreloadPath("gmail"),
           additionalArguments,
         },
       },

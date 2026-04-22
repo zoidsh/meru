@@ -2,15 +2,15 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { nativeTheme, shell, WebContentsView } from "electron";
+import { shell, WebContentsView } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
 import { ipc } from "./ipc";
 import { main } from "./main";
-import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
+import { getPreloadPath, loadRenderer } from "./lib/window";
 
 class Downloads {
   recentDownloadHistoryPopup: WebContentsView | null = null;
@@ -143,29 +143,15 @@ class Downloads {
 
     this.recentDownloadHistoryPopup = new WebContentsView({
       webPreferences: {
-        preload: path.join(__dirname, "preload-renderer.js"),
+        preload: getPreloadPath("renderer"),
       },
     });
 
-    const searchParams = new URLSearchParams();
-
-    searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
-
-    const hash = "recent-download-history";
-
-    if (is.dev) {
-      this.recentDownloadHistoryPopup.webContents.loadURL(
-        `http://localhost:3001/?${searchParams}#${hash}`,
-      );
-    } else {
-      this.recentDownloadHistoryPopup.webContents.loadFile(
-        path.join("build-js", "renderer-popup", "index.html"),
-        {
-          hash,
-          search: searchParams.toString(),
-        },
-      );
-    }
+    loadRenderer(this.recentDownloadHistoryPopup, {
+      renderer: "popup",
+      port: 3001,
+      hash: "recent-download-history",
+    });
 
     main.window.contentView.addChildView(this.recentDownloadHistoryPopup);
 

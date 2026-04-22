@@ -1,4 +1,6 @@
-import { BrowserWindow, screen } from "electron";
+import path from "node:path";
+import { is } from "@electron-toolkit/utils";
+import { BrowserWindow, nativeTheme, screen, WebContentsView } from "electron";
 
 const CASCADE_OFFSET = 30;
 
@@ -26,4 +28,41 @@ export function getCascadedWindowBounds({ width, height }: { width: number; heig
   }
 
   return { x, y, width, height };
+}
+
+export function getPreloadPath(name: string) {
+  return path.join(__dirname, `preload-${name}.js`);
+}
+
+type LoadRendererOptions = {
+  renderer: string;
+  port: number;
+  searchParams?: URLSearchParams;
+  hash?: string;
+};
+
+export function loadRenderer(
+  window: BrowserWindow | WebContentsView,
+  options: LoadRendererOptions,
+) {
+  const { renderer, port, hash } = options;
+
+  const searchParams = options.searchParams ?? new URLSearchParams();
+
+  searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
+
+  const rendererName = `renderer-${renderer}`;
+
+  if (is.dev) {
+    const hashSuffix = hash ? `#${hash}` : "";
+
+    window.webContents.loadURL(`http://localhost:${port}/?${searchParams.toString()}${hashSuffix}`);
+
+    window.webContents.openDevTools({ mode: "detach" });
+  } else {
+    window.webContents.loadFile(path.join("build-js", rendererName, "index.html"), {
+      search: searchParams.toString(),
+      ...(hash ? { hash } : {}),
+    });
+  }
 }

@@ -1,10 +1,11 @@
 import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { app, BrowserWindow, nativeTheme, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
 import { isLinuxWindowControlsEnabled } from "@/lib/linux";
+import { getPreloadPath, loadRenderer } from "@/lib/window";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -31,8 +32,6 @@ class Main {
   loadURL() {
     const searchParams = new URLSearchParams();
 
-    searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
-
     searchParams.set(
       "accounts",
       JSON.stringify(
@@ -52,17 +51,11 @@ class Main {
       searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
     }
 
-    if (is.dev) {
-      this.window.webContents.loadURL(`http://localhost:3000/?${searchParams.toString()}`);
-
-      this.window.webContents.openDevTools({
-        mode: "detach",
-      });
-    } else {
-      this.window.webContents.loadFile(path.join("build-js", "renderer-main", "index.html"), {
-        search: searchParams.toString(),
-      });
-    }
+    loadRenderer(this.window, {
+      renderer: "main",
+      port: 3000,
+      searchParams,
+    });
   }
 
   getTitlebarOverlayOptions() {
@@ -106,7 +99,7 @@ class Main {
           : false,
       darkTheme: nativeTheme.shouldUseDarkColors,
       webPreferences: {
-        preload: path.join(__dirname, "preload-renderer.js"),
+        preload: getPreloadPath("renderer"),
       },
       icon: platform.isLinux ? path.join(__dirname, "..", "static", "Icon.png") : undefined,
     });
