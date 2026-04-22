@@ -1,5 +1,5 @@
 {
-  "name": "@meru/gmail-preload",
+  "name": "@meru/preload-gmail",
   "version": "0.0.0",
   "private": true,
   "scripts": {
