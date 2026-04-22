@@ -345,31 +345,31 @@ class Ipc {
     });
 
     ipc.main.on("gmail.closeComposeWindow", (event) => {
-      const match = accounts.findComposeWindowByWebContentsId(event.sender.id);
+      for (const accountInstance of accounts.instances.values()) {
+        for (const window of accountInstance.windows) {
+          if (window instanceof BrowserWindow && window.webContents.id === event.sender.id) {
+            window.hide();
 
-      if (!match) {
-        return;
+            const browserWindowId = window.id;
+
+            window.once("closed", () => {
+              ipc.renderer.send(
+                accountInstance.gmail.view.webContents,
+                "gmail.dismissMessageSentNotification",
+                browserWindowId,
+              );
+            });
+
+            ipc.renderer.send(
+              accountInstance.gmail.view.webContents,
+              "gmail.showMessageSentNotification",
+              browserWindowId,
+            );
+
+            return;
+          }
+        }
       }
-
-      const { account: accountInstance, window } = match;
-
-      window.hide();
-
-      const browserWindowId = window.id;
-
-      window.once("closed", () => {
-        ipc.renderer.send(
-          accountInstance.gmail.view.webContents,
-          "gmail.dismissMessageSentNotification",
-          browserWindowId,
-        );
-      });
-
-      ipc.renderer.send(
-        accountInstance.gmail.view.webContents,
-        "gmail.showMessageSentNotification",
-        browserWindowId,
-      );
     });
 
     ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {
