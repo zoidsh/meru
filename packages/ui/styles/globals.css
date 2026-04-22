@@ -129,3 +129,11 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+@utility draggable {
+  app-region: drag;
+}
+
+@utility draggable-none {
+  app-region: no-drag;
+}
