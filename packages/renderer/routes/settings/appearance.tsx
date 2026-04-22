@@ -17,9 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { useConfig } from "@meru/renderer-lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 const themeItems = [
@@ -36,8 +37,6 @@ const systemTrayIconColorItems = [
 
 export function AppearanceSettings() {
   const { config } = useConfig();
-
-  const configMutation = useConfigMutation();
 
   if (!config) {
     return;
@@ -106,41 +105,14 @@ export function AppearanceSettings() {
           configKey="tray.enabled"
           restartRequired
         />
-        <Field>
-          <FieldContent>
-            <FieldLabel>Color</FieldLabel>
-            <FieldDescription>Choose the color of the system tray icon.</FieldDescription>
-          </FieldContent>
-          <Select
-            items={systemTrayIconColorItems}
-            value={config["tray.iconColor"]}
-            onValueChange={(value) => {
-              if (value) {
-                configMutation.mutate(
-                  {
-                    "tray.iconColor": value,
-                  },
-                  {
-                    onSuccess: () => {
-                      restartRequiredToast();
-                    },
-                  },
-                );
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select color" />
-            </SelectTrigger>
-            <SelectContent>
-              {systemTrayIconColorItems.map(({ value, label }) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+        <ConfigSelectField
+          configKey="tray.iconColor"
+          label="Color"
+          description="Choose the color of the system tray icon."
+          items={systemTrayIconColorItems}
+          placeholder="Select color"
+          restartRequired
+        />
         {selectAccountWithUnreadField}
       </FieldSet>
     );
