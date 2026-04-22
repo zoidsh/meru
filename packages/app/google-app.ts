@@ -1,5 +1,5 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { type BrowserWindow, type Session, WebContentsView } from "electron";
+import { type BrowserWindow, type Session, type WebContents, WebContentsView } from "electron";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -14,6 +14,12 @@ type GoogleAppOptions = {
 };
 
 export class GoogleApp {
+  private static instances = new Map<number, GoogleApp>();
+
+  static fromWebContents(webContents: WebContents) {
+    return GoogleApp.instances.get(webContents.id);
+  }
+
   browserWindow: BrowserWindow;
 
   view: WebContentsView;
@@ -23,6 +29,8 @@ export class GoogleApp {
       ...getCascadedWindowBounds({ width: 1280, height: 800 }),
       ...getCommonBrowserWindowOptions(),
     });
+
+    GoogleApp.instances.set(this.browserWindow.webContents.id, this);
 
     loadRenderer(this.browserWindow, {
       renderer: "google-app",
@@ -43,6 +51,10 @@ export class GoogleApp {
     this.updateViewBounds();
 
     this.browserWindow.on("resize", this.updateViewBounds);
+
+    this.browserWindow.on("closed", () => {
+      GoogleApp.instances.delete(this.browserWindow.webContents.id);
+    });
   }
 
   updateViewBounds = () => {

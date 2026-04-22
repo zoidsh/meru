@@ -1,10 +1,11 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
-import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
+import { WEBSITE_URL } from "@meru/shared/constants";
 import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
+import { Titlebar, TitlebarIconButton, TitlebarLeft } from "@meru/ui/components/titlebar";
 import { cn } from "@meru/ui/lib/utils";
 import {
   ArrowLeftIcon,
@@ -23,7 +24,7 @@ import {
   SparklesIcon,
   XIcon,
 } from "lucide-react";
-import { type ComponentProps, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { navigate, useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
@@ -38,12 +39,6 @@ import {
 } from "../lib/stores";
 import { GoogleAppIcon } from "./google-app-icon";
 import { useRoute } from "wouter";
-
-function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
-  return (
-    <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
-  );
-}
 
 function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
   const [fadeOut, setFadeOut] = useState(false);
@@ -400,7 +395,7 @@ export function AppTitlebar() {
   const renderContent = () => {
     if (isAppUpdateDetailsOpen) {
       return (
-        <div className="h-full flex justify-center items-center text-xs gap-4">
+        <div className="flex-1 flex justify-center items-center text-xs gap-4">
           <div>Meru {appUpdateVersion} is available and ready to install</div>
           <div className="flex gap-2">
             <Button
@@ -439,8 +434,8 @@ export function AppTitlebar() {
     }
 
     return (
-      <div className="h-full flex items-center justify-end gap-4">
-        <div className="flex-1 flex items-center gap-1">
+      <>
+        <TitlebarLeft>
           <Button
             variant="ghost"
             size="icon-sm"
@@ -515,56 +510,43 @@ export function AppTitlebar() {
               </Button>
             )}
           {renderAccounts()}
-        </div>
-        <div className="flex gap-2">
-          <Trial />
-          <FindInPage />
-          <PinnedGoogleApps />
-          <Download />
-          <DoNotDisturb />
-        </div>
-        {appUpdateVersion && (
-          <Button
-            size="sm"
-            className="draggable-none"
-            onClick={() => {
-              setIsAppUpdateDetailsOpen(true);
-            }}
-          >
-            <SparklesIcon /> Update Available
-          </Button>
-        )}
-        {window.electron.process.platform !== "darwin" && (
-          <div className="draggable-none">
+        </TitlebarLeft>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <Trial />
+            <FindInPage />
+            <PinnedGoogleApps />
+            <Download />
+            <DoNotDisturb />
+          </div>
+          {appUpdateVersion && (
             <Button
-              variant="ghost"
-              size="icon-sm"
+              size="sm"
+              className="draggable-none"
               onClick={() => {
-                ipc.main.send("titleBar.toggleAppMenu");
+                setIsAppUpdateDetailsOpen(true);
               }}
             >
-              <EllipsisVerticalIcon />
+              <SparklesIcon /> Update Available
             </Button>
-          </div>
-        )}
-      </div>
+          )}
+          {window.electron.process.platform !== "darwin" && (
+            <div className="draggable-none">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  ipc.main.send("titleBar.toggleAppMenu");
+                }}
+              >
+                <EllipsisVerticalIcon />
+              </Button>
+            </div>
+          )}
+        </div>
+      </>
     );
   };
 
-  return (
-    <div
-      className="relative bg-background border-b draggable select-none"
-      style={{ height: APP_TITLEBAR_HEIGHT }}
-    >
-      <div
-        className="absolute top-0 bottom-0 px-1.5"
-        style={{
-          left: "env(titlebar-area-x, 0)",
-          width: "env(titlebar-area-width, 100%)",
-        }}
-      >
-        {renderContent()}
-      </div>
-    </div>
-  );
+  return <Titlebar>{renderContent()}</Titlebar>;
 }

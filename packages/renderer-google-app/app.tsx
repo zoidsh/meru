@@ -1,10 +1,39 @@
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import {
+  Titlebar,
+  TitlebarIconButton,
+  TitlebarLeft,
+  TitlebarRight,
+} from "@meru/ui/components/titlebar";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CopyIcon,
+  ExternalLinkIcon,
+  RotateCwIcon,
+} from "lucide-react";
 
 export function App() {
   return (
-    <div
-      className="bg-background border-b draggable select-none"
-      style={{ height: APP_TITLEBAR_HEIGHT }}
-    />
+    <Titlebar>
+      <TitlebarLeft>
+        <TitlebarIconButton title="Back">
+          <ArrowLeftIcon />
+        </TitlebarIconButton>
+        <TitlebarIconButton title="Forward">
+          <ArrowRightIcon />
+        </TitlebarIconButton>
+        <TitlebarIconButton title="Reload">
+          <RotateCwIcon />
+        </TitlebarIconButton>
+      </TitlebarLeft>
+      <TitlebarRight>
+        <TitlebarIconButton title="Copy URL">
+          <CopyIcon />
+        </TitlebarIconButton>
+        <TitlebarIconButton title="Open in Browser">
+          <ExternalLinkIcon />
+        </TitlebarIconButton>
+      </TitlebarRight>
+    </Titlebar>
   );
 }
