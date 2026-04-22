@@ -148,6 +148,14 @@ class Accounts {
     return selectedAccount;
   }
 
+  findInstanceByGmailWebContentsId(webContentsId: number) {
+    for (const account of this.instances.values()) {
+      if (account.gmail.view.webContents.id === webContentsId) {
+        return account;
+      }
+    }
+  }
+
   selectAccount(selectedAccountId: string) {
     config.set(
       "accounts",

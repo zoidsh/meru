@@ -96,12 +96,12 @@ class Ipc {
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (event.sender.id === accountInstance.gmail.view.webContents.id) {
-          accountInstance.gmail.store.setState({
-            outOfOffice,
-          });
-        }
+      const accountInstance = accounts.findInstanceByGmailWebContentsId(event.sender.id);
+
+      if (accountInstance) {
+        accountInstance.gmail.store.setState({
+          outOfOffice,
+        });
       }
     });
 
@@ -360,12 +360,10 @@ class Ipc {
     });
 
     ipc.main.on("gmail.setUserEmail", (event, email) => {
-      for (const accountInstance of accounts.instances.values()) {
-        if (accountInstance.gmail.view.webContents.id === event.sender.id) {
-          accountInstance.gmail.userEmail = email;
+      const accountInstance = accounts.findInstanceByGmailWebContentsId(event.sender.id);
 
-          return;
-        }
+      if (accountInstance) {
+        accountInstance.gmail.userEmail = email;
       }
     });
 
