@@ -1,4 +1,3 @@
-import path from "node:path";
 import { is } from "@electron-toolkit/utils";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
@@ -23,7 +22,7 @@ import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
-import { getCascadedWindowBounds } from "./lib/window";
+import { getCascadedWindowBounds, getPreloadPath } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
@@ -426,7 +425,7 @@ export class GoogleApp {
           autoHideMenuBar: true,
           webPreferences: {
             session: this.session,
-            preload: path.join(__dirname, "preload-google-app.js"),
+            preload: getPreloadPath("google-app"),
           },
         };
 

@@ -1,5 +1,4 @@
-import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
@@ -8,7 +7,6 @@ import {
   BrowserWindow,
   type IpcMainEvent,
   ipcMain,
-  nativeTheme,
   type Session,
   session,
   type WebContentsView,
@@ -16,6 +14,7 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
+import { getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
 
 export class Account {
@@ -108,7 +107,7 @@ export class Account {
           resizable: false,
           autoHideMenuBar: true,
           webPreferences: {
-            preload: path.join(__dirname, "preload-renderer.js"),
+            preload: getPreloadPath("renderer"),
           },
         });
 
@@ -136,24 +135,11 @@ export class Account {
 
         desktopSourcesWindow.once(windowEvent, windowListener);
 
-        const searchParams = new URLSearchParams();
-
-        searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
-
-        if (is.dev) {
-          desktopSourcesWindow.webContents.loadURL(
-            `http://localhost:3001/?${searchParams}#desktop-sources`,
-          );
-
-          desktopSourcesWindow.webContents.openDevTools({
-            mode: "detach",
-          });
-        } else {
-          desktopSourcesWindow.webContents.loadFile(
-            path.join("build-js", "renderer-popup", "index.html"),
-            { hash: "desktop-sources", search: searchParams.toString() },
-          );
-        }
+        loadRenderer(desktopSourcesWindow, {
+          renderer: "popup",
+          port: 3001,
+          hash: "desktop-sources",
+        });
       },
       { useSystemPicker: config.get("screenShare.useSystemPicker") },
     );
