@@ -27,7 +27,6 @@ import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { downloads } from "./downloads";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
-import { fileExists } from "./lib/fs";
 import { log } from "./lib/log";
 
 class Ipc {
@@ -144,19 +143,7 @@ class Ipc {
     });
 
     ipc.main.on("downloads.openFile", async (_event, { id, filePath }) => {
-      if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
-
+      if (await downloads.markDownloadMissingIfGone(id, filePath)) {
         return;
       }
 
@@ -164,19 +151,7 @@ class Ipc {
     });
 
     ipc.main.on("downloads.showFileInFolder", async (_event, { id, filePath }) => {
-      if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
-
+      if (await downloads.markDownloadMissingIfGone(id, filePath)) {
         return;
       }
 
@@ -395,19 +370,7 @@ class Ipc {
     });
 
     ipc.main.on("downloads.dragFile", async (event, { id, filePath }) => {
-      if (!(await fileExists(filePath))) {
-        const downloadHistory = config.get("downloads.history");
-
-        for (const item of downloadHistory) {
-          if (item.id === id) {
-            item.exists = false;
-
-            break;
-          }
-        }
-
-        config.set("downloads.history", downloadHistory);
-
+      if (await downloads.markDownloadMissingIfGone(id, filePath)) {
         return;
       }
 
