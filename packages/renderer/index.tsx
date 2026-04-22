@@ -1,13 +1,6 @@
-import { createRoot } from "react-dom/client";
+import { renderApp } from "@meru/renderer-lib/react";
 import { App } from "./app";
 import "./lib/notifications";
-import "./dark-mode";
 import "./ipc";
 
-const rootElement = document.getElementById("root");
-
-if (rootElement) {
-  const root = createRoot(rootElement);
-
-  root.render(<App />);
-}
+renderApp(App);
