@@ -29,14 +29,10 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@meru/renderer-lib/react-query";
+import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
-
-function timeToMinutes(time: string) {
-  const colonIndex = time.indexOf(":");
-  return Number(time.slice(0, colonIndex)) * 60 + Number(time.slice(colonIndex + 1));
-}
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
@@ -49,12 +45,6 @@ function hasOverlap(times: NotificationTime[]) {
       return aStart < bEnd && bStart < aEnd;
     }),
   );
-}
-
-function minutesToTime(totalMinutes: number) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 function findFreeSlot(existingTimes: NotificationTime[]) {
