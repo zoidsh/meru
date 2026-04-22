@@ -66,13 +66,13 @@ class Main {
     };
   }
 
-  async updateTitlebarOverlay() {
-    if (!platform.isLinux || (await isLinuxWindowControlsEnabled())) {
+  updateTitlebarOverlay() {
+    if (!platform.isLinux || isLinuxWindowControlsEnabled()) {
       this.window.setTitleBarOverlay(this.getTitlebarOverlayOptions());
     }
   }
 
-  async init() {
+  init() {
     const lastWindowState = config.get("window.lastState");
     const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
 
@@ -94,7 +94,7 @@ class Main {
       show: false,
       titleBarStyle: platform.isMacOS ? "hiddenInset" : "hidden",
       titleBarOverlay:
-        !platform.isLinux || (await isLinuxWindowControlsEnabled())
+        !platform.isLinux || isLinuxWindowControlsEnabled()
           ? this.getTitlebarOverlayOptions()
           : false,
       darkTheme: nativeTheme.shouldUseDarkColors,
