@@ -24,7 +24,6 @@ import { openExternalUrl } from "@/url";
 import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
 import { appState } from "./state";
-import { clamp } from "@meru/shared/utils";
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -115,14 +114,9 @@ export class AppMenu {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
-    const MIN_ZOOM_FACTOR = 0.1;
-    const MAX_ZOOM_FACTOR = 3;
-
     const zoomIn = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        focusedWindow.webContents.setZoomFactor(
-          clamp(focusedWindow.webContents.getZoomFactor() + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomIn();
 
         return;
       }
@@ -138,9 +132,7 @@ export class AppMenu {
 
     const zoomOut = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        focusedWindow.webContents.setZoomFactor(
-          clamp(focusedWindow.webContents.getZoomFactor() - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomOut();
 
         return;
       }
@@ -362,13 +354,13 @@ export class AppMenu {
             label: "Reset Zoom",
             accelerator: "CommandOrControl+0",
             click: () => {
-              const defaultZoomFactor = 1;
-
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.setZoomFactor(defaultZoomFactor);
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.resetZoom();
 
                 return;
               }
+
+              const defaultZoomFactor = 1;
 
               for (const [_accountId, instance] of accounts.instances) {
                 instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
@@ -408,7 +400,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+R",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.reload();
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.reload();
 
                 return;
               }
@@ -421,7 +413,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+Shift+R",
             click: async () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.reloadIgnoringCache();
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.hardReload();
 
                 return;
               }
@@ -437,7 +429,13 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.openDevTools();
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.browserWindow.webContents.openDevTools({ mode: "detach" });
+
+                  googleApp.view.webContents.openDevTools();
+                }
 
                 return;
               }
@@ -468,7 +466,7 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.navigationHistory.goBack();
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.goBack();
 
                 return;
               }
@@ -481,7 +479,7 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.navigationHistory.goForward();
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.goForward();
 
                 return;
               }
