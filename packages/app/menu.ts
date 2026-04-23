@@ -293,7 +293,7 @@ export class AppMenu {
               const focusedWindow = BrowserWindow.getFocusedWindow();
 
               const targetWebContents =
-                focusedWindow && GoogleApp.fromWebContents(focusedWindow.webContents)
+                focusedWindow && GoogleApp.tryFromWebContents(focusedWindow.webContents)
                   ? focusedWindow.webContents
                   : main.window.webContents;
 
