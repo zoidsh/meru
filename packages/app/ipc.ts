@@ -16,6 +16,7 @@ import {
 } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import { GoogleApp } from "@/google-app";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -177,6 +178,26 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       selectedAccount.instance.gmail.search(searchQuery);
+    });
+
+    ipc.main.on("googleApp.goBack", (event) => {
+      GoogleApp.fromWebContents(event.sender).goBack();
+    });
+
+    ipc.main.on("googleApp.goForward", (event) => {
+      GoogleApp.fromWebContents(event.sender).goForward();
+    });
+
+    ipc.main.on("googleApp.reload", (event) => {
+      GoogleApp.fromWebContents(event.sender).reload();
+    });
+
+    ipc.main.on("googleApp.copyUrl", (event) => {
+      GoogleApp.fromWebContents(event.sender).copyUrl();
+    });
+
+    ipc.main.on("googleApp.openInBrowser", (event) => {
+      GoogleApp.fromWebContents(event.sender).openInBrowser();
     });
 
     ipc.main.handle("config.getConfig", () => config.store);

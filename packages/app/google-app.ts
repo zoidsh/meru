@@ -1,5 +1,12 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { type BrowserWindow, type Session, type WebContents, WebContentsView } from "electron";
+import {
+  clipboard,
+  type BrowserWindow,
+  type Session,
+  type WebContents,
+  WebContentsView,
+} from "electron";
+import { ipc } from "./ipc";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -7,6 +14,7 @@ import {
   getPreloadPath,
   loadRenderer,
 } from "./lib/window";
+import { openExternalUrl } from "./url";
 
 type GoogleAppOptions = {
   url: string;
@@ -17,7 +25,13 @@ export class GoogleApp {
   private static instances = new Map<number, GoogleApp>();
 
   static fromWebContents(webContents: WebContents) {
-    return GoogleApp.instances.get(webContents.id);
+    const instance = GoogleApp.instances.get(webContents.id);
+
+    if (!instance) {
+      throw new Error(`No GoogleApp instance for webContents ${webContents.id}`);
+    }
+
+    return instance;
   }
 
   browserWindow: BrowserWindow;
@@ -30,7 +44,9 @@ export class GoogleApp {
       ...getCommonBrowserWindowOptions(),
     });
 
-    GoogleApp.instances.set(this.browserWindow.webContents.id, this);
+    const webContentsId = this.browserWindow.webContents.id;
+
+    GoogleApp.instances.set(webContentsId, this);
 
     loadRenderer(this.browserWindow, {
       renderer: "google-app",
@@ -53,9 +69,20 @@ export class GoogleApp {
     this.browserWindow.on("resize", this.updateViewBounds);
 
     this.browserWindow.on("closed", () => {
-      GoogleApp.instances.delete(this.browserWindow.webContents.id);
+      GoogleApp.instances.delete(webContentsId);
     });
+
+    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+
+    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
   }
+
+  broadcastNavigationState = () => {
+    ipc.renderer.send(this.browserWindow.webContents, "googleApp.navigationStateChanged", {
+      canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+      canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+    });
+  };
 
   updateViewBounds = () => {
     const { width, height } = this.browserWindow.getContentBounds();
@@ -67,4 +94,24 @@ export class GoogleApp {
       height: height - APP_TITLEBAR_HEIGHT,
     });
   };
+
+  goBack() {
+    this.view.webContents.navigationHistory.goBack();
+  }
+
+  goForward() {
+    this.view.webContents.navigationHistory.goForward();
+  }
+
+  reload() {
+    this.view.webContents.reload();
+  }
+
+  copyUrl() {
+    clipboard.writeText(this.view.webContents.getURL());
+  }
+
+  openInBrowser() {
+    openExternalUrl(this.view.webContents.getURL(), true);
+  }
 }

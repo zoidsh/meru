@@ -191,6 +191,11 @@ export type IpcMainEvents =
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
+      "googleApp.goBack": [];
+      "googleApp.goForward": [];
+      "googleApp.reload": [];
+      "googleApp.copyUrl": [];
+      "googleApp.openInBrowser": [];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
@@ -256,5 +261,6 @@ export type IpcRendererEvent = {
   "googleApp.initAccountColorIndicator": [
     color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
   ];
+  "googleApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "config.configChanged": [config: Config];
 };
