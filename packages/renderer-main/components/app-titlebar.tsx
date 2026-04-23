@@ -5,7 +5,12 @@ import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
-import { Titlebar, TitlebarIconButton, TitlebarLeft } from "@meru/ui/components/titlebar";
+import {
+  Titlebar,
+  TitlebarButtonGroup,
+  TitlebarIconButton,
+  TitlebarLeft,
+} from "@meru/ui/components/titlebar";
 import { cn } from "@meru/ui/lib/utils";
 import {
   ArrowLeftIcon,
@@ -436,80 +441,84 @@ export function AppTitlebar() {
     return (
       <>
         <TitlebarLeft>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="draggable-none"
-            onClick={() => {
-              ipc.main.send("gmail.moveNavigationHistory", "back");
-            }}
-            disabled={matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack}
-            title="Go Back"
-          >
-            <ArrowLeftIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="draggable-none"
-            onClick={() => {
-              ipc.main.send("gmail.moveNavigationHistory", "forward");
-            }}
-            disabled={
-              matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
-            }
-            title="Go Forward"
-          >
-            <ArrowRightIcon />
-          </Button>
-          {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
-            <Button
-              variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
-              size="icon"
-              className="size-7 draggable-none"
-              onClick={() => {
-                navigate("/unified-inbox");
-
-                ipc.main.send("settings.toggleIsOpen", true);
-
-                setIsGmailSavedSearchesOpen(false);
-              }}
-              title="Unified Inbox"
-            >
-              <InboxIcon />
-            </Button>
-          )}
-          {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
+          <TitlebarButtonGroup>
             <Button
               variant="ghost"
               size="icon-sm"
               className="draggable-none"
               onClick={() => {
-                setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+                ipc.main.send("gmail.moveNavigationHistory", "back");
               }}
-              title="Saved Searches"
-              disabled={matchUnifiedInboxRoute}
+              disabled={
+                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack
+              }
+              title="Go Back"
             >
-              {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
+              <ArrowLeftIcon />
             </Button>
-          )}
-          {accounts.length === 1 &&
-            accounts[0]?.gmail.outOfOffice &&
-            config["gmail.hideOutOfOfficeBanner"] &&
-            isLicenseKeyValid && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="draggable-none"
+              onClick={() => {
+                ipc.main.send("gmail.moveNavigationHistory", "forward");
+              }}
+              disabled={
+                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
+              }
+              title="Go Forward"
+            >
+              <ArrowRightIcon />
+            </Button>
+            {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
+              <Button
+                variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
+                size="icon"
+                className="size-7 draggable-none"
+                onClick={() => {
+                  navigate("/unified-inbox");
+
+                  ipc.main.send("settings.toggleIsOpen", true);
+
+                  setIsGmailSavedSearchesOpen(false);
+                }}
+                title="Unified Inbox"
+              >
+                <InboxIcon />
+              </Button>
+            )}
+            {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
               <Button
                 variant="ghost"
                 size="icon-sm"
                 className="draggable-none"
-                title="Out of Office"
                 onClick={() => {
-                  ipc.main.send("gmail.navigateTo", "settings");
+                  setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
                 }}
+                title="Saved Searches"
+                disabled={matchUnifiedInboxRoute}
               >
-                <BriefcaseIcon />
+                {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
               </Button>
             )}
-          {renderAccounts()}
+            {accounts.length === 1 &&
+              accounts[0]?.gmail.outOfOffice &&
+              config["gmail.hideOutOfOfficeBanner"] &&
+              isLicenseKeyValid && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="draggable-none"
+                  title="Out of Office"
+                  onClick={() => {
+                    ipc.main.send("gmail.navigateTo", "settings");
+                  }}
+                >
+                  <BriefcaseIcon />
+                </Button>
+              )}
+            {renderAccounts()}
+          </TitlebarButtonGroup>
         </TitlebarLeft>
         <div className="flex items-center gap-4">
           <div className="flex gap-2">

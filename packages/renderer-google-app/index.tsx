@@ -4,6 +4,7 @@ import { renderApp } from "@meru/shared/renderer/react";
 import { AccountBadge } from "@meru/ui/components/account-badge";
 import {
   Titlebar,
+  TitlebarButtonGroup,
   TitlebarIconButton,
   TitlebarLeft,
   TitlebarRight,
@@ -74,32 +75,34 @@ function App() {
   return (
     <Titlebar>
       <TitlebarLeft>
-        <TitlebarIconButton
-          title="Back"
-          disabled={!navigationState?.canGoBack}
-          onClick={() => {
-            ipc.main.send("googleApp.goBack");
-          }}
-        >
-          <ArrowLeftIcon />
-        </TitlebarIconButton>
-        <TitlebarIconButton
-          title="Forward"
-          disabled={!navigationState?.canGoForward}
-          onClick={() => {
-            ipc.main.send("googleApp.goForward");
-          }}
-        >
-          <ArrowRightIcon />
-        </TitlebarIconButton>
-        <TitlebarIconButton
-          title="Reload"
-          onClick={() => {
-            ipc.main.send("googleApp.reload");
-          }}
-        >
-          <RotateCwIcon />
-        </TitlebarIconButton>
+        <TitlebarButtonGroup>
+          <TitlebarIconButton
+            title="Back"
+            disabled={!navigationState?.canGoBack}
+            onClick={() => {
+              ipc.main.send("googleApp.goBack");
+            }}
+          >
+            <ArrowLeftIcon />
+          </TitlebarIconButton>
+          <TitlebarIconButton
+            title="Forward"
+            disabled={!navigationState?.canGoForward}
+            onClick={() => {
+              ipc.main.send("googleApp.goForward");
+            }}
+          >
+            <ArrowRightIcon />
+          </TitlebarIconButton>
+          <TitlebarIconButton
+            title="Reload"
+            onClick={() => {
+              ipc.main.send("googleApp.reload");
+            }}
+          >
+            <RotateCwIcon />
+          </TitlebarIconButton>
+        </TitlebarButtonGroup>
         {account && <AccountBadge label={account.label} color={account.color} />}
         {pageTitle && (
           <div className="truncate max-w-xs text-sm" title={pageTitle}>
@@ -108,15 +111,17 @@ function App() {
         )}
       </TitlebarLeft>
       <TitlebarRight>
-        <CopyUrlButton />
-        <TitlebarIconButton
-          title="Open in Browser"
-          onClick={() => {
-            ipc.main.send("googleApp.openInBrowser");
-          }}
-        >
-          <ExternalLinkIcon />
-        </TitlebarIconButton>
+        <TitlebarButtonGroup>
+          <CopyUrlButton />
+          <TitlebarIconButton
+            title="Open in Browser"
+            onClick={() => {
+              ipc.main.send("googleApp.openInBrowser");
+            }}
+          >
+            <ExternalLinkIcon />
+          </TitlebarIconButton>
+        </TitlebarButtonGroup>
       </TitlebarRight>
     </Titlebar>
   );
