@@ -120,6 +120,16 @@ export class AppMenu {
 
     const zoomIn = () => {
       if (focusedWindow && focusedWindow !== main.window) {
+        const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+        if (googleApp) {
+          googleApp.setZoomFactor(
+            clamp(googleApp.zoomFactor + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+          );
+
+          return;
+        }
+
         focusedWindow.webContents.setZoomFactor(
           clamp(focusedWindow.webContents.getZoomFactor() + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
         );
@@ -138,6 +148,16 @@ export class AppMenu {
 
     const zoomOut = () => {
       if (focusedWindow && focusedWindow !== main.window) {
+        const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+        if (googleApp) {
+          googleApp.setZoomFactor(
+            clamp(googleApp.zoomFactor - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+          );
+
+          return;
+        }
+
         focusedWindow.webContents.setZoomFactor(
           clamp(focusedWindow.webContents.getZoomFactor() - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
         );
@@ -365,6 +385,14 @@ export class AppMenu {
               const defaultZoomFactor = 1;
 
               if (focusedWindow && focusedWindow !== main.window) {
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.setZoomFactor(defaultZoomFactor);
+
+                  return;
+                }
+
                 focusedWindow.webContents.setZoomFactor(defaultZoomFactor);
 
                 return;

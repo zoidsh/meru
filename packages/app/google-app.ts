@@ -404,6 +404,14 @@ export class GoogleApp {
     this.view.webContents.reloadIgnoringCache();
   }
 
+  get zoomFactor() {
+    return this.view.webContents.getZoomFactor();
+  }
+
+  setZoomFactor(zoomFactor: number) {
+    this.view.webContents.setZoomFactor(zoomFactor);
+  }
+
   stop() {
     this.view.webContents.stop();
   }
