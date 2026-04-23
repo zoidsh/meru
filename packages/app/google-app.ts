@@ -82,6 +82,8 @@ export class GoogleApp {
     this.view.webContents.on("did-navigate", this.broadcastNavigationState);
 
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+
+    this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
   }
 
   broadcastNavigationState = () => {
@@ -89,6 +91,14 @@ export class GoogleApp {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
+  };
+
+  broadcastPageTitle = () => {
+    ipc.renderer.send(
+      this.browserWindow.webContents,
+      "googleApp.pageTitleChanged",
+      this.view.webContents.getTitle(),
+    );
   };
 
   updateViewBounds = () => {

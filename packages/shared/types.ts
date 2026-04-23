@@ -263,5 +263,6 @@ export type IpcRendererEvent = {
     color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
   ];
   "googleApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
+  "googleApp.pageTitleChanged": [title: string];
   "config.configChanged": [config: Config];
 };

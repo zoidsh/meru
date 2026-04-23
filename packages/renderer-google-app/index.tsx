@@ -51,6 +51,8 @@ function App() {
     canGoForward: boolean;
   }>();
 
+  const [pageTitle, setPageTitle] = useState<string>();
+
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
     queryFn: () => ipc.main.invoke("googleApp.getAccount"),
@@ -60,6 +62,12 @@ function App() {
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
       setNavigationState(state);
+    });
+  }, []);
+
+  useEffect(() => {
+    return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
+      setPageTitle(title);
     });
   }, []);
 
@@ -92,9 +100,14 @@ function App() {
         >
           <RotateCwIcon />
         </TitlebarIconButton>
+        {account && <AccountBadge label={account.label} color={account.color} />}
+        {pageTitle && (
+          <div className="truncate max-w-xs text-sm" title={pageTitle}>
+            {pageTitle}
+          </div>
+        )}
       </TitlebarLeft>
       <TitlebarRight>
-        {account && <AccountBadge label={account.label} color={account.color} />}
         <CopyUrlButton />
         <TitlebarIconButton
           title="Open in Browser"
