@@ -417,8 +417,14 @@ class Ipc {
       });
     });
 
-    ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", () => {
-      if (downloads.toggleRecentDownloadHistoryPopup()) {
+    ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
+      const parentWindow = BrowserWindow.fromWebContents(event.sender);
+
+      if (!parentWindow) {
+        return;
+      }
+
+      if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
         downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });

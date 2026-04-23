@@ -2,6 +2,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { ms } from "@meru/shared/ms";
 import { renderApp } from "@meru/shared/renderer/react";
 import { AccountBadge } from "@meru/ui/components/account-badge";
+import { Button } from "@meru/ui/components/button";
 import { FindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
@@ -17,12 +18,35 @@ import {
   ArrowRightIcon,
   CheckIcon,
   CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   LoaderCircleIcon,
   RotateCwIcon,
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+function Download() {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="draggable-none"
+      onClick={() => {
+        ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
+      }}
+      onMouseEnter={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
+      }}
+      onMouseLeave={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
+      }}
+      title="Download History"
+    >
+      <DownloadIcon />
+    </Button>
+  );
+}
 
 function ReloadButton() {
   const [loading, setLoading] = useState(false);
@@ -171,6 +195,7 @@ function App() {
             setFindInPageState((state) => ({ ...state, isActive: false }));
           }}
         />
+        <Download />
         <TitlebarButtonGroup>
           <CopyUrlButton />
           <TitlebarIconButton
