@@ -86,39 +86,7 @@ export class GoogleApp {
     return false;
   }
 
-  static handleAboutBlankPopup() {
-    return {
-      action: "allow" as const,
-      createWindow: (options: Electron.BrowserWindowConstructorOptions) => {
-        let newWindow: BrowserWindow | null = new BrowserWindow({
-          ...options,
-          show: false,
-        });
-
-        newWindow.webContents.once("will-navigate", (_event, navigationUrl) => {
-          if (!newWindow) {
-            return;
-          }
-
-          if (navigationUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
-            newWindow.show();
-
-            return;
-          }
-
-          openExternalUrl(navigationUrl);
-
-          newWindow.webContents.close();
-
-          newWindow = null;
-        });
-
-        return newWindow.webContents;
-      },
-    };
-  }
-
-  static handlePasskeyChallengeNavigate(url: string) {
+  static handleNavigate(url: string) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
     }
@@ -130,7 +98,7 @@ export class GoogleApp {
     });
   }
 
-  static handleGoogleLoginRedirect(event: Electron.Event, url: string, webContents: WebContents) {
+  static handleRedirect(event: Electron.Event, url: string, webContents: WebContents) {
     if (
       !url.startsWith("https://www.google.com") &&
       !url.startsWith("https://workspace.google.com")
@@ -143,15 +111,84 @@ export class GoogleApp {
     webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
   }
 
-  static handleSupportedGoogleAppOpen({
+  static handleWindowOpen({
     accountId,
-    url,
-    disposition,
+    details,
+    webContents,
   }: {
     accountId: AccountConfig["id"];
-    url: string;
-    disposition: Electron.HandlerDetails["disposition"];
-  }) {
+    details: Electron.HandlerDetails;
+    webContents: WebContents;
+  }): ReturnType<Parameters<WebContents["setWindowOpenHandler"]>[0]> {
+    const { url, disposition } = details;
+
+    if (url === "about:blank") {
+      return {
+        action: "allow",
+        createWindow: (options) => {
+          let newWindow: BrowserWindow | null = new BrowserWindow({
+            ...options,
+            show: false,
+          });
+
+          newWindow.webContents.once("will-navigate", (_event, navigationUrl) => {
+            if (!newWindow) {
+              return;
+            }
+
+            if (navigationUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
+              newWindow.show();
+
+              return;
+            }
+
+            openExternalUrl(navigationUrl);
+
+            newWindow.webContents.close();
+
+            newWindow = null;
+          });
+
+          return newWindow.webContents;
+        },
+      };
+    }
+
+    if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
+      main.navigate("/settings/accounts");
+
+      return { action: "deny" };
+    }
+
+    if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
+      return { action: "allow" };
+    }
+
+    if (GoogleApp.GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
+      const account = accounts.getAccount(accountId);
+
+      const pdfWindow = new BrowserWindow({
+        ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+        autoHideMenuBar: true,
+        webPreferences: {
+          session: account.instance.session,
+          preload: getPreloadPath("google-app"),
+        },
+      });
+
+      setupWindowContextMenu(pdfWindow);
+
+      account.instance.windows.add(pdfWindow);
+
+      pdfWindow.once("closed", () => {
+        account.instance.windows.delete(pdfWindow);
+      });
+
+      pdfWindow.loadURL(url);
+
+      return { action: "deny" };
+    }
+
     const matchedSupportedGoogleApp = GoogleApp.getGoogleAppFromUrl(url);
 
     const isGoogleAppEnabledToOpenInApp =
@@ -160,46 +197,31 @@ export class GoogleApp {
       config.get("googleApps.openInApp") &&
       !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
 
-    if (!isGoogleAppEnabledToOpenInApp || disposition === "background-tab") {
-      return null;
+    if (isGoogleAppEnabledToOpenInApp && disposition !== "background-tab") {
+      if (
+        !config.get("googleApps.openAppsInNewWindow") &&
+        GoogleApp.reuseWindowByHostname(accountId, url)
+      ) {
+        return { action: "deny" };
+      }
+
+      new GoogleApp({
+        accountId,
+        url,
+      });
+
+      return { action: "deny" };
     }
 
-    if (
-      !config.get("googleApps.openAppsInNewWindow") &&
-      GoogleApp.reuseWindowByHostname(accountId, url)
-    ) {
-      return { action: "deny" as const };
+    if (GoogleApp.GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+      webContents.downloadURL(url);
+
+      return { action: "deny" };
     }
 
-    new GoogleApp({
-      accountId,
-      url,
-    });
+    openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
 
-    return { action: "deny" as const };
-  }
-
-  static openPdfViewerWindow({ accountId, url }: { accountId: AccountConfig["id"]; url: string }) {
-    const account = accounts.getAccount(accountId);
-
-    const pdfWindow = new BrowserWindow({
-      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-      autoHideMenuBar: true,
-      webPreferences: {
-        session: account.instance.session,
-        preload: getPreloadPath("google-app"),
-      },
-    });
-
-    setupWindowContextMenu(pdfWindow);
-
-    account.instance.windows.add(pdfWindow);
-
-    pdfWindow.once("closed", () => {
-      account.instance.windows.delete(pdfWindow);
-    });
-
-    pdfWindow.loadURL(url);
+    return { action: "deny" };
   }
 
   accountId: AccountConfig["id"];
@@ -276,47 +298,13 @@ export class GoogleApp {
   }
 
   private setWindowOpenHandler(view: WebContentsView) {
-    view.webContents.setWindowOpenHandler(({ url, disposition }) => {
-      if (url === "about:blank") {
-        return GoogleApp.handleAboutBlankPopup();
-      }
-
-      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-        main.navigate("/settings/accounts");
-
-        return { action: "deny" };
-      }
-
-      if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
-        return { action: "allow" };
-      }
-
-      if (GoogleApp.GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-        GoogleApp.openPdfViewerWindow({ accountId: this.accountId, url });
-
-        return { action: "deny" };
-      }
-
-      const supportedAppResult = GoogleApp.handleSupportedGoogleAppOpen({
+    view.webContents.setWindowOpenHandler((details) =>
+      GoogleApp.handleWindowOpen({
         accountId: this.accountId,
-        url,
-        disposition,
-      });
-
-      if (supportedAppResult) {
-        return supportedAppResult;
-      }
-
-      if (GoogleApp.GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
-        view.webContents.downloadURL(url);
-
-        return { action: "deny" };
-      }
-
-      openExternalUrl(url, Boolean(GoogleApp.getGoogleAppFromUrl(url)));
-
-      return { action: "deny" };
-    });
+        details,
+        webContents: view.webContents,
+      }),
+    );
   }
 
   private handleClose = () => {
@@ -383,11 +371,11 @@ export class GoogleApp {
   };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
-    GoogleApp.handlePasskeyChallengeNavigate(url);
+    GoogleApp.handleNavigate(url);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
-    GoogleApp.handleGoogleLoginRedirect(event, url, this.view.webContents);
+    GoogleApp.handleRedirect(event, url, this.view.webContents);
   };
 
   broadcastNavigationState = () => {
