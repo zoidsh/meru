@@ -2,8 +2,8 @@ import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
+  BrowserWindow,
   clipboard,
-  type BrowserWindow,
   dialog,
   type Session,
   type WebContents,
@@ -19,7 +19,10 @@ import {
   getPreloadPath,
   loadRenderer,
 } from "./lib/window";
+import { main } from "./main";
 import { openExternalUrl } from "./url";
+
+const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
 
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
@@ -88,6 +91,8 @@ export class GoogleApp {
 
     setupWindowContextMenu(view);
 
+    this.setWindowOpenHandler(view);
+
     view.webContents.loadURL(url);
 
     if (is.dev) {
@@ -95,6 +100,62 @@ export class GoogleApp {
     }
 
     return view;
+  }
+
+  private setWindowOpenHandler(view: WebContentsView) {
+    view.webContents.setWindowOpenHandler(({ url }) => {
+      if (url === "about:blank") {
+        return {
+          action: "allow",
+          createWindow: (options) => {
+            let newWindow: BrowserWindow | null = new BrowserWindow({
+              ...options,
+              show: false,
+            });
+
+            newWindow.webContents.once("will-navigate", (_event, navigationUrl) => {
+              if (!newWindow) {
+                return;
+              }
+
+              if (navigationUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
+                newWindow.show();
+
+                return;
+              }
+
+              openExternalUrl(navigationUrl);
+
+              newWindow.webContents.close();
+
+              newWindow = null;
+            });
+
+            return newWindow.webContents;
+          },
+        };
+      }
+
+      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
+        main.navigate("/settings/accounts");
+
+        return { action: "deny" };
+      }
+
+      if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
+        return { action: "allow" };
+      }
+
+      if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+        view.webContents.downloadURL(url);
+
+        return { action: "deny" };
+      }
+
+      openExternalUrl(url);
+
+      return { action: "deny" };
+    });
   }
 
   private handleClose = () => {
