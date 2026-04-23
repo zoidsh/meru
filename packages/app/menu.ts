@@ -126,13 +126,7 @@ export class AppMenu {
           googleApp.setZoomFactor(
             clamp(googleApp.zoomFactor + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
           );
-
-          return;
         }
-
-        focusedWindow.webContents.setZoomFactor(
-          clamp(focusedWindow.webContents.getZoomFactor() + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
 
         return;
       }
@@ -154,13 +148,7 @@ export class AppMenu {
           googleApp.setZoomFactor(
             clamp(googleApp.zoomFactor - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
           );
-
-          return;
         }
-
-        focusedWindow.webContents.setZoomFactor(
-          clamp(focusedWindow.webContents.getZoomFactor() - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
 
         return;
       }
@@ -385,15 +373,9 @@ export class AppMenu {
               const defaultZoomFactor = 1;
 
               if (focusedWindow && focusedWindow !== main.window) {
-                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
-
-                if (googleApp) {
-                  googleApp.setZoomFactor(defaultZoomFactor);
-
-                  return;
-                }
-
-                focusedWindow.webContents.setZoomFactor(defaultZoomFactor);
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.setZoomFactor(
+                  defaultZoomFactor,
+                );
 
                 return;
               }
@@ -465,7 +447,13 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                focusedWindow.webContents.openDevTools();
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  focusedWindow.webContents.openDevTools({ mode: "detach" });
+
+                  googleApp.view.webContents.openDevTools();
+                }
 
                 return;
               }
