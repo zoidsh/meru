@@ -1,7 +1,6 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
-import { getGoogleAppUrl } from "@meru/shared/google";
 import {
   app,
   BrowserWindow,
@@ -443,17 +442,6 @@ export class AppMenu {
               main.window.webContents.openDevTools({ mode: "detach" });
 
               selectedAccount.instance.gmail.view.webContents.openDevTools();
-            },
-          },
-          {
-            label: "Open Google Docs in GoogleApp window",
-            visible: is.dev,
-            accelerator: "CommandOrControl+T",
-            click: () => {
-              new GoogleApp({
-                accountId: selectedAccount.config.id,
-                url: getGoogleAppUrl("docs"),
-              });
             },
           },
         ],
