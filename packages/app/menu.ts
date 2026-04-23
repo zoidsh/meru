@@ -454,7 +454,6 @@ export class AppMenu {
             click: () => {
               new GoogleApp({
                 accountId: selectedAccount.config.id,
-                app: "docs",
                 url: getGoogleAppUrl("docs"),
               });
             },

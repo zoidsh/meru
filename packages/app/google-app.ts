@@ -34,9 +34,12 @@ const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
   `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
+function getGoogleAppFromUrl(url: string) {
+  return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
+}
+
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
-  app: SupportedGoogleApp;
   url: string;
 };
 
@@ -67,7 +70,13 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, app, url }: GoogleAppOptions) {
+  constructor({ accountId, url }: GoogleAppOptions) {
+    const app = getGoogleAppFromUrl(url);
+
+    if (!app) {
+      throw new Error(`Cannot determine Google app from URL: ${url}`);
+    }
+
     this.accountId = accountId;
     this.app = app;
 
@@ -174,9 +183,7 @@ export class GoogleApp {
         return { action: "deny" };
       }
 
-      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
-        | SupportedGoogleApp
-        | undefined;
+      const matchedSupportedGoogleApp = getGoogleAppFromUrl(url);
 
       const isGoogleAppEnabledToOpenInApp =
         licenseKey.isValid &&
@@ -204,7 +211,6 @@ export class GoogleApp {
 
         new GoogleApp({
           accountId: this.accountId,
-          app: matchedSupportedGoogleApp,
           url,
         });
 
@@ -217,7 +223,7 @@ export class GoogleApp {
         return { action: "deny" };
       }
 
-      openExternalUrl(url);
+      openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
 
       return { action: "deny" };
     });
