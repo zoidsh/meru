@@ -30,28 +30,25 @@ import { openExternalUrl } from "./url";
 const MIN_ZOOM_FACTOR = 0.1;
 const MAX_ZOOM_FACTOR = 3;
 
+const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
+
+const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
+
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
+  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+);
+
+function getGoogleAppFromUrl(url: string) {
+  return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
+}
+
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
 };
 
 export class GoogleApp {
-  static readonly GOOGLE_CHAT_ATTACHMENT_URL_REGEXP =
-    /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
-
-  static readonly GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
-
-  static readonly SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-    `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
-  );
-
   private static instances = new Map<number, GoogleApp>();
-
-  static getGoogleAppFromUrl(url: string) {
-    return url.match(GoogleApp.SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
-      | SupportedGoogleApp
-      | undefined;
-  }
 
   static fromWebContents(webContents: WebContents) {
     const instance = GoogleApp.instances.get(webContents.id);
@@ -164,7 +161,7 @@ export class GoogleApp {
       return { action: "allow" };
     }
 
-    if (GoogleApp.GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
+    if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
       const account = accounts.getAccount(accountId);
 
       const pdfWindow = new BrowserWindow({
@@ -189,7 +186,7 @@ export class GoogleApp {
       return { action: "deny" };
     }
 
-    const matchedSupportedGoogleApp = GoogleApp.getGoogleAppFromUrl(url);
+    const matchedSupportedGoogleApp = getGoogleAppFromUrl(url);
 
     const isGoogleAppEnabledToOpenInApp =
       licenseKey.isValid &&
@@ -213,7 +210,7 @@ export class GoogleApp {
       return { action: "deny" };
     }
 
-    if (GoogleApp.GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+    if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
       webContents.downloadURL(url);
 
       return { action: "deny" };
@@ -235,7 +232,7 @@ export class GoogleApp {
   private powerSaveBlockerId: number | undefined;
 
   constructor({ accountId, url }: GoogleAppOptions) {
-    const app = GoogleApp.getGoogleAppFromUrl(url);
+    const app = getGoogleAppFromUrl(url);
 
     if (!app) {
       throw new Error(`Cannot determine Google app from URL: ${url}`);
