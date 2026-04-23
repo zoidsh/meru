@@ -48,50 +48,58 @@ export class GoogleApp {
 
   constructor({ accountId, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
+    this.browserWindow = this.createToolbarWindow();
+    this.view = this.createView({ url, session });
 
-    this.browserWindow = createBrowserWindow({
+    this.updateViewBounds();
+    this.registerViewListeners();
+
+    this.browserWindow.on("resize", this.updateViewBounds);
+    this.browserWindow.on("close", this.handleClose);
+
+    GoogleApp.instances.set(this.browserWindow.webContents.id, this);
+  }
+
+  private createToolbarWindow() {
+    const browserWindow = createBrowserWindow({
       ...getCascadedWindowBounds({ width: 1280, height: 800 }),
       ...getCommonBrowserWindowOptions(),
     });
 
-    const webContentsId = this.browserWindow.webContents.id;
-
-    GoogleApp.instances.set(webContentsId, this);
-
-    loadRenderer(this.browserWindow, {
+    loadRenderer(browserWindow, {
       renderer: "google-app",
       port: 3002,
     });
 
-    this.view = new WebContentsView({
+    return browserWindow;
+  }
+
+  private createView({ url, session }: { url: string; session: Session }) {
+    const view = new WebContentsView({
       webPreferences: {
         session,
         preload: getPreloadPath("google-app"),
       },
     });
 
-    this.browserWindow.contentView.addChildView(this.view);
+    this.browserWindow.contentView.addChildView(view);
 
-    setupWindowContextMenu(this.view);
+    setupWindowContextMenu(view);
 
-    this.view.webContents.loadURL(url);
+    view.webContents.loadURL(url);
 
     if (is.dev) {
-      this.view.webContents.openDevTools({ mode: "bottom" });
+      view.webContents.openDevTools({ mode: "bottom" });
     }
 
-    this.updateViewBounds();
-
-    this.browserWindow.on("resize", this.updateViewBounds);
-
-    this.registerViewListeners();
-
-    this.browserWindow.on("close", () => {
-      this.unregisterViewListeners();
-
-      GoogleApp.instances.delete(webContentsId);
-    });
+    return view;
   }
+
+  private handleClose = () => {
+    this.unregisterViewListeners();
+
+    GoogleApp.instances.delete(this.browserWindow.webContents.id);
+  };
 
   private registerViewListeners() {
     this.view.webContents.on("dom-ready", this.handleDomReady);
