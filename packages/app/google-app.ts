@@ -1,11 +1,13 @@
 import { is } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL, GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
   clipboard,
   dialog,
+  globalShortcut,
+  powerSaveBlocker,
   type Session,
   type WebContents,
   WebContentsView,
@@ -56,8 +58,13 @@ export class GoogleApp {
 
   view: WebContentsView;
 
+  private isMeet: boolean;
+
+  private meetPowerSaveBlockerId: number | undefined;
+
   constructor({ accountId, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
+    this.isMeet = url.startsWith(GOOGLE_MEET_URL);
     this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url, session });
 
@@ -68,6 +75,10 @@ export class GoogleApp {
     this.browserWindow.on("close", this.handleClose);
 
     this.account.instance.windows.add(this.browserWindow);
+
+    if (this.isMeet) {
+      this.setupMeet();
+    }
 
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
@@ -205,10 +216,35 @@ export class GoogleApp {
   private handleClose = () => {
     this.unregisterViewListeners();
 
+    if (this.isMeet) {
+      this.teardownMeet();
+    }
+
     this.account.instance.windows.delete(this.browserWindow);
 
     GoogleApp.instances.delete(this.browserWindow.webContents.id);
   };
+
+  private setupMeet() {
+    this.meetPowerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
+
+    globalShortcut.register("CommandOrControl+Shift+1", () => {
+      ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
+    });
+
+    globalShortcut.register("CommandOrControl+Shift+2", () => {
+      ipc.renderer.send(this.view.webContents, "googleMeet.toggleCamera");
+    });
+  }
+
+  private teardownMeet() {
+    if (typeof this.meetPowerSaveBlockerId === "number") {
+      powerSaveBlocker.stop(this.meetPowerSaveBlockerId);
+    }
+
+    globalShortcut.unregister("CommandOrControl+Shift+1");
+    globalShortcut.unregister("CommandOrControl+Shift+2");
+  }
 
   private registerViewListeners() {
     this.view.webContents.on("dom-ready", this.handleDomReady);
