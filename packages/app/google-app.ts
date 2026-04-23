@@ -27,20 +27,8 @@ import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
 
-const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
-
-const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
-
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
-);
-
 const MIN_ZOOM_FACTOR = 0.1;
 const MAX_ZOOM_FACTOR = 3;
-
-function getGoogleAppFromUrl(url: string) {
-  return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
-}
 
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
@@ -48,7 +36,22 @@ type GoogleAppOptions = {
 };
 
 export class GoogleApp {
+  static readonly GOOGLE_CHAT_ATTACHMENT_URL_REGEXP =
+    /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
+
+  static readonly GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
+
+  static readonly SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
+    `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+  );
+
   private static instances = new Map<number, GoogleApp>();
+
+  static getGoogleAppFromUrl(url: string) {
+    return url.match(GoogleApp.SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
+      | SupportedGoogleApp
+      | undefined;
+  }
 
   static fromWebContents(webContents: WebContents) {
     const instance = GoogleApp.instances.get(webContents.id);
@@ -83,6 +86,122 @@ export class GoogleApp {
     return false;
   }
 
+  static handleAboutBlankPopup() {
+    return {
+      action: "allow" as const,
+      createWindow: (options: Electron.BrowserWindowConstructorOptions) => {
+        let newWindow: BrowserWindow | null = new BrowserWindow({
+          ...options,
+          show: false,
+        });
+
+        newWindow.webContents.once("will-navigate", (_event, navigationUrl) => {
+          if (!newWindow) {
+            return;
+          }
+
+          if (navigationUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
+            newWindow.show();
+
+            return;
+          }
+
+          openExternalUrl(navigationUrl);
+
+          newWindow.webContents.close();
+
+          newWindow = null;
+        });
+
+        return newWindow.webContents;
+      },
+    };
+  }
+
+  static handlePasskeyChallengeNavigate(url: string) {
+    if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
+      return;
+    }
+
+    dialog.showMessageBox({
+      type: "info",
+      message: "Passkey sign-in not supported yet",
+      detail: "Please use password to sign in.",
+    });
+  }
+
+  static handleGoogleLoginRedirect(event: Electron.Event, url: string, webContents: WebContents) {
+    if (
+      !url.startsWith("https://www.google.com") &&
+      !url.startsWith("https://workspace.google.com")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+  }
+
+  static handleSupportedGoogleAppOpen({
+    accountId,
+    url,
+    disposition,
+  }: {
+    accountId: AccountConfig["id"];
+    url: string;
+    disposition: Electron.HandlerDetails["disposition"];
+  }) {
+    const matchedSupportedGoogleApp = GoogleApp.getGoogleAppFromUrl(url);
+
+    const isGoogleAppEnabledToOpenInApp =
+      licenseKey.isValid &&
+      matchedSupportedGoogleApp &&
+      config.get("googleApps.openInApp") &&
+      !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
+
+    if (!isGoogleAppEnabledToOpenInApp || disposition === "background-tab") {
+      return null;
+    }
+
+    if (
+      !config.get("googleApps.openAppsInNewWindow") &&
+      GoogleApp.reuseWindowByHostname(accountId, url)
+    ) {
+      return { action: "deny" as const };
+    }
+
+    new GoogleApp({
+      accountId,
+      url,
+    });
+
+    return { action: "deny" as const };
+  }
+
+  static openPdfViewerWindow({ accountId, url }: { accountId: AccountConfig["id"]; url: string }) {
+    const account = accounts.getAccount(accountId);
+
+    const pdfWindow = new BrowserWindow({
+      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+      autoHideMenuBar: true,
+      webPreferences: {
+        session: account.instance.session,
+        preload: getPreloadPath("google-app"),
+      },
+    });
+
+    setupWindowContextMenu(pdfWindow);
+
+    account.instance.windows.add(pdfWindow);
+
+    pdfWindow.once("closed", () => {
+      account.instance.windows.delete(pdfWindow);
+    });
+
+    pdfWindow.loadURL(url);
+  }
+
   accountId: AccountConfig["id"];
 
   app: SupportedGoogleApp;
@@ -94,7 +213,7 @@ export class GoogleApp {
   private powerSaveBlockerId: number | undefined;
 
   constructor({ accountId, url }: GoogleAppOptions) {
-    const app = getGoogleAppFromUrl(url);
+    const app = GoogleApp.getGoogleAppFromUrl(url);
 
     if (!app) {
       throw new Error(`Cannot determine Google app from URL: ${url}`);
@@ -159,35 +278,7 @@ export class GoogleApp {
   private setWindowOpenHandler(view: WebContentsView) {
     view.webContents.setWindowOpenHandler(({ url, disposition }) => {
       if (url === "about:blank") {
-        return {
-          action: "allow",
-          createWindow: (options) => {
-            let newWindow: BrowserWindow | null = new BrowserWindow({
-              ...options,
-              show: false,
-            });
-
-            newWindow.webContents.once("will-navigate", (_event, navigationUrl) => {
-              if (!newWindow) {
-                return;
-              }
-
-              if (navigationUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
-                newWindow.show();
-
-                return;
-              }
-
-              openExternalUrl(navigationUrl);
-
-              newWindow.webContents.close();
-
-              newWindow = null;
-            });
-
-            return newWindow.webContents;
-          },
-        };
+        return GoogleApp.handleAboutBlankPopup();
       }
 
       if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
@@ -200,67 +291,32 @@ export class GoogleApp {
         return { action: "allow" };
       }
 
-      if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-        this.openPdfViewerWindow(url);
+      if (GoogleApp.GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
+        GoogleApp.openPdfViewerWindow({ accountId: this.accountId, url });
 
         return { action: "deny" };
       }
 
-      const matchedSupportedGoogleApp = getGoogleAppFromUrl(url);
+      const supportedAppResult = GoogleApp.handleSupportedGoogleAppOpen({
+        accountId: this.accountId,
+        url,
+        disposition,
+      });
 
-      const isGoogleAppEnabledToOpenInApp =
-        licenseKey.isValid &&
-        matchedSupportedGoogleApp &&
-        config.get("googleApps.openInApp") &&
-        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
-
-      if (isGoogleAppEnabledToOpenInApp && disposition !== "background-tab") {
-        if (
-          !config.get("googleApps.openAppsInNewWindow") &&
-          GoogleApp.reuseWindowByHostname(this.accountId, url)
-        ) {
-          return { action: "deny" };
-        }
-
-        new GoogleApp({
-          accountId: this.accountId,
-          url,
-        });
-
-        return { action: "deny" };
+      if (supportedAppResult) {
+        return supportedAppResult;
       }
 
-      if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+      if (GoogleApp.GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
         view.webContents.downloadURL(url);
 
         return { action: "deny" };
       }
 
-      openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
+      openExternalUrl(url, Boolean(GoogleApp.getGoogleAppFromUrl(url)));
 
       return { action: "deny" };
     });
-  }
-
-  private openPdfViewerWindow(url: string) {
-    const pdfWindow = new BrowserWindow({
-      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-      autoHideMenuBar: true,
-      webPreferences: {
-        session: this.account.instance.session,
-        preload: getPreloadPath("google-app"),
-      },
-    });
-
-    setupWindowContextMenu(pdfWindow);
-
-    this.account.instance.windows.add(pdfWindow);
-
-    pdfWindow.once("closed", () => {
-      this.account.instance.windows.delete(pdfWindow);
-    });
-
-    pdfWindow.loadURL(url);
   }
 
   private handleClose = () => {
@@ -327,28 +383,11 @@ export class GoogleApp {
   };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
-    if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
-      return;
-    }
-
-    dialog.showMessageBox({
-      type: "info",
-      message: "Passkey sign-in not supported yet",
-      detail: "Please use password to sign in.",
-    });
+    GoogleApp.handlePasskeyChallengeNavigate(url);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
-    if (
-      !url.startsWith("https://www.google.com") &&
-      !url.startsWith("https://workspace.google.com")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-
-    this.view.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+    GoogleApp.handleGoogleLoginRedirect(event, url, this.view.webContents);
   };
 
   broadcastNavigationState = () => {
