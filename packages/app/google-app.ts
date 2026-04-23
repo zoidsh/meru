@@ -408,16 +408,24 @@ export class GoogleApp {
     this.view.webContents.reloadIgnoringCache();
   }
 
-  get zoomFactor() {
+  zoomIn() {
+    this.setZoomFactor(this.zoomFactor + 0.1);
+  }
+
+  zoomOut() {
+    this.setZoomFactor(this.zoomFactor - 0.1);
+  }
+
+  resetZoom() {
+    this.setZoomFactor(1);
+  }
+
+  private get zoomFactor() {
     return this.view.webContents.getZoomFactor();
   }
 
-  setZoomFactor(zoomFactor: number) {
-    this.view.webContents.setZoomFactor(zoomFactor);
-  }
-
-  zoomBy(delta: number) {
-    this.setZoomFactor(clamp(this.zoomFactor + delta, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
+  private setZoomFactor(zoomFactor: number) {
+    this.view.webContents.setZoomFactor(clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
   }
 
   stop() {

@@ -116,7 +116,7 @@ export class AppMenu {
 
     const zoomIn = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomBy(0.1);
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomIn();
 
         return;
       }
@@ -132,7 +132,7 @@ export class AppMenu {
 
     const zoomOut = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomBy(-0.1);
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomOut();
 
         return;
       }
@@ -354,15 +354,13 @@ export class AppMenu {
             label: "Reset Zoom",
             accelerator: "CommandOrControl+0",
             click: () => {
-              const defaultZoomFactor = 1;
-
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.setZoomFactor(
-                  defaultZoomFactor,
-                );
+                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.resetZoom();
 
                 return;
               }
+
+              const defaultZoomFactor = 1;
 
               for (const [_accountId, instance] of accounts.instances) {
                 instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
