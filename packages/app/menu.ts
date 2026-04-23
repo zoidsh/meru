@@ -292,14 +292,14 @@ export class AppMenu {
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
 
-              const target =
-                focusedWindow && GoogleApp.tryFromWebContents(focusedWindow.webContents)
+              const targetWebContents =
+                focusedWindow && GoogleApp.fromWebContents(focusedWindow.webContents)
                   ? focusedWindow.webContents
                   : main.window.webContents;
 
-              ipc.renderer.send(target, "findInPage.activate");
+              ipc.renderer.send(targetWebContents, "findInPage.activate");
 
-              target.focus();
+              targetWebContents.focus();
             },
           },
           {

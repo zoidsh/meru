@@ -129,7 +129,7 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const googleApp = GoogleApp.tryFromWebContents(event.sender);
+      const googleApp = GoogleApp.fromWebContents(event.sender);
 
       const targetWebContents = googleApp
         ? googleApp.view.webContents
@@ -185,35 +185,47 @@ class Ipc {
     });
 
     ipc.main.handle("googleApp.getAccount", (event) => {
-      return GoogleApp.fromWebContents(event.sender).account.config;
+      const googleApp = GoogleApp.fromWebContents(event.sender);
+
+      if (!googleApp) {
+        throw new Error(`No GoogleApp for webContents ${event.sender.id}`);
+      }
+
+      return googleApp.account.config;
     });
 
     ipc.main.handle("googleApp.getLoadingState", (event) => {
-      return GoogleApp.fromWebContents(event.sender).isLoading;
+      const googleApp = GoogleApp.fromWebContents(event.sender);
+
+      if (!googleApp) {
+        throw new Error(`No GoogleApp for webContents ${event.sender.id}`);
+      }
+
+      return googleApp.isLoading;
     });
 
     ipc.main.on("googleApp.goBack", (event) => {
-      GoogleApp.fromWebContents(event.sender).goBack();
+      GoogleApp.fromWebContents(event.sender)?.goBack();
     });
 
     ipc.main.on("googleApp.goForward", (event) => {
-      GoogleApp.fromWebContents(event.sender).goForward();
+      GoogleApp.fromWebContents(event.sender)?.goForward();
     });
 
     ipc.main.on("googleApp.reload", (event) => {
-      GoogleApp.fromWebContents(event.sender).reload();
+      GoogleApp.fromWebContents(event.sender)?.reload();
     });
 
     ipc.main.on("googleApp.stop", (event) => {
-      GoogleApp.fromWebContents(event.sender).stop();
+      GoogleApp.fromWebContents(event.sender)?.stop();
     });
 
     ipc.main.on("googleApp.copyUrl", (event) => {
-      GoogleApp.fromWebContents(event.sender).copyUrl();
+      GoogleApp.fromWebContents(event.sender)?.copyUrl();
     });
 
     ipc.main.on("googleApp.openInBrowser", (event) => {
-      GoogleApp.fromWebContents(event.sender).openInBrowser();
+      GoogleApp.fromWebContents(event.sender)?.openInBrowser();
     });
 
     ipc.main.handle("config.getConfig", () => config.store);

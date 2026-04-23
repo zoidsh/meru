@@ -44,16 +44,6 @@ export class GoogleApp {
   private static instances = new Map<number, GoogleApp>();
 
   static fromWebContents(webContents: WebContents) {
-    const instance = GoogleApp.instances.get(webContents.id);
-
-    if (!instance) {
-      throw new Error(`No GoogleApp instance for webContents ${webContents.id}`);
-    }
-
-    return instance;
-  }
-
-  static tryFromWebContents(webContents: WebContents) {
     return GoogleApp.instances.get(webContents.id);
   }
 
