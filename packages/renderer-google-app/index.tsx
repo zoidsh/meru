@@ -19,8 +19,45 @@ import {
   ExternalLinkIcon,
   LoaderCircleIcon,
   RotateCwIcon,
+  XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+function ReloadButton() {
+  const [loading, setLoading] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = ipc.renderer.on("googleApp.loadingStateChanged", (_event, isLoading) => {
+      setLoading(isLoading);
+    });
+
+    ipc.main.invoke("googleApp.getLoadingState").then(setLoading);
+
+    return unsubscribe;
+  }, []);
+
+  return (
+    <TitlebarIconButton
+      title={loading ? "Stop" : "Reload"}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => {
+        ipc.main.send(loading ? "googleApp.stop" : "googleApp.reload");
+      }}
+    >
+      {loading ? (
+        hovered ? (
+          <XIcon />
+        ) : (
+          <LoaderCircleIcon className="animate-spin" />
+        )
+      ) : (
+        <RotateCwIcon />
+      )}
+    </TitlebarIconButton>
+  );
+}
 
 function CopyUrlButton() {
   const [copied, setCopied] = useState(false);
@@ -56,8 +93,6 @@ function App() {
 
   const [pageTitle, setPageTitle] = useState("");
 
-  const [loading, setLoading] = useState(false);
-
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
     queryFn: () => ipc.main.invoke("googleApp.getAccount"),
@@ -73,12 +108,6 @@ function App() {
   useEffect(() => {
     return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
       setPageTitle(title);
-    });
-  }, []);
-
-  useEffect(() => {
-    return ipc.renderer.on("googleApp.loadingStateChanged", (_event, isLoading) => {
-      setLoading(isLoading);
     });
   }, []);
 
@@ -104,14 +133,7 @@ function App() {
           >
             <ArrowRightIcon />
           </TitlebarIconButton>
-          <TitlebarIconButton
-            title="Reload"
-            onClick={() => {
-              ipc.main.send("googleApp.reload");
-            }}
-          >
-            {loading ? <LoaderCircleIcon className="animate-spin" /> : <RotateCwIcon />}
-          </TitlebarIconButton>
+          <ReloadButton />
         </TitlebarButtonGroup>
         {account && <AccountBadge label={account.label} color={account.color} />}
         <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>

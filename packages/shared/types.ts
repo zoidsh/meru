@@ -194,6 +194,7 @@ export type IpcMainEvents =
       "googleApp.goBack": [];
       "googleApp.goForward": [];
       "googleApp.reload": [];
+      "googleApp.stop": [];
       "googleApp.copyUrl": [];
       "googleApp.openInBrowser": [];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
@@ -236,6 +237,7 @@ export type IpcMainEvents =
       "app.getIsDefaultMailtoClient": () => boolean;
       "app.setAsDefaultMailtoClient": () => void;
       "googleApp.getAccount": () => AccountConfig;
+      "googleApp.getLoadingState": () => boolean;
     };
 
 export type IpcRendererEvent = {

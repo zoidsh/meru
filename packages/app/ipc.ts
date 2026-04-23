@@ -184,6 +184,10 @@ class Ipc {
       return GoogleApp.fromWebContents(event.sender).account.config;
     });
 
+    ipc.main.handle("googleApp.getLoadingState", (event) => {
+      return GoogleApp.fromWebContents(event.sender).isLoading;
+    });
+
     ipc.main.on("googleApp.goBack", (event) => {
       GoogleApp.fromWebContents(event.sender).goBack();
     });
@@ -194,6 +198,10 @@ class Ipc {
 
     ipc.main.on("googleApp.reload", (event) => {
       GoogleApp.fromWebContents(event.sender).reload();
+    });
+
+    ipc.main.on("googleApp.stop", (event) => {
+      GoogleApp.fromWebContents(event.sender).stop();
     });
 
     ipc.main.on("googleApp.copyUrl", (event) => {

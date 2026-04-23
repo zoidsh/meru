@@ -75,7 +75,13 @@ export class GoogleApp {
 
     this.browserWindow.on("resize", this.updateViewBounds);
 
-    this.browserWindow.on("closed", () => {
+    this.browserWindow.on("close", () => {
+      this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
+      this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+      this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+      this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
+      this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+
       GoogleApp.instances.delete(webContentsId);
     });
 
@@ -134,6 +140,14 @@ export class GoogleApp {
 
   reload() {
     this.view.webContents.reload();
+  }
+
+  stop() {
+    this.view.webContents.stop();
+  }
+
+  get isLoading() {
+    return this.view.webContents.isLoading();
   }
 
   copyUrl() {
