@@ -408,6 +408,14 @@ export class AppMenu {
             accelerator: "CommandOrControl+R",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.reload();
+
+                  return;
+                }
+
                 focusedWindow.webContents.reload();
 
                 return;
@@ -421,6 +429,14 @@ export class AppMenu {
             accelerator: "CommandOrControl+Shift+R",
             click: async () => {
               if (focusedWindow && focusedWindow !== main.window) {
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.hardReload();
+
+                  return;
+                }
+
                 focusedWindow.webContents.reloadIgnoringCache();
 
                 return;
@@ -468,6 +484,14 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.goBack();
+
+                  return;
+                }
+
                 focusedWindow.webContents.navigationHistory.goBack();
 
                 return;
@@ -481,6 +505,14 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
+                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+
+                if (googleApp) {
+                  googleApp.goForward();
+
+                  return;
+                }
+
                 focusedWindow.webContents.navigationHistory.goForward();
 
                 return;

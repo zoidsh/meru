@@ -400,6 +400,10 @@ export class GoogleApp {
     this.view.webContents.reload();
   }
 
+  hardReload() {
+    this.view.webContents.reloadIgnoringCache();
+  }
+
   stop() {
     this.view.webContents.stop();
   }
