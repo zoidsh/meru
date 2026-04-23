@@ -66,6 +66,7 @@ export class GoogleApp {
   constructor({ accountId, app, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = app;
+
     this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url, session });
 
@@ -224,32 +225,28 @@ export class GoogleApp {
   };
 
   private setupApp() {
-    if (this.app !== "meet") {
-      return;
+    if (this.app === "meet") {
+      this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
+
+      globalShortcut.register("CommandOrControl+Shift+1", () => {
+        ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
+      });
+
+      globalShortcut.register("CommandOrControl+Shift+2", () => {
+        ipc.renderer.send(this.view.webContents, "googleMeet.toggleCamera");
+      });
     }
-
-    this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
-
-    globalShortcut.register("CommandOrControl+Shift+1", () => {
-      ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
-    });
-
-    globalShortcut.register("CommandOrControl+Shift+2", () => {
-      ipc.renderer.send(this.view.webContents, "googleMeet.toggleCamera");
-    });
   }
 
   private teardownApp() {
-    if (this.app !== "meet") {
-      return;
-    }
+    if (this.app === "meet") {
+      if (typeof this.powerSaveBlockerId === "number") {
+        powerSaveBlocker.stop(this.powerSaveBlockerId);
+      }
 
-    if (typeof this.powerSaveBlockerId === "number") {
-      powerSaveBlocker.stop(this.powerSaveBlockerId);
+      globalShortcut.unregister("CommandOrControl+Shift+1");
+      globalShortcut.unregister("CommandOrControl+Shift+2");
     }
-
-    globalShortcut.unregister("CommandOrControl+Shift+1");
-    globalShortcut.unregister("CommandOrControl+Shift+2");
   }
 
   private registerViewListeners() {
