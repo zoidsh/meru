@@ -441,13 +441,13 @@ export class AppMenu {
             },
           },
           {
-            label: "Open Google Calendar in GoogleApp window",
+            label: "Open Google Docs in GoogleApp window",
             visible: is.dev,
             accelerator: "CommandOrControl+T",
             click: () => {
               new GoogleApp({
                 accountId: selectedAccount.config.id,
-                url: getGoogleAppUrl("calendar"),
+                url: getGoogleAppUrl("docs"),
                 session: selectedAccount.instance.session,
               });
             },
