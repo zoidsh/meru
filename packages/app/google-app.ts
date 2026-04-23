@@ -11,6 +11,7 @@ import {
   type WebContents,
   WebContentsView,
 } from "electron";
+import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
@@ -33,6 +34,9 @@ const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pd
 const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
   `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
+
+const MIN_ZOOM_FACTOR = 0.1;
+const MAX_ZOOM_FACTOR = 3;
 
 function getGoogleAppFromUrl(url: string) {
   return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
@@ -410,6 +414,10 @@ export class GoogleApp {
 
   setZoomFactor(zoomFactor: number) {
     this.view.webContents.setZoomFactor(zoomFactor);
+  }
+
+  zoomBy(delta: number) {
+    this.setZoomFactor(clamp(this.zoomFactor + delta, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
   }
 
   stop() {

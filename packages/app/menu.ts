@@ -24,7 +24,6 @@ import { openExternalUrl } from "@/url";
 import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
 import { appState } from "./state";
-import { clamp } from "@meru/shared/utils";
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -115,16 +114,9 @@ export class AppMenu {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
-    const MIN_ZOOM_FACTOR = 0.1;
-    const MAX_ZOOM_FACTOR = 3;
-
     const zoomIn = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
-
-        googleApp?.setZoomFactor(
-          clamp(googleApp.zoomFactor + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomBy(0.1);
 
         return;
       }
@@ -140,11 +132,7 @@ export class AppMenu {
 
     const zoomOut = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
-
-        googleApp?.setZoomFactor(
-          clamp(googleApp.zoomFactor - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
+        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomBy(-0.1);
 
         return;
       }
