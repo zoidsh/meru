@@ -29,6 +29,8 @@ import { openExternalUrl } from "./url";
 
 const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
 
+const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
+
 const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
   `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
@@ -168,6 +170,12 @@ export class GoogleApp {
         return { action: "allow" };
       }
 
+      if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
+        this.openPdfViewerWindow(url);
+
+        return { action: "deny" };
+      }
+
       const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
         | SupportedGoogleApp
         | undefined;
@@ -216,6 +224,27 @@ export class GoogleApp {
 
       return { action: "deny" };
     });
+  }
+
+  private openPdfViewerWindow(url: string) {
+    const pdfWindow = new BrowserWindow({
+      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+      autoHideMenuBar: true,
+      webPreferences: {
+        session: this.account.instance.session,
+        preload: getPreloadPath("google-app"),
+      },
+    });
+
+    setupWindowContextMenu(pdfWindow);
+
+    this.account.instance.windows.add(pdfWindow);
+
+    pdfWindow.once("closed", () => {
+      this.account.instance.windows.delete(pdfWindow);
+    });
+
+    pdfWindow.loadURL(url);
   }
 
   private handleClose = () => {
