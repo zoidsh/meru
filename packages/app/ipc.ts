@@ -16,6 +16,7 @@ import {
 } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import { GoogleApp } from "@/google-app";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -127,16 +128,20 @@ class Ipc {
         }));
     });
 
-    this.main.on("findInPage", (_event, text, options) => {
-      const selectedAccount = accounts.getSelectedAccount();
+    this.main.on("findInPage", (event, text, options) => {
+      const googleApp = GoogleApp.tryFromWebContents(event.sender);
+
+      const targetWebContents = googleApp
+        ? googleApp.view.webContents
+        : accounts.getSelectedAccount().instance.gmail.view.webContents;
 
       if (!text) {
-        selectedAccount.instance.gmail.view.webContents.stopFindInPage("clearSelection");
+        targetWebContents.stopFindInPage("clearSelection");
 
         return;
       }
 
-      selectedAccount.instance.gmail.view.webContents.findInPage(text, {
+      targetWebContents.findInPage(text, {
         forward: options?.forward,
         findNext: options?.findNext,
       });
@@ -177,6 +182,38 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       selectedAccount.instance.gmail.search(searchQuery);
+    });
+
+    ipc.main.handle("googleApp.getAccount", (event) => {
+      return GoogleApp.fromWebContents(event.sender).account.config;
+    });
+
+    ipc.main.handle("googleApp.getLoadingState", (event) => {
+      return GoogleApp.fromWebContents(event.sender).isLoading;
+    });
+
+    ipc.main.on("googleApp.goBack", (event) => {
+      GoogleApp.fromWebContents(event.sender).goBack();
+    });
+
+    ipc.main.on("googleApp.goForward", (event) => {
+      GoogleApp.fromWebContents(event.sender).goForward();
+    });
+
+    ipc.main.on("googleApp.reload", (event) => {
+      GoogleApp.fromWebContents(event.sender).reload();
+    });
+
+    ipc.main.on("googleApp.stop", (event) => {
+      GoogleApp.fromWebContents(event.sender).stop();
+    });
+
+    ipc.main.on("googleApp.copyUrl", (event) => {
+      GoogleApp.fromWebContents(event.sender).copyUrl();
+    });
+
+    ipc.main.on("googleApp.openInBrowser", (event) => {
+      GoogleApp.fromWebContents(event.sender).openInBrowser();
     });
 
     ipc.main.handle("config.getConfig", () => config.store);

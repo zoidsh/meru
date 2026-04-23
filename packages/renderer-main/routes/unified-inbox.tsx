@@ -2,8 +2,7 @@ import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
 import { createDateTimeFormatter, dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { accountColorsMap } from "@meru/shared/accounts";
-import { Badge } from "@meru/ui/components/badge";
+import { AccountBadge } from "@meru/ui/components/account-badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Select,
@@ -12,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import { cn } from "@meru/ui/lib/utils";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -46,17 +44,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   columnHelper.accessor("account.label", {
     cell: (props) => (
       <div className="w-20">
-        <Badge variant="secondary">
-          {props.row.original.account.color && (
-            <div
-              className={cn(
-                "size-2 rounded-full",
-                accountColorsMap[props.row.original.account.color].className,
-              )}
-            />
-          )}
-          {props.getValue()}
-        </Badge>
+        <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
       </div>
     ),
   }),

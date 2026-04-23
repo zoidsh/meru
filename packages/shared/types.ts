@@ -191,6 +191,12 @@ export type IpcMainEvents =
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
+      "googleApp.goBack": [];
+      "googleApp.goForward": [];
+      "googleApp.reload": [];
+      "googleApp.stop": [];
+      "googleApp.copyUrl": [];
+      "googleApp.openInBrowser": [];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
@@ -230,6 +236,8 @@ export type IpcMainEvents =
       "app.setLoginItemSettings": (settings: Partial<LoginItemSettings>) => void;
       "app.getIsDefaultMailtoClient": () => boolean;
       "app.setAsDefaultMailtoClient": () => void;
+      "googleApp.getAccount": () => AccountConfig;
+      "googleApp.getLoadingState": () => boolean;
     };
 
 export type IpcRendererEvent = {
@@ -256,5 +264,8 @@ export type IpcRendererEvent = {
   "googleApp.initAccountColorIndicator": [
     color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
   ];
+  "googleApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
+  "googleApp.pageTitleChanged": [title: string];
+  "googleApp.loadingStateChanged": [loading: boolean];
   "config.configChanged": [config: Config];
 };

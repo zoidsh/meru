@@ -20,6 +20,7 @@ import {
 import { createStore } from "zustand/vanilla";
 import { accounts } from "./accounts";
 import { config } from "./config";
+import { GoogleApp } from "./google-app";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import { getCascadedWindowBounds, getPreloadPath } from "./lib/window";
@@ -285,23 +286,19 @@ export class GoogleAppLegacy {
         disposition !== "background-tab"
       ) {
         if (matchedSupportedGoogleApp) {
-          const account = accounts.getAccount(this.accountId);
-
-          if (!config.get("googleApps.openAppsInNewWindow") && account.instance.windows.size > 0) {
-            const urlHostname = new URL(url).hostname;
-
-            for (const window of account.instance.windows) {
-              if (new URL(window.webContents.getURL()).hostname === urlHostname) {
-                window.webContents.loadURL(url);
-
-                window.webContents.focus();
-
-                return {
-                  action: "deny",
-                };
-              }
-            }
+          if (
+            !config.get("googleApps.openAppsInNewWindow") &&
+            GoogleApp.reuseWindowByHostname(this.accountId, url)
+          ) {
+            return { action: "deny" };
           }
+
+          new GoogleApp({
+            accountId: this.accountId,
+            url,
+          });
+
+          return { action: "deny" };
         }
 
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];

@@ -138,6 +138,7 @@ await Promise.all([
   buildAppFiles(),
   buildRenderer("renderer-main", 3000),
   buildRenderer("renderer-popup", 3001),
+  buildRenderer("renderer-google-app", 3002),
 ]);
 
 if (args.values.dev) {
@@ -177,11 +178,15 @@ if (args.values.dev) {
   const watcher = watch("./packages", { recursive: true });
 
   for await (const event of watcher) {
-    if (
-      ["renderer-main/", "renderer-popup/", "shared/renderer/", "ui/"].some((pathname) =>
-        event.filename?.includes(pathname),
-      )
-    ) {
+    const rendererPathnames = [
+      "renderer-main/",
+      "renderer-popup/",
+      "renderer-google-app/",
+      "shared/renderer/",
+      "ui/",
+    ];
+
+    if (rendererPathnames.some((pathname) => event.filename?.includes(pathname))) {
       continue;
     }
 

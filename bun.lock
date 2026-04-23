@@ -85,6 +85,10 @@
       "name": "@meru/preload-renderer",
       "version": "0.0.0",
     },
+    "packages/renderer-google-app": {
+      "name": "@meru/renderer-google-app",
+      "version": "0.0.0",
+    },
     "packages/renderer-main": {
       "name": "@meru/renderer-main",
       "version": "0.0.0",
@@ -333,6 +337,8 @@
     "@meru/preload-google-app": ["@meru/preload-google-app@workspace:packages/preload-google-app"],
 
     "@meru/preload-renderer": ["@meru/preload-renderer@workspace:packages/preload-renderer"],
+
+    "@meru/renderer-google-app": ["@meru/renderer-google-app@workspace:packages/renderer-google-app"],
 
     "@meru/renderer-main": ["@meru/renderer-main@workspace:packages/renderer-main"],
 

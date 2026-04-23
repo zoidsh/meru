@@ -90,6 +90,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components (e.g. `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`). Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.
 
+## React State
+
+- When multiple values always update together (same IPC payload, same effect, same callback), use a single `useState` object instead of splitting into separate hooks. Splitting only makes sense when the values can update independently.
+
 ## Settings UI Patterns
 
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.

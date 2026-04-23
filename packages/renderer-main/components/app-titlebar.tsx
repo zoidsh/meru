@@ -1,17 +1,21 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
-import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
+import { WEBSITE_URL } from "@meru/shared/constants";
 import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { Input } from "@meru/ui/components/input";
+import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
+import {
+  Titlebar,
+  TitlebarButtonGroup,
+  TitlebarIconButton,
+  TitlebarLeft,
+} from "@meru/ui/components/titlebar";
 import { cn } from "@meru/ui/lib/utils";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   BriefcaseIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   CircleAlertIcon,
   CircleXIcon,
   DownloadIcon,
@@ -21,10 +25,8 @@ import {
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
-  XIcon,
 } from "lucide-react";
-import { type ComponentProps, useEffect, useRef, useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
+import { useEffect, useRef, useState } from "react";
 import { navigate, useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@meru/shared/renderer/react-query";
@@ -38,12 +40,6 @@ import {
 } from "../lib/stores";
 import { GoogleAppIcon } from "./google-app-icon";
 import { useRoute } from "wouter";
-
-function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
-  return (
-    <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
-  );
-}
 
 function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
   const [fadeOut, setFadeOut] = useState(false);
@@ -172,92 +168,16 @@ function FindInPage() {
   const totalMatches = useFindInPageStore((state) => state.totalMatches);
   const deactivate = useFindInPageStore((state) => state.deactivate);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [text, setText] = useState("");
-
-  const debouncedOnChange = useDebouncedCallback((text) => {
-    ipc.main.send("findInPage", text, { findNext: true });
-  }, 250);
-
-  useEffect(() => {
-    if (isActive && text) {
-      ipc.main.send("findInPage", text, { findNext: true });
-
-      if (inputRef.current) {
-        inputRef.current.select();
-      }
-    }
-  }, [isActive]);
-
-  if (!isActive) {
-    return;
-  }
-
   return (
-    <div className="draggable-none flex items-center gap-4">
-      <div className="relative">
-        <Input
-          ref={inputRef}
-          className="h-7"
-          autoFocus
-          value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-
-            debouncedOnChange(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            switch (event.key) {
-              case "Enter": {
-                ipc.main.send("findInPage", text, {
-                  forward: true,
-                  findNext: false,
-                });
-
-                break;
-              }
-              case "Escape": {
-                deactivate();
-
-                break;
-              }
-            }
-          }}
-        />
-        <div className="absolute top-0 right-0 bottom-0 text-xs text-muted-foreground flex items-center p-2.5">
-          {activeMatch}/{totalMatches}
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => {
-            ipc.main.send("findInPage", text, {
-              forward: false,
-              findNext: false,
-            });
-          }}
-          title="Find Previous Match"
-        >
-          <ChevronUpIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => {
-            ipc.main.send("findInPage", text, { findNext: false });
-          }}
-          title="Find Next Match"
-        >
-          <ChevronDownIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={deactivate} title="Close Find in Page">
-          <XIcon />
-        </Button>
-      </div>
-    </div>
+    <UiFindInPage
+      isActive={isActive}
+      activeMatch={activeMatch}
+      totalMatches={totalMatches}
+      onFind={(text, options) => {
+        ipc.main.send("findInPage", text, options);
+      }}
+      onClose={deactivate}
+    />
   );
 }
 
@@ -400,7 +320,7 @@ export function AppTitlebar() {
   const renderContent = () => {
     if (isAppUpdateDetailsOpen) {
       return (
-        <div className="h-full flex justify-center items-center text-xs gap-4">
+        <div className="flex-1 flex justify-center items-center text-xs gap-4">
           <div>Meru {appUpdateVersion} is available and ready to install</div>
           <div className="flex gap-2">
             <Button
@@ -439,132 +359,123 @@ export function AppTitlebar() {
     }
 
     return (
-      <div className="h-full flex items-center justify-end gap-4">
-        <div className="flex-1 flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="draggable-none"
-            onClick={() => {
-              ipc.main.send("gmail.moveNavigationHistory", "back");
-            }}
-            disabled={matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack}
-            title="Go Back"
-          >
-            <ArrowLeftIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="draggable-none"
-            onClick={() => {
-              ipc.main.send("gmail.moveNavigationHistory", "forward");
-            }}
-            disabled={
-              matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
-            }
-            title="Go Forward"
-          >
-            <ArrowRightIcon />
-          </Button>
-          {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
-            <Button
-              variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
-              size="icon"
-              className="size-7 draggable-none"
-              onClick={() => {
-                navigate("/unified-inbox");
-
-                ipc.main.send("settings.toggleIsOpen", true);
-
-                setIsGmailSavedSearchesOpen(false);
-              }}
-              title="Unified Inbox"
-            >
-              <InboxIcon />
-            </Button>
-          )}
-          {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
+      <>
+        <TitlebarLeft>
+          <TitlebarButtonGroup>
             <Button
               variant="ghost"
               size="icon-sm"
               className="draggable-none"
               onClick={() => {
-                setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+                ipc.main.send("gmail.moveNavigationHistory", "back");
               }}
-              title="Saved Searches"
-              disabled={matchUnifiedInboxRoute}
+              disabled={
+                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack
+              }
+              title="Go Back"
             >
-              {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
+              <ArrowLeftIcon />
             </Button>
-          )}
-          {accounts.length === 1 &&
-            accounts[0]?.gmail.outOfOffice &&
-            config["gmail.hideOutOfOfficeBanner"] &&
-            isLicenseKeyValid && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="draggable-none"
+              onClick={() => {
+                ipc.main.send("gmail.moveNavigationHistory", "forward");
+              }}
+              disabled={
+                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
+              }
+              title="Go Forward"
+            >
+              <ArrowRightIcon />
+            </Button>
+            {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
+              <Button
+                variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
+                size="icon"
+                className="size-7 draggable-none"
+                onClick={() => {
+                  navigate("/unified-inbox");
+
+                  ipc.main.send("settings.toggleIsOpen", true);
+
+                  setIsGmailSavedSearchesOpen(false);
+                }}
+                title="Unified Inbox"
+              >
+                <InboxIcon />
+              </Button>
+            )}
+            {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
               <Button
                 variant="ghost"
                 size="icon-sm"
                 className="draggable-none"
-                title="Out of Office"
                 onClick={() => {
-                  ipc.main.send("gmail.navigateTo", "settings");
+                  setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
                 }}
+                title="Saved Searches"
+                disabled={matchUnifiedInboxRoute}
               >
-                <BriefcaseIcon />
+                {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
               </Button>
             )}
-          {renderAccounts()}
-        </div>
-        <div className="flex gap-2">
-          <Trial />
-          <FindInPage />
-          <PinnedGoogleApps />
-          <Download />
-          <DoNotDisturb />
-        </div>
-        {appUpdateVersion && (
-          <Button
-            size="sm"
-            className="draggable-none"
-            onClick={() => {
-              setIsAppUpdateDetailsOpen(true);
-            }}
-          >
-            <SparklesIcon /> Update Available
-          </Button>
-        )}
-        {window.electron.process.platform !== "darwin" && (
-          <div className="draggable-none">
+            {accounts.length === 1 &&
+              accounts[0]?.gmail.outOfOffice &&
+              config["gmail.hideOutOfOfficeBanner"] &&
+              isLicenseKeyValid && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="draggable-none"
+                  title="Out of Office"
+                  onClick={() => {
+                    ipc.main.send("gmail.navigateTo", "settings");
+                  }}
+                >
+                  <BriefcaseIcon />
+                </Button>
+              )}
+            {renderAccounts()}
+          </TitlebarButtonGroup>
+        </TitlebarLeft>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <Trial />
+            <FindInPage />
+            <PinnedGoogleApps />
+            <Download />
+            <DoNotDisturb />
+          </div>
+          {appUpdateVersion && (
             <Button
-              variant="ghost"
-              size="icon-sm"
+              size="sm"
+              className="draggable-none"
               onClick={() => {
-                ipc.main.send("titleBar.toggleAppMenu");
+                setIsAppUpdateDetailsOpen(true);
               }}
             >
-              <EllipsisVerticalIcon />
+              <SparklesIcon /> Update Available
             </Button>
-          </div>
-        )}
-      </div>
+          )}
+          {window.electron.process.platform !== "darwin" && (
+            <div className="draggable-none">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  ipc.main.send("titleBar.toggleAppMenu");
+                }}
+              >
+                <EllipsisVerticalIcon />
+              </Button>
+            </div>
+          )}
+        </div>
+      </>
     );
   };
 
-  return (
-    <div
-      className="relative bg-background border-b draggable select-none"
-      style={{ height: APP_TITLEBAR_HEIGHT }}
-    >
-      <div
-        className="absolute top-0 bottom-0 px-1.5"
-        style={{
-          left: "env(titlebar-area-x, 0)",
-          width: "env(titlebar-area-width, 100%)",
-        }}
-      >
-        {renderContent()}
-      </div>
-    </div>
-  );
+  return <Titlebar>{renderContent()}</Titlebar>;
 }

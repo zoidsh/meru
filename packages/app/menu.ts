@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import { getGoogleAppUrl } from "@meru/shared/google";
 import {
   app,
   BrowserWindow,
@@ -14,6 +15,7 @@ import {
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
+import { GoogleApp } from "@/google-app";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import { main } from "@/main";
@@ -288,9 +290,16 @@ export class AppMenu {
             label: "Find...",
             accelerator: "CommandOrControl+F",
             click: () => {
-              ipc.renderer.send(main.window.webContents, "findInPage.activate");
+              const focusedWindow = BrowserWindow.getFocusedWindow();
 
-              main.window.webContents.focus();
+              const targetWebContents =
+                focusedWindow && GoogleApp.tryFromWebContents(focusedWindow.webContents)
+                  ? focusedWindow.webContents
+                  : main.window.webContents;
+
+              ipc.renderer.send(targetWebContents, "findInPage.activate");
+
+              targetWebContents.focus();
             },
           },
           {
@@ -436,6 +445,17 @@ export class AppMenu {
               main.window.webContents.openDevTools({ mode: "detach" });
 
               selectedAccount.instance.gmail.view.webContents.openDevTools();
+            },
+          },
+          {
+            label: "Open Google Docs in GoogleApp window",
+            visible: is.dev,
+            accelerator: "CommandOrControl+T",
+            click: () => {
+              new GoogleApp({
+                accountId: selectedAccount.config.id,
+                url: getGoogleAppUrl("docs"),
+              });
             },
           },
         ],
