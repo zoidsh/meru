@@ -1,9 +1,10 @@
 import { is } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
   clipboard,
   type BrowserWindow,
+  dialog,
   type Session,
   type WebContents,
   WebContentsView,
@@ -73,10 +74,6 @@ export class GoogleApp {
 
     setupWindowContextMenu(this.view);
 
-    this.view.webContents.on("dom-ready", () => {
-      this.view.webContents.setVisualZoomLevelLimits(1, 3);
-    });
-
     this.view.webContents.loadURL(url);
 
     if (is.dev) {
@@ -87,26 +84,65 @@ export class GoogleApp {
 
     this.browserWindow.on("resize", this.updateViewBounds);
 
+    this.registerViewListeners();
+
     this.browserWindow.on("close", () => {
-      this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
-      this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-      this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
-      this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-      this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+      this.unregisterViewListeners();
 
       GoogleApp.instances.delete(webContentsId);
     });
-
-    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
-
-    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-
-    this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
-
-    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
-
-    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
   }
+
+  private registerViewListeners() {
+    this.view.webContents.on("dom-ready", this.handleDomReady);
+    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+  }
+
+  private unregisterViewListeners() {
+    this.view.webContents.removeListener("dom-ready", this.handleDomReady);
+    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+  }
+
+  private handleDomReady = () => {
+    this.view.webContents.setVisualZoomLevelLimits(1, 3);
+  };
+
+  private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
+    if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
+      return;
+    }
+
+    dialog.showMessageBox({
+      type: "info",
+      message: "Passkey sign-in not supported yet",
+      detail: "Please use password to sign in.",
+    });
+  };
+
+  private handleGoogleRedirect = (event: Electron.Event, url: string) => {
+    if (
+      !url.startsWith("https://www.google.com") &&
+      !url.startsWith("https://workspace.google.com")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    this.view.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+  };
 
   broadcastNavigationState = () => {
     ipc.renderer.send(this.browserWindow.webContents, "googleApp.navigationStateChanged", {
