@@ -128,16 +128,20 @@ class Ipc {
         }));
     });
 
-    this.main.on("findInPage", (_event, text, options) => {
-      const selectedAccount = accounts.getSelectedAccount();
+    this.main.on("findInPage", (event, text, options) => {
+      const googleApp = GoogleApp.tryFromWebContents(event.sender);
+
+      const targetWebContents = googleApp
+        ? googleApp.view.webContents
+        : accounts.getSelectedAccount().instance.gmail.view.webContents;
 
       if (!text) {
-        selectedAccount.instance.gmail.view.webContents.stopFindInPage("clearSelection");
+        targetWebContents.stopFindInPage("clearSelection");
 
         return;
       }
 
-      selectedAccount.instance.gmail.view.webContents.findInPage(text, {
+      targetWebContents.findInPage(text, {
         forward: options?.forward,
         findNext: options?.findNext,
       });

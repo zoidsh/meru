@@ -2,6 +2,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { ms } from "@meru/shared/ms";
 import { renderApp } from "@meru/shared/renderer/react";
 import { AccountBadge } from "@meru/ui/components/account-badge";
+import { FindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -93,6 +94,12 @@ function App() {
 
   const [pageTitle, setPageTitle] = useState("");
 
+  const [findInPageState, setFindInPageState] = useState({
+    isActive: false,
+    activeMatch: 0,
+    totalMatches: 0,
+  });
+
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
     queryFn: () => ipc.main.invoke("googleApp.getAccount"),
@@ -108,6 +115,18 @@ function App() {
   useEffect(() => {
     return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
       setPageTitle(title);
+    });
+  }, []);
+
+  useEffect(() => {
+    return ipc.renderer.on("findInPage.activate", () => {
+      setFindInPageState((state) => ({ ...state, isActive: true }));
+    });
+  }, []);
+
+  useEffect(() => {
+    return ipc.renderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => {
+      setFindInPageState((state) => ({ ...state, activeMatch, totalMatches }));
     });
   }, []);
 
@@ -139,6 +158,19 @@ function App() {
         <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
       </TitlebarLeft>
       <TitlebarRight>
+        <FindInPage
+          isActive={findInPageState.isActive}
+          activeMatch={findInPageState.activeMatch}
+          totalMatches={findInPageState.totalMatches}
+          onFind={(text, options) => {
+            ipc.main.send("findInPage", text, options);
+          }}
+          onClose={() => {
+            ipc.main.send("findInPage", null);
+
+            setFindInPageState((state) => ({ ...state, isActive: false }));
+          }}
+        />
         <TitlebarButtonGroup>
           <CopyUrlButton />
           <TitlebarIconButton

@@ -4,7 +4,7 @@ import { WEBSITE_URL } from "@meru/shared/constants";
 import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { Input } from "@meru/ui/components/input";
+import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -16,8 +16,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   BriefcaseIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   CircleAlertIcon,
   CircleXIcon,
   DownloadIcon,
@@ -27,10 +25,8 @@ import {
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
-  XIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
 import { navigate, useHashLocation } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@meru/shared/renderer/react-query";
@@ -172,92 +168,16 @@ function FindInPage() {
   const totalMatches = useFindInPageStore((state) => state.totalMatches);
   const deactivate = useFindInPageStore((state) => state.deactivate);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [text, setText] = useState("");
-
-  const debouncedOnChange = useDebouncedCallback((text) => {
-    ipc.main.send("findInPage", text, { findNext: true });
-  }, 250);
-
-  useEffect(() => {
-    if (isActive && text) {
-      ipc.main.send("findInPage", text, { findNext: true });
-
-      if (inputRef.current) {
-        inputRef.current.select();
-      }
-    }
-  }, [isActive]);
-
-  if (!isActive) {
-    return;
-  }
-
   return (
-    <div className="draggable-none flex items-center gap-4">
-      <div className="relative">
-        <Input
-          ref={inputRef}
-          className="h-7"
-          autoFocus
-          value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-
-            debouncedOnChange(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            switch (event.key) {
-              case "Enter": {
-                ipc.main.send("findInPage", text, {
-                  forward: true,
-                  findNext: false,
-                });
-
-                break;
-              }
-              case "Escape": {
-                deactivate();
-
-                break;
-              }
-            }
-          }}
-        />
-        <div className="absolute top-0 right-0 bottom-0 text-xs text-muted-foreground flex items-center p-2.5">
-          {activeMatch}/{totalMatches}
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => {
-            ipc.main.send("findInPage", text, {
-              forward: false,
-              findNext: false,
-            });
-          }}
-          title="Find Previous Match"
-        >
-          <ChevronUpIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => {
-            ipc.main.send("findInPage", text, { findNext: false });
-          }}
-          title="Find Next Match"
-        >
-          <ChevronDownIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={deactivate} title="Close Find in Page">
-          <XIcon />
-        </Button>
-      </div>
-    </div>
+    <UiFindInPage
+      isActive={isActive}
+      activeMatch={activeMatch}
+      totalMatches={totalMatches}
+      onFind={(text, options) => {
+        ipc.main.send("findInPage", text, options);
+      }}
+      onClose={deactivate}
+    />
   );
 }
 

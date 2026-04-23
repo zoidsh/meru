@@ -290,9 +290,16 @@ export class AppMenu {
             label: "Find...",
             accelerator: "CommandOrControl+F",
             click: () => {
-              ipc.renderer.send(main.window.webContents, "findInPage.activate");
+              const focusedWindow = BrowserWindow.getFocusedWindow();
 
-              main.window.webContents.focus();
+              const target =
+                focusedWindow && GoogleApp.tryFromWebContents(focusedWindow.webContents)
+                  ? focusedWindow.webContents
+                  : main.window.webContents;
+
+              ipc.renderer.send(target, "findInPage.activate");
+
+              target.focus();
             },
           },
           {

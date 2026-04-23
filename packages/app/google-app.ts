@@ -53,6 +53,10 @@ export class GoogleApp {
     return instance;
   }
 
+  static tryFromWebContents(webContents: WebContents) {
+    return GoogleApp.instances.get(webContents.id);
+  }
+
   accountId: AccountConfig["id"];
 
   app: SupportedGoogleApp;
@@ -258,6 +262,7 @@ export class GoogleApp {
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.on("found-in-page", this.broadcastFindInPageResult);
   }
 
   private unregisterViewListeners() {
@@ -269,6 +274,7 @@ export class GoogleApp {
     this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.removeListener("found-in-page", this.broadcastFindInPageResult);
   }
 
   private handleDomReady = () => {
@@ -321,6 +327,13 @@ export class GoogleApp {
       "googleApp.loadingStateChanged",
       this.view.webContents.isLoading(),
     );
+  };
+
+  broadcastFindInPageResult = (_event: Electron.Event, result: Electron.Result) => {
+    ipc.renderer.send(this.browserWindow.webContents, "findInPage.result", {
+      activeMatch: result.activeMatchOrdinal,
+      totalMatches: result.matches,
+    });
   };
 
   updateViewBounds = () => {
