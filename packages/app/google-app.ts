@@ -51,12 +51,6 @@ export class GoogleApp {
     this.browserWindow = this.createToolbarWindow();
     this.view = this.createView({ url, session });
 
-    this.updateViewBounds();
-    this.registerViewListeners();
-
-    this.browserWindow.on("resize", this.updateViewBounds);
-    this.browserWindow.on("close", this.handleClose);
-
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
@@ -70,6 +64,9 @@ export class GoogleApp {
       renderer: "google-app",
       port: 3002,
     });
+
+    browserWindow.on("resize", this.updateViewBounds);
+    browserWindow.on("close", this.handleClose);
 
     return browserWindow;
   }
@@ -91,6 +88,11 @@ export class GoogleApp {
     if (is.dev) {
       view.webContents.openDevTools({ mode: "bottom" });
     }
+
+    this.view = view;
+
+    this.updateViewBounds();
+    this.registerViewListeners();
 
     return view;
   }
