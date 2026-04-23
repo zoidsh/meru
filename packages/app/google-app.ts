@@ -58,13 +58,10 @@ export class GoogleApp {
 
   view: WebContentsView;
 
-  private isMeet: boolean;
-
-  private meetPowerSaveBlockerId: number | undefined;
+  private powerSaveBlockerId: number | undefined;
 
   constructor({ accountId, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
-    this.isMeet = url.startsWith(GOOGLE_MEET_URL);
     this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url, session });
 
@@ -76,7 +73,7 @@ export class GoogleApp {
 
     this.account.instance.windows.add(this.browserWindow);
 
-    if (this.isMeet) {
+    if (url.startsWith(GOOGLE_MEET_URL)) {
       this.setupMeet();
     }
 
@@ -216,9 +213,7 @@ export class GoogleApp {
   private handleClose = () => {
     this.unregisterViewListeners();
 
-    if (this.isMeet) {
-      this.teardownMeet();
-    }
+    this.teardownMeet();
 
     this.account.instance.windows.delete(this.browserWindow);
 
@@ -226,7 +221,7 @@ export class GoogleApp {
   };
 
   private setupMeet() {
-    this.meetPowerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
+    this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
     globalShortcut.register("CommandOrControl+Shift+1", () => {
       ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
@@ -238,9 +233,11 @@ export class GoogleApp {
   }
 
   private teardownMeet() {
-    if (typeof this.meetPowerSaveBlockerId === "number") {
-      powerSaveBlocker.stop(this.meetPowerSaveBlockerId);
+    if (typeof this.powerSaveBlockerId !== "number") {
+      return;
     }
+
+    powerSaveBlocker.stop(this.powerSaveBlockerId);
 
     globalShortcut.unregister("CommandOrControl+Shift+1");
     globalShortcut.unregister("CommandOrControl+Shift+2");
