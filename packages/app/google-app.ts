@@ -1,3 +1,4 @@
+import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
@@ -70,6 +71,10 @@ export class GoogleApp {
     this.browserWindow.contentView.addChildView(this.view);
 
     this.view.webContents.loadURL(url);
+
+    if (is.dev) {
+      this.view.webContents.openDevTools({ mode: "bottom" });
+    }
 
     this.updateViewBounds();
 
