@@ -8,7 +8,6 @@ import {
   dialog,
   globalShortcut,
   powerSaveBlocker,
-  type Session,
   type WebContents,
   WebContentsView,
 } from "electron";
@@ -39,7 +38,6 @@ type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   app: SupportedGoogleApp;
   url: string;
-  session: Session;
 };
 
 export class GoogleApp {
@@ -69,12 +67,12 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, app, url, session }: GoogleAppOptions) {
+  constructor({ accountId, app, url }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = app;
 
     this.browserWindow = this.createBrowserWindow();
-    this.view = this.createView({ url, session });
+    this.view = this.createView({ url });
 
     this.updateViewBounds();
     this.registerViewListeners();
@@ -103,10 +101,10 @@ export class GoogleApp {
     return browserWindow;
   }
 
-  private createView({ url, session }: { url: string; session: Session }) {
+  private createView({ url }: { url: string }) {
     const view = new WebContentsView({
       webPreferences: {
-        session,
+        session: this.account.instance.session,
         preload: getPreloadPath("google-app"),
       },
     });
@@ -208,7 +206,6 @@ export class GoogleApp {
           accountId: this.accountId,
           app: matchedSupportedGoogleApp,
           url,
-          session: this.account.instance.session,
         });
 
         return { action: "deny" };

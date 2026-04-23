@@ -456,7 +456,6 @@ export class AppMenu {
                 accountId: selectedAccount.config.id,
                 app: "docs",
                 url: getGoogleAppUrl("docs"),
-                session: selectedAccount.instance.session,
               });
             },
           },
