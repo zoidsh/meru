@@ -180,6 +180,10 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
+    ipc.main.handle("googleApp.getAccount", (event) => {
+      return GoogleApp.fromWebContents(event.sender).account.config;
+    });
+
     ipc.main.on("googleApp.goBack", (event) => {
       GoogleApp.fromWebContents(event.sender).goBack();
     });

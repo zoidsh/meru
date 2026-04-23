@@ -1,4 +1,5 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import type { AccountConfig } from "@meru/shared/schemas";
 import {
   clipboard,
   type BrowserWindow,
@@ -6,6 +7,7 @@ import {
   type WebContents,
   WebContentsView,
 } from "electron";
+import { accounts } from "./accounts";
 import { ipc } from "./ipc";
 import {
   createBrowserWindow,
@@ -17,6 +19,7 @@ import {
 import { openExternalUrl } from "./url";
 
 type GoogleAppOptions = {
+  accountId: AccountConfig["id"];
   url: string;
   session: Session;
 };
@@ -34,11 +37,15 @@ export class GoogleApp {
     return instance;
   }
 
+  accountId: AccountConfig["id"];
+
   browserWindow: BrowserWindow;
 
   view: WebContentsView;
 
-  constructor({ url, session }: GoogleAppOptions) {
+  constructor({ accountId, url, session }: GoogleAppOptions) {
+    this.accountId = accountId;
+
     this.browserWindow = createBrowserWindow({
       ...getCascadedWindowBounds({ width: 1280, height: 800 }),
       ...getCommonBrowserWindowOptions(),
@@ -113,5 +120,9 @@ export class GoogleApp {
 
   openInBrowser() {
     openExternalUrl(this.view.webContents.getURL(), true);
+  }
+
+  get account() {
+    return accounts.getAccount(this.accountId);
   }
 }

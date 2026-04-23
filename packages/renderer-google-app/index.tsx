@@ -1,12 +1,14 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { ms } from "@meru/shared/ms";
 import { renderApp } from "@meru/shared/renderer/react";
+import { AccountBadge } from "@meru/ui/components/account-badge";
 import {
   Titlebar,
   TitlebarIconButton,
   TitlebarLeft,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -49,6 +51,12 @@ function App() {
     canGoForward: boolean;
   }>();
 
+  const { data: account } = useQuery({
+    queryKey: ["googleApp.account"],
+    queryFn: () => ipc.main.invoke("googleApp.getAccount"),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
       setNavigationState(state);
@@ -86,6 +94,7 @@ function App() {
         </TitlebarIconButton>
       </TitlebarLeft>
       <TitlebarRight>
+        {account && <AccountBadge label={account.label} color={account.color} />}
         <CopyUrlButton />
         <TitlebarIconButton
           title="Open in Browser"

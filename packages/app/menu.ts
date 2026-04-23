@@ -446,6 +446,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+T",
             click: () => {
               new GoogleApp({
+                accountId: selectedAccount.config.id,
                 url: getGoogleAppUrl("calendar"),
                 session: selectedAccount.instance.session,
               });
