@@ -9,6 +9,7 @@ import {
   WebContentsView,
 } from "electron";
 import { accounts } from "./accounts";
+import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import {
   createBrowserWindow,
@@ -69,6 +70,12 @@ export class GoogleApp {
     });
 
     this.browserWindow.contentView.addChildView(this.view);
+
+    setupWindowContextMenu(this.view);
+
+    this.view.webContents.on("dom-ready", () => {
+      this.view.webContents.setVisualZoomLevelLimits(1, 3);
+    });
 
     this.view.webContents.loadURL(url);
 
