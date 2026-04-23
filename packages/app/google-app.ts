@@ -1,5 +1,5 @@
 import { is } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL, GOOGLE_MEET_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
@@ -35,6 +35,7 @@ const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
 
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
+  app: SupportedGoogleApp;
   url: string;
   session: Session;
 };
@@ -54,14 +55,17 @@ export class GoogleApp {
 
   accountId: AccountConfig["id"];
 
+  app: SupportedGoogleApp;
+
   browserWindow: BrowserWindow;
 
   view: WebContentsView;
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, url, session }: GoogleAppOptions) {
+  constructor({ accountId, app, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
+    this.app = app;
     this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url, session });
 
@@ -73,9 +77,7 @@ export class GoogleApp {
 
     this.account.instance.windows.add(this.browserWindow);
 
-    if (url.startsWith(GOOGLE_MEET_URL)) {
-      this.setupMeet();
-    }
+    this.setupApp();
 
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
@@ -191,6 +193,7 @@ export class GoogleApp {
 
         new GoogleApp({
           accountId: this.accountId,
+          app: matchedSupportedGoogleApp,
           url,
           session: this.account.instance.session,
         });
@@ -213,14 +216,18 @@ export class GoogleApp {
   private handleClose = () => {
     this.unregisterViewListeners();
 
-    this.teardownMeet();
+    this.teardownApp();
 
     this.account.instance.windows.delete(this.browserWindow);
 
     GoogleApp.instances.delete(this.browserWindow.webContents.id);
   };
 
-  private setupMeet() {
+  private setupApp() {
+    if (this.app !== "meet") {
+      return;
+    }
+
     this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
     globalShortcut.register("CommandOrControl+Shift+1", () => {
@@ -232,12 +239,14 @@ export class GoogleApp {
     });
   }
 
-  private teardownMeet() {
-    if (typeof this.powerSaveBlockerId !== "number") {
+  private teardownApp() {
+    if (this.app !== "meet") {
       return;
     }
 
-    powerSaveBlocker.stop(this.powerSaveBlockerId);
+    if (typeof this.powerSaveBlockerId === "number") {
+      powerSaveBlocker.stop(this.powerSaveBlockerId);
+    }
 
     globalShortcut.unregister("CommandOrControl+Shift+1");
     globalShortcut.unregister("CommandOrControl+Shift+2");
