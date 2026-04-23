@@ -122,11 +122,9 @@ export class AppMenu {
       if (focusedWindow && focusedWindow !== main.window) {
         const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
 
-        if (googleApp) {
-          googleApp.setZoomFactor(
-            clamp(googleApp.zoomFactor + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-          );
-        }
+        googleApp?.setZoomFactor(
+          clamp(googleApp.zoomFactor + 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        );
 
         return;
       }
@@ -144,11 +142,9 @@ export class AppMenu {
       if (focusedWindow && focusedWindow !== main.window) {
         const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
 
-        if (googleApp) {
-          googleApp.setZoomFactor(
-            clamp(googleApp.zoomFactor - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-          );
-        }
+        googleApp?.setZoomFactor(
+          clamp(googleApp.zoomFactor - 0.1, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        );
 
         return;
       }
@@ -450,7 +446,7 @@ export class AppMenu {
                 const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
 
                 if (googleApp) {
-                  focusedWindow.webContents.openDevTools({ mode: "detach" });
+                  googleApp.browserWindow.webContents.openDevTools({ mode: "detach" });
 
                   googleApp.view.webContents.openDevTools();
                 }
