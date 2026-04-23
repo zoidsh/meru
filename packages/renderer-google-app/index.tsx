@@ -17,6 +17,7 @@ import {
   CheckIcon,
   CopyIcon,
   ExternalLinkIcon,
+  LoaderCircleIcon,
   RotateCwIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -55,6 +56,8 @@ function App() {
 
   const [pageTitle, setPageTitle] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
     queryFn: () => ipc.main.invoke("googleApp.getAccount"),
@@ -70,6 +73,12 @@ function App() {
   useEffect(() => {
     return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
       setPageTitle(title);
+    });
+  }, []);
+
+  useEffect(() => {
+    return ipc.renderer.on("googleApp.loadingStateChanged", (_event, isLoading) => {
+      setLoading(isLoading);
     });
   }, []);
 
@@ -101,7 +110,7 @@ function App() {
               ipc.main.send("googleApp.reload");
             }}
           >
-            <RotateCwIcon />
+            {loading ? <LoaderCircleIcon className="animate-spin" /> : <RotateCwIcon />}
           </TitlebarIconButton>
         </TitlebarButtonGroup>
         {account && <AccountBadge label={account.label} color={account.color} />}

@@ -264,5 +264,6 @@ export type IpcRendererEvent = {
   ];
   "googleApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "googleApp.pageTitleChanged": [title: string];
+  "googleApp.loadingStateChanged": [loading: boolean];
   "config.configChanged": [config: Config];
 };

@@ -84,6 +84,10 @@ export class GoogleApp {
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
 
     this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
+
+    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+
+    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
   }
 
   broadcastNavigationState = () => {
@@ -98,6 +102,14 @@ export class GoogleApp {
       this.browserWindow.webContents,
       "googleApp.pageTitleChanged",
       this.view.webContents.getTitle(),
+    );
+  };
+
+  broadcastLoadingState = () => {
+    ipc.renderer.send(
+      this.browserWindow.webContents,
+      "googleApp.loadingStateChanged",
+      this.view.webContents.isLoading(),
     );
   };
 
