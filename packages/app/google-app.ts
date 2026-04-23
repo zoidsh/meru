@@ -1,6 +1,7 @@
 import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
+import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
   clipboard,
@@ -10,6 +11,7 @@ import {
   WebContentsView,
 } from "electron";
 import { accounts } from "./accounts";
+import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import {
@@ -19,10 +21,15 @@ import {
   getPreloadPath,
   loadRenderer,
 } from "./lib/window";
+import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
 
 const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
+
+const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
+  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+);
 
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
@@ -51,7 +58,7 @@ export class GoogleApp {
 
   constructor({ accountId, url, session }: GoogleAppOptions) {
     this.accountId = accountId;
-    this.browserWindow = this.createToolbarWindow();
+    this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url, session });
 
     this.updateViewBounds();
@@ -65,7 +72,7 @@ export class GoogleApp {
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
-  private createToolbarWindow() {
+  private createBrowserWindow() {
     const browserWindow = createBrowserWindow({
       ...getCascadedWindowBounds({ width: 1280, height: 800 }),
       ...getCommonBrowserWindowOptions(),
@@ -103,7 +110,7 @@ export class GoogleApp {
   }
 
   private setWindowOpenHandler(view: WebContentsView) {
-    view.webContents.setWindowOpenHandler(({ url }) => {
+    view.webContents.setWindowOpenHandler(({ url, disposition }) => {
       if (url === "about:blank") {
         return {
           action: "allow",
@@ -144,6 +151,43 @@ export class GoogleApp {
 
       if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
         return { action: "allow" };
+      }
+
+      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
+        | SupportedGoogleApp
+        | undefined;
+
+      const isGoogleAppEnabledToOpenInApp =
+        licenseKey.isValid &&
+        matchedSupportedGoogleApp &&
+        config.get("googleApps.openInApp") &&
+        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
+
+      if (isGoogleAppEnabledToOpenInApp && disposition !== "background-tab") {
+        if (!config.get("googleApps.openAppsInNewWindow")) {
+          const urlHostname = new URL(url).hostname;
+
+          for (const instance of GoogleApp.instances.values()) {
+            if (
+              instance.accountId === this.accountId &&
+              new URL(instance.view.webContents.getURL()).hostname === urlHostname
+            ) {
+              instance.view.webContents.loadURL(url);
+
+              instance.browserWindow.focus();
+
+              return { action: "deny" };
+            }
+          }
+        }
+
+        new GoogleApp({
+          accountId: this.accountId,
+          url,
+          session: this.account.instance.session,
+        });
+
+        return { action: "deny" };
       }
 
       if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
