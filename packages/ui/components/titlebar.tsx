@@ -34,6 +34,14 @@ export function TitlebarButtonGroup({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-1">{children}</div>;
 }
 
+export function TitlebarPageTitle({ children }: { children: string }) {
+  return (
+    <div className="truncate max-w-xs text-xs" title={children}>
+      {children}
+    </div>
+  );
+}
+
 export function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
     <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />

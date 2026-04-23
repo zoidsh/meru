@@ -7,6 +7,7 @@ import {
   TitlebarButtonGroup,
   TitlebarIconButton,
   TitlebarLeft,
+  TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +53,7 @@ function App() {
     canGoForward: boolean;
   }>();
 
-  const [pageTitle, setPageTitle] = useState<string>();
+  const [pageTitle, setPageTitle] = useState("");
 
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
@@ -104,11 +105,7 @@ function App() {
           </TitlebarIconButton>
         </TitlebarButtonGroup>
         {account && <AccountBadge label={account.label} color={account.color} />}
-        {pageTitle && (
-          <div className="truncate max-w-xs text-sm" title={pageTitle}>
-            {pageTitle}
-          </div>
-        )}
+        <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
       </TitlebarLeft>
       <TitlebarRight>
         <TitlebarButtonGroup>
