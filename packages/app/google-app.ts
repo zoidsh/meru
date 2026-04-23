@@ -60,6 +60,25 @@ export class GoogleApp {
     return GoogleApp.instances.get(webContents.id);
   }
 
+  static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
+    const urlHostname = new URL(url).hostname;
+
+    for (const instance of GoogleApp.instances.values()) {
+      if (
+        instance.accountId === accountId &&
+        new URL(instance.view.webContents.getURL()).hostname === urlHostname
+      ) {
+        instance.view.webContents.loadURL(url);
+
+        instance.browserWindow.focus();
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   accountId: AccountConfig["id"];
 
   app: SupportedGoogleApp;
@@ -192,21 +211,11 @@ export class GoogleApp {
         !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
 
       if (isGoogleAppEnabledToOpenInApp && disposition !== "background-tab") {
-        if (!config.get("googleApps.openAppsInNewWindow")) {
-          const urlHostname = new URL(url).hostname;
-
-          for (const instance of GoogleApp.instances.values()) {
-            if (
-              instance.accountId === this.accountId &&
-              new URL(instance.view.webContents.getURL()).hostname === urlHostname
-            ) {
-              instance.view.webContents.loadURL(url);
-
-              instance.browserWindow.focus();
-
-              return { action: "deny" };
-            }
-          }
+        if (
+          !config.get("googleApps.openAppsInNewWindow") &&
+          GoogleApp.reuseWindowByHostname(this.accountId, url)
+        ) {
+          return { action: "deny" };
         }
 
         new GoogleApp({
