@@ -57,6 +57,8 @@ export class GoogleApp {
     this.browserWindow.on("resize", this.updateViewBounds);
     this.browserWindow.on("close", this.handleClose);
 
+    this.account.instance.windows.add(this.browserWindow);
+
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
@@ -97,6 +99,8 @@ export class GoogleApp {
 
   private handleClose = () => {
     this.unregisterViewListeners();
+
+    this.account.instance.windows.delete(this.browserWindow);
 
     GoogleApp.instances.delete(this.browserWindow.webContents.id);
   };
