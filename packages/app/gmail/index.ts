@@ -521,7 +521,7 @@ export class Gmail {
             const googleApp = new GoogleApp({
               accountId: this.accountId,
               url,
-              browserWindow: { width: 800, height: 600 },
+              window: { width: 800, height: 600 },
               view: options,
             });
 

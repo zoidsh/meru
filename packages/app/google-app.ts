@@ -51,7 +51,7 @@ function getGoogleAppFromUrl(url: string) {
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
-  browserWindow?: BrowserWindowConstructorOptions;
+  window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
 };
 
@@ -73,7 +73,7 @@ export class GoogleApp {
   }
 
   static getAllWindows() {
-    return Array.from(GoogleApp.instances.values(), (instance) => instance.browserWindow);
+    return Array.from(GoogleApp.instances.values(), (instance) => instance.window);
   }
 
   static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
@@ -86,7 +86,7 @@ export class GoogleApp {
       ) {
         instance.view.webContents.loadURL(url);
 
-        instance.browserWindow.focus();
+        instance.window.focus();
 
         return true;
       }
@@ -218,7 +218,7 @@ export class GoogleApp {
 
   app: SupportedGoogleApp | undefined;
 
-  browserWindow: BrowserWindow;
+  window: BrowserWindow;
 
   view: WebContentsView;
 
@@ -226,11 +226,11 @@ export class GoogleApp {
 
   private viewDestroyed = false;
 
-  constructor({ accountId, url, browserWindow, view }: GoogleAppOptions) {
+  constructor({ accountId, url, window, view }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
 
-    this.browserWindow = this.createBrowserWindow(browserWindow);
+    this.window = this.createBrowserWindow(window);
     this.view = this.createView({ url, options: view });
 
     this.updateViewBounds();
@@ -239,19 +239,19 @@ export class GoogleApp {
     this.view.webContents.once("destroyed", () => {
       this.viewDestroyed = true;
 
-      if (!this.browserWindow.isDestroyed()) {
-        this.browserWindow.close();
+      if (!this.window.isDestroyed()) {
+        this.window.close();
       }
     });
 
-    this.browserWindow.on("resize", this.updateViewBounds);
-    this.browserWindow.on("close", this.handleClose);
+    this.window.on("resize", this.updateViewBounds);
+    this.window.on("close", this.handleClose);
 
-    this.account.instance.windows.add(this.browserWindow);
+    this.account.instance.windows.add(this.window);
 
     this.setupApp();
 
-    GoogleApp.instances.set(this.browserWindow.webContents.id, this);
+    GoogleApp.instances.set(this.window.webContents.id, this);
   }
 
   private createBrowserWindow(options?: BrowserWindowConstructorOptions) {
@@ -293,13 +293,13 @@ export class GoogleApp {
       },
     });
 
-    this.browserWindow.contentView.addChildView(view);
+    this.window.contentView.addChildView(view);
 
     setupWindowContextMenu(view);
 
     applyViewZoomLimits(view);
 
-    broadcastFoundInPageResults(view, this.browserWindow.webContents);
+    broadcastFoundInPageResults(view, this.window.webContents);
 
     this.setWindowOpenHandler(view);
 
@@ -327,9 +327,9 @@ export class GoogleApp {
 
     this.teardownApp();
 
-    this.account.instance.windows.delete(this.browserWindow);
+    this.account.instance.windows.delete(this.window);
 
-    GoogleApp.instances.delete(this.browserWindow.webContents.id);
+    GoogleApp.instances.delete(this.window.webContents.id);
   };
 
   private setupApp() {
@@ -386,7 +386,7 @@ export class GoogleApp {
   };
 
   broadcastNavigationState = () => {
-    ipc.renderer.send(this.browserWindow.webContents, "googleApp.navigationStateChanged", {
+    ipc.renderer.send(this.window.webContents, "googleApp.navigationStateChanged", {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
@@ -394,7 +394,7 @@ export class GoogleApp {
 
   broadcastPageTitle = () => {
     ipc.renderer.send(
-      this.browserWindow.webContents,
+      this.window.webContents,
       "googleApp.pageTitleChanged",
       this.view.webContents.getTitle(),
     );
@@ -402,14 +402,14 @@ export class GoogleApp {
 
   broadcastLoadingState = () => {
     ipc.renderer.send(
-      this.browserWindow.webContents,
+      this.window.webContents,
       "googleApp.loadingStateChanged",
       this.view.webContents.isLoading(),
     );
   };
 
   updateViewBounds = () => {
-    const { width, height } = this.browserWindow.getContentBounds();
+    const { width, height } = this.window.getContentBounds();
 
     this.view.setBounds({
       x: 0,
