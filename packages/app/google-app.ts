@@ -220,6 +220,8 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
+  private viewDestroyed = false;
+
   constructor({ accountId, url, browserWindow, view }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
@@ -229,6 +231,14 @@ export class GoogleApp {
 
     this.updateViewBounds();
     this.registerViewListeners();
+
+    this.view.webContents.once("destroyed", () => {
+      this.viewDestroyed = true;
+
+      if (!this.browserWindow.isDestroyed()) {
+        this.browserWindow.close();
+      }
+    });
 
     this.browserWindow.on("resize", this.updateViewBounds);
     this.browserWindow.on("close", this.handleClose);
@@ -302,7 +312,9 @@ export class GoogleApp {
   }
 
   private handleClose = () => {
-    this.unregisterViewListeners();
+    if (!this.viewDestroyed) {
+      this.unregisterViewListeners();
+    }
 
     this.teardownApp();
 
