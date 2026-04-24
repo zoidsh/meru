@@ -375,10 +375,8 @@ export function AppTitlebar() {
             <Trial />
             <FindInPage />
             <PinnedGoogleApps />
-            <TitlebarButtonGroup>
-              <RecentDownloadHistoryButton />
-              <DoNotDisturb />
-            </TitlebarButtonGroup>
+            <RecentDownloadHistoryButton />
+            <DoNotDisturb />
           </div>
           {appUpdateVersion && (
             <Button
