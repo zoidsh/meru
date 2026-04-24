@@ -3,6 +3,7 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
+  type BrowserWindowConstructorOptions,
   clipboard,
   dialog,
   globalShortcut,
@@ -46,10 +47,8 @@ function getGoogleAppFromUrl(url: string) {
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
-  bounds?: { width: number; height: number };
+  browserWindow?: BrowserWindowConstructorOptions;
 };
-
-const DEFAULT_BOUNDS = { width: 1280, height: 800 };
 
 export class GoogleApp {
   private static instances = new Map<number, GoogleApp>();
@@ -216,11 +215,11 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, url, bounds }: GoogleAppOptions) {
+  constructor({ accountId, url, browserWindow }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
 
-    this.browserWindow = this.createBrowserWindow(bounds ?? DEFAULT_BOUNDS);
+    this.browserWindow = this.createBrowserWindow(browserWindow);
     this.view = this.createView({ url });
 
     this.updateViewBounds();
@@ -236,10 +235,11 @@ export class GoogleApp {
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
-  private createBrowserWindow(bounds: { width: number; height: number }) {
+  private createBrowserWindow(options?: BrowserWindowConstructorOptions) {
     const browserWindow = createBrowserWindow({
-      ...getCascadedWindowBounds(bounds),
+      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
       ...getCommonBrowserWindowOptions(),
+      ...options,
     });
 
     loadRenderer(browserWindow, {

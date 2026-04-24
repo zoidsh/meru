@@ -520,7 +520,7 @@ export class Gmail {
           new GoogleApp({
             accountId: this.accountId,
             url,
-            bounds: { width: 800, height: 600 },
+            browserWindow: { width: 800, height: 600 },
           });
 
           return { action: "deny" };
