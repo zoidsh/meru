@@ -18,23 +18,24 @@ export function isWithinNotificationTimes() {
 export function createNotification({
   click,
   action,
-  forceSystemSound,
+  playSystemSound,
   ...options
 }: NotificationConstructorOptions & {
   click?: () => void;
   action?: (index: number) => void;
-  forceSystemSound?: boolean;
+  playSystemSound?: boolean;
 }) {
   if (!Notification.isSupported()) {
     return;
   }
 
-  const sound = forceSystemSound ? "system" : config.get("notifications.sound");
+  const sound = playSystemSound ? "system" : config.get("notifications.sound");
   const playSound = config.get("notifications.playSound");
-  const playsSystemSound = forceSystemSound || (licenseKey.isValid && sound === "system");
+  const shouldPlaySystemSound =
+    playSound && sound === "system" && (playSystemSound || licenseKey.isValid);
 
   const notification = new Notification({
-    silent: playsSystemSound ? !playSound : true,
+    silent: !shouldPlaySystemSound,
     ...options,
   });
 
