@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
@@ -35,7 +35,12 @@ import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
-import { applyViewZoomLimits, getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
+import {
+  applyViewZoomLimits,
+  getCascadedWindowBounds,
+  getPreloadPath,
+  openViewDevToolsInDev,
+} from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
@@ -394,9 +399,7 @@ export class Gmail {
       this.store.setState({ messageId: messageIdMatch?.[1] || null });
     });
 
-    if (is.dev) {
-      this.view.webContents.openDevTools({ mode: "bottom" });
-    }
+    openViewDevToolsInDev(this.view);
 
     return this.view.webContents.loadURL(this.url);
   }

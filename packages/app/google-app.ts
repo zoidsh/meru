@@ -1,4 +1,3 @@
-import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
@@ -23,6 +22,7 @@ import {
   getCommonBrowserWindowOptions,
   getPreloadPath,
   loadRenderer,
+  openViewDevToolsInDev,
 } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
@@ -265,9 +265,7 @@ export class GoogleApp {
 
     view.webContents.loadURL(url);
 
-    if (is.dev) {
-      view.webContents.openDevTools({ mode: "bottom" });
-    }
+    openViewDevToolsInDev(view);
 
     return view;
   }
