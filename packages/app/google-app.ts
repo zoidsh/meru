@@ -344,31 +344,17 @@ export class GoogleApp {
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
-    this.view.webContents.on("destroyed", this.handleViewDestroyed);
   }
 
   private unregisterViewListeners() {
-    const { webContents } = this.view;
-
-    if (!webContents || webContents.isDestroyed()) {
-      return;
-    }
-
-    webContents.removeListener("did-navigate", this.broadcastNavigationState);
-    webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    webContents.removeListener("page-title-updated", this.broadcastPageTitle);
-    webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    webContents.removeListener("will-redirect", this.handleGoogleRedirect);
-    webContents.removeListener("destroyed", this.handleViewDestroyed);
+    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
   }
-
-  private handleViewDestroyed = () => {
-    if (!this.browserWindow.isDestroyed()) {
-      this.browserWindow.close();
-    }
-  };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
     GoogleApp.handleNavigate(url);
