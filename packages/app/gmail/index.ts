@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
-import { accountColorsMap } from "@meru/shared/accounts";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { platform } from "@electron-toolkit/utils";
+import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
@@ -10,18 +9,13 @@ import {
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailInboxMessage,
-  isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
-import { supportedGoogleApps } from "@meru/shared/types";
-import type { GoogleAppsPinnedApp, SupportedGoogleApp } from "@meru/shared/types";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import {
   app,
   BrowserWindow,
   clipboard,
-  dialog,
-  globalShortcut,
-  powerSaveBlocker,
   type Session,
   WebContentsView,
   type WebContentsViewConstructorOptions,
@@ -39,29 +33,23 @@ import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
+import {
+  applyViewZoomLimits,
+  broadcastFoundInPageResults,
+  openViewDevToolsInDev,
+} from "@/lib/web-contents";
 import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
 import { ms } from "@meru/shared/ms";
 import { wait } from "@meru/shared/utils";
-import { openExternalUrl } from "@/url";
 
 export const GMAIL_USER_STYLES_PATH = path.join(app.getPath("userData"), "gmail-user-styles.css");
 
 const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
   ? fs.readFileSync(GMAIL_USER_STYLES_PATH, "utf-8")
   : null;
-
-const WINDOW_OPEN_URL_WHITELIST = [
-  /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
-];
-
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
-);
-
-const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
 
 const inboxFeedEntryAuthorSchema = z.object({
   name: z.coerce.string(),
@@ -375,13 +363,11 @@ export class Gmail {
 
     this.registerNavigationHandler(this.view);
 
-    this.registerFoundInPageHandler();
+    broadcastFoundInPageResults(this.view, main.window.webContents);
 
     this.registerWindowOpenHandler(this.view);
 
-    this.view.webContents.on("dom-ready", () => {
-      this.view.webContents.setVisualZoomLevelLimits(1, 3);
-    });
+    applyViewZoomLimits(this.view);
 
     setupWindowContextMenu(this.view);
 
@@ -411,22 +397,14 @@ export class Gmail {
       this.store.setState({ messageId: messageIdMatch?.[1] || null });
     });
 
-    if (is.dev) {
-      this.view.webContents.openDevTools({ mode: "bottom" });
-    }
+    openViewDevToolsInDev(this.view);
 
     return this.view.webContents.loadURL(this.url);
   }
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.on("did-navigate", (_event, url) => {
-      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
-        dialog.showMessageBox({
-          type: "info",
-          message: "Passkey sign-in not supported yet",
-          detail: "Please use password to sign in.",
-        });
-      }
+      GoogleApp.handleNavigate(url);
 
       if (window === this.view) {
         this.viewStore.setState({
@@ -451,23 +429,7 @@ export class Gmail {
     }
 
     window.webContents.on("will-redirect", (event, url) => {
-      if (
-        url.startsWith("https://www.google.com") ||
-        url.startsWith("https://workspace.google.com")
-      ) {
-        event.preventDefault();
-
-        window.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
-      }
-    });
-  }
-
-  private registerFoundInPageHandler() {
-    this.view.webContents.on("found-in-page", (_event, result) => {
-      ipc.renderer.send(main.window.webContents, "findInPage.result", {
-        activeMatch: result.activeMatchOrdinal,
-        totalMatches: result.matches,
-      });
+      GoogleApp.handleRedirect(event, url, window.webContents);
     });
   }
 
@@ -493,78 +455,10 @@ export class Gmail {
   }
 
   registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
-    window.webContents.setWindowOpenHandler(({ url, disposition }) => {
-      if (url === "about:blank") {
-        return {
-          action: "allow",
-          createWindow: (options) => {
-            let newWindow: BrowserWindow | null = new BrowserWindow({
-              ...options,
-              show: false,
-            });
+    window.webContents.setWindowOpenHandler((details) => {
+      const { url, disposition } = details;
 
-            newWindow.webContents.once("will-navigate", (_event, url) => {
-              if (newWindow) {
-                if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
-                  newWindow.show();
-
-                  return;
-                }
-
-                openExternalUrl(url);
-
-                newWindow.webContents.close();
-
-                newWindow = null;
-              }
-            });
-
-            return newWindow.webContents;
-          },
-        };
-      }
-
-      if (
-        (url.startsWith(GMAIL_URL) && url.includes("view=pt")) ||
-        url.startsWith(GOOGLE_ACCOUNTS_URL)
-      ) {
-        return {
-          action: "allow",
-        };
-      }
-
-      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
-        | SupportedGoogleApp
-        | undefined;
-
-      const isGoogleAppEnabledToOpenInApp =
-        licenseKey.isValid &&
-        matchedSupportedGoogleApp &&
-        config.get("googleApps.openInApp") &&
-        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
-
-      if (
-        (url.startsWith(GMAIL_URL) ||
-          WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-          isGoogleAppEnabledToOpenInApp) &&
-        disposition !== "background-tab"
-      ) {
-        if (matchedSupportedGoogleApp) {
-          if (
-            !config.get("googleApps.openAppsInNewWindow") &&
-            GoogleApp.reuseWindowByHostname(this.accountId, url)
-          ) {
-            return { action: "deny" };
-          }
-
-          new GoogleApp({
-            accountId: this.accountId,
-            url,
-          });
-
-          return { action: "deny" };
-        }
-
+      if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
@@ -587,9 +481,7 @@ export class Gmail {
             }),
           );
 
-          return {
-            action: "deny",
-          };
+          return { action: "deny" };
         }
 
         if (url === `${GMAIL_URL}/`) {
@@ -616,126 +508,29 @@ export class Gmail {
             );
           }
 
-          return {
-            action: "deny",
-          };
+          return { action: "deny" };
         }
-
-        const setupNewWindow = (newWindow: BrowserWindow) => {
-          this.registerNavigationHandler(newWindow);
-
-          this.registerWindowOpenHandler(newWindow);
-
-          setupWindowContextMenu(newWindow);
-
-          const account = accounts.getAccount(this.accountId);
-
-          account.instance.windows.add(newWindow);
-
-          const isUsingMultipleAccounts = accounts.getAccounts().length > 1;
-
-          if (config.get("googleApps.showAccountLabel") && isUsingMultipleAccounts) {
-            newWindow.webContents.on("page-title-updated", (_event, title) => {
-              newWindow.setTitle(`[${account.config.label}] ${title}`);
-            });
-          }
-
-          if (config.get("googleApps.showAccountColor") && isUsingMultipleAccounts) {
-            newWindow.webContents.on("dom-ready", () => {
-              if (account.config.color) {
-                const { value } = accountColorsMap[account.config.color];
-
-                ipc.renderer.send(
-                  newWindow.webContents,
-                  "googleApp.initAccountColorIndicator",
-                  value,
-                );
-              }
-            });
-          }
-
-          let powerSaveBlockerId: number | undefined;
-
-          if (matchedSupportedGoogleApp === "meet") {
-            powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
-
-            globalShortcut.register("CommandOrControl+Shift+1", () => {
-              ipc.renderer.send(newWindow.webContents, "googleMeet.toggleMicrophone");
-            });
-
-            globalShortcut.register("CommandOrControl+Shift+2", () => {
-              ipc.renderer.send(newWindow.webContents, "googleMeet.toggleCamera");
-            });
-          }
-
-          newWindow.once("closed", () => {
-            account.instance.windows.delete(newWindow);
-
-            if (matchedSupportedGoogleApp === "meet") {
-              globalShortcut.unregister("CommandOrControl+Shift+1");
-              globalShortcut.unregister("CommandOrControl+Shift+2");
-            }
-
-            if (typeof powerSaveBlockerId === "number") {
-              powerSaveBlocker.stop(powerSaveBlockerId);
-            }
-          });
-        };
-
-        const newWindowOptions = {
-          autoHideMenuBar: true,
-          webPreferences: {
-            session: this.session,
-            preload: getPreloadPath("google-app"),
-          },
-        };
-
-        if (isGmailComposeWindowUrl(url)) {
-          return {
-            action: "allow",
-            createWindow: (inheritedOptions) => {
-              const newWindow = new BrowserWindow({
-                ...inheritedOptions,
-                ...newWindowOptions,
-                ...getCascadedWindowBounds({ width: 800, height: 600 }),
-                webPreferences: {
-                  ...inheritedOptions.webPreferences,
-                  ...newWindowOptions.webPreferences,
-                },
-              });
-
-              setupNewWindow(newWindow);
-
-              return newWindow.webContents;
-            },
-          };
-        }
-
-        const newGoogleAppWindow = new BrowserWindow({
-          ...newWindowOptions,
-          ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-        });
-
-        setupNewWindow(newGoogleAppWindow);
-
-        newGoogleAppWindow.loadURL(url);
 
         return {
-          action: "deny",
+          action: "allow",
+          createWindow: (options) => {
+            const googleApp = new GoogleApp({
+              accountId: this.accountId,
+              url,
+              browserWindow: { width: 800, height: 600 },
+              view: options,
+            });
+
+            return googleApp.view.webContents;
+          },
         };
       }
 
-      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-        main.navigate("/settings/accounts");
-      } else if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
-        window.webContents.downloadURL(url);
-      } else {
-        openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
-      }
-
-      return {
-        action: "deny",
-      };
+      return GoogleApp.handleWindowOpen({
+        accountId: this.accountId,
+        details,
+        webContents: window.webContents,
+      });
     });
   }
 

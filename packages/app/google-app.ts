@@ -1,21 +1,27 @@
-import { is } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
   BrowserWindow,
+  type BrowserWindowConstructorOptions,
   clipboard,
   dialog,
   globalShortcut,
   powerSaveBlocker,
   type WebContents,
   WebContentsView,
+  type WebContentsViewConstructorOptions,
 } from "electron";
 import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
+import {
+  applyViewZoomLimits,
+  broadcastFoundInPageResults,
+  openViewDevToolsInDev,
+} from "./lib/web-contents";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -45,6 +51,8 @@ function getGoogleAppFromUrl(url: string) {
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
+  browserWindow?: BrowserWindowConstructorOptions;
+  view?: WebContentsViewConstructorOptions;
 };
 
 export class GoogleApp {
@@ -162,26 +170,7 @@ export class GoogleApp {
     }
 
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-      const account = accounts.getAccount(accountId);
-
-      const pdfWindow = new BrowserWindow({
-        ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-        autoHideMenuBar: true,
-        webPreferences: {
-          session: account.instance.session,
-          preload: getPreloadPath("google-app"),
-        },
-      });
-
-      setupWindowContextMenu(pdfWindow);
-
-      account.instance.windows.add(pdfWindow);
-
-      pdfWindow.once("closed", () => {
-        account.instance.windows.delete(pdfWindow);
-      });
-
-      pdfWindow.loadURL(url);
+      new GoogleApp({ accountId, url });
 
       return { action: "deny" };
     }
@@ -223,7 +212,7 @@ export class GoogleApp {
 
   accountId: AccountConfig["id"];
 
-  app: SupportedGoogleApp;
+  app: SupportedGoogleApp | undefined;
 
   browserWindow: BrowserWindow;
 
@@ -231,18 +220,12 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, url }: GoogleAppOptions) {
-    const app = getGoogleAppFromUrl(url);
-
-    if (!app) {
-      throw new Error(`Cannot determine Google app from URL: ${url}`);
-    }
-
+  constructor({ accountId, url, browserWindow, view }: GoogleAppOptions) {
     this.accountId = accountId;
-    this.app = app;
+    this.app = getGoogleAppFromUrl(url);
 
-    this.browserWindow = this.createBrowserWindow();
-    this.view = this.createView({ url });
+    this.browserWindow = this.createBrowserWindow(browserWindow);
+    this.view = this.createView({ url, options: view });
 
     this.updateViewBounds();
     this.registerViewListeners();
@@ -257,10 +240,14 @@ export class GoogleApp {
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
-  private createBrowserWindow() {
+  private createBrowserWindow(options?: BrowserWindowConstructorOptions) {
+    const width = options?.width ?? 1280;
+    const height = options?.height ?? 800;
+
     const browserWindow = createBrowserWindow({
-      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+      ...getCascadedWindowBounds({ width, height }),
       ...getCommonBrowserWindowOptions(),
+      ...options,
     });
 
     loadRenderer(browserWindow, {
@@ -271,9 +258,17 @@ export class GoogleApp {
     return browserWindow;
   }
 
-  private createView({ url }: { url: string }) {
+  private createView({
+    url,
+    options,
+  }: {
+    url: string;
+    options?: WebContentsViewConstructorOptions;
+  }) {
     const view = new WebContentsView({
+      ...options,
       webPreferences: {
+        ...options?.webPreferences,
         session: this.account.instance.session,
         preload: getPreloadPath("google-app"),
       },
@@ -283,13 +278,15 @@ export class GoogleApp {
 
     setupWindowContextMenu(view);
 
+    applyViewZoomLimits(view);
+
+    broadcastFoundInPageResults(view, this.browserWindow.webContents);
+
     this.setWindowOpenHandler(view);
 
     view.webContents.loadURL(url);
 
-    if (is.dev) {
-      view.webContents.openDevTools({ mode: "bottom" });
-    }
+    openViewDevToolsInDev(view);
 
     return view;
   }
@@ -340,7 +337,6 @@ export class GoogleApp {
   }
 
   private registerViewListeners() {
-    this.view.webContents.on("dom-ready", this.handleDomReady);
     this.view.webContents.on("did-navigate", this.broadcastNavigationState);
     this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
@@ -348,11 +344,9 @@ export class GoogleApp {
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
-    this.view.webContents.on("found-in-page", this.broadcastFindInPageResult);
   }
 
   private unregisterViewListeners() {
-    this.view.webContents.removeListener("dom-ready", this.handleDomReady);
     this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
     this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
@@ -360,12 +354,7 @@ export class GoogleApp {
     this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
-    this.view.webContents.removeListener("found-in-page", this.broadcastFindInPageResult);
   }
-
-  private handleDomReady = () => {
-    this.view.webContents.setVisualZoomLevelLimits(1, 3);
-  };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
     GoogleApp.handleNavigate(url);
@@ -396,13 +385,6 @@ export class GoogleApp {
       "googleApp.loadingStateChanged",
       this.view.webContents.isLoading(),
     );
-  };
-
-  broadcastFindInPageResult = (_event: Electron.Event, result: Electron.Result) => {
-    ipc.renderer.send(this.browserWindow.webContents, "findInPage.result", {
-      activeMatch: result.activeMatchOrdinal,
-      totalMatches: result.matches,
-    });
   };
 
   updateViewBounds = () => {
