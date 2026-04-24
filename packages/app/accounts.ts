@@ -61,7 +61,7 @@ class Accounts {
     );
 
     for (const account of accounts) {
-      account.instance.gmail.view.webContents?.setBackgroundThrottling(true);
+      account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
     // When window is closed/minimized, the account views sometimes don't render after showing/restoring window
@@ -72,7 +72,7 @@ class Accounts {
       main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
 
       selectedAccount.instance.gmail.updateViewBounds();
-      selectedAccount.instance.gmail.view.webContents?.focus();
+      selectedAccount.instance.gmail.view.webContents.focus();
     });
 
     main.window.on("restore", () => {
@@ -82,7 +82,7 @@ class Accounts {
       main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
 
       selectedAccount.instance.gmail.updateViewBounds();
-      selectedAccount.instance.gmail.view.webContents?.focus();
+      selectedAccount.instance.gmail.view.webContents.focus();
     });
   }
 
@@ -150,7 +150,7 @@ class Accounts {
 
   findInstanceByGmailWebContentsId(webContentsId: number) {
     for (const account of this.instances.values()) {
-      if (account.gmail.view.webContents?.id === webContentsId) {
+      if (account.gmail.view.webContents.id === webContentsId) {
         return account;
       }
     }
@@ -172,7 +172,7 @@ class Accounts {
         main.window.contentView.removeChildView(account.gmail.view);
         main.window.contentView.addChildView(account.gmail.view);
         account.gmail.updateViewBounds();
-        account.gmail.view.webContents?.focus();
+        account.gmail.view.webContents.focus();
 
         return account;
       }

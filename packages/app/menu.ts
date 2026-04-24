@@ -123,7 +123,7 @@ export class AppMenu {
       const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
 
       for (const [_accountId, instance] of accounts.instances) {
-        instance.gmail.view.webContents?.setZoomFactor(zoomFactor);
+        instance.gmail.view.webContents.setZoomFactor(zoomFactor);
       }
 
       config.set("gmail.zoomFactor", zoomFactor);
@@ -140,7 +140,7 @@ export class AppMenu {
 
       if (zoomFactor > 0) {
         for (const [_accountId, instance] of accounts.instances) {
-          instance.gmail.view.webContents?.setZoomFactor(zoomFactor);
+          instance.gmail.view.webContents.setZoomFactor(zoomFactor);
         }
 
         config.set("gmail.zoomFactor", zoomFactor);
@@ -192,13 +192,11 @@ export class AppMenu {
             label: "Gmail Settings...",
             accelerator: "Command+,",
             click: () => {
-              const gmailWebContents = selectedAccount.instance.gmail.view.webContents;
-
-              if (!gmailWebContents) {
-                return;
-              }
-
-              ipc.renderer.send(gmailWebContents, "gmail.navigateTo", "settings");
+              ipc.renderer.send(
+                selectedAccount.instance.gmail.view.webContents,
+                "gmail.navigateTo",
+                "settings",
+              );
 
               main.show();
             },
@@ -222,13 +220,11 @@ export class AppMenu {
           {
             label: "Compose",
             click: () => {
-              const gmailWebContents = selectedAccount.instance.gmail.view.webContents;
-
-              if (!gmailWebContents) {
-                return;
-              }
-
-              ipc.renderer.send(gmailWebContents, "gmail.navigateTo", "compose");
+              ipc.renderer.send(
+                selectedAccount.instance.gmail.view.webContents,
+                "gmail.navigateTo",
+                "compose",
+              );
 
               main.show();
             },
@@ -366,7 +362,7 @@ export class AppMenu {
               const defaultZoomFactor = 1;
 
               for (const [_accountId, instance] of accounts.instances) {
-                instance.gmail.view.webContents?.setZoomFactor(defaultZoomFactor);
+                instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
               }
 
               config.set("gmail.zoomFactor", defaultZoomFactor);
@@ -408,7 +404,7 @@ export class AppMenu {
                 return;
               }
 
-              selectedAccount.instance.gmail.view.webContents?.reload();
+              selectedAccount.instance.gmail.view.webContents.reload();
             },
           },
           {
@@ -421,7 +417,7 @@ export class AppMenu {
                 return;
               }
 
-              selectedAccount.instance.gmail.view.webContents?.reloadIgnoringCache();
+              selectedAccount.instance.gmail.view.webContents.reloadIgnoringCache();
             },
           },
           {
@@ -437,7 +433,7 @@ export class AppMenu {
                 if (googleApp) {
                   googleApp.browserWindow.webContents.openDevTools({ mode: "detach" });
 
-                  googleApp.view.webContents?.openDevTools();
+                  googleApp.view.webContents.openDevTools();
                 }
 
                 return;
@@ -445,7 +441,7 @@ export class AppMenu {
 
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              selectedAccount.instance.gmail.view.webContents?.openDevTools();
+              selectedAccount.instance.gmail.view.webContents.openDevTools();
             },
           },
         ],
@@ -463,7 +459,7 @@ export class AppMenu {
                 return;
               }
 
-              selectedAccount.instance.gmail.view.webContents?.navigationHistory.goBack();
+              selectedAccount.instance.gmail.view.webContents.navigationHistory.goBack();
             },
           },
           {
@@ -476,7 +472,7 @@ export class AppMenu {
                 return;
               }
 
-              selectedAccount.instance.gmail.view.webContents?.navigationHistory.goForward();
+              selectedAccount.instance.gmail.view.webContents.navigationHistory.goForward();
             },
           },
         ],

@@ -109,7 +109,6 @@
   "patchedDependencies": {
     "conf@14.0.0": "patches/conf@14.0.0.patch",
     "electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch",
-    "electron@41.2.1": "patches/electron@41.2.1.patch",
     "sonner@2.0.7": "patches/sonner@2.0.7.patch",
   },
   "packages": {

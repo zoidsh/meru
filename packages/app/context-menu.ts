@@ -23,7 +23,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
       if (
         licenseKey.isValid &&
-        parameters.pageURL === selectedAccount.instance.gmail.view.webContents?.getURL()
+        parameters.pageURL === selectedAccount.instance.gmail.view.webContents.getURL()
       ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;
         const messageId = selectedAccount.instance.gmail.store.getState().messageId;
@@ -54,16 +54,10 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       menuItems.push({
         label: "Inspect Element",
         click: () => {
-          const windowWebContents = window.webContents;
+          window.webContents.inspectElement(parameters.x, parameters.y);
 
-          if (!windowWebContents) {
-            return;
-          }
-
-          windowWebContents.inspectElement(parameters.x, parameters.y);
-
-          if (windowWebContents.isDevToolsOpened()) {
-            windowWebContents.devToolsWebContents?.focus();
+          if (window.webContents.isDevToolsOpened()) {
+            window.webContents.devToolsWebContents?.focus();
           }
         },
       });

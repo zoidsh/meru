@@ -121,11 +121,7 @@ export function handleMeruUrl(url: string) {
         if (account.gmail.userEmail === email) {
           accounts.selectAccount(accountId);
 
-          const gmailWebContents = account.gmail.view.webContents;
-
-          if (gmailWebContents) {
-            ipc.renderer.send(gmailWebContents, "gmail.openMessage", paths[2]);
-          }
+          ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", paths[2]);
 
           return;
         }

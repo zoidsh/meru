@@ -76,17 +76,11 @@ export class GoogleApp {
     const urlHostname = new URL(url).hostname;
 
     for (const instance of GoogleApp.instances.values()) {
-      const instanceWebContents = instance.view.webContents;
-
-      if (!instanceWebContents) {
-        continue;
-      }
-
       if (
         instance.accountId === accountId &&
-        new URL(instanceWebContents.getURL()).hostname === urlHostname
+        new URL(instance.view.webContents.getURL()).hostname === urlHostname
       ) {
-        instanceWebContents.loadURL(url);
+        instance.view.webContents.loadURL(url);
 
         instance.browserWindow.focus();
 
@@ -236,7 +230,7 @@ export class GoogleApp {
     this.updateViewBounds();
     this.registerViewListeners();
 
-    this.view.webContents?.once("destroyed", this.handleViewDestroyed);
+    this.view.webContents.once("destroyed", this.handleViewDestroyed);
 
     this.browserWindow.on("resize", this.updateViewBounds);
     this.browserWindow.on("close", this.handleClose);
@@ -292,7 +286,7 @@ export class GoogleApp {
 
     this.setWindowOpenHandler(view);
 
-    view.webContents?.loadURL(url);
+    view.webContents.loadURL(url);
 
     openViewDevToolsInDev(view);
 
@@ -300,17 +294,11 @@ export class GoogleApp {
   }
 
   private setWindowOpenHandler(view: WebContentsView) {
-    const viewWebContents = view.webContents;
-
-    if (!viewWebContents) {
-      return;
-    }
-
-    viewWebContents.setWindowOpenHandler((details) =>
+    view.webContents.setWindowOpenHandler((details) =>
       GoogleApp.handleWindowOpen({
         accountId: this.accountId,
         details,
-        webContents: viewWebContents,
+        webContents: view.webContents,
       }),
     );
   }
@@ -336,19 +324,11 @@ export class GoogleApp {
       this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
       globalShortcut.register("CommandOrControl+Shift+1", () => {
-        const viewWebContents = this.view.webContents;
-
-        if (viewWebContents) {
-          ipc.renderer.send(viewWebContents, "googleMeet.toggleMicrophone");
-        }
+        ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
       });
 
       globalShortcut.register("CommandOrControl+Shift+2", () => {
-        const viewWebContents = this.view.webContents;
-
-        if (viewWebContents) {
-          ipc.renderer.send(viewWebContents, "googleMeet.toggleCamera");
-        }
+        ipc.renderer.send(this.view.webContents, "googleMeet.toggleCamera");
       });
     }
   }
@@ -365,25 +345,19 @@ export class GoogleApp {
   }
 
   private registerViewListeners() {
-    const viewWebContents = this.view.webContents;
-
-    if (!viewWebContents) {
-      return;
-    }
-
-    viewWebContents.on("did-navigate", this.broadcastNavigationState);
-    viewWebContents.on("did-navigate", this.handlePasskeyChallenge);
-    viewWebContents.on("did-navigate-in-page", this.broadcastNavigationState);
-    viewWebContents.on("page-title-updated", this.broadcastPageTitle);
-    viewWebContents.on("did-start-loading", this.broadcastLoadingState);
-    viewWebContents.on("did-stop-loading", this.broadcastLoadingState);
-    viewWebContents.on("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
   }
 
   private unregisterViewListeners() {
     const viewWebContents = this.view.webContents;
 
-    if (!viewWebContents || viewWebContents.isDestroyed()) {
+    if (viewWebContents?.isDestroyed() !== false) {
       return;
     }
 
@@ -401,25 +375,13 @@ export class GoogleApp {
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
-    const viewWebContents = this.view.webContents;
-
-    if (!viewWebContents) {
-      return;
-    }
-
-    GoogleApp.handleRedirect(event, url, viewWebContents);
+    GoogleApp.handleRedirect(event, url, this.view.webContents);
   };
 
   broadcastNavigationState = () => {
-    const viewWebContents = this.view.webContents;
-
-    if (!viewWebContents) {
-      return;
-    }
-
     ipc.renderer.send(this.browserWindow.webContents, "googleApp.navigationStateChanged", {
-      canGoBack: viewWebContents.navigationHistory.canGoBack(),
-      canGoForward: viewWebContents.navigationHistory.canGoForward(),
+      canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+      canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
   };
 
@@ -427,7 +389,7 @@ export class GoogleApp {
     ipc.renderer.send(
       this.browserWindow.webContents,
       "googleApp.pageTitleChanged",
-      this.view.webContents?.getTitle() ?? "",
+      this.view.webContents.getTitle(),
     );
   };
 
@@ -435,7 +397,7 @@ export class GoogleApp {
     ipc.renderer.send(
       this.browserWindow.webContents,
       "googleApp.loadingStateChanged",
-      this.view.webContents?.isLoading() ?? false,
+      this.view.webContents.isLoading(),
     );
   };
 
@@ -451,19 +413,19 @@ export class GoogleApp {
   };
 
   goBack() {
-    this.view.webContents?.navigationHistory.goBack();
+    this.view.webContents.navigationHistory.goBack();
   }
 
   goForward() {
-    this.view.webContents?.navigationHistory.goForward();
+    this.view.webContents.navigationHistory.goForward();
   }
 
   reload() {
-    this.view.webContents?.reload();
+    this.view.webContents.reload();
   }
 
   hardReload() {
-    this.view.webContents?.reloadIgnoringCache();
+    this.view.webContents.reloadIgnoringCache();
   }
 
   zoomIn() {
@@ -479,35 +441,27 @@ export class GoogleApp {
   }
 
   private get zoomFactor() {
-    return this.view.webContents?.getZoomFactor() ?? 1;
+    return this.view.webContents.getZoomFactor();
   }
 
   private setZoomFactor(zoomFactor: number) {
-    this.view.webContents?.setZoomFactor(clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
+    this.view.webContents.setZoomFactor(clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
   }
 
   stop() {
-    this.view.webContents?.stop();
+    this.view.webContents.stop();
   }
 
   get isLoading() {
-    return this.view.webContents?.isLoading() ?? false;
+    return this.view.webContents.isLoading();
   }
 
   copyUrl() {
-    const url = this.view.webContents?.getURL();
-
-    if (url) {
-      clipboard.writeText(url);
-    }
+    clipboard.writeText(this.view.webContents.getURL());
   }
 
   openInBrowser() {
-    const url = this.view.webContents?.getURL();
-
-    if (url) {
-      openExternalUrl(url, true);
-    }
+    openExternalUrl(this.view.webContents.getURL(), true);
   }
 
   get account() {
