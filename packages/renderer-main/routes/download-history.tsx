@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useDownloadsStore } from "@/lib/stores";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -137,12 +135,6 @@ function DownloadHistoryContent() {
 }
 
 export function DownloadHistory() {
-  useEffect(() => {
-    useDownloadsStore.setState({
-      hasUnviewedCompletedDownload: false,
-    });
-  }, []);
-
   return (
     <>
       <SettingsHeader>

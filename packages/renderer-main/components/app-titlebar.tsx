@@ -32,7 +32,6 @@ import { useConfig } from "@meru/shared/renderer/react-query";
 import {
   useAccountsStore,
   useAppUpdaterStore,
-  useDownloadsStore,
   useFindInPageStore,
   useSettingsStore,
   useTrialStore,
@@ -41,10 +40,6 @@ import { GoogleAppIcon } from "./google-app-icon";
 import { useRoute } from "wouter";
 
 function Download() {
-  const hasUnviewedCompletedDownload = useDownloadsStore(
-    (state) => state.hasUnviewedCompletedDownload,
-  );
-
   return (
     <Button
       variant="ghost"
@@ -52,10 +47,6 @@ function Download() {
       className="draggable-none"
       onClick={() => {
         ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
-
-        useDownloadsStore.setState({
-          hasUnviewedCompletedDownload: false,
-        });
       }}
       onMouseEnter={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
@@ -65,11 +56,7 @@ function Download() {
       }}
       title="Download History"
     >
-      <DownloadIcon
-        className={cn({
-          "text-green-600": hasUnviewedCompletedDownload,
-        })}
-      />
+      <DownloadIcon />
     </Button>
   );
 }

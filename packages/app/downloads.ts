@@ -6,7 +6,6 @@ import { shell, WebContentsView } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
-import { ipc } from "./ipc";
 import { main } from "./main";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
@@ -65,8 +64,6 @@ class Downloads {
           createdAt: item.getStartTime(),
           exists: true,
         });
-
-        ipc.renderer.send(main.window.webContents, "downloads.itemCompleted");
 
         if (config.get("notifications.downloadCompleted")) {
           createNotification({
