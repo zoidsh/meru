@@ -100,14 +100,20 @@ export function loadRenderer(
 
   const rendererName = `renderer-${renderer}`;
 
+  const targetWebContents = window.webContents;
+
+  if (!targetWebContents) {
+    return;
+  }
+
   if (is.dev) {
     const hashSuffix = hash ? `#${hash}` : "";
 
-    window.webContents.loadURL(`http://localhost:${port}/?${searchParams.toString()}${hashSuffix}`);
+    targetWebContents.loadURL(`http://localhost:${port}/?${searchParams.toString()}${hashSuffix}`);
 
-    window.webContents.openDevTools({ mode: "detach" });
+    targetWebContents.openDevTools({ mode: "detach" });
   } else {
-    window.webContents.loadFile(path.join("build-js", rendererName, "index.html"), {
+    targetWebContents.loadFile(path.join("build-js", rendererName, "index.html"), {
       search: searchParams.toString(),
       ...(hash ? { hash } : {}),
     });

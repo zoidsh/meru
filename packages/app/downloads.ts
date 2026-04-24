@@ -122,9 +122,13 @@ class Downloads {
 
   closeRecentDownloadHistoryPopup = () => {
     if (this.recentDownloadHistoryPopup) {
-      this.recentDownloadHistoryPopup.webContents.removeAllListeners();
+      const popupWebContents = this.recentDownloadHistoryPopup.webContents;
 
-      this.recentDownloadHistoryPopup.webContents.close();
+      if (popupWebContents) {
+        popupWebContents.removeAllListeners();
+
+        popupWebContents.close();
+      }
 
       main.window.contentView.removeChildView(this.recentDownloadHistoryPopup);
 
@@ -157,7 +161,7 @@ class Downloads {
 
     this.setRecentDownloadHistoryPopupBounds();
 
-    this.recentDownloadHistoryPopup.webContents.once("blur", () => {
+    this.recentDownloadHistoryPopup.webContents?.once("blur", () => {
       if (this.downloadHistoryPopupOnBlurEnabled) {
         this.closeRecentDownloadHistoryPopup();
       }

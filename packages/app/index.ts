@@ -170,7 +170,7 @@ async function init() {
   if (!app.commandLine.hasSwitch("disable-bring-to-top-on-focus")) {
     main.window.on("focus", () => {
       if (!appState.isSettingsOpen) {
-        accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
+        accounts.getSelectedAccount().instance.gmail.view.webContents?.focus();
       }
     });
   }

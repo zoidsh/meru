@@ -361,6 +361,12 @@ export class Gmail {
 
     main.window.contentView.addChildView(this.view);
 
+    const viewWebContents = this.view.webContents;
+
+    if (!viewWebContents) {
+      throw new Error("Gmail view webContents unavailable after construction");
+    }
+
     this.registerNavigationHandler(this.view);
 
     broadcastFoundInPageResults(this.view, main.window.webContents);
@@ -377,19 +383,19 @@ export class Gmail {
       this.updateViewBounds();
     });
 
-    this.view.webContents.on("dom-ready", () => {
-      if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
-        this.view.webContents.insertCSS(gmailCSS);
+    viewWebContents.on("dom-ready", () => {
+      if (viewWebContents.getURL().startsWith(GMAIL_URL)) {
+        viewWebContents.insertCSS(gmailCSS);
 
         if (licenseKey.isValid && GMAIL_USER_STYLES) {
-          this.view.webContents.insertCSS(GMAIL_USER_STYLES);
+          viewWebContents.insertCSS(GMAIL_USER_STYLES);
         }
       }
 
-      this.view.webContents.insertCSS(meruCSS);
+      viewWebContents.insertCSS(meruCSS);
     });
 
-    this.view.webContents.on("did-navigate-in-page", (_event, url) => {
+    viewWebContents.on("did-navigate-in-page", (_event, url) => {
       const hash = new URL(url).hash;
 
       const messageIdMatch = hash.match(/#[^/]+\/([A-Za-z0-9]{15,})$/);
@@ -399,18 +405,24 @@ export class Gmail {
 
     openViewDevToolsInDev(this.view);
 
-    return this.view.webContents.loadURL(this.url);
+    return viewWebContents.loadURL(this.url);
   }
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
-    window.webContents.on("did-navigate", (_event, url) => {
+    const windowWebContents = window.webContents;
+
+    if (!windowWebContents) {
+      return;
+    }
+
+    windowWebContents.on("did-navigate", (_event, url) => {
       GoogleApp.handleNavigate(url);
 
       if (window === this.view) {
         this.viewStore.setState({
           navigationHistory: {
-            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+            canGoBack: windowWebContents.navigationHistory.canGoBack(),
+            canGoForward: windowWebContents.navigationHistory.canGoForward(),
           },
           attentionRequired: !url.startsWith(this.baseUrl),
         });
@@ -418,18 +430,18 @@ export class Gmail {
     });
 
     if (window === this.view) {
-      window.webContents.on("did-navigate-in-page", (_event: Electron.Event) => {
+      windowWebContents.on("did-navigate-in-page", (_event: Electron.Event) => {
         this.viewStore.setState({
           navigationHistory: {
-            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+            canGoBack: windowWebContents.navigationHistory.canGoBack(),
+            canGoForward: windowWebContents.navigationHistory.canGoForward(),
           },
         });
       });
     }
 
-    window.webContents.on("will-redirect", (event, url) => {
-      GoogleApp.handleRedirect(event, url, window.webContents);
+    windowWebContents.on("will-redirect", (event, url) => {
+      GoogleApp.handleRedirect(event, url, windowWebContents);
     });
   }
 
@@ -445,9 +457,13 @@ export class Gmail {
   }
 
   destroy() {
-    this.view.webContents.removeAllListeners();
+    const viewWebContents = this.view.webContents;
 
-    this.view.webContents.close();
+    if (viewWebContents) {
+      viewWebContents.removeAllListeners();
+
+      viewWebContents.close();
+    }
 
     this.view.removeAllListeners();
 
@@ -455,14 +471,20 @@ export class Gmail {
   }
 
   registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
-    window.webContents.setWindowOpenHandler((details) => {
+    const windowWebContents = window.webContents;
+
+    if (!windowWebContents) {
+      return;
+    }
+
+    windowWebContents.setWindowOpenHandler((details) => {
       const { url, disposition } = details;
 
       if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
-          window.webContents.loadURL(url);
+          windowWebContents.loadURL(url);
 
           config.set(
             "accounts",
@@ -485,7 +507,7 @@ export class Gmail {
         }
 
         if (url === `${GMAIL_URL}/`) {
-          window.webContents.loadURL(url);
+          windowWebContents.loadURL(url);
 
           const account = accounts.getAccount(this.accountId);
 
@@ -521,7 +543,13 @@ export class Gmail {
               view: options,
             });
 
-            return googleApp.view.webContents;
+            const googleAppWebContents = googleApp.view.webContents;
+
+            if (!googleAppWebContents) {
+              throw new Error("GoogleApp view webContents unavailable after construction");
+            }
+
+            return googleAppWebContents;
           },
         };
       }
@@ -529,19 +557,21 @@ export class Gmail {
       return GoogleApp.handleWindowOpen({
         accountId: this.accountId,
         details,
-        webContents: window.webContents,
+        webContents: windowWebContents,
       });
     });
   }
 
   async fetchInboxFeed(fetchAttempt = 1) {
     try {
-      if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+      const viewWebContents = this.view.webContents;
+
+      if (!viewWebContents || !viewWebContents.getURL().startsWith(GMAIL_URL)) {
         return;
       }
 
       const inboxType = inboxTypeSchema.parse(
-        await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
+        await viewWebContents.executeJavaScript("window.GM_INBOX_TYPE"),
       );
 
       const body = await this.session
@@ -651,17 +681,12 @@ export class Gmail {
               body: `Copied verification code ${verificationCode}`,
             });
 
-            if (config.get("verificationCodes.autoMarkAsRead")) {
-              ipc.renderer.send(
-                this.view.webContents,
-                "gmail.handleMessage",
-                newMail.id,
-                "markAsRead",
-              );
+            if (config.get("verificationCodes.autoMarkAsRead") && viewWebContents) {
+              ipc.renderer.send(viewWebContents, "gmail.handleMessage", newMail.id, "markAsRead");
             }
 
-            if (config.get("verificationCodes.autoDelete")) {
-              ipc.renderer.send(this.view.webContents, "gmail.handleMessage", newMail.id, "delete");
+            if (config.get("verificationCodes.autoDelete") && viewWebContents) {
+              ipc.renderer.send(viewWebContents, "gmail.handleMessage", newMail.id, "delete");
             }
 
             continue;
@@ -706,13 +731,25 @@ export class Gmail {
 
             accounts.selectAccount(this.accountId);
 
-            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
+            const freshViewWebContents = this.view.webContents;
+
+            if (!freshViewWebContents) {
+              return;
+            }
+
+            ipc.renderer.send(freshViewWebContents, "gmail.openMessage", newMail.id);
           },
           action: (index) => {
+            const freshViewWebContents = this.view.webContents;
+
+            if (!freshViewWebContents) {
+              return;
+            }
+
             switch (index) {
               case 0: {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  freshViewWebContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "archive",
@@ -722,7 +759,7 @@ export class Gmail {
               }
               case 1: {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  freshViewWebContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "markAsRead",
@@ -732,7 +769,7 @@ export class Gmail {
               }
               case 2: {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  freshViewWebContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "delete",
@@ -742,7 +779,7 @@ export class Gmail {
               }
               case 3: {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  freshViewWebContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "markAsSpam",
@@ -852,10 +889,10 @@ export class Gmail {
   }
 
   search(query: string) {
-    this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
+    this.view.webContents?.executeJavaScript(`window.location.hash = "#search/${query}"`);
   }
 
   openGoogleApp(app: GoogleAppsPinnedApp) {
-    this.view.webContents.executeJavaScript(`window.open("${getGoogleAppUrl(app)}", "_blank")`);
+    this.view.webContents?.executeJavaScript(`window.open("${getGoogleAppUrl(app)}", "_blank")`);
   }
 }
