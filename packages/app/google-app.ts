@@ -230,6 +230,8 @@ export class GoogleApp {
     this.updateViewBounds();
     this.registerViewListeners();
 
+    this.view.webContents.once("destroyed", this.handleViewDestroyed);
+
     this.browserWindow.on("resize", this.updateViewBounds);
     this.browserWindow.on("close", this.handleClose);
 
@@ -302,13 +304,17 @@ export class GoogleApp {
   }
 
   private handleClose = () => {
-    this.unregisterViewListeners();
-
     this.teardownApp();
 
     this.account.instance.windows.delete(this.browserWindow);
 
     GoogleApp.instances.delete(this.browserWindow.webContents.id);
+  };
+
+  private handleViewDestroyed = () => {
+    if (!this.browserWindow.isDestroyed()) {
+      this.browserWindow.close();
+    }
   };
 
   private setupApp() {
@@ -344,16 +350,6 @@ export class GoogleApp {
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
-  }
-
-  private unregisterViewListeners() {
-    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
-    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
