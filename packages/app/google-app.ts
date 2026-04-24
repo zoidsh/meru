@@ -348,18 +348,20 @@ export class GoogleApp {
   }
 
   private unregisterViewListeners() {
-    if (this.view.webContents.isDestroyed()) {
+    const { webContents } = this.view;
+
+    if (!webContents || webContents.isDestroyed()) {
       return;
     }
 
-    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
-    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
-    this.view.webContents.removeListener("destroyed", this.handleViewDestroyed);
+    webContents.removeListener("did-navigate", this.broadcastNavigationState);
+    webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
+    webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+    webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    webContents.removeListener("did-start-loading", this.broadcastLoadingState);
+    webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+    webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    webContents.removeListener("destroyed", this.handleViewDestroyed);
   }
 
   private handleViewDestroyed = () => {
