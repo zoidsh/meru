@@ -162,26 +162,7 @@ export class GoogleApp {
     }
 
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-      const account = accounts.getAccount(accountId);
-
-      const pdfWindow = new BrowserWindow({
-        ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-        autoHideMenuBar: true,
-        webPreferences: {
-          session: account.instance.session,
-          preload: getPreloadPath("google-app"),
-        },
-      });
-
-      setupWindowContextMenu(pdfWindow);
-
-      account.instance.windows.add(pdfWindow);
-
-      pdfWindow.once("closed", () => {
-        account.instance.windows.delete(pdfWindow);
-      });
-
-      pdfWindow.loadURL(url);
+      new GoogleApp({ accountId, url });
 
       return { action: "deny" };
     }
@@ -223,7 +204,7 @@ export class GoogleApp {
 
   accountId: AccountConfig["id"];
 
-  app: SupportedGoogleApp;
+  app: SupportedGoogleApp | undefined;
 
   browserWindow: BrowserWindow;
 
@@ -232,14 +213,8 @@ export class GoogleApp {
   private powerSaveBlockerId: number | undefined;
 
   constructor({ accountId, url }: GoogleAppOptions) {
-    const app = getGoogleAppFromUrl(url);
-
-    if (!app) {
-      throw new Error(`Cannot determine Google app from URL: ${url}`);
-    }
-
     this.accountId = accountId;
-    this.app = app;
+    this.app = getGoogleAppFromUrl(url);
 
     this.browserWindow = this.createBrowserWindow();
     this.view = this.createView({ url });
