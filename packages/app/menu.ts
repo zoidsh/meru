@@ -431,7 +431,7 @@ export class AppMenu {
                 const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
 
                 if (googleApp) {
-                  googleApp.browserWindow.webContents.openDevTools({ mode: "detach" });
+                  googleApp.window.webContents.openDevTools({ mode: "detach" });
 
                   googleApp.view.webContents.openDevTools();
                 }

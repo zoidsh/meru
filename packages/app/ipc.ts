@@ -54,6 +54,10 @@ class Ipc {
           config.store,
         );
       }
+
+      for (const googleAppWindow of GoogleApp.getAllWindows()) {
+        ipc.renderer.send(googleAppWindow.webContents, "config.configChanged", config.store);
+      }
     });
 
     config.onDidChange("accounts", () => {
