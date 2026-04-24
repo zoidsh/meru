@@ -519,12 +519,12 @@ export class Gmail {
         if (isGmailComposeWindowUrl(url)) {
           return {
             action: "allow",
-            createWindow: (inheritedOptions) => {
+            createWindow: (options) => {
               const googleApp = new GoogleApp({
                 accountId: this.accountId,
                 url,
                 browserWindow: { width: 800, height: 600 },
-                view: { webPreferences: inheritedOptions.webPreferences },
+                view: options,
               });
 
               return googleApp.view.webContents;
