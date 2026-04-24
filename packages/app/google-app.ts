@@ -10,6 +10,7 @@ import {
   powerSaveBlocker,
   type WebContents,
   WebContentsView,
+  type WebContentsViewConstructorOptions,
 } from "electron";
 import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
@@ -51,6 +52,7 @@ type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
   browserWindow?: BrowserWindowConstructorOptions;
+  view?: WebContentsViewConstructorOptions;
 };
 
 export class GoogleApp {
@@ -218,12 +220,12 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, url, browserWindow }: GoogleAppOptions) {
+  constructor({ accountId, url, browserWindow, view }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
 
     this.browserWindow = this.createBrowserWindow(browserWindow);
-    this.view = this.createView({ url });
+    this.view = this.createView({ url, options: view });
 
     this.updateViewBounds();
     this.registerViewListeners();
@@ -256,9 +258,17 @@ export class GoogleApp {
     return browserWindow;
   }
 
-  private createView({ url }: { url: string }) {
+  private createView({
+    url,
+    options,
+  }: {
+    url: string;
+    options?: WebContentsViewConstructorOptions;
+  }) {
     const view = new WebContentsView({
+      ...options,
       webPreferences: {
+        ...options?.webPreferences,
         session: this.account.instance.session,
         preload: getPreloadPath("google-app"),
       },
