@@ -232,7 +232,13 @@ export class GoogleApp {
     this.updateViewBounds();
     this.registerViewListeners();
 
-    this.view.webContents.once("destroyed", this.handleViewDestroyed);
+    this.view.webContents.once("destroyed", () => {
+      this.viewDestroyed = true;
+
+      if (!this.browserWindow.isDestroyed()) {
+        this.browserWindow.close();
+      }
+    });
 
     this.browserWindow.on("resize", this.updateViewBounds);
     this.browserWindow.on("close", this.handleClose);
@@ -315,14 +321,6 @@ export class GoogleApp {
     this.account.instance.windows.delete(this.browserWindow);
 
     GoogleApp.instances.delete(this.browserWindow.webContents.id);
-  };
-
-  private handleViewDestroyed = () => {
-    this.viewDestroyed = true;
-
-    if (!this.browserWindow.isDestroyed()) {
-      this.browserWindow.close();
-    }
   };
 
   private setupApp() {
