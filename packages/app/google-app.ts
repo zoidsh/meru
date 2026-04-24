@@ -344,6 +344,7 @@ export class GoogleApp {
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.on("destroyed", this.handleViewDestroyed);
   }
 
   private unregisterViewListeners() {
@@ -354,7 +355,14 @@ export class GoogleApp {
     this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.removeListener("destroyed", this.handleViewDestroyed);
   }
+
+  private handleViewDestroyed = () => {
+    if (!this.browserWindow.isDestroyed()) {
+      this.browserWindow.close();
+    }
+  };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
     GoogleApp.handleNavigate(url);
