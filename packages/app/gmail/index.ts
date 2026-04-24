@@ -555,6 +555,12 @@ export class Gmail {
           });
         };
 
+        if (isGmailComposeWindowUrl(url)) {
+          new GoogleApp({ accountId: this.accountId, url });
+
+          return { action: "deny" };
+        }
+
         const newWindowOptions = {
           autoHideMenuBar: true,
           webPreferences: {
@@ -562,27 +568,6 @@ export class Gmail {
             preload: getPreloadPath("google-app"),
           },
         };
-
-        if (isGmailComposeWindowUrl(url)) {
-          return {
-            action: "allow",
-            createWindow: (inheritedOptions) => {
-              const newWindow = new BrowserWindow({
-                ...inheritedOptions,
-                ...newWindowOptions,
-                ...getCascadedWindowBounds({ width: 800, height: 600 }),
-                webPreferences: {
-                  ...inheritedOptions.webPreferences,
-                  ...newWindowOptions.webPreferences,
-                },
-              });
-
-              setupNewWindow(newWindow);
-
-              return newWindow.webContents;
-            },
-          };
-        }
 
         const newGoogleAppWindow = new BrowserWindow({
           ...newWindowOptions,
