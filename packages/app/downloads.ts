@@ -70,7 +70,7 @@ class Downloads {
             title: `Download ${state}`,
             body: fileName,
             click: () => {
-              shell.openPath(filePath);
+              shell.showItemInFolder(filePath);
             },
           });
         }
