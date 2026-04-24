@@ -117,12 +117,12 @@ class Downloads {
 
     const width = BASE_SPACING * 48;
 
-    const parentBounds = platform.isWindows
+    const parentWindowBounds = platform.isWindows
       ? this.recentDownloadHistoryParentWindow.getContentBounds()
       : this.recentDownloadHistoryParentWindow.getBounds();
 
     this.recentDownloadHistoryView.setBounds({
-      x: parentBounds.width - width - BASE_SPACING,
+      x: parentWindowBounds.width - width - BASE_SPACING,
       y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
       width,
       height: BASE_SPACING * 44,
