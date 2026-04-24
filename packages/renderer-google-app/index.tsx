@@ -17,12 +17,32 @@ import {
   ArrowRightIcon,
   CheckIcon,
   CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   LoaderCircleIcon,
   RotateCwIcon,
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+function RecentDownloadHistoryButton() {
+  return (
+    <TitlebarIconButton
+      onClick={() => {
+        ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
+      }}
+      onMouseEnter={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
+      }}
+      onMouseLeave={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
+      }}
+      title="Recent Download History"
+    >
+      <DownloadIcon />
+    </TitlebarIconButton>
+  );
+}
 
 function ReloadButton() {
   const [loading, setLoading] = useState(false);
@@ -172,6 +192,7 @@ function App() {
           }}
         />
         <TitlebarButtonGroup>
+          <RecentDownloadHistoryButton />
           <CopyUrlButton />
           <TitlebarIconButton
             title="Open in Browser"

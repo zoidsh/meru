@@ -17,7 +17,8 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   - `startMinutes`/`endMinutes` not `s`/`e`
   - `aStart`/`aEnd`/`bStart`/`bEnd` not `aS`/`aE`/`bS`/`bE`
   - `event` not `e`, `error` not `err`, `index` not `i` (unless in a for loop counter)
-- Avoid generic/contextless names even when they're full words — pick a name that carries the domain. `raw`, `data`, `parsed`, `record`, `result`, `value`, `item`, `obj`, `tmp` are all red flags on their own. Prefer `gtkDecorationLayout` over `layout`, `savedLanguages` over `languages`, `accountConfigs` over `configs`. This lets a reader understand a line without tracing back to where the value came from.
+- Avoid generic/contextless names even when they're full words — pick a name that carries the domain. `raw`, `data`, `parsed`, `record`, `result`, `value`, `item`, `obj`, `tmp` are all red flags on their own. Prefer `gtkDecorationLayout` over `layout`, `savedLanguages` over `languages`, `accountConfigs` over `configs`, `parentWindowBounds` over `parentBounds`. This lets a reader understand a line without tracing back to where the value came from.
+- Applies equally to instance fields — `recentDownloadHistoryParentWindow` beats `popupParentWindow` because the field participates in the same "is the popup open?" check as `recentDownloadHistoryView`, and matching the domain prefix makes the pairing obvious.
 
 ## Code Formatting
 

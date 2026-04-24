@@ -47,9 +47,9 @@ class Ipc {
     config.onDidAnyChange(() => {
       ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
 
-      if (downloads.recentDownloadHistoryPopup) {
+      if (downloads.recentDownloadHistoryView) {
         ipc.renderer.send(
-          downloads.recentDownloadHistoryPopup.webContents,
+          downloads.recentDownloadHistoryView.webContents,
           "config.configChanged",
           config.store,
         );
@@ -417,8 +417,14 @@ class Ipc {
       });
     });
 
-    ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", () => {
-      if (downloads.toggleRecentDownloadHistoryPopup()) {
+    ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
+      const parentWindow = BrowserWindow.fromWebContents(event.sender);
+
+      if (!parentWindow) {
+        return;
+      }
+
+      if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
         downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });
