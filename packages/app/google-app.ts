@@ -220,6 +220,8 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
+  private viewDestroyed = false;
+
   constructor({ accountId, url, browserWindow, view }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
@@ -304,7 +306,9 @@ export class GoogleApp {
   }
 
   private handleClose = () => {
-    this.unregisterViewListeners();
+    if (!this.viewDestroyed) {
+      this.unregisterViewListeners();
+    }
 
     this.teardownApp();
 
@@ -314,6 +318,8 @@ export class GoogleApp {
   };
 
   private handleViewDestroyed = () => {
+    this.viewDestroyed = true;
+
     if (!this.browserWindow.isDestroyed()) {
       this.browserWindow.close();
     }
@@ -355,19 +361,13 @@ export class GoogleApp {
   }
 
   private unregisterViewListeners() {
-    const viewWebContents = this.view.webContents;
-
-    if (viewWebContents?.isDestroyed() !== false) {
-      return;
-    }
-
-    viewWebContents.removeListener("did-navigate", this.broadcastNavigationState);
-    viewWebContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    viewWebContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    viewWebContents.removeListener("page-title-updated", this.broadcastPageTitle);
-    viewWebContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    viewWebContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    viewWebContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
