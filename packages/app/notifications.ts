@@ -5,8 +5,6 @@ import { licenseKey } from "./license-key";
 import { checkWithinNotificationTimes } from "./lib/notifications";
 import { main } from "./main";
 
-export { checkWithinNotificationTimes };
-
 export function isWithinNotificationTimes() {
   if (!licenseKey.isValid) {
     return true;
