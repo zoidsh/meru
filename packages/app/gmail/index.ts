@@ -525,6 +525,10 @@ export class Gmail {
 
           return { action: "deny" };
         }
+
+        new GoogleApp({ accountId: this.accountId, url });
+
+        return { action: "deny" };
       }
 
       return GoogleApp.handleWindowOpen({
