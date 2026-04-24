@@ -47,9 +47,9 @@ class Ipc {
     config.onDidAnyChange(() => {
       ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
 
-      if (downloads.recentDownloadHistoryPopup) {
+      if (downloads.recentDownloadHistoryView) {
         ipc.renderer.send(
-          downloads.recentDownloadHistoryPopup.webContents,
+          downloads.recentDownloadHistoryView.webContents,
           "config.configChanged",
           config.store,
         );

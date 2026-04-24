@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-function Download() {
+function RecentDownloadHistoryButton() {
   return (
     <Button
       variant="ghost"
@@ -41,7 +41,7 @@ function Download() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Download History"
+      title="Recent Download History"
     >
       <DownloadIcon />
     </Button>
@@ -195,7 +195,7 @@ function App() {
             setFindInPageState((state) => ({ ...state, isActive: false }));
           }}
         />
-        <Download />
+        <RecentDownloadHistoryButton />
         <TitlebarButtonGroup>
           <CopyUrlButton />
           <TitlebarIconButton

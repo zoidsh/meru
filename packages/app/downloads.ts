@@ -18,9 +18,9 @@ const FILE_MANAGER_NAME = platform.isMacOS
     : "your file manager";
 
 class Downloads {
-  recentDownloadHistoryPopup: WebContentsView | null = null;
+  recentDownloadHistoryView: WebContentsView | null = null;
 
-  popupParentWindow: BrowserWindow | null = null;
+  recentDownloadHistoryParentWindow: BrowserWindow | null = null;
 
   downloadHistoryPopupOnBlurEnabled = false;
 
@@ -111,17 +111,17 @@ class Downloads {
   }
 
   setRecentDownloadHistoryPopupBounds = () => {
-    if (!this.recentDownloadHistoryPopup || !this.popupParentWindow) {
+    if (!this.recentDownloadHistoryView || !this.recentDownloadHistoryParentWindow) {
       return;
     }
 
     const width = BASE_SPACING * 48;
 
     const parentBounds = platform.isWindows
-      ? this.popupParentWindow.getContentBounds()
-      : this.popupParentWindow.getBounds();
+      ? this.recentDownloadHistoryParentWindow.getContentBounds()
+      : this.recentDownloadHistoryParentWindow.getBounds();
 
-    this.recentDownloadHistoryPopup.setBounds({
+    this.recentDownloadHistoryView.setBounds({
       x: parentBounds.width - width - BASE_SPACING,
       y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
       width,
@@ -130,23 +130,28 @@ class Downloads {
   };
 
   closeRecentDownloadHistoryPopup = () => {
-    if (this.recentDownloadHistoryPopup && this.popupParentWindow) {
-      this.recentDownloadHistoryPopup.webContents.removeAllListeners();
+    if (this.recentDownloadHistoryView && this.recentDownloadHistoryParentWindow) {
+      this.recentDownloadHistoryView.webContents.removeAllListeners();
 
-      this.recentDownloadHistoryPopup.webContents.close();
+      this.recentDownloadHistoryView.webContents.close();
 
-      this.popupParentWindow.contentView.removeChildView(this.recentDownloadHistoryPopup);
+      this.recentDownloadHistoryParentWindow.contentView.removeChildView(
+        this.recentDownloadHistoryView,
+      );
 
-      this.popupParentWindow.removeListener("resize", this.setRecentDownloadHistoryPopupBounds);
+      this.recentDownloadHistoryParentWindow.removeListener(
+        "resize",
+        this.setRecentDownloadHistoryPopupBounds,
+      );
 
-      this.recentDownloadHistoryPopup = null;
-      this.popupParentWindow = null;
+      this.recentDownloadHistoryView = null;
+      this.recentDownloadHistoryParentWindow = null;
     }
   };
 
   toggleRecentDownloadHistoryPopup(parentWindow: BrowserWindow) {
-    if (this.recentDownloadHistoryPopup) {
-      const wasSameWindow = this.popupParentWindow === parentWindow;
+    if (this.recentDownloadHistoryView) {
+      const wasSameWindow = this.recentDownloadHistoryParentWindow === parentWindow;
 
       this.closeRecentDownloadHistoryPopup();
 
@@ -155,25 +160,25 @@ class Downloads {
       }
     }
 
-    this.recentDownloadHistoryPopup = new WebContentsView({
+    this.recentDownloadHistoryView = new WebContentsView({
       webPreferences: {
         preload: getPreloadPath("renderer"),
       },
     });
 
-    this.popupParentWindow = parentWindow;
+    this.recentDownloadHistoryParentWindow = parentWindow;
 
-    loadRenderer(this.recentDownloadHistoryPopup, {
+    loadRenderer(this.recentDownloadHistoryView, {
       renderer: "popup",
       port: 3001,
       hash: "recent-download-history",
     });
 
-    parentWindow.contentView.addChildView(this.recentDownloadHistoryPopup);
+    parentWindow.contentView.addChildView(this.recentDownloadHistoryView);
 
     this.setRecentDownloadHistoryPopupBounds();
 
-    this.recentDownloadHistoryPopup.webContents.once("blur", () => {
+    this.recentDownloadHistoryView.webContents.once("blur", () => {
       if (this.downloadHistoryPopupOnBlurEnabled) {
         this.closeRecentDownloadHistoryPopup();
       }
@@ -181,7 +186,7 @@ class Downloads {
 
     parentWindow.on("resize", this.setRecentDownloadHistoryPopupBounds);
 
-    this.recentDownloadHistoryPopup.setBorderRadius(BASE_SPACING * 2);
+    this.recentDownloadHistoryView.setBorderRadius(BASE_SPACING * 2);
 
     return true;
   }
