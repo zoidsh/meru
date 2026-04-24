@@ -11,7 +11,7 @@ import {
   TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
-import { useQuery } from "@tanstack/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -24,6 +24,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "wouter";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -120,11 +121,13 @@ function App() {
     totalMatches: 0,
   });
 
-  const { data: account } = useQuery({
-    queryKey: ["googleApp.account"],
-    queryFn: () => ipc.main.invoke("googleApp.getAccount"),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  const { config } = useConfig();
+
+  const [searchParams] = useSearchParams();
+
+  const account = config?.accounts.find(
+    (accountConfig) => accountConfig.id === searchParams.get("accountId"),
+  );
 
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
@@ -174,7 +177,9 @@ function App() {
           </TitlebarIconButton>
           <ReloadButton />
         </TitlebarButtonGroup>
-        {account && <AccountBadge label={account.label} color={account.color} />}
+        {config && config.accounts.length > 1 && account && (
+          <AccountBadge label={account.label} color={account.color} />
+        )}
         <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
       </TitlebarLeft>
       <TitlebarRight>
