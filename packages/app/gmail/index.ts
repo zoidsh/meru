@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { accountColorsMap } from "@meru/shared/accounts";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
@@ -13,15 +13,11 @@ import {
   isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
-import { supportedGoogleApps } from "@meru/shared/types";
-import type { GoogleAppsPinnedApp, SupportedGoogleApp } from "@meru/shared/types";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import {
   app,
   BrowserWindow,
   clipboard,
-  dialog,
-  globalShortcut,
-  powerSaveBlocker,
   type Session,
   WebContentsView,
   type WebContentsViewConstructorOptions,
@@ -31,7 +27,7 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
-import { GoogleApp } from "@/google-app";
+import { getGoogleAppFromUrl, GoogleApp } from "@/google-app";
 import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -45,7 +41,6 @@ import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
 import { ms } from "@meru/shared/ms";
 import { wait } from "@meru/shared/utils";
-import { openExternalUrl } from "@/url";
 
 export const GMAIL_USER_STYLES_PATH = path.join(app.getPath("userData"), "gmail-user-styles.css");
 
@@ -56,12 +51,6 @@ const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
 const WINDOW_OPEN_URL_WHITELIST = [
   /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
 ];
-
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
-);
-
-const WINDOW_OPEN_DOWNLOAD_URL_WHITELIST = [/chat\.google\.com\/u\/\d\/api\/get_attachment_url/];
 
 const inboxFeedEntryAuthorSchema = z.object({
   name: z.coerce.string(),
@@ -420,13 +409,7 @@ export class Gmail {
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.on("did-navigate", (_event, url) => {
-      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
-        dialog.showMessageBox({
-          type: "info",
-          message: "Passkey sign-in not supported yet",
-          detail: "Please use password to sign in.",
-        });
-      }
+      GoogleApp.handleNavigate(url);
 
       if (window === this.view) {
         this.viewStore.setState({
@@ -451,14 +434,7 @@ export class Gmail {
     }
 
     window.webContents.on("will-redirect", (event, url) => {
-      if (
-        url.startsWith("https://www.google.com") ||
-        url.startsWith("https://workspace.google.com")
-      ) {
-        event.preventDefault();
-
-        window.webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
-      }
+      GoogleApp.handleRedirect(event, url, window.webContents);
     });
   }
 
@@ -493,78 +469,18 @@ export class Gmail {
   }
 
   registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
-    window.webContents.setWindowOpenHandler(({ url, disposition }) => {
-      if (url === "about:blank") {
-        return {
-          action: "allow",
-          createWindow: (options) => {
-            let newWindow: BrowserWindow | null = new BrowserWindow({
-              ...options,
-              show: false,
-            });
+    window.webContents.setWindowOpenHandler((details) => {
+      const { url, disposition } = details;
 
-            newWindow.webContents.once("will-navigate", (_event, url) => {
-              if (newWindow) {
-                if (url.startsWith(GOOGLE_ACCOUNTS_URL)) {
-                  newWindow.show();
-
-                  return;
-                }
-
-                openExternalUrl(url);
-
-                newWindow.webContents.close();
-
-                newWindow = null;
-              }
-            });
-
-            return newWindow.webContents;
-          },
-        };
+      if (url.startsWith(GMAIL_URL) && url.includes("view=pt")) {
+        return { action: "allow" };
       }
 
       if (
-        (url.startsWith(GMAIL_URL) && url.includes("view=pt")) ||
-        url.startsWith(GOOGLE_ACCOUNTS_URL)
-      ) {
-        return {
-          action: "allow",
-        };
-      }
-
-      const matchedSupportedGoogleApp = url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as
-        | SupportedGoogleApp
-        | undefined;
-
-      const isGoogleAppEnabledToOpenInApp =
-        licenseKey.isValid &&
-        matchedSupportedGoogleApp &&
-        config.get("googleApps.openInApp") &&
-        !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
-
-      if (
-        (url.startsWith(GMAIL_URL) ||
-          WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url)) ||
-          isGoogleAppEnabledToOpenInApp) &&
+        (url.startsWith(GMAIL_URL) || WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url))) &&
+        !getGoogleAppFromUrl(url) &&
         disposition !== "background-tab"
       ) {
-        if (matchedSupportedGoogleApp) {
-          if (
-            !config.get("googleApps.openAppsInNewWindow") &&
-            GoogleApp.reuseWindowByHostname(this.accountId, url)
-          ) {
-            return { action: "deny" };
-          }
-
-          new GoogleApp({
-            accountId: this.accountId,
-            url,
-          });
-
-          return { action: "deny" };
-        }
-
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
@@ -587,9 +503,7 @@ export class Gmail {
             }),
           );
 
-          return {
-            action: "deny",
-          };
+          return { action: "deny" };
         }
 
         if (url === `${GMAIL_URL}/`) {
@@ -616,9 +530,7 @@ export class Gmail {
             );
           }
 
-          return {
-            action: "deny",
-          };
+          return { action: "deny" };
         }
 
         const setupNewWindow = (newWindow: BrowserWindow) => {
@@ -654,31 +566,8 @@ export class Gmail {
             });
           }
 
-          let powerSaveBlockerId: number | undefined;
-
-          if (matchedSupportedGoogleApp === "meet") {
-            powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
-
-            globalShortcut.register("CommandOrControl+Shift+1", () => {
-              ipc.renderer.send(newWindow.webContents, "googleMeet.toggleMicrophone");
-            });
-
-            globalShortcut.register("CommandOrControl+Shift+2", () => {
-              ipc.renderer.send(newWindow.webContents, "googleMeet.toggleCamera");
-            });
-          }
-
           newWindow.once("closed", () => {
             account.instance.windows.delete(newWindow);
-
-            if (matchedSupportedGoogleApp === "meet") {
-              globalShortcut.unregister("CommandOrControl+Shift+1");
-              globalShortcut.unregister("CommandOrControl+Shift+2");
-            }
-
-            if (typeof powerSaveBlockerId === "number") {
-              powerSaveBlocker.stop(powerSaveBlockerId);
-            }
           });
         };
 
@@ -720,22 +609,14 @@ export class Gmail {
 
         newGoogleAppWindow.loadURL(url);
 
-        return {
-          action: "deny",
-        };
+        return { action: "deny" };
       }
 
-      if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-        main.navigate("/settings/accounts");
-      } else if (WINDOW_OPEN_DOWNLOAD_URL_WHITELIST.some((regex) => regex.test(url))) {
-        window.webContents.downloadURL(url);
-      } else {
-        openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
-      }
-
-      return {
-        action: "deny",
-      };
+      return GoogleApp.handleWindowOpen({
+        accountId: this.accountId,
+        details,
+        webContents: window.webContents,
+      });
     });
   }
 
