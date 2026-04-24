@@ -48,10 +48,6 @@ const GMAIL_USER_STYLES: string | null = fs.existsSync(GMAIL_USER_STYLES_PATH)
   ? fs.readFileSync(GMAIL_USER_STYLES_PATH, "utf-8")
   : null;
 
-const WINDOW_OPEN_URL_WHITELIST = [
-  /googleusercontent\.com\/viewer\/secure\/pdf/, // Print PDF
-];
-
 const inboxFeedEntryAuthorSchema = z.object({
   name: z.coerce.string(),
   email: z.string(),
@@ -477,7 +473,7 @@ export class Gmail {
       }
 
       if (
-        (url.startsWith(GMAIL_URL) || WINDOW_OPEN_URL_WHITELIST.some((regex) => regex.test(url))) &&
+        url.startsWith(GMAIL_URL) &&
         !getGoogleAppFromUrl(url) &&
         disposition !== "background-tab"
       ) {
