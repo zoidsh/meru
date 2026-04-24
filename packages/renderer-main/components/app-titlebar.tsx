@@ -39,12 +39,9 @@ import {
 import { GoogleAppIcon } from "./google-app-icon";
 import { useRoute } from "wouter";
 
-function Download() {
+function RecentDownloadHistoryButton() {
   return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      className="draggable-none"
+    <TitlebarIconButton
       onClick={() => {
         ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
       }}
@@ -54,10 +51,10 @@ function Download() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Download History"
+      title="Recent Download History"
     >
       <DownloadIcon />
-    </Button>
+    </TitlebarIconButton>
   );
 }
 
@@ -378,8 +375,10 @@ export function AppTitlebar() {
             <Trial />
             <FindInPage />
             <PinnedGoogleApps />
-            <Download />
-            <DoNotDisturb />
+            <TitlebarButtonGroup>
+              <RecentDownloadHistoryButton />
+              <DoNotDisturb />
+            </TitlebarButtonGroup>
           </div>
           {appUpdateVersion && (
             <Button
