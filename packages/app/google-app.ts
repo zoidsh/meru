@@ -260,9 +260,14 @@ export class GoogleApp {
       ...options,
     });
 
+    const searchParams = new URLSearchParams();
+
+    searchParams.set("accountId", this.accountId);
+
     loadRenderer(browserWindow, {
       renderer: "google-app",
       port: 3002,
+      searchParams,
     });
 
     return browserWindow;

@@ -12,7 +12,6 @@ import {
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { skipToken, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -24,6 +23,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "wouter";
 
 function ReloadButton() {
   const [loading, setLoading] = useState(false);
@@ -103,14 +103,11 @@ function App() {
 
   const { config } = useConfig();
 
-  const { data: account } = useQuery({
-    queryKey: ["googleApp.account"],
-    queryFn:
-      config && config.accounts.length > 1
-        ? () => ipc.main.invoke("googleApp.getAccount")
-        : skipToken,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  const [searchParams] = useSearchParams();
+
+  const account = config?.accounts.find(
+    (accountConfig) => accountConfig.id === searchParams.get("accountId"),
+  );
 
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
@@ -160,7 +157,9 @@ function App() {
           </TitlebarIconButton>
           <ReloadButton />
         </TitlebarButtonGroup>
-        {account && <AccountBadge label={account.label} color={account.color} />}
+        {config && config.accounts.length > 1 && account && (
+          <AccountBadge label={account.label} color={account.color} />
+        )}
         <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
       </TitlebarLeft>
       <TitlebarRight>

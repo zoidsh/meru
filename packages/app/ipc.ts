@@ -184,10 +184,6 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
-    ipc.main.handle("googleApp.getAccount", (event) => {
-      return GoogleApp.fromWebContents(event.sender).account.config;
-    });
-
     ipc.main.handle("googleApp.getLoadingState", (event) => {
       return GoogleApp.fromWebContents(event.sender).isLoading;
     });
