@@ -46,7 +46,10 @@ function getGoogleAppFromUrl(url: string) {
 type GoogleAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
+  bounds?: { width: number; height: number };
 };
+
+const DEFAULT_BOUNDS = { width: 1280, height: 800 };
 
 export class GoogleApp {
   private static instances = new Map<number, GoogleApp>();
@@ -213,11 +216,11 @@ export class GoogleApp {
 
   private powerSaveBlockerId: number | undefined;
 
-  constructor({ accountId, url }: GoogleAppOptions) {
+  constructor({ accountId, url, bounds }: GoogleAppOptions) {
     this.accountId = accountId;
     this.app = getGoogleAppFromUrl(url);
 
-    this.browserWindow = this.createBrowserWindow();
+    this.browserWindow = this.createBrowserWindow(bounds ?? DEFAULT_BOUNDS);
     this.view = this.createView({ url });
 
     this.updateViewBounds();
@@ -233,9 +236,9 @@ export class GoogleApp {
     GoogleApp.instances.set(this.browserWindow.webContents.id, this);
   }
 
-  private createBrowserWindow() {
+  private createBrowserWindow(bounds: { width: number; height: number }) {
     const browserWindow = createBrowserWindow({
-      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+      ...getCascadedWindowBounds(bounds),
       ...getCommonBrowserWindowOptions(),
     });
 

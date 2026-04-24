@@ -517,7 +517,11 @@ export class Gmail {
         }
 
         if (isGmailComposeWindowUrl(url)) {
-          new GoogleApp({ accountId: this.accountId, url });
+          new GoogleApp({
+            accountId: this.accountId,
+            url,
+            bounds: { width: 800, height: 600 },
+          });
 
           return { action: "deny" };
         }
