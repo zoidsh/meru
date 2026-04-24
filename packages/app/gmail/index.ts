@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
@@ -517,68 +516,11 @@ export class Gmail {
           return { action: "deny" };
         }
 
-        const setupNewWindow = (newWindow: BrowserWindow) => {
-          this.registerNavigationHandler(newWindow);
-
-          this.registerWindowOpenHandler(newWindow);
-
-          setupWindowContextMenu(newWindow);
-
-          const account = accounts.getAccount(this.accountId);
-
-          account.instance.windows.add(newWindow);
-
-          const isUsingMultipleAccounts = accounts.getAccounts().length > 1;
-
-          if (config.get("googleApps.showAccountLabel") && isUsingMultipleAccounts) {
-            newWindow.webContents.on("page-title-updated", (_event, title) => {
-              newWindow.setTitle(`[${account.config.label}] ${title}`);
-            });
-          }
-
-          if (config.get("googleApps.showAccountColor") && isUsingMultipleAccounts) {
-            newWindow.webContents.on("dom-ready", () => {
-              if (account.config.color) {
-                const { value } = accountColorsMap[account.config.color];
-
-                ipc.renderer.send(
-                  newWindow.webContents,
-                  "googleApp.initAccountColorIndicator",
-                  value,
-                );
-              }
-            });
-          }
-
-          newWindow.once("closed", () => {
-            account.instance.windows.delete(newWindow);
-          });
-        };
-
         if (isGmailComposeWindowUrl(url)) {
           new GoogleApp({ accountId: this.accountId, url });
 
           return { action: "deny" };
         }
-
-        const newWindowOptions = {
-          autoHideMenuBar: true,
-          webPreferences: {
-            session: this.session,
-            preload: getPreloadPath("google-app"),
-          },
-        };
-
-        const newGoogleAppWindow = new BrowserWindow({
-          ...newWindowOptions,
-          ...getCascadedWindowBounds({ width: 1280, height: 800 }),
-        });
-
-        setupNewWindow(newGoogleAppWindow);
-
-        newGoogleAppWindow.loadURL(url);
-
-        return { action: "deny" };
       }
 
       return GoogleApp.handleWindowOpen({
