@@ -113,15 +113,3 @@ export function loadRenderer(
     });
   }
 }
-
-export function applyViewZoomLimits(view: WebContentsView) {
-  view.webContents.on("dom-ready", () => {
-    view.webContents.setVisualZoomLevelLimits(1, 3);
-  });
-}
-
-export function openViewDevToolsInDev(view: WebContentsView) {
-  if (is.dev) {
-    view.webContents.openDevTools({ mode: "bottom" });
-  }
-}

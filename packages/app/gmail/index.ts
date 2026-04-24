@@ -27,7 +27,7 @@ import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
 import { GoogleApp } from "@/google-app";
-import { broadcastFoundInPageResults, ipc } from "@/ipc";
+import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appTray } from "@/tray";
@@ -36,10 +36,10 @@ import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
 import {
   applyViewZoomLimits,
-  getCascadedWindowBounds,
-  getPreloadPath,
+  broadcastFoundInPageResults,
   openViewDevToolsInDev,
-} from "@/lib/window";
+} from "@/lib/web-contents";
+import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";

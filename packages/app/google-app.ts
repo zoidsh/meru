@@ -15,15 +15,18 @@ import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
-import { broadcastFoundInPageResults, ipc } from "./ipc";
+import { ipc } from "./ipc";
 import {
   applyViewZoomLimits,
+  broadcastFoundInPageResults,
+  openViewDevToolsInDev,
+} from "./lib/web-contents";
+import {
   createBrowserWindow,
   getCascadedWindowBounds,
   getCommonBrowserWindowOptions,
   getPreloadPath,
   loadRenderer,
-  openViewDevToolsInDev,
 } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
