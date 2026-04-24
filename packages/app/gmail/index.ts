@@ -458,10 +458,6 @@ export class Gmail {
     window.webContents.setWindowOpenHandler((details) => {
       const { url, disposition } = details;
 
-      if (url.startsWith(GMAIL_URL) && url.includes("view=pt")) {
-        return { action: "allow" };
-      }
-
       if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
