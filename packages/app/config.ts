@@ -58,7 +58,6 @@ export const config = new Store<Config>({
     "notifications.times": [],
     "updates.autoCheck": true,
     "updates.showNotifications": true,
-    "updates.notificationDelay": "next-day",
     "blocker.enabled": true,
     "blocker.ads": true,
     "blocker.tracking": true,
@@ -302,6 +301,13 @@ export const config = new Store<Config>({
       if (store.has("resetConfig")) {
         // @ts-expect-error
         store.delete("resetConfig");
+      }
+    },
+    ">3.45.0": (store) => {
+      // @ts-expect-error: `updates.notificationDelay` has been removed
+      if (store.has("updates.notificationDelay")) {
+        // @ts-expect-error
+        store.delete("updates.notificationDelay");
       }
     },
   },
