@@ -185,6 +185,10 @@ class Ipc {
     });
 
     ipc.main.handle("googleApp.getAccount", (event) => {
+      if (accounts.getAccountConfigs().length === 1) {
+        return null;
+      }
+
       return GoogleApp.fromWebContents(event.sender).account.config;
     });
 
