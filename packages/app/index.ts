@@ -1,6 +1,6 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
-import { app, session } from "electron";
+import { app, type BrowserWindow, session } from "electron";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
 import { config } from "@/config";
@@ -149,9 +149,21 @@ async function init() {
     }
   });
 
+  let lastFocusedBrowserWindow: BrowserWindow | null = null;
+
+  app.on("browser-window-focus", (_event, browserWindow) => {
+    lastFocusedBrowserWindow = browserWindow;
+  });
+
   app.on("activate", (_event, hasVisibleWindows) => {
     if (!hasVisibleWindows) {
       main.show();
+
+      return;
+    }
+
+    if (lastFocusedBrowserWindow && !lastFocusedBrowserWindow.isDestroyed()) {
+      lastFocusedBrowserWindow.focus();
     }
   });
 
