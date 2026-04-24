@@ -9,7 +9,6 @@ import {
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailInboxMessage,
-  isGmailComposeWindowUrl,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
 import type { GoogleAppsPinnedApp } from "@meru/shared/types";
@@ -516,29 +515,19 @@ export class Gmail {
           return { action: "deny" };
         }
 
-        if (isGmailComposeWindowUrl(url)) {
-          return {
-            action: "allow",
-            createWindow: (options) => {
-              const googleApp = new GoogleApp({
-                accountId: this.accountId,
-                url,
-                browserWindow: { width: 800, height: 600 },
-                view: options,
-              });
+        return {
+          action: "allow",
+          createWindow: (options) => {
+            const googleApp = new GoogleApp({
+              accountId: this.accountId,
+              url,
+              browserWindow: { width: 800, height: 600 },
+              view: options,
+            });
 
-              return googleApp.view.webContents;
-            },
-          };
-        }
-
-        new GoogleApp({
-          accountId: this.accountId,
-          url,
-          browserWindow: { width: 800, height: 600 },
-        });
-
-        return { action: "deny" };
+            return googleApp.view.webContents;
+          },
+        };
       }
 
       return GoogleApp.handleWindowOpen({
