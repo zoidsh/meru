@@ -149,8 +149,10 @@ async function init() {
     }
   });
 
-  app.on("activate", () => {
-    main.show();
+  app.on("activate", (_event, hasVisibleWindows) => {
+    if (!hasVisibleWindows) {
+      main.show();
+    }
   });
 
   if (platform.isMacOS) {
