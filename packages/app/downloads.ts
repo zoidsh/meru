@@ -6,7 +6,6 @@ import { shell, WebContentsView } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
-import { ipc } from "./ipc";
 import { main } from "./main";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
@@ -59,14 +58,12 @@ class Downloads {
         const filePath = item.getSavePath();
         const fileName = path.basename(filePath);
 
-        const { id } = this.addDownloadHistoryItem({
+        this.addDownloadHistoryItem({
           fileName,
           filePath,
           createdAt: item.getStartTime(),
           exists: true,
         });
-
-        ipc.renderer.send(main.window.webContents, "downloads.itemCompleted", id);
 
         if (config.get("notifications.downloadCompleted")) {
           createNotification({

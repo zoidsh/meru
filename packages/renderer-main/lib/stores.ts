@@ -99,18 +99,6 @@ ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
   useTrialStore.setState({ daysLeft });
 });
 
-export const useDownloadsStore = create<{
-  itemCompleted: string | null;
-}>(() => ({
-  itemCompleted: null,
-}));
-
-ipc.renderer.on("downloads.itemCompleted", (_event, itemId) => {
-  useDownloadsStore.setState(() => ({
-    itemCompleted: itemId,
-  }));
-});
-
 export const useAppUpdaterStore = create<{
   version: string | null;
   dismiss: () => void;
