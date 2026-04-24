@@ -2,7 +2,6 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { ms } from "@meru/shared/ms";
 import { renderApp } from "@meru/shared/renderer/react";
 import { AccountBadge } from "@meru/ui/components/account-badge";
-import { Button } from "@meru/ui/components/button";
 import { FindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
@@ -28,10 +27,7 @@ import { useEffect, useState } from "react";
 
 function RecentDownloadHistoryButton() {
   return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      className="draggable-none"
+    <TitlebarIconButton
       onClick={() => {
         ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
       }}
@@ -44,7 +40,7 @@ function RecentDownloadHistoryButton() {
       title="Recent Download History"
     >
       <DownloadIcon />
-    </Button>
+    </TitlebarIconButton>
   );
 }
 
@@ -195,8 +191,8 @@ function App() {
             setFindInPageState((state) => ({ ...state, isActive: false }));
           }}
         />
-        <RecentDownloadHistoryButton />
         <TitlebarButtonGroup>
+          <RecentDownloadHistoryButton />
           <CopyUrlButton />
           <TitlebarIconButton
             title="Open in Browser"
