@@ -72,9 +72,9 @@ class Downloads {
           exists: true,
         });
 
-        if (config.get("notifications.downloadCompleted")) {
+        if (state === "completed" && config.get("notifications.downloadCompleted")) {
           createNotification({
-            title: `Download ${state}: ${fileName}`,
+            title: `Downloaded: ${fileName}`,
             body: `Click to show the file in ${FILE_MANAGER_NAME}`,
             click: () => {
               shell.showItemInFolder(filePath);
