@@ -28,7 +28,7 @@ import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
 import { GoogleApp } from "@/google-app";
-import { ipc } from "@/ipc";
+import { broadcastFoundInPageResults, ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appTray } from "@/tray";
@@ -365,7 +365,7 @@ export class Gmail {
 
     this.registerNavigationHandler(this.view);
 
-    this.registerFoundInPageHandler();
+    broadcastFoundInPageResults(this.view, main.window.webContents);
 
     this.registerWindowOpenHandler(this.view);
 
@@ -432,15 +432,6 @@ export class Gmail {
 
     window.webContents.on("will-redirect", (event, url) => {
       GoogleApp.handleRedirect(event, url, window.webContents);
-    });
-  }
-
-  private registerFoundInPageHandler() {
-    this.view.webContents.on("found-in-page", (_event, result) => {
-      ipc.renderer.send(main.window.webContents, "findInPage.result", {
-        activeMatch: result.activeMatchOrdinal,
-        totalMatches: result.matches,
-      });
     });
   }
 

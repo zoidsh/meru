@@ -13,6 +13,8 @@ import {
   nativeTheme,
   session,
   shell,
+  type WebContents,
+  type WebContentsView,
 } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -479,3 +481,12 @@ class Ipc {
 }
 
 export const ipc = new Ipc();
+
+export function broadcastFoundInPageResults(view: WebContentsView, target: WebContents) {
+  view.webContents.on("found-in-page", (_event, result) => {
+    ipc.renderer.send(target, "findInPage.result", {
+      activeMatch: result.activeMatchOrdinal,
+      totalMatches: result.matches,
+    });
+  });
+}
