@@ -113,3 +113,9 @@ export function loadRenderer(
     });
   }
 }
+
+export function applyViewZoomLimits(view: WebContentsView) {
+  view.webContents.on("dom-ready", () => {
+    view.webContents.setVisualZoomLevelLimits(1, 3);
+  });
+}

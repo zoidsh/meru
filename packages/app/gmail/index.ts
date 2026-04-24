@@ -35,7 +35,7 @@ import { appTray } from "@/tray";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
-import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
+import { applyViewZoomLimits, getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import { createNotification, isWithinNotificationTimes } from "@/notifications";
@@ -364,9 +364,7 @@ export class Gmail {
 
     this.registerWindowOpenHandler(this.view);
 
-    this.view.webContents.on("dom-ready", () => {
-      this.view.webContents.setVisualZoomLevelLimits(1, 3);
-    });
+    applyViewZoomLimits(this.view);
 
     setupWindowContextMenu(this.view);
 

@@ -17,6 +17,7 @@ import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
 import {
+  applyViewZoomLimits,
   createBrowserWindow,
   getCascadedWindowBounds,
   getCommonBrowserWindowOptions,
@@ -258,6 +259,8 @@ export class GoogleApp {
 
     setupWindowContextMenu(view);
 
+    applyViewZoomLimits(view);
+
     this.setWindowOpenHandler(view);
 
     view.webContents.loadURL(url);
@@ -315,7 +318,6 @@ export class GoogleApp {
   }
 
   private registerViewListeners() {
-    this.view.webContents.on("dom-ready", this.handleDomReady);
     this.view.webContents.on("did-navigate", this.broadcastNavigationState);
     this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
@@ -327,7 +329,6 @@ export class GoogleApp {
   }
 
   private unregisterViewListeners() {
-    this.view.webContents.removeListener("dom-ready", this.handleDomReady);
     this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
     this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
@@ -337,10 +338,6 @@ export class GoogleApp {
     this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
     this.view.webContents.removeListener("found-in-page", this.broadcastFindInPageResult);
   }
-
-  private handleDomReady = () => {
-    this.view.webContents.setVisualZoomLevelLimits(1, 3);
-  };
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
     GoogleApp.handleNavigate(url);
