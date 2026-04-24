@@ -239,8 +239,11 @@ export class GoogleApp {
   }
 
   private createBrowserWindow(options?: BrowserWindowConstructorOptions) {
+    const width = options?.width ?? 1280;
+    const height = options?.height ?? 800;
+
     const browserWindow = createBrowserWindow({
-      ...getCascadedWindowBounds({ width: 1280, height: 800 }),
+      ...getCascadedWindowBounds({ width, height }),
       ...getCommonBrowserWindowOptions(),
       ...options,
     });
