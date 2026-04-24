@@ -72,6 +72,10 @@ export class GoogleApp {
     return GoogleApp.instances.get(webContents.id);
   }
 
+  static getAllWindows() {
+    return Array.from(GoogleApp.instances.values(), (instance) => instance.browserWindow);
+  }
+
   static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
     const urlHostname = new URL(url).hostname;
 
