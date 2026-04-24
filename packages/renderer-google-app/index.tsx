@@ -11,7 +11,8 @@ import {
   TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
-import { useQuery } from "@tanstack/react-query";
+import { useConfig } from "@meru/shared/renderer/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -100,9 +101,14 @@ function App() {
     totalMatches: 0,
   });
 
+  const { config } = useConfig();
+
   const { data: account } = useQuery({
     queryKey: ["googleApp.account"],
-    queryFn: () => ipc.main.invoke("googleApp.getAccount"),
+    queryFn:
+      config && config.accounts.length > 1
+        ? () => ipc.main.invoke("googleApp.getAccount")
+        : skipToken,
     staleTime: Number.POSITIVE_INFINITY,
   });
 
