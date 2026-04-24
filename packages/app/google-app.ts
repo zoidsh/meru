@@ -38,7 +38,7 @@ const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
   `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
-export function getGoogleAppFromUrl(url: string) {
+function getGoogleAppFromUrl(url: string) {
   return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
 }
 

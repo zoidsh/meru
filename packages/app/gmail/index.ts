@@ -27,7 +27,7 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
-import { getGoogleAppFromUrl, GoogleApp } from "@/google-app";
+import { GoogleApp } from "@/google-app";
 import { ipc } from "@/ipc";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -472,11 +472,7 @@ export class Gmail {
         return { action: "allow" };
       }
 
-      if (
-        url.startsWith(GMAIL_URL) &&
-        !getGoogleAppFromUrl(url) &&
-        disposition !== "background-tab"
-      ) {
+      if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
