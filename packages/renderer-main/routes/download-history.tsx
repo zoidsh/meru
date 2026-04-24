@@ -139,7 +139,7 @@ function DownloadHistoryContent() {
 export function DownloadHistory() {
   useEffect(() => {
     useDownloadsStore.setState({
-      itemCompleted: null,
+      hasUnviewedCompletedDownload: false,
     });
   }, []);
 

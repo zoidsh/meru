@@ -1,7 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
-import { type DownloadItem, googleAppsPinnedApps } from "@meru/shared/types";
+import { googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -20,14 +20,13 @@ import {
   CircleXIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
-  FileCheckIcon,
   InboxIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { navigate, useHashLocation } from "wouter/use-hash-location";
+import { useState } from "react";
+import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import {
@@ -41,90 +40,37 @@ import {
 import { GoogleAppIcon } from "./google-app-icon";
 import { useRoute } from "wouter";
 
-function RecentlyDownloadedItem({ item }: { item: DownloadItem }) {
-  const [fadeOut, setFadeOut] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const handleAnimationEnd = () => {
-      if (useDownloadsStore.getState().itemCompleted === item.id) {
-        useDownloadsStore.setState({
-          itemCompleted: null,
-        });
-      }
-    };
-
-    const timer = setTimeout(() => {
-      buttonRef.current?.addEventListener("animationend", handleAnimationEnd);
-
-      setFadeOut(true);
-    }, 10000);
-
-    return () => {
-      clearTimeout(timer);
-
-      buttonRef.current?.removeEventListener("animationend", handleAnimationEnd);
-    };
-  }, [item]);
+function Download() {
+  const hasUnviewedCompletedDownload = useDownloadsStore(
+    (state) => state.hasUnviewedCompletedDownload,
+  );
 
   return (
     <Button
-      ref={buttonRef}
       variant="ghost"
-      size="sm"
-      className={cn("max-w-56 animate-in fade-in", {
-        "animate-out fade-out": fadeOut,
-      })}
+      size="icon-sm"
+      className="draggable-none"
       onClick={() => {
-        ipc.main.send("downloads.openFile", item);
+        ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
 
         useDownloadsStore.setState({
-          itemCompleted: null,
+          hasUnviewedCompletedDownload: false,
         });
       }}
+      onMouseEnter={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
+      }}
+      onMouseLeave={() => {
+        ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
+      }}
+      title="Download History"
     >
-      <FileCheckIcon />
-      <div className="truncate">{item.fileName}</div>
+      <DownloadIcon
+        className={cn({
+          "text-green-600": hasUnviewedCompletedDownload,
+        })}
+      />
     </Button>
-  );
-}
-
-function Download() {
-  const [_location] = useHashLocation();
-
-  const { config } = useConfig();
-
-  if (!config) {
-    return;
-  }
-
-  const completedDownloadItem = useDownloadsStore(
-    (state) =>
-      (state.itemCompleted &&
-        config?.["downloads.history"].find((item) => item.id === state.itemCompleted)) ||
-      null,
-  );
-
-  return (
-    <div className="draggable-none flex items-center gap-1">
-      {completedDownloadItem && <RecentlyDownloadedItem item={completedDownloadItem} />}
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => {
-          ipc.main.send("downloads.toggleRecentDownloadHistoryPopup");
-        }}
-        onMouseEnter={() => {
-          ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", false);
-        }}
-        onMouseLeave={() => {
-          ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
-        }}
-        title="Download History"
-      >
-        <DownloadIcon />
-      </Button>
-    </div>
   );
 }
 

@@ -100,15 +100,15 @@ ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
 });
 
 export const useDownloadsStore = create<{
-  itemCompleted: string | null;
+  hasUnviewedCompletedDownload: boolean;
 }>(() => ({
-  itemCompleted: null,
+  hasUnviewedCompletedDownload: false,
 }));
 
-ipc.renderer.on("downloads.itemCompleted", (_event, itemId) => {
-  useDownloadsStore.setState(() => ({
-    itemCompleted: itemId,
-  }));
+ipc.renderer.on("downloads.itemCompleted", () => {
+  useDownloadsStore.setState({
+    hasUnviewedCompletedDownload: true,
+  });
 });
 
 export const useAppUpdaterStore = create<{

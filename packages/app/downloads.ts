@@ -59,14 +59,14 @@ class Downloads {
         const filePath = item.getSavePath();
         const fileName = path.basename(filePath);
 
-        const { id } = this.addDownloadHistoryItem({
+        this.addDownloadHistoryItem({
           fileName,
           filePath,
           createdAt: item.getStartTime(),
           exists: true,
         });
 
-        ipc.renderer.send(main.window.webContents, "downloads.itemCompleted", id);
+        ipc.renderer.send(main.window.webContents, "downloads.itemCompleted");
 
         if (config.get("notifications.downloadCompleted")) {
           createNotification({

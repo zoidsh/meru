@@ -242,7 +242,7 @@ export type IpcMainEvents =
 
 export type IpcRendererEvent = {
   navigate: [to: string];
-  "downloads.itemCompleted": [itemId: string];
+  "downloads.itemCompleted": [];
   "settings.setIsOpen": [isOpen: boolean];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
