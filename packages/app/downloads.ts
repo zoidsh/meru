@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
 import { shell, WebContentsView } from "electron";
@@ -10,6 +11,12 @@ import { main } from "./main";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
 import { getPreloadPath, loadRenderer } from "./lib/window";
+
+const FILE_MANAGER_NAME = platform.isMacOS
+  ? "Finder"
+  : platform.isWindows
+    ? "File Explorer"
+    : "your file manager";
 
 class Downloads {
   recentDownloadHistoryPopup: WebContentsView | null = null;
@@ -67,10 +74,10 @@ class Downloads {
 
         if (config.get("notifications.downloadCompleted")) {
           createNotification({
-            title: `Download ${state}`,
-            body: fileName,
+            title: `Download ${state}: ${fileName}`,
+            body: `Click to show the file in ${FILE_MANAGER_NAME}`,
             click: () => {
-              shell.openPath(filePath);
+              shell.showItemInFolder(filePath);
             },
           });
         }
