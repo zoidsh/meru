@@ -13,7 +13,7 @@ export function isWithinNotificationTimes() {
   return checkWithinNotificationTimes(config.get("notifications.times"), new Date());
 }
 
-export function createNotification({
+export function createNewEmailNotification({
   click,
   action,
   ...options
@@ -39,7 +39,7 @@ export function createNotification({
 
   if (action) {
     notification.once("action", (_event, index) => {
-      action?.(index);
+      action(index);
     });
   }
 
@@ -49,6 +49,35 @@ export function createNotification({
         sound: licenseKey.isValid ? sound : "linen",
         volume: config.get("notifications.volume"),
       });
+    });
+  }
+
+  notification.show();
+
+  return notification;
+}
+
+export function createNotification({
+  click,
+  action,
+  ...options
+}: NotificationConstructorOptions & {
+  click?: () => void;
+  action?: (index: number) => void;
+}) {
+  if (!Notification.isSupported()) {
+    return;
+  }
+
+  const notification = new Notification(options);
+
+  if (click) {
+    notification.once("click", click);
+  }
+
+  if (action) {
+    notification.once("action", (_event, index) => {
+      action(index);
     });
   }
 

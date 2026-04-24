@@ -41,7 +41,11 @@ import {
 import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
-import { createNotification, isWithinNotificationTimes } from "@/notifications";
+import {
+  createNewEmailNotification,
+  createNotification,
+  isWithinNotificationTimes,
+} from "@/notifications";
 import { ms } from "@meru/shared/ms";
 import { wait } from "@meru/shared/utils";
 
@@ -677,7 +681,7 @@ export class Gmail {
           continue;
         }
 
-        createNotification({
+        createNewEmailNotification({
           title: config.get("notifications.showSender")
             ? newMail.author.name
             : account.config.label,

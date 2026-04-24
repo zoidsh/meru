@@ -23,7 +23,7 @@ import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
-import { createNotification } from "./notifications";
+import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { downloads } from "./downloads";
@@ -285,7 +285,7 @@ class Ipc {
     });
 
     ipc.main.on("notifications.showTestNotification", () => {
-      createNotification({
+      createNewEmailNotification({
         title: "Tim from Meru",
         subtitle: "Your Test Notification Request",
         body: "This is a test notification to show how notifications will appear.",
