@@ -348,6 +348,10 @@ export class GoogleApp {
   }
 
   private unregisterViewListeners() {
+    if (this.view.webContents.isDestroyed()) {
+      return;
+    }
+
     this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
     this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
