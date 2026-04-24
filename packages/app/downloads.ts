@@ -69,6 +69,7 @@ class Downloads {
           createNotification({
             title: `Download ${state}`,
             body: fileName,
+            useSystemSound: true,
             click: () => {
               shell.openPath(filePath);
             },

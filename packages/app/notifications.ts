@@ -18,10 +18,12 @@ export function isWithinNotificationTimes() {
 export function createNotification({
   click,
   action,
+  useSystemSound,
   ...options
 }: NotificationConstructorOptions & {
   click?: () => void;
   action?: (index: number) => void;
+  useSystemSound?: boolean;
 }) {
   if (!Notification.isSupported()) {
     return;
@@ -29,9 +31,10 @@ export function createNotification({
 
   const sound = config.get("notifications.sound");
   const playSound = config.get("notifications.playSound");
+  const playsSystemSound = useSystemSound || (licenseKey.isValid && sound === "system");
 
   const notification = new Notification({
-    silent: licenseKey.isValid && sound === "system" ? !playSound : true,
+    silent: playsSystemSound ? !playSound : true,
     ...options,
   });
 
@@ -45,7 +48,7 @@ export function createNotification({
     });
   }
 
-  if (sound !== "system" && playSound) {
+  if (!useSystemSound && sound !== "system" && playSound) {
     notification.once("show", () => {
       ipc.renderer.send(main.window.webContents, "notifications.playSound", {
         sound: licenseKey.isValid ? sound : "linen",
