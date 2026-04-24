@@ -517,13 +517,18 @@ export class Gmail {
         }
 
         if (isGmailComposeWindowUrl(url)) {
-          new GoogleApp({
-            accountId: this.accountId,
-            url,
-            browserWindow: { width: 800, height: 600 },
-          });
+          return {
+            action: "allow",
+            createWindow: () => {
+              const googleApp = new GoogleApp({
+                accountId: this.accountId,
+                url,
+                browserWindow: { width: 800, height: 600 },
+              });
 
-          return { action: "deny" };
+              return googleApp.view.webContents;
+            },
+          };
         }
 
         new GoogleApp({
