@@ -355,13 +355,19 @@ export class GoogleApp {
   }
 
   private unregisterViewListeners() {
-    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
-    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    const viewWebContents = this.view.webContents;
+
+    if (viewWebContents?.isDestroyed() !== false) {
+      return;
+    }
+
+    viewWebContents.removeListener("did-navigate", this.broadcastNavigationState);
+    viewWebContents.removeListener("did-navigate", this.handlePasskeyChallenge);
+    viewWebContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
+    viewWebContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    viewWebContents.removeListener("did-start-loading", this.broadcastLoadingState);
+    viewWebContents.removeListener("did-stop-loading", this.broadcastLoadingState);
+    viewWebContents.removeListener("will-redirect", this.handleGoogleRedirect);
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
