@@ -2,10 +2,9 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { shell, WebContentsView } from "electron";
+import { WebContentsView } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
-import { createNotification } from "@/notifications";
 import { ipc } from "./ipc";
 import { main } from "./main";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
@@ -55,7 +54,7 @@ class Downloads {
     const openFolderWhenDone = config.get("downloads.openFolderWhenDone");
 
     const handleStarted = (item: Electron.DownloadItem) => {
-      item.once("done", (_, state) => {
+      item.once("done", () => {
         const filePath = item.getSavePath();
         const fileName = path.basename(filePath);
 
@@ -67,16 +66,6 @@ class Downloads {
         });
 
         ipc.renderer.send(main.window.webContents, "downloads.itemCompleted", id);
-
-        if (config.get("notifications.downloadCompleted")) {
-          createNotification({
-            title: `Download ${state}`,
-            body: fileName,
-            click: () => {
-              shell.openPath(filePath);
-            },
-          });
-        }
       });
     };
 

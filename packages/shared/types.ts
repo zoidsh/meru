@@ -119,7 +119,6 @@ export type Config = {
   "notifications.allowFromGoogleApps": boolean;
   "notifications.sound": "system" | NotificationSound;
   "notifications.volume": number;
-  "notifications.downloadCompleted": boolean;
   "notifications.times": NotificationTime[];
   "updates.autoCheck": boolean;
   "updates.showNotifications": boolean;

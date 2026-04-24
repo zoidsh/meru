@@ -269,11 +269,6 @@ export function NotificationsSettings() {
             <FieldLegend>Others</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Downloads"
-                description="Show a notification when a download is completed, cancelled or failed."
-                configKey="notifications.downloadCompleted"
-              />
-              <ConfigSwitchField
                 label="Google Apps"
                 description="Allow notifications from Google Apps like Calendar, Meet, Chat, etc."
                 configKey="notifications.allowFromGoogleApps"
