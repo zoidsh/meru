@@ -97,8 +97,6 @@ async function init() {
 
   spellchecker.init();
 
-  accounts.init();
-
   await initLinuxWindowControls();
 
   ipc.init();
@@ -106,6 +104,8 @@ async function init() {
   main.init();
 
   main.loadURL();
+
+  await accounts.init();
 
   accounts.createViews();
 

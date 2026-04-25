@@ -39,6 +39,14 @@ class Accounts {
         }
       });
     }
+
+    return new Promise<void>((resolve) => {
+      ipc.main.on("accounts.init", () => {
+        this.sendAccountsChangedToRenderer();
+
+        resolve();
+      });
+    });
   }
 
   async createViews() {
