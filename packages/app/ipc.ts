@@ -60,10 +60,6 @@ class Ipc {
       }
     });
 
-    config.onDidChange("accounts", () => {
-      accounts.sendAccountsChangedToRenderer();
-    });
-
     this.main.on("accounts.requestInitial", () => {
       accounts.sendAccountsChangedToRenderer();
     });

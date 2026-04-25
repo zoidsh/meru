@@ -28,6 +28,10 @@ class Accounts {
       this.instances.set(accountConfig.id, account);
     }
 
+    config.onDidChange("accounts", () => {
+      this.sendAccountsChangedToRenderer();
+    });
+
     if (!platform.isMacOS) {
       config.onDidChange("spellchecker.languages", () => {
         for (const account of accounts.instances.values()) {
