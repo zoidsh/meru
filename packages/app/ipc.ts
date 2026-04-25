@@ -64,6 +64,10 @@ class Ipc {
       accounts.sendAccountsChangedToRenderer();
     });
 
+    this.main.on("accounts.requestInitial", () => {
+      accounts.sendAccountsChangedToRenderer();
+    });
+
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
       accounts.selectAccount(selectedAccountId);
     });

@@ -22,6 +22,8 @@ ipc.renderer.on("accounts.changed", (_event, accounts) => {
   useAccountsStore.setState({ accounts });
 });
 
+ipc.main.send("accounts.requestInitial");
+
 ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
   const config = await getConfig();
 
