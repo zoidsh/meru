@@ -97,13 +97,13 @@ async function init() {
 
   spellchecker.init();
 
-  accounts.init();
-
   await initLinuxWindowControls();
 
   main.init();
 
   main.loadURL();
+
+  accounts.init();
 
   accounts.createViews();
 

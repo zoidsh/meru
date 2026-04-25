@@ -1,7 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { app, BrowserWindow, screen } from "electron";
-import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
 import { getCommonBrowserWindowOptions, getTitleBarOptions, loadRenderer } from "@/lib/window";
 import { appState } from "@/state";
@@ -29,21 +28,6 @@ class Main {
 
   loadURL() {
     const searchParams = new URLSearchParams();
-
-    searchParams.set(
-      "accounts",
-      JSON.stringify(
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: {
-            ...account.instance.gmail.store.getState(),
-            ...account.instance.gmail.viewStore.getState(),
-          },
-        })),
-      ),
-    );
-
-    searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
 
     if (trial.daysLeft) {
       searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));

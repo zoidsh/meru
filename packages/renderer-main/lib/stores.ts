@@ -1,5 +1,5 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/shared/renderer/search-params";
+import { trialDaysLeftSearchParam } from "@meru/shared/renderer/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -10,19 +10,13 @@ export const useAccountsStore = create<{
   accounts: AccountInstances;
   isAddAccountDialogOpen: boolean;
   setIsAddAccountDialogOpen: (isOpen: boolean) => void;
-}>((set) => {
-  if (!accountsSearchParam) {
-    throw new Error("No accounts found in search params");
-  }
-
-  return {
-    accounts: JSON.parse(accountsSearchParam),
-    isAddAccountDialogOpen: false,
-    setIsAddAccountDialogOpen: (isOpen) => {
-      set({ isAddAccountDialogOpen: isOpen });
-    },
-  };
-});
+}>((set) => ({
+  accounts: [],
+  isAddAccountDialogOpen: false,
+  setIsAddAccountDialogOpen: (isOpen) => {
+    set({ isAddAccountDialogOpen: isOpen });
+  },
+}));
 
 ipc.renderer.on("accounts.changed", (_event, accounts) => {
   useAccountsStore.setState({ accounts });
