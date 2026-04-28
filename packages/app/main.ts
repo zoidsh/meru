@@ -57,6 +57,10 @@ class Main {
   }
 
   updateTitlebarOverlay() {
+    if (platform.isMacOS) {
+      return;
+    }
+
     const { titleBarOverlay } = getTitleBarOptions();
 
     if (typeof titleBarOverlay === "boolean") {
