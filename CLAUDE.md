@@ -165,3 +165,6 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Reference settings paths as `Settings... → Section → Option`.
 - Group related bullets next to each other (e.g. all Google Apps changes together).
 - Use sub-bullets for details: options list, defaults, keyboard shortcuts, behavior nuances. Always state the default for new options.
+- Drop fixes to code newly introduced in the same release — a bug that only existed between merge and tag is invisible to users upgrading from the previous public release.
+- Wrap keyboard shortcuts in `<kbd>` tags and write them per platform: `<kbd>Cmd</kbd>+<kbd>F</kbd> on macOS, <kbd>Ctrl</kbd>+<kbd>F</kbd> on Windows/Linux`.
+- When reverting or removing a previously released feature, include the reason inline so users who relied on it understand the change.
