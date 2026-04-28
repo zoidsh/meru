@@ -152,7 +152,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## Release Notes
 
 - Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
-- Output the release notes in chat for pasting into the GitHub release — do not write them to a file in the repo.
+- Output the release notes in chat for pasting into the GitHub release — do not write them to a file in the repo. Wrap the notes in a fenced markdown code block so the raw markdown can be copied directly into the GitHub release.
 - Structure: use `## Added`, `## Changed`, `## Fixed`, `## Internal Changes` sections (in that order, omit unused ones). Skip `## Internal Changes` entirely when nothing affects end users (e.g. CI, CLAUDE.md, repo tooling).
 - Classify each change correctly:
   - `Added` — new feature or capability
@@ -165,3 +165,6 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Reference settings paths as `Settings... → Section → Option`.
 - Group related bullets next to each other (e.g. all Google Apps changes together).
 - Use sub-bullets for details: options list, defaults, keyboard shortcuts, behavior nuances. Always state the default for new options.
+- Drop fixes to code newly introduced in the same release — a bug that only existed between merge and tag is invisible to users upgrading from the previous public release.
+- Wrap keyboard shortcuts in `<kbd>` tags and write them per platform: `<kbd>Cmd</kbd>+<kbd>F</kbd> on macOS, <kbd>Ctrl</kbd>+<kbd>F</kbd> on Windows/Linux`.
+- When reverting or removing a previously released feature, include the reason inline so users who relied on it understand the change.
