@@ -44,6 +44,7 @@ const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
 const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   columnHelper.accessor("account.label", {
+    id: "account",
     cell: (props) => (
       <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
     ),
@@ -187,7 +188,12 @@ function UnifiedInboxTable({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-3 py-3", cell.column.id === "subject" && "w-full max-w-0")}
+                    className={cn(
+                      "px-3 py-3",
+                      cell.column.id === "account" && "w-32",
+                      cell.column.id === "subject" && "w-full max-w-0",
+                      cell.column.id === "receivedAt" && "text-right",
+                    )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
