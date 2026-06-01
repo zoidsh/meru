@@ -54,7 +54,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
 
       return (
         <div
-          className="w-36 flex items-center gap-2"
+          className="flex items-center gap-2 max-w-36"
           title={[props.row.original.author, ...props.row.original.contributors]
             .map(({ name, email }) => `${name} <${email}>`)
             .join(", ")}
