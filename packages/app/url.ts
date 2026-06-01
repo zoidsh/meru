@@ -48,5 +48,5 @@ export async function openExternalUrl(
     }
   }
 
-  shell.openExternal(cleanUrl, { activate: options?.focusBrowser ?? true });
+  shell.openExternal(cleanUrl, { activate: options?.focusBrowser });
 }
