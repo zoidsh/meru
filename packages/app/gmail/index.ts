@@ -859,6 +859,16 @@ export class Gmail {
     this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
   }
 
+  navigateToHash(urlOrHash: string) {
+    const hash = urlOrHash.startsWith("https://") ? new URL(urlOrHash).hash : urlOrHash;
+
+    if (!hash) {
+      return;
+    }
+
+    this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
+  }
+
   openGoogleApp(app: GoogleAppsPinnedApp) {
     this.view.webContents.executeJavaScript(`window.open("${getGoogleAppUrl(app)}", "_blank")`);
   }
