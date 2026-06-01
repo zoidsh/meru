@@ -11,10 +11,8 @@ type AccountBadgeProps = {
 export function AccountBadge({ label, color }: AccountBadgeProps) {
   return (
     <Badge variant="secondary">
-      {color && (
-        <div className={cn("size-2 shrink-0 rounded-full", accountColorsMap[color].className)} />
-      )}
-      <span className="truncate">{label}</span>
+      {color && <div className={cn("size-2 rounded-full", accountColorsMap[color].className)} />}
+      {label}
     </Badge>
   );
 }
