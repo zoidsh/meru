@@ -187,7 +187,7 @@ function UnifiedInboxTable({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-3 py-3", cell.column.id === "subject" && "w-full")}
+                    className={cn("px-3 py-3", cell.column.id === "subject" && "w-full max-w-0")}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
