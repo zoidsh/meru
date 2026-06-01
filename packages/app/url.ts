@@ -12,14 +12,17 @@ export function getCleanUrl(url: string): string {
 
 const MAX_EXTERNAL_URL_LENGTH = 256;
 
-export async function openExternalUrl(url: string, trustedLink?: boolean) {
+export async function openExternalUrl(
+  url: string,
+  options?: { trustedLink?: boolean; activate?: boolean },
+) {
   const cleanUrl = getCleanUrl(url);
 
   if (licenseKey.isValid && config.get("externalLinks.confirm")) {
     const { origin } = new URL(cleanUrl);
     const trustedHosts = config.get("externalLinks.trustedHosts");
 
-    if (!trustedLink && !trustedHosts.includes(origin)) {
+    if (!options?.trustedLink && !trustedHosts.includes(origin)) {
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
         buttons: ["Open Link", "Copy Link", "Cancel"],
@@ -45,5 +48,5 @@ export async function openExternalUrl(url: string, trustedLink?: boolean) {
     }
   }
 
-  shell.openExternal(cleanUrl);
+  shell.openExternal(cleanUrl, { activate: options?.activate ?? true });
 }
