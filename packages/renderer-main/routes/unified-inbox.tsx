@@ -18,7 +18,7 @@ import {
   ChevronsRightIcon,
   InboxIcon,
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   type PaginationState,
   createColumnHelper,
@@ -37,15 +37,15 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@meru/ui/components/empty";
+import { Table, TableBody, TableCell, TableRow } from "@meru/ui/components/table";
+import { cn } from "@meru/ui/lib/utils";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
 const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   columnHelper.accessor("account.label", {
     cell: (props) => (
-      <div className="w-20">
-        <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
-      </div>
+      <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
     ),
   }),
   columnHelper.accessor("author.name", {
@@ -54,7 +54,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
 
       return (
         <div
-          className="w-36 flex items-center gap-2"
+          className="flex items-center gap-2 max-w-36"
           title={[props.row.original.author, ...props.row.original.contributors]
             .map(({ name, email }) => `${name} <${email}>`)
             .join(", ")}
@@ -169,26 +169,37 @@ function UnifiedInboxTable({
 
   return (
     <>
-      <div className="text-sm border rounded-lg overflow-hidden">
-        {table.getRowModel().rows.map((row) => (
-          <div
-            key={row.id}
-            className="flex items-center gap-6 not-last:border-b p-3 whitespace-nowrap hover:bg-muted/50 transition-colors cursor-default"
-            onClick={() => {
-              ipc.main.send("settings.toggleIsOpen", false);
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="cursor-default"
+                onClick={() => {
+                  ipc.main.send("settings.toggleIsOpen", false);
 
-              ipc.main.send("accounts.selectAccount", row.original.account.id);
+                  ipc.main.send("accounts.selectAccount", row.original.account.id);
 
-              ipc.main.send("gmail.openMessage", row.original.id);
-            }}
-          >
-            {row.getVisibleCells().map((cell) => (
-              <Fragment key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </Fragment>
+                  ipc.main.send("gmail.openMessage", row.original.id);
+                }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={cn(
+                      "px-3 py-3",
+                      cell.column.id === "subject" && "w-full max-w-0",
+                      cell.column.id === "receivedAt" && "text-right",
+                    )}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
             ))}
-          </div>
-        ))}
+          </TableBody>
+        </Table>
       </div>
       <div className="flex justify-between mt-4">
         <div className="flex gap-2 items-center">
