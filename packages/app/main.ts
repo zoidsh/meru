@@ -109,7 +109,7 @@ class Main {
     }
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
-      openExternalUrl(url, { trustedLink: true });
+      openExternalUrl(url, { skipTrustedHostCheck: true });
 
       return {
         action: "deny",

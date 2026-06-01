@@ -14,7 +14,7 @@ const MAX_EXTERNAL_URL_LENGTH = 256;
 
 export async function openExternalUrl(
   url: string,
-  options?: { trustedLink?: boolean; activate?: boolean },
+  options?: { skipTrustedHostCheck?: boolean; activate?: boolean },
 ) {
   const cleanUrl = getCleanUrl(url);
 
@@ -22,7 +22,7 @@ export async function openExternalUrl(
     const { origin } = new URL(cleanUrl);
     const trustedHosts = config.get("externalLinks.trustedHosts");
 
-    if (!options?.trustedLink && !trustedHosts.includes(origin)) {
+    if (!options?.skipTrustedHostCheck && !trustedHosts.includes(origin)) {
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
         buttons: ["Open Link", "Copy Link", "Cancel"],

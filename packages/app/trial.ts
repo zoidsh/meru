@@ -72,7 +72,7 @@ class Trial {
       });
 
       if (response === 0) {
-        openExternalUrl("https://meru.so/#pricing", { trustedLink: true });
+        openExternalUrl("https://meru.so/#pricing", { skipTrustedHostCheck: true });
       }
 
       if (response === 2) {

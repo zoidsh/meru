@@ -210,7 +210,7 @@ export class GoogleApp {
     }
 
     openExternalUrl(url, {
-      trustedLink: Boolean(matchedSupportedGoogleApp),
+      skipTrustedHostCheck: Boolean(matchedSupportedGoogleApp),
       activate: disposition !== "background-tab",
     });
 
@@ -471,7 +471,7 @@ export class GoogleApp {
   }
 
   openInBrowser() {
-    openExternalUrl(this.view.webContents.getURL(), { trustedLink: true });
+    openExternalUrl(this.view.webContents.getURL(), { skipTrustedHostCheck: true });
   }
 
   get account() {
