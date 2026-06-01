@@ -209,7 +209,10 @@ export class GoogleApp {
       return { action: "deny" };
     }
 
-    openExternalUrl(url, Boolean(matchedSupportedGoogleApp));
+    openExternalUrl(url, {
+      skipTrustedHostCheck: Boolean(matchedSupportedGoogleApp),
+      focusBrowser: disposition !== "background-tab",
+    });
 
     return { action: "deny" };
   }
@@ -468,7 +471,7 @@ export class GoogleApp {
   }
 
   openInBrowser() {
-    openExternalUrl(this.view.webContents.getURL(), true);
+    openExternalUrl(this.view.webContents.getURL(), { skipTrustedHostCheck: true });
   }
 
   get account() {
