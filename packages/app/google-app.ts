@@ -1,4 +1,5 @@
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import {
@@ -161,6 +162,18 @@ export class GoogleApp {
           return newWindow.webContents;
         },
       };
+    }
+
+    if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
+      const account = accounts.getAccount(accountId);
+
+      account.instance.gmail.navigateToHash(url);
+
+      accounts.selectAccount(accountId);
+
+      main.show();
+
+      return { action: "deny" };
     }
 
     if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
