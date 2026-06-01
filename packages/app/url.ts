@@ -14,7 +14,7 @@ const MAX_EXTERNAL_URL_LENGTH = 256;
 
 export async function openExternalUrl(
   url: string,
-  options?: { skipTrustedHostCheck?: boolean; activate?: boolean },
+  options?: { skipTrustedHostCheck?: boolean; focusBrowser?: boolean },
 ) {
   const cleanUrl = getCleanUrl(url);
 
@@ -48,5 +48,5 @@ export async function openExternalUrl(
     }
   }
 
-  shell.openExternal(cleanUrl, { activate: options?.activate ?? true });
+  shell.openExternal(cleanUrl, { activate: options?.focusBrowser ?? true });
 }

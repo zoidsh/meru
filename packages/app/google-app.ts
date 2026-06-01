@@ -211,7 +211,7 @@ export class GoogleApp {
 
     openExternalUrl(url, {
       skipTrustedHostCheck: Boolean(matchedSupportedGoogleApp),
-      activate: disposition !== "background-tab",
+      focusBrowser: disposition !== "background-tab",
     });
 
     return { action: "deny" };
