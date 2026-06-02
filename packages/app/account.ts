@@ -14,6 +14,7 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
+import { GoogleApp } from "./google-app";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
 
@@ -89,11 +90,19 @@ export class Account {
   private registerSessionDisplayMediaRequestHandler() {
     this.session.setDisplayMediaRequestHandler(
       async (_request, callback) => {
-        const googleMeetApp = Array.from(this.windows).find((window) =>
-          window.webContents.getURL().startsWith(GOOGLE_MEET_URL),
+        const googleMeetWindow = Array.from(this.windows).find(
+          (window): window is BrowserWindow => {
+            if (!(window instanceof BrowserWindow)) {
+              return false;
+            }
+
+            const googleApp = GoogleApp.tryFromWebContents(window.webContents);
+
+            return googleApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL) ?? false;
+          },
         );
 
-        if (!googleMeetApp) {
+        if (!googleMeetWindow) {
           callback({});
 
           return;
@@ -101,7 +110,7 @@ export class Account {
 
         const desktopSourcesWindow = createBrowserWindow({
           title: "Choose what to share",
-          parent: googleMeetApp instanceof BrowserWindow ? googleMeetApp : undefined,
+          parent: googleMeetWindow,
           width: 576,
           height: 512,
           resizable: false,
