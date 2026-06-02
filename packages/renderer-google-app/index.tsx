@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -129,6 +131,8 @@ function App() {
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
   );
 
+  const googleApp = searchParams.get("googleApp") as GoogleAppsPinnedApp | null;
+
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
       setNavigationState(state);
@@ -180,7 +184,10 @@ function App() {
         {config && config.accounts.length > 1 && account && (
           <AccountBadge label={account.label} color={account.color} />
         )}
-        <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
+        <div className="flex items-center gap-1">
+          {googleApp && <GoogleAppIcon app={googleApp} className="size-3.5" />}
+          <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
+        </div>
       </TitlebarLeft>
       <TitlebarRight>
         <FindInPage

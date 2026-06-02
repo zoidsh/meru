@@ -32,7 +32,7 @@ import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/c
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
-import { GoogleAppIcon } from "@/components/google-app-icon";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";

@@ -36,7 +36,7 @@ import {
   useSettingsStore,
   useTrialStore,
 } from "../lib/stores";
-import { GoogleAppIcon } from "./google-app-icon";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import { useRoute } from "wouter";
 
 function RecentDownloadHistoryButton() {
