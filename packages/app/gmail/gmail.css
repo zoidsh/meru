@@ -38,3 +38,8 @@ html.meru-reverse-conversation div[role="list"]:has(div[role="listitem"]) {
 html.meru-hide-out-of-office-banner #\:7 {
   display: none !important;
 }
+
+/* Gmail Upgrade Button */
+html.meru-hide-gmail-upgrade div[data-pep-id="global-pep-gmail"] {
+  display: none !important;
+}

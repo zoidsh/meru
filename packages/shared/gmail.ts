@@ -18,6 +18,7 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
   openComposeInNewWindow: "--meru-open-compose-in-new-window",
   showSenderIcons: "--meru-show-sender-icons",
   hideOutOfOfficeBanner: "--meru-hide-out-of-office-banner",
+  hideUpgradeButton: "--meru-hide-gmail-upgrade",
   moveAttachmentsToTop: "--meru-move-attachments-to-top",
   closeComposeWindowAfterSend: "--meru-close-compose-after-send",
   replyForwardInPopOut: "--meru-reply-forward-in-pop-out",

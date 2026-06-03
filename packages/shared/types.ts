@@ -133,6 +133,7 @@ export type Config = {
   "gmail.hideGmailLogo": boolean;
   "gmail.hideInboxFooter": boolean;
   "gmail.hideOutOfOfficeBanner": boolean;
+  "gmail.hideUpgradeButton": boolean;
   "gmail.reverseConversation": boolean;
   "gmail.savedSearches": GmailSavedSearches;
   "gmail.unreadCountPreference": "first-section" | "inbox";
