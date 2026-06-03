@@ -70,8 +70,10 @@ function buildGmailLabelTargets(
 ): { selector: string; textScope: GmailLabelTextScope }[] {
   return [
     { selector: `.at[title="${escapedLabel}"]`, textScope: "descendants" },
-    { selector: `.ahR .hN:has([data-name="${escapedLabel}"])`, textScope: "self" },
-    { selector: `.ahR .hO:has([data-name="${escapedLabel}"])`, textScope: "self" },
+    {
+      selector: `.ahR .hN:has([data-name="${escapedLabel}"]), .ahR .hO:has([data-name="${escapedLabel}"])`,
+      textScope: "self",
+    },
     { selector: `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`, textScope: "none" },
   ];
 }
