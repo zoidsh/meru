@@ -1,4 +1,4 @@
-import { getContrastTextColor, isValidCssColorInput } from "./color";
+import { isValidCssColorInput } from "./color";
 import type { GmailLabelColors } from "./schemas";
 
 export const GMAIL_ACTION_CODE_MAP = {
@@ -69,11 +69,9 @@ export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
     .map(({ label, color }) => {
       const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
-      const textColor = getContrastTextColor(color);
-
       return [
         `.at[title="${escapedLabel}"] { background-color: ${color} !important; }`,
-        `.at[title="${escapedLabel}"], .at[title="${escapedLabel}"] * { color: ${textColor} !important; }`,
+        `.at[title="${escapedLabel}"], .at[title="${escapedLabel}"] * { color: contrast-color(${color}) !important; }`,
       ].join("\n");
     })
     .join("\n");

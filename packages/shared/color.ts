@@ -72,22 +72,3 @@ export function parseCssColor(input: string): Rgb | null {
 export function isValidCssColorInput(input: string) {
   return parseCssColor(input) !== null;
 }
-
-export function getContrastTextColor(input: string) {
-  const rgb = parseCssColor(input);
-
-  if (!rgb) {
-    return "#ffffff";
-  }
-
-  const toLinear = (channel: number) => {
-    const value = channel / 255;
-
-    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  };
-
-  const luminance =
-    0.2126 * toLinear(rgb.red) + 0.7152 * toLinear(rgb.green) + 0.0722 * toLinear(rgb.blue);
-
-  return luminance > 0.179 ? "#000000" : "#ffffff";
-}
