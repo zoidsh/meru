@@ -109,29 +109,11 @@ function CopyUrlButton() {
   );
 }
 
-function App() {
+function NavigationButtons() {
   const [navigationState, setNavigationState] = useState<{
     canGoBack: boolean;
     canGoForward: boolean;
   }>();
-
-  const [pageTitle, setPageTitle] = useState("");
-
-  const [findInPageState, setFindInPageState] = useState({
-    isActive: false,
-    activeMatch: 0,
-    totalMatches: 0,
-  });
-
-  const { config } = useConfig();
-
-  const [searchParams] = useSearchParams();
-
-  const account = config?.accounts.find(
-    (accountConfig) => accountConfig.id === searchParams.get("accountId"),
-  );
-
-  const googleApp = searchParams.get("googleApp") as GoogleAppsPinnedApp | null;
 
   useEffect(() => {
     return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
@@ -139,11 +121,48 @@ function App() {
     });
   }, []);
 
+  return (
+    <>
+      <TitlebarIconButton
+        title="Back"
+        disabled={!navigationState?.canGoBack}
+        onClick={() => {
+          ipc.main.send("googleApp.goBack");
+        }}
+      >
+        <ArrowLeftIcon />
+      </TitlebarIconButton>
+      <TitlebarIconButton
+        title="Forward"
+        disabled={!navigationState?.canGoForward}
+        onClick={() => {
+          ipc.main.send("googleApp.goForward");
+        }}
+      >
+        <ArrowRightIcon />
+      </TitlebarIconButton>
+    </>
+  );
+}
+
+function PageTitle() {
+  const [pageTitle, setPageTitle] = useState("");
+
   useEffect(() => {
     return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
       setPageTitle(title);
     });
   }, []);
+
+  return <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>;
+}
+
+function FindInPageControls() {
+  const [findInPageState, setFindInPageState] = useState({
+    isActive: false,
+    activeMatch: 0,
+    totalMatches: 0,
+  });
 
   useEffect(() => {
     return ipc.renderer.on("findInPage.activate", () => {
@@ -158,27 +177,38 @@ function App() {
   }, []);
 
   return (
+    <FindInPage
+      isActive={findInPageState.isActive}
+      activeMatch={findInPageState.activeMatch}
+      totalMatches={findInPageState.totalMatches}
+      onFind={(text, options) => {
+        ipc.main.send("findInPage", text, options);
+      }}
+      onClose={() => {
+        ipc.main.send("findInPage", null);
+
+        setFindInPageState((state) => ({ ...state, isActive: false }));
+      }}
+    />
+  );
+}
+
+function App() {
+  const { config } = useConfig();
+
+  const [searchParams] = useSearchParams();
+
+  const account = config?.accounts.find(
+    (accountConfig) => accountConfig.id === searchParams.get("accountId"),
+  );
+
+  const googleApp = searchParams.get("googleApp") as GoogleAppsPinnedApp | null;
+
+  return (
     <Titlebar>
       <TitlebarLeft>
         <TitlebarButtonGroup>
-          <TitlebarIconButton
-            title="Back"
-            disabled={!navigationState?.canGoBack}
-            onClick={() => {
-              ipc.main.send("googleApp.goBack");
-            }}
-          >
-            <ArrowLeftIcon />
-          </TitlebarIconButton>
-          <TitlebarIconButton
-            title="Forward"
-            disabled={!navigationState?.canGoForward}
-            onClick={() => {
-              ipc.main.send("googleApp.goForward");
-            }}
-          >
-            <ArrowRightIcon />
-          </TitlebarIconButton>
+          <NavigationButtons />
           <ReloadButton />
         </TitlebarButtonGroup>
         {config && config.accounts.length > 1 && account && (
@@ -186,23 +216,11 @@ function App() {
         )}
         <div className="flex items-center gap-1">
           {googleApp && <GoogleAppIcon app={googleApp} className="size-3.5" />}
-          <TitlebarPageTitle>{pageTitle}</TitlebarPageTitle>
+          <PageTitle />
         </div>
       </TitlebarLeft>
       <TitlebarRight>
-        <FindInPage
-          isActive={findInPageState.isActive}
-          activeMatch={findInPageState.activeMatch}
-          totalMatches={findInPageState.totalMatches}
-          onFind={(text, options) => {
-            ipc.main.send("findInPage", text, options);
-          }}
-          onClose={() => {
-            ipc.main.send("findInPage", null);
-
-            setFindInPageState((state) => ({ ...state, isActive: false }));
-          }}
-        />
+        <FindInPageControls />
         <TitlebarButtonGroup>
           <RecentDownloadHistoryButton />
           <CopyUrlButton />
