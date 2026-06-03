@@ -63,12 +63,16 @@ export type GmailState = {
 
 export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
 
-function buildGmailLabelSelectors(escapedLabel: string) {
+type GmailLabelTextScope = "none" | "self" | "descendants";
+
+function buildGmailLabelTargets(
+  escapedLabel: string,
+): { selector: string; textScope: GmailLabelTextScope }[] {
   return [
-    `.at[title="${escapedLabel}"]`,
-    `.ahR:has([data-name="${escapedLabel}"]) .hN`,
-    `.ahR:has([data-name="${escapedLabel}"]) .h0`,
-    `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`,
+    { selector: `.at[title="${escapedLabel}"]`, textScope: "descendants" },
+    { selector: `.ahR:has([data-name="${escapedLabel}"]) .hN`, textScope: "self" },
+    { selector: `.ahR:has([data-name="${escapedLabel}"]) .h0`, textScope: "self" },
+    { selector: `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`, textScope: "none" },
   ];
 }
 
@@ -78,10 +82,22 @@ export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
     .flatMap(({ label, color }) => {
       const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
-      return buildGmailLabelSelectors(escapedLabel).flatMap((selector) => [
-        `${selector} { background-color: ${color} !important; }`,
-        `${selector}, ${selector} * { color: contrast-color(${color}) !important; }`,
-      ]);
+      return buildGmailLabelTargets(escapedLabel).flatMap(({ selector, textScope }) => {
+        if (textScope === "descendants") {
+          return [
+            `${selector} { background-color: ${color} !important; }`,
+            `${selector}, ${selector} * { color: contrast-color(${color}) !important; }`,
+          ];
+        }
+
+        if (textScope === "self") {
+          return [
+            `${selector} { background-color: ${color} !important; color: contrast-color(${color}) !important; }`,
+          ];
+        }
+
+        return [`${selector} { background-color: ${color} !important; }`];
+      });
     })
     .join("\n");
 }
