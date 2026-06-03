@@ -38,6 +38,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Add an empty line before `if` blocks when preceded by other statements.
 - Add an empty line before `return` statements when preceded by other statements.
 
+## Comments
+
+- Don't write comments. Clear code with descriptive names is the documentation — let it explain itself. Only add a comment when the logic is genuinely non-obvious (e.g. a subtle workaround or a non-intuitive constraint) and the reason can't be conveyed through naming or structure.
+
 ## Functions
 
 - Root-level functions (including React components) use `function` declarations.

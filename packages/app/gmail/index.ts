@@ -396,7 +396,6 @@ export class Gmail {
           this.view.webContents.insertCSS(GMAIL_USER_STYLES);
         }
 
-        // A reload drops all previously inserted CSS, so the stored key is stale.
         this.labelColorsCssKey = null;
 
         this.applyLabelColors();
