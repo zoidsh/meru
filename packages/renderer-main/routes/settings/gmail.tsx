@@ -60,6 +60,13 @@ export function GmailSettings() {
               restartRequired
               licenseKeyRequired
             />
+            <ConfigSwitchField
+              label="Hide Upgrade Button"
+              description="Hides the Upgrade button in Gmail."
+              configKey="gmail.hideUpgradeButton"
+              restartRequired
+              licenseKeyRequired
+            />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>

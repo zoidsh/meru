@@ -314,6 +314,10 @@ export class Gmail {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner);
       }
 
+      if (config.get("gmail.hideUpgradeButton")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideUpgradeButton);
+      }
+
       if (config.get("gmail.moveAttachmentsToTop")) {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop);
       }
