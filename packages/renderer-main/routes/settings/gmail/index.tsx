@@ -17,6 +17,7 @@ import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@meru/shared/renderer/react-query";
+import { GmailLabelColors } from "./label-colors";
 
 const unreadCountPreferenceItems = [
   { value: "first-section", label: "First Section Only" },
@@ -145,6 +146,14 @@ export function GmailSettings() {
               licenseKeyRequired
               restartRequired
             />
+          </FieldSet>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLegend className="flex items-center gap-2">
+              Label Colors
+              <LicenseKeyRequiredFieldBadge />
+            </FieldLegend>
+            <GmailLabelColors />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
