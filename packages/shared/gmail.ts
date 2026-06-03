@@ -66,8 +66,9 @@ export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
 function buildGmailLabelSelectors(escapedLabel: string) {
   return [
     `.at[title="${escapedLabel}"]`,
-    `.ahR:has([data-name="${escapedLabel}"])`,
-    `.aim:has([data-tooltip="${escapedLabel}"])`,
+    `.ahR:has([data-name="${escapedLabel}"]) .hN`,
+    `.ahR:has([data-name="${escapedLabel}"]) .h0`,
+    `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`,
   ];
 }
 
