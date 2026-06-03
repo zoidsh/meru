@@ -71,7 +71,7 @@ function buildGmailLabelTargets(
   return [
     { selector: `.at[title="${escapedLabel}"]`, textScope: "descendants" },
     { selector: `.ahR:has([data-name="${escapedLabel}"]) .hN`, textScope: "self" },
-    { selector: `.ahR:has([data-name="${escapedLabel}"]) .h0`, textScope: "self" },
+    { selector: `.ahR:has([data-name="${escapedLabel}"]) .hO`, textScope: "self" },
     { selector: `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`, textScope: "none" },
   ];
 }
