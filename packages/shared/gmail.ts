@@ -1,3 +1,6 @@
+import { getContrastTextColor, isValidCssColorInput } from "./color";
+import type { GmailLabelColors } from "./schemas";
+
 export const GMAIL_ACTION_CODE_MAP = {
   archive: 1,
   markAsRead: 3,
@@ -59,3 +62,19 @@ export type GmailState = {
 };
 
 export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
+
+export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
+  return labelColors
+    .filter(({ label, color }) => label && isValidCssColorInput(color))
+    .map(({ label, color }) => {
+      const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+
+      const textColor = getContrastTextColor(color);
+
+      return [
+        `.at[title="${escapedLabel}"] { background-color: ${color} !important; }`,
+        `.at[title="${escapedLabel}"], .at[title="${escapedLabel}"] * { color: ${textColor} !important; }`,
+      ].join("\n");
+    })
+    .join("\n");
+}
