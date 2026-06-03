@@ -433,6 +433,10 @@ export class Gmail {
     }
 
     window.webContents.on("will-redirect", (event, url) => {
+      if (url.startsWith("https://workspace.google.com/u/0/marketplace/appfinder")) {
+        return;
+      }
+
       GoogleApp.handleRedirect(event, url, window.webContents);
     });
   }
