@@ -63,16 +63,18 @@ export type GmailState = {
 
 export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
 
+const GMAIL_LABEL_ROOT_CLASSES = ["at", "ahR"];
+
 export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
   return labelColors
     .filter(({ label, color }) => label && isValidCssColorInput(color))
-    .map(({ label, color }) => {
+    .flatMap(({ label, color }) => {
       const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
-      return [
-        `.at[title="${escapedLabel}"] { background-color: ${color} !important; }`,
-        `.at[title="${escapedLabel}"], .at[title="${escapedLabel}"] * { color: contrast-color(${color}) !important; }`,
-      ].join("\n");
+      return GMAIL_LABEL_ROOT_CLASSES.flatMap((rootClass) => [
+        `.${rootClass}[title="${escapedLabel}"] { background-color: ${color} !important; }`,
+        `.${rootClass}[title="${escapedLabel}"], .${rootClass}[title="${escapedLabel}"] * { color: contrast-color(${color}) !important; }`,
+      ]);
     })
     .join("\n");
 }
