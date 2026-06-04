@@ -6,6 +6,7 @@ import type {
   AccountConfigInput,
   AccountConfigs,
   AccountInstances,
+  GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
 
@@ -136,6 +137,7 @@ export type Config = {
   "gmail.hideUpgradeButton": boolean;
   "gmail.reverseConversation": boolean;
   "gmail.savedSearches": GmailSavedSearches;
+  "gmail.labelColors": GmailLabelColors;
   "gmail.unreadCountPreference": "first-section" | "inbox";
   "gmail.openComposeInNewWindow": boolean;
   "gmail.showSenderIcons": boolean;

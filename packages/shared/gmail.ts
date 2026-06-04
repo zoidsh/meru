@@ -1,3 +1,6 @@
+import { isValidCssColorInput } from "./color";
+import type { GmailLabelColors, GmailLabelTextColor } from "./schemas";
+
 export const GMAIL_ACTION_CODE_MAP = {
   archive: 1,
   markAsRead: 3,
@@ -59,3 +62,58 @@ export type GmailState = {
 };
 
 export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
+
+type GmailLabelTextScope = "none" | "self" | "descendants";
+
+function buildGmailLabelTargets(
+  escapedLabel: string,
+): { selector: string; textScope: GmailLabelTextScope }[] {
+  return [
+    { selector: `.at[title="${escapedLabel}"]`, textScope: "descendants" },
+    {
+      selector: `.ahR .hN[data-name="${escapedLabel}"], .ahR .hO[data-name="${escapedLabel}"]`,
+      textScope: "self",
+    },
+    { selector: `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`, textScope: "none" },
+  ];
+}
+
+export function resolveGmailLabelTextColor(color: string, textColor: GmailLabelTextColor) {
+  if (textColor === "white") {
+    return "#ffffff";
+  }
+
+  if (textColor === "black") {
+    return "#000000";
+  }
+
+  return `contrast-color(${color})`;
+}
+
+export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
+  return labelColors
+    .filter(({ label, color }) => label && isValidCssColorInput(color))
+    .flatMap(({ label, color, textColor }) => {
+      const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+
+      const resolvedTextColor = resolveGmailLabelTextColor(color, textColor);
+
+      return buildGmailLabelTargets(escapedLabel).flatMap(({ selector, textScope }) => {
+        if (textScope === "descendants") {
+          return [
+            `${selector} { background-color: ${color} !important; }`,
+            `${selector} * { color: ${resolvedTextColor} !important; }`,
+          ];
+        }
+
+        if (textScope === "self") {
+          return [
+            `${selector} { background-color: ${color} !important; color: ${resolvedTextColor} !important; }`,
+          ];
+        }
+
+        return [`${selector} { background-color: ${color} !important; }`];
+      });
+    })
+    .join("\n");
+}

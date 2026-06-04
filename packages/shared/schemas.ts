@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCssColorInput } from "./color";
 import type { GmailState } from "./gmail";
 
 export const accountColors = [
@@ -70,3 +71,24 @@ export type GmailSavedSearchInput = z.infer<typeof gmailSavedSearchInputSchema>;
 export type GmailSavedSearch = z.infer<typeof gmailSavedSearchSchema>;
 
 export type GmailSavedSearches = GmailSavedSearch[];
+
+export const gmailLabelTextColors = ["auto", "white", "black"] as const;
+
+export type GmailLabelTextColor = (typeof gmailLabelTextColors)[number];
+
+export const gmailLabelColorSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1),
+  color: z.string().min(1).refine(isValidCssColorInput, "Enter a valid hex, rgb, or rgba color"),
+  textColor: z.enum(gmailLabelTextColors),
+});
+
+export const gmailLabelColorInputSchema = gmailLabelColorSchema.omit({
+  id: true,
+});
+
+export type GmailLabelColorInput = z.infer<typeof gmailLabelColorInputSchema>;
+
+export type GmailLabelColor = z.infer<typeof gmailLabelColorSchema>;
+
+export type GmailLabelColors = GmailLabelColor[];

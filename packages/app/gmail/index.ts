@@ -9,6 +9,7 @@ import {
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailInboxMessage,
+  generateGmailLabelColorsCss,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
 import type { GoogleAppsPinnedApp } from "@meru/shared/types";
@@ -268,6 +269,8 @@ export class Gmail {
     })),
   );
 
+  private labelColorsCssKey: string | null = null;
+
   private isInitialInboxFeedFetch = true;
 
   private previousInboxFeedTotalEntries: number = 0;
@@ -392,6 +395,10 @@ export class Gmail {
         if (licenseKey.isValid && GMAIL_USER_STYLES) {
           this.view.webContents.insertCSS(GMAIL_USER_STYLES);
         }
+
+        this.labelColorsCssKey = null;
+
+        this.applyLabelColors();
       }
 
       this.view.webContents.insertCSS(meruCSS);
@@ -408,6 +415,28 @@ export class Gmail {
     openViewDevToolsInDev(this.view);
 
     return this.view.webContents.loadURL(this.url);
+  }
+
+  async applyLabelColors() {
+    if (!this._view) {
+      return;
+    }
+
+    if (this.labelColorsCssKey) {
+      await this.view.webContents.removeInsertedCSS(this.labelColorsCssKey);
+
+      this.labelColorsCssKey = null;
+    }
+
+    if (!licenseKey.isValid) {
+      return;
+    }
+
+    const css = generateGmailLabelColorsCss(config.get("gmail.labelColors"));
+
+    if (css) {
+      this.labelColorsCssKey = await this.view.webContents.insertCSS(css);
+    }
   }
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {

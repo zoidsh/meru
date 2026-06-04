@@ -35,6 +35,12 @@ class Accounts {
         }
       });
     }
+
+    config.onDidChange("gmail.labelColors", () => {
+      for (const account of accounts.instances.values()) {
+        account.gmail.applyLabelColors();
+      }
+    });
   }
 
   async createViews() {
