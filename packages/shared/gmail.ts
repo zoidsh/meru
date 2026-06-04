@@ -74,7 +74,7 @@ function buildGmailLabelTargets(
       selector: `.ahR .hN[data-name="${escapedLabel}"], .ahR .hO[data-name="${escapedLabel}"]`,
       textScope: "self",
     },
-    { selector: `.aim .aEe[data-tooltip="${escapedLabel}"]`, textScope: "none" },
+    { selector: `.aim:has([data-tooltip="${escapedLabel}"]) .aEe`, textScope: "none" },
   ];
 }
 
