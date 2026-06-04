@@ -185,7 +185,7 @@ function EditLabelColorButton({
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="ghost">
+          <Button size="icon" className="size-8 p-0" variant="outline">
             <PencilIcon />
           </Button>
         }
@@ -255,8 +255,8 @@ export function GmailLabelColors() {
                 />
                 <Button
                   size="icon"
-                  className="size-8 p-0 text-destructive-foreground hover:text-destructive-foreground"
-                  variant="ghost"
+                  className="size-8 p-0 text-destructive hover:text-destructive"
+                  variant="outline"
                   onClick={() => {
                     const confirmed = window.confirm(
                       `Are you sure you want to delete the color for ${labelColor.label}?`,
