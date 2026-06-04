@@ -255,7 +255,7 @@ export function GmailLabelColors() {
                 />
                 <Button
                   size="icon"
-                  className="size-8 p-0 text-destructive hover:text-destructive"
+                  className="size-8 p-0"
                   variant="outline"
                   onClick={() => {
                     const confirmed = window.confirm(
