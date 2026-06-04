@@ -343,6 +343,8 @@ export class GoogleApp {
   private handleClose = () => {
     if (!this.viewDestroyed) {
       this.unregisterViewListeners();
+
+      this.view.webContents.close();
     }
 
     this.teardownApp();
