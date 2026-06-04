@@ -226,7 +226,7 @@ export function GmailLabelColors() {
         contrast against the background.
       </FieldDescription>
       {config["gmail.labelColors"].length > 0 && (
-        <ItemGroup className="gap-2">
+        <ItemGroup className="grid grid-cols-2 gap-2">
           {config["gmail.labelColors"].map((labelColor) => (
             <Item key={labelColor.id} variant="muted" size="sm">
               <ItemContent>
