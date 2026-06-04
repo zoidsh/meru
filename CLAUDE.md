@@ -125,6 +125,10 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
   if (accounts.length > 1 && config.get("unifiedInbox.enabled")) { ... }
   ```
 
+## Config Change Listeners
+
+- Register a `config.onDidChange("some.key", ...)` listener once at the manager/collection level (e.g. in `Accounts.init`) and iterate over instances inside the handler. Never register one listener per view/instance — that creates N duplicate listeners for the same key. See the `spellchecker.languages` listener in `packages/app/accounts.ts`.
+
 ## TypeScript
 
 - Do not add explicit return types unless necessary — rely on inference.
@@ -152,6 +156,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - When the full feature spans several concerns (e.g. IPC wiring, UI, state broadcasting), land the plumbing first, then each consumer in its own turn. Track the follow-ups inline in the conversation and/or in the PR description so they aren't lost.
 - `TODO.md` (at the repo root) is reserved for work that should be picked up in a **new session** — items unrelated enough to the current feature's goal that they shouldn't ride along with it. Do not use `TODO.md` as a backlog for the in-progress feature itself.
 - This is not about doing less work overall — it's about staging it so each step is easy to read, question, and approve.
+- Make only the change that was asked for. Don't add adjacent styling, props, classes, or behavior that wasn't requested, even if it seems like an improvement (e.g. a destructive text tint on a delete button). When restyling to "match the app", reference a sibling component/page and reuse its exact variants and classes rather than inventing new ones.
 
 ## Release Notes
 

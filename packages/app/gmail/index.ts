@@ -404,10 +404,6 @@ export class Gmail {
       this.view.webContents.insertCSS(meruCSS);
     });
 
-    config.onDidChange("gmail.labelColors", () => {
-      this.applyLabelColors();
-    });
-
     this.view.webContents.on("did-navigate-in-page", (_event, url) => {
       const hash = new URL(url).hash;
 
