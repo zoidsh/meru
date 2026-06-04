@@ -222,7 +222,7 @@ export function GmailLabelColors() {
   return (
     <Field>
       <FieldDescription>
-        Recolor Gmail label chips by their exact name. The text color defaults to automatic contrast
+        Recolor Gmail labels by their exact name. The text color defaults to automatic contrast
         against the background, or can be forced to white or black.
       </FieldDescription>
       {config["gmail.labelColors"].length > 0 && (
