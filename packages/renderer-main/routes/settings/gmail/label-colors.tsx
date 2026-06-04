@@ -1,6 +1,7 @@
 import {
   type GmailLabelColor,
   type GmailLabelColorInput,
+  type GmailLabelTextColor,
   gmailLabelColorInputSchema,
 } from "@meru/shared/schemas";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
@@ -14,6 +15,13 @@ import {
 } from "@meru/ui/components/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@meru/ui/components/select";
 import {
   Item,
   ItemActions,
@@ -29,8 +37,14 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 
 const HEX_COLOR_REGEXP = /^#[0-9a-fA-F]{6}$/;
 
+const textColorItems: { value: GmailLabelTextColor; label: string }[] = [
+  { value: "auto", label: "Auto (contrast)" },
+  { value: "white", label: "White" },
+  { value: "black", label: "Black" },
+];
+
 function LabelColorForm({
-  labelColor = { label: "", color: "#1a73e8" },
+  labelColor = { label: "", color: "#1a73e8", textColor: "auto" },
   type,
   onSubmit,
 }: {
@@ -95,6 +109,33 @@ function LabelColorForm({
               />
             </div>
             <FieldError errors={field.state.meta.errors} />
+          </Field>
+        )}
+      </form.Field>
+      <form.Field name="textColor">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>Text Color</FieldLabel>
+            <Select
+              items={textColorItems}
+              value={field.state.value}
+              onValueChange={(value) => {
+                if (value) {
+                  field.handleChange(value);
+                }
+              }}
+            >
+              <SelectTrigger id={field.name}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {textColorItems.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         )}
       </form.Field>
