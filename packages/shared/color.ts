@@ -72,3 +72,18 @@ export function parseCssColor(input: string): Rgb | null {
 export function isValidCssColorInput(input: string) {
   return parseCssColor(input) !== null;
 }
+
+export function getContrastTextColor(input: string) {
+  const rgb = parseCssColor(input);
+
+  if (!rgb) {
+    return "#ffffff";
+  }
+
+  // Perceived brightness (ITU-R BT.601). The 186 cutoff (out of 255) biases
+  // toward white text, only using black on clearly light backgrounds so
+  // mid-tone colors get light text.
+  const brightness = (rgb.red * 299 + rgb.green * 587 + rgb.blue * 114) / 1000;
+
+  return brightness > 186 ? "#000000" : "#ffffff";
+}
