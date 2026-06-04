@@ -4,7 +4,9 @@ import {
   type GmailLabelTextColor,
   gmailLabelColorInputSchema,
 } from "@meru/shared/schemas";
+import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
@@ -22,14 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from "@meru/ui/components/item";
+import { Item, ItemActions, ItemContent, ItemGroup } from "@meru/ui/components/item";
 import { useForm } from "@tanstack/react-form";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -234,14 +229,16 @@ export function GmailLabelColors() {
         <ItemGroup className="gap-2">
           {config["gmail.labelColors"].map((labelColor) => (
             <Item key={labelColor.id} variant="muted" size="sm">
-              <ItemMedia>
-                <div
-                  className="size-5 rounded-full border"
-                  style={{ backgroundColor: labelColor.color }}
-                />
-              </ItemMedia>
               <ItemContent>
-                <ItemTitle>{labelColor.label}</ItemTitle>
+                <Badge
+                  className="border-border"
+                  style={{
+                    backgroundColor: labelColor.color,
+                    color: resolveGmailLabelTextColor(labelColor.color, labelColor.textColor),
+                  }}
+                >
+                  {labelColor.label}
+                </Badge>
               </ItemContent>
               <ItemActions>
                 <EditLabelColorButton

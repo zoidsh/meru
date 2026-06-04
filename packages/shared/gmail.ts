@@ -78,7 +78,7 @@ function buildGmailLabelTargets(
   ];
 }
 
-function resolveGmailLabelTextColor(color: string, textColor: GmailLabelTextColor) {
+export function resolveGmailLabelTextColor(color: string, textColor: GmailLabelTextColor) {
   if (textColor === "white") {
     return "#ffffff";
   }
