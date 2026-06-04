@@ -1,4 +1,4 @@
-import { getContrastTextColor, isValidCssColorInput } from "./color";
+import { isValidCssColorInput } from "./color";
 import type { GmailLabelColors, GmailLabelTextColor } from "./schemas";
 
 export const GMAIL_ACTION_CODE_MAP = {
@@ -87,7 +87,7 @@ function resolveGmailLabelTextColor(color: string, textColor: GmailLabelTextColo
     return "#000000";
   }
 
-  return getContrastTextColor(color);
+  return `contrast-color(${color})`;
 }
 
 export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
