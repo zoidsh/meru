@@ -173,18 +173,12 @@ class Accounts {
       }),
     );
 
-    for (const [accountId, account] of this.instances) {
-      if (accountId === selectedAccountId) {
-        main.window.contentView.removeChildView(account.gmail.view);
-        main.window.contentView.addChildView(account.gmail.view);
-        account.gmail.updateViewBounds();
-        account.gmail.view.webContents.focus();
+    const selectedAccount = this.getSelectedAccount();
 
-        return account;
-      }
-    }
+    main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
 
-    throw new Error("Could not find account to select");
+    selectedAccount.instance.gmail.updateViewBounds();
+    selectedAccount.instance.gmail.view.webContents.focus();
   }
 
   selectPreviousAccount() {
