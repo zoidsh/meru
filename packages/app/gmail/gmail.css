@@ -39,6 +39,8 @@ html.meru-hide-out-of-office-banner #\:7 {
   display: none !important;
 }
 
-html.meru-hide-gmail-upgrade div[data-pep-id="global-pep-gmail"] {
+html.meru-hide-gmail-upgrade div[data-pep-id="global-pep-gmail"],
+html.meru-hide-gmail-upgrade
+  span:has(> div > div > div > div > div[data-action-behavior*="one.google.com/dynamic-plans"]) {
   display: none !important;
 }
