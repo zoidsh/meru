@@ -656,11 +656,23 @@ export class Gmail {
 
       const account = accounts.getAccount(this.accountId);
 
+      const hasMultipleAccounts = accounts.getAccountConfigs().length > 1;
+
       for (const newMailIndex of newMailIndexes.reverse()) {
         const newMail = unreadInbox[newMailIndex];
 
         if (!newMail) {
           throw new Error("New mail not found");
+        }
+
+        let notificationTitle: string;
+
+        if (config.get("notifications.showSender")) {
+          notificationTitle = hasMultipleAccounts
+            ? `[${account.config.label}] ${newMail.author.name}`
+            : newMail.author.name;
+        } else {
+          notificationTitle = account.config.label;
         }
 
         let subtitle: string | undefined;
@@ -686,9 +698,7 @@ export class Gmail {
             clipboard.writeText(verificationCode);
 
             createNotification({
-              title: config.get("notifications.showSender")
-                ? newMail.author.name
-                : account.config.label,
+              title: notificationTitle,
               body: `Copied verification code ${verificationCode}`,
             });
 
@@ -719,9 +729,7 @@ export class Gmail {
         }
 
         createNewEmailNotification({
-          title: config.get("notifications.showSender")
-            ? newMail.author.name
-            : account.config.label,
+          title: notificationTitle,
           subtitle,
           body,
           actions: [
