@@ -173,8 +173,6 @@ function UnifiedInboxTable({
 
   const rows = table.getRowModel().rows;
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const focusedRowRef = useRef<HTMLTableRowElement>(null);
 
   const isGPrefixActiveRef = useRef(false);
@@ -189,7 +187,7 @@ function UnifiedInboxTable({
     ipc.main.send("gmail.openMessage", message.id);
   };
 
-  useHotkeys("j", (event) => {
+  useHotkeys(["j", "down"], (event) => {
     event.preventDefault();
 
     if (focusedIndex < rows.length - 1) {
@@ -201,7 +199,7 @@ function UnifiedInboxTable({
     }
   });
 
-  useHotkeys("k", (event) => {
+  useHotkeys(["k", "up"], (event) => {
     event.preventDefault();
 
     if (focusedIndex > 0) {
@@ -270,12 +268,10 @@ function UnifiedInboxTable({
   }, [rows.length]);
 
   useEffect(() => {
+    focusedRowRef.current?.focus({ preventScroll: true });
+
     focusedRowRef.current?.scrollIntoView({ block: "nearest" });
   }, [focusedIndex]);
-
-  useEffect(() => {
-    containerRef.current?.focus({ preventScroll: true });
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -285,19 +281,16 @@ function UnifiedInboxTable({
 
   return (
     <>
-      <div
-        ref={containerRef}
-        tabIndex={-1}
-        className="border rounded-lg overflow-hidden outline-none"
-      >
+      <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableBody>
             {rows.map((row, index) => (
               <TableRow
                 key={row.id}
                 ref={index === focusedIndex ? focusedRowRef : undefined}
+                tabIndex={index === focusedIndex ? -1 : undefined}
                 data-state={index === focusedIndex ? "selected" : undefined}
-                className="cursor-default"
+                className="cursor-default outline-none"
                 onClick={() => {
                   openMessage(row.original);
                 }}
