@@ -173,6 +173,8 @@ function UnifiedInboxTable({
 
   const rows = table.getRowModel().rows;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const focusedRowRef = useRef<HTMLTableRowElement>(null);
 
   const isGPrefixActiveRef = useRef(false);
@@ -272,6 +274,10 @@ function UnifiedInboxTable({
   }, [focusedIndex]);
 
   useEffect(() => {
+    containerRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
     return () => {
       clearTimeout(gPrefixTimeoutRef.current);
     };
@@ -279,7 +285,11 @@ function UnifiedInboxTable({
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="border rounded-lg overflow-hidden outline-none"
+      >
         <Table>
           <TableBody>
             {rows.map((row, index) => (
