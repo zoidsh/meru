@@ -18,7 +18,9 @@ import {
   ChevronsRightIcon,
   InboxIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import { ms } from "@meru/shared/ms";
 import {
   type PaginationState,
   createColumnHelper,
@@ -151,6 +153,8 @@ function UnifiedInboxTable({
     pageSize: rowsPerPage,
   });
 
+  const [focusedIndex, setFocusedIndex] = useState(0);
+
   const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
 
   const table = useReactTable({
@@ -167,21 +171,128 @@ function UnifiedInboxTable({
 
   const configMutation = useConfigMutation();
 
+  const rows = table.getRowModel().rows;
+
+  const focusedRowRef = useRef<HTMLTableRowElement>(null);
+
+  const isGPrefixActiveRef = useRef(false);
+
+  const gPrefixTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const openMessage = (message: UnifiedInboxMessage) => {
+    ipc.main.send("settings.toggleIsOpen", false);
+
+    ipc.main.send("accounts.selectAccount", message.account.id);
+
+    ipc.main.send("gmail.openMessage", message.id);
+  };
+
+  useHotkeys(["j", "down"], (event) => {
+    event.preventDefault();
+
+    if (focusedIndex < rows.length - 1) {
+      setFocusedIndex(focusedIndex + 1);
+    } else if (table.getCanNextPage()) {
+      table.nextPage();
+
+      setFocusedIndex(0);
+    }
+  });
+
+  useHotkeys(["k", "up"], (event) => {
+    event.preventDefault();
+
+    if (focusedIndex > 0) {
+      setFocusedIndex(focusedIndex - 1);
+    } else if (table.getCanPreviousPage()) {
+      table.previousPage();
+
+      setFocusedIndex(table.getState().pagination.pageSize - 1);
+    }
+  });
+
+  useHotkeys(["enter", "o"], (event) => {
+    event.preventDefault();
+
+    const focusedMessage = rows[focusedIndex]?.original;
+
+    if (focusedMessage) {
+      openMessage(focusedMessage);
+    }
+  });
+
+  useHotkeys("g", () => {
+    isGPrefixActiveRef.current = true;
+
+    clearTimeout(gPrefixTimeoutRef.current);
+
+    gPrefixTimeoutRef.current = setTimeout(() => {
+      isGPrefixActiveRef.current = false;
+    }, ms("1s"));
+  });
+
+  useHotkeys("n", () => {
+    if (!isGPrefixActiveRef.current) {
+      return;
+    }
+
+    isGPrefixActiveRef.current = false;
+
+    clearTimeout(gPrefixTimeoutRef.current);
+
+    if (table.getCanNextPage()) {
+      table.nextPage();
+
+      setFocusedIndex(0);
+    }
+  });
+
+  useHotkeys("p", () => {
+    if (!isGPrefixActiveRef.current) {
+      return;
+    }
+
+    isGPrefixActiveRef.current = false;
+
+    clearTimeout(gPrefixTimeoutRef.current);
+
+    if (table.getCanPreviousPage()) {
+      table.previousPage();
+
+      setFocusedIndex(0);
+    }
+  });
+
+  useEffect(() => {
+    setFocusedIndex((current) => Math.min(current, Math.max(rows.length - 1, 0)));
+  }, [rows.length]);
+
+  useEffect(() => {
+    focusedRowRef.current?.focus({ preventScroll: true });
+
+    focusedRowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [focusedIndex]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(gPrefixTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <>
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
+            {rows.map((row, index) => (
               <TableRow
                 key={row.id}
-                className="cursor-default"
+                ref={index === focusedIndex ? focusedRowRef : undefined}
+                tabIndex={index === focusedIndex ? -1 : undefined}
+                data-state={index === focusedIndex ? "selected" : undefined}
+                className="cursor-default outline-none"
                 onClick={() => {
-                  ipc.main.send("settings.toggleIsOpen", false);
-
-                  ipc.main.send("accounts.selectAccount", row.original.account.id);
-
-                  ipc.main.send("gmail.openMessage", row.original.id);
+                  openMessage(row.original);
                 }}
               >
                 {row.getVisibleCells().map((cell) => (
