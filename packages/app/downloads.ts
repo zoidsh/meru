@@ -74,11 +74,20 @@ class Downloads {
         });
 
         if (state === "completed" && config.get("notifications.downloadCompleted")) {
+          const shouldOpenFile =
+            config.get("notifications.onClickDownloadCompleted") === "openFile";
+
           createNotification({
             title: `Downloaded: ${fileName}`,
-            body: `Click to show the file in ${FILE_MANAGER_NAME}`,
+            body: shouldOpenFile
+              ? "Click to open the file"
+              : `Click to show the file in ${FILE_MANAGER_NAME}`,
             click: () => {
-              shell.showItemInFolder(filePath);
+              if (shouldOpenFile) {
+                shell.openPath(filePath);
+              } else {
+                shell.showItemInFolder(filePath);
+              }
             },
           });
         }

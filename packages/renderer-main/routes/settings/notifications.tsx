@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -266,13 +267,31 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Others</FieldLegend>
+            <FieldLegend>Downloads</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Downloads"
+                label="Show Notification"
                 description="Show a notification when a download is completed, cancelled or failed."
                 configKey="notifications.downloadCompleted"
               />
+              {config["notifications.downloadCompleted"] && (
+                <ConfigSelectField
+                  label="On Click"
+                  description="Choose what happens when clicking the download notification."
+                  configKey="notifications.onClickDownloadCompleted"
+                  placeholder="Select action"
+                  items={[
+                    { value: "showInFolder", label: "Show in Folder" },
+                    { value: "openFile", label: "Open File" },
+                  ]}
+                />
+              )}
+            </FieldGroup>
+          </FieldSet>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLegend>Google Apps</FieldLegend>
+            <FieldGroup>
               <ConfigSwitchField
                 label="Google Apps"
                 description="Allow notifications from Google Apps like Calendar, Meet, Chat, etc."

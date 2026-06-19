@@ -121,6 +121,7 @@ export type Config = {
   "notifications.sound": "system" | NotificationSound;
   "notifications.volume": number;
   "notifications.downloadCompleted": boolean;
+  "notifications.onClickDownloadCompleted": "openFile" | "showInFolder";
   "notifications.times": NotificationTime[];
   "updates.autoCheck": boolean;
   "updates.showNotifications": boolean;

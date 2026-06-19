@@ -102,6 +102,8 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## Settings UI Patterns
 
 - Structure settings fields as: `Field` > `FieldLabel` + `FieldDescription` + control component.
+- Render config-backed fields with the existing wrapper components rather than hand-rolling `Field` + control: `ConfigSwitchField` for a boolean key, `ConfigSelectField` for a string-union key (both in `packages/renderer-main/components/`). Each enforces its key's type at runtime, so the value type dictates the component — a fixed set of named choices should be modeled as a string union + `ConfigSelectField`, not a boolean + switch.
+- In a `ConfigSelectField`, list the option matching the config default first in `items`.
 - Access config via `useConfig()` and persist changes via `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
 - Always guard against unloaded config with an early return before accessing config values:
