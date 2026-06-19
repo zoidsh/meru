@@ -4,7 +4,6 @@ import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -24,7 +23,7 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
-import { Switch } from "@meru/ui/components/switch";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -276,28 +275,16 @@ export function NotificationsSettings() {
                 configKey="notifications.downloadCompleted"
               />
               {config["notifications.downloadCompleted"] && (
-                <Field orientation="horizontal">
-                  <FieldContent>
-                    <FieldLabel htmlFor="notifications.onClickDownloadCompleted">
-                      Open File on Click
-                    </FieldLabel>
-                    <FieldDescription>
-                      Open the downloaded file when clicking the notification instead of showing it
-                      in folder.
-                    </FieldDescription>
-                  </FieldContent>
-                  <Switch
-                    id="notifications.onClickDownloadCompleted"
-                    checked={config["notifications.onClickDownloadCompleted"] === "openFile"}
-                    onCheckedChange={(checked) => {
-                      configMutation.mutate({
-                        "notifications.onClickDownloadCompleted": checked
-                          ? "openFile"
-                          : "showInFolder",
-                      });
-                    }}
-                  />
-                </Field>
+                <ConfigSelectField
+                  label="On Click"
+                  description="Choose what happens when clicking the download notification."
+                  configKey="notifications.onClickDownloadCompleted"
+                  placeholder="Select action"
+                  items={[
+                    { value: "openFile", label: "Open File" },
+                    { value: "showInFolder", label: "Show in Folder" },
+                  ]}
+                />
               )}
             </FieldGroup>
           </FieldSet>

@@ -11,6 +11,12 @@ import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
 import { getPreloadPath, loadRenderer } from "./lib/window";
 
+const FILE_MANAGER_NAME = platform.isMacOS
+  ? "Finder"
+  : platform.isWindows
+    ? "File Explorer"
+    : "your file manager";
+
 class Downloads {
   recentDownloadHistoryView: WebContentsView | null = null;
 
@@ -73,7 +79,9 @@ class Downloads {
 
           createNotification({
             title: `Downloaded: ${fileName}`,
-            body: shouldOpenFile ? "Click to open the file" : "Click to show the file in folder",
+            body: shouldOpenFile
+              ? "Click to open the file"
+              : `Click to show the file in ${FILE_MANAGER_NAME}`,
             click: () => {
               if (shouldOpenFile) {
                 shell.openPath(filePath);
