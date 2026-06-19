@@ -281,8 +281,8 @@ export function NotificationsSettings() {
                   configKey="notifications.onClickDownloadCompleted"
                   placeholder="Select action"
                   items={[
-                    { value: "openFile", label: "Open File" },
                     { value: "showInFolder", label: "Show in Folder" },
+                    { value: "openFile", label: "Open File" },
                   ]}
                 />
               )}
