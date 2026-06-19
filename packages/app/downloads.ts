@@ -11,12 +11,6 @@ import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
 import { getPreloadPath, loadRenderer } from "./lib/window";
 
-const FILE_MANAGER_NAME = platform.isMacOS
-  ? "Finder"
-  : platform.isWindows
-    ? "File Explorer"
-    : "your file manager";
-
 class Downloads {
   recentDownloadHistoryView: WebContentsView | null = null;
 
@@ -74,11 +68,18 @@ class Downloads {
         });
 
         if (state === "completed" && config.get("notifications.downloadCompleted")) {
+          const shouldOpenFile =
+            config.get("notifications.onClickDownloadCompleted") === "openFile";
+
           createNotification({
             title: `Downloaded: ${fileName}`,
-            body: `Click to show the file in ${FILE_MANAGER_NAME}`,
+            body: shouldOpenFile ? "Click to open the file" : "Click to show the file in folder",
             click: () => {
-              shell.showItemInFolder(filePath);
+              if (shouldOpenFile) {
+                shell.openPath(filePath);
+              } else {
+                shell.showItemInFolder(filePath);
+              }
             },
           });
         }

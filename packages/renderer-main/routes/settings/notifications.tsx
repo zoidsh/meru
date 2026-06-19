@@ -4,6 +4,7 @@ import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -23,6 +24,7 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
+import { Switch } from "@meru/ui/components/switch";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -266,13 +268,43 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Others</FieldLegend>
+            <FieldLegend>Downloads</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Downloads"
+                label="Show Notification"
                 description="Show a notification when a download is completed, cancelled or failed."
                 configKey="notifications.downloadCompleted"
               />
+              {config["notifications.downloadCompleted"] && (
+                <Field orientation="horizontal">
+                  <FieldContent>
+                    <FieldLabel htmlFor="notifications.onClickDownloadCompleted">
+                      Open File on Click
+                    </FieldLabel>
+                    <FieldDescription>
+                      Open the downloaded file when clicking the notification instead of showing it
+                      in folder.
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="notifications.onClickDownloadCompleted"
+                    checked={config["notifications.onClickDownloadCompleted"] === "openFile"}
+                    onCheckedChange={(checked) => {
+                      configMutation.mutate({
+                        "notifications.onClickDownloadCompleted": checked
+                          ? "openFile"
+                          : "showInFolder",
+                      });
+                    }}
+                  />
+                </Field>
+              )}
+            </FieldGroup>
+          </FieldSet>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLegend>Google Apps</FieldLegend>
+            <FieldGroup>
               <ConfigSwitchField
                 label="Google Apps"
                 description="Allow notifications from Google Apps like Calendar, Meet, Chat, etc."
