@@ -98,7 +98,7 @@ export type Config = {
   "accounts.unreadBadge": boolean;
   launchMinimized: boolean;
   launchAtLogin: boolean;
-  hardwareAcceleration: boolean;
+  "app.hardwareAcceleration": boolean;
   resetApp: boolean;
   theme: "system" | "light" | "dark";
   licenseKey: string | null;

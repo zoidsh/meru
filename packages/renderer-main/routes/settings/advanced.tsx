@@ -166,7 +166,7 @@ export function AdvancedSettings() {
               <ConfigSwitchField
                 label="Hardware Acceleration"
                 description="Enabling hardware acceleration can improve performance but can also cause compatibility issues on some systems."
-                configKey="hardwareAcceleration"
+                configKey="app.hardwareAcceleration"
                 restartRequired
               />
               {platform.isMacOS && (
