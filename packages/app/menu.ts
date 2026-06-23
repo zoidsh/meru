@@ -425,7 +425,7 @@ export class AppMenu {
           },
           {
             label: "Developer Tools",
-            accelerator: platform.isMacOS ? "Command+Alt+I" : "Control+Shift+I",
+            accelerator: is.dev && platform.isMacOS ? "Command+Alt+I" : undefined,
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
                 const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
