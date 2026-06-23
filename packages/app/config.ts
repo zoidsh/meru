@@ -30,9 +30,9 @@ export const config = new Store<Config>({
       },
     ],
     "accounts.unreadBadge": true,
+    "app.hardwareAcceleration": true,
     launchMinimized: false,
     launchAtLogin: false,
-    hardwareAcceleration: false,
     resetApp: false,
     theme: "system",
     licenseKey: null,
@@ -311,6 +311,15 @@ export const config = new Store<Config>({
       if (store.has("updates.notificationDelay")) {
         // @ts-expect-error
         store.delete("updates.notificationDelay");
+      }
+    },
+    ">3.51.0": (store) => {
+      // @ts-expect-error: `hardwareAcceleration` is now 'app.hardwareAcceleration'
+      if (typeof store.get("hardwareAcceleration") === "boolean") {
+        store.set("app.hardwareAcceleration", true);
+
+        // @ts-expect-error
+        store.delete("hardwareAcceleration");
       }
     },
   },

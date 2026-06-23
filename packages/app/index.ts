@@ -67,7 +67,7 @@ async function init() {
     return;
   }
 
-  if (config.get("hardwareAcceleration") === false) {
+  if (config.get("app.hardwareAcceleration") === false) {
     app.disableHardwareAcceleration();
   }
 

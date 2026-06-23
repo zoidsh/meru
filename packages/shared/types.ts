@@ -96,9 +96,9 @@ type GmailHashLocation =
 export type Config = {
   accounts: AccountConfigs;
   "accounts.unreadBadge": boolean;
+  "app.hardwareAcceleration": boolean;
   launchMinimized: boolean;
   launchAtLogin: boolean;
-  hardwareAcceleration: boolean;
   resetApp: boolean;
   theme: "system" | "light" | "dark";
   licenseKey: string | null;
