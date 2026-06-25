@@ -1,4 +1,5 @@
 import { GMAIL_URL } from "@meru/shared/gmail";
+import { ms } from "@meru/shared/ms";
 
 let urlPreviewElement: HTMLElement | null = null;
 
@@ -54,7 +55,7 @@ function createUrlPreviewElement(href: string) {
     if (urlPreviewElement) {
       urlPreviewElement.setAttribute("data-long-hover", "true");
     }
-  }, 1500);
+  }, ms("1.5s"));
 }
 
 function lookupHref(target: HTMLElement) {
