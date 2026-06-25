@@ -495,6 +495,25 @@ export class Gmail {
     main.window.contentView.removeChildView(this.view);
   }
 
+  private setDelegatedAccountId(delegatedAccountId: string | null) {
+    config.set(
+      "accounts",
+      config.get("accounts").map((account) => {
+        if (account.id === this.accountId) {
+          return {
+            ...account,
+            gmail: {
+              ...account.gmail,
+              delegatedAccountId,
+            },
+          };
+        }
+
+        return account;
+      }),
+    );
+  }
+
   registerWindowOpenHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.setWindowOpenHandler((details) => {
       const { url, disposition } = details;
@@ -505,22 +524,7 @@ export class Gmail {
         if (gmailDelegatedAccountId) {
           window.webContents.loadURL(url);
 
-          config.set(
-            "accounts",
-            config.get("accounts").map((account) => {
-              if (account.id === this.accountId) {
-                return {
-                  ...account,
-                  gmail: {
-                    ...account.gmail,
-                    delegatedAccountId: gmailDelegatedAccountId,
-                  },
-                };
-              }
-
-              return account;
-            }),
-          );
+          this.setDelegatedAccountId(gmailDelegatedAccountId);
 
           return { action: "deny" };
         }
@@ -531,22 +535,7 @@ export class Gmail {
           const account = accounts.getAccount(this.accountId);
 
           if (account.config.gmail.delegatedAccountId) {
-            config.set(
-              "accounts",
-              config.get("accounts").map((account) => {
-                if (account.id === this.accountId) {
-                  return {
-                    ...account,
-                    gmail: {
-                      ...account.gmail,
-                      delegatedAccountId: null,
-                    },
-                  };
-                }
-
-                return account;
-              }),
-            );
+            this.setDelegatedAccountId(null);
           }
 
           return { action: "deny" };
