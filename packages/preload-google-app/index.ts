@@ -1,4 +1,5 @@
 import "@meru/shared/electron-api";
+import "./ipc";
 import { initMailPreload } from "./apps/mail";
 import { initMeetPreload } from "./apps/meet";
 

@@ -1,7 +1,7 @@
 import { observeBodyMutations } from "@meru/shared/dom";
 import { GMAIL_PRELOAD_ARGUMENTS, isGmailComposeWindowUrl } from "@meru/shared/gmail";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { $ } from "select-dom";
-import { ipcMain, ipcRenderer } from "@/ipc";
 
 const isCloseComposeWindowAfterSendEnabled = process.argv.includes(
   GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend,
@@ -24,9 +24,9 @@ function closeComposeWindowAfterSend() {
 
   messageSentElement.setAttribute(messageSentElementProcessedAttribute, "");
 
-  ipcMain.send("gmail.closeComposeWindow");
+  ipc.main.send("gmail.closeComposeWindow");
 
-  ipcRenderer.once("gmail.undoMessageSent", () => {
+  ipc.renderer.once("gmail.undoMessageSent", () => {
     const undoElement = $("span#link_undo", messageSentElement);
 
     if (!undoElement) {

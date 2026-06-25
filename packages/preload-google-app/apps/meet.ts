@@ -1,5 +1,5 @@
+import { ipc } from "@meru/shared/renderer/ipc";
 import { $$ } from "select-dom";
-import { ipcRenderer } from "@/ipc";
 
 function toggleMuteButton(button: "microphone" | "camera") {
   const muteButtons = $$("button[data-is-muted]");
@@ -12,11 +12,11 @@ function toggleMuteButton(button: "microphone" | "camera") {
 }
 
 export function initMeetPreload() {
-  ipcRenderer.on("googleMeet.toggleMicrophone", () => {
+  ipc.renderer.on("googleMeet.toggleMicrophone", () => {
     toggleMuteButton("microphone");
   });
 
-  ipcRenderer.on("googleMeet.toggleCamera", () => {
+  ipc.renderer.on("googleMeet.toggleCamera", () => {
     toggleMuteButton("camera");
   });
 }

@@ -1,5 +1,5 @@
+import { ipc } from "@meru/shared/renderer/ipc";
 import { $ } from "select-dom";
-import { ipcMain } from "./ipc";
 import { createNotMatchingAttributeSelector } from "./lib/utils";
 
 const userEmailElementProcessedAttribute = "data-meru-user-email";
@@ -20,5 +20,5 @@ export function setUserEmail() {
 
   userEmailElement.setAttribute(userEmailElementProcessedAttribute, "");
 
-  ipcMain.send("gmail.setUserEmail", userEmail);
+  ipc.main.send("gmail.setUserEmail", userEmail);
 }

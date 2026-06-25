@@ -1,8 +1,8 @@
+import { ipc } from "@meru/shared/renderer/ipc";
 import { $ } from "select-dom";
-import { ipcMain } from "./ipc";
 
 export function observeOutOfOfficeBanner() {
   const outOfOfficeElement = $("#\\:7:has(div#\\:k)");
 
-  ipcMain.send("gmail.setOutOfOffice", Boolean(outOfOfficeElement));
+  ipc.main.send("gmail.setOutOfOffice", Boolean(outOfOfficeElement));
 }
