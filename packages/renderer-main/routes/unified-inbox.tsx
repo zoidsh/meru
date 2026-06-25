@@ -187,39 +187,51 @@ function UnifiedInboxTable({
     ipc.main.send("gmail.openMessage", message.id);
   };
 
-  useHotkeys(["j", "down"], (event) => {
-    event.preventDefault();
+  useHotkeys(
+    ["j", "down"],
+    (event) => {
+      event.preventDefault();
 
-    if (focusedIndex < rows.length - 1) {
-      setFocusedIndex(focusedIndex + 1);
-    } else if (table.getCanNextPage()) {
-      table.nextPage();
+      if (focusedIndex < rows.length - 1) {
+        setFocusedIndex(focusedIndex + 1);
+      } else if (table.getCanNextPage()) {
+        table.nextPage();
 
-      setFocusedIndex(0);
-    }
-  });
+        setFocusedIndex(0);
+      }
+    },
+    [focusedIndex, rows],
+  );
 
-  useHotkeys(["k", "up"], (event) => {
-    event.preventDefault();
+  useHotkeys(
+    ["k", "up"],
+    (event) => {
+      event.preventDefault();
 
-    if (focusedIndex > 0) {
-      setFocusedIndex(focusedIndex - 1);
-    } else if (table.getCanPreviousPage()) {
-      table.previousPage();
+      if (focusedIndex > 0) {
+        setFocusedIndex(focusedIndex - 1);
+      } else if (table.getCanPreviousPage()) {
+        table.previousPage();
 
-      setFocusedIndex(table.getState().pagination.pageSize - 1);
-    }
-  });
+        setFocusedIndex(table.getState().pagination.pageSize - 1);
+      }
+    },
+    [focusedIndex],
+  );
 
-  useHotkeys(["enter", "o"], (event) => {
-    event.preventDefault();
+  useHotkeys(
+    ["enter", "o"],
+    (event) => {
+      event.preventDefault();
 
-    const focusedMessage = rows[focusedIndex]?.original;
+      const focusedMessage = rows[focusedIndex]?.original;
 
-    if (focusedMessage) {
-      openMessage(focusedMessage);
-    }
-  });
+      if (focusedMessage) {
+        openMessage(focusedMessage);
+      }
+    },
+    [focusedIndex, rows],
+  );
 
   useHotkeys("g", () => {
     isGPrefixActiveRef.current = true;
