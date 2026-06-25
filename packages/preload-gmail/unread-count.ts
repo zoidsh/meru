@@ -1,4 +1,4 @@
-import { ipcMain } from "./ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { inboxAnchorElementSelector } from "./lib/selectors";
 
 let previousUnreadCountString: string = "";
@@ -8,7 +8,7 @@ export function observeUnreadCount() {
     document.querySelector(`div:has(> ${inboxAnchorElementSelector}) .bsU`)?.textContent || "";
 
   if (currentUnreadCountString !== previousUnreadCountString) {
-    ipcMain.send("gmail.unreadCountChanged", currentUnreadCountString);
+    ipc.main.send("gmail.unreadCountChanged", currentUnreadCountString);
 
     previousUnreadCountString = currentUnreadCountString;
   }

@@ -1,27 +1,22 @@
-import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
-import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { toast } from "sonner";
 import { refreshInbox, sendMailAction } from "./inbox";
 
-export const ipcRenderer = new IpcListener<IpcRendererEvent>();
-
-export const ipcMain = new IpcEmitter<IpcMainEvents>();
-
-ipcRenderer.on("gmail.navigateTo", (_event, destination) => {
+ipc.renderer.on("gmail.navigateTo", (_event, destination) => {
   window.location.hash = `#${destination}`;
 });
 
-ipcRenderer.on("gmail.openMessage", (_event, messageId: string) => {
+ipc.renderer.on("gmail.openMessage", (_event, messageId: string) => {
   window.location.hash = `#inbox/${messageId}`;
 });
 
-ipcRenderer.on("gmail.handleMessage", async (_event, messageId, action) => {
+ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
   await sendMailAction(messageId, action);
 
   refreshInbox();
 });
 
-ipcRenderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
+ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
   toast.success("Message sent", {
     id: browserWindowId,
     duration: Number.POSITIVE_INFINITY,
@@ -29,12 +24,12 @@ ipcRenderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: nu
     action: {
       label: "Undo",
       onClick: () => {
-        ipcMain.send("gmail.undoMessageSent", browserWindowId);
+        ipc.main.send("gmail.undoMessageSent", browserWindowId);
       },
     },
   });
 });
 
-ipcRenderer.on("gmail.dismissMessageSentNotification", (_event, browserWindowId: number) => {
+ipc.renderer.on("gmail.dismissMessageSentNotification", (_event, browserWindowId: number) => {
   toast.dismiss(browserWindowId);
 });
