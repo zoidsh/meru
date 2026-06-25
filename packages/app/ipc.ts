@@ -1,6 +1,8 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
+import { machineId } from "node-machine-id";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -282,6 +284,27 @@ class Ipc {
       } else {
         app.setAsDefaultProtocolClient(MAILTO_PROTOCOL);
       }
+    });
+
+    ipc.main.handle("troubleshooting.getInfo", async () => ({
+      version: app.getVersion(),
+      os: `${os.type()} ${os.release()} (${os.arch()})`,
+      machineId: await machineId(),
+    }));
+
+    ipc.main.handle("troubleshooting.exportLogs", async () => {
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        defaultPath: "meru.log",
+        buttonLabel: "Export",
+      });
+
+      if (canceled || !filePath) {
+        return { canceled: true };
+      }
+
+      fs.copyFileSync(log.transports.file.getFile().path, filePath);
+
+      return { canceled: false };
     });
 
     ipc.main.on("notifications.showTestNotification", () => {

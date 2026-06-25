@@ -17,6 +17,7 @@ import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
 import { PhishingProtectionSettings } from "@/routes/settings/phishing-protection";
 import { SavedSearchesSettings } from "@/routes/settings/saved-searches";
+import { TroubleshootingSettings } from "@/routes/settings/troubleshooting";
 import { UnifiedInboxSettings } from "@/routes/settings/unified-inbox";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
@@ -98,6 +99,11 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     label: "Advanced",
     path: "/settings/advanced",
     component: AdvancedSettings,
+  },
+  {
+    label: "Troubleshooting",
+    path: "/settings/troubleshooting",
+    component: TroubleshootingSettings,
   },
   { type: "separator" },
   { label: "License", path: "/settings/license", component: LicenseSettings },
