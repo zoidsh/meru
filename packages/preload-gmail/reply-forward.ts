@@ -2,6 +2,7 @@ import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import {
   createElementAttributeFromPreloadArgument,
   createNotMatchingAttributeSelector,
+  reEmitClickWithShiftKey,
 } from "./lib/utils";
 import { $, $$ } from "select-dom";
 
@@ -42,27 +43,6 @@ export function replyForwardInPopOut() {
   }
 
   for (const replyForwardButton of replyForwardButtons) {
-    let isClicked = false;
-
-    replyForwardButton.addEventListener("click", (event) => {
-      if (isClicked) {
-        isClicked = false;
-
-        return;
-      }
-
-      isClicked = true;
-
-      event.stopPropagation();
-
-      const clickEvent = new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        shiftKey: true,
-      });
-
-      replyForwardButton.dispatchEvent(clickEvent);
-    });
+    reEmitClickWithShiftKey(replyForwardButton);
   }
 }
