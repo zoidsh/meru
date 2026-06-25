@@ -49,14 +49,6 @@ export class AppMenu {
 
     this._subscribeToSelectedAccount();
 
-    this.menu.on("menu-will-show", () => {
-      this._isPopupOpen = true;
-    });
-
-    this.menu.on("menu-will-close", () => {
-      this._isPopupOpen = false;
-    });
-
     Menu.setApplicationMenu(this.menu);
 
     config.onDidChange("accounts", () => {
@@ -78,6 +70,8 @@ export class AppMenu {
     for (const unsubscribe of this._selectedAccountUnsubscribeFns) {
       unsubscribe();
     }
+
+    this._selectedAccountUnsubscribeFns.clear();
 
     const selectedAccount = accounts.getSelectedAccount();
 
@@ -725,7 +719,17 @@ export class AppMenu {
       },
     ];
 
-    return Menu.buildFromTemplate(template);
+    const menu = Menu.buildFromTemplate(template);
+
+    menu.on("menu-will-show", () => {
+      this._isPopupOpen = true;
+    });
+
+    menu.on("menu-will-close", () => {
+      this._isPopupOpen = false;
+    });
+
+    return menu;
   }
 
   togglePopup() {
