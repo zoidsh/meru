@@ -160,6 +160,11 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - This is not about doing less work overall — it's about staging it so each step is easy to read, question, and approve.
 - Make only the change that was asked for. Don't add adjacent styling, props, classes, or behavior that wasn't requested, even if it seems like an improvement (e.g. a destructive text tint on a delete button). When restyling to "match the app", reference a sibling component/page and reuse its exact variants and classes rather than inventing new ones.
 
+## Git Commits
+
+- Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
+- Keep each commit to a single logical change.
+
 ## Release Notes
 
 - Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
