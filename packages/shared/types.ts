@@ -242,6 +242,8 @@ export type IpcMainEvents =
       "app.setLoginItemSettings": (settings: Partial<LoginItemSettings>) => void;
       "app.getIsDefaultMailtoClient": () => boolean;
       "app.setAsDefaultMailtoClient": () => void;
+      "about.getInfo": () => { version: string; os: string; machineId: string };
+      "about.exportLogs": () => { canceled: boolean };
       "googleApp.getLoadingState": () => boolean;
     };
 

@@ -5,6 +5,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { platform } from "@meru/shared/renderer/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { AccountsSettings } from "@/routes/settings/accounts";
+import { AboutSettings } from "@/routes/settings/about";
 import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
 import { BlockerSettings } from "@/routes/settings/blocker";
@@ -105,6 +106,11 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     label: "What's New",
     path: "/settings/version-history",
     component: VersionHistorySettings,
+  },
+  {
+    label: "About Meru",
+    path: "/settings/about",
+    component: AboutSettings,
   },
 ];
 
