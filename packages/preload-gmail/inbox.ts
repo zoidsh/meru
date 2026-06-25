@@ -1,13 +1,12 @@
 import { GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "@meru/shared/gmail";
 import { $ } from "select-dom";
+import { inboxAnchorElementSelector } from "./lib/selectors";
 
 declare global {
   interface Window {
     GM_ID_KEY: string;
   }
 }
-
-const inboxAnchorElementSelector = 'span > a[href*="#inbox"]';
 
 let gmailIdKey: string | undefined;
 
