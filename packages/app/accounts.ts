@@ -72,24 +72,22 @@ class Accounts {
 
     // When window is closed/minimized, the account views sometimes don't render after showing/restoring window
     main.window.on("show", () => {
-      const selectedAccount = this.getSelectedAccount();
-
-      main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
-      main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
-
-      selectedAccount.instance.gmail.updateViewBounds();
-      selectedAccount.instance.gmail.view.webContents.focus();
+      this.refreshSelectedAccountView();
     });
 
     main.window.on("restore", () => {
-      const selectedAccount = this.getSelectedAccount();
-
-      main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
-      main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
-
-      selectedAccount.instance.gmail.updateViewBounds();
-      selectedAccount.instance.gmail.view.webContents.focus();
+      this.refreshSelectedAccountView();
     });
+  }
+
+  refreshSelectedAccountView() {
+    const selectedAccount = this.getSelectedAccount();
+
+    main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
+    main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+
+    selectedAccount.instance.gmail.updateViewBounds();
+    selectedAccount.instance.gmail.view.webContents.focus();
   }
 
   getAccountConfigs() {
