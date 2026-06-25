@@ -1,8 +1,7 @@
 import { ipcMain } from "./ipc";
+import { inboxAnchorElementSelector } from "./lib/selectors";
 
 let previousUnreadCountString: string = "";
-
-const inboxAnchorElementSelector = 'span > a[href*="#inbox"]';
 
 export function observeUnreadCount() {
   const currentUnreadCountString =
