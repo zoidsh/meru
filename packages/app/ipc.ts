@@ -286,13 +286,13 @@ class Ipc {
       }
     });
 
-    ipc.main.handle("troubleshooting.getInfo", async () => ({
+    ipc.main.handle("about.getInfo", async () => ({
       version: app.getVersion(),
       os: `${os.type()} ${os.release()} (${os.arch()})`,
       machineId: await machineId(),
     }));
 
-    ipc.main.handle("troubleshooting.exportLogs", async () => {
+    ipc.main.handle("about.exportLogs", async () => {
       const { canceled, filePath } = await dialog.showSaveDialog({
         defaultPath: "meru.log",
         buttonLabel: "Export",

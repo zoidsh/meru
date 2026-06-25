@@ -109,7 +109,7 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   },
   {
     label: "About Meru",
-    path: "/help",
+    path: "/settings/about",
     component: AboutSettings,
   },
 ];

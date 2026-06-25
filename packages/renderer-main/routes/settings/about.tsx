@@ -25,7 +25,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 function DiagnosticInfo() {
   const { data: info, isPending } = useQuery({
     queryKey: ["about", "info"],
-    queryFn: () => ipc.main.invoke("troubleshooting.getInfo"),
+    queryFn: () => ipc.main.invoke("about.getInfo"),
   });
 
   if (isPending || !info) {
@@ -50,9 +50,7 @@ function DiagnosticInfo() {
         <Item key={label} variant="muted">
           <ItemContent className="min-w-0">
             <ItemTitle>{label}</ItemTitle>
-            <ItemDescription>
-              <span className="block truncate">{value}</span>
-            </ItemDescription>
+            <ItemDescription className="truncate">{value}</ItemDescription>
           </ItemContent>
           <ItemActions>
             <CopyButton value={value} />
@@ -65,7 +63,7 @@ function DiagnosticInfo() {
 
 function ExportLogsField() {
   const exportLogsMutation = useMutation({
-    mutationFn: () => ipc.main.invoke("troubleshooting.exportLogs"),
+    mutationFn: () => ipc.main.invoke("about.exportLogs"),
     onSuccess: ({ canceled }) => {
       if (!canceled) {
         toast("Logs exported successfully");
