@@ -90,7 +90,7 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
 
     nativeTheme.on("updated", updateBackgroundColor);
 
-    browserWindow.on("closed", () => {
+    browserWindow.once("closed", () => {
       nativeTheme.off("updated", updateBackgroundColor);
     });
   }
