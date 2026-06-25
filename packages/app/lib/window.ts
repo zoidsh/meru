@@ -83,6 +83,18 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
     browserWindow.show();
   });
 
+  if (options.backgroundColor) {
+    const updateBackgroundColor = () => {
+      browserWindow.setBackgroundColor(getBackgroundColor());
+    };
+
+    nativeTheme.on("updated", updateBackgroundColor);
+
+    browserWindow.on("closed", () => {
+      nativeTheme.off("updated", updateBackgroundColor);
+    });
+  }
+
   return browserWindow;
 }
 
