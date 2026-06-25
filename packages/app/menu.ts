@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import { clamp } from "@meru/shared/utils";
 import {
   app,
   BrowserWindow,
@@ -14,7 +15,7 @@ import {
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
-import { GoogleApp } from "@/google-app";
+import { GoogleApp, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from "@/google-app";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import { main } from "@/main";
@@ -120,7 +121,11 @@ export class AppMenu {
         return;
       }
 
-      const zoomFactor = config.get("gmail.zoomFactor") + 0.1;
+      const zoomFactor = clamp(
+        config.get("gmail.zoomFactor") + 0.1,
+        MIN_ZOOM_FACTOR,
+        MAX_ZOOM_FACTOR,
+      );
 
       for (const [_accountId, instance] of accounts.instances) {
         instance.gmail.view.webContents.setZoomFactor(zoomFactor);
@@ -136,15 +141,17 @@ export class AppMenu {
         return;
       }
 
-      const zoomFactor = config.get("gmail.zoomFactor") - 0.1;
+      const zoomFactor = clamp(
+        config.get("gmail.zoomFactor") - 0.1,
+        MIN_ZOOM_FACTOR,
+        MAX_ZOOM_FACTOR,
+      );
 
-      if (zoomFactor > 0) {
-        for (const [_accountId, instance] of accounts.instances) {
-          instance.gmail.view.webContents.setZoomFactor(zoomFactor);
-        }
-
-        config.set("gmail.zoomFactor", zoomFactor);
+      for (const [_accountId, instance] of accounts.instances) {
+        instance.gmail.view.webContents.setZoomFactor(zoomFactor);
       }
+
+      config.set("gmail.zoomFactor", zoomFactor);
     };
 
     const selectedAccount = accounts.getSelectedAccount();

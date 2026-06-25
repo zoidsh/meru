@@ -34,8 +34,8 @@ import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
 
-const MIN_ZOOM_FACTOR = 0.1;
-const MAX_ZOOM_FACTOR = 3;
+export const MIN_ZOOM_FACTOR = 0.1;
+export const MAX_ZOOM_FACTOR = 3;
 
 const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
 
