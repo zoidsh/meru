@@ -1,6 +1,7 @@
 import { nativeTheme } from "electron";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { getBackgroundColor } from "@/lib/window";
 import { main } from "@/main";
 import { appTray } from "@/tray";
 
@@ -14,6 +15,8 @@ class Theme {
         "theme.darkModeChanged",
         nativeTheme.shouldUseDarkColors,
       );
+
+      main.window.setBackgroundColor(getBackgroundColor());
 
       main.updateTitlebarOverlay();
 

@@ -42,11 +42,15 @@ export function getPreloadPath(name: string) {
   return path.join(__dirname, `preload-${name}.js`);
 }
 
+export function getBackgroundColor() {
+  return nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff";
+}
+
 export function getTitleBarOptions() {
   const titleBarOverlay =
     !platform.isLinux || isLinuxWindowControlsEnabled()
       ? {
-          color: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
+          color: getBackgroundColor(),
           symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
           height: APP_TITLEBAR_HEIGHT - 1,
         }
@@ -61,6 +65,7 @@ export function getTitleBarOptions() {
 export function getCommonBrowserWindowOptions() {
   return {
     ...getTitleBarOptions(),
+    backgroundColor: getBackgroundColor(),
     darkTheme: nativeTheme.shouldUseDarkColors,
     webPreferences: {
       preload: getPreloadPath("renderer"),
