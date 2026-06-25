@@ -154,6 +154,12 @@ async function init() {
   });
 
   if (platform.isMacOS) {
+    app.on("did-become-active", () => {
+      if (!main.window.isVisible()) {
+        main.show();
+      }
+    });
+
     app.on("open-url", (_event, url) => {
       if (isMailtoUrl(url)) {
         handleMailtoUrl(url);
