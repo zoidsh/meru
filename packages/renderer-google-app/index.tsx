@@ -1,5 +1,5 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { ms } from "@meru/shared/ms";
+import { useCopied } from "@meru/shared/renderer/hooks";
 import { renderApp } from "@meru/shared/renderer/react";
 import { AccountBadge } from "@meru/ui/components/account-badge";
 import { FindInPage } from "@meru/ui/components/find-in-page";
@@ -84,24 +84,14 @@ function ReloadButton() {
 }
 
 function CopyUrlButton() {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-
-    const timeout = setTimeout(() => setCopied(false), ms("1.5s"));
-
-    return () => clearTimeout(timeout);
-  }, [copied]);
+  const { copied, markCopied } = useCopied();
 
   return (
     <TitlebarIconButton
       title="Copy URL"
       onClick={() => {
         ipc.main.send("googleApp.copyUrl");
-        setCopied(true);
+        markCopied();
       }}
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
