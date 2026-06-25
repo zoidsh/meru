@@ -5,6 +5,21 @@ import { licenseKey } from "./license-key";
 import { checkWithinNotificationTimes } from "./lib/notifications";
 import { main } from "./main";
 
+function attachNotificationListeners(
+  notification: Notification,
+  { click, action }: { click?: () => void; action?: (index: number) => void },
+) {
+  if (click) {
+    notification.once("click", click);
+  }
+
+  if (action) {
+    notification.once("action", (_event, index) => {
+      action(index);
+    });
+  }
+}
+
 export function isWithinNotificationTimes() {
   if (!licenseKey.isValid) {
     return true;
@@ -33,15 +48,7 @@ export function createNewEmailNotification({
     ...options,
   });
 
-  if (click) {
-    notification.once("click", click);
-  }
-
-  if (action) {
-    notification.once("action", (_event, index) => {
-      action(index);
-    });
-  }
+  attachNotificationListeners(notification, { click, action });
 
   if (sound !== "system" && playSound) {
     notification.once("show", () => {
@@ -71,15 +78,7 @@ export function createNotification({
 
   const notification = new Notification(options);
 
-  if (click) {
-    notification.once("click", click);
-  }
-
-  if (action) {
-    notification.once("action", (_event, index) => {
-      action(index);
-    });
-  }
+  attachNotificationListeners(notification, { click, action });
 
   notification.show();
 
