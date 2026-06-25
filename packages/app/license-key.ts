@@ -114,65 +114,63 @@ class LicenseKey {
       return true;
     }
 
-    if (licenseKey) {
-      const { error, isDefined } = await (
-        useFallback ? apiFallbackClient : apiClient
-      ).v2.license.validate({
-        licenseKey,
-        deviceId: await machineId(),
-      });
+    const { error, isDefined } = await (
+      useFallback ? apiFallbackClient : apiClient
+    ).v2.license.validate({
+      licenseKey,
+      deviceId: await machineId(),
+    });
 
-      if (error) {
-        if (isDefined) {
-          const errorMessages: Record<typeof error.code, string> = {
-            LICENSE_KEY_INVALID: "The license key is invalid",
-            LICENSE_DISABLED: "The license key has been disabled",
-            LICENSE_EXPIRED: "The license key has expired",
-            DEVICE_NOT_ACTIVATED: "The license key is not activated for this device",
-          };
+    if (error) {
+      if (isDefined) {
+        const errorMessages: Record<typeof error.code, string> = {
+          LICENSE_KEY_INVALID: "The license key is invalid",
+          LICENSE_DISABLED: "The license key has been disabled",
+          LICENSE_EXPIRED: "The license key has expired",
+          DEVICE_NOT_ACTIVATED: "The license key is not activated for this device",
+        };
 
-          const { response } = await this.showValidationError({
-            detail: `${errorMessages[error.code]} and will be removed on this device. Contact support if you need further help.`,
-            buttons: ["Continue", "Quit"],
-            defaultId: 0,
-            cancelId: 1,
+        const { response } = await this.showValidationError({
+          detail: `${errorMessages[error.code]} and will be removed on this device. Contact support if you need further help.`,
+          buttons: ["Continue", "Quit"],
+          defaultId: 0,
+          cancelId: 1,
+        });
+
+        if (response === 0) {
+          config.set("licenseKey", null);
+
+          app.relaunch();
+        }
+      } else {
+        if (!useFallback) {
+          log.error("Failed to validate license key, retrying with fallback API client", {
+            error: serializeError(error),
           });
 
-          if (response === 0) {
-            config.set("licenseKey", null);
-
-            app.relaunch();
-          }
-        } else {
-          if (!useFallback) {
-            log.error("Failed to validate license key, retrying with fallback API client", {
-              error: serializeError(error),
-            });
-
-            return this.validate({ useFallback: true });
-          }
-
-          log.error("Failed to validate license key", { error: serializeError(error) });
-
-          const { response } = await this.showValidationError({
-            detail: (await isOnline())
-              ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
-              : "It seems you are currently offline. Please connect to the internet and restart the app to try again or contact support for further help.",
-            buttons: ["Restart", "Quit"],
-            defaultId: 0,
-            cancelId: 1,
-          });
-
-          if (response === 0) {
-            app.relaunch();
-          }
+          return this.validate({ useFallback: true });
         }
 
-        return false;
+        log.error("Failed to validate license key", { error: serializeError(error) });
+
+        const { response } = await this.showValidationError({
+          detail: (await isOnline())
+            ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
+            : "It seems you are currently offline. Please connect to the internet and restart the app to try again or contact support for further help.",
+          buttons: ["Restart", "Quit"],
+          defaultId: 0,
+          cancelId: 1,
+        });
+
+        if (response === 0) {
+          app.relaunch();
+        }
       }
 
-      this.isValid = true;
+      return false;
     }
+
+    this.isValid = true;
 
     return true;
   }
