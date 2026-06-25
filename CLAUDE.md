@@ -164,6 +164,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
 - Keep each commit to a single logical change.
+- After pushing a feature branch's work to `main`, delete that branch (locally and on the remote) — it's no longer needed once merged.
 
 ## Release Notes
 
