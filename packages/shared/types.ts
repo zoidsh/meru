@@ -65,12 +65,15 @@ const googleAppsPinnedAppKeys = [
   "drive",
   "forms",
   "gemini",
+  "groups",
   "keep",
   "meet",
   "notebooklm",
   "sheets",
+  "sites",
   "slides",
   "tasks",
+  "voice",
 ] as const satisfies readonly SupportedGoogleApp[];
 
 export type GoogleAppsPinnedApp = (typeof googleAppsPinnedAppKeys)[number];
