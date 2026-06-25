@@ -3,6 +3,7 @@ import { $ } from "select-dom";
 import {
   createNotMatchingAttributeSelector,
   createElementAttributeFromPreloadArgument,
+  reEmitClickWithShiftKey,
 } from "./lib/utils";
 
 const isOpenComposeInNewWindowEnabled = process.argv.includes(
@@ -31,26 +32,5 @@ export async function openComposeInNewWindow() {
 
   composeButtonElement.setAttribute(composeButtonProcessedAttribute, "");
 
-  let isClicked = false;
-
-  composeButtonElement.addEventListener("click", (event) => {
-    if (isClicked) {
-      isClicked = false;
-
-      return;
-    }
-
-    isClicked = true;
-
-    event.stopPropagation();
-
-    const clickEvent = new MouseEvent("click", {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      shiftKey: true,
-    });
-
-    composeButtonElement.dispatchEvent(clickEvent);
-  });
+  reEmitClickWithShiftKey(composeButtonElement);
 }
