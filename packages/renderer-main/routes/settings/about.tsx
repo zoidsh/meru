@@ -2,7 +2,6 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -19,13 +18,13 @@ import {
 } from "@meru/ui/components/item";
 import { Skeleton } from "@meru/ui/components/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/copy-button";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 
 function DiagnosticInfo() {
   const { data: info, isPending } = useQuery({
-    queryKey: ["troubleshooting", "info"],
+    queryKey: ["about", "info"],
     queryFn: () => ipc.main.invoke("troubleshooting.getInfo"),
   });
 
@@ -49,22 +48,14 @@ function DiagnosticInfo() {
     <ItemGroup>
       {rows.map(({ label, value }) => (
         <Item key={label} variant="muted">
-          <ItemContent>
+          <ItemContent className="min-w-0">
             <ItemTitle>{label}</ItemTitle>
-            <ItemDescription>{value}</ItemDescription>
+            <ItemDescription>
+              <span className="block truncate">{value}</span>
+            </ItemDescription>
           </ItemContent>
           <ItemActions>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                navigator.clipboard.writeText(value);
-
-                toast(`Copied ${label.toLowerCase()} to clipboard`);
-              }}
-            >
-              <CopyIcon />
-            </Button>
+            <CopyButton value={value} />
           </ItemActions>
         </Item>
       ))}
@@ -86,31 +77,31 @@ function ExportLogsField() {
   });
 
   return (
-    <Field orientation="horizontal">
-      <FieldContent>
-        <FieldLabel>Logs</FieldLabel>
-        <FieldDescription>
-          Export application logs to a file to help diagnose issues or share with support.
-        </FieldDescription>
-      </FieldContent>
-      <Button
-        variant="outline"
-        onClick={() => {
-          exportLogsMutation.mutate();
-        }}
-        disabled={exportLogsMutation.isPending}
-      >
-        Export Logs
-      </Button>
+    <Field>
+      <FieldLabel>Logs</FieldLabel>
+      <FieldDescription>
+        Export application logs to a file to help diagnose issues or share with support.
+      </FieldDescription>
+      <div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            exportLogsMutation.mutate();
+          }}
+          disabled={exportLogsMutation.isPending}
+        >
+          Export Logs
+        </Button>
+      </div>
     </Field>
   );
 }
 
-export function TroubleshootingSettings() {
+export function AboutSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Troubleshooting</SettingsTitle>
+        <SettingsTitle>About Meru</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>

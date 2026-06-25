@@ -5,6 +5,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { platform } from "@meru/shared/renderer/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { AccountsSettings } from "@/routes/settings/accounts";
+import { AboutSettings } from "@/routes/settings/about";
 import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
 import { BlockerSettings } from "@/routes/settings/blocker";
@@ -17,7 +18,6 @@ import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
 import { PhishingProtectionSettings } from "@/routes/settings/phishing-protection";
 import { SavedSearchesSettings } from "@/routes/settings/saved-searches";
-import { TroubleshootingSettings } from "@/routes/settings/troubleshooting";
 import { UnifiedInboxSettings } from "@/routes/settings/unified-inbox";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
@@ -100,17 +100,17 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     path: "/settings/advanced",
     component: AdvancedSettings,
   },
-  {
-    label: "Troubleshooting",
-    path: "/settings/troubleshooting",
-    component: TroubleshootingSettings,
-  },
   { type: "separator" },
   { label: "License", path: "/settings/license", component: LicenseSettings },
   {
     label: "What's New",
     path: "/settings/version-history",
     component: VersionHistorySettings,
+  },
+  {
+    label: "About Meru",
+    path: "/help",
+    component: AboutSettings,
   },
 ];
 
