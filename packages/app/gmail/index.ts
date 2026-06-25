@@ -39,7 +39,7 @@ import {
   broadcastFoundInPageResults,
   openViewDevToolsInDev,
 } from "@/lib/web-contents";
-import { getCascadedWindowBounds, getPreloadPath } from "@/lib/window";
+import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import z from "zod";
 import {
@@ -881,22 +881,10 @@ export class Gmail {
   }
 
   createComposeWindow(url: string) {
-    const window = new BrowserWindow({
-      ...getCascadedWindowBounds({ width: 800, height: 600 }),
-      autoHideMenuBar: true,
-      webPreferences: {
-        session: this.session,
-      },
-    });
-
-    setupWindowContextMenu(window);
-
-    this.registerWindowOpenHandler(window);
-
-    window.webContents.loadURL(`${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`);
-
-    window.once("ready-to-show", () => {
-      window.focus();
+    new GoogleApp({
+      accountId: this.accountId,
+      url: `${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
+      window: { width: 800, height: 600 },
     });
   }
 
