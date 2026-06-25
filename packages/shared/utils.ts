@@ -10,7 +10,7 @@ export function arrayMove<ValueType>(
   if (startIndex >= 0 && startIndex < array.length) {
     const endIndex = toIndex < 0 ? array.length + toIndex : toIndex;
 
-    const [item] = newArray.splice(fromIndex, 1);
+    const [item] = newArray.splice(startIndex, 1);
 
     if (item) {
       newArray.splice(endIndex, 0, item);
