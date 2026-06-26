@@ -57,11 +57,9 @@ export function AppMain() {
               .map(({ path, component }) => <Route key={path} path={path} component={component} />)
           )}
         </div>
-        {!matchUnifiedInboxRoute && (
-          <div className="absolute top-8 right-8">
-            <CloseButton />
-          </div>
-        )}
+        <div className="absolute top-8 right-8">
+          <CloseButton />
+        </div>
       </ScrollArea>
     </div>
   );
