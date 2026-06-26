@@ -1,6 +1,9 @@
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
-import type { AccountConfig } from "@meru/shared/schemas";
+import type { AccountConfig, AccountInstance } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -11,15 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import { Input } from "@meru/ui/components/input";
-import { Item, ItemActions, ItemContent, ItemTitle } from "@meru/ui/components/item";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import {
   Select,
   SelectContent,
@@ -29,7 +26,7 @@ import {
 } from "@meru/ui/components/select";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, XIcon } from "lucide-react";
+import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -249,45 +246,18 @@ function AddAccountButton() {
   );
 }
 
-function AccountMenuButton({ account, removable }: { account: AccountConfig; removable: boolean }) {
-  const [isOpen, setIsOpen] = useState(false);
+function EditAccountButton({ account }: { account: AccountConfig }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button size="icon" className="size-8 p-0" variant="outline">
-              <EllipsisIcon />
-            </Button>
-          }
-        />
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
-          {removable && (
-            <DropdownMenuItem
-              className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
-              onClick={() => {
-                const confirmed = window.confirm(
-                  `Are you sure you want to remove ${account.label}?`,
-                );
-
-                if (confirmed) {
-                  ipc.main.send("accounts.removeAccount", account.id);
-                }
-              }}
-            >
-              Remove
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger
+        render={
+          <Button size="icon" className="size-8 p-0" variant="outline">
+            <PencilIcon />
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Account</DialogTitle>
@@ -301,7 +271,7 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
               gmail: { ...account.gmail, ...values.gmail },
             });
 
-            setIsOpen(false);
+            setIsDialogOpen(false);
 
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
@@ -315,6 +285,76 @@ function AccountMenuButton({ account, removable }: { account: AccountConfig; rem
         />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SortableAccountItem({
+  account,
+  index,
+  removable,
+  disabled,
+}: {
+  account: AccountInstance;
+  index: number;
+  removable: boolean;
+  disabled: boolean;
+}) {
+  const { ref, handleRef, isDragging } = useSortable({ id: account.config.id, index, disabled });
+
+  return (
+    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
+      <Button
+        ref={handleRef}
+        size="icon"
+        className="size-8 cursor-grab touch-none p-0"
+        variant="ghost"
+        disabled={disabled}
+        aria-label={`Drag ${account.config.label} to reorder`}
+      >
+        <GripVerticalIcon />
+      </Button>
+      <ItemContent className="gap-2">
+        <ItemTitle>
+          <div
+            className={cn(
+              "size-2 rounded-full",
+              account.config.color
+                ? `${accountColorsMap[account.config.color].className}`
+                : "border",
+            )}
+          />
+          {account.config.label}
+        </ItemTitle>
+        {(account.config.gmail.unreadBadge || account.config.notifications) && (
+          <div className="flex gap-2">
+            {account.config.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
+            {account.config.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
+            {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
+          </div>
+        )}
+      </ItemContent>
+      <ItemActions>
+        <EditAccountButton account={account.config} />
+        {removable && (
+          <Button
+            size="icon"
+            className="size-8 p-0"
+            variant="outline"
+            onClick={() => {
+              const confirmed = window.confirm(
+                `Are you sure you want to remove ${account.config.label}?`,
+              );
+
+              if (confirmed) {
+                ipc.main.send("accounts.removeAccount", account.config.id);
+              }
+            }}
+          >
+            <TrashIcon />
+          </Button>
+        )}
+      </ItemActions>
+    </Item>
   );
 }
 
@@ -335,65 +375,33 @@ export function AccountsSettings() {
         <LicenseKeyRequiredBanner>
           Upgrade to Meru Pro to add more accounts
         </LicenseKeyRequiredBanner>
-        <div className="space-y-4">
-          {accounts.map((account, index) => (
-            <Item key={account.config.id} variant="muted">
-              <ItemContent className="gap-2">
-                <ItemTitle>
-                  <div
-                    className={cn(
-                      "size-2 rounded-full",
-                      account.config.color
-                        ? `${accountColorsMap[account.config.color].className}`
-                        : "border",
-                    )}
-                  />
-                  {account.config.label}
-                </ItemTitle>
-                {(account.config.gmail.unreadBadge || account.config.notifications) && (
-                  <div className="flex gap-2">
-                    {account.config.gmail.unreadBadge && (
-                      <Badge variant="outline">Unread Badge</Badge>
-                    )}
-                    {account.config.gmail.unifiedInbox && (
-                      <Badge variant="outline">Unified Inbox</Badge>
-                    )}
-                    {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
-                  </div>
-                )}
-              </ItemContent>
-              <ItemActions>
-                {accounts.length > 1 && (
-                  <>
-                    <Button
-                      size="icon"
-                      className="size-8 p-0"
-                      variant="outline"
-                      disabled={index === 0}
-                      onClick={() => {
-                        ipc.main.send("accounts.moveAccount", account.config.id, "up");
-                      }}
-                    >
-                      <ArrowUpIcon />
-                    </Button>
-                    <Button
-                      size="icon"
-                      className="size-8 p-0"
-                      variant="outline"
-                      disabled={index + 1 === accounts.length}
-                      onClick={() => {
-                        ipc.main.send("accounts.moveAccount", account.config.id, "down");
-                      }}
-                    >
-                      <ArrowDownIcon />
-                    </Button>
-                  </>
-                )}
-                <AccountMenuButton account={account.config} removable={accounts.length > 1} />
-              </ItemActions>
-            </Item>
-          ))}
-        </div>
+        <DragDropProvider
+          onDragEnd={(event) => {
+            if (event.canceled) {
+              return;
+            }
+
+            ipc.main.send(
+              "accounts.reorderAccounts",
+              move(
+                accounts.map((account) => account.config.id),
+                event,
+              ),
+            );
+          }}
+        >
+          <ItemGroup>
+            {accounts.map((account, index) => (
+              <SortableAccountItem
+                key={account.config.id}
+                account={account}
+                index={index}
+                removable={accounts.length > 1}
+                disabled={accounts.length < 2}
+              />
+            ))}
+          </ItemGroup>
+        </DragDropProvider>
       </SettingsContent>
     </>
   );

@@ -285,30 +285,21 @@ class Accounts {
     );
   }
 
-  moveAccount(selectedAccountId: string, direction: "up" | "down") {
+  reorderAccounts(accountIds: string[]) {
     const accountConfigs = config.get("accounts");
 
-    const selectedAccountConfigIndex = accountConfigs.findIndex(
-      (account) => account.id === selectedAccountId,
+    config.set(
+      "accounts",
+      accountIds.map((accountId) => {
+        const accountConfig = accountConfigs.find((account) => account.id === accountId);
+
+        if (!accountConfig) {
+          throw new Error("Could not find account config");
+        }
+
+        return accountConfig;
+      }),
     );
-
-    const selectedAccountConfig = accountConfigs.splice(selectedAccountConfigIndex, 1)[0];
-
-    if (!selectedAccountConfig) {
-      throw new Error("Could not find selected account config");
-    }
-
-    accountConfigs.splice(
-      direction === "up"
-        ? selectedAccountConfigIndex - 1
-        : direction === "down"
-          ? selectedAccountConfigIndex + 1
-          : selectedAccountConfigIndex,
-      0,
-      selectedAccountConfig,
-    );
-
-    config.set("accounts", accountConfigs);
   }
 
   hide() {
