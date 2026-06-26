@@ -1,11 +1,6 @@
-import { closestCenter, DndContext, PointerSensor, useSensor } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -231,36 +226,28 @@ function SavedSearchMenuButton({
 
 function SortableSavedSearchItem({
   savedSearch,
+  index,
   onDelete,
   onEdit,
   disabled,
 }: {
   savedSearch: GmailSavedSearch;
+  index: number;
   onDelete: () => void;
   onEdit: (editedSavedSearch: GmailSavedSearch) => void;
   disabled: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: savedSearch.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : undefined,
-  };
+  const { ref, handleRef, isDragging } = useSortable({ id: savedSearch.id, index, disabled });
 
   return (
-    <Item ref={setNodeRef} style={style} variant="muted">
+    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
       <Button
+        ref={handleRef}
         size="icon"
         className="size-8 cursor-grab touch-none p-0"
         variant="ghost"
         disabled={disabled}
         aria-label={`Drag ${savedSearch.label} to reorder`}
-        {...attributes}
-        {...listeners}
       >
         <GripVerticalIcon />
       </Button>
@@ -282,8 +269,6 @@ export function SavedSearchesSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const pointerSensor = useSensor(PointerSensor);
-
   if (!config) {
     return;
   }
@@ -297,60 +282,44 @@ export function SavedSearchesSettings() {
         <LicenseKeyRequiredBanner>
           Upgrade to Meru Pro to add saved searches
         </LicenseKeyRequiredBanner>
-        <DndContext
-          sensors={[pointerSensor]}
-          collisionDetection={closestCenter}
+        <DragDropProvider
           onDragEnd={(event) => {
-            const { active, over } = event;
-
-            if (!over || active.id === over.id) {
+            if (event.canceled) {
               return;
             }
 
-            const oldIndex = config["gmail.savedSearches"].findIndex(
-              (savedSearch) => savedSearch.id === active.id,
-            );
-
-            const newIndex = config["gmail.savedSearches"].findIndex(
-              (savedSearch) => savedSearch.id === over.id,
-            );
-
             configMutation.mutate({
-              "gmail.savedSearches": arrayMove(config["gmail.savedSearches"], oldIndex, newIndex),
+              "gmail.savedSearches": move(config["gmail.savedSearches"], event),
             });
           }}
         >
-          <SortableContext
-            items={config["gmail.savedSearches"].map((savedSearch) => savedSearch.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <ItemGroup className="mb-4">
-              {config["gmail.savedSearches"].map((savedSearch) => (
-                <SortableSavedSearchItem
-                  key={savedSearch.id}
-                  savedSearch={savedSearch}
-                  disabled={!isLicenseKeyValid}
-                  onDelete={() => {
-                    const deleteSavedSearchId = savedSearch.id;
+          <ItemGroup className="mb-4">
+            {config["gmail.savedSearches"].map((savedSearch, index) => (
+              <SortableSavedSearchItem
+                key={savedSearch.id}
+                savedSearch={savedSearch}
+                index={index}
+                disabled={!isLicenseKeyValid}
+                onDelete={() => {
+                  const deleteSavedSearchId = savedSearch.id;
 
-                    configMutation.mutate({
-                      "gmail.savedSearches": config["gmail.savedSearches"].filter(
-                        (savedSearch) => savedSearch.id !== deleteSavedSearchId,
-                      ),
-                    });
-                  }}
-                  onEdit={(editedSavedSearch) => {
-                    configMutation.mutate({
-                      "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
-                        savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
-                      ),
-                    });
-                  }}
-                />
-              ))}
-            </ItemGroup>
-          </SortableContext>
-        </DndContext>
+                  configMutation.mutate({
+                    "gmail.savedSearches": config["gmail.savedSearches"].filter(
+                      (savedSearch) => savedSearch.id !== deleteSavedSearchId,
+                    ),
+                  });
+                }}
+                onEdit={(editedSavedSearch) => {
+                  configMutation.mutate({
+                    "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
+                      savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
+                    ),
+                  });
+                }}
+              />
+            ))}
+          </ItemGroup>
+        </DragDropProvider>
         <div className="flex justify-end">
           <AddSavedSearchButton
             onAdd={(savedSearch) => {
