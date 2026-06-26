@@ -260,6 +260,19 @@ export function SavedSearchesSettings() {
     <>
       <SettingsHeader>
         <SettingsTitle>Saved Searches</SettingsTitle>
+        <AddSavedSearchButton
+          onAdd={(savedSearch) => {
+            configMutation.mutate({
+              "gmail.savedSearches": [
+                ...config["gmail.savedSearches"],
+                {
+                  id: crypto.randomUUID(),
+                  ...savedSearch,
+                },
+              ],
+            });
+          }}
+        />
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
@@ -276,7 +289,7 @@ export function SavedSearchesSettings() {
             });
           }}
         >
-          <ItemGroup className="mb-4">
+          <ItemGroup>
             {config["gmail.savedSearches"].map((savedSearch, index) => (
               <SortableSavedSearchItem
                 key={savedSearch.id}
@@ -303,21 +316,6 @@ export function SavedSearchesSettings() {
             ))}
           </ItemGroup>
         </DragDropProvider>
-        <div className="flex justify-end">
-          <AddSavedSearchButton
-            onAdd={(savedSearch) => {
-              configMutation.mutate({
-                "gmail.savedSearches": [
-                  ...config["gmail.savedSearches"],
-                  {
-                    id: crypto.randomUUID(),
-                    ...savedSearch,
-                  },
-                ],
-              });
-            }}
-          />
-        </div>
       </SettingsContent>
     </>
   );
