@@ -1,9 +1,11 @@
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
   gmailSavedSearchInputSchema,
 } from "@meru/shared/schemas";
-import { arrayMove } from "@meru/shared/utils";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
@@ -12,23 +14,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import { Input } from "@meru/ui/components/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@meru/ui/components/table";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@meru/ui/components/item";
+import { GripVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -156,51 +152,24 @@ export function AddSavedSearchButton({
   );
 }
 
-function SavedSearchMenuButton({
+function EditSavedSearchButton({
   savedSearch,
-  onDelete,
   onEdit,
 }: {
   savedSearch: GmailSavedSearch;
-  onDelete: () => void;
   onEdit: (editedSavedSearch: GmailSavedSearch) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button size="icon" className="size-8 p-0" variant="ghost">
-              <EllipsisIcon />
-            </Button>
-          }
-        />
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
-            onClick={() => {
-              const confirmed = window.confirm(
-                `Are you sure you want to delete ${savedSearch.label}?`,
-              );
-
-              if (confirmed) {
-                onDelete();
-              }
-            }}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger
+        render={
+          <Button size="icon" className="size-8 p-0" variant="outline">
+            <PencilIcon />
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Saved Search</DialogTitle>
@@ -213,7 +182,7 @@ function SavedSearchMenuButton({
               ...values,
             });
 
-            setIsOpen(false);
+            setIsDialogOpen(false);
           }}
           type="edit"
         />
@@ -222,28 +191,70 @@ function SavedSearchMenuButton({
   );
 }
 
+function SortableSavedSearchItem({
+  savedSearch,
+  index,
+  onDelete,
+  onEdit,
+  disabled,
+}: {
+  savedSearch: GmailSavedSearch;
+  index: number;
+  onDelete: () => void;
+  onEdit: (editedSavedSearch: GmailSavedSearch) => void;
+  disabled: boolean;
+}) {
+  const { ref, handleRef, isDragging } = useSortable({ id: savedSearch.id, index, disabled });
+
+  return (
+    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
+      <Button
+        ref={handleRef}
+        size="icon"
+        className="size-8 cursor-grab touch-none p-0"
+        variant="ghost"
+        disabled={disabled}
+        aria-label={`Drag ${savedSearch.label} to reorder`}
+      >
+        <GripVerticalIcon />
+      </Button>
+      <ItemContent>
+        <ItemTitle>{savedSearch.label}</ItemTitle>
+        <ItemDescription>{savedSearch.query}</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <EditSavedSearchButton savedSearch={savedSearch} onEdit={onEdit} />
+        <Button
+          size="icon"
+          className="size-8 p-0"
+          variant="outline"
+          onClick={() => {
+            const confirmed = window.confirm(
+              `Are you sure you want to delete ${savedSearch.label}?`,
+            );
+
+            if (confirmed) {
+              onDelete();
+            }
+          }}
+        >
+          <TrashIcon />
+        </Button>
+      </ItemActions>
+    </Item>
+  );
+}
+
 export function SavedSearchesSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
 
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
   if (!config) {
     return;
   }
-
-  const moveSavedSearch = (savedSearchId: string, direction: "up" | "down") => {
-    const savedSearchIndex = config["gmail.savedSearches"].findIndex(
-      (savedSearch) => savedSearch.id === savedSearchId,
-    );
-
-    configMutation.mutate({
-      "gmail.savedSearches": arrayMove(
-        config["gmail.savedSearches"],
-        savedSearchIndex,
-        direction === "up" ? savedSearchIndex - 1 : savedSearchIndex + 1,
-      ),
-    });
-  };
 
   return (
     <>
@@ -254,70 +265,44 @@ export function SavedSearchesSettings() {
         <LicenseKeyRequiredBanner>
           Upgrade to Meru Pro to add saved searches
         </LicenseKeyRequiredBanner>
-        <Table className="mb-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Query</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {config["gmail.savedSearches"].map((savedSearch, index) => (
-              <TableRow key={savedSearch.id}>
-                <TableCell>{savedSearch.label}</TableCell>
-                <TableCell>{savedSearch.query}</TableCell>
-                <TableCell className="flex justify-end">
-                  {config["gmail.savedSearches"].length > 1 && (
-                    <>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index === 0}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "up");
-                        }}
-                      >
-                        <ArrowUpIcon />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index + 1 === config["gmail.savedSearches"].length}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "down");
-                        }}
-                      >
-                        <ArrowDownIcon />
-                      </Button>
-                    </>
-                  )}
-                  <SavedSearchMenuButton
-                    savedSearch={savedSearch}
-                    onDelete={() => {
-                      const deleteSavedSearchId = savedSearch.id;
+        <DragDropProvider
+          onDragEnd={(event) => {
+            if (event.canceled) {
+              return;
+            }
 
-                      configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].filter(
-                          (savedSearch) => savedSearch.id !== deleteSavedSearchId,
-                        ),
-                      });
-                    }}
-                    onEdit={(editedSavedSearch) => {
-                      configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
-                          savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
-                        ),
-                      });
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
+            configMutation.mutate({
+              "gmail.savedSearches": move(config["gmail.savedSearches"], event),
+            });
+          }}
+        >
+          <ItemGroup className="mb-4">
+            {config["gmail.savedSearches"].map((savedSearch, index) => (
+              <SortableSavedSearchItem
+                key={savedSearch.id}
+                savedSearch={savedSearch}
+                index={index}
+                disabled={!isLicenseKeyValid}
+                onDelete={() => {
+                  const deleteSavedSearchId = savedSearch.id;
+
+                  configMutation.mutate({
+                    "gmail.savedSearches": config["gmail.savedSearches"].filter(
+                      (savedSearch) => savedSearch.id !== deleteSavedSearchId,
+                    ),
+                  });
+                }}
+                onEdit={(editedSavedSearch) => {
+                  configMutation.mutate({
+                    "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
+                      savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
+                    ),
+                  });
+                }}
+              />
             ))}
-          </TableBody>
-        </Table>
+          </ItemGroup>
+        </DragDropProvider>
         <div className="flex justify-end">
           <AddSavedSearchButton
             onAdd={(savedSearch) => {
