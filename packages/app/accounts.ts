@@ -285,23 +285,6 @@ class Accounts {
     );
   }
 
-  reorderAccounts(accountIds: string[]) {
-    const accountConfigs = config.get("accounts");
-
-    config.set(
-      "accounts",
-      accountIds.map((accountId) => {
-        const accountConfig = accountConfigs.find((account) => account.id === accountId);
-
-        if (!accountConfig) {
-          throw new Error("Could not find account config");
-        }
-
-        return accountConfig;
-      }),
-    );
-  }
-
   hide() {
     for (const account of this.instances.values()) {
       account.gmail.view.setVisible(false);

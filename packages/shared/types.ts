@@ -190,7 +190,6 @@ export type IpcMainEvents =
       "accounts.addAccount": [account: AccountConfigInput];
       "accounts.removeAccount": [accountId: AccountConfig["id"]];
       "accounts.updateAccount": [account: AccountConfig];
-      "accounts.reorderAccounts": [accountIds: AccountConfig["id"][]];
       "settings.toggleIsOpen": [open?: boolean];
       "gmail.moveNavigationHistory": [move: "back" | "forward"];
       "gmail.unreadCountChanged": [unreadCountString: string];

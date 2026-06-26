@@ -3,7 +3,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
-import type { AccountConfig, AccountInstance } from "@meru/shared/schemas";
+import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -31,7 +31,7 @@ import { useState } from "react";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/shared/renderer/react-query";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 import { useForm } from "@tanstack/react-form";
@@ -294,12 +294,12 @@ function SortableAccountItem({
   removable,
   disabled,
 }: {
-  account: AccountInstance;
+  account: AccountConfig;
   index: number;
   removable: boolean;
   disabled: boolean;
 }) {
-  const { ref, handleRef, isDragging } = useSortable({ id: account.config.id, index, disabled });
+  const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
@@ -309,7 +309,7 @@ function SortableAccountItem({
         className="size-8 cursor-grab touch-none p-0"
         variant="ghost"
         disabled={disabled}
-        aria-label={`Drag ${account.config.label} to reorder`}
+        aria-label={`Drag ${account.label} to reorder`}
       >
         <GripVerticalIcon />
       </Button>
@@ -318,35 +318,31 @@ function SortableAccountItem({
           <div
             className={cn(
               "size-2 rounded-full",
-              account.config.color
-                ? `${accountColorsMap[account.config.color].className}`
-                : "border",
+              account.color ? `${accountColorsMap[account.color].className}` : "border",
             )}
           />
-          {account.config.label}
+          {account.label}
         </ItemTitle>
-        {(account.config.gmail.unreadBadge || account.config.notifications) && (
+        {(account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
-            {account.config.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
-            {account.config.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
-            {account.config.notifications && <Badge variant="outline">Notifications</Badge>}
+            {account.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
+            {account.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
+            {account.notifications && <Badge variant="outline">Notifications</Badge>}
           </div>
         )}
       </ItemContent>
       <ItemActions>
-        <EditAccountButton account={account.config} />
+        <EditAccountButton account={account} />
         {removable && (
           <Button
             size="icon"
             className="size-8 p-0"
             variant="outline"
             onClick={() => {
-              const confirmed = window.confirm(
-                `Are you sure you want to remove ${account.config.label}?`,
-              );
+              const confirmed = window.confirm(`Are you sure you want to remove ${account.label}?`);
 
               if (confirmed) {
-                ipc.main.send("accounts.removeAccount", account.config.id);
+                ipc.main.send("accounts.removeAccount", account.id);
               }
             }}
           >
@@ -359,9 +355,11 @@ function SortableAccountItem({
 }
 
 export function AccountsSettings() {
-  const accounts = useAccountsStore((state) => state.accounts);
+  const { config } = useConfig();
 
-  if (!accounts.length) {
+  const configMutation = useConfigMutation();
+
+  if (!config) {
     return;
   }
 
@@ -381,23 +379,19 @@ export function AccountsSettings() {
               return;
             }
 
-            ipc.main.send(
-              "accounts.reorderAccounts",
-              move(
-                accounts.map((account) => account.config.id),
-                event,
-              ),
-            );
+            configMutation.mutate({
+              accounts: move(config.accounts, event),
+            });
           }}
         >
           <ItemGroup>
-            {accounts.map((account, index) => (
+            {config.accounts.map((account, index) => (
               <SortableAccountItem
-                key={account.config.id}
+                key={account.id}
                 account={account}
                 index={index}
-                removable={accounts.length > 1}
-                disabled={accounts.length < 2}
+                removable={config.accounts.length > 1}
+                disabled={config.accounts.length < 2}
               />
             ))}
           </ItemGroup>

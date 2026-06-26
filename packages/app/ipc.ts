@@ -90,10 +90,6 @@ class Ipc {
       accounts.updateAccount(updatedAccount);
     });
 
-    this.main.on("accounts.reorderAccounts", (_event, accountIds) => {
-      accounts.reorderAccounts(accountIds);
-    });
-
     this.main.on("gmail.moveNavigationHistory", (_event, action) => {
       accounts
         .getSelectedAccount()
