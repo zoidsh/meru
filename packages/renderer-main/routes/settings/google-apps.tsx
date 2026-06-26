@@ -1,11 +1,6 @@
-import { closestCenter, DndContext, PointerSensor, useSensor } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
   type GoogleAppsPinnedApp,
@@ -40,34 +35,26 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 
 function SortablePinnedAppItem({
   app,
+  index,
   onUnpin,
   disabled,
 }: {
   app: GoogleAppsPinnedApp;
+  index: number;
   onUnpin: () => void;
   disabled: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: app,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : undefined,
-  };
+  const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
 
   return (
-    <Item ref={setNodeRef} style={style} variant="outline" size="xs">
+    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="outline" size="xs">
       <Button
+        ref={handleRef}
         size="icon-xs"
         variant="ghost"
         className="cursor-grab touch-none"
         disabled={disabled}
         aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
-        {...attributes}
-        {...listeners}
       >
         <GripVerticalIcon />
       </Button>
@@ -98,8 +85,6 @@ export function GoogleAppsSettings() {
   const configMutation = useConfigMutation();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
-
-  const pointerSensor = useSensor(PointerSensor);
 
   if (!config) {
     return;
@@ -228,43 +213,33 @@ export function GoogleAppsSettings() {
                     No pinned apps. Add apps from Available below.
                   </p>
                 ) : (
-                  <DndContext
-                    sensors={[pointerSensor]}
-                    collisionDetection={closestCenter}
+                  <DragDropProvider
                     onDragEnd={(event) => {
-                      const { active, over } = event;
-
-                      if (!over || active.id === over.id) {
+                      if (event.canceled) {
                         return;
                       }
 
-                      const oldIndex = pinnedApps.indexOf(active.id as GoogleAppsPinnedApp);
-                      const newIndex = pinnedApps.indexOf(over.id as GoogleAppsPinnedApp);
-
                       configMutation.mutate({
-                        "googleApps.pinnedApps": arrayMove(pinnedApps, oldIndex, newIndex),
+                        "googleApps.pinnedApps": move(pinnedApps, event),
                       });
                     }}
                   >
-                    <SortableContext items={pinnedApps} strategy={verticalListSortingStrategy}>
-                      <ItemGroup>
-                        {pinnedApps.map((app) => (
-                          <SortablePinnedAppItem
-                            key={app}
-                            app={app}
-                            onUnpin={() => {
-                              configMutation.mutate({
-                                "googleApps.pinnedApps": pinnedApps.filter(
-                                  (value) => value !== app,
-                                ),
-                              });
-                            }}
-                            disabled={!isLicenseKeyValid}
-                          />
-                        ))}
-                      </ItemGroup>
-                    </SortableContext>
-                  </DndContext>
+                    <ItemGroup>
+                      {pinnedApps.map((app, index) => (
+                        <SortablePinnedAppItem
+                          key={app}
+                          app={app}
+                          index={index}
+                          onUnpin={() => {
+                            configMutation.mutate({
+                              "googleApps.pinnedApps": pinnedApps.filter((value) => value !== app),
+                            });
+                          }}
+                          disabled={!isLicenseKeyValid}
+                        />
+                      ))}
+                    </ItemGroup>
+                  </DragDropProvider>
                 )}
               </div>
               {availableApps.length > 0 && (
