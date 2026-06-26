@@ -1,7 +1,6 @@
 {
   "extends": "@total-typescript/tsconfig/bundler/dom",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
