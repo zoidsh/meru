@@ -153,7 +153,7 @@ function UnifiedInboxTable({
     pageSize: rowsPerPage,
   });
 
-  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
 
   const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
 
@@ -192,6 +192,12 @@ function UnifiedInboxTable({
     (event) => {
       event.preventDefault();
 
+      if (focusedIndex === -1) {
+        setFocusedIndex(0);
+
+        return;
+      }
+
       if (focusedIndex < rows.length - 1) {
         setFocusedIndex(focusedIndex + 1);
       } else if (table.getCanNextPage()) {
@@ -207,6 +213,12 @@ function UnifiedInboxTable({
     ["k", "up"],
     (event) => {
       event.preventDefault();
+
+      if (focusedIndex === -1) {
+        setFocusedIndex(0);
+
+        return;
+      }
 
       if (focusedIndex > 0) {
         setFocusedIndex(focusedIndex - 1);
