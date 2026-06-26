@@ -14,12 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import { Input } from "@meru/ui/components/input";
 import {
@@ -30,7 +24,7 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@meru/ui/components/item";
-import { EllipsisIcon, GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -158,51 +152,24 @@ export function AddSavedSearchButton({
   );
 }
 
-function SavedSearchMenuButton({
+function EditSavedSearchButton({
   savedSearch,
-  onDelete,
   onEdit,
 }: {
   savedSearch: GmailSavedSearch;
-  onDelete: () => void;
   onEdit: (editedSavedSearch: GmailSavedSearch) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button size="icon" className="size-8 p-0" variant="ghost">
-              <EllipsisIcon />
-            </Button>
-          }
-        />
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground"
-            onClick={() => {
-              const confirmed = window.confirm(
-                `Are you sure you want to delete ${savedSearch.label}?`,
-              );
-
-              if (confirmed) {
-                onDelete();
-              }
-            }}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger
+        render={
+          <Button size="icon" className="size-8 p-0" variant="outline">
+            <PencilIcon />
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Saved Search</DialogTitle>
@@ -215,7 +182,7 @@ function SavedSearchMenuButton({
               ...values,
             });
 
-            setIsOpen(false);
+            setIsDialogOpen(false);
           }}
           type="edit"
         />
@@ -256,7 +223,23 @@ function SortableSavedSearchItem({
         <ItemDescription>{savedSearch.query}</ItemDescription>
       </ItemContent>
       <ItemActions>
-        <SavedSearchMenuButton savedSearch={savedSearch} onDelete={onDelete} onEdit={onEdit} />
+        <EditSavedSearchButton savedSearch={savedSearch} onEdit={onEdit} />
+        <Button
+          size="icon"
+          className="size-8 p-0"
+          variant="outline"
+          onClick={() => {
+            const confirmed = window.confirm(
+              `Are you sure you want to delete ${savedSearch.label}?`,
+            );
+
+            if (confirmed) {
+              onDelete();
+            }
+          }}
+        >
+          <TrashIcon />
+        </Button>
       </ItemActions>
     </Item>
   );
