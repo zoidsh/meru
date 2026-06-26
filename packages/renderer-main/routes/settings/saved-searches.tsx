@@ -1,9 +1,16 @@
+import { closestCenter, DndContext, PointerSensor, useSensor } from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
   gmailSavedSearchInputSchema,
 } from "@meru/shared/schemas";
-import { arrayMove } from "@meru/shared/utils";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
@@ -21,14 +28,14 @@ import {
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import { Input } from "@meru/ui/components/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@meru/ui/components/table";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon } from "lucide-react";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@meru/ui/components/item";
+import { EllipsisIcon, GripVerticalIcon } from "lucide-react";
 import { useState } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -222,28 +229,64 @@ function SavedSearchMenuButton({
   );
 }
 
+function SortableSavedSearchItem({
+  savedSearch,
+  onDelete,
+  onEdit,
+  disabled,
+}: {
+  savedSearch: GmailSavedSearch;
+  onDelete: () => void;
+  onEdit: (editedSavedSearch: GmailSavedSearch) => void;
+  disabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: savedSearch.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : undefined,
+  };
+
+  return (
+    <Item ref={setNodeRef} style={style} variant="muted">
+      <Button
+        size="icon"
+        className="size-8 cursor-grab touch-none p-0"
+        variant="ghost"
+        disabled={disabled}
+        aria-label={`Drag ${savedSearch.label} to reorder`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon />
+      </Button>
+      <ItemContent>
+        <ItemTitle>{savedSearch.label}</ItemTitle>
+        <ItemDescription>{savedSearch.query}</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <SavedSearchMenuButton savedSearch={savedSearch} onDelete={onDelete} onEdit={onEdit} />
+      </ItemActions>
+    </Item>
+  );
+}
+
 export function SavedSearchesSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
 
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const pointerSensor = useSensor(PointerSensor);
+
   if (!config) {
     return;
   }
-
-  const moveSavedSearch = (savedSearchId: string, direction: "up" | "down") => {
-    const savedSearchIndex = config["gmail.savedSearches"].findIndex(
-      (savedSearch) => savedSearch.id === savedSearchId,
-    );
-
-    configMutation.mutate({
-      "gmail.savedSearches": arrayMove(
-        config["gmail.savedSearches"],
-        savedSearchIndex,
-        direction === "up" ? savedSearchIndex - 1 : savedSearchIndex + 1,
-      ),
-    });
-  };
 
   return (
     <>
@@ -254,70 +297,60 @@ export function SavedSearchesSettings() {
         <LicenseKeyRequiredBanner>
           Upgrade to Meru Pro to add saved searches
         </LicenseKeyRequiredBanner>
-        <Table className="mb-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Query</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {config["gmail.savedSearches"].map((savedSearch, index) => (
-              <TableRow key={savedSearch.id}>
-                <TableCell>{savedSearch.label}</TableCell>
-                <TableCell>{savedSearch.query}</TableCell>
-                <TableCell className="flex justify-end">
-                  {config["gmail.savedSearches"].length > 1 && (
-                    <>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index === 0}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "up");
-                        }}
-                      >
-                        <ArrowUpIcon />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="ghost"
-                        disabled={index + 1 === config["gmail.savedSearches"].length}
-                        onClick={() => {
-                          moveSavedSearch(savedSearch.id, "down");
-                        }}
-                      >
-                        <ArrowDownIcon />
-                      </Button>
-                    </>
-                  )}
-                  <SavedSearchMenuButton
-                    savedSearch={savedSearch}
-                    onDelete={() => {
-                      const deleteSavedSearchId = savedSearch.id;
+        <DndContext
+          sensors={[pointerSensor]}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => {
+            const { active, over } = event;
 
-                      configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].filter(
-                          (savedSearch) => savedSearch.id !== deleteSavedSearchId,
-                        ),
-                      });
-                    }}
-                    onEdit={(editedSavedSearch) => {
-                      configMutation.mutate({
-                        "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
-                          savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
-                        ),
-                      });
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            if (!over || active.id === over.id) {
+              return;
+            }
+
+            const oldIndex = config["gmail.savedSearches"].findIndex(
+              (savedSearch) => savedSearch.id === active.id,
+            );
+
+            const newIndex = config["gmail.savedSearches"].findIndex(
+              (savedSearch) => savedSearch.id === over.id,
+            );
+
+            configMutation.mutate({
+              "gmail.savedSearches": arrayMove(config["gmail.savedSearches"], oldIndex, newIndex),
+            });
+          }}
+        >
+          <SortableContext
+            items={config["gmail.savedSearches"].map((savedSearch) => savedSearch.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ItemGroup className="mb-4">
+              {config["gmail.savedSearches"].map((savedSearch) => (
+                <SortableSavedSearchItem
+                  key={savedSearch.id}
+                  savedSearch={savedSearch}
+                  disabled={!isLicenseKeyValid}
+                  onDelete={() => {
+                    const deleteSavedSearchId = savedSearch.id;
+
+                    configMutation.mutate({
+                      "gmail.savedSearches": config["gmail.savedSearches"].filter(
+                        (savedSearch) => savedSearch.id !== deleteSavedSearchId,
+                      ),
+                    });
+                  }}
+                  onEdit={(editedSavedSearch) => {
+                    configMutation.mutate({
+                      "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
+                        savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
+                      ),
+                    });
+                  }}
+                />
+              ))}
+            </ItemGroup>
+          </SortableContext>
+        </DndContext>
         <div className="flex justify-end">
           <AddSavedSearchButton
             onAdd={(savedSearch) => {
