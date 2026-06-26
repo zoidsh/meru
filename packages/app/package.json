@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "test": "bun test",
-    "types": "tsc"
+    "types": "tsc && tsc -p tsconfig.test.json"
   }
 }

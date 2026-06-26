@@ -3,7 +3,7 @@ import { ms } from "@meru/shared/ms";
 
 let urlPreviewElement: HTMLElement | null = null;
 
-let removeUrlPreviewElementTimeout: Timer | null = null;
+let removeUrlPreviewElementTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function removeUrlPreviewElement() {
   if (urlPreviewElement) {
