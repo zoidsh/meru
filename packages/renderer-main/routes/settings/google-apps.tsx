@@ -24,7 +24,6 @@ import {
   FieldSeparator,
 } from "@meru/ui/components/field";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
-import { cn } from "@meru/ui/lib/utils";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -48,7 +47,7 @@ function SortablePinnedAppItem({
   const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
 
   return (
-    <Item ref={ref} className={cn(isDragging && "opacity-50")} variant="outline" size="xs">
+    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="outline" size="xs">
       <Button
         ref={handleRef}
         size="icon-xs"
