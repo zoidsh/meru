@@ -23,7 +23,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
+import { ButtonGroup } from "@meru/ui/components/button-group";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -47,35 +47,29 @@ function SortablePinnedAppItem({
   const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
 
   return (
-    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="outline" size="xs">
+    <ButtonGroup ref={ref} className={isDragging ? "opacity-50" : undefined}>
       <Button
         ref={handleRef}
-        size="icon-xs"
-        variant="ghost"
+        variant="outline"
+        size="xs"
         className="cursor-grab touch-none"
         disabled={disabled}
         aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
       >
         <GripVerticalIcon />
+        <GoogleAppIcon app={app} className="size-3.5" />
+        {googleAppsPinnedApps[app]}
       </Button>
-      <ItemContent>
-        <ItemTitle>
-          <GoogleAppIcon app={app} className="size-3.5" />
-          {googleAppsPinnedApps[app]}
-        </ItemTitle>
-      </ItemContent>
-      <ItemActions>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          onClick={onUnpin}
-          disabled={disabled}
-          aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
-        >
-          <XIcon />
-        </Button>
-      </ItemActions>
-    </Item>
+      <Button
+        variant="outline"
+        size="icon-xs"
+        onClick={onUnpin}
+        disabled={disabled}
+        aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
+      >
+        <XIcon />
+      </Button>
+    </ButtonGroup>
   );
 }
 
@@ -224,7 +218,7 @@ export function GoogleAppsSettings() {
                       });
                     }}
                   >
-                    <ItemGroup>
+                    <div className="flex flex-row flex-wrap gap-2">
                       {pinnedApps.map((app, index) => (
                         <SortablePinnedAppItem
                           key={app}
@@ -238,40 +232,33 @@ export function GoogleAppsSettings() {
                           disabled={!isLicenseKeyValid}
                         />
                       ))}
-                    </ItemGroup>
+                    </div>
                   </DragDropProvider>
                 )}
               </div>
               {availableApps.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <div className="text-xs font-medium text-muted-foreground">Available</div>
-                  <ItemGroup className="grid grid-cols-2">
+                  <div className="flex flex-row flex-wrap gap-2">
                     {availableApps.map((app) => (
-                      <Item key={app} variant="outline" size="xs">
-                        <ItemContent>
-                          <ItemTitle>
-                            <GoogleAppIcon app={app} className="size-3.5" />
-                            {googleAppsPinnedApps[app]}
-                          </ItemTitle>
-                        </ItemContent>
-                        <ItemActions>
-                          <Button
-                            size="icon-xs"
-                            variant="ghost"
-                            onClick={() => {
-                              configMutation.mutate({
-                                "googleApps.pinnedApps": [...pinnedApps, app],
-                              });
-                            }}
-                            disabled={!isLicenseKeyValid}
-                            aria-label={`Pin ${googleAppsPinnedApps[app]}`}
-                          >
-                            <PlusIcon />
-                          </Button>
-                        </ItemActions>
-                      </Item>
+                      <Button
+                        key={app}
+                        variant="outline"
+                        size="xs"
+                        onClick={() => {
+                          configMutation.mutate({
+                            "googleApps.pinnedApps": [...pinnedApps, app],
+                          });
+                        }}
+                        disabled={!isLicenseKeyValid}
+                        aria-label={`Pin ${googleAppsPinnedApps[app]}`}
+                      >
+                        <GoogleAppIcon app={app} className="size-3.5" />
+                        {googleAppsPinnedApps[app]}
+                        <PlusIcon />
+                      </Button>
                     ))}
-                  </ItemGroup>
+                  </div>
                 </div>
               )}
             </div>
