@@ -23,7 +23,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
+import { cn } from "@meru/ui/lib/utils";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -47,35 +47,30 @@ function SortablePinnedAppItem({
   const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
 
   return (
-    <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="outline" size="xs">
+    <div ref={ref} className={cn("flex items-center", isDragging && "opacity-50")}>
       <Button
         ref={handleRef}
-        size="icon-xs"
-        variant="ghost"
-        className="cursor-grab touch-none"
+        variant="outline"
+        size="xs"
+        className="cursor-grab touch-none rounded-r-none"
         disabled={disabled}
         aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
       >
         <GripVerticalIcon />
+        <GoogleAppIcon app={app} className="size-3.5" />
+        {googleAppsPinnedApps[app]}
       </Button>
-      <ItemContent>
-        <ItemTitle>
-          <GoogleAppIcon app={app} className="size-3.5" />
-          {googleAppsPinnedApps[app]}
-        </ItemTitle>
-      </ItemContent>
-      <ItemActions>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          onClick={onUnpin}
-          disabled={disabled}
-          aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
-        >
-          <XIcon />
-        </Button>
-      </ItemActions>
-    </Item>
+      <Button
+        variant="outline"
+        size="icon-xs"
+        className="-ml-px rounded-l-none"
+        onClick={onUnpin}
+        disabled={disabled}
+        aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
+      >
+        <XIcon />
+      </Button>
+    </div>
   );
 }
 
@@ -224,7 +219,7 @@ export function GoogleAppsSettings() {
                       });
                     }}
                   >
-                    <ItemGroup>
+                    <div className="flex flex-row flex-wrap gap-2">
                       {pinnedApps.map((app, index) => (
                         <SortablePinnedAppItem
                           key={app}
@@ -238,7 +233,7 @@ export function GoogleAppsSettings() {
                           disabled={!isLicenseKeyValid}
                         />
                       ))}
-                    </ItemGroup>
+                    </div>
                   </DragDropProvider>
                 )}
               </div>
