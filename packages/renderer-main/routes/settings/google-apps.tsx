@@ -23,7 +23,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import { cn } from "@meru/ui/lib/utils";
+import { ButtonGroup } from "@meru/ui/components/button-group";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -47,12 +47,12 @@ function SortablePinnedAppItem({
   const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
 
   return (
-    <div ref={ref} className={cn("flex items-center", isDragging && "opacity-50")}>
+    <ButtonGroup ref={ref} className={isDragging ? "opacity-50" : undefined}>
       <Button
         ref={handleRef}
         variant="outline"
         size="xs"
-        className="cursor-grab touch-none rounded-r-none"
+        className="cursor-grab touch-none"
         disabled={disabled}
         aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
       >
@@ -63,14 +63,13 @@ function SortablePinnedAppItem({
       <Button
         variant="outline"
         size="icon-xs"
-        className="-ml-px rounded-l-none"
         onClick={onUnpin}
         disabled={disabled}
         aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
       >
         <XIcon />
       </Button>
-    </div>
+    </ButtonGroup>
   );
 }
 
