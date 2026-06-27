@@ -8,6 +8,7 @@ import { AccountsSettings } from "@/routes/settings/accounts";
 import { AboutSettings } from "@/routes/settings/about";
 import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
+import { GeneralSettings } from "@/routes/settings/general";
 import { BlockerSettings } from "@/routes/settings/blocker";
 import { DownloadHistory } from "@/routes/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
@@ -32,6 +33,11 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   },
   {
     type: "separator",
+  },
+  {
+    label: "General",
+    path: "/settings/general",
+    component: GeneralSettings,
   },
   {
     label: "Accounts",
