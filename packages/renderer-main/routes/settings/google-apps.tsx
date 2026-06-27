@@ -245,33 +245,26 @@ export function GoogleAppsSettings() {
               {availableApps.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <div className="text-xs font-medium text-muted-foreground">Available</div>
-                  <ItemGroup className="grid grid-cols-2">
+                  <div className="flex flex-row flex-wrap gap-2">
                     {availableApps.map((app) => (
-                      <Item key={app} variant="outline" size="xs">
-                        <ItemContent>
-                          <ItemTitle>
-                            <GoogleAppIcon app={app} className="size-3.5" />
-                            {googleAppsPinnedApps[app]}
-                          </ItemTitle>
-                        </ItemContent>
-                        <ItemActions>
-                          <Button
-                            size="icon-xs"
-                            variant="ghost"
-                            onClick={() => {
-                              configMutation.mutate({
-                                "googleApps.pinnedApps": [...pinnedApps, app],
-                              });
-                            }}
-                            disabled={!isLicenseKeyValid}
-                            aria-label={`Pin ${googleAppsPinnedApps[app]}`}
-                          >
-                            <PlusIcon />
-                          </Button>
-                        </ItemActions>
-                      </Item>
+                      <Button
+                        key={app}
+                        variant="outline"
+                        size="xs"
+                        onClick={() => {
+                          configMutation.mutate({
+                            "googleApps.pinnedApps": [...pinnedApps, app],
+                          });
+                        }}
+                        disabled={!isLicenseKeyValid}
+                        aria-label={`Pin ${googleAppsPinnedApps[app]}`}
+                      >
+                        <GoogleAppIcon app={app} className="size-3.5" />
+                        {googleAppsPinnedApps[app]}
+                        <PlusIcon />
+                      </Button>
                     ))}
-                  </ItemGroup>
+                  </div>
                 </div>
               )}
             </div>
