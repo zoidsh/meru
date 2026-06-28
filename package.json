@@ -48,7 +48,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "electron": "^42.5.0",
-    "electron-builder": "^26.15.2",
+    "electron-builder": "26.15.6",
     "electron-context-menu": "^4.1.0",
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.0",
