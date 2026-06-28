@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import type { Config } from "@meru/shared/types";
 import {
   BrowserWindow,
   type BrowserWindowConstructorOptions,
@@ -36,6 +37,33 @@ export function getCascadedWindowBounds({ width, height }: { width: number; heig
   }
 
   return { x, y, width, height };
+}
+
+export function isWindowVisibleOnConnectedDisplay(bounds: Config["window.lastState"]["bounds"]) {
+  if (typeof bounds.x !== "number" || typeof bounds.y !== "number") {
+    return true;
+  }
+
+  const windowX = bounds.x;
+  const windowY = bounds.y;
+  const windowWidth = bounds.width;
+  const windowHeight = bounds.height;
+
+  return screen.getAllDisplays().some((display) => {
+    const {
+      x: workAreaX,
+      y: workAreaY,
+      width: workAreaWidth,
+      height: workAreaHeight,
+    } = display.workArea;
+
+    return (
+      windowX < workAreaX + workAreaWidth &&
+      windowX + windowWidth > workAreaX &&
+      windowY < workAreaY + workAreaHeight &&
+      windowY + windowHeight > workAreaY
+    );
+  });
 }
 
 export function getPreloadPath(name: string) {
