@@ -3,7 +3,12 @@ import { platform } from "@electron-toolkit/utils";
 import { app, BrowserWindow, screen } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
-import { getCommonBrowserWindowOptions, getTitleBarOptions, loadRenderer } from "@/lib/window";
+import {
+  getCommonBrowserWindowOptions,
+  getTitleBarOptions,
+  isWindowVisibleOnConnectedDisplay,
+  loadRenderer,
+} from "@/lib/window";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -74,10 +79,7 @@ class Main {
     const lastWindowState = config.get("window.lastState");
     const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
 
-    if (
-      typeof lastWindowState.displayId === "number" &&
-      !screen.getAllDisplays().some((display) => display.id === lastWindowState.displayId)
-    ) {
+    if (!isWindowVisibleOnConnectedDisplay(lastWindowState.bounds)) {
       lastWindowState.bounds = DEFAULT_WINDOW_STATE_BOUNDS;
     }
 
