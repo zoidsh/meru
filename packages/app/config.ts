@@ -85,7 +85,6 @@ export const config = new Store<Config>({
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,
       fullscreen: false,
       maximized: false,
-      displayId: null,
     },
     "window.restrictMinimumSize": true,
     "trial.expired": false,
@@ -153,15 +152,6 @@ export const config = new Store<Config>({
 
         // @ts-expect-error
         store.delete("lastWindowState");
-      }
-    },
-    ">=3.9.3": (store) => {
-      const lastWindowState = store.get("window.lastState");
-
-      if (lastWindowState && typeof lastWindowState.displayId === "undefined") {
-        lastWindowState.displayId = null;
-
-        store.set("window.lastState", lastWindowState);
       }
     },
     ">=3.11.0": (store) => {

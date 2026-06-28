@@ -159,7 +159,6 @@ export type Config = {
     };
     fullscreen: boolean;
     maximized: boolean;
-    displayId: number | null;
   };
   "window.restrictMinimumSize": boolean;
   "trial.expired": boolean;

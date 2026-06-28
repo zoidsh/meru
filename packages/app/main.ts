@@ -1,6 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
 import {
@@ -174,14 +174,10 @@ class Main {
   }
 
   saveWindowState() {
-    const bounds = main.window.getBounds();
-    const display = screen.getDisplayMatching(bounds);
-
     config.set("window.lastState", {
       bounds: main.window.getBounds(),
       fullscreen: main.window.isFullScreen(),
       maximized: main.window.isMaximized(),
-      displayId: display.id >= 0 ? display.id : null,
     });
   }
 
