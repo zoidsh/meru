@@ -186,7 +186,7 @@ export class AppMenu {
           {
             label: "Settings...",
             click: () => {
-              main.navigate("/settings/accounts");
+              main.navigate("/settings/general");
             },
           },
           {
