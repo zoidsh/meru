@@ -5,10 +5,10 @@ import postcssTailwind from "@tailwindcss/postcss";
 import viteTailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
 import { type Subprocess, spawn } from "bun";
+import postcss from "postcss";
+import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
-import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
-import postcss from "postcss";
 
 const args = parseArgs({
   args: Bun.argv,

@@ -8,7 +8,6 @@ import {
 } from "frimousse";
 import { LoaderIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";
-
 import { cn } from "../lib/utils";
 
 function EmojiPicker({
@@ -73,7 +72,7 @@ function EmojiPickerCategoryHeader({ category, ...props }: EmojiPickerListCatego
   return (
     <div
       {...props}
-      className="bg-popover px-3 pt-3.5 pb-2 text-muted-foreground text-xs leading-none"
+      className="bg-popover px-3 pt-3.5 pb-2 text-xs leading-none text-muted-foreground"
       data-slot="emoji-picker-category-header"
     >
       {category.label}
@@ -98,13 +97,13 @@ function EmojiPickerContent({
         <LoaderIcon className="size-4 animate-spin" />
       </EmojiPickerPrimitive.Loading>
       <EmojiPickerPrimitive.Empty
-        className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm"
+        className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
         data-slot="emoji-picker-empty"
       >
         No emoji found.
       </EmojiPickerPrimitive.Empty>
       <EmojiPickerPrimitive.List
-        className="select-none pb-1"
+        className="pb-1 select-none"
         components={{
           Row: EmojiPickerRow,
           Emoji: EmojiPickerEmoji,
@@ -120,7 +119,7 @@ function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">)
   return (
     <div
       className={cn(
-        "flex w-full min-w-0 max-w-(--frimousse-viewport-width) items-center gap-1 border-t p-2",
+        "flex w-full max-w-(--frimousse-viewport-width) min-w-0 items-center gap-1 border-t p-2",
         className,
       )}
       data-slot="emoji-picker-footer"
@@ -133,10 +132,10 @@ function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">)
               <div className="flex size-7 flex-none items-center justify-center text-lg">
                 {emoji.emoji}
               </div>
-              <span className="truncate text-secondary-foreground text-xs">{emoji.label}</span>
+              <span className="truncate text-xs text-secondary-foreground">{emoji.label}</span>
             </>
           ) : (
-            <span className="ml-1.5 flex h-7 items-center truncate text-muted-foreground text-xs">
+            <span className="ml-1.5 flex h-7 items-center truncate text-xs text-muted-foreground">
               Select an emoji…
             </span>
           )

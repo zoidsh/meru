@@ -1,9 +1,9 @@
-import { platform } from "@electron-toolkit/utils";
 import * as childProcess from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { platform } from "@electron-toolkit/utils";
 
 const execFile = promisify(childProcess.execFile);
 

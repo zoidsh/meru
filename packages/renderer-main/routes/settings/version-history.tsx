@@ -1,3 +1,4 @@
+import { dayjs } from "@meru/shared/renderer/date";
 import { Button } from "@meru/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@meru/ui/components/empty";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@meru/ui/components/item";
@@ -8,7 +9,6 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { dayjs } from "@meru/shared/renderer/date";
 
 export function VersionHistorySettings() {
   const { data, isPending, isError, refetch } = useQuery({
@@ -66,7 +66,7 @@ export function VersionHistorySettings() {
         <ItemContent>
           <ItemTitle className="text-2xl font-semibold">{release.tag_name}</ItemTitle>
           <ItemDescription>{dayjs(release.published_at).fromNow()}</ItemDescription>
-          <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 text-sm mt-6">
+          <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 mt-6 text-sm">
             <Markdown
               rehypePlugins={[rehypeRaw]}
               components={{

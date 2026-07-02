@@ -2,6 +2,7 @@ import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
+import { clamp } from "@meru/shared/utils";
 import {
   BrowserWindow,
   type BrowserWindowConstructorOptions,
@@ -13,7 +14,6 @@ import {
   WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
-import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { setupWindowContextMenu } from "./context-menu";

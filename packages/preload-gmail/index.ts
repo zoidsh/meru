@@ -5,11 +5,11 @@ import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
 import { observeOutOfOfficeBanner } from "./out-of-office";
+import { replyForwardInPopOut } from "./reply-forward";
 import { addSenderIcons } from "./sender-icons";
 import { initToaster } from "./toaster";
-import { initUrlPreview } from "./url-preview";
 import { observeUnreadCount } from "./unread-count";
-import { replyForwardInPopOut } from "./reply-forward";
+import { initUrlPreview } from "./url-preview";
 import { setUserEmail } from "./user-email";
 
 const features = [

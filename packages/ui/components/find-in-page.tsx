@@ -43,7 +43,7 @@ export function FindInPage({
   }
 
   return (
-    <div className="draggable-none flex items-center gap-4">
+    <div className="flex items-center gap-4 draggable-none">
       <div className="relative">
         <Input
           ref={inputRef}
@@ -70,7 +70,7 @@ export function FindInPage({
             }
           }}
         />
-        <div className="absolute top-0 right-0 bottom-0 text-xs text-muted-foreground flex items-center p-2.5">
+        <div className="absolute top-0 right-0 bottom-0 flex items-center p-2.5 text-xs text-muted-foreground">
           {activeMatch}/{totalMatches}
         </div>
       </div>

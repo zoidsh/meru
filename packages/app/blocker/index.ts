@@ -1,9 +1,9 @@
 import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { config } from "@/config";
-import { EMAIL_TRACKERS_REGEXP } from "./trackers";
 import { licenseKey } from "../license-key";
 import easylist from "./lists/easylist.txt";
 import easyprivacy from "./lists/easyprivacy.txt";
+import { EMAIL_TRACKERS_REGEXP } from "./trackers";
 
 export class Blocker {
   private _engine: FiltersEngine | undefined;

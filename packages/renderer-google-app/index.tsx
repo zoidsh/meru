@@ -1,8 +1,11 @@
-import { ipc } from "@meru/shared/renderer/ipc";
 import { useCopied } from "@meru/shared/renderer/hooks";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { renderApp } from "@meru/shared/renderer/react";
+import { useConfig } from "@meru/shared/renderer/react-query";
+import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 import { AccountBadge } from "@meru/ui/components/account-badge";
 import { FindInPage } from "@meru/ui/components/find-in-page";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -11,7 +14,6 @@ import {
   TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -25,8 +27,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
-import type { GoogleAppsPinnedApp } from "@meru/shared/types";
 
 function RecentDownloadHistoryButton() {
   return (

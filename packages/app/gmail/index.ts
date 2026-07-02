@@ -12,7 +12,9 @@ import {
   generateGmailLabelColorsCss,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
+import { ms } from "@meru/shared/ms";
 import type { GoogleAppsPinnedApp } from "@meru/shared/types";
+import { wait } from "@meru/shared/utils";
 import {
   app,
   BrowserWindow,
@@ -21,6 +23,7 @@ import {
   WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
+import z from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
@@ -28,11 +31,6 @@ import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
 import { GoogleApp } from "@/google-app";
 import { ipc } from "@/ipc";
-import { licenseKey } from "@/license-key";
-import { main } from "@/main";
-import { appTray } from "@/tray";
-import gmailCSS from "./gmail.css";
-import meruCSS from "./meru.css";
 import { log } from "@/lib/log";
 import {
   applyViewZoomLimits,
@@ -41,14 +39,16 @@ import {
 } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
-import z from "zod";
+import { licenseKey } from "@/license-key";
+import { main } from "@/main";
 import {
   createNewEmailNotification,
   createNotification,
   isWithinNotificationTimes,
 } from "@/notifications";
-import { ms } from "@meru/shared/ms";
-import { wait } from "@meru/shared/utils";
+import { appTray } from "@/tray";
+import gmailCSS from "./gmail.css";
+import meruCSS from "./meru.css";
 
 export const GMAIL_USER_STYLES_PATH = path.join(app.getPath("userData"), "gmail-user-styles.css");
 

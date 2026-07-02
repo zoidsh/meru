@@ -1,8 +1,8 @@
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { FieldGroup } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/shared/renderer/react-query";
 
 export function UnifiedInboxSettings() {
   const { config } = useConfig();

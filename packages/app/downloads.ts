@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
 import { BrowserWindow, shell, WebContentsView } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
-import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { fileExists } from "./lib/fs";
 import { getPreloadPath, loadRenderer } from "./lib/window";
 

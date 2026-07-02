@@ -6,11 +6,11 @@ import { Button } from "./button";
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative bg-background border-b draggable select-none"
+      className="relative border-b bg-background select-none draggable"
       style={{ height: APP_TITLEBAR_HEIGHT }}
     >
       <div
-        className="absolute top-0 bottom-0 px-1.5 flex items-center justify-between"
+        className="absolute top-0 bottom-0 flex items-center justify-between px-1.5"
         style={{
           left: "env(titlebar-area-x, 0)",
           width: "env(titlebar-area-width, 100%)",
@@ -36,7 +36,7 @@ export function TitlebarButtonGroup({ children }: { children: ReactNode }) {
 
 export function TitlebarPageTitle({ children }: { children: string }) {
   return (
-    <div className="truncate max-w-xs text-xs" title={children}>
+    <div className="max-w-xs truncate text-xs" title={children}>
       {children}
     </div>
   );

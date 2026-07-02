@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { machineId } from "node-machine-id";
+import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -16,6 +16,7 @@ import {
   session,
   shell,
 } from "electron";
+import { machineId } from "node-machine-id";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { GoogleApp } from "@/google-app";
@@ -24,13 +25,12 @@ import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
+import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
+import { log } from "./lib/log";
 import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
-import { downloads } from "./downloads";
-import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
-import { log } from "./lib/log";
 
 class Ipc {
   main = new IpcListener<IpcMainEvents>();

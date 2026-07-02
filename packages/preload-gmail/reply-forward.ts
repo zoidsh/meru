@@ -1,10 +1,10 @@
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
+import { $, $$ } from "select-dom";
 import {
   createElementAttributeFromPreloadArgument,
   createNotMatchingAttributeSelector,
   reEmitClickWithShiftKey,
 } from "./lib/utils";
-import { $, $$ } from "select-dom";
 
 const isReplyForwardInPopOutEnabled = process.argv.includes(
   GMAIL_PRELOAD_ARGUMENTS.replyForwardInPopOut,

@@ -15,7 +15,6 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
-import { spellchecker } from "./spellchecker";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
@@ -27,6 +26,7 @@ import {
   PROCESS_MERU_URL_ARG,
   setMeruProtocolClient,
 } from "./protocol";
+import { spellchecker } from "./spellchecker";
 import { trial } from "./trial";
 
 async function resetApp() {

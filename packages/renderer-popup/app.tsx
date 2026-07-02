@@ -1,11 +1,11 @@
+import { useThemeStore } from "@meru/shared/renderer/theme";
+import { Toaster } from "@meru/ui/components/sonner";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Router } from "wouter";
-import { useHashLocation } from "wouter/use-hash-location";
 import { Route } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { DesktopSources } from "./routes/desktop-sources";
 import { RecentDownloadHistory } from "./routes/recent-download-history";
-import { useHotkeys } from "react-hotkeys-hook";
-import { Toaster } from "@meru/ui/components/sonner";
-import { useThemeStore } from "@meru/shared/renderer/theme";
 
 export function App() {
   const theme = useThemeStore((state) => state.theme);

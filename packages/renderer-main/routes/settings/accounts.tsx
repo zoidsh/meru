@@ -1,8 +1,9 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
 import { Badge } from "@meru/ui/components/badge";
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from "@meru/ui/components/dialog";
 import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
+import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import {
@@ -26,16 +28,14 @@ import {
 } from "@meru/ui/components/select";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
+import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
-import { useForm } from "@tanstack/react-form";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
 
 function AccountForm({
   account = {
@@ -202,7 +202,7 @@ function AccountForm({
           </form.Field>
         </FieldSet>
       </FieldGroup>
-      <div className="flex justify-end items-center">
+      <div className="flex items-center justify-end">
         <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
       </div>
     </form>

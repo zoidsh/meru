@@ -10,7 +10,7 @@ export function SettingsTitle({ className, ...props }: ComponentProps<"div">) {
 }
 
 export function SettingsDescription({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("text-muted-foreground text-sm", className)} {...props} />;
+  return <div className={cn("text-sm text-muted-foreground", className)} {...props} />;
 }
 
 export function SettingsContent(props: ComponentProps<"div">) {

@@ -1,6 +1,7 @@
-import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
+import { Card, CardContent } from "@meru/ui/components/card";
 import {
   Empty,
   EmptyDescription,
@@ -8,11 +9,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@meru/ui/components/empty";
-import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
-import { Card, CardContent } from "@meru/ui/components/card";
-import { ipc } from "@meru/shared/renderer/ipc";
-import { DateFromNow } from "@/components/date-from-now";
 import { cn } from "@meru/ui/lib/utils";
+import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
+import { DateFromNow } from "@/components/date-from-now";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 
 function DownloadHistoryClearAllButton() {
   const { config } = useConfig();
@@ -68,12 +68,12 @@ function DownloadHistoryContent() {
     <div className="space-y-4">
       {config["downloads.history"].map(({ id, fileName, filePath, createdAt, exists }) => (
         <Card key={id}>
-          <CardContent className="flex gap-4 items-center text-sm">
+          <CardContent className="flex items-center gap-4 text-sm">
             <div className="flex-1 space-y-1">
               <div
                 className={cn("font-medium", {
-                  "hover:underline underline-offset-4": exists,
-                  "line-through text-muted-foreground": !exists,
+                  "underline-offset-4 hover:underline": exists,
+                  "text-muted-foreground line-through": !exists,
                 })}
                 onClick={
                   exists

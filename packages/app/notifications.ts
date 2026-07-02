@@ -1,8 +1,8 @@
 import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
-import { licenseKey } from "./license-key";
 import { checkWithinNotificationTimes } from "./lib/notifications";
+import { licenseKey } from "./license-key";
 import { main } from "./main";
 
 function attachNotificationListeners(
