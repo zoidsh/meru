@@ -1,15 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-
+import * as React from "react";
 import { cn } from "../lib/utils";
 import { Separator } from "./separator";
 
 const buttonGroupVariants = cva(
-  "flex w-fit items-stretch [&>*]:focus-visible:z-10 [&>*]:focus-visible:relative [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1 has-[>[data-slot=button-group]]:gap-2",
+  "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
   {
     variants: {
       orientation: {
@@ -47,7 +46,7 @@ function ButtonGroupText({ className, render, ...props }: useRender.ComponentPro
     props: mergeProps<"div">(
       {
         className: cn(
-          "bg-muted flex items-center gap-2 rounded-lg border px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+          "flex items-center gap-2 rounded-lg border bg-muted px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
           className,
         ),
       },
@@ -66,7 +65,7 @@ function ButtonGroupSeparator({
     <Separator
       data-slot="button-group-separator"
       orientation={orientation}
-      className={cn("bg-input relative !m-0 self-stretch data-vertical:h-auto", className)}
+      className={cn("relative !m-0 self-stretch bg-input data-vertical:h-auto", className)}
       {...props}
     />
   );

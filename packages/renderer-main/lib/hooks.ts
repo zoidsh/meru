@@ -1,9 +1,9 @@
-import { ipc } from "@meru/shared/renderer/ipc";
-import { useEffect } from "react";
-import { useConfig } from "@meru/shared/renderer/react-query";
-import { useAccountsStore, useTrialStore } from "./stores";
 import type { GmailInboxMessage } from "@meru/shared/gmail";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
+import { useEffect } from "react";
+import { useAccountsStore, useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
   useEffect(() => {

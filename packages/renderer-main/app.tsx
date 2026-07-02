@@ -1,3 +1,4 @@
+import { useThemeStore } from "@meru/shared/renderer/theme";
 import { Toaster } from "@meru/ui/components/sonner";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
@@ -5,7 +6,6 @@ import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { useMouseAccountSwitching } from "./lib/hooks";
-import { useThemeStore } from "@meru/shared/renderer/theme";
 
 export function App() {
   const theme = useThemeStore((state) => state.theme);
@@ -16,17 +16,17 @@ export function App() {
     <Router hook={useHashLocation}>
       <Switch>
         <Route path="/unified-inbox">
-          <div className="h-screen flex flex-col">
+          <div className="flex h-screen flex-col">
             <AppTitlebar />
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex flex-1 overflow-hidden">
               <AppMain />
             </div>
           </div>
         </Route>
         <Route>
-          <div className="h-screen flex flex-col">
+          <div className="flex h-screen flex-col">
             <AppTitlebar />
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
               <AppMain />
             </div>

@@ -1,5 +1,6 @@
-import { ipc } from "@meru/shared/renderer/ipc";
 import { WEBSITE_URL } from "@meru/shared/constants";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { Button, buttonVariants } from "@meru/ui/components/button";
 import {
   Dialog,
@@ -26,7 +27,6 @@ import { type ComponentProps, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({
@@ -79,7 +79,7 @@ function LicenseKeyForm({
           }}
         </form.Field>
       </FieldGroup>
-      <div className="flex justify-end items-center">
+      <div className="flex items-center justify-end">
         <Button type="submit">Activate</Button>
       </div>
     </form>
@@ -246,7 +246,7 @@ export function LicenseSettings() {
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Device Label</FieldLabel>
-                        <div className="flex gap-2 items-end">
+                        <div className="flex items-end gap-2">
                           <InputGroup>
                             <InputGroupInput
                               id={field.name}
@@ -289,7 +289,7 @@ export function LicenseSettings() {
     if (trialDaysLeft) {
       return (
         <>
-          <div className="space-y-2 text-sm mb-4">
+          <div className="mb-4 space-y-2 text-sm">
             <div>
               You're using a Meru Pro trial with {trialDaysLeft} day
               {trialDaysLeft > 1 ? "s" : ""} left.
@@ -313,7 +313,7 @@ export function LicenseSettings() {
 
     return (
       <>
-        <div className="space-y-2 text-sm mb-4">
+        <div className="mb-4 space-y-2 text-sm">
           <div>You're using the free version of Meru for personal use.</div>
           <div>
             Unlock Meru Pro for professional features and commercial use. Your upgrade supports

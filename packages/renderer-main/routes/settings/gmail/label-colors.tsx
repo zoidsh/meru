@@ -1,11 +1,11 @@
+import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
   type GmailLabelColor,
   type GmailLabelColorInput,
   type GmailLabelTextColor,
   gmailLabelColorInputSchema,
 } from "@meru/shared/schemas";
-import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@meru/ui/components/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
+import { Item, ItemActions, ItemContent, ItemGroup } from "@meru/ui/components/item";
 import {
   Select,
   SelectContent,
@@ -24,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import { Item, ItemActions, ItemContent, ItemGroup } from "@meru/ui/components/item";
 import { useForm } from "@tanstack/react-form";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";

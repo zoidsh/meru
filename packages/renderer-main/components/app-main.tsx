@@ -1,14 +1,14 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
+import { cn } from "@meru/ui/lib/utils";
 import { XIcon } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Route, useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useSettingsStore } from "@/lib/stores";
-import { sidebarNavItems } from "./app-sidebar";
 import { UnifiedInbox } from "@/routes/unified-inbox";
-import { cn } from "@meru/ui/lib/utils";
+import { sidebarNavItems } from "./app-sidebar";
 
 ipc.renderer.on("navigate", (_event, to) => {
   navigate(to);
@@ -26,7 +26,7 @@ function CloseButton() {
       <Button variant="outline" size="icon" onClick={closeSettings} className="rounded-full">
         <XIcon />
       </Button>
-      <div className="text-muted-foreground text-xs font-semibold">ESC</div>
+      <div className="text-xs font-semibold text-muted-foreground">ESC</div>
     </div>
   );
 }
@@ -41,11 +41,11 @@ export function AppMain() {
   }
 
   return (
-    <div className="flex-1 flex relative bg-sidebar">
+    <div className="relative flex flex-1 bg-sidebar">
       <ScrollArea
         className={cn(
-          "flex-1 bg-background relative overflow-hidden border dark:border-none",
-          !matchUnifiedInboxRoute && "rounded-xl m-4",
+          "relative flex-1 overflow-hidden border bg-background dark:border-none",
+          !matchUnifiedInboxRoute && "m-4 rounded-xl",
         )}
       >
         <div className={cn("mx-auto py-8", matchUnifiedInboxRoute ? "w-6xl px-8" : "w-3xl px-28")}>

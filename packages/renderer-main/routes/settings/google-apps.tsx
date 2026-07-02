@@ -9,6 +9,7 @@ import {
   supportedGoogleApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
+import { ButtonGroup } from "@meru/ui/components/button-group";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -23,11 +24,10 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import { ButtonGroup } from "@meru/ui/components/button-group";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";

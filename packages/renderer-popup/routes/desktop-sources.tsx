@@ -21,19 +21,19 @@ export function DesktopSources() {
       <div
         key={window.id}
         className={cn(
-          "px-3 py-2 border rounded-md text-sm transition hover:bg-accent select-none",
+          "rounded-md border px-3 py-2 text-sm transition select-none hover:bg-accent",
           {
-            "bg-accent text-accent-foreground font-semibold": selectedDesktopSourceId === window.id,
+            "bg-accent font-semibold text-accent-foreground": selectedDesktopSourceId === window.id,
           },
         )}
         onClick={() => {
           setSelectedDesktopSourceId(window.id);
         }}
       >
-        <div className="aspect-square flex justify-center items-center">
+        <div className="flex aspect-square items-center justify-center">
           <img src={window.thumbnail} alt={window.name} className="w-full" />
         </div>
-        <div className="whitespace-nowrap truncate">{window.name}</div>
+        <div className="truncate whitespace-nowrap">{window.name}</div>
       </div>
     ));
 
@@ -45,8 +45,8 @@ export function DesktopSources() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <Tabs defaultValue="windows" className="flex-1 overflow-hidden gap-0">
+    <div className="flex h-screen flex-col">
+      <Tabs defaultValue="windows" className="flex-1 gap-0 overflow-hidden">
         <div className="border-b px-4 py-3.5">
           <TabsList className="w-full">
             <TabsTrigger value="windows">Windows</TabsTrigger>
@@ -62,7 +62,7 @@ export function DesktopSources() {
           </TabsContent>
         </ScrollArea>
       </Tabs>
-      <div className="px-4 py-3.5 flex gap-4 justify-end border-t">
+      <div className="flex justify-end gap-4 border-t px-4 py-3.5">
         <Button
           variant="outline"
           onClick={() => {

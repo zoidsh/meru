@@ -1,5 +1,8 @@
 import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { platform } from "@meru/shared/renderer/utils";
+import { minutesToTime, timeToMinutes } from "@meru/shared/time";
+import type { NotificationTime } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -23,17 +26,14 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
+import { Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
-import { minutesToTime, timeToMinutes } from "@meru/shared/time";
-import type { NotificationTime } from "@meru/shared/types";
-import { Plus, X } from "lucide-react";
-import { toast } from "sonner";
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
@@ -190,7 +190,7 @@ export function NotificationsSettings() {
                               className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                               disabled={!isLicenseKeyValid}
                             />
-                            <span className="text-muted-foreground shrink-0 text-sm">to</span>
+                            <span className="shrink-0 text-sm text-muted-foreground">to</span>
                             <Input
                               type="time"
                               value={time.end}

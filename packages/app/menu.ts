@@ -21,8 +21,8 @@ import { log } from "@/lib/log";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
-import { createMeruMessageUrl } from "./protocol";
 import { licenseKey } from "./license-key";
+import { createMeruMessageUrl } from "./protocol";
 import { appState } from "./state";
 
 export class AppMenu {

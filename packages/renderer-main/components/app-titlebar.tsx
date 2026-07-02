@@ -1,10 +1,12 @@
-import { ipc } from "@meru/shared/renderer/ipc";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { googleAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
+import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -26,9 +28,9 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import {
   useAccountsStore,
   useAppUpdaterStore,
@@ -36,8 +38,6 @@ import {
   useSettingsStore,
   useTrialStore,
 } from "../lib/stores";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
-import { useRoute } from "wouter";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -69,14 +69,14 @@ function Trial() {
     <Badge
       variant="outline"
       className={cn(
-        "h-7 text-yellow-600/60 border-yellow-600/60 hover:border-transparent hover:bg-secondary hover:text-secondary-foreground transition draggable-none group relative",
+        "group relative h-7 border-yellow-600/60 text-yellow-600/60 transition draggable-none hover:border-transparent hover:bg-secondary hover:text-secondary-foreground",
         {
-          "text-red-600/60 border-red-600/60": trialDaysLeft <= 3,
+          "border-red-600/60 text-red-600/60": trialDaysLeft <= 3,
         },
       )}
     >
       <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
-        <span className="group-hover:opacity-0 fade-out">
+        <span className="fade-out group-hover:opacity-0">
           Pro trial ends in{" "}
           {trialDaysLeft >= 2
             ? `${trialDaysLeft} days`
@@ -84,7 +84,7 @@ function Trial() {
               ? `${trialDaysLeft} day`
               : "less than a day"}
         </span>
-        <span className="opacity-0 absolute inset-0 group-hover:opacity-100 group-hover:inline-flex items-center justify-center fade-in">
+        <span className="absolute inset-0 items-center justify-center opacity-0 fade-in group-hover:inline-flex group-hover:opacity-100">
           Upgrade to Pro
         </span>
       </a>
@@ -239,7 +239,7 @@ export function AppTitlebar() {
         {!account.gmail.attentionRequired &&
         config["accounts.unreadBadge"] &&
         account.gmail.unreadCount ? (
-          <div className="bg-[#ec3128] font-normal text-[0.5rem] leading-none text-white min-w-3.5 h-3.5 px-1 flex items-center justify-center rounded-full">
+          <div className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#ec3128] px-1 text-[0.5rem] leading-none font-normal text-white">
             {account.gmail.unreadCount.toLocaleString()}
           </div>
         ) : null}
@@ -250,7 +250,7 @@ export function AppTitlebar() {
   const renderContent = () => {
     if (isAppUpdateDetailsOpen) {
       return (
-        <div className="flex-1 flex justify-center items-center text-xs gap-4">
+        <div className="flex flex-1 items-center justify-center gap-4 text-xs">
           <div>Meru {appUpdateVersion} is available and ready to install</div>
           <div className="flex gap-2">
             <Button

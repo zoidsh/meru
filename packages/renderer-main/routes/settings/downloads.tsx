@@ -1,4 +1,5 @@
 import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -11,7 +12,6 @@ import {
 import { Input } from "@meru/ui/components/input";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
 export function DownloadsSettings() {

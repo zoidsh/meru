@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
+import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { Account } from "./account";
 import { config } from "./config";
+import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
-import { ipc } from "./ipc";
-import { platform } from "@electron-toolkit/utils";
 
 class Accounts {
   instances: Map<string, Account> = new Map();

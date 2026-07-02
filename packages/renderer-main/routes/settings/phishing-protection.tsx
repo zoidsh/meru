@@ -1,3 +1,4 @@
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -11,7 +12,6 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 
 export function PhishingProtectionSettings() {
   const { config } = useConfig();
@@ -51,7 +51,7 @@ export function PhishingProtectionSettings() {
                 {config["externalLinks.trustedHosts"].length > 0 && (
                   <div className="space-y-4">
                     {config["externalLinks.trustedHosts"].map((host) => (
-                      <div className="flex text-sm items-center pb-4 not-last:border-b" key={host}>
+                      <div className="flex items-center pb-4 text-sm not-last:border-b" key={host}>
                         <div className="flex-1">{host}</div>
                         <Button
                           variant="outline"

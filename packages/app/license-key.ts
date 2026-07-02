@@ -1,11 +1,11 @@
 import { app, dialog, type MessageBoxOptions } from "electron";
+import isOnline from "is-online";
 import { machineId } from "node-machine-id";
+import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { log } from "./lib/log";
 import { openExternalUrl } from "./url";
-import isOnline from "is-online";
-import { serializeError } from "serialize-error";
 
 class LicenseKey {
   isValid = false;

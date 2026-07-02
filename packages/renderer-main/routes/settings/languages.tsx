@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -8,13 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
 import { FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
-import { ChevronDownIcon } from "lucide-react";
-import { ipc } from "@meru/shared/renderer/ipc";
-import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { cn } from "@meru/ui/lib/utils";
-import { Badge } from "@meru/ui/components/badge";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDownIcon } from "lucide-react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 
 const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
@@ -99,7 +99,7 @@ export function LanguagesSettings() {
                     )}
                   >
                     <span className="truncate">{getTriggerLabel(selected)}</span>
-                    <ChevronDownIcon className="text-muted-foreground size-4 shrink-0" />
+                    <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
                   </Button>
                 }
               />

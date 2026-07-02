@@ -1,7 +1,7 @@
-import { createRoot } from "react-dom/client";
-import { queryClient } from "./react-query";
 import { TooltipProvider } from "@meru/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { createRoot } from "react-dom/client";
+import { queryClient } from "./react-query";
 import { initTheme } from "./theme";
 
 export function renderApp(App: React.ComponentType) {

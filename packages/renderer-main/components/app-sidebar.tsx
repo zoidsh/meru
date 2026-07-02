@@ -1,17 +1,18 @@
+import { platform } from "@meru/shared/renderer/utils";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
-import { platform } from "@meru/shared/renderer/utils";
 import { type RouteProps, useLocation } from "wouter";
-import { AccountsSettings } from "@/routes/settings/accounts";
+import { useSettingsStore } from "@/lib/stores";
+import { DownloadHistory } from "@/routes/download-history";
 import { AboutSettings } from "@/routes/settings/about";
+import { AccountsSettings } from "@/routes/settings/accounts";
 import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
-import { GeneralSettings } from "@/routes/settings/general";
 import { BlockerSettings } from "@/routes/settings/blocker";
-import { DownloadHistory } from "@/routes/download-history";
 import { DownloadsSettings } from "@/routes/settings/downloads";
+import { GeneralSettings } from "@/routes/settings/general";
 import { GmailSettings } from "@/routes/settings/gmail";
 import { GoogleAppsSettings } from "@/routes/settings/google-apps";
 import { LanguagesSettings } from "@/routes/settings/languages";
@@ -23,7 +24,6 @@ import { UnifiedInboxSettings } from "@/routes/settings/unified-inbox";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
 import { VersionHistorySettings } from "@/routes/settings/version-history";
-import { useSettingsStore } from "@/lib/stores";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
@@ -149,7 +149,7 @@ export function AppSidebar() {
 
   return (
     <div className="bg-sidebar p-4 pr-0">
-      <ScrollArea className="w-56 h-full">
+      <ScrollArea className="h-full w-56">
         <div className="space-y-2">
           {sidebarNavItems
             .filter((item) => !item.hidden)

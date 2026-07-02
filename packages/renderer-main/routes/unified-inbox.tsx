@@ -1,9 +1,18 @@
-import { SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
+import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
+import { ms } from "@meru/shared/ms";
 import { createDateTimeFormatter, dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { AccountBadge } from "@meru/ui/components/account-badge";
+import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@meru/ui/components/avatar";
 import { Button } from "@meru/ui/components/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@meru/ui/components/empty";
 import {
   Select,
   SelectContent,
@@ -11,6 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
+import { Table, TableBody, TableCell, TableRow } from "@meru/ui/components/table";
+import { cn } from "@meru/ui/lib/utils";
+import {
+  type PaginationState,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -20,27 +39,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { ms } from "@meru/shared/ms";
-import {
-  type PaginationState,
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
-import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@meru/ui/components/avatar";
-import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@meru/ui/components/empty";
-import { Table, TableBody, TableCell, TableRow } from "@meru/ui/components/table";
-import { cn } from "@meru/ui/lib/utils";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
@@ -56,7 +56,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
 
       return (
         <div
-          className="flex items-center gap-2 max-w-36"
+          className="flex max-w-36 items-center gap-2"
           title={[props.row.original.author, ...props.row.original.contributors]
             .map(({ name, email }) => `${name} <${email}>`)
             .join(", ")}
@@ -97,11 +97,11 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   }),
   columnHelper.accessor("subject", {
     cell: (props) => (
-      <div className="flex-1 flex gap-2 overflow-hidden">
-        <div className="truncate shrink-0 max-w-sm" title={props.getValue()}>
+      <div className="flex flex-1 gap-2 overflow-hidden">
+        <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
-        <div className="text-muted-foreground truncate min-w-0" title={props.row.original.summary}>
+        <div className="min-w-0 truncate text-muted-foreground" title={props.row.original.summary}>
           {props.row.original.summary}
         </div>
       </div>
@@ -113,7 +113,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
 
       return (
         <div
-          className="text-muted-foreground whitespace-nowrap"
+          className="whitespace-nowrap text-muted-foreground"
           title={createDateTimeFormatter({
             hour: "2-digit",
             minute: "2-digit",
@@ -305,7 +305,7 @@ function UnifiedInboxTable({
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableBody>
             {rows.map((row, index) => (
@@ -336,8 +336,8 @@ function UnifiedInboxTable({
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-between mt-4">
-        <div className="flex gap-2 items-center">
+      <div className="mt-4 flex justify-between">
+        <div className="flex items-center gap-2">
           <div className="text-sm">Rows per page</div>
           <Select
             value={rowsPerPage}
@@ -361,7 +361,7 @@ function UnifiedInboxTable({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-2">
           <div className="text-sm">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </div>

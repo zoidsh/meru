@@ -1,5 +1,7 @@
 import { app, dialog } from "electron";
+import isOnline from "is-online";
 import { machineId } from "node-machine-id";
+import { serializeError } from "serialize-error";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -7,8 +9,6 @@ import { log } from "./lib/log";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
-import isOnline from "is-online";
-import { serializeError } from "serialize-error";
 
 class Trial {
   private validationInterval: NodeJS.Timeout | undefined;

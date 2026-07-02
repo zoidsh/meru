@@ -1,18 +1,8 @@
+import { DateFromNow } from "@meru/renderer-main/components/date-from-now";
+import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
-import { ScrollArea } from "@meru/ui/components/scroll-area";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from "@meru/ui/components/item";
-import { DateFromNow } from "@meru/renderer-main/components/date-from-now";
-import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
-import { ipc } from "@meru/shared/renderer/ipc";
-import { cn } from "@meru/ui/lib/utils";
-import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import {
   Empty,
   EmptyDescription,
@@ -20,6 +10,16 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@meru/ui/components/empty";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@meru/ui/components/item";
+import { ScrollArea } from "@meru/ui/components/scroll-area";
+import { cn } from "@meru/ui/lib/utils";
+import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 
 export function RecentDownloadHistory() {
   const { config } = useConfig();
@@ -49,7 +49,7 @@ export function RecentDownloadHistory() {
     }
 
     return (
-      <ScrollArea className="flex-1 px-4 overflow-hidden">
+      <ScrollArea className="flex-1 overflow-hidden px-4">
         <div className="space-y-2">
           {config["downloads.history"]
             .slice(0, MAX_RECENT_DOWNLOAD_HISTORY_ITEMS)
@@ -58,7 +58,7 @@ export function RecentDownloadHistory() {
                 variant="outline"
                 key={id}
                 className={cn({
-                  "hover:bg-muted/50 transition-colors": exists,
+                  "transition-colors hover:bg-muted/50": exists,
                 })}
                 onClick={
                   exists
@@ -81,7 +81,7 @@ export function RecentDownloadHistory() {
                 <ItemContent className="overflow-hidden">
                   <ItemTitle
                     className={cn("block w-full truncate", {
-                      "line-through text-muted-foreground": !exists,
+                      "text-muted-foreground line-through": !exists,
                     })}
                     title={fileName}
                   >
@@ -131,8 +131,8 @@ export function RecentDownloadHistory() {
   };
 
   return (
-    <div className="h-screen flex flex-col border rounded-2xl">
-      <div className="font-semibold p-4">Recent Download History</div>
+    <div className="flex h-screen flex-col rounded-2xl border">
+      <div className="p-4 font-semibold">Recent Download History</div>
       <Button
         size="icon"
         variant="ghost"
@@ -145,7 +145,7 @@ export function RecentDownloadHistory() {
         <XIcon />
       </Button>
       {renderContent()}
-      <div className="bg-muted/50 border-t p-4 mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end border-t bg-muted/50 p-4">
         <Button
           size="sm"
           variant="outline"
