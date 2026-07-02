@@ -1,4 +1,12 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": []
+  "ignorePatterns": [],
+  "sortImports": {
+    "newlinesBetween": false
+  },
+  "sortPackageJson": true,
+  "sortTailwindcss": {
+    "functions": ["cn"],
+    "stylesheet": "packages/ui/styles/globals.css"
+  }
 }
