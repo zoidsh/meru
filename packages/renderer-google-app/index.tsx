@@ -16,9 +16,9 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckIcon,
-  CopyIcon,
   DownloadIcon,
   ExternalLinkIcon,
+  LinkIcon,
   LoaderCircleIcon,
   RotateCwIcon,
   XIcon,
@@ -94,7 +94,7 @@ function CopyUrlButton() {
         markCopied();
       }}
     >
-      {copied ? <CheckIcon /> : <CopyIcon />}
+      {copied ? <CheckIcon /> : <LinkIcon />}
     </TitlebarIconButton>
   );
 }
