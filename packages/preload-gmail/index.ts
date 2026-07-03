@@ -8,6 +8,7 @@ import { observeOutOfOfficeBanner } from "./out-of-office";
 import { replyForwardInPopOut } from "./reply-forward";
 import { addSenderIcons } from "./sender-icons";
 import { initToaster } from "./toaster";
+import { showEntireMessage } from "./trimmed-content";
 import { observeUnreadCount } from "./unread-count";
 import { initUrlPreview } from "./url-preview";
 import { setUserEmail } from "./user-email";
@@ -20,6 +21,7 @@ const features = [
   openComposeInNewWindow,
   setUserEmail,
   replyForwardInPopOut,
+  showEntireMessage,
 ];
 
 function runFeatures() {

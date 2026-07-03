@@ -140,6 +140,7 @@ export type Config = {
   "gmail.hideOutOfOfficeBanner": boolean;
   "gmail.hideUpgradeButton": boolean;
   "gmail.reverseConversation": boolean;
+  "gmail.showEntireMessage": boolean;
   "gmail.savedSearches": GmailSavedSearches;
   "gmail.labelColors": GmailLabelColors;
   "gmail.unreadCountPreference": "first-section" | "inbox";

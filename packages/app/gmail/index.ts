@@ -305,6 +305,10 @@ export class Gmail {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.reverseConversation);
       }
 
+      if (config.get("gmail.showEntireMessage")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.showEntireMessage);
+      }
+
       if (config.get("gmail.openComposeInNewWindow")) {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.openComposeInNewWindow);
       }

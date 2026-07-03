@@ -98,6 +98,13 @@ export function GmailSettings() {
               licenseKeyRequired
             />
             <ConfigSwitchField
+              label="Always Show Entire Message"
+              description="Automatically fetches and shows the full content of clipped emails instead of the '[Message clipped] View entire message' link."
+              configKey="gmail.showEntireMessage"
+              restartRequired
+              licenseKeyRequired
+            />
+            <ConfigSwitchField
               label="Move Attachments to Top"
               description="Moves email attachments to the top of the email."
               configKey="gmail.moveAttachmentsToTop"

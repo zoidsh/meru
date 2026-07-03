@@ -25,6 +25,7 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
   moveAttachmentsToTop: "--meru-move-attachments-to-top",
   closeComposeWindowAfterSend: "--meru-close-compose-after-send",
   replyForwardInPopOut: "--meru-reply-forward-in-pop-out",
+  showEntireMessage: "--meru-show-entire-message",
 };
 
 export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
