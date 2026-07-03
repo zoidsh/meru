@@ -1,6 +1,6 @@
 import { config } from "@/config";
 import { licenseKey } from "../license-key";
-import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, isBlockedHost } from "./hosts";
+import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, hasGoogleTelemetry, isBlockedHost } from "./hosts";
 import { EMAIL_TRACKERS_REGEXP } from "./trackers";
 
 export class Blocker {
@@ -50,7 +50,7 @@ export class Blocker {
 
     if (
       isBlockedHost(hostname, this.blockedHosts) ||
-      (this.blockTracking && EMAIL_TRACKERS_REGEXP.test(url))
+      (this.blockTracking && (EMAIL_TRACKERS_REGEXP.test(url) || hasGoogleTelemetry(url)))
     ) {
       callback({ cancel: true });
 

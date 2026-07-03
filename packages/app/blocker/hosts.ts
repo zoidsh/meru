@@ -20,6 +20,16 @@ export const GOOGLE_TRACKER_HOSTS: string[] = [
   "getgoogletagmanager.com",
 ];
 
+// Google telemetry endpoints that live on first-party hosts Gmail needs, so they
+// can only be matched by path. Harvested from EasyPrivacy's gen_204/log rules.
+export const GOOGLE_TELEMETRY_PATTERNS: string[] = [
+  "generate_204",
+  "gen_204",
+  "csi_204",
+  "client_204",
+  "play.google.com/log",
+];
+
 export function isBlockedHost(hostname: string, blockedHosts: Set<string>) {
   let domain = hostname;
 
@@ -32,4 +42,8 @@ export function isBlockedHost(hostname: string, blockedHosts: Set<string>) {
   }
 
   return false;
+}
+
+export function hasGoogleTelemetry(url: string) {
+  return GOOGLE_TELEMETRY_PATTERNS.some((pattern) => url.includes(pattern));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, isBlockedHost } from "./hosts";
+import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, hasGoogleTelemetry, isBlockedHost } from "./hosts";
 import { EMAIL_TRACKERS_REGEXP } from "./trackers";
 
 const hostnameOf = (url: string) => new URL(url).hostname;
@@ -57,6 +57,36 @@ describe("blocklist toggles", () => {
 
     expect(isBlockedHost("www.google-analytics.com", trackingOnly)).toBe(true);
     expect(isBlockedHost("ad.doubleclick.net", trackingOnly)).toBe(false);
+  });
+});
+
+describe("hasGoogleTelemetry", () => {
+  test("blocks path-based Google telemetry on first-party hosts", () => {
+    const telemetryUrls = [
+      "https://mail.google.com/mail/u/0/generate_204?uaahhg",
+      "https://play.google.com/log?format=json&hasfast=true&authuser=0",
+      "https://play.google.com/log?hasfast=true&auth=SAPISIDHASH+723f8e33259b7095",
+      "https://www.google.com/gen_204?foo=bar",
+      "https://www.gstatic.com/gen_204?x",
+    ];
+
+    for (const url of telemetryUrls) {
+      expect(hasGoogleTelemetry(url)).toBe(true);
+    }
+  });
+
+  test("leaves first-party Gmail, Play Store and sign-in untouched", () => {
+    const allowedUrls = [
+      "https://mail.google.com/mail/u/0/",
+      "https://mail.google.com/sync/u/0/i/s",
+      "https://play.google.com/store",
+      "https://accounts.google.com/o/oauth2/",
+      "https://lh3.googleusercontent.com/a/avatar",
+    ];
+
+    for (const url of allowedUrls) {
+      expect(hasGoogleTelemetry(url)).toBe(false);
+    }
   });
 });
 
