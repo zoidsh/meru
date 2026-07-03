@@ -1,68 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, hasGoogleTelemetry, isBlockedHost } from "./hosts";
-import { EMAIL_TRACKERS_REGEXP } from "./trackers";
+import { createBlockMatcher } from "./hosts";
 
-const hostnameOf = (url: string) => new URL(url).hostname;
+describe("createBlockMatcher", () => {
+  const matcher = createBlockMatcher({ ads: true, tracking: true });
 
-describe("isBlockedHost", () => {
-  const allHosts = new Set([...GOOGLE_AD_HOSTS, ...GOOGLE_TRACKER_HOSTS]);
-
-  test("blocks exact and subdomain matches of curated hosts", () => {
+  test("blocks google ad/tracker hosts and their subdomains", () => {
     const blockedUrls = [
       "https://doubleclick.net/instream/ad",
       "https://ad.doubleclick.net/ddm/ad/foo",
       "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
-      "https://mail-ads.google.com/pagead/",
+      "https://mail-ads.google.com/mail/main_jspb?rt=r&client=25&pt=ji",
       "https://www.google-analytics.com/g/collect",
       "https://www.googletagmanager.com/gtm.js",
     ];
 
     for (const url of blockedUrls) {
-      expect(isBlockedHost(hostnameOf(url), allHosts)).toBe(true);
+      expect(matcher?.(url)).toBe(true);
     }
   });
 
-  test("does not block first-party Google hosts Gmail needs", () => {
-    const allowedUrls = [
-      "https://mail.google.com/mail/u/0/",
-      "https://www.gstatic.com/og/_/js/foo.js",
-      "https://fonts.gstatic.com/s/inter/foo.woff2",
-      "https://lh3.googleusercontent.com/a/avatar",
-      "https://apis.google.com/js/api.js",
-      "https://accounts.google.com/o/oauth2/",
-      "https://google.com/",
-    ];
-
-    for (const url of allowedUrls) {
-      expect(isBlockedHost(hostnameOf(url), allHosts)).toBe(false);
-    }
-  });
-
-  test("does not match on non-label-boundary suffixes", () => {
-    expect(isBlockedHost("evildoubleclick.net", allHosts)).toBe(false);
-    expect(isBlockedHost("notgoogle-analytics.com", allHosts)).toBe(false);
-  });
-});
-
-describe("blocklist toggles", () => {
-  test("ads set blocks ad hosts but not tracker hosts", () => {
-    const adsOnly = new Set(GOOGLE_AD_HOSTS);
-
-    expect(isBlockedHost("ad.doubleclick.net", adsOnly)).toBe(true);
-    expect(isBlockedHost("www.google-analytics.com", adsOnly)).toBe(false);
-  });
-
-  test("tracker set blocks tracker hosts but not ad hosts", () => {
-    const trackingOnly = new Set(GOOGLE_TRACKER_HOSTS);
-
-    expect(isBlockedHost("www.google-analytics.com", trackingOnly)).toBe(true);
-    expect(isBlockedHost("ad.doubleclick.net", trackingOnly)).toBe(false);
-  });
-});
-
-describe("hasGoogleTelemetry", () => {
-  test("blocks path-based Google telemetry on first-party hosts", () => {
-    const telemetryUrls = [
+  test("blocks path-based google telemetry on first-party hosts", () => {
+    const blockedUrls = [
       "https://mail.google.com/mail/u/0/generate_204?uaahhg",
       "https://play.google.com/log?format=json&hasfast=true&authuser=0",
       "https://play.google.com/log?hasfast=true&auth=SAPISIDHASH+723f8e33259b7095",
@@ -70,33 +28,66 @@ describe("hasGoogleTelemetry", () => {
       "https://www.gstatic.com/gen_204?x",
     ];
 
-    for (const url of telemetryUrls) {
-      expect(hasGoogleTelemetry(url)).toBe(true);
+    for (const url of blockedUrls) {
+      expect(matcher?.(url)).toBe(true);
     }
   });
 
-  test("leaves first-party Gmail, Play Store and sign-in untouched", () => {
+  test("blocks known email tracking pixels", () => {
+    expect(matcher?.("https://awstrack.me/open/abc")).toBe(true);
+    expect(matcher?.("https://example.com/track/open")).toBe(true);
+  });
+
+  test("does not block first-party Google surfaces Gmail needs", () => {
     const allowedUrls = [
       "https://mail.google.com/mail/u/0/",
       "https://mail.google.com/sync/u/0/i/s",
-      "https://play.google.com/store",
-      "https://accounts.google.com/o/oauth2/",
+      "https://www.gstatic.com/og/_/js/foo.js",
+      "https://fonts.gstatic.com/s/inter/foo.woff2",
       "https://lh3.googleusercontent.com/a/avatar",
+      "https://apis.google.com/js/api.js",
+      "https://accounts.google.com/o/oauth2/",
+      "https://play.google.com/store",
+      "https://google.com/",
     ];
 
     for (const url of allowedUrls) {
-      expect(hasGoogleTelemetry(url)).toBe(false);
+      expect(matcher?.(url)).toBe(false);
+    }
+  });
+
+  test("does not match lookalike hosts or in-path occurrences", () => {
+    const allowedUrls = [
+      "https://evildoubleclick.net/x",
+      "https://notgoogle-analytics.com/x",
+      "https://example.com/a.doubleclick.net/b",
+      "https://example.com/redirect?url=doubleclick.net",
+    ];
+
+    for (const url of allowedUrls) {
+      expect(matcher?.(url)).toBe(false);
     }
   });
 });
 
-describe("EMAIL_TRACKERS_REGEXP", () => {
-  test("matches known email tracking pixels", () => {
-    expect(EMAIL_TRACKERS_REGEXP.test("https://awstrack.me/open/abc")).toBe(true);
-    expect(EMAIL_TRACKERS_REGEXP.test("https://example.com/track/open")).toBe(true);
+describe("createBlockMatcher toggles", () => {
+  test("ads only blocks ad hosts, not trackers or telemetry", () => {
+    const matcher = createBlockMatcher({ ads: true, tracking: false });
+
+    expect(matcher?.("https://ad.doubleclick.net/ddm/")).toBe(true);
+    expect(matcher?.("https://www.google-analytics.com/g/collect")).toBe(false);
+    expect(matcher?.("https://mail.google.com/mail/u/0/generate_204?x")).toBe(false);
   });
 
-  test("does not match ordinary email content", () => {
-    expect(EMAIL_TRACKERS_REGEXP.test("https://lh3.googleusercontent.com/a/avatar")).toBe(false);
+  test("tracking only blocks trackers and telemetry, not ad hosts", () => {
+    const matcher = createBlockMatcher({ ads: false, tracking: true });
+
+    expect(matcher?.("https://www.google-analytics.com/g/collect")).toBe(true);
+    expect(matcher?.("https://mail.google.com/mail/u/0/generate_204?x")).toBe(true);
+    expect(matcher?.("https://ad.doubleclick.net/ddm/")).toBe(false);
+  });
+
+  test("returns undefined when nothing is active", () => {
+    expect(createBlockMatcher({ ads: false, tracking: false })).toBeUndefined();
   });
 });

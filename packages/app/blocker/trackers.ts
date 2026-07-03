@@ -1,4 +1,4 @@
-const EMAIL_TRACKERS: string[] = [
+export const EMAIL_TRACKERS: string[] = [
   // 365offers
   "trk\\.365offers\\.trade",
   // Absolutesoftware
@@ -453,5 +453,3 @@ const EMAIL_TRACKERS: string[] = [
   "hubspotlinks\\.com/Cto",
   "servlet/servlet\\.ImageServer\\?oid",
 ];
-
-export const EMAIL_TRACKERS_REGEXP = new RegExp(EMAIL_TRACKERS.join("|"));

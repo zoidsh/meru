@@ -1,8 +1,9 @@
-// Google ad/tracker hostnames harvested from EasyList and EasyPrivacy — the only
-// list rules that can fire against the Gmail traffic Meru renders. Blocking a host
-// also blocks its subdomains (see isBlockedHost in ./index.ts).
+import { EMAIL_TRACKERS } from "./trackers";
 
-export const GOOGLE_AD_HOSTS: string[] = [
+// Google ad/tracker hostnames and telemetry paths harvested from EasyList and
+// EasyPrivacy — the only list rules that fire against the Gmail traffic Meru renders.
+
+const GOOGLE_AD_HOSTS = [
   "doubleclick.net",
   "doubleclick.com",
   "googlesyndication.com",
@@ -14,15 +15,13 @@ export const GOOGLE_AD_HOSTS: string[] = [
   "mail-ads.google.com",
 ];
 
-export const GOOGLE_TRACKER_HOSTS: string[] = [
+const GOOGLE_TRACKER_HOSTS = [
   "google-analytics.com",
   "googletagmanager.com",
   "getgoogletagmanager.com",
 ];
 
-// Google telemetry endpoints that live on first-party hosts Gmail needs, so they
-// can only be matched by path. Harvested from EasyPrivacy's gen_204/log rules.
-export const GOOGLE_TELEMETRY_PATTERNS: string[] = [
+const GOOGLE_TELEMETRY_PATTERNS = [
   "generate_204",
   "gen_204",
   "csi_204",
@@ -30,20 +29,53 @@ export const GOOGLE_TELEMETRY_PATTERNS: string[] = [
   "play.google.com/log",
 ];
 
-export function isBlockedHost(hostname: string, blockedHosts: Set<string>) {
-  let domain = hostname;
-
-  while (domain.includes(".")) {
-    if (blockedHosts.has(domain)) {
-      return true;
-    }
-
-    domain = domain.slice(domain.indexOf(".") + 1);
-  }
-
-  return false;
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function hasGoogleTelemetry(url: string) {
-  return GOOGLE_TELEMETRY_PATTERNS.some((pattern) => url.includes(pattern));
+function createHostPattern(hosts: string[]) {
+  // Match a blocked host only at a hostname label boundary in the URL authority,
+  // so paths and lookalike hosts (e.g. evildoubleclick.net) never match.
+  return new RegExp(`://(?:[a-z0-9-]+\\.)*(?:${hosts.map(escapeRegExp).join("|")})(?=[:/?#]|$)`);
+}
+
+// A pattern with an unbounded quantifier defeats V8's regexp prefilter and forces a
+// full backtracking scan of every alternative. Splitting these off keeps the literal
+// patterns on the fast path — matching the same URLs an order of magnitude faster.
+function hasUnboundedQuantifier(pattern: string) {
+  return /[*+{]/.test(pattern);
+}
+
+export function createBlockMatcher({ ads, tracking }: { ads: boolean; tracking: boolean }) {
+  const patterns: RegExp[] = [];
+
+  const hosts = [...(ads ? GOOGLE_AD_HOSTS : []), ...(tracking ? GOOGLE_TRACKER_HOSTS : [])];
+
+  if (hosts.length) {
+    patterns.push(createHostPattern(hosts));
+  }
+
+  if (tracking) {
+    const literal = [
+      ...GOOGLE_TELEMETRY_PATTERNS.map(escapeRegExp),
+      ...EMAIL_TRACKERS.filter((pattern) => !hasUnboundedQuantifier(pattern)),
+    ];
+
+    patterns.push(new RegExp(literal.join("|")));
+    patterns.push(new RegExp(EMAIL_TRACKERS.filter(hasUnboundedQuantifier).join("|")));
+  }
+
+  if (!patterns.length) {
+    return;
+  }
+
+  return (url: string) => {
+    for (const pattern of patterns) {
+      if (pattern.test(url)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 }
