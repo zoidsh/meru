@@ -1,6 +1,6 @@
 // Google ad/tracker hostnames, telemetry paths and email-tracker fragments harvested
-// from EasyList and EasyPrivacy — the only list rules that fire against the Gmail
-// traffic Meru renders.
+// from EasyList and EasyPrivacy — the only list rules that fire against the Google
+// Workspace traffic (Gmail, Calendar, Drive, Meet, …) Meru renders.
 
 const GOOGLE_AD_HOSTS = [
   "doubleclick.net",
