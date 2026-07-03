@@ -20,13 +20,7 @@ export class Blocker {
     details: Electron.OnBeforeRequestListenerDetails,
     callback: (response: Electron.CallbackResponse) => void,
   ) => {
-    if (!this.blockMatcher) {
-      callback({});
-
-      return;
-    }
-
-    if (this.blockMatcher(details.url)) {
+    if (this.blockMatcher?.(details.url)) {
       callback({ cancel: true });
 
       return;
