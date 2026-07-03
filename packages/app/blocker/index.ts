@@ -1,74 +1,57 @@
-import { FiltersEngine, Request } from "@ghostery/adblocker";
 import { config } from "@/config";
 import { licenseKey } from "../license-key";
-import easylist from "./lists/easylist.txt";
-import easyprivacy from "./lists/easyprivacy.txt";
+import { GOOGLE_AD_HOSTS, GOOGLE_TRACKER_HOSTS, isBlockedHost } from "./hosts";
 import { EMAIL_TRACKERS_REGEXP } from "./trackers";
 
 export class Blocker {
-  private _engine: FiltersEngine | undefined;
+  private blockedHosts = new Set<string>();
 
   blockTracking = false;
-
-  get engine() {
-    if (!this._engine) {
-      throw new Error("Blocker engine is not initialized");
-    }
-
-    return this._engine;
-  }
-
-  set engine(engine: FiltersEngine) {
-    this._engine = engine;
-  }
 
   init() {
     if (!licenseKey.isValid || !config.get("blocker.enabled")) {
       return;
     }
 
-    const lists: string[] = [];
-
     if (config.get("blocker.ads")) {
-      lists.push(easylist);
+      for (const host of GOOGLE_AD_HOSTS) {
+        this.blockedHosts.add(host);
+      }
     }
 
     this.blockTracking = config.get("blocker.tracking");
 
     if (this.blockTracking) {
-      lists.push(easyprivacy);
+      for (const host of GOOGLE_TRACKER_HOSTS) {
+        this.blockedHosts.add(host);
+      }
     }
+  }
 
-    if (!lists.length) {
-      return;
-    }
-
-    this.engine = FiltersEngine.parse(lists.join("\n"));
+  private get isActive() {
+    return this.blockedHosts.size > 0 || this.blockTracking;
   }
 
   private onBeforeRequest = (
     details: Electron.OnBeforeRequestListenerDetails,
     callback: (response: Electron.CallbackResponse) => void,
   ) => {
-    const { id, url, resourceType, referrer } = details;
+    const { url } = details;
 
-    const { redirect, match } = this.engine.match(
-      Request.fromRawDetails({
-        _originalRequestDetails: details,
-        requestId: `${id}`,
-        url,
-        type: resourceType,
-        sourceUrl: referrer,
-      }),
-    );
+    let hostname: string;
 
-    if (redirect) {
-      callback({ redirectURL: redirect.dataUrl });
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      callback({});
 
       return;
     }
 
-    if (match || (this.blockTracking && EMAIL_TRACKERS_REGEXP.test(url))) {
+    if (
+      isBlockedHost(hostname, this.blockedHosts) ||
+      (this.blockTracking && EMAIL_TRACKERS_REGEXP.test(url))
+    ) {
       callback({ cancel: true });
 
       return;
@@ -78,7 +61,7 @@ export class Blocker {
   };
 
   setupSession(session: Electron.Session) {
-    if (this._engine) {
+    if (this.isActive) {
       session.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, this.onBeforeRequest);
     }
   }
