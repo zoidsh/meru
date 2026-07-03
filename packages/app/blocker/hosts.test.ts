@@ -26,6 +26,7 @@ describe("createBlockMatcher", () => {
       "https://play.google.com/log?hasfast=true&auth=SAPISIDHASH+723f8e33259b7095",
       "https://www.google.com/gen_204?foo=bar",
       "https://www.gstatic.com/gen_204?x",
+      "https://docs.google.com/csi?v=2&s=docs&action=load",
     ];
 
     for (const url of blockedUrls) {

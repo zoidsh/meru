@@ -20,13 +20,15 @@ const GOOGLE_TRACKER_HOSTS = [
   "getgoogletagmanager.com",
 ];
 
-// Google telemetry lives on first-party hosts Gmail needs, so it can only be matched
-// by these path/query markers rather than by hostname.
+// Google telemetry lives on first-party hosts the Workspace apps need, so it can only
+// be matched by these path/query markers rather than by hostname. gen_204/csi beacons
+// fire across every Google app (Docs, Calendar, Drive, Meet, …), not just Gmail.
 const GOOGLE_TELEMETRY_PATHS = [
   "generate_204",
   "gen_204",
   "csi_204",
   "client_204",
+  "/csi?v=",
   "play.google.com/log",
 ];
 
