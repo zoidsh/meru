@@ -22,6 +22,22 @@ class Accounts {
       config.set("accounts", accountConfigs);
     }
 
+    const hasSelectedEnabledAccount = accountConfigs.some(
+      (accountConfig) => !accountConfig.disabled && accountConfig.selected,
+    );
+
+    if (!hasSelectedEnabledAccount) {
+      const firstEnabledAccount = accountConfigs.find((accountConfig) => !accountConfig.disabled);
+
+      if (firstEnabledAccount) {
+        for (const accountConfig of accountConfigs) {
+          accountConfig.selected = accountConfig.id === firstEnabledAccount.id;
+        }
+
+        config.set("accounts", accountConfigs);
+      }
+    }
+
     for (const accountConfig of this.getAccountConfigs()) {
       const account = new Account(accountConfig);
 
@@ -91,7 +107,9 @@ class Accounts {
   }
 
   getAccountConfigs() {
-    const accountConfigs = config.get("accounts");
+    const accountConfigs = config
+      .get("accounts")
+      .filter((accountConfig) => !accountConfig.disabled);
 
     if (!licenseKey.isValid) {
       return accountConfigs.slice(0, 1);
@@ -224,6 +242,7 @@ class Accounts {
       ...accountDetails,
       id: randomUUID(),
       selected: false,
+      disabled: false,
       gmail: {
         unreadBadge: accountDetails.gmail.unreadBadge,
         unifiedInbox: accountDetails.gmail.unifiedInbox,

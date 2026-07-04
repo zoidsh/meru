@@ -21,6 +21,7 @@ export const config = new Store<Config>({
         label: "Default",
         color: null,
         selected: true,
+        disabled: false,
         notifications: true,
         gmail: {
           unreadBadge: true,
@@ -310,6 +311,25 @@ export const config = new Store<Config>({
 
         // @ts-expect-error
         store.delete("hardwareAcceleration");
+      }
+    },
+    ">3.54.0": (store) => {
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        let accountsMigrated = false;
+
+        for (const account of accounts) {
+          if (typeof account.disabled !== "boolean") {
+            account.disabled = false;
+
+            accountsMigrated = true;
+          }
+        }
+
+        if (accountsMigrated) {
+          store.set("accounts", accounts);
+        }
       }
     },
   },

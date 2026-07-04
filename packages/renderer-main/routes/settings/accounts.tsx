@@ -31,6 +31,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -42,6 +43,7 @@ function AccountForm({
     label: "",
     color: null,
     gmail: { unreadBadge: true, unifiedInbox: true },
+    disabled: false,
     notifications: true,
   },
   placeholder = "Work",
@@ -200,6 +202,21 @@ function AccountForm({
               </Field>
             )}
           </form.Field>
+          {type === "edit" && (
+            <form.Field name="disabled">
+              {(field) => (
+                <Field orientation="horizontal" className="w-fit">
+                  <Switch
+                    id={field.name}
+                    name={field.name}
+                    checked={field.state.value}
+                    onCheckedChange={field.handleChange}
+                  />
+                  <FieldLabel>Disabled</FieldLabel>
+                </Field>
+              )}
+            </form.Field>
+          )}
         </FieldSet>
       </FieldGroup>
       <div className="flex items-center justify-end">
@@ -249,6 +266,8 @@ function AddAccountButton() {
 function EditAccountButton({ account }: { account: AccountConfig }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const { config } = useConfig();
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
@@ -265,6 +284,17 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
         <AccountForm
           account={account}
           onSubmit={(values) => {
+            if (values.disabled && !account.disabled) {
+              const enabledAccountsCount =
+                config?.accounts.filter((accountConfig) => !accountConfig.disabled).length ?? 0;
+
+              if (enabledAccountsCount <= 1) {
+                toast.error("Cannot disable the only enabled account");
+
+                return;
+              }
+            }
+
             ipc.main.send("accounts.updateAccount", {
               ...account,
               ...values,
@@ -276,7 +306,8 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
               account.gmail.unifiedInbox !== values.gmail.unifiedInbox ||
-              account.notifications !== values.notifications
+              account.notifications !== values.notifications ||
+              account.disabled !== values.disabled
             ) {
               restartRequiredToast();
             }
@@ -323,8 +354,9 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.gmail.unreadBadge || account.notifications) && (
+        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
+            {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
