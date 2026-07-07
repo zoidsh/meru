@@ -38,7 +38,13 @@ class Accounts {
       }
     }
 
-    for (const accountConfig of this.getAccountConfigs()) {
+    const enabledAccountConfigs = accountConfigs.filter((accountConfig) => !accountConfig.disabled);
+
+    const accountConfigsToLoad = licenseKey.isValid
+      ? enabledAccountConfigs
+      : enabledAccountConfigs.slice(0, 1);
+
+    for (const accountConfig of accountConfigsToLoad) {
       const account = new Account(accountConfig);
 
       this.instances.set(accountConfig.id, account);
@@ -109,7 +115,7 @@ class Accounts {
   getAccountConfigs() {
     const accountConfigs = config
       .get("accounts")
-      .filter((accountConfig) => !accountConfig.disabled);
+      .filter((accountConfig) => this.instances.has(accountConfig.id));
 
     if (!licenseKey.isValid) {
       return accountConfigs.slice(0, 1);
