@@ -27,11 +27,11 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Switch } from "@meru/ui/components/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@meru/ui/components/tooltip";
 import { cn } from "@meru/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
+import { GripVerticalIcon, InfoIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -49,11 +49,13 @@ function AccountForm({
   placeholder = "Work",
   onSubmit,
   type,
+  isOnlyEnabledAccount = false,
 }: {
   account?: AccountConfigInput;
   placeholder?: string;
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
+  isOnlyEnabledAccount?: boolean;
 }) {
   const form = useForm({
     defaultValues: account,
@@ -211,8 +213,17 @@ function AccountForm({
                     name={field.name}
                     checked={field.state.value}
                     onCheckedChange={field.handleChange}
+                    disabled={isOnlyEnabledAccount}
                   />
                   <FieldLabel>Disabled</FieldLabel>
+                  {isOnlyEnabledAccount && (
+                    <Tooltip>
+                      <TooltipTrigger className="text-muted-foreground">
+                        <InfoIcon className="size-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>At least one account must stay enabled.</TooltipContent>
+                    </Tooltip>
+                  )}
                 </Field>
               )}
             </form.Field>
@@ -268,6 +279,10 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
 
   const { config } = useConfig();
 
+  const isOnlyEnabledAccount =
+    !account.disabled &&
+    (config?.accounts.filter((accountConfig) => !accountConfig.disabled).length ?? 0) <= 1;
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
@@ -283,18 +298,8 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
         </DialogHeader>
         <AccountForm
           account={account}
+          isOnlyEnabledAccount={isOnlyEnabledAccount}
           onSubmit={(values) => {
-            if (values.disabled && !account.disabled) {
-              const enabledAccountsCount =
-                config?.accounts.filter((accountConfig) => !accountConfig.disabled).length ?? 0;
-
-              if (enabledAccountsCount <= 1) {
-                toast.error("Cannot disable the only enabled account");
-
-                return;
-              }
-            }
-
             ipc.main.send("accounts.updateAccount", {
               ...account,
               ...values,
