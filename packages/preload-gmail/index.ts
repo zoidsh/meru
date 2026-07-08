@@ -4,6 +4,7 @@ import { observeBodyMutations } from "@meru/shared/dom";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
+import { darkMode } from "./dark-mode";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { replyForwardInPopOut } from "./reply-forward";
 import { addSenderIcons } from "./sender-icons";
@@ -20,6 +21,7 @@ const features = [
   openComposeInNewWindow,
   setUserEmail,
   replyForwardInPopOut,
+  darkMode,
 ];
 
 function runFeatures() {
