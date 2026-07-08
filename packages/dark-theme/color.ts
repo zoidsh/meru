@@ -26,15 +26,15 @@ export function getSRGBLightness(r: number, g: number, b: number): number {
 // https://en.wikipedia.org/wiki/HSL_and_HSV
 export function hslToRGB({ h, s, l, a = 1 }: HSLA): RGBA {
   if (s === 0) {
-    const [r, b, g] = [l, l, l].map((value) => Math.round(value * 255));
+    const gray = Math.round(l * 255);
 
-    return { r, g, b, a };
+    return { r: gray, g: gray, b: gray, a };
   }
 
   const chroma = (1 - Math.abs(2 * l - 1)) * s;
   const secondary = chroma * (1 - Math.abs(((h / 60) % 2) - 1));
   const lightnessOffset = l - chroma / 2;
-  const [r, g, b] = (
+  const [red, green, blue] = (
     h < 60
       ? [chroma, secondary, 0]
       : h < 120
@@ -46,9 +46,14 @@ export function hslToRGB({ h, s, l, a = 1 }: HSLA): RGBA {
             : h < 300
               ? [secondary, 0, chroma]
               : [chroma, 0, secondary]
-  ).map((value) => Math.round((value + lightnessOffset) * 255));
+  ) as [number, number, number];
 
-  return { r, g, b, a };
+  return {
+    r: Math.round((red + lightnessOffset) * 255),
+    g: Math.round((green + lightnessOffset) * 255),
+    b: Math.round((blue + lightnessOffset) * 255),
+    a,
+  };
 }
 
 // https://en.wikipedia.org/wiki/HSL_and_HSV
@@ -153,7 +158,7 @@ function getNumbersFromString(input: string, range: number[], units: { [unit: st
     const numberEnd = unitStart > -1 ? unitStart : matchEnd;
     const numberText = input.slice(numberStart, numberEnd);
     let number = parseFloat(numberText);
-    const bound = range[numbers.length];
+    const bound = range[numbers.length] ?? 1;
 
     if (unitStart > -1) {
       const unit = input.slice(unitStart, matchEnd);
@@ -306,7 +311,11 @@ function domParseColor(colorText: string): RGBA | null {
   canvasContext.fillStyle = colorText;
   canvasContext.fillRect(0, 0, 1, 1);
   const imageData = canvasContext.getImageData(0, 0, 1, 1).data;
-  const color = `rgba(${imageData[0]}, ${imageData[1]}, ${imageData[2]}, ${(imageData[3] / 255).toFixed(2)})`;
+  const red = imageData[0] ?? 0;
+  const green = imageData[1] ?? 0;
+  const blue = imageData[2] ?? 0;
+  const alpha = imageData[3] ?? 0;
+  const color = `rgba(${red}, ${green}, ${blue}, ${(alpha / 255).toFixed(2)})`;
 
   return parseRGB(color);
 }

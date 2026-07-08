@@ -108,12 +108,13 @@ export function modifyBackgroundImage(
   Promise.all(
     layers.map(async (layer) => {
       const urlMatch = layer.match(urlLayerRegex);
+      const imageUrl = urlMatch?.[2];
 
-      if (!urlMatch) {
+      if (!imageUrl) {
         return isGradientLayer(layer) ? modifyGradientLayer(layer, theme) : layer;
       }
 
-      const details = await getImageDetails(urlMatch[2]);
+      const details = await getImageDetails(imageUrl);
 
       if (!details) {
         return layer;

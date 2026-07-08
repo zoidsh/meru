@@ -1,12 +1,20 @@
 import { darkTheme } from "@meru/dark-theme";
 import { $ } from "select-dom";
 
+let themedElement: HTMLElement | null = null;
+
 export function darkMode() {
   const messageElement = $(".AO .nH.g.id");
 
-  if (!messageElement) {
+  if (!messageElement || messageElement === themedElement) {
     return;
   }
 
-  darkTheme(messageElement);
+  themedElement = messageElement;
+
+  darkTheme(messageElement, {
+    darkSchemeBackgroundColor: "#1a1a1a",
+    ignore: [".at"],
+    observe: true,
+  });
 }

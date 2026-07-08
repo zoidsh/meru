@@ -92,10 +92,10 @@ function analyzeImage(image: HTMLImageElement): ImageAnalysis | null {
   let sumAlpha = 0;
 
   for (let offset = 0; offset < pixels.length; offset += 4) {
-    const red = pixels[offset];
-    const green = pixels[offset + 1];
-    const blue = pixels[offset + 2];
-    const alpha = pixels[offset + 3];
+    const red = pixels[offset] ?? 0;
+    const green = pixels[offset + 1] ?? 0;
+    const blue = pixels[offset + 2] ?? 0;
+    const alpha = pixels[offset + 3] ?? 0;
 
     sumRed += red;
     sumGreen += green;

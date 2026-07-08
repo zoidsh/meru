@@ -39,7 +39,7 @@ export function applyColorMatrix(
   const rgbColumn: Matrix5x1 = [[red / 255], [green / 255], [blue / 255], [1], [1]];
   const result = multiplyMatrices<Matrix5x1>(matrix, rgbColumn);
 
-  return [0, 1, 2].map((index) => clamp(Math.round(result[index][0] * 255), 0, 255)) as [
+  return [0, 1, 2].map((index) => clamp(Math.round((result[index]?.[0] ?? 0) * 255), 0, 255)) as [
     number,
     number,
     number,

@@ -31,19 +31,24 @@ export function clamp(x: number, min: number, max: number): number {
 
 export function multiplyMatrices<M extends Matrix>(m1: Matrix5x5, m2: Matrix5x5 | Matrix5x1): M {
   const result: number[][] = [];
+  const columns = m2[0]?.length ?? 0;
+  const inner = m1[0]?.length ?? 0;
 
-  for (let row = 0, rows = m1.length; row < rows; row++) {
-    result[row] = [];
+  for (let row = 0; row < m1.length; row++) {
+    const m1Row = m1[row] ?? [];
+    const resultRow: number[] = [];
 
-    for (let column = 0, columns = m2[0].length; column < columns; column++) {
+    for (let column = 0; column < columns; column++) {
       let sum = 0;
 
-      for (let index = 0, inner = m1[0].length; index < inner; index++) {
-        sum += m1[row][index] * m2[index][column];
+      for (let index = 0; index < inner; index++) {
+        sum += (m1Row[index] ?? 0) * (m2[index]?.[column] ?? 0);
       }
 
-      result[row][column] = sum;
+      resultRow[column] = sum;
     }
+
+    result[row] = resultRow;
   }
 
   return result as M;

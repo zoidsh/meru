@@ -34,24 +34,54 @@ type ColorSnapshot = {
   textShadow: string;
 };
 
+export type DarkThemeOptions = Partial<Theme> & {
+  // Selectors whose matching elements (and their descendants) keep their
+  // original colors — e.g. Gmail's coloured label chips.
+  ignore?: string[];
+  // Watch the subtree and keep theming content added later, and re-theme an
+  // element when its class changes so state-driven styles (e.g. the shadow a
+  // sticky toolbar gains on scroll) are darkened too.
+  observe?: boolean;
+};
+
 export type DarkThemeController = {
   revert: () => void;
 };
 
-export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThemeController {
-  const theme = { ...DEFAULT_THEME, ...options };
+export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
+  const { ignore, observe, ...themeOptions } = options ?? {};
+  const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
   const isCancelled = () => cancelled;
 
-  const elements = [root, ...root.querySelectorAll<HTMLElement>("*")].filter(
-    (element) => !element.hasAttribute(PROCESSED_ATTRIBUTE),
-  );
+  const ignoreSelector = ignore && ignore.length > 0 ? ignore.join(",") : null;
+  const isIgnored = (element: HTMLElement) =>
+    ignoreSelector != null && element.closest(ignoreSelector) != null;
 
-  // Read every original color before mutating anything: applying an inline color
-  // to a parent changes what getComputedStyle reports for its children, so a
-  // single read-then-write pass would re-modify already-darkened inherited colors.
-  const snapshots: ColorSnapshot[] = elements.map((element) => {
+  // Which properties this engine has overridden on each element, so re-theming
+  // (on class changes) only fills in newly-appeared properties instead of
+  // re-darkening its own output or touching the element's own inline styles.
+  const overriddenProperties = new WeakMap<HTMLElement, Set<string>>();
+  const originalStyles = new Map<HTMLElement, string>();
+
+  const setOverride = (element: HTMLElement, property: string, value: string) => {
+    let properties = overriddenProperties.get(element);
+
+    if (!properties) {
+      properties = new Set();
+      overriddenProperties.set(element, properties);
+    }
+
+    if (properties.has(property)) {
+      return;
+    }
+
+    element.style.setProperty(property, value, "important");
+    properties.add(property);
+  };
+
+  const captureSnapshot = (element: HTMLElement): ColorSnapshot => {
     const computedStyle = window.getComputedStyle(element);
 
     const borderColors = borderSides
@@ -110,90 +140,135 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
       boxShadow: computedStyle.getPropertyValue("box-shadow"),
       textShadow: computedStyle.getPropertyValue("text-shadow"),
     };
-  });
+  };
 
-  for (const snapshot of snapshots) {
+  const applyColors = (snapshot: ColorSnapshot) => {
     const { element, backgroundColor, textColor, borderColors, outlineColor, foregroundColors } =
       snapshot;
 
-    const isRoot = element === root;
     const hasBackground = backgroundColor != null && backgroundColor.a !== 0;
 
-    if (isRoot && !hasBackground) {
-      element.style.setProperty("background-color", theme.darkSchemeBackgroundColor, "important");
+    if (element === root && !hasBackground) {
+      setOverride(element, "background-color", theme.darkSchemeBackgroundColor);
     } else if (hasBackground) {
-      element.style.setProperty(
-        "background-color",
-        modifyBackgroundColor(backgroundColor, theme),
-        "important",
-      );
+      setOverride(element, "background-color", modifyBackgroundColor(backgroundColor, theme));
     }
 
     if (textColor != null && textColor.a !== 0) {
-      element.style.setProperty("color", modifyForegroundColor(textColor, theme), "important");
+      setOverride(element, "color", modifyForegroundColor(textColor, theme));
     }
 
     for (const { side, color } of borderColors) {
       if (color != null && color.a !== 0) {
-        element.style.setProperty(
-          `border-${side}-color`,
-          modifyBorderColor(color, theme),
-          "important",
-        );
+        setOverride(element, `border-${side}-color`, modifyBorderColor(color, theme));
       }
     }
 
     if (outlineColor != null && outlineColor.a !== 0) {
-      element.style.setProperty(
-        "outline-color",
-        modifyBorderColor(outlineColor, theme),
-        "important",
-      );
+      setOverride(element, "outline-color", modifyBorderColor(outlineColor, theme));
     }
 
     for (const { property, color } of foregroundColors) {
       if (color != null && color.a !== 0) {
-        element.style.setProperty(property, modifyForegroundColor(color, theme), "important");
+        setOverride(element, property, modifyForegroundColor(color, theme));
       }
     }
 
     if (snapshot.boxShadow && snapshot.boxShadow !== "none") {
-      element.style.setProperty(
-        "box-shadow",
-        replaceColorTokens(snapshot.boxShadow, theme),
-        "important",
-      );
+      setOverride(element, "box-shadow", replaceColorTokens(snapshot.boxShadow, theme));
     }
 
     if (snapshot.textShadow && snapshot.textShadow !== "none") {
-      element.style.setProperty(
-        "text-shadow",
-        replaceColorTokens(snapshot.textShadow, theme),
-        "important",
-      );
+      setOverride(element, "text-shadow", replaceColorTokens(snapshot.textShadow, theme));
+    }
+  };
+
+  const applyImages = (snapshot: ColorSnapshot) => {
+    if (snapshot.backgroundImage && snapshot.backgroundImage !== "none") {
+      modifyBackgroundImage(snapshot.element, snapshot.backgroundImage, theme, isCancelled);
     }
 
-    element.setAttribute(PROCESSED_ATTRIBUTE, "");
-  }
+    if (snapshot.element instanceof HTMLImageElement) {
+      invertDarkImageElement(snapshot.element, theme, isCancelled);
+    }
+  };
 
-  for (const { element, backgroundImage } of snapshots) {
-    if (backgroundImage && backgroundImage !== "none") {
-      modifyBackgroundImage(element, backgroundImage, theme, isCancelled);
+  // Colors are read for the whole batch before any are written: applying an
+  // inline color to a parent changes what getComputedStyle reports for its
+  // children, so a single read-then-write pass would re-modify already-darkened
+  // inherited colors.
+  const processBatch = (candidates: HTMLElement[]) => {
+    const targets = candidates.filter(
+      (element) => !element.hasAttribute(PROCESSED_ATTRIBUTE) && !isIgnored(element),
+    );
+
+    if (targets.length === 0) {
+      return;
     }
 
-    if (element instanceof HTMLImageElement) {
-      invertDarkImageElement(element, theme, isCancelled);
+    const snapshots = targets.map(captureSnapshot);
+
+    for (const snapshot of snapshots) {
+      originalStyles.set(snapshot.element, snapshot.originalStyle);
+      applyColors(snapshot);
+      snapshot.element.setAttribute(PROCESSED_ATTRIBUTE, "");
     }
+
+    for (const snapshot of snapshots) {
+      applyImages(snapshot);
+    }
+  };
+
+  const refreshElement = (element: HTMLElement) => {
+    if (!element.hasAttribute(PROCESSED_ATTRIBUTE) || isIgnored(element)) {
+      return;
+    }
+
+    applyColors(captureSnapshot(element));
+  };
+
+  processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
+
+  let observer: MutationObserver | null = null;
+
+  if (observe) {
+    observer = new MutationObserver((mutations) => {
+      if (cancelled) {
+        return;
+      }
+
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement) {
+              processBatch([node, ...node.querySelectorAll<HTMLElement>("*")]);
+            }
+          }
+        } else if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
+          refreshElement(mutation.target);
+        }
+      }
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
   }
 
   return {
     revert: () => {
       cancelled = true;
+      observer?.disconnect();
 
-      for (const { element, originalStyle } of snapshots) {
+      for (const [element, originalStyle] of originalStyles) {
         element.style.cssText = originalStyle;
         element.removeAttribute(PROCESSED_ATTRIBUTE);
       }
+
+      originalStyles.clear();
     },
   };
 }
