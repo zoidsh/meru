@@ -1,4 +1,4 @@
-import { parse } from "./color";
+import { replaceColorTokens } from "./css-value";
 import {
   getFilteredImageURL,
   getImageDetails,
@@ -11,7 +11,6 @@ import type { Theme } from "./theme";
 
 const gradientRegex = /(^|[\s,])(repeating-)?(linear|radial|conic)-gradient\(/i;
 const urlLayerRegex = /^url\((['"]?)([^]*?)\1\)$/i;
-const colorTokenRegex = /rgba?\([^)]*\)|hsla?\([^)]*\)|#[0-9a-f]+/gi;
 
 function splitLayers(value: string): string[] {
   const layers: string[] = [];
@@ -41,11 +40,7 @@ function isGradientLayer(layer: string): boolean {
 }
 
 function modifyGradientLayer(layer: string, theme: Theme): string {
-  return layer.replace(colorTokenRegex, (token) => {
-    const rgb = parse(token);
-
-    return rgb ? modifyBackgroundColor(rgb, theme) : token;
-  });
+  return replaceColorTokens(layer, theme);
 }
 
 // Ported from Dark Reader's getBgImageValue decision tree (dark mode).

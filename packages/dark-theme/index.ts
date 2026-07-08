@@ -1,5 +1,6 @@
 import { modifyBackgroundImage } from "./background-image";
 import { parse } from "./color";
+import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
@@ -16,14 +17,21 @@ export {
 
 const PROCESSED_ATTRIBUTE = "data-dark-theme";
 const borderSides = ["top", "right", "bottom", "left"] as const;
+const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
+
+type ParsedColor = ReturnType<typeof parse>;
 
 type ColorSnapshot = {
   element: HTMLElement;
   originalStyle: string;
-  backgroundColor: ReturnType<typeof parse>;
+  backgroundColor: ParsedColor;
   backgroundImage: string;
-  textColor: ReturnType<typeof parse>;
-  borderColors: Array<{ side: (typeof borderSides)[number]; color: ReturnType<typeof parse> }>;
+  textColor: ParsedColor;
+  borderColors: Array<{ side: (typeof borderSides)[number]; color: ParsedColor }>;
+  outlineColor: ParsedColor;
+  foregroundColors: Array<{ property: string; color: ParsedColor }>;
+  boxShadow: string;
+  textShadow: string;
 };
 
 export type DarkThemeController = {
@@ -58,6 +66,38 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
         color: parse(computedStyle.getPropertyValue(`border-${side}-color`)),
       }));
 
+    const outlineColor =
+      computedStyle.getPropertyValue("outline-style") !== "none" &&
+      parseFloat(computedStyle.getPropertyValue("outline-width")) > 0
+        ? parse(computedStyle.getPropertyValue("outline-color"))
+        : null;
+
+    const foregroundColors: Array<{ property: string; color: ParsedColor }> = [];
+
+    const captureForegroundColor = (property: string) => {
+      foregroundColors.push({ property, color: parse(computedStyle.getPropertyValue(property)) });
+    };
+
+    if (element instanceof SVGElement) {
+      for (const property of svgColorProperties) {
+        captureForegroundColor(property);
+      }
+    }
+
+    if (computedStyle.getPropertyValue("text-decoration-line") !== "none") {
+      captureForegroundColor("text-decoration-color");
+    }
+
+    if (
+      computedStyle.getPropertyValue("column-rule-style") !== "none" &&
+      parseFloat(computedStyle.getPropertyValue("column-rule-width")) > 0
+    ) {
+      captureForegroundColor("column-rule-color");
+    }
+
+    captureForegroundColor("-webkit-text-fill-color");
+    captureForegroundColor("caret-color");
+
     return {
       element,
       originalStyle: element.style.cssText,
@@ -65,11 +105,16 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
       backgroundImage: computedStyle.backgroundImage,
       textColor: parse(computedStyle.color),
       borderColors,
+      outlineColor,
+      foregroundColors,
+      boxShadow: computedStyle.getPropertyValue("box-shadow"),
+      textShadow: computedStyle.getPropertyValue("text-shadow"),
     };
   });
 
   for (const snapshot of snapshots) {
-    const { element, backgroundColor, textColor, borderColors } = snapshot;
+    const { element, backgroundColor, textColor, borderColors, outlineColor, foregroundColors } =
+      snapshot;
 
     const isRoot = element === root;
     const hasBackground = backgroundColor != null && backgroundColor.a !== 0;
@@ -96,6 +141,36 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
           "important",
         );
       }
+    }
+
+    if (outlineColor != null && outlineColor.a !== 0) {
+      element.style.setProperty(
+        "outline-color",
+        modifyBorderColor(outlineColor, theme),
+        "important",
+      );
+    }
+
+    for (const { property, color } of foregroundColors) {
+      if (color != null && color.a !== 0) {
+        element.style.setProperty(property, modifyForegroundColor(color, theme), "important");
+      }
+    }
+
+    if (snapshot.boxShadow && snapshot.boxShadow !== "none") {
+      element.style.setProperty(
+        "box-shadow",
+        replaceColorTokens(snapshot.boxShadow, theme),
+        "important",
+      );
+    }
+
+    if (snapshot.textShadow && snapshot.textShadow !== "none") {
+      element.style.setProperty(
+        "text-shadow",
+        replaceColorTokens(snapshot.textShadow, theme),
+        "important",
+      );
     }
 
     element.setAttribute(PROCESSED_ATTRIBUTE, "");
