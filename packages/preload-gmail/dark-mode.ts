@@ -13,7 +13,7 @@ export function darkMode() {
   themedElement = messageElement;
 
   darkTheme(messageElement, {
-    darkSchemeBackgroundColor: "#1a1a1a",
+    darkSchemeBackgroundColor: "#131313",
     ignore: [".at"],
     observe: true,
   });
