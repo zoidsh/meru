@@ -1,4 +1,7 @@
+import { modifyBackgroundImage } from "./background-image";
 import { parse } from "./color";
+import { getCSSFilterValue } from "./filter";
+import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { DEFAULT_THEME, type Theme } from "./theme";
 
@@ -18,6 +21,7 @@ type ColorSnapshot = {
   element: HTMLElement;
   originalStyle: string;
   backgroundColor: ReturnType<typeof parse>;
+  backgroundImage: string;
   textColor: ReturnType<typeof parse>;
   borderColors: Array<{ side: (typeof borderSides)[number]; color: ReturnType<typeof parse> }>;
 };
@@ -28,6 +32,9 @@ export type DarkThemeController = {
 
 export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThemeController {
   const theme = { ...DEFAULT_THEME, ...options };
+
+  let cancelled = false;
+  const isCancelled = () => cancelled;
 
   const elements = [root, ...root.querySelectorAll<HTMLElement>("*")].filter(
     (element) => !element.hasAttribute(PROCESSED_ATTRIBUTE),
@@ -55,6 +62,7 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
       element,
       originalStyle: element.style.cssText,
       backgroundColor: parse(computedStyle.backgroundColor),
+      backgroundImage: computedStyle.backgroundImage,
       textColor: parse(computedStyle.color),
       borderColors,
     };
@@ -93,12 +101,45 @@ export function darkTheme(root: HTMLElement, options?: Partial<Theme>): DarkThem
     element.setAttribute(PROCESSED_ATTRIBUTE, "");
   }
 
+  for (const { element, backgroundImage } of snapshots) {
+    if (backgroundImage && backgroundImage !== "none") {
+      modifyBackgroundImage(element, backgroundImage, theme, isCancelled);
+    }
+
+    if (element instanceof HTMLImageElement) {
+      invertDarkImageElement(element, theme, isCancelled);
+    }
+  }
+
   return {
     revert: () => {
+      cancelled = true;
+
       for (const { element, originalStyle } of snapshots) {
         element.style.cssText = originalStyle;
         element.removeAttribute(PROCESSED_ATTRIBUTE);
       }
     },
   };
+}
+
+// A dark, mostly-transparent <img> (a logo or icon) would vanish against the
+// dark background, so it is inverted. Photos and colorful images fall outside
+// the dark-and-transparent classification and are left untouched.
+function invertDarkImageElement(image: HTMLImageElement, theme: Theme, isCancelled: () => boolean) {
+  const source = image.currentSrc || image.src;
+
+  if (!source) {
+    return;
+  }
+
+  getImageDetails(source).then((details) => {
+    if (isCancelled() || !details) {
+      return;
+    }
+
+    if (details.isDark && details.isTransparent && details.width > 2) {
+      image.style.setProperty("filter", getCSSFilterValue(theme), "important");
+    }
+  });
 }

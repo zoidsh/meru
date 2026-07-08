@@ -19,6 +19,10 @@ export type HSLA = {
   a?: number;
 };
 
+export function getSRGBLightness(r: number, g: number, b: number): number {
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+
 // https://en.wikipedia.org/wiki/HSL_and_HSV
 export function hslToRGB({ h, s, l, a = 1 }: HSLA): RGBA {
   if (s === 0) {
