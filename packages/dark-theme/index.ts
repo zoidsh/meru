@@ -125,7 +125,13 @@ export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkTh
       captureForegroundColor("column-rule-color");
     }
 
-    captureForegroundColor("-webkit-text-fill-color");
+    // -webkit-text-fill-color is inherited and overrides `color` for glyph fill,
+    // so only theme it when an element sets it to something other than its own
+    // color; otherwise the redundant value would leak onto descendants.
+    if (computedStyle.getPropertyValue("-webkit-text-fill-color") !== computedStyle.color) {
+      captureForegroundColor("-webkit-text-fill-color");
+    }
+
     captureForegroundColor("caret-color");
 
     return {

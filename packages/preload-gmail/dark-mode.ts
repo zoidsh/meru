@@ -14,7 +14,7 @@ export function darkMode() {
 
   darkTheme(messageElement, {
     darkSchemeBackgroundColor: "#131313",
-    ignore: [".at"],
+    ignore: [".at", ".ahR .hN", ".ahR .hO"],
     observe: true,
   });
 }
