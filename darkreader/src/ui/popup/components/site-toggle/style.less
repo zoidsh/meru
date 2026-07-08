@@ -1,0 +1,24 @@
+@import "../../../theme";
+
+.site-toggle {
+    color: @color-input-fore;
+    white-space: normal;
+
+    &--disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    &__mark {
+        svg {
+            fill: currentColor;
+            height: @size-text-normal;
+            vertical-align: bottom;
+            width: @size-text-normal;
+        }
+    }
+
+    &--active {
+        color: @color-input-fore-active;
+    }
+}

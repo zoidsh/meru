@@ -1,0 +1,37 @@
+@import "../../theme";
+
+.shortcut {
+    color: @color-fore;
+    cursor: pointer;
+    display: inline-block;
+    font-size: @size-text-small;
+    line-height: @size-text-small-height;
+    outline: none;
+    text-align: center;
+    text-decoration: none;
+    white-space: pre;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &--edit {
+        color: @color-input-fore-active;
+    }
+
+    &::before {
+        content: "✎";
+        direction: rtl;
+        display: inline-block;
+        line-height: @size-text-small-height;
+        visibility: hidden;
+        width: 0;
+    }
+
+    &:hover,
+    &--edit {
+        &::before {
+            visibility: visible;
+        }
+    }
+}

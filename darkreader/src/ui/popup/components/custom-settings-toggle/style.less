@@ -1,0 +1,32 @@
+@import "../../../theme";
+
+.custom-settings-toggle {
+    color: @color-fore;
+    white-space: normal;
+
+    &--checked,
+    &:active,
+    &--checked:hover {
+        background-color: @color-control-active;
+        color: mix(@color-fore, @color-control-fore, 80%);
+        transition: background-color @time-fast, color @time-fast;
+    }
+
+    &--disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    &__url {
+        color: @color-control-fore;
+        -moz-user-select: none;
+        user-select: none;
+    }
+
+    .button__wrapper {
+        align-items: center;
+        display: inline-flex;
+        justify-content: center;
+        min-width: @popup-content-width - 2 * @size-border;
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "target": "ES2019",
+        "module": "ES2015",
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "types": [
+            "chrome",
+            "jasmine"
+        ],
+        "allowJs": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "jsx": "react",
+        "jsxFactory": "m",
+        "moduleResolution": "Node",
+        "noEmit": true,
+        "noImplicitAny": true,
+        "removeComments": false,
+        "sourceMap": true,
+        "inlineSources": true,
+        "noEmitOnError": true,
+        "strictPropertyInitialization": false,
+        "paths": {
+            "@plus/*": ["../../src/stubs/*"],
+            "definitions": ["../../src/definitions"],
+            "utils/*": ["../../src/utils/*"]
+        },
+        "ignoreDeprecations": "6.0",
+    },
+    "exclude": [
+        "./coverage"
+    ]
+}
