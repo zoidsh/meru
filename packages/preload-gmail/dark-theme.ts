@@ -20,10 +20,13 @@ export function darkTheme() {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
       ignore: [".edeTZ"],
-      invertImageUrls: ["https://www.gstatic.com/images/icons/material/system_gm/"],
+      invertImageUrls: [
+        "https://www.gstatic.com/images/icons/material/system_gm/",
+        "https://ssl.gstatic.com/ui/v1/icons/mail/gm3/",
+      ],
       // The coloured starred-state icon shares the material-icon path but must keep
       // its colour, so it's excluded from the blanket inversion above.
-      invertImageExcludeFilenames: ["star_black_20dp.png"],
+      invertImageExcludeFilenames: ["star_googyellow500_20dp.png", "archive_white_20dp.png"],
       css: darkThemeCss,
     });
   }
