@@ -10,11 +10,11 @@
 
 /* Darken the light surface/gradient tokens Gmail reads only in state selectors
    (:hover/:focus etc.): the Material hover surface, and the generative-AI chip
-   gradient — whose hover builds a light gradient from the muted-gradient stops,
-   so convert each stop to its dark-theme equivalent. */
+   gradient — whose hover builds a light gradient from the muted-gradient stops.
+   Keep each stop's hue but drop its lightness so the shimmer stays blue, dark. */
 [data-dark-theme] {
   --gm3-sys-color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
-  --ws-sys-color-genai-muted-gradient01: #1d1d1d !important;
-  --ws-sys-color-genai-muted-gradient02: #292929 !important;
-  --ws-sys-color-genai-muted-gradient03: #222222 !important;
+  --ws-sys-color-genai-muted-gradient01: #121c2b !important;
+  --ws-sys-color-genai-muted-gradient02: #003257 !important;
+  --ws-sys-color-genai-muted-gradient03: #000e47 !important;
 }
