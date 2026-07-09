@@ -49,9 +49,9 @@ export type DarkThemeOptions = Partial<Theme> & {
   // original colors instead of being themed (e.g. coloured chips or badges).
   ignore?: string[];
   // Watch the subtree and keep theming content added later, and re-theme an
-  // element when its class changes so state-driven styles (e.g. the shadow a
-  // sticky toolbar gains on scroll) are darkened too. Defaults to true; when
-  // enabled, call the returned controller's revert() to disconnect the observer.
+  // element when its class or aria state changes so state-driven styles (a
+  // scroll shadow, an icon that swaps on toggle) are re-evaluated. Defaults to
+  // true; when enabled, call the returned controller's revert() to disconnect.
   observe?: boolean;
   // CSS injected into the document while the theme is active and removed on
   // revert()/destroy(). Use for rules the inline-override engine can't reach —
@@ -134,9 +134,11 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   };
 
   // Pseudo-elements can't be reached by inline styles, so their darkened paint is
-  // collected into one injected stylesheet, each rule keyed to a unique attribute
-  // stamped on the owning element.
-  const pseudoRules: string[] = [];
+  // collected into one injected stylesheet. Each element keeps a stable id so its
+  // rules can be rebuilt when a class change alters its pseudo styles — e.g. a star
+  // icon whose url, and so whether it's inverted, depends on its state.
+  const pseudoIds = new WeakMap<HTMLElement, string>();
+  const pseudoRulesById = new Map<string, string[]>();
   let pseudoRuleCounter = 0;
   let pseudoStyleElement: HTMLStyleElement | null = null;
 
@@ -349,15 +351,32 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   };
 
   const applyPseudoRules = (snapshot: ColorSnapshot) => {
-    if (snapshot.pseudos.length === 0) {
-      return;
+    const { element, pseudos } = snapshot;
+    let id = pseudoIds.get(element);
+
+    if (id === undefined) {
+      // Nothing to do for an element that has never had, and still has no, pseudo
+      // rules — avoids stamping ids and rebuilding the sheet for the common case.
+      if (pseudos.length === 0) {
+        return;
+      }
+
+      id = String(pseudoRuleCounter++);
+      pseudoIds.set(element, id);
+      element.setAttribute(PSEUDO_ATTRIBUTE, id);
     }
 
-    const id = String(pseudoRuleCounter++);
-    snapshot.element.setAttribute(PSEUDO_ATTRIBUTE, id);
+    const ruleId = id;
 
-    for (const { selector, body } of snapshot.pseudos) {
-      pseudoRules.push(`[${PSEUDO_ATTRIBUTE}="${id}"]${selector} { ${body}; }`);
+    if (pseudos.length === 0) {
+      pseudoRulesById.delete(ruleId);
+    } else {
+      pseudoRulesById.set(
+        ruleId,
+        pseudos.map(
+          ({ selector, body }) => `[${PSEUDO_ATTRIBUTE}="${ruleId}"]${selector} { ${body}; }`,
+        ),
+      );
     }
 
     if (!pseudoStyleElement) {
@@ -366,7 +385,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       injectedStyleElements.push(pseudoStyleElement);
     }
 
-    pseudoStyleElement.textContent = pseudoRules.join("\n");
+    pseudoStyleElement.textContent = [...pseudoRulesById.values()].flat().join("\n");
   };
 
   // Colors are read for the whole batch before any are written: applying an
@@ -401,7 +420,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       return;
     }
 
-    applyColors(captureSnapshot(element));
+    const snapshot = captureSnapshot(element);
+
+    applyColors(snapshot);
+    applyPseudoRules(snapshot);
   };
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
@@ -456,7 +478,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class"],
+      // class plus the aria state attributes that commonly drive state styles (an
+      // icon that swaps on toggle, a selected row) so re-theming catches them.
+      attributeFilter: ["class", "aria-checked", "aria-selected", "aria-pressed", "aria-expanded"],
     });
   }
 
