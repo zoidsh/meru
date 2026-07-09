@@ -1,6 +1,6 @@
 /* Gmail dark-theme fixes for state/pseudo-element styles the inline-override
    engine can't reach, scoped to [data-dark-theme] so they apply only where the
-   engine has themed. Injected via applyDarkTheme's `css` option. */
+   engine has themed. */
 
 /* Lighten the unstarred message star (a black cross-origin icon on a ::before),
    leaving the coloured starred states untouched. */
