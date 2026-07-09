@@ -79,7 +79,7 @@ export const config = new Store<Config>({
     "gmail.moveAttachmentsToTop": false,
     "gmail.closeComposeWindowAfterSend": false,
     "gmail.replyForwardInPopOut": false,
-    "gmail.emailDarkTheme": false,
+    "gmail.fullDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
     "screenShare.useSystemPicker": true,
     "window.lastState": {

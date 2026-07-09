@@ -333,8 +333,8 @@ export class Gmail {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.replyForwardInPopOut);
       }
 
-      if (config.get("gmail.emailDarkTheme")) {
-        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.emailDarkTheme);
+      if (config.get("gmail.fullDarkTheme")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.fullDarkTheme);
       }
     }
 
