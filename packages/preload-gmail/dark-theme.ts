@@ -19,7 +19,7 @@ export function darkTheme() {
   if (messageElement) {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
-      ignore: [".edeTZ"],
+      ignore: [".edeTZ", '[id=":mr"]'],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",
         "https://ssl.gstatic.com/ui/v1/icons/mail/gm3/",
