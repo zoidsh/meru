@@ -1,6 +1,6 @@
 /*
- * Ported from Dark Reader (https://github.com/darkreader/darkreader),
- * MIT License, Copyright (c) 2018-present Dark Reader Ltd.
+ * Adapted from Dark Reader (https://github.com/darkreader/darkreader), MIT —
+ * see ./THIRD_PARTY_NOTICES.md.
  */
 
 import { clamp, type Matrix5x1, type Matrix5x5, multiplyMatrices } from "./math";

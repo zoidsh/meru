@@ -1,8 +1,7 @@
 /*
- * Ported from Dark Reader (https://github.com/darkreader/darkreader),
- * MIT License, Copyright (c) 2018-present Dark Reader Ltd.
- * Reduced to the dark-scheme paths and stripped of Dark Reader's CSS-variable
- * registration; the HSL remapping math is unchanged.
+ * Adapted from Dark Reader (https://github.com/darkreader/darkreader), MIT —
+ * see ./THIRD_PARTY_NOTICES.md. Reduced to the dark-scheme paths and stripped of
+ * Dark Reader's CSS-variable registration; the HSL remapping math is unchanged.
  */
 
 import {

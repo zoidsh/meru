@@ -1,7 +1,6 @@
 /*
- * Theme shape and default palette ported from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT License,
- * Copyright (c) 2018-present Dark Reader Ltd.
+ * Theme shape and default palette adapted from Dark Reader
+ * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
  */
 
 export type Theme = {

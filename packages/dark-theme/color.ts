@@ -1,8 +1,7 @@
 /*
- * Ported from Dark Reader (https://github.com/darkreader/darkreader),
- * MIT License, Copyright (c) 2018-present Dark Reader Ltd.
- * Non-null assertions were refactored away to satisfy this repo's lint rules;
- * the parsing and conversion logic is otherwise unchanged.
+ * Adapted from Dark Reader (https://github.com/darkreader/darkreader), MIT —
+ * see ./THIRD_PARTY_NOTICES.md. Non-null assertions were refactored away to
+ * satisfy this repo's lint rules; the parsing and conversion logic is unchanged.
  */
 
 export type RGBA = {

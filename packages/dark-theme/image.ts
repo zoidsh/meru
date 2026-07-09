@@ -1,7 +1,6 @@
 /*
- * Image analysis and SVG filtering ported from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT License,
- * Copyright (c) 2018-present Dark Reader Ltd.
+ * Image analysis and SVG filtering adapted from Dark Reader
+ * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
  * Dark Reader's extension-only background fetch and blob-URL machinery is
  * replaced with a plain cross-origin canvas load that degrades to "leave the
  * image untouched" whenever the pixels cannot be read (e.g. a tainted canvas);

@@ -1,7 +1,6 @@
 /*
- * SVG feColorMatrix value and CSS filter helpers ported from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT License,
- * Copyright (c) 2018-present Dark Reader Ltd.
+ * SVG feColorMatrix value and CSS filter helpers adapted from Dark Reader
+ * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
  */
 
 import { createFilterMatrix } from "./matrix";
