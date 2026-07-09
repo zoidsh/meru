@@ -174,7 +174,14 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
       const declarations: string[] = [];
 
-      if (hasInvertImageUrl(content) || hasInvertImageUrl(pseudoStyle.backgroundImage)) {
+      // A monochrome icon is drawn either as an image (content/background-image) or
+      // as a mask over a fill; both carry the icon url, so check all of them.
+      if (
+        hasInvertImageUrl(content) ||
+        hasInvertImageUrl(pseudoStyle.backgroundImage) ||
+        hasInvertImageUrl(pseudoStyle.getPropertyValue("mask-image")) ||
+        hasInvertImageUrl(pseudoStyle.getPropertyValue("-webkit-mask-image"))
+      ) {
         declarations.push("filter: invert(1) !important");
       }
 
