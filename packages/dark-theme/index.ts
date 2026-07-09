@@ -104,7 +104,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       return false;
     }
 
-    return [...cssValue.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].some(([, , url]) => {
+    // Match the url directly rather than a `url(...)` wrapper: Gmail serves icons
+    // through `image-set()`, where the url can appear unwrapped.
+    return [...cssValue.matchAll(/https?:\/\/[^"')\s]+/g)].some(([url]) => {
       if (!url || !invertImageUrls.some((prefix) => url.startsWith(prefix))) {
         return false;
       }
@@ -174,14 +176,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
       const declarations: string[] = [];
 
-      // A monochrome icon is drawn either as an image (content/background-image) or
-      // as a mask over a fill; both carry the icon url, so check all of them.
-      if (
-        hasInvertImageUrl(content) ||
-        hasInvertImageUrl(pseudoStyle.backgroundImage) ||
-        hasInvertImageUrl(pseudoStyle.getPropertyValue("mask-image")) ||
-        hasInvertImageUrl(pseudoStyle.getPropertyValue("-webkit-mask-image"))
-      ) {
+      if (hasInvertImageUrl(content) || hasInvertImageUrl(pseudoStyle.backgroundImage)) {
         declarations.push("filter: invert(1) !important");
       }
 
