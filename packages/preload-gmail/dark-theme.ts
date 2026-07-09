@@ -1,11 +1,18 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
+import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import darkThemeCss from "./dark-theme.css";
+
+const isEmailDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.emailDarkTheme);
 
 let themedElement: HTMLElement | null = null;
 let controller: DarkThemeController | null = null;
 
 export function darkTheme() {
+  if (!isEmailDarkThemeEnabled) {
+    return;
+  }
+
   const messageElement = $(".AO .nH.g.id") ?? null;
 
   if (messageElement === themedElement) {

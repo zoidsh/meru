@@ -111,6 +111,14 @@ export function GmailSettings() {
               restartRequired
               licenseKeyRequired
             />
+            <ConfigSwitchField
+              label="Dark Theme for Emails"
+              description="Applies a dark theme to the email reading area, including message content."
+              configKey="gmail.emailDarkTheme"
+              restartRequired
+              licenseKeyRequired
+              beta
+            />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>

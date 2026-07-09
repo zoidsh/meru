@@ -332,6 +332,10 @@ export class Gmail {
       if (config.get("gmail.replyForwardInPopOut")) {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.replyForwardInPopOut);
       }
+
+      if (config.get("gmail.emailDarkTheme")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.emailDarkTheme);
+      }
     }
 
     this.accountId = accountId;
