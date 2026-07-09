@@ -19,7 +19,12 @@ export function darkTheme() {
   if (messageElement) {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
-      ignore: [".edeTZ", '[id=":mr"]'],
+      ignore: [
+        // Element containing the conversation labels.
+        ".edeTZ",
+        // The "be cautious about sharing sensitive information" warning banner.
+        '[id=":mr"]',
+      ],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",
         "https://ssl.gstatic.com/ui/v1/icons/mail/gm3/",
