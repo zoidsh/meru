@@ -65,6 +65,12 @@ engine flags:
   isn't touched — it inherits the element's own themed color. Pseudo **content
   images** (e.g. a cross-origin icon) are left alone, the same CORS limit as
   `<img>`; recolor those with a `css` rule.
+- `:hover`/`:focus`/`:active` styles — which a computed-style snapshot can't see,
+  since the state isn't active at theme time — are read from the document's
+  **same-origin** author rules, darkened, and re-emitted with each selector kept
+  verbatim inside a CSS `@scope (root)` block, so they apply only within the themed
+  subtree. Rules declared only in cross-origin stylesheets are missed (same CORS
+  limit).
 - Colors apply synchronously; image analysis resolves shortly after (async).
 - Idempotent — re-invoking only themes not-yet-themed elements, so it's safe to call
   again as the subtree grows.

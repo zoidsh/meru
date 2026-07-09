@@ -4,6 +4,7 @@ import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
+import { buildDarkStateOverrides } from "./state-rules";
 import { DEFAULT_THEME, type Theme } from "./theme";
 import { buildDarkVariableOverrides } from "./variables";
 
@@ -18,9 +19,14 @@ export {
 
 const PROCESSED_ATTRIBUTE = "data-dark-theme";
 const PSEUDO_ATTRIBUTE = "data-dark-theme-pseudo";
+const ROOT_ATTRIBUTE = "data-dark-theme-root";
 const borderSides = ["top", "right", "bottom", "left"] as const;
 const pseudoSelectors = ["::before", "::after"] as const;
 const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
+
+// Distinguishes each active theme's root so its @scope-wrapped state rules apply
+// only within its own subtree, even with several themed subtrees on one page.
+let instanceCounter = 0;
 
 type ParsedColor = ReturnType<typeof parse>;
 
@@ -354,12 +360,25 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
 
+  const rootId = String(instanceCounter++);
+  root.setAttribute(ROOT_ATTRIBUTE, rootId);
+
   // Injected before the caller's css so a hand-tuned override there wins over the
-  // generated value for the same custom property (equal specificity, later wins).
+  // generated values (equal specificity/importance, later wins).
   const variableOverrides = buildDarkVariableOverrides(root, theme);
 
   if (variableOverrides) {
     injectStyle(variableOverrides);
+  }
+
+  const stateOverrides = buildDarkStateOverrides(
+    root.ownerDocument,
+    theme,
+    `[${ROOT_ATTRIBUTE}="${rootId}"]`,
+  );
+
+  if (stateOverrides) {
+    injectStyle(stateOverrides);
   }
 
   if (css) {
@@ -398,6 +417,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const teardown = () => {
     cancelled = true;
     observer?.disconnect();
+    root.removeAttribute(ROOT_ATTRIBUTE);
 
     for (const styleElement of injectedStyleElements) {
       styleElement.remove();

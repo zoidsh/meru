@@ -1,6 +1,7 @@
 import { parse } from "./color";
 import { relativeLuminance } from "./contrast";
 import { replaceColorTokens } from "./css-value";
+import { forEachStyleRule } from "./stylesheets";
 import type { Theme } from "./theme";
 
 const customPropertyReferenceRegex = /var\(\s*(--[\w-]+)\s*(?:,([^)]*))?\)/g;
@@ -25,36 +26,30 @@ const hasLightColorToken = (value: string) => {
   });
 };
 
-function collectFromRules(rules: CSSRuleList, names: Set<string>, fallbacks: Map<string, string>) {
-  for (const rule of rules) {
-    if (rule instanceof CSSStyleRule) {
-      const { style } = rule;
+function collectFromRule(rule: CSSStyleRule, names: Set<string>, fallbacks: Map<string, string>) {
+  const { style } = rule;
 
-      for (let index = 0; index < style.length; index++) {
-        const property = style.item(index);
+  for (let index = 0; index < style.length; index++) {
+    const property = style.item(index);
 
-        if (property.startsWith("--")) {
-          names.add(property);
-        }
-      }
+    if (property.startsWith("--")) {
+      names.add(property);
+    }
+  }
 
-      for (const match of style.cssText.matchAll(customPropertyReferenceRegex)) {
-        const name = match[1];
+  for (const match of style.cssText.matchAll(customPropertyReferenceRegex)) {
+    const name = match[1];
 
-        if (!name) {
-          continue;
-        }
+    if (!name) {
+      continue;
+    }
 
-        names.add(name);
+    names.add(name);
 
-        const fallback = match[2]?.trim();
+    const fallback = match[2]?.trim();
 
-        if (fallback && !fallbacks.has(name)) {
-          fallbacks.set(name, fallback);
-        }
-      }
-    } else if (rule instanceof CSSGroupingRule) {
-      collectFromRules(rule.cssRules, names, fallbacks);
+    if (fallback && !fallbacks.has(name)) {
+      fallbacks.set(name, fallback);
     }
   }
 }
@@ -81,17 +76,7 @@ export function buildDarkVariableOverrides(root: HTMLElement, theme: Theme): str
   const names = new Set<string>();
   const fallbacks = new Map<string, string>();
 
-  for (const sheet of ownerDocument.styleSheets) {
-    let rules: CSSRuleList;
-
-    try {
-      rules = sheet.cssRules;
-    } catch {
-      continue;
-    }
-
-    collectFromRules(rules, names, fallbacks);
-  }
+  forEachStyleRule(ownerDocument, (rule) => collectFromRule(rule, names, fallbacks));
 
   const rootStyle = view.getComputedStyle(root);
   const declarations: string[] = [];
