@@ -43,6 +43,10 @@ export type DarkThemeOptions = Partial<Theme> & {
   // sticky toolbar gains on scroll) are darkened too. Defaults to true; when
   // enabled, call the returned controller's revert() to disconnect the observer.
   observe?: boolean;
+  // CSS injected into the document while the theme is active and removed on
+  // revert()/destroy(). Use for rules the inline-override engine can't reach —
+  // e.g. :hover backgrounds or ::before icons — scoped with [data-dark-theme].
+  css?: string;
 };
 
 export type DarkThemeController = {
@@ -56,7 +60,7 @@ export type DarkThemeController = {
 };
 
 export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
-  const { ignore, observe = true, ...themeOptions } = options ?? {};
+  const { ignore, observe = true, css, ...themeOptions } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
@@ -242,6 +246,14 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
 
+  let styleElement: HTMLStyleElement | null = null;
+
+  if (css) {
+    styleElement = root.ownerDocument.createElement("style");
+    styleElement.textContent = css;
+    root.ownerDocument.head?.appendChild(styleElement);
+  }
+
   let observer: MutationObserver | null = null;
 
   if (observe) {
@@ -271,14 +283,15 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     });
   }
 
-  const stopObserving = () => {
+  const teardown = () => {
     cancelled = true;
     observer?.disconnect();
+    styleElement?.remove();
   };
 
   return {
     revert: () => {
-      stopObserving();
+      teardown();
 
       for (const [element, originalStyle] of originalStyles) {
         element.style.cssText = originalStyle;
@@ -288,7 +301,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       originalStyles.clear();
     },
     destroy: () => {
-      stopObserving();
+      teardown();
       originalStyles.clear();
     },
   };

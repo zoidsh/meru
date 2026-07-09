@@ -44,18 +44,3 @@ html.meru-hide-gmail-upgrade
   span:has(> div > div > div > div > div[data-action-behavior*="one.google.com/dynamic-plans"]) {
   display: none !important;
 }
-
-/* Dark mode: lighten the unstarred message star (a black cross-origin icon on a
-   ::before the dark-theme engine cannot reach), leaving colored starred states. */
-.T-KT[data-dark-theme]:not(.T-KT-Jp):not(.byM)::before {
-  filter: invert(1) !important;
-}
-
-/* Dark mode: darken the light surface/gradient tokens Gmail reads only in state
-   selectors (:hover/:focus etc.) — the Material hover surface and the generative-AI
-   chip gradient — which the inline-override engine never sees. Override them to a
-   subtle overlay wherever the engine has themed. */
-[data-dark-theme] {
-  --gm3-sys-color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
-  --ae-genai-generation-gradient: rgba(255, 255, 255, 0.08) !important;
-}

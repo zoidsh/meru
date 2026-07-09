@@ -38,6 +38,10 @@ engine flags:
   re-theme an element when its class changes (so state-driven styles, like a shadow
   a sticky toolbar gains on scroll, are darkened too). Defaults to `true`; call
   `revert()` or `destroy()` to disconnect.
+- `css?: string` — CSS injected into the document while the theme is active and
+  removed on `revert()`/`destroy()`. Use it for rules the inline-override engine can't
+  reach — `:hover`/`:focus` backgrounds, `::before` icons — scoped with the
+  `[data-dark-theme]` attribute so they apply only where the engine has themed.
 
 ## Controller
 

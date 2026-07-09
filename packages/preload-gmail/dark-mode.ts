@@ -1,5 +1,6 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { $ } from "select-dom";
+import darkModeCss from "./dark-mode.css";
 
 let themedElement: HTMLElement | null = null;
 let controller: DarkThemeController | null = null;
@@ -19,6 +20,7 @@ export function darkMode() {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
       ignore: [".edeTZ"],
+      css: darkModeCss,
     });
   }
 }
