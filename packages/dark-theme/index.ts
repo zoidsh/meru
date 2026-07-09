@@ -57,6 +57,12 @@ export type DarkThemeOptions = Partial<Theme> & {
   // revert()/destroy(). Use for rules the inline-override engine can't reach —
   // e.g. :hover backgrounds or ::before icons — scoped with [data-dark-theme].
   css?: string;
+  // URL prefixes of dark monochrome icons (element background-images, or a
+  // pseudo-element's content/background-image) to blank-invert with
+  // `filter: invert(1)`. A pragmatic substitute for pixel analysis when the icon
+  // is cross-origin (CORS-tainted) and so can't be inspected — e.g. a site's
+  // material-icon CDN path. Matched by `startsWith`.
+  invertImageUrls?: string[];
 };
 
 export type DarkThemeController = {
@@ -70,7 +76,7 @@ export type DarkThemeController = {
 };
 
 export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
-  const { ignore, observe = true, css, ...themeOptions } = options ?? {};
+  const { ignore, observe = true, css, invertImageUrls, ...themeOptions } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
@@ -79,6 +85,16 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const ignoreSelector = ignore && ignore.length > 0 ? ignore.join(",") : null;
   const isIgnored = (element: HTMLElement) =>
     ignoreSelector != null && element.closest(ignoreSelector) != null;
+
+  const hasInvertImageUrl = (cssValue: string) => {
+    if (!invertImageUrls || invertImageUrls.length === 0) {
+      return false;
+    }
+
+    return [...cssValue.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].some(([, , url]) =>
+      invertImageUrls.some((prefix) => url?.startsWith(prefix)),
+    );
+  };
 
   // Which properties this engine has overridden on each element, so re-theming
   // (on class changes) only fills in newly-appeared properties instead of
@@ -123,8 +139,8 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   // A ::before/::after box paints backgrounds, borders and shadows that don't
   // inherit from the element, so — unlike the pseudo's `color`, already covered by
   // the element's inline color — they leak light and must be darkened directly.
-  // Content images are left alone: they're the cross-origin CORS wall again, so a
-  // dark icon like Gmail's star needs a per-site css rule instead.
+  // A content/background image can't be color-inspected when it's cross-origin
+  // (CORS), so a dark monochrome icon matching `invertImageUrls` is blank-inverted.
   const capturePseudoRules = (element: HTMLElement) => {
     const pseudos: ColorSnapshot["pseudos"] = [];
 
@@ -137,6 +153,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       }
 
       const declarations: string[] = [];
+
+      if (hasInvertImageUrl(content) || hasInvertImageUrl(pseudoStyle.backgroundImage)) {
+        declarations.push("filter: invert(1) !important");
+      }
 
       const backgroundColor = parse(pseudoStyle.backgroundColor);
 
@@ -294,7 +314,11 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   const applyImages = (snapshot: ColorSnapshot) => {
     if (snapshot.backgroundImage && snapshot.backgroundImage !== "none") {
-      modifyBackgroundImage(snapshot.element, snapshot.backgroundImage, theme, isCancelled);
+      if (hasInvertImageUrl(snapshot.backgroundImage)) {
+        setOverride(snapshot.element, "filter", "invert(1)");
+      } else {
+        modifyBackgroundImage(snapshot.element, snapshot.backgroundImage, theme, isCancelled);
+      }
     }
 
     if (snapshot.element instanceof HTMLImageElement) {

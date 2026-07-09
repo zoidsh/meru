@@ -42,6 +42,12 @@ engine flags:
   removed on `revert()`/`destroy()`. Use it for rules the inline-override engine can't
   reach — `:hover`/`:focus` backgrounds, `::before` icons — scoped with the
   `[data-dark-theme]` attribute so they apply only where the engine has themed.
+- `invertImageUrls?: string[]` — URL prefixes of dark monochrome icons (an element's
+  `background-image`, or a pseudo-element's `content`/`background-image`) to
+  blank-invert with `filter: invert(1)`. A pragmatic stand-in for pixel analysis when
+  the icon is cross-origin (CORS-tainted) and can't be inspected — e.g. a site's
+  material-icon CDN path. Matched by `startsWith`; use `ignore` to spare coloured
+  variants that live under the same path.
 
 ## Controller
 
@@ -62,9 +68,10 @@ engine flags:
 - `::before`/`::after` pseudo-elements are darkened too: their non-inheriting paint
   (background, border, box-shadow, and gradient background-images) is remapped and
   emitted into an injected stylesheet keyed to the owning element. Their `color`
-  isn't touched — it inherits the element's own themed color. Pseudo **content
-  images** (e.g. a cross-origin icon) are left alone, the same CORS limit as
-  `<img>`; recolor those with a `css` rule.
+  isn't touched — it inherits the element's own themed color. A pseudo **content
+  image** can't be colour-inspected when it's cross-origin (the same CORS limit as
+  `<img>`); if its URL matches `invertImageUrls` it's blank-inverted, otherwise left
+  alone.
 - `:hover`/`:focus`/`:active` styles — which a computed-style snapshot can't see,
   since the state isn't active at theme time — are read from the document's
   **same-origin** author rules, darkened, and re-emitted with each selector kept
