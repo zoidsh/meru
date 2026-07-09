@@ -64,6 +64,12 @@ engine flags:
   cascades into the themed subtree and stops at its boundary). Properties declared
   only in cross-origin stylesheets are missed (the same CORS wall as images). A
   `css` override for the same property still wins, so hand-tune exceptions there.
+- `::before`/`::after` pseudo-elements are darkened too: their non-inheriting paint
+  (background, border, box-shadow, and gradient background-images) is remapped and
+  emitted into an injected stylesheet keyed to the owning element. Their `color`
+  isn't touched — it inherits the element's own themed color. Pseudo **content
+  images** (e.g. a cross-origin icon) are left alone, the same CORS limit as
+  `<img>`; recolor those with a `css` rule.
 - Colors apply synchronously; image analysis resolves shortly after (async).
 - Idempotent — re-invoking only themes not-yet-themed elements, so it's safe to call
   again as the subtree grows.

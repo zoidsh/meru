@@ -18,7 +18,9 @@ export {
 } from "./modify-colors";
 
 const PROCESSED_ATTRIBUTE = "data-dark-theme";
+const PSEUDO_ATTRIBUTE = "data-dark-theme-pseudo";
 const borderSides = ["top", "right", "bottom", "left"] as const;
+const pseudoSelectors = ["::before", "::after"] as const;
 const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
 
 // WCAG 1.4.11 asks for 3:1 non-text contrast for UI components; lift a control's
@@ -44,6 +46,7 @@ type ColorSnapshot = {
   boxShadow: string;
   textShadow: string;
   isControl: boolean;
+  pseudos: Array<{ selector: (typeof pseudoSelectors)[number]; body: string }>;
 };
 
 export type DarkThemeOptions = Partial<Theme> & {
@@ -95,6 +98,22 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   // measured against the nearest ancestor the engine actually painted.
   const themedBackgrounds = new Map<HTMLElement, RGBA>();
 
+  const injectedStyleElements: HTMLStyleElement[] = [];
+
+  const injectStyle = (styleText: string) => {
+    const styleElement = root.ownerDocument.createElement("style");
+    styleElement.textContent = styleText;
+    root.ownerDocument.head?.appendChild(styleElement);
+    injectedStyleElements.push(styleElement);
+  };
+
+  // Pseudo-elements can't be reached by inline styles, so their darkened paint is
+  // collected into one injected stylesheet, each rule keyed to a unique attribute
+  // stamped on the owning element.
+  const pseudoRules: string[] = [];
+  let pseudoRuleCounter = 0;
+  let pseudoStyleElement: HTMLStyleElement | null = null;
+
   const setOverride = (element: HTMLElement, property: string, value: string) => {
     let properties = overriddenProperties.get(element);
 
@@ -111,6 +130,69 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     properties.add(property);
 
     return true;
+  };
+
+  // A ::before/::after box paints backgrounds, borders and shadows that don't
+  // inherit from the element, so — unlike the pseudo's `color`, already covered by
+  // the element's inline color — they leak light and must be darkened directly.
+  // Content images are left alone: they're the cross-origin CORS wall again, so a
+  // dark icon like Gmail's star needs a per-site css rule instead.
+  const capturePseudoRules = (element: HTMLElement) => {
+    const pseudos: ColorSnapshot["pseudos"] = [];
+
+    for (const selector of pseudoSelectors) {
+      const pseudoStyle = window.getComputedStyle(element, selector);
+      const content = pseudoStyle.getPropertyValue("content");
+
+      if (content === "none" || content === "normal") {
+        continue;
+      }
+
+      const declarations: string[] = [];
+
+      const backgroundColor = parse(pseudoStyle.backgroundColor);
+
+      if (backgroundColor != null && backgroundColor.a !== 0) {
+        declarations.push(
+          `background-color: ${modifyBackgroundColor(backgroundColor, theme)} !important`,
+        );
+      }
+
+      const backgroundImage = pseudoStyle.backgroundImage;
+
+      if (backgroundImage && backgroundImage !== "none" && !backgroundImage.includes("url(")) {
+        declarations.push(
+          `background-image: ${replaceColorTokens(backgroundImage, theme)} !important`,
+        );
+      }
+
+      for (const side of borderSides) {
+        const width = parseFloat(pseudoStyle.getPropertyValue(`border-${side}-width`));
+        const borderStyle = pseudoStyle.getPropertyValue(`border-${side}-style`);
+
+        if (width > 0 && borderStyle !== "none") {
+          const color = parse(pseudoStyle.getPropertyValue(`border-${side}-color`));
+
+          if (color != null && color.a !== 0) {
+            declarations.push(
+              `border-${side}-color: ${modifyBorderColor(color, theme)} !important`,
+            );
+          }
+        }
+      }
+
+      const boxShadow = pseudoStyle.getPropertyValue("box-shadow");
+
+      if (boxShadow && boxShadow !== "none") {
+        declarations.push(`box-shadow: ${replaceColorTokens(boxShadow, theme)} !important`);
+      }
+
+      if (declarations.length > 0) {
+        pseudos.push({ selector, body: declarations.join("; ") });
+      }
+    }
+
+    return pseudos;
   };
 
   const captureSnapshot = (element: HTMLElement): ColorSnapshot => {
@@ -178,6 +260,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       boxShadow: computedStyle.getPropertyValue("box-shadow"),
       textShadow: computedStyle.getPropertyValue("text-shadow"),
       isControl: computedStyle.cursor === "pointer" || element.matches(CONTROL_SELECTOR),
+      pseudos: capturePseudoRules(element),
     };
   };
 
@@ -244,6 +327,27 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     if (snapshot.element instanceof HTMLImageElement) {
       invertDarkImageElement(snapshot.element, theme, isCancelled);
     }
+  };
+
+  const applyPseudoRules = (snapshot: ColorSnapshot) => {
+    if (snapshot.pseudos.length === 0) {
+      return;
+    }
+
+    const id = String(pseudoRuleCounter++);
+    snapshot.element.setAttribute(PSEUDO_ATTRIBUTE, id);
+
+    for (const { selector, body } of snapshot.pseudos) {
+      pseudoRules.push(`[${PSEUDO_ATTRIBUTE}="${id}"]${selector} { ${body}; }`);
+    }
+
+    if (!pseudoStyleElement) {
+      pseudoStyleElement = root.ownerDocument.createElement("style");
+      root.ownerDocument.head?.appendChild(pseudoStyleElement);
+      injectedStyleElements.push(pseudoStyleElement);
+    }
+
+    pseudoStyleElement.textContent = pseudoRules.join("\n");
   };
 
   const effectiveBackground = (element: HTMLElement): RGBA | null => {
@@ -334,6 +438,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
     for (const snapshot of snapshots) {
       applyImages(snapshot);
+      applyPseudoRules(snapshot);
     }
   };
 
@@ -346,15 +451,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   };
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
-
-  const injectedStyleElements: HTMLStyleElement[] = [];
-
-  const injectStyle = (styleText: string) => {
-    const styleElement = root.ownerDocument.createElement("style");
-    styleElement.textContent = styleText;
-    root.ownerDocument.head?.appendChild(styleElement);
-    injectedStyleElements.push(styleElement);
-  };
 
   // Injected before the caller's css so a hand-tuned override there wins over the
   // generated value for the same custom property (equal specificity, later wins).
@@ -413,6 +509,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       for (const [element, originalStyle] of originalStyles) {
         element.style.cssText = originalStyle;
         element.removeAttribute(PROCESSED_ATTRIBUTE);
+        element.removeAttribute(PSEUDO_ATTRIBUTE);
       }
 
       originalStyles.clear();
