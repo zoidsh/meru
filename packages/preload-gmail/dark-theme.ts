@@ -23,7 +23,7 @@ export function darkTheme() {
         // Element containing the conversation labels.
         ".edeTZ",
         // The "be cautious about sharing sensitive information" warning banner.
-        '[id=":mr"]',
+        ".ac4",
       ],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",
