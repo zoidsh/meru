@@ -57,6 +57,13 @@ engine flags:
 
 ## Behavior notes
 
+- Light-valued CSS custom properties declared or referenced in the document's
+  **same-origin** stylesheets are darkened and re-declared scoped to
+  `[data-dark-theme]`, so surfaces painted via `var(--token)` are covered even in
+  states the element walk never observes (a variable inherits, so the dark value
+  cascades into the themed subtree and stops at its boundary). Properties declared
+  only in cross-origin stylesheets are missed (the same CORS wall as images). A
+  `css` override for the same property still wins, so hand-tune exceptions there.
 - Colors apply synchronously; image analysis resolves shortly after (async).
 - Idempotent — re-invoking only themes not-yet-themed elements, so it's safe to call
   again as the subtree grows.

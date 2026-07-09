@@ -6,6 +6,7 @@ import { getCSSFilterValue } from "./filter";
 import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { DEFAULT_THEME, type Theme } from "./theme";
+import { buildDarkVariableOverrides } from "./variables";
 
 export { DEFAULT_THEME } from "./theme";
 export type { Theme } from "./theme";
@@ -346,12 +347,25 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
 
-  let styleElement: HTMLStyleElement | null = null;
+  const injectedStyleElements: HTMLStyleElement[] = [];
+
+  const injectStyle = (styleText: string) => {
+    const styleElement = root.ownerDocument.createElement("style");
+    styleElement.textContent = styleText;
+    root.ownerDocument.head?.appendChild(styleElement);
+    injectedStyleElements.push(styleElement);
+  };
+
+  // Injected before the caller's css so a hand-tuned override there wins over the
+  // generated value for the same custom property (equal specificity, later wins).
+  const variableOverrides = buildDarkVariableOverrides(root, theme);
+
+  if (variableOverrides) {
+    injectStyle(variableOverrides);
+  }
 
   if (css) {
-    styleElement = root.ownerDocument.createElement("style");
-    styleElement.textContent = css;
-    root.ownerDocument.head?.appendChild(styleElement);
+    injectStyle(css);
   }
 
   let observer: MutationObserver | null = null;
@@ -386,7 +400,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const teardown = () => {
     cancelled = true;
     observer?.disconnect();
-    styleElement?.remove();
+
+    for (const styleElement of injectedStyleElements) {
+      styleElement.remove();
+    }
   };
 
   return {
