@@ -24,8 +24,9 @@ export function darkTheme() {
         "https://www.gstatic.com/images/icons/material/system_gm/",
         "https://ssl.gstatic.com/ui/v1/icons/mail/gm3/",
       ],
-      // Already-light icons under the matched paths that inverting would darken.
-      invertImageExcludeFilenames: ["archive_white_20dp.png"],
+      // Icons under the matched paths that must not be inverted: the coloured
+      // starred star, and an already-light archive icon.
+      invertImageExcludeFilenames: ["star_googyellow500_20dp.png", "archive_white_20dp.png"],
       css: darkThemeCss,
     });
   }
