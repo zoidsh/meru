@@ -42,11 +42,6 @@ engine flags:
   removed on `revert()`/`destroy()`. Use it for rules the inline-override engine can't
   reach — `:hover`/`:focus` backgrounds, `::before` icons — scoped with the
   `[data-dark-theme]` attribute so they apply only where the engine has themed.
-- `elevateControls?: boolean` — lift a control's themed background (buttons, inputs,
-  `[role="button"]`, `cursor: pointer` elements) toward WCAG **3:1** contrast against
-  its effective background so it doesn't blend into the surface — capped so the
-  control's own text keeps its contrast (readable text takes priority, so a control
-  with light text may stop short of 3:1). Defaults to `true`.
 
 ## Controller
 

@@ -1,6 +1,5 @@
 import { modifyBackgroundImage } from "./background-image";
-import { parse, type RGBA, rgbToHexString } from "./color";
-import { raiseToContrast, relativeLuminance } from "./contrast";
+import { parse } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { getImageDetails } from "./image";
@@ -23,15 +22,6 @@ const borderSides = ["top", "right", "bottom", "left"] as const;
 const pseudoSelectors = ["::before", "::after"] as const;
 const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
 
-// WCAG 1.4.11 asks for 3:1 non-text contrast for UI components; lift a control's
-// themed background toward that against its surroundings, capped so nesting can't
-// run away to near-white (and text on it keeps ample contrast).
-const CONTROL_CONTRAST = 3;
-const TEXT_CONTRAST = 4.5;
-const MAX_ELEVATION_LIGHTNESS = 0.55;
-const CONTROL_SELECTOR =
-  'button, a[href], input, select, textarea, [role="button"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="option"]';
-
 type ParsedColor = ReturnType<typeof parse>;
 
 type ColorSnapshot = {
@@ -45,7 +35,6 @@ type ColorSnapshot = {
   foregroundColors: Array<{ property: string; color: ParsedColor }>;
   boxShadow: string;
   textShadow: string;
-  isControl: boolean;
   pseudos: Array<{ selector: (typeof pseudoSelectors)[number]; body: string }>;
 };
 
@@ -62,10 +51,6 @@ export type DarkThemeOptions = Partial<Theme> & {
   // revert()/destroy(). Use for rules the inline-override engine can't reach —
   // e.g. :hover backgrounds or ::before icons — scoped with [data-dark-theme].
   css?: string;
-  // Lift a control's themed background until it has WCAG 3:1 contrast against its
-  // effective background, so buttons and inputs don't blend into the surface.
-  // Defaults to true.
-  elevateControls?: boolean;
 };
 
 export type DarkThemeController = {
@@ -79,7 +64,7 @@ export type DarkThemeController = {
 };
 
 export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
-  const { ignore, observe = true, css, elevateControls = true, ...themeOptions } = options ?? {};
+  const { ignore, observe = true, css, ...themeOptions } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
@@ -94,9 +79,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   // re-darkening its own output or touching the element's own inline styles.
   const overriddenProperties = new WeakMap<HTMLElement, Set<string>>();
   const originalStyles = new Map<HTMLElement, string>();
-  // Each element's applied opaque background, so a control's contrast can be
-  // measured against the nearest ancestor the engine actually painted.
-  const themedBackgrounds = new Map<HTMLElement, RGBA>();
 
   const injectedStyleElements: HTMLStyleElement[] = [];
 
@@ -259,7 +241,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       foregroundColors,
       boxShadow: computedStyle.getPropertyValue("box-shadow"),
       textShadow: computedStyle.getPropertyValue("text-shadow"),
-      isControl: computedStyle.cursor === "pointer" || element.matches(CONTROL_SELECTOR),
       pseudos: capturePseudoRules(element),
     };
   };
@@ -271,23 +252,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     const hasBackground = backgroundColor != null && backgroundColor.a !== 0;
 
     if (element === root && !hasBackground) {
-      if (setOverride(element, "background-color", theme.darkSchemeBackgroundColor)) {
-        const poleColor = parse(theme.darkSchemeBackgroundColor);
-
-        if (poleColor) {
-          themedBackgrounds.set(element, poleColor);
-        }
-      }
+      setOverride(element, "background-color", theme.darkSchemeBackgroundColor);
     } else if (hasBackground) {
-      const themedBackground = modifyBackgroundColor(backgroundColor, theme);
-
-      if (setOverride(element, "background-color", themedBackground)) {
-        const parsedBackground = parse(themedBackground);
-
-        if (parsedBackground) {
-          themedBackgrounds.set(element, parsedBackground);
-        }
-      }
+      setOverride(element, "background-color", modifyBackgroundColor(backgroundColor, theme));
     }
 
     if (textColor != null && textColor.a !== 0) {
@@ -350,65 +317,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     pseudoStyleElement.textContent = pseudoRules.join("\n");
   };
 
-  const effectiveBackground = (element: HTMLElement): RGBA | null => {
-    let ancestor = element.parentElement;
-
-    while (ancestor) {
-      const background = themedBackgrounds.get(ancestor);
-
-      if (background && (background.a ?? 1) === 1) {
-        return background;
-      }
-
-      ancestor = ancestor.parentElement;
-    }
-
-    return null;
-  };
-
-  const elevateControl = (snapshot: ColorSnapshot) => {
-    if (!snapshot.isControl || snapshot.element === root) {
-      return;
-    }
-
-    const themedBackground = themedBackgrounds.get(snapshot.element);
-
-    if (!themedBackground || (themedBackground.a ?? 1) !== 1) {
-      return;
-    }
-
-    const background = effectiveBackground(snapshot.element);
-
-    if (!background) {
-      return;
-    }
-
-    // Don't lift the background past the point where the control's own text would
-    // drop below the WCAG text-contrast ratio — readable text outranks 1.4.11.
-    let textCapLuminance = Number.POSITIVE_INFINITY;
-
-    if (snapshot.textColor != null && snapshot.textColor.a !== 0) {
-      const themedText = parse(modifyForegroundColor(snapshot.textColor, theme));
-
-      if (themedText) {
-        textCapLuminance = (relativeLuminance(themedText) + 0.05) / TEXT_CONTRAST - 0.05;
-      }
-    }
-
-    const elevated = raiseToContrast(
-      themedBackground,
-      background,
-      CONTROL_CONTRAST,
-      MAX_ELEVATION_LIGHTNESS,
-      textCapLuminance,
-    );
-
-    if (elevated !== themedBackground) {
-      snapshot.element.style.setProperty("background-color", rgbToHexString(elevated), "important");
-      themedBackgrounds.set(snapshot.element, elevated);
-    }
-  };
-
   // Colors are read for the whole batch before any are written: applying an
   // inline color to a parent changes what getComputedStyle reports for its
   // children, so a single read-then-write pass would re-modify already-darkened
@@ -428,12 +336,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       originalStyles.set(snapshot.element, snapshot.originalStyle);
       applyColors(snapshot);
       snapshot.element.setAttribute(PROCESSED_ATTRIBUTE, "");
-    }
-
-    if (elevateControls) {
-      for (const snapshot of snapshots) {
-        elevateControl(snapshot);
-      }
     }
 
     for (const snapshot of snapshots) {
