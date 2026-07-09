@@ -46,8 +46,11 @@ engine flags:
   `background-image`, or a pseudo-element's `content`/`background-image`) to
   blank-invert with `filter: invert(1)`. A pragmatic stand-in for pixel analysis when
   the icon is cross-origin (CORS-tainted) and can't be inspected — e.g. a site's
-  material-icon CDN path. Matched by `startsWith`; use `ignore` to spare coloured
-  variants that live under the same path.
+  material-icon CDN path. Matched by `startsWith`.
+- `invertImageExcludeFilenames?: string[]` — filenames (the last path segment of the
+  url) that `invertImageUrls` should skip even when their prefix matches — for a
+  coloured icon variant sharing the same path as the monochrome ones, which inverting
+  would wrongly recolour.
 
 ## Controller
 

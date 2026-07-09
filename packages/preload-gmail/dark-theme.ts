@@ -19,10 +19,11 @@ export function darkTheme() {
   if (messageElement) {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
-      // The coloured starred states use their own icon and must keep it, so they're
-      // left out of the blanket icon inversion below.
-      ignore: [".edeTZ", ".T-KT.T-KT-Jp", ".T-KT.byM"],
+      ignore: [".edeTZ"],
       invertImageUrls: ["https://www.gstatic.com/images/icons/material/system_gm/"],
+      // The coloured starred-state icon shares the material-icon path but must keep
+      // its colour, so it's excluded from the blanket inversion above.
+      invertImageExcludeFilenames: ["star_black_20dp.png"],
       css: darkThemeCss,
     });
   }

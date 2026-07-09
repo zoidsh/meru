@@ -63,6 +63,10 @@ export type DarkThemeOptions = Partial<Theme> & {
   // is cross-origin (CORS-tainted) and so can't be inspected — e.g. a site's
   // material-icon CDN path. Matched by `startsWith`.
   invertImageUrls?: string[];
+  // Filenames (the last path segment of the url) that `invertImageUrls` should
+  // skip even when their prefix matches — e.g. a coloured icon variant sharing the
+  // same CDN path as the monochrome ones, which inverting would wrongly recolour.
+  invertImageExcludeFilenames?: string[];
 };
 
 export type DarkThemeController = {
@@ -76,7 +80,14 @@ export type DarkThemeController = {
 };
 
 export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
-  const { ignore, observe = true, css, invertImageUrls, ...themeOptions } = options ?? {};
+  const {
+    ignore,
+    observe = true,
+    css,
+    invertImageUrls,
+    invertImageExcludeFilenames,
+    ...themeOptions
+  } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
@@ -86,14 +97,23 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const isIgnored = (element: HTMLElement) =>
     ignoreSelector != null && element.closest(ignoreSelector) != null;
 
+  const invertImageExcludeFilenameSet = new Set(invertImageExcludeFilenames);
+
   const hasInvertImageUrl = (cssValue: string) => {
     if (!invertImageUrls || invertImageUrls.length === 0) {
       return false;
     }
 
-    return [...cssValue.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].some(([, , url]) =>
-      invertImageUrls.some((prefix) => url?.startsWith(prefix)),
-    );
+    return [...cssValue.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].some(([, , url]) => {
+      if (!url || !invertImageUrls.some((prefix) => url.startsWith(prefix))) {
+        return false;
+      }
+
+      const pathname = url.split(/[?#]/)[0] ?? url;
+      const filename = pathname.slice(pathname.lastIndexOf("/") + 1);
+
+      return !invertImageExcludeFilenameSet.has(filename);
+    });
   };
 
   // Which properties this engine has overridden on each element, so re-theming
