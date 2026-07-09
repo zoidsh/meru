@@ -24,9 +24,8 @@ export function darkTheme() {
         "https://www.gstatic.com/images/icons/material/system_gm/",
         "https://ssl.gstatic.com/ui/v1/icons/mail/gm3/",
       ],
-      // The coloured starred-state icon shares the material-icon path but must keep
-      // its colour, so it's excluded from the blanket inversion above.
-      invertImageExcludeFilenames: ["star_googyellow500_20dp.png", "archive_white_20dp.png"],
+      // Already-light icons under the matched paths that inverting would darken.
+      invertImageExcludeFilenames: ["archive_white_20dp.png"],
       css: darkThemeCss,
     });
   }

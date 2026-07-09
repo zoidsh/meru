@@ -478,9 +478,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       childList: true,
       subtree: true,
       attributes: true,
-      // class plus the aria state attributes that commonly drive state styles (an
-      // icon that swaps on toggle, a selected row) so re-theming catches them.
-      attributeFilter: ["class", "aria-checked", "aria-selected", "aria-pressed", "aria-expanded"],
+      // class plus aria-checked, the attributes that drive a state style swap (a
+      // scroll shadow, a star icon that changes on toggle) so re-theming catches it.
+      attributeFilter: ["class", "aria-checked"],
     });
   }
 
