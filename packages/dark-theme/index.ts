@@ -55,7 +55,7 @@ export type DarkThemeController = {
   destroy: () => void;
 };
 
-export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
+export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
   const { ignore, observe = true, ...themeOptions } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 

@@ -1,4 +1,4 @@
-import { darkTheme, type DarkThemeController } from "@meru/dark-theme";
+import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { $ } from "select-dom";
 
 let themedElement: HTMLElement | null = null;
@@ -16,7 +16,7 @@ export function darkMode() {
   themedElement = messageElement;
 
   if (messageElement) {
-    controller = darkTheme(messageElement, {
+    controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
       ignore: [".edeTZ"],
     });
