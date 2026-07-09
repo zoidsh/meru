@@ -1,20 +1,24 @@
-import { darkTheme } from "@meru/dark-theme";
+import { darkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { $ } from "select-dom";
 
 let themedElement: HTMLElement | null = null;
+let controller: DarkThemeController | null = null;
 
 export function darkMode() {
-  const messageElement = $(".AO .nH.g.id");
+  const messageElement = $(".AO .nH.g.id") ?? null;
 
-  if (!messageElement || messageElement === themedElement) {
+  if (messageElement === themedElement) {
     return;
   }
 
+  controller?.revert();
+  controller = null;
   themedElement = messageElement;
 
-  darkTheme(messageElement, {
-    darkSchemeBackgroundColor: "#131313",
-    ignore: [".edeTZ"],
-    observe: true,
-  });
+  if (messageElement) {
+    controller = darkTheme(messageElement, {
+      darkSchemeBackgroundColor: "#131313",
+      ignore: [".edeTZ"],
+    });
+  }
 }

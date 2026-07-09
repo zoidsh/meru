@@ -40,7 +40,8 @@ export type DarkThemeOptions = Partial<Theme> & {
   ignore?: string[];
   // Watch the subtree and keep theming content added later, and re-theme an
   // element when its class changes so state-driven styles (e.g. the shadow a
-  // sticky toolbar gains on scroll) are darkened too.
+  // sticky toolbar gains on scroll) are darkened too. Defaults to true; when
+  // enabled, call the returned controller's revert() to disconnect the observer.
   observe?: boolean;
 };
 
@@ -49,7 +50,7 @@ export type DarkThemeController = {
 };
 
 export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
-  const { ignore, observe, ...themeOptions } = options ?? {};
+  const { ignore, observe = true, ...themeOptions } = options ?? {};
   const theme = { ...DEFAULT_THEME, ...themeOptions };
 
   let cancelled = false;
