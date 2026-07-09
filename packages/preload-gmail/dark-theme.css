@@ -14,7 +14,7 @@
    Replace the stops with neutral dark greys for a subtle hover shimmer. */
 [data-dark-theme] {
   --gm3-sys-color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
-  --ws-sys-color-genai-muted-gradient01: #2d2d2d !important;
-  --ws-sys-color-genai-muted-gradient02: #393939 !important;
-  --ws-sys-color-genai-muted-gradient03: #323232 !important;
+  --ws-sys-color-genai-muted-gradient01: #252525 !important;
+  --ws-sys-color-genai-muted-gradient02: #313131 !important;
+  --ws-sys-color-genai-muted-gradient03: #2a2a2a !important;
 }
