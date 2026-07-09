@@ -14,7 +14,7 @@
    Keep each stop's hue but drop its lightness so the shimmer stays blue, dark. */
 [data-dark-theme] {
   --gm3-sys-color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
-  --ws-sys-color-genai-muted-gradient01: #121c2b !important;
-  --ws-sys-color-genai-muted-gradient02: #003257 !important;
-  --ws-sys-color-genai-muted-gradient03: #000e47 !important;
+  --ws-sys-color-genai-muted-gradient01: #1e2e48 !important;
+  --ws-sys-color-genai-muted-gradient02: #004c85 !important;
+  --ws-sys-color-genai-muted-gradient03: #001570 !important;
 }
