@@ -1,4 +1,4 @@
-/* Gmail dark-mode fixes for state/pseudo-element styles the inline-override
+/* Gmail dark-theme fixes for state/pseudo-element styles the inline-override
    engine can't reach, scoped to [data-dark-theme] so they apply only where the
    engine has themed. Injected via applyDarkTheme's `css` option. */
 

@@ -1,11 +1,11 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { $ } from "select-dom";
-import darkModeCss from "./dark-mode.css";
+import darkThemeCss from "./dark-theme.css";
 
 let themedElement: HTMLElement | null = null;
 let controller: DarkThemeController | null = null;
 
-export function darkMode() {
+export function darkTheme() {
   const messageElement = $(".AO .nH.g.id") ?? null;
 
   if (messageElement === themedElement) {
@@ -20,7 +20,7 @@ export function darkMode() {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "#131313",
       ignore: [".edeTZ"],
-      css: darkModeCss,
+      css: darkThemeCss,
     });
   }
 }
