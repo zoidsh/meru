@@ -52,7 +52,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## Acknowledgments
 
-- [Dark Reader](https://github.com/darkreader/darkreader) ([MIT](https://github.com/darkreader/darkreader/blob/main/LICENSE)) — Meru's dark theme for email content adapts Dark Reader's color-modification and image-analysis logic. See [`packages/dark-theme/THIRD_PARTY_NOTICES.md`](packages/dark-theme/THIRD_PARTY_NOTICES.md).
+- [Dark Reader](https://github.com/darkreader/darkreader) ([MIT](https://github.com/darkreader/darkreader/blob/main/LICENSE)) — Meru's dark-theme engine adapts Dark Reader's color-modification and image-analysis logic. See [`packages/dark-theme/THIRD_PARTY_NOTICES.md`](packages/dark-theme/THIRD_PARTY_NOTICES.md).
 
 ## Disclaimer
 

@@ -36,7 +36,7 @@ type ColorSnapshot = {
 
 export type DarkThemeOptions = Partial<Theme> & {
   // Selectors whose matching elements (and their descendants) keep their
-  // original colors — e.g. Gmail's coloured label chips.
+  // original colors instead of being themed (e.g. coloured chips or badges).
   ignore?: string[];
   // Watch the subtree and keep theming content added later, and re-theme an
   // element when its class changes so state-driven styles (e.g. the shadow a
