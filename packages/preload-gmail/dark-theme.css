@@ -8,16 +8,14 @@
   filter: invert(1) !important;
 }
 
-/* Darken the light surface/gradient tokens Gmail reads only in state selectors
-   (:hover/:focus etc.): the Material hover surface, and the generative-AI chip
-   gradient — whose hover builds a light gradient from the muted-gradient stops.
-   Replace the stops with neutral dark greys for a subtle hover shimmer.
-   --pkw-background is the compose recipient/field fallback (defaults to #fff),
-   left light because the engine sees it as transparent at theme time. */
+/* Two surface tokens the engine's automatic variable darkening gets wrong by
+   design, so they're pinned by hand: the Material hover surface wants to *lighten*
+   its backdrop (a translucent white lift), not darken; and the generative-AI chip
+   gradient stops are tuned to specific neutral greys for a subtle hover shimmer
+   rather than the flat near-black the auto remap would produce. */
 [data-dark-theme] {
   --gm3-sys-color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
   --ws-sys-color-genai-muted-gradient01: #252525 !important;
   --ws-sys-color-genai-muted-gradient02: #313131 !important;
   --ws-sys-color-genai-muted-gradient03: #2a2a2a !important;
-  --pkw-background: #131313 !important;
 }
