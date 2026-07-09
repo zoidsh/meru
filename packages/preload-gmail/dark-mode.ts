@@ -11,7 +11,7 @@ export function darkMode() {
     return;
   }
 
-  controller?.revert();
+  controller?.destroy();
   controller = null;
   themedElement = messageElement;
 

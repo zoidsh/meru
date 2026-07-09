@@ -46,7 +46,13 @@ export type DarkThemeOptions = Partial<Theme> & {
 };
 
 export type DarkThemeController = {
+  // Undo theming on a still-live subtree: disconnect the observer, restore every
+  // element's original inline styles, and release references.
   revert: () => void;
+  // Tear down without restoring styles: disconnect the observer and release
+  // references. Use when the themed subtree is being discarded (e.g. removed from
+  // the DOM), where restoring inline styles would be wasted work.
+  destroy: () => void;
 };
 
 export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkThemeController {
@@ -265,16 +271,24 @@ export function darkTheme(root: HTMLElement, options?: DarkThemeOptions): DarkTh
     });
   }
 
+  const stopObserving = () => {
+    cancelled = true;
+    observer?.disconnect();
+  };
+
   return {
     revert: () => {
-      cancelled = true;
-      observer?.disconnect();
+      stopObserving();
 
       for (const [element, originalStyle] of originalStyles) {
         element.style.cssText = originalStyle;
         element.removeAttribute(PROCESSED_ATTRIBUTE);
       }
 
+      originalStyles.clear();
+    },
+    destroy: () => {
+      stopObserving();
       originalStyles.clear();
     },
   };
