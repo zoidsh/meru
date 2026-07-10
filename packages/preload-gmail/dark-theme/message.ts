@@ -30,9 +30,6 @@ export function darkThemeMessage() {
         ".edeTZ",
         // The "be cautious about sharing sensitive information" warning banner.
         ".ac4",
-        // The generative-AI chip ("Add to Calendar" etc.): its :hover gradient comes from
-        // cross-origin genai tokens the engine can't darken, so keep the whole chip native.
-        ".o03h8b",
       ],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",
