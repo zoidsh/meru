@@ -25,7 +25,7 @@ export function darkThemeMessage() {
 
   if (messageElement) {
     controller = applyDarkTheme(messageElement, {
-      darkSchemeBackgroundColor: "#131313",
+      darkSchemeBackgroundColor: "rgb(19, 19, 19)",
       ignore: [
         // Element containing the conversation labels.
         ".edeTZ",

@@ -6,3 +6,15 @@
 .o03h8b[data-dark-theme]:hover {
   background: rgb(26, 26, 26) !important;
 }
+
+.HM .I5 {
+  border-color: rgb(61 61 61) !important;
+}
+
+.HM .ahe::before {
+  border-color: rgb(61 61 61) !important;
+}
+
+.HM .ahe::after {
+  background: rgb(19, 19, 19) !important;
+}
