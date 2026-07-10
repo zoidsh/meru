@@ -2,6 +2,7 @@ import { modifyBackgroundImage } from "./background-image";
 import { parse } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
+import { coversProperty, type IgnorePropertyRule } from "./ignore";
 import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { buildDarkStateOverrides } from "./state-rules";
@@ -10,6 +11,7 @@ import { buildDarkVariableOverrides } from "./variables";
 
 export { DEFAULT_THEME } from "./theme";
 export type { Theme } from "./theme";
+export type { IgnorePropertyRule } from "./ignore";
 export {
   clearColorModificationCache,
   modifyBackgroundColor,
@@ -23,20 +25,6 @@ const ROOT_ATTRIBUTE = "data-dark-theme-root";
 const borderSides = ["top", "right", "bottom", "left"] as const;
 const pseudoSelectors = ["::before", "::after"] as const;
 const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
-
-// Whether an ignore rule's property list covers a property the engine is about to set.
-// "border-color" is a shorthand for the four per-side colors the engine writes.
-function coversProperty(properties: string[], property: string) {
-  if (properties.includes(property)) {
-    return true;
-  }
-
-  if (property.startsWith("border-") && property.endsWith("-color")) {
-    return properties.includes("border-color");
-  }
-
-  return false;
-}
 
 // Distinguishes each active theme's root so its @scope-wrapped state rules apply
 // only within its own subtree, even with several themed subtrees on one page.
@@ -56,13 +44,6 @@ type ColorSnapshot = {
   boxShadow: string;
   textShadow: string;
   pseudos: Array<{ selector: (typeof pseudoSelectors)[number]; body: string }>;
-};
-
-export type IgnorePropertyRule = {
-  // Elements matching this selector (via element.matches) keep the listed properties
-  // original instead of being themed. "border-color" covers all four sides.
-  selector: string;
-  properties: string[];
 };
 
 export type DarkThemeOptions = Partial<Theme> & {
@@ -160,6 +141,12 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const overriddenProperties = new WeakMap<HTMLElement, Set<string>>();
   const originalStyles = new Map<HTMLElement, string>();
 
+  // Elements we've blank-inverted for a monochrome background-image. Unlike the
+  // sticky overrides above, this must be re-evaluated on state changes: an
+  // element's icon url can swap between one we invert and one we don't, so the
+  // filter is added or removed to match rather than set once and left.
+  const invertedImageElements = new WeakSet<HTMLElement>();
+
   const injectedStyleElements: HTMLStyleElement[] = [];
 
   const injectStyle = (styleText: string) => {
@@ -177,6 +164,13 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const pseudoRulesById = new Map<string, string[]>();
   let pseudoRuleCounter = 0;
   let pseudoStyleElement: HTMLStyleElement | null = null;
+
+  // A pseudo-element's darkened colour paint is captured once and reused on
+  // refresh: re-reading its computed style after we've injected the darkened rule
+  // would return our own output and darken it again toward black on every state
+  // change. Only the invert-image decision (below) is re-evaluated, since that
+  // tracks a state-driven icon swap and reads the url, which our rule doesn't touch.
+  const pseudoColorDeclarationsCache = new WeakMap<HTMLElement, Map<string, string[]>>();
 
   const setOverride = (element: HTMLElement, property: string, value: string) => {
     if (isPropertyIgnored(element, property)) {
@@ -205,8 +199,72 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   // the element's inline color — they leak light and must be darkened directly.
   // A content/background image can't be color-inspected when it's cross-origin
   // (CORS), so a dark monochrome icon matching `invertImageUrls` is blank-inverted.
+  const capturePseudoColorDeclarations = (
+    element: HTMLElement,
+    pseudoStyle: CSSStyleDeclaration,
+  ) => {
+    const declarations: string[] = [];
+
+    const backgroundColor = parse(pseudoStyle.backgroundColor);
+
+    if (
+      backgroundColor != null &&
+      backgroundColor.a !== 0 &&
+      !isPropertyIgnored(element, "background-color")
+    ) {
+      declarations.push(
+        `background-color: ${modifyBackgroundColor(backgroundColor, theme)} !important`,
+      );
+    }
+
+    const backgroundImage = pseudoStyle.backgroundImage;
+
+    if (
+      backgroundImage &&
+      backgroundImage !== "none" &&
+      !backgroundImage.includes("url(") &&
+      !isPropertyIgnored(element, "background-image")
+    ) {
+      declarations.push(
+        `background-image: ${replaceColorTokens(backgroundImage, theme)} !important`,
+      );
+    }
+
+    for (const side of borderSides) {
+      const width = parseFloat(pseudoStyle.getPropertyValue(`border-${side}-width`));
+      const borderStyle = pseudoStyle.getPropertyValue(`border-${side}-style`);
+
+      if (
+        width > 0 &&
+        borderStyle !== "none" &&
+        !isPropertyIgnored(element, `border-${side}-color`)
+      ) {
+        const color = parse(pseudoStyle.getPropertyValue(`border-${side}-color`));
+
+        if (color != null && color.a !== 0) {
+          declarations.push(`border-${side}-color: ${modifyBorderColor(color, theme)} !important`);
+        }
+      }
+    }
+
+    const boxShadow = pseudoStyle.getPropertyValue("box-shadow");
+
+    if (boxShadow && boxShadow !== "none" && !isPropertyIgnored(element, "box-shadow")) {
+      declarations.push(`box-shadow: ${replaceColorTokens(boxShadow, theme)} !important`);
+    }
+
+    return declarations;
+  };
+
   const capturePseudoRules = (element: HTMLElement) => {
     const pseudos: ColorSnapshot["pseudos"] = [];
+
+    let colorDeclarationsBySelector = pseudoColorDeclarationsCache.get(element);
+
+    if (!colorDeclarationsBySelector) {
+      colorDeclarationsBySelector = new Map();
+      pseudoColorDeclarationsCache.set(element, colorDeclarationsBySelector);
+    }
 
     for (const selector of pseudoSelectors) {
       const pseudoStyle = window.getComputedStyle(element, selector);
@@ -218,46 +276,21 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
       const declarations: string[] = [];
 
-      if (hasInvertImageUrl(content) || hasInvertImageUrl(pseudoStyle.backgroundImage)) {
+      if (
+        (hasInvertImageUrl(content) || hasInvertImageUrl(pseudoStyle.backgroundImage)) &&
+        !isPropertyIgnored(element, "filter")
+      ) {
         declarations.push("filter: invert(1) !important");
       }
 
-      const backgroundColor = parse(pseudoStyle.backgroundColor);
+      let colorDeclarations = colorDeclarationsBySelector.get(selector);
 
-      if (backgroundColor != null && backgroundColor.a !== 0) {
-        declarations.push(
-          `background-color: ${modifyBackgroundColor(backgroundColor, theme)} !important`,
-        );
+      if (colorDeclarations === undefined) {
+        colorDeclarations = capturePseudoColorDeclarations(element, pseudoStyle);
+        colorDeclarationsBySelector.set(selector, colorDeclarations);
       }
 
-      const backgroundImage = pseudoStyle.backgroundImage;
-
-      if (backgroundImage && backgroundImage !== "none" && !backgroundImage.includes("url(")) {
-        declarations.push(
-          `background-image: ${replaceColorTokens(backgroundImage, theme)} !important`,
-        );
-      }
-
-      for (const side of borderSides) {
-        const width = parseFloat(pseudoStyle.getPropertyValue(`border-${side}-width`));
-        const borderStyle = pseudoStyle.getPropertyValue(`border-${side}-style`);
-
-        if (width > 0 && borderStyle !== "none") {
-          const color = parse(pseudoStyle.getPropertyValue(`border-${side}-color`));
-
-          if (color != null && color.a !== 0) {
-            declarations.push(
-              `border-${side}-color: ${modifyBorderColor(color, theme)} !important`,
-            );
-          }
-        }
-      }
-
-      const boxShadow = pseudoStyle.getPropertyValue("box-shadow");
-
-      if (boxShadow && boxShadow !== "none") {
-        declarations.push(`box-shadow: ${replaceColorTokens(boxShadow, theme)} !important`);
-      }
+      declarations.push(...colorDeclarations);
 
       if (declarations.length > 0) {
         pseudos.push({ selector, body: declarations.join("; ") });
@@ -376,11 +409,32 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     }
   };
 
+  const refreshImageInvert = (element: HTMLElement, backgroundImage: string) => {
+    if (isPropertyIgnored(element, "filter")) {
+      return;
+    }
+
+    const shouldInvert =
+      backgroundImage !== "" && backgroundImage !== "none" && hasInvertImageUrl(backgroundImage);
+
+    if (shouldInvert === invertedImageElements.has(element)) {
+      return;
+    }
+
+    if (shouldInvert) {
+      element.style.setProperty("filter", "invert(1)", "important");
+      invertedImageElements.add(element);
+    } else {
+      element.style.removeProperty("filter");
+      invertedImageElements.delete(element);
+    }
+  };
+
   const applyImages = (snapshot: ColorSnapshot) => {
     if (snapshot.backgroundImage && snapshot.backgroundImage !== "none") {
-      if (hasInvertImageUrl(snapshot.backgroundImage)) {
-        setOverride(snapshot.element, "filter", "invert(1)");
-      } else {
+      refreshImageInvert(snapshot.element, snapshot.backgroundImage);
+
+      if (!invertedImageElements.has(snapshot.element)) {
         modifyBackgroundImage(snapshot.element, snapshot.backgroundImage, theme, isCancelled);
       }
     }
@@ -463,6 +517,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     const snapshot = captureSnapshot(element);
 
     applyColors(snapshot);
+    refreshImageInvert(element, snapshot.backgroundImage);
     applyPseudoRules(snapshot);
   };
 
@@ -483,6 +538,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     root.ownerDocument,
     theme,
     `[${ROOT_ATTRIBUTE}="${rootId}"]`,
+    ignorePropertyRules,
   );
 
   if (stateOverrides) {

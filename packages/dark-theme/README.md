@@ -38,7 +38,10 @@ engine flags:
   the listed `properties` on elements matching its `selector` (via `matches`), leaving those
   to CSS — e.g. `{ selector: ".foo", properties: ["border-color"] }` lets a stylesheet set
   the border colour, which the engine's inline override would otherwise win over.
-  `"border-color"` covers all four sides.
+  `"border-color"` covers all four sides. The skip applies across every path the engine
+  darkens a property from — the inline override, `::before`/`::after` pseudo rules, and the
+  darkened `:hover`/`:focus` state rules — so an ignored property stays with CSS in every
+  state.
 - `observe?: boolean` — watch the subtree and keep theming content added later, and
   re-theme an element when its class changes (so state-driven styles, like a shadow
   a sticky toolbar gains on scroll, are darkened too). Defaults to `true`; call
@@ -79,7 +82,8 @@ engine flags:
   isn't touched — it inherits the element's own themed color. A pseudo **content
   image** can't be colour-inspected when it's cross-origin (the same CORS limit as
   `<img>`); if its URL matches `invertImageUrls` it's blank-inverted, otherwise left
-  alone.
+  alone. The invert decision is re-evaluated when the element's class/state changes, so an
+  icon whose URL swaps on toggle (e.g. a star) gains or loses the invert to match.
 - `:hover`/`:focus`/`:active` styles — which a computed-style snapshot can't see,
   since the state isn't active at theme time — are read from the document's
   **same-origin** author rules, darkened, and re-emitted with each selector kept

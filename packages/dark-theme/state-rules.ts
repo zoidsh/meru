@@ -1,10 +1,12 @@
 import type { RGBA } from "./color";
 import { modifyColorTokens } from "./css-value";
+import { coversProperty, type IgnorePropertyRule } from "./ignore";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { forEachStyleRule } from "./stylesheets";
 import type { Theme } from "./theme";
 
 const statePseudoRegex = /:(?:hover|active|focus(?:-within|-visible)?)\b/;
+const statePseudoStripRegex = /:(?:hover|active|focus(?:-within|-visible)?)\b/g;
 
 const backgroundProperties = new Set([
   "background",
@@ -69,6 +71,44 @@ const darkenDeclaration = (property: string, value: string, theme: Theme) => {
   return null;
 };
 
+// The ignore rules a state rule must respect: those whose selector matches an
+// element the rule (with its state pseudos stripped) actually targets. Their
+// covered properties are then left to CSS instead of darkened here, mirroring how
+// the inline-override path skips ignored properties.
+function applicableIgnoreRules(
+  ownerDocument: Document,
+  selectorText: string,
+  ignorePropertyRules: IgnorePropertyRule[],
+) {
+  if (ignorePropertyRules.length === 0) {
+    return ignorePropertyRules;
+  }
+
+  const baseSelector = selectorText.replace(statePseudoStripRegex, "").trim();
+
+  if (baseSelector === "") {
+    return [];
+  }
+
+  let targetedElements: NodeListOf<Element>;
+
+  try {
+    targetedElements = ownerDocument.querySelectorAll(baseSelector);
+  } catch {
+    return [];
+  }
+
+  return ignorePropertyRules.filter((ignoreRule) => {
+    for (let index = 0; index < targetedElements.length; index++) {
+      if (targetedElements[index]?.matches(ignoreRule.selector)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
+
 // `:hover`/`:focus` styles live in author rules a getComputedStyle snapshot never
 // sees (the state isn't active at theme time), so they leak light. This rewrites
 // those rules' color-bearing declarations — darkened — keeping each selector
@@ -81,6 +121,7 @@ export function buildDarkStateOverrides(
   ownerDocument: Document,
   theme: Theme,
   scopeSelector: string,
+  ignorePropertyRules: IgnorePropertyRule[],
 ): string | null {
   const seen = new Set<string>();
   const rules: string[] = [];
@@ -90,11 +131,22 @@ export function buildDarkStateOverrides(
       return;
     }
 
+    const ignoreRules = applicableIgnoreRules(
+      ownerDocument,
+      rule.selectorText,
+      ignorePropertyRules,
+    );
+
     const declarations: string[] = [];
     const { style } = rule;
 
     for (let index = 0; index < style.length; index++) {
       const property = style.item(index);
+
+      if (ignoreRules.some((ignoreRule) => coversProperty(ignoreRule.properties, property))) {
+        continue;
+      }
+
       const value = style.getPropertyValue(property);
       const darkenedValue = darkenDeclaration(property, value, theme);
 
