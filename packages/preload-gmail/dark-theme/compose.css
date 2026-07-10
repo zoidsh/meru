@@ -1,0 +1,9 @@
+/* More options in reply container */
+.J-M:has([data-dark-theme]) {
+  background-color: rgb(19, 19, 19) !important;
+}
+
+.HQ .Un:after {
+  background-image: url(//ssl.gstatic.com/ui/v1/icons/mail/gm3/1x/arrow_drop_down_baseline_nv700_20dp.png) !important;
+  filter: invert(1) !important;
+}
