@@ -24,6 +24,20 @@ const borderSides = ["top", "right", "bottom", "left"] as const;
 const pseudoSelectors = ["::before", "::after"] as const;
 const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
 
+// Whether an ignore rule's property list covers a property the engine is about to set.
+// "border-color" is a shorthand for the four per-side colors the engine writes.
+function coversProperty(properties: string[], property: string) {
+  if (properties.includes(property)) {
+    return true;
+  }
+
+  if (property.startsWith("border-") && property.endsWith("-color")) {
+    return properties.includes("border-color");
+  }
+
+  return false;
+}
+
 // Distinguishes each active theme's root so its @scope-wrapped state rules apply
 // only within its own subtree, even with several themed subtrees on one page.
 let instanceCounter = 0;
@@ -44,10 +58,20 @@ type ColorSnapshot = {
   pseudos: Array<{ selector: (typeof pseudoSelectors)[number]; body: string }>;
 };
 
+export type IgnorePropertyRule = {
+  // Elements matching this selector (via element.matches) keep the listed properties
+  // original instead of being themed. "border-color" covers all four sides.
+  selector: string;
+  properties: string[];
+};
+
 export type DarkThemeOptions = Partial<Theme> & {
-  // Selectors whose matching elements (and their descendants) keep their
-  // original colors instead of being themed (e.g. coloured chips or badges).
-  ignore?: string[];
+  // Opt elements out of theming. A string selector keeps its matching elements and
+  // their descendants (via closest) fully original — e.g. coloured chips or badges. An
+  // object skips only the listed properties on elements matching its selector (via
+  // matches), leaving those to CSS — e.g. a border colour set in a stylesheet, which the
+  // engine's inline override would otherwise win over.
+  ignore?: Array<string | IgnorePropertyRule>;
   // Watch the subtree and keep theming content added later, and re-theme an
   // element when its class or aria state changes so state-driven styles (a
   // scroll shadow, an icon that swaps on toggle) are re-evaluated. Defaults to
@@ -93,9 +117,21 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   let cancelled = false;
   const isCancelled = () => cancelled;
 
-  const ignoreSelector = ignore && ignore.length > 0 ? ignore.join(",") : null;
+  const ignoreSelectors = (ignore ?? []).filter(
+    (entry): entry is string => typeof entry === "string",
+  );
+  const ignorePropertyRules = (ignore ?? []).filter(
+    (entry): entry is IgnorePropertyRule => typeof entry === "object",
+  );
+
+  const ignoreSelector = ignoreSelectors.length > 0 ? ignoreSelectors.join(",") : null;
   const isIgnored = (element: HTMLElement) =>
     ignoreSelector != null && element.closest(ignoreSelector) != null;
+
+  const isPropertyIgnored = (element: HTMLElement, property: string) =>
+    ignorePropertyRules.some(
+      (rule) => coversProperty(rule.properties, property) && element.matches(rule.selector),
+    );
 
   const invertImageExcludeFilenameSet = new Set(invertImageExcludeFilenames);
 
@@ -143,6 +179,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   let pseudoStyleElement: HTMLStyleElement | null = null;
 
   const setOverride = (element: HTMLElement, property: string, value: string) => {
+    if (isPropertyIgnored(element, property)) {
+      return false;
+    }
+
     let properties = overriddenProperties.get(element);
 
     if (!properties) {

@@ -32,8 +32,13 @@ engine flags:
   colors are remapped toward. Default `#181a1b` / `#e8e6e3`.
 - `brightness` / `contrast` / `sepia` / `grayscale` — filter adjustments applied on
   top of the remap. Default `100` / `100` / `0` / `0`.
-- `ignore?: string[]` — selectors whose matching elements (and their descendants)
-  keep their original colors instead of being themed.
+- `ignore?: Array<string | { selector: string; properties: string[] }>` — opt elements
+  out of theming. A **string** selector keeps its matching elements and their descendants
+  (via `closest`) fully original — e.g. coloured chips or badges. An **object** skips only
+  the listed `properties` on elements matching its `selector` (via `matches`), leaving those
+  to CSS — e.g. `{ selector: ".foo", properties: ["border-color"] }` lets a stylesheet set
+  the border colour, which the engine's inline override would otherwise win over.
+  `"border-color"` covers all four sides.
 - `observe?: boolean` — watch the subtree and keep theming content added later, and
   re-theme an element when its class changes (so state-driven styles, like a shadow
   a sticky toolbar gains on scroll, are darkened too). Defaults to `true`; call

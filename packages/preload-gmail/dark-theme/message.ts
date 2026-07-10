@@ -31,6 +31,9 @@ export function darkThemeMessage() {
         ".edeTZ",
         // The "be cautious about sharing sensitive information" warning banner.
         ".ac4",
+        // The compose container: leave its border colour to Gmail's own CSS instead of
+        // the engine's inline override.
+        { selector: ".I5", properties: ["border-color"] },
       ],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",
