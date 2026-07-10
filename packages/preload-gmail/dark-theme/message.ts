@@ -1,6 +1,7 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $ } from "select-dom";
+import messageCss from "./message.css";
 
 const isFullDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.fullDarkTheme);
 
@@ -40,6 +41,7 @@ export function darkThemeMessage() {
         "archive_white_20dp.png",
         "schedule_send_googblue_20dp.png",
       ],
+      css: messageCss,
     });
   }
 }

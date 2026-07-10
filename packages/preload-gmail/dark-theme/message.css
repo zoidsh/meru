@@ -1,0 +1,8 @@
+/* Gmail dark-theme fixes for state styles the inline-override engine can't reach,
+   scoped to [data-dark-theme] so they apply only where the engine has themed. */
+
+/* The generative-AI chip's :hover pulls a light gradient from cross-origin genai
+   tokens the engine can't darken; pin it to the dark surface used for its idle state. */
+.o03h8b[data-dark-theme]:hover {
+  background: rgb(26, 26, 26) !important;
+}
