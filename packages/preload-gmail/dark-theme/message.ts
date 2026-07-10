@@ -27,13 +27,18 @@ export function darkThemeMessage() {
     controller = applyDarkTheme(messageElement, {
       darkSchemeBackgroundColor: "rgb(19, 19, 19)",
       ignore: [
-        // Element containing the conversation labels.
+        // Conversation labels inside message
         ".edeTZ",
-        // The "be cautious about sharing sensitive information" warning banner.
+        // "Be cautious about sharing sensitive information" warning banner
         ".ac4",
-        // The compose container: leave its border colour to Gmail's own CSS instead of
-        // the engine's inline override.
-        { selector: ".I5", properties: ["border-color"] },
+        // Reply container
+        { selector: ".HM .I5", properties: ["border-color"] },
+        // "More options" button in reply container
+        { selector: ".J-JN-M-I", properties: ["background-color"] },
+        // "More options" menu items
+        { selector: ".J-N", properties: ["background-color"] },
+        // "Send" button in reply container
+        { selector: ".dC", properties: ["background-color"] },
       ],
       invertImageUrls: [
         "https://www.gstatic.com/images/icons/material/system_gm/",

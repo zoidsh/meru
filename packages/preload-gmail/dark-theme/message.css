@@ -7,14 +7,25 @@
   background: rgb(26, 26, 26) !important;
 }
 
-.HM .I5 {
+/* Reply container */
+.HM .I5[data-dark-theme] {
   border-color: rgb(61 61 61) !important;
 }
 
-.HM .ahe::before {
+.HM .ahe[data-dark-theme]::before {
   border-color: rgb(61 61 61) !important;
 }
 
-.HM .ahe::after {
+.HM .ahe[data-dark-theme]::after {
   background: rgb(19, 19, 19) !important;
+}
+
+/* More options in reply container */
+.J-N[data-dark-theme] {
+  background-color: rgb(19, 19, 19) !important;
+}
+
+/* "Send" button in reply container */
+.dC[data-dark-theme]:hover {
+  background-color: rgb(19, 19, 19) !important;
 }
