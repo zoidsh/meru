@@ -375,7 +375,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     const hasBackground = backgroundColor != null && backgroundColor.a !== 0;
 
     if (element === root && !hasBackground) {
-      setOverride(element, "background-color", theme.darkSchemeBackgroundColor);
+      setOverride(element, "background-color", theme.backgroundColor);
     } else if (hasBackground) {
       setOverride(element, "background-color", modifyBackgroundColor(backgroundColor, theme));
     }

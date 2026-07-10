@@ -31,8 +31,8 @@ const themeCacheKeys: Array<keyof Theme> = [
   "contrast",
   "grayscale",
   "sepia",
-  "darkSchemeBackgroundColor",
-  "darkSchemeTextColor",
+  "backgroundColor",
+  "textColor",
 ];
 
 function getCacheId(rgb: RGBA, theme: Theme, poleColorA?: string, poleColorB?: string): string {
@@ -193,19 +193,13 @@ function modifyBorderHSL({ h, s, l, a }: HSLA, poleFg: HSLA, poleBg: HSLA): HSLA
 }
 
 export function modifyBackgroundColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(rgb, theme, modifyBgHSL, theme.darkSchemeBackgroundColor);
+  return modifyColorWithCache(rgb, theme, modifyBgHSL, theme.backgroundColor);
 }
 
 export function modifyForegroundColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(rgb, theme, modifyFgHSL, theme.darkSchemeTextColor);
+  return modifyColorWithCache(rgb, theme, modifyFgHSL, theme.textColor);
 }
 
 export function modifyBorderColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(
-    rgb,
-    theme,
-    modifyBorderHSL,
-    theme.darkSchemeTextColor,
-    theme.darkSchemeBackgroundColor,
-  );
+  return modifyColorWithCache(rgb, theme, modifyBorderHSL, theme.textColor, theme.backgroundColor);
 }

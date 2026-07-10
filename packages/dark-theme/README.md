@@ -28,8 +28,8 @@ use it in a renderer or content script, not the Electron main process.
 `applyDarkTheme(root, options?)` — `options` is a partial `Theme` plus a couple of
 engine flags:
 
-- `darkSchemeBackgroundColor` / `darkSchemeTextColor` — the HSL poles that light
-  colors are remapped toward. Default `#181a1b` / `#e8e6e3`.
+- `backgroundColor` / `textColor` — the HSL poles that light colors are remapped
+  toward. Default `#181a1b` / `#e8e6e3`.
 - `brightness` / `contrast` / `sepia` / `grayscale` — filter adjustments applied on
   top of the remap. Default `100` / `100` / `0` / `0`.
 - `ignore?: Array<string | { selector: string; properties: string[] }>` — opt elements

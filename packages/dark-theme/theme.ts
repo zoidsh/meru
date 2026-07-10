@@ -9,8 +9,8 @@ export type Theme = {
   contrast: number;
   grayscale: number;
   sepia: number;
-  darkSchemeBackgroundColor: string;
-  darkSchemeTextColor: string;
+  backgroundColor: string;
+  textColor: string;
 };
 
 export const DEFAULT_THEME: Theme = {
@@ -19,6 +19,6 @@ export const DEFAULT_THEME: Theme = {
   contrast: 100,
   grayscale: 0,
   sepia: 0,
-  darkSchemeBackgroundColor: "#181a1b",
-  darkSchemeTextColor: "#e8e6e3",
+  backgroundColor: "#181a1b",
+  textColor: "#e8e6e3",
 };
