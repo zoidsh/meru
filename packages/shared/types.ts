@@ -148,6 +148,7 @@ export type Config = {
   "gmail.moveAttachmentsToTop": boolean;
   "gmail.closeComposeWindowAfterSend": boolean;
   "gmail.replyForwardInPopOut": boolean;
+  "gmail.fullDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
   "screenShare.useSystemPicker": boolean;
   "window.lastState": {

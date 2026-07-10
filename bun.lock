@@ -71,6 +71,10 @@
       "name": "@meru/app",
       "version": "0.0.0",
     },
+    "packages/dark-theme": {
+      "name": "@meru/dark-theme",
+      "version": "0.0.0",
+    },
     "packages/preload-gmail": {
       "name": "@meru/preload-gmail",
       "version": "0.0.0",
@@ -331,6 +335,8 @@
     "@malept/flatpak-bundler": ["@malept/flatpak-bundler@0.4.0", "", { "dependencies": { "debug": "^4.1.1", "fs-extra": "^9.0.0", "lodash": "^4.17.15", "tmp-promise": "^3.0.2" } }, "sha512-9QOtNffcOF/c1seMCDnjckb3R9WHcG34tky+FHpNKKCW0wc/scYLwMtO+ptyGUfMW0/b/n4qRiALlaFHc9Oj7Q=="],
 
     "@meru/app": ["@meru/app@workspace:packages/app"],
+
+    "@meru/dark-theme": ["@meru/dark-theme@workspace:packages/dark-theme"],
 
     "@meru/preload-gmail": ["@meru/preload-gmail@workspace:packages/preload-gmail"],
 

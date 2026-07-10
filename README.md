@@ -50,6 +50,10 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
+## Acknowledgments
+
+- [Dark Reader](https://github.com/darkreader/darkreader) ([MIT](https://github.com/darkreader/darkreader/blob/main/LICENSE)) — Meru's dark-theme engine adapts Dark Reader's color-modification and image-analysis logic. See [`packages/dark-theme/THIRD_PARTY_NOTICES.md`](packages/dark-theme/THIRD_PARTY_NOTICES.md).
+
 ## Disclaimer
 
 Meru is a third-party app and not affiliated with Google.
