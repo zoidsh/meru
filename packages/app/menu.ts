@@ -445,6 +445,23 @@ export class AppMenu {
               selectedAccount.instance.gmail.view.webContents.openDevTools();
             },
           },
+          {
+            type: "separator",
+          },
+          {
+            label: "Export Gmail Page Snapshot",
+            visible: is.dev,
+            click: async () => {
+              const snapshotPath = path.join(
+                app.getPath("downloads"),
+                `gmail-snapshot-${new Date().toISOString().replaceAll(":", "-")}.mhtml`,
+              );
+
+              await selectedAccount.instance.gmail.view.webContents.savePage(snapshotPath, "MHTML");
+
+              shell.showItemInFolder(snapshotPath);
+            },
+          },
         ],
       },
       {
