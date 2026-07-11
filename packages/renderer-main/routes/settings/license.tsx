@@ -267,7 +267,11 @@ export function LicenseSettings() {
                             selector={(state) => [state.isPristine, state.isSubmitting]}
                           >
                             {([isPristine, isSubmitting]) => (
-                              <Button variant="secondary" disabled={isPristine || isSubmitting}>
+                              <Button
+                                type="submit"
+                                variant="secondary"
+                                disabled={isPristine || isSubmitting}
+                              >
                                 {isSubmitting && <Spinner />}
                                 Save
                               </Button>
