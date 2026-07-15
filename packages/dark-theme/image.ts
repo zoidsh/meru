@@ -189,12 +189,33 @@ function imageToDataURL(image: HTMLImageElement): string {
   }
 }
 
+// Bounded because entries can carry a base64 dataURL of the full image — in a
+// long-lived mail client an unbounded per-url cache would accumulate megabytes.
+const IMAGE_DETAILS_CACHE_MAX_ENTRIES = 256;
 const imageDetailsCache = new Map<string, ImageDetails | null>();
 
-export async function getImageDetails(url: string): Promise<ImageDetails | null> {
-  const cached = imageDetailsCache.get(url);
+// Only the classifications that end up as a filtered SVG replacement (a dark
+// transparent icon to invert, a light non-solid image to darken) ever read the
+// dataURL, so it is built just for those instead of for every analyzed image.
+function shouldBuildDataURL(analysis: ImageAnalysis, image: HTMLImageElement) {
+  if (analysis.isLarge) {
+    return false;
+  }
 
-  if (cached !== undefined) {
+  if (analysis.isDark && analysis.isTransparent && image.naturalWidth > 2) {
+    return true;
+  }
+
+  return analysis.isLight && !analysis.isTransparent && !analysis.solidColor;
+}
+
+export async function getImageDetails(url: string): Promise<ImageDetails | null> {
+  if (imageDetailsCache.has(url)) {
+    const cached = imageDetailsCache.get(url) ?? null;
+
+    imageDetailsCache.delete(url);
+    imageDetailsCache.set(url, cached);
+
     return cached;
   }
 
@@ -205,7 +226,11 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
     const analysis = analyzeImage(image);
 
     if (analysis) {
-      const dataURL = analysis.isLarge ? "" : url.startsWith("data:") ? url : imageToDataURL(image);
+      const dataURL = shouldBuildDataURL(analysis, image)
+        ? url.startsWith("data:")
+          ? url
+          : imageToDataURL(image)
+        : "";
 
       details = {
         src: url,
@@ -217,6 +242,14 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
     }
   } catch {
     details = null;
+  }
+
+  if (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES) {
+    const oldestUrl = imageDetailsCache.keys().next().value;
+
+    if (oldestUrl !== undefined) {
+      imageDetailsCache.delete(oldestUrl);
+    }
   }
 
   imageDetailsCache.set(url, details);
