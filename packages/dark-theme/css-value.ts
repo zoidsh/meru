@@ -1,4 +1,4 @@
-import { parse, type RGBA } from "./color";
+import { parseColorWithCache, type RGBA } from "./color";
 import { modifyBackgroundColor } from "./modify-colors";
 import type { Theme } from "./theme";
 
@@ -9,7 +9,7 @@ const colorTokenRegex = /rgba?\([^)]*\)|hsla?\([^)]*\)|#[0-9a-f]+/gi;
 // var() references) intact. `modify` may return null to leave a token untouched.
 export function modifyColorTokens(value: string, modify: (rgb: RGBA) => string | null): string {
   return value.replace(colorTokenRegex, (token) => {
-    const rgb = parse(token);
+    const rgb = parseColorWithCache(token);
 
     if (!rgb) {
       return token;

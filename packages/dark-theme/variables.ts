@@ -1,4 +1,4 @@
-import { parse } from "./color";
+import { parseColorWithCache } from "./color";
 import { relativeLuminance } from "./contrast";
 import { replaceColorTokens } from "./css-value";
 import { forEachStyleRule } from "./stylesheets";
@@ -20,7 +20,7 @@ const hasLightColorToken = (value: string) => {
   }
 
   return tokens.some((token) => {
-    const rgba = parse(token);
+    const rgba = parseColorWithCache(token);
 
     return rgba != null && relativeLuminance(rgba) > LIGHT_LUMINANCE_THRESHOLD;
   });

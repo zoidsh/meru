@@ -1,5 +1,5 @@
 import { modifyBackgroundImage } from "./background-image";
-import { parse } from "./color";
+import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
@@ -30,7 +30,7 @@ const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
 // only within its own subtree, even with several themed subtrees on one page.
 let instanceCounter = 0;
 
-type ParsedColor = ReturnType<typeof parse>;
+type ParsedColor = ReturnType<typeof parseColorWithCache>;
 
 type ColorSnapshot = {
   element: HTMLElement;
@@ -205,7 +205,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   ) => {
     const declarations: string[] = [];
 
-    const backgroundColor = parse(pseudoStyle.backgroundColor);
+    const backgroundColor = parseColorWithCache(pseudoStyle.backgroundColor);
 
     if (
       backgroundColor != null &&
@@ -239,7 +239,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         borderStyle !== "none" &&
         !isPropertyIgnored(element, `border-${side}-color`)
       ) {
-        const color = parse(pseudoStyle.getPropertyValue(`border-${side}-color`));
+        const color = parseColorWithCache(pseudoStyle.getPropertyValue(`border-${side}-color`));
 
         if (color != null && color.a !== 0) {
           declarations.push(`border-${side}-color: ${modifyBorderColor(color, theme)} !important`);
@@ -312,19 +312,22 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       })
       .map((side) => ({
         side,
-        color: parse(computedStyle.getPropertyValue(`border-${side}-color`)),
+        color: parseColorWithCache(computedStyle.getPropertyValue(`border-${side}-color`)),
       }));
 
     const outlineColor =
       computedStyle.getPropertyValue("outline-style") !== "none" &&
       parseFloat(computedStyle.getPropertyValue("outline-width")) > 0
-        ? parse(computedStyle.getPropertyValue("outline-color"))
+        ? parseColorWithCache(computedStyle.getPropertyValue("outline-color"))
         : null;
 
     const foregroundColors: Array<{ property: string; color: ParsedColor }> = [];
 
     const captureForegroundColor = (property: string) => {
-      foregroundColors.push({ property, color: parse(computedStyle.getPropertyValue(property)) });
+      foregroundColors.push({
+        property,
+        color: parseColorWithCache(computedStyle.getPropertyValue(property)),
+      });
     };
 
     if (element instanceof SVGElement) {
@@ -356,9 +359,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     return {
       element,
       originalStyle: element.style.cssText,
-      backgroundColor: parse(computedStyle.backgroundColor),
+      backgroundColor: parseColorWithCache(computedStyle.backgroundColor),
       backgroundImage: computedStyle.backgroundImage,
-      textColor: parse(computedStyle.color),
+      textColor: parseColorWithCache(computedStyle.color),
       borderColors,
       outlineColor,
       foregroundColors,
