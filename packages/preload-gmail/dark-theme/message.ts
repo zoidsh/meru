@@ -48,6 +48,7 @@ export function darkThemeMessage() {
         "star_googyellow500_20dp.png",
         "archive_white_20dp.png",
         "schedule_send_googblue_20dp.png",
+        "label_important_fill_googyellow500_20dp.png",
       ],
       css: messageCss,
     });
