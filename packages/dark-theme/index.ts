@@ -472,6 +472,22 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         ),
       );
     }
+  };
+
+  // The pseudo sheet is written once per batch, not once per element: assigning
+  // textContent re-parses the whole sheet, so per-element writes would cost
+  // O(n²) during the initial pass. Skipping the assignment when the text hasn't
+  // changed also keeps hover-driven class churn from re-parsing an unchanged sheet.
+  let pseudoStyleText = "";
+
+  const flushPseudoRules = () => {
+    const styleText = [...pseudoRulesById.values()].flat().join("\n");
+
+    if (styleText === pseudoStyleText) {
+      return;
+    }
+
+    pseudoStyleText = styleText;
 
     if (!pseudoStyleElement) {
       pseudoStyleElement = root.ownerDocument.createElement("style");
@@ -479,7 +495,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       injectedStyleElements.push(pseudoStyleElement);
     }
 
-    pseudoStyleElement.textContent = [...pseudoRulesById.values()].flat().join("\n");
+    pseudoStyleElement.textContent = styleText;
   };
 
   // Colors are read for the whole batch before any are written: applying an
@@ -507,18 +523,30 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       applyImages(snapshot);
       applyPseudoRules(snapshot);
     }
+
+    flushPseudoRules();
   };
 
-  const refreshElement = (element: HTMLElement) => {
-    if (!element.hasAttribute(PROCESSED_ATTRIBUTE) || isIgnored(element)) {
+  // Same read-then-write batching as processBatch: snapshotting after another
+  // element's inline writes would force a style recalc per element.
+  const refreshElements = (elements: Iterable<HTMLElement>) => {
+    const targets = [...elements].filter(
+      (element) => element.hasAttribute(PROCESSED_ATTRIBUTE) && !isIgnored(element),
+    );
+
+    if (targets.length === 0) {
       return;
     }
 
-    const snapshot = captureSnapshot(element);
+    const snapshots = targets.map(captureSnapshot);
 
-    applyColors(snapshot);
-    refreshImageInvert(element, snapshot.backgroundImage);
-    applyPseudoRules(snapshot);
+    for (const snapshot of snapshots) {
+      applyColors(snapshot);
+      refreshImageInvert(snapshot.element, snapshot.backgroundImage);
+      applyPseudoRules(snapshot);
+    }
+
+    flushPseudoRules();
   };
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
@@ -557,16 +585,31 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         return;
       }
 
+      // All additions and refreshes across the mutation list are collected first
+      // and processed as two batches — handling each node separately would
+      // interleave getComputedStyle reads with inline-style writes and force a
+      // synchronous style recalc per node during bursty re-renders.
+      const addedElements: HTMLElement[] = [];
+      const refreshTargets = new Set<HTMLElement>();
+
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement) {
-              processBatch([node, ...node.querySelectorAll<HTMLElement>("*")]);
+              addedElements.push(node, ...node.querySelectorAll<HTMLElement>("*"));
             }
           }
         } else if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
-          refreshElement(mutation.target);
+          refreshTargets.add(mutation.target);
         }
+      }
+
+      if (addedElements.length > 0) {
+        processBatch(addedElements);
+      }
+
+      if (refreshTargets.size > 0) {
+        refreshElements(refreshTargets);
       }
     });
 
