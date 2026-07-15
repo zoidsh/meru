@@ -4,7 +4,7 @@ import { Field, FieldContent, FieldDescription, FieldLabel } from "@meru/ui/comp
 import { Switch } from "@meru/ui/components/switch";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { restartRequiredToast } from "@/lib/toast";
-import { BetaFieldBadge } from "./beta-field-badge";
+import { ExperimentalFieldBadge } from "./experimental-field-badge";
 import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
 
 export function ConfigSwitchField({
@@ -12,7 +12,7 @@ export function ConfigSwitchField({
   label,
   description,
   licenseKeyRequired,
-  beta,
+  experimental,
   disabled,
   restartRequired,
 }: {
@@ -20,7 +20,7 @@ export function ConfigSwitchField({
   label: string;
   description: string;
   licenseKeyRequired?: boolean;
-  beta?: boolean;
+  experimental?: boolean;
   disabled?: boolean;
   restartRequired?: boolean;
 }) {
@@ -51,7 +51,7 @@ export function ConfigSwitchField({
       <FieldContent>
         <FieldLabel htmlFor={configKey} className="flex items-center gap-2">
           {label}
-          {beta && <BetaFieldBadge />}
+          {experimental && <ExperimentalFieldBadge />}
           {licenseKeyRequired && <LicenseKeyRequiredFieldBadge />}
         </FieldLabel>
         <FieldDescription>{description}</FieldDescription>
