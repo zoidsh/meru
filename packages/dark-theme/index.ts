@@ -560,20 +560,17 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const rootId = String(instanceCounter++);
   root.setAttribute(ROOT_ATTRIBUTE, rootId);
 
+  const scopeSelector = `[${ROOT_ATTRIBUTE}="${rootId}"]`;
+
   // Injected before the caller's css so a hand-tuned override there wins over the
   // generated values (equal specificity/importance, later wins).
-  const variableOverrides = buildDarkVariableOverrides(root, theme);
+  const variableOverrides = buildDarkVariableOverrides(root, theme, scopeSelector);
 
   if (variableOverrides) {
     injectStyle(variableOverrides);
   }
 
-  const stateOverrides = buildDarkStateOverrides(
-    root,
-    theme,
-    `[${ROOT_ATTRIBUTE}="${rootId}"]`,
-    ignorePropertyRules,
-  );
+  const stateOverrides = buildDarkStateOverrides(root, theme, scopeSelector, ignorePropertyRules);
 
   if (stateOverrides) {
     injectStyle(stateOverrides);
