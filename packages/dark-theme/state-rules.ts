@@ -1,44 +1,16 @@
 import type { RGBA } from "./color";
-import { modifyColorTokens } from "./css-value";
+import { modifyColorTokens, substituteVarFallbacks } from "./css-value";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
-import { forEachStyleRule } from "./stylesheets";
+import {
+  backgroundProperties,
+  borderProperties,
+  foregroundProperties,
+  getStylesheetCollection,
+} from "./stylesheets";
 import type { Theme } from "./theme";
 
-const statePseudoRegex = /:(?:hover|active|focus(?:-within|-visible)?)\b/;
 const statePseudoStripRegex = /:(?:hover|active|focus(?:-within|-visible)?)\b/g;
-
-const backgroundProperties = new Set([
-  "background",
-  "background-color",
-  "background-image",
-  "box-shadow",
-]);
-
-const foregroundProperties = new Set([
-  "color",
-  "fill",
-  "stroke",
-  "caret-color",
-  "-webkit-text-fill-color",
-  "text-decoration-color",
-  "column-rule-color",
-]);
-
-const borderProperties = new Set([
-  "border",
-  "border-color",
-  "border-top",
-  "border-right",
-  "border-bottom",
-  "border-left",
-  "border-top-color",
-  "border-right-color",
-  "border-bottom-color",
-  "border-left-color",
-  "outline",
-  "outline-color",
-]);
 
 // Fully transparent tokens are left as-is so a rule whose only color is a default
 // `background-color: transparent` longhand produces no override — otherwise every
@@ -71,43 +43,19 @@ const darkenDeclaration = (property: string, value: string, theme: Theme) => {
   return null;
 };
 
-// The ignore rules a state rule must respect: those whose selector matches an
-// element the rule (with its state pseudos stripped) actually targets. Their
-// covered properties are then left to CSS instead of darkened here, mirroring how
-// the inline-override path skips ignored properties.
-function applicableIgnoreRules(
-  ownerDocument: Document,
-  selectorText: string,
-  ignorePropertyRules: IgnorePropertyRule[],
-) {
-  if (ignorePropertyRules.length === 0) {
-    return ignorePropertyRules;
-  }
+const hasVisibleColorToken = (value: string) => {
+  let hasVisibleToken = false;
 
-  const baseSelector = selectorText.replace(statePseudoStripRegex, "").trim();
-
-  if (baseSelector === "") {
-    return [];
-  }
-
-  let targetedElements: NodeListOf<Element>;
-
-  try {
-    targetedElements = ownerDocument.querySelectorAll(baseSelector);
-  } catch {
-    return [];
-  }
-
-  return ignorePropertyRules.filter((ignoreRule) => {
-    for (let index = 0; index < targetedElements.length; index++) {
-      if (targetedElements[index]?.matches(ignoreRule.selector)) {
-        return true;
-      }
+  modifyColorTokens(value, (rgb) => {
+    if (rgb.a !== 0) {
+      hasVisibleToken = true;
     }
 
-    return false;
+    return null;
   });
-}
+
+  return hasVisibleToken;
+};
 
 // `:hover`/`:focus` styles live in author rules a getComputedStyle snapshot never
 // sees (the state isn't active at theme time), so they leak light. This rewrites
@@ -118,7 +66,7 @@ function applicableIgnoreRules(
 // Only same-origin stylesheets can be read (cross-origin sheets throw on
 // cssRules, the same CORS wall image analysis hits).
 export function buildDarkStateOverrides(
-  ownerDocument: Document,
+  root: HTMLElement,
   theme: Theme,
   scopeSelector: string,
   ignorePropertyRules: IgnorePropertyRule[],
@@ -126,46 +74,107 @@ export function buildDarkStateOverrides(
   const seen = new Set<string>();
   const rules: string[] = [];
 
-  forEachStyleRule(ownerDocument, (rule) => {
-    if (!statePseudoRegex.test(rule.selectorText)) {
-      return;
+  // The ignore rules a state rule must respect: those whose selector matches an
+  // element the rule (with its state pseudos stripped) actually targets. Matching
+  // is scoped to the themed root — the generated rules are @scope-wrapped, so an
+  // element outside the subtree can never be affected by them — and memoized per
+  // selector, since the query is the expensive part.
+  const applicableIgnoreRulesBySelector = new Map<string, IgnorePropertyRule[]>();
+
+  const applicableIgnoreRules = (selectorText: string) => {
+    const memoized = applicableIgnoreRulesBySelector.get(selectorText);
+
+    if (memoized) {
+      return memoized;
     }
 
-    const ignoreRules = applicableIgnoreRules(
-      ownerDocument,
-      rule.selectorText,
-      ignorePropertyRules,
+    const baseSelector = selectorText.replace(statePseudoStripRegex, "").trim();
+    let targetedElements: Element[] = [];
+
+    if (baseSelector !== "") {
+      try {
+        targetedElements = [...root.querySelectorAll(baseSelector)];
+
+        if (root.matches(baseSelector)) {
+          targetedElements.push(root);
+        }
+      } catch {
+        targetedElements = [];
+      }
+    }
+
+    const ignoreRules = ignorePropertyRules.filter((ignoreRule) =>
+      targetedElements.some((element) => element.matches(ignoreRule.selector)),
     );
 
-    const declarations: string[] = [];
-    const { style } = rule;
+    applicableIgnoreRulesBySelector.set(selectorText, ignoreRules);
 
-    for (let index = 0; index < style.length; index++) {
-      const property = style.item(index);
+    return ignoreRules;
+  };
 
-      if (ignoreRules.some((ignoreRule) => coversProperty(ignoreRule.properties, property))) {
+  for (const candidate of getStylesheetCollection(root.ownerDocument).stateRuleCandidates) {
+    const darkenedDeclarations: Array<{ property: string; declarationText: string }> = [];
+
+    for (const { property, value } of candidate.declarations) {
+      // The variable's runtime value is out of reach — the page may define it
+      // via inline styles or constructed stylesheets no stylesheet walk can
+      // see — so `var(--x, fallback)` is pinned to its darkened fallback
+      // instead of trusting the var to resolve dark. Pinning also applies when
+      // the fallback needs no darkening (a light live value would still leak),
+      // but not when the flattened value carries no visible color (keeps a bare
+      // `var(--x, transparent)` from emitting a useless override).
+      const flattenedValue = substituteVarFallbacks(value);
+      const darkenedValue = darkenDeclaration(property, flattenedValue, theme);
+
+      if (darkenedValue == null || darkenedValue === value) {
         continue;
       }
 
-      const value = style.getPropertyValue(property);
-      const darkenedValue = darkenDeclaration(property, value, theme);
+      if (darkenedValue === flattenedValue && !hasVisibleColorToken(flattenedValue)) {
+        continue;
+      }
 
-      if (darkenedValue != null && darkenedValue !== value) {
-        declarations.push(`${property}: ${darkenedValue} !important`);
+      darkenedDeclarations.push({
+        property,
+        declarationText: `${property}: ${darkenedValue} !important`,
+      });
+    }
+
+    if (darkenedDeclarations.length === 0) {
+      continue;
+    }
+
+    // The live selector matching behind applicableIgnoreRules only runs when an
+    // ignore rule actually covers one of the darkened properties — for the vast
+    // majority of state rules none does, and the query can be skipped outright.
+    const isCoveredByIgnoreRules = ignorePropertyRules.some((ignoreRule) =>
+      darkenedDeclarations.some(({ property }) => coversProperty(ignoreRule.properties, property)),
+    );
+
+    let declarations = darkenedDeclarations;
+
+    if (isCoveredByIgnoreRules) {
+      const ignoreRules = applicableIgnoreRules(candidate.selectorText);
+
+      declarations = darkenedDeclarations.filter(
+        ({ property }) =>
+          !ignoreRules.some((ignoreRule) => coversProperty(ignoreRule.properties, property)),
+      );
+
+      if (declarations.length === 0) {
+        continue;
       }
     }
 
-    if (declarations.length === 0) {
-      return;
-    }
-
-    const generatedRule = `${rule.selectorText} { ${declarations.join("; ")}; }`;
+    const generatedRule = `${candidate.selectorText} { ${declarations
+      .map(({ declarationText }) => declarationText)
+      .join("; ")}; }`;
 
     if (!seen.has(generatedRule)) {
       seen.add(generatedRule);
       rules.push(generatedRule);
     }
-  });
+  }
 
   if (rules.length === 0) {
     return null;

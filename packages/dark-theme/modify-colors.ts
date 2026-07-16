@@ -13,7 +13,7 @@ import {
   rgbToHSL,
   rgbToString,
 } from "./color";
-import { scale } from "./math";
+import { type Matrix5x5, scale } from "./math";
 import { applyColorMatrix, createFilterMatrix } from "./matrix";
 import type { Theme } from "./theme";
 
@@ -51,6 +51,29 @@ function getCacheId(rgb: RGBA, theme: Theme, poleColorA?: string, poleColorB?: s
   return cacheId;
 }
 
+// The filter matrix depends only on the theme's adjustment values, so it is
+// memoized across color modifications; a theme without adjustments maps to null
+// so the identity multiplication is skipped entirely.
+const filterMatrixCache = new Map<string, Matrix5x5 | null>();
+
+function getFilterMatrix(theme: Theme): Matrix5x5 | null {
+  const cacheKey = `${theme.brightness};${theme.contrast};${theme.grayscale};${theme.sepia}`;
+  let matrix = filterMatrixCache.get(cacheKey);
+
+  if (matrix === undefined) {
+    const hasAdjustments =
+      theme.brightness !== 100 ||
+      theme.contrast !== 100 ||
+      theme.grayscale !== 0 ||
+      theme.sepia !== 0;
+
+    matrix = hasAdjustments ? createFilterMatrix({ ...theme, mode: 0 }) : null;
+    filterMatrixCache.set(cacheKey, matrix);
+  }
+
+  return matrix;
+}
+
 function modifyColorWithCache(
   rgb: RGBA,
   theme: Theme,
@@ -82,8 +105,8 @@ function modifyColorWithCache(
 
   const modified = modifyHSL(hsl, poleA, poleB);
   const { r, g, b, a } = hslToRGB(modified);
-  const matrix = createFilterMatrix({ ...theme, mode: 0 });
-  const [red, green, blue] = applyColorMatrix([r, g, b], matrix);
+  const matrix = getFilterMatrix(theme);
+  const [red, green, blue] = matrix ? applyColorMatrix([r, g, b], matrix) : [r, g, b];
 
   const color =
     a === 1

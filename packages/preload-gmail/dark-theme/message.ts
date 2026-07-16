@@ -29,8 +29,6 @@ export function darkThemeMessage() {
       ignore: [
         // Conversation labels inside message
         ".edeTZ",
-        // "Be cautious about sharing sensitive information" warning banner
-        ".ac4",
         // Reply container
         { selector: ".HM .I5", properties: ["border-color"] },
         // "More options" button in reply container

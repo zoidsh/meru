@@ -1,11 +1,12 @@
 import { modifyBackgroundImage } from "./background-image";
-import { parse } from "./color";
+import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
 import { getImageDetails } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { buildDarkStateOverrides } from "./state-rules";
+import { INJECTED_STYLE_ATTRIBUTE } from "./stylesheets";
 import { DEFAULT_THEME, type Theme } from "./theme";
 import { buildDarkVariableOverrides } from "./variables";
 
@@ -30,7 +31,7 @@ const svgColorProperties = ["fill", "stroke", "stop-color"] as const;
 // only within its own subtree, even with several themed subtrees on one page.
 let instanceCounter = 0;
 
-type ParsedColor = ReturnType<typeof parse>;
+type ParsedColor = ReturnType<typeof parseColorWithCache>;
 
 type ColorSnapshot = {
   element: HTMLElement;
@@ -151,6 +152,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   const injectStyle = (styleText: string) => {
     const styleElement = root.ownerDocument.createElement("style");
+    styleElement.setAttribute(INJECTED_STYLE_ATTRIBUTE, "");
     styleElement.textContent = styleText;
     root.ownerDocument.head?.appendChild(styleElement);
     injectedStyleElements.push(styleElement);
@@ -205,7 +207,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   ) => {
     const declarations: string[] = [];
 
-    const backgroundColor = parse(pseudoStyle.backgroundColor);
+    const backgroundColor = parseColorWithCache(pseudoStyle.backgroundColor);
 
     if (
       backgroundColor != null &&
@@ -239,7 +241,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         borderStyle !== "none" &&
         !isPropertyIgnored(element, `border-${side}-color`)
       ) {
-        const color = parse(pseudoStyle.getPropertyValue(`border-${side}-color`));
+        const color = parseColorWithCache(pseudoStyle.getPropertyValue(`border-${side}-color`));
 
         if (color != null && color.a !== 0) {
           declarations.push(`border-${side}-color: ${modifyBorderColor(color, theme)} !important`);
@@ -312,19 +314,22 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       })
       .map((side) => ({
         side,
-        color: parse(computedStyle.getPropertyValue(`border-${side}-color`)),
+        color: parseColorWithCache(computedStyle.getPropertyValue(`border-${side}-color`)),
       }));
 
     const outlineColor =
       computedStyle.getPropertyValue("outline-style") !== "none" &&
       parseFloat(computedStyle.getPropertyValue("outline-width")) > 0
-        ? parse(computedStyle.getPropertyValue("outline-color"))
+        ? parseColorWithCache(computedStyle.getPropertyValue("outline-color"))
         : null;
 
     const foregroundColors: Array<{ property: string; color: ParsedColor }> = [];
 
     const captureForegroundColor = (property: string) => {
-      foregroundColors.push({ property, color: parse(computedStyle.getPropertyValue(property)) });
+      foregroundColors.push({
+        property,
+        color: parseColorWithCache(computedStyle.getPropertyValue(property)),
+      });
     };
 
     if (element instanceof SVGElement) {
@@ -356,9 +361,9 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     return {
       element,
       originalStyle: element.style.cssText,
-      backgroundColor: parse(computedStyle.backgroundColor),
+      backgroundColor: parseColorWithCache(computedStyle.backgroundColor),
       backgroundImage: computedStyle.backgroundImage,
-      textColor: parse(computedStyle.color),
+      textColor: parseColorWithCache(computedStyle.color),
       borderColors,
       outlineColor,
       foregroundColors,
@@ -472,14 +477,31 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         ),
       );
     }
+  };
+
+  // The pseudo sheet is written once per batch, not once per element: assigning
+  // textContent re-parses the whole sheet, so per-element writes would cost
+  // O(n²) during the initial pass. Skipping the assignment when the text hasn't
+  // changed also keeps hover-driven class churn from re-parsing an unchanged sheet.
+  let pseudoStyleText = "";
+
+  const flushPseudoRules = () => {
+    const styleText = [...pseudoRulesById.values()].flat().join("\n");
+
+    if (styleText === pseudoStyleText) {
+      return;
+    }
+
+    pseudoStyleText = styleText;
 
     if (!pseudoStyleElement) {
       pseudoStyleElement = root.ownerDocument.createElement("style");
+      pseudoStyleElement.setAttribute(INJECTED_STYLE_ATTRIBUTE, "");
       root.ownerDocument.head?.appendChild(pseudoStyleElement);
       injectedStyleElements.push(pseudoStyleElement);
     }
 
-    pseudoStyleElement.textContent = [...pseudoRulesById.values()].flat().join("\n");
+    pseudoStyleElement.textContent = styleText;
   };
 
   // Colors are read for the whole batch before any are written: applying an
@@ -507,18 +529,30 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       applyImages(snapshot);
       applyPseudoRules(snapshot);
     }
+
+    flushPseudoRules();
   };
 
-  const refreshElement = (element: HTMLElement) => {
-    if (!element.hasAttribute(PROCESSED_ATTRIBUTE) || isIgnored(element)) {
+  // Same read-then-write batching as processBatch: snapshotting after another
+  // element's inline writes would force a style recalc per element.
+  const refreshElements = (elements: Iterable<HTMLElement>) => {
+    const targets = [...elements].filter(
+      (element) => element.hasAttribute(PROCESSED_ATTRIBUTE) && !isIgnored(element),
+    );
+
+    if (targets.length === 0) {
       return;
     }
 
-    const snapshot = captureSnapshot(element);
+    const snapshots = targets.map(captureSnapshot);
 
-    applyColors(snapshot);
-    refreshImageInvert(element, snapshot.backgroundImage);
-    applyPseudoRules(snapshot);
+    for (const snapshot of snapshots) {
+      applyColors(snapshot);
+      refreshImageInvert(snapshot.element, snapshot.backgroundImage);
+      applyPseudoRules(snapshot);
+    }
+
+    flushPseudoRules();
   };
 
   processBatch([root, ...root.querySelectorAll<HTMLElement>("*")]);
@@ -526,20 +560,17 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   const rootId = String(instanceCounter++);
   root.setAttribute(ROOT_ATTRIBUTE, rootId);
 
+  const scopeSelector = `[${ROOT_ATTRIBUTE}="${rootId}"]`;
+
   // Injected before the caller's css so a hand-tuned override there wins over the
   // generated values (equal specificity/importance, later wins).
-  const variableOverrides = buildDarkVariableOverrides(root, theme);
+  const variableOverrides = buildDarkVariableOverrides(root, theme, scopeSelector);
 
   if (variableOverrides) {
     injectStyle(variableOverrides);
   }
 
-  const stateOverrides = buildDarkStateOverrides(
-    root.ownerDocument,
-    theme,
-    `[${ROOT_ATTRIBUTE}="${rootId}"]`,
-    ignorePropertyRules,
-  );
+  const stateOverrides = buildDarkStateOverrides(root, theme, scopeSelector, ignorePropertyRules);
 
   if (stateOverrides) {
     injectStyle(stateOverrides);
@@ -557,16 +588,31 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         return;
       }
 
+      // All additions and refreshes across the mutation list are collected first
+      // and processed as two batches — handling each node separately would
+      // interleave getComputedStyle reads with inline-style writes and force a
+      // synchronous style recalc per node during bursty re-renders.
+      const addedElements: HTMLElement[] = [];
+      const refreshTargets = new Set<HTMLElement>();
+
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement) {
-              processBatch([node, ...node.querySelectorAll<HTMLElement>("*")]);
+              addedElements.push(node, ...node.querySelectorAll<HTMLElement>("*"));
             }
           }
         } else if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
-          refreshElement(mutation.target);
+          refreshTargets.add(mutation.target);
         }
+      }
+
+      if (addedElements.length > 0) {
+        processBatch(addedElements);
+      }
+
+      if (refreshTargets.size > 0) {
+        refreshElements(refreshTargets);
       }
     });
 
