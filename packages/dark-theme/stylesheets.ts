@@ -43,20 +43,11 @@ export type StateRuleCandidate = {
   declarations: Array<{ property: string; value: string }>;
 };
 
-export type CustomPropertyDeclaration = {
-  selectorText: string;
-  name: string;
-  value: string;
-};
-
 export type StylesheetCollection = {
   customPropertyNames: Set<string>;
   customPropertyFallbacks: Map<string, string>;
-  customPropertyDeclarations: CustomPropertyDeclaration[];
   stateRuleCandidates: StateRuleCandidate[];
 };
-
-const colorTokenPresenceRegex = /rgba?\(|hsla?\(|#[0-9a-f]/i;
 
 const customPropertyReferenceStartRegex = /var\(\s*(--[\w-]+)\s*/g;
 
@@ -149,20 +140,8 @@ function collectFromRule(rule: CSSStyleRule, collection: StylesheetCollection) {
   for (let index = 0; index < style.length; index++) {
     const property = style.item(index);
 
-    if (!property.startsWith("--")) {
-      continue;
-    }
-
-    collection.customPropertyNames.add(property);
-
-    const declaredValue = style.getPropertyValue(property).trim();
-
-    if (colorTokenPresenceRegex.test(declaredValue)) {
-      collection.customPropertyDeclarations.push({
-        selectorText: rule.selectorText,
-        name: property,
-        value: declaredValue,
-      });
+    if (property.startsWith("--")) {
+      collection.customPropertyNames.add(property);
     }
   }
 
@@ -240,7 +219,6 @@ export function getStylesheetCollection(ownerDocument: Document): StylesheetColl
   const collection: StylesheetCollection = {
     customPropertyNames: new Set(),
     customPropertyFallbacks: new Map(),
-    customPropertyDeclarations: [],
     stateRuleCandidates: [],
   };
 

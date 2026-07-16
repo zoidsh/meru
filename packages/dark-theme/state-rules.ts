@@ -1,5 +1,5 @@
 import type { RGBA } from "./color";
-import { modifyColorTokens } from "./css-value";
+import { modifyColorTokens, substituteVarFallbacks } from "./css-value";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import {
@@ -41,6 +41,20 @@ const darkenDeclaration = (property: string, value: string, theme: Theme) => {
   }
 
   return null;
+};
+
+const hasVisibleColorToken = (value: string) => {
+  let hasVisibleToken = false;
+
+  modifyColorTokens(value, (rgb) => {
+    if (rgb.a !== 0) {
+      hasVisibleToken = true;
+    }
+
+    return null;
+  });
+
+  return hasVisibleToken;
 };
 
 // `:hover`/`:focus` styles live in author rules a getComputedStyle snapshot never
@@ -102,14 +116,28 @@ export function buildDarkStateOverrides(
     const darkenedDeclarations: Array<{ property: string; declarationText: string }> = [];
 
     for (const { property, value } of candidate.declarations) {
-      const darkenedValue = darkenDeclaration(property, value, theme);
+      // The variable's runtime value is out of reach — the page may define it
+      // via inline styles or constructed stylesheets no stylesheet walk can
+      // see — so `var(--x, fallback)` is pinned to its darkened fallback
+      // instead of trusting the var to resolve dark. Pinning also applies when
+      // the fallback needs no darkening (a light live value would still leak),
+      // but not when the flattened value carries no visible color (keeps a bare
+      // `var(--x, transparent)` from emitting a useless override).
+      const flattenedValue = substituteVarFallbacks(value);
+      const darkenedValue = darkenDeclaration(property, flattenedValue, theme);
 
-      if (darkenedValue != null && darkenedValue !== value) {
-        darkenedDeclarations.push({
-          property,
-          declarationText: `${property}: ${darkenedValue} !important`,
-        });
+      if (darkenedValue == null || darkenedValue === value) {
+        continue;
       }
+
+      if (darkenedValue === flattenedValue && !hasVisibleColorToken(flattenedValue)) {
+        continue;
+      }
+
+      darkenedDeclarations.push({
+        property,
+        declarationText: `${property}: ${darkenedValue} !important`,
+      });
     }
 
     if (darkenedDeclarations.length === 0) {

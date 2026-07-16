@@ -63,3 +63,61 @@ export function modifyColorTokens(value: string, modify: (rgb: RGBA) => string |
 export function replaceColorTokens(value: string, theme: Theme): string {
   return modifyColorTokens(value, (rgb) => modifyBackgroundColor(rgb, theme));
 }
+
+const varReferenceStartRegex = /var\(\s*(--[\w-]+)\s*/g;
+
+// Replaces every `var(--x, fallback)` with its fallback text, innermost-first
+// (`var(--a, var(--b, #fff))` becomes `#fff`), so a value can be darkened
+// without depending on what the page resolves the variable to at runtime —
+// definitions set via inline styles or constructed stylesheets are invisible to
+// any stylesheet walk. A `var(--x)` without a fallback is left intact.
+export function substituteVarFallbacks(value: string): string {
+  let substitutedValue = value;
+  let searchFrom = 0;
+
+  while (true) {
+    varReferenceStartRegex.lastIndex = searchFrom;
+
+    const match = varReferenceStartRegex.exec(substitutedValue);
+
+    if (!match) {
+      return substitutedValue;
+    }
+
+    let scanIndex = match.index + match[0].length;
+    let parenDepth = 1;
+    let fallbackStart = -1;
+
+    while (scanIndex < substitutedValue.length && parenDepth > 0) {
+      const character = substitutedValue[scanIndex];
+
+      if (character === "(") {
+        parenDepth++;
+      } else if (character === ")") {
+        parenDepth--;
+      } else if (character === "," && parenDepth === 1 && fallbackStart === -1) {
+        fallbackStart = scanIndex + 1;
+      }
+
+      if (parenDepth > 0) {
+        scanIndex++;
+      }
+    }
+
+    if (parenDepth > 0) {
+      return substitutedValue;
+    }
+
+    if (fallbackStart === -1) {
+      searchFrom = scanIndex + 1;
+
+      continue;
+    }
+
+    const fallback = substitutedValue.slice(fallbackStart, scanIndex).trim();
+
+    substitutedValue =
+      substitutedValue.slice(0, match.index) + fallback + substitutedValue.slice(scanIndex + 1);
+    searchFrom = match.index;
+  }
+}
