@@ -190,14 +190,3 @@ export function transformColorChannels(
 
   return [channelAt(0), channelAt(1), channelAt(2)];
 }
-
-export function createFilterMatrix(theme: Theme): ColorMatrix {
-  return composeFilterMatrix(theme);
-}
-
-export function applyColorMatrix(
-  [red, green, blue]: [number, number, number],
-  matrix: ColorMatrix,
-): [number, number, number] {
-  return transformColorChannels(red, green, blue, matrix);
-}

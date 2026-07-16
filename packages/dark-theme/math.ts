@@ -11,5 +11,3 @@ export function scale(
 export function clamp(value: number, lowerBound: number, upperBound: number): number {
   return Math.min(upperBound, Math.max(lowerBound, value));
 }
-
-export type Matrix5x5 = number[];

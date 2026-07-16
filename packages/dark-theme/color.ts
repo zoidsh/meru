@@ -661,7 +661,6 @@ export function parse(colorText: string): RGBA | null {
 const PARSE_CACHE_MAX_ENTRIES = 4096;
 
 const rgbaParseCache = new Map<string, RGBA | null>();
-const hslaParseCache = new Map<string, HSLA>();
 
 export function parseColorWithCache(colorText: string): RGBA | null {
   const cacheKey = colorText.trim();
@@ -679,27 +678,4 @@ export function parseColorWithCache(colorText: string): RGBA | null {
   rgbaParseCache.set(cacheKey, color);
 
   return color;
-}
-
-export function parseToHSLWithCache(colorText: string): HSLA | null {
-  const cached = hslaParseCache.get(colorText);
-
-  if (cached) {
-    return cached;
-  }
-
-  const rgb = parseColorWithCache(colorText);
-
-  if (!rgb) {
-    return null;
-  }
-
-  if (hslaParseCache.size >= PARSE_CACHE_MAX_ENTRIES) {
-    hslaParseCache.clear();
-  }
-
-  const hsl = rgbToHSL(rgb);
-  hslaParseCache.set(colorText, hsl);
-
-  return hsl;
 }

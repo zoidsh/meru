@@ -1,228 +1,273 @@
-/*
- * Adapted from Dark Reader (https://github.com/darkreader/darkreader), MIT —
- * see ./THIRD_PARTY_NOTICES.md. Reduced to the dark-scheme paths and stripped of
- * Dark Reader's CSS-variable registration; the HSL remapping math is unchanged.
- */
-
 import {
   type HSLA,
   hslToRGB,
-  parseToHSLWithCache,
+  parseColorWithCache,
   type RGBA,
   rgbToHexString,
   rgbToHSL,
   rgbToString,
 } from "./color";
-import { type Matrix5x5, scale } from "./math";
-import { applyColorMatrix, createFilterMatrix } from "./matrix";
+import { scale } from "./math";
+import { type ColorMatrix, composeFilterMatrix, transformColorChannels } from "./matrix";
 import type { Theme } from "./theme";
 
-type HSLModifier = (hsl: HSLA, poleA: HSLA, poleB: HSLA) => HSLA;
+const MAX_BACKGROUND_LIGHTNESS = 0.4;
+const MIN_FOREGROUND_LIGHTNESS = 0.55;
 
-const colorModificationCache = new Map<HSLModifier, Map<string, string>>();
+function remapBackgroundHSL(hsl: HSLA, pole: HSLA): HSLA {
+  const { h: hue, s: saturation, l: lightness, a: alpha } = hsl;
+  const isBluish = hue > 200 && hue < 280;
+  const isNearGray = saturation < 0.12 || (lightness > 0.8 && isBluish);
+
+  if (lightness < 0.5) {
+    const mappedLightness = scale(lightness, 0, 0.5, 0, MAX_BACKGROUND_LIGHTNESS);
+
+    if (isNearGray) {
+      return { h: pole.h, s: pole.s, l: mappedLightness, a: alpha };
+    }
+
+    return { h: hue, s: saturation, l: mappedLightness, a: alpha };
+  }
+
+  let mappedLightness = scale(lightness, 0.5, 1, MAX_BACKGROUND_LIGHTNESS, pole.l);
+
+  if (isNearGray) {
+    return { h: pole.h, s: pole.s, l: mappedLightness, a: alpha };
+  }
+
+  // Yellows shift toward orange or green so a pale yellow surface doesn't turn
+  // into a murky olive on the dark background.
+  let mappedHue = hue;
+
+  if (hue > 60 && hue < 180) {
+    mappedHue = hue > 120 ? scale(hue, 120, 180, 135, 180) : scale(hue, 60, 120, 60, 105);
+  }
+
+  if (mappedHue > 40 && mappedHue < 80) {
+    mappedLightness *= 0.75;
+  }
+
+  return { h: mappedHue, s: saturation, l: mappedLightness, a: alpha };
+}
+
+function softenBlueHue(hue: number): number {
+  return scale(hue, 205, 245, 205, 220);
+}
+
+function remapForegroundHSL(hsl: HSLA, pole: HSLA): HSLA {
+  const { h: hue, s: saturation, l: lightness, a: alpha } = hsl;
+  const isNearGray = lightness < 0.2 || saturation < 0.24;
+  const isBluish = !isNearGray && hue > 205 && hue < 245;
+
+  if (lightness > 0.5) {
+    const mappedLightness = scale(lightness, 0.5, 1, MIN_FOREGROUND_LIGHTNESS, pole.l);
+
+    if (isNearGray) {
+      return { h: pole.h, s: pole.s, l: mappedLightness, a: alpha };
+    }
+
+    return { h: isBluish ? softenBlueHue(hue) : hue, s: saturation, l: mappedLightness, a: alpha };
+  }
+
+  if (isNearGray) {
+    return {
+      h: pole.h,
+      s: pole.s,
+      l: scale(lightness, 0, 0.5, pole.l, MIN_FOREGROUND_LIGHTNESS),
+      a: alpha,
+    };
+  }
+
+  if (isBluish) {
+    return {
+      h: softenBlueHue(hue),
+      s: saturation,
+      l: scale(lightness, 0, 0.5, pole.l, Math.min(1, MIN_FOREGROUND_LIGHTNESS + 0.05)),
+      a: alpha,
+    };
+  }
+
+  return {
+    h: hue,
+    s: saturation,
+    l: scale(lightness, 0, 0.5, pole.l, MIN_FOREGROUND_LIGHTNESS),
+    a: alpha,
+  };
+}
+
+function remapBorderHSL(hsl: HSLA, textPole: HSLA, backgroundPole: HSLA): HSLA {
+  const { h: hue, s: saturation, l: lightness, a: alpha } = hsl;
+  const mappedLightness = scale(lightness, 0, 1, 0.5, 0.2);
+
+  if (lightness < 0.2 || saturation < 0.24) {
+    const pole = lightness < 0.5 ? textPole : backgroundPole;
+
+    return { h: pole.h, s: pole.s, l: mappedLightness, a: alpha };
+  }
+
+  return { h: hue, s: saturation, l: mappedLightness, a: alpha };
+}
+
+type ColorRemapper = (hsl: HSLA) => HSLA;
+
+// Colors that are in-gamut integers with full alpha — the overwhelmingly common
+// case — memoize under a packed 24-bit integer key; everything else (fractional
+// or out-of-gamut channels, translucency) falls back to a string key. Alpha is
+// part of the output string verbatim, so the key must encode it losslessly —
+// quantizing it would collide colors with different formatted alphas.
+type ColorCache = {
+  packed: Map<number, string>;
+  keyed: Map<string, string>;
+};
+
+type ThemeState = {
+  filterMatrix: ColorMatrix | null;
+  backgroundRemap: ColorRemapper | null;
+  foregroundRemap: ColorRemapper | null;
+  borderRemap: ColorRemapper | null;
+  backgroundCache: ColorCache;
+  foregroundCache: ColorCache;
+  borderCache: ColorCache;
+};
+
+function createColorCache(): ColorCache {
+  return { packed: new Map(), keyed: new Map() };
+}
+
+function parsePoleColor(poleColorText: string): HSLA | null {
+  const poleRGB = parseColorWithCache(poleColorText);
+
+  return poleRGB ? rgbToHSL(poleRGB) : null;
+}
+
+function createThemeState(theme: Theme): ThemeState {
+  const backgroundPole = parsePoleColor(theme.backgroundColor);
+  const textPole = parsePoleColor(theme.textColor);
+
+  const hasAdjustments =
+    theme.brightness !== 100 ||
+    theme.contrast !== 100 ||
+    theme.grayscale !== 0 ||
+    theme.sepia !== 0;
+
+  return {
+    filterMatrix: hasAdjustments ? composeFilterMatrix({ ...theme, mode: 0 }) : null,
+    backgroundRemap: backgroundPole && ((hsl) => remapBackgroundHSL(hsl, backgroundPole)),
+    foregroundRemap: textPole && ((hsl) => remapForegroundHSL(hsl, textPole)),
+    borderRemap:
+      textPole && backgroundPole && ((hsl) => remapBorderHSL(hsl, textPole, backgroundPole)),
+    backgroundCache: createColorCache(),
+    foregroundCache: createColorCache(),
+    borderCache: createColorCache(),
+  };
+}
+
+const themeStatesByIdentity = new WeakMap<Theme, ThemeState>();
+const themeStatesByValue = new Map<string, ThemeState>();
+
+// The engine passes one theme object through a whole applyDarkTheme run, so the
+// WeakMap identity hit is the hot path; the value-keyed map only steps in to
+// dedupe distinct-but-equal theme objects across runs.
+function resolveThemeState(theme: Theme): ThemeState {
+  const identityMatch = themeStatesByIdentity.get(theme);
+
+  if (identityMatch) {
+    return identityMatch;
+  }
+
+  const themeValueKey = `${theme.mode};${theme.brightness};${theme.contrast};${theme.grayscale};${theme.sepia};${theme.backgroundColor};${theme.textColor}`;
+  let themeState = themeStatesByValue.get(themeValueKey);
+
+  if (!themeState) {
+    themeState = createThemeState(theme);
+    themeStatesByValue.set(themeValueKey, themeState);
+  }
+
+  themeStatesByIdentity.set(theme, themeState);
+
+  return themeState;
+}
 
 export function clearColorModificationCache() {
-  colorModificationCache.clear();
+  for (const themeState of themeStatesByValue.values()) {
+    themeState.backgroundCache.packed.clear();
+    themeState.backgroundCache.keyed.clear();
+    themeState.foregroundCache.packed.clear();
+    themeState.foregroundCache.keyed.clear();
+    themeState.borderCache.packed.clear();
+    themeState.borderCache.keyed.clear();
+  }
 }
 
-const themeCacheKeys: Array<keyof Theme> = [
-  "mode",
-  "brightness",
-  "contrast",
-  "grayscale",
-  "sepia",
-  "backgroundColor",
-  "textColor",
-];
-
-function getCacheId(rgb: RGBA, theme: Theme, poleColorA?: string, poleColorB?: string): string {
-  let cacheId = "";
-
-  for (const key of ["r", "g", "b", "a"] as Array<keyof RGBA>) {
-    cacheId += `${rgb[key]};`;
-  }
-
-  for (const key of themeCacheKeys) {
-    cacheId += `${theme[key]};`;
-  }
-
-  cacheId += `${poleColorA};${poleColorB}`;
-
-  return cacheId;
+function isPackableChannel(channelValue: number): boolean {
+  return Number.isInteger(channelValue) && channelValue >= 0 && channelValue <= 255;
 }
 
-// The filter matrix depends only on the theme's adjustment values, so it is
-// memoized across color modifications; a theme without adjustments maps to null
-// so the identity multiplication is skipped entirely.
-const filterMatrixCache = new Map<string, Matrix5x5 | null>();
-
-function getFilterMatrix(theme: Theme): Matrix5x5 | null {
-  const cacheKey = `${theme.brightness};${theme.contrast};${theme.grayscale};${theme.sepia}`;
-  let matrix = filterMatrixCache.get(cacheKey);
-
-  if (matrix === undefined) {
-    const hasAdjustments =
-      theme.brightness !== 100 ||
-      theme.contrast !== 100 ||
-      theme.grayscale !== 0 ||
-      theme.sepia !== 0;
-
-    matrix = hasAdjustments ? createFilterMatrix({ ...theme, mode: 0 }) : null;
-    filterMatrixCache.set(cacheKey, matrix);
-  }
-
-  return matrix;
-}
-
-function modifyColorWithCache(
+function remapThroughCache(
   rgb: RGBA,
-  theme: Theme,
-  modifyHSL: HSLModifier,
-  poleColorA: string,
-  poleColorB?: string,
+  themeState: ThemeState,
+  cache: ColorCache,
+  remap: ColorRemapper,
 ): string {
-  let functionCache = colorModificationCache.get(modifyHSL);
+  const isPackable =
+    (rgb.a === 1 || rgb.a === undefined) &&
+    isPackableChannel(rgb.r) &&
+    isPackableChannel(rgb.g) &&
+    isPackableChannel(rgb.b);
 
-  if (!functionCache) {
-    functionCache = new Map();
-    colorModificationCache.set(modifyHSL, functionCache);
-  }
-
-  const cacheId = getCacheId(rgb, theme, poleColorA, poleColorB);
-  const cached = functionCache.get(cacheId);
+  const packedKey = isPackable ? (rgb.r << 16) | (rgb.g << 8) | rgb.b : 0;
+  const stringKey = isPackable ? "" : `${rgb.r},${rgb.g},${rgb.b},${rgb.a}`;
+  const cached = isPackable ? cache.packed.get(packedKey) : cache.keyed.get(stringKey);
 
   if (cached !== undefined) {
     return cached;
   }
 
-  const hsl = rgbToHSL(rgb);
-  const poleA = parseToHSLWithCache(poleColorA);
-  const poleB = poleColorB == null ? poleA : parseToHSLWithCache(poleColorB);
-
-  if (!poleA || !poleB) {
-    return rgbToHexString(rgb);
-  }
-
-  const modified = modifyHSL(hsl, poleA, poleB);
-  const { r, g, b, a } = hslToRGB(modified);
-  const matrix = getFilterMatrix(theme);
-  const [red, green, blue] = matrix ? applyColorMatrix([r, g, b], matrix) : [r, g, b];
+  const { r, g, b, a } = hslToRGB(remap(rgbToHSL(rgb)));
+  const [red, green, blue] = themeState.filterMatrix
+    ? transformColorChannels(r, g, b, themeState.filterMatrix)
+    : [r, g, b];
 
   const color =
     a === 1
       ? rgbToHexString({ r: red, g: green, b: blue })
       : rgbToString({ r: red, g: green, b: blue, a });
 
-  functionCache.set(cacheId, color);
+  if (isPackable) {
+    cache.packed.set(packedKey, color);
+  } else {
+    cache.keyed.set(stringKey, color);
+  }
 
   return color;
 }
 
-const MAX_BG_LIGHTNESS = 0.4;
-
-function modifyBgHSL({ h, s, l, a }: HSLA, pole: HSLA): HSLA {
-  const isDark = l < 0.5;
-  const isBlue = h > 200 && h < 280;
-  const isNeutral = s < 0.12 || (l > 0.8 && isBlue);
-
-  if (isDark) {
-    const darkLightness = scale(l, 0, 0.5, 0, MAX_BG_LIGHTNESS);
-
-    if (isNeutral) {
-      return { h: pole.h, s: pole.s, l: darkLightness, a };
-    }
-
-    return { h, s, l: darkLightness, a };
-  }
-
-  let lightness = scale(l, 0.5, 1, MAX_BG_LIGHTNESS, pole.l);
-
-  if (isNeutral) {
-    return { h: pole.h, s: pole.s, l: lightness, a };
-  }
-
-  let hue = h;
-  const isYellow = h > 60 && h < 180;
-
-  if (isYellow) {
-    const isCloserToGreen = h > 120;
-
-    if (isCloserToGreen) {
-      hue = scale(h, 120, 180, 135, 180);
-    } else {
-      hue = scale(h, 60, 120, 60, 105);
-    }
-  }
-
-  // Lower the lightness if the resulting hue is in the lower yellow spectrum.
-  if (hue > 40 && hue < 80) {
-    lightness *= 0.75;
-  }
-
-  return { h: hue, s, l: lightness, a };
-}
-
-const MIN_FG_LIGHTNESS = 0.55;
-
-function modifyBlueFgHue(hue: number): number {
-  return scale(hue, 205, 245, 205, 220);
-}
-
-function modifyFgHSL({ h, s, l, a }: HSLA, pole: HSLA): HSLA {
-  const isLight = l > 0.5;
-  const isNeutral = l < 0.2 || s < 0.24;
-  const isBlue = !isNeutral && h > 205 && h < 245;
-
-  if (isLight) {
-    const lightness = scale(l, 0.5, 1, MIN_FG_LIGHTNESS, pole.l);
-
-    if (isNeutral) {
-      return { h: pole.h, s: pole.s, l: lightness, a };
-    }
-
-    return { h: isBlue ? modifyBlueFgHue(h) : h, s, l: lightness, a };
-  }
-
-  if (isNeutral) {
-    return { h: pole.h, s: pole.s, l: scale(l, 0, 0.5, pole.l, MIN_FG_LIGHTNESS), a };
-  }
-
-  if (isBlue) {
-    return {
-      h: modifyBlueFgHue(h),
-      s,
-      l: scale(l, 0, 0.5, pole.l, Math.min(1, MIN_FG_LIGHTNESS + 0.05)),
-      a,
-    };
-  }
-
-  return { h, s, l: scale(l, 0, 0.5, pole.l, MIN_FG_LIGHTNESS), a };
-}
-
-function modifyBorderHSL({ h, s, l, a }: HSLA, poleFg: HSLA, poleBg: HSLA): HSLA {
-  const isDark = l < 0.5;
-  const isNeutral = l < 0.2 || s < 0.24;
-
-  let hue = h;
-  let saturation = s;
-
-  if (isNeutral) {
-    const pole = isDark ? poleFg : poleBg;
-    hue = pole.h;
-    saturation = pole.s;
-  }
-
-  return { h: hue, s: saturation, l: scale(l, 0, 1, 0.5, 0.2), a };
-}
-
 export function modifyBackgroundColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(rgb, theme, modifyBgHSL, theme.backgroundColor);
+  const themeState = resolveThemeState(theme);
+
+  if (!themeState.backgroundRemap) {
+    return rgbToHexString(rgb);
+  }
+
+  return remapThroughCache(rgb, themeState, themeState.backgroundCache, themeState.backgroundRemap);
 }
 
 export function modifyForegroundColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(rgb, theme, modifyFgHSL, theme.textColor);
+  const themeState = resolveThemeState(theme);
+
+  if (!themeState.foregroundRemap) {
+    return rgbToHexString(rgb);
+  }
+
+  return remapThroughCache(rgb, themeState, themeState.foregroundCache, themeState.foregroundRemap);
 }
 
 export function modifyBorderColor(rgb: RGBA, theme: Theme): string {
-  return modifyColorWithCache(rgb, theme, modifyBorderHSL, theme.textColor, theme.backgroundColor);
+  const themeState = resolveThemeState(theme);
+
+  if (!themeState.borderRemap) {
+    return rgbToHexString(rgb);
+  }
+
+  return remapThroughCache(rgb, themeState, themeState.borderCache, themeState.borderRemap);
 }
