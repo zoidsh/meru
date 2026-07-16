@@ -2,7 +2,7 @@ import { parseColorWithCache } from "./color";
 import { relativeLuminance } from "./contrast";
 import { replaceColorTokens } from "./css-value";
 import { getStylesheetCollection } from "./stylesheets";
-import type { Theme } from "./theme";
+import { getThemeValueKey, type Theme } from "./theme";
 
 const colorTokenRegex = /rgba?\([^)]*\)|hsla?\([^)]*\)|#[0-9a-f]+/gi;
 
@@ -23,6 +23,48 @@ const hasLightColorToken = (value: string) => {
 
     return rgba != null && relativeLuminance(rgba) > LIGHT_LUMINANCE_THRESHOLD;
   });
+};
+
+// Values recur across re-themes (the same Gmail custom properties resolve to
+// the same strings on every message open), so the light-token check and
+// darkening memoize per value string. Keyed by value rather than property name
+// because a property can resolve differently per themed root. Bounded like the
+// parse caches — dropping entries only costs recomputation.
+const DARKENED_VALUE_CACHE_MAX_ENTRIES = 4096;
+const darkenedValuesByThemeKey = new Map<string, Map<string, string | null>>();
+
+const darkenLightValue = (value: string, theme: Theme) => {
+  const themeValueKey = getThemeValueKey(theme);
+  let darkenedValueCache = darkenedValuesByThemeKey.get(themeValueKey);
+
+  if (!darkenedValueCache) {
+    darkenedValueCache = new Map();
+    darkenedValuesByThemeKey.set(themeValueKey, darkenedValueCache);
+  }
+
+  const cached = darkenedValueCache.get(value);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  let darkenedValue: string | null = null;
+
+  if (hasLightColorToken(value)) {
+    const replacedValue = replaceColorTokens(value, theme);
+
+    if (replacedValue !== value) {
+      darkenedValue = replacedValue;
+    }
+  }
+
+  if (darkenedValueCache.size >= DARKENED_VALUE_CACHE_MAX_ENTRIES) {
+    darkenedValueCache.clear();
+  }
+
+  darkenedValueCache.set(value, darkenedValue);
+
+  return darkenedValue;
 };
 
 // Gmail's reading pane paints many surfaces via CSS custom properties (e.g.
@@ -57,13 +99,13 @@ export function buildDarkVariableOverrides(
     const resolvedValue = rootStyle.getPropertyValue(name).trim();
     const value = resolvedValue || customPropertyFallbacks.get(name) || "";
 
-    if (!value || !hasLightColorToken(value)) {
+    if (!value) {
       continue;
     }
 
-    const darkenedValue = replaceColorTokens(value, theme);
+    const darkenedValue = darkenLightValue(value, theme);
 
-    if (darkenedValue === value) {
+    if (darkenedValue == null) {
       continue;
     }
 
