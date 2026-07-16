@@ -9,7 +9,7 @@ import {
 } from "./color";
 import { scale } from "./math";
 import { type ColorMatrix, composeFilterMatrix, transformColorChannels } from "./matrix";
-import type { Theme } from "./theme";
+import { getThemeValueKey, type Theme } from "./theme";
 
 const MAX_BACKGROUND_LIGHTNESS = 0.4;
 const MIN_FOREGROUND_LIGHTNESS = 0.55;
@@ -175,7 +175,7 @@ function resolveThemeState(theme: Theme): ThemeState {
     return identityMatch;
   }
 
-  const themeValueKey = `${theme.mode};${theme.brightness};${theme.contrast};${theme.grayscale};${theme.sepia};${theme.backgroundColor};${theme.textColor}`;
+  const themeValueKey = getThemeValueKey(theme);
   let themeState = themeStatesByValue.get(themeValueKey);
 
   if (!themeState) {

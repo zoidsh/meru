@@ -10,6 +10,10 @@ export type Theme = {
   textColor: string;
 };
 
+export function getThemeValueKey(theme: Theme): string {
+  return `${theme.mode};${theme.brightness};${theme.contrast};${theme.grayscale};${theme.sepia};${theme.backgroundColor};${theme.textColor}`;
+}
+
 export const DEFAULT_THEME: Theme = {
   mode: 1,
   brightness: 100,
