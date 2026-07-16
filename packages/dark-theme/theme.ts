@@ -1,9 +1,6 @@
-/*
- * Theme shape and default palette adapted from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
- */
-
 export type Theme = {
+  // 1 inverts toward the dark scheme; 0 leaves polarity alone (used for the
+  // adjustment-only filter matrix applied on top of remapped colors).
   mode: 0 | 1;
   brightness: number;
   contrast: number;
