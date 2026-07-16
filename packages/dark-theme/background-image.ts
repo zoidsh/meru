@@ -9,69 +9,128 @@ import { clamp } from "./math";
 import { modifyBackgroundColor } from "./modify-colors";
 import type { Theme } from "./theme";
 
-const gradientRegex = /(^|[\s,])(repeating-)?(linear|radial|conic)-gradient\(/i;
-const urlLayerRegex = /^url\((['"]?)([^]*?)\1\)$/i;
+const CHAR_CODE_OPEN_PAREN = 40;
+const CHAR_CODE_CLOSE_PAREN = 41;
+const CHAR_CODE_COMMA = 44;
 
-function splitLayers(value: string): string[] {
+function splitTopLevelLayers(backgroundImage: string): string[] {
   const layers: string[] = [];
-  let depth = 0;
-  let start = 0;
+  let parenDepth = 0;
+  let layerStart = 0;
 
-  for (let index = 0; index < value.length; index++) {
-    const char = value[index];
+  for (let index = 0; index < backgroundImage.length; index++) {
+    const charCode = backgroundImage.charCodeAt(index);
 
-    if (char === "(") {
-      depth++;
-    } else if (char === ")") {
-      depth--;
-    } else if (char === "," && depth === 0) {
-      layers.push(value.slice(start, index).trim());
-      start = index + 1;
+    if (charCode === CHAR_CODE_OPEN_PAREN) {
+      parenDepth++;
+    } else if (charCode === CHAR_CODE_CLOSE_PAREN) {
+      parenDepth--;
+    } else if (charCode === CHAR_CODE_COMMA && parenDepth === 0) {
+      layers.push(backgroundImage.slice(layerStart, index).trim());
+      layerStart = index + 1;
     }
   }
 
-  layers.push(value.slice(start).trim());
+  layers.push(backgroundImage.slice(layerStart).trim());
 
   return layers;
 }
 
+const gradientFunctionOpeners = ["linear-gradient(", "radial-gradient(", "conic-gradient("];
+const repeatingPrefix = "repeating-";
+
+function isWhitespaceOrCommaCharCode(charCode: number): boolean {
+  return charCode === 32 || charCode === CHAR_CODE_COMMA || (charCode >= 9 && charCode <= 13);
+}
+
+// A gradient function counts only at a layer boundary — the start of the layer
+// or right after whitespace/comma — so a url whose path merely contains
+// "-gradient(" isn't remapped as one.
 function isGradientLayer(layer: string): boolean {
-  return gradientRegex.test(layer);
+  const layerLowercase = layer.toLowerCase();
+
+  for (const opener of gradientFunctionOpeners) {
+    let searchFrom = 0;
+
+    while (true) {
+      const openerIndex = layerLowercase.indexOf(opener, searchFrom);
+
+      if (openerIndex === -1) {
+        break;
+      }
+
+      const functionStart = layerLowercase.startsWith(
+        repeatingPrefix,
+        openerIndex - repeatingPrefix.length,
+      )
+        ? openerIndex - repeatingPrefix.length
+        : openerIndex;
+
+      if (
+        functionStart === 0 ||
+        isWhitespaceOrCommaCharCode(layerLowercase.charCodeAt(functionStart - 1))
+      ) {
+        return true;
+      }
+
+      searchFrom = openerIndex + 1;
+    }
+  }
+
+  return false;
 }
 
-function modifyGradientLayer(layer: string, theme: Theme): string {
-  return replaceColorTokens(layer, theme);
+// The url a `url(...)` layer points at, with matching outer quotes stripped, or
+// null when the layer isn't a url function at all.
+function readUrlLayerTarget(layer: string): string | null {
+  if (layer.length < 5 || !layer.endsWith(")") || layer.slice(0, 4).toLowerCase() !== "url(") {
+    return null;
+  }
+
+  const body = layer.slice(4, -1);
+  const firstBodyChar = body[0];
+
+  if (
+    (firstBodyChar === '"' || firstBodyChar === "'") &&
+    body.length >= 2 &&
+    body.endsWith(firstBodyChar)
+  ) {
+    return body.slice(1, -1);
+  }
+
+  return body;
 }
 
-// Ported from Dark Reader's getBgImageValue decision tree (dark mode).
-function getImageReplacement(details: ImageDetails, theme: Theme): string | null {
-  const { isDark, isLight, isTransparent, isLarge, solidColor, width, dataURL } = details;
-
-  if (isLarge && isLight && !isTransparent) {
+function buildUrlLayerReplacement(details: ImageDetails, theme: Theme): string | null {
+  if (details.isLarge && details.isLight && !details.isTransparent) {
     return "none";
   }
 
-  if (isDark && isTransparent && width > 2) {
-    if (!dataURL) {
+  if (details.isDark && details.isTransparent && details.width > 2) {
+    if (!details.dataURL) {
       return null;
     }
 
-    const inverted = getFilteredImageURL(details, {
+    // The extra sepia keeps the inverted icon from going stark blue-white.
+    const invertedUrl = getFilteredImageURL(details, {
       ...theme,
       sepia: clamp(theme.sepia + 10, 0, 100),
     });
 
-    return `url("${inverted}")`;
+    return `url("${invertedUrl}")`;
   }
 
-  if (isLight && !isTransparent) {
-    if (solidColor) {
-      const solid = getSolidColorImageURL(details, modifyBackgroundColor(solidColor, theme));
+  if (details.isLight && !details.isTransparent) {
+    if (details.solidColor) {
+      const solidUrl = getSolidColorImageURL(
+        details,
+        modifyBackgroundColor(details.solidColor, theme),
+      );
 
-      return `url("${solid}")`;
+      return `url("${solidUrl}")`;
     }
 
-    if (!dataURL) {
+    if (!details.dataURL) {
       return null;
     }
 
@@ -87,31 +146,28 @@ export function modifyBackgroundImage(
   theme: Theme,
   isCancelled: () => boolean,
 ) {
-  const layers = splitLayers(backgroundImage);
+  const layers = splitTopLevelLayers(backgroundImage);
 
   // Gradients are remapped synchronously so they apply immediately; url()
   // layers stay as-is until their image has been analyzed asynchronously.
   element.style.setProperty(
     "background-image",
     layers
-      .map((layer) => (isGradientLayer(layer) ? modifyGradientLayer(layer, theme) : layer))
+      .map((layer) => (isGradientLayer(layer) ? replaceColorTokens(layer, theme) : layer))
       .join(", "),
     "important",
   );
 
-  const hasUrlLayer = layers.some((layer) => urlLayerRegex.test(layer));
-
-  if (!hasUrlLayer) {
+  if (!layers.some((layer) => readUrlLayerTarget(layer) != null)) {
     return;
   }
 
   Promise.all(
     layers.map(async (layer) => {
-      const urlMatch = layer.match(urlLayerRegex);
-      const imageUrl = urlMatch?.[2];
+      const imageUrl = readUrlLayerTarget(layer);
 
       if (!imageUrl) {
-        return isGradientLayer(layer) ? modifyGradientLayer(layer, theme) : layer;
+        return isGradientLayer(layer) ? replaceColorTokens(layer, theme) : layer;
       }
 
       const details = await getImageDetails(imageUrl);
@@ -120,13 +176,13 @@ export function modifyBackgroundImage(
         return layer;
       }
 
-      return getImageReplacement(details, theme) ?? layer;
+      return buildUrlLayerReplacement(details, theme) ?? layer;
     }),
-  ).then((modifiedLayers) => {
+  ).then((finalLayers) => {
     if (isCancelled()) {
       return;
     }
 
-    element.style.setProperty("background-image", modifiedLayers.join(", "), "important");
+    element.style.setProperty("background-image", finalLayers.join(", "), "important");
   });
 }
