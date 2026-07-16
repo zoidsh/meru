@@ -6,6 +6,6 @@
     ".": "./index.ts"
   },
   "scripts": {
-    "types": "tsc"
+    "types": "tsc && tsc -p tsconfig.test.json"
   }
 }
