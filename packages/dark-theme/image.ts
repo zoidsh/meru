@@ -117,11 +117,17 @@ function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
   let blueSum = 0;
   let alphaSum = 0;
 
-  for (let offset = 0; offset < pixels.length; offset += 4) {
-    const red = pixels[offset] ?? 0;
-    const green = pixels[offset + 1] ?? 0;
-    const blue = pixels[offset + 2] ?? 0;
-    const alpha = pixels[offset + 3] ?? 0;
+  // One 32-bit read per pixel instead of four byte reads. Chromium only ships
+  // on little-endian platforms, so the RGBA bytes always land as R in the low
+  // byte through A in the high byte.
+  const pixelLanes = new Uint32Array(pixels.buffer, pixels.byteOffset, pixels.length / 4);
+
+  for (let pixelIndex = 0; pixelIndex < pixelLanes.length; pixelIndex++) {
+    const pixelLane = pixelLanes[pixelIndex] ?? 0;
+    const red = pixelLane & 255;
+    const green = (pixelLane >>> 8) & 255;
+    const blue = (pixelLane >>> 16) & 255;
+    const alpha = pixelLane >>> 24;
 
     redSum += red;
     greenSum += green;
