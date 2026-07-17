@@ -259,6 +259,10 @@ function imageToDataURL(image: HTMLImageElement): string {
   }
 }
 
+export function isImageElementLarge(image: HTMLImageElement): boolean {
+  return image.naturalWidth * image.naturalHeight > LARGE_IMAGE_PIXEL_COUNT;
+}
+
 // A dark, mostly-transparent image is treated as a logo or icon that would
 // vanish against the dark background, so it gets inverted — unless it is large
 // or spans a photographic tonal range, which marks it as a photo (e.g. a dark

@@ -3,7 +3,7 @@ import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
-import { getImageDetails, shouldInvertDarkImage } from "./image";
+import { getImageDetails, isImageElementLarge, shouldInvertDarkImage } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { buildDarkStateOverrides } from "./state-rules";
 import { INJECTED_STYLE_ATTRIBUTE } from "./stylesheets";
@@ -714,20 +714,42 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   };
 }
 
+// Analysis re-fetches the image with an anonymous crossOrigin request — a
+// second copy the browser caches separately from the one the page already
+// rendered. A large image is never inverted (it reads as a photo), and a broken
+// one has nothing to analyze, so both are skipped before that fetch by reading
+// the natural size off the element — which means waiting for its own load
+// instead of racing it with an immediate parallel fetch.
 function invertDarkImageElement(image: HTMLImageElement, theme: Theme, isCancelled: () => boolean) {
-  const source = image.currentSrc || image.src;
+  const analyzeLoadedImage = () => {
+    const source = image.currentSrc || image.src;
 
-  if (!source) {
-    return;
-  }
-
-  getImageDetails(source).then((details) => {
-    if (isCancelled() || !details) {
+    if (!source || image.naturalWidth === 0 || isImageElementLarge(image)) {
       return;
     }
 
-    if (shouldInvertDarkImage(details)) {
-      image.style.setProperty("filter", getCSSFilterValue(theme), "important");
-    }
-  });
+    getImageDetails(source).then((details) => {
+      if (isCancelled() || !details) {
+        return;
+      }
+
+      if (shouldInvertDarkImage(details)) {
+        image.style.setProperty("filter", getCSSFilterValue(theme), "important");
+      }
+    });
+  };
+
+  if (image.complete) {
+    analyzeLoadedImage();
+  } else {
+    image.addEventListener(
+      "load",
+      () => {
+        if (!isCancelled()) {
+          analyzeLoadedImage();
+        }
+      },
+      { once: true },
+    );
+  }
 }
