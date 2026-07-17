@@ -136,6 +136,13 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "synopsis": "The Gmail experience you deserve",
