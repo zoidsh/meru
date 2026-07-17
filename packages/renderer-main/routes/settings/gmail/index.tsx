@@ -47,7 +47,7 @@ export function GmailSettings() {
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>General</FieldLegend>
+            <FieldLegend>Appearance</FieldLegend>
             <ConfigSwitchField
               label="Hide Gmail Logo"
               description="Hides the Gmail logo on the top left corner."
