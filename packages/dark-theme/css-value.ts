@@ -177,6 +177,44 @@ function isCustomPropertyNameCharCode(charCode: number): boolean {
   );
 }
 
+// Visits the custom property name of every `var(--x, ...)` reference in the
+// value, including references nested inside another reference's fallback.
+export function forEachVariableReference(value: string, visit: (variableName: string) => void) {
+  let searchFrom = 0;
+
+  while (true) {
+    const varStart = value.indexOf("var(", searchFrom);
+
+    if (varStart === -1) {
+      return;
+    }
+
+    let cursor = varStart + 4;
+
+    while (isWhitespaceCharCode(value.charCodeAt(cursor))) {
+      cursor++;
+    }
+
+    if (
+      value.charCodeAt(cursor) === CHAR_CODE_DASH &&
+      value.charCodeAt(cursor + 1) === CHAR_CODE_DASH
+    ) {
+      const nameStart = cursor;
+      cursor += 2;
+
+      while (isCustomPropertyNameCharCode(value.charCodeAt(cursor))) {
+        cursor++;
+      }
+
+      if (cursor > nameStart + 2) {
+        visit(value.slice(nameStart, cursor));
+      }
+    }
+
+    searchFrom = varStart + 4;
+  }
+}
+
 // The position right after `var(` + whitespace + `--name` + whitespace, or -1
 // when the position doesn't start a var() reference with a custom property name.
 function varReferenceBodyStart(value: string, varStart: number): number {

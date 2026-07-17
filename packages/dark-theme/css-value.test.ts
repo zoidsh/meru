@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import type { RGBA } from "./color";
-import { modifyColorTokens, replaceColorTokens, substituteVarFallbacks } from "./css-value";
+import {
+  forEachVariableReference,
+  modifyColorTokens,
+  replaceColorTokens,
+  substituteVarFallbacks,
+} from "./css-value";
 import { ADJUSTED_THEME } from "./modify-colors.fixtures";
 import { DEFAULT_THEME } from "./theme";
 
@@ -133,5 +138,29 @@ describe("substituteVarFallbacks", () => {
 
   test("unbalanced input is returned unchanged", () => {
     expect(substituteVarFallbacks("var(--a, #fff")).toBe("var(--a, #fff");
+  });
+});
+
+describe("forEachVariableReference", () => {
+  const collectVariableNames = (value: string) => {
+    const variableNames: string[] = [];
+
+    forEachVariableReference(value, (variableName) => {
+      variableNames.push(variableName);
+    });
+
+    return variableNames;
+  };
+
+  test("visits every referenced name, including nested fallback references", () => {
+    expect(collectVariableNames("var(--a, var(--b, #fff)) solid var( --c )")).toEqual([
+      "--a",
+      "--b",
+      "--c",
+    ]);
+  });
+
+  test("ignores text that is not a var() reference with a custom property name", () => {
+    expect(collectVariableNames("url(var.png) rgb(1, 2, 3) var(invalid)")).toEqual([]);
   });
 });
