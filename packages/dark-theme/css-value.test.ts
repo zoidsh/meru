@@ -128,6 +128,7 @@ describe("substituteVarFallbacks", () => {
 
   test("whitespace around the name and fallback is tolerated", () => {
     expect(substituteVarFallbacks("var( --a , #fff )")).toBe("#fff");
+    expect(substituteVarFallbacks("var(\u00a0--a, red)")).toBe("red");
   });
 
   test("unbalanced input is returned unchanged", () => {

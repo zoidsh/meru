@@ -147,8 +147,24 @@ export function replaceColorTokens(value: string, theme: Theme): string {
   return modifyColorTokens(value, (rgb) => modifyBackgroundColor(rgb, theme));
 }
 
-function isWhitespaceCharCode(charCode: number): boolean {
-  return charCode === 32 || (charCode >= 9 && charCode <= 13);
+// The full set JavaScript's \s matches — the scanners this replaced were
+// regex-based, so unicode spaces must stay recognized.
+export function isWhitespaceCharCode(charCode: number): boolean {
+  if (charCode === 32 || (charCode >= 9 && charCode <= 13)) {
+    return true;
+  }
+
+  return (
+    charCode === 0xa0 ||
+    charCode === 0x1680 ||
+    (charCode >= 0x2000 && charCode <= 0x200a) ||
+    charCode === 0x2028 ||
+    charCode === 0x2029 ||
+    charCode === 0x202f ||
+    charCode === 0x205f ||
+    charCode === 0x3000 ||
+    charCode === 0xfeff
+  );
 }
 
 function isCustomPropertyNameCharCode(charCode: number): boolean {

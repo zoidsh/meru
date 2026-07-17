@@ -1,4 +1,4 @@
-import { replaceColorTokens } from "./css-value";
+import { isWhitespaceCharCode, replaceColorTokens } from "./css-value";
 import {
   getFilteredImageURL,
   getImageDetails,
@@ -40,7 +40,7 @@ const gradientFunctionOpeners = ["linear-gradient(", "radial-gradient(", "conic-
 const repeatingPrefix = "repeating-";
 
 function isWhitespaceOrCommaCharCode(charCode: number): boolean {
-  return charCode === 32 || charCode === CHAR_CODE_COMMA || (charCode >= 9 && charCode <= 13);
+  return charCode === CHAR_CODE_COMMA || isWhitespaceCharCode(charCode);
 }
 
 // A gradient function counts only at a layer boundary — the start of the layer

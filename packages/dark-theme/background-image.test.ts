@@ -56,6 +56,25 @@ describe("modifyBackgroundImage", () => {
     ]);
   });
 
+  test("recognizes a gradient after a unicode space boundary", () => {
+    const { element, setPropertyCalls } = createFakeElement();
+
+    modifyBackgroundImage(
+      element,
+      "cross-fade(#fff)\u00a0linear-gradient(#fff, #000)",
+      DEFAULT_THEME,
+      () => false,
+    );
+
+    expect(setPropertyCalls).toEqual([
+      {
+        property: "background-image",
+        value: "cross-fade(#181a1b)\u00a0linear-gradient(#181a1b, #000000)",
+        priority: "important",
+      },
+    ]);
+  });
+
   test("darkens a hex inside a gradient's var() fallback", () => {
     const { element, setPropertyCalls } = createFakeElement();
 
