@@ -140,29 +140,31 @@ function buildUrlLayerReplacement(details: ImageDetails, theme: Theme): string |
   return null;
 }
 
-export function modifyBackgroundImage(
-  element: HTMLElement,
+export type BackgroundImageModification = {
+  immediateValue: string;
+  finalValuePromise: Promise<string | null> | null;
+};
+
+// Gradients are remapped synchronously into immediateValue; url() layers keep
+// their original text until their image has been analyzed, after which the
+// promise resolves with the final value — or null when cancelled or when the
+// analysis changed nothing.
+export function modifyBackgroundImageValue(
   backgroundImage: string,
   theme: Theme,
   isCancelled: () => boolean,
-) {
+): BackgroundImageModification {
   const layers = splitTopLevelLayers(backgroundImage);
 
-  // Gradients are remapped synchronously so they apply immediately; url()
-  // layers stay as-is until their image has been analyzed asynchronously.
-  element.style.setProperty(
-    "background-image",
-    layers
-      .map((layer) => (isGradientLayer(layer) ? replaceColorTokens(layer, theme) : layer))
-      .join(", "),
-    "important",
-  );
+  const immediateValue = layers
+    .map((layer) => (isGradientLayer(layer) ? replaceColorTokens(layer, theme) : layer))
+    .join(", ");
 
   if (!layers.some((layer) => readUrlLayerTarget(layer) != null)) {
-    return;
+    return { immediateValue, finalValuePromise: null };
   }
 
-  Promise.all(
+  const finalValuePromise = Promise.all(
     layers.map(async (layer) => {
       const imageUrl = readUrlLayerTarget(layer);
 
@@ -180,9 +182,13 @@ export function modifyBackgroundImage(
     }),
   ).then((finalLayers) => {
     if (isCancelled()) {
-      return;
+      return null;
     }
 
-    element.style.setProperty("background-image", finalLayers.join(", "), "important");
+    const finalValue = finalLayers.join(", ");
+
+    return finalValue === immediateValue ? null : finalValue;
   });
+
+  return { immediateValue, finalValuePromise };
 }

@@ -1,4 +1,4 @@
-import { modifyBackgroundImage } from "./background-image";
+import { modifyBackgroundImageValue } from "./background-image";
 import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
@@ -435,12 +435,28 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     }
   };
 
+  const applyBackgroundImage = (element: HTMLElement, backgroundImage: string) => {
+    const { immediateValue, finalValuePromise } = modifyBackgroundImageValue(
+      backgroundImage,
+      theme,
+      isCancelled,
+    );
+
+    element.style.setProperty("background-image", immediateValue, "important");
+
+    finalValuePromise?.then((finalValue) => {
+      if (finalValue != null && !isCancelled()) {
+        element.style.setProperty("background-image", finalValue, "important");
+      }
+    });
+  };
+
   const applyImages = (snapshot: ColorSnapshot) => {
     if (snapshot.backgroundImage && snapshot.backgroundImage !== "none") {
       refreshImageInvert(snapshot.element, snapshot.backgroundImage);
 
       if (!invertedImageElements.has(snapshot.element)) {
-        modifyBackgroundImage(snapshot.element, snapshot.backgroundImage, theme, isCancelled);
+        applyBackgroundImage(snapshot.element, snapshot.backgroundImage);
       }
     }
 
