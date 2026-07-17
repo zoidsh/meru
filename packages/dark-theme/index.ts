@@ -591,15 +591,21 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       // All additions and refreshes across the mutation list are collected first
       // and processed as two batches — handling each node separately would
       // interleave getComputedStyle reads with inline-style writes and force a
-      // synchronous style recalc per node during bursty re-renders.
-      const addedElements: HTMLElement[] = [];
+      // synchronous style recalc per node during bursty re-renders. Sets dedupe
+      // an element reported through several mutation records (added directly and
+      // inside an added ancestor), which would otherwise be snapshotted twice.
+      const addedElements = new Set<HTMLElement>();
       const refreshTargets = new Set<HTMLElement>();
 
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement) {
-              addedElements.push(node, ...node.querySelectorAll<HTMLElement>("*"));
+              addedElements.add(node);
+
+              for (const descendant of node.querySelectorAll<HTMLElement>("*")) {
+                addedElements.add(descendant);
+              }
             }
           }
         } else if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
@@ -607,8 +613,8 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
         }
       }
 
-      if (addedElements.length > 0) {
-        processBatch(addedElements);
+      if (addedElements.size > 0) {
+        processBatch([...addedElements]);
       }
 
       if (refreshTargets.size > 0) {

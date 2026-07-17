@@ -1,12 +1,3 @@
-/*
- * Image analysis and SVG filtering adapted from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
- * Dark Reader's extension-only background fetch and blob-URL machinery is
- * replaced with a plain cross-origin canvas load that degrades to "leave the
- * image untouched" whenever the pixels cannot be read (e.g. a tainted canvas);
- * the classification thresholds and SVG construction are unchanged.
- */
-
 import { getSRGBLightness, type RGBA } from "./color";
 import { getSVGFilterMatrixValue } from "./filter";
 import type { Theme } from "./theme";
@@ -23,17 +14,37 @@ export type ImageDetails = {
   solidColor: RGBA | null;
 };
 
-const MAX_ANALYSIS_PIXELS_COUNT = 32 * 32;
-const LARGE_IMAGE_PIXELS_COUNT = 512 * 512;
+const MAX_ANALYSIS_PIXEL_COUNT = 32 * 32;
+const LARGE_IMAGE_PIXEL_COUNT = 512 * 512;
+
+// Per-axis cap on the analysis canvas. A scaled draw wider than this (an
+// extreme aspect ratio like a 2048×1 strip) gets clipped, and getImageData
+// reads the clipped range back as transparent black — those pixels count as
+// transparent in the classification.
+const ANALYSIS_CANVAS_SIDE_LIMIT = 1024;
+
+const TRANSPARENT_ALPHA_THRESHOLD = 0.05;
+const DARK_PIXEL_LIGHTNESS_THRESHOLD = 0.4;
+const LIGHT_PIXEL_LIGHTNESS_THRESHOLD = 0.7;
+const DARK_IMAGE_PIXEL_RATIO = 0.7;
+const LIGHT_IMAGE_PIXEL_RATIO = 0.7;
+const TRANSPARENT_IMAGE_PIXEL_RATIO = 0.1;
+const SOLID_IMAGE_LIGHTNESS_SPREAD = 0.1;
 
 let analysisCanvas: HTMLCanvasElement | null = null;
 let analysisContext: CanvasRenderingContext2D | null = null;
 
-function getAnalysisContext() {
-  if (!analysisContext) {
+// The canvas starts empty and only ever grows (up to the side limit), so the
+// steady-state footprint stays at icon size instead of a fixed worst-case
+// allocation. Resizing a canvas resets its context state, so smoothing is
+// re-disabled after every growth — smoothed downscales would change the pixels
+// the classifier sees.
+function getAnalysisContext(
+  requiredWidth: number,
+  requiredHeight: number,
+): CanvasRenderingContext2D | null {
+  if (!analysisCanvas) {
     analysisCanvas = document.createElement("canvas");
-    analysisCanvas.width = MAX_ANALYSIS_PIXELS_COUNT;
-    analysisCanvas.height = MAX_ANALYSIS_PIXELS_COUNT;
     analysisContext = analysisCanvas.getContext("2d", { willReadFrequently: true });
 
     if (analysisContext) {
@@ -41,28 +52,53 @@ function getAnalysisContext() {
     }
   }
 
+  if (!analysisContext) {
+    return null;
+  }
+
+  const targetWidth = Math.min(requiredWidth, ANALYSIS_CANVAS_SIDE_LIMIT);
+  const targetHeight = Math.min(requiredHeight, ANALYSIS_CANVAS_SIDE_LIMIT);
+  let resized = false;
+
+  if (analysisCanvas.width < targetWidth) {
+    analysisCanvas.width = targetWidth;
+    resized = true;
+  }
+
+  if (analysisCanvas.height < targetHeight) {
+    analysisCanvas.height = targetHeight;
+    resized = true;
+  }
+
+  if (resized) {
+    analysisContext.imageSmoothingEnabled = false;
+  }
+
   return analysisContext;
 }
 
 type ImageAnalysis = Omit<ImageDetails, "src" | "dataURL" | "width" | "height">;
 
-function analyzeImage(image: HTMLImageElement): ImageAnalysis | null {
-  const context = getAnalysisContext();
+function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
   const sourceWidth = image.naturalWidth;
   const sourceHeight = image.naturalHeight;
 
-  if (!context || sourceWidth === 0 || sourceHeight === 0) {
+  if (sourceWidth === 0 || sourceHeight === 0) {
     return null;
   }
 
-  const isLarge = sourceWidth * sourceHeight > LARGE_IMAGE_PIXELS_COUNT;
-
   const scaleFactor = Math.min(
     1,
-    Math.sqrt(MAX_ANALYSIS_PIXELS_COUNT / (sourceWidth * sourceHeight)),
+    Math.sqrt(MAX_ANALYSIS_PIXEL_COUNT / (sourceWidth * sourceHeight)),
   );
   const width = Math.ceil(sourceWidth * scaleFactor);
   const height = Math.ceil(sourceHeight * scaleFactor);
+
+  const context = getAnalysisContext(width, height);
+
+  if (!context) {
+    return null;
+  }
 
   context.clearRect(0, 0, width, height);
   context.drawImage(image, 0, 0, sourceWidth, sourceHeight, 0, 0, width, height);
@@ -75,82 +111,78 @@ function analyzeImage(image: HTMLImageElement): ImageAnalysis | null {
     return null;
   }
 
-  const TRANSPARENT_ALPHA_THRESHOLD = 0.05;
-  const DARK_LIGHTNESS_THRESHOLD = 0.4;
-  const LIGHT_LIGHTNESS_THRESHOLD = 0.7;
-
-  let transparentPixelsCount = 0;
-  let darkPixelsCount = 0;
-  let lightPixelsCount = 0;
-
+  let transparentPixelCount = 0;
+  let darkPixelCount = 0;
+  let lightPixelCount = 0;
   let minLightness = 1;
   let maxLightness = 0;
-  let sumRed = 0;
-  let sumGreen = 0;
-  let sumBlue = 0;
-  let sumAlpha = 0;
+  let redSum = 0;
+  let greenSum = 0;
+  let blueSum = 0;
+  let alphaSum = 0;
 
-  for (let offset = 0; offset < pixels.length; offset += 4) {
-    const red = pixels[offset] ?? 0;
-    const green = pixels[offset + 1] ?? 0;
-    const blue = pixels[offset + 2] ?? 0;
-    const alpha = pixels[offset + 3] ?? 0;
+  // One 32-bit read per pixel instead of four byte reads. Chromium only ships
+  // on little-endian platforms, so the RGBA bytes always land as R in the low
+  // byte through A in the high byte.
+  const pixelLanes = new Uint32Array(pixels.buffer, pixels.byteOffset, pixels.length / 4);
 
-    sumRed += red;
-    sumGreen += green;
-    sumBlue += blue;
-    sumAlpha += alpha;
+  for (let pixelIndex = 0; pixelIndex < pixelLanes.length; pixelIndex++) {
+    const pixelLane = pixelLanes[pixelIndex] ?? 0;
+    const red = pixelLane & 255;
+    const green = (pixelLane >>> 8) & 255;
+    const blue = (pixelLane >>> 16) & 255;
+    const alpha = pixelLane >>> 24;
+
+    redSum += red;
+    greenSum += green;
+    blueSum += blue;
+    alphaSum += alpha;
 
     if (alpha / 255 < TRANSPARENT_ALPHA_THRESHOLD) {
-      transparentPixelsCount++;
-    } else {
-      const lightness = getSRGBLightness(red, green, blue);
+      transparentPixelCount++;
 
-      if (lightness < DARK_LIGHTNESS_THRESHOLD) {
-        darkPixelsCount++;
-      }
+      continue;
+    }
 
-      if (lightness > LIGHT_LIGHTNESS_THRESHOLD) {
-        lightPixelsCount++;
-      }
+    const lightness = getSRGBLightness(red, green, blue);
 
-      if (lightness < minLightness) {
-        minLightness = lightness;
-      }
+    if (lightness < DARK_PIXEL_LIGHTNESS_THRESHOLD) {
+      darkPixelCount++;
+    }
 
-      if (lightness > maxLightness) {
-        maxLightness = lightness;
-      }
+    if (lightness > LIGHT_PIXEL_LIGHTNESS_THRESHOLD) {
+      lightPixelCount++;
+    }
+
+    if (lightness < minLightness) {
+      minLightness = lightness;
+    }
+
+    if (lightness > maxLightness) {
+      maxLightness = lightness;
     }
   }
 
-  const totalPixelsCount = width * height;
-  const opaquePixelsCount = totalPixelsCount - transparentPixelsCount;
+  const totalPixelCount = width * height;
+  const opaquePixelCount = totalPixelCount - transparentPixelCount;
 
-  const DARK_IMAGE_THRESHOLD = 0.7;
-  const LIGHT_IMAGE_THRESHOLD = 0.7;
-  const TRANSPARENT_IMAGE_THRESHOLD = 0.1;
-  const SOLID_LIGHTNESS_DIFF_THRESHOLD = 0.1;
-
-  const isSolid =
-    sumAlpha === totalPixelsCount * 255 &&
-    maxLightness - minLightness < SOLID_LIGHTNESS_DIFF_THRESHOLD;
-  const solidColor =
-    isSolid && opaquePixelsCount > 0
-      ? {
-          r: Math.round(sumRed / opaquePixelsCount),
-          g: Math.round(sumGreen / opaquePixelsCount),
-          b: Math.round(sumBlue / opaquePixelsCount),
-          a: transparentPixelsCount / totalPixelsCount,
-        }
-      : null;
+  const isFullyOpaque = alphaSum === totalPixelCount * 255;
+  const isSolid = isFullyOpaque && maxLightness - minLightness < SOLID_IMAGE_LIGHTNESS_SPREAD;
 
   return {
-    isDark: opaquePixelsCount > 0 && darkPixelsCount / opaquePixelsCount >= DARK_IMAGE_THRESHOLD,
-    isLight: opaquePixelsCount > 0 && lightPixelsCount / opaquePixelsCount >= LIGHT_IMAGE_THRESHOLD,
-    isTransparent: transparentPixelsCount / totalPixelsCount >= TRANSPARENT_IMAGE_THRESHOLD,
-    isLarge,
-    solidColor,
+    isDark: opaquePixelCount > 0 && darkPixelCount / opaquePixelCount >= DARK_IMAGE_PIXEL_RATIO,
+    isLight: opaquePixelCount > 0 && lightPixelCount / opaquePixelCount >= LIGHT_IMAGE_PIXEL_RATIO,
+    isTransparent: transparentPixelCount / totalPixelCount >= TRANSPARENT_IMAGE_PIXEL_RATIO,
+    isLarge: sourceWidth * sourceHeight > LARGE_IMAGE_PIXEL_COUNT,
+    solidColor:
+      isSolid && opaquePixelCount > 0
+        ? {
+            r: Math.round(redSum / opaquePixelCount),
+            g: Math.round(greenSum / opaquePixelCount),
+            b: Math.round(blueSum / opaquePixelCount),
+            a: transparentPixelCount / totalPixelCount,
+          }
+        : null,
   };
 }
 
@@ -164,17 +196,17 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-let fullSizeCanvas: HTMLCanvasElement | null = null;
+let snapshotCanvas: HTMLCanvasElement | null = null;
 
 function imageToDataURL(image: HTMLImageElement): string {
-  if (!fullSizeCanvas) {
-    fullSizeCanvas = document.createElement("canvas");
+  if (!snapshotCanvas) {
+    snapshotCanvas = document.createElement("canvas");
   }
 
-  fullSizeCanvas.width = image.naturalWidth;
-  fullSizeCanvas.height = image.naturalHeight;
+  snapshotCanvas.width = image.naturalWidth;
+  snapshotCanvas.height = image.naturalHeight;
 
-  const context = fullSizeCanvas.getContext("2d");
+  const context = snapshotCanvas.getContext("2d");
 
   if (!context) {
     return "";
@@ -183,21 +215,16 @@ function imageToDataURL(image: HTMLImageElement): string {
   context.drawImage(image, 0, 0);
 
   try {
-    return fullSizeCanvas.toDataURL("image/png");
+    return snapshotCanvas.toDataURL("image/png");
   } catch {
     return "";
   }
 }
 
-// Bounded because entries can carry a base64 dataURL of the full image — in a
-// long-lived mail client an unbounded per-url cache would accumulate megabytes.
-const IMAGE_DETAILS_CACHE_MAX_ENTRIES = 256;
-const imageDetailsCache = new Map<string, ImageDetails | null>();
-
 // Only the classifications that end up as a filtered SVG replacement (a dark
 // transparent icon to invert, a light non-solid image to darken) ever read the
 // dataURL, so it is built just for those instead of for every analyzed image.
-function shouldBuildDataURL(analysis: ImageAnalysis, image: HTMLImageElement) {
+function shouldBuildDataURL(analysis: ImageAnalysis, image: HTMLImageElement): boolean {
   if (analysis.isLarge) {
     return false;
   }
@@ -207,6 +234,23 @@ function shouldBuildDataURL(analysis: ImageAnalysis, image: HTMLImageElement) {
   }
 
   return analysis.isLight && !analysis.isTransparent && !analysis.solidColor;
+}
+
+// Bounded because entries can carry a base64 dataURL of the full image — in a
+// long-lived mail client an unbounded per-url cache would accumulate megabytes.
+const IMAGE_DETAILS_CACHE_MAX_ENTRIES = 256;
+const imageDetailsCache = new Map<string, ImageDetails | null>();
+
+function rememberImageDetails(url: string, details: ImageDetails | null) {
+  if (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES) {
+    const oldestUrl = imageDetailsCache.keys().next().value;
+
+    if (oldestUrl !== undefined) {
+      imageDetailsCache.delete(oldestUrl);
+    }
+  }
+
+  imageDetailsCache.set(url, details);
 }
 
 export async function getImageDetails(url: string): Promise<ImageDetails | null> {
@@ -223,14 +267,14 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
 
   try {
     const image = await loadImage(url);
-    const analysis = analyzeImage(image);
+    const analysis = analyzeImagePixels(image);
 
     if (analysis) {
-      const dataURL = shouldBuildDataURL(analysis, image)
-        ? url.startsWith("data:")
-          ? url
-          : imageToDataURL(image)
-        : "";
+      let dataURL = "";
+
+      if (shouldBuildDataURL(analysis, image)) {
+        dataURL = url.startsWith("data:") ? url : imageToDataURL(image);
+      }
 
       details = {
         src: url,
@@ -244,20 +288,12 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
     details = null;
   }
 
-  if (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES) {
-    const oldestUrl = imageDetailsCache.keys().next().value;
-
-    if (oldestUrl !== undefined) {
-      imageDetailsCache.delete(oldestUrl);
-    }
-  }
-
-  imageDetailsCache.set(url, details);
+  rememberImageDetails(url, details);
 
   return details;
 }
 
-const xmlEscapeChars: Record<string, string> = {
+const xmlEscapes: Record<string, string> = {
   "<": "&lt;",
   ">": "&gt;",
   "&": "&amp;",
@@ -266,35 +302,26 @@ const xmlEscapeChars: Record<string, string> = {
 };
 
 function escapeXML(text: string): string {
-  return text.replace(/[<>&'"]/g, (char) => xmlEscapeChars[char] ?? char);
+  return text.replace(/[<>&'"]/g, (character) => xmlEscapes[character] ?? character);
 }
 
 export function getFilteredImageURL(details: ImageDetails, theme: Theme): string {
   const href = details.dataURL.startsWith("data:image/svg+xml")
     ? escapeXML(details.dataURL)
     : details.dataURL;
-  const matrix = getSVGFilterMatrixValue(theme);
 
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${details.width}" height="${details.height}">`,
-    "<defs>",
-    '<filter id="dark-theme-image-filter">',
-    `<feColorMatrix type="matrix" values="${matrix}" />`,
-    "</filter>",
-    "</defs>",
-    `<image width="${details.width}" height="${details.height}" filter="url(#dark-theme-image-filter)" xlink:href="${href}" />`,
-    "</svg>",
-  ].join("");
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${details.width}" height="${details.height}">` +
+    `<defs><filter id="dark-theme-image-filter"><feColorMatrix type="matrix" values="${getSVGFilterMatrixValue(theme)}" /></filter></defs>` +
+    `<image width="${details.width}" height="${details.height}" filter="url(#dark-theme-image-filter)" xlink:href="${href}" /></svg>`;
 
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
 export function getSolidColorImageURL(details: ImageDetails, color: string): string {
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${details.width}" height="${details.height}">`,
-    `<rect width="100%" height="100%" fill="${escapeXML(color)}" />`,
-    "</svg>",
-  ].join("");
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${details.width}" height="${details.height}">` +
+    `<rect width="100%" height="100%" fill="${escapeXML(color)}" /></svg>`;
 
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }

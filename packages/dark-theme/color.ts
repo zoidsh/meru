@@ -1,9 +1,3 @@
-/*
- * Adapted from Dark Reader (https://github.com/darkreader/darkreader), MIT —
- * see ./THIRD_PARTY_NOTICES.md. Non-null assertions were refactored away to
- * satisfy this repo's lint rules; the parsing and conversion logic is unchanged.
- */
-
 export type RGBA = {
   r: number;
   g: number;
@@ -18,11 +12,61 @@ export type HSLA = {
   a?: number;
 };
 
+const CHAR_CODE_0 = 48;
+const CHAR_CODE_9 = 57;
+const CHAR_CODE_LOWER_A = 97;
+const CHAR_CODE_LOWER_E = 101;
+const CHAR_CODE_LOWER_F = 102;
+const CHAR_CODE_UPPER_A = 65;
+const CHAR_CODE_UPPER_F = 70;
+const CHAR_CODE_DOT = 46;
+const CHAR_CODE_PLUS = 43;
+const CHAR_CODE_MINUS = 45;
+const CHAR_CODE_SPACE = 32;
+const CHAR_CODE_COMMA = 44;
+const CHAR_CODE_SLASH = 47;
+const CHAR_CODE_HASH = 35;
+const CHAR_CODE_OPEN_PAREN = 40;
+
 export function getSRGBLightness(r: number, g: number, b: number): number {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 }
 
-// https://en.wikipedia.org/wiki/HSL_and_HSV
+export function rgbToHSL({ r: red255, g: green255, b: blue255, a = 1 }: RGBA): HSLA {
+  const red = red255 / 255;
+  const green = green255 / 255;
+  const blue = blue255 / 255;
+
+  const maxChannel = Math.max(red, green, blue);
+  const minChannel = Math.min(red, green, blue);
+  const chroma = maxChannel - minChannel;
+  const lightness = (maxChannel + minChannel) / 2;
+
+  if (chroma === 0) {
+    return { h: 0, s: 0, l: lightness, a };
+  }
+
+  let hueSegment: number;
+
+  if (maxChannel === red) {
+    hueSegment = ((green - blue) / chroma) % 6;
+  } else if (maxChannel === green) {
+    hueSegment = (blue - red) / chroma + 2;
+  } else {
+    hueSegment = (red - green) / chroma + 4;
+  }
+
+  let hue = hueSegment * 60;
+
+  if (hue < 0) {
+    hue += 360;
+  }
+
+  const saturation = chroma / (1 - Math.abs(2 * lightness - 1));
+
+  return { h: hue, s: saturation, l: lightness, a };
+}
+
 export function hslToRGB({ h, s, l, a = 1 }: HSLA): RGBA {
   if (s === 0) {
     const gray = Math.round(l * 255);
@@ -31,259 +75,287 @@ export function hslToRGB({ h, s, l, a = 1 }: HSLA): RGBA {
   }
 
   const chroma = (1 - Math.abs(2 * l - 1)) * s;
-  const secondary = chroma * (1 - Math.abs(((h / 60) % 2) - 1));
-  const lightnessOffset = l - chroma / 2;
-  const [red, green, blue] = (
-    h < 60
-      ? [chroma, secondary, 0]
-      : h < 120
-        ? [secondary, chroma, 0]
-        : h < 180
-          ? [0, chroma, secondary]
-          : h < 240
-            ? [0, secondary, chroma]
-            : h < 300
-              ? [secondary, 0, chroma]
-              : [chroma, 0, secondary]
-  ) as [number, number, number];
+  const middle = chroma * (1 - Math.abs(((h / 60) % 2) - 1));
+  const base = l - chroma / 2;
+  const sextant = Math.min(5, Math.max(0, Math.floor(h / 60)));
+
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+
+  switch (sextant) {
+    case 0:
+      red = chroma;
+      green = middle;
+      break;
+    case 1:
+      red = middle;
+      green = chroma;
+      break;
+    case 2:
+      green = chroma;
+      blue = middle;
+      break;
+    case 3:
+      green = middle;
+      blue = chroma;
+      break;
+    case 4:
+      red = middle;
+      blue = chroma;
+      break;
+    default:
+      red = chroma;
+      blue = middle;
+  }
 
   return {
-    r: Math.round((red + lightnessOffset) * 255),
-    g: Math.round((green + lightnessOffset) * 255),
-    b: Math.round((blue + lightnessOffset) * 255),
+    r: Math.round((red + base) * 255),
+    g: Math.round((green + base) * 255),
+    b: Math.round((blue + base) * 255),
     a,
   };
 }
 
-// https://en.wikipedia.org/wiki/HSL_and_HSV
-export function rgbToHSL({ r: r255, g: g255, b: b255, a = 1 }: RGBA): HSLA {
-  const r = r255 / 255;
-  const g = g255 / 255;
-  const b = b255 / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const chroma = max - min;
-
-  const l = (max + min) / 2;
-
-  if (chroma === 0) {
-    return { h: 0, s: 0, l, a };
-  }
-
-  let h =
-    (max === r ? ((g - b) / chroma) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4) *
-    60;
-
-  if (h < 0) {
-    h += 360;
-  }
-
-  const s = chroma / (1 - Math.abs(2 * l - 1));
-
-  return { h, s, l, a };
-}
-
-function toFixed(value: number, digits = 0): string {
+function formatFixed(value: number, digits = 0): string {
   const fixed = value.toFixed(digits);
 
   if (digits === 0) {
     return fixed;
   }
 
-  const dot = fixed.indexOf(".");
+  const dotIndex = fixed.indexOf(".");
 
-  if (dot >= 0) {
-    const zerosMatch = fixed.match(/0+$/);
-
-    if (zerosMatch) {
-      if (zerosMatch.index === dot + 1) {
-        return fixed.substring(0, dot);
-      }
-
-      return fixed.substring(0, zerosMatch.index);
-    }
+  if (dotIndex < 0) {
+    return fixed;
   }
 
-  return fixed;
+  let end = fixed.length;
+
+  while (end > dotIndex && fixed.charCodeAt(end - 1) === CHAR_CODE_0) {
+    end--;
+  }
+
+  if (end === dotIndex + 1) {
+    end = dotIndex;
+  }
+
+  return end === fixed.length ? fixed : fixed.slice(0, end);
 }
 
 export function rgbToString(rgb: RGBA): string {
   const { r, g, b, a } = rgb;
 
   if (a != null && a < 1) {
-    return `rgba(${toFixed(r)}, ${toFixed(g)}, ${toFixed(b)}, ${toFixed(a, 2)})`;
+    return `rgba(${formatFixed(r)}, ${formatFixed(g)}, ${formatFixed(b)}, ${formatFixed(a, 2)})`;
   }
 
-  return `rgb(${toFixed(r)}, ${toFixed(g)}, ${toFixed(b)})`;
+  return `rgb(${formatFixed(r)}, ${formatFixed(g)}, ${formatFixed(b)})`;
 }
 
 export function rgbToHexString({ r, g, b, a }: RGBA): string {
-  return `#${(a != null && a < 1 ? [r, g, b, Math.round(a * 255)] : [r, g, b])
-    .map((value) => {
-      return `${value < 16 ? "0" : ""}${value.toString(16)}`;
-    })
-    .join("")}`;
+  const channels = a != null && a < 1 ? [r, g, b, Math.round(a * 255)] : [r, g, b];
+
+  let hex = "#";
+
+  for (const channel of channels) {
+    if (channel < 16) {
+      hex += "0";
+    }
+
+    hex += channel.toString(16);
+  }
+
+  return hex;
 }
 
-const rgbMatch = /^rgba?\([^()]+\)$/;
-const hslMatch = /^hsla?\([^()]+\)$/;
-const hexMatch = /^#[0-9a-f]+$/i;
+function isNumberCharCode(charCode: number): boolean {
+  return (
+    (charCode >= CHAR_CODE_0 && charCode <= CHAR_CODE_9) ||
+    charCode === CHAR_CODE_DOT ||
+    charCode === CHAR_CODE_PLUS ||
+    charCode === CHAR_CODE_MINUS ||
+    charCode === CHAR_CODE_LOWER_E
+  );
+}
 
-const supportedColorFuncs = ["color", "color-mix", "hwb", "lab", "lch", "oklab", "oklch"];
+function isDelimiterCharCode(charCode: number): boolean {
+  return (
+    charCode === CHAR_CODE_SPACE || charCode === CHAR_CODE_COMMA || charCode === CHAR_CODE_SLASH
+  );
+}
 
-const CHAR_0 = "0".charCodeAt(0);
-const CHAR_9 = "9".charCodeAt(0);
-const CHAR_E = "e".charCodeAt(0);
-const CHAR_DOT = ".".charCodeAt(0);
-const CHAR_PLUS = "+".charCodeAt(0);
-const CHAR_MINUS = "-".charCodeAt(0);
-const CHAR_SPACE = " ".charCodeAt(0);
-const CHAR_COMMA = ",".charCodeAt(0);
-const CHAR_SLASH = "/".charCodeAt(0);
-const CHAR_UPPER_A = "A".charCodeAt(0);
-const CHAR_UPPER_F = "F".charCodeAt(0);
-const CHAR_LOWER_A = "a".charCodeAt(0);
-const CHAR_LOWER_F = "f".charCodeAt(0);
+type ComponentSpan = {
+  numberStart: number;
+  numberEnd: number;
+  unitEnd: number;
+};
 
-function getNumbersFromString(input: string, range: number[], units: { [unit: string]: number }) {
-  const numbers: number[] = [];
-  const searchStart = input.indexOf("(") + 1;
-  const searchEnd = input.length - 1;
+// Reads the numeric components of a color function body: each span covers a
+// number and an optional trailing unit, and components are scaled so a value in
+// units maps onto its bound (e.g. 50% of 255 → 127.5). Bounds above 1 mark
+// integer channels and round; the alpha bound of 1 keeps fractions intact.
+function readColorComponents(
+  functionText: string,
+  componentBounds: number[],
+  unitScales: { [unit: string]: number },
+): number[] {
+  const bodyStart = functionText.indexOf("(") + 1;
+  const bodyEnd = functionText.length - 1;
+  const spans: ComponentSpan[] = [];
+
   let numberStart = -1;
-  let unitStart = -1;
+  let numberEnd = -1;
 
-  const push = (matchEnd: number) => {
-    const numberEnd = unitStart > -1 ? unitStart : matchEnd;
-    const numberText = input.slice(numberStart, numberEnd);
-    let number = parseFloat(numberText);
-    const bound = range[numbers.length] ?? 1;
-
-    if (unitStart > -1) {
-      const unit = input.slice(unitStart, matchEnd);
-      const unitScale = units[unit];
-
-      if (unitScale != null) {
-        number *= bound / unitScale;
-      }
-    }
-
-    if (bound > 1) {
-      number = Math.round(number);
-    }
-
-    numbers.push(number);
+  const closeSpan = (unitEnd: number) => {
+    spans.push({ numberStart, numberEnd: numberEnd === -1 ? unitEnd : numberEnd, unitEnd });
     numberStart = -1;
-    unitStart = -1;
+    numberEnd = -1;
   };
 
-  for (let index = searchStart; index < searchEnd; index++) {
-    const charCode = input.charCodeAt(index);
-    const isNumberChar =
-      (charCode >= CHAR_0 && charCode <= CHAR_9) ||
-      charCode === CHAR_DOT ||
-      charCode === CHAR_PLUS ||
-      charCode === CHAR_MINUS ||
-      charCode === CHAR_E;
-    const isDelimiter =
-      charCode === CHAR_SPACE || charCode === CHAR_COMMA || charCode === CHAR_SLASH;
+  for (let index = bodyStart; index < bodyEnd; index++) {
+    const charCode = functionText.charCodeAt(index);
 
-    if (isNumberChar) {
+    if (isNumberCharCode(charCode)) {
       if (numberStart === -1) {
         numberStart = index;
       }
     } else if (numberStart > -1) {
-      if (isDelimiter) {
-        push(index);
-      } else if (unitStart === -1) {
-        unitStart = index;
+      if (isDelimiterCharCode(charCode)) {
+        closeSpan(index);
+      } else if (numberEnd === -1) {
+        numberEnd = index;
       }
     }
   }
 
   if (numberStart > -1) {
-    push(searchEnd);
+    closeSpan(bodyEnd);
   }
 
-  return numbers;
+  return spans.map((span, componentIndex) => {
+    let component = parseFloat(functionText.slice(span.numberStart, span.numberEnd));
+    const bound = componentBounds[componentIndex] ?? 1;
+
+    if (span.numberEnd < span.unitEnd) {
+      const unitScale = unitScales[functionText.slice(span.numberEnd, span.unitEnd)];
+
+      if (unitScale != null) {
+        component *= bound / unitScale;
+      }
+    }
+
+    if (bound > 1) {
+      component = Math.round(component);
+    }
+
+    return component;
+  });
 }
 
-const rgbRange = [255, 255, 255, 1];
-const rgbUnits = { "%": 100 };
-const hslRange = [360, 1, 1, 1];
-const hslUnits = { "%": 100, deg: 360, rad: 2 * Math.PI, turn: 1 };
+const rgbComponentBounds = [255, 255, 255, 1];
+const rgbUnitScales = { "%": 100 };
+const hslComponentBounds = [360, 1, 1, 1];
+const hslUnitScales = { "%": 100, deg: 360, rad: 2 * Math.PI, turn: 1 };
 
-function parseRGB(rgbText: string): RGBA | null {
-  const [r, g, b, a = 1] = getNumbersFromString(rgbText, rgbRange, rgbUnits);
+function parseRgbFunction(rgbText: string): RGBA | null {
+  const [red, green, blue, alpha = 1] = readColorComponents(
+    rgbText,
+    rgbComponentBounds,
+    rgbUnitScales,
+  );
 
-  if (r == null || g == null || b == null || a == null) {
+  if (red === undefined || green === undefined || blue === undefined) {
     return null;
   }
 
-  return { r, g, b, a };
+  return { r: red, g: green, b: blue, a: alpha };
 }
 
-function parseHSL(hslText: string): RGBA | null {
-  const [h, s, l, a = 1] = getNumbersFromString(hslText, hslRange, hslUnits);
+function parseHslFunction(hslText: string): RGBA | null {
+  const [hue, saturation, lightness, alpha = 1] = readColorComponents(
+    hslText,
+    hslComponentBounds,
+    hslUnitScales,
+  );
 
-  if (h == null || s == null || l == null || a == null) {
+  if (hue === undefined || saturation === undefined || lightness === undefined) {
     return null;
   }
 
-  return hslToRGB({ h, s, l, a });
+  return hslToRGB({ h: hue, s: saturation, l: lightness, a: alpha });
 }
 
-function parseHex(hexText: string): RGBA | null {
-  const length = hexText.length;
-  const digitCount = length - 1;
-  const isShort = digitCount === 3 || digitCount === 4;
-  const isLong = digitCount === 6 || digitCount === 8;
+function hexNibbleAt(hexText: string, index: number): number {
+  const charCode = hexText.charCodeAt(index);
 
-  if (!isShort && !isLong) {
+  if (charCode >= CHAR_CODE_UPPER_A && charCode <= CHAR_CODE_UPPER_F) {
+    return charCode - CHAR_CODE_UPPER_A + 10;
+  }
+
+  if (charCode >= CHAR_CODE_LOWER_A && charCode <= CHAR_CODE_LOWER_F) {
+    return charCode - CHAR_CODE_LOWER_A + 10;
+  }
+
+  return charCode - CHAR_CODE_0;
+}
+
+function parseHexColor(hexText: string): RGBA | null {
+  const hexPairAt = (index: number) =>
+    hexNibbleAt(hexText, index) * 16 + hexNibbleAt(hexText, index + 1);
+  const hexSingleAt = (index: number) => hexNibbleAt(hexText, index) * 17;
+
+  switch (hexText.length - 1) {
+    case 3:
+      return { r: hexSingleAt(1), g: hexSingleAt(2), b: hexSingleAt(3), a: 1 };
+    case 4:
+      return { r: hexSingleAt(1), g: hexSingleAt(2), b: hexSingleAt(3), a: hexSingleAt(4) / 255 };
+    case 6:
+      return { r: hexPairAt(1), g: hexPairAt(3), b: hexPairAt(5), a: 1 };
+    case 8:
+      return { r: hexPairAt(1), g: hexPairAt(3), b: hexPairAt(5), a: hexPairAt(7) / 255 };
+    default:
+      return null;
+  }
+}
+
+function isHexColorText(colorText: string): boolean {
+  if (colorText.charCodeAt(0) !== CHAR_CODE_HASH || colorText.length < 2) {
+    return false;
+  }
+
+  for (let index = 1; index < colorText.length; index++) {
+    const charCode = colorText.charCodeAt(index);
+    const isHexDigit =
+      (charCode >= CHAR_CODE_0 && charCode <= CHAR_CODE_9) ||
+      (charCode >= CHAR_CODE_LOWER_A && charCode <= CHAR_CODE_LOWER_F);
+
+    if (!isHexDigit) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// A simple color function is `name(` + a paren-free body + `)`; anything nested
+// (like `rgb(var(--x))`) has to fall through to the later checks and end up
+// unparsed, matching how these values behave everywhere else in the engine.
+function readSimpleFunctionBody(colorText: string, functionName: string): string | null {
+  if (!colorText.startsWith(`${functionName}(`) || !colorText.endsWith(")")) {
     return null;
   }
 
-  const hexDigit = (index: number) => {
-    const charCode = hexText.charCodeAt(index);
+  const body = colorText.slice(functionName.length + 1, -1);
 
-    if (charCode >= CHAR_UPPER_A && charCode <= CHAR_UPPER_F) {
-      return charCode + 10 - CHAR_UPPER_A;
-    }
-
-    if (charCode >= CHAR_LOWER_A && charCode <= CHAR_LOWER_F) {
-      return charCode + 10 - CHAR_LOWER_A;
-    }
-
-    return charCode - CHAR_0;
-  };
-
-  let r: number;
-  let g: number;
-  let b: number;
-  let a = 1;
-
-  if (isShort) {
-    r = hexDigit(1) * 17;
-    g = hexDigit(2) * 17;
-    b = hexDigit(3) * 17;
-
-    if (digitCount === 4) {
-      a = (hexDigit(4) * 17) / 255;
-    }
-  } else {
-    r = hexDigit(1) * 16 + hexDigit(2);
-    g = hexDigit(3) * 16 + hexDigit(4);
-    b = hexDigit(5) * 16 + hexDigit(6);
-
-    if (digitCount === 8) {
-      a = (hexDigit(7) * 16 + hexDigit(8)) / 255;
-    }
+  if (body.length === 0 || body.includes("(") || body.includes(")")) {
+    return null;
   }
 
-  return { r, g, b, a };
+  return body;
 }
 
-function colorFromNumber(rgbNumber: number): RGBA {
+function rgbaFromNumber(rgbNumber: number): RGBA {
   return {
     r: (rgbNumber >> 16) & 255,
     g: (rgbNumber >> 8) & 255,
@@ -292,34 +364,7 @@ function colorFromNumber(rgbNumber: number): RGBA {
   };
 }
 
-let canvas: HTMLCanvasElement | undefined;
-let canvasContext: CanvasRenderingContext2D | null = null;
-
-function domParseColor(colorText: string): RGBA | null {
-  if (!canvasContext) {
-    canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-    canvasContext = canvas.getContext("2d", { willReadFrequently: true });
-  }
-
-  if (!canvasContext) {
-    return null;
-  }
-
-  canvasContext.fillStyle = colorText;
-  canvasContext.fillRect(0, 0, 1, 1);
-  const imageData = canvasContext.getImageData(0, 0, 1, 1).data;
-  const red = imageData[0] ?? 0;
-  const green = imageData[1] ?? 0;
-  const blue = imageData[2] ?? 0;
-  const alpha = imageData[3] ?? 0;
-  const color = `rgba(${red}, ${green}, ${blue}, ${(alpha / 255).toFixed(2)})`;
-
-  return parseRGB(color);
-}
-
-const knownColors: Map<string, number> = new Map(
+const namedColorValues: Map<string, number> = new Map(
   Object.entries({
     aliceblue: 0xf0f8ff,
     antiquewhite: 0xfaebd7,
@@ -472,7 +517,7 @@ const knownColors: Map<string, number> = new Map(
   }),
 );
 
-const systemColors: Map<string, number> = new Map(
+const systemColorValues: Map<string, number> = new Map(
   Object.entries({
     ActiveBorder: 0x3b99fc,
     ActiveCaption: 0x000000,
@@ -503,42 +548,57 @@ const systemColors: Map<string, number> = new Map(
     WindowFrame: 0xaaaaaa,
     WindowText: 0x000000,
     "-webkit-focus-ring-color": 0xe59700,
-  }).map(([key, value]) => [key.toLowerCase(), value] as [string, number]),
+  }).map(([name, rgbNumber]) => [name.toLowerCase(), rgbNumber]),
 );
 
-const rgbaParseCache = new Map<string, RGBA | null>();
-const hslaParseCache = new Map<string, HSLA>();
+const cssWideFunctionNames = ["color", "color-mix", "hwb", "lab", "lch", "oklab", "oklch"];
 
-export function parseColorWithCache(colorText: string): RGBA | null {
-  const key = colorText.trim();
-
-  if (rgbaParseCache.has(key)) {
-    return rgbaParseCache.get(key) ?? null;
+function isCssWideColorFunction(colorText: string): boolean {
+  if (!colorText.endsWith(")")) {
+    return false;
   }
 
-  const color = parse(key);
-  rgbaParseCache.set(key, color);
-
-  return color;
+  return cssWideFunctionNames.some(
+    (functionName) =>
+      colorText.startsWith(functionName) &&
+      colorText.charCodeAt(functionName.length) === CHAR_CODE_OPEN_PAREN &&
+      colorText.lastIndexOf(functionName) === 0,
+  );
 }
 
-export function parseToHSLWithCache(colorText: string): HSLA | null {
-  const cached = hslaParseCache.get(colorText);
+let parseCanvas: HTMLCanvasElement | undefined;
+let parseCanvasContext: CanvasRenderingContext2D | null = null;
 
-  if (cached) {
-    return cached;
+// Lets the browser evaluate syntaxes the scanner doesn't cover (color-mix,
+// oklch, relative colors) by painting one pixel and reading it back. The
+// round-trip through rgba text quantizes alpha to two decimals.
+function parseColorViaCanvas(colorText: string): RGBA | null {
+  if (!parseCanvasContext) {
+    parseCanvas = document.createElement("canvas");
+    parseCanvas.width = 1;
+    parseCanvas.height = 1;
+    parseCanvasContext = parseCanvas.getContext("2d", { willReadFrequently: true });
   }
 
-  const rgb = parseColorWithCache(colorText);
-
-  if (!rgb) {
+  if (!parseCanvasContext) {
     return null;
   }
 
-  const hsl = rgbToHSL(rgb);
-  hslaParseCache.set(colorText, hsl);
+  // Cleared first so a translucent color can't composite over the previous
+  // parse — results must not depend on parse order, or the bounded cache's
+  // eviction would become observable.
+  parseCanvasContext.clearRect(0, 0, 1, 1);
+  parseCanvasContext.fillStyle = colorText;
+  parseCanvasContext.fillRect(0, 0, 1, 1);
 
-  return hsl;
+  const [red = 0, green = 0, blue = 0, alpha = 0] = parseCanvasContext.getImageData(
+    0,
+    0,
+    1,
+    1,
+  ).data;
+
+  return parseRgbFunction(`rgba(${red}, ${green}, ${blue}, ${(alpha / 255).toFixed(2)})`);
 }
 
 export function parse(colorText: string): RGBA | null {
@@ -549,56 +609,77 @@ export function parse(colorText: string): RGBA | null {
       return null;
     }
 
-    return domParseColor(color);
+    return parseColorViaCanvas(color);
   }
 
-  if (color.match(rgbMatch)) {
-    if (color.startsWith("rgb(#") || color.startsWith("rgba(#")) {
+  const rgbBody = readSimpleFunctionBody(color, "rgb") ?? readSimpleFunctionBody(color, "rgba");
+
+  if (rgbBody != null) {
+    if (rgbBody.charCodeAt(0) === CHAR_CODE_HASH) {
       if (color.lastIndexOf("rgb") > 0) {
         return null;
       }
 
-      return domParseColor(color);
+      return parseColorViaCanvas(color);
     }
 
-    return parseRGB(color);
+    return parseRgbFunction(color);
   }
 
-  if (color.match(hslMatch)) {
-    return parseHSL(color);
+  if (
+    readSimpleFunctionBody(color, "hsl") != null ||
+    readSimpleFunctionBody(color, "hsla") != null
+  ) {
+    return parseHslFunction(color);
   }
 
-  if (color.match(hexMatch)) {
-    return parseHex(color);
+  if (isHexColorText(color)) {
+    return parseHexColor(color);
   }
 
-  const knownColor = knownColors.get(color);
+  const namedColorValue = namedColorValues.get(color);
 
-  if (knownColor != null) {
-    return colorFromNumber(knownColor);
+  if (namedColorValue != null) {
+    return rgbaFromNumber(namedColorValue);
   }
 
-  const systemColor = systemColors.get(color);
+  const systemColorValue = systemColorValues.get(color);
 
-  if (systemColor != null) {
-    return colorFromNumber(systemColor);
+  if (systemColorValue != null) {
+    return rgbaFromNumber(systemColorValue);
   }
 
   if (color === "transparent") {
     return { r: 0, g: 0, b: 0, a: 0 };
   }
 
-  if (
-    color.endsWith(")") &&
-    supportedColorFuncs.some(
-      (colorFunc) =>
-        color.startsWith(colorFunc) &&
-        color[colorFunc.length] === "(" &&
-        color.lastIndexOf(colorFunc) === 0,
-    )
-  ) {
-    return domParseColor(color);
+  if (isCssWideColorFunction(color)) {
+    return parseColorViaCanvas(color);
   }
 
   return null;
+}
+
+// Bounded so a long-lived document cycling through unique color strings can't
+// grow the caches forever; parsing is pure, so dropping entries is invisible.
+const PARSE_CACHE_MAX_ENTRIES = 4096;
+
+const rgbaParseCache = new Map<string, RGBA | null>();
+
+export function parseColorWithCache(colorText: string): RGBA | null {
+  const cacheKey = colorText.trim();
+  const cached = rgbaParseCache.get(cacheKey);
+
+  if (cached !== undefined || rgbaParseCache.has(cacheKey)) {
+    return cached ?? null;
+  }
+
+  if (rgbaParseCache.size >= PARSE_CACHE_MAX_ENTRIES) {
+    rgbaParseCache.clear();
+  }
+
+  const color = parse(cacheKey);
+  rgbaParseCache.set(cacheKey, color);
+
+  return color;
 }

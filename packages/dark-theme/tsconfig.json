@@ -1,3 +1,4 @@
 {
-  "extends": "@total-typescript/tsconfig/bundler/dom"
+  "extends": "@total-typescript/tsconfig/bundler/dom",
+  "exclude": ["**/*.test.ts"]
 }

@@ -1,10 +1,7 @@
 # @meru/dark-theme
 
 Apply a dark theme to any DOM element and its subtree — colors, gradients, and
-images — with good contrast, without touching the rest of the document. A small,
-element-scoped adaptation of
-[Dark Reader](https://github.com/darkreader/darkreader)'s dynamic-mode color and
-image logic.
+images — with good contrast, without touching the rest of the document.
 
 ## Usage
 
@@ -96,7 +93,3 @@ engine flags:
 - Overrides are inline `!important`; use `ignore` for elements that must keep their
   own colors (a stylesheet rule can't override an inline `!important`).
 - Cross-origin images need CORS to be analyzed; otherwise they're left untouched.
-
-## Attribution
-
-Adapts Dark Reader (MIT). See [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).

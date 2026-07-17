@@ -1,20 +1,17 @@
-/*
- * SVG feColorMatrix value and CSS filter helpers adapted from Dark Reader
- * (https://github.com/darkreader/darkreader), MIT — see ./THIRD_PARTY_NOTICES.md.
- */
-
-import { createFilterMatrix } from "./matrix";
+import { composeFilterMatrix } from "./matrix";
 import type { Theme } from "./theme";
 
-function toSVGMatrix(matrix: number[][]): string {
-  return matrix
-    .slice(0, 4)
-    .map((row) => row.map((value) => value.toFixed(3)).join(" "))
-    .join(" ");
-}
-
+// The SVG feColorMatrix value is the top four rows of the 5×5 filter matrix
+// (SVG's matrix type has no fifth row — it's implicitly [0 0 0 0 1]).
 export function getSVGFilterMatrixValue(theme: Theme): string {
-  return toSVGMatrix(createFilterMatrix(theme));
+  const matrix = composeFilterMatrix(theme);
+  const values: string[] = [];
+
+  for (let index = 0; index < 20; index++) {
+    values.push((matrix[index] ?? 0).toFixed(3));
+  }
+
+  return values.join(" ");
 }
 
 export function getCSSFilterValue(theme: Theme): string {
