@@ -64,7 +64,7 @@ type DarkenedStateRule = {
   declarations: Array<{ property: string; declarationText: string }>;
 };
 
-const darkenCandidateDeclarations = (candidate: StateRuleCandidate, theme: Theme) => {
+function darkenCandidateDeclarations(candidate: StateRuleCandidate, theme: Theme) {
   const darkenedDeclarations: DarkenedStateRule["declarations"] = [];
 
   for (const { property, value } of candidate.declarations) {
@@ -93,7 +93,7 @@ const darkenCandidateDeclarations = (candidate: StateRuleCandidate, theme: Theme
   }
 
   return darkenedDeclarations;
-};
+}
 
 // The darkened declarations depend only on the collection's candidates and the
 // theme — not on the themed root — so re-theming (a new compose window, a
@@ -106,7 +106,7 @@ const darkenedStateRulesByCollection = new WeakMap<
   Map<string, DarkenedStateRule[]>
 >();
 
-const getDarkenedStateRules = (collection: StylesheetCollection, theme: Theme) => {
+function getDarkenedStateRules(collection: StylesheetCollection, theme: Theme) {
   let darkenedRulesByThemeKey = darkenedStateRulesByCollection.get(collection);
 
   if (!darkenedRulesByThemeKey) {
@@ -132,7 +132,7 @@ const getDarkenedStateRules = (collection: StylesheetCollection, theme: Theme) =
   }
 
   return darkenedRules;
-};
+}
 
 // `:hover`/`:focus` styles live in author rules a getComputedStyle snapshot never
 // sees (the state isn't active at theme time), so they leak light. This rewrites

@@ -33,7 +33,7 @@ const hasLightColorToken = (value: string) => {
 const DARKENED_VALUE_CACHE_MAX_ENTRIES = 4096;
 const darkenedValuesByThemeKey = new Map<string, Map<string, string | null>>();
 
-const darkenLightValue = (value: string, theme: Theme) => {
+function darkenLightValue(value: string, theme: Theme) {
   const themeValueKey = getThemeValueKey(theme);
   let darkenedValueCache = darkenedValuesByThemeKey.get(themeValueKey);
 
@@ -65,7 +65,7 @@ const darkenLightValue = (value: string, theme: Theme) => {
   darkenedValueCache.set(value, darkenedValue);
 
   return darkenedValue;
-};
+}
 
 // Gmail's reading pane paints many surfaces via CSS custom properties (e.g.
 // `background: var(--pkw-background, #fff)`); a getComputedStyle snapshot of a
