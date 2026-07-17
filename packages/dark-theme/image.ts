@@ -46,6 +46,10 @@ function getAnalysisContext(
   if (!analysisCanvas) {
     analysisCanvas = document.createElement("canvas");
     analysisContext = analysisCanvas.getContext("2d", { willReadFrequently: true });
+
+    if (analysisContext) {
+      analysisContext.imageSmoothingEnabled = false;
+    }
   }
 
   if (!analysisContext) {
