@@ -346,16 +346,12 @@ function rememberImageDetails(url: string, details: ImageDetails | null) {
   imageDetailsCacheTextLength += textLength;
 }
 
-export async function getImageDetails(url: string): Promise<ImageDetails | null> {
-  const cachedEntry = imageDetailsCache.get(url);
+// The same url often appears many times in one batch (a logo repeated through a
+// message, a sprite shared by many elements); deduping in-flight analyses keeps
+// that from spawning parallel fetches and full decodes of the same image.
+const pendingImageDetailsByUrl = new Map<string, Promise<ImageDetails | null>>();
 
-  if (cachedEntry !== undefined) {
-    imageDetailsCache.delete(url);
-    imageDetailsCache.set(url, cachedEntry);
-
-    return cachedEntry.details;
-  }
-
+async function loadAndAnalyzeImage(url: string): Promise<ImageDetails | null> {
   let details: ImageDetails | null = null;
 
   try {
@@ -382,6 +378,31 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
   rememberImageDetails(url, details);
 
   return details;
+}
+
+export async function getImageDetails(url: string): Promise<ImageDetails | null> {
+  const cachedEntry = imageDetailsCache.get(url);
+
+  if (cachedEntry !== undefined) {
+    imageDetailsCache.delete(url);
+    imageDetailsCache.set(url, cachedEntry);
+
+    return cachedEntry.details;
+  }
+
+  const pendingDetails = pendingImageDetailsByUrl.get(url);
+
+  if (pendingDetails) {
+    return pendingDetails;
+  }
+
+  const detailsPromise = loadAndAnalyzeImage(url).finally(() => {
+    pendingImageDetailsByUrl.delete(url);
+  });
+
+  pendingImageDetailsByUrl.set(url, detailsPromise);
+
+  return detailsPromise;
 }
 
 const xmlEscapes: Record<string, string> = {
