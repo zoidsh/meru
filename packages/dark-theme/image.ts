@@ -235,12 +235,11 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-let snapshotCanvas: HTMLCanvasElement | null = null;
-
+// Created per call so the backing bitmap is released afterwards — a module-level
+// canvas would keep the last snapshotted image's pixels allocated for the
+// renderer's lifetime.
 function imageToDataURL(image: HTMLImageElement): string {
-  if (!snapshotCanvas) {
-    snapshotCanvas = document.createElement("canvas");
-  }
+  const snapshotCanvas = document.createElement("canvas");
 
   snapshotCanvas.width = image.naturalWidth;
   snapshotCanvas.height = image.naturalHeight;
