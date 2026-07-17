@@ -235,12 +235,11 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-let snapshotCanvas: HTMLCanvasElement | null = null;
-
+// Created per call so the backing bitmap is released afterwards — a module-level
+// canvas would keep the last snapshotted image's pixels allocated for the
+// renderer's lifetime.
 function imageToDataURL(image: HTMLImageElement): string {
-  if (!snapshotCanvas) {
-    snapshotCanvas = document.createElement("canvas");
-  }
+  const snapshotCanvas = document.createElement("canvas");
 
   snapshotCanvas.width = image.naturalWidth;
   snapshotCanvas.height = image.naturalHeight;
@@ -258,6 +257,10 @@ function imageToDataURL(image: HTMLImageElement): string {
   } catch {
     return "";
   }
+}
+
+export function isImageElementLarge(image: HTMLImageElement): boolean {
+  return image.naturalWidth * image.naturalHeight > LARGE_IMAGE_PIXEL_COUNT;
 }
 
 // A dark, mostly-transparent image is treated as a logo or icon that would
@@ -289,33 +292,66 @@ function shouldBuildDataURL(details: ImageDetails): boolean {
   return details.isLight && !details.isTransparent && !details.solidColor;
 }
 
-// Bounded because entries can carry a base64 dataURL of the full image — in a
-// long-lived mail client an unbounded per-url cache would accumulate megabytes.
+// Bounded by total text length, not just entry count: an entry can carry a
+// base64 dataURL of the full image, and a data: source url is itself the whole
+// image (it is the cache key even when analysis fails), so counting entries
+// alone would let a few hundred multi-megabyte strings pin tens of megabytes in
+// a long-lived mail client.
 const IMAGE_DETAILS_CACHE_MAX_ENTRIES = 256;
-const imageDetailsCache = new Map<string, ImageDetails | null>();
+const IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH = 8 * 1024 * 1024;
 
-function rememberImageDetails(url: string, details: ImageDetails | null) {
-  if (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES) {
-    const oldestUrl = imageDetailsCache.keys().next().value;
+type ImageDetailsCacheEntry = {
+  details: ImageDetails | null;
+  textLength: number;
+};
 
-    if (oldestUrl !== undefined) {
-      imageDetailsCache.delete(oldestUrl);
-    }
+const imageDetailsCache = new Map<string, ImageDetailsCacheEntry>();
+let imageDetailsCacheTextLength = 0;
+
+function getImageDetailsTextLength(url: string, details: ImageDetails | null): number {
+  if (!details || details.dataURL === url) {
+    return url.length;
   }
 
-  imageDetailsCache.set(url, details);
+  return url.length + details.dataURL.length;
 }
 
-export async function getImageDetails(url: string): Promise<ImageDetails | null> {
-  if (imageDetailsCache.has(url)) {
-    const cached = imageDetailsCache.get(url) ?? null;
+function evictOldestImageDetails() {
+  const oldestUrl = imageDetailsCache.keys().next().value;
 
-    imageDetailsCache.delete(url);
-    imageDetailsCache.set(url, cached);
-
-    return cached;
+  if (oldestUrl === undefined) {
+    return;
   }
 
+  imageDetailsCacheTextLength -= imageDetailsCache.get(oldestUrl)?.textLength ?? 0;
+  imageDetailsCache.delete(oldestUrl);
+}
+
+function rememberImageDetails(url: string, details: ImageDetails | null) {
+  const textLength = getImageDetailsTextLength(url, details);
+
+  if (textLength > IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH) {
+    return;
+  }
+
+  while (
+    imageDetailsCache.size > 0 &&
+    (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES ||
+      imageDetailsCacheTextLength + textLength > IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH)
+  ) {
+    evictOldestImageDetails();
+  }
+
+  imageDetailsCache.set(url, { details, textLength });
+  imageDetailsCacheTextLength += textLength;
+}
+
+// The same url often appears many times in one batch (a logo repeated through a
+// message, a sprite shared by many elements); deduping in-flight analyses keeps
+// that from spawning parallel fetches and full decodes of the same image.
+const pendingImageDetailsByUrl = new Map<string, Promise<ImageDetails | null>>();
+
+async function loadAndAnalyzeImage(url: string): Promise<ImageDetails | null> {
   let details: ImageDetails | null = null;
 
   try {
@@ -342,6 +378,31 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
   rememberImageDetails(url, details);
 
   return details;
+}
+
+export async function getImageDetails(url: string): Promise<ImageDetails | null> {
+  const cachedEntry = imageDetailsCache.get(url);
+
+  if (cachedEntry !== undefined) {
+    imageDetailsCache.delete(url);
+    imageDetailsCache.set(url, cachedEntry);
+
+    return cachedEntry.details;
+  }
+
+  const pendingDetails = pendingImageDetailsByUrl.get(url);
+
+  if (pendingDetails) {
+    return pendingDetails;
+  }
+
+  const detailsPromise = loadAndAnalyzeImage(url).finally(() => {
+    pendingImageDetailsByUrl.delete(url);
+  });
+
+  pendingImageDetailsByUrl.set(url, detailsPromise);
+
+  return detailsPromise;
 }
 
 const xmlEscapes: Record<string, string> = {
