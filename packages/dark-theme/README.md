@@ -18,8 +18,7 @@ controller.revert();
 ```
 
 Runs in a DOM context (it uses the CSSOM, `<canvas>`, and `Image`), so use it
-in a renderer or content script, not the Electron main process. Chromium only —
-it relies on `@scope`.
+in a renderer or content script, not the Electron main process. Chromium only.
 
 ## Options
 
@@ -32,8 +31,8 @@ engine flags:
   top of the remap. Default `100` / `100` / `0` / `0`.
 - `ignore?: Array<string | { selector: string; properties: string[] }>` — opt elements
   out of theming. A **string** selector keeps its matching elements and their descendants
-  fully original (they are excluded from the generated `@scope` blocks and skipped by the
-  inline pass) — e.g. coloured chips or badges. An **object** skips only the listed
+  fully original (the generated rules exclude them via `:not()` and the inline pass skips
+  them) — e.g. coloured chips or badges. An **object** skips only the listed
   `properties` on elements matching its `selector` (via `matches`), leaving those to CSS —
   the inline pass skips them, and the instance sheet re-emits the original stylesheet
   values for them so the shared darkened rules lose. `"border-color"` covers all four
@@ -70,8 +69,12 @@ target element:
 
 - **Scoped stylesheet re-emission.** The document's same-origin stylesheets are
   walked and every color-bearing declaration is re-emitted darkened into one shared
-  injected sheet, wrapped in `@scope ([data-dark-theme-root^="…"])` so the copies
-  apply only inside themed subtrees. Selectors are kept verbatim, so
+  injected sheet, each selector anchored with an
+  `:is([data-dark-theme-root^="…"], [data-dark-theme-root^="…"] *)` suffix so the
+  copies apply only inside themed subtrees (`@scope` can't serve this: its scoping
+  root is only matchable by `:scope`, and Gmail selectors name the root's own
+  classes). The suffix adds the same specificity to every copy, so the copies'
+  relative cascade order mirrors the originals'. Selectors are otherwise verbatim, so
   `:hover`/`:focus`/`:active`, `::before`/`::after`, and `::selection` styles are
   covered natively — no state simulation. Custom properties are typed by the
   properties that consume them (background/text/border/image, with one hop of
