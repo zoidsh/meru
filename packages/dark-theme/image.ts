@@ -289,31 +289,68 @@ function shouldBuildDataURL(details: ImageDetails): boolean {
   return details.isLight && !details.isTransparent && !details.solidColor;
 }
 
-// Bounded because entries can carry a base64 dataURL of the full image — in a
-// long-lived mail client an unbounded per-url cache would accumulate megabytes.
+// Bounded by total text length, not just entry count: an entry can carry a
+// base64 dataURL of the full image, and a data: source url is itself the whole
+// image (it is the cache key even when analysis fails), so counting entries
+// alone would let a few hundred multi-megabyte strings pin tens of megabytes in
+// a long-lived mail client.
 const IMAGE_DETAILS_CACHE_MAX_ENTRIES = 256;
-const imageDetailsCache = new Map<string, ImageDetails | null>();
+const IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH = 8 * 1024 * 1024;
 
-function rememberImageDetails(url: string, details: ImageDetails | null) {
-  if (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES) {
-    const oldestUrl = imageDetailsCache.keys().next().value;
+type ImageDetailsCacheEntry = {
+  details: ImageDetails | null;
+  textLength: number;
+};
 
-    if (oldestUrl !== undefined) {
-      imageDetailsCache.delete(oldestUrl);
-    }
+const imageDetailsCache = new Map<string, ImageDetailsCacheEntry>();
+let imageDetailsCacheTextLength = 0;
+
+function getImageDetailsTextLength(url: string, details: ImageDetails | null): number {
+  if (!details || details.dataURL === url) {
+    return url.length;
   }
 
-  imageDetailsCache.set(url, details);
+  return url.length + details.dataURL.length;
+}
+
+function evictOldestImageDetails() {
+  const oldestUrl = imageDetailsCache.keys().next().value;
+
+  if (oldestUrl === undefined) {
+    return;
+  }
+
+  imageDetailsCacheTextLength -= imageDetailsCache.get(oldestUrl)?.textLength ?? 0;
+  imageDetailsCache.delete(oldestUrl);
+}
+
+function rememberImageDetails(url: string, details: ImageDetails | null) {
+  const textLength = getImageDetailsTextLength(url, details);
+
+  if (textLength > IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH) {
+    return;
+  }
+
+  while (
+    imageDetailsCache.size > 0 &&
+    (imageDetailsCache.size >= IMAGE_DETAILS_CACHE_MAX_ENTRIES ||
+      imageDetailsCacheTextLength + textLength > IMAGE_DETAILS_CACHE_MAX_TEXT_LENGTH)
+  ) {
+    evictOldestImageDetails();
+  }
+
+  imageDetailsCache.set(url, { details, textLength });
+  imageDetailsCacheTextLength += textLength;
 }
 
 export async function getImageDetails(url: string): Promise<ImageDetails | null> {
-  if (imageDetailsCache.has(url)) {
-    const cached = imageDetailsCache.get(url) ?? null;
+  const cachedEntry = imageDetailsCache.get(url);
 
+  if (cachedEntry !== undefined) {
     imageDetailsCache.delete(url);
-    imageDetailsCache.set(url, cached);
+    imageDetailsCache.set(url, cachedEntry);
 
-    return cached;
+    return cachedEntry.details;
   }
 
   let details: ImageDetails | null = null;
