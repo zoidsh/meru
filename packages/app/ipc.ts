@@ -285,7 +285,7 @@ class Ipc {
     ipc.main.handle("about.getInfo", async () => ({
       version: app.getVersion(),
       os: `${os.type()} ${os.release()} (${os.arch()})`,
-      machineId: await machineId(),
+      deviceId: await machineId(),
     }));
 
     ipc.main.handle("about.exportLogs", async () => {
