@@ -584,6 +584,10 @@ function parseColorViaCanvas(colorText: string): RGBA | null {
     return null;
   }
 
+  // Cleared first so a translucent color can't composite over the previous
+  // parse — results must not depend on parse order, or the bounded cache's
+  // eviction would become observable.
+  parseCanvasContext.clearRect(0, 0, 1, 1);
   parseCanvasContext.fillStyle = colorText;
   parseCanvasContext.fillRect(0, 0, 1, 1);
 
