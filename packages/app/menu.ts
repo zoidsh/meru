@@ -1,4 +1,3 @@
-import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
@@ -9,7 +8,6 @@ import {
   dialog,
   Menu,
   type MenuItemConstructorOptions,
-  nativeImage,
   shell,
 } from "electron";
 import { accounts } from "@/accounts";
@@ -165,13 +163,7 @@ export class AppMenu {
           {
             label: `About ${app.name}`,
             click: () => {
-              dialog.showMessageBox({
-                icon: nativeImage.createFromPath(
-                  path.join(__dirname, "..", "..", "static", "Icon.png"),
-                ),
-                message: `${app.name}`,
-                detail: `Version: ${app.getVersion()}\n\nCreated by Tim Cheung <tim@meru.so>\n\nCopyright © ${new Date().getFullYear()} Meru`,
-              });
+              main.navigate("/settings/about");
             },
           },
           {
