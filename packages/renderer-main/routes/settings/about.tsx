@@ -41,7 +41,7 @@ function DiagnosticInfo() {
   const rows = [
     { label: "Application Version", value: info.version },
     { label: "Operating System", value: info.os },
-    { label: "Machine ID", value: info.machineId },
+    { label: "Device ID", value: info.machineId },
   ];
 
   return (
