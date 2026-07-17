@@ -533,6 +533,37 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     flushPseudoRules();
   };
 
+  // Without pruning, elements the page removes stay strongly held by the
+  // original-style map until revert()/destroy() — a detached-subtree leak that
+  // grows for as long as the controller lives — and their pseudo rules bloat
+  // the injected sheet forever. A node that was merely moved is connected again
+  // by the time the mutation records are processed, so it is kept; a pruned
+  // element that later re-attaches comes back through the refresh path, which
+  // rebuilds its pseudo rules from the still-alive weak caches.
+  const pruneRemovedElements = (removedRoots: Iterable<HTMLElement>) => {
+    let didPrunePseudoRules = false;
+
+    for (const removedRoot of removedRoots) {
+      if (removedRoot.isConnected) {
+        continue;
+      }
+
+      for (const element of [removedRoot, ...removedRoot.querySelectorAll<HTMLElement>("*")]) {
+        originalStyles.delete(element);
+
+        const pseudoId = element.getAttribute(PSEUDO_ATTRIBUTE);
+
+        if (pseudoId != null && pseudoRulesById.delete(pseudoId)) {
+          didPrunePseudoRules = true;
+        }
+      }
+    }
+
+    if (didPrunePseudoRules) {
+      flushPseudoRules();
+    }
+  };
+
   // Same read-then-write batching as processBatch: snapshotting after another
   // element's inline writes would force a style recalc per element.
   const refreshElements = (elements: Iterable<HTMLElement>) => {
@@ -596,16 +627,34 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       // inside an added ancestor), which would otherwise be snapshotted twice.
       const addedElements = new Set<HTMLElement>();
       const refreshTargets = new Set<HTMLElement>();
+      const removedElements = new Set<HTMLElement>();
+
+      // An added node that was already processed is a re-attachment (the page
+      // moved or restored it); it goes through the refresh path instead so the
+      // pseudo rules pruned while it was detached are rebuilt.
+      const collectAddedElement = (element: HTMLElement) => {
+        if (element.hasAttribute(PROCESSED_ATTRIBUTE)) {
+          refreshTargets.add(element);
+        } else {
+          addedElements.add(element);
+        }
+      };
 
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement) {
-              addedElements.add(node);
+              collectAddedElement(node);
 
               for (const descendant of node.querySelectorAll<HTMLElement>("*")) {
-                addedElements.add(descendant);
+                collectAddedElement(descendant);
               }
+            }
+          }
+
+          for (const node of mutation.removedNodes) {
+            if (node instanceof HTMLElement) {
+              removedElements.add(node);
             }
           }
         } else if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
@@ -619,6 +668,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
       if (refreshTargets.size > 0) {
         refreshElements(refreshTargets);
+      }
+
+      if (removedElements.size > 0) {
+        pruneRemovedElements(removedElements);
       }
     });
 
