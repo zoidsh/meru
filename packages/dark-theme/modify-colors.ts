@@ -203,6 +203,10 @@ function isPackableChannel(channelValue: number): boolean {
   return Number.isInteger(channelValue) && channelValue >= 0 && channelValue <= 255;
 }
 
+// Bounded like the parse cache: arbitrary email HTML feeds an open-ended stream
+// of distinct colors, and dropping entries only costs recomputation.
+const COLOR_CACHE_MAX_ENTRIES = 4096;
+
 function remapThroughCache(
   rgb: RGBA,
   themeState: ThemeState,
@@ -232,6 +236,11 @@ function remapThroughCache(
     a === 1
       ? rgbToHexString({ r: red, g: green, b: blue })
       : rgbToString({ r: red, g: green, b: blue, a });
+
+  if (cache.packed.size + cache.keyed.size >= COLOR_CACHE_MAX_ENTRIES) {
+    cache.packed.clear();
+    cache.keyed.clear();
+  }
 
   if (isPackable) {
     cache.packed.set(packedKey, color);
