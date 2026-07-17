@@ -325,3 +325,33 @@ export function getSolidColorImageURL(details: ImageDetails, color: string): str
 
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
+
+const imageUrlRegex = /https?:\/\/[^"')\s]+/g;
+
+// Matches urls directly rather than a `url(...)` wrapper: Gmail serves icons
+// through `image-set()`, where the url can appear unwrapped. A pragmatic
+// substitute for pixel analysis when the icon is cross-origin (CORS-tainted)
+// and so can't be inspected.
+export function createInvertImageUrlMatcher(
+  invertImageUrls: string[] | undefined,
+  invertImageExcludeFilenames: string[] | undefined,
+): (cssValue: string) => boolean {
+  const excludeFilenameSet = new Set(invertImageExcludeFilenames);
+
+  return (cssValue: string) => {
+    if (!invertImageUrls || invertImageUrls.length === 0) {
+      return false;
+    }
+
+    return [...cssValue.matchAll(imageUrlRegex)].some(([url]) => {
+      if (!url || !invertImageUrls.some((prefix) => url.startsWith(prefix))) {
+        return false;
+      }
+
+      const pathname = url.split(/[?#]/)[0] ?? url;
+      const filename = pathname.slice(pathname.lastIndexOf("/") + 1);
+
+      return !excludeFilenameSet.has(filename);
+    });
+  };
+}

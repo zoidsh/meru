@@ -17,8 +17,9 @@ controller.destroy();
 controller.revert();
 ```
 
-Runs in a DOM context (it uses `getComputedStyle`, `<canvas>`, and `Image`), so
-use it in a renderer or content script, not the Electron main process.
+Runs in a DOM context (it uses the CSSOM, `<canvas>`, and `Image`), so use it
+in a renderer or content script, not the Electron main process. Chromium only —
+it relies on `@scope`.
 
 ## Options
 
@@ -31,22 +32,19 @@ engine flags:
   top of the remap. Default `100` / `100` / `0` / `0`.
 - `ignore?: Array<string | { selector: string; properties: string[] }>` — opt elements
   out of theming. A **string** selector keeps its matching elements and their descendants
-  (via `closest`) fully original — e.g. coloured chips or badges. An **object** skips only
-  the listed `properties` on elements matching its `selector` (via `matches`), leaving those
-  to CSS — e.g. `{ selector: ".foo", properties: ["border-color"] }` lets a stylesheet set
-  the border colour, which the engine's inline override would otherwise win over.
-  `"border-color"` covers all four sides. The skip applies across every path the engine
-  darkens a property from — the inline override, `::before`/`::after` pseudo rules, and the
-  darkened `:hover`/`:focus` state rules — so an ignored property stays with CSS in every
-  state.
-- `observe?: boolean` — watch the subtree and keep theming content added later, and
-  re-theme an element when its class changes (so state-driven styles, like a shadow
-  a sticky toolbar gains on scroll, are darkened too). Defaults to `true`; call
-  `revert()` or `destroy()` to disconnect.
+  fully original (they are excluded from the generated `@scope` blocks and skipped by the
+  inline pass) — e.g. coloured chips or badges. An **object** skips only the listed
+  `properties` on elements matching its `selector` (via `matches`), leaving those to CSS —
+  the inline pass skips them, and the instance sheet re-emits the original stylesheet
+  values for them so the shared darkened rules lose. `"border-color"` covers all four
+  sides.
+- `observe?: boolean` — watch the subtree and keep theming content added later.
+  Defaults to `true`; call `revert()` or `destroy()` to disconnect.
 - `css?: string` — CSS injected into the document while the theme is active and
-  removed on `revert()`/`destroy()`. Use it for rules the inline-override engine can't
-  reach — `:hover`/`:focus` backgrounds, `::before` icons — scoped with the
-  `[data-dark-theme]` attribute so they apply only where the engine has themed.
+  removed on `revert()`/`destroy()`. Use it for hand-tuned overrides, scoped with the
+  `[data-dark-theme]` attribute (stamped on every themed element) — the attribute's
+  extra specificity plus the late injection order make these rules win over the
+  generated values.
 - `invertImageUrls?: string[]` — URL prefixes of dark monochrome icons (an element's
   `background-image`, or a pseudo-element's `content`/`background-image`) to
   blank-invert with `filter: invert(1)`. A pragmatic stand-in for pixel analysis when
@@ -59,37 +57,46 @@ engine flags:
 
 ## Controller
 
-- `revert()` — disconnect the observer, restore every element's original inline
-  styles, and release references. Use on a **still-live** subtree.
-- `destroy()` — disconnect the observer and release references **without** restoring
-  styles. Use when the subtree is being discarded (restoring would be wasted work).
+- `revert()` — disconnect the observers, remove the generated stylesheets, restore
+  every touched style attribute, and release references. Use on a **still-live**
+  subtree.
+- `destroy()` — disconnect and remove the generated stylesheets **without** restoring
+  attributes. Use when the subtree is being discarded (restoring would be wasted work).
 
-## Behavior notes
+## How it works
 
-- Light-valued CSS custom properties declared or referenced in the document's
-  **same-origin** stylesheets are darkened and re-declared scoped to
-  `[data-dark-theme]`, so surfaces painted via `var(--token)` are covered even in
-  states the element walk never observes (a variable inherits, so the dark value
-  cascades into the themed subtree and stops at its boundary). Properties declared
-  only in cross-origin stylesheets are missed (the same CORS wall as images). A
-  `css` override for the same property still wins, so hand-tune exceptions there.
-- `::before`/`::after` pseudo-elements are darkened too: their non-inheriting paint
-  (background, border, box-shadow, and gradient background-images) is remapped and
-  emitted into an injected stylesheet keyed to the owning element. Their `color`
-  isn't touched — it inherits the element's own themed color. A pseudo **content
-  image** can't be colour-inspected when it's cross-origin (the same CORS limit as
-  `<img>`); if its URL matches `invertImageUrls` it's blank-inverted, otherwise left
-  alone. The invert decision is re-evaluated when the element's class/state changes, so an
-  icon whose URL swaps on toggle (e.g. a star) gains or loses the invert to match.
-- `:hover`/`:focus`/`:active` styles — which a computed-style snapshot can't see,
-  since the state isn't active at theme time — are read from the document's
-  **same-origin** author rules, darkened, and re-emitted with each selector kept
-  verbatim inside a CSS `@scope (root)` block, so they apply only within the themed
-  subtree. Rules declared only in cross-origin stylesheets are missed (same CORS
-  limit).
-- Colors apply synchronously; image analysis resolves shortly after (async).
-- Idempotent — re-invoking only themes not-yet-themed elements, so it's safe to call
-  again as the subtree grows.
-- Overrides are inline `!important`; use `ignore` for elements that must keep their
-  own colors (a stylesheet rule can't override an inline `!important`).
-- Cross-origin images need CORS to be analyzed; otherwise they're left untouched.
+Two cooperating layers, modeled on Dark Reader's dynamic engine but scoped to a
+target element:
+
+- **Scoped stylesheet re-emission.** The document's same-origin stylesheets are
+  walked and every color-bearing declaration is re-emitted darkened into one shared
+  injected sheet, wrapped in `@scope ([data-dark-theme-root^="…"])` so the copies
+  apply only inside themed subtrees. Selectors are kept verbatim, so
+  `:hover`/`:focus`/`:active`, `::before`/`::after`, and `::selection` styles are
+  covered natively — no state simulation. Custom properties are typed by the
+  properties that consume them (background/text/border/image, with one hop of
+  var-to-var propagation) and re-declared darkened with the matching pole; untyped
+  variables are left alone. Source `!important` is mirrored, so the page's own
+  cascade ordering is preserved. Multiple live instances (a message pane plus
+  several compose windows) share one darkened copy; per-instance sheets carry the
+  root background fallback, ignore counter-rules, and icon invert rules. The walk
+  is cached per rule text, refreshed by a `<head>` observer plus a cheap rule-count
+  fingerprint polled once a second (for CSSOM-only edits).
+- **Inline overrides.** Email HTML carries its colors in `style=` attributes and
+  legacy presentational attributes (`bgcolor`, `color`, `fill`, `stroke`). Each
+  affected element gets marker attributes plus `--dark-theme-inline-*` custom
+  properties, driven by one static rule block — the author's style attribute text is
+  never rewritten, so `revert()` restores it exactly. A MutationObserver keeps the
+  pass current for added nodes and attribute changes.
+
+Image handling: a dark, mostly-transparent `<img>` (a logo) is inverted after canvas
+analysis; stylesheet `background-image` url layers are analyzed asynchronously and
+replaced (dark transparent icons inverted, large light photos hidden, light solids
+replaced with a darkened solid) via a patch sheet; gradients are darkened
+synchronously. Cross-origin images can't be analyzed (CORS) — use `invertImageUrls`
+for those.
+
+Known limits, accepted for the Chromium + Gmail use case: cross-origin stylesheets
+are skipped (same CORS wall as images); `@layer` is flattened; variable typing is
+one hop deep; keyword colors inside compound values (`1px solid white`) aren't
+darkened; adopted stylesheets, shadow DOM, and iframes aren't walked.
