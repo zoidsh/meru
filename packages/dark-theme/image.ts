@@ -11,6 +11,7 @@ export type ImageDetails = {
   isLight: boolean;
   isTransparent: boolean;
   isLarge: boolean;
+  hasPhotographicTonalRange: boolean;
   solidColor: RGBA | null;
 };
 
@@ -30,6 +31,14 @@ const DARK_IMAGE_PIXEL_RATIO = 0.7;
 const LIGHT_IMAGE_PIXEL_RATIO = 0.7;
 const TRANSPARENT_IMAGE_PIXEL_RATIO = 0.1;
 const SOLID_IMAGE_LIGHTNESS_SPREAD = 0.1;
+
+// Flat icon artwork occupies only a few lightness bands (fill color, maybe
+// text or an accent), while a photograph's continuous shading spreads across
+// many. Buckets below the significance floor are ignored so anti-aliased edge
+// pixels don't count as extra bands.
+const LIGHTNESS_BUCKET_COUNT = 10;
+const SIGNIFICANT_LIGHTNESS_BUCKET_PIXEL_RATIO = 0.01;
+const PHOTOGRAPHIC_IMAGE_LIGHTNESS_BUCKET_COUNT = 4;
 
 let analysisCanvas: HTMLCanvasElement | null = null;
 let analysisContext: CanvasRenderingContext2D | null = null;
@@ -111,6 +120,13 @@ function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
     return null;
   }
 
+  return analyzeImagePixelData(pixels, sourceWidth * sourceHeight);
+}
+
+export function analyzeImagePixelData(
+  pixels: Uint8ClampedArray,
+  sourcePixelCount: number,
+): ImageAnalysis {
   let transparentPixelCount = 0;
   let darkPixelCount = 0;
   let lightPixelCount = 0;
@@ -120,6 +136,8 @@ function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
   let greenSum = 0;
   let blueSum = 0;
   let alphaSum = 0;
+
+  const lightnessBucketCounts = new Uint32Array(LIGHTNESS_BUCKET_COUNT);
 
   // One 32-bit read per pixel instead of four byte reads. Chromium only ships
   // on little-endian platforms, so the RGBA bytes always land as R in the low
@@ -161,10 +179,29 @@ function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
     if (lightness > maxLightness) {
       maxLightness = lightness;
     }
+
+    const lightnessBucketIndex = Math.min(
+      LIGHTNESS_BUCKET_COUNT - 1,
+      Math.floor(lightness * LIGHTNESS_BUCKET_COUNT),
+    );
+
+    lightnessBucketCounts[lightnessBucketIndex] =
+      (lightnessBucketCounts[lightnessBucketIndex] ?? 0) + 1;
   }
 
-  const totalPixelCount = width * height;
+  const totalPixelCount = pixelLanes.length;
   const opaquePixelCount = totalPixelCount - transparentPixelCount;
+
+  let significantLightnessBucketCount = 0;
+
+  for (const lightnessBucketCount of lightnessBucketCounts) {
+    if (
+      opaquePixelCount > 0 &&
+      lightnessBucketCount / opaquePixelCount >= SIGNIFICANT_LIGHTNESS_BUCKET_PIXEL_RATIO
+    ) {
+      significantLightnessBucketCount++;
+    }
+  }
 
   const isFullyOpaque = alphaSum === totalPixelCount * 255;
   const isSolid = isFullyOpaque && maxLightness - minLightness < SOLID_IMAGE_LIGHTNESS_SPREAD;
@@ -173,7 +210,9 @@ function analyzeImagePixels(image: HTMLImageElement): ImageAnalysis | null {
     isDark: opaquePixelCount > 0 && darkPixelCount / opaquePixelCount >= DARK_IMAGE_PIXEL_RATIO,
     isLight: opaquePixelCount > 0 && lightPixelCount / opaquePixelCount >= LIGHT_IMAGE_PIXEL_RATIO,
     isTransparent: transparentPixelCount / totalPixelCount >= TRANSPARENT_IMAGE_PIXEL_RATIO,
-    isLarge: sourceWidth * sourceHeight > LARGE_IMAGE_PIXEL_COUNT,
+    isLarge: sourcePixelCount > LARGE_IMAGE_PIXEL_COUNT,
+    hasPhotographicTonalRange:
+      significantLightnessBucketCount >= PHOTOGRAPHIC_IMAGE_LIGHTNESS_BUCKET_COUNT,
     solidColor:
       isSolid && opaquePixelCount > 0
         ? {
@@ -221,19 +260,33 @@ function imageToDataURL(image: HTMLImageElement): string {
   }
 }
 
+// A dark, mostly-transparent image is treated as a logo or icon that would
+// vanish against the dark background, so it gets inverted — unless it is large
+// or spans a photographic tonal range, which marks it as a photo (e.g. a dark
+// product shot on a transparent background) that inverting would ruin.
+export function shouldInvertDarkImage(details: ImageDetails): boolean {
+  return (
+    details.isDark &&
+    details.isTransparent &&
+    !details.isLarge &&
+    !details.hasPhotographicTonalRange &&
+    details.width > 2
+  );
+}
+
 // Only the classifications that end up as a filtered SVG replacement (a dark
 // transparent icon to invert, a light non-solid image to darken) ever read the
 // dataURL, so it is built just for those instead of for every analyzed image.
-function shouldBuildDataURL(analysis: ImageAnalysis, image: HTMLImageElement): boolean {
-  if (analysis.isLarge) {
+function shouldBuildDataURL(details: ImageDetails): boolean {
+  if (details.isLarge) {
     return false;
   }
 
-  if (analysis.isDark && analysis.isTransparent && image.naturalWidth > 2) {
+  if (shouldInvertDarkImage(details)) {
     return true;
   }
 
-  return analysis.isLight && !analysis.isTransparent && !analysis.solidColor;
+  return details.isLight && !details.isTransparent && !details.solidColor;
 }
 
 // Bounded because entries can carry a base64 dataURL of the full image — in a
@@ -270,19 +323,17 @@ export async function getImageDetails(url: string): Promise<ImageDetails | null>
     const analysis = analyzeImagePixels(image);
 
     if (analysis) {
-      let dataURL = "";
-
-      if (shouldBuildDataURL(analysis, image)) {
-        dataURL = url.startsWith("data:") ? url : imageToDataURL(image);
-      }
-
       details = {
         src: url,
-        dataURL,
+        dataURL: "",
         width: image.naturalWidth,
         height: image.naturalHeight,
         ...analysis,
       };
+
+      if (shouldBuildDataURL(details)) {
+        details.dataURL = url.startsWith("data:") ? url : imageToDataURL(image);
+      }
     }
   } catch {
     details = null;

@@ -3,7 +3,7 @@ import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
 import { coversProperty, type IgnorePropertyRule } from "./ignore";
-import { getImageDetails } from "./image";
+import { getImageDetails, shouldInvertDarkImage } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { buildDarkStateOverrides } from "./state-rules";
 import { INJECTED_STYLE_ATTRIBUTE } from "./stylesheets";
@@ -661,9 +661,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
   };
 }
 
-// A dark, mostly-transparent <img> (a logo or icon) would vanish against the
-// dark background, so it is inverted. Photos and colorful images fall outside
-// the dark-and-transparent classification and are left untouched.
 function invertDarkImageElement(image: HTMLImageElement, theme: Theme, isCancelled: () => boolean) {
   const source = image.currentSrc || image.src;
 
@@ -676,7 +673,7 @@ function invertDarkImageElement(image: HTMLImageElement, theme: Theme, isCancell
       return;
     }
 
-    if (details.isDark && details.isTransparent && details.width > 2) {
+    if (shouldInvertDarkImage(details)) {
       image.style.setProperty("filter", getCSSFilterValue(theme), "important");
     }
   });

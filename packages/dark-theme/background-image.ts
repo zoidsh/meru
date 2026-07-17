@@ -4,6 +4,7 @@ import {
   getImageDetails,
   getSolidColorImageURL,
   type ImageDetails,
+  shouldInvertDarkImage,
 } from "./image";
 import { clamp } from "./math";
 import { modifyBackgroundColor } from "./modify-colors";
@@ -106,7 +107,7 @@ function buildUrlLayerReplacement(details: ImageDetails, theme: Theme): string |
     return "none";
   }
 
-  if (details.isDark && details.isTransparent && details.width > 2) {
+  if (shouldInvertDarkImage(details)) {
     if (!details.dataURL) {
       return null;
     }
