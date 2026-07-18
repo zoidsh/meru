@@ -25,6 +25,7 @@ export const accountConfigSchema = z.object({
   label: z.string(),
   color: z.enum(accountColors).nullable(),
   selected: z.boolean(),
+  disabled: z.boolean(),
   notifications: z.boolean(),
   gmail: z.object({
     unreadBadge: z.boolean(),
@@ -41,6 +42,7 @@ export const accountConfigInputSchema = accountConfigSchema
   .pick({
     label: true,
     color: true,
+    disabled: true,
     notifications: true,
   })
   .extend({

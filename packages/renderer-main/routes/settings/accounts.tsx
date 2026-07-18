@@ -27,9 +27,10 @@ import {
   SelectValue,
 } from "@meru/ui/components/select";
 import { Switch } from "@meru/ui/components/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@meru/ui/components/tooltip";
 import { cn } from "@meru/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
+import { GripVerticalIcon, InfoIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -42,16 +43,19 @@ function AccountForm({
     label: "",
     color: null,
     gmail: { unreadBadge: true, unifiedInbox: true },
+    disabled: false,
     notifications: true,
   },
   placeholder = "Work",
   onSubmit,
   type,
+  isOnlyEnabledAccount = false,
 }: {
   account?: AccountConfigInput;
   placeholder?: string;
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
+  isOnlyEnabledAccount?: boolean;
 }) {
   const form = useForm({
     defaultValues: account,
@@ -200,6 +204,30 @@ function AccountForm({
               </Field>
             )}
           </form.Field>
+          {type === "edit" && (
+            <form.Field name="disabled">
+              {(field) => (
+                <Field orientation="horizontal" className="w-fit">
+                  <Switch
+                    id={field.name}
+                    name={field.name}
+                    checked={field.state.value}
+                    onCheckedChange={field.handleChange}
+                    disabled={isOnlyEnabledAccount}
+                  />
+                  <FieldLabel>Disabled</FieldLabel>
+                  {isOnlyEnabledAccount && (
+                    <Tooltip>
+                      <TooltipTrigger className="text-muted-foreground">
+                        <InfoIcon className="size-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>At least one account must stay enabled.</TooltipContent>
+                    </Tooltip>
+                  )}
+                </Field>
+              )}
+            </form.Field>
+          )}
         </FieldSet>
       </FieldGroup>
       <div className="flex items-center justify-end">
@@ -249,6 +277,12 @@ function AddAccountButton() {
 function EditAccountButton({ account }: { account: AccountConfig }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const { config } = useConfig();
+
+  const isOnlyEnabledAccount =
+    !account.disabled &&
+    (config?.accounts.filter((accountConfig) => !accountConfig.disabled).length ?? 0) <= 1;
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
@@ -264,6 +298,7 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
         </DialogHeader>
         <AccountForm
           account={account}
+          isOnlyEnabledAccount={isOnlyEnabledAccount}
           onSubmit={(values) => {
             ipc.main.send("accounts.updateAccount", {
               ...account,
@@ -276,7 +311,8 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
               account.gmail.unifiedInbox !== values.gmail.unifiedInbox ||
-              account.notifications !== values.notifications
+              account.notifications !== values.notifications ||
+              account.disabled !== values.disabled
             ) {
               restartRequiredToast();
             }
@@ -323,8 +359,9 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.gmail.unreadBadge || account.notifications) && (
+        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
+            {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
