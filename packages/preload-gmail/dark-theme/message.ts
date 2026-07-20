@@ -1,5 +1,5 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
-import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
+import { GMAIL_PRELOAD_ARGUMENTS, isGmailMessageHash } from "@meru/shared/gmail";
 import { $ } from "select-dom";
 import messageCss from "./message.css";
 
@@ -13,7 +13,7 @@ export function darkThemeMessage() {
     return;
   }
 
-  const messageElement = $(".AO .nH.g.id") ?? null;
+  const messageElement = (isGmailMessageHash(window.location.hash) && $("div[role=main]")) || null;
 
   if (messageElement === themedElement) {
     return;

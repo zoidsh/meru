@@ -118,3 +118,7 @@ export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
     })
     .join("\n");
 }
+
+export function isGmailMessageHash(hash: string) {
+  return GMAIL_MESSAGE_HASH_REGEXP.test(hash);
+}
