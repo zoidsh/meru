@@ -1,6 +1,6 @@
 {
   "name": "meru",
-  "version": "3.56.1",
+  "version": "3.56.2",
   "private": true,
   "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
   "author": "Tim Cheung <tim@meru.so>",
@@ -8,7 +8,6 @@
   "workspaces": [
     "packages/*"
   ],
-  "type": "module",
   "main": "build-js/app.js",
   "scripts": {
     "build:clean-dist": "bun run scripts/clean-dist.ts",
