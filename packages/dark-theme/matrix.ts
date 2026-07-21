@@ -117,7 +117,7 @@ function grayscaleMatrix(amount: number): ColorMatrix {
 }
 
 function multiplyColorMatrices(left: ColorMatrix, right: ColorMatrix): ColorMatrix {
-  const product: number[] = new Array(25);
+  const product: number[] = Array.from({ length: 25 });
 
   for (let row = 0; row < 5; row++) {
     for (let column = 0; column < 5; column++) {

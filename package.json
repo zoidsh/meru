@@ -8,21 +8,22 @@
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "main": "build-js/app.js",
   "scripts": {
-    "postinstall": "electron-builder install-app-deps",
+    "build:clean-dist": "bun run scripts/clean-dist.ts",
+    "build:js": "bun run scripts/build.ts",
+    "build:linux": "bun run build:js && bun run build:clean-dist && electron-builder --linux",
+    "build:mac": "bun run build:js && bun run build:clean-dist && electron-builder --mac",
+    "build:win": "bun run build:js && bun run build:clean-dist && electron-builder --win",
     "dev": "bun run scripts/build.ts --dev",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
+    "postinstall": "electron-builder install-app-deps",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",
-    "types:ci": "tsc && bun run --filter='*' types",
-    "build:clean-dist": "bun run scripts/clean-dist.ts",
-    "build:js": "bun run scripts/build.ts",
-    "build:mac": "bun run build:js && bun run build:clean-dist && electron-builder --mac",
-    "build:linux": "bun run build:js && bun run build:clean-dist && electron-builder --linux",
-    "build:win": "bun run build:js && bun run build:clean-dist && electron-builder --win"
+    "types:ci": "tsc && bun run --filter='*' types"
   },
   "devDependencies": {
     "@base-ui/react": "^1.4.0",
@@ -38,6 +39,7 @@
     "@tanstack/react-form": "^1.28.5",
     "@tanstack/react-query": "^5.90.5",
     "@tanstack/react-table": "^8.21.3",
+    "@timche/oxc-configs": "^1.0.6",
     "@total-typescript/tsconfig": "^1.0.4",
     "@types/bun": "^1.3.12",
     "@types/react": "^19.1.16",
