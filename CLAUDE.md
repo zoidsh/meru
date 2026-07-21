@@ -165,7 +165,6 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
 - Pull request titles follow the same style as commit summaries: short, lowercase, imperative, no type prefix.
 - Keep each commit to a single logical change.
-- After pushing a feature branch's work to `main`, delete that branch (locally and on the remote) — it's no longer needed once merged.
 - Always rebase onto the latest `main` before pushing (`git pull --rebase origin main`) — never merge. `main` must stay linear; merge commits are not allowed on it.
 
 ## Release Notes
