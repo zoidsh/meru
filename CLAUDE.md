@@ -1,14 +1,14 @@
 # Meru – Claude Code Guidelines
 
-## FIRST STEP — Required Before Any Work
+## Dependencies — Install Before Code Changes or Scripts
 
-**Run this before doing anything else in a session, no exceptions:**
+**Run this before making any code changes or running any scripts, no exceptions:**
 
 ```sh
 bun install --frozen-lockfile
 ```
 
-This installs dependencies and runs postinstall scripts (including the lefthook pre-commit hook). Skipping this causes missing packages, broken type checks, and unwanted build artifacts.
+This installs dependencies and runs postinstall scripts (including the lefthook pre-commit hook). Skipping this causes missing packages, broken type checks, and unwanted build artifacts. Answering questions or exploring the codebase doesn't require it — only run it once you're about to change code or run a script.
 
 ## Variable Naming
 
