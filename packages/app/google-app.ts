@@ -4,6 +4,7 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
+  app,
   BrowserWindow,
   type BrowserWindowConstructorOptions,
   clipboard,
@@ -383,7 +384,7 @@ export class GoogleApp {
     this.view.webContents.on("did-navigate", this.broadcastNavigationState);
     this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.on("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
@@ -393,7 +394,7 @@ export class GoogleApp {
     this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
     this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
     this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.removeListener("page-title-updated", this.broadcastPageTitle);
+    this.view.webContents.removeListener("page-title-updated", this.handlePageTitleUpdated);
     this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
@@ -414,12 +415,23 @@ export class GoogleApp {
     });
   };
 
-  broadcastPageTitle = () => {
-    ipc.renderer.send(
-      this.window.webContents,
-      "googleApp.pageTitleChanged",
-      this.view.webContents.getTitle(),
-    );
+  handlePageTitleUpdated = () => {
+    const pageTitle = this.view.webContents.getTitle();
+
+    ipc.renderer.send(this.window.webContents, "googleApp.pageTitleChanged", pageTitle);
+
+    const title = pageTitle || (this.app ? supportedGoogleApps[this.app] : "");
+
+    if (!title) {
+      this.window.setTitle(app.name);
+
+      return;
+    }
+
+    const accountLabelPrefix =
+      config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
+
+    this.window.setTitle(`${accountLabelPrefix}${title} - ${app.name}`);
   };
 
   broadcastLoadingState = () => {
