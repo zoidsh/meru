@@ -1,4 +1,6 @@
 import { dayjs } from "@meru/shared/renderer/date";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@meru/ui/components/empty";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@meru/ui/components/item";
@@ -11,6 +13,13 @@ import z from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 
 export function VersionHistorySettings() {
+  const { data: info } = useQuery({
+    queryKey: ["about", "info"],
+    queryFn: () => ipc.main.invoke("about.getInfo"),
+  });
+
+  const currentTagName = info ? `v${info.version}` : undefined;
+
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["github", "releases"],
     queryFn: async () => {
@@ -64,7 +73,10 @@ export function VersionHistorySettings() {
     return data.map((release) => (
       <Item key={release.id} variant="muted">
         <ItemContent>
-          <ItemTitle className="text-2xl font-semibold">{release.tag_name}</ItemTitle>
+          <div className="flex items-center justify-between gap-2">
+            <ItemTitle className="text-2xl font-semibold">{release.tag_name}</ItemTitle>
+            {release.tag_name === currentTagName ? <Badge>Current version</Badge> : null}
+          </div>
           <ItemDescription>{dayjs(release.published_at).fromNow()}</ItemDescription>
           <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 mt-6 text-sm">
             <Markdown
@@ -84,8 +96,9 @@ export function VersionHistorySettings() {
 
   return (
     <>
-      <SettingsHeader>
+      <SettingsHeader className="flex-col items-start justify-start gap-2">
         <SettingsTitle>Version History</SettingsTitle>
+        {info ? <Badge variant="secondary">v{info.version}</Badge> : null}
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>
     </>
