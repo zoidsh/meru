@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
-import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 
 export function VersionHistorySettings() {
   const { data: info } = useQuery({
@@ -96,10 +96,10 @@ export function VersionHistorySettings() {
 
   return (
     <>
-      <SettingsHeader className="flex-col items-start justify-start gap-2">
+      <SettingsHeader className="flex-col items-start justify-start gap-1">
         <SettingsTitle>Version History</SettingsTitle>
         {info ? (
-          <Badge variant="secondary">Currently installed version v{info.version}</Badge>
+          <SettingsDescription>Currently installed version v{info.version}</SettingsDescription>
         ) : null}
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>
