@@ -99,7 +99,10 @@ export function VersionHistorySettings() {
       <SettingsHeader className="flex-col items-start justify-start gap-1">
         <SettingsTitle>Version History</SettingsTitle>
         {info ? (
-          <SettingsDescription>Currently installed version v{info.version}</SettingsDescription>
+          <div className="flex items-center gap-2">
+            <SettingsDescription>Current version:</SettingsDescription>
+            <Badge variant="secondary">v{info.version}</Badge>
+          </div>
         ) : null}
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>
