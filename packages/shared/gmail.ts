@@ -62,7 +62,46 @@ export type GmailState = {
   attentionRequired: boolean;
 };
 
-export const GMAIL_MESSAGE_HASH_REGEXP = /#[^/]+\/([A-Za-z0-9]{15,})$/;
+const GMAIL_MESSAGE_ID_REGEXP = /^[A-Za-z0-9]{15,}$/;
+
+const GMAIL_QUERY_HASH_VIEWS = new Set([
+  "search",
+  "advanced-search",
+  "label",
+  "category",
+  "section_query",
+  "circle",
+]);
+
+export function parseGmailMessageId(hash: string) {
+  const [hashPath] = hash.replace(/^#/, "").split("?");
+
+  if (!hashPath) {
+    return null;
+  }
+
+  const hashSegments = hashPath.split("/");
+
+  const [hashView] = hashSegments;
+
+  if (!hashView) {
+    return null;
+  }
+
+  const messageIdIndex = GMAIL_QUERY_HASH_VIEWS.has(hashView) ? 2 : 1;
+
+  if (hashSegments.length !== messageIdIndex + 1) {
+    return null;
+  }
+
+  const messageId = hashSegments[messageIdIndex];
+
+  if (!messageId || !GMAIL_MESSAGE_ID_REGEXP.test(messageId)) {
+    return null;
+  }
+
+  return messageId;
+}
 
 type GmailLabelTextScope = "none" | "self" | "descendants";
 
@@ -117,8 +156,4 @@ export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
       });
     })
     .join("\n");
-}
-
-export function isGmailMessageHash(hash: string) {
-  return GMAIL_MESSAGE_HASH_REGEXP.test(hash);
 }

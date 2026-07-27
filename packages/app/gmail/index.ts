@@ -10,6 +10,7 @@ import {
   GMAIL_URL,
   type GmailInboxMessage,
   generateGmailLabelColorsCss,
+  parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { getGoogleAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
@@ -409,11 +410,7 @@ export class Gmail {
     });
 
     this.view.webContents.on("did-navigate-in-page", (_event, url) => {
-      const hash = new URL(url).hash;
-
-      const messageIdMatch = hash.match(/#[^/]+\/([A-Za-z0-9]{15,})$/);
-
-      this.store.setState({ messageId: messageIdMatch?.[1] || null });
+      this.store.setState({ messageId: parseGmailMessageId(new URL(url).hash) });
     });
 
     openViewDevToolsInDev(this.view);
