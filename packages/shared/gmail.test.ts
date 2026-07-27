@@ -15,7 +15,7 @@ describe("parseGmailMessageId", () => {
   });
 
   test("parses a message opened from advanced search", () => {
-    expect(parseGmailMessageId(`#advanced-search/from%3Dtim%40cheung.io/${MESSAGE_ID}`)).toBe(
+    expect(parseGmailMessageId(`#advanced-search/from%3Dsender%40example.com/${MESSAGE_ID}`)).toBe(
       MESSAGE_ID,
     );
   });
