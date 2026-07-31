@@ -171,12 +171,7 @@ class Accounts {
       }),
     );
 
-    const selectedAccount = this.getSelectedAccount();
-
-    main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
-
-    selectedAccount.instance.gmail.updateViewBounds();
-    selectedAccount.instance.gmail.view.webContents.focus();
+    this.refreshSelectedAccountView();
   }
 
   selectPreviousAccount() {
