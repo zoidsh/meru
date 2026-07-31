@@ -178,6 +178,14 @@ export function AppearanceSettings() {
               description="Limit the minimum size of the application window to prevent it from being too small."
               configKey="window.restrictMinimumSize"
             />
+            {platform.isLinux && (
+              <ConfigSwitchField
+                label="Use System Title Bar and Borders"
+                description="Let the window manager draw the window frame instead of showing the built-in window controls."
+                configKey="window.useSystemTitleBar"
+                restartRequired
+              />
+            )}
           </FieldSet>
         </FieldGroup>
       </SettingsContent>

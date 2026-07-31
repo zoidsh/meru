@@ -162,6 +162,7 @@ export type Config = {
     maximized: boolean;
   };
   "window.restrictMinimumSize": boolean;
+  "window.useSystemTitleBar": boolean;
   "trial.expired": boolean;
   "googleApps.openInApp": boolean;
   "googleApps.openInAppExcludedApps": SupportedGoogleApp[];

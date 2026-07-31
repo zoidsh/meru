@@ -9,6 +9,7 @@ import {
   screen,
   WebContentsView,
 } from "electron";
+import { config } from "@/config";
 import { isLinuxWindowControlsEnabled } from "./linux";
 
 const CASCADE_OFFSET = 30;
@@ -75,6 +76,12 @@ export function getBackgroundColor() {
 }
 
 export function getTitleBarOptions() {
+  if (platform.isLinux && config.get("window.useSystemTitleBar")) {
+    return {
+      titleBarOverlay: false,
+    };
+  }
+
   const titleBarOverlay =
     !platform.isLinux || isLinuxWindowControlsEnabled()
       ? {

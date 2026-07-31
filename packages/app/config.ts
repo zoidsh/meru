@@ -88,6 +88,7 @@ export const config = new Store<Config>({
       maximized: false,
     },
     "window.restrictMinimumSize": true,
+    "window.useSystemTitleBar": false,
     "trial.expired": false,
     "googleApps.openInApp": true,
     "googleApps.openInAppExcludedApps": [],
