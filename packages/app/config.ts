@@ -51,7 +51,7 @@ export const config = new Store<Config>({
     "notifications.showSubject": true,
     "notifications.showSummary": true,
     "notifications.playSound": true,
-    "notifications.allowFromGoogleApps": false,
+    "notifications.allowFromWorkspaceApps": false,
     "notifications.sound": "linen",
     "notifications.volume": 1,
     "notifications.downloadCompleted": true,
@@ -89,12 +89,12 @@ export const config = new Store<Config>({
     },
     "window.restrictMinimumSize": true,
     "trial.expired": false,
-    "googleApps.openInApp": true,
-    "googleApps.openInAppExcludedApps": [],
-    "googleApps.openAppsInNewWindow": false,
-    "googleApps.pinnedApps": [],
-    "googleApps.showAccountColor": true,
-    "googleApps.showAccountLabel": true,
+    "workspaceApps.openInApp": true,
+    "workspaceApps.openInAppExcludedApps": [],
+    "workspaceApps.openAppsInNewWindow": false,
+    "workspaceApps.pinnedApps": [],
+    "workspaceApps.showAccountColor": true,
+    "workspaceApps.showAccountLabel": true,
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,
@@ -184,6 +184,7 @@ export const config = new Store<Config>({
       );
 
       if (typeof openGoogleAppsInExternalBrowser === "boolean") {
+        // @ts-expect-error: `googleApps.openInApp` is now 'workspaceApps.openInApp'
         store.set("googleApps.openInApp", !openGoogleAppsInExternalBrowser);
       }
     },
@@ -311,6 +312,30 @@ export const config = new Store<Config>({
 
         // @ts-expect-error
         store.delete("hardwareAcceleration");
+      }
+    },
+    ">3.57.0": (store) => {
+      const renamedKeys = [
+        ["googleApps.openInApp", "workspaceApps.openInApp"],
+        ["googleApps.openInAppExcludedApps", "workspaceApps.openInAppExcludedApps"],
+        ["googleApps.openAppsInNewWindow", "workspaceApps.openAppsInNewWindow"],
+        ["googleApps.pinnedApps", "workspaceApps.pinnedApps"],
+        ["googleApps.showAccountColor", "workspaceApps.showAccountColor"],
+        ["googleApps.showAccountLabel", "workspaceApps.showAccountLabel"],
+        ["notifications.allowFromGoogleApps", "notifications.allowFromWorkspaceApps"],
+      ] as const;
+
+      for (const [previousKey, renamedKey] of renamedKeys) {
+        // @ts-expect-error: `googleApps.*` keys are now 'workspaceApps.*'
+        const value = store.get(previousKey);
+
+        if (typeof value !== "undefined") {
+          // @ts-expect-error
+          store.set(renamedKey, value);
+        }
+
+        // @ts-expect-error
+        store.delete(previousKey);
       }
     },
   },

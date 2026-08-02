@@ -1,10 +1,10 @@
-import type { GoogleAppsPinnedApp } from "@meru/shared/types";
+import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
 import type { ComponentProps } from "react";
 
-export function GoogleAppIcon({
+export function WorkspaceAppIcon({
   app,
   ...props
-}: { app: GoogleAppsPinnedApp } & ComponentProps<"svg">) {
+}: { app: WorkspaceAppsPinnedApp } & ComponentProps<"svg">) {
   switch (app) {
     case "calendar": {
       return (

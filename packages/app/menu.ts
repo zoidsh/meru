@@ -13,12 +13,12 @@ import {
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
-import { GoogleApp, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from "@/google-app";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
+import { WorkspaceApp, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from "@/workspace-app";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
 import { appState } from "./state";
@@ -108,7 +108,7 @@ export class AppMenu {
 
     const zoomIn = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomIn();
+        WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.zoomIn();
 
         return;
       }
@@ -128,7 +128,7 @@ export class AppMenu {
 
     const zoomOut = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        GoogleApp.tryFromWebContents(focusedWindow.webContents)?.zoomOut();
+        WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.zoomOut();
 
         return;
       }
@@ -277,7 +277,7 @@ export class AppMenu {
               const focusedWindow = BrowserWindow.getFocusedWindow();
 
               const targetWebContents =
-                focusedWindow && GoogleApp.tryFromWebContents(focusedWindow.webContents)
+                focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)
                   ? focusedWindow.webContents
                   : main.window.webContents;
 
@@ -347,7 +347,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+0",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.resetZoom();
+                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.resetZoom();
 
                 return;
               }
@@ -392,7 +392,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+R",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.reload();
+                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.reload();
 
                 return;
               }
@@ -405,7 +405,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+Shift+R",
             click: async () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.hardReload();
+                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.hardReload();
 
                 return;
               }
@@ -421,12 +421,12 @@ export class AppMenu {
             accelerator: is.dev && platform.isMacOS ? "Command+Alt+I" : undefined,
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                const googleApp = GoogleApp.tryFromWebContents(focusedWindow.webContents);
+                const workspaceApp = WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
 
-                if (googleApp) {
-                  googleApp.window.webContents.openDevTools({ mode: "detach" });
+                if (workspaceApp) {
+                  workspaceApp.window.webContents.openDevTools({ mode: "detach" });
 
-                  googleApp.view.webContents.openDevTools();
+                  workspaceApp.view.webContents.openDevTools();
                 }
 
                 return;
@@ -447,7 +447,7 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.goBack();
+                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.goBack();
 
                 return;
               }
@@ -460,7 +460,7 @@ export class AppMenu {
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
-                GoogleApp.tryFromWebContents(focusedWindow.webContents)?.goForward();
+                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.goForward();
 
                 return;
               }

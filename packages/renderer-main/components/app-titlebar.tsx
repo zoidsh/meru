@@ -2,17 +2,17 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { googleAppsPinnedApps } from "@meru/shared/types";
+import { workspaceAppsPinnedApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import {
   Titlebar,
   TitlebarButtonGroup,
   TitlebarIconButton,
   TitlebarLeft,
 } from "@meru/ui/components/titlebar";
+import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   ArrowLeftIcon,
@@ -141,26 +141,26 @@ function DoNotDisturb() {
   );
 }
 
-function PinnedGoogleApps() {
+function PinnedWorkspaceApps() {
   const { config } = useConfig();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  if (!config || !isLicenseKeyValid || config["googleApps.pinnedApps"].length === 0) {
+  if (!config || !isLicenseKeyValid || config["workspaceApps.pinnedApps"].length === 0) {
     return;
   }
 
   return (
     <div className="flex gap-2 border-r pr-2 not-first:border-l not-first:pl-2">
-      {config["googleApps.pinnedApps"].map((app) => (
+      {config["workspaceApps.pinnedApps"].map((app) => (
         <TitlebarIconButton
           key={app}
           onClick={() => {
-            ipc.main.send("googleApps.openApp", app);
+            ipc.main.send("workspaceApps.openApp", app);
           }}
-          title={googleAppsPinnedApps[app]}
+          title={workspaceAppsPinnedApps[app]}
         >
-          <GoogleAppIcon app={app} />
+          <WorkspaceAppIcon app={app} />
         </TitlebarIconButton>
       ))}
     </div>
@@ -374,7 +374,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Trial />
             <FindInPage />
-            <PinnedGoogleApps />
+            <PinnedWorkspaceApps />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>

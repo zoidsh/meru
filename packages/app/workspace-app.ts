@@ -1,7 +1,7 @@
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { supportedGoogleApps, type SupportedGoogleApp } from "@meru/shared/types";
+import { supportedWorkspaceApps, type SupportedWorkspaceApp } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -46,46 +46,46 @@ const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_at
 
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
 
-const SUPPORTED_GOOGLE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedGoogleApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+const SUPPORTED_WORKSPACE_APPS_URL_REGEXP = new RegExp(
+  `(${Object.keys(supportedWorkspaceApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
-function getGoogleAppFromUrl(url: string) {
-  return url.match(SUPPORTED_GOOGLE_APPS_URL_REGEXP)?.[1] as SupportedGoogleApp | undefined;
+function getWorkspaceAppFromUrl(url: string) {
+  return url.match(SUPPORTED_WORKSPACE_APPS_URL_REGEXP)?.[1] as SupportedWorkspaceApp | undefined;
 }
 
-type GoogleAppOptions = {
+type WorkspaceAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
   window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
 };
 
-export class GoogleApp {
-  private static instances = new Map<number, GoogleApp>();
+export class WorkspaceApp {
+  private static instances = new Map<number, WorkspaceApp>();
 
   static fromWebContents(webContents: WebContents) {
-    const instance = GoogleApp.instances.get(webContents.id);
+    const instance = WorkspaceApp.instances.get(webContents.id);
 
     if (!instance) {
-      throw new Error(`No GoogleApp instance for webContents ${webContents.id}`);
+      throw new Error(`No WorkspaceApp instance for webContents ${webContents.id}`);
     }
 
     return instance;
   }
 
   static tryFromWebContents(webContents: WebContents) {
-    return GoogleApp.instances.get(webContents.id);
+    return WorkspaceApp.instances.get(webContents.id);
   }
 
   static getAllWindows() {
-    return Array.from(GoogleApp.instances.values(), (instance) => instance.window);
+    return Array.from(WorkspaceApp.instances.values(), (instance) => instance.window);
   }
 
   static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
     const urlHostname = new URL(url).hostname;
 
-    const reusableInstance = Array.from(GoogleApp.instances.values())
+    const reusableInstance = Array.from(WorkspaceApp.instances.values())
       .reverse()
       .find(
         (instance) =>
@@ -195,28 +195,28 @@ export class GoogleApp {
     }
 
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-      new GoogleApp({ accountId, url });
+      new WorkspaceApp({ accountId, url });
 
       return { action: "deny" };
     }
 
-    const matchedSupportedGoogleApp = getGoogleAppFromUrl(url);
+    const matchedSupportedWorkspaceApp = getWorkspaceAppFromUrl(url);
 
-    const isGoogleAppEnabledToOpenInApp =
+    const isWorkspaceAppEnabledToOpenInApp =
       licenseKey.isValid &&
-      matchedSupportedGoogleApp &&
-      config.get("googleApps.openInApp") &&
-      !config.get("googleApps.openInAppExcludedApps").includes(matchedSupportedGoogleApp);
+      matchedSupportedWorkspaceApp &&
+      config.get("workspaceApps.openInApp") &&
+      !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
-    if (isGoogleAppEnabledToOpenInApp && disposition !== "background-tab") {
+    if (isWorkspaceAppEnabledToOpenInApp && disposition !== "background-tab") {
       if (
-        !config.get("googleApps.openAppsInNewWindow") &&
-        GoogleApp.reuseWindowByHostname(accountId, url)
+        !config.get("workspaceApps.openAppsInNewWindow") &&
+        WorkspaceApp.reuseWindowByHostname(accountId, url)
       ) {
         return { action: "deny" };
       }
 
-      new GoogleApp({
+      new WorkspaceApp({
         accountId,
         url,
       });
@@ -231,7 +231,7 @@ export class GoogleApp {
     }
 
     openExternalUrl(url, {
-      skipTrustedHostCheck: Boolean(matchedSupportedGoogleApp),
+      skipTrustedHostCheck: Boolean(matchedSupportedWorkspaceApp),
       focusBrowser: disposition !== "background-tab",
     });
 
@@ -239,16 +239,18 @@ export class GoogleApp {
   }
 
   private static getMeetInstances() {
-    return Array.from(GoogleApp.instances.values()).filter((instance) => instance.app === "meet");
+    return Array.from(WorkspaceApp.instances.values()).filter(
+      (instance) => instance.app === "meet",
+    );
   }
 
   private static getMostRecentMeetInstance() {
-    return GoogleApp.getMeetInstances().at(-1);
+    return WorkspaceApp.getMeetInstances().at(-1);
   }
 
   private static registerMeetShortcuts() {
     globalShortcut.register(GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR, () => {
-      const meetInstance = GoogleApp.getMostRecentMeetInstance();
+      const meetInstance = WorkspaceApp.getMostRecentMeetInstance();
 
       if (meetInstance) {
         ipc.renderer.send(meetInstance.view.webContents, "googleMeet.toggleMicrophone");
@@ -256,7 +258,7 @@ export class GoogleApp {
     });
 
     globalShortcut.register(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR, () => {
-      const meetInstance = GoogleApp.getMostRecentMeetInstance();
+      const meetInstance = WorkspaceApp.getMostRecentMeetInstance();
 
       if (meetInstance) {
         ipc.renderer.send(meetInstance.view.webContents, "googleMeet.toggleCamera");
@@ -271,7 +273,7 @@ export class GoogleApp {
 
   accountId: AccountConfig["id"];
 
-  app: SupportedGoogleApp | undefined;
+  app: SupportedWorkspaceApp | undefined;
 
   window: BrowserWindow;
 
@@ -281,9 +283,9 @@ export class GoogleApp {
 
   private viewDestroyed = false;
 
-  constructor({ accountId, url, window, view }: GoogleAppOptions) {
+  constructor({ accountId, url, window, view }: WorkspaceAppOptions) {
     this.accountId = accountId;
-    this.app = getGoogleAppFromUrl(url);
+    this.app = getWorkspaceAppFromUrl(url);
 
     this.window = this.createBrowserWindow(window);
     this.view = this.createView({ url, options: view });
@@ -299,14 +301,14 @@ export class GoogleApp {
       }
     });
 
-    GoogleApp.instances.set(this.window.webContents.id, this);
+    WorkspaceApp.instances.set(this.window.webContents.id, this);
 
     this.window.on("resize", this.updateViewBounds);
     this.window.on("close", this.handleClose);
     this.window.on("focus", () => {
-      GoogleApp.instances.delete(this.window.webContents.id);
+      WorkspaceApp.instances.delete(this.window.webContents.id);
 
-      GoogleApp.instances.set(this.window.webContents.id, this);
+      WorkspaceApp.instances.set(this.window.webContents.id, this);
     });
 
     this.account.instance.windows.add(this.window);
@@ -329,11 +331,11 @@ export class GoogleApp {
     searchParams.set("accountId", this.accountId);
 
     if (this.app) {
-      searchParams.set("googleApp", this.app);
+      searchParams.set("workspaceApp", this.app);
     }
 
     loadRenderer(browserWindow, {
-      renderer: "google-app",
+      renderer: "workspace-app",
       port: 3002,
       searchParams,
     });
@@ -353,7 +355,7 @@ export class GoogleApp {
       webPreferences: {
         ...options?.webPreferences,
         session: this.account.instance.session,
-        preload: getPreloadPath("google-app"),
+        preload: getPreloadPath("workspace-app"),
       },
     });
 
@@ -376,7 +378,7 @@ export class GoogleApp {
 
   private setWindowOpenHandler(view: WebContentsView) {
     view.webContents.setWindowOpenHandler((details) =>
-      GoogleApp.handleWindowOpen({
+      WorkspaceApp.handleWindowOpen({
         accountId: this.accountId,
         details,
         webContents: view.webContents,
@@ -395,15 +397,15 @@ export class GoogleApp {
 
     this.account.instance.windows.delete(this.window);
 
-    GoogleApp.instances.delete(this.window.webContents.id);
+    WorkspaceApp.instances.delete(this.window.webContents.id);
   };
 
   private setupApp() {
     if (this.app === "meet") {
       this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
-      if (GoogleApp.getMeetInstances().length === 1) {
-        GoogleApp.registerMeetShortcuts();
+      if (WorkspaceApp.getMeetInstances().length === 1) {
+        WorkspaceApp.registerMeetShortcuts();
       }
     }
   }
@@ -414,8 +416,8 @@ export class GoogleApp {
         powerSaveBlocker.stop(this.powerSaveBlockerId);
       }
 
-      if (GoogleApp.getMeetInstances().length === 1) {
-        GoogleApp.unregisterMeetShortcuts();
+      if (WorkspaceApp.getMeetInstances().length === 1) {
+        WorkspaceApp.unregisterMeetShortcuts();
       }
     }
   }
@@ -441,15 +443,15 @@ export class GoogleApp {
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
-    GoogleApp.handleNavigate(url);
+    WorkspaceApp.handleNavigate(url);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
-    GoogleApp.handleRedirect(event, url, this.view.webContents);
+    WorkspaceApp.handleRedirect(event, url, this.view.webContents);
   };
 
   broadcastNavigationState = () => {
-    ipc.renderer.send(this.window.webContents, "googleApp.navigationStateChanged", {
+    ipc.renderer.send(this.window.webContents, "workspaceApp.navigationStateChanged", {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
@@ -458,9 +460,9 @@ export class GoogleApp {
   handlePageTitleUpdated = () => {
     const pageTitle = this.view.webContents.getTitle();
 
-    ipc.renderer.send(this.window.webContents, "googleApp.pageTitleChanged", pageTitle);
+    ipc.renderer.send(this.window.webContents, "workspaceApp.pageTitleChanged", pageTitle);
 
-    const title = pageTitle || (this.app ? supportedGoogleApps[this.app] : "");
+    const title = pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
 
     if (!title) {
       this.window.setTitle(app.name);
@@ -477,7 +479,7 @@ export class GoogleApp {
   broadcastLoadingState = () => {
     ipc.renderer.send(
       this.window.webContents,
-      "googleApp.loadingStateChanged",
+      "workspaceApp.loadingStateChanged",
       this.view.webContents.isLoading(),
     );
   };

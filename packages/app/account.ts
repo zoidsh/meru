@@ -14,9 +14,9 @@ import {
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
-import { GoogleApp } from "./google-app";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
+import { WorkspaceApp } from "./workspace-app";
 
 export class Account {
   session: Session;
@@ -80,7 +80,7 @@ export class Account {
           break;
         }
         case "notifications": {
-          callback(config.get("notifications.allowFromGoogleApps"));
+          callback(config.get("notifications.allowFromWorkspaceApps"));
           break;
         }
       }
@@ -96,9 +96,9 @@ export class Account {
               return false;
             }
 
-            const googleApp = GoogleApp.tryFromWebContents(window.webContents);
+            const workspaceApp = WorkspaceApp.tryFromWebContents(window.webContents);
 
-            return googleApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL) ?? false;
+            return workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL) ?? false;
           },
         );
 

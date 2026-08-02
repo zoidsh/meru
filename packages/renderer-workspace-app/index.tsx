@@ -2,10 +2,9 @@ import { useCopied } from "@meru/shared/renderer/hooks";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { renderApp } from "@meru/shared/renderer/react";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import type { GoogleAppsPinnedApp } from "@meru/shared/types";
+import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
 import { AccountBadge } from "@meru/ui/components/account-badge";
 import { FindInPage } from "@meru/ui/components/find-in-page";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -14,6 +13,7 @@ import {
   TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
+import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -52,11 +52,11 @@ function ReloadButton() {
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = ipc.renderer.on("googleApp.loadingStateChanged", (_event, isLoading) => {
+    const unsubscribe = ipc.renderer.on("workspaceApp.loadingStateChanged", (_event, isLoading) => {
       setLoading(isLoading);
     });
 
-    ipc.main.invoke("googleApp.getLoadingState").then(setLoading);
+    ipc.main.invoke("workspaceApp.getLoadingState").then(setLoading);
 
     return unsubscribe;
   }, []);
@@ -67,7 +67,7 @@ function ReloadButton() {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
-        ipc.main.send(loading ? "googleApp.stop" : "googleApp.reload");
+        ipc.main.send(loading ? "workspaceApp.stop" : "workspaceApp.reload");
       }}
     >
       {loading ? (
@@ -90,7 +90,7 @@ function CopyUrlButton() {
     <TitlebarIconButton
       title="Copy URL"
       onClick={() => {
-        ipc.main.send("googleApp.copyUrl");
+        ipc.main.send("workspaceApp.copyUrl");
         markCopied();
       }}
     >
@@ -106,7 +106,7 @@ function NavigationButtons() {
   }>();
 
   useEffect(() => {
-    return ipc.renderer.on("googleApp.navigationStateChanged", (_event, state) => {
+    return ipc.renderer.on("workspaceApp.navigationStateChanged", (_event, state) => {
       setNavigationState(state);
     });
   }, []);
@@ -117,7 +117,7 @@ function NavigationButtons() {
         title="Back"
         disabled={!navigationState?.canGoBack}
         onClick={() => {
-          ipc.main.send("googleApp.goBack");
+          ipc.main.send("workspaceApp.goBack");
         }}
       >
         <ArrowLeftIcon />
@@ -126,7 +126,7 @@ function NavigationButtons() {
         title="Forward"
         disabled={!navigationState?.canGoForward}
         onClick={() => {
-          ipc.main.send("googleApp.goForward");
+          ipc.main.send("workspaceApp.goForward");
         }}
       >
         <ArrowRightIcon />
@@ -139,7 +139,7 @@ function PageTitle() {
   const [pageTitle, setPageTitle] = useState("");
 
   useEffect(() => {
-    return ipc.renderer.on("googleApp.pageTitleChanged", (_event, title) => {
+    return ipc.renderer.on("workspaceApp.pageTitleChanged", (_event, title) => {
       setPageTitle(title);
     });
   }, []);
@@ -192,7 +192,7 @@ function App() {
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
   );
 
-  const googleApp = searchParams.get("googleApp") as GoogleAppsPinnedApp | null;
+  const workspaceApp = searchParams.get("workspaceApp") as WorkspaceAppsPinnedApp | null;
 
   return (
     <Titlebar>
@@ -205,7 +205,7 @@ function App() {
           <AccountBadge label={account.label} color={account.color} />
         )}
         <div className="flex items-center gap-1">
-          {googleApp && <GoogleAppIcon app={googleApp} className="size-3.5" />}
+          {workspaceApp && <WorkspaceAppIcon app={workspaceApp} className="size-3.5" />}
           <PageTitle />
         </div>
       </TitlebarLeft>
@@ -217,7 +217,7 @@ function App() {
           <TitlebarIconButton
             title="Open in Browser"
             onClick={() => {
-              ipc.main.send("googleApp.openInBrowser");
+              ipc.main.send("workspaceApp.openInBrowser");
             }}
           >
             <ExternalLinkIcon />
