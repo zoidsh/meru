@@ -85,20 +85,23 @@ export class GoogleApp {
   static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
     const urlHostname = new URL(url).hostname;
 
-    for (const instance of GoogleApp.instances.values()) {
-      if (
-        instance.accountId === accountId &&
-        new URL(instance.view.webContents.getURL()).hostname === urlHostname
-      ) {
-        instance.view.webContents.loadURL(url);
+    const reusableInstance = Array.from(GoogleApp.instances.values())
+      .reverse()
+      .find(
+        (instance) =>
+          instance.accountId === accountId &&
+          new URL(instance.view.webContents.getURL()).hostname === urlHostname,
+      );
 
-        instance.window.focus();
-
-        return true;
-      }
+    if (!reusableInstance) {
+      return false;
     }
 
-    return false;
+    reusableInstance.view.webContents.loadURL(url);
+
+    reusableInstance.window.focus();
+
+    return true;
   }
 
   static handleNavigate(url: string) {
