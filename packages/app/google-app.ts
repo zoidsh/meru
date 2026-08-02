@@ -38,6 +38,10 @@ import { openExternalUrl } from "./url";
 export const MIN_ZOOM_FACTOR = 0.1;
 export const MAX_ZOOM_FACTOR = 3;
 
+const GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR = "CommandOrControl+Shift+1";
+
+const GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR = "CommandOrControl+Shift+2";
+
 const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
 
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
@@ -231,6 +235,37 @@ export class GoogleApp {
     return { action: "deny" };
   }
 
+  private static getMeetInstances() {
+    return Array.from(GoogleApp.instances.values()).filter((instance) => instance.app === "meet");
+  }
+
+  private static getMostRecentMeetInstance() {
+    return GoogleApp.getMeetInstances().at(-1);
+  }
+
+  private static registerMeetShortcuts() {
+    globalShortcut.register(GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR, () => {
+      const meetInstance = GoogleApp.getMostRecentMeetInstance();
+
+      if (meetInstance) {
+        ipc.renderer.send(meetInstance.view.webContents, "googleMeet.toggleMicrophone");
+      }
+    });
+
+    globalShortcut.register(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR, () => {
+      const meetInstance = GoogleApp.getMostRecentMeetInstance();
+
+      if (meetInstance) {
+        ipc.renderer.send(meetInstance.view.webContents, "googleMeet.toggleCamera");
+      }
+    });
+  }
+
+  private static unregisterMeetShortcuts() {
+    globalShortcut.unregister(GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR);
+    globalShortcut.unregister(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR);
+  }
+
   accountId: AccountConfig["id"];
 
   app: SupportedGoogleApp | undefined;
@@ -261,14 +296,19 @@ export class GoogleApp {
       }
     });
 
+    GoogleApp.instances.set(this.window.webContents.id, this);
+
     this.window.on("resize", this.updateViewBounds);
     this.window.on("close", this.handleClose);
+    this.window.on("focus", () => {
+      GoogleApp.instances.delete(this.window.webContents.id);
+
+      GoogleApp.instances.set(this.window.webContents.id, this);
+    });
 
     this.account.instance.windows.add(this.window);
 
     this.setupApp();
-
-    GoogleApp.instances.set(this.window.webContents.id, this);
   }
 
   private createBrowserWindow(options?: BrowserWindowConstructorOptions) {
@@ -359,13 +399,9 @@ export class GoogleApp {
     if (this.app === "meet") {
       this.powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
 
-      globalShortcut.register("CommandOrControl+Shift+1", () => {
-        ipc.renderer.send(this.view.webContents, "googleMeet.toggleMicrophone");
-      });
-
-      globalShortcut.register("CommandOrControl+Shift+2", () => {
-        ipc.renderer.send(this.view.webContents, "googleMeet.toggleCamera");
-      });
+      if (GoogleApp.getMeetInstances().length === 1) {
+        GoogleApp.registerMeetShortcuts();
+      }
     }
   }
 
@@ -375,8 +411,9 @@ export class GoogleApp {
         powerSaveBlocker.stop(this.powerSaveBlockerId);
       }
 
-      globalShortcut.unregister("CommandOrControl+Shift+1");
-      globalShortcut.unregister("CommandOrControl+Shift+2");
+      if (GoogleApp.getMeetInstances().length === 1) {
+        GoogleApp.unregisterMeetShortcuts();
+      }
     }
   }
 
