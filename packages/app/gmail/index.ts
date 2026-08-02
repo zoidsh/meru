@@ -389,10 +389,6 @@ export class Gmail {
 
     this.updateViewBounds();
 
-    main.window.on("resize", () => {
-      this.updateViewBounds();
-    });
-
     this.view.webContents.on("dom-ready", () => {
       if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
         this.view.webContents.insertCSS(gmailCSS);

@@ -70,6 +70,10 @@ class Accounts {
       account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
+    main.window.on("resize", () => {
+      this.updateAllViewBounds();
+    });
+
     // When window is closed/minimized, the account views sometimes don't render after showing/restoring window
     main.window.on("show", () => {
       this.refreshSelectedAccountView();
@@ -78,6 +82,12 @@ class Accounts {
     main.window.on("restore", () => {
       this.refreshSelectedAccountView();
     });
+  }
+
+  updateAllViewBounds() {
+    for (const account of this.instances.values()) {
+      account.gmail.updateViewBounds();
+    }
   }
 
   refreshSelectedAccountView() {
@@ -264,9 +274,7 @@ class Accounts {
 
     config.set("accounts", updatedAccounts);
 
-    for (const account of this.instances.values()) {
-      account.gmail.updateViewBounds();
-    }
+    this.updateAllViewBounds();
   }
 
   updateAccount(accountDetails: AccountConfig) {
