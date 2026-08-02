@@ -3,10 +3,10 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
-  type GoogleAppsPinnedApp,
-  googleAppsPinnedApps,
-  type SupportedGoogleApp,
-  supportedGoogleApps,
+  type WorkspaceAppsPinnedApp,
+  workspaceAppsPinnedApps,
+  type SupportedWorkspaceApp,
+  supportedWorkspaceApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -24,7 +24,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
-import { GoogleAppIcon } from "@meru/ui/components/google-app-icon";
+import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -39,7 +39,7 @@ function SortablePinnedAppItem({
   onUnpin,
   disabled,
 }: {
-  app: GoogleAppsPinnedApp;
+  app: WorkspaceAppsPinnedApp;
   index: number;
   onUnpin: () => void;
   disabled: boolean;
@@ -54,18 +54,18 @@ function SortablePinnedAppItem({
         size="xs"
         className="cursor-grab touch-none"
         disabled={disabled}
-        aria-label={`Drag ${googleAppsPinnedApps[app]} to reorder`}
+        aria-label={`Drag ${workspaceAppsPinnedApps[app]} to reorder`}
       >
         <GripVerticalIcon />
-        <GoogleAppIcon app={app} className="size-3.5" />
-        {googleAppsPinnedApps[app]}
+        <WorkspaceAppIcon app={app} className="size-3.5" />
+        {workspaceAppsPinnedApps[app]}
       </Button>
       <Button
         variant="outline"
         size="icon-xs"
         onClick={onUnpin}
         disabled={disabled}
-        aria-label={`Unpin ${googleAppsPinnedApps[app]}`}
+        aria-label={`Unpin ${workspaceAppsPinnedApps[app]}`}
       >
         <XIcon />
       </Button>
@@ -73,7 +73,7 @@ function SortablePinnedAppItem({
   );
 }
 
-export function GoogleAppsSettings() {
+export function WorkspaceAppsSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -84,17 +84,17 @@ export function GoogleAppsSettings() {
     return;
   }
 
-  const pinnedApps = config["googleApps.pinnedApps"];
+  const pinnedApps = config["workspaceApps.pinnedApps"];
 
-  const availableApps = (Object.keys(googleAppsPinnedApps) as GoogleAppsPinnedApp[]).filter(
+  const availableApps = (Object.keys(workspaceAppsPinnedApps) as WorkspaceAppsPinnedApp[]).filter(
     (app) => !pinnedApps.includes(app),
   );
 
-  const excludedApps = config["googleApps.openInAppExcludedApps"];
+  const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
-  const excludedAppLabels = (Object.keys(supportedGoogleApps) as SupportedGoogleApp[])
+  const excludedAppLabels = (Object.keys(supportedWorkspaceApps) as SupportedWorkspaceApp[])
     .filter((app) => excludedApps.includes(app))
-    .map((app) => supportedGoogleApps[app]);
+    .map((app) => supportedWorkspaceApps[app]);
 
   const visibleExcludedAppLabels = excludedAppLabels.slice(0, 3);
 
@@ -110,23 +110,23 @@ export function GoogleAppsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Google Apps</SettingsTitle>
+        <SettingsTitle>Workspace Apps</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
             label="Open in App"
-            description="Open Google Apps in app instead of external browser."
-            configKey="googleApps.openInApp"
+            description="Open Workspace Apps in app instead of external browser."
+            configKey="workspaceApps.openInApp"
             licenseKeyRequired
           />
-          {config["googleApps.openInApp"] && (
+          {config["workspaceApps.openInApp"] && (
             <>
               <ConfigSwitchField
                 label="Always Open in New Window"
-                description="Always open Google Apps in a new window instead of reusing the same window if it is already open."
-                configKey="googleApps.openAppsInNewWindow"
+                description="Always open Workspace Apps in a new window instead of reusing the same window if it is already open."
+                configKey="workspaceApps.openAppsInNewWindow"
                 licenseKeyRequired
               />
               <Field>
@@ -136,7 +136,8 @@ export function GoogleAppsSettings() {
                     {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
                   </FieldLabel>
                   <FieldDescription>
-                    Select which Google Apps should open in the external browser instead of the app.
+                    Select which Workspace Apps should open in the external browser instead of the
+                    app.
                   </FieldDescription>
                 </FieldContent>
                 <DropdownMenu>
@@ -151,17 +152,19 @@ export function GoogleAppsSettings() {
                   />
                   <DropdownMenuContent align="end">
                     {(
-                      Object.entries(supportedGoogleApps) as Entries<typeof supportedGoogleApps>
+                      Object.entries(supportedWorkspaceApps) as Entries<
+                        typeof supportedWorkspaceApps
+                      >
                     ).map(([app, label]) => (
                       <DropdownMenuCheckboxItem
                         key={app}
-                        checked={config["googleApps.openInAppExcludedApps"].includes(app)}
+                        checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
                         closeOnClick={false}
                         onCheckedChange={(checked) => {
                           configMutation.mutate({
-                            "googleApps.openInAppExcludedApps": checked
-                              ? [...config["googleApps.openInAppExcludedApps"], app]
-                              : config["googleApps.openInAppExcludedApps"].filter(
+                            "workspaceApps.openInAppExcludedApps": checked
+                              ? [...config["workspaceApps.openInAppExcludedApps"], app]
+                              : config["workspaceApps.openInAppExcludedApps"].filter(
                                   (value) => value !== app,
                                 ),
                           });
@@ -178,14 +181,14 @@ export function GoogleAppsSettings() {
           <FieldSeparator />
           <ConfigSwitchField
             label="Show Account Label"
-            description="Show the account label in the titlebar of Google Apps windows if using more than one account."
-            configKey="googleApps.showAccountLabel"
+            description="Show the account label in the titlebar of Workspace Apps windows if using more than one account."
+            configKey="workspaceApps.showAccountLabel"
             licenseKeyRequired
           />
           <ConfigSwitchField
             label="Show Account Color"
-            description="Show a colored indicator on top of Google Apps windows to indicate which account is being used when an account has a color configured."
-            configKey="googleApps.showAccountColor"
+            description="Show a colored indicator on top of Workspace Apps windows to indicate which account is being used when an account has a color configured."
+            configKey="workspaceApps.showAccountColor"
             licenseKeyRequired
           />
           <FieldSeparator />
@@ -196,7 +199,7 @@ export function GoogleAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Pin Google Apps to the titlebar and drag to reorder.
+                Pin Workspace Apps to the titlebar and drag to reorder.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
@@ -214,7 +217,7 @@ export function GoogleAppsSettings() {
                       }
 
                       configMutation.mutate({
-                        "googleApps.pinnedApps": move(pinnedApps, event),
+                        "workspaceApps.pinnedApps": move(pinnedApps, event),
                       });
                     }}
                   >
@@ -226,7 +229,9 @@ export function GoogleAppsSettings() {
                           index={index}
                           onUnpin={() => {
                             configMutation.mutate({
-                              "googleApps.pinnedApps": pinnedApps.filter((value) => value !== app),
+                              "workspaceApps.pinnedApps": pinnedApps.filter(
+                                (value) => value !== app,
+                              ),
                             });
                           }}
                           disabled={!isLicenseKeyValid}
@@ -247,14 +252,14 @@ export function GoogleAppsSettings() {
                         size="xs"
                         onClick={() => {
                           configMutation.mutate({
-                            "googleApps.pinnedApps": [...pinnedApps, app],
+                            "workspaceApps.pinnedApps": [...pinnedApps, app],
                           });
                         }}
                         disabled={!isLicenseKeyValid}
-                        aria-label={`Pin ${googleAppsPinnedApps[app]}`}
+                        aria-label={`Pin ${workspaceAppsPinnedApps[app]}`}
                       >
-                        <GoogleAppIcon app={app} className="size-3.5" />
-                        {googleAppsPinnedApps[app]}
+                        <WorkspaceAppIcon app={app} className="size-3.5" />
+                        {workspaceAppsPinnedApps[app]}
                         <PlusIcon />
                       </Button>
                     ))}

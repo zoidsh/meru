@@ -290,12 +290,12 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Google Apps</FieldLegend>
+            <FieldLegend>Workspace Apps</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Google Apps"
-                description="Allow notifications from Google Apps like Calendar, Meet, Chat, etc."
-                configKey="notifications.allowFromGoogleApps"
+                label="Workspace Apps"
+                description="Allow notifications from Workspace Apps like Calendar, Meet, Chat, etc."
+                configKey="notifications.allowFromWorkspaceApps"
                 licenseKeyRequired
               />
             </FieldGroup>

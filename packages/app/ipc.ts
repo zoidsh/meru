@@ -19,11 +19,11 @@ import {
 import { machineId } from "node-machine-id";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { GoogleApp } from "@/google-app";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
+import { WorkspaceApp } from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -57,8 +57,8 @@ class Ipc {
         );
       }
 
-      for (const googleAppWindow of GoogleApp.getAllWindows()) {
-        ipc.renderer.send(googleAppWindow.webContents, "config.configChanged", config.store);
+      for (const workspaceAppWindow of WorkspaceApp.getAllWindows()) {
+        ipc.renderer.send(workspaceAppWindow.webContents, "config.configChanged", config.store);
       }
     });
 
@@ -131,10 +131,10 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const googleApp = GoogleApp.tryFromWebContents(event.sender);
+      const workspaceApp = WorkspaceApp.tryFromWebContents(event.sender);
 
-      const targetWebContents = googleApp
-        ? googleApp.view.webContents
+      const targetWebContents = workspaceApp
+        ? workspaceApp.view.webContents
         : accounts.getSelectedAccount().instance.gmail.view.webContents;
 
       if (!text) {
@@ -186,32 +186,32 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
-    ipc.main.handle("googleApp.getLoadingState", (event) => {
-      return GoogleApp.fromWebContents(event.sender).isLoading;
+    ipc.main.handle("workspaceApp.getLoadingState", (event) => {
+      return WorkspaceApp.fromWebContents(event.sender).isLoading;
     });
 
-    ipc.main.on("googleApp.goBack", (event) => {
-      GoogleApp.fromWebContents(event.sender).goBack();
+    ipc.main.on("workspaceApp.goBack", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).goBack();
     });
 
-    ipc.main.on("googleApp.goForward", (event) => {
-      GoogleApp.fromWebContents(event.sender).goForward();
+    ipc.main.on("workspaceApp.goForward", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).goForward();
     });
 
-    ipc.main.on("googleApp.reload", (event) => {
-      GoogleApp.fromWebContents(event.sender).reload();
+    ipc.main.on("workspaceApp.reload", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).reload();
     });
 
-    ipc.main.on("googleApp.stop", (event) => {
-      GoogleApp.fromWebContents(event.sender).stop();
+    ipc.main.on("workspaceApp.stop", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).stop();
     });
 
-    ipc.main.on("googleApp.copyUrl", (event) => {
-      GoogleApp.fromWebContents(event.sender).copyUrl();
+    ipc.main.on("workspaceApp.copyUrl", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).copyUrl();
     });
 
-    ipc.main.on("googleApp.openInBrowser", (event) => {
-      GoogleApp.fromWebContents(event.sender).openInBrowser();
+    ipc.main.on("workspaceApp.openInBrowser", (event) => {
+      WorkspaceApp.fromWebContents(event.sender).openInBrowser();
     });
 
     ipc.main.handle("config.getConfig", () => config.store);
@@ -311,8 +311,8 @@ class Ipc {
       });
     });
 
-    ipc.main.on("googleApps.openApp", (_event, app) => {
-      accounts.getSelectedAccount().instance.gmail.openGoogleApp(app);
+    ipc.main.on("workspaceApps.openApp", (_event, app) => {
+      accounts.getSelectedAccount().instance.gmail.openWorkspaceApp(app);
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {

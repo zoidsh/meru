@@ -14,7 +14,6 @@ import { BlockerSettings } from "@/routes/settings/blocker";
 import { DownloadsSettings } from "@/routes/settings/downloads";
 import { GeneralSettings } from "@/routes/settings/general";
 import { GmailSettings } from "@/routes/settings/gmail";
-import { GoogleAppsSettings } from "@/routes/settings/google-apps";
 import { LanguagesSettings } from "@/routes/settings/languages";
 import { LicenseSettings } from "@/routes/settings/license";
 import { NotificationsSettings } from "@/routes/settings/notifications";
@@ -24,6 +23,7 @@ import { UnifiedInboxSettings } from "@/routes/settings/unified-inbox";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
 import { VersionHistorySettings } from "@/routes/settings/version-history";
+import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
@@ -61,9 +61,9 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     component: GmailSettings,
   },
   {
-    label: "Google Apps",
-    path: "/settings/google-apps",
-    component: GoogleAppsSettings,
+    label: "Workspace Apps",
+    path: "/settings/workspace-apps",
+    component: WorkspaceAppsSettings,
   },
   {
     label: "Languages",

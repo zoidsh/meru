@@ -33,7 +33,7 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-export const supportedGoogleApps = {
+export const supportedWorkspaceApps = {
   calendar: "Calendar",
   chat: "Chat",
   classroom: "Classroom",
@@ -54,9 +54,9 @@ export const supportedGoogleApps = {
   voice: "Voice",
 } as const;
 
-export type SupportedGoogleApp = keyof typeof supportedGoogleApps;
+export type SupportedWorkspaceApp = keyof typeof supportedWorkspaceApps;
 
-const googleAppsPinnedAppKeys = [
+const workspaceAppsPinnedAppKeys = [
   "calendar",
   "chat",
   "classroom",
@@ -74,13 +74,13 @@ const googleAppsPinnedAppKeys = [
   "slides",
   "tasks",
   "voice",
-] as const satisfies readonly SupportedGoogleApp[];
+] as const satisfies readonly SupportedWorkspaceApp[];
 
-export type GoogleAppsPinnedApp = (typeof googleAppsPinnedAppKeys)[number];
+export type WorkspaceAppsPinnedApp = (typeof workspaceAppsPinnedAppKeys)[number];
 
-export const googleAppsPinnedApps = Object.fromEntries(
-  googleAppsPinnedAppKeys.map((key) => [key, supportedGoogleApps[key]]),
-) as Pick<typeof supportedGoogleApps, GoogleAppsPinnedApp>;
+export const workspaceAppsPinnedApps = Object.fromEntries(
+  workspaceAppsPinnedAppKeys.map((key) => [key, supportedWorkspaceApps[key]]),
+) as Pick<typeof supportedWorkspaceApps, WorkspaceAppsPinnedApp>;
 
 type GmailHashLocation =
   | "inbox"
@@ -120,7 +120,7 @@ export type Config = {
   "notifications.showSubject": boolean;
   "notifications.showSummary": boolean;
   "notifications.playSound": boolean;
-  "notifications.allowFromGoogleApps": boolean;
+  "notifications.allowFromWorkspaceApps": boolean;
   "notifications.sound": "system" | NotificationSound;
   "notifications.volume": number;
   "notifications.downloadCompleted": boolean;
@@ -163,12 +163,12 @@ export type Config = {
   };
   "window.restrictMinimumSize": boolean;
   "trial.expired": boolean;
-  "googleApps.openInApp": boolean;
-  "googleApps.openInAppExcludedApps": SupportedGoogleApp[];
-  "googleApps.openAppsInNewWindow": boolean;
-  "googleApps.pinnedApps": GoogleAppsPinnedApp[];
-  "googleApps.showAccountColor": boolean;
-  "googleApps.showAccountLabel": boolean;
+  "workspaceApps.openInApp": boolean;
+  "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
+  "workspaceApps.openAppsInNewWindow": boolean;
+  "workspaceApps.pinnedApps": WorkspaceAppsPinnedApp[];
+  "workspaceApps.showAccountColor": boolean;
+  "workspaceApps.showAccountLabel": boolean;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;
@@ -196,12 +196,12 @@ export type IpcMainEvents =
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
-      "googleApp.goBack": [];
-      "googleApp.goForward": [];
-      "googleApp.reload": [];
-      "googleApp.stop": [];
-      "googleApp.copyUrl": [];
-      "googleApp.openInBrowser": [];
+      "workspaceApp.goBack": [];
+      "workspaceApp.goForward": [];
+      "workspaceApp.reload": [];
+      "workspaceApp.stop": [];
+      "workspaceApp.copyUrl": [];
+      "workspaceApp.openInBrowser": [];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
@@ -216,7 +216,7 @@ export type IpcMainEvents =
       "app.relaunch": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
-      "googleApps.openApp": [app: GoogleAppsPinnedApp];
+      "workspaceApps.openApp": [app: WorkspaceAppsPinnedApp];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
@@ -243,7 +243,7 @@ export type IpcMainEvents =
       "app.setAsDefaultMailtoClient": () => void;
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
-      "googleApp.getLoadingState": () => boolean;
+      "workspaceApp.getLoadingState": () => boolean;
     };
 
 export type IpcRendererEvent = {
@@ -266,11 +266,11 @@ export type IpcRendererEvent = {
   "appUpdater.updateAvailable": [version: string];
   "googleMeet.toggleMicrophone": [];
   "googleMeet.toggleCamera": [];
-  "googleApp.initAccountColorIndicator": [
+  "workspaceApp.initAccountColorIndicator": [
     color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
   ];
-  "googleApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
-  "googleApp.pageTitleChanged": [title: string];
-  "googleApp.loadingStateChanged": [loading: boolean];
+  "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
+  "workspaceApp.pageTitleChanged": [title: string];
+  "workspaceApp.loadingStateChanged": [loading: boolean];
   "config.configChanged": [config: Config];
 };

@@ -12,9 +12,9 @@ import {
   generateGmailLabelColorsCss,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
-import { getGoogleAppUrl } from "@meru/shared/google";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
-import type { GoogleAppsPinnedApp } from "@meru/shared/types";
+import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
 import { wait } from "@meru/shared/utils";
 import {
   app,
@@ -30,7 +30,6 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { setupWindowContextMenu } from "@/context-menu";
-import { GoogleApp } from "@/google-app";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import {
@@ -48,6 +47,7 @@ import {
   isWithinNotificationTimes,
 } from "@/notifications";
 import { appTray } from "@/tray";
+import { WorkspaceApp } from "@/workspace-app";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 
@@ -438,7 +438,7 @@ export class Gmail {
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.on("did-navigate", (_event, url) => {
-      GoogleApp.handleNavigate(url);
+      WorkspaceApp.handleNavigate(url);
 
       if (window === this.view) {
         this.viewStore.setState({
@@ -467,7 +467,7 @@ export class Gmail {
         return;
       }
 
-      GoogleApp.handleRedirect(event, url, window.webContents);
+      WorkspaceApp.handleRedirect(event, url, window.webContents);
     });
   }
 
@@ -541,19 +541,19 @@ export class Gmail {
         return {
           action: "allow",
           createWindow: (options) => {
-            const googleApp = new GoogleApp({
+            const workspaceApp = new WorkspaceApp({
               accountId: this.accountId,
               url,
               window: { width: 800, height: 600 },
               view: options,
             });
 
-            return googleApp.view.webContents;
+            return workspaceApp.view.webContents;
           },
         };
       }
 
-      return GoogleApp.handleWindowOpen({
+      return WorkspaceApp.handleWindowOpen({
         accountId: this.accountId,
         details,
         webContents: window.webContents,
@@ -867,7 +867,7 @@ export class Gmail {
   }
 
   createComposeWindow(url: string) {
-    new GoogleApp({
+    new WorkspaceApp({
       accountId: this.accountId,
       url: `${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
       window: { width: 800, height: 600 },
@@ -888,7 +888,7 @@ export class Gmail {
     this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
   }
 
-  openGoogleApp(app: GoogleAppsPinnedApp) {
-    this.view.webContents.executeJavaScript(`window.open("${getGoogleAppUrl(app)}", "_blank")`);
+  openWorkspaceApp(app: WorkspaceAppsPinnedApp) {
+    this.view.webContents.executeJavaScript(`window.open("${getWorkspaceAppUrl(app)}", "_blank")`);
   }
 }

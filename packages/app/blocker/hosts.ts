@@ -22,7 +22,7 @@ const GOOGLE_TRACKER_HOSTS = [
 
 // Google telemetry lives on first-party hosts the Workspace apps need, so it can only
 // be matched by these path/query markers rather than by hostname. gen_204/csi beacons
-// fire across every Google app (Docs, Calendar, Drive, Meet, …), not just Gmail.
+// fire across every Workspace app (Docs, Calendar, Drive, Meet, …), not just Gmail.
 const GOOGLE_TELEMETRY_PATHS = [
   "generate_204",
   "gen_204",

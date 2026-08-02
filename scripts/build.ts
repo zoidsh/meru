@@ -99,7 +99,7 @@ function buildAppFiles() {
       }),
     ),
     buildPreloadFile("preload-gmail"),
-    buildPreloadFile("preload-google-app"),
+    buildPreloadFile("preload-workspace-app"),
     buildPreloadFile("preload-renderer"),
   ]);
 }
@@ -138,7 +138,7 @@ await Promise.all([
   buildAppFiles(),
   buildRenderer("renderer-main", 3000),
   buildRenderer("renderer-popup", 3001),
-  buildRenderer("renderer-google-app", 3002),
+  buildRenderer("renderer-workspace-app", 3002),
 ]);
 
 if (args.values.dev) {
@@ -181,7 +181,7 @@ if (args.values.dev) {
     const rendererPathnames = [
       "renderer-main/",
       "renderer-popup/",
-      "renderer-google-app/",
+      "renderer-workspace-app/",
       "shared/renderer/",
       "ui/",
     ];
