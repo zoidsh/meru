@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -62,10 +63,10 @@ type WorkspaceAppOptions = {
 };
 
 export class WorkspaceApp {
-  private static instances = new Map<number, WorkspaceApp>();
+  private static instances = new Map<string, WorkspaceApp>();
 
   static fromWebContents(webContents: WebContents) {
-    const instance = WorkspaceApp.instances.get(webContents.id);
+    const instance = WorkspaceApp.tryFromWebContents(webContents);
 
     if (!instance) {
       throw new Error(`No WorkspaceApp instance for webContents ${webContents.id}`);
@@ -75,11 +76,17 @@ export class WorkspaceApp {
   }
 
   static tryFromWebContents(webContents: WebContents) {
-    return WorkspaceApp.instances.get(webContents.id);
+    for (const instance of WorkspaceApp.instances.values()) {
+      if (instance._window?.webContents.id === webContents.id) {
+        return instance;
+      }
+    }
   }
 
   static getAllWindows() {
-    return Array.from(WorkspaceApp.instances.values(), (instance) => instance.window);
+    return Array.from(WorkspaceApp.instances.values())
+      .filter((instance) => !instance.isEmbedded)
+      .map((instance) => instance.window);
   }
 
   static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
@@ -87,11 +94,15 @@ export class WorkspaceApp {
 
     const reusableInstance = Array.from(WorkspaceApp.instances.values())
       .reverse()
-      .find(
-        (instance) =>
-          instance.accountId === accountId &&
-          new URL(instance.view.webContents.getURL()).hostname === urlHostname,
-      );
+      .find((instance) => {
+        if (instance.accountId !== accountId || instance.isEmbedded) {
+          return false;
+        }
+
+        const instanceUrl = instance.view.webContents.getURL();
+
+        return Boolean(instanceUrl) && new URL(instanceUrl).hostname === urlHostname;
+      });
 
     if (!reusableInstance) {
       return false;
@@ -275,13 +286,35 @@ export class WorkspaceApp {
 
   app: SupportedWorkspaceApp | undefined;
 
-  window: BrowserWindow;
+  private _window: BrowserWindow | undefined;
+
+  get window() {
+    if (!this._window) {
+      throw new Error("Workspace app has no window");
+    }
+
+    return this._window;
+  }
+
+  set window(browserWindow: BrowserWindow) {
+    this._window = browserWindow;
+  }
 
   view: WebContentsView;
+
+  id = randomUUID();
 
   private powerSaveBlockerId: number | undefined;
 
   private viewDestroyed = false;
+
+  get isEmbedded() {
+    return !this._window;
+  }
+
+  private get chromeWebContents() {
+    return this._window ? this._window.webContents : main.window.webContents;
+  }
 
   constructor({ accountId, url, window, view }: WorkspaceAppOptions) {
     this.accountId = accountId;
@@ -296,20 +329,16 @@ export class WorkspaceApp {
     this.view.webContents.once("destroyed", () => {
       this.viewDestroyed = true;
 
-      if (!this.window.isDestroyed()) {
-        this.window.close();
+      if (this._window && !this._window.isDestroyed()) {
+        this._window.close();
       }
     });
 
-    WorkspaceApp.instances.set(this.window.webContents.id, this);
+    WorkspaceApp.instances.set(this.id, this);
 
     this.window.on("resize", this.updateViewBounds);
     this.window.on("close", this.handleClose);
-    this.window.on("focus", () => {
-      WorkspaceApp.instances.delete(this.window.webContents.id);
-
-      WorkspaceApp.instances.set(this.window.webContents.id, this);
-    });
+    this.window.on("focus", this.moveToMostRecentlyUsed);
 
     this.account.instance.windows.add(this.window);
 
@@ -365,7 +394,7 @@ export class WorkspaceApp {
 
     applyViewZoomLimits(view);
 
-    broadcastFoundInPageResults(view, this.window.webContents);
+    broadcastFoundInPageResults(view, this.chromeWebContents);
 
     this.setWindowOpenHandler(view);
 
@@ -386,7 +415,13 @@ export class WorkspaceApp {
     );
   }
 
-  private handleClose = () => {
+  moveToMostRecentlyUsed = () => {
+    WorkspaceApp.instances.delete(this.id);
+
+    WorkspaceApp.instances.set(this.id, this);
+  };
+
+  close() {
     if (!this.viewDestroyed) {
       this.unregisterViewListeners();
 
@@ -395,9 +430,13 @@ export class WorkspaceApp {
 
     this.teardownApp();
 
-    this.account.instance.windows.delete(this.window);
+    WorkspaceApp.instances.delete(this.id);
+  }
 
-    WorkspaceApp.instances.delete(this.window.webContents.id);
+  private handleClose = () => {
+    this.close();
+
+    this.account.instance.windows.delete(this.window);
   };
 
   private setupApp() {
@@ -451,7 +490,7 @@ export class WorkspaceApp {
   };
 
   broadcastNavigationState = () => {
-    ipc.renderer.send(this.window.webContents, "workspaceApp.navigationStateChanged", {
+    ipc.renderer.send(this.chromeWebContents, "workspaceApp.navigationStateChanged", {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
@@ -460,7 +499,11 @@ export class WorkspaceApp {
   handlePageTitleUpdated = () => {
     const pageTitle = this.view.webContents.getTitle();
 
-    ipc.renderer.send(this.window.webContents, "workspaceApp.pageTitleChanged", pageTitle);
+    ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", pageTitle);
+
+    if (this.isEmbedded) {
+      return;
+    }
 
     const title = pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
 
@@ -478,7 +521,7 @@ export class WorkspaceApp {
 
   broadcastLoadingState = () => {
     ipc.renderer.send(
-      this.window.webContents,
+      this.chromeWebContents,
       "workspaceApp.loadingStateChanged",
       this.view.webContents.isLoading(),
     );
