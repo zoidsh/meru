@@ -163,9 +163,16 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## Git Commits
 
 - Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
-- Pull request titles follow the same style as commit summaries: short, lowercase, imperative, no type prefix.
 - Keep each commit to a single logical change.
 - Always rebase onto the latest `main` before pushing (`git pull --rebase origin main`) — never merge. `main` must stay linear; merge commits are not allowed on it.
+
+## Pull Requests
+
+- Titles follow the same style as commit summaries: short, lowercase, imperative, no type prefix.
+- Keep the title and description accurate at all times. They describe what the branch contains **now**, not what it contained when the pull request was opened.
+- Whenever the branch changes, update the title and description in the same step — never leave them describing an earlier version. This applies to reworks after review feedback, added or dropped scope, and rebases that change what the diff means.
+- The description should cover the problem being solved, the changes made, and anything a reviewer needs in order to judge them — including deliberate omissions, known risks, and what has not been verified.
+- Check the state of a pull request before acting on it rather than assuming it is unchanged. `gh pr list` only shows open pull requests, so one disappearing from the list means it was merged or closed.
 
 ## Release Notes
 
