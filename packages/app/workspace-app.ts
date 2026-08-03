@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { supportedWorkspaceApps, type SupportedWorkspaceApp } from "@meru/shared/types";
+import {
+  supportedWorkspaceApps,
+  type SupportedWorkspaceApp,
+  workspaceAppsAlwaysOpenAsWindow,
+} from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -219,7 +223,10 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
-      if (disposition === "background-tab") {
+      if (
+        disposition === "background-tab" &&
+        !workspaceAppsAlwaysOpenAsWindow.includes(matchedSupportedWorkspaceApp)
+      ) {
         new WorkspaceApp({
           accountId,
           url,

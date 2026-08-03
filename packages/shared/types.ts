@@ -84,6 +84,8 @@ export const workspaceAppsPinnedApps = Object.fromEntries(
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
 
+export const workspaceAppsAlwaysOpenAsWindow: SupportedWorkspaceApp[] = ["myaccount"];
+
 export const GMAIL_TAB_ID = "gmail";
 
 export type TabState = {
