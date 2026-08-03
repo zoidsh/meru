@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
+import { APP_TAB_STRIP_WIDTH } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { Account } from "./account";
 import { config } from "./config";
@@ -84,20 +85,29 @@ class Accounts {
     });
   }
 
+  getTabStripWidth() {
+    return this.getSelectedAccount().instance.tabs.hasWorkspaceTabs ? APP_TAB_STRIP_WIDTH : 0;
+  }
+
   updateAllViewBounds() {
     for (const account of this.instances.values()) {
-      account.gmail.updateViewBounds();
+      for (const tab of account.tabs.tabs) {
+        tab.updateViewBounds();
+      }
     }
   }
 
   refreshSelectedAccountView() {
-    const selectedAccount = this.getSelectedAccount();
+    const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
-    main.window.contentView.removeChildView(selectedAccount.instance.gmail.view);
-    main.window.contentView.addChildView(selectedAccount.instance.gmail.view);
+    main.window.contentView.removeChildView(activeTab.view);
+    main.window.contentView.addChildView(activeTab.view);
 
-    selectedAccount.instance.gmail.updateViewBounds();
-    selectedAccount.instance.gmail.view.webContents.focus();
+    activeTab.updateViewBounds();
+
+    if (!appState.isSettingsOpen) {
+      activeTab.view.webContents.focus();
+    }
   }
 
   getAccountConfigs() {
@@ -181,6 +191,8 @@ class Accounts {
       }),
     );
 
+    this.updateAllViewBounds();
+
     this.refreshSelectedAccountView();
   }
 
@@ -246,6 +258,8 @@ class Accounts {
 
     this.selectAccount(createdAccount.id);
 
+    this.sendTabsChangedToRenderer();
+
     this.show();
 
     appState.setIsSettingsOpen(false);
@@ -253,6 +267,8 @@ class Accounts {
 
   async removeAccount(selectedAccountId: string) {
     const account = this.getAccount(selectedAccountId);
+
+    account.instance.tabs.closeAll();
 
     account.instance.gmail.destroy();
 
@@ -275,6 +291,8 @@ class Accounts {
     config.set("accounts", updatedAccounts);
 
     this.updateAllViewBounds();
+
+    this.sendTabsChangedToRenderer();
   }
 
   updateAccount(accountDetails: AccountConfig) {
@@ -290,13 +308,17 @@ class Accounts {
 
   hide() {
     for (const account of this.instances.values()) {
-      account.gmail.view.setVisible(false);
+      for (const tab of account.tabs.tabs) {
+        tab.view.setVisible(false);
+      }
     }
   }
 
   show() {
     for (const account of this.instances.values()) {
-      account.gmail.view.setVisible(true);
+      for (const tab of account.tabs.tabs) {
+        tab.view.setVisible(true);
+      }
     }
   }
 
@@ -320,6 +342,17 @@ class Accounts {
         }
       }
     }
+  }
+
+  sendTabsChangedToRenderer() {
+    ipc.renderer.send(
+      main.window.webContents,
+      "tabs.changed",
+      this.getAccounts().map((account) => ({
+        accountId: account.config.id,
+        tabs: account.instance.tabs.serialize(),
+      })),
+    );
   }
 
   sendAccountsChangedToRenderer() {

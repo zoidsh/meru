@@ -155,8 +155,16 @@ function PinnedWorkspaceApps() {
       {config["workspaceApps.pinnedApps"].map((app) => (
         <TitlebarIconButton
           key={app}
-          onClick={() => {
-            ipc.main.send("workspaceApps.openApp", app);
+          onClick={(event) => {
+            ipc.main.send(
+              "workspaceApps.openApp",
+              app,
+              event.metaKey || event.ctrlKey
+                ? "background-tab"
+                : event.shiftKey
+                  ? "new-window"
+                  : "foreground-tab",
+            );
           }}
           title={workspaceAppsPinnedApps[app]}
         >

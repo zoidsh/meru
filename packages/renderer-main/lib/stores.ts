@@ -2,6 +2,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { getConfig } from "@meru/shared/renderer/react-query";
 import { accountsSearchParam, trialDaysLeftSearchParam } from "@meru/shared/renderer/search-params";
 import type { AccountInstances } from "@meru/shared/schemas";
+import type { AccountTabsState } from "@meru/shared/types";
 import { toast } from "sonner";
 import { navigate } from "wouter/use-hash-location";
 import { create } from "zustand";
@@ -40,6 +41,16 @@ ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
   }
 
   useAccountsStore.setState({ isAddAccountDialogOpen: true });
+});
+
+export const useTabsStore = create<{
+  accountsTabs: AccountTabsState[];
+}>(() => ({
+  accountsTabs: [],
+}));
+
+ipc.renderer.on("tabs.changed", (_event, accountsTabs) => {
+  useTabsStore.setState({ accountsTabs });
 });
 
 export const useSettingsStore = create<{

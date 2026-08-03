@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -131,11 +132,10 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const workspaceApp = WorkspaceApp.tryFromWebContents(event.sender);
-
-      const targetWebContents = workspaceApp
-        ? workspaceApp.view.webContents
-        : accounts.getSelectedAccount().instance.gmail.view.webContents;
+      const targetWebContents = (
+        WorkspaceApp.tryFromWebContents(event.sender) ??
+        accounts.getSelectedAccount().instance.tabs.activeTab
+      ).view.webContents;
 
       if (!text) {
         targetWebContents.stopFindInPage("clearSelection");
@@ -212,6 +212,28 @@ class Ipc {
 
     ipc.main.on("workspaceApp.openInBrowser", (event) => {
       WorkspaceApp.fromWebContents(event.sender).openInBrowser();
+    });
+
+    ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {
+      const account = accounts.getAccount(accountId);
+
+      account.instance.tabs.activateTab(tabId);
+
+      if (account.config.selected) {
+        accounts.refreshSelectedAccountView();
+      } else {
+        accounts.selectAccount(accountId);
+      }
+    });
+
+    ipc.main.on("tabs.closeTab", (_event, accountId, tabId) => {
+      const account = accounts.getAccount(accountId);
+
+      account.instance.tabs.closeTab(tabId);
+
+      if (account.config.selected) {
+        accounts.refreshSelectedAccountView();
+      }
     });
 
     ipc.main.handle("config.getConfig", () => config.store);
@@ -311,8 +333,17 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app) => {
-      accounts.getSelectedAccount().instance.gmail.openWorkspaceApp(app);
+    ipc.main.on("workspaceApps.openApp", (_event, app, disposition) => {
+      const selectedAccount = accounts.getSelectedAccount();
+
+      WorkspaceApp.handleWindowOpen({
+        accountId: selectedAccount.config.id,
+        details: {
+          url: getWorkspaceAppUrl(app),
+          disposition: disposition ?? "foreground-tab",
+        },
+        webContents: selectedAccount.instance.gmail.view.webContents,
+      });
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {

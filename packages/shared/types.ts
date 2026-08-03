@@ -82,6 +82,21 @@ export const workspaceAppsPinnedApps = Object.fromEntries(
   workspaceAppsPinnedAppKeys.map((key) => [key, supportedWorkspaceApps[key]]),
 ) as Pick<typeof supportedWorkspaceApps, WorkspaceAppsPinnedApp>;
 
+export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
+
+export const GMAIL_TAB_ID = "gmail";
+
+export type TabState = {
+  id: string;
+  app: SupportedWorkspaceApp | undefined;
+  active: boolean;
+};
+
+export type AccountTabsState = {
+  accountId: AccountConfig["id"];
+  tabs: TabState[];
+};
+
 type GmailHashLocation =
   | "inbox"
   | "starred"
@@ -216,7 +231,12 @@ export type IpcMainEvents =
       "app.relaunch": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
-      "workspaceApps.openApp": [app: WorkspaceAppsPinnedApp];
+      "workspaceApps.openApp": [
+        app: WorkspaceAppsPinnedApp,
+        disposition?: WorkspaceAppOpenDisposition,
+      ];
+      "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
+      "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
@@ -257,6 +277,7 @@ export type IpcRendererEvent = {
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
   "accounts.changed": [accounts: AccountInstances];
+  "tabs.changed": [accountsTabs: AccountTabsState[]];
   "accounts.openAddAccountDialog": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];
