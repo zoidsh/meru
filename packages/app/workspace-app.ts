@@ -539,22 +539,22 @@ export class WorkspaceApp {
     });
   };
 
+  private pageTitle = "";
+
   get title() {
-    return this.view.webContents.getTitle() || (this.app ? supportedWorkspaceApps[this.app] : "");
+    return this.pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
   }
 
-  handlePageTitleUpdated = () => {
+  handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {
+    this.pageTitle = explicitSet ? pageTitle : "";
+
     if (!this._window) {
       accounts.sendTabsChangedToRenderer();
 
       return;
     }
 
-    ipc.renderer.send(
-      this.chromeWebContents,
-      "workspaceApp.pageTitleChanged",
-      this.view.webContents.getTitle(),
-    );
+    ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
 
     if (!this.title) {
       this.window.setTitle(app.name);
