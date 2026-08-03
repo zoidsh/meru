@@ -3,7 +3,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { GMAIL_TAB_ID } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import { GlobeIcon, MailIcon, XIcon } from "lucide-react";
+import { GlobeIcon, XIcon } from "lucide-react";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 export function AppTabStrip() {
@@ -43,7 +43,7 @@ export function AppTabStrip() {
                 ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
               }}
             >
-              <MailIcon />
+              <WorkspaceAppIcon app="gmail" className="size-4" />
             </Button>
           );
         }

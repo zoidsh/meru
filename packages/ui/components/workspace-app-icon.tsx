@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 export function WorkspaceAppIcon({
   app,
   ...props
-}: { app: WorkspaceAppsPinnedApp } & ComponentProps<"svg">) {
+}: { app: WorkspaceAppsPinnedApp | "gmail" } & ComponentProps<"svg">) {
   switch (app) {
     case "calendar": {
       return (
@@ -762,6 +762,58 @@ export function WorkspaceAppIcon({
             <clipPath id="clip0_2007_90">
               <rect width={22} height={22} fill="white" transform="translate(1 1)" />
             </clipPath>
+          </defs>
+        </svg>
+      );
+    }
+    case "gmail": {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+          <path
+            d="M18.25 5.25003H23V19C23 19.8284 22.3283 20.5 21.5 20.5H19C18.8011 20.5 18.6103 20.421 18.4696 20.2803C18.329 20.1397 18.25 19.9489 18.25 19.75V5.25003Z"
+            fill="url(#paint0_linear_2010_2)"
+          />
+          <path
+            d="M5.75001 5.25003H1.00002V19C1.00002 19.8284 1.67165 20.5 2.50002 20.5H5.00001C5.19892 20.5 5.38969 20.421 5.53034 20.2803C5.67099 20.1397 5.75001 19.9489 5.75001 19.75V5.25003Z"
+            fill="#FC413D"
+          />
+          <path
+            d="M4.90326 3.55703C3.89914 2.71304 2.40102 2.84279 1.55702 3.84691C0.713024 4.8509 0.842774 6.34903 1.8469 7.19315L11.3566 15.1868C11.5368 15.3382 11.7647 15.4213 12.0001 15.4213C12.2355 15.4213 12.4633 15.3382 12.6435 15.1868L22.1532 7.19302C23.1572 6.34903 23.287 4.8509 22.443 3.84678C21.599 2.84278 20.1008 2.71304 19.0968 3.55703L12 9.52252L4.90326 3.55703Z"
+            fill="url(#paint1_linear_2010_2)"
+          />
+          <defs>
+            <linearGradient
+              id="paint0_linear_2010_2"
+              x1={20.625}
+              y1={5.25003}
+              x2={20.625}
+              y2={20.5}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#60D673" />
+              <stop offset={0.17} stopColor="#42C868" />
+              <stop offset={0.39} stopColor="#0EBC5F" />
+              <stop offset={0.62} stopColor="#00A9BB" />
+              <stop offset={0.86} stopColor="#3C90FF" />
+              <stop offset={1} stopColor="#3186FF" />
+            </linearGradient>
+            <linearGradient
+              id="paint1_linear_2010_2"
+              x1={1.00002}
+              y1={5.51628}
+              x2={23}
+              y2={5.51628}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset={0.08} stopColor="#FF63A0" />
+              <stop offset={0.3} stopColor="#FC413D" />
+              <stop offset={0.5} stopColor="#FC413D" />
+              <stop offset={0.65} stopColor="#FC413D" />
+              <stop offset={0.72} stopColor="#FC5C30" />
+              <stop offset={0.86} stopColor="#FEB10C" />
+              <stop offset={0.91} stopColor="#FEC700" />
+              <stop offset={0.96} stopColor="#FFDB0F" />
+            </linearGradient>
           </defs>
         </svg>
       );
