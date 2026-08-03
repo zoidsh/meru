@@ -40,7 +40,7 @@ export function AppTabStrip() {
 
   return (
     <div
-      className="flex flex-col gap-1 border-r p-2"
+      className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
       style={{ width: tabStripWidth, minWidth: tabStripWidth }}
     >
       {selectedAccountTabs.tabs.map((tab) => {
