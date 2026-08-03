@@ -4,7 +4,9 @@ export const BASE_SPACING = 8;
 
 export const APP_TITLEBAR_HEIGHT = BASE_SPACING * 5;
 
-export const APP_TAB_STRIP_WIDTH = BASE_SPACING * 28;
+export const APP_TAB_STRIP_NARROW_WIDTH = BASE_SPACING * 8;
+
+export const APP_TAB_STRIP_WIDE_WIDTH = BASE_SPACING * 28;
 
 export const GOOGLE_ACCOUNTS_URL = "https://accounts.google.com";
 

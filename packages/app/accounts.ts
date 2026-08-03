@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TAB_STRIP_WIDTH } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
+import { getTabStripWidth } from "@meru/shared/types";
 import { Account } from "./account";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -86,7 +86,7 @@ class Accounts {
   }
 
   getTabStripWidth() {
-    return this.getSelectedAccount().instance.tabs.hasWorkspaceTabs ? APP_TAB_STRIP_WIDTH : 0;
+    return getTabStripWidth(this.getSelectedAccount().instance.tabs.serialize());
   }
 
   updateAllViewBounds() {
