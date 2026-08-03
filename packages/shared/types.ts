@@ -89,6 +89,7 @@ export const GMAIL_TAB_ID = "gmail";
 export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
+  title: string;
   active: boolean;
 };
 

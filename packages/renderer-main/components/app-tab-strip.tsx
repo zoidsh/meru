@@ -1,6 +1,6 @@
 import { APP_TAB_STRIP_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { GMAIL_TAB_ID, supportedWorkspaceApps } from "@meru/shared/types";
+import { GMAIL_TAB_ID } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { GlobeIcon, MailIcon, XIcon } from "lucide-react";
@@ -38,7 +38,7 @@ export function AppTabStrip() {
               key={tab.id}
               variant={tab.active ? "secondary" : "ghost"}
               size="icon"
-              title="Gmail"
+              title={tab.title}
               onClick={() => {
                 ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
               }}
@@ -53,7 +53,7 @@ export function AppTabStrip() {
             <Button
               variant={tab.active ? "secondary" : "ghost"}
               size="icon"
-              title={tab.app ? supportedWorkspaceApps[tab.app] : undefined}
+              title={tab.title}
               onClick={() => {
                 ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
               }}

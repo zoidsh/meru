@@ -532,18 +532,24 @@ export class WorkspaceApp {
     });
   };
 
+  get title() {
+    return this.view.webContents.getTitle() || (this.app ? supportedWorkspaceApps[this.app] : "");
+  }
+
   handlePageTitleUpdated = () => {
     if (!this._window) {
+      accounts.sendTabsChangedToRenderer();
+
       return;
     }
 
-    const pageTitle = this.view.webContents.getTitle();
+    ipc.renderer.send(
+      this.chromeWebContents,
+      "workspaceApp.pageTitleChanged",
+      this.view.webContents.getTitle(),
+    );
 
-    ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", pageTitle);
-
-    const title = pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
-
-    if (!title) {
+    if (!this.title) {
       this.window.setTitle(app.name);
 
       return;
@@ -552,7 +558,7 @@ export class WorkspaceApp {
     const accountLabelPrefix =
       config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
 
-    this.window.setTitle(`${accountLabelPrefix}${title} - ${app.name}`);
+    this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   };
 
   broadcastLoadingState = () => {

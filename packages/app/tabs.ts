@@ -8,6 +8,7 @@ import { WorkspaceApp } from "./workspace-app";
 export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
+  title: string;
   view: WebContentsView;
   updateViewBounds: () => void;
 };
@@ -22,6 +23,7 @@ export class Tabs {
       {
         id: GMAIL_TAB_ID,
         app: undefined,
+        title: "Gmail",
         get view() {
           return gmail.view;
         },
@@ -92,6 +94,7 @@ export class Tabs {
     return this.tabs.map((tab) => ({
       id: tab.id,
       app: tab.app,
+      title: tab.title,
       active: tab.id === this.activeTabId,
     }));
   }
