@@ -28,7 +28,7 @@ export function AppTabStrip() {
 
   return (
     <div
-      className="flex flex-col items-center gap-2 border-r py-2"
+      className="flex flex-col gap-1 border-r p-2"
       style={{ width: APP_TAB_STRIP_WIDTH, minWidth: APP_TAB_STRIP_WIDTH }}
     >
       {selectedAccountTabs.tabs.map((tab) => {
@@ -37,13 +37,15 @@ export function AppTabStrip() {
             <Button
               key={tab.id}
               variant={tab.active ? "secondary" : "ghost"}
-              size="icon"
+              size="sm"
+              className="w-full justify-start"
               title={tab.title}
               onClick={() => {
                 ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
               }}
             >
               <WorkspaceAppIcon app="gmail" className="size-4" />
+              <span className="truncate">{tab.title}</span>
             </Button>
           );
         }
@@ -52,7 +54,8 @@ export function AppTabStrip() {
           <div key={tab.id} className="group relative">
             <Button
               variant={tab.active ? "secondary" : "ghost"}
-              size="icon"
+              size="sm"
+              className="w-full justify-start pr-7"
               title={tab.title}
               onClick={() => {
                 ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
@@ -63,11 +66,12 @@ export function AppTabStrip() {
               ) : (
                 <GlobeIcon />
               )}
+              <span className="truncate">{tab.title}</span>
             </Button>
             <Button
               variant="secondary"
               size="icon"
-              className="absolute -top-1 -right-1 hidden size-4 rounded-full group-hover:flex"
+              className="absolute top-1/2 right-1 hidden size-5 -translate-y-1/2 group-hover:flex"
               title="Close Tab"
               onClick={() => {
                 ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
