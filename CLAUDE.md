@@ -169,6 +169,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 ## Pull Requests
 
 - Titles follow the same style as commit summaries: short, lowercase, imperative, no type prefix.
+- Keep a pull request to a single logical commit. Apply review feedback and follow-up fixes by amending that commit and force-pushing (`git push --force-with-lease`) — never stack fixup commits on a pull request branch.
 - Keep the title and description accurate at all times. They describe what the branch contains **now**, not what it contained when the pull request was opened.
 - Whenever the branch changes, update the title and description in the same step — never leave them describing an earlier version. This applies to reworks after review feedback, added or dropped scope, and rebases that change what the diff means.
 - The description should cover the problem being solved, the changes made, and anything a reviewer needs in order to judge them — including deliberate omissions, known risks, and what has not been verified.
