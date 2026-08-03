@@ -3,6 +3,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
+import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, XIcon } from "lucide-react";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
@@ -78,11 +79,12 @@ export function AppTabStrip() {
             <Button
               variant="secondary"
               size="icon"
-              className={
+              className={cn(
+                "absolute hidden group-hover:flex",
                 isWide
-                  ? "absolute top-1/2 right-1 hidden size-5 -translate-y-1/2 group-hover:flex"
-                  : "absolute -top-1 -right-1 hidden size-4 rounded-full group-hover:flex"
-              }
+                  ? "top-1/2 right-1 size-5 -translate-y-1/2"
+                  : "-top-1 -right-1 size-4 rounded-full",
+              )}
               title="Close Tab"
               onClick={() => {
                 ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
