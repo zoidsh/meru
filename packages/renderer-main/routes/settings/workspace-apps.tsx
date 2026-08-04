@@ -127,7 +127,7 @@ export function WorkspaceAppsSettings() {
             <>
               <ConfigSelectField
                 label="Open Behavior"
-                description="How Workspace Apps open: as a tab in the main window, in a new window, or as a background tab."
+                description="How Workspace Apps open: as a tab in the main window (default), in a new window, or as a background tab. Hold Cmd/Ctrl to always open as a background tab or Shift to always open in a new window."
                 configKey="workspaceApps.openBehavior"
                 placeholder="Select behavior"
                 licenseKeyRequired
