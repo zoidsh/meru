@@ -49,13 +49,16 @@ export class DormantTab {
 
   navigationHistory = { canGoBack: false, canGoForward: false };
 
-  constructor(app: SupportedWorkspaceApp, url: string) {
-    this.app = app;
-    this.url = url;
+  private pageTitle: string;
+
+  constructor(pinnedTab: PinnedTab) {
+    this.app = pinnedTab.app;
+    this.url = pinnedTab.url;
+    this.pageTitle = pinnedTab.title;
   }
 
   get title() {
-    return workspaceApps[this.app].label;
+    return this.pageTitle || workspaceApps[this.app].label;
   }
 }
 
@@ -162,7 +165,7 @@ export class Tabs {
 
   restorePinnedTabs(pinnedTabs: PinnedTab[]) {
     for (const pinnedTab of pinnedTabs) {
-      this.tabs.push(new DormantTab(pinnedTab.app, pinnedTab.url));
+      this.tabs.push(new DormantTab(pinnedTab));
     }
   }
 
@@ -254,9 +257,10 @@ export class Tabs {
         pinnedTabs.push({
           app: tab.app,
           url: tab.view.webContents.getURL() || getWorkspaceAppUrl(tab.app),
+          title: tab.title,
         });
       } else if (tab instanceof DormantTab) {
-        pinnedTabs.push({ app: tab.app, url: tab.url });
+        pinnedTabs.push({ app: tab.app, url: tab.url, title: tab.title });
       }
     }
 

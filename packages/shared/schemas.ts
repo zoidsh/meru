@@ -26,6 +26,7 @@ export const pinnedTabSchema = z.object({
     (value) => typeof value === "string" && value in workspaceApps,
   ),
   url: z.string(),
+  title: z.string(),
 });
 
 export type PinnedTab = z.infer<typeof pinnedTabSchema>;
