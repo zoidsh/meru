@@ -1,10 +1,25 @@
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/types";
+import { useConfig } from "@meru/shared/renderer/react-query";
+import type { AccountConfig } from "@meru/shared/schemas";
+import {
+  bookmarkableWorkspaceApps,
+  GMAIL_TAB_ID,
+  getTabStripWidth,
+  type TabState,
+} from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, XIcon } from "lucide-react";
+import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 function TabIcon({ tab }: { tab: TabState }) {
@@ -15,10 +30,139 @@ function TabIcon({ tab }: { tab: TabState }) {
   return <GlobeIcon />;
 }
 
+function StripTab({
+  tab,
+  accountId,
+  isWide,
+}: {
+  tab: TabState;
+  accountId: AccountConfig["id"];
+  isWide: boolean;
+}) {
+  const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
+
+  return (
+    <div className="group relative">
+      <Button
+        variant={tab.active ? "secondary" : "ghost"}
+        size={isWide ? "sm" : "icon"}
+        className={cn(
+          tab.dormant && "opacity-50",
+          isWide && "w-full justify-start",
+          isWide && isCloseable && "pr-7",
+        )}
+        title={tab.title}
+        onClick={() => {
+          ipc.main.send("tabs.selectTab", accountId, tab.id);
+        }}
+        onAuxClick={(event) => {
+          if (event.button === 1 && isCloseable) {
+            ipc.main.send("tabs.closeTab", accountId, tab.id);
+          }
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+
+          ipc.main.send("tabs.showTabContextMenu", accountId, tab.id);
+        }}
+      >
+        <TabIcon tab={tab} />
+        {isWide && <span className="truncate">{tab.title}</span>}
+      </Button>
+      {isCloseable && (
+        <Button
+          variant="secondary"
+          size="icon"
+          className={cn(
+            "absolute hidden group-hover:flex",
+            isWide
+              ? "top-1/2 right-1 size-5 -translate-y-1/2"
+              : "-top-1 -right-1 size-4 rounded-full",
+          )}
+          title="Close Tab"
+          onClick={() => {
+            ipc.main.send("tabs.closeTab", accountId, tab.id);
+          }}
+        >
+          <XIcon className="size-3" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function NewTabButton({ isWide }: { isWide: boolean }) {
+  const { config } = useConfig();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleWindowBlur = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isOpen]);
+
+  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
+    return;
+  }
+
+  return (
+    <div className={isWide ? "w-full" : undefined}>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size={isWide ? "sm" : "icon"}
+              className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
+              title="New Tab"
+            >
+              <PlusIcon />
+            </Button>
+          }
+        />
+        <DropdownMenuContent
+          side="bottom"
+          align="start"
+          className={cn("space-y-1", !isWide && "min-w-0")}
+        >
+          {config["workspaceApps.bookmarkedApps"].map((app) => (
+            <DropdownMenuItem
+              key={app}
+              className={isWide ? undefined : "justify-center"}
+              title={bookmarkableWorkspaceApps[app]}
+              onClick={() => {
+                ipc.main.send("workspaceApps.openApp", app);
+              }}
+            >
+              <WorkspaceAppIcon app={app} className="size-4" />
+              {isWide && bookmarkableWorkspaceApps[app]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export function AppTabStrip() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+
+  const { config } = useConfig();
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
@@ -26,7 +170,12 @@ export function AppTabStrip() {
     (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
   );
 
-  const tabStripWidth = selectedAccountTabs ? getTabStripWidth(selectedAccountTabs.tabs) : 0;
+  const tabStripWidth = selectedAccountTabs
+    ? getTabStripWidth(
+        selectedAccountTabs.tabs,
+        (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
+      )
+    : 0;
 
   if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {
     return;
@@ -40,53 +189,9 @@ export function AppTabStrip() {
       style={{ width: tabStripWidth, minWidth: tabStripWidth }}
     >
       {selectedAccountTabs.tabs.map((tab) => (
-        <div key={tab.id} className="group relative">
-          <Button
-            variant={tab.active ? "secondary" : "ghost"}
-            size={isWide ? "sm" : "icon"}
-            className={cn(
-              tab.dormant && "opacity-50",
-              isWide && "w-full justify-start",
-              isWide && tab.id !== GMAIL_TAB_ID && !tab.pinned && "pr-7",
-            )}
-            title={tab.title}
-            onClick={() => {
-              ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
-            }}
-            onAuxClick={(event) => {
-              if (event.button === 1 && tab.id !== GMAIL_TAB_ID && !tab.pinned) {
-                ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
-              }
-            }}
-            onContextMenu={(event) => {
-              event.preventDefault();
-
-              ipc.main.send("tabs.showTabContextMenu", selectedAccount.config.id, tab.id);
-            }}
-          >
-            <TabIcon tab={tab} />
-            {isWide && <span className="truncate">{tab.title}</span>}
-          </Button>
-          {tab.id !== GMAIL_TAB_ID && !tab.pinned && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className={cn(
-                "absolute hidden group-hover:flex",
-                isWide
-                  ? "top-1/2 right-1 size-5 -translate-y-1/2"
-                  : "-top-1 -right-1 size-4 rounded-full",
-              )}
-              title="Close Tab"
-              onClick={() => {
-                ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
-              }}
-            >
-              <XIcon className="size-3" />
-            </Button>
-          )}
-        </div>
+        <StripTab key={tab.id} tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
       ))}
+      <NewTabButton isWide={isWide} />
     </div>
   );
 }

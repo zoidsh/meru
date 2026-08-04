@@ -83,8 +83,6 @@ export const bookmarkableWorkspaceApps = Object.fromEntries(
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<BookmarkableWorkspaceApp, string>;
 
-export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
-
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
   newWindow: "New Window",
@@ -111,8 +109,8 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
-export function getTabStripWidth(tabs: Pick<TabState, "app">[]) {
-  if (tabs.length <= 1) {
+export function getTabStripWidth(tabs: Pick<TabState, "app">[], hasBookmarkedApps: boolean) {
+  if (tabs.length <= 1 && !hasBookmarkedApps) {
     return 0;
   }
 
@@ -264,13 +262,10 @@ export type IpcMainEvents =
       "app.relaunch": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
-      "workspaceApps.openApp": [
-        app: BookmarkableWorkspaceApp,
-        disposition?: WorkspaceAppOpenDisposition,
-      ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
+      "workspaceApps.openApp": [app: BookmarkableWorkspaceApp];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

@@ -389,17 +389,18 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app, disposition) => {
+    ipc.main.on("workspaceApps.openApp", (_event, app) => {
+      if (!licenseKey.isValid) {
+        return;
+      }
+
       const selectedAccount = accounts.getSelectedAccount();
 
-      WorkspaceApp.handleWindowOpen({
-        accountId: selectedAccount.config.id,
-        details: {
-          url: getWorkspaceAppUrl(app),
-          disposition: disposition ?? "foreground-tab",
-        },
-        webContents: selectedAccount.instance.gmail.view.webContents,
-      });
+      const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+
+      selectedAccount.instance.tabs.activateTab(workspaceApp.id);
+
+      accounts.refreshSelectedAccountView();
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {

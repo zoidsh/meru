@@ -42,6 +42,10 @@ class Accounts {
         account.gmail.applyLabelColors();
       }
     });
+
+    config.onDidChange("workspaceApps.bookmarkedApps", () => {
+      accounts.updateAllViewBounds();
+    });
   }
 
   async createViews() {
@@ -90,7 +94,10 @@ class Accounts {
   }
 
   getTabStripWidth() {
-    return getTabStripWidth(this.getSelectedAccount().instance.tabs.serialize());
+    return getTabStripWidth(
+      this.getSelectedAccount().instance.tabs.serialize(),
+      config.get("workspaceApps.bookmarkedApps").length > 0,
+    );
   }
 
   updateAllViewBounds() {
