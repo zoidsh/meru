@@ -1,11 +1,24 @@
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { useConfig } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/types";
+import {
+  bookmarkableWorkspaceApps,
+  GMAIL_TAB_ID,
+  getTabStripWidth,
+  type TabState,
+} from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, XIcon } from "lucide-react";
+import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 function TabIcon({ tab }: { tab: TabState }) {
@@ -25,7 +38,7 @@ function StripTab({
   accountId: AccountConfig["id"];
   isWide: boolean;
 }) {
-  const isCloseable = !tab.bookmark && tab.id !== GMAIL_TAB_ID && !tab.pinned;
+  const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
 
   return (
     <div className="group relative">
@@ -77,10 +90,56 @@ function StripTab({
   );
 }
 
+function NewTabButton({ isWide }: { isWide: boolean }) {
+  const { config } = useConfig();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
+    return;
+  }
+
+  return (
+    <div className={cn("mt-auto", isWide && "w-full")}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            isWide ? (
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                <PlusIcon />
+                New Tab
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" title="New Tab">
+                <PlusIcon />
+              </Button>
+            )
+          }
+        />
+        <DropdownMenuContent side="right" align="end">
+          {config["workspaceApps.bookmarkedApps"].map((app) => (
+            <DropdownMenuItem
+              key={app}
+              onClick={() => {
+                ipc.main.send("workspaceApps.openApp", app);
+              }}
+            >
+              <WorkspaceAppIcon app={app} className="size-4" />
+              {bookmarkableWorkspaceApps[app]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export function AppTabStrip() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+
+  const { config } = useConfig();
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
@@ -88,7 +147,12 @@ export function AppTabStrip() {
     (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
   );
 
-  const tabStripWidth = selectedAccountTabs ? getTabStripWidth(selectedAccountTabs.tabs) : 0;
+  const tabStripWidth = selectedAccountTabs
+    ? getTabStripWidth(
+        selectedAccountTabs.tabs,
+        (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
+      )
+    : 0;
 
   if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {
     return;
@@ -96,30 +160,15 @@ export function AppTabStrip() {
 
   const isWide = tabStripWidth === APP_TAB_STRIP_WIDE_WIDTH;
 
-  const openTabs = selectedAccountTabs.tabs.filter((tab) => !tab.bookmark);
-
-  const bookmarkTabs = selectedAccountTabs.tabs.filter((tab) => tab.bookmark);
-
   return (
     <div
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
       style={{ width: tabStripWidth, minWidth: tabStripWidth }}
     >
-      {openTabs.map((tab) => (
+      {selectedAccountTabs.tabs.map((tab) => (
         <StripTab key={tab.id} tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
       ))}
-      {bookmarkTabs.length > 0 && (
-        <div className={cn("mt-auto flex flex-col", isWide ? "gap-1" : "items-center gap-2")}>
-          {bookmarkTabs.map((tab) => (
-            <StripTab
-              key={tab.id}
-              tab={tab}
-              accountId={selectedAccount.config.id}
-              isWide={isWide}
-            />
-          ))}
-        </div>
-      )}
+      <NewTabButton isWide={isWide} />
     </div>
   );
 }

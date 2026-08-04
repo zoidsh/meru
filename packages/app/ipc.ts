@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -386,6 +387,20 @@ class Ipc {
         subtitle: "Your Test Notification Request",
         body: "This is a test notification to show how notifications will appear.",
       });
+    });
+
+    ipc.main.on("workspaceApps.openApp", (_event, app) => {
+      if (!licenseKey.isValid) {
+        return;
+      }
+
+      const selectedAccount = accounts.getSelectedAccount();
+
+      const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+
+      selectedAccount.instance.tabs.activateTab(workspaceApp.id);
+
+      accounts.refreshSelectedAccountView();
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {

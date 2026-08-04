@@ -99,7 +99,6 @@ export type TabState = {
   title: string;
   pinned: boolean;
   dormant: boolean;
-  bookmark: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
@@ -110,8 +109,8 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
-export function getTabStripWidth(tabs: Pick<TabState, "app">[]) {
-  if (tabs.length <= 1) {
+export function getTabStripWidth(tabs: Pick<TabState, "app">[], hasBookmarkedApps: boolean) {
+  if (tabs.length <= 1 && !hasBookmarkedApps) {
     return 0;
   }
 
@@ -266,6 +265,7 @@ export type IpcMainEvents =
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
+      "workspaceApps.openApp": [app: BookmarkableWorkspaceApp];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

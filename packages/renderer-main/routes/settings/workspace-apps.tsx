@@ -213,7 +213,7 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Bookmark Workspace Apps to show them at the bottom of the tab strip and drag to
+                Bookmark Workspace Apps to open them from the tab strip's New Tab menu and drag to
                 reorder.
               </FieldDescription>
             </FieldContent>

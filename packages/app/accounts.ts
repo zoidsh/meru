@@ -44,9 +44,7 @@ class Accounts {
     });
 
     config.onDidChange("workspaceApps.bookmarkedApps", () => {
-      for (const account of accounts.instances.values()) {
-        account.tabs.syncBookmarkTabs();
-      }
+      accounts.updateAllViewBounds();
     });
   }
 
@@ -96,7 +94,10 @@ class Accounts {
   }
 
   getTabStripWidth() {
-    return getTabStripWidth(this.getSelectedAccount().instance.tabs.serialize());
+    return getTabStripWidth(
+      this.getSelectedAccount().instance.tabs.serialize(),
+      config.get("workspaceApps.bookmarkedApps").length > 0,
+    );
   }
 
   updateAllViewBounds() {
