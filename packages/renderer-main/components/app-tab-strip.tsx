@@ -164,6 +164,13 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
               onClick={(event) => {
                 ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
               }}
+              onAuxClick={(event) => {
+                if (event.button === 1) {
+                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+                  setIsOpen(false);
+                }
+              }}
             >
               <WorkspaceAppIcon app={app} className="size-4" />
               {isWide && bookmarkableWorkspaceApps[app]}
