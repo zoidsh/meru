@@ -236,18 +236,21 @@ export class Gmail {
     return this._view ? this._view.webContents.isLoading() : false;
   }
 
+  get navigationHistory() {
+    if (!this._view) {
+      return { canGoBack: false, canGoForward: false };
+    }
+
+    return {
+      canGoBack: this._view.webContents.navigationHistory.canGoBack(),
+      canGoForward: this._view.webContents.navigationHistory.canGoForward(),
+    };
+  }
+
   viewStore = createStore(
     subscribeWithSelector<{
-      navigationHistory: {
-        canGoBack: boolean;
-        canGoForward: boolean;
-      };
       attentionRequired: boolean;
     }>(() => ({
-      navigationHistory: {
-        canGoBack: false,
-        canGoForward: false,
-      },
       attentionRequired: false,
     })),
   );
@@ -452,23 +455,14 @@ export class Gmail {
 
       if (window === this.view) {
         this.viewStore.setState({
-          navigationHistory: {
-            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
-          },
           attentionRequired: !url.startsWith(this.baseUrl),
         });
       }
     });
 
     if (window === this.view) {
-      window.webContents.on("did-navigate-in-page", (_event: Electron.Event) => {
-        this.viewStore.setState({
-          navigationHistory: {
-            canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-            canGoForward: this.view.webContents.navigationHistory.canGoForward(),
-          },
-        });
+      window.webContents.on("did-navigate-in-page", () => {
+        accounts.sendTabsChangedToRenderer();
       });
     }
 
