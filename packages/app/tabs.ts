@@ -171,7 +171,7 @@ export class Tabs {
     return workspaceApp;
   }
 
-  loadLaunchTabs() {
+  materializeLoadOnLaunchTabs() {
     for (const tab of this.tabs.slice()) {
       if (tab instanceof DormantTab && tab.loadOnLaunch) {
         this.materializeDormantTab(tab);

@@ -72,7 +72,7 @@ class Accounts {
     }
 
     for (const account of accounts) {
-      account.instance.tabs.loadLaunchTabs();
+      account.instance.tabs.materializeLoadOnLaunchTabs();
     }
 
     main.window.on("resize", () => {
