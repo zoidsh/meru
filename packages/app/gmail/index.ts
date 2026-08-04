@@ -411,6 +411,14 @@ export class Gmail {
       this.store.setState({ messageId: parseGmailMessageId(new URL(url).hash) });
     });
 
+    this.view.webContents.on("did-start-loading", () => {
+      accounts.sendTabsChangedToRenderer();
+    });
+
+    this.view.webContents.on("did-stop-loading", () => {
+      accounts.sendTabsChangedToRenderer();
+    });
+
     openViewDevToolsInDev(this.view);
 
     return this.view.webContents.loadURL(this.url);
