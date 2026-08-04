@@ -11,6 +11,12 @@ import { WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
 
+function stripGoogleFromPageTitle(pageTitle: string, app: SupportedWorkspaceApp) {
+  const appLabel = workspaceApps[app].label;
+
+  return pageTitle.replace(`Google ${appLabel}`, appLabel);
+}
+
 export function registerTabBroadcasts(view: WebContentsView) {
   const broadcastTabsChanged = () => {
     accounts.sendTabsChangedToRenderer();
@@ -375,7 +381,7 @@ export class Tabs {
     return this.tabs.map((tab) => ({
       id: tab.id,
       app: tab.app,
-      title: tab.title,
+      title: tab.app ? stripGoogleFromPageTitle(tab.title, tab.app) : tab.title,
       pinned: tab.pinned,
       dormant: tab instanceof DormantTab,
       loading: tab.isLoading,
