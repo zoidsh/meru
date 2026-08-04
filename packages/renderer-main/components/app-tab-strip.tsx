@@ -53,12 +53,10 @@ function StripTab({
         )}
         title={tab.title}
         onClick={(event) => {
-          if (
-            canOpenSecondInstance &&
-            tab.app &&
-            (platform.isMacOS ? event.metaKey : event.ctrlKey)
-          ) {
-            ipc.main.send("workspaceApps.openApp", tab.app, { background: true });
+          const isCommandOrControlClick = platform.isMacOS ? event.metaKey : event.ctrlKey;
+
+          if (canOpenSecondInstance && tab.app && isCommandOrControlClick) {
+            ipc.main.send("workspaceApps.openApp", tab.app, { background: !event.shiftKey });
 
             return;
           }
@@ -153,8 +151,10 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
               key={app}
               className={isWide ? undefined : "justify-center"}
               title={bookmarkableWorkspaceApps[app]}
-              onClick={() => {
-                ipc.main.send("workspaceApps.openApp", app);
+              onClick={(event) => {
+                ipc.main.send("workspaceApps.openApp", app, {
+                  background: (platform.isMacOS ? event.metaKey : event.ctrlKey) && !event.shiftKey,
+                });
               }}
             >
               <WorkspaceAppIcon app={app} className="size-4" />
