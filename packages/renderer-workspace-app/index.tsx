@@ -15,7 +15,7 @@ import {
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import { CheckIcon, DownloadIcon, ExternalLinkIcon, LinkIcon } from "lucide-react";
+import { AppWindowIcon, CheckIcon, DownloadIcon, ExternalLinkIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 
@@ -189,6 +189,14 @@ function App() {
             }}
           >
             <ExternalLinkIcon />
+          </TitlebarIconButton>
+          <TitlebarIconButton
+            title="Move to Tab"
+            onClick={() => {
+              ipc.main.send("workspaceApp.moveToTab", workspaceAppId);
+            }}
+          >
+            <AppWindowIcon />
           </TitlebarIconButton>
         </TitlebarButtonGroup>
       </TitlebarRight>

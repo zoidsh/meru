@@ -144,6 +144,12 @@ export class Tabs {
     return workspaceApp;
   }
 
+  adoptTab(workspaceApp: WorkspaceApp) {
+    this.tabs.push(workspaceApp);
+
+    this.activateTab(workspaceApp.id);
+  }
+
   removeTab(tabId: string) {
     const removedTab = this.getTab(tabId);
 
