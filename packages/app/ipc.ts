@@ -376,7 +376,6 @@ class Ipc {
       Menu.buildFromTemplate([
         {
           label: "Reopen Closed Tab",
-          accelerator: "CommandOrControl+Shift+T",
           enabled: account.instance.tabs.hasRecentlyClosedTabs,
           click: () => {
             if (account.instance.tabs.reopenClosedTab() && account.config.selected) {
