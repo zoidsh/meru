@@ -268,11 +268,29 @@ class Ipc {
                   }
                 },
               },
-              {
-                type: "separator" as const,
-              },
             ]
           : []),
+        {
+          label: "Duplicate Tab",
+          click: () => {
+            const currentTabUrl =
+              tab instanceof WorkspaceApp ? tab.view.webContents.getURL() : tab.url;
+
+            const duplicatedTabUrl =
+              !currentTabUrl && tabApp ? getWorkspaceAppUrl(tabApp) : currentTabUrl;
+
+            const workspaceApp = account.instance.tabs.openTab(duplicatedTabUrl);
+
+            account.instance.tabs.activateTab(workspaceApp.id);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          type: "separator",
+        },
         tab.pinned
           ? {
               label: "Unpin Tab",
