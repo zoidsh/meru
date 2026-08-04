@@ -296,7 +296,7 @@ class Ipc {
           },
         },
         {
-          label: "Duplicate Tab",
+          label: "Duplicate",
           click: () => {
             const currentTabUrl =
               tab instanceof WorkspaceApp ? tab.view.webContents.getURL() : tab.url;
