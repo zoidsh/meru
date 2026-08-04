@@ -47,7 +47,7 @@ function RecentDownloadHistoryButton() {
   );
 }
 
-function ReloadButton() {
+function ReloadButton({ workspaceAppId }: { workspaceAppId: string }) {
   const [loading, setLoading] = useState(false);
   const [hovered, setHovered] = useState(false);
 
@@ -56,10 +56,10 @@ function ReloadButton() {
       setLoading(isLoading);
     });
 
-    ipc.main.invoke("workspaceApp.getLoadingState").then(setLoading);
+    ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setLoading);
 
     return unsubscribe;
-  }, []);
+  }, [workspaceAppId]);
 
   return (
     <TitlebarIconButton
@@ -67,7 +67,7 @@ function ReloadButton() {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
-        ipc.main.send(loading ? "workspaceApp.stop" : "workspaceApp.reload");
+        ipc.main.send(loading ? "workspaceApp.stop" : "workspaceApp.reload", workspaceAppId);
       }}
     >
       {loading ? (
@@ -83,14 +83,14 @@ function ReloadButton() {
   );
 }
 
-function CopyUrlButton() {
+function CopyUrlButton({ workspaceAppId }: { workspaceAppId: string }) {
   const { copied, markCopied } = useCopied();
 
   return (
     <TitlebarIconButton
       title="Copy URL"
       onClick={() => {
-        ipc.main.send("workspaceApp.copyUrl");
+        ipc.main.send("workspaceApp.copyUrl", workspaceAppId);
         markCopied();
       }}
     >
@@ -99,7 +99,7 @@ function CopyUrlButton() {
   );
 }
 
-function NavigationButtons() {
+function NavigationButtons({ workspaceAppId }: { workspaceAppId: string }) {
   const [navigationState, setNavigationState] = useState<{
     canGoBack: boolean;
     canGoForward: boolean;
@@ -117,7 +117,7 @@ function NavigationButtons() {
         title="Back"
         disabled={!navigationState?.canGoBack}
         onClick={() => {
-          ipc.main.send("workspaceApp.goBack");
+          ipc.main.send("workspaceApp.goBack", workspaceAppId);
         }}
       >
         <ArrowLeftIcon />
@@ -126,7 +126,7 @@ function NavigationButtons() {
         title="Forward"
         disabled={!navigationState?.canGoForward}
         onClick={() => {
-          ipc.main.send("workspaceApp.goForward");
+          ipc.main.send("workspaceApp.goForward", workspaceAppId);
         }}
       >
         <ArrowRightIcon />
@@ -194,12 +194,18 @@ function App() {
 
   const workspaceApp = searchParams.get("workspaceApp") as SupportedWorkspaceApp | null;
 
+  const workspaceAppId = searchParams.get("workspaceAppId");
+
+  if (!workspaceAppId) {
+    return;
+  }
+
   return (
     <Titlebar>
       <TitlebarLeft>
         <TitlebarButtonGroup>
-          <NavigationButtons />
-          <ReloadButton />
+          <NavigationButtons workspaceAppId={workspaceAppId} />
+          <ReloadButton workspaceAppId={workspaceAppId} />
         </TitlebarButtonGroup>
         {config && config.accounts.length > 1 && account && (
           <AccountBadge label={account.label} color={account.color} />
@@ -213,11 +219,11 @@ function App() {
         <FindInPageControls />
         <TitlebarButtonGroup>
           <RecentDownloadHistoryButton />
-          <CopyUrlButton />
+          <CopyUrlButton workspaceAppId={workspaceAppId} />
           <TitlebarIconButton
             title="Open in Browser"
             onClick={() => {
-              ipc.main.send("workspaceApp.openInBrowser");
+              ipc.main.send("workspaceApp.openInBrowser", workspaceAppId);
             }}
           >
             <ExternalLinkIcon />

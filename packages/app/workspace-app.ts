@@ -80,11 +80,11 @@ type WorkspaceAppOptions = {
 export class WorkspaceApp {
   private static instances = new Map<string, WorkspaceApp>();
 
-  static fromWebContents(webContents: WebContents) {
-    const instance = WorkspaceApp.tryFromWebContents(webContents);
+  static fromId(workspaceAppId: string) {
+    const instance = WorkspaceApp.instances.get(workspaceAppId);
 
     if (!instance) {
-      throw new Error(`No WorkspaceApp instance for webContents ${webContents.id}`);
+      throw new Error(`No WorkspaceApp instance for id ${workspaceAppId}`);
     }
 
     return instance;
@@ -405,6 +405,8 @@ export class WorkspaceApp {
 
     searchParams.set("accountId", this.accountId);
 
+    searchParams.set("workspaceAppId", this.id);
+
     if (this.app) {
       searchParams.set("workspaceApp", this.app);
     }
@@ -585,6 +587,8 @@ export class WorkspaceApp {
 
   broadcastLoadingState = () => {
     if (!this._window) {
+      accounts.sendTabsChangedToRenderer();
+
       return;
     }
 

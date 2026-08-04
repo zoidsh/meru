@@ -232,6 +232,10 @@ export class Gmail {
     this._view = view;
   }
 
+  get isLoading() {
+    return this._view ? this._view.webContents.isLoading() : false;
+  }
+
   viewStore = createStore(
     subscribeWithSelector<{
       navigationHistory: {
@@ -405,6 +409,14 @@ export class Gmail {
 
     this.view.webContents.on("did-navigate-in-page", (_event, url) => {
       this.store.setState({ messageId: parseGmailMessageId(new URL(url).hash) });
+    });
+
+    this.view.webContents.on("did-start-loading", () => {
+      accounts.sendTabsChangedToRenderer();
+    });
+
+    this.view.webContents.on("did-stop-loading", () => {
+      accounts.sendTabsChangedToRenderer();
     });
 
     openViewDevToolsInDev(this.view);
