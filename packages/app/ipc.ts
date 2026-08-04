@@ -329,7 +329,7 @@ class Ipc {
           },
         },
         {
-          label: "Open in Browser",
+          label: "Open in Default Browser",
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.openInBrowser();

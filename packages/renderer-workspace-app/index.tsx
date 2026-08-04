@@ -183,7 +183,7 @@ function App() {
           <RecentDownloadHistoryButton />
           <CopyUrlButton workspaceAppId={workspaceAppId} />
           <TitlebarIconButton
-            title="Open in Browser"
+            title="Open in Default Browser"
             onClick={() => {
               ipc.main.send("workspaceApp.openInBrowser", workspaceAppId);
             }}
