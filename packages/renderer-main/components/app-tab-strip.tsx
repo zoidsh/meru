@@ -45,22 +45,29 @@ export function AppTabStrip() {
             variant={tab.active ? "secondary" : "ghost"}
             size={isWide ? "sm" : "icon"}
             className={
-              isWide ? cn("w-full justify-start", tab.id !== GMAIL_TAB_ID && "pr-7") : undefined
+              isWide
+                ? cn("w-full justify-start", tab.id !== GMAIL_TAB_ID && !tab.pinned && "pr-7")
+                : undefined
             }
             title={tab.title}
             onClick={() => {
               ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
             }}
             onAuxClick={(event) => {
-              if (event.button === 1 && tab.id !== GMAIL_TAB_ID) {
+              if (event.button === 1 && tab.id !== GMAIL_TAB_ID && !tab.pinned) {
                 ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
               }
+            }}
+            onContextMenu={(event) => {
+              event.preventDefault();
+
+              ipc.main.send("tabs.showTabContextMenu", selectedAccount.config.id, tab.id);
             }}
           >
             <TabIcon tab={tab} />
             {isWide && <span className="truncate">{tab.title}</span>}
           </Button>
-          {tab.id !== GMAIL_TAB_ID && (
+          {tab.id !== GMAIL_TAB_ID && !tab.pinned && (
             <Button
               variant="secondary"
               size="icon"

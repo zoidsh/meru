@@ -27,6 +27,9 @@ export const config = new Store<Config>({
           delegatedAccountId: null,
           unifiedInbox: true,
         },
+        workspaceApps: {
+          pinnedTabs: [],
+        },
       },
     ],
     "accounts.unreadBadge": true,
@@ -340,6 +343,18 @@ export const config = new Store<Config>({
 
       // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
       store.delete("workspaceApps.openAppsInNewWindow");
+
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        for (const account of accounts) {
+          if (typeof account.workspaceApps === "undefined") {
+            account.workspaceApps = { pinnedTabs: [] };
+          }
+        }
+
+        store.set("accounts", accounts);
+      }
     },
   },
 });

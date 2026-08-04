@@ -246,6 +246,9 @@ class Accounts {
         unifiedInbox: accountDetails.gmail.unifiedInbox,
         delegatedAccountId: null,
       },
+      workspaceApps: {
+        pinnedTabs: [],
+      },
     };
 
     const instance = new Account(createdAccount);
@@ -342,6 +345,30 @@ class Accounts {
         }
       }
     }
+  }
+
+  savePinnedTabs() {
+    if (appState.isQuittingApp) {
+      return;
+    }
+
+    config.set(
+      "accounts",
+      this.getAccountConfigs().map((accountConfig) => {
+        const instance = this.instances.get(accountConfig.id);
+
+        if (!instance) {
+          return accountConfig;
+        }
+
+        return {
+          ...accountConfig,
+          workspaceApps: {
+            pinnedTabs: instance.tabs.serializePinnedTabs(),
+          },
+        };
+      }),
+    );
   }
 
   sendTabsChangedToRenderer() {

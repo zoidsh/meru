@@ -323,6 +323,8 @@ export class WorkspaceApp {
 
   view: WebContentsView;
 
+  pinned = false;
+
   private powerSaveBlockerId: number | undefined;
 
   private viewDestroyed = false;
