@@ -1,4 +1,4 @@
-import type { SupportedWorkspaceApp } from "@meru/shared/types";
+import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { ComponentProps } from "react";
 
 export function WorkspaceAppIcon({

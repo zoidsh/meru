@@ -1,4 +1,4 @@
-import { type SupportedWorkspaceApp, workspaceApps } from "./types";
+import { type SupportedWorkspaceApp, workspaceApps } from "./workspace-apps";
 
 export function getWorkspaceAppUrl(app: SupportedWorkspaceApp) {
   return workspaceApps[app].url ?? `https://${app}.google.com`;
