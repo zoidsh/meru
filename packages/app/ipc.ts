@@ -10,6 +10,7 @@ import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
+  clipboard,
   desktopCapturer,
   dialog,
   Menu,
@@ -35,6 +36,7 @@ import { log } from "./lib/log";
 import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
+import { openExternalUrl } from "./url";
 
 function getNavigationWebContents(workspaceAppId?: string) {
   if (workspaceAppId) {
@@ -300,6 +302,33 @@ class Ipc {
             if (account.config.selected) {
               accounts.refreshSelectedAccountView();
             }
+          },
+        },
+        {
+          type: "separator",
+        },
+        {
+          label: "Copy URL",
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.copyUrl();
+
+              return;
+            }
+
+            clipboard.writeText(tab.url);
+          },
+        },
+        {
+          label: "Open in Browser",
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.openInBrowser();
+
+              return;
+            }
+
+            openExternalUrl(tab.url, { skipTrustedHostCheck: true });
           },
         },
         {
