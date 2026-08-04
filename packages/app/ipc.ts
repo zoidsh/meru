@@ -287,6 +287,15 @@ class Ipc {
             ]
           : []),
         {
+          label: "Reload Tab",
+          enabled: tab instanceof WorkspaceApp,
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.reload();
+            }
+          },
+        },
+        {
           label: "Duplicate Tab",
           click: () => {
             const currentTabUrl =
