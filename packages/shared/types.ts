@@ -1,5 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
+import { APP_TAB_STRIP_NARROW_WIDTH, APP_TAB_STRIP_WIDE_WIDTH } from "./constants";
 import type { GMAIL_ACTION_CODE_MAP } from "./gmail";
 import type {
   AccountConfig,
@@ -81,6 +82,44 @@ export type WorkspaceAppsPinnedApp = (typeof workspaceAppsPinnedAppKeys)[number]
 export const workspaceAppsPinnedApps = Object.fromEntries(
   workspaceAppsPinnedAppKeys.map((key) => [key, supportedWorkspaceApps[key]]),
 ) as Pick<typeof supportedWorkspaceApps, WorkspaceAppsPinnedApp>;
+
+export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
+
+export const workspaceAppsAlwaysOpenAsWindow: SupportedWorkspaceApp[] = ["myaccount"];
+
+export const GMAIL_TAB_ID = "gmail";
+
+export type TabState = {
+  id: string;
+  app: SupportedWorkspaceApp | undefined;
+  title: string;
+  active: boolean;
+};
+
+export type AccountTabsState = {
+  accountId: AccountConfig["id"];
+  tabs: TabState[];
+};
+
+export function getTabStripWidth(tabs: Pick<TabState, "app">[]) {
+  if (tabs.length <= 1) {
+    return 0;
+  }
+
+  const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
+
+  for (const tab of tabs) {
+    if (tab.app) {
+      workspaceAppTabCounts.set(tab.app, (workspaceAppTabCounts.get(tab.app) ?? 0) + 1);
+    }
+  }
+
+  const hasWorkspaceAppWithMultipleTabs = Array.from(workspaceAppTabCounts.values()).some(
+    (workspaceAppTabCount) => workspaceAppTabCount > 1,
+  );
+
+  return hasWorkspaceAppWithMultipleTabs ? APP_TAB_STRIP_WIDE_WIDTH : APP_TAB_STRIP_NARROW_WIDTH;
+}
 
 type GmailHashLocation =
   | "inbox"
@@ -216,7 +255,12 @@ export type IpcMainEvents =
       "app.relaunch": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
-      "workspaceApps.openApp": [app: WorkspaceAppsPinnedApp];
+      "workspaceApps.openApp": [
+        app: WorkspaceAppsPinnedApp,
+        disposition?: WorkspaceAppOpenDisposition,
+      ];
+      "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
+      "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
@@ -257,6 +301,7 @@ export type IpcRendererEvent = {
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
   "accounts.changed": [accounts: AccountInstances];
+  "tabs.changed": [accountsTabs: AccountTabsState[]];
   "accounts.openAddAccountDialog": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];

@@ -5,6 +5,7 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { AppSidebar } from "./components/app-sidebar";
+import { AppTabStrip } from "./components/app-tab-strip";
 import { useMouseAccountSwitching } from "./lib/hooks";
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
           <div className="flex h-screen flex-col">
             <AppTitlebar />
             <div className="flex flex-1 overflow-hidden">
+              <AppTabStrip />
               <AppSidebar />
               <AppMain />
             </div>

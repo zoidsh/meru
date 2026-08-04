@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { supportedWorkspaceApps, type SupportedWorkspaceApp } from "@meru/shared/types";
+import {
+  supportedWorkspaceApps,
+  type SupportedWorkspaceApp,
+  workspaceAppsAlwaysOpenAsWindow,
+} from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -34,6 +38,7 @@ import {
 } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
+import { appState } from "./state";
 import { openExternalUrl } from "./url";
 
 export const MIN_ZOOM_FACTOR = 0.1;
@@ -60,6 +65,7 @@ type WorkspaceAppOptions = {
   url: string;
   window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
+  asWindow?: boolean;
 };
 
 export class WorkspaceApp {
@@ -143,7 +149,7 @@ export class WorkspaceApp {
     webContents,
   }: {
     accountId: AccountConfig["id"];
-    details: Electron.HandlerDetails;
+    details: Pick<Electron.HandlerDetails, "url" | "disposition">;
     webContents: WebContents;
   }): ReturnType<Parameters<WebContents["setWindowOpenHandler"]>[0]> {
     const { url, disposition } = details;
@@ -203,7 +209,7 @@ export class WorkspaceApp {
     }
 
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
-      new WorkspaceApp({ accountId, url });
+      new WorkspaceApp({ accountId, url, asWindow: true });
 
       return { action: "deny" };
     }
@@ -216,7 +222,19 @@ export class WorkspaceApp {
       config.get("workspaceApps.openInApp") &&
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
-    if (isWorkspaceAppEnabledToOpenInApp && disposition !== "background-tab") {
+    if (isWorkspaceAppEnabledToOpenInApp) {
+      if (
+        disposition === "background-tab" &&
+        !workspaceAppsAlwaysOpenAsWindow.includes(matchedSupportedWorkspaceApp)
+      ) {
+        new WorkspaceApp({
+          accountId,
+          url,
+        });
+
+        return { action: "deny" };
+      }
+
       if (
         !config.get("workspaceApps.openAppsInNewWindow") &&
         WorkspaceApp.reuseWindowByHostname(accountId, url)
@@ -227,6 +245,7 @@ export class WorkspaceApp {
       new WorkspaceApp({
         accountId,
         url,
+        asWindow: true,
       });
 
       return { action: "deny" };
@@ -305,11 +324,14 @@ export class WorkspaceApp {
 
   private viewDestroyed = false;
 
-  constructor({ accountId, url, window, view }: WorkspaceAppOptions) {
+  constructor({ accountId, url, window, view, asWindow }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = getWorkspaceAppFromUrl(url);
 
-    this._window = this.createBrowserWindow(window);
+    if (asWindow) {
+      this._window = this.createBrowserWindow(window);
+    }
+
     this.view = this.createView({ url, options: view });
 
     this.updateViewBounds();
@@ -318,22 +340,38 @@ export class WorkspaceApp {
     this.view.webContents.once("destroyed", () => {
       this.viewDestroyed = true;
 
-      if (this._window && !this._window.isDestroyed()) {
-        this._window.close();
+      if (this._window) {
+        if (!this._window.isDestroyed()) {
+          this._window.close();
+        }
+
+        return;
       }
+
+      this.close();
     });
 
     WorkspaceApp.instances.set(this.id, this);
 
-    this.window.on("resize", this.updateViewBounds);
-    this.window.on("close", this.handleClose);
-    this.window.on("focus", () => {
-      WorkspaceApp.instances.delete(this.id);
+    if (this._window) {
+      this.window.on("resize", this.updateViewBounds);
+      this.window.on("close", this.handleClose);
+      this.window.on("focus", () => {
+        WorkspaceApp.instances.delete(this.id);
 
-      WorkspaceApp.instances.set(this.id, this);
-    });
+        WorkspaceApp.instances.set(this.id, this);
+      });
 
-    this.account.instance.windows.add(this.window);
+      this.account.instance.windows.add(this.window);
+    } else {
+      this.account.instance.windows.add(this.view);
+
+      if (appState.isSettingsOpen) {
+        this.view.setVisible(false);
+      }
+
+      this.account.instance.tabs.addTab(this);
+    }
 
     this.setupApp();
   }
@@ -381,7 +419,11 @@ export class WorkspaceApp {
       },
     });
 
-    this.window.contentView.addChildView(view);
+    if (this._window) {
+      this._window.contentView.addChildView(view);
+    } else {
+      main.window.contentView.addChildView(view, 0);
+    }
 
     setupWindowContextMenu(view);
 
@@ -413,6 +455,16 @@ export class WorkspaceApp {
       this.unregisterViewListeners();
 
       this.view.webContents.close();
+    }
+
+    if (!this._window) {
+      if (!main.window.isDestroyed()) {
+        main.window.contentView.removeChildView(this.view);
+      }
+
+      this.account.instance.windows.delete(this.view);
+
+      this.account.instance.tabs.removeTab(this.id);
     }
 
     this.teardownApp();
@@ -477,24 +529,34 @@ export class WorkspaceApp {
   };
 
   broadcastNavigationState = () => {
+    if (!this._window) {
+      return;
+    }
+
     ipc.renderer.send(this.chromeWebContents, "workspaceApp.navigationStateChanged", {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
     });
   };
 
-  handlePageTitleUpdated = () => {
-    const pageTitle = this.view.webContents.getTitle();
+  private pageTitle = "";
 
-    ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", pageTitle);
+  get title() {
+    return this.pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
+  }
+
+  handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {
+    this.pageTitle = explicitSet ? pageTitle : "";
 
     if (!this._window) {
+      accounts.sendTabsChangedToRenderer();
+
       return;
     }
 
-    const title = pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
+    ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
 
-    if (!title) {
+    if (!this.title) {
       this.window.setTitle(app.name);
 
       return;
@@ -503,10 +565,14 @@ export class WorkspaceApp {
     const accountLabelPrefix =
       config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
 
-    this.window.setTitle(`${accountLabelPrefix}${title} - ${app.name}`);
+    this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   };
 
   broadcastLoadingState = () => {
+    if (!this._window) {
+      return;
+    }
+
     ipc.renderer.send(
       this.chromeWebContents,
       "workspaceApp.loadingStateChanged",
@@ -515,6 +581,21 @@ export class WorkspaceApp {
   };
 
   updateViewBounds = () => {
+    if (!this._window) {
+      const { width, height } = main.getWindowBounds();
+
+      const tabStripWidth = accounts.getTabStripWidth();
+
+      this.view.setBounds({
+        x: tabStripWidth,
+        y: APP_TITLEBAR_HEIGHT,
+        width: width - tabStripWidth,
+        height: height - APP_TITLEBAR_HEIGHT,
+      });
+
+      return;
+    }
+
     const { width, height } = this.window.getContentBounds();
 
     this.view.setBounds({

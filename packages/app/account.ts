@@ -16,12 +16,15 @@ import { config } from "./config";
 import { Gmail } from "./gmail";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
+import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
 export class Account {
   session: Session;
 
   gmail: Gmail;
+
+  tabs: Tabs;
 
   windows: Set<BrowserWindow | WebContentsView> = new Set();
 
@@ -45,6 +48,8 @@ export class Account {
       unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
     });
+
+    this.tabs = new Tabs(this.gmail);
   }
 
   setSpellCheckerLanguages() {

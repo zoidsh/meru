@@ -12,9 +12,7 @@ import {
   generateGmailLabelColorsCss,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
-import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
-import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
 import { wait } from "@meru/shared/utils";
 import {
   app,
@@ -474,10 +472,12 @@ export class Gmail {
   updateViewBounds() {
     const { width, height } = main.getWindowBounds();
 
+    const tabStripWidth = accounts.getTabStripWidth();
+
     this.view.setBounds({
-      x: 0,
+      x: tabStripWidth,
       y: APP_TITLEBAR_HEIGHT,
-      width,
+      width: width - tabStripWidth,
       height: height - APP_TITLEBAR_HEIGHT,
     });
   }
@@ -546,6 +546,7 @@ export class Gmail {
               url,
               window: { width: 800, height: 600 },
               view: options,
+              asWindow: true,
             });
 
             return workspaceApp.view.webContents;
@@ -871,6 +872,7 @@ export class Gmail {
       accountId: this.accountId,
       url: `${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
       window: { width: 800, height: 600 },
+      asWindow: true,
     });
   }
 
@@ -886,9 +888,5 @@ export class Gmail {
     }
 
     this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
-  }
-
-  openWorkspaceApp(app: WorkspaceAppsPinnedApp) {
-    this.view.webContents.executeJavaScript(`window.open("${getWorkspaceAppUrl(app)}", "_blank")`);
   }
 }
