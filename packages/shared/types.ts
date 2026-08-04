@@ -98,6 +98,7 @@ export type TabState = {
   app: SupportedWorkspaceApp | undefined;
   title: string;
   pinned: boolean;
+  dormant: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;

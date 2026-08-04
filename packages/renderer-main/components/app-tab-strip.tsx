@@ -44,11 +44,11 @@ export function AppTabStrip() {
           <Button
             variant={tab.active ? "secondary" : "ghost"}
             size={isWide ? "sm" : "icon"}
-            className={
-              isWide
-                ? cn("w-full justify-start", tab.id !== GMAIL_TAB_ID && !tab.pinned && "pr-7")
-                : undefined
-            }
+            className={cn(
+              tab.dormant && "opacity-50",
+              isWide && "w-full justify-start",
+              isWide && tab.id !== GMAIL_TAB_ID && !tab.pinned && "pr-7",
+            )}
             title={tab.title}
             onClick={() => {
               ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);

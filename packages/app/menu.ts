@@ -162,7 +162,8 @@ export class AppMenu {
         }
       }
 
-      return selectedAccount.instance.tabs.activeTab.view.webContents;
+      return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view)
+        .webContents;
     };
 
     const selectNextTab = () => {
@@ -459,7 +460,7 @@ export class AppMenu {
 
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              selectedAccount.instance.tabs.activeTab.view.webContents.openDevTools();
+              getActiveViewWebContents().openDevTools();
             },
           },
         ],

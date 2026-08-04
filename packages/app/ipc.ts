@@ -24,6 +24,7 @@ import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
+import { DormantTab } from "@/tabs";
 import { WorkspaceApp } from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
@@ -38,7 +39,10 @@ function getNavigationWebContents(workspaceAppId?: string) {
     return WorkspaceApp.fromId(workspaceAppId).view.webContents;
   }
 
-  return accounts.getSelectedAccount().instance.tabs.activeTab.view.webContents;
+  const selectedAccount = accounts.getSelectedAccount();
+
+  return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view)
+    .webContents;
 }
 
 class Ipc {
@@ -152,10 +156,9 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const targetWebContents = (
-        WorkspaceApp.tryFromWebContents(event.sender) ??
-        accounts.getSelectedAccount().instance.tabs.activeTab
-      ).view.webContents;
+      const targetWebContents =
+        WorkspaceApp.tryFromWebContents(event.sender)?.view.webContents ??
+        getNavigationWebContents();
 
       if (!text) {
         targetWebContents.stopFindInPage("clearSelection");
@@ -241,7 +244,7 @@ class Ipc {
 
       const tab = account.instance.tabs.getTab(tabId);
 
-      if (!(tab instanceof WorkspaceApp)) {
+      if (!(tab instanceof WorkspaceApp) && !(tab instanceof DormantTab)) {
         return;
       }
 
@@ -259,6 +262,20 @@ class Ipc {
                 account.instance.tabs.pinTab(tabId);
               },
             },
+        ...(tab.pinned
+          ? [
+              {
+                label: "Load on Launch",
+                type: "checkbox" as const,
+                checked: tab.loadOnLaunch,
+                click: () => {
+                  tab.loadOnLaunch = !tab.loadOnLaunch;
+
+                  accounts.savePinnedTabs();
+                },
+              },
+            ]
+          : []),
         {
           type: "separator",
         },

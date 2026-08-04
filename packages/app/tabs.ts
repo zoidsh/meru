@@ -1,5 +1,12 @@
+import { randomUUID } from "node:crypto";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { PinnedTab } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, type SupportedWorkspaceApp, type TabState } from "@meru/shared/types";
+import {
+  GMAIL_TAB_ID,
+  type SupportedWorkspaceApp,
+  type TabState,
+  workspaceApps,
+} from "@meru/shared/types";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
@@ -25,16 +32,49 @@ export type Tab = {
   pinned: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
-  view: WebContentsView;
-  updateViewBounds: () => void;
+  view?: WebContentsView;
+  updateViewBounds?: () => void;
 };
 
+export class DormantTab {
+  id = randomUUID();
+
+  app: SupportedWorkspaceApp;
+
+  url: string;
+
+  pinned = true;
+
+  isLoading = false;
+
+  navigationHistory = { canGoBack: false, canGoForward: false };
+
+  loadOnLaunch: boolean;
+
+  private pageTitle: string;
+
+  constructor(pinnedTab: PinnedTab) {
+    this.app = pinnedTab.app;
+    this.url = pinnedTab.url;
+    this.pageTitle = pinnedTab.title;
+    this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
+  }
+
+  get title() {
+    return this.pageTitle || workspaceApps[this.app].label;
+  }
+}
+
 export class Tabs {
+  private accountId: string;
+
   tabs: Tab[];
 
   activeTabId: string = GMAIL_TAB_ID;
 
-  constructor(gmail: Gmail) {
+  constructor(accountId: string, gmail: Gmail) {
+    this.accountId = accountId;
+
     this.tabs = [
       {
         id: GMAIL_TAB_ID,
@@ -77,10 +117,17 @@ export class Tabs {
     return this.tabs.find((tab) => tab.id === tabId);
   }
 
-  addTab(workspaceApp: WorkspaceApp) {
+  openTab(url: string) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url,
+    });
+
     this.tabs.push(workspaceApp);
 
     this.broadcastTabsChanged();
+
+    return workspaceApp;
   }
 
   removeTab(tabId: string) {
@@ -100,9 +147,49 @@ export class Tabs {
   }
 
   activateTab(tabId: string) {
+    const activatedTab = this.getTab(tabId);
+
+    if (activatedTab instanceof DormantTab) {
+      this.activeTabId = this.materializeDormantTab(activatedTab).id;
+
+      this.broadcastTabsChanged();
+
+      return;
+    }
+
     this.activeTabId = tabId;
 
     this.broadcastTabsChanged();
+  }
+
+  private materializeDormantTab(dormantTab: DormantTab) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url: dormantTab.url,
+      pinned: true,
+      loadOnLaunch: dormantTab.loadOnLaunch,
+      app: dormantTab.app,
+    });
+
+    this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
+
+    return workspaceApp;
+  }
+
+  loadLaunchTabs() {
+    for (const tab of this.tabs.slice()) {
+      if (tab instanceof DormantTab && tab.loadOnLaunch) {
+        this.materializeDormantTab(tab);
+      }
+    }
+
+    this.broadcastTabsChanged();
+  }
+
+  restorePinnedTabs(pinnedTabs: PinnedTab[]) {
+    for (const pinnedTab of pinnedTabs) {
+      this.tabs.push(new DormantTab(pinnedTab));
+    }
   }
 
   activateNextTab() {
@@ -130,6 +217,12 @@ export class Tabs {
 
     if (closableTab instanceof WorkspaceApp) {
       closableTab.close();
+
+      return;
+    }
+
+    if (closableTab instanceof DormantTab) {
+      this.removeTab(tabId);
     }
   }
 
@@ -151,6 +244,12 @@ export class Tabs {
 
   unpinTab(tabId: string) {
     const unpinnableTab = this.getTab(tabId);
+
+    if (unpinnableTab instanceof DormantTab) {
+      this.removeTab(tabId);
+
+      return;
+    }
 
     if (!(unpinnableTab instanceof WorkspaceApp)) {
       return;
@@ -178,7 +277,19 @@ export class Tabs {
 
     for (const tab of this.tabs) {
       if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
-        pinnedTabs.push({ app: tab.app, url: tab.view.webContents.getURL() });
+        pinnedTabs.push({
+          app: tab.app,
+          url: tab.view.webContents.getURL() || getWorkspaceAppUrl(tab.app),
+          title: tab.title,
+          loadOnLaunch: tab.loadOnLaunch,
+        });
+      } else if (tab instanceof DormantTab) {
+        pinnedTabs.push({
+          app: tab.app,
+          url: tab.url,
+          title: tab.title,
+          loadOnLaunch: tab.loadOnLaunch,
+        });
       }
     }
 
@@ -199,6 +310,7 @@ export class Tabs {
       app: tab.app,
       title: tab.title,
       pinned: tab.pinned,
+      dormant: tab instanceof DormantTab,
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,
