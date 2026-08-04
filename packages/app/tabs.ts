@@ -1,12 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { PinnedTab } from "@meru/shared/schemas";
-import {
-  GMAIL_TAB_ID,
-  type SupportedWorkspaceApp,
-  type TabState,
-  workspaceApps,
-} from "@meru/shared/types";
+import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
+import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";

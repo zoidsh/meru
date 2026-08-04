@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getTabStripWidth } from "@meru/shared/types";
+import { getTabStripWidth } from "@meru/shared/tabs";
 import { Account } from "./account";
 import { config } from "./config";
 import { ipc } from "./ipc";

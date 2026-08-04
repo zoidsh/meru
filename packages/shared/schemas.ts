@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isValidCssColorInput } from "./color";
 import type { GmailState } from "./gmail";
-import { type SupportedWorkspaceApp, workspaceApps } from "./types";
+import { type SupportedWorkspaceApp, workspaceApps } from "./workspace-apps";
 
 export const accountColors = [
   "orange",

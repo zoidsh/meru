@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
+import { clamp } from "@meru/shared/utils";
 import {
   type SupportedWorkspaceApp,
   type WorkspaceAppOpenBehavior,
   workspaceApps,
-} from "@meru/shared/types";
-import { clamp } from "@meru/shared/utils";
+} from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,

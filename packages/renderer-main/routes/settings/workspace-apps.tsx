@@ -9,7 +9,7 @@ import {
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
-} from "@meru/shared/types";
+} from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
 import {

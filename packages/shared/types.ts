@@ -1,7 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import { APP_TAB_STRIP_NARROW_WIDTH, APP_TAB_STRIP_WIDE_WIDTH } from "./constants";
-import { type GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "./gmail";
+import type { GMAIL_ACTION_CODE_MAP } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -10,6 +9,12 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
+import type { AccountTabsState } from "./tabs";
+import type {
+  BookmarkableWorkspaceApp,
+  SupportedWorkspaceApp,
+  WorkspaceAppOpenBehavior,
+} from "./workspace-apps";
 
 export type DesktopSource = { id: string; name: string; thumbnail: string };
 
@@ -33,101 +38,6 @@ export type NotificationTime = {
   end: string; // "HH:mm" 24-hour
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
-
-type WorkspaceAppDefinition = {
-  label: string;
-  url?: string;
-  bookmarkable?: boolean;
-  alwaysOpenAsWindow?: boolean;
-  singleInstance?: boolean;
-};
-
-const workspaceAppDefinitions = {
-  calendar: { label: "Calendar" },
-  chat: { label: "Chat" },
-  classroom: { label: "Classroom" },
-  contacts: { label: "Contacts" },
-  docs: { label: "Docs" },
-  drive: { label: "Drive" },
-  forms: { label: "Forms" },
-  gemini: { label: "Gemini" },
-  gmail: { label: "Gmail", url: GMAIL_URL, bookmarkable: false, singleInstance: true },
-  groups: { label: "Groups" },
-  keep: { label: "Keep" },
-  meet: { label: "Meet" },
-  myaccount: { label: "My Account", bookmarkable: false, alwaysOpenAsWindow: true },
-  notebooklm: { label: "NotebookLM" },
-  sheets: { label: "Sheets" },
-  sites: { label: "Sites" },
-  slides: { label: "Slides" },
-  tasks: { label: "Tasks" },
-  voice: { label: "Voice" },
-} as const satisfies Record<string, WorkspaceAppDefinition>;
-
-export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
-
-export type BookmarkableWorkspaceApp = {
-  [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends {
-    bookmarkable: false;
-  }
-    ? never
-    : App;
-}[SupportedWorkspaceApp];
-
-export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
-  workspaceAppDefinitions;
-
-export const bookmarkableWorkspaceApps = Object.fromEntries(
-  Object.entries(workspaceApps)
-    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.bookmarkable !== false)
-    .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
-) as Record<BookmarkableWorkspaceApp, string>;
-
-export const workspaceAppOpenBehaviors = {
-  tab: "Tab",
-  newWindow: "New Window",
-  backgroundTab: "Background Tab",
-} as const;
-
-export type WorkspaceAppOpenBehavior = keyof typeof workspaceAppOpenBehaviors;
-
-export const GMAIL_TAB_ID = "gmail";
-
-export type TabState = {
-  id: string;
-  app: SupportedWorkspaceApp | undefined;
-  title: string;
-  pinned: boolean;
-  dormant: boolean;
-  loading: boolean;
-  navigationHistory: { canGoBack: boolean; canGoForward: boolean };
-  active: boolean;
-};
-
-export type AccountTabsState = {
-  accountId: AccountConfig["id"];
-  tabs: TabState[];
-};
-
-export function getTabStripWidth(tabs: Pick<TabState, "app">[], hasBookmarkedApps: boolean) {
-  if (tabs.length <= 1 && !hasBookmarkedApps) {
-    return 0;
-  }
-
-  const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
-
-  for (const tab of tabs) {
-    if (tab.app) {
-      workspaceAppTabCounts.set(tab.app, (workspaceAppTabCounts.get(tab.app) ?? 0) + 1);
-    }
-  }
-
-  const hasWorkspaceAppWithMultipleTabs = Array.from(workspaceAppTabCounts.values()).some(
-    (workspaceAppTabCount) => workspaceAppTabCount > 1,
-  );
-
-  return hasWorkspaceAppWithMultipleTabs ? APP_TAB_STRIP_WIDE_WIDTH : APP_TAB_STRIP_NARROW_WIDTH;
-}
 
 type GmailHashLocation =
   | "inbox"

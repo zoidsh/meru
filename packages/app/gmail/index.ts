@@ -13,8 +13,8 @@ import {
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
-import { workspaceApps } from "@meru/shared/types";
 import { wait } from "@meru/shared/utils";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
