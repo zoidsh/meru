@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
-import { GMAIL_URL } from "@meru/shared/gmail";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
@@ -48,12 +48,25 @@ const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_at
 
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
 
+const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>(
+  (Object.keys(workspaceApps) as SupportedWorkspaceApp[]).map((workspaceApp) => [
+    new URL(getWorkspaceAppUrl(workspaceApp)).hostname.replace(".google.com", ""),
+    workspaceApp,
+  ]),
+);
+
 const SUPPORTED_WORKSPACE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(workspaceApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+  `(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
 function getWorkspaceAppFromUrl(url: string) {
-  return url.match(SUPPORTED_WORKSPACE_APPS_URL_REGEXP)?.[1] as SupportedWorkspaceApp | undefined;
+  const workspaceAppSubdomain = url.match(SUPPORTED_WORKSPACE_APPS_URL_REGEXP)?.[1];
+
+  if (!workspaceAppSubdomain) {
+    return undefined;
+  }
+
+  return workspaceAppsBySubdomain.get(workspaceAppSubdomain);
 }
 
 type WorkspaceAppOptions = {
@@ -182,18 +195,6 @@ export class WorkspaceApp {
       };
     }
 
-    if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
-      const account = accounts.getAccount(accountId);
-
-      account.instance.gmail.navigateToHash(url);
-
-      accounts.selectAccount(accountId);
-
-      main.show();
-
-      return { action: "deny" };
-    }
-
     if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
       main.navigate("/settings/accounts");
 
@@ -212,9 +213,27 @@ export class WorkspaceApp {
 
     const matchedSupportedWorkspaceApp = getWorkspaceAppFromUrl(url);
 
+    if (
+      matchedSupportedWorkspaceApp &&
+      workspaceApps[matchedSupportedWorkspaceApp].singleInstance &&
+      url.startsWith(getWorkspaceAppUrl(matchedSupportedWorkspaceApp)) &&
+      disposition !== "background-tab"
+    ) {
+      const account = accounts.getAccount(accountId);
+
+      account.instance.gmail.navigateToHash(url);
+
+      accounts.selectAccount(accountId);
+
+      main.show();
+
+      return { action: "deny" };
+    }
+
     const isWorkspaceAppEnabledToOpenInApp =
       licenseKey.isValid &&
       matchedSupportedWorkspaceApp &&
+      !workspaceApps[matchedSupportedWorkspaceApp].singleInstance &&
       config.get("workspaceApps.openInApp") &&
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 

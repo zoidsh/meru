@@ -1,4 +1,9 @@
-import { GMAIL_TAB_ID, type SupportedWorkspaceApp, type TabState } from "@meru/shared/types";
+import {
+  GMAIL_TAB_ID,
+  type SupportedWorkspaceApp,
+  type TabState,
+  workspaceApps,
+} from "@meru/shared/types";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
@@ -22,8 +27,8 @@ export class Tabs {
     this.tabs = [
       {
         id: GMAIL_TAB_ID,
-        app: undefined,
-        title: "Gmail",
+        app: "gmail",
+        title: workspaceApps.gmail.label,
         get view() {
           return gmail.view;
         },

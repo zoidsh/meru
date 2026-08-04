@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 export function WorkspaceAppIcon({
   app,
   ...props
-}: { app: SupportedWorkspaceApp | "gmail" } & ComponentProps<"svg">) {
+}: { app: SupportedWorkspaceApp } & ComponentProps<"svg">) {
   switch (app) {
     case "calendar": {
       return (

@@ -8,10 +8,6 @@ import { GlobeIcon, XIcon } from "lucide-react";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 function TabIcon({ tab }: { tab: TabState }) {
-  if (tab.id === GMAIL_TAB_ID) {
-    return <WorkspaceAppIcon app="gmail" className="size-4" />;
-  }
-
   if (tab.app && tab.app !== "myaccount") {
     return <WorkspaceAppIcon app={tab.app} className="size-4" />;
   }
@@ -43,39 +39,23 @@ export function AppTabStrip() {
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
       style={{ width: tabStripWidth, minWidth: tabStripWidth }}
     >
-      {selectedAccountTabs.tabs.map((tab) => {
-        if (tab.id === GMAIL_TAB_ID) {
-          return (
-            <Button
-              key={tab.id}
-              variant={tab.active ? "secondary" : "ghost"}
-              size={isWide ? "sm" : "icon"}
-              className={isWide ? "w-full justify-start" : undefined}
-              title={tab.title}
-              onClick={() => {
-                ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
-              }}
-            >
-              <TabIcon tab={tab} />
-              {isWide && <span className="truncate">{tab.title}</span>}
-            </Button>
-          );
-        }
-
-        return (
-          <div key={tab.id} className="group relative">
-            <Button
-              variant={tab.active ? "secondary" : "ghost"}
-              size={isWide ? "sm" : "icon"}
-              className={isWide ? "w-full justify-start pr-7" : undefined}
-              title={tab.title}
-              onClick={() => {
-                ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
-              }}
-            >
-              <TabIcon tab={tab} />
-              {isWide && <span className="truncate">{tab.title}</span>}
-            </Button>
+      {selectedAccountTabs.tabs.map((tab) => (
+        <div key={tab.id} className="group relative">
+          <Button
+            variant={tab.active ? "secondary" : "ghost"}
+            size={isWide ? "sm" : "icon"}
+            className={
+              isWide ? cn("w-full justify-start", tab.id !== GMAIL_TAB_ID && "pr-7") : undefined
+            }
+            title={tab.title}
+            onClick={() => {
+              ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
+            }}
+          >
+            <TabIcon tab={tab} />
+            {isWide && <span className="truncate">{tab.title}</span>}
+          </Button>
+          {tab.id !== GMAIL_TAB_ID && (
             <Button
               variant="secondary"
               size="icon"
@@ -92,9 +72,9 @@ export function AppTabStrip() {
             >
               <XIcon className="size-3" />
             </Button>
-          </div>
-        );
-      })}
+          )}
+        </div>
+      ))}
     </div>
   );
 }
