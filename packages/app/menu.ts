@@ -153,6 +153,18 @@ export class AppMenu {
 
     const selectedAccount = accounts.getSelectedAccount();
 
+    const getActiveViewWebContents = () => {
+      if (focusedWindow && focusedWindow !== main.window) {
+        const workspaceApp = WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
+
+        if (workspaceApp) {
+          return workspaceApp.view.webContents;
+        }
+      }
+
+      return selectedAccount.instance.tabs.activeTab.view.webContents;
+    };
+
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.messageId;
 
@@ -396,26 +408,14 @@ export class AppMenu {
             label: "Reload",
             accelerator: "CommandOrControl+R",
             click: () => {
-              if (focusedWindow && focusedWindow !== main.window) {
-                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.reload();
-
-                return;
-              }
-
-              selectedAccount.instance.gmail.view.webContents.reload();
+              getActiveViewWebContents().reload();
             },
           },
           {
             label: "Hard Reload",
             accelerator: "CommandOrControl+Shift+R",
-            click: async () => {
-              if (focusedWindow && focusedWindow !== main.window) {
-                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.hardReload();
-
-                return;
-              }
-
-              selectedAccount.instance.gmail.view.webContents.reloadIgnoringCache();
+            click: () => {
+              getActiveViewWebContents().reloadIgnoringCache();
             },
           },
           {
@@ -439,7 +439,7 @@ export class AppMenu {
 
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              selectedAccount.instance.gmail.view.webContents.openDevTools();
+              selectedAccount.instance.tabs.activeTab.view.webContents.openDevTools();
             },
           },
         ],
@@ -451,26 +451,14 @@ export class AppMenu {
             label: "Back",
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
-              if (focusedWindow && focusedWindow !== main.window) {
-                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.goBack();
-
-                return;
-              }
-
-              selectedAccount.instance.gmail.view.webContents.navigationHistory.goBack();
+              getActiveViewWebContents().navigationHistory.goBack();
             },
           },
           {
             label: "Forward",
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
-              if (focusedWindow && focusedWindow !== main.window) {
-                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.goForward();
-
-                return;
-              }
-
-              selectedAccount.instance.gmail.view.webContents.navigationHistory.goForward();
+              getActiveViewWebContents().navigationHistory.goForward();
             },
           },
         ],
