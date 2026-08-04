@@ -1,10 +1,10 @@
-import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
+import type { PinnableWorkspaceApp } from "@meru/shared/types";
 import type { ComponentProps } from "react";
 
 export function WorkspaceAppIcon({
   app,
   ...props
-}: { app: WorkspaceAppsPinnedApp | "gmail" } & ComponentProps<"svg">) {
+}: { app: PinnableWorkspaceApp | "gmail" } & ComponentProps<"svg">) {
   switch (app) {
     case "calendar": {
       return (

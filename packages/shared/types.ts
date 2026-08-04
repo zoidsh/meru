@@ -63,7 +63,7 @@ const workspaceAppDefinitions = {
 
 export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
-export type WorkspaceAppsPinnedApp = {
+export type PinnableWorkspaceApp = {
   [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends { pinnable: false }
     ? never
     : App;
@@ -72,11 +72,11 @@ export type WorkspaceAppsPinnedApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
-export const workspaceAppsPinnedApps = Object.fromEntries(
+export const pinnableWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
     .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable !== false)
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
-) as Record<WorkspaceAppsPinnedApp, string>;
+) as Record<PinnableWorkspaceApp, string>;
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
 
@@ -198,7 +198,7 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openAppsInNewWindow": boolean;
-  "workspaceApps.pinnedApps": WorkspaceAppsPinnedApp[];
+  "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "verificationCodes.autoCopy": boolean;
@@ -249,7 +249,7 @@ export type IpcMainEvents =
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
       "workspaceApps.openApp": [
-        app: WorkspaceAppsPinnedApp,
+        app: PinnableWorkspaceApp,
         disposition?: WorkspaceAppOpenDisposition,
       ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
