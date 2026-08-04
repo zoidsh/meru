@@ -36,42 +36,45 @@ export type NotificationTime = {
 
 type WorkspaceAppDefinition = {
   label: string;
-  pinnable: boolean;
-  alwaysOpenAsWindow: boolean;
+  pinnable?: boolean;
+  alwaysOpenAsWindow?: boolean;
 };
 
-export const workspaceApps = {
-  calendar: { label: "Calendar", pinnable: true, alwaysOpenAsWindow: false },
-  chat: { label: "Chat", pinnable: true, alwaysOpenAsWindow: false },
-  classroom: { label: "Classroom", pinnable: true, alwaysOpenAsWindow: false },
-  contacts: { label: "Contacts", pinnable: true, alwaysOpenAsWindow: false },
-  docs: { label: "Docs", pinnable: true, alwaysOpenAsWindow: false },
-  drive: { label: "Drive", pinnable: true, alwaysOpenAsWindow: false },
-  forms: { label: "Forms", pinnable: true, alwaysOpenAsWindow: false },
-  gemini: { label: "Gemini", pinnable: true, alwaysOpenAsWindow: false },
-  groups: { label: "Groups", pinnable: true, alwaysOpenAsWindow: false },
-  keep: { label: "Keep", pinnable: true, alwaysOpenAsWindow: false },
-  meet: { label: "Meet", pinnable: true, alwaysOpenAsWindow: false },
+const workspaceAppDefinitions = {
+  calendar: { label: "Calendar" },
+  chat: { label: "Chat" },
+  classroom: { label: "Classroom" },
+  contacts: { label: "Contacts" },
+  docs: { label: "Docs" },
+  drive: { label: "Drive" },
+  forms: { label: "Forms" },
+  gemini: { label: "Gemini" },
+  groups: { label: "Groups" },
+  keep: { label: "Keep" },
+  meet: { label: "Meet" },
   myaccount: { label: "My Account", pinnable: false, alwaysOpenAsWindow: true },
-  notebooklm: { label: "NotebookLM", pinnable: true, alwaysOpenAsWindow: false },
-  sheets: { label: "Sheets", pinnable: true, alwaysOpenAsWindow: false },
-  sites: { label: "Sites", pinnable: true, alwaysOpenAsWindow: false },
-  slides: { label: "Slides", pinnable: true, alwaysOpenAsWindow: false },
-  tasks: { label: "Tasks", pinnable: true, alwaysOpenAsWindow: false },
-  voice: { label: "Voice", pinnable: true, alwaysOpenAsWindow: false },
+  notebooklm: { label: "NotebookLM" },
+  sheets: { label: "Sheets" },
+  sites: { label: "Sites" },
+  slides: { label: "Slides" },
+  tasks: { label: "Tasks" },
+  voice: { label: "Voice" },
 } as const satisfies Record<string, WorkspaceAppDefinition>;
 
-export type SupportedWorkspaceApp = keyof typeof workspaceApps;
+export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
 export type WorkspaceAppsPinnedApp = {
-  [App in SupportedWorkspaceApp]: (typeof workspaceApps)[App]["pinnable"] extends true
-    ? App
-    : never;
+  [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends { pinnable: false }
+    ? never
+    : App;
 }[SupportedWorkspaceApp];
+
+export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
+  workspaceAppDefinitions;
 
 export const workspaceAppsPinnedApps = Object.fromEntries(
   Object.entries(workspaceApps)
-    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable)
+    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable !== false)
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<WorkspaceAppsPinnedApp, string>;
 
