@@ -234,7 +234,7 @@ export function AppTabStrip() {
     (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
   );
 
-  const shouldRenderSeparator = unpinnedTabs.length > 0 && (isWide || hasPinnedTabs);
+  const shouldRenderSeparator = !isWide && hasPinnedTabs && unpinnedTabs.length > 0;
 
   return (
     <div
@@ -253,7 +253,7 @@ export function AppTabStrip() {
       {isWide ? (
         <div
           className={cn(
-            "grid w-full gap-1",
+            "grid w-full gap-2",
             getPinnedSectionGridColumnsClassName(pinnedSectionTabs.length),
           )}
         >
@@ -276,9 +276,7 @@ export function AppTabStrip() {
           />
         ))
       )}
-      {shouldRenderSeparator && (
-        <Separator className={isWide ? undefined : "data-horizontal:w-8"} />
-      )}
+      {shouldRenderSeparator && <Separator className="data-horizontal:w-8" />}
       {unpinnedTabs.map((tab) => (
         <StripTab
           key={tab.id}
