@@ -287,7 +287,7 @@ class Ipc {
             ]
           : []),
         {
-          label: "Reload Tab",
+          label: "Reload",
           enabled: tab instanceof WorkspaceApp,
           click: () => {
             if (tab instanceof WorkspaceApp) {
