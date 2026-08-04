@@ -35,7 +35,7 @@ export class Tabs {
           return gmail.isLoading;
         },
         get navigationHistory() {
-          return gmail.viewStore.getState().navigationHistory;
+          return gmail.navigationHistory;
         },
         get view() {
           return gmail.view;

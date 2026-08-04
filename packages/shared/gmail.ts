@@ -52,10 +52,6 @@ export interface GmailInboxMessage {
 }
 
 export type GmailState = {
-  navigationHistory: {
-    canGoBack: boolean;
-    canGoForward: boolean;
-  };
   unreadCount: number | null;
   unreadInbox: GmailInboxMessage[];
   outOfOffice: boolean;
