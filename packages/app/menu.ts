@@ -73,16 +73,21 @@ export class AppMenu {
 
     const selectedAccount = accounts.getSelectedAccount();
 
-    this._selectedAccountUnsubscribeFns.add(
-      selectedAccount.instance.gmail.store.subscribe(
-        (state) => state.messageId,
-        () => {
-          this.menu = this.createMenu();
+    const gmailWebContents = selectedAccount.instance.gmail.view.webContents;
 
-          Menu.setApplicationMenu(this.menu);
-        },
-      ),
-    );
+    const rebuildMenu = () => {
+      this.menu = this.createMenu();
+
+      Menu.setApplicationMenu(this.menu);
+    };
+
+    gmailWebContents.on("did-navigate-in-page", rebuildMenu);
+
+    this._selectedAccountUnsubscribeFns.add(() => {
+      if (!gmailWebContents.isDestroyed()) {
+        gmailWebContents.removeListener("did-navigate-in-page", rebuildMenu);
+      }
+    });
   }
 
   createMenu() {
@@ -149,7 +154,7 @@ export class AppMenu {
     const selectedAccount = accounts.getSelectedAccount();
 
     const userEmail = selectedAccount.instance.gmail.userEmail;
-    const messageId = selectedAccount.instance.gmail.store.getState().messageId;
+    const messageId = selectedAccount.instance.gmail.messageId;
 
     const copyOrShareMessageLink =
       userEmail && messageId && createMeruMessageUrl(userEmail, messageId);

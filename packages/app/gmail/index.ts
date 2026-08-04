@@ -247,6 +247,16 @@ export class Gmail {
     };
   }
 
+  get messageId() {
+    const gmailUrl = this._view?.webContents.getURL();
+
+    if (!gmailUrl) {
+      return null;
+    }
+
+    return parseGmailMessageId(new URL(gmailUrl).hash);
+  }
+
   viewStore = createStore(
     subscribeWithSelector<{
       attentionRequired: boolean;
@@ -266,12 +276,10 @@ export class Gmail {
       unreadCount: number;
       unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
-      messageId: string | null;
     }>(() => ({
       unreadCount: 0,
       unreadInbox: [],
       outOfOffice: false,
-      messageId: null,
     })),
   );
 
@@ -408,10 +416,6 @@ export class Gmail {
       }
 
       this.view.webContents.insertCSS(meruCSS);
-    });
-
-    this.view.webContents.on("did-navigate-in-page", (_event, url) => {
-      this.store.setState({ messageId: parseGmailMessageId(new URL(url).hash) });
     });
 
     this.view.webContents.on("did-start-loading", () => {
