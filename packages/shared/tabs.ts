@@ -20,7 +20,10 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
-export function getTabStripWidth(tabs: Pick<TabState, "app">[], hasBookmarkedApps: boolean) {
+export function getTabStripWidth(
+  tabs: Pick<TabState, "app" | "pinned">[],
+  hasBookmarkedApps: boolean,
+) {
   if (tabs.length <= 1 && !hasBookmarkedApps) {
     return 0;
   }
@@ -28,7 +31,7 @@ export function getTabStripWidth(tabs: Pick<TabState, "app">[], hasBookmarkedApp
   const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
 
   for (const tab of tabs) {
-    if (tab.app) {
+    if (tab.app && !tab.pinned) {
       workspaceAppTabCounts.set(tab.app, (workspaceAppTabCounts.get(tab.app) ?? 0) + 1);
     }
   }
