@@ -97,6 +97,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Never repeat shared classes across the branches of a conditional `className`. Hoist them and merge with the `cn` helper (`@meru/ui/lib/utils`): `cn("absolute hidden", isWide ? "size-5" : "size-4")`.
 - Consider the platform when showing platform-specific information (modifier keys, OS names): branch on the existing `platform` helper — `@meru/shared/renderer/utils` in renderers, `@electron-toolkit/utils` in the main process — e.g. `platform.isMacOS ? "Cmd" : "Ctrl"`.
 - Render keyboard keys in user-facing text with the `Kbd` component (`@meru/ui/components/kbd`), not as plain text: `Hold <Kbd>Shift</Kbd> to …`.
+- Child `WebContentsView`s always paint above the main window's HTML, so renderer-drawn overlays (dropdowns, tooltips, dialogs) get covered wherever a view sits. Keep overlays inside the regions the renderer owns (titlebar, tab strip) — e.g. tab strip menus open with `side="top"` at anchor width. For overlays over view content, use a native `Menu.popup` or a dedicated `WebContentsView` (see the recent-downloads popup).
 
 ## React State
 
