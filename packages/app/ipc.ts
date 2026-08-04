@@ -10,6 +10,7 @@ import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
+  clipboard,
   desktopCapturer,
   dialog,
   Menu,
@@ -35,6 +36,7 @@ import { log } from "./lib/log";
 import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
+import { openExternalUrl } from "./url";
 
 function getNavigationWebContents(workspaceAppId?: string) {
   if (workspaceAppId) {
@@ -285,7 +287,16 @@ class Ipc {
             ]
           : []),
         {
-          label: "Duplicate Tab",
+          label: "Reload",
+          enabled: tab instanceof WorkspaceApp,
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.reload();
+            }
+          },
+        },
+        {
+          label: "Duplicate",
           click: () => {
             const currentTabUrl =
               tab instanceof WorkspaceApp ? tab.view.webContents.getURL() : tab.url;
@@ -305,15 +316,42 @@ class Ipc {
         {
           type: "separator",
         },
+        {
+          label: "Copy Link",
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.copyUrl();
+
+              return;
+            }
+
+            clipboard.writeText(tab.url);
+          },
+        },
+        {
+          label: "Open in Default Browser",
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.openInBrowser();
+
+              return;
+            }
+
+            openExternalUrl(tab.url, { skipTrustedHostCheck: true });
+          },
+        },
+        {
+          type: "separator",
+        },
         tab.pinned
           ? {
-              label: "Unpin Tab",
+              label: "Unpin",
               click: () => {
                 account.instance.tabs.unpinTab(tabId);
               },
             }
           : {
-              label: "Pin Tab",
+              label: "Pin",
               click: () => {
                 account.instance.tabs.pinTab(tabId);
               },
@@ -336,7 +374,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Close Tab",
+          label: "Close",
           click: () => {
             account.instance.tabs.closeTab(tabId);
 

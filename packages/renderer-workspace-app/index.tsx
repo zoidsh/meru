@@ -87,7 +87,7 @@ function CopyUrlButton({ workspaceAppId }: { workspaceAppId: string }) {
 
   return (
     <TitlebarIconButton
-      title="Copy URL"
+      title="Copy Link"
       onClick={() => {
         ipc.main.send("workspaceApp.copyUrl", workspaceAppId);
         markCopied();
@@ -183,7 +183,7 @@ function App() {
           <RecentDownloadHistoryButton />
           <CopyUrlButton workspaceAppId={workspaceAppId} />
           <TitlebarIconButton
-            title="Open in Browser"
+            title="Open in Default Browser"
             onClick={() => {
               ipc.main.send("workspaceApp.openInBrowser", workspaceAppId);
             }}
