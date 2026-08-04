@@ -18,6 +18,7 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
@@ -95,13 +96,31 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleWindowBlur = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isOpen]);
+
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
   }
 
   return (
     <div className={isWide ? "w-full" : undefined}>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger
           render={
             <Button
