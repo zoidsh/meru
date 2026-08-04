@@ -35,6 +35,7 @@ import {
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
+import { registerTabBroadcasts } from "./tabs";
 import { openExternalUrl } from "./url";
 
 export const MIN_ZOOM_FACTOR = 0.1;
@@ -469,7 +470,7 @@ export class WorkspaceApp {
 
   close() {
     if (!this.viewDestroyed) {
-      this.unregisterViewListeners();
+      this.view.webContents.removeAllListeners();
 
       this.view.webContents.close();
     }
@@ -518,23 +519,18 @@ export class WorkspaceApp {
   }
 
   private registerViewListeners() {
-    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
     this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
-    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
-    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
-  }
+    this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
 
-  private unregisterViewListeners() {
-    this.view.webContents.removeListener("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.removeListener("did-navigate", this.handlePasskeyChallenge);
-    this.view.webContents.removeListener("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.removeListener("page-title-updated", this.handlePageTitleUpdated);
-    this.view.webContents.removeListener("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("did-stop-loading", this.broadcastLoadingState);
-    this.view.webContents.removeListener("will-redirect", this.handleGoogleRedirect);
+    if (this._window) {
+      this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+      this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+      this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+      this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+    } else {
+      registerTabBroadcasts(this.view);
+    }
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
@@ -553,12 +549,6 @@ export class WorkspaceApp {
   }
 
   broadcastNavigationState = () => {
-    if (!this._window) {
-      accounts.sendTabsChangedToRenderer();
-
-      return;
-    }
-
     ipc.renderer.send(
       this.chromeWebContents,
       "workspaceApp.navigationStateChanged",
@@ -576,8 +566,6 @@ export class WorkspaceApp {
     this.pageTitle = explicitSet ? pageTitle : "";
 
     if (!this._window) {
-      accounts.sendTabsChangedToRenderer();
-
       return;
     }
 
@@ -596,12 +584,6 @@ export class WorkspaceApp {
   };
 
   broadcastLoadingState = () => {
-    if (!this._window) {
-      accounts.sendTabsChangedToRenderer();
-
-      return;
-    }
-
     ipc.renderer.send(
       this.chromeWebContents,
       "workspaceApp.loadingStateChanged",

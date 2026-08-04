@@ -44,6 +44,7 @@ import {
   createNotification,
   isWithinNotificationTimes,
 } from "@/notifications";
+import { registerTabBroadcasts } from "@/tabs";
 import { appTray } from "@/tray";
 import { WorkspaceApp } from "@/workspace-app";
 import gmailCSS from "./gmail.css";
@@ -412,13 +413,7 @@ export class Gmail {
       this.view.webContents.insertCSS(meruCSS);
     });
 
-    this.view.webContents.on("did-start-loading", () => {
-      accounts.sendTabsChangedToRenderer();
-    });
-
-    this.view.webContents.on("did-stop-loading", () => {
-      accounts.sendTabsChangedToRenderer();
-    });
+    registerTabBroadcasts(this.view);
 
     openViewDevToolsInDev(this.view);
 
@@ -457,12 +452,6 @@ export class Gmail {
         });
       }
     });
-
-    if (window === this.view) {
-      window.webContents.on("did-navigate-in-page", () => {
-        accounts.sendTabsChangedToRenderer();
-      });
-    }
 
     window.webContents.on("will-redirect", (event, url) => {
       if (url.startsWith("https://workspace.google.com/u/0/marketplace/appfinder")) {
