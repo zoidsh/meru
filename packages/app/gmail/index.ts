@@ -13,6 +13,7 @@ import {
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
+import { workspaceApps } from "@meru/shared/types";
 import { wait } from "@meru/shared/utils";
 import {
   app,
@@ -248,6 +249,12 @@ export class Gmail {
     };
   }
 
+  private pageTitle = "";
+
+  get title() {
+    return this.pageTitle || workspaceApps.gmail.label;
+  }
+
   get messageId() {
     const gmailUrl = this._view?.webContents.getURL();
 
@@ -411,6 +418,10 @@ export class Gmail {
       }
 
       this.view.webContents.insertCSS(meruCSS);
+    });
+
+    this.view.webContents.on("page-title-updated", (_event, pageTitle, explicitSet) => {
+      this.pageTitle = explicitSet ? pageTitle : "";
     });
 
     registerTabBroadcasts(this.view);
