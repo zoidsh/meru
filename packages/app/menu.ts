@@ -165,6 +165,26 @@ export class AppMenu {
       return selectedAccount.instance.tabs.activeTab.view.webContents;
     };
 
+    const selectNextTab = () => {
+      accounts.getSelectedAccount().instance.tabs.activateNextTab();
+
+      appState.setIsSettingsOpen(false);
+
+      accounts.refreshSelectedAccountView();
+
+      main.show();
+    };
+
+    const selectPreviousTab = () => {
+      accounts.getSelectedAccount().instance.tabs.activatePreviousTab();
+
+      appState.setIsSettingsOpen(false);
+
+      accounts.refreshSelectedAccountView();
+
+      main.show();
+    };
+
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.messageId;
 
@@ -464,6 +484,35 @@ export class AppMenu {
         ],
       },
       {
+        label: "Tabs",
+        submenu: [
+          {
+            label: "Select Next Tab",
+            accelerator: "Ctrl+Tab",
+            click: selectNextTab,
+          },
+          {
+            label: "Select Next Tab (hidden shortcut 1)",
+            accelerator: platform.isMacOS ? "Command+Option+Down" : "Ctrl+PageDown",
+            visible: is.dev,
+            acceleratorWorksWhenHidden: true,
+            click: selectNextTab,
+          },
+          {
+            label: "Select Previous Tab",
+            accelerator: "Ctrl+Shift+Tab",
+            click: selectPreviousTab,
+          },
+          {
+            label: "Select Previous Tab (hidden shortcut 1)",
+            accelerator: platform.isMacOS ? "Command+Option+Up" : "Ctrl+PageUp",
+            visible: is.dev,
+            acceleratorWorksWhenHidden: true,
+            click: selectPreviousTab,
+          },
+        ],
+      },
+      {
         label: "Accounts",
         submenu: [
           ...allAccounts.map((account, index) => ({
@@ -482,7 +531,7 @@ export class AppMenu {
           },
           {
             label: "Select Next Account",
-            accelerator: "Ctrl+Tab",
+            accelerator: platform.isMacOS ? "Command+Shift+]" : undefined,
             click: () => {
               accounts.selectNextAccount();
 
@@ -493,19 +542,6 @@ export class AppMenu {
           },
           {
             label: "Select Next Account (hidden shortcut 1)",
-            accelerator: "Command+Shift+]",
-            visible: is.dev,
-            acceleratorWorksWhenHidden: true,
-            click: () => {
-              accounts.selectNextAccount();
-
-              appState.setIsSettingsOpen(false);
-
-              main.show();
-            },
-          },
-          {
-            label: "Select Next Account (hidden shortcut 2)",
             accelerator: "Command+Option+Right",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -519,7 +555,7 @@ export class AppMenu {
           },
           {
             label: "Select Previous Account",
-            accelerator: "Ctrl+Shift+Tab",
+            accelerator: platform.isMacOS ? "Command+Shift+[" : undefined,
             click: () => {
               accounts.selectPreviousAccount();
 
@@ -530,19 +566,6 @@ export class AppMenu {
           },
           {
             label: "Select Previous Account (hidden shortcut 1)",
-            accelerator: "Command+Shift+[",
-            visible: is.dev,
-            acceleratorWorksWhenHidden: true,
-            click: () => {
-              accounts.selectPreviousAccount();
-
-              appState.setIsSettingsOpen(false);
-
-              main.show();
-            },
-          },
-          {
-            label: "Select Previous Account (hidden shortcut 2)",
             accelerator: "Command+Option+Left",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
