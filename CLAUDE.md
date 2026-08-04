@@ -95,6 +95,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components (e.g. `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`). Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.
 - Never repeat shared classes across the branches of a conditional `className`. Hoist them and merge with the `cn` helper (`@meru/ui/lib/utils`): `cn("absolute hidden", isWide ? "size-5" : "size-4")`.
+- Consider the platform when showing platform-specific information (modifier keys, OS names): branch on the existing `platform` helper — `@meru/shared/renderer/utils` in renderers, `@electron-toolkit/utils` in the main process — e.g. `platform.isMacOS ? "Cmd" : "Ctrl"`.
 
 ## React State
 
