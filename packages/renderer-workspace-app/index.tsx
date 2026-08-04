@@ -2,7 +2,7 @@ import { useCopied } from "@meru/shared/renderer/hooks";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { renderApp } from "@meru/shared/renderer/react";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import type { WorkspaceAppsPinnedApp } from "@meru/shared/types";
+import type { SupportedWorkspaceApp } from "@meru/shared/types";
 import { AccountBadge } from "@meru/ui/components/account-badge";
 import { FindInPage } from "@meru/ui/components/find-in-page";
 import {
@@ -192,7 +192,7 @@ function App() {
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
   );
 
-  const workspaceApp = searchParams.get("workspaceApp") as WorkspaceAppsPinnedApp | null;
+  const workspaceApp = searchParams.get("workspaceApp") as SupportedWorkspaceApp | null;
 
   return (
     <Titlebar>

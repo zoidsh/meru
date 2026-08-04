@@ -2,7 +2,7 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { workspaceAppsPinnedApps } from "@meru/shared/types";
+import { pinnableWorkspaceApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -166,7 +166,7 @@ function PinnedWorkspaceApps() {
                   : "foreground-tab",
             );
           }}
-          title={workspaceAppsPinnedApps[app]}
+          title={pinnableWorkspaceApps[app]}
         >
           <WorkspaceAppIcon app={app} />
         </TitlebarIconButton>

@@ -34,58 +34,51 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-export const supportedWorkspaceApps = {
-  calendar: "Calendar",
-  chat: "Chat",
-  classroom: "Classroom",
-  contacts: "Contacts",
-  docs: "Docs",
-  drive: "Drive",
-  forms: "Forms",
-  gemini: "Gemini",
-  groups: "Groups",
-  keep: "Keep",
-  meet: "Meet",
-  myaccount: "My Account",
-  notebooklm: "NotebookLM",
-  sheets: "Sheets",
-  sites: "Sites",
-  slides: "Slides",
-  tasks: "Tasks",
-  voice: "Voice",
-} as const;
+type WorkspaceAppDefinition = {
+  label: string;
+  pinnable?: boolean;
+  alwaysOpenAsWindow?: boolean;
+};
 
-export type SupportedWorkspaceApp = keyof typeof supportedWorkspaceApps;
+const workspaceAppDefinitions = {
+  calendar: { label: "Calendar" },
+  chat: { label: "Chat" },
+  classroom: { label: "Classroom" },
+  contacts: { label: "Contacts" },
+  docs: { label: "Docs" },
+  drive: { label: "Drive" },
+  forms: { label: "Forms" },
+  gemini: { label: "Gemini" },
+  groups: { label: "Groups" },
+  keep: { label: "Keep" },
+  meet: { label: "Meet" },
+  myaccount: { label: "My Account", pinnable: false, alwaysOpenAsWindow: true },
+  notebooklm: { label: "NotebookLM" },
+  sheets: { label: "Sheets" },
+  sites: { label: "Sites" },
+  slides: { label: "Slides" },
+  tasks: { label: "Tasks" },
+  voice: { label: "Voice" },
+} as const satisfies Record<string, WorkspaceAppDefinition>;
 
-const workspaceAppsPinnedAppKeys = [
-  "calendar",
-  "chat",
-  "classroom",
-  "contacts",
-  "docs",
-  "drive",
-  "forms",
-  "gemini",
-  "groups",
-  "keep",
-  "meet",
-  "notebooklm",
-  "sheets",
-  "sites",
-  "slides",
-  "tasks",
-  "voice",
-] as const satisfies readonly SupportedWorkspaceApp[];
+export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
-export type WorkspaceAppsPinnedApp = (typeof workspaceAppsPinnedAppKeys)[number];
+export type PinnableWorkspaceApp = {
+  [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends { pinnable: false }
+    ? never
+    : App;
+}[SupportedWorkspaceApp];
 
-export const workspaceAppsPinnedApps = Object.fromEntries(
-  workspaceAppsPinnedAppKeys.map((key) => [key, supportedWorkspaceApps[key]]),
-) as Pick<typeof supportedWorkspaceApps, WorkspaceAppsPinnedApp>;
+export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
+  workspaceAppDefinitions;
+
+export const pinnableWorkspaceApps = Object.fromEntries(
+  Object.entries(workspaceApps)
+    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable !== false)
+    .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
+) as Record<PinnableWorkspaceApp, string>;
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
-
-export const workspaceAppsAlwaysOpenAsWindow: SupportedWorkspaceApp[] = ["myaccount"];
 
 export const GMAIL_TAB_ID = "gmail";
 
@@ -205,7 +198,7 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openAppsInNewWindow": boolean;
-  "workspaceApps.pinnedApps": WorkspaceAppsPinnedApp[];
+  "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "verificationCodes.autoCopy": boolean;
@@ -256,7 +249,7 @@ export type IpcMainEvents =
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
       "workspaceApps.openApp": [
-        app: WorkspaceAppsPinnedApp,
+        app: PinnableWorkspaceApp,
         disposition?: WorkspaceAppOpenDisposition,
       ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];

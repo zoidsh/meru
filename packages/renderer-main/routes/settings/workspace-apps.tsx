@@ -3,10 +3,10 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
-  type WorkspaceAppsPinnedApp,
-  workspaceAppsPinnedApps,
+  type PinnableWorkspaceApp,
+  pinnableWorkspaceApps,
   type SupportedWorkspaceApp,
-  supportedWorkspaceApps,
+  workspaceApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -39,7 +39,7 @@ function SortablePinnedAppItem({
   onUnpin,
   disabled,
 }: {
-  app: WorkspaceAppsPinnedApp;
+  app: PinnableWorkspaceApp;
   index: number;
   onUnpin: () => void;
   disabled: boolean;
@@ -54,18 +54,18 @@ function SortablePinnedAppItem({
         size="xs"
         className="cursor-grab touch-none"
         disabled={disabled}
-        aria-label={`Drag ${workspaceAppsPinnedApps[app]} to reorder`}
+        aria-label={`Drag ${pinnableWorkspaceApps[app]} to reorder`}
       >
         <GripVerticalIcon />
         <WorkspaceAppIcon app={app} className="size-3.5" />
-        {workspaceAppsPinnedApps[app]}
+        {pinnableWorkspaceApps[app]}
       </Button>
       <Button
         variant="outline"
         size="icon-xs"
         onClick={onUnpin}
         disabled={disabled}
-        aria-label={`Unpin ${workspaceAppsPinnedApps[app]}`}
+        aria-label={`Unpin ${pinnableWorkspaceApps[app]}`}
       >
         <XIcon />
       </Button>
@@ -86,15 +86,15 @@ export function WorkspaceAppsSettings() {
 
   const pinnedApps = config["workspaceApps.pinnedApps"];
 
-  const availableApps = (Object.keys(workspaceAppsPinnedApps) as WorkspaceAppsPinnedApp[]).filter(
+  const availableApps = (Object.keys(pinnableWorkspaceApps) as PinnableWorkspaceApp[]).filter(
     (app) => !pinnedApps.includes(app),
   );
 
   const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
-  const excludedAppLabels = (Object.keys(supportedWorkspaceApps) as SupportedWorkspaceApp[])
+  const excludedAppLabels = (Object.keys(workspaceApps) as SupportedWorkspaceApp[])
     .filter((app) => excludedApps.includes(app))
-    .map((app) => supportedWorkspaceApps[app]);
+    .map((app) => workspaceApps[app].label);
 
   const visibleExcludedAppLabels = excludedAppLabels.slice(0, 3);
 
@@ -151,28 +151,26 @@ export function WorkspaceAppsSettings() {
                     }
                   />
                   <DropdownMenuContent align="end">
-                    {(
-                      Object.entries(supportedWorkspaceApps) as Entries<
-                        typeof supportedWorkspaceApps
-                      >
-                    ).map(([app, label]) => (
-                      <DropdownMenuCheckboxItem
-                        key={app}
-                        checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
-                        closeOnClick={false}
-                        onCheckedChange={(checked) => {
-                          configMutation.mutate({
-                            "workspaceApps.openInAppExcludedApps": checked
-                              ? [...config["workspaceApps.openInAppExcludedApps"], app]
-                              : config["workspaceApps.openInAppExcludedApps"].filter(
-                                  (value) => value !== app,
-                                ),
-                          });
-                        }}
-                      >
-                        {label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    {(Object.entries(workspaceApps) as Entries<typeof workspaceApps>).map(
+                      ([app, { label }]) => (
+                        <DropdownMenuCheckboxItem
+                          key={app}
+                          checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
+                          closeOnClick={false}
+                          onCheckedChange={(checked) => {
+                            configMutation.mutate({
+                              "workspaceApps.openInAppExcludedApps": checked
+                                ? [...config["workspaceApps.openInAppExcludedApps"], app]
+                                : config["workspaceApps.openInAppExcludedApps"].filter(
+                                    (value) => value !== app,
+                                  ),
+                            });
+                          }}
+                        >
+                          {label}
+                        </DropdownMenuCheckboxItem>
+                      ),
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </Field>
@@ -256,10 +254,10 @@ export function WorkspaceAppsSettings() {
                           });
                         }}
                         disabled={!isLicenseKeyValid}
-                        aria-label={`Pin ${workspaceAppsPinnedApps[app]}`}
+                        aria-label={`Pin ${pinnableWorkspaceApps[app]}`}
                       >
                         <WorkspaceAppIcon app={app} className="size-3.5" />
-                        {workspaceAppsPinnedApps[app]}
+                        {pinnableWorkspaceApps[app]}
                         <PlusIcon />
                       </Button>
                     ))}
