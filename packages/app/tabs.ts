@@ -72,8 +72,6 @@ export class Tabs {
 
   activeTabId: string = GMAIL_TAB_ID;
 
-  private suppressBroadcasts = false;
-
   constructor(accountId: string, gmail: Gmail) {
     this.accountId = accountId;
 
@@ -119,10 +117,17 @@ export class Tabs {
     return this.tabs.find((tab) => tab.id === tabId);
   }
 
-  addTab(workspaceApp: WorkspaceApp) {
+  openTab(url: string) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url,
+    });
+
     this.tabs.push(workspaceApp);
 
     this.broadcastTabsChanged();
+
+    return workspaceApp;
   }
 
   removeTab(tabId: string) {
@@ -158,25 +163,17 @@ export class Tabs {
   }
 
   private materializeDormantTab(dormantTab: DormantTab) {
-    this.suppressBroadcasts = true;
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url: dormantTab.url,
+      pinned: true,
+      loadOnLaunch: dormantTab.loadOnLaunch,
+      app: dormantTab.app,
+    });
 
-    try {
-      const workspaceApp = new WorkspaceApp({
-        accountId: this.accountId,
-        url: dormantTab.url,
-        pinned: true,
-        loadOnLaunch: dormantTab.loadOnLaunch,
-        app: dormantTab.app,
-      });
+    this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
 
-      this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
-
-      this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
-
-      return workspaceApp;
-    } finally {
-      this.suppressBroadcasts = false;
-    }
+    return workspaceApp;
   }
 
   loadLaunchTabs() {
@@ -321,7 +318,7 @@ export class Tabs {
   }
 
   private broadcastTabsChanged() {
-    if (this.suppressBroadcasts || main.window.isDestroyed()) {
+    if (main.window.isDestroyed()) {
       return;
     }
 

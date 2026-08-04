@@ -241,13 +241,12 @@ export class WorkspaceApp {
         return { action: "deny" };
       }
 
-      const workspaceApp = new WorkspaceApp({
-        accountId,
-        url,
-      });
+      const account = accounts.getAccount(accountId);
+
+      const workspaceApp = account.instance.tabs.openTab(url);
 
       if (openBehavior === "tab") {
-        accounts.getAccount(accountId).instance.tabs.activateTab(workspaceApp.id);
+        account.instance.tabs.activateTab(workspaceApp.id);
 
         accounts.selectAccount(accountId);
 
@@ -390,8 +389,6 @@ export class WorkspaceApp {
       if (appState.isSettingsOpen) {
         this.view.setVisible(false);
       }
-
-      this.account.instance.tabs.addTab(this);
     }
 
     this.setupApp();
