@@ -105,29 +105,6 @@ export class WorkspaceApp {
       .map((instance) => instance.window);
   }
 
-  static reuseWindowByHostname(accountId: AccountConfig["id"], url: string) {
-    const urlHostname = new URL(url).hostname;
-
-    const reusableInstance = Array.from(WorkspaceApp.instances.values())
-      .reverse()
-      .find(
-        (instance) =>
-          instance._window &&
-          instance.accountId === accountId &&
-          new URL(instance.view.webContents.getURL()).hostname === urlHostname,
-      );
-
-    if (!reusableInstance) {
-      return false;
-    }
-
-    reusableInstance.view.webContents.loadURL(url);
-
-    reusableInstance.window.focus();
-
-    return true;
-  }
-
   static handleNavigate(url: string) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
@@ -248,13 +225,6 @@ export class WorkspaceApp {
           url,
         });
 
-        return { action: "deny" };
-      }
-
-      if (
-        !config.get("workspaceApps.openAppsInNewWindow") &&
-        WorkspaceApp.reuseWindowByHostname(accountId, url)
-      ) {
         return { action: "deny" };
       }
 

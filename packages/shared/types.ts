@@ -202,7 +202,6 @@ export type Config = {
   "trial.expired": boolean;
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
-  "workspaceApps.openAppsInNewWindow": boolean;
   "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
