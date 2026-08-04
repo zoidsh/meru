@@ -11,18 +11,10 @@ import { WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
 
-function stripWorkspaceAppPageTitle(pageTitle: string, app: SupportedWorkspaceApp) {
+function stripGoogleFromPageTitle(pageTitle: string, app: SupportedWorkspaceApp) {
   const appLabel = workspaceApps[app].label;
 
-  if (pageTitle === appLabel || pageTitle === `Google ${appLabel}`) {
-    return pageTitle;
-  }
-
-  const strippedPageTitle = pageTitle
-    .replace(new RegExp(` - (Google )?${appLabel}$`), "")
-    .replace(new RegExp(`^Google ${appLabel} - `), "");
-
-  return strippedPageTitle || pageTitle;
+  return pageTitle.replace(`Google ${appLabel}`, appLabel);
 }
 
 export function registerTabBroadcasts(view: WebContentsView) {
@@ -389,7 +381,7 @@ export class Tabs {
     return this.tabs.map((tab) => ({
       id: tab.id,
       app: tab.app,
-      title: tab.app ? stripWorkspaceAppPageTitle(tab.title, tab.app) : tab.title,
+      title: tab.app ? stripGoogleFromPageTitle(tab.title, tab.app) : tab.title,
       pinned: tab.pinned,
       dormant: tab instanceof DormantTab,
       loading: tab.isLoading,
