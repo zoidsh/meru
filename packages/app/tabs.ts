@@ -141,6 +141,7 @@ export class Tabs {
         accountId: this.accountId,
         url: activatedTab.url,
         pinned: true,
+        app: activatedTab.app,
       });
 
       this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
