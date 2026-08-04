@@ -104,16 +104,14 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            isWide ? (
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                <PlusIcon />
-                New Tab
-              </Button>
-            ) : (
-              <Button variant="ghost" size="icon" title="New Tab">
-                <PlusIcon />
-              </Button>
-            )
+            <Button
+              variant="ghost"
+              size={isWide ? "sm" : "icon"}
+              className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
+              title="New Tab"
+            >
+              <PlusIcon />
+            </Button>
           }
         />
         <DropdownMenuContent
