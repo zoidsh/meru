@@ -345,13 +345,13 @@ class Ipc {
         },
         tab.pinned
           ? {
-              label: "Unpin Tab",
+              label: "Unpin",
               click: () => {
                 account.instance.tabs.unpinTab(tabId);
               },
             }
           : {
-              label: "Pin Tab",
+              label: "Pin",
               click: () => {
                 account.instance.tabs.pinTab(tabId);
               },
@@ -374,7 +374,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Close Tab",
+          label: "Close",
           click: () => {
             account.instance.tabs.closeTab(tabId);
 
