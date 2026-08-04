@@ -6,7 +6,7 @@ import {
   type WorkspaceAppsPinnedApp,
   workspaceAppsPinnedApps,
   type SupportedWorkspaceApp,
-  supportedWorkspaceApps,
+  workspaceApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -92,9 +92,9 @@ export function WorkspaceAppsSettings() {
 
   const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
-  const excludedAppLabels = (Object.keys(supportedWorkspaceApps) as SupportedWorkspaceApp[])
+  const excludedAppLabels = (Object.keys(workspaceApps) as SupportedWorkspaceApp[])
     .filter((app) => excludedApps.includes(app))
-    .map((app) => supportedWorkspaceApps[app]);
+    .map((app) => workspaceApps[app].label);
 
   const visibleExcludedAppLabels = excludedAppLabels.slice(0, 3);
 
@@ -151,28 +151,26 @@ export function WorkspaceAppsSettings() {
                     }
                   />
                   <DropdownMenuContent align="end">
-                    {(
-                      Object.entries(supportedWorkspaceApps) as Entries<
-                        typeof supportedWorkspaceApps
-                      >
-                    ).map(([app, label]) => (
-                      <DropdownMenuCheckboxItem
-                        key={app}
-                        checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
-                        closeOnClick={false}
-                        onCheckedChange={(checked) => {
-                          configMutation.mutate({
-                            "workspaceApps.openInAppExcludedApps": checked
-                              ? [...config["workspaceApps.openInAppExcludedApps"], app]
-                              : config["workspaceApps.openInAppExcludedApps"].filter(
-                                  (value) => value !== app,
-                                ),
-                          });
-                        }}
-                      >
-                        {label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    {(Object.entries(workspaceApps) as Entries<typeof workspaceApps>).map(
+                      ([app, { label }]) => (
+                        <DropdownMenuCheckboxItem
+                          key={app}
+                          checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
+                          closeOnClick={false}
+                          onCheckedChange={(checked) => {
+                            configMutation.mutate({
+                              "workspaceApps.openInAppExcludedApps": checked
+                                ? [...config["workspaceApps.openInAppExcludedApps"], app]
+                                : config["workspaceApps.openInAppExcludedApps"].filter(
+                                    (value) => value !== app,
+                                  ),
+                            });
+                          }}
+                        >
+                          {label}
+                        </DropdownMenuCheckboxItem>
+                      ),
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </Field>

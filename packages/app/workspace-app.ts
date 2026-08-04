@@ -2,11 +2,7 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { GMAIL_URL } from "@meru/shared/gmail";
 import type { AccountConfig } from "@meru/shared/schemas";
-import {
-  supportedWorkspaceApps,
-  type SupportedWorkspaceApp,
-  workspaceAppsAlwaysOpenAsWindow,
-} from "@meru/shared/types";
+import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -53,7 +49,7 @@ const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_at
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
 
 const SUPPORTED_WORKSPACE_APPS_URL_REGEXP = new RegExp(
-  `(${Object.keys(supportedWorkspaceApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+  `(${Object.keys(workspaceApps).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
 function getWorkspaceAppFromUrl(url: string) {
@@ -225,7 +221,7 @@ export class WorkspaceApp {
     if (isWorkspaceAppEnabledToOpenInApp) {
       if (
         disposition === "background-tab" &&
-        !workspaceAppsAlwaysOpenAsWindow.includes(matchedSupportedWorkspaceApp)
+        !workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow
       ) {
         new WorkspaceApp({
           accountId,
@@ -542,7 +538,7 @@ export class WorkspaceApp {
   private pageTitle = "";
 
   get title() {
-    return this.pageTitle || (this.app ? supportedWorkspaceApps[this.app] : "");
+    return this.pageTitle || (this.app ? workspaceApps[this.app].label : "");
   }
 
   handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {

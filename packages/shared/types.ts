@@ -34,58 +34,48 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-export const supportedWorkspaceApps = {
-  calendar: "Calendar",
-  chat: "Chat",
-  classroom: "Classroom",
-  contacts: "Contacts",
-  docs: "Docs",
-  drive: "Drive",
-  forms: "Forms",
-  gemini: "Gemini",
-  groups: "Groups",
-  keep: "Keep",
-  meet: "Meet",
-  myaccount: "My Account",
-  notebooklm: "NotebookLM",
-  sheets: "Sheets",
-  sites: "Sites",
-  slides: "Slides",
-  tasks: "Tasks",
-  voice: "Voice",
-} as const;
+type WorkspaceAppDefinition = {
+  label: string;
+  pinnable: boolean;
+  alwaysOpenAsWindow: boolean;
+};
 
-export type SupportedWorkspaceApp = keyof typeof supportedWorkspaceApps;
+export const workspaceApps = {
+  calendar: { label: "Calendar", pinnable: true, alwaysOpenAsWindow: false },
+  chat: { label: "Chat", pinnable: true, alwaysOpenAsWindow: false },
+  classroom: { label: "Classroom", pinnable: true, alwaysOpenAsWindow: false },
+  contacts: { label: "Contacts", pinnable: true, alwaysOpenAsWindow: false },
+  docs: { label: "Docs", pinnable: true, alwaysOpenAsWindow: false },
+  drive: { label: "Drive", pinnable: true, alwaysOpenAsWindow: false },
+  forms: { label: "Forms", pinnable: true, alwaysOpenAsWindow: false },
+  gemini: { label: "Gemini", pinnable: true, alwaysOpenAsWindow: false },
+  groups: { label: "Groups", pinnable: true, alwaysOpenAsWindow: false },
+  keep: { label: "Keep", pinnable: true, alwaysOpenAsWindow: false },
+  meet: { label: "Meet", pinnable: true, alwaysOpenAsWindow: false },
+  myaccount: { label: "My Account", pinnable: false, alwaysOpenAsWindow: true },
+  notebooklm: { label: "NotebookLM", pinnable: true, alwaysOpenAsWindow: false },
+  sheets: { label: "Sheets", pinnable: true, alwaysOpenAsWindow: false },
+  sites: { label: "Sites", pinnable: true, alwaysOpenAsWindow: false },
+  slides: { label: "Slides", pinnable: true, alwaysOpenAsWindow: false },
+  tasks: { label: "Tasks", pinnable: true, alwaysOpenAsWindow: false },
+  voice: { label: "Voice", pinnable: true, alwaysOpenAsWindow: false },
+} as const satisfies Record<string, WorkspaceAppDefinition>;
 
-const workspaceAppsPinnedAppKeys = [
-  "calendar",
-  "chat",
-  "classroom",
-  "contacts",
-  "docs",
-  "drive",
-  "forms",
-  "gemini",
-  "groups",
-  "keep",
-  "meet",
-  "notebooklm",
-  "sheets",
-  "sites",
-  "slides",
-  "tasks",
-  "voice",
-] as const satisfies readonly SupportedWorkspaceApp[];
+export type SupportedWorkspaceApp = keyof typeof workspaceApps;
 
-export type WorkspaceAppsPinnedApp = (typeof workspaceAppsPinnedAppKeys)[number];
+export type WorkspaceAppsPinnedApp = {
+  [App in SupportedWorkspaceApp]: (typeof workspaceApps)[App]["pinnable"] extends true
+    ? App
+    : never;
+}[SupportedWorkspaceApp];
 
 export const workspaceAppsPinnedApps = Object.fromEntries(
-  workspaceAppsPinnedAppKeys.map((key) => [key, supportedWorkspaceApps[key]]),
-) as Pick<typeof supportedWorkspaceApps, WorkspaceAppsPinnedApp>;
+  Object.entries(workspaceApps)
+    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable)
+    .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
+) as Record<WorkspaceAppsPinnedApp, string>;
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
-
-export const workspaceAppsAlwaysOpenAsWindow: SupportedWorkspaceApp[] = ["myaccount"];
 
 export const GMAIL_TAB_ID = "gmail";
 
