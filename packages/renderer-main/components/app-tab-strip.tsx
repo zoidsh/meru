@@ -4,10 +4,14 @@ import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/type
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, XIcon } from "lucide-react";
+import { GlobeIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 function TabIcon({ tab }: { tab: TabState }) {
+  if (tab.loading) {
+    return <LoaderCircleIcon className="size-4 animate-spin" />;
+  }
+
   if (tab.app && tab.app !== "myaccount") {
     return <WorkspaceAppIcon app={tab.app} className="size-4" />;
   }

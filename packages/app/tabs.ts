@@ -14,6 +14,7 @@ export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
+  isLoading: boolean;
   view: WebContentsView;
   updateViewBounds: () => void;
 };
@@ -29,6 +30,9 @@ export class Tabs {
         id: GMAIL_TAB_ID,
         app: "gmail",
         title: workspaceApps.gmail.label,
+        get isLoading() {
+          return gmail.view.webContents.isLoading();
+        },
         get view() {
           return gmail.view;
         },
@@ -100,6 +104,7 @@ export class Tabs {
       id: tab.id,
       app: tab.app,
       title: tab.title,
+      loading: tab.isLoading,
       active: tab.id === this.activeTabId,
     }));
   }

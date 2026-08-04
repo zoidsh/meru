@@ -585,6 +585,8 @@ export class WorkspaceApp {
 
   broadcastLoadingState = () => {
     if (!this._window) {
+      accounts.sendTabsChangedToRenderer();
+
       return;
     }
 

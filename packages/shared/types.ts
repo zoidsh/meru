@@ -89,6 +89,7 @@ export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
+  loading: boolean;
   active: boolean;
 };
 
