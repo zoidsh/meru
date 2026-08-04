@@ -15,6 +15,7 @@ export type Tab = {
   app: SupportedWorkspaceApp | undefined;
   title: string;
   isLoading: boolean;
+  navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view: WebContentsView;
   updateViewBounds: () => void;
 };
@@ -32,6 +33,9 @@ export class Tabs {
         title: workspaceApps.gmail.label,
         get isLoading() {
           return gmail.isLoading;
+        },
+        get navigationHistory() {
+          return gmail.viewStore.getState().navigationHistory;
         },
         get view() {
           return gmail.view;
@@ -105,6 +109,7 @@ export class Tabs {
       app: tab.app,
       title: tab.title,
       loading: tab.isLoading,
+      navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,
     }));
   }

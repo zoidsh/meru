@@ -90,6 +90,7 @@ export type TabState = {
   app: SupportedWorkspaceApp | undefined;
   title: string;
   loading: boolean;
+  navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
 };
 
@@ -227,15 +228,14 @@ export type IpcMainEvents =
       "accounts.removeAccount": [accountId: AccountConfig["id"]];
       "accounts.updateAccount": [account: AccountConfig];
       "settings.toggleIsOpen": [open?: boolean];
-      "gmail.moveNavigationHistory": [move: "back" | "forward"];
+      "workspaceApp.goBack": [workspaceAppId?: string];
+      "workspaceApp.goForward": [workspaceAppId?: string];
+      "workspaceApp.reload": [workspaceAppId?: string];
+      "workspaceApp.stop": [workspaceAppId?: string];
       "gmail.unreadCountChanged": [unreadCountString: string];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
-      "workspaceApp.goBack": [workspaceAppId: string];
-      "workspaceApp.goForward": [workspaceAppId: string];
-      "workspaceApp.reload": [workspaceAppId: string];
-      "workspaceApp.stop": [workspaceAppId: string];
       "workspaceApp.copyUrl": [workspaceAppId: string];
       "workspaceApp.openInBrowser": [workspaceAppId: string];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
@@ -284,7 +284,7 @@ export type IpcMainEvents =
       "app.setAsDefaultMailtoClient": () => void;
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
-      "workspaceApp.getLoadingState": (workspaceAppId: string) => boolean;
+      "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
     };
 
 export type IpcRendererEvent = {

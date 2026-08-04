@@ -10,21 +10,12 @@ import {
   TitlebarButtonGroup,
   TitlebarIconButton,
   TitlebarLeft,
+  TitlebarNavigationControls,
   TitlebarPageTitle,
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckIcon,
-  DownloadIcon,
-  ExternalLinkIcon,
-  LinkIcon,
-  LoaderCircleIcon,
-  RotateCwIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckIcon, DownloadIcon, ExternalLinkIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 
@@ -47,39 +38,47 @@ function RecentDownloadHistoryButton() {
   );
 }
 
-function ReloadButton({ workspaceAppId }: { workspaceAppId: string }) {
-  const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState(false);
+function NavigationControls({ workspaceAppId }: { workspaceAppId: string }) {
+  const [navigationState, setNavigationState] = useState({
+    canGoBack: false,
+    canGoForward: false,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = ipc.renderer.on("workspaceApp.loadingStateChanged", (_event, isLoading) => {
-      setLoading(isLoading);
+    return ipc.renderer.on("workspaceApp.navigationStateChanged", (_event, state) => {
+      setNavigationState(state);
+    });
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = ipc.renderer.on("workspaceApp.loadingStateChanged", (_event, loading) => {
+      setIsLoading(loading);
     });
 
-    ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setLoading);
+    ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setIsLoading);
 
     return unsubscribe;
   }, [workspaceAppId]);
 
   return (
-    <TitlebarIconButton
-      title={loading ? "Stop" : "Reload"}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => {
-        ipc.main.send(loading ? "workspaceApp.stop" : "workspaceApp.reload", workspaceAppId);
+    <TitlebarNavigationControls
+      canGoBack={navigationState.canGoBack}
+      canGoForward={navigationState.canGoForward}
+      isLoading={isLoading}
+      onGoBack={() => {
+        ipc.main.send("workspaceApp.goBack", workspaceAppId);
       }}
-    >
-      {loading ? (
-        hovered ? (
-          <XIcon />
-        ) : (
-          <LoaderCircleIcon className="animate-spin" />
-        )
-      ) : (
-        <RotateCwIcon />
-      )}
-    </TitlebarIconButton>
+      onGoForward={() => {
+        ipc.main.send("workspaceApp.goForward", workspaceAppId);
+      }}
+      onReload={() => {
+        ipc.main.send("workspaceApp.reload", workspaceAppId);
+      }}
+      onStop={() => {
+        ipc.main.send("workspaceApp.stop", workspaceAppId);
+      }}
+    />
   );
 }
 
@@ -96,42 +95,6 @@ function CopyUrlButton({ workspaceAppId }: { workspaceAppId: string }) {
     >
       {copied ? <CheckIcon /> : <LinkIcon />}
     </TitlebarIconButton>
-  );
-}
-
-function NavigationButtons({ workspaceAppId }: { workspaceAppId: string }) {
-  const [navigationState, setNavigationState] = useState<{
-    canGoBack: boolean;
-    canGoForward: boolean;
-  }>();
-
-  useEffect(() => {
-    return ipc.renderer.on("workspaceApp.navigationStateChanged", (_event, state) => {
-      setNavigationState(state);
-    });
-  }, []);
-
-  return (
-    <>
-      <TitlebarIconButton
-        title="Back"
-        disabled={!navigationState?.canGoBack}
-        onClick={() => {
-          ipc.main.send("workspaceApp.goBack", workspaceAppId);
-        }}
-      >
-        <ArrowLeftIcon />
-      </TitlebarIconButton>
-      <TitlebarIconButton
-        title="Forward"
-        disabled={!navigationState?.canGoForward}
-        onClick={() => {
-          ipc.main.send("workspaceApp.goForward", workspaceAppId);
-        }}
-      >
-        <ArrowRightIcon />
-      </TitlebarIconButton>
-    </>
   );
 }
 
@@ -204,8 +167,7 @@ function App() {
     <Titlebar>
       <TitlebarLeft>
         <TitlebarButtonGroup>
-          <NavigationButtons workspaceAppId={workspaceAppId} />
-          <ReloadButton workspaceAppId={workspaceAppId} />
+          <NavigationControls workspaceAppId={workspaceAppId} />
         </TitlebarButtonGroup>
         {config && config.accounts.length > 1 && account && (
           <AccountBadge label={account.label} color={account.color} />

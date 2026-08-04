@@ -545,15 +545,25 @@ export class WorkspaceApp {
     WorkspaceApp.handleRedirect(event, url, this.view.webContents);
   };
 
+  get navigationHistory() {
+    return {
+      canGoBack: this.view.webContents.navigationHistory.canGoBack(),
+      canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+    };
+  }
+
   broadcastNavigationState = () => {
     if (!this._window) {
+      accounts.sendTabsChangedToRenderer();
+
       return;
     }
 
-    ipc.renderer.send(this.chromeWebContents, "workspaceApp.navigationStateChanged", {
-      canGoBack: this.view.webContents.navigationHistory.canGoBack(),
-      canGoForward: this.view.webContents.navigationHistory.canGoForward(),
-    });
+    ipc.renderer.send(
+      this.chromeWebContents,
+      "workspaceApp.navigationStateChanged",
+      this.navigationHistory,
+    );
   };
 
   private pageTitle = "";

@@ -11,12 +11,11 @@ import {
   TitlebarButtonGroup,
   TitlebarIconButton,
   TitlebarLeft,
+  TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
   BriefcaseIcon,
   CircleAlertIcon,
   CircleXIcon,
@@ -36,6 +35,7 @@ import {
   useAppUpdaterStore,
   useFindInPageStore,
   useSettingsStore,
+  useTabsStore,
   useTrialStore,
 } from "../lib/stores";
 
@@ -180,6 +180,12 @@ export function AppTitlebar() {
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+
+  const activeTab = accountsTabs
+    .find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
+    ?.tabs.find((tab) => tab.active);
+
   const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
@@ -300,34 +306,24 @@ export function AppTitlebar() {
       <>
         <TitlebarLeft>
           <TitlebarButtonGroup>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="draggable-none"
-              onClick={() => {
-                ipc.main.send("gmail.moveNavigationHistory", "back");
+            <TitlebarNavigationControls
+              canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
+              canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
+              isLoading={Boolean(activeTab?.loading)}
+              disabled={matchUnifiedInboxRoute}
+              onGoBack={() => {
+                ipc.main.send("workspaceApp.goBack");
               }}
-              disabled={
-                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack
-              }
-              title="Go Back"
-            >
-              <ArrowLeftIcon />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="draggable-none"
-              onClick={() => {
-                ipc.main.send("gmail.moveNavigationHistory", "forward");
+              onGoForward={() => {
+                ipc.main.send("workspaceApp.goForward");
               }}
-              disabled={
-                matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
-              }
-              title="Go Forward"
-            >
-              <ArrowRightIcon />
-            </Button>
+              onReload={() => {
+                ipc.main.send("workspaceApp.reload");
+              }}
+              onStop={() => {
+                ipc.main.send("workspaceApp.stop");
+              }}
+            />
             {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
               <Button
                 variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
