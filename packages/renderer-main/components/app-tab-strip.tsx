@@ -16,7 +16,7 @@ import { Separator } from "@meru/ui/components/separator";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { Fragment, type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
@@ -41,13 +41,15 @@ function TabIcon({ tab }: { tab: TabState }) {
 function StripTab({
   tab,
   accountId,
-  isWide,
+  presentation,
 }: {
   tab: TabState;
   accountId: AccountConfig["id"];
-  isWide: boolean;
+  presentation: "wideRow" | "narrowIcon" | "gridIcon";
 }) {
   const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
+
+  const isWideRow = presentation === "wideRow";
 
   const canOpenSecondInstance =
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
@@ -56,11 +58,12 @@ function StripTab({
     <div className="group relative">
       <Button
         variant={tab.active ? "secondary" : "ghost"}
-        size={isWide ? "sm" : "icon"}
+        size={isWideRow ? "sm" : "icon"}
         className={cn(
           tab.dormant && "opacity-50",
-          isWide && "w-full justify-start",
-          isWide && isCloseable && "pr-7",
+          isWideRow && "w-full justify-start",
+          isWideRow && isCloseable && "pr-7",
+          presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
         onClick={(event) => {
@@ -86,7 +89,7 @@ function StripTab({
         }}
       >
         <TabIcon tab={tab} />
-        {isWide && <span className="truncate">{tab.title}</span>}
+        {isWideRow && <span className="truncate">{tab.title}</span>}
       </Button>
       {isCloseable && (
         <Button
@@ -94,7 +97,7 @@ function StripTab({
           size="icon"
           className={cn(
             "absolute hidden group-hover:flex",
-            isWide
+            isWideRow
               ? "top-1/2 right-1 size-5 -translate-y-1/2"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
@@ -183,6 +186,18 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
   );
 }
 
+function getPinnedSectionGridColumnsClassName(pinnedSectionTabsCount: number) {
+  if (pinnedSectionTabsCount === 1) {
+    return "grid-cols-1";
+  }
+
+  if (pinnedSectionTabsCount % 2 === 0) {
+    return "grid-cols-2";
+  }
+
+  return "grid-cols-3";
+}
+
 export function AppTabStrip() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
@@ -211,9 +226,15 @@ export function AppTabStrip() {
 
   const hasPinnedTabs = selectedAccountTabs.tabs.some((tab) => tab.pinned);
 
-  const firstUnpinnedTabId = selectedAccountTabs.tabs.find(
-    (tab) => !tab.pinned && tab.id !== GMAIL_TAB_ID,
-  )?.id;
+  const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
+    (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
+  );
+
+  const unpinnedTabs = selectedAccountTabs.tabs.filter(
+    (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
+  );
+
+  const shouldRenderSeparator = unpinnedTabs.length > 0 && (isWide || hasPinnedTabs);
 
   return (
     <div
@@ -229,13 +250,42 @@ export function AppTabStrip() {
         ipc.main.send("tabs.showTabStripContextMenu", selectedAccount.config.id);
       }}
     >
-      {selectedAccountTabs.tabs.map((tab) => (
-        <Fragment key={tab.id}>
-          {hasPinnedTabs && tab.id === firstUnpinnedTabId && (
-            <Separator className={isWide ? undefined : "data-horizontal:w-8"} />
+      {isWide ? (
+        <div
+          className={cn(
+            "grid w-full gap-1",
+            getPinnedSectionGridColumnsClassName(pinnedSectionTabs.length),
           )}
-          <StripTab tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
-        </Fragment>
+        >
+          {pinnedSectionTabs.map((tab) => (
+            <StripTab
+              key={tab.id}
+              tab={tab}
+              accountId={selectedAccount.config.id}
+              presentation="gridIcon"
+            />
+          ))}
+        </div>
+      ) : (
+        pinnedSectionTabs.map((tab) => (
+          <StripTab
+            key={tab.id}
+            tab={tab}
+            accountId={selectedAccount.config.id}
+            presentation="narrowIcon"
+          />
+        ))
+      )}
+      {shouldRenderSeparator && (
+        <Separator className={isWide ? undefined : "data-horizontal:w-8"} />
+      )}
+      {unpinnedTabs.map((tab) => (
+        <StripTab
+          key={tab.id}
+          tab={tab}
+          accountId={selectedAccount.config.id}
+          presentation={isWide ? "wideRow" : "narrowIcon"}
+        />
       ))}
       <NewTabButton isWide={isWide} />
     </div>
