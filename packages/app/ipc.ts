@@ -317,7 +317,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Copy URL",
+          label: "Copy Link",
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.copyUrl();

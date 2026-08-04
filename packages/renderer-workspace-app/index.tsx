@@ -87,7 +87,7 @@ function CopyUrlButton({ workspaceAppId }: { workspaceAppId: string }) {
 
   return (
     <TitlebarIconButton
-      title="Copy URL"
+      title="Copy Link"
       onClick={() => {
         ipc.main.send("workspaceApp.copyUrl", workspaceAppId);
         markCopied();
