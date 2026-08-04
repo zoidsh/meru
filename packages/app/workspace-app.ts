@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/types";
+import {
+  type SupportedWorkspaceApp,
+  type WorkspaceAppOpenBehavior,
+  workspaceApps,
+} from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -216,7 +220,7 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
-      const openBehavior =
+      const openBehavior: WorkspaceAppOpenBehavior =
         workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow ||
         disposition === "new-window"
           ? "newWindow"
