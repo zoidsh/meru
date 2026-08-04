@@ -27,6 +27,14 @@ export function registerTabBroadcasts(view: WebContentsView) {
   view.webContents.on("page-title-updated", broadcastTabsChanged);
   view.webContents.on("did-start-loading", broadcastTabsChanged);
   view.webContents.on("did-stop-loading", broadcastTabsChanged);
+
+  return () => {
+    view.webContents.off("did-navigate", broadcastTabsChanged);
+    view.webContents.off("did-navigate-in-page", broadcastTabsChanged);
+    view.webContents.off("page-title-updated", broadcastTabsChanged);
+    view.webContents.off("did-start-loading", broadcastTabsChanged);
+    view.webContents.off("did-stop-loading", broadcastTabsChanged);
+  };
 }
 
 export type Tab = {

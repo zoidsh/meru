@@ -333,6 +333,8 @@ export class WorkspaceApp {
 
   private viewDestroyed = false;
 
+  private unregisterTabBroadcasts: (() => void) | undefined;
+
   constructor({
     accountId,
     url,
@@ -374,15 +376,7 @@ export class WorkspaceApp {
     WorkspaceApp.instances.set(this.id, this);
 
     if (this._window) {
-      this.window.on("resize", this.updateViewBounds);
-      this.window.on("close", this.handleClose);
-      this.window.on("focus", () => {
-        WorkspaceApp.instances.delete(this.id);
-
-        WorkspaceApp.instances.set(this.id, this);
-      });
-
-      this.account.instance.windows.add(this.window);
+      this.registerWindowListeners();
     } else {
       this.account.instance.windows.add(this.view);
 
@@ -449,7 +443,7 @@ export class WorkspaceApp {
 
     applyViewZoomLimits(view);
 
-    broadcastFoundInPageResults(view, this.chromeWebContents);
+    broadcastFoundInPageResults(view, () => this.chromeWebContents);
 
     this.setWindowOpenHandler(view);
 
@@ -526,13 +520,64 @@ export class WorkspaceApp {
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
 
     if (this._window) {
-      this.view.webContents.on("did-navigate", this.broadcastNavigationState);
-      this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-      this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
-      this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+      this.registerWindowedViewListeners();
     } else {
-      registerTabBroadcasts(this.view);
+      this.unregisterTabBroadcasts = registerTabBroadcasts(this.view);
     }
+  }
+
+  private registerWindowedViewListeners() {
+    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+  }
+
+  private registerWindowListeners() {
+    this.window.on("resize", this.updateViewBounds);
+    this.window.on("close", this.handleClose);
+    this.window.on("focus", () => {
+      WorkspaceApp.instances.delete(this.id);
+
+      WorkspaceApp.instances.set(this.id, this);
+    });
+
+    this.account.instance.windows.add(this.window);
+  }
+
+  detachToWindow() {
+    this.account.instance.tabs.removeTab(this.id);
+
+    this.pinned = false;
+    this.loadOnLaunch = false;
+
+    main.window.contentView.removeChildView(this.view);
+
+    this.account.instance.windows.delete(this.view);
+
+    this.unregisterTabBroadcasts?.();
+
+    this.unregisterTabBroadcasts = undefined;
+
+    this._window = this.createBrowserWindow();
+
+    this.window.contentView.addChildView(this.view);
+
+    this.view.setVisible(true);
+
+    this.registerWindowedViewListeners();
+    this.registerWindowListeners();
+
+    this.updateViewBounds();
+    this.updateWindowTitle();
+
+    this.window.webContents.once("did-finish-load", () => {
+      this.broadcastNavigationState();
+
+      this.broadcastLoadingState();
+
+      ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
+    });
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
@@ -573,6 +618,10 @@ export class WorkspaceApp {
 
     ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
 
+    this.updateWindowTitle();
+  };
+
+  private updateWindowTitle() {
     if (!this.title) {
       this.window.setTitle(app.name);
 
@@ -583,7 +632,7 @@ export class WorkspaceApp {
       config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
-  };
+  }
 
   broadcastLoadingState = () => {
     ipc.renderer.send(

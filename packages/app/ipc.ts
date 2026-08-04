@@ -314,6 +314,19 @@ class Ipc {
           },
         },
         {
+          label: "Move to New Window",
+          enabled: tab instanceof WorkspaceApp,
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.detachToWindow();
+            }
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
           type: "separator",
         },
         {
