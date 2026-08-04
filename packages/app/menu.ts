@@ -511,6 +511,18 @@ export class AppMenu {
             acceleratorWorksWhenHidden: true,
             click: selectPreviousTab,
           },
+          {
+            type: "separator",
+          },
+          {
+            label: "Reopen Closed Tab",
+            accelerator: "CommandOrControl+Shift+T",
+            click: () => {
+              if (accounts.getSelectedAccount().instance.tabs.reopenClosedTab()) {
+                accounts.refreshSelectedAccountView();
+              }
+            },
+          },
         ],
       },
       {
