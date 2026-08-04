@@ -33,6 +33,14 @@ import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 
+function getNavigationWebContents(workspaceAppId?: string) {
+  if (workspaceAppId) {
+    return WorkspaceApp.fromId(workspaceAppId).view.webContents;
+  }
+
+  return accounts.getSelectedAccount().instance.tabs.activeTab.view.webContents;
+}
+
 class Ipc {
   main = new IpcListener<IpcMainEvents>();
 
@@ -91,12 +99,24 @@ class Ipc {
       accounts.updateAccount(updatedAccount);
     });
 
-    this.main.on("gmail.moveNavigationHistory", (_event, action) => {
-      accounts
-        .getSelectedAccount()
-        .instance.gmail.view.webContents.navigationHistory[
-          action === "back" ? "goBack" : "goForward"
-        ]();
+    this.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
+      getNavigationWebContents(workspaceAppId).navigationHistory.goBack();
+    });
+
+    this.main.on("workspaceApp.goForward", (_event, workspaceAppId) => {
+      getNavigationWebContents(workspaceAppId).navigationHistory.goForward();
+    });
+
+    this.main.on("workspaceApp.reload", (_event, workspaceAppId) => {
+      getNavigationWebContents(workspaceAppId).reload();
+    });
+
+    this.main.on("workspaceApp.stop", (_event, workspaceAppId) => {
+      getNavigationWebContents(workspaceAppId).stop();
+    });
+
+    this.main.handle("workspaceApp.getLoadingState", (_event, workspaceAppId) => {
+      return getNavigationWebContents(workspaceAppId).isLoading();
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
@@ -184,26 +204,6 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       selectedAccount.instance.gmail.search(searchQuery);
-    });
-
-    ipc.main.handle("workspaceApp.getLoadingState", (_event, workspaceAppId) => {
-      return WorkspaceApp.fromId(workspaceAppId).isLoading;
-    });
-
-    ipc.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).goBack();
-    });
-
-    ipc.main.on("workspaceApp.goForward", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).goForward();
-    });
-
-    ipc.main.on("workspaceApp.reload", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).reload();
-    });
-
-    ipc.main.on("workspaceApp.stop", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).stop();
     });
 
     ipc.main.on("workspaceApp.copyUrl", (_event, workspaceAppId) => {

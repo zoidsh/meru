@@ -305,7 +305,7 @@ export function AppTitlebar() {
               size="icon-sm"
               className="draggable-none"
               onClick={() => {
-                ipc.main.send("gmail.moveNavigationHistory", "back");
+                ipc.main.send("workspaceApp.goBack");
               }}
               disabled={
                 matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoBack
@@ -319,7 +319,7 @@ export function AppTitlebar() {
               size="icon-sm"
               className="draggable-none"
               onClick={() => {
-                ipc.main.send("gmail.moveNavigationHistory", "forward");
+                ipc.main.send("workspaceApp.goForward");
               }}
               disabled={
                 matchUnifiedInboxRoute || !selectedAccount?.gmail.navigationHistory.canGoForward
