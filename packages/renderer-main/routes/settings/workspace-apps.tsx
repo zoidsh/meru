@@ -213,7 +213,8 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Bookmark Workspace Apps to the titlebar and drag to reorder.
+                Bookmark Workspace Apps to show them at the bottom of the tab strip and drag to
+                reorder.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">

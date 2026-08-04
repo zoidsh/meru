@@ -42,6 +42,12 @@ class Accounts {
         account.gmail.applyLabelColors();
       }
     });
+
+    config.onDidChange("workspaceApps.bookmarkedApps", () => {
+      for (const account of accounts.instances.values()) {
+        account.tabs.syncBookmarkTabs();
+      }
+    });
   }
 
   async createViews() {

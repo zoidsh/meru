@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { PinnedTab } from "@meru/shared/schemas";
 import {
+  type BookmarkableWorkspaceApp,
   GMAIL_TAB_ID,
   type SupportedWorkspaceApp,
   type TabState,
@@ -9,6 +10,7 @@ import {
 } from "@meru/shared/types";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
+import { config } from "./config";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { WorkspaceApp } from "./workspace-app";
@@ -35,6 +37,26 @@ export type Tab = {
   view?: WebContentsView;
   updateViewBounds?: () => void;
 };
+
+export class BookmarkTab {
+  id = randomUUID();
+
+  app: BookmarkableWorkspaceApp;
+
+  pinned = false;
+
+  isLoading = false;
+
+  navigationHistory = { canGoBack: false, canGoForward: false };
+
+  constructor(app: BookmarkableWorkspaceApp) {
+    this.app = app;
+  }
+
+  get title() {
+    return workspaceApps[this.app].label;
+  }
+}
 
 export class DormantTab {
   id = randomUUID();
@@ -70,10 +92,16 @@ export class Tabs {
 
   tabs: Tab[];
 
+  private bookmarkTabs: BookmarkTab[];
+
   activeTabId: string = GMAIL_TAB_ID;
 
   constructor(accountId: string, gmail: Gmail) {
     this.accountId = accountId;
+
+    this.bookmarkTabs = config
+      .get("workspaceApps.bookmarkedApps")
+      .map((bookmarkedApp) => new BookmarkTab(bookmarkedApp));
 
     this.tabs = [
       {
@@ -113,8 +141,29 @@ export class Tabs {
     return activeTab;
   }
 
-  getTab(tabId: string) {
-    return this.tabs.find((tab) => tab.id === tabId);
+  getTab(tabId: string): Tab | undefined {
+    return (
+      this.tabs.find((tab) => tab.id === tabId) ??
+      this.bookmarkTabs.find((bookmarkTab) => bookmarkTab.id === tabId)
+    );
+  }
+
+  private get visibleBookmarkTabs() {
+    return this.bookmarkTabs.filter(
+      (bookmarkTab) => !this.tabs.some((tab) => tab.app === bookmarkTab.app),
+    );
+  }
+
+  syncBookmarkTabs() {
+    this.bookmarkTabs = config
+      .get("workspaceApps.bookmarkedApps")
+      .map(
+        (bookmarkedApp) =>
+          this.bookmarkTabs.find((bookmarkTab) => bookmarkTab.app === bookmarkedApp) ??
+          new BookmarkTab(bookmarkedApp),
+      );
+
+    this.broadcastTabsChanged();
   }
 
   openTab(url: string) {
@@ -157,9 +206,37 @@ export class Tabs {
       return;
     }
 
+    if (activatedTab instanceof BookmarkTab) {
+      this.activeTabId = this.materializeBookmarkTab(activatedTab).id;
+
+      this.broadcastTabsChanged();
+
+      return;
+    }
+
     this.activeTabId = tabId;
 
     this.broadcastTabsChanged();
+  }
+
+  private materializeBookmarkTab(bookmarkTab: BookmarkTab) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url: getWorkspaceAppUrl(bookmarkTab.app),
+      app: bookmarkTab.app,
+    });
+
+    const firstUnpinnedTabIndex = this.tabs.findIndex(
+      (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
+    );
+
+    this.tabs.splice(
+      firstUnpinnedTabIndex === -1 ? this.tabs.length : firstUnpinnedTabIndex,
+      0,
+      workspaceApp,
+    );
+
+    return workspaceApp;
   }
 
   private materializeDormantTab(dormantTab: DormantTab) {
@@ -305,12 +382,13 @@ export class Tabs {
   }
 
   serialize(): TabState[] {
-    return this.tabs.map((tab) => ({
+    return [...this.tabs, ...this.visibleBookmarkTabs].map((tab) => ({
       id: tab.id,
       app: tab.app,
       title: tab.title,
       pinned: tab.pinned,
-      dormant: tab instanceof DormantTab,
+      dormant: tab instanceof DormantTab || tab instanceof BookmarkTab,
+      bookmark: tab instanceof BookmarkTab,
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,

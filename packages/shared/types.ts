@@ -83,8 +83,6 @@ export const bookmarkableWorkspaceApps = Object.fromEntries(
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<BookmarkableWorkspaceApp, string>;
 
-export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
-
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
   newWindow: "New Window",
@@ -101,6 +99,7 @@ export type TabState = {
   title: string;
   pinned: boolean;
   dormant: boolean;
+  bookmark: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
@@ -264,10 +263,6 @@ export type IpcMainEvents =
       "app.relaunch": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
-      "workspaceApps.openApp": [
-        app: BookmarkableWorkspaceApp,
-        disposition?: WorkspaceAppOpenDisposition,
-      ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];

@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
-import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import {
   app,
@@ -386,19 +385,6 @@ class Ipc {
         title: "Tim from Meru",
         subtitle: "Your Test Notification Request",
         body: "This is a test notification to show how notifications will appear.",
-      });
-    });
-
-    ipc.main.on("workspaceApps.openApp", (_event, app, disposition) => {
-      const selectedAccount = accounts.getSelectedAccount();
-
-      WorkspaceApp.handleWindowOpen({
-        accountId: selectedAccount.config.id,
-        details: {
-          url: getWorkspaceAppUrl(app),
-          disposition: disposition ?? "foreground-tab",
-        },
-        webContents: selectedAccount.instance.gmail.view.webContents,
       });
     });
 

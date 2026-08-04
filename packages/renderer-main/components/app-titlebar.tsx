@@ -2,7 +2,6 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { bookmarkableWorkspaceApps } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -13,7 +12,6 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -138,40 +136,6 @@ function DoNotDisturb() {
         })}
       />
     </TitlebarIconButton>
-  );
-}
-
-function BookmarkedWorkspaceApps() {
-  const { config } = useConfig();
-
-  const isLicenseKeyValid = useIsLicenseKeyValid();
-
-  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
-    return;
-  }
-
-  return (
-    <div className="flex gap-2 border-r pr-2 not-first:border-l not-first:pl-2">
-      {config["workspaceApps.bookmarkedApps"].map((app) => (
-        <TitlebarIconButton
-          key={app}
-          onClick={(event) => {
-            ipc.main.send(
-              "workspaceApps.openApp",
-              app,
-              event.metaKey || event.ctrlKey
-                ? "background-tab"
-                : event.shiftKey
-                  ? "new-window"
-                  : "foreground-tab",
-            );
-          }}
-          title={bookmarkableWorkspaceApps[app]}
-        >
-          <WorkspaceAppIcon app={app} />
-        </TitlebarIconButton>
-      ))}
-    </div>
   );
 }
 
@@ -378,7 +342,6 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Trial />
             <FindInPage />
-            <BookmarkedWorkspaceApps />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
