@@ -257,14 +257,6 @@ export class Gmail {
     return parseGmailMessageId(new URL(gmailUrl).hash);
   }
 
-  viewStore = createStore(
-    subscribeWithSelector<{
-      attentionRequired: boolean;
-    }>(() => ({
-      attentionRequired: false,
-    })),
-  );
-
   userEmail: string | null = null;
 
   unreadCountEnabled = true;
@@ -276,10 +268,12 @@ export class Gmail {
       unreadCount: number;
       unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
+      attentionRequired: boolean;
     }>(() => ({
       unreadCount: 0,
       unreadInbox: [],
       outOfOffice: false,
+      attentionRequired: false,
     })),
   );
 
@@ -458,7 +452,7 @@ export class Gmail {
       WorkspaceApp.handleNavigate(url);
 
       if (window === this.view) {
-        this.viewStore.setState({
+        this.store.setState({
           attentionRequired: !url.startsWith(this.baseUrl),
         });
       }
@@ -820,11 +814,14 @@ export class Gmail {
   }
 
   subscribeToStore() {
-    this.viewStore.subscribe(() => {
-      accounts.sendAccountsChangedToRenderer();
+    this.store.subscribe(
+      (state) => state.attentionRequired,
+      () => {
+        accounts.sendAccountsChangedToRenderer();
 
-      accounts.sendTabsChangedToRenderer();
-    });
+        accounts.sendTabsChangedToRenderer();
+      },
+    );
 
     if (this.getIsUnreadCountEnabled()) {
       const dockUnreadBadge = config.get("dock.unreadBadge");
