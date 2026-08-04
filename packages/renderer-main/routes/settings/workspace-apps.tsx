@@ -123,12 +123,6 @@ export function WorkspaceAppsSettings() {
           />
           {config["workspaceApps.openInApp"] && (
             <>
-              <ConfigSwitchField
-                label="Always Open in New Window"
-                description="Always open Workspace Apps in a new window instead of reusing the same window if it is already open."
-                configKey="workspaceApps.openAppsInNewWindow"
-                licenseKeyRequired
-              />
               <Field>
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">

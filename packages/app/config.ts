@@ -91,7 +91,6 @@ export const config = new Store<Config>({
     "trial.expired": false,
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
-    "workspaceApps.openAppsInNewWindow": false,
     "workspaceApps.pinnedApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
@@ -337,6 +336,9 @@ export const config = new Store<Config>({
         // @ts-expect-error
         store.delete(previousKey);
       }
+
+      // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
+      store.delete("workspaceApps.openAppsInNewWindow");
     },
   },
 });
