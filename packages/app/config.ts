@@ -95,7 +95,7 @@ export const config = new Store<Config>({
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
     "workspaceApps.openBehavior": "tab",
-    "workspaceApps.pinnedApps": [],
+    "workspaceApps.bookmarkedApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "verificationCodes.autoCopy": false,
@@ -322,7 +322,7 @@ export const config = new Store<Config>({
         ["googleApps.openInApp", "workspaceApps.openInApp"],
         ["googleApps.openInAppExcludedApps", "workspaceApps.openInAppExcludedApps"],
         ["googleApps.openAppsInNewWindow", "workspaceApps.openAppsInNewWindow"],
-        ["googleApps.pinnedApps", "workspaceApps.pinnedApps"],
+        ["googleApps.pinnedApps", "workspaceApps.bookmarkedApps"],
         ["googleApps.showAccountColor", "workspaceApps.showAccountColor"],
         ["googleApps.showAccountLabel", "workspaceApps.showAccountLabel"],
         ["notifications.allowFromGoogleApps", "notifications.allowFromWorkspaceApps"],
@@ -343,6 +343,17 @@ export const config = new Store<Config>({
 
       // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
       store.delete("workspaceApps.openAppsInNewWindow");
+
+      // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.bookmarkedApps'
+      const pinnedApps = store.get("workspaceApps.pinnedApps");
+
+      if (typeof pinnedApps !== "undefined") {
+        // @ts-expect-error
+        store.set("workspaceApps.bookmarkedApps", pinnedApps);
+
+        // @ts-expect-error
+        store.delete("workspaceApps.pinnedApps");
+      }
 
       const accounts = store.get("accounts");
 
