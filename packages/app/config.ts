@@ -336,6 +336,9 @@ export const config = new Store<Config>({
         // @ts-expect-error
         store.delete(previousKey);
       }
+
+      // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
+      store.delete("workspaceApps.openAppsInNewWindow");
     },
   },
 });
