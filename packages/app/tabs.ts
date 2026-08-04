@@ -259,6 +259,10 @@ export class Tabs {
     return workspaceApp;
   }
 
+  get hasRecentlyClosedTabs() {
+    return this.recentlyClosedTabUrls.length > 0;
+  }
+
   closeOtherTabs(keptTabId: string) {
     const previousActiveTabId = this.activeTabId;
 

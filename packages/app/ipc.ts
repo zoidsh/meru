@@ -370,6 +370,23 @@ class Ipc {
       ]).popup();
     });
 
+    ipc.main.on("tabs.showTabStripContextMenu", (_event, accountId) => {
+      const account = accounts.getAccount(accountId);
+
+      Menu.buildFromTemplate([
+        {
+          label: "Reopen Closed Tab",
+          accelerator: "CommandOrControl+Shift+T",
+          enabled: account.instance.tabs.hasRecentlyClosedTabs,
+          click: () => {
+            if (account.instance.tabs.reopenClosedTab() && account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+      ]).popup();
+    });
+
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(

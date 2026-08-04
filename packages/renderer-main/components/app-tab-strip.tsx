@@ -212,6 +212,15 @@ export function AppTabStrip() {
     <div
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
       style={{ width: tabStripWidth, minWidth: tabStripWidth }}
+      onContextMenu={(event) => {
+        if (event.defaultPrevented) {
+          return;
+        }
+
+        event.preventDefault();
+
+        ipc.main.send("tabs.showTabStripContextMenu", selectedAccount.config.id);
+      }}
     >
       {selectedAccountTabs.tabs.map((tab) => (
         <StripTab key={tab.id} tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
