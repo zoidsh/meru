@@ -6,6 +6,7 @@ import {
   type PinnableWorkspaceApp,
   pinnableWorkspaceApps,
   type SupportedWorkspaceApp,
+  workspaceAppOpenBehaviors,
   workspaceApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
@@ -130,11 +131,10 @@ export function WorkspaceAppsSettings() {
                 configKey="workspaceApps.openBehavior"
                 placeholder="Select behavior"
                 licenseKeyRequired
-                items={[
-                  { value: "tab", label: "Tab" },
-                  { value: "newWindow", label: "New Window" },
-                  { value: "backgroundTab", label: "Background Tab" },
-                ]}
+                items={Object.entries(workspaceAppOpenBehaviors).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
               />
               <Field>
                 <FieldContent>
