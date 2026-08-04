@@ -57,7 +57,7 @@ function StripTab({
   return (
     <div className="group relative">
       <Button
-        variant={tab.active ? "secondary" : "ghost"}
+        variant={tab.active ? "secondary" : presentation === "gridIcon" ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
         className={cn(
           tab.dormant && "opacity-50",
