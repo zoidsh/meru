@@ -72,6 +72,8 @@ export class Tabs {
 
   activeTabId: string = GMAIL_TAB_ID;
 
+  private suppressBroadcasts = false;
+
   constructor(accountId: string, gmail: Gmail) {
     this.accountId = accountId;
 
@@ -156,19 +158,25 @@ export class Tabs {
   }
 
   private materializeDormantTab(dormantTab: DormantTab) {
-    const workspaceApp = new WorkspaceApp({
-      accountId: this.accountId,
-      url: dormantTab.url,
-      pinned: true,
-      loadOnLaunch: dormantTab.loadOnLaunch,
-      app: dormantTab.app,
-    });
+    this.suppressBroadcasts = true;
 
-    this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
+    try {
+      const workspaceApp = new WorkspaceApp({
+        accountId: this.accountId,
+        url: dormantTab.url,
+        pinned: true,
+        loadOnLaunch: dormantTab.loadOnLaunch,
+        app: dormantTab.app,
+      });
 
-    this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
+      this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
 
-    return workspaceApp;
+      this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
+
+      return workspaceApp;
+    } finally {
+      this.suppressBroadcasts = false;
+    }
   }
 
   loadLaunchTabs() {
@@ -177,6 +185,8 @@ export class Tabs {
         this.materializeDormantTab(tab);
       }
     }
+
+    this.broadcastTabsChanged();
   }
 
   restorePinnedTabs(pinnedTabs: PinnedTab[]) {
@@ -311,7 +321,7 @@ export class Tabs {
   }
 
   private broadcastTabsChanged() {
-    if (main.window.isDestroyed()) {
+    if (this.suppressBroadcasts || main.window.isDestroyed()) {
       return;
     }
 
