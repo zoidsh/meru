@@ -116,7 +116,11 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
             )
           }
         />
-        <DropdownMenuContent side="top" align="start" className={isWide ? undefined : "min-w-0"}>
+        <DropdownMenuContent
+          side="top"
+          align="start"
+          className={cn("space-y-1", !isWide && "min-w-0")}
+        >
           {config["workspaceApps.bookmarkedApps"].map((app) => (
             <DropdownMenuItem
               key={app}
