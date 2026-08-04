@@ -1,9 +1,10 @@
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
+import { platform } from "@meru/shared/renderer/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/tabs";
-import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
+import { bookmarkableWorkspaceApps, workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -37,6 +38,9 @@ function StripTab({
 }) {
   const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
 
+  const canOpenSecondInstance =
+    tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
+
   return (
     <div className="group relative">
       <Button
@@ -48,7 +52,17 @@ function StripTab({
           isWide && isCloseable && "pr-7",
         )}
         title={tab.title}
-        onClick={() => {
+        onClick={(event) => {
+          if (
+            canOpenSecondInstance &&
+            tab.app &&
+            (platform.isMacOS ? event.metaKey : event.ctrlKey)
+          ) {
+            ipc.main.send("workspaceApps.openApp", tab.app, { background: true });
+
+            return;
+          }
+
           ipc.main.send("tabs.selectTab", accountId, tab.id);
         }}
         onAuxClick={(event) => {

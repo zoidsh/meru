@@ -5,6 +5,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
@@ -248,7 +249,30 @@ class Ipc {
         return;
       }
 
+      const tabApp = tab.app;
+
       Menu.buildFromTemplate([
+        ...(tabApp &&
+        !workspaceApps[tabApp].singleInstance &&
+        !workspaceApps[tabApp].alwaysOpenAsWindow
+          ? [
+              {
+                label: `New ${workspaceApps[tabApp].label} Tab`,
+                click: () => {
+                  const workspaceApp = account.instance.tabs.openTab(getWorkspaceAppUrl(tabApp));
+
+                  account.instance.tabs.activateTab(workspaceApp.id);
+
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
+              },
+              {
+                type: "separator" as const,
+              },
+            ]
+          : []),
         tab.pinned
           ? {
               label: "Unpin Tab",
@@ -389,7 +413,7 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app) => {
+    ipc.main.on("workspaceApps.openApp", (_event, app, options) => {
       if (!licenseKey.isValid) {
         return;
       }
@@ -397,6 +421,10 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+
+      if (options?.background) {
+        return;
+      }
 
       selectedAccount.instance.tabs.activateTab(workspaceApp.id);
 
