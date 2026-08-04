@@ -1,5 +1,6 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import type { ComponentProps, ReactNode } from "react";
+import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
+import { type ComponentProps, type ReactNode, useState } from "react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 
@@ -45,5 +46,59 @@ export function TitlebarPageTitle({ children }: { children: string }) {
 export function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
     <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
+  );
+}
+
+export function TitlebarNavigationControls({
+  canGoBack,
+  canGoForward,
+  isLoading,
+  disabled,
+  onGoBack,
+  onGoForward,
+  onReload,
+  onStop,
+}: {
+  canGoBack: boolean;
+  canGoForward: boolean;
+  isLoading: boolean;
+  disabled?: boolean;
+  onGoBack: () => void;
+  onGoForward: () => void;
+  onReload: () => void;
+  onStop: () => void;
+}) {
+  const [isReloadHovered, setIsReloadHovered] = useState(false);
+
+  return (
+    <>
+      <TitlebarIconButton title="Back" disabled={disabled || !canGoBack} onClick={onGoBack}>
+        <ArrowLeftIcon />
+      </TitlebarIconButton>
+      <TitlebarIconButton
+        title="Forward"
+        disabled={disabled || !canGoForward}
+        onClick={onGoForward}
+      >
+        <ArrowRightIcon />
+      </TitlebarIconButton>
+      <TitlebarIconButton
+        title={isLoading ? "Stop" : "Reload"}
+        disabled={disabled}
+        onMouseEnter={() => setIsReloadHovered(true)}
+        onMouseLeave={() => setIsReloadHovered(false)}
+        onClick={isLoading ? onStop : onReload}
+      >
+        {isLoading ? (
+          isReloadHovered ? (
+            <XIcon />
+          ) : (
+            <LoaderCircleIcon className="animate-spin" />
+          )
+        ) : (
+          <RotateCwIcon />
+        )}
+      </TitlebarIconButton>
+    </>
   );
 }
