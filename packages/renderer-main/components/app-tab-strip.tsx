@@ -42,10 +42,12 @@ function StripTab({
   tab,
   accountId,
   presentation,
+  className,
 }: {
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
+  className?: string;
 }) {
   const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
 
@@ -55,7 +57,7 @@ function StripTab({
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
 
   return (
-    <div className="group relative">
+    <div className={cn("group relative", className)}>
       <Button
         variant={tab.active ? "secondary" : presentation === "gridIcon" ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
@@ -186,18 +188,6 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
   );
 }
 
-function getPinnedSectionGridColumnsClassName(pinnedSectionTabsCount: number) {
-  if (pinnedSectionTabsCount === 1) {
-    return "grid-cols-1";
-  }
-
-  if (pinnedSectionTabsCount % 2 === 0) {
-    return "grid-cols-2";
-  }
-
-  return "grid-cols-3";
-}
-
 export function AppTabStrip() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
@@ -251,18 +241,18 @@ export function AppTabStrip() {
       }}
     >
       {isWide ? (
-        <div
-          className={cn(
-            "mb-1 grid w-full gap-2",
-            getPinnedSectionGridColumnsClassName(pinnedSectionTabs.length),
-          )}
-        >
-          {pinnedSectionTabs.map((tab) => (
+        <div className="mb-1 grid w-full grid-cols-2 gap-2">
+          {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
             <StripTab
               key={tab.id}
               tab={tab}
               accountId={selectedAccount.config.id}
               presentation="gridIcon"
+              className={cn(
+                pinnedSectionTabs.length % 2 === 1 &&
+                  pinnedSectionTabIndex === pinnedSectionTabs.length - 1 &&
+                  "col-span-2",
+              )}
             />
           ))}
         </div>
