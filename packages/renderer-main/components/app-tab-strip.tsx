@@ -1,9 +1,10 @@
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
+import { platform } from "@meru/shared/renderer/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/tabs";
-import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
+import { bookmarkableWorkspaceApps, workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -14,9 +15,19 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+
+function getModifierOpenBehavior(event: MouseEvent) {
+  if (platform.isMacOS ? event.metaKey : event.ctrlKey) {
+    return event.shiftKey ? "tab" : "backgroundTab";
+  }
+
+  if (event.shiftKey) {
+    return "newWindow";
+  }
+}
 
 function TabIcon({ tab }: { tab: TabState }) {
   if (tab.app && tab.app !== "myaccount") {
@@ -37,6 +48,9 @@ function StripTab({
 }) {
   const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
 
+  const canOpenSecondInstance =
+    tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
+
   return (
     <div className="group relative">
       <Button
@@ -48,7 +62,15 @@ function StripTab({
           isWide && isCloseable && "pr-7",
         )}
         title={tab.title}
-        onClick={() => {
+        onClick={(event) => {
+          const modifierOpenBehavior = getModifierOpenBehavior(event);
+
+          if (canOpenSecondInstance && tab.app && modifierOpenBehavior) {
+            ipc.main.send("workspaceApps.openApp", tab.app, modifierOpenBehavior);
+
+            return;
+          }
+
           ipc.main.send("tabs.selectTab", accountId, tab.id);
         }}
         onAuxClick={(event) => {
@@ -139,8 +161,15 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
               key={app}
               className={isWide ? undefined : "justify-center"}
               title={bookmarkableWorkspaceApps[app]}
-              onClick={() => {
-                ipc.main.send("workspaceApps.openApp", app);
+              onClick={(event) => {
+                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+              }}
+              onAuxClick={(event) => {
+                if (event.button === 1) {
+                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+                  setIsOpen(false);
+                }
               }}
             >
               <WorkspaceAppIcon app={app} className="size-4" />

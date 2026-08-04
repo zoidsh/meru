@@ -4,7 +4,9 @@ import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
@@ -248,7 +250,61 @@ class Ipc {
         return;
       }
 
+      const tabApp = tab.app;
+
+      const hasOtherClosableTabs = account.instance.tabs.tabs.some(
+        (accountTab) =>
+          accountTab.id !== tabId && accountTab.id !== GMAIL_TAB_ID && !accountTab.pinned,
+      );
+
+      const contextTabIndex = account.instance.tabs.tabs.findIndex(
+        (accountTab) => accountTab.id === tabId,
+      );
+
+      const hasClosableTabsBelow = account.instance.tabs.tabs
+        .slice(contextTabIndex + 1)
+        .some((accountTab) => !accountTab.pinned);
+
       Menu.buildFromTemplate([
+        ...(tabApp &&
+        !workspaceApps[tabApp].singleInstance &&
+        !workspaceApps[tabApp].alwaysOpenAsWindow
+          ? [
+              {
+                label: `New ${workspaceApps[tabApp].label} Tab`,
+                click: () => {
+                  const workspaceApp = account.instance.tabs.openTab(getWorkspaceAppUrl(tabApp));
+
+                  account.instance.tabs.activateTab(workspaceApp.id);
+
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
+              },
+            ]
+          : []),
+        {
+          label: "Duplicate Tab",
+          click: () => {
+            const currentTabUrl =
+              tab instanceof WorkspaceApp ? tab.view.webContents.getURL() : tab.url;
+
+            const duplicatedTabUrl =
+              !currentTabUrl && tabApp ? getWorkspaceAppUrl(tabApp) : currentTabUrl;
+
+            const workspaceApp = account.instance.tabs.openTab(duplicatedTabUrl);
+
+            account.instance.tabs.activateTab(workspaceApp.id);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          type: "separator",
+        },
         tab.pinned
           ? {
               label: "Unpin Tab",
@@ -283,6 +339,28 @@ class Ipc {
           label: "Close Tab",
           click: () => {
             account.instance.tabs.closeTab(tabId);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          label: "Close Other Tabs",
+          enabled: hasOtherClosableTabs,
+          click: () => {
+            account.instance.tabs.closeOtherTabs(tabId);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          label: "Close Tabs Below",
+          enabled: hasClosableTabsBelow,
+          click: () => {
+            account.instance.tabs.closeTabsBelow(tabId);
 
             if (account.config.selected) {
               accounts.refreshSelectedAccountView();
@@ -389,14 +467,28 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app) => {
+    ipc.main.on("workspaceApps.openApp", (_event, app, openBehavior = "tab") => {
       if (!licenseKey.isValid) {
         return;
       }
 
       const selectedAccount = accounts.getSelectedAccount();
 
+      if (openBehavior === "newWindow") {
+        new WorkspaceApp({
+          accountId: selectedAccount.config.id,
+          url: getWorkspaceAppUrl(app),
+          asWindow: true,
+        });
+
+        return;
+      }
+
       const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+
+      if (openBehavior === "backgroundTab") {
+        return;
+      }
 
       selectedAccount.instance.tabs.activateTab(workspaceApp.id);
 
