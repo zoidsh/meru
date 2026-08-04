@@ -103,7 +103,7 @@ function StripTab({
               ? "top-1/2 right-1 size-5 -translate-y-1/2"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
-          title="Close Tab"
+          title="Close"
           onClick={() => {
             ipc.main.send("tabs.closeTab", accountId, tab.id);
           }}
