@@ -177,6 +177,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Keep the title and description accurate at all times. They describe what the branch contains **now**, not what it contained when the pull request was opened.
 - Whenever the branch changes, update the title and description in the same step — never leave them describing an earlier version. This applies to reworks after review feedback, added or dropped scope, and rebases that change what the diff means.
 - The description should cover the problem being solved, the changes made, and anything a reviewer needs in order to judge them — including deliberate omissions, known risks, and what has not been verified.
+- End every description with a **Test plan** section: a numbered list of concrete steps to walk through in the running app to verify the work. Write each step as a user action with its expected outcome, and cover the changed behavior's edge cases (gated states, empty states, platform differences), not just the happy path. Keep it in sync with the branch like the rest of the description.
 - Check the state of a pull request before acting on it rather than assuming it is unchanged. `gh pr list` only shows open pull requests, so one disappearing from the list means it was merged or closed.
 
 ## Release Notes
