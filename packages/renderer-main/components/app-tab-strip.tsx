@@ -249,9 +249,7 @@ export function AppTabStrip() {
               accountId={selectedAccount.config.id}
               presentation="gridIcon"
               className={cn(
-                pinnedSectionTabs.length % 2 === 1 &&
-                  pinnedSectionTabIndex === pinnedSectionTabs.length - 1 &&
-                  "col-span-2",
+                pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
               )}
             />
           ))}
