@@ -186,32 +186,32 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
-    ipc.main.handle("workspaceApp.getLoadingState", (event) => {
-      return WorkspaceApp.fromWebContents(event.sender).isLoading;
+    ipc.main.handle("workspaceApp.getLoadingState", (_event, workspaceAppId) => {
+      return WorkspaceApp.fromId(workspaceAppId).isLoading;
     });
 
-    ipc.main.on("workspaceApp.goBack", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).goBack();
+    ipc.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).goBack();
     });
 
-    ipc.main.on("workspaceApp.goForward", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).goForward();
+    ipc.main.on("workspaceApp.goForward", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).goForward();
     });
 
-    ipc.main.on("workspaceApp.reload", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).reload();
+    ipc.main.on("workspaceApp.reload", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).reload();
     });
 
-    ipc.main.on("workspaceApp.stop", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).stop();
+    ipc.main.on("workspaceApp.stop", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).stop();
     });
 
-    ipc.main.on("workspaceApp.copyUrl", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).copyUrl();
+    ipc.main.on("workspaceApp.copyUrl", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).copyUrl();
     });
 
-    ipc.main.on("workspaceApp.openInBrowser", (event) => {
-      WorkspaceApp.fromWebContents(event.sender).openInBrowser();
+    ipc.main.on("workspaceApp.openInBrowser", (_event, workspaceAppId) => {
+      WorkspaceApp.fromId(workspaceAppId).openInBrowser();
     });
 
     ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {

@@ -232,12 +232,12 @@ export type IpcMainEvents =
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
-      "workspaceApp.goBack": [];
-      "workspaceApp.goForward": [];
-      "workspaceApp.reload": [];
-      "workspaceApp.stop": [];
-      "workspaceApp.copyUrl": [];
-      "workspaceApp.openInBrowser": [];
+      "workspaceApp.goBack": [workspaceAppId: string];
+      "workspaceApp.goForward": [workspaceAppId: string];
+      "workspaceApp.reload": [workspaceAppId: string];
+      "workspaceApp.stop": [workspaceAppId: string];
+      "workspaceApp.copyUrl": [workspaceAppId: string];
+      "workspaceApp.openInBrowser": [workspaceAppId: string];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
@@ -284,7 +284,7 @@ export type IpcMainEvents =
       "app.setAsDefaultMailtoClient": () => void;
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
-      "workspaceApp.getLoadingState": () => boolean;
+      "workspaceApp.getLoadingState": (workspaceAppId: string) => boolean;
     };
 
 export type IpcRendererEvent = {
