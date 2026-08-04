@@ -26,7 +26,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
         parameters.pageURL === selectedAccount.instance.gmail.view.webContents.getURL()
       ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;
-        const messageId = selectedAccount.instance.gmail.store.getState().messageId;
+        const messageId = selectedAccount.instance.gmail.messageId;
 
         if (userEmail && messageId) {
           const meruMessageUrl = createMeruMessageUrl(userEmail, messageId);

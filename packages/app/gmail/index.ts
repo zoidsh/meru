@@ -44,6 +44,7 @@ import {
   createNotification,
   isWithinNotificationTimes,
 } from "@/notifications";
+import { registerTabBroadcasts } from "@/tabs";
 import { appTray } from "@/tray";
 import { WorkspaceApp } from "@/workspace-app";
 import gmailCSS from "./gmail.css";
@@ -247,13 +248,15 @@ export class Gmail {
     };
   }
 
-  viewStore = createStore(
-    subscribeWithSelector<{
-      attentionRequired: boolean;
-    }>(() => ({
-      attentionRequired: false,
-    })),
-  );
+  get messageId() {
+    const gmailUrl = this._view?.webContents.getURL();
+
+    if (!gmailUrl) {
+      return null;
+    }
+
+    return parseGmailMessageId(new URL(gmailUrl).hash);
+  }
 
   userEmail: string | null = null;
 
@@ -266,12 +269,12 @@ export class Gmail {
       unreadCount: number;
       unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
-      messageId: string | null;
+      attentionRequired: boolean;
     }>(() => ({
       unreadCount: 0,
       unreadInbox: [],
       outOfOffice: false,
-      messageId: null,
+      attentionRequired: false,
     })),
   );
 
@@ -410,17 +413,7 @@ export class Gmail {
       this.view.webContents.insertCSS(meruCSS);
     });
 
-    this.view.webContents.on("did-navigate-in-page", (_event, url) => {
-      this.store.setState({ messageId: parseGmailMessageId(new URL(url).hash) });
-    });
-
-    this.view.webContents.on("did-start-loading", () => {
-      accounts.sendTabsChangedToRenderer();
-    });
-
-    this.view.webContents.on("did-stop-loading", () => {
-      accounts.sendTabsChangedToRenderer();
-    });
+    registerTabBroadcasts(this.view);
 
     openViewDevToolsInDev(this.view);
 
@@ -454,17 +447,11 @@ export class Gmail {
       WorkspaceApp.handleNavigate(url);
 
       if (window === this.view) {
-        this.viewStore.setState({
+        this.store.setState({
           attentionRequired: !url.startsWith(this.baseUrl),
         });
       }
     });
-
-    if (window === this.view) {
-      window.webContents.on("did-navigate-in-page", () => {
-        accounts.sendTabsChangedToRenderer();
-      });
-    }
 
     window.webContents.on("will-redirect", (event, url) => {
       if (url.startsWith("https://workspace.google.com/u/0/marketplace/appfinder")) {
@@ -816,11 +803,14 @@ export class Gmail {
   }
 
   subscribeToStore() {
-    this.viewStore.subscribe(() => {
-      accounts.sendAccountsChangedToRenderer();
+    this.store.subscribe(
+      (state) => state.attentionRequired,
+      () => {
+        accounts.sendAccountsChangedToRenderer();
 
-      accounts.sendTabsChangedToRenderer();
-    });
+        accounts.sendTabsChangedToRenderer();
+      },
+    );
 
     if (this.getIsUnreadCountEnabled()) {
       const dockUnreadBadge = config.get("dock.unreadBadge");
@@ -850,17 +840,7 @@ export class Gmail {
 
           appTray.updateUnreadStatus(totalUnreadCount);
 
-          ipc.renderer.send(
-            main.window.webContents,
-            "accounts.changed",
-            accounts.getAccounts().map((account) => ({
-              config: account.config,
-              gmail: {
-                ...account.instance.gmail.store.getState(),
-                ...account.instance.gmail.viewStore.getState(),
-              },
-            })),
-          );
+          accounts.sendAccountsChangedToRenderer();
         },
       );
     }

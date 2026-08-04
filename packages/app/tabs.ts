@@ -10,6 +10,18 @@ import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { WorkspaceApp } from "./workspace-app";
 
+export function registerTabBroadcasts(view: WebContentsView) {
+  const broadcastTabsChanged = () => {
+    accounts.sendTabsChangedToRenderer();
+  };
+
+  view.webContents.on("did-navigate", broadcastTabsChanged);
+  view.webContents.on("did-navigate-in-page", broadcastTabsChanged);
+  view.webContents.on("page-title-updated", broadcastTabsChanged);
+  view.webContents.on("did-start-loading", broadcastTabsChanged);
+  view.webContents.on("did-stop-loading", broadcastTabsChanged);
+}
+
 export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;

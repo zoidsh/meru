@@ -40,10 +40,7 @@ class Main {
       JSON.stringify(
         accounts.getAccounts().map((account) => ({
           config: account.config,
-          gmail: {
-            ...account.instance.gmail.store.getState(),
-            ...account.instance.gmail.viewStore.getState(),
-          },
+          gmail: account.instance.gmail.store.getState(),
         })),
       ),
     );
