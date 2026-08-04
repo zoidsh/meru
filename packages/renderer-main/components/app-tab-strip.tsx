@@ -12,10 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
+import { Separator } from "@meru/ui/components/separator";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { type MouseEvent, useEffect, useState } from "react";
+import { Fragment, type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
@@ -208,6 +209,12 @@ export function AppTabStrip() {
 
   const isWide = tabStripWidth === APP_TAB_STRIP_WIDE_WIDTH;
 
+  const hasPinnedTabs = selectedAccountTabs.tabs.some((tab) => tab.pinned);
+
+  const firstUnpinnedTabId = selectedAccountTabs.tabs.find(
+    (tab) => !tab.pinned && tab.id !== GMAIL_TAB_ID,
+  )?.id;
+
   return (
     <div
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
@@ -223,7 +230,12 @@ export function AppTabStrip() {
       }}
     >
       {selectedAccountTabs.tabs.map((tab) => (
-        <StripTab key={tab.id} tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
+        <Fragment key={tab.id}>
+          {hasPinnedTabs && tab.id === firstUnpinnedTabId && (
+            <Separator className={isWide ? undefined : "data-horizontal:w-8"} />
+          )}
+          <StripTab tab={tab} accountId={selectedAccount.config.id} isWide={isWide} />
+        </Fragment>
       ))}
       <NewTabButton isWide={isWide} />
     </div>
