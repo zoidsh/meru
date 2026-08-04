@@ -413,16 +413,26 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app, options) => {
+    ipc.main.on("workspaceApps.openApp", (_event, app, openBehavior = "tab") => {
       if (!licenseKey.isValid) {
         return;
       }
 
       const selectedAccount = accounts.getSelectedAccount();
 
+      if (openBehavior === "newWindow") {
+        new WorkspaceApp({
+          accountId: selectedAccount.config.id,
+          url: getWorkspaceAppUrl(app),
+          asWindow: true,
+        });
+
+        return;
+      }
+
       const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
 
-      if (options?.background) {
+      if (openBehavior === "backgroundTab") {
         return;
       }
 

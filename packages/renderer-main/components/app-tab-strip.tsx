@@ -15,9 +15,19 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+
+function getModifierOpenBehavior(event: MouseEvent) {
+  if (platform.isMacOS ? event.metaKey : event.ctrlKey) {
+    return event.shiftKey ? "tab" : "backgroundTab";
+  }
+
+  if (event.shiftKey) {
+    return "newWindow";
+  }
+}
 
 function TabIcon({ tab }: { tab: TabState }) {
   if (tab.app && tab.app !== "myaccount") {
@@ -53,10 +63,10 @@ function StripTab({
         )}
         title={tab.title}
         onClick={(event) => {
-          const isCommandOrControlClick = platform.isMacOS ? event.metaKey : event.ctrlKey;
+          const modifierOpenBehavior = getModifierOpenBehavior(event);
 
-          if (canOpenSecondInstance && tab.app && isCommandOrControlClick) {
-            ipc.main.send("workspaceApps.openApp", tab.app, { background: !event.shiftKey });
+          if (canOpenSecondInstance && tab.app && modifierOpenBehavior) {
+            ipc.main.send("workspaceApps.openApp", tab.app, modifierOpenBehavior);
 
             return;
           }
@@ -152,9 +162,7 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
               className={isWide ? undefined : "justify-center"}
               title={bookmarkableWorkspaceApps[app]}
               onClick={(event) => {
-                ipc.main.send("workspaceApps.openApp", app, {
-                  background: (platform.isMacOS ? event.metaKey : event.ctrlKey) && !event.shiftKey,
-                });
+                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
               }}
             >
               <WorkspaceAppIcon app={app} className="size-4" />

@@ -175,7 +175,10 @@ export type IpcMainEvents =
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
-      "workspaceApps.openApp": [app: SupportedWorkspaceApp, options?: { background?: boolean }];
+      "workspaceApps.openApp": [
+        app: SupportedWorkspaceApp,
+        openBehavior?: WorkspaceAppOpenBehavior,
+      ];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
