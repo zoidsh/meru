@@ -205,6 +205,7 @@ export function AppTabStrip() {
     ? getTabStripWidth(
         selectedAccountTabs.tabs,
         (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
+        config?.["workspaceApps.tabStripWidth"] ?? "auto",
       )
     : 0;
 
