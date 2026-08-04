@@ -9,6 +9,8 @@ import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { WorkspaceApp } from "./workspace-app";
 
+const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
+
 export function registerTabBroadcasts(view: WebContentsView) {
   const broadcastTabsChanged = () => {
     accounts.sendTabsChangedToRenderer();
@@ -67,6 +69,8 @@ export class Tabs {
   tabs: Tab[];
 
   activeTabId: string = GMAIL_TAB_ID;
+
+  private recentlyClosedTabUrls: string[] = [];
 
   constructor(accountId: string, gmail: Gmail) {
     this.accountId = accountId;
@@ -212,14 +216,51 @@ export class Tabs {
     const closableTab = this.getTab(tabId);
 
     if (closableTab instanceof WorkspaceApp) {
+      this.recordRecentlyClosedTab(
+        closableTab.view.webContents.getURL() ||
+          (closableTab.app ? getWorkspaceAppUrl(closableTab.app) : ""),
+      );
+
       closableTab.close();
 
       return;
     }
 
     if (closableTab instanceof DormantTab) {
+      this.recordRecentlyClosedTab(closableTab.url);
+
       this.removeTab(tabId);
     }
+  }
+
+  private recordRecentlyClosedTab(closedTabUrl: string) {
+    if (!closedTabUrl) {
+      return;
+    }
+
+    this.recentlyClosedTabUrls.push(closedTabUrl);
+
+    if (this.recentlyClosedTabUrls.length > MAX_RECENTLY_CLOSED_TAB_URLS) {
+      this.recentlyClosedTabUrls.shift();
+    }
+  }
+
+  reopenClosedTab() {
+    const reopenedTabUrl = this.recentlyClosedTabUrls.pop();
+
+    if (!reopenedTabUrl) {
+      return;
+    }
+
+    const workspaceApp = this.openTab(reopenedTabUrl);
+
+    this.activateTab(workspaceApp.id);
+
+    return workspaceApp;
+  }
+
+  get hasRecentlyClosedTabs() {
+    return this.recentlyClosedTabUrls.length > 0;
   }
 
   closeOtherTabs(keptTabId: string) {
