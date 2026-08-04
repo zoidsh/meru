@@ -464,6 +464,37 @@ export class AppMenu {
         ],
       },
       {
+        label: "Tabs",
+        submenu: [
+          {
+            label: "Select Next Tab",
+            accelerator: platform.isMacOS ? "Command+Option+Down" : "Ctrl+PageDown",
+            click: () => {
+              accounts.getSelectedAccount().instance.tabs.activateNextTab();
+
+              appState.setIsSettingsOpen(false);
+
+              accounts.refreshSelectedAccountView();
+
+              main.show();
+            },
+          },
+          {
+            label: "Select Previous Tab",
+            accelerator: platform.isMacOS ? "Command+Option+Up" : "Ctrl+PageUp",
+            click: () => {
+              accounts.getSelectedAccount().instance.tabs.activatePreviousTab();
+
+              appState.setIsSettingsOpen(false);
+
+              accounts.refreshSelectedAccountView();
+
+              main.show();
+            },
+          },
+        ],
+      },
+      {
         label: "Accounts",
         submenu: [
           ...allAccounts.map((account, index) => ({

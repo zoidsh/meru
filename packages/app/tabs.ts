@@ -96,6 +96,26 @@ export class Tabs {
     this.broadcastTabsChanged();
   }
 
+  activateNextTab() {
+    const activeTabIndex = this.tabs.findIndex((tab) => tab.id === this.activeTabId);
+
+    const nextTab = this.tabs.at(activeTabIndex === this.tabs.length - 1 ? 0 : activeTabIndex + 1);
+
+    if (nextTab) {
+      this.activateTab(nextTab.id);
+    }
+  }
+
+  activatePreviousTab() {
+    const activeTabIndex = this.tabs.findIndex((tab) => tab.id === this.activeTabId);
+
+    const previousTab = this.tabs.at(activeTabIndex === 0 ? -1 : activeTabIndex - 1);
+
+    if (previousTab) {
+      this.activateTab(previousTab.id);
+    }
+  }
+
   closeTab(tabId: string) {
     const closableTab = this.getTab(tabId);
 
