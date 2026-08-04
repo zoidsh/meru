@@ -253,7 +253,7 @@ export function AppTabStrip() {
       {isWide ? (
         <div
           className={cn(
-            "mb-2 grid w-full gap-2",
+            "mb-1 grid w-full gap-2",
             getPinnedSectionGridColumnsClassName(pinnedSectionTabs.length),
           )}
         >
