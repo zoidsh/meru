@@ -303,6 +303,7 @@ export class Tabs {
       app: tab.app,
       title: tab.title,
       pinned: tab.pinned,
+      dormant: tab instanceof DormantTab,
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,

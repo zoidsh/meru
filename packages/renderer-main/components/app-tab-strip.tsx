@@ -4,7 +4,7 @@ import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/type
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, XIcon } from "lucide-react";
+import { CircleDashedIcon, GlobeIcon, XIcon } from "lucide-react";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
 function TabIcon({ tab }: { tab: TabState }) {
@@ -46,7 +46,10 @@ export function AppTabStrip() {
             size={isWide ? "sm" : "icon"}
             className={
               isWide
-                ? cn("w-full justify-start", tab.id !== GMAIL_TAB_ID && !tab.pinned && "pr-7")
+                ? cn(
+                    "w-full justify-start",
+                    ((tab.id !== GMAIL_TAB_ID && !tab.pinned) || tab.dormant) && "pr-7",
+                  )
                 : undefined
             }
             title={tab.title}
@@ -67,6 +70,14 @@ export function AppTabStrip() {
             <TabIcon tab={tab} />
             {isWide && <span className="truncate">{tab.title}</span>}
           </Button>
+          {tab.dormant && (
+            <CircleDashedIcon
+              className={cn(
+                "absolute text-muted-foreground",
+                isWide ? "top-1/2 right-2 size-3.5 -translate-y-1/2" : "-top-1 -right-1 size-3.5",
+              )}
+            />
+          )}
           {tab.id !== GMAIL_TAB_ID && !tab.pinned && (
             <Button
               variant="secondary"
