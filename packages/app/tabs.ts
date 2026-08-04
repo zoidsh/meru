@@ -1,5 +1,12 @@
+import { randomUUID } from "node:crypto";
+import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { PinnedTab } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, type SupportedWorkspaceApp, type TabState } from "@meru/shared/types";
+import {
+  GMAIL_TAB_ID,
+  type SupportedWorkspaceApp,
+  type TabState,
+  workspaceApps,
+} from "@meru/shared/types";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
@@ -25,16 +32,43 @@ export type Tab = {
   pinned: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
-  view: WebContentsView;
-  updateViewBounds: () => void;
+  view?: WebContentsView;
+  updateViewBounds?: () => void;
 };
 
+export class DormantTab {
+  id = randomUUID();
+
+  app: SupportedWorkspaceApp;
+
+  url: string;
+
+  pinned = true;
+
+  isLoading = false;
+
+  navigationHistory = { canGoBack: false, canGoForward: false };
+
+  constructor(app: SupportedWorkspaceApp, url: string) {
+    this.app = app;
+    this.url = url;
+  }
+
+  get title() {
+    return workspaceApps[this.app].label;
+  }
+}
+
 export class Tabs {
+  private accountId: string;
+
   tabs: Tab[];
 
   activeTabId: string = GMAIL_TAB_ID;
 
-  constructor(gmail: Gmail) {
+  constructor(accountId: string, gmail: Gmail) {
+    this.accountId = accountId;
+
     this.tabs = [
       {
         id: GMAIL_TAB_ID,
@@ -100,9 +134,35 @@ export class Tabs {
   }
 
   activateTab(tabId: string) {
+    const activatedTab = this.getTab(tabId);
+
+    if (activatedTab instanceof DormantTab) {
+      const workspaceApp = new WorkspaceApp({
+        accountId: this.accountId,
+        url: activatedTab.url,
+        pinned: true,
+      });
+
+      this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
+
+      this.tabs.splice(this.tabs.indexOf(activatedTab), 1, workspaceApp);
+
+      this.activeTabId = workspaceApp.id;
+
+      this.broadcastTabsChanged();
+
+      return;
+    }
+
     this.activeTabId = tabId;
 
     this.broadcastTabsChanged();
+  }
+
+  restorePinnedTabs(pinnedTabs: PinnedTab[]) {
+    for (const pinnedTab of pinnedTabs) {
+      this.tabs.push(new DormantTab(pinnedTab.app, pinnedTab.url));
+    }
   }
 
   activateNextTab() {
@@ -130,6 +190,12 @@ export class Tabs {
 
     if (closableTab instanceof WorkspaceApp) {
       closableTab.close();
+
+      return;
+    }
+
+    if (closableTab instanceof DormantTab) {
+      this.removeTab(tabId);
     }
   }
 
@@ -151,6 +217,12 @@ export class Tabs {
 
   unpinTab(tabId: string) {
     const unpinnableTab = this.getTab(tabId);
+
+    if (unpinnableTab instanceof DormantTab) {
+      this.removeTab(tabId);
+
+      return;
+    }
 
     if (!(unpinnableTab instanceof WorkspaceApp)) {
       return;
@@ -178,7 +250,12 @@ export class Tabs {
 
     for (const tab of this.tabs) {
       if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
-        pinnedTabs.push({ app: tab.app, url: tab.view.webContents.getURL() });
+        pinnedTabs.push({
+          app: tab.app,
+          url: tab.view.webContents.getURL() || getWorkspaceAppUrl(tab.app),
+        });
+      } else if (tab instanceof DormantTab) {
+        pinnedTabs.push({ app: tab.app, url: tab.url });
       }
     }
 

@@ -80,6 +80,7 @@ type WorkspaceAppOptions = {
   window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
   asWindow?: boolean;
+  pinned?: boolean;
 };
 
 export class WorkspaceApp {
@@ -329,9 +330,10 @@ export class WorkspaceApp {
 
   private viewDestroyed = false;
 
-  constructor({ accountId, url, window, view, asWindow }: WorkspaceAppOptions) {
+  constructor({ accountId, url, window, view, asWindow, pinned }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = getWorkspaceAppFromUrl(url);
+    this.pinned = Boolean(pinned);
 
     if (asWindow) {
       this._window = this.createBrowserWindow(window);

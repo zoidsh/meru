@@ -92,7 +92,7 @@ class Accounts {
   updateAllViewBounds() {
     for (const account of this.instances.values()) {
       for (const tab of account.tabs.tabs) {
-        tab.updateViewBounds();
+        tab.updateViewBounds?.();
       }
     }
   }
@@ -100,10 +100,14 @@ class Accounts {
   refreshSelectedAccountView() {
     const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
+    if (!activeTab.view) {
+      return;
+    }
+
     main.window.contentView.removeChildView(activeTab.view);
     main.window.contentView.addChildView(activeTab.view);
 
-    activeTab.updateViewBounds();
+    activeTab.updateViewBounds?.();
 
     if (!appState.isSettingsOpen) {
       activeTab.view.webContents.focus();
@@ -312,7 +316,7 @@ class Accounts {
   hide() {
     for (const account of this.instances.values()) {
       for (const tab of account.tabs.tabs) {
-        tab.view.setVisible(false);
+        tab.view?.setVisible(false);
       }
     }
   }
@@ -320,7 +324,7 @@ class Accounts {
   show() {
     for (const account of this.instances.values()) {
       for (const tab of account.tabs.tabs) {
-        tab.view.setVisible(true);
+        tab.view?.setVisible(true);
       }
     }
   }

@@ -49,7 +49,9 @@ export class Account {
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
     });
 
-    this.tabs = new Tabs(this.gmail);
+    this.tabs = new Tabs(accountConfig.id, this.gmail);
+
+    this.tabs.restorePinnedTabs(accountConfig.workspaceApps.pinnedTabs);
   }
 
   setSpellCheckerLanguages() {
