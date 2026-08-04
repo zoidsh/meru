@@ -232,6 +232,10 @@ export class Gmail {
     this._view = view;
   }
 
+  get isLoading() {
+    return this._view ? this._view.webContents.isLoading() : false;
+  }
+
   viewStore = createStore(
     subscribeWithSelector<{
       navigationHistory: {

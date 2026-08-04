@@ -31,7 +31,7 @@ export class Tabs {
         app: "gmail",
         title: workspaceApps.gmail.label,
         get isLoading() {
-          return gmail.view.webContents.isLoading();
+          return gmail.isLoading;
         },
         get view() {
           return gmail.view;
