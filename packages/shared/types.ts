@@ -37,7 +37,7 @@ export type NotificationTime = {
 type WorkspaceAppDefinition = {
   label: string;
   url?: string;
-  pinnable?: boolean;
+  bookmarkable?: boolean;
   alwaysOpenAsWindow?: boolean;
   singleInstance?: boolean;
 };
@@ -51,11 +51,11 @@ const workspaceAppDefinitions = {
   drive: { label: "Drive" },
   forms: { label: "Forms" },
   gemini: { label: "Gemini" },
-  gmail: { label: "Gmail", url: GMAIL_URL, pinnable: false, singleInstance: true },
+  gmail: { label: "Gmail", url: GMAIL_URL, bookmarkable: false, singleInstance: true },
   groups: { label: "Groups" },
   keep: { label: "Keep" },
   meet: { label: "Meet" },
-  myaccount: { label: "My Account", pinnable: false, alwaysOpenAsWindow: true },
+  myaccount: { label: "My Account", bookmarkable: false, alwaysOpenAsWindow: true },
   notebooklm: { label: "NotebookLM" },
   sheets: { label: "Sheets" },
   sites: { label: "Sites" },
@@ -66,8 +66,10 @@ const workspaceAppDefinitions = {
 
 export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
-export type PinnableWorkspaceApp = {
-  [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends { pinnable: false }
+export type BookmarkableWorkspaceApp = {
+  [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends {
+    bookmarkable: false;
+  }
     ? never
     : App;
 }[SupportedWorkspaceApp];
@@ -75,11 +77,11 @@ export type PinnableWorkspaceApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
-export const pinnableWorkspaceApps = Object.fromEntries(
+export const bookmarkableWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
-    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.pinnable !== false)
+    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.bookmarkable !== false)
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
-) as Record<PinnableWorkspaceApp, string>;
+) as Record<BookmarkableWorkspaceApp, string>;
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
 
@@ -213,7 +215,7 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
-  "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
+  "workspaceApps.bookmarkedApps": BookmarkableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "verificationCodes.autoCopy": boolean;
@@ -263,7 +265,7 @@ export type IpcMainEvents =
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
       "workspaceApps.openApp": [
-        app: PinnableWorkspaceApp,
+        app: BookmarkableWorkspaceApp,
         disposition?: WorkspaceAppOpenDisposition,
       ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];

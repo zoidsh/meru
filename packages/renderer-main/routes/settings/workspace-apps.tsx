@@ -4,8 +4,8 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { platform } from "@meru/shared/renderer/utils";
 import {
-  type PinnableWorkspaceApp,
-  pinnableWorkspaceApps,
+  type BookmarkableWorkspaceApp,
+  bookmarkableWorkspaceApps,
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
@@ -37,15 +37,15 @@ import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 
-function SortablePinnedAppItem({
+function SortableBookmarkedAppItem({
   app,
   index,
-  onUnpin,
+  onRemove,
   disabled,
 }: {
-  app: PinnableWorkspaceApp;
+  app: BookmarkableWorkspaceApp;
   index: number;
-  onUnpin: () => void;
+  onRemove: () => void;
   disabled: boolean;
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
@@ -58,18 +58,18 @@ function SortablePinnedAppItem({
         size="xs"
         className="cursor-grab touch-none"
         disabled={disabled}
-        aria-label={`Drag ${pinnableWorkspaceApps[app]} to reorder`}
+        aria-label={`Drag ${bookmarkableWorkspaceApps[app]} to reorder`}
       >
         <GripVerticalIcon />
         <WorkspaceAppIcon app={app} className="size-3.5" />
-        {pinnableWorkspaceApps[app]}
+        {bookmarkableWorkspaceApps[app]}
       </Button>
       <Button
         variant="outline"
         size="icon-xs"
-        onClick={onUnpin}
+        onClick={onRemove}
         disabled={disabled}
-        aria-label={`Unpin ${pinnableWorkspaceApps[app]}`}
+        aria-label={`Remove ${bookmarkableWorkspaceApps[app]} bookmark`}
       >
         <XIcon />
       </Button>
@@ -88,11 +88,11 @@ export function WorkspaceAppsSettings() {
     return;
   }
 
-  const pinnedApps = config["workspaceApps.pinnedApps"];
+  const bookmarkedApps = config["workspaceApps.bookmarkedApps"];
 
-  const availableApps = (Object.keys(pinnableWorkspaceApps) as PinnableWorkspaceApp[]).filter(
-    (app) => !pinnedApps.includes(app),
-  );
+  const availableApps = (
+    Object.keys(bookmarkableWorkspaceApps) as BookmarkableWorkspaceApp[]
+  ).filter((app) => !bookmarkedApps.includes(app));
 
   const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
@@ -209,19 +209,19 @@ export function WorkspaceAppsSettings() {
           <Field>
             <FieldContent>
               <FieldLabel className="flex items-center gap-2">
-                Pinned Apps
+                Bookmarked Apps
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Pin Workspace Apps to the titlebar and drag to reorder.
+                Bookmark Workspace Apps to the titlebar and drag to reorder.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Pinned</div>
-                {pinnedApps.length === 0 ? (
+                <div className="text-xs font-medium text-muted-foreground">Bookmarked</div>
+                {bookmarkedApps.length === 0 ? (
                   <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    No pinned apps. Add apps from Available below.
+                    No bookmarked apps. Add apps from Available below.
                   </p>
                 ) : (
                   <DragDropProvider
@@ -231,19 +231,19 @@ export function WorkspaceAppsSettings() {
                       }
 
                       configMutation.mutate({
-                        "workspaceApps.pinnedApps": move(pinnedApps, event),
+                        "workspaceApps.bookmarkedApps": move(bookmarkedApps, event),
                       });
                     }}
                   >
                     <div className="flex flex-row flex-wrap gap-2">
-                      {pinnedApps.map((app, index) => (
-                        <SortablePinnedAppItem
+                      {bookmarkedApps.map((app, index) => (
+                        <SortableBookmarkedAppItem
                           key={app}
                           app={app}
                           index={index}
-                          onUnpin={() => {
+                          onRemove={() => {
                             configMutation.mutate({
-                              "workspaceApps.pinnedApps": pinnedApps.filter(
+                              "workspaceApps.bookmarkedApps": bookmarkedApps.filter(
                                 (value) => value !== app,
                               ),
                             });
@@ -266,14 +266,14 @@ export function WorkspaceAppsSettings() {
                         size="xs"
                         onClick={() => {
                           configMutation.mutate({
-                            "workspaceApps.pinnedApps": [...pinnedApps, app],
+                            "workspaceApps.bookmarkedApps": [...bookmarkedApps, app],
                           });
                         }}
                         disabled={!isLicenseKeyValid}
-                        aria-label={`Pin ${pinnableWorkspaceApps[app]}`}
+                        aria-label={`Bookmark ${bookmarkableWorkspaceApps[app]}`}
                       >
                         <WorkspaceAppIcon app={app} className="size-3.5" />
-                        {pinnableWorkspaceApps[app]}
+                        {bookmarkableWorkspaceApps[app]}
                         <PlusIcon />
                       </Button>
                     ))}
