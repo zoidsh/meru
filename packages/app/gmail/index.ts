@@ -854,17 +854,7 @@ export class Gmail {
 
           appTray.updateUnreadStatus(totalUnreadCount);
 
-          ipc.renderer.send(
-            main.window.webContents,
-            "accounts.changed",
-            accounts.getAccounts().map((account) => ({
-              config: account.config,
-              gmail: {
-                ...account.instance.gmail.store.getState(),
-                ...account.instance.gmail.viewStore.getState(),
-              },
-            })),
-          );
+          accounts.sendAccountsChangedToRenderer();
         },
       );
     }
