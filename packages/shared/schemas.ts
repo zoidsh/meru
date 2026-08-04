@@ -27,6 +27,7 @@ export const pinnedTabSchema = z.object({
   ),
   url: z.string(),
   title: z.string(),
+  loadOnLaunch: z.boolean(),
 });
 
 export type PinnedTab = z.infer<typeof pinnedTabSchema>;

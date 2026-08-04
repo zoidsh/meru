@@ -71,6 +71,10 @@ class Accounts {
       account.instance.gmail.view.webContents.setBackgroundThrottling(true);
     }
 
+    for (const account of accounts) {
+      account.instance.tabs.loadLaunchTabs();
+    }
+
     main.window.on("resize", () => {
       this.updateAllViewBounds();
     });

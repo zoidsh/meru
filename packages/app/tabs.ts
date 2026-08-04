@@ -49,12 +49,15 @@ export class DormantTab {
 
   navigationHistory = { canGoBack: false, canGoForward: false };
 
+  loadOnLaunch: boolean;
+
   private pageTitle: string;
 
   constructor(pinnedTab: PinnedTab) {
     this.app = pinnedTab.app;
     this.url = pinnedTab.url;
     this.pageTitle = pinnedTab.title;
+    this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
   }
 
   get title() {
@@ -140,18 +143,7 @@ export class Tabs {
     const activatedTab = this.getTab(tabId);
 
     if (activatedTab instanceof DormantTab) {
-      const workspaceApp = new WorkspaceApp({
-        accountId: this.accountId,
-        url: activatedTab.url,
-        pinned: true,
-        app: activatedTab.app,
-      });
-
-      this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
-
-      this.tabs.splice(this.tabs.indexOf(activatedTab), 1, workspaceApp);
-
-      this.activeTabId = workspaceApp.id;
+      this.activeTabId = this.materializeDormantTab(activatedTab).id;
 
       this.broadcastTabsChanged();
 
@@ -161,6 +153,30 @@ export class Tabs {
     this.activeTabId = tabId;
 
     this.broadcastTabsChanged();
+  }
+
+  private materializeDormantTab(dormantTab: DormantTab) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url: dormantTab.url,
+      pinned: true,
+      loadOnLaunch: dormantTab.loadOnLaunch,
+      app: dormantTab.app,
+    });
+
+    this.tabs = this.tabs.filter((tab) => tab !== workspaceApp);
+
+    this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
+
+    return workspaceApp;
+  }
+
+  loadLaunchTabs() {
+    for (const tab of this.tabs.slice()) {
+      if (tab instanceof DormantTab && tab.loadOnLaunch) {
+        this.materializeDormantTab(tab);
+      }
+    }
   }
 
   restorePinnedTabs(pinnedTabs: PinnedTab[]) {
@@ -258,9 +274,15 @@ export class Tabs {
           app: tab.app,
           url: tab.view.webContents.getURL() || getWorkspaceAppUrl(tab.app),
           title: tab.title,
+          loadOnLaunch: tab.loadOnLaunch,
         });
       } else if (tab instanceof DormantTab) {
-        pinnedTabs.push({ app: tab.app, url: tab.url, title: tab.title });
+        pinnedTabs.push({
+          app: tab.app,
+          url: tab.url,
+          title: tab.title,
+          loadOnLaunch: tab.loadOnLaunch,
+        });
       }
     }
 

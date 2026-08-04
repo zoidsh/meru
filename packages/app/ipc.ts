@@ -262,6 +262,20 @@ class Ipc {
                 account.instance.tabs.pinTab(tabId);
               },
             },
+        ...(tab.pinned
+          ? [
+              {
+                label: "Load on Launch",
+                type: "checkbox" as const,
+                checked: tab.loadOnLaunch,
+                click: () => {
+                  tab.loadOnLaunch = !tab.loadOnLaunch;
+
+                  accounts.savePinnedTabs();
+                },
+              },
+            ]
+          : []),
         {
           type: "separator",
         },

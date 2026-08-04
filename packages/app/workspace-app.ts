@@ -81,6 +81,7 @@ type WorkspaceAppOptions = {
   view?: WebContentsViewConstructorOptions;
   asWindow?: boolean;
   pinned?: boolean;
+  loadOnLaunch?: boolean;
   app?: SupportedWorkspaceApp;
 };
 
@@ -327,14 +328,26 @@ export class WorkspaceApp {
 
   pinned = false;
 
+  loadOnLaunch = false;
+
   private powerSaveBlockerId: number | undefined;
 
   private viewDestroyed = false;
 
-  constructor({ accountId, url, window, view, asWindow, pinned, app }: WorkspaceAppOptions) {
+  constructor({
+    accountId,
+    url,
+    window,
+    view,
+    asWindow,
+    pinned,
+    loadOnLaunch,
+    app,
+  }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
+    this.loadOnLaunch = Boolean(loadOnLaunch);
 
     if (asWindow) {
       this._window = this.createBrowserWindow(window);
