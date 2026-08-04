@@ -100,7 +100,7 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
   }
 
   return (
-    <div className={cn("mt-auto", isWide && "w-full")}>
+    <div className={isWide ? "w-full" : undefined}>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -115,7 +115,7 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
           }
         />
         <DropdownMenuContent
-          side="top"
+          side="bottom"
           align="start"
           className={cn("space-y-1", !isWide && "min-w-0")}
         >
