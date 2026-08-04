@@ -116,16 +116,18 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
             )
           }
         />
-        <DropdownMenuContent side="right" align="end">
+        <DropdownMenuContent side="top" align="start" className={isWide ? undefined : "min-w-0"}>
           {config["workspaceApps.bookmarkedApps"].map((app) => (
             <DropdownMenuItem
               key={app}
+              className={isWide ? undefined : "justify-center"}
+              title={bookmarkableWorkspaceApps[app]}
               onClick={() => {
                 ipc.main.send("workspaceApps.openApp", app);
               }}
             >
               <WorkspaceAppIcon app={app} className="size-4" />
-              {bookmarkableWorkspaceApps[app]}
+              {isWide && bookmarkableWorkspaceApps[app]}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
