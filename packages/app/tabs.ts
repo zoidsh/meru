@@ -222,6 +222,36 @@ export class Tabs {
     }
   }
 
+  closeOtherTabs(keptTabId: string) {
+    const previousActiveTabId = this.activeTabId;
+
+    for (const tab of this.tabs.slice()) {
+      if (tab.id !== keptTabId && tab.id !== GMAIL_TAB_ID && !tab.pinned) {
+        this.closeTab(tab.id);
+      }
+    }
+
+    if (this.activeTabId !== previousActiveTabId) {
+      this.activateTab(keptTabId);
+    }
+  }
+
+  closeTabsBelow(tabId: string) {
+    const previousActiveTabId = this.activeTabId;
+
+    const tabIndex = this.tabs.findIndex((tab) => tab.id === tabId);
+
+    for (const tab of this.tabs.slice(tabIndex + 1)) {
+      if (!tab.pinned) {
+        this.closeTab(tab.id);
+      }
+    }
+
+    if (this.activeTabId !== previousActiveTabId) {
+      this.activateTab(tabId);
+    }
+  }
+
   pinTab(tabId: string) {
     const pinnableTab = this.getTab(tabId);
 

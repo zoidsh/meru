@@ -4,6 +4,7 @@ import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
@@ -251,6 +252,19 @@ class Ipc {
 
       const tabApp = tab.app;
 
+      const hasOtherClosableTabs = account.instance.tabs.tabs.some(
+        (accountTab) =>
+          accountTab.id !== tabId && accountTab.id !== GMAIL_TAB_ID && !accountTab.pinned,
+      );
+
+      const contextTabIndex = account.instance.tabs.tabs.findIndex(
+        (accountTab) => accountTab.id === tabId,
+      );
+
+      const hasClosableTabsBelow = account.instance.tabs.tabs
+        .slice(contextTabIndex + 1)
+        .some((accountTab) => !accountTab.pinned);
+
       Menu.buildFromTemplate([
         ...(tabApp &&
         !workspaceApps[tabApp].singleInstance &&
@@ -325,6 +339,28 @@ class Ipc {
           label: "Close Tab",
           click: () => {
             account.instance.tabs.closeTab(tabId);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          label: "Close Other Tabs",
+          enabled: hasOtherClosableTabs,
+          click: () => {
+            account.instance.tabs.closeOtherTabs(tabId);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          label: "Close Tabs Below",
+          enabled: hasClosableTabsBelow,
+          click: () => {
+            account.instance.tabs.closeTabsBelow(tabId);
 
             if (account.config.selected) {
               accounts.refreshSelectedAccountView();
