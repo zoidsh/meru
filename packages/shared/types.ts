@@ -97,6 +97,7 @@ export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
+  pinned: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
@@ -266,6 +267,7 @@ export type IpcMainEvents =
       ];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
+      "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

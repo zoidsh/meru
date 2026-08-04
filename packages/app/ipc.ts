@@ -236,6 +236,45 @@ class Ipc {
       }
     });
 
+    ipc.main.on("tabs.showTabContextMenu", (_event, accountId, tabId) => {
+      const account = accounts.getAccount(accountId);
+
+      const tab = account.instance.tabs.getTab(tabId);
+
+      if (!(tab instanceof WorkspaceApp)) {
+        return;
+      }
+
+      Menu.buildFromTemplate([
+        tab.pinned
+          ? {
+              label: "Unpin Tab",
+              click: () => {
+                account.instance.tabs.unpinTab(tabId);
+              },
+            }
+          : {
+              label: "Pin Tab",
+              click: () => {
+                account.instance.tabs.pinTab(tabId);
+              },
+            },
+        {
+          type: "separator",
+        },
+        {
+          label: "Close Tab",
+          click: () => {
+            account.instance.tabs.closeTab(tabId);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+      ]).popup();
+    });
+
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(

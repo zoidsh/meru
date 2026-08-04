@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidCssColorInput } from "./color";
 import type { GmailState } from "./gmail";
+import { type SupportedWorkspaceApp, workspaceApps } from "./types";
 
 export const accountColors = [
   "orange",
@@ -20,6 +21,15 @@ export const accountColors = [
   "pink",
 ] as const;
 
+export const pinnedTabSchema = z.object({
+  app: z.custom<SupportedWorkspaceApp>(
+    (value) => typeof value === "string" && value in workspaceApps,
+  ),
+  url: z.string(),
+});
+
+export type PinnedTab = z.infer<typeof pinnedTabSchema>;
+
 export const accountConfigSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -30,6 +40,9 @@ export const accountConfigSchema = z.object({
     unreadBadge: z.boolean(),
     delegatedAccountId: z.string().nullable(),
     unifiedInbox: z.boolean(),
+  }),
+  workspaceApps: z.object({
+    pinnedTabs: z.array(pinnedTabSchema),
   }),
 });
 

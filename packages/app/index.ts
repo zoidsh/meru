@@ -185,6 +185,8 @@ async function init() {
     if (!appState.isQuittingApp) {
       main.saveWindowState();
 
+      accounts.savePinnedTabs();
+
       appState.isQuittingApp = true;
     }
   });

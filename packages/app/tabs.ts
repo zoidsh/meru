@@ -1,3 +1,4 @@
+import type { PinnedTab } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type SupportedWorkspaceApp, type TabState } from "@meru/shared/types";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
@@ -21,6 +22,7 @@ export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
+  pinned: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view: WebContentsView;
@@ -37,6 +39,7 @@ export class Tabs {
       {
         id: GMAIL_TAB_ID,
         app: "gmail",
+        pinned: false,
         get title() {
           return gmail.title;
         },
@@ -81,6 +84,8 @@ export class Tabs {
   }
 
   removeTab(tabId: string) {
+    const removedTab = this.getTab(tabId);
+
     this.tabs = this.tabs.filter((tab) => tab.id !== tabId);
 
     if (this.activeTabId === tabId) {
@@ -88,6 +93,10 @@ export class Tabs {
     }
 
     this.broadcastTabsChanged();
+
+    if (removedTab?.pinned) {
+      accounts.savePinnedTabs();
+    }
   }
 
   activateTab(tabId: string) {
@@ -124,6 +133,58 @@ export class Tabs {
     }
   }
 
+  pinTab(tabId: string) {
+    const pinnableTab = this.getTab(tabId);
+
+    if (!(pinnableTab instanceof WorkspaceApp)) {
+      return;
+    }
+
+    pinnableTab.pinned = true;
+
+    this.reorderTabs();
+
+    this.broadcastTabsChanged();
+
+    accounts.savePinnedTabs();
+  }
+
+  unpinTab(tabId: string) {
+    const unpinnableTab = this.getTab(tabId);
+
+    if (!(unpinnableTab instanceof WorkspaceApp)) {
+      return;
+    }
+
+    unpinnableTab.pinned = false;
+
+    this.reorderTabs();
+
+    this.broadcastTabsChanged();
+
+    accounts.savePinnedTabs();
+  }
+
+  private reorderTabs() {
+    this.tabs = [
+      ...this.tabs.filter((tab) => tab.id === GMAIL_TAB_ID),
+      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.pinned),
+      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned),
+    ];
+  }
+
+  serializePinnedTabs(): PinnedTab[] {
+    const pinnedTabs: PinnedTab[] = [];
+
+    for (const tab of this.tabs) {
+      if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
+        pinnedTabs.push({ app: tab.app, url: tab.view.webContents.getURL() });
+      }
+    }
+
+    return pinnedTabs;
+  }
+
   closeAll() {
     for (const tab of this.tabs.slice()) {
       if (tab instanceof WorkspaceApp) {
@@ -137,6 +198,7 @@ export class Tabs {
       id: tab.id,
       app: tab.app,
       title: tab.title,
+      pinned: tab.pinned,
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,
