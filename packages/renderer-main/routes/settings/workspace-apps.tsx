@@ -151,8 +151,9 @@ export function WorkspaceAppsSettings() {
                     }
                   />
                   <DropdownMenuContent align="end">
-                    {(Object.entries(workspaceApps) as Entries<typeof workspaceApps>).map(
-                      ([app, { label }]) => (
+                    {(Object.entries(workspaceApps) as Entries<typeof workspaceApps>)
+                      .filter(([, { singleInstance }]) => !singleInstance)
+                      .map(([app, { label }]) => (
                         <DropdownMenuCheckboxItem
                           key={app}
                           checked={config["workspaceApps.openInAppExcludedApps"].includes(app)}
@@ -169,8 +170,7 @@ export function WorkspaceAppsSettings() {
                         >
                           {label}
                         </DropdownMenuCheckboxItem>
-                      ),
-                    )}
+                      ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </Field>

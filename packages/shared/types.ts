@@ -1,7 +1,7 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
 import { APP_TAB_STRIP_NARROW_WIDTH, APP_TAB_STRIP_WIDE_WIDTH } from "./constants";
-import type { GMAIL_ACTION_CODE_MAP } from "./gmail";
+import { type GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -36,8 +36,10 @@ export type NotificationTime = {
 
 type WorkspaceAppDefinition = {
   label: string;
+  url?: string;
   pinnable?: boolean;
   alwaysOpenAsWindow?: boolean;
+  singleInstance?: boolean;
 };
 
 const workspaceAppDefinitions = {
@@ -49,6 +51,7 @@ const workspaceAppDefinitions = {
   drive: { label: "Drive" },
   forms: { label: "Forms" },
   gemini: { label: "Gemini" },
+  gmail: { label: "Gmail", url: GMAIL_URL, pinnable: false, singleInstance: true },
   groups: { label: "Groups" },
   keep: { label: "Keep" },
   meet: { label: "Meet" },

@@ -1,7 +1,7 @@
-import type { SupportedWorkspaceApp } from "./types";
+import { type SupportedWorkspaceApp, workspaceApps } from "./types";
 
 export function getWorkspaceAppUrl(app: SupportedWorkspaceApp) {
-  return `https://${app}.google.com`;
+  return workspaceApps[app].url ?? `https://${app}.google.com`;
 }
 
 export function getGoogleDomainFaviconUrl(domain: string, size: number) {
