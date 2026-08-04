@@ -34,7 +34,7 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-type WorkspaceAppDefinition = {
+type WorkspaceApp = {
   label: string;
   pinnable?: boolean;
   alwaysOpenAsWindow?: boolean;
@@ -59,7 +59,7 @@ const workspaceAppDefinitions = {
   slides: { label: "Slides" },
   tasks: { label: "Tasks" },
   voice: { label: "Voice" },
-} as const satisfies Record<string, WorkspaceAppDefinition>;
+} as const satisfies Record<string, WorkspaceApp>;
 
 export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
@@ -69,8 +69,7 @@ export type PinnableWorkspaceApp = {
     : App;
 }[SupportedWorkspaceApp];
 
-export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
-  workspaceAppDefinitions;
+export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceApp> = workspaceAppDefinitions;
 
 export const pinnableWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
