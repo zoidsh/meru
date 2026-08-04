@@ -179,6 +179,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - The description should cover the problem being solved, the changes made, and anything a reviewer needs in order to judge them — including deliberate omissions, known risks, and what has not been verified.
 - End every description with a **Test plan** section: a numbered list of concrete steps to walk through in the running app to verify the work. Write each step as a user action with its expected outcome, and cover the changed behavior's edge cases (gated states, empty states, platform differences), not just the happy path. Keep it in sync with the branch like the rest of the description.
 - Check the state of a pull request before acting on it rather than assuming it is unchanged. `gh pr list` only shows open pull requests, so one disappearing from the list means it was merged or closed.
+- When new work depends on a pull request that is still open, don't wait for it to merge and don't base the work on `main` — branch off the open pull request's branch, open the new pull request with that branch as its base, and link the chain into a GitHub stack with `gh stack link <bottom> ... <top>` (bottom to top; PR numbers or branch names). GitHub then shows the stack on each pull request and retargets bases as parts merge; merge a whole chain atomically with `gh stack merge` instead of merging its pull requests one by one.
 
 ## Release Notes
 
