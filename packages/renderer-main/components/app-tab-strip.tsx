@@ -51,6 +51,11 @@ export function AppTabStrip() {
             onClick={() => {
               ipc.main.send("tabs.selectTab", selectedAccount.config.id, tab.id);
             }}
+            onAuxClick={(event) => {
+              if (event.button === 1 && tab.id !== GMAIL_TAB_ID) {
+                ipc.main.send("tabs.closeTab", selectedAccount.config.id, tab.id);
+              }
+            }}
           >
             <TabIcon tab={tab} />
             {isWide && <span className="truncate">{tab.title}</span>}
