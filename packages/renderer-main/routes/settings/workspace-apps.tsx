@@ -27,6 +27,7 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
@@ -123,6 +124,18 @@ export function WorkspaceAppsSettings() {
           />
           {config["workspaceApps.openInApp"] && (
             <>
+              <ConfigSelectField
+                label="Open Behavior"
+                description="How Workspace Apps open: as a tab in the main window, in a new window, or as a background tab."
+                configKey="workspaceApps.openBehavior"
+                placeholder="Select behavior"
+                licenseKeyRequired
+                items={[
+                  { value: "tab", label: "Tab" },
+                  { value: "newWindow", label: "New Window" },
+                  { value: "backgroundTab", label: "Background Tab" },
+                ]}
+              />
               <Field>
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">

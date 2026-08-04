@@ -216,23 +216,36 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
-      if (
-        disposition === "background-tab" &&
-        !workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow
-      ) {
+      const openBehavior =
+        workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow ||
+        disposition === "new-window"
+          ? "newWindow"
+          : disposition === "background-tab"
+            ? "backgroundTab"
+            : config.get("workspaceApps.openBehavior");
+
+      if (openBehavior === "newWindow") {
         new WorkspaceApp({
           accountId,
           url,
+          asWindow: true,
         });
 
         return { action: "deny" };
       }
 
-      new WorkspaceApp({
+      const workspaceApp = new WorkspaceApp({
         accountId,
         url,
-        asWindow: true,
       });
+
+      if (openBehavior === "tab") {
+        accounts.getAccount(accountId).instance.tabs.activateTab(workspaceApp.id);
+
+        accounts.selectAccount(accountId);
+
+        main.show();
+      }
 
       return { action: "deny" };
     }

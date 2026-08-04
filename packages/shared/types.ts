@@ -202,6 +202,7 @@ export type Config = {
   "trial.expired": boolean;
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
+  "workspaceApps.openBehavior": "tab" | "newWindow" | "backgroundTab";
   "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
