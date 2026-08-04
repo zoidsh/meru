@@ -824,6 +824,8 @@ export class Gmail {
   subscribeToStore() {
     this.viewStore.subscribe(() => {
       accounts.sendAccountsChangedToRenderer();
+
+      accounts.sendTabsChangedToRenderer();
     });
 
     if (this.getIsUnreadCountEnabled()) {
