@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/types";
+import {
+  type SupportedWorkspaceApp,
+  type WorkspaceAppOpenBehavior,
+  workspaceApps,
+} from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
 import {
   app,
@@ -216,23 +220,36 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
-      if (
-        disposition === "background-tab" &&
-        !workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow
-      ) {
+      const openBehavior: WorkspaceAppOpenBehavior =
+        workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow ||
+        disposition === "new-window"
+          ? "newWindow"
+          : disposition === "background-tab"
+            ? "backgroundTab"
+            : config.get("workspaceApps.openBehavior");
+
+      if (openBehavior === "newWindow") {
         new WorkspaceApp({
           accountId,
           url,
+          asWindow: true,
         });
 
         return { action: "deny" };
       }
 
-      new WorkspaceApp({
+      const workspaceApp = new WorkspaceApp({
         accountId,
         url,
-        asWindow: true,
       });
+
+      if (openBehavior === "tab") {
+        accounts.getAccount(accountId).instance.tabs.activateTab(workspaceApp.id);
+
+        accounts.selectAccount(accountId);
+
+        main.show();
+      }
 
       return { action: "deny" };
     }

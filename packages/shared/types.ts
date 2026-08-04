@@ -83,6 +83,14 @@ export const pinnableWorkspaceApps = Object.fromEntries(
 
 export type WorkspaceAppOpenDisposition = "foreground-tab" | "background-tab" | "new-window";
 
+export const workspaceAppOpenBehaviors = {
+  tab: "Tab",
+  newWindow: "New Window",
+  backgroundTab: "Background Tab",
+} as const;
+
+export type WorkspaceAppOpenBehavior = keyof typeof workspaceAppOpenBehaviors;
+
 export const GMAIL_TAB_ID = "gmail";
 
 export type TabState = {
@@ -202,6 +210,7 @@ export type Config = {
   "trial.expired": boolean;
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
+  "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
   "workspaceApps.pinnedApps": PinnableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;

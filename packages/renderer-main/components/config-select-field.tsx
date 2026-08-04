@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
+import type { ReactNode } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { restartRequiredToast } from "@/lib/toast";
 import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
@@ -24,7 +25,7 @@ export function ConfigSelectField({
 }: {
   configKey: keyof Config;
   label: string;
-  description: string;
+  description: ReactNode;
   items: { value: string; label: string }[];
   placeholder: string;
   licenseKeyRequired?: boolean;

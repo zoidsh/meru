@@ -2,10 +2,12 @@ import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
+import { platform } from "@meru/shared/renderer/utils";
 import {
   type PinnableWorkspaceApp,
   pinnableWorkspaceApps,
   type SupportedWorkspaceApp,
+  workspaceAppOpenBehaviors,
   workspaceApps,
 } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
@@ -24,9 +26,11 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@meru/ui/components/field";
+import { Kbd } from "@meru/ui/components/kbd";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
@@ -123,6 +127,24 @@ export function WorkspaceAppsSettings() {
           />
           {config["workspaceApps.openInApp"] && (
             <>
+              <ConfigSelectField
+                label="Open Behavior"
+                description={
+                  <>
+                    How Workspace Apps open: as a tab in the main window (default), in a new window,
+                    or as a background tab. Hold <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to
+                    always open as a background tab or <Kbd>Shift</Kbd> to always open in a new
+                    window.
+                  </>
+                }
+                configKey="workspaceApps.openBehavior"
+                placeholder="Select behavior"
+                licenseKeyRequired
+                items={Object.entries(workspaceAppOpenBehaviors).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
               <Field>
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">

@@ -91,6 +91,7 @@ export const config = new Store<Config>({
     "trial.expired": false,
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
+    "workspaceApps.openBehavior": "tab",
     "workspaceApps.pinnedApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
