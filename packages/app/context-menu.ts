@@ -9,12 +9,8 @@ import { accounts } from "./accounts";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
 import { openExternalUrl } from "./url";
-import type { WorkspaceApp } from "./workspace-app";
 
-export function setupWindowContextMenu(
-  window: BrowserWindow | WebContentsView,
-  owningWorkspaceApp?: WorkspaceApp,
-) {
+export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) {
   electronContextMenu({
     window,
     showCopyImageAddress: true,
@@ -54,20 +50,6 @@ export function setupWindowContextMenu(
             },
           );
         }
-      }
-
-      if (owningWorkspaceApp?.isWindowed) {
-        menuItems.push(
-          {
-            label: "Move to Tab",
-            click: () => {
-              owningWorkspaceApp.adoptIntoTabs();
-            },
-          },
-          {
-            type: "separator",
-          },
-        );
       }
 
       if (window !== selectedAccount.instance.gmail.view) {

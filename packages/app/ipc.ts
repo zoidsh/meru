@@ -218,6 +218,15 @@ class Ipc {
 
       Menu.buildFromTemplate([
         {
+          label: "Move to Tab",
+          click: () => {
+            workspaceApp.adoptIntoTabs();
+          },
+        },
+        {
+          type: "separator",
+        },
+        {
           label: "Copy Link",
           click: () => {
             workspaceApp.copyUrl();
