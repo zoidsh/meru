@@ -365,19 +365,6 @@ class Ipc {
               },
             ]),
         {
-          label: "Move to New Window",
-          enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
-          click: () => {
-            if (tab instanceof WorkspaceApp) {
-              tab.detachToWindow();
-            }
-
-            if (account.config.selected) {
-              accounts.refreshSelectedAccountView();
-            }
-          },
-        },
-        {
           type: "separator",
         },
         {
