@@ -159,7 +159,6 @@ export type IpcMainEvents =
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
       "workspaceApp.showMenu": [workspaceAppId: string];
-      "workspaceApp.moveToTab": [workspaceAppId: string];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];

@@ -443,7 +443,7 @@ export class WorkspaceApp {
       main.window.contentView.addChildView(view, 0);
     }
 
-    setupWindowContextMenu(view);
+    setupWindowContextMenu(view, this);
 
     applyViewZoomLimits(view);
 

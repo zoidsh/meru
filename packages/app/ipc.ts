@@ -232,10 +232,6 @@ class Ipc {
       ]).popup();
     });
 
-    ipc.main.on("workspaceApp.moveToTab", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).adoptIntoTabs();
-    });
-
     ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {
       const account = accounts.getAccount(accountId);
 

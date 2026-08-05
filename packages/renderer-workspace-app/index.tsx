@@ -14,7 +14,7 @@ import {
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import { AppWindowIcon, DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
+import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 
@@ -164,14 +164,6 @@ function App() {
         <FindInPageControls />
         <TitlebarButtonGroup>
           <RecentDownloadHistoryButton />
-          <TitlebarIconButton
-            title="Move to Tab"
-            onClick={() => {
-              ipc.main.send("workspaceApp.moveToTab", workspaceAppId);
-            }}
-          >
-            <AppWindowIcon />
-          </TitlebarIconButton>
           <TitlebarIconButton
             title="More Options"
             onClick={() => {
