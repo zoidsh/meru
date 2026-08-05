@@ -269,6 +269,12 @@ class Ipc {
       }
     });
 
+    ipc.main.on("tabs.moveTab", (_event, accountId, tabId, targetSectionIndex) => {
+      const account = accounts.getAccount(accountId);
+
+      account.instance.tabs.moveTab(tabId, targetSectionIndex);
+    });
+
     ipc.main.on("tabs.showTabContextMenu", (_event, accountId, tabId) => {
       const account = accounts.getAccount(accountId);
 
