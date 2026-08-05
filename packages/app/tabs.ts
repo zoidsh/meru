@@ -214,19 +214,21 @@ export class Tabs {
   }
 
   activateNextTab() {
-    this.activateAdjacentTab(1);
+    this.activateAdjacentTab("next");
   }
 
   activatePreviousTab() {
-    this.activateAdjacentTab(-1);
+    this.activateAdjacentTab("previous");
   }
 
-  private activateAdjacentTab(direction: 1 | -1) {
+  private activateAdjacentTab(direction: "next" | "previous") {
     const cyclableTabs = this.tabs.filter((tab) => !isWindowedTab(tab));
 
     const activeTabIndex = cyclableTabs.findIndex((tab) => tab.id === this.activeTabId);
 
-    const adjacentTab = cyclableTabs.at((activeTabIndex + direction) % cyclableTabs.length);
+    const indexOffset = direction === "next" ? 1 : -1;
+
+    const adjacentTab = cyclableTabs.at((activeTabIndex + indexOffset) % cyclableTabs.length);
 
     if (adjacentTab) {
       this.activateTab(adjacentTab.id);

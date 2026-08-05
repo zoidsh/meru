@@ -38,6 +38,19 @@ function TabIcon({ tab }: { tab: TabState }) {
   return <GlobeIcon />;
 }
 
+function WindowedTabBadge({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
+        className,
+      )}
+    >
+      <AppWindowIcon className="size-2.5" />
+    </div>
+  );
+}
+
 function StripTab({
   tab,
   accountId,
@@ -64,7 +77,7 @@ function StripTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && "pr-7",
+          isWideRow && isCloseable && "group-hover:pr-7",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -91,14 +104,12 @@ function StripTab({
         }}
       >
         <TabIcon tab={tab} />
-        {isWideRow && <span className="truncate">{tab.title}</span>}
-        {isWideRow && tab.windowed && <AppWindowIcon className="size-3" />}
+        {isWideRow && <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>}
+        {isWideRow && tab.windowed && (
+          <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
+        )}
       </Button>
-      {!isWideRow && tab.windowed && (
-        <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-          <AppWindowIcon className="size-3" />
-        </div>
-      )}
+      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {isCloseable && (
         <Button
           variant="secondary"
@@ -109,7 +120,7 @@ function StripTab({
               ? "top-1/2 right-1 size-5 -translate-y-1/2"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
-          title="Close Tab"
+          title="Close"
           onClick={() => {
             ipc.main.send("tabs.closeTab", accountId, tab.id);
           }}
@@ -211,6 +222,7 @@ export function AppTabStrip() {
     ? getTabStripWidth(
         selectedAccountTabs.tabs,
         (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
+        config?.["workspaceApps.tabStripWidth"] ?? "auto",
       )
     : 0;
 
