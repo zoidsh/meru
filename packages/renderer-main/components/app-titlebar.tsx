@@ -68,12 +68,7 @@ function WorkspaceAppsLauncher() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  if (
-    !config ||
-    !isLicenseKeyValid ||
-    config["workspaceApps.bookmarkedApps"].length === 0 ||
-    isSettingsOpen
-  ) {
+  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
   }
 
@@ -84,7 +79,8 @@ function WorkspaceAppsLauncher() {
   );
 
   if (
-    !selectedAccountTabs ||
+    !isSettingsOpen &&
+    selectedAccountTabs &&
     getTabStripWidth(selectedAccountTabs.tabs, config["workspaceApps.tabStripWidth"]) > 0
   ) {
     return;
