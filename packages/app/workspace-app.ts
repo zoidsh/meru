@@ -559,6 +559,13 @@ export class WorkspaceApp {
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
   }
 
+  private unregisterWindowedViewListeners() {
+    this.view.webContents.off("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.off("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
+  }
+
   private registerWindowListeners() {
     this.window.on("resize", this.updateViewBounds);
     this.window.on("close", this.handleClose);
@@ -603,6 +610,45 @@ export class WorkspaceApp {
     this.window.show();
 
     this.view.webContents.focus();
+  }
+
+  adoptIntoTabs() {
+    const discardedWindow = this.window;
+
+    discardedWindow.off("resize", this.updateViewBounds);
+    discardedWindow.off("close", this.handleClose);
+
+    this.unregisterWindowedViewListeners();
+
+    discardedWindow.contentView.removeChildView(this.view);
+
+    this.account.instance.windows.delete(discardedWindow);
+
+    this._window = undefined;
+
+    discardedWindow.destroy();
+
+    main.window.contentView.addChildView(this.view, 0);
+
+    this.account.instance.windows.add(this.view);
+
+    if (appState.isSettingsOpen) {
+      this.view.setVisible(false);
+    }
+
+    if (this.account.instance.tabs.getTab(this.id)) {
+      this.account.instance.tabs.activateTab(this.id);
+    } else {
+      registerTabBroadcasts(this.view);
+
+      this.account.instance.tabs.adoptTab(this);
+    }
+
+    accounts.selectAccount(this.accountId);
+
+    main.show();
+
+    this.updateViewBounds();
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {

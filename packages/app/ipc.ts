@@ -218,6 +218,15 @@ class Ipc {
 
       Menu.buildFromTemplate([
         {
+          label: "Move to Tab",
+          click: () => {
+            workspaceApp.adoptIntoTabs();
+          },
+        },
+        {
+          type: "separator",
+        },
+        {
           label: "Copy Link",
           click: () => {
             workspaceApp.copyUrl();
@@ -330,19 +339,36 @@ class Ipc {
             }
           },
         },
-        {
-          label: "Move to New Window",
-          enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
-          click: () => {
-            if (tab instanceof WorkspaceApp) {
-              tab.detachToWindow();
-            }
+        ...(tab instanceof WorkspaceApp && tab.isWindowed
+          ? [
+              {
+                label: "Move to Tab",
+                click: () => {
+                  if (tab instanceof WorkspaceApp) {
+                    tab.adoptIntoTabs();
+                  }
 
-            if (account.config.selected) {
-              accounts.refreshSelectedAccountView();
-            }
-          },
-        },
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
+              },
+            ]
+          : [
+              {
+                label: "Move to New Window",
+                enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
+                click: () => {
+                  if (tab instanceof WorkspaceApp) {
+                    tab.detachToWindow();
+                  }
+
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
+              },
+            ]),
         {
           type: "separator",
         },
