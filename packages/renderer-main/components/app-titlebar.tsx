@@ -3,7 +3,6 @@ import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import { getTabStripWidth } from "@meru/shared/tabs";
-import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -14,7 +13,6 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -32,7 +30,6 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
-import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
   useAppUpdaterStore,
@@ -42,8 +39,6 @@ import {
   useTrialStore,
 } from "../lib/stores";
 import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
-
-const MAX_INLINE_BOOKMARKED_APPS = 3;
 
 function RecentDownloadHistoryButton() {
   return (
@@ -95,40 +90,21 @@ function WorkspaceAppsLauncher() {
     return;
   }
 
-  const bookmarkedApps = config["workspaceApps.bookmarkedApps"];
-
-  if (bookmarkedApps.length <= MAX_INLINE_BOOKMARKED_APPS) {
-    return bookmarkedApps.map((app) => (
-      <TitlebarIconButton
-        key={app}
-        title={bookmarkableWorkspaceApps[app]}
-        onClick={(event) => {
-          ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-        }}
-        onAuxClick={(event) => {
-          if (event.button === 1) {
-            ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-          }
-        }}
-      >
-        <WorkspaceAppIcon app={app} className="size-4" />
-      </TitlebarIconButton>
-    ));
-  }
-
   return (
-    <BookmarkedWorkspaceAppsMenu
-      trigger={
-        <TitlebarIconButton title="Workspace Apps">
-          <LayoutGridIcon />
-        </TitlebarIconButton>
-      }
-      orientation="horizontal"
-      side="left"
-      align="center"
-      showAppLabels={false}
-      className="draggable-none"
-    />
+    <TitlebarButtonGroup>
+      <BookmarkedWorkspaceAppsMenu
+        trigger={
+          <TitlebarIconButton title="Workspace Apps">
+            <LayoutGridIcon />
+          </TitlebarIconButton>
+        }
+        orientation="horizontal"
+        side="right"
+        align="center"
+        showAppLabels={false}
+        className="draggable-none"
+      />
+    </TitlebarButtonGroup>
   );
 }
 
@@ -359,6 +335,7 @@ export function AppTitlebar() {
     return (
       <>
         <TitlebarLeft>
+          <WorkspaceAppsLauncher />
           <TitlebarButtonGroup>
             <TitlebarNavigationControls
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
@@ -437,7 +414,6 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
-            <WorkspaceAppsLauncher />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
