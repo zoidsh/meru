@@ -55,6 +55,8 @@ export function BookmarkedWorkspaceAppsMenu({
     return;
   }
 
+  const isHorizontal = orientation === "horizontal";
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} orientation={orientation}>
       <DropdownMenuTrigger render={trigger} />
@@ -62,10 +64,8 @@ export function BookmarkedWorkspaceAppsMenu({
       <DropdownMenuContent
         side={side}
         align={align}
-        className={cn(
-          orientation === "horizontal" ? "flex w-auto min-w-0 flex-row gap-1" : "space-y-1",
-          className,
-        )}
+        collisionPadding={isHorizontal ? 0 : undefined}
+        className={cn(isHorizontal ? "flex w-auto min-w-0 flex-row gap-1" : "space-y-1", className)}
       >
         {config["workspaceApps.bookmarkedApps"].map((app) => (
           <DropdownMenuItem
