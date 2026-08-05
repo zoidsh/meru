@@ -213,12 +213,23 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
-    ipc.main.on("workspaceApp.copyUrl", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).copyUrl();
-    });
+    ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
+      const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
-    ipc.main.on("workspaceApp.openInBrowser", (_event, workspaceAppId) => {
-      WorkspaceApp.fromId(workspaceAppId).openInBrowser();
+      Menu.buildFromTemplate([
+        {
+          label: "Copy Link",
+          click: () => {
+            workspaceApp.copyUrl();
+          },
+        },
+        {
+          label: "Open in Default Browser",
+          click: () => {
+            workspaceApp.openInBrowser();
+          },
+        },
+      ]).popup();
     });
 
     ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {

@@ -1,4 +1,3 @@
-import { useCopied } from "@meru/shared/renderer/hooks";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { renderApp } from "@meru/shared/renderer/react";
 import { useConfig } from "@meru/shared/renderer/react-query";
@@ -15,7 +14,7 @@ import {
   TitlebarRight,
 } from "@meru/ui/components/titlebar";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import { CheckIcon, DownloadIcon, ExternalLinkIcon, LinkIcon } from "lucide-react";
+import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 
@@ -79,22 +78,6 @@ function NavigationControls({ workspaceAppId }: { workspaceAppId: string }) {
         ipc.main.send("workspaceApp.stop", workspaceAppId);
       }}
     />
-  );
-}
-
-function CopyUrlButton({ workspaceAppId }: { workspaceAppId: string }) {
-  const { copied, markCopied } = useCopied();
-
-  return (
-    <TitlebarIconButton
-      title="Copy Link"
-      onClick={() => {
-        ipc.main.send("workspaceApp.copyUrl", workspaceAppId);
-        markCopied();
-      }}
-    >
-      {copied ? <CheckIcon /> : <LinkIcon />}
-    </TitlebarIconButton>
   );
 }
 
@@ -181,14 +164,13 @@ function App() {
         <FindInPageControls />
         <TitlebarButtonGroup>
           <RecentDownloadHistoryButton />
-          <CopyUrlButton workspaceAppId={workspaceAppId} />
           <TitlebarIconButton
-            title="Open in Default Browser"
+            title="More Options"
             onClick={() => {
-              ipc.main.send("workspaceApp.openInBrowser", workspaceAppId);
+              ipc.main.send("workspaceApp.showMenu", workspaceAppId);
             }}
           >
-            <ExternalLinkIcon />
+            <EllipsisVerticalIcon />
           </TitlebarIconButton>
         </TitlebarButtonGroup>
       </TitlebarRight>
