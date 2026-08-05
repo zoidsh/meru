@@ -45,10 +45,6 @@ class Accounts {
       }
     });
 
-    config.onDidChange("workspaceApps.bookmarkedApps", () => {
-      accounts.updateAllViewBounds();
-    });
-
     config.onDidChange("workspaceApps.tabStripWidth", () => {
       accounts.updateAllViewBounds();
     });
@@ -106,7 +102,6 @@ class Accounts {
   getTabStripWidth() {
     return getTabStripWidth(
       this.getSelectedAccount().instance.tabs.serialize(),
-      config.get("workspaceApps.bookmarkedApps").length > 0,
       config.get("workspaceApps.tabStripWidth"),
     );
   }

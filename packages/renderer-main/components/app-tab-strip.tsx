@@ -5,23 +5,17 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { platform } from "@meru/shared/renderer/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/tabs";
-import { bookmarkableWorkspaceApps, workspaceApps } from "@meru/shared/workspace-apps";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { type MouseEvent, type Ref, useEffect, useState } from "react";
-import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { AppWindowIcon, GlobeIcon, LayoutGridIcon, XIcon } from "lucide-react";
+import type { Ref } from "react";
+import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
 
 const tabStripPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
@@ -57,16 +51,6 @@ function moveSectionTab(
   }
 
   ipc.main.send("tabs.moveTab", accountId, movedTabId, movedSectionTabIds.indexOf(movedTabId));
-}
-
-function getModifierOpenBehavior(event: MouseEvent) {
-  if (platform.isMacOS ? event.metaKey : event.ctrlKey) {
-    return event.shiftKey ? "tab" : "backgroundTab";
-  }
-
-  if (event.shiftKey) {
-    return "newWindow";
-  }
 }
 
 function TabIcon({ tab }: { tab: TabState }) {
@@ -211,75 +195,24 @@ function SortableStripTab({
 }
 
 function NewTabButton({ isWide }: { isWide: boolean }) {
-  const { config } = useConfig();
-
-  const isLicenseKeyValid = useIsLicenseKeyValid();
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleWindowBlur = () => {
-      setIsOpen(false);
-    };
-
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [isOpen]);
-
-  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
-    return;
-  }
-
   return (
-    <div className={isWide ? "w-full" : undefined}>
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size={isWide ? "sm" : "icon"}
-              className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
-              title="New Tab"
-            >
-              <PlusIcon />
-            </Button>
-          }
-        />
-        <DropdownMenuContent
-          side="bottom"
-          align="start"
-          className={cn("space-y-1", !isWide && "min-w-0")}
+    <BookmarkedWorkspaceAppsMenu
+      trigger={
+        <Button
+          variant="ghost"
+          size={isWide ? "sm" : "icon"}
+          className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
+          title="New Tab"
         >
-          {config["workspaceApps.bookmarkedApps"].map((app) => (
-            <DropdownMenuItem
-              key={app}
-              className={isWide ? undefined : "justify-center"}
-              title={bookmarkableWorkspaceApps[app]}
-              onClick={(event) => {
-                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-              }}
-              onAuxClick={(event) => {
-                if (event.button === 1) {
-                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-
-                  setIsOpen(false);
-                }
-              }}
-            >
-              <WorkspaceAppIcon app={app} className="size-4" />
-              {isWide && bookmarkableWorkspaceApps[app]}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+          <LayoutGridIcon />
+        </Button>
+      }
+      orientation="vertical"
+      side="bottom"
+      align="start"
+      showAppLabels={isWide}
+      className={isWide ? undefined : "min-w-0"}
+    />
   );
 }
 
@@ -297,11 +230,7 @@ export function AppTabStrip() {
   );
 
   const tabStripWidth = selectedAccountTabs
-    ? getTabStripWidth(
-        selectedAccountTabs.tabs,
-        (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
-        config?.["workspaceApps.tabStripWidth"] ?? "auto",
-      )
+    ? getTabStripWidth(selectedAccountTabs.tabs, config?.["workspaceApps.tabStripWidth"] ?? "auto")
     : 0;
 
   if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {

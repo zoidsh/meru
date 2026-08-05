@@ -23,10 +23,9 @@ export type AccountTabsState = {
 
 export function getTabStripWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  hasBookmarkedApps: boolean,
   configuredTabStripWidth: WorkspaceAppTabStripWidth,
 ) {
-  if (tabs.length <= 1 && !hasBookmarkedApps) {
+  if (tabs.length <= 1) {
     return 0;
   }
 

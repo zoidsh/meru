@@ -2,6 +2,8 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
+import { getTabStripWidth } from "@meru/shared/tabs";
+import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -12,6 +14,7 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
+import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -20,6 +23,7 @@ import {
   DownloadIcon,
   EllipsisVerticalIcon,
   InboxIcon,
+  LayoutGridIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
@@ -28,6 +32,7 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
   useAppUpdaterStore,
@@ -36,6 +41,9 @@ import {
   useTabsStore,
   useTrialStore,
 } from "../lib/stores";
+import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
+
+const MAX_INLINE_BOOKMARKED_APPS = 3;
 
 function RecentDownloadHistoryButton() {
   return (
@@ -53,6 +61,74 @@ function RecentDownloadHistoryButton() {
     >
       <DownloadIcon />
     </TitlebarIconButton>
+  );
+}
+
+function WorkspaceAppsLauncher() {
+  const accounts = useAccountsStore((state) => state.accounts);
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+
+  const { config } = useConfig();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  if (
+    !config ||
+    !isLicenseKeyValid ||
+    config["workspaceApps.bookmarkedApps"].length === 0 ||
+    isSettingsOpen
+  ) {
+    return;
+  }
+
+  const selectedAccount = accounts.find((account) => account.config.selected);
+
+  const selectedAccountTabs = accountsTabs.find(
+    (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
+  );
+
+  if (
+    !selectedAccountTabs ||
+    getTabStripWidth(selectedAccountTabs.tabs, config["workspaceApps.tabStripWidth"]) > 0
+  ) {
+    return;
+  }
+
+  const bookmarkedApps = config["workspaceApps.bookmarkedApps"];
+
+  if (bookmarkedApps.length <= MAX_INLINE_BOOKMARKED_APPS) {
+    return bookmarkedApps.map((app) => (
+      <TitlebarIconButton
+        key={app}
+        title={bookmarkableWorkspaceApps[app]}
+        onClick={(event) => {
+          ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+        }}
+        onAuxClick={(event) => {
+          if (event.button === 1) {
+            ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+          }
+        }}
+      >
+        <WorkspaceAppIcon app={app} className="size-4" />
+      </TitlebarIconButton>
+    ));
+  }
+
+  return (
+    <BookmarkedWorkspaceAppsMenu
+      trigger={
+        <TitlebarIconButton title="Workspace Apps">
+          <LayoutGridIcon />
+        </TitlebarIconButton>
+      }
+      orientation="horizontal"
+      side="left"
+      align="center"
+      showAppLabels={false}
+      className="draggable-none"
+    />
   );
 }
 
@@ -342,6 +418,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Trial />
             <FindInPage />
+            <WorkspaceAppsLauncher />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
