@@ -2,14 +2,7 @@ import { platform } from "@electron-toolkit/utils";
 import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
-import {
-  app,
-  type BrowserWindow,
-  type IpcMainEvent,
-  ipcMain,
-  type Session,
-  session,
-} from "electron";
+import { app, type IpcMainEvent, ipcMain, type Session, session } from "electron";
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { Gmail } from "./gmail";
@@ -20,15 +13,17 @@ import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
 export class Account {
+  accountId: AccountConfig["id"];
+
   session: Session;
 
   gmail: Gmail;
 
   tabs: Tabs;
 
-  windows: Set<BrowserWindow> = new Set();
-
   constructor(accountConfig: AccountConfig) {
+    this.accountId = accountConfig.id;
+
     this.session = session.fromPartition(`persist:${accountConfig.id}`);
 
     this.setCustomUserAgent();
@@ -95,11 +90,9 @@ export class Account {
   }
 
   private findGoogleMeetParentWindow() {
-    for (const workspaceAppWindow of this.windows) {
-      const workspaceApp = WorkspaceApp.tryFromWebContents(workspaceAppWindow.webContents);
-
-      if (workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
-        return workspaceAppWindow;
+    for (const windowedWorkspaceApp of WorkspaceApp.getAccountWindowedInstances(this.accountId)) {
+      if (windowedWorkspaceApp.view.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
+        return windowedWorkspaceApp.window;
       }
     }
 
