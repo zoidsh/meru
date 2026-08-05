@@ -20,7 +20,7 @@ import {
   BrowserWindow,
   clipboard,
   type Session,
-  WebContentsView,
+  type WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
 import z from "zod";
@@ -28,14 +28,9 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
-import {
-  applyViewZoomLimits,
-  broadcastFoundInPageResults,
-  openViewDevToolsInDev,
-} from "@/lib/web-contents";
+import { createChildWebContentsView, openViewDevToolsInDev } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import { licenseKey } from "@/license-key";
@@ -382,27 +377,21 @@ export class Gmail {
   }
 
   createView(options?: WebContentsViewConstructorOptions) {
-    this.view = new WebContentsView({
-      ...options,
-      webPreferences: {
-        preload: getPreloadPath("gmail"),
-        additionalArguments: this.additionalArguments,
-        ...options?.webPreferences,
-        session: this.session,
+    this.view = createChildWebContentsView({
+      session: this.session,
+      preload: getPreloadPath("gmail"),
+      additionalArguments: this.additionalArguments,
+      viewOptions: options,
+      attachView: (view) => {
+        main.window.contentView.addChildView(view);
+      },
+      getFindInPageTargetWebContents: () => main.window.webContents,
+      registerWindowOpenHandler: (view) => {
+        this.registerWindowOpenHandler(view);
       },
     });
 
-    main.window.contentView.addChildView(this.view);
-
     this.registerNavigationHandler(this.view);
-
-    broadcastFoundInPageResults(this.view, () => main.window.webContents);
-
-    this.registerWindowOpenHandler(this.view);
-
-    applyViewZoomLimits(this.view);
-
-    setupWindowContextMenu(this.view);
 
     this.updateViewBounds();
 
