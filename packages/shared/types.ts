@@ -14,6 +14,7 @@ import type {
   BookmarkableWorkspaceApp,
   SupportedWorkspaceApp,
   WorkspaceAppOpenBehavior,
+  WorkspaceAppTabStripWidth,
 } from "./workspace-apps";
 
 export type DesktopSource = { id: string; name: string; thumbnail: string };
@@ -123,6 +124,7 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
+  "workspaceApps.tabStripWidth": WorkspaceAppTabStripWidth;
   "workspaceApps.bookmarkedApps": BookmarkableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
