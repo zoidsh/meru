@@ -319,6 +319,10 @@ export class WorkspaceApp {
     return this._window;
   }
 
+  get hasWindow() {
+    return Boolean(this._window);
+  }
+
   private get chromeWebContents() {
     return this._window ? this._window.webContents : main.window.webContents;
   }
@@ -333,7 +337,7 @@ export class WorkspaceApp {
 
   private viewDestroyed = false;
 
-  private unregisterTabBroadcasts: (() => void) | undefined;
+  private isClosing = false;
 
   constructor({
     accountId,
@@ -465,20 +469,36 @@ export class WorkspaceApp {
   }
 
   close() {
+    if (this.isClosing) {
+      return;
+    }
+
+    this.isClosing = true;
+
+    this.teardown();
+
+    if (this._window && !this._window.isDestroyed()) {
+      this._window.destroy();
+    }
+
+    this.account.instance.tabs.removeTab(this.id);
+  }
+
+  private teardown() {
     if (!this.viewDestroyed) {
       this.view.webContents.removeAllListeners();
 
       this.view.webContents.close();
     }
 
-    if (!this._window) {
+    if (this._window) {
+      this.account.instance.windows.delete(this._window);
+    } else {
       if (!main.window.isDestroyed()) {
         main.window.contentView.removeChildView(this.view);
       }
 
       this.account.instance.windows.delete(this.view);
-
-      this.account.instance.tabs.removeTab(this.id);
     }
 
     this.teardownApp();
@@ -487,9 +507,15 @@ export class WorkspaceApp {
   }
 
   private handleClose = () => {
-    this.close();
+    if (this.isClosing) {
+      return;
+    }
 
-    this.account.instance.windows.delete(this.window);
+    this.isClosing = true;
+
+    this.account.instance.tabs.handleWindowedTabClosed(this);
+
+    this.teardown();
   };
 
   private setupApp() {
@@ -522,7 +548,7 @@ export class WorkspaceApp {
     if (this._window) {
       this.registerWindowedViewListeners();
     } else {
-      this.unregisterTabBroadcasts = registerTabBroadcasts(this.view);
+      registerTabBroadcasts(this.view);
     }
   }
 
@@ -546,18 +572,9 @@ export class WorkspaceApp {
   }
 
   detachToWindow() {
-    this.account.instance.tabs.removeTab(this.id);
-
-    this.pinned = false;
-    this.loadOnLaunch = false;
-
     main.window.contentView.removeChildView(this.view);
 
     this.account.instance.windows.delete(this.view);
-
-    this.unregisterTabBroadcasts?.();
-
-    this.unregisterTabBroadcasts = undefined;
 
     this._window = this.createBrowserWindow();
 
@@ -578,6 +595,14 @@ export class WorkspaceApp {
 
       ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
     });
+
+    this.account.instance.tabs.deactivateTab(this.id);
+  }
+
+  focusWindow() {
+    this.window.show();
+
+    this.window.focus();
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
@@ -710,6 +735,10 @@ export class WorkspaceApp {
 
   get isLoading() {
     return this.view.webContents.isLoading();
+  }
+
+  get url() {
+    return this.view.webContents.getURL() || (this.app ? getWorkspaceAppUrl(this.app) : "");
   }
 
   copyUrl() {

@@ -15,7 +15,7 @@ import {
 import { Separator } from "@meru/ui/components/separator";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
@@ -92,7 +92,13 @@ function StripTab({
       >
         <TabIcon tab={tab} />
         {isWideRow && <span className="truncate">{tab.title}</span>}
+        {isWideRow && tab.windowed && <AppWindowIcon className="size-3" />}
       </Button>
+      {!isWideRow && tab.windowed && (
+        <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+          <AppWindowIcon className="size-3" />
+        </div>
+      )}
       {isCloseable && (
         <Button
           variant="secondary"
