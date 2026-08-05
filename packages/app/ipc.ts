@@ -683,7 +683,7 @@ class Ipc {
     ipc.main.on("gmail.closeComposeWindow", (event) => {
       for (const accountInstance of accounts.instances.values()) {
         for (const window of accountInstance.windows) {
-          if (window instanceof BrowserWindow && window.webContents.id === event.sender.id) {
+          if (window.webContents.id === event.sender.id) {
             window.hide();
 
             const browserWindowId = window.id;

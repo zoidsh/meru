@@ -4,12 +4,11 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import {
   app,
-  BrowserWindow,
+  type BrowserWindow,
   type IpcMainEvent,
   ipcMain,
   type Session,
   session,
-  type WebContentsView,
 } from "electron";
 import { blocker } from "./blocker";
 import { config } from "./config";
@@ -27,7 +26,7 @@ export class Account {
 
   tabs: Tabs;
 
-  windows: Set<BrowserWindow | WebContentsView> = new Set();
+  windows: Set<BrowserWindow> = new Set();
 
   constructor(accountConfig: AccountConfig) {
     this.session = session.fromPartition(`persist:${accountConfig.id}`);
@@ -95,32 +94,31 @@ export class Account {
     });
   }
 
+  private findGoogleMeetParentWindow() {
+    for (const workspaceAppWindow of this.windows) {
+      const workspaceApp = WorkspaceApp.tryFromWebContents(workspaceAppWindow.webContents);
+
+      if (workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
+        return workspaceAppWindow;
+      }
+    }
+
+    const hasEmbeddedGoogleMeetTab = this.tabs.tabs.some(
+      (tab) =>
+        tab instanceof WorkspaceApp &&
+        !tab.isWindowed &&
+        tab.view.webContents.getURL().startsWith(GOOGLE_MEET_URL),
+    );
+
+    if (hasEmbeddedGoogleMeetTab) {
+      return main.window;
+    }
+  }
+
   private registerSessionDisplayMediaRequestHandler() {
     this.session.setDisplayMediaRequestHandler(
       async (_request, callback) => {
-        let googleMeetParentWindow: BrowserWindow | undefined;
-
-        for (const workspaceAppWindowOrView of this.windows) {
-          if (workspaceAppWindowOrView instanceof BrowserWindow) {
-            const workspaceApp = WorkspaceApp.tryFromWebContents(
-              workspaceAppWindowOrView.webContents,
-            );
-
-            if (workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
-              googleMeetParentWindow = workspaceAppWindowOrView;
-
-              break;
-            }
-
-            continue;
-          }
-
-          if (workspaceAppWindowOrView.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
-            googleMeetParentWindow = main.window;
-
-            break;
-          }
-        }
+        const googleMeetParentWindow = this.findGoogleMeetParentWindow();
 
         if (!googleMeetParentWindow) {
           callback({});

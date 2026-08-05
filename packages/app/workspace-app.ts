@@ -413,8 +413,6 @@ export class WorkspaceApp {
     if (this._window) {
       this.registerWindowListeners();
     } else {
-      this.account.instance.windows.add(this.view);
-
       if (appState.isSettingsOpen) {
         this.view.setVisible(false);
       }
@@ -524,12 +522,8 @@ export class WorkspaceApp {
 
     if (this._window) {
       this.account.instance.windows.delete(this._window);
-    } else {
-      if (!main.window.isDestroyed()) {
-        main.window.contentView.removeChildView(this.view);
-      }
-
-      this.account.instance.windows.delete(this.view);
+    } else if (!main.window.isDestroyed()) {
+      main.window.contentView.removeChildView(this.view);
     }
 
     this.teardownApp();
@@ -612,8 +606,6 @@ export class WorkspaceApp {
   detachToWindow() {
     main.window.contentView.removeChildView(this.view);
 
-    this.account.instance.windows.delete(this.view);
-
     this._window = this.createBrowserWindow();
 
     this.window.contentView.addChildView(this.view);
@@ -660,8 +652,6 @@ export class WorkspaceApp {
     discardedWindow.destroy();
 
     main.window.contentView.addChildView(this.view, 0);
-
-    this.account.instance.windows.add(this.view);
 
     if (appState.isSettingsOpen) {
       this.view.setVisible(false);
