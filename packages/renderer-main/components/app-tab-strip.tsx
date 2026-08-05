@@ -1,6 +1,6 @@
 import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { move } from "@dnd-kit/helpers";
-import { type DragEndEvent, DragDropProvider, KeyboardSensor, PointerSensor } from "@dnd-kit/react";
+import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -29,7 +29,6 @@ const tabStripSensors = [
     preventActivation: (event) =>
       event.target instanceof Element && event.target.closest("[data-tab-close]") !== null,
   }),
-  KeyboardSensor,
 ];
 
 function moveSectionTab(
