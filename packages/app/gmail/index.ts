@@ -396,13 +396,7 @@ export class Gmail {
     this.updateViewBounds();
 
     this.view.webContents.once("did-navigate", () => {
-      const gmailZoomFactor = config.get("workspaceApps.zoomFactors").gmail;
-
-      if (gmailZoomFactor !== undefined) {
-        this.view.webContents.setZoomFactor(
-          clamp(gmailZoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
-        );
-      }
+      this.applyPersistedZoomFactor();
     });
 
     this.view.webContents.on("dom-ready", () => {
@@ -485,6 +479,46 @@ export class Gmail {
       width: width - tabStripWidth,
       height: height - APP_TITLEBAR_HEIGHT,
     });
+  }
+
+  zoomIn() {
+    this.updateZoomFactor(this.persistedZoomFactor + 0.1);
+  }
+
+  zoomOut() {
+    this.updateZoomFactor(this.persistedZoomFactor - 0.1);
+  }
+
+  resetZoom() {
+    this.updateZoomFactor(1);
+  }
+
+  private get persistedZoomFactor() {
+    return config.get("workspaceApps.zoomFactors").gmail ?? 1;
+  }
+
+  private updateZoomFactor(zoomFactor: number) {
+    const clampedZoomFactor = clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR);
+
+    const zoomFactors = { ...config.get("workspaceApps.zoomFactors") };
+
+    if (clampedZoomFactor === 1) {
+      delete zoomFactors.gmail;
+    } else {
+      zoomFactors.gmail = clampedZoomFactor;
+    }
+
+    config.set("workspaceApps.zoomFactors", zoomFactors);
+  }
+
+  applyPersistedZoomFactor() {
+    if (!this._view) {
+      return;
+    }
+
+    this.view.webContents.setZoomFactor(
+      clamp(this.persistedZoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+    );
   }
 
   destroy() {

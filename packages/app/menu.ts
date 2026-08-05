@@ -1,6 +1,5 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
-import { clamp } from "@meru/shared/utils";
 import {
   app,
   BrowserWindow,
@@ -18,40 +17,10 @@ import { log } from "@/lib/log";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
-import { WorkspaceApp, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from "@/workspace-app";
+import { WorkspaceApp } from "@/workspace-app";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
 import { appState } from "./state";
-
-function setGmailZoomFactor(zoomFactor: number) {
-  const clampedZoomFactor = clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR);
-
-  for (const [_accountId, instance] of accounts.instances) {
-    instance.gmail.view.webContents.setZoomFactor(clampedZoomFactor);
-  }
-
-  const zoomFactors = { ...config.get("workspaceApps.zoomFactors") };
-
-  if (clampedZoomFactor === 1) {
-    delete zoomFactors.gmail;
-  } else {
-    zoomFactors.gmail = clampedZoomFactor;
-  }
-
-  config.set("workspaceApps.zoomFactors", zoomFactors);
-}
-
-const gmailZoomTarget = {
-  zoomIn: () => {
-    setGmailZoomFactor((config.get("workspaceApps.zoomFactors").gmail ?? 1) + 0.1);
-  },
-  zoomOut: () => {
-    setGmailZoomFactor((config.get("workspaceApps.zoomFactors").gmail ?? 1) - 0.1);
-  },
-  resetZoom: () => {
-    setGmailZoomFactor(1);
-  },
-};
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -152,7 +121,7 @@ export class AppMenu {
         return activeTab;
       }
 
-      return gmailZoomTarget;
+      return accounts.getSelectedAccount().instance.gmail;
     };
 
     const zoomIn = () => {
