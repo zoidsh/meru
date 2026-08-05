@@ -110,7 +110,7 @@ function StripTab({
   const isWideRow = presentation === "wideRow";
 
   const canOpenSecondInstance =
-    tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
+    tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
 
   return (
     <div ref={ref} className={cn("group relative", className)}>

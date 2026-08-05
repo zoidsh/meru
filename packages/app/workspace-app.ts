@@ -223,8 +223,13 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
+      if (workspaceApps[matchedSupportedWorkspaceApp].popupOnly) {
+        new WorkspaceApp({ accountId, url, asWindow: true });
+
+        return { action: "deny" };
+      }
+
       const openBehavior: WorkspaceAppOpenBehavior =
-        workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow ||
         disposition === "new-window"
           ? "newWindow"
           : disposition === "background-tab"

@@ -306,9 +306,7 @@ class Ipc {
         .some((accountTab) => !accountTab.pinned);
 
       Menu.buildFromTemplate([
-        ...(tabApp &&
-        !workspaceApps[tabApp].singleInstance &&
-        !workspaceApps[tabApp].alwaysOpenAsWindow
+        ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
           ? [
               {
                 label: `New ${workspaceApps[tabApp].label} Tab`,
