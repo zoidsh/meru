@@ -77,9 +77,7 @@ function StripTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && !tab.windowed && "pr-7",
-          isWideRow && tab.windowed && "pr-6",
-          isWideRow && tab.windowed && isCloseable && "group-hover:pr-11",
+          isWideRow && isCloseable && "group-hover:pr-7",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -106,19 +104,12 @@ function StripTab({
         }}
       >
         <TabIcon tab={tab} />
-        {isWideRow && <span className="truncate">{tab.title}</span>}
+        {isWideRow && <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>}
+        {isWideRow && tab.windowed && (
+          <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
+        )}
       </Button>
-      {tab.windowed &&
-        (isWideRow ? (
-          <AppWindowIcon
-            className={cn(
-              "pointer-events-none absolute top-1/2 right-2 size-3 -translate-y-1/2 text-muted-foreground",
-              isCloseable && "group-hover:right-7",
-            )}
-          />
-        ) : (
-          <WindowedTabBadge className="-right-1 -bottom-1" />
-        ))}
+      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {isCloseable && (
         <Button
           variant="secondary"
