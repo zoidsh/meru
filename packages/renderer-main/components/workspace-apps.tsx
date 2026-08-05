@@ -58,7 +58,7 @@ export function BookmarkedWorkspaceAppsMenu({
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} orientation={orientation}>
       <DropdownMenuTrigger render={trigger} />
-      <DropdownMenuBackdrop />
+      <DropdownMenuBackdrop className="draggable-none" />
       <DropdownMenuContent
         side={side}
         align={align}

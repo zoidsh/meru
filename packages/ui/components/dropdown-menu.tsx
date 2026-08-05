@@ -22,7 +22,7 @@ function DropdownMenuBackdrop({ className, ...props }: MenuPrimitive.Backdrop.Pr
     <MenuPrimitive.Portal>
       <MenuPrimitive.Backdrop
         data-slot="dropdown-menu-backdrop"
-        className={cn("fixed inset-0 draggable-none", className)}
+        className={cn("fixed inset-0", className)}
         {...props}
       />
     </MenuPrimitive.Portal>
