@@ -368,19 +368,12 @@ export function AppTitlebar() {
             <TitlebarNavigationControls
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
               canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
-              isLoading={Boolean(activeTab?.loading)}
               disabled={matchUnifiedInboxRoute}
               onGoBack={() => {
                 ipc.main.send("workspaceApp.goBack");
               }}
               onGoForward={() => {
                 ipc.main.send("workspaceApp.goForward");
-              }}
-              onReload={() => {
-                ipc.main.send("workspaceApp.reload");
-              }}
-              onStop={() => {
-                ipc.main.send("workspaceApp.stop");
               }}
             />
           </TitlebarButtonGroup>

@@ -42,40 +42,21 @@ function NavigationControls({ workspaceAppId }: { workspaceAppId: string }) {
     canGoBack: false,
     canGoForward: false,
   });
-  const [isLoading, setIsLoading] = useState(false);
-
   useEffect(() => {
     return ipc.renderer.on("workspaceApp.navigationStateChanged", (_event, state) => {
       setNavigationState(state);
     });
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = ipc.renderer.on("workspaceApp.loadingStateChanged", (_event, loading) => {
-      setIsLoading(loading);
-    });
-
-    ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setIsLoading);
-
-    return unsubscribe;
-  }, [workspaceAppId]);
-
   return (
     <TitlebarNavigationControls
       canGoBack={navigationState.canGoBack}
       canGoForward={navigationState.canGoForward}
-      isLoading={isLoading}
       onGoBack={() => {
         ipc.main.send("workspaceApp.goBack", workspaceAppId);
       }}
       onGoForward={() => {
         ipc.main.send("workspaceApp.goForward", workspaceAppId);
-      }}
-      onReload={() => {
-        ipc.main.send("workspaceApp.reload", workspaceAppId);
-      }}
-      onStop={() => {
-        ipc.main.send("workspaceApp.stop", workspaceAppId);
       }}
     />
   );

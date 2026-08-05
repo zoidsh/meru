@@ -11,7 +11,6 @@ export type TabState = {
   pinned: boolean;
   dormant: boolean;
   windowed: boolean;
-  loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
 };

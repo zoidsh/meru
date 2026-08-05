@@ -231,10 +231,6 @@ export class Gmail {
     this._view = view;
   }
 
-  get isLoading() {
-    return this._view ? this._view.webContents.isLoading() : false;
-  }
-
   get navigationHistory() {
     if (!this._view) {
       return { canGoBack: false, canGoForward: false };

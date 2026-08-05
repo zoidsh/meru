@@ -18,8 +18,6 @@ export function registerTabBroadcasts(view: WebContentsView) {
   view.webContents.on("did-navigate", broadcastTabsChanged);
   view.webContents.on("did-navigate-in-page", broadcastTabsChanged);
   view.webContents.on("page-title-updated", broadcastTabsChanged);
-  view.webContents.on("did-start-loading", broadcastTabsChanged);
-  view.webContents.on("did-stop-loading", broadcastTabsChanged);
 }
 
 export function isWindowedTab(tab: Tab) {
@@ -37,7 +35,6 @@ export type Tab = {
   app: SupportedWorkspaceApp | undefined;
   title: string;
   pinned: boolean;
-  isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
   updateViewBounds?: () => void;
@@ -51,8 +48,6 @@ export class DormantTab {
   url: string;
 
   pinned = true;
-
-  isLoading = false;
 
   navigationHistory = { canGoBack: false, canGoForward: false };
 
@@ -90,9 +85,6 @@ export class Tabs {
         pinned: false,
         get title() {
           return gmail.title;
-        },
-        get isLoading() {
-          return gmail.isLoading;
         },
         get navigationHistory() {
           return gmail.navigationHistory;
@@ -504,7 +496,6 @@ export class Tabs {
       pinned: tab.pinned,
       dormant: tab instanceof DormantTab,
       windowed: isWindowedTab(tab),
-      loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,
     }));

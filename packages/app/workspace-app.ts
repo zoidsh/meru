@@ -590,15 +590,11 @@ export class WorkspaceApp {
   private registerWindowedViewListeners() {
     this.view.webContents.on("did-navigate", this.broadcastNavigationState);
     this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
   }
 
   private unregisterWindowedViewListeners() {
     this.view.webContents.off("did-navigate", this.broadcastNavigationState);
     this.view.webContents.off("did-navigate-in-page", this.broadcastNavigationState);
-    this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
-    this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
   }
 
   private registerWindowListeners() {
@@ -628,8 +624,6 @@ export class WorkspaceApp {
 
     this.window.webContents.once("did-finish-load", () => {
       this.broadcastNavigationState();
-
-      this.broadcastLoadingState();
 
       ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
     });
@@ -731,14 +725,6 @@ export class WorkspaceApp {
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   }
-
-  broadcastLoadingState = () => {
-    ipc.renderer.send(
-      this.chromeWebContents,
-      "workspaceApp.loadingStateChanged",
-      this.view.webContents.isLoading(),
-    );
-  };
 
   updateViewBounds = () => {
     if (!this._window) {
@@ -876,10 +862,6 @@ export class WorkspaceApp {
 
   stop() {
     this.view.webContents.stop();
-  }
-
-  get isLoading() {
-    return this.view.webContents.isLoading();
   }
 
   get url() {

@@ -153,8 +153,6 @@ export type IpcMainEvents =
       "settings.toggleIsOpen": [open?: boolean];
       "workspaceApp.goBack": [workspaceAppId?: string];
       "workspaceApp.goForward": [workspaceAppId?: string];
-      "workspaceApp.reload": [workspaceAppId?: string];
-      "workspaceApp.stop": [workspaceAppId?: string];
       "gmail.unreadCountChanged": [unreadCountString: string];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
@@ -209,7 +207,6 @@ export type IpcMainEvents =
       "app.setAsDefaultMailtoClient": () => void;
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
-      "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
     };
 
 export type IpcRendererEvent = {
@@ -238,6 +235,5 @@ export type IpcRendererEvent = {
   ];
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "workspaceApp.pageTitleChanged": [title: string];
-  "workspaceApp.loadingStateChanged": [loading: boolean];
   "config.configChanged": [config: Config];
 };

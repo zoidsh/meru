@@ -128,18 +128,6 @@ class Ipc {
       getNavigationWebContents(workspaceAppId).navigationHistory.goForward();
     });
 
-    this.main.on("workspaceApp.reload", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).reload();
-    });
-
-    this.main.on("workspaceApp.stop", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).stop();
-    });
-
-    this.main.handle("workspaceApp.getLoadingState", (_event, workspaceAppId) => {
-      return getNavigationWebContents(workspaceAppId).isLoading();
-    });
-
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
       const accountInstance = accounts.findInstanceByGmailWebContentsId(event.sender.id);
 

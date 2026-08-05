@@ -52,6 +52,18 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
         }
       }
 
+      menuItems.push(
+        {
+          label: "Reload",
+          click: () => {
+            window.webContents.reload();
+          },
+        },
+        {
+          type: "separator",
+        },
+      );
+
       if (window !== selectedAccount.instance.gmail.view) {
         menuItems.push(
           {
