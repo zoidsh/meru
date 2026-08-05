@@ -681,31 +681,29 @@ class Ipc {
     });
 
     ipc.main.on("gmail.closeComposeWindow", (event) => {
-      for (const accountInstance of accounts.instances.values()) {
-        for (const window of accountInstance.windows) {
-          if (window.webContents.id === event.sender.id) {
-            window.hide();
+      const composeWorkspaceApp = WorkspaceApp.tryFromViewWebContents(event.sender);
 
-            const browserWindowId = window.id;
-
-            window.once("closed", () => {
-              ipc.renderer.send(
-                accountInstance.gmail.view.webContents,
-                "gmail.dismissMessageSentNotification",
-                browserWindowId,
-              );
-            });
-
-            ipc.renderer.send(
-              accountInstance.gmail.view.webContents,
-              "gmail.showMessageSentNotification",
-              browserWindowId,
-            );
-
-            return;
-          }
-        }
+      if (!composeWorkspaceApp?.isWindowed) {
+        return;
       }
+
+      const composeWindow = composeWorkspaceApp.window;
+
+      const gmailWebContents = composeWorkspaceApp.account.instance.gmail.view.webContents;
+
+      composeWindow.hide();
+
+      const browserWindowId = composeWindow.id;
+
+      composeWindow.once("closed", () => {
+        ipc.renderer.send(
+          gmailWebContents,
+          "gmail.dismissMessageSentNotification",
+          browserWindowId,
+        );
+      });
+
+      ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId);
     });
 
     ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {
@@ -715,9 +713,15 @@ class Ipc {
         throw new Error('Could not find compose window with the given "browserWindowId"');
       }
 
+      const composeWorkspaceApp = WorkspaceApp.tryFromWebContents(composeWindow.webContents);
+
+      if (!composeWorkspaceApp) {
+        throw new Error('Could not find compose workspace app with the given "browserWindowId"');
+      }
+
       composeWindow.show();
 
-      ipc.renderer.send(composeWindow.webContents, "gmail.undoMessageSent");
+      ipc.renderer.send(composeWorkspaceApp.view.webContents, "gmail.undoMessageSent");
     });
 
     ipc.main.on("gmail.setUserEmail", (event, email) => {
