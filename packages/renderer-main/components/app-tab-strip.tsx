@@ -1,4 +1,4 @@
-import { PointerActivationConstraints } from "@dnd-kit/dom";
+import { Accessibility, defaultPreset, PointerActivationConstraints } from "@dnd-kit/dom";
 import { move } from "@dnd-kit/helpers";
 import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
@@ -22,6 +22,8 @@ import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
 import { type MouseEvent, type Ref, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+
+const tabStripPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
 const tabStripSensors = [
   PointerSensor.configure({
@@ -332,6 +334,7 @@ export function AppTabStrip() {
     >
       {isWide ? (
         <DragDropProvider
+          plugins={tabStripPlugins}
           sensors={tabStripSensors}
           onDragEnd={(event) => {
             moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
@@ -364,6 +367,7 @@ export function AppTabStrip() {
       )}
       {isWide ? (
         <DragDropProvider
+          plugins={tabStripPlugins}
           sensors={tabStripSensors}
           onDragEnd={(event) => {
             moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
