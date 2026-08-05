@@ -14,6 +14,11 @@ import { type ComponentProps, type ReactElement, useEffect, useState } from "rea
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
+// The titlebar centers its buttons in a 39px box (its 40px height minus the bottom border), so a
+// trigger's center sits on a half pixel. The half-pixel vertical padding keeps the popup's height
+// odd, which turns the centered position into a whole pixel instead of one that gets rounded down.
+const HORIZONTAL_MENU_CONTENT_CLASS_NAME = "flex w-auto min-w-0 flex-row gap-1 py-[3.5px]";
+
 export function BookmarkedWorkspaceAppsMenu({
   trigger,
   orientation,
@@ -63,7 +68,7 @@ export function BookmarkedWorkspaceAppsMenu({
         side={side}
         align={align}
         className={cn(
-          orientation === "horizontal" ? "flex w-auto min-w-0 flex-row gap-1" : "space-y-1",
+          orientation === "horizontal" ? HORIZONTAL_MENU_CONTENT_CLASS_NAME : "space-y-1",
           className,
         )}
       >
