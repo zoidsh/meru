@@ -297,11 +297,7 @@ export function AppTabStrip() {
   );
 
   const tabStripWidth = selectedAccountTabs
-    ? getTabStripWidth(
-        selectedAccountTabs.tabs,
-        (config?.["workspaceApps.bookmarkedApps"].length ?? 0) > 0,
-        config?.["workspaceApps.tabStripWidth"] ?? "auto",
-      )
+    ? getTabStripWidth(selectedAccountTabs.tabs, config?.["workspaceApps.tabStripWidth"] ?? "auto")
     : 0;
 
   if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {
