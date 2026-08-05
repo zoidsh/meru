@@ -116,7 +116,7 @@ function StripTab({
           variant="secondary"
           size="icon"
           className={cn(
-            "absolute hidden group-hover:flex",
+            "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
               ? "top-1/2 right-1 size-5 -translate-y-1/2"
               : "-top-1 -right-1 size-4 rounded-full",
