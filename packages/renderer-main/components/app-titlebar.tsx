@@ -101,6 +101,7 @@ function WorkspaceAppsLauncher() {
       side="left"
       align="center"
       showAppLabels={false}
+      className="draggable-none"
     />
   );
 }
