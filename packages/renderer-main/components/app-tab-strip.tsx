@@ -105,7 +105,11 @@ function StripTab({
         }}
       >
         <TabIcon tab={tab} />
-        {isWideRow && <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>}
+        {isWideRow && (
+          <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
+            {tab.title}
+          </span>
+        )}
         {isWideRow && tab.windowed && (
           <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
