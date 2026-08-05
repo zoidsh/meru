@@ -3,6 +3,7 @@ import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import {
   DropdownMenu,
+  DropdownMenuBackdrop,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -57,6 +58,7 @@ export function BookmarkedWorkspaceAppsMenu({
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} orientation={orientation}>
       <DropdownMenuTrigger render={trigger} />
+      <DropdownMenuBackdrop />
       <DropdownMenuContent
         side={side}
         align={align}

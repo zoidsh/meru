@@ -17,6 +17,18 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+function DropdownMenuBackdrop({ className, ...props }: MenuPrimitive.Backdrop.Props) {
+  return (
+    <MenuPrimitive.Portal>
+      <MenuPrimitive.Backdrop
+        data-slot="dropdown-menu-backdrop"
+        className={cn("fixed inset-0 draggable-none", className)}
+        {...props}
+      />
+    </MenuPrimitive.Portal>
+  );
+}
+
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
@@ -242,6 +254,7 @@ export {
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,
+  DropdownMenuBackdrop,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
