@@ -99,6 +99,8 @@ export const config = new Store<Config>({
     "workspaceApps.bookmarkedApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
+    "workspaceApps.persistZoom": true,
+    "workspaceApps.zoomFactors": {},
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,

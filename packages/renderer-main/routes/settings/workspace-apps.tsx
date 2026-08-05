@@ -195,6 +195,12 @@ export function WorkspaceAppsSettings() {
           )}
           <FieldSeparator />
           <ConfigSwitchField
+            label="Persist Zoom"
+            description="Remember the zoom level of Workspace Apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
+            configKey="workspaceApps.persistZoom"
+            licenseKeyRequired
+          />
+          <ConfigSwitchField
             label="Show Account Label"
             description="Show the account label in the titlebar of Workspace Apps windows if using more than one account."
             configKey="workspaceApps.showAccountLabel"
