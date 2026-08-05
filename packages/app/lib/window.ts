@@ -1,6 +1,6 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_CONTENT_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { Config } from "@meru/shared/types";
 import {
   BrowserWindow,
@@ -80,7 +80,7 @@ export function getTitleBarOptions() {
       ? {
           color: getBackgroundColor(),
           symbolColor: nativeTheme.shouldUseDarkColors ? "#fafafa" : "#0a0a0a",
-          height: APP_TITLEBAR_CONTENT_HEIGHT,
+          height: APP_TITLEBAR_HEIGHT - 1,
         }
       : false;
 
