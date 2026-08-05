@@ -7,11 +7,11 @@ import { Button } from "./button";
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative bg-background select-none draggable"
+      className="relative border-b bg-background select-none draggable"
       style={{ height: APP_TITLEBAR_HEIGHT }}
     >
       <div
-        className="absolute top-0 bottom-px flex items-center justify-between px-1.5"
+        className="absolute top-0 bottom-0 flex items-center justify-between px-1.5"
         style={{
           left: "env(titlebar-area-x, 0)",
           width: "env(titlebar-area-width, 100%)",
@@ -19,7 +19,6 @@ export function Titlebar({ children }: { children: ReactNode }) {
       >
         {children}
       </div>
-      <div className="absolute inset-x-0 bottom-0 h-px bg-border" />
     </div>
   );
 }
