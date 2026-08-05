@@ -397,6 +397,10 @@ class Accounts {
   }
 
   sendTabsChangedToRenderer() {
+    if (main.window.isDestroyed()) {
+      return;
+    }
+
     ipc.renderer.send(
       main.window.webContents,
       "tabs.changed",
@@ -408,6 +412,10 @@ class Accounts {
   }
 
   sendAccountsChangedToRenderer() {
+    if (main.window.isDestroyed()) {
+      return;
+    }
+
     ipc.renderer.send(
       main.window.webContents,
       "accounts.changed",
