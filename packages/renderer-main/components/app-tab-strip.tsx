@@ -77,8 +77,9 @@ function StripTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && (tab.windowed ? "pr-11" : "pr-7"),
-          isWideRow && !isCloseable && tab.windowed && "pr-6",
+          isWideRow && isCloseable && !tab.windowed && "pr-7",
+          isWideRow && tab.windowed && "pr-6",
+          isWideRow && tab.windowed && isCloseable && "group-hover:pr-11",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
