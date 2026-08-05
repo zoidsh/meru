@@ -315,7 +315,6 @@ export function AppTitlebar() {
       <>
         <TitlebarLeft>
           <TitlebarButtonGroup>
-            <WorkspaceAppsLauncher />
             <TitlebarNavigationControls
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
               canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
@@ -388,6 +387,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Trial />
             <FindInPage />
+            <WorkspaceAppsLauncher />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
