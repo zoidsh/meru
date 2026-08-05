@@ -189,7 +189,7 @@ function SortableStripTab({
 }: {
   tab: TabState;
   accountId: AccountConfig["id"];
-  presentation: "wideRow" | "gridIcon";
+  presentation: "wideRow" | "narrowIcon" | "gridIcon";
   sectionIndex: number;
   className?: string;
 }) {
@@ -332,14 +332,14 @@ export function AppTabStrip() {
         ipc.main.send("tabs.showTabStripContextMenu", selectedAccount.config.id);
       }}
     >
-      {isWide ? (
-        <DragDropProvider
-          plugins={tabStripPlugins}
-          sensors={tabStripSensors}
-          onDragEnd={(event) => {
-            moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
-          }}
-        >
+      <DragDropProvider
+        plugins={tabStripPlugins}
+        sensors={tabStripSensors}
+        onDragEnd={(event) => {
+          moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
+        }}
+      >
+        {isWide ? (
           <div className="mb-1 grid w-full grid-cols-2 gap-2">
             {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
               <SortableStripTab
@@ -354,45 +354,35 @@ export function AppTabStrip() {
               />
             ))}
           </div>
-        </DragDropProvider>
-      ) : (
-        pinnedSectionTabs.map((tab) => (
-          <StripTab
-            key={tab.id}
-            tab={tab}
-            accountId={selectedAccount.config.id}
-            presentation="narrowIcon"
-          />
-        ))
-      )}
-      {isWide ? (
-        <DragDropProvider
-          plugins={tabStripPlugins}
-          sensors={tabStripSensors}
-          onDragEnd={(event) => {
-            moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
-          }}
-        >
-          {unpinnedTabs.map((tab, unpinnedTabIndex) => (
+        ) : (
+          pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
             <SortableStripTab
               key={tab.id}
               tab={tab}
               accountId={selectedAccount.config.id}
-              presentation="wideRow"
-              sectionIndex={unpinnedTabIndex}
+              presentation="narrowIcon"
+              sectionIndex={pinnedSectionTabIndex}
             />
-          ))}
-        </DragDropProvider>
-      ) : (
-        unpinnedTabs.map((tab) => (
-          <StripTab
+          ))
+        )}
+      </DragDropProvider>
+      <DragDropProvider
+        plugins={tabStripPlugins}
+        sensors={tabStripSensors}
+        onDragEnd={(event) => {
+          moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
+        }}
+      >
+        {unpinnedTabs.map((tab, unpinnedTabIndex) => (
+          <SortableStripTab
             key={tab.id}
             tab={tab}
             accountId={selectedAccount.config.id}
-            presentation="narrowIcon"
+            presentation={isWide ? "wideRow" : "narrowIcon"}
+            sectionIndex={unpinnedTabIndex}
           />
-        ))
-      )}
+        ))}
+      </DragDropProvider>
       <NewTabButton isWide={isWide} />
     </div>
   );
