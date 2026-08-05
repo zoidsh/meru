@@ -77,7 +77,8 @@ function StripTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && "pr-7",
+          isWideRow && isCloseable && (tab.windowed ? "pr-11" : "pr-7"),
+          isWideRow && !isCloseable && tab.windowed && "pr-6",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -103,13 +104,20 @@ function StripTab({
           ipc.main.send("tabs.showTabContextMenu", accountId, tab.id);
         }}
       >
-        <div className={cn("relative shrink-0", isWideRow && tab.windowed && "mr-1")}>
-          <TabIcon tab={tab} />
-          {isWideRow && tab.windowed && <WindowedTabBadge className="-right-2 -bottom-2" />}
-        </div>
+        <TabIcon tab={tab} />
         {isWideRow && <span className="truncate">{tab.title}</span>}
       </Button>
-      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
+      {tab.windowed &&
+        (isWideRow ? (
+          <AppWindowIcon
+            className={cn(
+              "pointer-events-none absolute top-1/2 right-2 size-3 -translate-y-1/2 text-muted-foreground",
+              isCloseable && "group-hover:right-7",
+            )}
+          />
+        ) : (
+          <WindowedTabBadge className="-right-1 -bottom-1" />
+        ))}
       {isCloseable && (
         <Button
           variant="secondary"
