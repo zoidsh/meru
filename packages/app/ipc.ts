@@ -435,17 +435,27 @@ class Ipc {
         {
           type: "separator",
         },
-        {
-          label: "Close",
-          enabled: !(tab instanceof DormantTab),
-          click: () => {
-            account.instance.tabs.closeTab(tabId);
+        tab instanceof DormantTab
+          ? {
+              label: "Open",
+              click: () => {
+                account.instance.tabs.activateTab(tabId);
 
-            if (account.config.selected) {
-              accounts.refreshSelectedAccountView();
+                if (account.config.selected) {
+                  accounts.refreshSelectedAccountView();
+                }
+              },
             }
-          },
-        },
+          : {
+              label: "Close",
+              click: () => {
+                account.instance.tabs.closeTab(tabId);
+
+                if (account.config.selected) {
+                  accounts.refreshSelectedAccountView();
+                }
+              },
+            },
         {
           label: "Close Other Tabs",
           enabled: hasOtherClosableTabs,
