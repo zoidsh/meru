@@ -217,15 +217,19 @@ class Ipc {
       const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
       Menu.buildFromTemplate([
-        {
-          label: "Move to Tab",
-          click: () => {
-            workspaceApp.adoptIntoTabs();
-          },
-        },
-        {
-          type: "separator",
-        },
+        ...(workspaceApp.isPopup
+          ? []
+          : [
+              {
+                label: "Move to Tab",
+                click: () => {
+                  workspaceApp.adoptIntoTabs();
+                },
+              },
+              {
+                type: "separator" as const,
+              },
+            ]),
         {
           label: "Copy Link",
           click: () => {
@@ -300,9 +304,7 @@ class Ipc {
         .some((accountTab) => !accountTab.pinned);
 
       Menu.buildFromTemplate([
-        ...(tabApp &&
-        !workspaceApps[tabApp].singleInstance &&
-        !workspaceApps[tabApp].alwaysOpenAsWindow
+        ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
           ? [
               {
                 label: `New ${workspaceApps[tabApp].label} Tab`,
@@ -602,11 +604,7 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       if (openBehavior === "newWindow") {
-        new WorkspaceApp({
-          accountId: selectedAccount.config.id,
-          url: getWorkspaceAppUrl(app),
-          asWindow: true,
-        });
+        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(app));
 
         return;
       }

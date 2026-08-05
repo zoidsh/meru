@@ -230,25 +230,26 @@ export class WorkspaceApp {
       !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
+      if (workspaceApps[matchedSupportedWorkspaceApp].popupOnly) {
+        new WorkspaceApp({ accountId, url, asWindow: true });
+
+        return { action: "deny" };
+      }
+
       const openBehavior: WorkspaceAppOpenBehavior =
-        workspaceApps[matchedSupportedWorkspaceApp].alwaysOpenAsWindow ||
         disposition === "new-window"
           ? "newWindow"
           : disposition === "background-tab"
             ? "backgroundTab"
             : config.get("workspaceApps.openBehavior");
 
+      const account = accounts.getAccount(accountId);
+
       if (openBehavior === "newWindow") {
-        new WorkspaceApp({
-          accountId,
-          url,
-          asWindow: true,
-        });
+        account.instance.tabs.openWindowedTab(url);
 
         return { action: "deny" };
       }
-
-      const account = accounts.getAccount(accountId);
 
       const workspaceApp = account.instance.tabs.openTab(url);
 
@@ -342,6 +343,10 @@ export class WorkspaceApp {
 
   get isWindowed() {
     return Boolean(this._window);
+  }
+
+  get isPopup() {
+    return !this.account.instance.tabs.getTab(this.id);
   }
 
   private get chromeWebContents() {
@@ -662,12 +667,12 @@ export class WorkspaceApp {
       this.view.setVisible(false);
     }
 
-    if (this.account.instance.tabs.getTab(this.id)) {
-      this.account.instance.tabs.activateTab(this.id);
-    } else {
+    if (this.isPopup) {
       registerTabBroadcasts(this.view);
 
       this.account.instance.tabs.adoptTab(this);
+    } else {
+      this.account.instance.tabs.activateTab(this.id);
     }
 
     accounts.selectAccount(this.accountId);

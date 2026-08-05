@@ -138,6 +138,22 @@ export class Tabs {
     return workspaceApp;
   }
 
+  openWindowedTab(url: string) {
+    const workspaceApp = new WorkspaceApp({
+      accountId: this.accountId,
+      url,
+      asWindow: true,
+    });
+
+    registerTabBroadcasts(workspaceApp.view);
+
+    this.tabs.push(workspaceApp);
+
+    this.broadcastTabsChanged();
+
+    return workspaceApp;
+  }
+
   adoptTab(workspaceApp: WorkspaceApp) {
     this.tabs.push(workspaceApp);
 
