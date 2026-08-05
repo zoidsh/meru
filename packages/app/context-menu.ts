@@ -8,6 +8,7 @@ import electronContextMenu from "electron-context-menu";
 import { accounts } from "./accounts";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
+import { openExternalUrl } from "./url";
 
 export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) {
   electronContextMenu({
@@ -49,6 +50,28 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
             },
           );
         }
+      }
+
+      if (window !== selectedAccount.instance.gmail.view) {
+        menuItems.push(
+          {
+            label: "Copy Link",
+            click: () => {
+              clipboard.writeText(window.webContents.getURL());
+            },
+          },
+          {
+            label: "Open in Default Browser",
+            click: () => {
+              openExternalUrl(window.webContents.getURL(), {
+                skipTrustedHostCheck: true,
+              });
+            },
+          },
+          {
+            type: "separator",
+          },
+        );
       }
 
       menuItems.push({
