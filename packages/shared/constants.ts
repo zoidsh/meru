@@ -2,7 +2,11 @@ export const APP_ID = "sh.zoid.meru";
 
 export const BASE_SPACING = 8;
 
-export const APP_TITLEBAR_HEIGHT = BASE_SPACING * 5;
+export const APP_TITLEBAR_CONTENT_HEIGHT = BASE_SPACING * 5;
+
+export const APP_TITLEBAR_BORDER_WIDTH = 1;
+
+export const APP_TITLEBAR_HEIGHT = APP_TITLEBAR_CONTENT_HEIGHT + APP_TITLEBAR_BORDER_WIDTH;
 
 export const APP_TAB_STRIP_NARROW_WIDTH = BASE_SPACING * 8;
 
