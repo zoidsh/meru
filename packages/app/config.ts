@@ -44,7 +44,6 @@ export const config = new Store<Config>({
     "dock.unreadBadge": true,
     "externalLinks.confirm": true,
     "externalLinks.trustedHosts": [],
-    "gmail.zoomFactor": 1,
     "downloads.saveAs": false,
     "downloads.openFolderWhenDone": false,
     "downloads.location": app.getPath("downloads"),
@@ -369,6 +368,19 @@ export const config = new Store<Config>({
 
         store.set("accounts", accounts);
       }
+
+      // @ts-expect-error: `gmail.zoomFactor` is now an entry in 'workspaceApps.zoomFactors'
+      const gmailZoomFactor = store.get("gmail.zoomFactor");
+
+      if (typeof gmailZoomFactor === "number" && gmailZoomFactor !== 1) {
+        store.set("workspaceApps.zoomFactors", {
+          ...store.get("workspaceApps.zoomFactors"),
+          gmail: gmailZoomFactor,
+        });
+      }
+
+      // @ts-expect-error
+      store.delete("gmail.zoomFactor");
     },
   },
 });
