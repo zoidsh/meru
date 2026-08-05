@@ -216,16 +216,22 @@ class Ipc {
     ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
       const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
+      const isPopupWindow = !workspaceApp.account.instance.tabs.getTab(workspaceApp.id);
+
       Menu.buildFromTemplate([
-        {
-          label: "Move to Tab",
-          click: () => {
-            workspaceApp.adoptIntoTabs();
-          },
-        },
-        {
-          type: "separator",
-        },
+        ...(isPopupWindow
+          ? []
+          : [
+              {
+                label: "Move to Tab",
+                click: () => {
+                  workspaceApp.adoptIntoTabs();
+                },
+              },
+              {
+                type: "separator" as const,
+              },
+            ]),
         {
           label: "Copy Link",
           click: () => {
