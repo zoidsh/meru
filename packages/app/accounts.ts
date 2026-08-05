@@ -51,6 +51,10 @@ class Accounts {
 
     config.onDidChange("workspaceApps.zoomFactors", () => {
       WorkspaceApp.applyPersistedZoomFactors();
+
+      for (const account of accounts.instances.values()) {
+        account.gmail.applyPersistedZoomFactor();
+      }
     });
   }
 
