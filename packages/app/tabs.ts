@@ -26,6 +26,12 @@ export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
 }
 
+type PinnedWorkspaceApp = WorkspaceApp & { app: SupportedWorkspaceApp };
+
+function isPinnedWorkspaceApp(tab: Tab): tab is PinnedWorkspaceApp {
+  return tab instanceof WorkspaceApp && tab.pinned && tab.app !== undefined;
+}
+
 export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
@@ -240,19 +246,17 @@ export class Tabs {
   closeTab(tabId: string) {
     const closableTab = this.getTab(tabId);
 
-    if (closableTab instanceof WorkspaceApp) {
-      this.recordRecentlyClosedTab(closableTab.url);
-
-      closableTab.close();
-
+    if (!(closableTab instanceof WorkspaceApp)) {
       return;
     }
 
-    if (closableTab instanceof DormantTab) {
+    if (isPinnedWorkspaceApp(closableTab)) {
+      this.dormantizePinnedTab(closableTab);
+    } else {
       this.recordRecentlyClosedTab(closableTab.url);
-
-      this.removeTab(tabId);
     }
+
+    closableTab.close();
   }
 
   handleWindowedTabClosed(windowedTab: WorkspaceApp) {
@@ -260,24 +264,8 @@ export class Tabs {
       return;
     }
 
-    if (windowedTab.pinned && windowedTab.app) {
-      this.tabs.splice(
-        this.tabs.indexOf(windowedTab),
-        1,
-        new DormantTab(
-          {
-            app: windowedTab.app,
-            url: windowedTab.url,
-            title: windowedTab.title,
-            loadOnLaunch: windowedTab.loadOnLaunch,
-          },
-          windowedTab.zoomFactor,
-        ),
-      );
-
-      this.broadcastTabsChanged();
-
-      accounts.savePinnedTabs();
+    if (isPinnedWorkspaceApp(windowedTab)) {
+      this.dormantizePinnedTab(windowedTab);
 
       return;
     }
@@ -285,6 +273,30 @@ export class Tabs {
     this.recordRecentlyClosedTab(windowedTab.url);
 
     this.removeTab(windowedTab.id);
+  }
+
+  private dormantizePinnedTab(pinnedWorkspaceApp: PinnedWorkspaceApp) {
+    this.tabs.splice(
+      this.tabs.indexOf(pinnedWorkspaceApp),
+      1,
+      new DormantTab(
+        {
+          app: pinnedWorkspaceApp.app,
+          url: pinnedWorkspaceApp.url,
+          title: pinnedWorkspaceApp.title,
+          loadOnLaunch: pinnedWorkspaceApp.loadOnLaunch,
+        },
+        pinnedWorkspaceApp.zoomFactor,
+      ),
+    );
+
+    if (this.activeTabId === pinnedWorkspaceApp.id) {
+      this.activeTabId = GMAIL_TAB_ID;
+    }
+
+    this.broadcastTabsChanged();
+
+    accounts.savePinnedTabs();
   }
 
   private recordRecentlyClosedTab(closedTabUrl: string) {
