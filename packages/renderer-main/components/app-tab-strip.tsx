@@ -38,6 +38,19 @@ function TabIcon({ tab }: { tab: TabState }) {
   return <GlobeIcon />;
 }
 
+function WindowedTabBadge({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
+        className,
+      )}
+    >
+      <AppWindowIcon className="size-2.5" />
+    </div>
+  );
+}
+
 function StripTab({
   tab,
   accountId,
@@ -90,15 +103,13 @@ function StripTab({
           ipc.main.send("tabs.showTabContextMenu", accountId, tab.id);
         }}
       >
-        <TabIcon tab={tab} />
-        {isWideRow && <span className="truncate">{tab.title}</span>}
-        {isWideRow && tab.windowed && <AppWindowIcon className="size-3" />}
-      </Button>
-      {!isWideRow && tab.windowed && (
-        <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-          <AppWindowIcon className="size-3" />
+        <div className={cn("relative shrink-0", isWideRow && tab.windowed && "mr-1")}>
+          <TabIcon tab={tab} />
+          {isWideRow && tab.windowed && <WindowedTabBadge className="-right-2 -bottom-2" />}
         </div>
-      )}
+        {isWideRow && <span className="truncate">{tab.title}</span>}
+      </Button>
+      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {isCloseable && (
         <Button
           variant="secondary"
