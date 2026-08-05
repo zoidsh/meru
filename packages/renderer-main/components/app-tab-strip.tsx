@@ -15,7 +15,7 @@ import {
 import { Separator } from "@meru/ui/components/separator";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
@@ -36,6 +36,19 @@ function TabIcon({ tab }: { tab: TabState }) {
   }
 
   return <GlobeIcon />;
+}
+
+function WindowedTabBadge({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
+        className,
+      )}
+    >
+      <AppWindowIcon className="size-2.5" />
+    </div>
+  );
 }
 
 function StripTab({
@@ -64,7 +77,7 @@ function StripTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && "pr-7",
+          isWideRow && isCloseable && "group-hover:pr-7",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -91,8 +104,12 @@ function StripTab({
         }}
       >
         <TabIcon tab={tab} />
-        {isWideRow && <span className="truncate">{tab.title}</span>}
+        {isWideRow && <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>}
+        {isWideRow && tab.windowed && (
+          <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
+        )}
       </Button>
+      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {isCloseable && (
         <Button
           variant="secondary"

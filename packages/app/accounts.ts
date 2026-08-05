@@ -8,6 +8,7 @@ import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
+import { isWindowedTab } from "./tabs";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -330,17 +331,21 @@ class Accounts {
   }
 
   hide() {
-    for (const account of this.instances.values()) {
-      for (const tab of account.tabs.tabs) {
-        tab.view?.setVisible(false);
-      }
-    }
+    this.setEmbeddedViewsVisible(false);
   }
 
   show() {
+    this.setEmbeddedViewsVisible(true);
+  }
+
+  private setEmbeddedViewsVisible(visible: boolean) {
     for (const account of this.instances.values()) {
       for (const tab of account.tabs.tabs) {
-        tab.view?.setVisible(true);
+        if (isWindowedTab(tab)) {
+          continue;
+        }
+
+        tab.view?.setVisible(visible);
       }
     }
   }

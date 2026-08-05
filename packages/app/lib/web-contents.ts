@@ -14,9 +14,12 @@ export function openViewDevToolsInDev(view: WebContentsView) {
   }
 }
 
-export function broadcastFoundInPageResults(view: WebContentsView, target: WebContents) {
+export function broadcastFoundInPageResults(
+  view: WebContentsView,
+  getTargetWebContents: () => WebContents,
+) {
   view.webContents.on("found-in-page", (_event, result) => {
-    ipc.renderer.send(target, "findInPage.result", {
+    ipc.renderer.send(getTargetWebContents(), "findInPage.result", {
       activeMatch: result.activeMatchOrdinal,
       totalMatches: result.matches,
     });

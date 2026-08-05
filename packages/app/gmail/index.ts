@@ -394,7 +394,7 @@ export class Gmail {
 
     this.registerNavigationHandler(this.view);
 
-    broadcastFoundInPageResults(this.view, main.window.webContents);
+    broadcastFoundInPageResults(this.view, () => main.window.webContents);
 
     this.registerWindowOpenHandler(this.view);
 

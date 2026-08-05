@@ -235,7 +235,13 @@ class Ipc {
     ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {
       const account = accounts.getAccount(accountId);
 
+      const selectedTab = account.instance.tabs.getTab(tabId);
+
       account.instance.tabs.activateTab(tabId);
+
+      if (selectedTab instanceof WorkspaceApp && selectedTab.isWindowed) {
+        return;
+      }
 
       if (account.config.selected) {
         accounts.refreshSelectedAccountView();
@@ -318,6 +324,19 @@ class Ipc {
             const workspaceApp = account.instance.tabs.openTab(duplicatedTabUrl);
 
             account.instance.tabs.activateTab(workspaceApp.id);
+
+            if (account.config.selected) {
+              accounts.refreshSelectedAccountView();
+            }
+          },
+        },
+        {
+          label: "Move to New Window",
+          enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
+          click: () => {
+            if (tab instanceof WorkspaceApp) {
+              tab.detachToWindow();
+            }
 
             if (account.config.selected) {
               accounts.refreshSelectedAccountView();

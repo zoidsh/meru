@@ -319,6 +319,10 @@ export class WorkspaceApp {
     return this._window;
   }
 
+  get isWindowed() {
+    return Boolean(this._window);
+  }
+
   private get chromeWebContents() {
     return this._window ? this._window.webContents : main.window.webContents;
   }
@@ -332,6 +336,8 @@ export class WorkspaceApp {
   private powerSaveBlockerId: number | undefined;
 
   private viewDestroyed = false;
+
+  private isClosing = false;
 
   constructor({
     accountId,
@@ -374,15 +380,7 @@ export class WorkspaceApp {
     WorkspaceApp.instances.set(this.id, this);
 
     if (this._window) {
-      this.window.on("resize", this.updateViewBounds);
-      this.window.on("close", this.handleClose);
-      this.window.on("focus", () => {
-        WorkspaceApp.instances.delete(this.id);
-
-        WorkspaceApp.instances.set(this.id, this);
-      });
-
-      this.account.instance.windows.add(this.window);
+      this.registerWindowListeners();
     } else {
       this.account.instance.windows.add(this.view);
 
@@ -449,7 +447,7 @@ export class WorkspaceApp {
 
     applyViewZoomLimits(view);
 
-    broadcastFoundInPageResults(view, this.chromeWebContents);
+    broadcastFoundInPageResults(view, () => this.chromeWebContents);
 
     this.setWindowOpenHandler(view);
 
@@ -471,20 +469,36 @@ export class WorkspaceApp {
   }
 
   close() {
+    if (this.isClosing) {
+      return;
+    }
+
+    this.isClosing = true;
+
+    this.teardown();
+
+    if (this._window && !this._window.isDestroyed()) {
+      this._window.destroy();
+    }
+
+    this.account.instance.tabs.removeTab(this.id);
+  }
+
+  private teardown() {
     if (!this.viewDestroyed) {
       this.view.webContents.removeAllListeners();
 
       this.view.webContents.close();
     }
 
-    if (!this._window) {
+    if (this._window) {
+      this.account.instance.windows.delete(this._window);
+    } else {
       if (!main.window.isDestroyed()) {
         main.window.contentView.removeChildView(this.view);
       }
 
       this.account.instance.windows.delete(this.view);
-
-      this.account.instance.tabs.removeTab(this.id);
     }
 
     this.teardownApp();
@@ -493,9 +507,15 @@ export class WorkspaceApp {
   }
 
   private handleClose = () => {
-    this.close();
+    if (this.isClosing) {
+      return;
+    }
 
-    this.account.instance.windows.delete(this.window);
+    this.isClosing = true;
+
+    this.account.instance.tabs.handleWindowedTabClosed(this);
+
+    this.teardown();
   };
 
   private setupApp() {
@@ -526,13 +546,63 @@ export class WorkspaceApp {
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
 
     if (this._window) {
-      this.view.webContents.on("did-navigate", this.broadcastNavigationState);
-      this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
-      this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
-      this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+      this.registerWindowedViewListeners();
     } else {
       registerTabBroadcasts(this.view);
     }
+  }
+
+  private registerWindowedViewListeners() {
+    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
+    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+    this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+  }
+
+  private registerWindowListeners() {
+    this.window.on("resize", this.updateViewBounds);
+    this.window.on("close", this.handleClose);
+    this.window.on("focus", () => {
+      WorkspaceApp.instances.delete(this.id);
+
+      WorkspaceApp.instances.set(this.id, this);
+    });
+
+    this.account.instance.windows.add(this.window);
+  }
+
+  detachToWindow() {
+    main.window.contentView.removeChildView(this.view);
+
+    this.account.instance.windows.delete(this.view);
+
+    this._window = this.createBrowserWindow();
+
+    this.window.contentView.addChildView(this.view);
+
+    this.view.setVisible(true);
+
+    this.registerWindowedViewListeners();
+    this.registerWindowListeners();
+
+    this.updateViewBounds();
+    this.updateWindowTitle();
+
+    this.window.webContents.once("did-finish-load", () => {
+      this.broadcastNavigationState();
+
+      this.broadcastLoadingState();
+
+      ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
+    });
+
+    this.account.instance.tabs.deactivateTab(this.id);
+  }
+
+  focusWindow() {
+    this.window.show();
+
+    this.view.webContents.focus();
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
@@ -573,6 +643,10 @@ export class WorkspaceApp {
 
     ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
 
+    this.updateWindowTitle();
+  };
+
+  private updateWindowTitle() {
     if (!this.title) {
       this.window.setTitle(app.name);
 
@@ -583,7 +657,7 @@ export class WorkspaceApp {
       config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
-  };
+  }
 
   broadcastLoadingState = () => {
     ipc.renderer.send(
@@ -661,6 +735,10 @@ export class WorkspaceApp {
 
   get isLoading() {
     return this.view.webContents.isLoading();
+  }
+
+  get url() {
+    return this.view.webContents.getURL() || (this.app ? getWorkspaceAppUrl(this.app) : "");
   }
 
   copyUrl() {
