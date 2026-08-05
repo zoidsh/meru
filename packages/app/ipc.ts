@@ -228,7 +228,13 @@ class Ipc {
     ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {
       const account = accounts.getAccount(accountId);
 
+      const selectedTab = account.instance.tabs.getTab(tabId);
+
       account.instance.tabs.activateTab(tabId);
+
+      if (selectedTab instanceof WorkspaceApp && selectedTab.hasWindow) {
+        return;
+      }
 
       if (account.config.selected) {
         accounts.refreshSelectedAccountView();
@@ -319,7 +325,7 @@ class Ipc {
         },
         {
           label: "Move to New Window",
-          enabled: tab instanceof WorkspaceApp,
+          enabled: tab instanceof WorkspaceApp && !tab.hasWindow,
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.detachToWindow();

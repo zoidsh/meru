@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { PinnedTab } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
@@ -27,14 +26,10 @@ export function registerTabBroadcasts(view: WebContentsView) {
   view.webContents.on("page-title-updated", broadcastTabsChanged);
   view.webContents.on("did-start-loading", broadcastTabsChanged);
   view.webContents.on("did-stop-loading", broadcastTabsChanged);
+}
 
-  return () => {
-    view.webContents.off("did-navigate", broadcastTabsChanged);
-    view.webContents.off("did-navigate-in-page", broadcastTabsChanged);
-    view.webContents.off("page-title-updated", broadcastTabsChanged);
-    view.webContents.off("did-start-loading", broadcastTabsChanged);
-    view.webContents.off("did-stop-loading", broadcastTabsChanged);
-  };
+export function isWindowedTab(tab: Tab) {
+  return tab instanceof WorkspaceApp && tab.hasWindow;
 }
 
 export type Tab = {
@@ -169,6 +164,12 @@ export class Tabs {
   activateTab(tabId: string) {
     const activatedTab = this.getTab(tabId);
 
+    if (activatedTab instanceof WorkspaceApp && activatedTab.hasWindow) {
+      activatedTab.focusWindow();
+
+      return;
+    }
+
     if (activatedTab instanceof DormantTab) {
       this.activeTabId = this.materializeDormantTab(activatedTab).id;
 
@@ -213,33 +214,38 @@ export class Tabs {
   }
 
   activateNextTab() {
-    const activeTabIndex = this.tabs.findIndex((tab) => tab.id === this.activeTabId);
-
-    const nextTab = this.tabs.at(activeTabIndex === this.tabs.length - 1 ? 0 : activeTabIndex + 1);
-
-    if (nextTab) {
-      this.activateTab(nextTab.id);
-    }
+    this.activateAdjacentTab(1);
   }
 
   activatePreviousTab() {
-    const activeTabIndex = this.tabs.findIndex((tab) => tab.id === this.activeTabId);
+    this.activateAdjacentTab(-1);
+  }
 
-    const previousTab = this.tabs.at(activeTabIndex === 0 ? -1 : activeTabIndex - 1);
+  private activateAdjacentTab(direction: 1 | -1) {
+    const cyclableTabs = this.tabs.filter((tab) => !isWindowedTab(tab));
 
-    if (previousTab) {
-      this.activateTab(previousTab.id);
+    const activeTabIndex = cyclableTabs.findIndex((tab) => tab.id === this.activeTabId);
+
+    const adjacentTab = cyclableTabs.at((activeTabIndex + direction) % cyclableTabs.length);
+
+    if (adjacentTab) {
+      this.activateTab(adjacentTab.id);
     }
+  }
+
+  deactivateTab(tabId: string) {
+    if (this.activeTabId === tabId) {
+      this.activeTabId = GMAIL_TAB_ID;
+    }
+
+    this.broadcastTabsChanged();
   }
 
   closeTab(tabId: string) {
     const closableTab = this.getTab(tabId);
 
     if (closableTab instanceof WorkspaceApp) {
-      this.recordRecentlyClosedTab(
-        closableTab.view.webContents.getURL() ||
-          (closableTab.app ? getWorkspaceAppUrl(closableTab.app) : ""),
-      );
+      this.recordRecentlyClosedTab(closableTab.url);
 
       closableTab.close();
 
@@ -251,6 +257,35 @@ export class Tabs {
 
       this.removeTab(tabId);
     }
+  }
+
+  handleWindowedTabClosed(windowedTab: WorkspaceApp) {
+    if (!this.tabs.includes(windowedTab)) {
+      return;
+    }
+
+    if (windowedTab.pinned && windowedTab.app) {
+      this.tabs.splice(
+        this.tabs.indexOf(windowedTab),
+        1,
+        new DormantTab({
+          app: windowedTab.app,
+          url: windowedTab.url,
+          title: windowedTab.title,
+          loadOnLaunch: windowedTab.loadOnLaunch,
+        }),
+      );
+
+      this.broadcastTabsChanged();
+
+      accounts.savePinnedTabs();
+
+      return;
+    }
+
+    this.recordRecentlyClosedTab(windowedTab.url);
+
+    this.removeTab(windowedTab.id);
   }
 
   private recordRecentlyClosedTab(closedTabUrl: string) {
@@ -366,7 +401,7 @@ export class Tabs {
       if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
         pinnedTabs.push({
           app: tab.app,
-          url: tab.view.webContents.getURL() || getWorkspaceAppUrl(tab.app),
+          url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
         });
@@ -398,6 +433,7 @@ export class Tabs {
       title: tab.app ? stripGoogleFromPageTitle(tab.title, tab.app) : tab.title,
       pinned: tab.pinned,
       dormant: tab instanceof DormantTab,
+      windowed: isWindowedTab(tab),
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,
