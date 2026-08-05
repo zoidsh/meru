@@ -338,6 +338,10 @@ export class WorkspaceApp {
     return Boolean(this._window);
   }
 
+  get isPopup() {
+    return !this.account.instance.tabs.getTab(this.id);
+  }
+
   private get chromeWebContents() {
     return this._window ? this._window.webContents : main.window.webContents;
   }
@@ -651,12 +655,12 @@ export class WorkspaceApp {
       this.view.setVisible(false);
     }
 
-    if (this.account.instance.tabs.getTab(this.id)) {
-      this.account.instance.tabs.activateTab(this.id);
-    } else {
+    if (this.isPopup) {
       registerTabBroadcasts(this.view);
 
       this.account.instance.tabs.adoptTab(this);
+    } else {
+      this.account.instance.tabs.activateTab(this.id);
     }
 
     accounts.selectAccount(this.accountId);

@@ -216,10 +216,8 @@ class Ipc {
     ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
       const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
-      const isPopupWindow = !workspaceApp.account.instance.tabs.getTab(workspaceApp.id);
-
       Menu.buildFromTemplate([
-        ...(isPopupWindow
+        ...(workspaceApp.isPopup
           ? []
           : [
               {
