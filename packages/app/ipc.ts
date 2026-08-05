@@ -4,6 +4,7 @@ import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { workspaceApps } from "@meru/shared/workspace-apps";
@@ -37,6 +38,18 @@ import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
+
+const undoSendLapseTimeouts = new Map<number, NodeJS.Timeout>();
+
+function clearUndoSendLapseTimeout(browserWindowId: number) {
+  const undoSendLapseTimeout = undoSendLapseTimeouts.get(browserWindowId);
+
+  if (undoSendLapseTimeout) {
+    clearTimeout(undoSendLapseTimeout);
+  }
+
+  undoSendLapseTimeouts.delete(browserWindowId);
+}
 
 function getNavigationWebContents(workspaceAppId?: string) {
   if (workspaceAppId) {
@@ -695,13 +708,35 @@ class Ipc {
 
       const browserWindowId = composeWindow.id;
 
+      clearUndoSendLapseTimeout(browserWindowId);
+
+      // Gmail's undo send period is configurable up to 30 seconds
+      undoSendLapseTimeouts.set(
+        browserWindowId,
+        setTimeout(() => {
+          if (!composeWindow.isDestroyed() && !composeWindow.isVisible()) {
+            composeWindow.close();
+          }
+        }, ms("30s")),
+      );
+
       composeWindow.once("closed", () => {
+        clearUndoSendLapseTimeout(browserWindowId);
+
+        if (gmailWebContents.isDestroyed()) {
+          return;
+        }
+
         ipc.renderer.send(
           gmailWebContents,
           "gmail.dismissMessageSentNotification",
           browserWindowId,
         );
       });
+
+      if (gmailWebContents.isDestroyed()) {
+        return;
+      }
 
       ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId);
     });
@@ -710,14 +745,16 @@ class Ipc {
       const composeWindow = BrowserWindow.fromId(browserWindowId);
 
       if (!composeWindow) {
-        throw new Error('Could not find compose window with the given "browserWindowId"');
+        return;
       }
 
       const composeWorkspaceApp = WorkspaceApp.tryFromWebContents(composeWindow.webContents);
 
       if (!composeWorkspaceApp) {
-        throw new Error('Could not find compose workspace app with the given "browserWindowId"');
+        return;
       }
+
+      clearUndoSendLapseTimeout(browserWindowId);
 
       composeWindow.show();
 
