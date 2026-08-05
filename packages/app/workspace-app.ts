@@ -17,18 +17,13 @@ import {
   globalShortcut,
   powerSaveBlocker,
   type WebContents,
-  WebContentsView,
+  type WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
 import { accounts } from "./accounts";
 import { config } from "./config";
-import { setupWindowContextMenu } from "./context-menu";
 import { ipc } from "./ipc";
-import {
-  applyViewZoomLimits,
-  broadcastFoundInPageResults,
-  openViewDevToolsInDev,
-} from "./lib/web-contents";
+import { createChildWebContentsView, openViewDevToolsInDev } from "./lib/web-contents";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -459,28 +454,22 @@ export class WorkspaceApp {
     url: string;
     options?: WebContentsViewConstructorOptions;
   }) {
-    const view = new WebContentsView({
-      ...options,
-      webPreferences: {
-        ...options?.webPreferences,
-        session: this.account.instance.session,
-        preload: getPreloadPath("workspace-app"),
+    const view = createChildWebContentsView({
+      session: this.account.instance.session,
+      preload: getPreloadPath("workspace-app"),
+      viewOptions: options,
+      attachView: (createdView) => {
+        if (this._window) {
+          this._window.contentView.addChildView(createdView);
+        } else {
+          main.window.contentView.addChildView(createdView, 0);
+        }
+      },
+      getFindInPageTargetWebContents: () => this.chromeWebContents,
+      registerWindowOpenHandler: (createdView) => {
+        this.setWindowOpenHandler(createdView);
       },
     });
-
-    if (this._window) {
-      this._window.contentView.addChildView(view);
-    } else {
-      main.window.contentView.addChildView(view, 0);
-    }
-
-    setupWindowContextMenu(view);
-
-    applyViewZoomLimits(view);
-
-    broadcastFoundInPageResults(view, () => this.chromeWebContents);
-
-    this.setWindowOpenHandler(view);
 
     view.webContents.loadURL(url);
 

@@ -1,5 +1,11 @@
 import { is } from "@electron-toolkit/utils";
-import type { WebContents, WebContentsView } from "electron";
+import {
+  type Session,
+  type WebContents,
+  WebContentsView,
+  type WebContentsViewConstructorOptions,
+} from "electron";
+import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 
 export function applyViewZoomLimits(view: WebContentsView) {
@@ -24,4 +30,44 @@ export function broadcastFoundInPageResults(
       totalMatches: result.matches,
     });
   });
+}
+
+export function createChildWebContentsView({
+  session,
+  preload,
+  additionalArguments,
+  viewOptions,
+  attachView,
+  getFindInPageTargetWebContents,
+  registerWindowOpenHandler,
+}: {
+  session: Session;
+  preload: string;
+  additionalArguments?: string[];
+  viewOptions?: WebContentsViewConstructorOptions;
+  attachView: (view: WebContentsView) => void;
+  getFindInPageTargetWebContents: () => WebContents;
+  registerWindowOpenHandler: (view: WebContentsView) => void;
+}) {
+  const view = new WebContentsView({
+    ...viewOptions,
+    webPreferences: {
+      ...(additionalArguments && { additionalArguments }),
+      ...viewOptions?.webPreferences,
+      session,
+      preload,
+    },
+  });
+
+  attachView(view);
+
+  setupWindowContextMenu(view);
+
+  applyViewZoomLimits(view);
+
+  broadcastFoundInPageResults(view, getFindInPageTargetWebContents);
+
+  registerWindowOpenHandler(view);
+
+  return view;
 }
