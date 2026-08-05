@@ -632,13 +632,17 @@ export class WorkspaceApp {
 
     this.account.instance.windows.add(this.view);
 
-    this.unregisterTabBroadcasts = registerTabBroadcasts(this.view);
-
     if (appState.isSettingsOpen) {
       this.view.setVisible(false);
     }
 
-    this.account.instance.tabs.adoptTab(this);
+    if (this.account.instance.tabs.getTab(this.id)) {
+      this.account.instance.tabs.activateTab(this.id);
+    } else {
+      registerTabBroadcasts(this.view);
+
+      this.account.instance.tabs.adoptTab(this);
+    }
 
     accounts.selectAccount(this.accountId);
 
