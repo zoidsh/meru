@@ -83,6 +83,7 @@ type WorkspaceAppOptions = {
   pinned?: boolean;
   loadOnLaunch?: boolean;
   app?: SupportedWorkspaceApp;
+  zoomFactor?: number;
 };
 
 export class WorkspaceApp {
@@ -103,6 +104,12 @@ export class WorkspaceApp {
       if (instance._window?.webContents.id === webContents.id) {
         return instance;
       }
+    }
+  }
+
+  static applyPersistedZoomFactors() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.applyPersistedZoomFactor();
     }
   }
 
@@ -362,6 +369,7 @@ export class WorkspaceApp {
     pinned,
     loadOnLaunch,
     app,
+    zoomFactor,
   }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
@@ -376,6 +384,10 @@ export class WorkspaceApp {
 
     this.updateViewBounds();
     this.registerViewListeners();
+
+    this.view.webContents.once("did-navigate", () => {
+      this.applyInitialZoomFactor(zoomFactor);
+    });
 
     this.view.webContents.once("destroyed", () => {
       this.viewDestroyed = true;
@@ -770,22 +782,94 @@ export class WorkspaceApp {
   }
 
   zoomIn() {
-    this.setZoomFactor(this.zoomFactor + 0.1);
+    const zoomFactor = this.zoomFactor;
+
+    if (zoomFactor === undefined) {
+      return;
+    }
+
+    this.updateZoomFactor(zoomFactor + 0.1);
   }
 
   zoomOut() {
-    this.setZoomFactor(this.zoomFactor - 0.1);
+    const zoomFactor = this.zoomFactor;
+
+    if (zoomFactor === undefined) {
+      return;
+    }
+
+    this.updateZoomFactor(zoomFactor - 0.1);
   }
 
   resetZoom() {
-    this.setZoomFactor(1);
+    this.updateZoomFactor(1);
   }
 
-  private get zoomFactor() {
+  get zoomFactor() {
+    if (this.viewDestroyed) {
+      return undefined;
+    }
+
     return this.view.webContents.getZoomFactor();
   }
 
+  private get persistableZoomApp() {
+    if (!config.get("workspaceApps.persistZoom") || !this.app || this.app === "gmail") {
+      return undefined;
+    }
+
+    return this.app;
+  }
+
+  private updateZoomFactor(zoomFactor: number) {
+    const clampedZoomFactor = clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR);
+
+    this.setZoomFactor(clampedZoomFactor);
+
+    const persistableZoomApp = this.persistableZoomApp;
+
+    if (!persistableZoomApp) {
+      return;
+    }
+
+    const zoomFactors = { ...config.get("workspaceApps.zoomFactors") };
+
+    if (clampedZoomFactor === 1) {
+      delete zoomFactors[persistableZoomApp];
+    } else {
+      zoomFactors[persistableZoomApp] = clampedZoomFactor;
+    }
+
+    config.set("workspaceApps.zoomFactors", zoomFactors);
+  }
+
+  private applyInitialZoomFactor(dormantZoomFactor: number | undefined) {
+    if (this.persistableZoomApp) {
+      this.applyPersistedZoomFactor();
+
+      return;
+    }
+
+    if (dormantZoomFactor !== undefined) {
+      this.setZoomFactor(dormantZoomFactor);
+    }
+  }
+
+  applyPersistedZoomFactor() {
+    const persistableZoomApp = this.persistableZoomApp;
+
+    if (!persistableZoomApp) {
+      return;
+    }
+
+    this.setZoomFactor(config.get("workspaceApps.zoomFactors")[persistableZoomApp] ?? 1);
+  }
+
   private setZoomFactor(zoomFactor: number) {
+    if (this.viewDestroyed) {
+      return;
+    }
+
     this.view.webContents.setZoomFactor(clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
   }
 
