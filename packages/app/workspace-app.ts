@@ -602,7 +602,7 @@ export class WorkspaceApp {
   focusWindow() {
     this.window.show();
 
-    this.window.focus();
+    this.view.webContents.focus();
   }
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
