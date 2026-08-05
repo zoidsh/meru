@@ -202,7 +202,7 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
           variant="ghost"
           size={isWide ? "sm" : "icon"}
           className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
-          title="New Tab"
+          title="Workspace Apps"
         >
           <LayoutGridIcon />
         </Button>
