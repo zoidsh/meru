@@ -30,15 +30,23 @@ function setGmailZoomFactor(zoomFactor: number) {
     instance.gmail.view.webContents.setZoomFactor(clampedZoomFactor);
   }
 
-  config.set("gmail.zoomFactor", clampedZoomFactor);
+  const zoomFactors = { ...config.get("workspaceApps.zoomFactors") };
+
+  if (clampedZoomFactor === 1) {
+    delete zoomFactors.gmail;
+  } else {
+    zoomFactors.gmail = clampedZoomFactor;
+  }
+
+  config.set("workspaceApps.zoomFactors", zoomFactors);
 }
 
 const gmailZoomTarget = {
   zoomIn: () => {
-    setGmailZoomFactor(config.get("gmail.zoomFactor") + 0.1);
+    setGmailZoomFactor((config.get("workspaceApps.zoomFactors").gmail ?? 1) + 0.1);
   },
   zoomOut: () => {
-    setGmailZoomFactor(config.get("gmail.zoomFactor") - 0.1);
+    setGmailZoomFactor((config.get("workspaceApps.zoomFactors").gmail ?? 1) - 0.1);
   },
   resetZoom: () => {
     setGmailZoomFactor(1);

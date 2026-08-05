@@ -68,7 +68,6 @@ export type Config = {
   "dock.unreadBadge": boolean;
   "externalLinks.confirm": boolean;
   "externalLinks.trustedHosts": string[];
-  "gmail.zoomFactor": number;
   "downloads.saveAs": boolean;
   "downloads.openFolderWhenDone": boolean;
   "downloads.location": string;

@@ -13,7 +13,7 @@ import {
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
-import { wait } from "@meru/shared/utils";
+import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import {
   app,
@@ -47,7 +47,7 @@ import {
 } from "@/notifications";
 import { registerTabBroadcasts } from "@/tabs";
 import { appTray } from "@/tray";
-import { WorkspaceApp } from "@/workspace-app";
+import { MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR, WorkspaceApp } from "@/workspace-app";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 
@@ -405,6 +405,16 @@ export class Gmail {
     setupWindowContextMenu(this.view);
 
     this.updateViewBounds();
+
+    this.view.webContents.once("did-navigate", () => {
+      const gmailZoomFactor = config.get("workspaceApps.zoomFactors").gmail;
+
+      if (gmailZoomFactor !== undefined) {
+        this.view.webContents.setZoomFactor(
+          clamp(gmailZoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        );
+      }
+    });
 
     this.view.webContents.on("dom-ready", () => {
       if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
