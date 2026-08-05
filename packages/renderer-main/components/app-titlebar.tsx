@@ -20,8 +20,8 @@ import {
   CircleXIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
-  GripIcon,
   InboxIcon,
+  LayoutGridIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
@@ -94,7 +94,7 @@ function WorkspaceAppsLauncher() {
     <BookmarkedWorkspaceAppsMenu
       trigger={
         <TitlebarIconButton title="Workspace Apps">
-          <GripIcon />
+          <LayoutGridIcon />
         </TitlebarIconButton>
       }
       orientation="horizontal"
