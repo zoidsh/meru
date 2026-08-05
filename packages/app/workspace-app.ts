@@ -107,6 +107,14 @@ export class WorkspaceApp {
     }
   }
 
+  static tryFromViewWebContents(webContents: WebContents) {
+    for (const instance of WorkspaceApp.instances.values()) {
+      if (instance.view.webContents.id === webContents.id) {
+        return instance;
+      }
+    }
+  }
+
   static applyPersistedZoomFactors() {
     for (const instance of WorkspaceApp.instances.values()) {
       instance.applyPersistedZoomFactor();
