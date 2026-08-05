@@ -11,7 +11,7 @@ import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, GlobeIcon, GripIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
@@ -204,7 +204,7 @@ function NewTabButton({ isWide }: { isWide: boolean }) {
           className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
           title="New Tab"
         >
-          <PlusIcon />
+          <GripIcon />
         </Button>
       }
       orientation="vertical"
