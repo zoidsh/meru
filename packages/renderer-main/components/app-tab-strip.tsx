@@ -12,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
-import { Separator } from "@meru/ui/components/separator";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
@@ -62,7 +61,9 @@ function StripTab({
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
   className?: string;
 }) {
-  const isCloseable = tab.id !== GMAIL_TAB_ID && !tab.pinned;
+  const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.pinned;
+
+  const isCloseable = !isPinnedSectionTab;
 
   const isWideRow = presentation === "wideRow";
 
@@ -72,7 +73,7 @@ function StripTab({
   return (
     <div className={cn("group relative", className)}>
       <Button
-        variant={tab.active ? "secondary" : presentation === "gridIcon" ? "outline" : "ghost"}
+        variant={tab.active ? "secondary" : !isWideRow && isPinnedSectionTab ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
         className={cn(
           tab.dormant && "opacity-50",
@@ -232,8 +233,6 @@ export function AppTabStrip() {
 
   const isWide = tabStripWidth === APP_TAB_STRIP_WIDE_WIDTH;
 
-  const hasPinnedTabs = selectedAccountTabs.tabs.some((tab) => tab.pinned);
-
   const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
     (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
   );
@@ -241,8 +240,6 @@ export function AppTabStrip() {
   const unpinnedTabs = selectedAccountTabs.tabs.filter(
     (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
   );
-
-  const shouldRenderSeparator = !isWide && hasPinnedTabs && unpinnedTabs.length > 0;
 
   return (
     <div
@@ -282,7 +279,6 @@ export function AppTabStrip() {
           />
         ))
       )}
-      {shouldRenderSeparator && <Separator className="data-horizontal:w-8" />}
       {unpinnedTabs.map((tab) => (
         <StripTab
           key={tab.id}
