@@ -38,6 +38,7 @@ import {
   useTabsStore,
   useTrialStore,
 } from "../lib/stores";
+import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -90,14 +91,17 @@ function WorkspaceAppsLauncher() {
   }
 
   return (
-    <TitlebarIconButton
-      onClick={() => {
-        ipc.main.send("workspaceApps.showLauncherMenu");
-      }}
-      title="Workspace Apps"
-    >
-      <GripIcon />
-    </TitlebarIconButton>
+    <BookmarkedWorkspaceAppsMenu
+      trigger={
+        <TitlebarIconButton title="Workspace Apps">
+          <GripIcon />
+        </TitlebarIconButton>
+      }
+      orientation="horizontal"
+      side="left"
+      align="center"
+      showAppLabels={false}
+    />
   );
 }
 

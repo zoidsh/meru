@@ -902,30 +902,3 @@ export class WorkspaceApp {
     return accounts.getAccount(this.accountId);
   }
 }
-
-export function openWorkspaceApp(
-  workspaceApp: SupportedWorkspaceApp,
-  openBehavior: WorkspaceAppOpenBehavior = "tab",
-) {
-  if (!licenseKey.isValid) {
-    return;
-  }
-
-  const selectedAccount = accounts.getSelectedAccount();
-
-  if (openBehavior === "newWindow") {
-    selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(workspaceApp));
-
-    return;
-  }
-
-  const workspaceAppTab = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(workspaceApp));
-
-  if (openBehavior === "backgroundTab") {
-    return;
-  }
-
-  selectedAccount.instance.tabs.activateTab(workspaceAppTab.id);
-
-  accounts.refreshSelectedAccountView();
-}

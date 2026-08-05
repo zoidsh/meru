@@ -2,19 +2,17 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
-import { platform } from "@electron-toolkit/utils";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
-import { bookmarkableWorkspaceApps, workspaceApps } from "@meru/shared/workspace-apps";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
   clipboard,
   desktopCapturer,
   dialog,
-  type KeyboardEvent,
   Menu,
   type MenuItemConstructorOptions,
   nativeImage,
@@ -30,7 +28,7 @@ import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { DormantTab } from "@/tabs";
-import { openWorkspaceApp, WorkspaceApp } from "@/workspace-app";
+import { WorkspaceApp } from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -39,16 +37,6 @@ import { createNewEmailNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
-
-function getMenuModifierOpenBehavior(event: KeyboardEvent) {
-  if (platform.isMacOS ? event.metaKey : event.ctrlKey) {
-    return event.shiftKey ? "tab" : "backgroundTab";
-  }
-
-  if (event.shiftKey) {
-    return "newWindow";
-  }
-}
 
 function getNavigationWebContents(workspaceAppId?: string) {
   if (workspaceAppId) {
@@ -608,21 +596,28 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app, openBehavior) => {
-      openWorkspaceApp(app, openBehavior);
-    });
+    ipc.main.on("workspaceApps.openApp", (_event, app, openBehavior = "tab") => {
+      if (!licenseKey.isValid) {
+        return;
+      }
 
-    ipc.main.on("workspaceApps.showLauncherMenu", () => {
-      const bookmarkedAppsMenuItems: MenuItemConstructorOptions[] = config
-        .get("workspaceApps.bookmarkedApps")
-        .map((bookmarkedApp) => ({
-          label: bookmarkableWorkspaceApps[bookmarkedApp],
-          click: (_menuItem, _browserWindow, event) => {
-            openWorkspaceApp(bookmarkedApp, getMenuModifierOpenBehavior(event));
-          },
-        }));
+      const selectedAccount = accounts.getSelectedAccount();
 
-      Menu.buildFromTemplate(bookmarkedAppsMenuItems).popup();
+      if (openBehavior === "newWindow") {
+        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(app));
+
+        return;
+      }
+
+      const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+
+      if (openBehavior === "backgroundTab") {
+        return;
+      }
+
+      selectedAccount.instance.tabs.activateTab(workspaceApp.id);
+
+      accounts.refreshSelectedAccountView();
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {
