@@ -128,6 +128,8 @@ export type Config = {
   "workspaceApps.bookmarkedApps": BookmarkableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
+  "workspaceApps.persistZoom": boolean;
+  "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;

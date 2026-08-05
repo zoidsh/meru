@@ -54,11 +54,14 @@ export class DormantTab {
 
   title: string;
 
-  constructor(pinnedTab: PinnedTab) {
+  zoomFactor: number | undefined;
+
+  constructor(pinnedTab: PinnedTab, zoomFactor?: number) {
     this.app = pinnedTab.app;
     this.url = pinnedTab.url;
     this.title = pinnedTab.title;
     this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
+    this.zoomFactor = zoomFactor;
   }
 }
 
@@ -180,6 +183,7 @@ export class Tabs {
       pinned: true,
       loadOnLaunch: dormantTab.loadOnLaunch,
       app: dormantTab.app,
+      zoomFactor: dormantTab.zoomFactor,
     });
 
     this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
@@ -260,12 +264,15 @@ export class Tabs {
       this.tabs.splice(
         this.tabs.indexOf(windowedTab),
         1,
-        new DormantTab({
-          app: windowedTab.app,
-          url: windowedTab.url,
-          title: windowedTab.title,
-          loadOnLaunch: windowedTab.loadOnLaunch,
-        }),
+        new DormantTab(
+          {
+            app: windowedTab.app,
+            url: windowedTab.url,
+            title: windowedTab.title,
+            loadOnLaunch: windowedTab.loadOnLaunch,
+          },
+          windowedTab.zoomFactor,
+        ),
       );
 
       this.broadcastTabsChanged();

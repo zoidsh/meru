@@ -9,6 +9,7 @@ import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appState } from "./state";
 import { isWindowedTab } from "./tabs";
+import { WorkspaceApp } from "./workspace-app";
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -50,6 +51,10 @@ class Accounts {
 
     config.onDidChange("workspaceApps.tabStripWidth", () => {
       accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("workspaceApps.zoomFactors", () => {
+      WorkspaceApp.applyPersistedZoomFactors();
     });
   }
 
