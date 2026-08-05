@@ -245,6 +245,18 @@ export function AppTitlebar() {
     return;
   }
 
+  const shouldShowUnifiedInboxButton =
+    isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
+
+  const shouldShowSavedSearchesButton =
+    config["gmail.savedSearches"].length > 0 && Boolean(config.licenseKey);
+
+  const shouldShowOutOfOfficeButton =
+    accounts.length === 1 &&
+    Boolean(accounts[0]?.gmail.outOfOffice) &&
+    config["gmail.hideOutOfOfficeBanner"] &&
+    isLicenseKeyValid;
+
   const renderAccounts = () => {
     if (isGmailSavedSearchesOpen) {
       return config["gmail.savedSearches"].map((savedSearch) => (
@@ -342,6 +354,8 @@ export function AppTitlebar() {
       );
     }
 
+    const accountButtons = renderAccounts();
+
     return (
       <>
         <TitlebarLeft>
@@ -364,41 +378,45 @@ export function AppTitlebar() {
                 ipc.main.send("workspaceApp.stop");
               }}
             />
-            {isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1 && (
-              <Button
-                variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
-                size="icon"
-                className="size-7 draggable-none"
-                onClick={() => {
-                  navigate("/unified-inbox");
+          </TitlebarButtonGroup>
+          {(shouldShowUnifiedInboxButton || shouldShowSavedSearchesButton) && (
+            <TitlebarButtonGroup>
+              {shouldShowUnifiedInboxButton && (
+                <Button
+                  variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
+                  size="icon"
+                  className="size-7 draggable-none"
+                  onClick={() => {
+                    navigate("/unified-inbox");
 
-                  ipc.main.send("settings.toggleIsOpen", true);
+                    ipc.main.send("settings.toggleIsOpen", true);
 
-                  setIsGmailSavedSearchesOpen(false);
-                }}
-                title="Unified Inbox"
-              >
-                <InboxIcon />
-              </Button>
-            )}
-            {config["gmail.savedSearches"].length > 0 && config.licenseKey && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="draggable-none"
-                onClick={() => {
-                  setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-                }}
-                title="Saved Searches"
-                disabled={matchUnifiedInboxRoute}
-              >
-                {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
-              </Button>
-            )}
-            {accounts.length === 1 &&
-              accounts[0]?.gmail.outOfOffice &&
-              config["gmail.hideOutOfOfficeBanner"] &&
-              isLicenseKeyValid && (
+                    setIsGmailSavedSearchesOpen(false);
+                  }}
+                  title="Unified Inbox"
+                >
+                  <InboxIcon />
+                </Button>
+              )}
+              {shouldShowSavedSearchesButton && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="draggable-none"
+                  onClick={() => {
+                    setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
+                  }}
+                  title="Saved Searches"
+                  disabled={matchUnifiedInboxRoute}
+                >
+                  {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
+                </Button>
+              )}
+            </TitlebarButtonGroup>
+          )}
+          {(shouldShowOutOfOfficeButton || accountButtons) && (
+            <TitlebarButtonGroup>
+              {shouldShowOutOfOfficeButton && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -411,8 +429,9 @@ export function AppTitlebar() {
                   <BriefcaseIcon />
                 </Button>
               )}
-            {renderAccounts()}
-          </TitlebarButtonGroup>
+              {accountButtons}
+            </TitlebarButtonGroup>
+          )}
         </TitlebarLeft>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
