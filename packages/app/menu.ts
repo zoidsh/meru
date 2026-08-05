@@ -23,6 +23,28 @@ import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
 import { appState } from "./state";
 
+function setGmailZoomFactor(zoomFactor: number) {
+  const clampedZoomFactor = clamp(zoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR);
+
+  for (const [_accountId, instance] of accounts.instances) {
+    instance.gmail.view.webContents.setZoomFactor(clampedZoomFactor);
+  }
+
+  config.set("gmail.zoomFactor", clampedZoomFactor);
+}
+
+const gmailZoomTarget = {
+  zoomIn: () => {
+    setGmailZoomFactor(config.get("gmail.zoomFactor") + 0.1);
+  },
+  zoomOut: () => {
+    setGmailZoomFactor(config.get("gmail.zoomFactor") - 0.1);
+  },
+  resetZoom: () => {
+    setGmailZoomFactor(1);
+  },
+};
+
 export class AppMenu {
   private _menu: Menu | undefined;
 
@@ -111,44 +133,26 @@ export class AppMenu {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
-    const zoomIn = () => {
+    const getActiveZoomTarget = () => {
       if (focusedWindow && focusedWindow !== main.window) {
-        WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.zoomIn();
-
-        return;
+        return WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
       }
 
-      const zoomFactor = clamp(
-        config.get("gmail.zoomFactor") + 0.1,
-        MIN_ZOOM_FACTOR,
-        MAX_ZOOM_FACTOR,
-      );
+      const activeTab = accounts.getSelectedAccount().instance.tabs.activeTab;
 
-      for (const [_accountId, instance] of accounts.instances) {
-        instance.gmail.view.webContents.setZoomFactor(zoomFactor);
+      if (activeTab instanceof WorkspaceApp && !activeTab.isWindowed) {
+        return activeTab;
       }
 
-      config.set("gmail.zoomFactor", zoomFactor);
+      return gmailZoomTarget;
+    };
+
+    const zoomIn = () => {
+      getActiveZoomTarget()?.zoomIn();
     };
 
     const zoomOut = () => {
-      if (focusedWindow && focusedWindow !== main.window) {
-        WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.zoomOut();
-
-        return;
-      }
-
-      const zoomFactor = clamp(
-        config.get("gmail.zoomFactor") - 0.1,
-        MIN_ZOOM_FACTOR,
-        MAX_ZOOM_FACTOR,
-      );
-
-      for (const [_accountId, instance] of accounts.instances) {
-        instance.gmail.view.webContents.setZoomFactor(zoomFactor);
-      }
-
-      config.set("gmail.zoomFactor", zoomFactor);
+      getActiveZoomTarget()?.zoomOut();
     };
 
     const selectedAccount = accounts.getSelectedAccount();
@@ -384,19 +388,7 @@ export class AppMenu {
             label: "Reset Zoom",
             accelerator: "CommandOrControl+0",
             click: () => {
-              if (focusedWindow && focusedWindow !== main.window) {
-                WorkspaceApp.tryFromWebContents(focusedWindow.webContents)?.resetZoom();
-
-                return;
-              }
-
-              const defaultZoomFactor = 1;
-
-              for (const [_accountId, instance] of accounts.instances) {
-                instance.gmail.view.webContents.setZoomFactor(defaultZoomFactor);
-              }
-
-              config.set("gmail.zoomFactor", defaultZoomFactor);
+              getActiveZoomTarget()?.resetZoom();
             },
           },
           {
