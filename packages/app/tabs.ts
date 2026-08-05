@@ -378,6 +378,49 @@ export class Tabs {
     accounts.savePinnedTabs();
   }
 
+  moveTab(tabId: string, targetSectionIndex: number) {
+    if (tabId === GMAIL_TAB_ID) {
+      return;
+    }
+
+    const movedTab = this.getTab(tabId);
+
+    if (!movedTab) {
+      return;
+    }
+
+    const remainingTabs = this.tabs.filter((tab) => tab.id !== tabId);
+
+    const remainingPinnedSectionTabCount = remainingTabs.filter(
+      (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
+    ).length;
+
+    const sectionStartIndex = movedTab.pinned ? 0 : remainingPinnedSectionTabCount;
+
+    const sectionTabCount = movedTab.pinned
+      ? remainingPinnedSectionTabCount
+      : remainingTabs.length - remainingPinnedSectionTabCount;
+
+    const minimumSectionIndex = movedTab.pinned ? 1 : 0;
+
+    const clampedSectionIndex = Math.min(
+      Math.max(targetSectionIndex, minimumSectionIndex),
+      sectionTabCount,
+    );
+
+    remainingTabs.splice(sectionStartIndex + clampedSectionIndex, 0, movedTab);
+
+    this.tabs = remainingTabs;
+
+    this.reorderTabs();
+
+    this.broadcastTabsChanged();
+
+    if (movedTab.pinned) {
+      accounts.savePinnedTabs();
+    }
+  }
+
   private reorderTabs() {
     this.tabs = [
       ...this.tabs.filter((tab) => tab.id === GMAIL_TAB_ID),

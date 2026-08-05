@@ -1,3 +1,7 @@
+import { Accessibility, defaultPreset, PointerActivationConstraints } from "@dnd-kit/dom";
+import { move } from "@dnd-kit/helpers";
+import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
@@ -15,9 +19,45 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { AppWindowIcon, GlobeIcon, PlusIcon, XIcon } from "lucide-react";
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, type Ref, useEffect, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+
+const tabStripPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
+
+const tabStripSensors = [
+  PointerSensor.configure({
+    activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
+    preventActivation: (event) =>
+      event.target instanceof Element && event.target.closest("[data-tab-close]") !== null,
+  }),
+];
+
+function moveSectionTab(
+  accountId: AccountConfig["id"],
+  sectionTabs: TabState[],
+  event: DragEndEvent,
+) {
+  if (event.canceled) {
+    return;
+  }
+
+  const sectionTabIds = sectionTabs.map((tab) => tab.id);
+
+  const movedSectionTabIds = move(sectionTabIds, event);
+
+  if (movedSectionTabIds === sectionTabIds) {
+    return;
+  }
+
+  const movedTabId = event.operation.source?.id;
+
+  if (typeof movedTabId !== "string") {
+    return;
+  }
+
+  ipc.main.send("tabs.moveTab", accountId, movedTabId, movedSectionTabIds.indexOf(movedTabId));
+}
 
 function getModifierOpenBehavior(event: MouseEvent) {
   if (platform.isMacOS ? event.metaKey : event.ctrlKey) {
@@ -51,11 +91,13 @@ function WindowedTabBadge({ className }: { className?: string }) {
 }
 
 function StripTab({
+  ref,
   tab,
   accountId,
   presentation,
   className,
 }: {
+  ref?: Ref<HTMLDivElement>;
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
@@ -71,7 +113,7 @@ function StripTab({
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].alwaysOpenAsWindow;
 
   return (
-    <div className={cn("group relative", className)}>
+    <div ref={ref} className={cn("group relative", className)}>
       <Button
         variant={tab.active ? "secondary" : !isWideRow && isPinnedSectionTab ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
@@ -119,6 +161,7 @@ function StripTab({
         <Button
           variant="secondary"
           size="icon"
+          data-tab-close
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
@@ -134,6 +177,36 @@ function StripTab({
         </Button>
       )}
     </div>
+  );
+}
+
+function SortableStripTab({
+  tab,
+  accountId,
+  presentation,
+  sectionIndex,
+  className,
+}: {
+  tab: TabState;
+  accountId: AccountConfig["id"];
+  presentation: "wideRow" | "narrowIcon" | "gridIcon";
+  sectionIndex: number;
+  className?: string;
+}) {
+  const { ref, isDragging } = useSortable({
+    id: tab.id,
+    index: sectionIndex,
+    disabled: tab.id === GMAIL_TAB_ID,
+  });
+
+  return (
+    <StripTab
+      ref={ref}
+      tab={tab}
+      accountId={accountId}
+      presentation={presentation}
+      className={cn("touch-none", isDragging && "opacity-50", className)}
+    />
   );
 }
 
@@ -259,38 +332,57 @@ export function AppTabStrip() {
         ipc.main.send("tabs.showTabStripContextMenu", selectedAccount.config.id);
       }}
     >
-      {isWide ? (
-        <div className="mb-1 grid w-full grid-cols-2 gap-2">
-          {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-            <StripTab
+      <DragDropProvider
+        plugins={tabStripPlugins}
+        sensors={tabStripSensors}
+        onDragEnd={(event) => {
+          moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
+        }}
+      >
+        {isWide ? (
+          <div className="mb-1 grid w-full grid-cols-2 gap-2">
+            {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
+              <SortableStripTab
+                key={tab.id}
+                tab={tab}
+                accountId={selectedAccount.config.id}
+                presentation="gridIcon"
+                sectionIndex={pinnedSectionTabIndex}
+                className={cn(
+                  pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
+                )}
+              />
+            ))}
+          </div>
+        ) : (
+          pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
+            <SortableStripTab
               key={tab.id}
               tab={tab}
               accountId={selectedAccount.config.id}
-              presentation="gridIcon"
-              className={cn(
-                pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
-              )}
+              presentation="narrowIcon"
+              sectionIndex={pinnedSectionTabIndex}
             />
-          ))}
-        </div>
-      ) : (
-        pinnedSectionTabs.map((tab) => (
-          <StripTab
+          ))
+        )}
+      </DragDropProvider>
+      <DragDropProvider
+        plugins={tabStripPlugins}
+        sensors={tabStripSensors}
+        onDragEnd={(event) => {
+          moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
+        }}
+      >
+        {unpinnedTabs.map((tab, unpinnedTabIndex) => (
+          <SortableStripTab
             key={tab.id}
             tab={tab}
             accountId={selectedAccount.config.id}
-            presentation="narrowIcon"
+            presentation={isWide ? "wideRow" : "narrowIcon"}
+            sectionIndex={unpinnedTabIndex}
           />
-        ))
-      )}
-      {unpinnedTabs.map((tab) => (
-        <StripTab
-          key={tab.id}
-          tab={tab}
-          accountId={selectedAccount.config.id}
-          presentation={isWide ? "wideRow" : "narrowIcon"}
-        />
-      ))}
+        ))}
+      </DragDropProvider>
       <NewTabButton isWide={isWide} />
     </div>
   );

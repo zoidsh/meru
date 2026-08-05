@@ -175,6 +175,7 @@ export type IpcMainEvents =
       "notifications.showTestNotification": [];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
+      "tabs.moveTab": [accountId: AccountConfig["id"], tabId: string, targetSectionIndex: number];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showTabStripContextMenu": [accountId: AccountConfig["id"]];
       "workspaceApps.openApp": [
