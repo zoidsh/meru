@@ -2,10 +2,6 @@ import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
 import {
-  type WorkspaceAppTabStripWidth,
-  workspaceAppTabStripWidths,
-} from "@meru/shared/workspace-apps";
-import {
   app,
   BrowserWindow,
   clipboard,
@@ -57,12 +53,6 @@ export class AppMenu {
       this.menu = this.createMenu();
 
       this._subscribeToSelectedAccount();
-
-      Menu.setApplicationMenu(this.menu);
-    });
-
-    config.onDidChange("workspaceApps.tabStripWidth", () => {
-      this.menu = this.createMenu();
 
       Menu.setApplicationMenu(this.menu);
     });
@@ -386,19 +376,6 @@ export class AppMenu {
             click: () => {
               main.navigate("/download-history");
             },
-          },
-          {
-            label: "Tab Strip Width",
-            submenu: (Object.keys(workspaceAppTabStripWidths) as WorkspaceAppTabStripWidth[]).map(
-              (tabStripWidth) => ({
-                label: workspaceAppTabStripWidths[tabStripWidth],
-                type: "radio" as const,
-                checked: config.get("workspaceApps.tabStripWidth") === tabStripWidth,
-                click: () => {
-                  config.set("workspaceApps.tabStripWidth", tabStripWidth);
-                },
-              }),
-            ),
           },
           {
             type: "separator",
