@@ -242,23 +242,17 @@ export class Tabs {
   closeTab(tabId: string) {
     const closableTab = this.getTab(tabId);
 
-    if (closableTab instanceof WorkspaceApp) {
-      if (isPinnedWorkspaceApp(closableTab)) {
-        this.dormantizePinnedTab(closableTab);
-      } else {
-        this.recordRecentlyClosedTab(closableTab.url);
-      }
-
-      closableTab.close();
-
+    if (!(closableTab instanceof WorkspaceApp)) {
       return;
     }
 
-    if (closableTab instanceof DormantTab) {
+    if (isPinnedWorkspaceApp(closableTab)) {
+      this.dormantizePinnedTab(closableTab);
+    } else {
       this.recordRecentlyClosedTab(closableTab.url);
-
-      this.removeTab(tabId);
     }
+
+    closableTab.close();
   }
 
   handleWindowedTabClosed(windowedTab: WorkspaceApp) {

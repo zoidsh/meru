@@ -437,6 +437,7 @@ class Ipc {
         },
         {
           label: "Close",
+          enabled: !(tab instanceof DormantTab),
           click: () => {
             account.instance.tabs.closeTab(tabId);
 
