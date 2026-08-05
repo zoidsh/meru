@@ -57,7 +57,7 @@ export class DormantTab {
   constructor(pinnedTab: PinnedTab) {
     this.app = pinnedTab.app;
     this.url = pinnedTab.url;
-    this.title = WorkspaceApp.resolveTitle(pinnedTab.title, pinnedTab.app);
+    this.title = pinnedTab.title;
     this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
   }
 }
