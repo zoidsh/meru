@@ -11,11 +11,10 @@ import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, GlobeIcon, LayoutGridIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, GlobeIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
-import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
 
 const tabStripPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
@@ -194,28 +193,6 @@ function SortableStripTab({
   );
 }
 
-function NewTabButton({ isWide }: { isWide: boolean }) {
-  return (
-    <BookmarkedWorkspaceAppsMenu
-      trigger={
-        <Button
-          variant="ghost"
-          size={isWide ? "sm" : "icon"}
-          className={cn("opacity-50 hover:opacity-100", isWide && "w-full")}
-          title="Workspace Apps"
-        >
-          <LayoutGridIcon />
-        </Button>
-      }
-      orientation="vertical"
-      side="bottom"
-      align="start"
-      showAppLabels={isWide}
-      className={isWide ? undefined : "min-w-0"}
-    />
-  );
-}
-
 export function AppTabStrip() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
@@ -312,7 +289,6 @@ export function AppTabStrip() {
           />
         ))}
       </DragDropProvider>
-      <NewTabButton isWide={isWide} />
     </div>
   );
 }

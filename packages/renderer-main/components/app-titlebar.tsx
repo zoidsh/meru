@@ -2,9 +2,16 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
-import { getTabStripWidth } from "@meru/shared/tabs";
+import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuBackdrop,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
@@ -13,6 +20,7 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
+import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -26,10 +34,11 @@ import {
   MoonIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
   useAppUpdaterStore,
@@ -38,7 +47,6 @@ import {
   useTabsStore,
   useTrialStore,
 } from "../lib/stores";
-import { BookmarkedWorkspaceAppsMenu } from "./workspace-apps";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -60,46 +68,70 @@ function RecentDownloadHistoryButton() {
 }
 
 function WorkspaceAppsLauncher() {
-  const accounts = useAccountsStore((state) => state.accounts);
-  const accountsTabs = useTabsStore((state) => state.accountsTabs);
-  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
-
   const { config } = useConfig();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handleWindowBlur = () => {
+      setIsMenuOpen(false);
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isMenuOpen]);
 
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
   }
 
-  const selectedAccount = accounts.find((account) => account.config.selected);
-
-  const selectedAccountTabs = accountsTabs.find(
-    (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
-  );
-
-  if (
-    !isSettingsOpen &&
-    selectedAccountTabs &&
-    getTabStripWidth(selectedAccountTabs.tabs, config["workspaceApps.tabStripWidth"]) > 0
-  ) {
-    return;
-  }
-
   return (
     <TitlebarButtonGroup>
-      <BookmarkedWorkspaceAppsMenu
-        trigger={
-          <TitlebarIconButton title="Workspace Apps">
-            <LayoutGridIcon />
-          </TitlebarIconButton>
-        }
-        orientation="horizontal"
-        side="right"
-        align="center"
-        showAppLabels={false}
-        className="draggable-none"
-      />
+      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} orientation="horizontal">
+        <DropdownMenuTrigger
+          render={
+            <TitlebarIconButton title="Workspace Apps">
+              <LayoutGridIcon />
+            </TitlebarIconButton>
+          }
+        />
+        <DropdownMenuBackdrop className="draggable-none" />
+        <DropdownMenuContent
+          side="right"
+          align="center"
+          collisionPadding={0}
+          className="flex w-auto min-w-0 flex-row gap-1 draggable-none"
+        >
+          {config["workspaceApps.bookmarkedApps"].map((app) => (
+            <DropdownMenuItem
+              key={app}
+              className="justify-center"
+              title={bookmarkableWorkspaceApps[app]}
+              onClick={(event) => {
+                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+              }}
+              onAuxClick={(event) => {
+                if (event.button === 1) {
+                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+                  setIsMenuOpen(false);
+                }
+              }}
+            >
+              <WorkspaceAppIcon app={app} className="size-4" />
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </TitlebarButtonGroup>
   );
 }
