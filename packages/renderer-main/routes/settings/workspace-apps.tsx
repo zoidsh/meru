@@ -231,8 +231,8 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Bookmark Workspace Apps to open them from the tab strip's New Tab menu and drag to
-                reorder.
+                Bookmark Workspace Apps to open them from the tab strip's Workspace Apps menu and
+                drag to reorder.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
