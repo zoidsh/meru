@@ -319,7 +319,7 @@ export class WorkspaceApp {
     return this._window;
   }
 
-  get hasWindow() {
+  get isWindowed() {
     return Boolean(this._window);
   }
 

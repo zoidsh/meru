@@ -29,7 +29,7 @@ export function registerTabBroadcasts(view: WebContentsView) {
 }
 
 export function isWindowedTab(tab: Tab) {
-  return tab instanceof WorkspaceApp && tab.hasWindow;
+  return tab instanceof WorkspaceApp && tab.isWindowed;
 }
 
 export type Tab = {
@@ -158,7 +158,7 @@ export class Tabs {
   activateTab(tabId: string) {
     const activatedTab = this.getTab(tabId);
 
-    if (activatedTab instanceof WorkspaceApp && activatedTab.hasWindow) {
+    if (activatedTab instanceof WorkspaceApp && activatedTab.isWindowed) {
       activatedTab.focusWindow();
 
       return;
