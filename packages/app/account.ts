@@ -16,6 +16,7 @@ import { config } from "./config";
 import { Gmail } from "./gmail";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
+import { main } from "./main";
 import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
@@ -97,19 +98,31 @@ export class Account {
   private registerSessionDisplayMediaRequestHandler() {
     this.session.setDisplayMediaRequestHandler(
       async (_request, callback) => {
-        const googleMeetWindow = Array.from(this.windows).find(
-          (window): window is BrowserWindow => {
-            if (!(window instanceof BrowserWindow)) {
-              return false;
+        let googleMeetParentWindow: BrowserWindow | undefined;
+
+        for (const workspaceAppWindowOrView of this.windows) {
+          if (workspaceAppWindowOrView instanceof BrowserWindow) {
+            const workspaceApp = WorkspaceApp.tryFromWebContents(
+              workspaceAppWindowOrView.webContents,
+            );
+
+            if (workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
+              googleMeetParentWindow = workspaceAppWindowOrView;
+
+              break;
             }
 
-            const workspaceApp = WorkspaceApp.tryFromWebContents(window.webContents);
+            continue;
+          }
 
-            return workspaceApp?.view.webContents.getURL().startsWith(GOOGLE_MEET_URL) ?? false;
-          },
-        );
+          if (workspaceAppWindowOrView.webContents.getURL().startsWith(GOOGLE_MEET_URL)) {
+            googleMeetParentWindow = main.window;
 
-        if (!googleMeetWindow) {
+            break;
+          }
+        }
+
+        if (!googleMeetParentWindow) {
           callback({});
 
           return;
@@ -117,7 +130,7 @@ export class Account {
 
         const desktopSourcesWindow = createBrowserWindow({
           title: "Choose what to share",
-          parent: googleMeetWindow,
+          parent: googleMeetParentWindow,
           width: 576,
           height: 512,
           resizable: false,
