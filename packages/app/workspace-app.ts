@@ -127,6 +127,12 @@ export class WorkspaceApp {
       .map((instance) => instance.window);
   }
 
+  static getAccountWindowedInstances(accountId: AccountConfig["id"]) {
+    return Array.from(WorkspaceApp.instances.values()).filter(
+      (instance) => instance.accountId === accountId && instance._window,
+    );
+  }
+
   static handleNavigate(url: string) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
@@ -528,9 +534,7 @@ export class WorkspaceApp {
       this.view.webContents.close();
     }
 
-    if (this._window) {
-      this.account.instance.windows.delete(this._window);
-    } else if (!main.window.isDestroyed()) {
+    if (!this._window && !main.window.isDestroyed()) {
       main.window.contentView.removeChildView(this.view);
     }
 
@@ -607,8 +611,6 @@ export class WorkspaceApp {
 
       WorkspaceApp.instances.set(this.id, this);
     });
-
-    this.account.instance.windows.add(this.window);
   }
 
   detachToWindow() {
@@ -652,8 +654,6 @@ export class WorkspaceApp {
     this.unregisterWindowedViewListeners();
 
     discardedWindow.contentView.removeChildView(this.view);
-
-    this.account.instance.windows.delete(discardedWindow);
 
     this._window = undefined;
 
