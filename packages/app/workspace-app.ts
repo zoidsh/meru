@@ -4,7 +4,6 @@ import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
-  stripGoogleFromPageTitle,
   type SupportedWorkspaceApp,
   type WorkspaceAppOpenBehavior,
   workspaceApps,
@@ -302,6 +301,20 @@ export class WorkspaceApp {
   private static unregisterMeetShortcuts() {
     globalShortcut.unregister(GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR);
     globalShortcut.unregister(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR);
+  }
+
+  static resolveTitle(pageTitle: string, app: SupportedWorkspaceApp | undefined) {
+    if (!app) {
+      return pageTitle;
+    }
+
+    const appLabel = workspaceApps[app].label;
+
+    if (!pageTitle) {
+      return appLabel;
+    }
+
+    return pageTitle.replace(`Google ${appLabel}`, appLabel);
   }
 
   accountId: AccountConfig["id"];
@@ -678,15 +691,7 @@ export class WorkspaceApp {
   private pageTitle = "";
 
   get title() {
-    if (!this.app) {
-      return this.pageTitle;
-    }
-
-    if (!this.pageTitle) {
-      return workspaceApps[this.app].label;
-    }
-
-    return stripGoogleFromPageTitle(this.pageTitle, this.app);
+    return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
 
   handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {

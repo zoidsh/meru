@@ -43,12 +43,6 @@ export type BookmarkableWorkspaceApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
-export function stripGoogleFromPageTitle(pageTitle: string, app: SupportedWorkspaceApp) {
-  const appLabel = workspaceApps[app].label;
-
-  return pageTitle.replace(`Google ${appLabel}`, appLabel);
-}
-
 export const bookmarkableWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
     .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.bookmarkable !== false)

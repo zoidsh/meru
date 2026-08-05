@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { PinnedTab } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
-import {
-  stripGoogleFromPageTitle,
-  type SupportedWorkspaceApp,
-  workspaceApps,
-} from "@meru/shared/workspace-apps";
+import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
@@ -66,11 +62,7 @@ export class DormantTab {
   }
 
   get title() {
-    if (!this.pageTitle) {
-      return workspaceApps[this.app].label;
-    }
-
-    return stripGoogleFromPageTitle(this.pageTitle, this.app);
+    return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
 }
 

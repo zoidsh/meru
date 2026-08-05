@@ -14,7 +14,6 @@ import {
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { wait } from "@meru/shared/utils";
-import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
@@ -252,7 +251,7 @@ export class Gmail {
   private pageTitle = "";
 
   get title() {
-    return this.pageTitle || workspaceApps.gmail.label;
+    return WorkspaceApp.resolveTitle(this.pageTitle, "gmail");
   }
 
   get messageId() {
