@@ -319,7 +319,7 @@ export class WorkspaceApp {
     return this._window;
   }
 
-  get hasWindow() {
+  get isWindowed() {
     return Boolean(this._window);
   }
 
@@ -609,7 +609,7 @@ export class WorkspaceApp {
   focusWindow() {
     this.window.show();
 
-    this.window.focus();
+    this.view.webContents.focus();
   }
 
   adoptIntoTabs() {

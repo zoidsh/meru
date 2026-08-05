@@ -232,7 +232,7 @@ class Ipc {
 
       account.instance.tabs.activateTab(tabId);
 
-      if (selectedTab instanceof WorkspaceApp && selectedTab.hasWindow) {
+      if (selectedTab instanceof WorkspaceApp && selectedTab.isWindowed) {
         return;
       }
 
@@ -323,7 +323,7 @@ class Ipc {
             }
           },
         },
-        ...(tab instanceof WorkspaceApp && tab.hasWindow
+        ...(tab instanceof WorkspaceApp && tab.isWindowed
           ? [
               {
                 label: "Move to Tab",
@@ -341,7 +341,7 @@ class Ipc {
           : [
               {
                 label: "Move to New Window",
-                enabled: tab instanceof WorkspaceApp && !tab.hasWindow,
+                enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
                 click: () => {
                   if (tab instanceof WorkspaceApp) {
                     tab.detachToWindow();
