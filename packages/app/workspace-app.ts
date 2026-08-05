@@ -4,6 +4,7 @@ import { getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
+  stripGoogleFromPageTitle,
   type SupportedWorkspaceApp,
   type WorkspaceAppOpenBehavior,
   workspaceApps,
@@ -677,7 +678,15 @@ export class WorkspaceApp {
   private pageTitle = "";
 
   get title() {
-    return this.pageTitle || (this.app ? workspaceApps[this.app].label : "");
+    if (!this.app) {
+      return this.pageTitle;
+    }
+
+    if (!this.pageTitle) {
+      return workspaceApps[this.app].label;
+    }
+
+    return stripGoogleFromPageTitle(this.pageTitle, this.app);
   }
 
   handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {

@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { PinnedTab } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
-import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
+import {
+  stripGoogleFromPageTitle,
+  type SupportedWorkspaceApp,
+  workspaceApps,
+} from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
@@ -9,12 +13,6 @@ import { main } from "./main";
 import { WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
-
-function stripGoogleFromPageTitle(pageTitle: string, app: SupportedWorkspaceApp) {
-  const appLabel = workspaceApps[app].label;
-
-  return pageTitle.replace(`Google ${appLabel}`, appLabel);
-}
 
 export function registerTabBroadcasts(view: WebContentsView) {
   const broadcastTabsChanged = () => {
@@ -68,7 +66,11 @@ export class DormantTab {
   }
 
   get title() {
-    return this.pageTitle || workspaceApps[this.app].label;
+    if (!this.pageTitle) {
+      return workspaceApps[this.app].label;
+    }
+
+    return stripGoogleFromPageTitle(this.pageTitle, this.app);
   }
 }
 
@@ -432,7 +434,7 @@ export class Tabs {
     return this.tabs.map((tab) => ({
       id: tab.id,
       app: tab.app,
-      title: tab.app ? stripGoogleFromPageTitle(tab.title, tab.app) : tab.title,
+      title: tab.title,
       pinned: tab.pinned,
       dormant: tab instanceof DormantTab,
       windowed: isWindowedTab(tab),
