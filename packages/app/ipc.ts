@@ -609,10 +609,12 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app, openBehavior = "tab") => {
+    ipc.main.on("workspaceApps.openApp", (_event, app, modifierOpenBehavior) => {
       if (!licenseKey.isValid) {
         return;
       }
+
+      const openBehavior = modifierOpenBehavior ?? config.get("workspaceApps.openBehavior");
 
       const selectedAccount = accounts.getSelectedAccount();
 
