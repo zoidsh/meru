@@ -14,7 +14,7 @@ import {
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { wait } from "@meru/shared/utils";
-import { workspaceApps } from "@meru/shared/workspace-apps";
+import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
@@ -212,6 +212,8 @@ function extractVerificationCode(texts: string[]) {
 export class Gmail {
   accountId: string;
 
+  app: SupportedWorkspaceApp = "gmail";
+
   url: string;
 
   baseUrl: string;
@@ -252,7 +254,7 @@ export class Gmail {
   private pageTitle = "";
 
   get title() {
-    return this.pageTitle || workspaceApps.gmail.label;
+    return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
 
   get messageId() {

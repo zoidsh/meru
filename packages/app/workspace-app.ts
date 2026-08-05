@@ -303,6 +303,20 @@ export class WorkspaceApp {
     globalShortcut.unregister(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR);
   }
 
+  static resolveTitle(pageTitle: string, app: SupportedWorkspaceApp | undefined) {
+    if (!app) {
+      return pageTitle;
+    }
+
+    const appLabel = workspaceApps[app].label;
+
+    if (!pageTitle) {
+      return appLabel;
+    }
+
+    return pageTitle.replace(`Google ${appLabel}`, appLabel);
+  }
+
   accountId: AccountConfig["id"];
 
   app: SupportedWorkspaceApp | undefined;
@@ -677,7 +691,7 @@ export class WorkspaceApp {
   private pageTitle = "";
 
   get title() {
-    return this.pageTitle || (this.app ? workspaceApps[this.app].label : "");
+    return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
 
   handlePageTitleUpdated = (_event: Electron.Event, pageTitle: string, explicitSet: boolean) => {
