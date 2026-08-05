@@ -52,17 +52,13 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
-  private pageTitle: string;
+  title: string;
 
   constructor(pinnedTab: PinnedTab) {
     this.app = pinnedTab.app;
     this.url = pinnedTab.url;
-    this.pageTitle = pinnedTab.title;
+    this.title = WorkspaceApp.resolveTitle(pinnedTab.title, pinnedTab.app);
     this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
-  }
-
-  get title() {
-    return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
 }
 
@@ -81,7 +77,7 @@ export class Tabs {
     this.tabs = [
       {
         id: GMAIL_TAB_ID,
-        app: "gmail",
+        app: gmail.app,
         pinned: false,
         get title() {
           return gmail.title;
