@@ -184,6 +184,7 @@ export type IpcMainEvents =
         app: SupportedWorkspaceApp,
         openBehavior?: WorkspaceAppOpenBehavior,
       ];
+      "workspaceApps.showLauncherMenu": [];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

@@ -2,6 +2,7 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
+import { getTabStripWidth } from "@meru/shared/tabs";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
@@ -19,6 +20,7 @@ import {
   CircleXIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
+  GripIcon,
   InboxIcon,
   MailSearchIcon,
   MoonIcon,
@@ -52,6 +54,49 @@ function RecentDownloadHistoryButton() {
       title="Recent Download History"
     >
       <DownloadIcon />
+    </TitlebarIconButton>
+  );
+}
+
+function WorkspaceAppsLauncher() {
+  const accounts = useAccountsStore((state) => state.accounts);
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
+
+  const { config } = useConfig();
+
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  if (
+    !config ||
+    !isLicenseKeyValid ||
+    config["workspaceApps.bookmarkedApps"].length === 0 ||
+    isSettingsOpen
+  ) {
+    return;
+  }
+
+  const selectedAccount = accounts.find((account) => account.config.selected);
+
+  const selectedAccountTabs = accountsTabs.find(
+    (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
+  );
+
+  if (
+    !selectedAccountTabs ||
+    getTabStripWidth(selectedAccountTabs.tabs, config["workspaceApps.tabStripWidth"]) > 0
+  ) {
+    return;
+  }
+
+  return (
+    <TitlebarIconButton
+      onClick={() => {
+        ipc.main.send("workspaceApps.showLauncherMenu");
+      }}
+      title="Workspace Apps"
+    >
+      <GripIcon />
     </TitlebarIconButton>
   );
 }
@@ -270,6 +315,7 @@ export function AppTitlebar() {
       <>
         <TitlebarLeft>
           <TitlebarButtonGroup>
+            <WorkspaceAppsLauncher />
             <TitlebarNavigationControls
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
               canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
