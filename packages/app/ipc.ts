@@ -591,11 +591,7 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       if (openBehavior === "newWindow") {
-        new WorkspaceApp({
-          accountId: selectedAccount.config.id,
-          url: getWorkspaceAppUrl(app),
-          asWindow: true,
-        });
+        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(app));
 
         return;
       }

@@ -231,17 +231,13 @@ export class WorkspaceApp {
             ? "backgroundTab"
             : config.get("workspaceApps.openBehavior");
 
+      const account = accounts.getAccount(accountId);
+
       if (openBehavior === "newWindow") {
-        new WorkspaceApp({
-          accountId,
-          url,
-          asWindow: true,
-        });
+        account.instance.tabs.openWindowedTab(url);
 
         return { action: "deny" };
       }
-
-      const account = accounts.getAccount(accountId);
 
       const workspaceApp = account.instance.tabs.openTab(url);
 
