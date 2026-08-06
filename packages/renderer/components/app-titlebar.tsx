@@ -5,17 +5,12 @@ import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuBackdrop,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
+  TitlebarDropdownMenu,
+  TitlebarDropdownMenuItem,
   TitlebarIconButton,
   TitlebarLeft,
   TitlebarNavigationControls,
@@ -25,7 +20,6 @@ import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
   CircleAlertIcon,
-  CircleXIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
   InboxIcon,
@@ -34,7 +28,7 @@ import {
   MoonIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
@@ -74,64 +68,37 @@ function WorkspaceAppsLauncher() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const handleWindowBlur = () => {
-      setIsMenuOpen(false);
-    };
-
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [isMenuOpen]);
-
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
   }
 
   return (
     <TitlebarButtonGroup>
-      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} orientation="horizontal">
-        <DropdownMenuTrigger
-          render={
-            <TitlebarIconButton title="Workspace Apps">
-              <LayoutGridIcon />
-            </TitlebarIconButton>
-          }
-        />
-        <DropdownMenuBackdrop className="draggable-none" />
-        <DropdownMenuContent
-          side="right"
-          align="center"
-          collisionPadding={0}
-          className="flex w-auto min-w-0 flex-row gap-1 draggable-none"
-        >
-          {config["workspaceApps.bookmarkedApps"].map((app) => (
-            <DropdownMenuItem
-              key={app}
-              className="justify-center"
-              title={bookmarkableWorkspaceApps[app]}
-              onClick={(event) => {
-                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-              }}
-              onAuxClick={(event) => {
-                if (event.button === 1) {
-                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+      <TitlebarDropdownMenu
+        title="Workspace Apps"
+        icon={<LayoutGridIcon />}
+        isOpen={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+      >
+        {config["workspaceApps.bookmarkedApps"].map((app) => (
+          <TitlebarDropdownMenuItem
+            key={app}
+            title={bookmarkableWorkspaceApps[app]}
+            onClick={(event) => {
+              ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+            }}
+            onAuxClick={(event) => {
+              if (event.button === 1) {
+                ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
 
-                  setIsMenuOpen(false);
-                }
-              }}
-            >
-              <WorkspaceAppIcon app={app} className="size-4" />
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+                setIsMenuOpen(false);
+              }
+            }}
+          >
+            <WorkspaceAppIcon app={app} className="size-4" />
+          </TitlebarDropdownMenuItem>
+        ))}
+      </TitlebarDropdownMenu>
     </TitlebarButtonGroup>
   );
 }
@@ -262,22 +229,6 @@ export function AppTitlebar() {
     isLicenseKeyValid;
 
   const renderAccounts = () => {
-    if (isGmailSavedSearchesOpen) {
-      return config["gmail.savedSearches"].map((savedSearch) => (
-        <Button
-          key={savedSearch.id}
-          variant="outline"
-          size="sm"
-          className="draggable-none"
-          onClick={() => {
-            ipc.main.send("gmail.search", savedSearch.query);
-          }}
-        >
-          {savedSearch.label}
-        </Button>
-      ));
-    }
-
     if (accounts.length === 1) {
       return;
     }
@@ -395,8 +346,6 @@ export function AppTitlebar() {
                     navigate("/main/unified-inbox");
 
                     ipc.main.send("settings.toggleIsOpen", true);
-
-                    setIsGmailSavedSearchesOpen(false);
                   }}
                   title="Unified Inbox"
                 >
@@ -404,18 +353,24 @@ export function AppTitlebar() {
                 </Button>
               )}
               {shouldShowSavedSearchesButton && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="draggable-none"
-                  onClick={() => {
-                    setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-                  }}
+                <TitlebarDropdownMenu
                   title="Saved Searches"
+                  icon={<MailSearchIcon />}
                   disabled={matchUnifiedInboxRoute}
+                  isOpen={isGmailSavedSearchesOpen}
+                  onOpenChange={setIsGmailSavedSearchesOpen}
                 >
-                  {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
-                </Button>
+                  {config["gmail.savedSearches"].map((savedSearch) => (
+                    <TitlebarDropdownMenuItem
+                      key={savedSearch.id}
+                      onClick={() => {
+                        ipc.main.send("gmail.search", savedSearch.query);
+                      }}
+                    >
+                      {savedSearch.label}
+                    </TitlebarDropdownMenuItem>
+                  ))}
+                </TitlebarDropdownMenu>
               )}
             </TitlebarButtonGroup>
           )}
