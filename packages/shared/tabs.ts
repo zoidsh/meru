@@ -1,8 +1,16 @@
-import { APP_TAB_STRIP_NARROW_WIDTH, APP_TAB_STRIP_WIDE_WIDTH } from "./constants";
+import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
-import type { SupportedWorkspaceApp, WorkspaceAppTabStripWidth } from "./workspace-apps";
+import type { SupportedWorkspaceApp } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
+
+export const verticalTabsWidths = {
+  auto: "Auto",
+  narrow: "Narrow",
+  wide: "Wide",
+} as const;
+
+export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
 
 export type TabState = {
   id: string;
@@ -21,20 +29,20 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
-export function getTabStripWidth(
+export function getVerticalTabsWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  configuredTabStripWidth: WorkspaceAppTabStripWidth,
+  configuredVerticalTabsWidth: VerticalTabsWidth,
 ) {
   if (tabs.length <= 1) {
     return 0;
   }
 
-  if (configuredTabStripWidth === "narrow") {
-    return APP_TAB_STRIP_NARROW_WIDTH;
+  if (configuredVerticalTabsWidth === "narrow") {
+    return VERTICAL_TABS_NARROW_WIDTH;
   }
 
-  if (configuredTabStripWidth === "wide") {
-    return APP_TAB_STRIP_WIDE_WIDTH;
+  if (configuredVerticalTabsWidth === "wide") {
+    return VERTICAL_TABS_WIDE_WIDTH;
   }
 
   const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
@@ -49,5 +57,5 @@ export function getTabStripWidth(
     (workspaceAppTabCount) => workspaceAppTabCount > 1,
   );
 
-  return hasWorkspaceAppWithMultipleTabs ? APP_TAB_STRIP_WIDE_WIDTH : APP_TAB_STRIP_NARROW_WIDTH;
+  return hasWorkspaceAppWithMultipleTabs ? VERTICAL_TABS_WIDE_WIDTH : VERTICAL_TABS_NARROW_WIDTH;
 }

@@ -9,7 +9,6 @@ import {
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
-  workspaceAppTabStripWidths,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -213,17 +212,6 @@ export function WorkspaceAppsSettings() {
             licenseKeyRequired
           />
           <FieldSeparator />
-          <ConfigSelectField
-            label="Tab Strip Width"
-            description="How wide the tab strip is. Auto switches between narrow and wide automatically based on the open tabs."
-            configKey="workspaceApps.tabStripWidth"
-            placeholder="Select width"
-            licenseKeyRequired
-            items={Object.entries(workspaceAppTabStripWidths).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-          />
           <Field>
             <FieldContent>
               <FieldLabel className="flex items-center gap-2">
@@ -231,7 +219,7 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Bookmark Workspace Apps to open them from the tab strip's Workspace Apps menu and
+                Bookmark Workspace Apps to open them from the vertical tabs' Workspace Apps menu and
                 drag to reorder.
               </FieldDescription>
             </FieldContent>

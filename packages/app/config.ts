@@ -94,7 +94,6 @@ export const config = new Store<Config>({
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
     "workspaceApps.openBehavior": "tab",
-    "workspaceApps.tabStripWidth": "auto",
     "workspaceApps.bookmarkedApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
@@ -111,6 +110,7 @@ export const config = new Store<Config>({
     "unifiedInbox.showSenderIcons": true,
     "unifiedInbox.rowsPerPage": 10,
     "spellchecker.languages": [],
+    "verticalTabs.width": "auto",
   },
   migrations: {
     ">=3.4.0": (store) => {
