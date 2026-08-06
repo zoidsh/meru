@@ -1,5 +1,6 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import {
   app,
   BrowserWindow,
@@ -42,25 +43,25 @@ export class AppMenu {
   }
 
   init() {
-    this.menu = this.createMenu();
-
     this._subscribeToSelectedAccount();
 
-    Menu.setApplicationMenu(this.menu);
+    this.refresh();
 
     config.onDidChange("accounts", () => {
-      this.menu = this.createMenu();
-
       this._subscribeToSelectedAccount();
 
-      Menu.setApplicationMenu(this.menu);
+      this.refresh();
     });
 
     app.on("browser-window-focus", () => {
-      this.menu = this.createMenu();
-
-      Menu.setApplicationMenu(this.menu);
+      this.refresh();
     });
+  }
+
+  refresh() {
+    this.menu = this.createMenu();
+
+    Menu.setApplicationMenu(this.menu);
   }
 
   private _subscribeToSelectedAccount() {
@@ -74,17 +75,15 @@ export class AppMenu {
 
     const gmailWebContents = selectedAccount.instance.gmail.view.webContents;
 
-    const rebuildMenu = () => {
-      this.menu = this.createMenu();
-
-      Menu.setApplicationMenu(this.menu);
+    const refreshMenu = () => {
+      this.refresh();
     };
 
-    gmailWebContents.on("did-navigate-in-page", rebuildMenu);
+    gmailWebContents.on("did-navigate-in-page", refreshMenu);
 
     this._selectedAccountUnsubscribeFns.add(() => {
       if (!gmailWebContents.isDestroyed()) {
-        gmailWebContents.removeListener("did-navigate-in-page", rebuildMenu);
+        gmailWebContents.removeListener("did-navigate-in-page", refreshMenu);
       }
     });
   }
@@ -167,11 +166,16 @@ export class AppMenu {
       main.show();
     };
 
+    const isGmailVisible =
+      focusedWindow === main.window &&
+      !appState.isSettingsOpen &&
+      selectedAccount.instance.tabs.activeTab.id === GMAIL_TAB_ID;
+
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.messageId;
 
     const copyOrShareMessageLink =
-      userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
+      isGmailVisible && userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
 
     const allAccounts = accounts.getAccounts();
 
@@ -317,7 +321,7 @@ export class AppMenu {
         submenu: [
           {
             label: "Copy Message Link",
-            enabled: focusedWindow === main.window && Boolean(copyOrShareMessageLink),
+            enabled: Boolean(copyOrShareMessageLink),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
               if (copyOrShareMessageLink) {
@@ -325,7 +329,7 @@ export class AppMenu {
               }
             },
           },
-          focusedWindow === main.window && copyOrShareMessageLink
+          copyOrShareMessageLink
             ? {
                 role: "shareMenu",
                 sharingItem: {
