@@ -1,8 +1,0 @@
-{
-  "name": "@meru/renderer-workspace-app",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "types": "tsc"
-  }
-}

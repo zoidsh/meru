@@ -138,7 +138,6 @@ await Promise.all([
   buildAppFiles(),
   buildRenderer("renderer-main", 3000),
   buildRenderer("renderer-popup", 3001),
-  buildRenderer("renderer-workspace-app", 3002),
 ]);
 
 if (args.values.dev) {
@@ -178,13 +177,7 @@ if (args.values.dev) {
   const watcher = watch("./packages", { recursive: true });
 
   for await (const event of watcher) {
-    const rendererPathnames = [
-      "renderer-main/",
-      "renderer-popup/",
-      "renderer-workspace-app/",
-      "shared/renderer/",
-      "ui/",
-    ];
+    const rendererPathnames = ["renderer-main/", "renderer-popup/", "shared/renderer/", "ui/"];
 
     if (rendererPathnames.some((pathname) => event.filename?.includes(pathname))) {
       continue;

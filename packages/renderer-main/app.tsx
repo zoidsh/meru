@@ -4,6 +4,7 @@ import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
+import { WorkspaceApp } from "@/routes/workspace-app";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppTabStrip } from "./components/app-tab-strip";
 import { useMouseAccountSwitching } from "./lib/hooks";
@@ -24,6 +25,7 @@ export function App() {
             </div>
           </div>
         </Route>
+        <Route path="/workspace-app" component={WorkspaceApp} />
         <Route path="/main/*?">
           <div className="flex h-screen flex-col">
             <AppTitlebar />
