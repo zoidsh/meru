@@ -28,7 +28,7 @@ import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
     label: "Download History",
-    path: "/download-history",
+    path: "/main/download-history",
     component: DownloadHistory,
   },
   {
@@ -36,86 +36,86 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   },
   {
     label: "General",
-    path: "/settings/general",
+    path: "/main/settings/general",
     component: GeneralSettings,
   },
   {
     label: "Accounts",
-    path: "/settings/accounts",
+    path: "/main/settings/accounts",
     component: AccountsSettings,
   },
   {
     label: "Appearance",
-    path: "/settings/appearance",
+    path: "/main/settings/appearance",
     component: AppearanceSettings,
   },
-  { label: "Blocker", path: "/settings/blocker", component: BlockerSettings },
+  { label: "Blocker", path: "/main/settings/blocker", component: BlockerSettings },
   {
     label: "Downloads",
-    path: "/settings/downloads",
+    path: "/main/settings/downloads",
     component: DownloadsSettings,
   },
   {
     label: "Gmail",
-    path: "/settings/gmail",
+    path: "/main/settings/gmail",
     component: GmailSettings,
   },
   {
     label: "Workspace Apps",
-    path: "/settings/workspace-apps",
+    path: "/main/settings/workspace-apps",
     component: WorkspaceAppsSettings,
   },
   {
     label: "Languages",
-    path: "/settings/languages",
+    path: "/main/settings/languages",
     component: LanguagesSettings,
     hidden: platform.isMacOS,
   },
   {
     label: "Notifications",
-    path: "/settings/notifications",
+    path: "/main/settings/notifications",
     component: NotificationsSettings,
   },
   {
     label: "Phishing Protection",
-    path: "/settings/phishing-protection",
+    path: "/main/settings/phishing-protection",
     component: PhishingProtectionSettings,
   },
   {
     label: "Saved Searches",
-    path: "/settings/saved-searches",
+    path: "/main/settings/saved-searches",
     component: SavedSearchesSettings,
   },
   {
     label: "Unified Inbox",
-    path: "/settings/unified-inbox",
+    path: "/main/settings/unified-inbox",
     component: UnifiedInboxSettings,
   },
   {
     label: "Updates",
-    path: "/settings/updates",
+    path: "/main/settings/updates",
     component: UpdatesSettings,
   },
   {
     label: "Verification Codes",
-    path: "/settings/verification-codes",
+    path: "/main/settings/verification-codes",
     component: VerificationCodesSettings,
   },
   {
     label: "Advanced",
-    path: "/settings/advanced",
+    path: "/main/settings/advanced",
     component: AdvancedSettings,
   },
   { type: "separator" },
-  { label: "License", path: "/settings/license", component: LicenseSettings },
+  { label: "License", path: "/main/settings/license", component: LicenseSettings },
   {
     label: "What's New",
-    path: "/settings/version-history",
+    path: "/main/settings/version-history",
     component: VersionHistorySettings,
   },
   {
     label: "About Meru",
-    path: "/settings/about",
+    path: "/main/settings/about",
     component: AboutSettings,
   },
 ];

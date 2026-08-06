@@ -230,7 +230,7 @@ export function AppTitlebar() {
     .find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
     ?.tabs.find((tab) => tab.active);
 
-  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
+  const [matchUnifiedInboxRoute] = useRoute("/main/unified-inbox");
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
@@ -392,7 +392,7 @@ export function AppTitlebar() {
                   size="icon"
                   className="size-7 draggable-none"
                   onClick={() => {
-                    navigate("/unified-inbox");
+                    navigate("/main/unified-inbox");
 
                     ipc.main.send("settings.toggleIsOpen", true);
 

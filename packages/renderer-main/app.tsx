@@ -16,7 +16,7 @@ export function App() {
   return (
     <Router hook={useHashLocation}>
       <Switch>
-        <Route path="/unified-inbox">
+        <Route path="/main/unified-inbox">
           <div className="flex h-screen flex-col">
             <AppTitlebar />
             <div className="flex flex-1 overflow-hidden">
@@ -24,7 +24,7 @@ export function App() {
             </div>
           </div>
         </Route>
-        <Route>
+        <Route path="/main/*?">
           <div className="flex h-screen flex-col">
             <AppTitlebar />
             <div className="flex flex-1 overflow-hidden">

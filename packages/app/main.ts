@@ -55,6 +55,7 @@ class Main {
       renderer: "main",
       port: 3000,
       searchParams,
+      hash: "main",
     });
   }
 
