@@ -390,7 +390,7 @@ export function AppTitlebar() {
                     side="right"
                     align="center"
                     collisionPadding={0}
-                    className="flex w-auto min-w-0 flex-row gap-1 draggable-none"
+                    className="flex w-auto min-w-0 flex-row gap-1 p-0.5 draggable-none"
                   >
                     {config["gmail.savedSearches"].map((savedSearch) => (
                       <DropdownMenuItem
