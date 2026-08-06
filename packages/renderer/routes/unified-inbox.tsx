@@ -1,9 +1,6 @@
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
-import { createDateTimeFormatter, dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
-import { AccountBadge } from "@meru/ui/components/account-badge";
 import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@meru/ui/components/avatar";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -39,8 +36,11 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { AccountBadge } from "@/components/account-badge";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { createDateTimeFormatter, dayjs } from "@/lib/date";
 import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 

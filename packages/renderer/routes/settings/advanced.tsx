@@ -1,8 +1,8 @@
-import { platform } from "@meru/shared/renderer/utils";
 import { FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { platform } from "@/lib/utils";
 
 export function AdvancedSettings() {
   return (

@@ -1,6 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
-import { platform } from "@meru/shared/renderer/utils";
 import { verticalTabsWidths } from "@meru/shared/tabs";
 import {
   Field,
@@ -22,7 +20,9 @@ import {
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useConfig } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
+import { platform } from "@/lib/utils";
 
 const themeItems = [
   { value: "light", label: "Light" },

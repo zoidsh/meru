@@ -5,8 +5,10 @@ import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@meru/ui/components/tabs";
 import { cn } from "@meru/ui/lib/utils";
 import { useEffect, useState } from "react";
+import { PopupWindow } from "@/components/popup-window";
+import { renderApp } from "@/lib/react";
 
-export function DesktopSources() {
+function DesktopSources() {
   const [desktopSources, setDesktopSources] = useState<DesktopSources>([]);
   const [selectedDesktopSourceId, setSelectedDesktopSourceId] = useState<string>("");
 
@@ -91,3 +93,13 @@ export function DesktopSources() {
     </div>
   );
 }
+
+function DesktopSourcesPopup() {
+  return (
+    <PopupWindow>
+      <DesktopSources />
+    </PopupWindow>
+  );
+}
+
+renderApp(DesktopSourcesPopup);

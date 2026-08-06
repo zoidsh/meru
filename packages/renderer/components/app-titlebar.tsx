@@ -1,22 +1,9 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
-import {
-  Titlebar,
-  TitlebarButtonGroup,
-  TitlebarDropdownMenu,
-  TitlebarDropdownMenuItem,
-  TitlebarIconButton,
-  TitlebarLeft,
-  TitlebarNavigationControls,
-} from "@meru/ui/components/titlebar";
-import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -32,7 +19,20 @@ import {
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
+import { FindInPage as UiFindInPage } from "@/components/find-in-page";
+import {
+  Titlebar,
+  TitlebarButtonGroup,
+  TitlebarDropdownMenu,
+  TitlebarDropdownMenuItem,
+  TitlebarIconButton,
+  TitlebarLeft,
+  TitlebarNavigationControls,
+} from "@/components/titlebar";
+import { UnreadCountBadge } from "@/components/unread-count-badge";
+import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
@@ -156,7 +156,7 @@ export function AppTitlebar() {
     .find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
     ?.tabs.find((tab) => tab.active);
 
-  const [matchUnifiedInboxRoute] = useRoute("/main/unified-inbox");
+  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
@@ -334,7 +334,7 @@ export function AppTitlebar() {
                   size="icon"
                   className="size-7 draggable-none"
                   onClick={() => {
-                    navigate("/main/unified-inbox");
+                    navigate("/unified-inbox");
 
                     ipc.main.send("settings.toggleIsOpen", true);
                   }}

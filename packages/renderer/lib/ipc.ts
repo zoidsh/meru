@@ -1,5 +1,5 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { playNotificationSound } from "./lib/notifications";
+import { playNotificationSound } from "./notifications";
 
 ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
   const canvas = document.createElement("canvas");

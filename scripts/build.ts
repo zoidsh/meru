@@ -104,9 +104,13 @@ function buildAppFiles() {
 }
 
 async function buildRenderer(rendererName: string, port: number) {
+  const rendererRoot = path.join(process.cwd(), "packages", rendererName);
+
+  const pageFileNames = Array.from(new Bun.Glob("*.html").scanSync(rendererRoot));
+
   const viteConfig: vite.InlineConfig = {
     configFile: false,
-    root: path.join(process.cwd(), "packages", rendererName),
+    root: rendererRoot,
     base: "./",
     plugins: [viteReact(), viteTailwindcss()],
     resolve: {
@@ -119,6 +123,9 @@ async function buildRenderer(rendererName: string, port: number) {
     build: {
       outDir: path.join(process.cwd(), "build-js", rendererName),
       target: browserTarget,
+      rollupOptions: {
+        input: pageFileNames.map((pageFileName) => path.join(rendererRoot, pageFileName)),
+      },
     },
     clearScreen: false,
   };

@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -17,6 +16,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig } from "@/lib/react-query";
 import { GmailLabelColors } from "./label-colors";
 
 const unreadCountPreferenceItems = [

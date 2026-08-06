@@ -1,10 +1,10 @@
-import { platform } from "@meru/shared/renderer/utils";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { useSettingsStore } from "@/lib/stores";
+import { platform } from "@/lib/utils";
 import { DownloadHistory } from "@/routes/download-history";
 import { AboutSettings } from "@/routes/settings/about";
 import { AccountsSettings } from "@/routes/settings/accounts";
@@ -28,7 +28,7 @@ import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
     label: "Download History",
-    path: "/main/download-history",
+    path: "/download-history",
     component: DownloadHistory,
   },
   {
@@ -36,86 +36,86 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   },
   {
     label: "General",
-    path: "/main/settings/general",
+    path: "/settings/general",
     component: GeneralSettings,
   },
   {
     label: "Accounts",
-    path: "/main/settings/accounts",
+    path: "/settings/accounts",
     component: AccountsSettings,
   },
   {
     label: "Appearance",
-    path: "/main/settings/appearance",
+    path: "/settings/appearance",
     component: AppearanceSettings,
   },
-  { label: "Blocker", path: "/main/settings/blocker", component: BlockerSettings },
+  { label: "Blocker", path: "/settings/blocker", component: BlockerSettings },
   {
     label: "Downloads",
-    path: "/main/settings/downloads",
+    path: "/settings/downloads",
     component: DownloadsSettings,
   },
   {
     label: "Gmail",
-    path: "/main/settings/gmail",
+    path: "/settings/gmail",
     component: GmailSettings,
   },
   {
     label: "Workspace Apps",
-    path: "/main/settings/workspace-apps",
+    path: "/settings/workspace-apps",
     component: WorkspaceAppsSettings,
   },
   {
     label: "Languages",
-    path: "/main/settings/languages",
+    path: "/settings/languages",
     component: LanguagesSettings,
     hidden: platform.isMacOS,
   },
   {
     label: "Notifications",
-    path: "/main/settings/notifications",
+    path: "/settings/notifications",
     component: NotificationsSettings,
   },
   {
     label: "Phishing Protection",
-    path: "/main/settings/phishing-protection",
+    path: "/settings/phishing-protection",
     component: PhishingProtectionSettings,
   },
   {
     label: "Saved Searches",
-    path: "/main/settings/saved-searches",
+    path: "/settings/saved-searches",
     component: SavedSearchesSettings,
   },
   {
     label: "Unified Inbox",
-    path: "/main/settings/unified-inbox",
+    path: "/settings/unified-inbox",
     component: UnifiedInboxSettings,
   },
   {
     label: "Updates",
-    path: "/main/settings/updates",
+    path: "/settings/updates",
     component: UpdatesSettings,
   },
   {
     label: "Verification Codes",
-    path: "/main/settings/verification-codes",
+    path: "/settings/verification-codes",
     component: VerificationCodesSettings,
   },
   {
     label: "Advanced",
-    path: "/main/settings/advanced",
+    path: "/settings/advanced",
     component: AdvancedSettings,
   },
   { type: "separator" },
-  { label: "License", path: "/main/settings/license", component: LicenseSettings },
+  { label: "License", path: "/settings/license", component: LicenseSettings },
   {
     label: "What's New",
-    path: "/main/settings/version-history",
+    path: "/settings/version-history",
     component: VersionHistorySettings,
   },
   {
     label: "About Meru",
-    path: "/main/settings/about",
+    path: "/settings/about",
     component: AboutSettings,
   },
 ];

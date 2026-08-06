@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import { Card, CardContent } from "@meru/ui/components/card";
 import {
@@ -13,6 +12,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
 import { DateFromNow } from "@/components/date-from-now";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 function DownloadHistoryClearAllButton() {
   const { config } = useConfig();

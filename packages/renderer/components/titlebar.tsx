@@ -1,15 +1,15 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
-import { cn } from "../lib/utils";
-import { Button } from "./button";
+import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuBackdrop,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./dropdown-menu";
+} from "@meru/ui/components/dropdown-menu";
+import { cn } from "@meru/ui/lib/utils";
+import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
+import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
 
 export function Titlebar({ children }: { children: ReactNode }) {
   return (

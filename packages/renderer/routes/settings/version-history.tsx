@@ -1,4 +1,3 @@
-import { dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -11,6 +10,7 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import z from "zod";
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { dayjs } from "@/lib/date";
 
 export function VersionHistorySettings() {
   const { data: info } = useQuery({

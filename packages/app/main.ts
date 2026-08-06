@@ -52,8 +52,8 @@ class Main {
     }
 
     loadRenderer(this.window, {
+      page: "main",
       searchParams,
-      hash: "main",
     });
   }
 

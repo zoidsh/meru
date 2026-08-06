@@ -1,8 +1,9 @@
 import type { GmailInboxMessage } from "@meru/shared/gmail";
+import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useConfig } from "./react-query";
 import { useAccountsStore, useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
@@ -53,4 +54,32 @@ export function useUnifiedInbox() {
     .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
 
   return { messages };
+}
+
+export function useCopied() {
+  const [copied, setCopied] = useState(false);
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const markCopied = () => {
+    setCopied(true);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, ms("2s"));
+  };
+
+  return { copied, markCopied };
 }

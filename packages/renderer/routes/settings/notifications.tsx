@@ -1,6 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
-import { platform } from "@meru/shared/renderer/utils";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
 import { Badge } from "@meru/ui/components/badge";
@@ -34,6 +32,8 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>

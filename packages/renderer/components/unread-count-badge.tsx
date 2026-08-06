@@ -1,4 +1,4 @@
-import { cn } from "../lib/utils";
+import { cn } from "@meru/ui/lib/utils";
 
 export function UnreadCountBadge({
   unreadCount,
