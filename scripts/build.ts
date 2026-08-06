@@ -65,7 +65,7 @@ function buildAppFiles() {
               .then((result) => result.css);
 
             return {
-              code: `export default \`${content}\`;`,
+              code: `export default ${JSON.stringify(content)};`,
               moduleType: "js",
             };
           },
