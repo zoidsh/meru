@@ -25,7 +25,6 @@ import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
   CircleAlertIcon,
-  CircleXIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
   InboxIcon,
@@ -34,10 +33,10 @@ import {
   MoonIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
-import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useCloseMenuOnWindowBlur, useIsLicenseKeyValid } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
@@ -74,21 +73,7 @@ function WorkspaceAppsLauncher() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const handleWindowBlur = () => {
-      setIsMenuOpen(false);
-    };
-
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [isMenuOpen]);
+  useCloseMenuOnWindowBlur(isMenuOpen, setIsMenuOpen);
 
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
@@ -241,6 +226,8 @@ export function AppTitlebar() {
 
   const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] = useState(false);
 
+  useCloseMenuOnWindowBlur(isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen);
+
   const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -262,22 +249,6 @@ export function AppTitlebar() {
     isLicenseKeyValid;
 
   const renderAccounts = () => {
-    if (isGmailSavedSearchesOpen) {
-      return config["gmail.savedSearches"].map((savedSearch) => (
-        <Button
-          key={savedSearch.id}
-          variant="outline"
-          size="sm"
-          className="draggable-none"
-          onClick={() => {
-            ipc.main.send("gmail.search", savedSearch.query);
-          }}
-        >
-          {savedSearch.label}
-        </Button>
-      ));
-    }
-
     if (accounts.length === 1) {
       return;
     }
@@ -395,8 +366,6 @@ export function AppTitlebar() {
                     navigate("/main/unified-inbox");
 
                     ipc.main.send("settings.toggleIsOpen", true);
-
-                    setIsGmailSavedSearchesOpen(false);
                   }}
                   title="Unified Inbox"
                 >
@@ -404,18 +373,37 @@ export function AppTitlebar() {
                 </Button>
               )}
               {shouldShowSavedSearchesButton && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="draggable-none"
-                  onClick={() => {
-                    setIsGmailSavedSearchesOpen((isOpen) => !isOpen);
-                  }}
-                  title="Saved Searches"
-                  disabled={matchUnifiedInboxRoute}
+                <DropdownMenu
+                  open={isGmailSavedSearchesOpen}
+                  onOpenChange={setIsGmailSavedSearchesOpen}
+                  orientation="horizontal"
                 >
-                  {isGmailSavedSearchesOpen ? <CircleXIcon /> : <MailSearchIcon />}
-                </Button>
+                  <DropdownMenuTrigger
+                    render={
+                      <TitlebarIconButton title="Saved Searches" disabled={matchUnifiedInboxRoute}>
+                        <MailSearchIcon />
+                      </TitlebarIconButton>
+                    }
+                  />
+                  <DropdownMenuBackdrop className="draggable-none" />
+                  <DropdownMenuContent
+                    side="right"
+                    align="center"
+                    collisionPadding={0}
+                    className="flex w-auto min-w-0 flex-row gap-1 draggable-none"
+                  >
+                    {config["gmail.savedSearches"].map((savedSearch) => (
+                      <DropdownMenuItem
+                        key={savedSearch.id}
+                        onClick={() => {
+                          ipc.main.send("gmail.search", savedSearch.query);
+                        }}
+                      >
+                        {savedSearch.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </TitlebarButtonGroup>
           )}
