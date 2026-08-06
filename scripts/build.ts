@@ -8,7 +8,6 @@ import { type Subprocess, spawn } from "bun";
 import postcss from "postcss";
 import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
-import { viteSingleFile } from "vite-plugin-singlefile";
 
 const args = parseArgs({
   args: Bun.argv,
@@ -108,20 +107,8 @@ async function buildRenderer(rendererName: string, port: number) {
   const viteConfig: vite.InlineConfig = {
     configFile: false,
     root: path.join(process.cwd(), "packages", rendererName),
-    plugins: [
-      viteReact(),
-      viteTailwindcss(),
-      viteSingleFile(),
-      {
-        name: "exclude-sounds-from-inlining",
-        enforce: "post",
-        config: () => ({
-          build: {
-            assetsInlineLimit: (assetFilePath: string) => !assetFilePath.endsWith(".wav"),
-          },
-        }),
-      },
-    ],
+    base: "./",
+    plugins: [viteReact(), viteTailwindcss()],
     resolve: {
       tsconfigPaths: true,
     },
