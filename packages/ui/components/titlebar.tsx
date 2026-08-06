@@ -59,6 +59,7 @@ export function TitlebarIconButton({ className, ...props }: ComponentProps<typeo
 export function TitlebarDropdownMenu({
   title,
   icon,
+  side = "right",
   disabled,
   isOpen,
   onOpenChange,
@@ -66,6 +67,7 @@ export function TitlebarDropdownMenu({
 }: {
   title: string;
   icon: ReactNode;
+  side?: "left" | "right";
   disabled?: boolean;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -98,7 +100,7 @@ export function TitlebarDropdownMenu({
       />
       <DropdownMenuBackdrop className="draggable-none" />
       <DropdownMenuContent
-        side="right"
+        side={side}
         align="center"
         collisionPadding={0}
         className="flex w-auto min-w-0 flex-row gap-1 p-0.5 draggable-none"

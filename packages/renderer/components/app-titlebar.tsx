@@ -279,9 +279,7 @@ export function AppTitlebar() {
     return (
       <>
         <TitlebarLeft>
-          {(shouldShowWorkspaceAppsLauncher ||
-            shouldShowSavedSearchesButton ||
-            shouldShowUnifiedInboxButton) && (
+          {(shouldShowWorkspaceAppsLauncher || shouldShowUnifiedInboxButton) && (
             <TitlebarButtonGroup>
               {shouldShowWorkspaceAppsLauncher && (
                 <TitlebarDropdownMenu
@@ -307,26 +305,6 @@ export function AppTitlebar() {
                       }}
                     >
                       <WorkspaceAppIcon app={app} className="size-4" />
-                    </TitlebarDropdownMenuItem>
-                  ))}
-                </TitlebarDropdownMenu>
-              )}
-              {shouldShowSavedSearchesButton && (
-                <TitlebarDropdownMenu
-                  title="Saved Searches"
-                  icon={<MailSearchIcon />}
-                  disabled={matchUnifiedInboxRoute || isWorkspaceAppTabActive}
-                  isOpen={isGmailSavedSearchesOpen}
-                  onOpenChange={setIsGmailSavedSearchesOpen}
-                >
-                  {config["gmail.savedSearches"].map((savedSearch) => (
-                    <TitlebarDropdownMenuItem
-                      key={savedSearch.id}
-                      onClick={() => {
-                        ipc.main.send("gmail.search", savedSearch.query);
-                      }}
-                    >
-                      {savedSearch.label}
                     </TitlebarDropdownMenuItem>
                   ))}
                 </TitlebarDropdownMenu>
@@ -391,6 +369,27 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
+            {shouldShowSavedSearchesButton && (
+              <TitlebarDropdownMenu
+                title="Saved Searches"
+                icon={<MailSearchIcon />}
+                side="left"
+                disabled={matchUnifiedInboxRoute || isWorkspaceAppTabActive}
+                isOpen={isGmailSavedSearchesOpen}
+                onOpenChange={setIsGmailSavedSearchesOpen}
+              >
+                {config["gmail.savedSearches"].map((savedSearch) => (
+                  <TitlebarDropdownMenuItem
+                    key={savedSearch.id}
+                    onClick={() => {
+                      ipc.main.send("gmail.search", savedSearch.query);
+                    }}
+                  >
+                    {savedSearch.label}
+                  </TitlebarDropdownMenuItem>
+                ))}
+              </TitlebarDropdownMenu>
+            )}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
