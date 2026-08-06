@@ -1,8 +1,15 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
+import {
+  DropdownMenu,
+  DropdownMenuBackdrop,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
 
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
@@ -47,6 +54,66 @@ export function TitlebarIconButton({ className, ...props }: ComponentProps<typeo
   return (
     <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
   );
+}
+
+export function TitlebarDropdownMenu({
+  title,
+  icon,
+  disabled,
+  isOpen,
+  onOpenChange,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  disabled?: boolean;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleWindowBlur = () => {
+      onOpenChange(false);
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isOpen, onOpenChange]);
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={onOpenChange} orientation="horizontal">
+      <DropdownMenuTrigger
+        render={
+          <TitlebarIconButton title={title} disabled={disabled}>
+            {icon}
+          </TitlebarIconButton>
+        }
+      />
+      <DropdownMenuBackdrop className="draggable-none" />
+      <DropdownMenuContent
+        side="right"
+        align="center"
+        collisionPadding={0}
+        className="flex w-auto min-w-0 flex-row gap-1 p-0.5 draggable-none"
+      >
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function TitlebarDropdownMenuItem({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuItem>) {
+  return <DropdownMenuItem className={cn("h-7 justify-center", className)} {...props} />;
 }
 
 export function TitlebarNavigationControls({

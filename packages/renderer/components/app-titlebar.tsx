@@ -5,17 +5,12 @@ import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuBackdrop,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@meru/ui/components/dropdown-menu";
 import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
+  TitlebarDropdownMenu,
+  TitlebarDropdownMenuItem,
   TitlebarIconButton,
   TitlebarLeft,
   TitlebarNavigationControls,
@@ -36,7 +31,7 @@ import {
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
-import { useCloseMenuOnWindowBlur, useIsLicenseKeyValid } from "@/lib/hooks";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
@@ -73,50 +68,37 @@ function WorkspaceAppsLauncher() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useCloseMenuOnWindowBlur(isMenuOpen, setIsMenuOpen);
-
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
     return;
   }
 
   return (
     <TitlebarButtonGroup>
-      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} orientation="horizontal">
-        <DropdownMenuTrigger
-          render={
-            <TitlebarIconButton title="Workspace Apps">
-              <LayoutGridIcon />
-            </TitlebarIconButton>
-          }
-        />
-        <DropdownMenuBackdrop className="draggable-none" />
-        <DropdownMenuContent
-          side="right"
-          align="center"
-          collisionPadding={0}
-          className="flex w-auto min-w-0 flex-row gap-1 draggable-none"
-        >
-          {config["workspaceApps.bookmarkedApps"].map((app) => (
-            <DropdownMenuItem
-              key={app}
-              className="justify-center"
-              title={bookmarkableWorkspaceApps[app]}
-              onClick={(event) => {
-                ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-              }}
-              onAuxClick={(event) => {
-                if (event.button === 1) {
-                  ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+      <TitlebarDropdownMenu
+        title="Workspace Apps"
+        icon={<LayoutGridIcon />}
+        isOpen={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+      >
+        {config["workspaceApps.bookmarkedApps"].map((app) => (
+          <TitlebarDropdownMenuItem
+            key={app}
+            title={bookmarkableWorkspaceApps[app]}
+            onClick={(event) => {
+              ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+            }}
+            onAuxClick={(event) => {
+              if (event.button === 1) {
+                ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
 
-                  setIsMenuOpen(false);
-                }
-              }}
-            >
-              <WorkspaceAppIcon app={app} className="size-4" />
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+                setIsMenuOpen(false);
+              }
+            }}
+          >
+            <WorkspaceAppIcon app={app} className="size-4" />
+          </TitlebarDropdownMenuItem>
+        ))}
+      </TitlebarDropdownMenu>
     </TitlebarButtonGroup>
   );
 }
@@ -225,8 +207,6 @@ export function AppTitlebar() {
   const { config } = useConfig();
 
   const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] = useState(false);
-
-  useCloseMenuOnWindowBlur(isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen);
 
   const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
 
@@ -373,37 +353,24 @@ export function AppTitlebar() {
                 </Button>
               )}
               {shouldShowSavedSearchesButton && (
-                <DropdownMenu
-                  open={isGmailSavedSearchesOpen}
+                <TitlebarDropdownMenu
+                  title="Saved Searches"
+                  icon={<MailSearchIcon />}
+                  disabled={matchUnifiedInboxRoute}
+                  isOpen={isGmailSavedSearchesOpen}
                   onOpenChange={setIsGmailSavedSearchesOpen}
-                  orientation="horizontal"
                 >
-                  <DropdownMenuTrigger
-                    render={
-                      <TitlebarIconButton title="Saved Searches" disabled={matchUnifiedInboxRoute}>
-                        <MailSearchIcon />
-                      </TitlebarIconButton>
-                    }
-                  />
-                  <DropdownMenuBackdrop className="draggable-none" />
-                  <DropdownMenuContent
-                    side="right"
-                    align="center"
-                    collisionPadding={0}
-                    className="flex w-auto min-w-0 flex-row gap-1 p-0.5 draggable-none"
-                  >
-                    {config["gmail.savedSearches"].map((savedSearch) => (
-                      <DropdownMenuItem
-                        key={savedSearch.id}
-                        onClick={() => {
-                          ipc.main.send("gmail.search", savedSearch.query);
-                        }}
-                      >
-                        {savedSearch.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  {config["gmail.savedSearches"].map((savedSearch) => (
+                    <TitlebarDropdownMenuItem
+                      key={savedSearch.id}
+                      onClick={() => {
+                        ipc.main.send("gmail.search", savedSearch.query);
+                      }}
+                    >
+                      {savedSearch.label}
+                    </TitlebarDropdownMenuItem>
+                  ))}
+                </TitlebarDropdownMenu>
               )}
             </TitlebarButtonGroup>
           )}
