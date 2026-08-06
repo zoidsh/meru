@@ -61,51 +61,6 @@ function RecentDownloadHistoryButton() {
   );
 }
 
-function WorkspaceAppsLauncher() {
-  const { config } = useConfig();
-
-  const isLicenseKeyValid = useIsLicenseKeyValid();
-
-  const [matchUnifiedInboxRoute] = useRoute("/main/unified-inbox");
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
-    return;
-  }
-
-  return (
-    <TitlebarButtonGroup>
-      <TitlebarDropdownMenu
-        title="Workspace Apps"
-        icon={<LayoutGridIcon />}
-        disabled={matchUnifiedInboxRoute}
-        isOpen={isMenuOpen}
-        onOpenChange={setIsMenuOpen}
-      >
-        {config["workspaceApps.bookmarkedApps"].map((app) => (
-          <TitlebarDropdownMenuItem
-            key={app}
-            title={bookmarkableWorkspaceApps[app]}
-            onClick={(event) => {
-              ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-            }}
-            onAuxClick={(event) => {
-              if (event.button === 1) {
-                ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-
-                setIsMenuOpen(false);
-              }
-            }}
-          >
-            <WorkspaceAppIcon app={app} className="size-4" />
-          </TitlebarDropdownMenuItem>
-        ))}
-      </TitlebarDropdownMenu>
-    </TitlebarButtonGroup>
-  );
-}
-
 function Trial() {
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
@@ -209,6 +164,8 @@ export function AppTitlebar() {
 
   const { config } = useConfig();
 
+  const [isWorkspaceAppsLauncherOpen, setIsWorkspaceAppsLauncherOpen] = useState(false);
+
   const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] = useState(false);
 
   const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
@@ -218,6 +175,9 @@ export function AppTitlebar() {
   if (!config || !accounts) {
     return;
   }
+
+  const shouldShowWorkspaceAppsLauncher =
+    isLicenseKeyValid && config["workspaceApps.bookmarkedApps"].length > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -319,43 +279,37 @@ export function AppTitlebar() {
     return (
       <>
         <TitlebarLeft>
-          <WorkspaceAppsLauncher />
-          <TitlebarButtonGroup>
-            <TitlebarNavigationControls
-              canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
-              canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
-              isLoading={Boolean(activeTab?.loading)}
-              disabled={matchUnifiedInboxRoute}
-              onGoBack={() => {
-                ipc.main.send("workspaceApp.goBack");
-              }}
-              onGoForward={() => {
-                ipc.main.send("workspaceApp.goForward");
-              }}
-              onReload={() => {
-                ipc.main.send("workspaceApp.reload");
-              }}
-              onStop={() => {
-                ipc.main.send("workspaceApp.stop");
-              }}
-            />
-          </TitlebarButtonGroup>
-          {(shouldShowUnifiedInboxButton || shouldShowSavedSearchesButton) && (
+          {(shouldShowWorkspaceAppsLauncher ||
+            shouldShowSavedSearchesButton ||
+            shouldShowUnifiedInboxButton) && (
             <TitlebarButtonGroup>
-              {shouldShowUnifiedInboxButton && (
-                <Button
-                  variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
-                  size="icon"
-                  className="size-7 draggable-none"
-                  onClick={() => {
-                    navigate("/main/unified-inbox");
-
-                    ipc.main.send("settings.toggleIsOpen", true);
-                  }}
-                  title="Unified Inbox"
+              {shouldShowWorkspaceAppsLauncher && (
+                <TitlebarDropdownMenu
+                  title="Workspace Apps"
+                  icon={<LayoutGridIcon />}
+                  disabled={matchUnifiedInboxRoute}
+                  isOpen={isWorkspaceAppsLauncherOpen}
+                  onOpenChange={setIsWorkspaceAppsLauncherOpen}
                 >
-                  <InboxIcon />
-                </Button>
+                  {config["workspaceApps.bookmarkedApps"].map((app) => (
+                    <TitlebarDropdownMenuItem
+                      key={app}
+                      title={bookmarkableWorkspaceApps[app]}
+                      onClick={(event) => {
+                        ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+                      }}
+                      onAuxClick={(event) => {
+                        if (event.button === 1) {
+                          ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+                          setIsWorkspaceAppsLauncherOpen(false);
+                        }
+                      }}
+                    >
+                      <WorkspaceAppIcon app={app} className="size-4" />
+                    </TitlebarDropdownMenuItem>
+                  ))}
+                </TitlebarDropdownMenu>
               )}
               {shouldShowSavedSearchesButton && (
                 <TitlebarDropdownMenu
@@ -377,8 +331,43 @@ export function AppTitlebar() {
                   ))}
                 </TitlebarDropdownMenu>
               )}
+              {shouldShowUnifiedInboxButton && (
+                <Button
+                  variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
+                  size="icon"
+                  className="size-7 draggable-none"
+                  onClick={() => {
+                    navigate("/main/unified-inbox");
+
+                    ipc.main.send("settings.toggleIsOpen", true);
+                  }}
+                  title="Unified Inbox"
+                >
+                  <InboxIcon />
+                </Button>
+              )}
             </TitlebarButtonGroup>
           )}
+          <TitlebarButtonGroup>
+            <TitlebarNavigationControls
+              canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
+              canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
+              isLoading={Boolean(activeTab?.loading)}
+              disabled={matchUnifiedInboxRoute}
+              onGoBack={() => {
+                ipc.main.send("workspaceApp.goBack");
+              }}
+              onGoForward={() => {
+                ipc.main.send("workspaceApp.goForward");
+              }}
+              onReload={() => {
+                ipc.main.send("workspaceApp.reload");
+              }}
+              onStop={() => {
+                ipc.main.send("workspaceApp.stop");
+              }}
+            />
+          </TitlebarButtonGroup>
           {(shouldShowOutOfOfficeButton || accountButtons) && (
             <TitlebarButtonGroup>
               {shouldShowOutOfOfficeButton && (
