@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { renderApp } from "@meru/shared/renderer/react";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { AccountBadge } from "@meru/ui/components/account-badge";
@@ -16,7 +15,6 @@ import {
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "wouter";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -129,10 +127,10 @@ function FindInPageControls() {
   );
 }
 
-function App() {
+export function WorkspaceApp() {
   const { config } = useConfig();
 
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
 
   const account = config?.accounts.find(
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
@@ -177,5 +175,3 @@ function App() {
     </Titlebar>
   );
 }
-
-renderApp(App);

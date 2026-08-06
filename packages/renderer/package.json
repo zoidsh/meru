@@ -1,5 +1,5 @@
 {
-  "name": "@meru/renderer-popup",
+  "name": "@meru/renderer",
   "version": "0.0.0",
   "private": true,
   "scripts": {

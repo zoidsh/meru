@@ -52,9 +52,8 @@ class Main {
     }
 
     loadRenderer(this.window, {
-      renderer: "main",
-      port: 3000,
       searchParams,
+      hash: "main",
     });
   }
 

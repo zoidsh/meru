@@ -182,7 +182,7 @@ export class AppMenu {
           {
             label: `About ${app.name}`,
             click: () => {
-              main.navigate("/settings/about");
+              main.navigate("/main/settings/about");
             },
           },
           {
@@ -197,7 +197,7 @@ export class AppMenu {
           {
             label: "Settings...",
             click: () => {
-              main.navigate("/settings/general");
+              main.navigate("/main/settings/general");
             },
           },
           {
@@ -348,14 +348,14 @@ export class AppMenu {
               licenseKey.isValid && config.get("unifiedInbox.enabled") && allAccounts.length > 1,
             accelerator: "CommandOrControl+Shift+I",
             click: () => {
-              main.navigate("/unified-inbox");
+              main.navigate("/main/unified-inbox");
             },
           },
           {
             label: "Downloads",
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
-              main.navigate("/download-history");
+              main.navigate("/main/download-history");
             },
           },
           {
@@ -565,7 +565,7 @@ export class AppMenu {
           {
             label: "Manage Accounts...",
             click: () => {
-              main.navigate("/settings/accounts");
+              main.navigate("/main/settings/accounts");
             },
           },
         ],
@@ -593,7 +593,7 @@ export class AppMenu {
           {
             label: "Version History",
             click: () => {
-              main.navigate("/settings/version-history");
+              main.navigate("/main/settings/version-history");
             },
           },
           {

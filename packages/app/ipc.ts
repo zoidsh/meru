@@ -217,7 +217,7 @@ class Ipc {
     });
 
     ipc.main.on("appUpdater.openVersionHistory", () => {
-      main.navigate("/settings/version-history");
+      main.navigate("/main/settings/version-history");
     });
 
     ipc.main.on("gmail.search", (_event, searchQuery) => {
@@ -805,7 +805,7 @@ class Ipc {
     });
 
     ipc.main.on("downloads.openDownloadHistory", () => {
-      main.navigate("/download-history");
+      main.navigate("/main/download-history");
 
       downloads.checkDownloadHistoryItems();
     });
