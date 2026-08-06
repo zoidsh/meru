@@ -9,6 +9,7 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
+import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { AppWindowIcon, GlobeIcon, XIcon } from "lucide-react";
@@ -78,12 +79,14 @@ function StripTab({
   tab,
   accountId,
   presentation,
+  unreadCount,
   className,
 }: {
   ref?: Ref<HTMLDivElement>;
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
+  unreadCount?: number | null;
   className?: string;
 }) {
   const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.pinned;
@@ -140,6 +143,12 @@ function StripTab({
         )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
+      {unreadCount ? (
+        <UnreadCountBadge
+          unreadCount={unreadCount}
+          className="pointer-events-none absolute -top-1 -right-1"
+        />
+      ) : null}
       {isCloseable && (
         <Button
           variant="secondary"
@@ -168,12 +177,14 @@ function SortableStripTab({
   accountId,
   presentation,
   sectionIndex,
+  unreadCount,
   className,
 }: {
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
   sectionIndex: number;
+  unreadCount?: number | null;
   className?: string;
 }) {
   const { ref, isDragging } = useSortable({
@@ -188,6 +199,7 @@ function SortableStripTab({
       tab={tab}
       accountId={accountId}
       presentation={presentation}
+      unreadCount={unreadCount}
       className={cn("touch-none", isDragging && "opacity-50", className)}
     />
   );
@@ -224,6 +236,10 @@ export function AppTabStrip() {
     (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
   );
 
+  const gmailUnreadCount = config?.["accounts.unreadBadge"]
+    ? selectedAccount.gmail.unreadCount
+    : null;
+
   return (
     <div
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
@@ -254,6 +270,7 @@ export function AppTabStrip() {
                 accountId={selectedAccount.config.id}
                 presentation="gridIcon"
                 sectionIndex={pinnedSectionTabIndex}
+                unreadCount={tab.id === GMAIL_TAB_ID ? gmailUnreadCount : null}
                 className={cn(
                   pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
                 )}
@@ -268,6 +285,7 @@ export function AppTabStrip() {
               accountId={selectedAccount.config.id}
               presentation="narrowIcon"
               sectionIndex={pinnedSectionTabIndex}
+              unreadCount={tab.id === GMAIL_TAB_ID ? gmailUnreadCount : null}
             />
           ))
         )}

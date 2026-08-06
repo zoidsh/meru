@@ -15,6 +15,7 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
 } from "@meru/ui/components/titlebar";
+import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
@@ -225,9 +226,7 @@ export function AppTitlebar() {
         {!account.gmail.attentionRequired &&
         config["accounts.unreadBadge"] &&
         account.gmail.unreadCount ? (
-          <div className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#ec3128] px-1 text-[0.5rem] leading-none font-normal text-white">
-            {account.gmail.unreadCount.toLocaleString()}
-          </div>
+          <UnreadCountBadge unreadCount={account.gmail.unreadCount} />
         ) : null}
       </Button>
     ));
