@@ -66,6 +66,8 @@ function WorkspaceAppsLauncher() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const [matchUnifiedInboxRoute] = useRoute("/main/unified-inbox");
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (!config || !isLicenseKeyValid || config["workspaceApps.bookmarkedApps"].length === 0) {
@@ -77,6 +79,7 @@ function WorkspaceAppsLauncher() {
       <TitlebarDropdownMenu
         title="Workspace Apps"
         icon={<LayoutGridIcon />}
+        disabled={matchUnifiedInboxRoute}
         isOpen={isMenuOpen}
         onOpenChange={setIsMenuOpen}
       >
