@@ -1,5 +1,7 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
+import { ms } from "@meru/shared/ms";
+import { dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
@@ -28,7 +30,7 @@ import {
   MoonIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
@@ -119,6 +121,30 @@ function DoNotDisturb() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const doNotDisturbUntil = config?.["doNotDisturb.until"] ?? null;
+
+  const [timeLeft, setTimeLeft] = useState(() =>
+    doNotDisturbUntil ? dayjs(doNotDisturbUntil).fromNow(true) : null,
+  );
+
+  useEffect(() => {
+    if (!doNotDisturbUntil) {
+      setTimeLeft(null);
+
+      return;
+    }
+
+    setTimeLeft(dayjs(doNotDisturbUntil).fromNow(true));
+
+    const interval = setInterval(() => {
+      setTimeLeft(dayjs(doNotDisturbUntil).fromNow(true));
+    }, ms("1s"));
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [doNotDisturbUntil]);
+
   if (!config || !isLicenseKeyValid) {
     return;
   }
@@ -133,7 +159,11 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title="Do Not Disturb"
+      title={
+        config["doNotDisturb.enabled"] && timeLeft
+          ? `Do Not Disturb (${timeLeft} left)`
+          : "Do Not Disturb"
+      }
     >
       <MoonIcon
         className={cn({
