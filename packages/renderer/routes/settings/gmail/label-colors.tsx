@@ -1,5 +1,4 @@
 import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
   type GmailLabelColor,
   type GmailLabelColorInput,
@@ -29,6 +28,7 @@ import { useForm } from "@tanstack/react-form";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const HEX_COLOR_REGEXP = /^#[0-9a-fA-F]{6}$/;
 

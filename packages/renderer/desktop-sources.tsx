@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { renderApp } from "@meru/shared/renderer/react";
 import type { DesktopSource, DesktopSources } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@meru/ui/components/ta
 import { cn } from "@meru/ui/lib/utils";
 import { useEffect, useState } from "react";
 import { PopupWindow } from "@/components/popup-window";
+import { renderApp } from "@/lib/react";
 
 function DesktopSources() {
   const [desktopSources, setDesktopSources] = useState<DesktopSources>([]);

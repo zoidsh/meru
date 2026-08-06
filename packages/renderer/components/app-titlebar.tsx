@@ -1,7 +1,6 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -33,6 +32,7 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,

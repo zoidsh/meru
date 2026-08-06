@@ -1,5 +1,5 @@
-import { platform } from "@meru/shared/renderer/utils";
 import type { MouseEvent } from "react";
+import { platform } from "./utils";
 
 export function getModifierOpenBehavior(event: MouseEvent) {
   if (platform.isMacOS ? event.metaKey : event.ctrlKey) {

@@ -1,10 +1,10 @@
-import { platform } from "@meru/shared/renderer/utils";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { useSettingsStore } from "@/lib/stores";
+import { platform } from "@/lib/utils";
 import { DownloadHistory } from "@/routes/download-history";
 import { AboutSettings } from "@/routes/settings/about";
 import { AccountsSettings } from "@/routes/settings/accounts";

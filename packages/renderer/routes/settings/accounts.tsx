@@ -3,7 +3,6 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
 import { Badge } from "@meru/ui/components/badge";
@@ -34,6 +33,7 @@ import { useState } from "react";
 import type { Entries } from "type-fest";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 

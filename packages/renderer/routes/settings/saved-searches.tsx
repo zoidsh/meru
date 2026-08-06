@@ -1,7 +1,6 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -32,6 +31,7 @@ import { useState } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 export function SavedSearchForm({
   savedSearch = { label: "", query: "" },

@@ -1,8 +1,6 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
-import { platform } from "@meru/shared/renderer/utils";
 import {
   type BookmarkableWorkspaceApp,
   bookmarkableWorkspaceApps,
@@ -36,6 +34,8 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 function SortableBookmarkedAppItem({
   app,

@@ -1,7 +1,7 @@
-import { useCopied } from "@meru/shared/renderer/hooks";
 import { Button } from "@meru/ui/components/button";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useCopied } from "@/lib/hooks";
 
 export function CopyButton({
   value,

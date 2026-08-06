@@ -1,4 +1,3 @@
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import type { Config } from "@meru/shared/types";
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@meru/ui/components/field";
 import {
@@ -10,6 +9,7 @@ import {
 } from "@meru/ui/components/select";
 import type { ReactNode } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
 

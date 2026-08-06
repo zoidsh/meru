@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -16,6 +15,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
 

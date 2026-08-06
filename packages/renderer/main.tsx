@@ -1,5 +1,3 @@
-import { renderApp } from "@meru/shared/renderer/react";
-import { useThemeStore } from "@meru/shared/renderer/theme";
 import { Toaster } from "@meru/ui/components/sonner";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
@@ -8,6 +6,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { VerticalTabs } from "@/components/vertical-tabs";
 import { useMouseAccountSwitching } from "@/lib/hooks";
+import { renderApp } from "@/lib/react";
+import { useThemeStore } from "@/lib/theme";
 import "@/lib/ipc";
 
 function Main() {

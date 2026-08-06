@@ -1,4 +1,3 @@
-import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -12,6 +11,7 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 export function PhishingProtectionSettings() {
   const { config } = useConfig();

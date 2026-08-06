@@ -4,7 +4,6 @@ import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/rea
 import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { useConfig } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getVerticalTabsWidth, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
@@ -14,6 +13,7 @@ import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import { AppWindowIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
+import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
