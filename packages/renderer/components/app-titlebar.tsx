@@ -4,18 +4,6 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { FindInPage as UiFindInPage } from "@meru/ui/components/find-in-page";
-import {
-  Titlebar,
-  TitlebarButtonGroup,
-  TitlebarDropdownMenu,
-  TitlebarDropdownMenuItem,
-  TitlebarIconButton,
-  TitlebarLeft,
-  TitlebarNavigationControls,
-} from "@meru/ui/components/titlebar";
-import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
 import {
   BriefcaseIcon,
@@ -31,6 +19,18 @@ import {
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
+import { FindInPage as UiFindInPage } from "@/components/find-in-page";
+import {
+  Titlebar,
+  TitlebarButtonGroup,
+  TitlebarDropdownMenu,
+  TitlebarDropdownMenuItem,
+  TitlebarIconButton,
+  TitlebarLeft,
+  TitlebarNavigationControls,
+} from "@/components/titlebar";
+import { UnreadCountBadge } from "@/components/unread-count-badge";
+import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";

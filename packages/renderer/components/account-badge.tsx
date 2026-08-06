@@ -1,7 +1,7 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { cn } from "../lib/utils";
-import { Badge } from "./badge";
+import { Badge } from "@meru/ui/components/badge";
+import { cn } from "@meru/ui/lib/utils";
 
 type AccountBadgeProps = {
   label: string;

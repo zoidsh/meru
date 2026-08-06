@@ -25,7 +25,6 @@ import {
   FieldSeparator,
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
@@ -33,6 +32,7 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { platform } from "@/lib/utils";

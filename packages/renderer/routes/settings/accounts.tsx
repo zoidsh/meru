@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import { EmojiPickerButton } from "@meru/ui/components/emoji-picker-button";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
@@ -31,6 +30,7 @@ import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import type { Entries } from "type-fest";
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@/lib/react-query";

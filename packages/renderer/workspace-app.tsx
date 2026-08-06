@@ -1,7 +1,9 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
-import { AccountBadge } from "@meru/ui/components/account-badge";
-import { FindInPage } from "@meru/ui/components/find-in-page";
+import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AccountBadge } from "@/components/account-badge";
+import { FindInPage } from "@/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
@@ -10,10 +12,8 @@ import {
   TitlebarNavigationControls,
   TitlebarPageTitle,
   TitlebarRight,
-} from "@meru/ui/components/titlebar";
-import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
-import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+} from "@/components/titlebar";
+import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { renderApp } from "@/lib/react";
 import { useConfig } from "@/lib/react-query";
 

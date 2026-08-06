@@ -1,13 +1,13 @@
-import { SmileIcon } from "lucide-react";
-import { type ComponentProps, useState } from "react";
-import { Button } from "./button";
+import { Button } from "@meru/ui/components/button";
 import {
   EmojiPicker,
   EmojiPickerContent,
   EmojiPickerFooter,
   EmojiPickerSearch,
-} from "./emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+} from "@meru/ui/components/emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@meru/ui/components/popover";
+import { SmileIcon } from "lucide-react";
+import { type ComponentProps, useState } from "react";
 
 export function EmojiPickerButton({
   onEmojiSelect,
