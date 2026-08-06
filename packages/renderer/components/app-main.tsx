@@ -32,7 +32,7 @@ function CloseButton() {
 }
 
 export function AppMain() {
-  const [matchUnifiedInboxRoute] = useRoute("/main/unified-inbox");
+  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
 
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 

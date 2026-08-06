@@ -57,7 +57,7 @@ ipc.renderer.on("settings.setIsOpen", (_event, isOpen) => {
   useSettingsStore.setState({ isOpen });
 
   if (!isOpen) {
-    navigate("/main");
+    navigate("/");
   }
 });
 

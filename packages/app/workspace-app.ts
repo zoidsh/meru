@@ -197,7 +197,7 @@ export class WorkspaceApp {
     }
 
     if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-      main.navigate("/main/settings/accounts");
+      main.navigate("/settings/accounts");
 
       return { action: "deny" };
     }

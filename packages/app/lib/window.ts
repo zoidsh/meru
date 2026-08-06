@@ -131,31 +131,25 @@ type RendererPage = "main" | "workspace-app" | "desktop-sources" | "recent-downl
 type LoadRendererOptions = {
   page: RendererPage;
   searchParams?: URLSearchParams;
-  hash?: string;
 };
 
 export function loadRenderer(
   window: BrowserWindow | WebContentsView,
   options: LoadRendererOptions,
 ) {
-  const { page, hash } = options;
-
-  const pageFileName = `${page}.html`;
+  const pageFileName = `${options.page}.html`;
 
   const searchParams = options.searchParams ?? new URLSearchParams();
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
   if (is.dev) {
-    window.webContents.loadURL(
-      `http://localhost:3000/${pageFileName}?${searchParams.toString()}${hash ? `#${hash}` : ""}`,
-    );
+    window.webContents.loadURL(`http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
 
     window.webContents.openDevTools({ mode: "detach" });
   } else {
     window.webContents.loadFile(path.join("build-js", "renderer", pageFileName), {
       search: searchParams.toString(),
-      hash,
     });
   }
 }
