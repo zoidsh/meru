@@ -127,34 +127,28 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
 }
 
 type LoadRendererOptions = {
-  renderer: string;
-  port: number;
   searchParams?: URLSearchParams;
-  hash?: string;
+  hash: string;
 };
 
 export function loadRenderer(
   window: BrowserWindow | WebContentsView,
   options: LoadRendererOptions,
 ) {
-  const { renderer, port, hash } = options;
+  const { hash } = options;
 
   const searchParams = options.searchParams ?? new URLSearchParams();
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
-  const rendererName = `renderer-${renderer}`;
-
   if (is.dev) {
-    const hashSuffix = hash ? `#${hash}` : "";
-
-    window.webContents.loadURL(`http://localhost:${port}/?${searchParams.toString()}${hashSuffix}`);
+    window.webContents.loadURL(`http://localhost:3000/?${searchParams.toString()}#${hash}`);
 
     window.webContents.openDevTools({ mode: "detach" });
   } else {
-    window.webContents.loadFile(path.join("build-js", rendererName, "index.html"), {
+    window.webContents.loadFile(path.join("build-js", "renderer-main", "index.html"), {
       search: searchParams.toString(),
-      ...(hash ? { hash } : {}),
+      hash,
     });
   }
 }

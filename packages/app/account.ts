@@ -156,8 +156,6 @@ export class Account {
         desktopSourcesWindow.once(windowEvent, windowListener);
 
         loadRenderer(desktopSourcesWindow, {
-          renderer: "main",
-          port: 3000,
           hash: "popups/desktop-sources",
         });
       },

@@ -451,8 +451,6 @@ export class WorkspaceApp {
     }
 
     loadRenderer(browserWindow, {
-      renderer: "main",
-      port: 3000,
       hash: "workspace-app",
       searchParams,
     });

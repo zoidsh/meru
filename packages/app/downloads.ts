@@ -178,8 +178,6 @@ class Downloads {
     this.recentDownloadHistoryParentWindow = parentWindow;
 
     loadRenderer(this.recentDownloadHistoryView, {
-      renderer: "main",
-      port: 3000,
       hash: "popups/recent-download-history",
     });
 
