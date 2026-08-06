@@ -169,6 +169,9 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 - Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
 - Keep each commit to a single logical change.
 - Always rebase onto the latest `main` before pushing (`git pull --rebase origin main`) — never merge. `main` must stay linear; merge commits are not allowed on it.
+- Always push the branch once the work is finished and `bun types:ci` passes, without being asked. The user pulls it on their own machine to test the changes, so unpushed work blocks them.
+- Never push to `main` on your own. It's fine when the user asks for it in that moment, and only then — a past go-ahead doesn't carry over to the next branch. Push the branch to `main` as a fast-forward so the history stays linear.
+- After a push to `main` lands, cleaning up doesn't need a separate approval: delete the merged branch locally and on the remote.
 
 ## Pull Requests
 
