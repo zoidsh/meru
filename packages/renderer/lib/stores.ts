@@ -11,19 +11,13 @@ export const useAccountsStore = create<{
   accounts: AccountInstances;
   isAddAccountDialogOpen: boolean;
   setIsAddAccountDialogOpen: (isOpen: boolean) => void;
-}>((set) => {
-  if (!accountsSearchParam) {
-    throw new Error("No accounts found in search params");
-  }
-
-  return {
-    accounts: JSON.parse(accountsSearchParam),
-    isAddAccountDialogOpen: false,
-    setIsAddAccountDialogOpen: (isOpen) => {
-      set({ isAddAccountDialogOpen: isOpen });
-    },
-  };
-});
+}>((set) => ({
+  accounts: accountsSearchParam ? JSON.parse(accountsSearchParam) : [],
+  isAddAccountDialogOpen: false,
+  setIsAddAccountDialogOpen: (isOpen) => {
+    set({ isAddAccountDialogOpen: isOpen });
+  },
+}));
 
 ipc.renderer.on("accounts.changed", (_event, accounts) => {
   useAccountsStore.setState({ accounts });
