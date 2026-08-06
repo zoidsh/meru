@@ -1,9 +1,9 @@
 import type { NotificationSound } from "@meru/shared/types";
-import breeze from "./sounds/breeze.wav?inline";
-import chime from "./sounds/chime.wav?inline";
-import duet from "./sounds/duet.wav?inline";
-import knock from "./sounds/knock.wav?inline";
-import linen from "./sounds/linen.wav?inline";
+import breeze from "./sounds/breeze.wav";
+import chime from "./sounds/chime.wav";
+import duet from "./sounds/duet.wav";
+import knock from "./sounds/knock.wav";
+import linen from "./sounds/linen.wav";
 
 export const NOTIFICATION_SOUNDS: Record<NotificationSound, { label: string; file: string }> = {
   breeze: { label: "Breeze", file: breeze },

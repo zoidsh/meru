@@ -108,7 +108,20 @@ async function buildRenderer(rendererName: string, port: number) {
   const viteConfig: vite.InlineConfig = {
     configFile: false,
     root: path.join(process.cwd(), "packages", rendererName),
-    plugins: [viteReact(), viteTailwindcss(), viteSingleFile()],
+    plugins: [
+      viteReact(),
+      viteTailwindcss(),
+      viteSingleFile(),
+      {
+        name: "exclude-sounds-from-inlining",
+        enforce: "post",
+        config: () => ({
+          build: {
+            assetsInlineLimit: (assetFilePath: string) => !assetFilePath.endsWith(".wav"),
+          },
+        }),
+      },
+    ],
     resolve: {
       tsconfigPaths: true,
     },

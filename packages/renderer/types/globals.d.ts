@@ -1,4 +1,4 @@
-declare module "*.wav?inline" {
-  const content: string;
-  export default content;
+declare module "*.wav" {
+  const soundUrl: string;
+  export default soundUrl;
 }
