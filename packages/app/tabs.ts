@@ -6,6 +6,7 @@ import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
+import { appMenu } from "./menu";
 import { WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
@@ -76,7 +77,7 @@ export class Tabs {
 
   tabs: Tab[];
 
-  activeTabId: string = GMAIL_TAB_ID;
+  private _activeTabId: string = GMAIL_TAB_ID;
 
   private recentlyClosedTabUrls: string[] = [];
 
@@ -109,6 +110,20 @@ export class Tabs {
 
   get hasWorkspaceTabs() {
     return this.tabs.length > 1;
+  }
+
+  get activeTabId() {
+    return this._activeTabId;
+  }
+
+  set activeTabId(tabId: string) {
+    if (this._activeTabId === tabId) {
+      return;
+    }
+
+    this._activeTabId = tabId;
+
+    appMenu.refresh();
   }
 
   get activeTab() {
