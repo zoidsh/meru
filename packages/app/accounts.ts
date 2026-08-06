@@ -45,7 +45,7 @@ class Accounts {
       }
     });
 
-    config.onDidChange("workspaceApps.tabStripWidth", () => {
+    config.onDidChange("verticalTabs.width", () => {
       accounts.updateAllViewBounds();
     });
 
@@ -106,7 +106,7 @@ class Accounts {
   getTabStripWidth() {
     return getTabStripWidth(
       this.getSelectedAccount().instance.tabs.serialize(),
-      config.get("workspaceApps.tabStripWidth"),
+      config.get("verticalTabs.width"),
     );
   }
 

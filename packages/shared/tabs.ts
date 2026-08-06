@@ -1,8 +1,16 @@
 import { APP_TAB_STRIP_NARROW_WIDTH, APP_TAB_STRIP_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
-import type { SupportedWorkspaceApp, WorkspaceAppTabStripWidth } from "./workspace-apps";
+import type { SupportedWorkspaceApp } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
+
+export const tabStripWidths = {
+  auto: "Auto",
+  narrow: "Narrow",
+  wide: "Wide",
+} as const;
+
+export type TabStripWidth = keyof typeof tabStripWidths;
 
 export type TabState = {
   id: string;
@@ -23,7 +31,7 @@ export type AccountTabsState = {
 
 export function getTabStripWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  configuredTabStripWidth: WorkspaceAppTabStripWidth,
+  configuredTabStripWidth: TabStripWidth,
 ) {
   if (tabs.length <= 1) {
     return 0;

@@ -9,12 +9,11 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
-import type { AccountTabsState } from "./tabs";
+import type { AccountTabsState, TabStripWidth } from "./tabs";
 import type {
   BookmarkableWorkspaceApp,
   SupportedWorkspaceApp,
   WorkspaceAppOpenBehavior,
-  WorkspaceAppTabStripWidth,
 } from "./workspace-apps";
 
 export type DesktopSource = { id: string; name: string; thumbnail: string };
@@ -123,7 +122,6 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
-  "workspaceApps.tabStripWidth": WorkspaceAppTabStripWidth;
   "workspaceApps.bookmarkedApps": BookmarkableWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
@@ -140,6 +138,7 @@ export type Config = {
   "unifiedInbox.showSenderIcons": boolean;
   "unifiedInbox.rowsPerPage": number;
   "spellchecker.languages": string[];
+  "verticalTabs.width": TabStripWidth;
 };
 
 export type IpcMainEvents =

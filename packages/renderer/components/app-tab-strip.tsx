@@ -238,7 +238,7 @@ export function AppTabStrip() {
   );
 
   const tabStripWidth = selectedAccountTabs
-    ? getTabStripWidth(selectedAccountTabs.tabs, config?.["workspaceApps.tabStripWidth"] ?? "auto")
+    ? getTabStripWidth(selectedAccountTabs.tabs, config?.["verticalTabs.width"] ?? "auto")
     : 0;
 
   if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {

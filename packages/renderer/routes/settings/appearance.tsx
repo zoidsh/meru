@@ -1,6 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import { platform } from "@meru/shared/renderer/utils";
+import { tabStripWidths } from "@meru/shared/tabs";
 import {
   Field,
   FieldContent,
@@ -166,6 +167,21 @@ export function AppearanceSettings() {
               description="Hide all unread badges if disabled regardless of individual account settings."
               configKey="accounts.unreadBadge"
               restartRequired
+            />
+          </FieldSet>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLegend>Vertical Tabs</FieldLegend>
+            <ConfigSelectField
+              label="Width"
+              description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide automatically based on the open tabs."
+              configKey="verticalTabs.width"
+              placeholder="Select width"
+              licenseKeyRequired
+              items={Object.entries(tabStripWidths).map(([value, label]) => ({
+                value,
+                label,
+              }))}
             />
           </FieldSet>
           <FieldSeparator />

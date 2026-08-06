@@ -56,11 +56,3 @@ export const workspaceAppOpenBehaviors = {
 } as const;
 
 export type WorkspaceAppOpenBehavior = keyof typeof workspaceAppOpenBehaviors;
-
-export const workspaceAppTabStripWidths = {
-  auto: "Auto",
-  narrow: "Narrow",
-  wide: "Wide",
-} as const;
-
-export type WorkspaceAppTabStripWidth = keyof typeof workspaceAppTabStripWidths;
