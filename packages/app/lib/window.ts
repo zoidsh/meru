@@ -146,7 +146,7 @@ export function loadRenderer(
 
     window.webContents.openDevTools({ mode: "detach" });
   } else {
-    window.webContents.loadFile(path.join("build-js", "renderer-main", "index.html"), {
+    window.webContents.loadFile(path.join("build-js", "renderer", "index.html"), {
       search: searchParams.toString(),
       hash,
     });

@@ -89,12 +89,8 @@
       "name": "@meru/preload-workspace-app",
       "version": "0.0.0",
     },
-    "packages/renderer-main": {
-      "name": "@meru/renderer-main",
-      "version": "0.0.0",
-    },
-    "packages/renderer-popup": {
-      "name": "@meru/renderer-popup",
+    "packages/renderer": {
+      "name": "@meru/renderer",
       "version": "0.0.0",
     },
     "packages/shared": {
@@ -342,9 +338,7 @@
 
     "@meru/preload-workspace-app": ["@meru/preload-workspace-app@workspace:packages/preload-workspace-app"],
 
-    "@meru/renderer-main": ["@meru/renderer-main@workspace:packages/renderer-main"],
-
-    "@meru/renderer-popup": ["@meru/renderer-popup@workspace:packages/renderer-popup"],
+    "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 
     "@meru/shared": ["@meru/shared@workspace:packages/shared"],
 

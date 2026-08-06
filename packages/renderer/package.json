@@ -1,5 +1,5 @@
 {
-  "name": "@meru/renderer-main",
+  "name": "@meru/renderer",
   "version": "0.0.0",
   "private": true,
   "scripts": {
