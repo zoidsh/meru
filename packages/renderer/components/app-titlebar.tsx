@@ -1,7 +1,6 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
-import { dayjs } from "@meru/shared/renderer/date";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
@@ -116,34 +115,52 @@ function FindInPage() {
   );
 }
 
+function formatDoNotDisturbTimeLeft(until: number) {
+  const millisecondsLeft = Math.max(0, until - Date.now());
+
+  const hours = Math.floor(millisecondsLeft / ms("1h"));
+  const minutes = Math.floor((millisecondsLeft % ms("1h")) / ms("1m"));
+  const seconds = Math.floor((millisecondsLeft % ms("1m")) / ms("1s"));
+
+  if (hours) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (minutes) {
+    return `${minutes}m`;
+  }
+
+  return `${seconds}s`;
+}
+
 function DoNotDisturb() {
   const { config } = useConfig();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const doNotDisturbUntil = config?.["doNotDisturb.until"] ?? null;
+  const doNotDisturbUntil = config?.["doNotDisturb.enabled"] ? config["doNotDisturb.until"] : null;
 
-  const [timeLeft, setTimeLeft] = useState(() =>
-    doNotDisturbUntil ? dayjs(doNotDisturbUntil).fromNow(true) : null,
-  );
+  const [isHovered, setIsHovered] = useState(false);
+
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!doNotDisturbUntil) {
+    if (!isHovered || !doNotDisturbUntil) {
       setTimeLeft(null);
 
       return;
     }
 
-    setTimeLeft(dayjs(doNotDisturbUntil).fromNow(true));
+    setTimeLeft(formatDoNotDisturbTimeLeft(doNotDisturbUntil));
 
     const interval = setInterval(() => {
-      setTimeLeft(dayjs(doNotDisturbUntil).fromNow(true));
+      setTimeLeft(formatDoNotDisturbTimeLeft(doNotDisturbUntil));
     }, ms("1s"));
 
     return () => {
       clearInterval(interval);
     };
-  }, [doNotDisturbUntil]);
+  }, [isHovered, doNotDisturbUntil]);
 
   if (!config || !isLicenseKeyValid) {
     return;
@@ -159,17 +176,21 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title={
-        config["doNotDisturb.enabled"] && timeLeft
-          ? `Do Not Disturb (${timeLeft} left)`
-          : "Do Not Disturb"
-      }
+      onMouseEnter={() => {
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+      }}
+      title="Do Not Disturb"
+      className={cn(timeLeft && "w-auto gap-1 px-2")}
     >
       <MoonIcon
         className={cn({
           "text-violet-600": config["doNotDisturb.enabled"],
         })}
       />
+      {timeLeft && <span className="text-xs text-violet-600">{timeLeft}</span>}
     </TitlebarIconButton>
   );
 }
