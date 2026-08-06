@@ -225,6 +225,8 @@ export function AppTitlebar() {
   const shouldShowSavedSearchesButton =
     config["gmail.savedSearches"].length > 0 && Boolean(config.licenseKey);
 
+  const isWorkspaceAppTabActive = Boolean(activeTab?.app && activeTab.app !== "gmail");
+
   const shouldShowOutOfOfficeButton =
     accounts.length === 1 &&
     Boolean(accounts[0]?.gmail.outOfOffice) &&
@@ -359,7 +361,7 @@ export function AppTitlebar() {
                 <TitlebarDropdownMenu
                   title="Saved Searches"
                   icon={<MailSearchIcon />}
-                  disabled={matchUnifiedInboxRoute}
+                  disabled={matchUnifiedInboxRoute || isWorkspaceAppTabActive}
                   isOpen={isGmailSavedSearchesOpen}
                   onOpenChange={setIsGmailSavedSearchesOpen}
                 >
