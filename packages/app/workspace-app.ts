@@ -743,12 +743,12 @@ export class WorkspaceApp {
     if (!this._window) {
       const { width, height } = main.getWindowBounds();
 
-      const tabStripWidth = accounts.getTabStripWidth();
+      const verticalTabsWidth = accounts.getVerticalTabsWidth();
 
       this.view.setBounds({
-        x: tabStripWidth,
+        x: verticalTabsWidth,
         y: APP_TITLEBAR_HEIGHT,
-        width: width - tabStripWidth,
+        width: width - verticalTabsWidth,
         height: height - APP_TITLEBAR_HEIGHT,
       });
 

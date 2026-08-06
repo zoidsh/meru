@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getTabStripWidth } from "@meru/shared/tabs";
+import { getVerticalTabsWidth } from "@meru/shared/tabs";
 import { Account } from "./account";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -103,8 +103,8 @@ class Accounts {
     });
   }
 
-  getTabStripWidth() {
-    return getTabStripWidth(
+  getVerticalTabsWidth() {
+    return getVerticalTabsWidth(
       this.getSelectedAccount().instance.tabs.serialize(),
       config.get("verticalTabs.width"),
     );

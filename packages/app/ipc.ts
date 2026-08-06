@@ -496,7 +496,7 @@ class Ipc {
       ]).popup();
     });
 
-    ipc.main.on("tabs.showTabStripContextMenu", (_event, accountId) => {
+    ipc.main.on("tabs.showVerticalTabsContextMenu", (_event, accountId) => {
       const account = accounts.getAccount(accountId);
 
       Menu.buildFromTemplate([

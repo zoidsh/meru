@@ -1,7 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import { platform } from "@meru/shared/renderer/utils";
-import { tabStripWidths } from "@meru/shared/tabs";
+import { verticalTabsWidths } from "@meru/shared/tabs";
 import {
   Field,
   FieldContent,
@@ -178,7 +178,7 @@ export function AppearanceSettings() {
               configKey="verticalTabs.width"
               placeholder="Select width"
               licenseKeyRequired
-              items={Object.entries(tabStripWidths).map(([value, label]) => ({
+              items={Object.entries(verticalTabsWidths).map(([value, label]) => ({
                 value,
                 label,
               }))}

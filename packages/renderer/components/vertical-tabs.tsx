@@ -2,11 +2,11 @@ import { Accessibility, defaultPreset, PointerActivationConstraints } from "@dnd
 import { move } from "@dnd-kit/helpers";
 import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { APP_TAB_STRIP_WIDE_WIDTH } from "@meru/shared/constants";
+import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { useConfig } from "@meru/shared/renderer/react-query";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, getTabStripWidth, type TabState } from "@meru/shared/tabs";
+import { GMAIL_TAB_ID, getVerticalTabsWidth, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
@@ -17,9 +17,9 @@ import type { Ref } from "react";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
 
-const tabStripPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
+const verticalTabsPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
-const tabStripSensors = [
+const verticalTabsSensors = [
   PointerSensor.configure({
     activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
     preventActivation: (event) =>
@@ -98,7 +98,7 @@ function GmailTabStatusBadge({ attentionRequired, unreadCount }: GmailTabStatus)
   );
 }
 
-function StripTab({
+function VerticalTab({
   ref,
   tab,
   accountId,
@@ -191,7 +191,7 @@ function StripTab({
   );
 }
 
-function SortableStripTab({
+function SortableVerticalTab({
   tab,
   accountId,
   presentation,
@@ -213,7 +213,7 @@ function SortableStripTab({
   });
 
   return (
-    <StripTab
+    <VerticalTab
       ref={ref}
       tab={tab}
       accountId={accountId}
@@ -224,7 +224,7 @@ function SortableStripTab({
   );
 }
 
-export function AppTabStrip() {
+export function VerticalTabs() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
@@ -237,15 +237,15 @@ export function AppTabStrip() {
     (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
   );
 
-  const tabStripWidth = selectedAccountTabs
-    ? getTabStripWidth(selectedAccountTabs.tabs, config?.["verticalTabs.width"] ?? "auto")
+  const verticalTabsWidth = selectedAccountTabs
+    ? getVerticalTabsWidth(selectedAccountTabs.tabs, config?.["verticalTabs.width"] ?? "auto")
     : 0;
 
-  if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || tabStripWidth === 0) {
+  if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || verticalTabsWidth === 0) {
     return;
   }
 
-  const isWide = tabStripWidth === APP_TAB_STRIP_WIDE_WIDTH;
+  const isWide = verticalTabsWidth === VERTICAL_TABS_WIDE_WIDTH;
 
   const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
     (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
@@ -263,7 +263,7 @@ export function AppTabStrip() {
   return (
     <div
       className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
-      style={{ width: tabStripWidth, minWidth: tabStripWidth }}
+      style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
         if (event.defaultPrevented) {
           return;
@@ -271,12 +271,12 @@ export function AppTabStrip() {
 
         event.preventDefault();
 
-        ipc.main.send("tabs.showTabStripContextMenu", selectedAccount.config.id);
+        ipc.main.send("tabs.showVerticalTabsContextMenu", selectedAccount.config.id);
       }}
     >
       <DragDropProvider
-        plugins={tabStripPlugins}
-        sensors={tabStripSensors}
+        plugins={verticalTabsPlugins}
+        sensors={verticalTabsSensors}
         onDragEnd={(event) => {
           moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
         }}
@@ -284,7 +284,7 @@ export function AppTabStrip() {
         {isWide ? (
           <div className="mb-1 grid w-full grid-cols-2 gap-2">
             {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-              <SortableStripTab
+              <SortableVerticalTab
                 key={tab.id}
                 tab={tab}
                 accountId={selectedAccount.config.id}
@@ -299,7 +299,7 @@ export function AppTabStrip() {
           </div>
         ) : (
           pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-            <SortableStripTab
+            <SortableVerticalTab
               key={tab.id}
               tab={tab}
               accountId={selectedAccount.config.id}
@@ -311,14 +311,14 @@ export function AppTabStrip() {
         )}
       </DragDropProvider>
       <DragDropProvider
-        plugins={tabStripPlugins}
-        sensors={tabStripSensors}
+        plugins={verticalTabsPlugins}
+        sensors={verticalTabsSensors}
         onDragEnd={(event) => {
           moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
         }}
       >
         {unpinnedTabs.map((tab, unpinnedTabIndex) => (
-          <SortableStripTab
+          <SortableVerticalTab
             key={tab.id}
             tab={tab}
             accountId={selectedAccount.config.id}

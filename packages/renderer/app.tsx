@@ -7,7 +7,7 @@ import { AppMain } from "@/components/app-main";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { WorkspaceApp } from "@/routes/workspace-app";
 import { AppSidebar } from "./components/app-sidebar";
-import { AppTabStrip } from "./components/app-tab-strip";
+import { VerticalTabs } from "./components/vertical-tabs";
 import { useMouseAccountSwitching } from "./lib/hooks";
 import { DesktopSources } from "./routes/desktop-sources";
 import { RecentDownloadHistory } from "./routes/recent-download-history";
@@ -56,7 +56,7 @@ export function App() {
           <div className="flex h-screen flex-col">
             <AppTitlebar />
             <div className="flex flex-1 overflow-hidden">
-              <AppTabStrip />
+              <VerticalTabs />
               <AppSidebar />
               <AppMain />
             </div>
