@@ -451,7 +451,7 @@ export class WorkspaceApp {
     }
 
     loadRenderer(browserWindow, {
-      hash: "workspace-app",
+      page: "workspace-app",
       searchParams,
     });
 

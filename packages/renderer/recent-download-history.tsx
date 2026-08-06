@@ -1,5 +1,6 @@
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { renderApp } from "@meru/shared/renderer/react";
 import { useConfig, useConfigMutation } from "@meru/shared/renderer/react-query";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -20,8 +21,9 @@ import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
 import { DownloadIcon, FolderIcon, SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 import { DateFromNow } from "@/components/date-from-now";
+import { PopupWindow } from "@/components/popup-window";
 
-export function RecentDownloadHistory() {
+function RecentDownloadHistory() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -159,3 +161,13 @@ export function RecentDownloadHistory() {
     </div>
   );
 }
+
+function RecentDownloadHistoryPopup() {
+  return (
+    <PopupWindow>
+      <RecentDownloadHistory />
+    </PopupWindow>
+  );
+}
+
+renderApp(RecentDownloadHistoryPopup);
