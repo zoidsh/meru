@@ -178,9 +178,9 @@ class Downloads {
     this.recentDownloadHistoryParentWindow = parentWindow;
 
     loadRenderer(this.recentDownloadHistoryView, {
-      renderer: "popup",
-      port: 3001,
-      hash: "recent-download-history",
+      renderer: "main",
+      port: 3000,
+      hash: "popups/recent-download-history",
     });
 
     parentWindow.contentView.addChildView(this.recentDownloadHistoryView);

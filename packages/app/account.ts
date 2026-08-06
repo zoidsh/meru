@@ -156,9 +156,9 @@ export class Account {
         desktopSourcesWindow.once(windowEvent, windowListener);
 
         loadRenderer(desktopSourcesWindow, {
-          renderer: "popup",
-          port: 3001,
-          hash: "desktop-sources",
+          renderer: "main",
+          port: 3000,
+          hash: "popups/desktop-sources",
         });
       },
       { useSystemPicker: config.get("screenShare.useSystemPicker") },

@@ -134,11 +134,7 @@ async function buildRenderer(rendererName: string, port: number) {
   }
 }
 
-await Promise.all([
-  buildAppFiles(),
-  buildRenderer("renderer-main", 3000),
-  buildRenderer("renderer-popup", 3001),
-]);
+await Promise.all([buildAppFiles(), buildRenderer("renderer-main", 3000)]);
 
 if (args.values.dev) {
   let electron: Subprocess;
@@ -177,7 +173,7 @@ if (args.values.dev) {
   const watcher = watch("./packages", { recursive: true });
 
   for await (const event of watcher) {
-    const rendererPathnames = ["renderer-main/", "renderer-popup/", "shared/renderer/", "ui/"];
+    const rendererPathnames = ["renderer-main/", "shared/renderer/", "ui/"];
 
     if (rendererPathnames.some((pathname) => event.filename?.includes(pathname))) {
       continue;
