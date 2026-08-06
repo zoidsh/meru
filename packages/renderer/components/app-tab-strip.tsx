@@ -12,7 +12,7 @@ import { Button } from "@meru/ui/components/button";
 import { UnreadCountBadge } from "@meru/ui/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@meru/ui/components/workspace-app-icon";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, GlobeIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
@@ -74,19 +74,43 @@ function WindowedTabBadge({ className }: { className?: string }) {
   );
 }
 
+type GmailTabStatus = {
+  attentionRequired: boolean;
+  unreadCount: number | null;
+};
+
+function GmailTabStatusBadge({ attentionRequired, unreadCount }: GmailTabStatus) {
+  if (attentionRequired) {
+    return (
+      <CircleAlertIcon className="pointer-events-none absolute -top-1 -right-1 size-3.5 rounded-full bg-background text-yellow-400" />
+    );
+  }
+
+  if (!unreadCount) {
+    return null;
+  }
+
+  return (
+    <UnreadCountBadge
+      unreadCount={unreadCount}
+      className="pointer-events-none absolute -top-1 -right-1"
+    />
+  );
+}
+
 function StripTab({
   ref,
   tab,
   accountId,
   presentation,
-  unreadCount,
+  gmailStatus,
   className,
 }: {
   ref?: Ref<HTMLDivElement>;
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
-  unreadCount?: number | null;
+  gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
   const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.pinned;
@@ -143,12 +167,7 @@ function StripTab({
         )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
-      {unreadCount ? (
-        <UnreadCountBadge
-          unreadCount={unreadCount}
-          className="pointer-events-none absolute -top-1 -right-1"
-        />
-      ) : null}
+      {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {isCloseable && (
         <Button
           variant="secondary"
@@ -177,14 +196,14 @@ function SortableStripTab({
   accountId,
   presentation,
   sectionIndex,
-  unreadCount,
+  gmailStatus,
   className,
 }: {
   tab: TabState;
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
   sectionIndex: number;
-  unreadCount?: number | null;
+  gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
   const { ref, isDragging } = useSortable({
@@ -199,7 +218,7 @@ function SortableStripTab({
       tab={tab}
       accountId={accountId}
       presentation={presentation}
-      unreadCount={unreadCount}
+      gmailStatus={gmailStatus}
       className={cn("touch-none", isDragging && "opacity-50", className)}
     />
   );
@@ -236,9 +255,10 @@ export function AppTabStrip() {
     (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
   );
 
-  const gmailUnreadCount = config?.["accounts.unreadBadge"]
-    ? selectedAccount.gmail.unreadCount
-    : null;
+  const gmailTabStatus = {
+    attentionRequired: selectedAccount.gmail.attentionRequired,
+    unreadCount: config?.["accounts.unreadBadge"] ? selectedAccount.gmail.unreadCount : null,
+  };
 
   return (
     <div
@@ -270,7 +290,7 @@ export function AppTabStrip() {
                 accountId={selectedAccount.config.id}
                 presentation="gridIcon"
                 sectionIndex={pinnedSectionTabIndex}
-                unreadCount={tab.id === GMAIL_TAB_ID ? gmailUnreadCount : null}
+                gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
                 className={cn(
                   pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
                 )}
@@ -285,7 +305,7 @@ export function AppTabStrip() {
               accountId={selectedAccount.config.id}
               presentation="narrowIcon"
               sectionIndex={pinnedSectionTabIndex}
-              unreadCount={tab.id === GMAIL_TAB_ID ? gmailUnreadCount : null}
+              gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
             />
           ))
         )}
