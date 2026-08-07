@@ -149,7 +149,7 @@ export type IpcMainEvents =
       "accounts.addAccount": [account: AccountConfigInput];
       "accounts.removeAccount": [accountId: AccountConfig["id"]];
       "accounts.updateAccount": [account: AccountConfig];
-      "settings.toggleIsOpen": [open?: boolean];
+      "route.changed": [location: string];
       "workspaceApp.goBack": [workspaceAppId?: string];
       "workspaceApp.goForward": [workspaceAppId?: string];
       "workspaceApp.reload": [workspaceAppId?: string];
@@ -213,7 +213,6 @@ export type IpcMainEvents =
 
 export type IpcRendererEvent = {
   navigate: [to: string];
-  "settings.setIsOpen": [isOpen: boolean];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
   "gmail.openMessage": [messageId: string];

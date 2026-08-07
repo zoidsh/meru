@@ -2,7 +2,6 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstances } from "@meru/shared/schemas";
 import type { AccountTabsState } from "@meru/shared/tabs";
 import { toast } from "sonner";
-import { navigate } from "wouter/use-hash-location";
 import { create } from "zustand";
 import { getConfig } from "./react-query";
 import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
@@ -45,20 +44,6 @@ export const useTabsStore = create<{
 
 ipc.renderer.on("tabs.changed", (_event, accountsTabs) => {
   useTabsStore.setState({ accountsTabs });
-});
-
-export const useSettingsStore = create<{
-  isOpen: boolean;
-}>(() => ({
-  isOpen: false,
-}));
-
-ipc.renderer.on("settings.setIsOpen", (_event, isOpen) => {
-  useSettingsStore.setState({ isOpen });
-
-  if (!isOpen) {
-    navigate("/");
-  }
 });
 
 export const useFindInPageStore = create<{

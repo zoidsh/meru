@@ -130,7 +130,7 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    if (!appState.isSettingsOpen) {
+    if (appState.visibleSurface === "account") {
       activeTab.view.webContents.focus();
     }
   }
@@ -288,9 +288,7 @@ class Accounts {
 
     this.sendTabsChangedToRenderer();
 
-    this.show();
-
-    appState.setIsSettingsOpen(false);
+    main.navigate("/");
   }
 
   async removeAccount(selectedAccountId: string) {

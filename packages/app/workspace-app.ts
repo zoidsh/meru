@@ -422,7 +422,7 @@ export class WorkspaceApp {
     if (this._window) {
       this.registerWindowListeners();
     } else {
-      if (appState.isSettingsOpen) {
+      if (appState.visibleSurface !== "account") {
         this.view.setVisible(false);
       }
     }
@@ -658,7 +658,7 @@ export class WorkspaceApp {
 
     main.window.contentView.addChildView(this.view, 0);
 
-    if (appState.isSettingsOpen) {
+    if (appState.visibleSurface !== "account") {
       this.view.setVisible(false);
     }
 

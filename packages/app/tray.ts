@@ -4,7 +4,6 @@ import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { main } from "@/main";
-import { appState } from "./state";
 
 export class AppTray {
   private tray: Electron.Tray | undefined;
@@ -60,7 +59,7 @@ export class AppTray {
         if (accountWithUnread) {
           accounts.selectAccount(accountWithUnread.id);
 
-          appState.setIsSettingsOpen(false);
+          main.navigate("/");
         }
       }
 

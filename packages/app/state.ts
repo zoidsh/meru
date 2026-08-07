@@ -1,29 +1,39 @@
-import { ipc } from "@/ipc";
-import { main } from "@/main";
 import { accounts } from "./accounts";
 import { appMenu } from "./menu";
 
 class AppState {
   isQuittingApp = false;
 
-  isSettingsOpen = false;
+  rendererRoute = "/";
 
-  setIsSettingsOpen(value: boolean) {
-    this.isSettingsOpen = value;
+  get visibleSurface() {
+    if (this.rendererRoute === "/") {
+      return "account";
+    }
 
-    ipc.renderer.send(main.window.webContents, "settings.setIsOpen", this.isSettingsOpen);
+    if (this.rendererRoute === "/unified-inbox") {
+      return "unifiedInbox";
+    }
 
-    if (this.isSettingsOpen) {
-      accounts.hide();
-    } else {
+    return "settings";
+  }
+
+  setRendererRoute(route: string) {
+    const previousVisibleSurface = this.visibleSurface;
+
+    this.rendererRoute = route;
+
+    if (this.visibleSurface === previousVisibleSurface) {
+      return;
+    }
+
+    if (this.visibleSurface === "account") {
       accounts.show();
+    } else {
+      accounts.hide();
     }
 
     appMenu.refresh();
-  }
-
-  toggleIsSettingsOpen() {
-    this.setIsSettingsOpen(!this.isSettingsOpen);
   }
 }
 

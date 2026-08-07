@@ -178,7 +178,7 @@ class Main {
   }
 
   navigate(to: string) {
-    appState.setIsSettingsOpen(true);
+    appState.setRendererRoute(to);
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 

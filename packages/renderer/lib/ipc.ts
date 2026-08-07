@@ -1,5 +1,18 @@
 import { ipc } from "@meru/shared/renderer/ipc";
+import { navigate } from "wouter/use-hash-location";
 import { playNotificationSound } from "./notifications";
+
+ipc.renderer.on("navigate", (_event, to) => {
+  navigate(to);
+});
+
+function sendRouteChanged() {
+  ipc.main.send("route.changed", `/${window.location.hash.replace(/^#?\/?/, "")}`);
+}
+
+window.addEventListener("hashchange", sendRouteChanged);
+
+sendRouteChanged();
 
 ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
   const canvas = document.createElement("canvas");

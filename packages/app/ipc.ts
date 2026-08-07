@@ -68,12 +68,8 @@ class Ipc {
   renderer = new IpcEmitter<IpcRendererEvent>();
 
   init() {
-    this.main.on("settings.toggleIsOpen", (_event, open) => {
-      if (typeof open === "boolean") {
-        appState.setIsSettingsOpen(open);
-      } else {
-        appState.toggleIsSettingsOpen();
-      }
+    this.main.on("route.changed", (_event, rendererRoute) => {
+      appState.setRendererRoute(rendererRoute);
     });
 
     config.onDidAnyChange(() => {

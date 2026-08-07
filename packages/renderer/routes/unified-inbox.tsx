@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { navigate } from "wouter/use-hash-location";
 import { AccountBadge } from "@/components/account-badge";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { createDateTimeFormatter, dayjs } from "@/lib/date";
@@ -180,7 +181,7 @@ function UnifiedInboxTable({
   const gPrefixTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const openMessage = (message: UnifiedInboxMessage) => {
-    ipc.main.send("settings.toggleIsOpen", false);
+    navigate("/");
 
     ipc.main.send("accounts.selectAccount", message.account.id);
 
