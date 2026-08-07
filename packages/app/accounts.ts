@@ -130,7 +130,7 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    if (main.route === "/") {
+    if (main.location === "/") {
       activeTab.view.webContents.focus();
     }
   }

@@ -18,20 +18,20 @@ import { trial } from "./trial";
 class Main {
   private _window: BrowserWindow | undefined;
 
-  route = "/";
+  location = "/";
 
-  private setRoute(route: string) {
-    const wasAccountRoute = this.route === "/";
+  private setLocation(location: string) {
+    const wasAccountLocation = this.location === "/";
 
-    this.route = route;
+    this.location = location;
 
-    const isAccountRoute = route === "/";
+    const isAccountLocation = location === "/";
 
-    if (isAccountRoute === wasAccountRoute) {
+    if (isAccountLocation === wasAccountLocation) {
       return;
     }
 
-    if (isAccountRoute) {
+    if (isAccountLocation) {
       accounts.show();
     } else {
       accounts.hide();
@@ -130,7 +130,7 @@ class Main {
     }
 
     this.window.webContents.on("did-navigate-in-page", (_event, url) => {
-      this.setRoute(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
+      this.setLocation(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
     });
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
@@ -205,7 +205,7 @@ class Main {
   }
 
   navigate(to: string) {
-    this.setRoute(to);
+    this.setLocation(to);
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 

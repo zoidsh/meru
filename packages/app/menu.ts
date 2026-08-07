@@ -164,7 +164,7 @@ export class AppMenu {
 
     const isGmailVisible =
       focusedWindow === main.window &&
-      main.route === "/" &&
+      main.location === "/" &&
       selectedAccount.instance.tabs.activeTab.id === GMAIL_TAB_ID;
 
     const userEmail = selectedAccount.instance.gmail.userEmail;

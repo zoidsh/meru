@@ -175,7 +175,7 @@ async function init() {
 
   if (!app.commandLine.hasSwitch("disable-bring-to-top-on-focus")) {
     main.window.on("focus", () => {
-      if (main.route === "/") {
+      if (main.location === "/") {
         accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
       }
     });
