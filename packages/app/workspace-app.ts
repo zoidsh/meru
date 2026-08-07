@@ -635,6 +635,10 @@ export class WorkspaceApp {
     });
 
     this.account.instance.tabs.deactivateTab(this.id);
+
+    if (this.persistence) {
+      accounts.saveTabs();
+    }
   }
 
   focusWindow() {
@@ -676,6 +680,10 @@ export class WorkspaceApp {
     main.show();
 
     this.updateViewBounds();
+
+    if (this.persistence) {
+      accounts.saveTabs();
+    }
   }
 
   private updateAppFromNavigation(url: string) {

@@ -65,6 +65,8 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
+  windowed: boolean;
+
   title: string;
 
   zoomFactor: number | undefined;
@@ -75,6 +77,7 @@ export class DormantTab {
     this.title = savedTab.title;
     this.persistence = savedTab.persistence;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
+    this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
   }
 }
@@ -209,7 +212,11 @@ export class Tabs {
     }
 
     if (activatedTab instanceof DormantTab) {
-      this.activeTabId = this.materializeDormantTab(activatedTab).id;
+      const materializedTab = this.materializeDormantTab(activatedTab);
+
+      if (!materializedTab.isWindowed) {
+        this.activeTabId = materializedTab.id;
+      }
 
       this.broadcastTabsChanged();
 
@@ -227,9 +234,14 @@ export class Tabs {
       url: dormantTab.url,
       persistence: dormantTab.persistence,
       loadOnLaunch: dormantTab.loadOnLaunch,
+      asWindow: dormantTab.windowed,
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
     });
+
+    if (workspaceApp.isWindowed) {
+      registerTabBroadcasts(workspaceApp.view);
+    }
 
     this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
 
@@ -327,6 +339,7 @@ export class Tabs {
           title: savedWorkspaceApp.title,
           persistence: savedWorkspaceApp.persistence,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
+          windowed: savedWorkspaceApp.isWindowed,
         },
         savedWorkspaceApp.zoomFactor,
       ),
@@ -491,6 +504,7 @@ export class Tabs {
           title: tab.title,
           persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
+          windowed: tab.isWindowed,
         });
       } else if (tab instanceof DormantTab) {
         savedTabs.push({
@@ -499,6 +513,7 @@ export class Tabs {
           title: tab.title,
           persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
+          windowed: tab.windowed,
         });
       }
     }
