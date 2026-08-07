@@ -33,6 +33,7 @@ export const savedTabSchema = z.object({
   title: z.string(),
   persistence: tabPersistenceSchema,
   loadOnLaunch: z.boolean(),
+  windowed: z.boolean(),
 });
 
 export type SavedTab = z.infer<typeof savedTabSchema>;
