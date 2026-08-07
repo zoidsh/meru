@@ -1,16 +1,5 @@
-import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
-import { Card, CardContent } from "@meru/ui/components/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@meru/ui/components/empty";
-import { cn } from "@meru/ui/lib/utils";
-import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
-import { DateFromNow } from "@/components/date-from-now";
+import { DownloadHistoryList } from "@/components/download-history";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
@@ -38,102 +27,6 @@ function DownloadHistoryClearAllButton() {
   );
 }
 
-function DownloadHistoryContent() {
-  const { config } = useConfig();
-
-  const configMutation = useConfigMutation();
-
-  if (!config) {
-    return;
-  }
-
-  if (config["downloads.history"].length === 0) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <DownloadIcon />
-          </EmptyMedia>
-          <EmptyTitle>No downloads yet</EmptyTitle>
-          <EmptyDescription>Your downloaded files will appear here.</EmptyDescription>
-          <EmptyDescription>
-            Downloads older than 30 days will be automatically removed from the history.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {config["downloads.history"].map(({ id, fileName, filePath, createdAt, exists }) => (
-        <Card key={id}>
-          <CardContent className="flex items-center gap-4 text-sm">
-            <div className="flex-1 space-y-1">
-              <div
-                className={cn("font-medium", {
-                  "underline-offset-4 hover:underline": exists,
-                  "text-muted-foreground line-through": !exists,
-                })}
-                onClick={
-                  exists
-                    ? () => {
-                        ipc.main.send("downloads.openFile", { id, filePath });
-                      }
-                    : undefined
-                }
-                onDragStart={
-                  exists
-                    ? (event) => {
-                        event.preventDefault();
-
-                        ipc.main.send("downloads.dragFile", { id, filePath });
-                      }
-                    : undefined
-                }
-                draggable={exists}
-              >
-                {fileName}
-              </div>
-              <div className="text-muted-foreground first-letter:capitalize">
-                {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {exists && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  title="Show in folder"
-                  onClick={() => {
-                    ipc.main.send("downloads.showFileInFolder", { id, filePath });
-                  }}
-                >
-                  <FolderIcon />
-                </Button>
-              )}
-              <Button
-                size="icon"
-                variant="ghost"
-                title="Remove from history"
-                onClick={() => {
-                  configMutation.mutate({
-                    "downloads.history": config["downloads.history"].filter(
-                      (item) => item.id !== id,
-                    ),
-                  });
-                }}
-              >
-                <XIcon />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
 export function DownloadHistory() {
   return (
     <>
@@ -141,7 +34,7 @@ export function DownloadHistory() {
         <SettingsTitle>Download History</SettingsTitle>
         <DownloadHistoryClearAllButton />
       </SettingsHeader>
-      <DownloadHistoryContent />
+      <DownloadHistoryList />
     </>
   );
 }

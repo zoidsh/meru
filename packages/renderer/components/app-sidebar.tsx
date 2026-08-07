@@ -5,7 +5,6 @@ import { cn } from "@meru/ui/lib/utils";
 import { type RouteProps, useLocation } from "wouter";
 import { useSettingsStore } from "@/lib/stores";
 import { platform } from "@/lib/utils";
-import { DownloadHistory } from "@/routes/download-history";
 import { AboutSettings } from "@/routes/settings/about";
 import { AccountsSettings } from "@/routes/settings/accounts";
 import { AdvancedSettings } from "@/routes/settings/advanced";
@@ -26,14 +25,6 @@ import { VersionHistorySettings } from "@/routes/settings/version-history";
 import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
-  {
-    label: "Download History",
-    path: "/download-history",
-    component: DownloadHistory,
-  },
-  {
-    type: "separator",
-  },
   {
     label: "General",
     path: "/settings/general",

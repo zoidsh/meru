@@ -10,6 +10,17 @@ import { renderApp } from "@/lib/react";
 import { useThemeStore } from "@/lib/theme";
 import "@/lib/ipc";
 
+function FullWidthLayout() {
+  return (
+    <div className="flex h-screen flex-col">
+      <AppTitlebar />
+      <div className="flex flex-1 overflow-hidden">
+        <AppMain />
+      </div>
+    </div>
+  );
+}
+
 function Main() {
   const theme = useThemeStore((state) => state.theme);
 
@@ -19,12 +30,10 @@ function Main() {
     <Router hook={useHashLocation}>
       <Switch>
         <Route path="/unified-inbox">
-          <div className="flex h-screen flex-col">
-            <AppTitlebar />
-            <div className="flex flex-1 overflow-hidden">
-              <AppMain />
-            </div>
-          </div>
+          <FullWidthLayout />
+        </Route>
+        <Route path="/download-history">
+          <FullWidthLayout />
         </Route>
         <Route path="/*?">
           <div className="flex h-screen flex-col">

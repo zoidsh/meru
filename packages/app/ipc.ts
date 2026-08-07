@@ -805,6 +805,8 @@ class Ipc {
     });
 
     ipc.main.on("downloads.openDownloadHistory", () => {
+      downloads.closeRecentDownloadHistoryPopup();
+
       main.navigate("/download-history");
 
       downloads.checkDownloadHistoryItems();
