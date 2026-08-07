@@ -33,7 +33,6 @@ import {
 } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 import { registerTabBroadcasts } from "./tabs";
 import { openExternalUrl } from "./url";
 
@@ -422,7 +421,7 @@ export class WorkspaceApp {
     if (this._window) {
       this.registerWindowListeners();
     } else {
-      if (appState.visibleSurface !== "account") {
+      if (main.visibleSurface !== "account") {
         this.view.setVisible(false);
       }
     }
@@ -658,7 +657,7 @@ export class WorkspaceApp {
 
     main.window.contentView.addChildView(this.view, 0);
 
-    if (appState.visibleSurface !== "account") {
+    if (main.visibleSurface !== "account") {
       this.view.setVisible(false);
     }
 

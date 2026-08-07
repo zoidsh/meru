@@ -27,7 +27,6 @@ import { config } from "@/config";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
-import { appState } from "@/state";
 import { DormantTab } from "@/tabs";
 import { WorkspaceApp } from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
@@ -68,10 +67,6 @@ class Ipc {
   renderer = new IpcEmitter<IpcRendererEvent>();
 
   init() {
-    this.main.on("route.changed", (_event, rendererRoute) => {
-      appState.setRendererRoute(rendererRoute);
-    });
-
     config.onDidAnyChange(() => {
       ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
 

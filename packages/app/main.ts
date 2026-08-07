@@ -9,6 +9,7 @@ import {
   isWindowVisibleOnConnectedDisplay,
   loadRenderer,
 } from "@/lib/window";
+import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -16,6 +17,38 @@ import { trial } from "./trial";
 
 class Main {
   private _window: BrowserWindow | undefined;
+
+  rendererRoute = "/";
+
+  get visibleSurface() {
+    if (this.rendererRoute === "/") {
+      return "account";
+    }
+
+    if (this.rendererRoute === "/unified-inbox") {
+      return "unifiedInbox";
+    }
+
+    return "settings";
+  }
+
+  private setRendererRoute(route: string) {
+    const previousVisibleSurface = this.visibleSurface;
+
+    this.rendererRoute = route;
+
+    if (this.visibleSurface === previousVisibleSurface) {
+      return;
+    }
+
+    if (this.visibleSurface === "account") {
+      accounts.show();
+    } else {
+      accounts.hide();
+    }
+
+    appMenu.refresh();
+  }
 
   get window() {
     if (!this._window) {
@@ -106,6 +139,10 @@ class Main {
       }
     }
 
+    this.window.webContents.on("did-navigate-in-page", (_event, url) => {
+      this.setRendererRoute(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
+    });
+
     this.window.webContents.setWindowOpenHandler(({ url }) => {
       openExternalUrl(url, { skipTrustedHostCheck: true });
 
@@ -178,7 +215,7 @@ class Main {
   }
 
   navigate(to: string) {
-    appState.setRendererRoute(to);
+    this.setRendererRoute(to);
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 

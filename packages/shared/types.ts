@@ -149,7 +149,6 @@ export type IpcMainEvents =
       "accounts.addAccount": [account: AccountConfigInput];
       "accounts.removeAccount": [accountId: AccountConfig["id"]];
       "accounts.updateAccount": [account: AccountConfig];
-      "route.changed": [location: string];
       "workspaceApp.goBack": [workspaceAppId?: string];
       "workspaceApp.goForward": [workspaceAppId?: string];
       "workspaceApp.reload": [workspaceAppId?: string];

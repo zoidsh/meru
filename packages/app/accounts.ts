@@ -130,7 +130,7 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    if (appState.visibleSurface === "account") {
+    if (main.visibleSurface === "account") {
       activeTab.view.webContents.focus();
     }
   }
