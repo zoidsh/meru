@@ -709,10 +709,24 @@ export class Gmail {
 
         let body: string | undefined;
 
-        if (platform.isMacOS && config.get("notifications.showSummary")) {
-          body = newMail.summary;
-        } else if (!platform.isMacOS && config.get("notifications.showSubject")) {
-          body = newMail.subject;
+        if (platform.isMacOS) {
+          if (config.get("notifications.showSummary")) {
+            body = newMail.summary;
+          }
+        } else {
+          const bodyLines: string[] = [];
+
+          if (config.get("notifications.showSubject")) {
+            bodyLines.push(newMail.subject);
+          }
+
+          if (config.get("notifications.showSummary")) {
+            bodyLines.push(newMail.summary);
+          }
+
+          if (bodyLines.length) {
+            body = bodyLines.join("\n");
+          }
         }
 
         if (licenseKey.isValid && config.get("verificationCodes.autoCopy")) {
