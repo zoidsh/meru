@@ -173,6 +173,10 @@ export class AppMenu {
     const copyOrShareMessageLink =
       isGmailVisible && userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
 
+    const isFindInPageEnabled =
+      Boolean(focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)) ||
+      main.location === "/";
+
     const allAccounts = accounts.getAccounts();
 
     const template: MenuItemConstructorOptions[] = [
@@ -294,6 +298,7 @@ export class AppMenu {
           {
             label: "Find...",
             accelerator: "CommandOrControl+F",
+            enabled: isFindInPageEnabled,
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
 
