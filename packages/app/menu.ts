@@ -22,7 +22,6 @@ import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
-import { appState } from "./state";
 
 export class AppMenu {
   private _menu: Menu | undefined;
@@ -150,26 +149,22 @@ export class AppMenu {
     const selectNextTab = () => {
       accounts.getSelectedAccount().instance.tabs.activateNextTab();
 
-      appState.setIsSettingsOpen(false);
+      main.navigate("/");
 
       accounts.refreshSelectedAccountView();
-
-      main.show();
     };
 
     const selectPreviousTab = () => {
       accounts.getSelectedAccount().instance.tabs.activatePreviousTab();
 
-      appState.setIsSettingsOpen(false);
+      main.navigate("/");
 
       accounts.refreshSelectedAccountView();
-
-      main.show();
     };
 
     const isGmailVisible =
       focusedWindow === main.window &&
-      !appState.isSettingsOpen &&
+      main.location === "/" &&
       selectedAccount.instance.tabs.activeTab.id === GMAIL_TAB_ID;
 
     const userEmail = selectedAccount.instance.gmail.userEmail;
@@ -513,9 +508,7 @@ export class AppMenu {
             click: () => {
               accounts.selectAccount(account.config.id);
 
-              appState.setIsSettingsOpen(false);
-
-              main.show();
+              main.navigate("/");
             },
             accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
           })),
@@ -528,9 +521,7 @@ export class AppMenu {
             click: () => {
               accounts.selectNextAccount();
 
-              appState.setIsSettingsOpen(false);
-
-              main.show();
+              main.navigate("/");
             },
           },
           {
@@ -541,9 +532,7 @@ export class AppMenu {
             click: () => {
               accounts.selectNextAccount();
 
-              appState.setIsSettingsOpen(false);
-
-              main.show();
+              main.navigate("/");
             },
           },
           {
@@ -552,9 +541,7 @@ export class AppMenu {
             click: () => {
               accounts.selectPreviousAccount();
 
-              appState.setIsSettingsOpen(false);
-
-              main.show();
+              main.navigate("/");
             },
           },
           {
@@ -565,9 +552,7 @@ export class AppMenu {
             click: () => {
               accounts.selectPreviousAccount();
 
-              appState.setIsSettingsOpen(false);
-
-              main.show();
+              main.navigate("/");
             },
           },
           {

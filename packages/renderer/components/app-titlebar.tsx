@@ -38,7 +38,6 @@ import {
   useAccountsStore,
   useAppUpdaterStore,
   useFindInPageStore,
-  useSettingsStore,
   useTabsStore,
   useTrialStore,
 } from "../lib/stores";
@@ -158,10 +157,10 @@ export function AppTitlebar() {
 
   const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
 
+  const [matchAccountRoute] = useRoute("/");
+
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
-
-  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   const { config } = useConfig();
 
@@ -202,15 +201,11 @@ export function AppTitlebar() {
     return accounts.map((account) => (
       <Button
         key={account.config.id}
-        variant={
-          account.config.selected && !matchUnifiedInboxRoute && !isSettingsOpen
-            ? "secondary"
-            : "ghost"
-        }
+        variant={account.config.selected && matchAccountRoute ? "secondary" : "ghost"}
         size="sm"
         className="draggable-none"
         onClick={() => {
-          ipc.main.send("settings.toggleIsOpen", false);
+          navigate("/");
 
           ipc.main.send("accounts.selectAccount", account.config.id);
         }}
@@ -335,8 +330,6 @@ export function AppTitlebar() {
                   className="size-7 draggable-none"
                   onClick={() => {
                     navigate("/unified-inbox");
-
-                    ipc.main.send("settings.toggleIsOpen", true);
                   }}
                   title="Unified Inbox"
                 >

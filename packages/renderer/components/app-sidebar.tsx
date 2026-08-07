@@ -3,7 +3,6 @@ import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
 import { type RouteProps, useLocation } from "wouter";
-import { useSettingsStore } from "@/lib/stores";
 import { platform } from "@/lib/utils";
 import { AboutSettings } from "@/routes/settings/about";
 import { AccountsSettings } from "@/routes/settings/accounts";
@@ -131,12 +130,6 @@ type SidebarNavItemProps =
 
 export function AppSidebar() {
   const [location, navigate] = useLocation();
-
-  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
-
-  if (!isSettingsOpen) {
-    return;
-  }
 
   return (
     <div className="bg-sidebar p-4 pr-0">

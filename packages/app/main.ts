@@ -9,6 +9,7 @@ import {
   isWindowVisibleOnConnectedDisplay,
   loadRenderer,
 } from "@/lib/window";
+import { appMenu } from "@/menu";
 import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
@@ -16,6 +17,28 @@ import { trial } from "./trial";
 
 class Main {
   private _window: BrowserWindow | undefined;
+
+  location = "/";
+
+  private setLocation(location: string) {
+    const wasAccountLocation = this.location === "/";
+
+    this.location = location;
+
+    const isAccountLocation = location === "/";
+
+    if (isAccountLocation === wasAccountLocation) {
+      return;
+    }
+
+    if (isAccountLocation) {
+      accounts.show();
+    } else {
+      accounts.hide();
+    }
+
+    appMenu.refresh();
+  }
 
   get window() {
     if (!this._window) {
@@ -106,6 +129,10 @@ class Main {
       }
     }
 
+    this.window.webContents.on("did-navigate-in-page", (_event, url) => {
+      this.setLocation(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
+    });
+
     this.window.webContents.setWindowOpenHandler(({ url }) => {
       openExternalUrl(url, { skipTrustedHostCheck: true });
 
@@ -178,7 +205,7 @@ class Main {
   }
 
   navigate(to: string) {
-    appState.setIsSettingsOpen(true);
+    this.setLocation(to);
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 

@@ -10,17 +10,6 @@ import { renderApp } from "@/lib/react";
 import { useThemeStore } from "@/lib/theme";
 import "@/lib/ipc";
 
-function FullWidthLayout() {
-  return (
-    <div className="flex h-screen flex-col">
-      <AppTitlebar />
-      <div className="flex flex-1 overflow-hidden">
-        <AppMain />
-      </div>
-    </div>
-  );
-}
-
 function Main() {
   const theme = useThemeStore((state) => state.theme);
 
@@ -28,25 +17,27 @@ function Main() {
 
   return (
     <Router hook={useHashLocation}>
-      <Switch>
-        <Route path="/unified-inbox">
-          <FullWidthLayout />
-        </Route>
-        <Route path="/download-history">
-          <FullWidthLayout />
-        </Route>
-        <Route path="/*?">
-          <div className="flex h-screen flex-col">
-            <AppTitlebar />
-            <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-screen flex-col">
+        <AppTitlebar />
+        <div className="flex flex-1 overflow-hidden">
+          <Switch>
+            <Route path="/">
               <VerticalTabs />
+            </Route>
+            <Route path="/unified-inbox">
+              <AppMain />
+            </Route>
+            <Route path="/download-history">
+              <AppMain />
+            </Route>
+            <Route>
               <AppSidebar />
               <AppMain />
-            </div>
-          </div>
-          <Toaster theme={theme} />
-        </Route>
-      </Switch>
+            </Route>
+          </Switch>
+        </div>
+      </div>
+      <Toaster theme={theme} />
     </Router>
   );
 }

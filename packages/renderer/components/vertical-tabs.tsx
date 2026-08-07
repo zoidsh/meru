@@ -15,7 +15,7 @@ import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
-import { useAccountsStore, useSettingsStore, useTabsStore } from "../lib/stores";
+import { useAccountsStore, useTabsStore } from "../lib/stores";
 
 const verticalTabsPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
@@ -227,7 +227,6 @@ function SortableVerticalTab({
 export function VerticalTabs() {
   const accounts = useAccountsStore((state) => state.accounts);
   const accountsTabs = useTabsStore((state) => state.accountsTabs);
-  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   const { config } = useConfig();
 
@@ -241,7 +240,7 @@ export function VerticalTabs() {
     ? getVerticalTabsWidth(selectedAccountTabs.tabs, config?.["verticalTabs.width"] ?? "auto")
     : 0;
 
-  if (isSettingsOpen || !selectedAccount || !selectedAccountTabs || verticalTabsWidth === 0) {
+  if (!selectedAccount || !selectedAccountTabs || verticalTabsWidth === 0) {
     return;
   }
 
