@@ -1,6 +1,3 @@
-import { move } from "@dnd-kit/helpers";
-import { DragDropProvider } from "@dnd-kit/react";
-import { useSortable } from "@dnd-kit/react/sortable";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
@@ -9,7 +6,6 @@ import {
   workspaceApps,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
-import { ButtonGroup } from "@meru/ui/components/button-group";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -25,7 +21,7 @@ import {
   FieldSeparator,
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
-import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon, XIcon } from "lucide-react";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -36,46 +32,6 @@ import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
-
-function SortableLauncherAppItem({
-  app,
-  index,
-  onRemove,
-  disabled,
-}: {
-  app: LauncherWorkspaceApp;
-  index: number;
-  onRemove: () => void;
-  disabled: boolean;
-}) {
-  const { ref, handleRef, isDragging } = useSortable({ id: app, index, disabled });
-
-  return (
-    <ButtonGroup ref={ref} className={isDragging ? "opacity-50" : undefined}>
-      <Button
-        ref={handleRef}
-        variant="outline"
-        size="xs"
-        className="cursor-grab touch-none"
-        disabled={disabled}
-        aria-label={`Drag ${launcherWorkspaceApps[app]} to reorder`}
-      >
-        <GripVerticalIcon />
-        <WorkspaceAppIcon app={app} className="size-3.5" />
-        {launcherWorkspaceApps[app]}
-      </Button>
-      <Button
-        variant="outline"
-        size="icon-xs"
-        onClick={onRemove}
-        disabled={disabled}
-        aria-label={`Remove ${launcherWorkspaceApps[app]} from launcher`}
-      >
-        <XIcon />
-      </Button>
-    </ButtonGroup>
-  );
-}
 
 export function WorkspaceAppsSettings() {
   const { config } = useConfig();
@@ -219,8 +175,7 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the left and
-                drag to reorder.
+                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the left.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
@@ -231,35 +186,28 @@ export function WorkspaceAppsSettings() {
                     No apps in the launcher. Add apps from Available below.
                   </p>
                 ) : (
-                  <DragDropProvider
-                    onDragEnd={(event) => {
-                      if (event.canceled) {
-                        return;
-                      }
-
-                      configMutation.mutate({
-                        "workspaceApps.launcherApps": move(launcherApps, event),
-                      });
-                    }}
-                  >
-                    <div className="flex flex-row flex-wrap gap-2">
-                      {launcherApps.map((app, index) => (
-                        <SortableLauncherAppItem
-                          key={app}
-                          app={app}
-                          index={index}
-                          onRemove={() => {
-                            configMutation.mutate({
-                              "workspaceApps.launcherApps": launcherApps.filter(
-                                (value) => value !== app,
-                              ),
-                            });
-                          }}
-                          disabled={!isLicenseKeyValid}
-                        />
-                      ))}
-                    </div>
-                  </DragDropProvider>
+                  <div className="flex flex-row flex-wrap gap-2">
+                    {launcherApps.map((app) => (
+                      <Button
+                        key={app}
+                        variant="outline"
+                        size="xs"
+                        onClick={() => {
+                          configMutation.mutate({
+                            "workspaceApps.launcherApps": launcherApps.filter(
+                              (value) => value !== app,
+                            ),
+                          });
+                        }}
+                        disabled={!isLicenseKeyValid}
+                        aria-label={`Remove ${launcherWorkspaceApps[app]} from launcher`}
+                      >
+                        <WorkspaceAppIcon app={app} className="size-3.5" />
+                        {launcherWorkspaceApps[app]}
+                        <XIcon />
+                      </Button>
+                    ))}
+                  </div>
                 )}
               </div>
               {availableApps.length > 0 && (
