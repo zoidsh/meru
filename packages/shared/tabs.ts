@@ -1,5 +1,5 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
-import type { AccountConfig } from "./schemas";
+import type { AccountConfig, TabPersistence } from "./schemas";
 import type { SupportedWorkspaceApp } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
@@ -16,7 +16,7 @@ export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
-  pinned: boolean;
+  persistence: TabPersistence | null;
   dormant: boolean;
   windowed: boolean;
   loading: boolean;
@@ -30,7 +30,7 @@ export type AccountTabsState = {
 };
 
 export function getVerticalTabsWidth(
-  tabs: Pick<TabState, "app" | "pinned">[],
+  tabs: Pick<TabState, "app" | "persistence">[],
   configuredVerticalTabsWidth: VerticalTabsWidth,
 ) {
   if (tabs.length <= 1) {
@@ -48,7 +48,7 @@ export function getVerticalTabsWidth(
   const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
 
   for (const tab of tabs) {
-    if (tab.app && !tab.pinned) {
+    if (tab.app && tab.persistence !== "pinned") {
       workspaceAppTabCounts.set(tab.app, (workspaceAppTabCounts.get(tab.app) ?? 0) + 1);
     }
   }

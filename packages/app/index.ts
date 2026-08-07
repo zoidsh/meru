@@ -184,7 +184,7 @@ async function init() {
     if (!main.isQuittingApp) {
       main.saveWindowState();
 
-      accounts.savePinnedTabs();
+      accounts.saveTabs();
 
       main.isQuittingApp = true;
     }

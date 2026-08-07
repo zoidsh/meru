@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
-import type { AccountConfig } from "@meru/shared/schemas";
+import type { AccountConfig, TabPersistence } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
   type SupportedWorkspaceApp,
@@ -74,7 +74,7 @@ type WorkspaceAppOptions = {
   window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
   asWindow?: boolean;
-  pinned?: boolean;
+  persistence?: TabPersistence | null;
   loadOnLaunch?: boolean;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
@@ -363,7 +363,7 @@ export class WorkspaceApp {
 
   view: WebContentsView;
 
-  pinned = false;
+  persistence: TabPersistence | null;
 
   loadOnLaunch = false;
 
@@ -379,14 +379,14 @@ export class WorkspaceApp {
     window,
     view,
     asWindow,
-    pinned,
+    persistence,
     loadOnLaunch,
     app,
     zoomFactor,
   }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
-    this.pinned = Boolean(pinned);
+    this.persistence = persistence ?? null;
     this.loadOnLaunch = Boolean(loadOnLaunch);
 
     if (asWindow) {

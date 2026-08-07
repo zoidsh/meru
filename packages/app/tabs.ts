@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PinnedTab } from "@meru/shared/schemas";
+import type { SavedTab, TabPersistence } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
@@ -27,17 +27,20 @@ export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
 }
 
-type PinnedWorkspaceApp = WorkspaceApp & { app: SupportedWorkspaceApp };
+type SavedWorkspaceApp = WorkspaceApp & {
+  app: SupportedWorkspaceApp;
+  persistence: TabPersistence;
+};
 
-function isPinnedWorkspaceApp(tab: Tab): tab is PinnedWorkspaceApp {
-  return tab instanceof WorkspaceApp && tab.pinned && tab.app !== undefined;
+function isSavedWorkspaceApp(tab: Tab): tab is SavedWorkspaceApp {
+  return tab instanceof WorkspaceApp && tab.persistence !== null && tab.app !== undefined;
 }
 
 export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
-  pinned: boolean;
+  persistence: TabPersistence | null;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -51,7 +54,7 @@ export class DormantTab {
 
   url: string;
 
-  pinned = true;
+  persistence: TabPersistence;
 
   isLoading = false;
 
@@ -63,11 +66,12 @@ export class DormantTab {
 
   zoomFactor: number | undefined;
 
-  constructor(pinnedTab: PinnedTab, zoomFactor?: number) {
-    this.app = pinnedTab.app;
-    this.url = pinnedTab.url;
-    this.title = pinnedTab.title;
-    this.loadOnLaunch = Boolean(pinnedTab.loadOnLaunch);
+  constructor(savedTab: SavedTab, zoomFactor?: number) {
+    this.app = savedTab.app;
+    this.url = savedTab.url;
+    this.title = savedTab.title;
+    this.persistence = savedTab.persistence;
+    this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
     this.zoomFactor = zoomFactor;
   }
 }
@@ -88,7 +92,7 @@ export class Tabs {
       {
         id: GMAIL_TAB_ID,
         app: gmail.app,
-        pinned: false,
+        persistence: null,
         get title() {
           return gmail.title;
         },
@@ -186,8 +190,8 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
-    if (removedTab?.pinned) {
-      accounts.savePinnedTabs();
+    if (removedTab?.persistence) {
+      accounts.saveTabs();
     }
   }
 
@@ -217,7 +221,7 @@ export class Tabs {
     const workspaceApp = new WorkspaceApp({
       accountId: this.accountId,
       url: dormantTab.url,
-      pinned: true,
+      persistence: dormantTab.persistence,
       loadOnLaunch: dormantTab.loadOnLaunch,
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
@@ -238,9 +242,9 @@ export class Tabs {
     this.broadcastTabsChanged();
   }
 
-  restorePinnedTabs(pinnedTabs: PinnedTab[]) {
-    for (const pinnedTab of pinnedTabs) {
-      this.tabs.push(new DormantTab(pinnedTab));
+  restoreSavedTabs(savedTabs: SavedTab[]) {
+    for (const savedTab of savedTabs) {
+      this.tabs.push(new DormantTab(savedTab));
     }
   }
 
@@ -281,8 +285,8 @@ export class Tabs {
       return;
     }
 
-    if (isPinnedWorkspaceApp(closableTab)) {
-      this.dormantizePinnedTab(closableTab);
+    if (isSavedWorkspaceApp(closableTab)) {
+      this.dormantizeSavedTab(closableTab);
     } else {
       this.recordRecentlyClosedTab(closableTab.url);
     }
@@ -295,8 +299,8 @@ export class Tabs {
       return;
     }
 
-    if (isPinnedWorkspaceApp(windowedTab)) {
-      this.dormantizePinnedTab(windowedTab);
+    if (isSavedWorkspaceApp(windowedTab)) {
+      this.dormantizeSavedTab(windowedTab);
 
       return;
     }
@@ -306,28 +310,29 @@ export class Tabs {
     this.removeTab(windowedTab.id);
   }
 
-  private dormantizePinnedTab(pinnedWorkspaceApp: PinnedWorkspaceApp) {
+  private dormantizeSavedTab(savedWorkspaceApp: SavedWorkspaceApp) {
     this.tabs.splice(
-      this.tabs.indexOf(pinnedWorkspaceApp),
+      this.tabs.indexOf(savedWorkspaceApp),
       1,
       new DormantTab(
         {
-          app: pinnedWorkspaceApp.app,
-          url: pinnedWorkspaceApp.url,
-          title: pinnedWorkspaceApp.title,
-          loadOnLaunch: pinnedWorkspaceApp.loadOnLaunch,
+          app: savedWorkspaceApp.app,
+          url: savedWorkspaceApp.url,
+          title: savedWorkspaceApp.title,
+          persistence: savedWorkspaceApp.persistence,
+          loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
         },
-        pinnedWorkspaceApp.zoomFactor,
+        savedWorkspaceApp.zoomFactor,
       ),
     );
 
-    if (this.activeTabId === pinnedWorkspaceApp.id) {
+    if (this.activeTabId === savedWorkspaceApp.id) {
       this.activeTabId = GMAIL_TAB_ID;
     }
 
     this.broadcastTabsChanged();
 
-    accounts.savePinnedTabs();
+    accounts.saveTabs();
   }
 
   private recordRecentlyClosedTab(closedTabUrl: string) {
@@ -364,7 +369,7 @@ export class Tabs {
     const previousActiveTabId = this.activeTabId;
 
     for (const tab of this.tabs.slice()) {
-      if (tab.id !== keptTabId && tab.id !== GMAIL_TAB_ID && !tab.pinned) {
+      if (tab.id !== keptTabId && tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned") {
         this.closeTab(tab.id);
       }
     }
@@ -380,7 +385,7 @@ export class Tabs {
     const tabIndex = this.tabs.findIndex((tab) => tab.id === tabId);
 
     for (const tab of this.tabs.slice(tabIndex + 1)) {
-      if (!tab.pinned) {
+      if (tab.persistence !== "pinned") {
         this.closeTab(tab.id);
       }
     }
@@ -390,42 +395,28 @@ export class Tabs {
     }
   }
 
-  pinTab(tabId: string) {
-    const pinnableTab = this.getTab(tabId);
+  setTabPersistence(tabId: string, persistence: TabPersistence | null) {
+    const persistableTab = this.getTab(tabId);
 
-    if (!(pinnableTab instanceof WorkspaceApp)) {
+    if (persistableTab instanceof DormantTab) {
+      if (!persistence) {
+        this.removeTab(tabId);
+
+        return;
+      }
+
+      persistableTab.persistence = persistence;
+    } else if (persistableTab instanceof WorkspaceApp) {
+      persistableTab.persistence = persistence;
+    } else {
       return;
     }
-
-    pinnableTab.pinned = true;
 
     this.reorderTabs();
 
     this.broadcastTabsChanged();
 
-    accounts.savePinnedTabs();
-  }
-
-  unpinTab(tabId: string) {
-    const unpinnableTab = this.getTab(tabId);
-
-    if (unpinnableTab instanceof DormantTab) {
-      this.removeTab(tabId);
-
-      return;
-    }
-
-    if (!(unpinnableTab instanceof WorkspaceApp)) {
-      return;
-    }
-
-    unpinnableTab.pinned = false;
-
-    this.reorderTabs();
-
-    this.broadcastTabsChanged();
-
-    accounts.savePinnedTabs();
+    accounts.saveTabs();
   }
 
   moveTab(tabId: string, targetSectionIndex: number) {
@@ -441,17 +432,19 @@ export class Tabs {
 
     const remainingTabs = this.tabs.filter((tab) => tab.id !== tabId);
 
+    const isMovedTabPinned = movedTab.persistence === "pinned";
+
     const remainingPinnedSectionTabCount = remainingTabs.filter(
-      (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
+      (tab) => tab.id === GMAIL_TAB_ID || tab.persistence === "pinned",
     ).length;
 
-    const sectionStartIndex = movedTab.pinned ? 0 : remainingPinnedSectionTabCount;
+    const sectionStartIndex = isMovedTabPinned ? 0 : remainingPinnedSectionTabCount;
 
-    const sectionTabCount = movedTab.pinned
+    const sectionTabCount = isMovedTabPinned
       ? remainingPinnedSectionTabCount
       : remainingTabs.length - remainingPinnedSectionTabCount;
 
-    const minimumSectionIndex = movedTab.pinned ? 1 : 0;
+    const minimumSectionIndex = isMovedTabPinned ? 1 : 0;
 
     const clampedSectionIndex = Math.min(
       Math.max(targetSectionIndex, minimumSectionIndex),
@@ -466,41 +459,43 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
-    if (movedTab.pinned) {
-      accounts.savePinnedTabs();
+    if (movedTab.persistence) {
+      accounts.saveTabs();
     }
   }
 
   private reorderTabs() {
     this.tabs = [
       ...this.tabs.filter((tab) => tab.id === GMAIL_TAB_ID),
-      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.pinned),
-      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned),
+      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.persistence === "pinned"),
+      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned"),
     ];
   }
 
-  serializePinnedTabs(): PinnedTab[] {
-    const pinnedTabs: PinnedTab[] = [];
+  serializeSavedTabs(): SavedTab[] {
+    const savedTabs: SavedTab[] = [];
 
     for (const tab of this.tabs) {
-      if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
-        pinnedTabs.push({
+      if (tab instanceof WorkspaceApp && tab.persistence && tab.app) {
+        savedTabs.push({
           app: tab.app,
           url: tab.url,
           title: tab.title,
+          persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
         });
       } else if (tab instanceof DormantTab) {
-        pinnedTabs.push({
+        savedTabs.push({
           app: tab.app,
           url: tab.url,
           title: tab.title,
+          persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
         });
       }
     }
 
-    return pinnedTabs;
+    return savedTabs;
   }
 
   closeAll() {
@@ -516,7 +511,7 @@ export class Tabs {
       id: tab.id,
       app: tab.app,
       title: tab.title,
-      pinned: tab.pinned,
+      persistence: tab.persistence,
       dormant: tab instanceof DormantTab,
       windowed: isWindowedTab(tab),
       loading: tab.isLoading,
