@@ -1,7 +1,7 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { bookmarkableWorkspaceApps } from "@meru/shared/workspace-apps";
+import { launcherWorkspaceApps } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -178,7 +178,7 @@ export function AppTitlebar() {
   }
 
   const shouldShowWorkspaceAppsLauncher =
-    isLicenseKeyValid && config["workspaceApps.bookmarkedApps"].length > 0;
+    isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -308,10 +308,10 @@ export function AppTitlebar() {
                   isOpen={isWorkspaceAppsLauncherOpen}
                   onOpenChange={setIsWorkspaceAppsLauncherOpen}
                 >
-                  {config["workspaceApps.bookmarkedApps"].map((app) => (
+                  {config["workspaceApps.launcherApps"].map((app) => (
                     <TitlebarDropdownMenuItem
                       key={app}
-                      title={bookmarkableWorkspaceApps[app]}
+                      title={launcherWorkspaceApps[app]}
                       onClick={(event) => {
                         ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
                       }}

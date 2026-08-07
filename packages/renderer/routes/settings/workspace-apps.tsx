@@ -2,8 +2,8 @@ import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import {
-  type BookmarkableWorkspaceApp,
-  bookmarkableWorkspaceApps,
+  type LauncherWorkspaceApp,
+  launcherWorkspaceApps,
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
@@ -37,13 +37,13 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
 
-function SortableBookmarkedAppItem({
+function SortableLauncherAppItem({
   app,
   index,
   onRemove,
   disabled,
 }: {
-  app: BookmarkableWorkspaceApp;
+  app: LauncherWorkspaceApp;
   index: number;
   onRemove: () => void;
   disabled: boolean;
@@ -58,18 +58,18 @@ function SortableBookmarkedAppItem({
         size="xs"
         className="cursor-grab touch-none"
         disabled={disabled}
-        aria-label={`Drag ${bookmarkableWorkspaceApps[app]} to reorder`}
+        aria-label={`Drag ${launcherWorkspaceApps[app]} to reorder`}
       >
         <GripVerticalIcon />
         <WorkspaceAppIcon app={app} className="size-3.5" />
-        {bookmarkableWorkspaceApps[app]}
+        {launcherWorkspaceApps[app]}
       </Button>
       <Button
         variant="outline"
         size="icon-xs"
         onClick={onRemove}
         disabled={disabled}
-        aria-label={`Remove ${bookmarkableWorkspaceApps[app]} bookmark`}
+        aria-label={`Remove ${launcherWorkspaceApps[app]} from launcher`}
       >
         <XIcon />
       </Button>
@@ -88,11 +88,11 @@ export function WorkspaceAppsSettings() {
     return;
   }
 
-  const bookmarkedApps = config["workspaceApps.bookmarkedApps"];
+  const launcherApps = config["workspaceApps.launcherApps"];
 
-  const availableApps = (
-    Object.keys(bookmarkableWorkspaceApps) as BookmarkableWorkspaceApp[]
-  ).filter((app) => !bookmarkedApps.includes(app));
+  const availableApps = (Object.keys(launcherWorkspaceApps) as LauncherWorkspaceApp[]).filter(
+    (app) => !launcherApps.includes(app),
+  );
 
   const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
@@ -215,20 +215,20 @@ export function WorkspaceAppsSettings() {
           <Field>
             <FieldContent>
               <FieldLabel className="flex items-center gap-2">
-                Bookmarked Apps
+                Launcher Apps
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Bookmark Workspace Apps to open them from the vertical tabs' Workspace Apps menu and
+                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the left and
                 drag to reorder.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Bookmarked</div>
-                {bookmarkedApps.length === 0 ? (
+                <div className="text-xs font-medium text-muted-foreground">In Launcher</div>
+                {launcherApps.length === 0 ? (
                   <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    No bookmarked apps. Add apps from Available below.
+                    No apps in the launcher. Add apps from Available below.
                   </p>
                 ) : (
                   <DragDropProvider
@@ -238,19 +238,19 @@ export function WorkspaceAppsSettings() {
                       }
 
                       configMutation.mutate({
-                        "workspaceApps.bookmarkedApps": move(bookmarkedApps, event),
+                        "workspaceApps.launcherApps": move(launcherApps, event),
                       });
                     }}
                   >
                     <div className="flex flex-row flex-wrap gap-2">
-                      {bookmarkedApps.map((app, index) => (
-                        <SortableBookmarkedAppItem
+                      {launcherApps.map((app, index) => (
+                        <SortableLauncherAppItem
                           key={app}
                           app={app}
                           index={index}
                           onRemove={() => {
                             configMutation.mutate({
-                              "workspaceApps.bookmarkedApps": bookmarkedApps.filter(
+                              "workspaceApps.launcherApps": launcherApps.filter(
                                 (value) => value !== app,
                               ),
                             });
@@ -273,14 +273,14 @@ export function WorkspaceAppsSettings() {
                         size="xs"
                         onClick={() => {
                           configMutation.mutate({
-                            "workspaceApps.bookmarkedApps": [...bookmarkedApps, app],
+                            "workspaceApps.launcherApps": [...launcherApps, app],
                           });
                         }}
                         disabled={!isLicenseKeyValid}
-                        aria-label={`Bookmark ${bookmarkableWorkspaceApps[app]}`}
+                        aria-label={`Add ${launcherWorkspaceApps[app]} to launcher`}
                       >
                         <WorkspaceAppIcon app={app} className="size-3.5" />
-                        {bookmarkableWorkspaceApps[app]}
+                        {launcherWorkspaceApps[app]}
                         <PlusIcon />
                       </Button>
                     ))}
