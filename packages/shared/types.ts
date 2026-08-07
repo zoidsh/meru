@@ -187,7 +187,8 @@ export type IpcMainEvents =
       "downloads.toggleRecentDownloadHistoryPopup": [];
       "downloads.closeRecentDownloadHistoryPopup": [];
       "downloads.setDownloadHistoryPopupOnBlurEnabled": [enabled: boolean];
-      "downloads.openDownloadHistory": [];
+      "downloads.openDownloadHistoryPopup": [];
+      "downloads.closeDownloadHistoryPopup": [];
       "downloads.openFile": [item: Pick<DownloadItem, "id" | "filePath">];
       "downloads.showFileInFolder": [item: Pick<DownloadItem, "id" | "filePath">];
       "downloads.dragFile": [item: Pick<DownloadItem, "id" | "filePath">];

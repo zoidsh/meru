@@ -87,6 +87,14 @@ class Ipc {
         );
       }
 
+      if (downloads.downloadHistoryView) {
+        ipc.renderer.send(
+          downloads.downloadHistoryView.webContents,
+          "config.configChanged",
+          config.store,
+        );
+      }
+
       for (const workspaceAppWindow of WorkspaceApp.getAllWindows()) {
         ipc.renderer.send(workspaceAppWindow.webContents, "config.configChanged", config.store);
       }
@@ -804,10 +812,22 @@ class Ipc {
       downloads.downloadHistoryPopupOnBlurEnabled = enabled;
     });
 
-    ipc.main.on("downloads.openDownloadHistory", () => {
-      main.navigate("/download-history");
+    ipc.main.on("downloads.openDownloadHistoryPopup", () => {
+      const parentWindow = downloads.recentDownloadHistoryParentWindow;
 
-      downloads.checkDownloadHistoryItems();
+      if (!parentWindow) {
+        return;
+      }
+
+      downloads.closeRecentDownloadHistoryPopup();
+
+      if (downloads.toggleDownloadHistoryPopup(parentWindow)) {
+        downloads.checkDownloadHistoryItems();
+      }
+    });
+
+    ipc.main.on("downloads.closeDownloadHistoryPopup", () => {
+      downloads.closeDownloadHistoryPopup();
     });
 
     this.main.on("gmail.unreadCountChanged", (event, unreadCountString) => {

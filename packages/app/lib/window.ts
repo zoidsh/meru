@@ -126,7 +126,12 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
   return browserWindow;
 }
 
-type RendererPage = "main" | "workspace-app" | "desktop-sources" | "recent-download-history";
+type RendererPage =
+  | "main"
+  | "workspace-app"
+  | "desktop-sources"
+  | "recent-download-history"
+  | "download-history";
 
 type LoadRendererOptions = {
   page: RendererPage;
