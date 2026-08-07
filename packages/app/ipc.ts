@@ -298,7 +298,8 @@ class Ipc {
         (accountTab) =>
           accountTab.id !== tabId &&
           accountTab.id !== GMAIL_TAB_ID &&
-          accountTab.persistence !== "pinned",
+          accountTab.persistence !== "pinned" &&
+          !accountTab.dormant,
       );
 
       const contextTabIndex = account.instance.tabs.tabs.findIndex(
@@ -307,7 +308,7 @@ class Ipc {
 
       const hasClosableTabsBelow = account.instance.tabs.tabs
         .slice(contextTabIndex + 1)
-        .some((accountTab) => accountTab.persistence !== "pinned");
+        .some((accountTab) => accountTab.persistence !== "pinned" && !accountTab.dormant);
 
       Menu.buildFromTemplate([
         ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
@@ -410,34 +411,51 @@ class Ipc {
             openExternalUrl(tab.url, { skipTrustedHostCheck: true });
           },
         },
-        {
-          type: "separator",
-        },
-        tab.persistence === "pinned"
-          ? {
-              label: "Unpin",
-              click: () => {
-                account.instance.tabs.setTabPersistence(tabId, null);
-              },
-            }
-          : {
-              label: "Pin",
-              click: () => {
-                account.instance.tabs.setTabPersistence(tabId, "pinned");
-              },
-            },
-        ...(tab.persistence === "pinned"
+        ...(tabApp
           ? [
               {
-                label: "Load on Launch",
-                type: "checkbox" as const,
-                checked: tab.loadOnLaunch,
-                click: () => {
-                  tab.loadOnLaunch = !tab.loadOnLaunch;
-
-                  accounts.saveTabs();
-                },
+                type: "separator" as const,
               },
+              tab.persistence === "pinned"
+                ? {
+                    label: "Unpin",
+                    click: () => {
+                      account.instance.tabs.setTabPersistence(tabId, null);
+                    },
+                  }
+                : {
+                    label: "Pin",
+                    click: () => {
+                      account.instance.tabs.setTabPersistence(tabId, "pinned");
+                    },
+                  },
+              tab.persistence === "bookmarked"
+                ? {
+                    label: "Remove Bookmark",
+                    click: () => {
+                      account.instance.tabs.setTabPersistence(tabId, null);
+                    },
+                  }
+                : {
+                    label: "Bookmark",
+                    click: () => {
+                      account.instance.tabs.setTabPersistence(tabId, "bookmarked");
+                    },
+                  },
+              ...(tab.persistence === "pinned"
+                ? [
+                    {
+                      label: "Load on Launch",
+                      type: "checkbox" as const,
+                      checked: tab.loadOnLaunch,
+                      click: () => {
+                        tab.loadOnLaunch = !tab.loadOnLaunch;
+
+                        accounts.saveTabs();
+                      },
+                    },
+                  ]
+                : []),
             ]
           : []),
         {

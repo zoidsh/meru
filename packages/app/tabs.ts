@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SavedTab, TabPersistence } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
+import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
@@ -41,6 +41,7 @@ export type Tab = {
   app: SupportedWorkspaceApp | undefined;
   title: string;
   persistence: TabPersistence | null;
+  dormant: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -55,6 +56,8 @@ export class DormantTab {
   url: string;
 
   persistence: TabPersistence;
+
+  dormant = true;
 
   isLoading = false;
 
@@ -93,6 +96,7 @@ export class Tabs {
         id: GMAIL_TAB_ID,
         app: gmail.app,
         persistence: null,
+        dormant: false,
         get title() {
           return gmail.title;
         },
@@ -229,6 +233,8 @@ export class Tabs {
 
     this.tabs.splice(this.tabs.indexOf(dormantTab), 1, workspaceApp);
 
+    this.reorderTabs();
+
     return workspaceApp;
   }
 
@@ -330,6 +336,8 @@ export class Tabs {
       this.activeTabId = GMAIL_TAB_ID;
     }
 
+    this.reorderTabs();
+
     this.broadcastTabsChanged();
 
     accounts.saveTabs();
@@ -412,6 +420,10 @@ export class Tabs {
       return;
     }
 
+    if (persistence !== "pinned") {
+      persistableTab.loadOnLaunch = false;
+    }
+
     this.reorderTabs();
 
     this.broadcastTabsChanged();
@@ -432,19 +444,17 @@ export class Tabs {
 
     const remainingTabs = this.tabs.filter((tab) => tab.id !== tabId);
 
-    const isMovedTabPinned = movedTab.persistence === "pinned";
+    const movedTabSection = getTabSection(movedTab);
 
-    const remainingPinnedSectionTabCount = remainingTabs.filter(
-      (tab) => tab.id === GMAIL_TAB_ID || tab.persistence === "pinned",
+    const sectionStartIndex = remainingTabs.filter(
+      (tab) => tabSections.indexOf(getTabSection(tab)) < tabSections.indexOf(movedTabSection),
     ).length;
 
-    const sectionStartIndex = isMovedTabPinned ? 0 : remainingPinnedSectionTabCount;
+    const sectionTabCount = remainingTabs.filter(
+      (tab) => getTabSection(tab) === movedTabSection,
+    ).length;
 
-    const sectionTabCount = isMovedTabPinned
-      ? remainingPinnedSectionTabCount
-      : remainingTabs.length - remainingPinnedSectionTabCount;
-
-    const minimumSectionIndex = isMovedTabPinned ? 1 : 0;
+    const minimumSectionIndex = movedTabSection === "pinned" ? 1 : 0;
 
     const clampedSectionIndex = Math.min(
       Math.max(targetSectionIndex, minimumSectionIndex),
@@ -465,11 +475,9 @@ export class Tabs {
   }
 
   private reorderTabs() {
-    this.tabs = [
-      ...this.tabs.filter((tab) => tab.id === GMAIL_TAB_ID),
-      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.persistence === "pinned"),
-      ...this.tabs.filter((tab) => tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned"),
-    ];
+    this.tabs = tabSections.flatMap((tabSection) =>
+      this.tabs.filter((tab) => getTabSection(tab) === tabSection),
+    );
   }
 
   serializeSavedTabs(): SavedTab[] {
@@ -512,7 +520,7 @@ export class Tabs {
       app: tab.app,
       title: tab.title,
       persistence: tab.persistence,
-      dormant: tab instanceof DormantTab,
+      dormant: tab.dormant,
       windowed: isWindowedTab(tab),
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
