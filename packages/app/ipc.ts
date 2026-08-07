@@ -19,6 +19,7 @@ import {
   nativeImage,
   nativeTheme,
   Notification,
+  type WebContents,
   session,
   shell,
 } from "electron";
@@ -49,6 +50,20 @@ function clearUndoSendLapseTimeout(browserWindowId: number) {
   }
 
   undoSendLapseTimeouts.delete(browserWindowId);
+}
+
+function logWorkspaceAppNotification(
+  senderWebContents: WebContents,
+  message: string,
+  detail?: unknown,
+) {
+  log.info("[meru:notifications]", message, detail);
+
+  senderWebContents
+    .executeJavaScript(
+      `console.log("[meru:notifications] (main)", ${JSON.stringify(message)}, ${JSON.stringify(detail ?? null)})`,
+    )
+    .catch(() => {});
 }
 
 function getNavigationWebContents(workspaceAppId?: string) {
@@ -622,10 +637,10 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApp.showNotification", (event, notification) => {
-      log.info("[meru:notifications] main received", notification);
+      logWorkspaceAppNotification(event.sender, "main received", notification);
 
       if (!config.get("notifications.allowFromWorkspaceApps")) {
-        log.info("[meru:notifications] dropped, allowFromWorkspaceApps is off");
+        logWorkspaceAppNotification(event.sender, "dropped, allowFromWorkspaceApps is off");
 
         return;
       }
@@ -633,12 +648,16 @@ class Ipc {
       const notifyingWorkspaceApp = WorkspaceApp.tryFromViewWebContents(event.sender);
 
       if (!notifyingWorkspaceApp) {
-        log.info("[meru:notifications] dropped, no workspace app for sender");
+        logWorkspaceAppNotification(event.sender, "dropped, no workspace app for sender");
 
         return;
       }
 
-      log.info("[meru:notifications] Notification.isSupported", Notification.isSupported());
+      logWorkspaceAppNotification(
+        event.sender,
+        "Notification.isSupported",
+        Notification.isSupported(),
+      );
 
       const workspaceAppNotification = createNotification({
         title: notification.title,
@@ -665,21 +684,21 @@ class Ipc {
       });
 
       if (!workspaceAppNotification) {
-        log.info("[meru:notifications] createNotification returned nothing");
+        logWorkspaceAppNotification(event.sender, "createNotification returned nothing");
 
         return;
       }
 
       workspaceAppNotification.on("show", () => {
-        log.info("[meru:notifications] shown");
+        logWorkspaceAppNotification(event.sender, "shown");
       });
 
       workspaceAppNotification.on("failed", (_event, error) => {
-        log.error("[meru:notifications] failed", error);
+        logWorkspaceAppNotification(event.sender, "failed", String(error));
       });
 
       workspaceAppNotification.on("close", () => {
-        log.info("[meru:notifications] closed");
+        logWorkspaceAppNotification(event.sender, "closed");
       });
     });
 
