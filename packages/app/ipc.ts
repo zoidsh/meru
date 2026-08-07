@@ -18,6 +18,7 @@ import {
   type MenuItemConstructorOptions,
   nativeImage,
   nativeTheme,
+  Notification,
   session,
   shell,
 } from "electron";
@@ -621,17 +622,25 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApp.showNotification", (event, notification) => {
+      log.info("[meru:notifications] main received", notification);
+
       if (!config.get("notifications.allowFromWorkspaceApps")) {
+        log.info("[meru:notifications] dropped, allowFromWorkspaceApps is off");
+
         return;
       }
 
       const notifyingWorkspaceApp = WorkspaceApp.tryFromViewWebContents(event.sender);
 
       if (!notifyingWorkspaceApp) {
+        log.info("[meru:notifications] dropped, no workspace app for sender");
+
         return;
       }
 
-      createNotification({
+      log.info("[meru:notifications] Notification.isSupported", Notification.isSupported());
+
+      const workspaceAppNotification = createNotification({
         title: notification.title,
         body: notification.body,
         silent: notification.silent,
@@ -653,6 +662,24 @@ class Ipc {
             accounts.selectAccount(notifyingWorkspaceApp.accountId);
           }
         },
+      });
+
+      if (!workspaceAppNotification) {
+        log.info("[meru:notifications] createNotification returned nothing");
+
+        return;
+      }
+
+      workspaceAppNotification.on("show", () => {
+        log.info("[meru:notifications] shown");
+      });
+
+      workspaceAppNotification.on("failed", (_event, error) => {
+        log.error("[meru:notifications] failed", error);
+      });
+
+      workspaceAppNotification.on("close", () => {
+        log.info("[meru:notifications] closed");
       });
     });
 
