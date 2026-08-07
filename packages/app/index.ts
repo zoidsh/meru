@@ -10,7 +10,6 @@ import { initLinuxWindowControls } from "@/lib/linux";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
-import { appState } from "@/state";
 import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
@@ -182,12 +181,12 @@ async function init() {
   }
 
   app.on("before-quit", () => {
-    if (!appState.isQuittingApp) {
+    if (!main.isQuittingApp) {
       main.saveWindowState();
 
       accounts.savePinnedTabs();
 
-      appState.isQuittingApp = true;
+      main.isQuittingApp = true;
     }
   });
 }

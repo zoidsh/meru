@@ -7,7 +7,6 @@ import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { appState } from "./state";
 import { isWindowedTab } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
@@ -375,7 +374,7 @@ class Accounts {
   }
 
   savePinnedTabs() {
-    if (appState.isQuittingApp) {
+    if (main.isQuittingApp) {
       return;
     }
 
