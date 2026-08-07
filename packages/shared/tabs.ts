@@ -29,6 +29,22 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
+export const tabSections = ["pinned", "normal", "bookmarks"] as const;
+
+export type TabSection = (typeof tabSections)[number];
+
+export function getTabSection(tab: Pick<TabState, "id" | "persistence" | "dormant">): TabSection {
+  if (tab.id === GMAIL_TAB_ID || tab.persistence === "pinned") {
+    return "pinned";
+  }
+
+  if (tab.persistence === "bookmarked" && tab.dormant) {
+    return "bookmarks";
+  }
+
+  return "normal";
+}
+
 export function getVerticalTabsWidth(
   tabs: Pick<TabState, "app" | "persistence">[],
   configuredVerticalTabsWidth: VerticalTabsWidth,
@@ -42,6 +58,10 @@ export function getVerticalTabsWidth(
   }
 
   if (configuredVerticalTabsWidth === "wide") {
+    return VERTICAL_TABS_WIDE_WIDTH;
+  }
+
+  if (tabs.some((tab) => tab.persistence === "bookmarked")) {
     return VERTICAL_TABS_WIDE_WIDTH;
   }
 

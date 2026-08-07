@@ -365,6 +365,8 @@ export class WorkspaceApp {
 
   persistence: TabPersistence | null;
 
+  dormant = false;
+
   loadOnLaunch = false;
 
   private powerSaveBlockerId: number | undefined;

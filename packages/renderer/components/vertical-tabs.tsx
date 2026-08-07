@@ -5,11 +5,16 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { GMAIL_TAB_ID, getVerticalTabsWidth, type TabState } from "@meru/shared/tabs";
+import {
+  GMAIL_TAB_ID,
+  getTabSection,
+  getVerticalTabsWidth,
+  type TabState,
+} from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
@@ -113,9 +118,9 @@ function VerticalTab({
   gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
-  const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.persistence === "pinned";
+  const isPinnedSectionTab = getTabSection(tab) === "pinned";
 
-  const isCloseable = !isPinnedSectionTab;
+  const isCloseable = !isPinnedSectionTab && !tab.dormant;
 
   const isWideRow = presentation === "wideRow";
 
@@ -164,6 +169,9 @@ function VerticalTab({
         )}
         {isWideRow && tab.windowed && (
           <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
+        )}
+        {isWideRow && tab.persistence === "bookmarked" && (
+          <BookmarkIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
@@ -247,11 +255,13 @@ export function VerticalTabs() {
   const isWide = verticalTabsWidth === VERTICAL_TABS_WIDE_WIDTH;
 
   const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
-    (tab) => tab.id === GMAIL_TAB_ID || tab.persistence === "pinned",
+    (tab) => getTabSection(tab) === "pinned",
   );
 
-  const unpinnedTabs = selectedAccountTabs.tabs.filter(
-    (tab) => tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned",
+  const normalTabs = selectedAccountTabs.tabs.filter((tab) => getTabSection(tab) === "normal");
+
+  const bookmarkedTabs = selectedAccountTabs.tabs.filter(
+    (tab) => getTabSection(tab) === "bookmarks",
   );
 
   const gmailTabStatus = {
@@ -313,16 +323,33 @@ export function VerticalTabs() {
         plugins={verticalTabsPlugins}
         sensors={verticalTabsSensors}
         onDragEnd={(event) => {
-          moveSectionTab(selectedAccount.config.id, unpinnedTabs, event);
+          moveSectionTab(selectedAccount.config.id, normalTabs, event);
         }}
       >
-        {unpinnedTabs.map((tab, unpinnedTabIndex) => (
+        {normalTabs.map((tab, normalTabIndex) => (
           <SortableVerticalTab
             key={tab.id}
             tab={tab}
             accountId={selectedAccount.config.id}
             presentation={isWide ? "wideRow" : "narrowIcon"}
-            sectionIndex={unpinnedTabIndex}
+            sectionIndex={normalTabIndex}
+          />
+        ))}
+      </DragDropProvider>
+      <DragDropProvider
+        plugins={verticalTabsPlugins}
+        sensors={verticalTabsSensors}
+        onDragEnd={(event) => {
+          moveSectionTab(selectedAccount.config.id, bookmarkedTabs, event);
+        }}
+      >
+        {bookmarkedTabs.map((tab, bookmarkedTabIndex) => (
+          <SortableVerticalTab
+            key={tab.id}
+            tab={tab}
+            accountId={selectedAccount.config.id}
+            presentation={isWide ? "wideRow" : "narrowIcon"}
+            sectionIndex={bookmarkedTabIndex}
           />
         ))}
       </DragDropProvider>
