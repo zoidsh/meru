@@ -819,8 +819,6 @@ class Ipc {
         return;
       }
 
-      downloads.closeRecentDownloadHistoryPopup();
-
       if (downloads.toggleDownloadHistoryPopup(parentWindow)) {
         downloads.checkDownloadHistoryItems();
       }

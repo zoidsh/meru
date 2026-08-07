@@ -17,6 +17,8 @@ const FILE_MANAGER_NAME = platform.isMacOS
     ? "File Explorer"
     : "your file manager";
 
+const DOWNLOAD_HISTORY_POPUP_BACKDROP_BLUR_CSS = "html { filter: blur(4px); }";
+
 class Downloads {
   recentDownloadHistoryView: WebContentsView | null = null;
 
@@ -25,6 +27,8 @@ class Downloads {
   downloadHistoryView: WebContentsView | null = null;
 
   downloadHistoryParentWindow: BrowserWindow | null = null;
+
+  downloadHistoryBackdropBlurCssKeys = new Map<Electron.WebContents, Promise<string | null>>();
 
   downloadHistoryPopupOnBlurEnabled = false;
 
@@ -219,7 +223,36 @@ class Downloads {
     });
   };
 
+  blurDownloadHistoryPopupBackdrop(parentWindow: BrowserWindow) {
+    for (const childView of parentWindow.contentView.children) {
+      if (!(childView instanceof WebContentsView) || childView === this.downloadHistoryView) {
+        continue;
+      }
+
+      this.downloadHistoryBackdropBlurCssKeys.set(
+        childView.webContents,
+        childView.webContents.insertCSS(DOWNLOAD_HISTORY_POPUP_BACKDROP_BLUR_CSS).catch(() => null),
+      );
+    }
+  }
+
+  async unblurDownloadHistoryPopupBackdrop() {
+    const backdropBlurCssKeys = [...this.downloadHistoryBackdropBlurCssKeys];
+
+    this.downloadHistoryBackdropBlurCssKeys.clear();
+
+    for (const [webContents, backdropBlurCssKey] of backdropBlurCssKeys) {
+      const cssKey = await backdropBlurCssKey;
+
+      if (cssKey && !webContents.isDestroyed()) {
+        await webContents.removeInsertedCSS(cssKey);
+      }
+    }
+  }
+
   closeDownloadHistoryPopup = () => {
+    this.unblurDownloadHistoryPopupBackdrop();
+
     if (this.downloadHistoryView && this.downloadHistoryParentWindow) {
       this.downloadHistoryView.webContents.removeAllListeners();
 
@@ -245,6 +278,8 @@ class Downloads {
       }
     }
 
+    this.closeRecentDownloadHistoryPopup();
+
     this.downloadHistoryView = new WebContentsView({
       webPreferences: {
         preload: getPreloadPath("renderer"),
@@ -262,6 +297,8 @@ class Downloads {
     parentWindow.contentView.addChildView(this.downloadHistoryView);
 
     this.setDownloadHistoryPopupBounds();
+
+    this.blurDownloadHistoryPopupBackdrop(parentWindow);
 
     this.downloadHistoryView.webContents.focus();
 
