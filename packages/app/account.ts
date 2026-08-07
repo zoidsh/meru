@@ -30,6 +30,8 @@ export class Account {
 
     this.registerSessionPermissionsRequestsHandler();
 
+    this.registerSessionPermissionsCheckHandler();
+
     this.registerSessionDisplayMediaRequestHandler();
 
     blocker.setupSession(this.session);
@@ -85,7 +87,20 @@ export class Account {
           callback(config.get("notifications.allowFromWorkspaceApps"));
           break;
         }
+        default: {
+          callback(false);
+        }
       }
+    });
+  }
+
+  private registerSessionPermissionsCheckHandler() {
+    this.session.setPermissionCheckHandler((_webContents, permission) => {
+      if (permission === "notifications") {
+        return config.get("notifications.allowFromWorkspaceApps");
+      }
+
+      return true;
     });
   }
 
