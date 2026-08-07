@@ -67,7 +67,7 @@ export class DormantTab {
   zoomFactor: number | undefined;
 
   constructor(savedTab: SavedTab, zoomFactor?: number) {
-    this.app = savedTab.app ?? undefined;
+    this.app = savedTab.app;
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.persistence = savedTab.persistence;
@@ -319,7 +319,7 @@ export class Tabs {
       1,
       new DormantTab(
         {
-          app: savedWorkspaceApp.app ?? null,
+          app: savedWorkspaceApp.app,
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           persistence: savedWorkspaceApp.persistence,
@@ -483,7 +483,7 @@ export class Tabs {
     for (const tab of this.tabs) {
       if (tab instanceof WorkspaceApp && tab.persistence && tab.url) {
         savedTabs.push({
-          app: tab.app ?? null,
+          app: tab.app,
           url: tab.url,
           title: tab.title,
           persistence: tab.persistence,
@@ -491,7 +491,7 @@ export class Tabs {
         });
       } else if (tab instanceof DormantTab) {
         savedTabs.push({
-          app: tab.app ?? null,
+          app: tab.app,
           url: tab.url,
           title: tab.title,
           persistence: tab.persistence,

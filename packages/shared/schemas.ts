@@ -28,7 +28,7 @@ export type TabPersistence = z.infer<typeof tabPersistenceSchema>;
 export const savedTabSchema = z.object({
   app: z
     .custom<SupportedWorkspaceApp>((value) => typeof value === "string" && value in workspaceApps)
-    .nullable(),
+    .optional(),
   url: z.string(),
   title: z.string(),
   persistence: tabPersistenceSchema,
