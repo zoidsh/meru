@@ -17,7 +17,7 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useLocation } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { FindInPage as UiFindInPage } from "@/components/find-in-page";
 import {
@@ -28,6 +28,7 @@ import {
   TitlebarIconButton,
   TitlebarLeft,
   TitlebarNavigationControls,
+  TitlebarTitle,
 } from "@/components/titlebar";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
@@ -58,6 +59,26 @@ function RecentDownloadHistoryButton() {
     >
       <DownloadIcon />
     </TitlebarIconButton>
+  );
+}
+
+function AppMenuButton({ className }: { className?: string }) {
+  if (window.electron.process.platform === "darwin") {
+    return;
+  }
+
+  return (
+    <div className={cn("draggable-none", className)}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => {
+          ipc.main.send("titleBar.toggleAppMenu");
+        }}
+      >
+        <EllipsisVerticalIcon />
+      </Button>
+    </div>
   );
 }
 
@@ -155,9 +176,7 @@ export function AppTitlebar() {
     .find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
     ?.tabs.find((tab) => tab.active);
 
-  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
-
-  const [matchAccountRoute] = useRoute("/");
+  const [location] = useLocation();
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
@@ -172,9 +191,22 @@ export function AppTitlebar() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  if (location.startsWith("/settings/")) {
+    return (
+      <Titlebar>
+        <TitlebarTitle>Settings</TitlebarTitle>
+        <AppMenuButton className="ml-auto" />
+      </Titlebar>
+    );
+  }
+
   if (!config || !accounts) {
     return;
   }
+
+  const isAccountLocation = location === "/";
+
+  const isUnifiedInboxLocation = location === "/unified-inbox";
 
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
@@ -201,7 +233,7 @@ export function AppTitlebar() {
     return accounts.map((account) => (
       <Button
         key={account.config.id}
-        variant={account.config.selected && matchAccountRoute ? "secondary" : "ghost"}
+        variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
         className="draggable-none"
         onClick={() => {
@@ -278,7 +310,7 @@ export function AppTitlebar() {
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
               canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
               isLoading={Boolean(activeTab?.loading)}
-              disabled={matchUnifiedInboxRoute}
+              disabled={isUnifiedInboxLocation}
               onGoBack={() => {
                 ipc.main.send("workspaceApp.goBack");
               }}
@@ -299,7 +331,7 @@ export function AppTitlebar() {
                 <TitlebarDropdownMenu
                   title="Workspace Apps"
                   icon={<LayoutGridIcon />}
-                  disabled={matchUnifiedInboxRoute}
+                  disabled={isUnifiedInboxLocation}
                   isOpen={isWorkspaceAppsLauncherOpen}
                   onOpenChange={setIsWorkspaceAppsLauncherOpen}
                 >
@@ -325,7 +357,7 @@ export function AppTitlebar() {
               )}
               {shouldShowUnifiedInboxButton && (
                 <Button
-                  variant={matchUnifiedInboxRoute ? "secondary" : "ghost"}
+                  variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
                   size="icon"
                   className="size-7 draggable-none"
                   onClick={() => {
@@ -366,7 +398,7 @@ export function AppTitlebar() {
                 title="Saved Searches"
                 icon={<MailSearchIcon />}
                 side="left"
-                disabled={matchUnifiedInboxRoute || isWorkspaceAppTabActive}
+                disabled={isUnifiedInboxLocation || isWorkspaceAppTabActive}
                 isOpen={isGmailSavedSearchesOpen}
                 onOpenChange={setIsGmailSavedSearchesOpen}
               >
@@ -396,19 +428,7 @@ export function AppTitlebar() {
               <SparklesIcon /> Update Available
             </Button>
           )}
-          {window.electron.process.platform !== "darwin" && (
-            <div className="draggable-none">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => {
-                  ipc.main.send("titleBar.toggleAppMenu");
-                }}
-              >
-                <EllipsisVerticalIcon />
-              </Button>
-            </div>
-          )}
+          <AppMenuButton />
         </div>
       </>
     );
