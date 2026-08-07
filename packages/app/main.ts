@@ -10,7 +10,6 @@ import {
   loadRenderer,
 } from "@/lib/window";
 import { appMenu } from "@/menu";
-import { appState } from "@/state";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
 import { trial } from "./trial";
@@ -54,6 +53,8 @@ class Main {
 
   shouldLaunchMinimized =
     app.commandLine.hasSwitch("launch-minimized") || config.get("launchMinimized");
+
+  isQuittingApp = false;
 
   loadURL() {
     const searchParams = new URLSearchParams();
@@ -152,7 +153,7 @@ class Main {
         this.window.setFullScreen(false);
       }
 
-      if (!appState.isQuittingApp) {
+      if (!this.isQuittingApp) {
         event.preventDefault();
 
         this.window.blur();

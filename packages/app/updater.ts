@@ -4,7 +4,6 @@ import { config } from "@/config";
 import { ipc } from "./ipc";
 import { log } from "./lib/log";
 import { main } from "./main";
-import { appState } from "./state";
 
 class AppUpdater {
   init() {
@@ -45,7 +44,7 @@ class AppUpdater {
   quitAndInstall() {
     main.saveWindowState();
 
-    appState.isQuittingApp = true;
+    main.isQuittingApp = true;
 
     autoUpdater.quitAndInstall();
   }
