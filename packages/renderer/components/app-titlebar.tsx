@@ -19,7 +19,6 @@ import {
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { navigate } from "wouter/use-hash-location";
-import { sidebarNavItems } from "@/components/app-sidebar";
 import { FindInPage as UiFindInPage } from "@/components/find-in-page";
 import {
   Titlebar,
@@ -166,18 +165,6 @@ function DoNotDisturb() {
   );
 }
 
-function getLocationTitle(location: string) {
-  if (location === "/unified-inbox") {
-    return "Unified Inbox";
-  }
-
-  if (location === "/download-history") {
-    return "Download History";
-  }
-
-  return sidebarNavItems.find((navItem) => navItem.path === location)?.label;
-}
-
 export function AppTitlebar() {
   const accounts = useAccountsStore((state) => state.accounts);
 
@@ -205,11 +192,9 @@ export function AppTitlebar() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   if (location !== "/") {
-    const locationTitle = getLocationTitle(location);
-
     return (
       <Titlebar>
-        {locationTitle && <TitlebarTitle>{locationTitle}</TitlebarTitle>}
+        {location.startsWith("/settings/") && <TitlebarTitle>Settings</TitlebarTitle>}
         <AppMenuButton className="ml-auto" />
       </Titlebar>
     );
