@@ -18,6 +18,10 @@ function patchShowNotification() {
         window.focus();
       };
 
+      notification.onerror = () => {
+        console.error("Failed to show service worker notification:", title);
+      };
+
       return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);
