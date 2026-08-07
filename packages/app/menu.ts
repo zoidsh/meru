@@ -235,6 +235,7 @@ export class AppMenu {
         submenu: [
           {
             label: "Compose",
+            visible: isGmailVisible,
             click: () => {
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
@@ -247,6 +248,7 @@ export class AppMenu {
           },
           {
             type: "separator",
+            visible: isGmailVisible,
           },
           {
             role: "close",
