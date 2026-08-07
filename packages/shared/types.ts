@@ -11,7 +11,7 @@ import type {
 } from "./schemas";
 import type { AccountTabsState, VerticalTabsWidth } from "./tabs";
 import type {
-  BookmarkableWorkspaceApp,
+  LauncherWorkspaceApp,
   SupportedWorkspaceApp,
   WorkspaceAppOpenBehavior,
 } from "./workspace-apps";
@@ -122,7 +122,7 @@ export type Config = {
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
   "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
-  "workspaceApps.bookmarkedApps": BookmarkableWorkspaceApp[];
+  "workspaceApps.launcherApps": LauncherWorkspaceApp[];
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;

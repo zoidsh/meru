@@ -94,7 +94,7 @@ export const config = new Store<Config>({
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
     "workspaceApps.openBehavior": "tab",
-    "workspaceApps.bookmarkedApps": [],
+    "workspaceApps.launcherApps": [],
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,
@@ -324,7 +324,7 @@ export const config = new Store<Config>({
         ["googleApps.openInApp", "workspaceApps.openInApp"],
         ["googleApps.openInAppExcludedApps", "workspaceApps.openInAppExcludedApps"],
         ["googleApps.openAppsInNewWindow", "workspaceApps.openAppsInNewWindow"],
-        ["googleApps.pinnedApps", "workspaceApps.bookmarkedApps"],
+        ["googleApps.pinnedApps", "workspaceApps.launcherApps"],
         ["googleApps.showAccountColor", "workspaceApps.showAccountColor"],
         ["googleApps.showAccountLabel", "workspaceApps.showAccountLabel"],
         ["notifications.allowFromGoogleApps", "notifications.allowFromWorkspaceApps"],
@@ -346,12 +346,12 @@ export const config = new Store<Config>({
       // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
       store.delete("workspaceApps.openAppsInNewWindow");
 
-      // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.bookmarkedApps'
+      // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.launcherApps'
       const pinnedApps = store.get("workspaceApps.pinnedApps");
 
       if (typeof pinnedApps !== "undefined") {
         // @ts-expect-error
-        store.set("workspaceApps.bookmarkedApps", pinnedApps);
+        store.set("workspaceApps.launcherApps", pinnedApps);
 
         // @ts-expect-error
         store.delete("workspaceApps.pinnedApps");

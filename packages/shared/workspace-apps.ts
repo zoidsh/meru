@@ -3,7 +3,7 @@ import { GMAIL_URL } from "./gmail";
 type WorkspaceAppDefinition = {
   label: string;
   url?: string;
-  bookmarkable?: boolean;
+  availableInLauncher?: boolean;
   popupOnly?: boolean;
   singleInstance?: boolean;
 };
@@ -17,11 +17,11 @@ const workspaceAppDefinitions = {
   drive: { label: "Drive" },
   forms: { label: "Forms" },
   gemini: { label: "Gemini" },
-  gmail: { label: "Gmail", url: GMAIL_URL, bookmarkable: false, singleInstance: true },
+  gmail: { label: "Gmail", url: GMAIL_URL, availableInLauncher: false, singleInstance: true },
   groups: { label: "Groups" },
   keep: { label: "Keep" },
   meet: { label: "Meet" },
-  myaccount: { label: "My Account", bookmarkable: false, popupOnly: true },
+  myaccount: { label: "My Account", availableInLauncher: false, popupOnly: true },
   notebooklm: { label: "NotebookLM" },
   sheets: { label: "Sheets" },
   sites: { label: "Sites" },
@@ -32,9 +32,9 @@ const workspaceAppDefinitions = {
 
 export type SupportedWorkspaceApp = keyof typeof workspaceAppDefinitions;
 
-export type BookmarkableWorkspaceApp = {
+export type LauncherWorkspaceApp = {
   [App in SupportedWorkspaceApp]: (typeof workspaceAppDefinitions)[App] extends {
-    bookmarkable: false;
+    availableInLauncher: false;
   }
     ? never
     : App;
@@ -43,11 +43,11 @@ export type BookmarkableWorkspaceApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
-export const bookmarkableWorkspaceApps = Object.fromEntries(
+export const launcherWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
-    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.bookmarkable !== false)
+    .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.availableInLauncher !== false)
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
-) as Record<BookmarkableWorkspaceApp, string>;
+) as Record<LauncherWorkspaceApp, string>;
 
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
