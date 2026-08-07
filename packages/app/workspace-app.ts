@@ -421,7 +421,7 @@ export class WorkspaceApp {
     if (this._window) {
       this.registerWindowListeners();
     } else {
-      if (main.visibleSurface !== "account") {
+      if (main.route !== "/") {
         this.view.setVisible(false);
       }
     }
@@ -657,7 +657,7 @@ export class WorkspaceApp {
 
     main.window.contentView.addChildView(this.view, 0);
 
-    if (main.visibleSurface !== "account") {
+    if (main.route !== "/") {
       this.view.setVisible(false);
     }
 

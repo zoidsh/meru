@@ -18,30 +18,20 @@ import { trial } from "./trial";
 class Main {
   private _window: BrowserWindow | undefined;
 
-  rendererRoute = "/";
+  route = "/";
 
-  get visibleSurface() {
-    if (this.rendererRoute === "/") {
-      return "account";
-    }
+  private setRoute(route: string) {
+    const wasAccountRoute = this.route === "/";
 
-    if (this.rendererRoute === "/unified-inbox") {
-      return "unifiedInbox";
-    }
+    this.route = route;
 
-    return "settings";
-  }
+    const isAccountRoute = route === "/";
 
-  private setRendererRoute(route: string) {
-    const previousVisibleSurface = this.visibleSurface;
-
-    this.rendererRoute = route;
-
-    if (this.visibleSurface === previousVisibleSurface) {
+    if (isAccountRoute === wasAccountRoute) {
       return;
     }
 
-    if (this.visibleSurface === "account") {
+    if (isAccountRoute) {
       accounts.show();
     } else {
       accounts.hide();
@@ -140,7 +130,7 @@ class Main {
     }
 
     this.window.webContents.on("did-navigate-in-page", (_event, url) => {
-      this.setRendererRoute(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
+      this.setRoute(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
     });
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
@@ -215,7 +205,7 @@ class Main {
   }
 
   navigate(to: string) {
-    this.setRendererRoute(to);
+    this.setRoute(to);
 
     ipc.renderer.send(main.window.webContents, "navigate", to);
 
