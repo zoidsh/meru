@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
+import { platform } from "@electron-toolkit/utils";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
@@ -631,10 +632,35 @@ class Ipc {
         return;
       }
 
+      const workspaceAppLabel = notifyingWorkspaceApp.app
+        ? workspaceApps[notifyingWorkspaceApp.app].label
+        : undefined;
+
+      const hasMultipleAccounts = accounts.getAccountConfigs().length > 1;
+
+      let notificationTitle = workspaceAppLabel ?? notification.title;
+
+      if (hasMultipleAccounts) {
+        notificationTitle = `[${notifyingWorkspaceApp.account.config.label}] ${notificationTitle}`;
+      }
+
+      let subtitle: string | undefined;
+
+      let body = notification.body;
+
+      if (workspaceAppLabel) {
+        if (platform.isMacOS) {
+          subtitle = notification.title;
+        } else {
+          body = [notification.title, notification.body].filter(Boolean).join("\n");
+        }
+      }
+
       createNotification({
-        title: notification.title,
-        body: notification.body,
-        silent: notification.silent,
+        title: notificationTitle,
+        subtitle,
+        body,
+        silent: notifyingWorkspaceApp.app === "calendar" ? true : notification.silent,
         timeoutType: notification.requireInteraction ? "never" : "default",
         click: () => {
           if (notifyingWorkspaceApp.isWindowed) {
