@@ -34,7 +34,7 @@ function DownloadHistoryClearAllButton() {
 function DownloadHistoryModal() {
   return (
     <div
-      className="flex h-screen items-center justify-center bg-black/10"
+      className="flex h-screen items-center justify-center bg-black/50"
       onClick={() => {
         ipc.main.send("downloads.closeDownloadHistoryPopup");
       }}
