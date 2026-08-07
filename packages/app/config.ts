@@ -81,7 +81,7 @@ export const config = new Store<Config>({
     "gmail.moveAttachmentsToTop": false,
     "gmail.closeComposeWindowAfterSend": false,
     "gmail.replyForwardInPopOut": false,
-    "gmail.fullDarkTheme": false,
+    "gmail.extendDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
     "screenShare.useSystemPicker": true,
     "window.lastState": {
@@ -381,6 +381,17 @@ export const config = new Store<Config>({
 
       // @ts-expect-error
       store.delete("gmail.zoomFactor");
+
+      // @ts-expect-error: `gmail.fullDarkTheme` is now 'gmail.extendDarkTheme'
+      const fullDarkTheme = store.get("gmail.fullDarkTheme");
+
+      if (typeof fullDarkTheme !== "undefined") {
+        // @ts-expect-error
+        store.set("gmail.extendDarkTheme", fullDarkTheme);
+      }
+
+      // @ts-expect-error
+      store.delete("gmail.fullDarkTheme");
     },
   },
 });

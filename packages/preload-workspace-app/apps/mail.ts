@@ -39,13 +39,13 @@ function closeComposeWindowAfterSend() {
   });
 }
 
-const isFullDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.fullDarkTheme);
+const isExtendDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.extendDarkTheme);
 
 let themedElement: HTMLElement | null = null;
 let controller: DarkThemeController | null = null;
 
 function darkThemeMail() {
-  if (!isFullDarkThemeEnabled) {
+  if (!isExtendDarkThemeEnabled) {
     return;
   }
 

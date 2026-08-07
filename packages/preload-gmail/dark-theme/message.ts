@@ -3,12 +3,12 @@ import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $$ } from "select-dom";
 import messageCss from "./message.css";
 
-const isFullDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.fullDarkTheme);
+const isExtendDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.extendDarkTheme);
 
 const controllers = new Map<HTMLElement, DarkThemeController>();
 
 export function darkThemeMessage() {
-  if (!isFullDarkThemeEnabled) {
+  if (!isExtendDarkThemeEnabled) {
     return;
   }
 
