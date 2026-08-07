@@ -1,35 +1,34 @@
-import { webFrame } from "electron";
+import { ipc } from "@meru/shared/renderer/ipc";
+import type { WorkspaceAppNotification } from "@meru/shared/types";
+import { contextBridge, webFrame } from "electron";
+
+declare global {
+  interface Window {
+    meruShowNotification: (notification: WorkspaceAppNotification) => void;
+  }
+}
 
 function patchShowNotification() {
   ServiceWorkerRegistration.prototype.showNotification = function (title, options) {
-    try {
-      const notification = new Notification(title, {
-        body: options?.body,
-        icon: options?.icon,
-        tag: options?.tag,
-        silent: options?.silent,
-        data: options?.data,
-        requireInteraction: options?.requireInteraction,
-        lang: options?.lang,
-        dir: options?.dir,
-      });
+    window.meruShowNotification({
+      title,
+      body: options?.body,
+      silent: options?.silent ?? undefined,
+      requireInteraction: options?.requireInteraction,
+    });
 
-      notification.onclick = () => {
-        window.focus();
-      };
-
-      notification.onerror = () => {
-        console.error("Failed to show service worker notification:", title);
-      };
-
-      return Promise.resolve();
-    } catch (error) {
-      return Promise.reject(error);
-    }
+    return Promise.resolve();
   };
 }
 
 export function initServiceWorkerNotifications() {
+  contextBridge.exposeInMainWorld(
+    "meruShowNotification",
+    (notification: WorkspaceAppNotification) => {
+      ipc.main.send("workspaceApp.showNotification", notification);
+    },
+  );
+
   webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`).catch((error) => {
     console.error("Failed to patch service worker notifications:", error);
   });

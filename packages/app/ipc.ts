@@ -33,7 +33,7 @@ import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { log } from "./lib/log";
-import { createNewEmailNotification } from "./notifications";
+import { createNewEmailNotification, createNotification } from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
@@ -617,6 +617,42 @@ class Ipc {
         title: "Tim from Meru",
         subtitle: "Your Test Notification Request",
         body: "This is a test notification to show how notifications will appear.",
+      });
+    });
+
+    ipc.main.on("workspaceApp.showNotification", (event, notification) => {
+      if (!config.get("notifications.allowFromWorkspaceApps")) {
+        return;
+      }
+
+      const notifyingWorkspaceApp = WorkspaceApp.tryFromViewWebContents(event.sender);
+
+      if (!notifyingWorkspaceApp) {
+        return;
+      }
+
+      createNotification({
+        title: notification.title,
+        body: notification.body,
+        silent: notification.silent,
+        timeoutType: notification.requireInteraction ? "never" : "default",
+        click: () => {
+          if (notifyingWorkspaceApp.isWindowed) {
+            notifyingWorkspaceApp.window.show();
+
+            return;
+          }
+
+          main.show();
+
+          notifyingWorkspaceApp.account.instance.tabs.activateTab(notifyingWorkspaceApp.id);
+
+          if (notifyingWorkspaceApp.account.config.selected) {
+            accounts.refreshSelectedAccountView();
+          } else {
+            accounts.selectAccount(notifyingWorkspaceApp.accountId);
+          }
+        },
       });
     });
 

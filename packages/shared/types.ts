@@ -39,6 +39,13 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
+export type WorkspaceAppNotification = {
+  title: string;
+  body?: string;
+  silent?: boolean;
+  requireInteraction?: boolean;
+};
+
 type GmailHashLocation =
   | "inbox"
   | "starred"
@@ -158,6 +165,7 @@ export type IpcMainEvents =
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
       "workspaceApp.showMenu": [workspaceAppId: string];
+      "workspaceApp.showNotification": [notification: WorkspaceAppNotification];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
       "gmail.undoMessageSent": [browserWindowId: number];
