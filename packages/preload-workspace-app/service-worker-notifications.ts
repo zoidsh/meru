@@ -26,5 +26,7 @@ function patchShowNotification() {
 }
 
 export function initServiceWorkerNotifications() {
-  webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`);
+  webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`).catch((error) => {
+    console.error("Failed to patch service worker notifications:", error);
+  });
 }
