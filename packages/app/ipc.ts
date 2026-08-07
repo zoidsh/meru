@@ -296,7 +296,9 @@ class Ipc {
 
       const hasOtherClosableTabs = account.instance.tabs.tabs.some(
         (accountTab) =>
-          accountTab.id !== tabId && accountTab.id !== GMAIL_TAB_ID && !accountTab.pinned,
+          accountTab.id !== tabId &&
+          accountTab.id !== GMAIL_TAB_ID &&
+          accountTab.persistence !== "pinned",
       );
 
       const contextTabIndex = account.instance.tabs.tabs.findIndex(
@@ -305,7 +307,7 @@ class Ipc {
 
       const hasClosableTabsBelow = account.instance.tabs.tabs
         .slice(contextTabIndex + 1)
-        .some((accountTab) => !accountTab.pinned);
+        .some((accountTab) => accountTab.persistence !== "pinned");
 
       Menu.buildFromTemplate([
         ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
@@ -411,20 +413,20 @@ class Ipc {
         {
           type: "separator",
         },
-        tab.pinned
+        tab.persistence === "pinned"
           ? {
               label: "Unpin",
               click: () => {
-                account.instance.tabs.unpinTab(tabId);
+                account.instance.tabs.setTabPersistence(tabId, null);
               },
             }
           : {
               label: "Pin",
               click: () => {
-                account.instance.tabs.pinTab(tabId);
+                account.instance.tabs.setTabPersistence(tabId, "pinned");
               },
             },
-        ...(tab.pinned
+        ...(tab.persistence === "pinned"
           ? [
               {
                 label: "Load on Launch",
@@ -433,7 +435,7 @@ class Ipc {
                 click: () => {
                   tab.loadOnLaunch = !tab.loadOnLaunch;
 
-                  accounts.savePinnedTabs();
+                  accounts.saveTabs();
                 },
               },
             ]

@@ -28,7 +28,7 @@ export const config = new Store<Config>({
           unifiedInbox: true,
         },
         workspaceApps: {
-          pinnedTabs: [],
+          savedTabs: [],
         },
       },
     ],
@@ -362,7 +362,7 @@ export const config = new Store<Config>({
       if (Array.isArray(accounts)) {
         for (const account of accounts) {
           if (typeof account.workspaceApps === "undefined") {
-            account.workspaceApps = { pinnedTabs: [] };
+            account.workspaceApps = { savedTabs: [] };
           }
         }
 

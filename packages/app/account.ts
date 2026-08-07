@@ -46,7 +46,7 @@ export class Account {
 
     this.tabs = new Tabs(accountConfig.id, this.gmail);
 
-    this.tabs.restorePinnedTabs(accountConfig.workspaceApps.pinnedTabs);
+    this.tabs.restoreSavedTabs(accountConfig.workspaceApps.savedTabs);
   }
 
   setSpellCheckerLanguages() {

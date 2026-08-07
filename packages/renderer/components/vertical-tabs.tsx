@@ -113,7 +113,7 @@ function VerticalTab({
   gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
-  const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.pinned;
+  const isPinnedSectionTab = tab.id === GMAIL_TAB_ID || tab.persistence === "pinned";
 
   const isCloseable = !isPinnedSectionTab;
 
@@ -247,11 +247,11 @@ export function VerticalTabs() {
   const isWide = verticalTabsWidth === VERTICAL_TABS_WIDE_WIDTH;
 
   const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
-    (tab) => tab.id === GMAIL_TAB_ID || tab.pinned,
+    (tab) => tab.id === GMAIL_TAB_ID || tab.persistence === "pinned",
   );
 
   const unpinnedTabs = selectedAccountTabs.tabs.filter(
-    (tab) => tab.id !== GMAIL_TAB_ID && !tab.pinned,
+    (tab) => tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned",
   );
 
   const gmailTabStatus = {

@@ -271,7 +271,7 @@ class Accounts {
         delegatedAccountId: null,
       },
       workspaceApps: {
-        pinnedTabs: [],
+        savedTabs: [],
       },
     };
 
@@ -373,7 +373,7 @@ class Accounts {
     }
   }
 
-  savePinnedTabs() {
+  saveTabs() {
     if (main.isQuittingApp) {
       return;
     }
@@ -390,7 +390,7 @@ class Accounts {
         return {
           ...accountConfig,
           workspaceApps: {
-            pinnedTabs: instance.tabs.serializePinnedTabs(),
+            savedTabs: instance.tabs.serializeSavedTabs(),
           },
         };
       }),

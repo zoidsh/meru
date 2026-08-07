@@ -21,16 +21,21 @@ export const accountColors = [
   "pink",
 ] as const;
 
-export const pinnedTabSchema = z.object({
+export const tabPersistenceSchema = z.enum(["pinned", "bookmarked"]);
+
+export type TabPersistence = z.infer<typeof tabPersistenceSchema>;
+
+export const savedTabSchema = z.object({
   app: z.custom<SupportedWorkspaceApp>(
     (value) => typeof value === "string" && value in workspaceApps,
   ),
   url: z.string(),
   title: z.string(),
+  persistence: tabPersistenceSchema,
   loadOnLaunch: z.boolean(),
 });
 
-export type PinnedTab = z.infer<typeof pinnedTabSchema>;
+export type SavedTab = z.infer<typeof savedTabSchema>;
 
 export const accountConfigSchema = z.object({
   id: z.string(),
@@ -44,7 +49,7 @@ export const accountConfigSchema = z.object({
     unifiedInbox: z.boolean(),
   }),
   workspaceApps: z.object({
-    pinnedTabs: z.array(pinnedTabSchema),
+    savedTabs: z.array(savedTabSchema),
   }),
 });
 
