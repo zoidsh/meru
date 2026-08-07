@@ -2,6 +2,10 @@ import { clipboard, dialog, shell } from "electron";
 import { config } from "@/config";
 import { licenseKey } from "./license-key";
 
+export function isHttpUrl(url: string) {
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
 export function getCleanUrl(url: string): string {
   if (url.includes("google.com/url")) {
     return new URL(url).searchParams.get("q") ?? url;

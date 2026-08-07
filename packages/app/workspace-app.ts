@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
-import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { getWorkspaceAppUrl, isGoogleUrl } from "@meru/shared/google";
 import type { AccountConfig, TabPersistence } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
@@ -34,7 +34,7 @@ import {
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { registerTabBroadcasts } from "./tabs";
-import { openExternalUrl } from "./url";
+import { isHttpUrl, openExternalUrl } from "./url";
 
 export const MIN_ZOOM_FACTOR = 0.1;
 export const MAX_ZOOM_FACTOR = 3;
@@ -150,6 +150,27 @@ export class WorkspaceApp {
     event.preventDefault();
 
     webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+  }
+
+  static handleWillNavigate(
+    event: Electron.Event<Electron.WebContentsWillNavigateEventParams>,
+    webContents: WebContents,
+  ) {
+    if (!event.isMainFrame || !isHttpUrl(event.url) || isGoogleUrl(event.url)) {
+      return;
+    }
+
+    const currentUrl = webContents.getURL();
+
+    // Sign-in hands off to third-party identity providers, so navigations away
+    // from the accounts origin have to stay in the view to keep SSO working.
+    if (!isGoogleUrl(currentUrl) || currentUrl.startsWith(GOOGLE_ACCOUNTS_URL)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    openExternalUrl(event.url, { focusBrowser: true });
   }
 
   static handleWindowOpen({
@@ -578,6 +599,7 @@ export class WorkspaceApp {
   private registerViewListeners() {
     this.view.webContents.on("did-navigate", this.updateAppFromNavigation);
     this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.on("will-navigate", this.handleExternalNavigation);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
 
@@ -695,6 +717,12 @@ export class WorkspaceApp {
 
   private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
     WorkspaceApp.handleNavigate(url);
+  };
+
+  private handleExternalNavigation = (
+    event: Electron.Event<Electron.WebContentsWillNavigateEventParams>,
+  ) => {
+    WorkspaceApp.handleWillNavigate(event, this.view.webContents);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
