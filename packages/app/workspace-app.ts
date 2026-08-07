@@ -576,8 +576,7 @@ export class WorkspaceApp {
   }
 
   private registerViewListeners() {
-    this.view.webContents.on("did-navigate", this.updateAppFromNavigation);
-    this.view.webContents.on("did-navigate", this.handlePasskeyChallenge);
+    this.view.webContents.on("did-navigate", this.handleDidNavigate);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
 
@@ -679,7 +678,7 @@ export class WorkspaceApp {
     this.updateViewBounds();
   }
 
-  private updateAppFromNavigation = (_event: Electron.Event, url: string) => {
+  private updateAppFromNavigation(url: string) {
     const navigatedApp = getWorkspaceAppFromUrl(url);
 
     if (navigatedApp === this.app) {
@@ -691,9 +690,11 @@ export class WorkspaceApp {
     this.app = navigatedApp;
 
     this.setupApp();
-  };
+  }
 
-  private handlePasskeyChallenge = (_event: Electron.Event, url: string) => {
+  private handleDidNavigate = (_event: Electron.Event, url: string) => {
+    this.updateAppFromNavigation(url);
+
     WorkspaceApp.handleNavigate(url);
   };
 
