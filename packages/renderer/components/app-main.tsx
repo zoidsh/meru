@@ -15,13 +15,6 @@ ipc.renderer.on("navigate", (_event, to) => {
   navigate(to);
 });
 
-export function useIsFullWidthRoute() {
-  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
-  const [matchDownloadHistoryRoute] = useRoute("/download-history");
-
-  return matchUnifiedInboxRoute || matchDownloadHistoryRoute;
-}
-
 function CloseButton() {
   const closeSettings = () => {
     ipc.main.send("settings.toggleIsOpen", false);
@@ -40,13 +33,16 @@ function CloseButton() {
 }
 
 export function AppMain() {
-  const isFullWidthRoute = useIsFullWidthRoute();
+  const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
+  const [matchDownloadHistoryRoute] = useRoute("/download-history");
 
   const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   if (!isSettingsOpen) {
     return;
   }
+
+  const isFullWidthRoute = matchUnifiedInboxRoute || matchDownloadHistoryRoute;
 
   return (
     <div className="relative flex flex-1 bg-sidebar">
@@ -56,7 +52,16 @@ export function AppMain() {
           !isFullWidthRoute && "m-4 rounded-xl",
         )}
       >
-        <div className={cn("mx-auto py-8", isFullWidthRoute ? "w-6xl px-8" : "w-3xl px-28")}>
+        <div
+          className={cn(
+            "mx-auto py-8",
+            matchUnifiedInboxRoute
+              ? "w-6xl px-8"
+              : matchDownloadHistoryRoute
+                ? "max-w-2xl px-8"
+                : "w-3xl px-28",
+          )}
+        >
           <Route path="/unified-inbox" component={UnifiedInbox} />
           <Route path="/download-history" component={DownloadHistory} />
           {sidebarNavItems
