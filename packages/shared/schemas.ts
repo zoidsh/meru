@@ -26,9 +26,9 @@ export const tabPersistenceSchema = z.enum(["pinned", "bookmarked"]);
 export type TabPersistence = z.infer<typeof tabPersistenceSchema>;
 
 export const savedTabSchema = z.object({
-  app: z.custom<SupportedWorkspaceApp>(
-    (value) => typeof value === "string" && value in workspaceApps,
-  ),
+  app: z
+    .custom<SupportedWorkspaceApp>((value) => typeof value === "string" && value in workspaceApps)
+    .nullable(),
   url: z.string(),
   title: z.string(),
   persistence: tabPersistenceSchema,

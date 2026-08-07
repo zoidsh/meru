@@ -411,51 +411,47 @@ class Ipc {
             openExternalUrl(tab.url, { skipTrustedHostCheck: true });
           },
         },
-        ...(tabApp
+        {
+          type: "separator",
+        },
+        tab.persistence === "pinned"
+          ? {
+              label: "Unpin",
+              click: () => {
+                account.instance.tabs.setTabPersistence(tabId, null);
+              },
+            }
+          : {
+              label: "Pin",
+              click: () => {
+                account.instance.tabs.setTabPersistence(tabId, "pinned");
+              },
+            },
+        tab.persistence === "bookmarked"
+          ? {
+              label: "Remove Bookmark",
+              click: () => {
+                account.instance.tabs.setTabPersistence(tabId, null);
+              },
+            }
+          : {
+              label: "Bookmark",
+              click: () => {
+                account.instance.tabs.setTabPersistence(tabId, "bookmarked");
+              },
+            },
+        ...(tab.persistence === "pinned"
           ? [
               {
-                type: "separator" as const,
-              },
-              tab.persistence === "pinned"
-                ? {
-                    label: "Unpin",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, null);
-                    },
-                  }
-                : {
-                    label: "Pin",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, "pinned");
-                    },
-                  },
-              tab.persistence === "bookmarked"
-                ? {
-                    label: "Remove Bookmark",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, null);
-                    },
-                  }
-                : {
-                    label: "Bookmark",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, "bookmarked");
-                    },
-                  },
-              ...(tab.persistence === "pinned"
-                ? [
-                    {
-                      label: "Load on Launch",
-                      type: "checkbox" as const,
-                      checked: tab.loadOnLaunch,
-                      click: () => {
-                        tab.loadOnLaunch = !tab.loadOnLaunch;
+                label: "Load on Launch",
+                type: "checkbox" as const,
+                checked: tab.loadOnLaunch,
+                click: () => {
+                  tab.loadOnLaunch = !tab.loadOnLaunch;
 
-                        accounts.saveTabs();
-                      },
-                    },
-                  ]
-                : []),
+                  accounts.saveTabs();
+                },
+              },
             ]
           : []),
         {

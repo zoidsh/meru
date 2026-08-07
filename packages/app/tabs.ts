@@ -27,13 +27,10 @@ export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
 }
 
-type SavedWorkspaceApp = WorkspaceApp & {
-  app: SupportedWorkspaceApp;
-  persistence: TabPersistence;
-};
+type SavedWorkspaceApp = WorkspaceApp & { persistence: TabPersistence };
 
 function isSavedWorkspaceApp(tab: Tab): tab is SavedWorkspaceApp {
-  return tab instanceof WorkspaceApp && tab.persistence !== null && tab.app !== undefined;
+  return tab instanceof WorkspaceApp && tab.persistence !== null;
 }
 
 export type Tab = {
@@ -51,7 +48,7 @@ export type Tab = {
 export class DormantTab {
   id = randomUUID();
 
-  app: SupportedWorkspaceApp;
+  app: SupportedWorkspaceApp | undefined;
 
   url: string;
 
@@ -70,7 +67,7 @@ export class DormantTab {
   zoomFactor: number | undefined;
 
   constructor(savedTab: SavedTab, zoomFactor?: number) {
-    this.app = savedTab.app;
+    this.app = savedTab.app ?? undefined;
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.persistence = savedTab.persistence;
@@ -322,7 +319,7 @@ export class Tabs {
       1,
       new DormantTab(
         {
-          app: savedWorkspaceApp.app,
+          app: savedWorkspaceApp.app ?? null,
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           persistence: savedWorkspaceApp.persistence,
@@ -484,9 +481,9 @@ export class Tabs {
     const savedTabs: SavedTab[] = [];
 
     for (const tab of this.tabs) {
-      if (tab instanceof WorkspaceApp && tab.persistence && tab.app) {
+      if (tab instanceof WorkspaceApp && tab.persistence && tab.url) {
         savedTabs.push({
-          app: tab.app,
+          app: tab.app ?? null,
           url: tab.url,
           title: tab.title,
           persistence: tab.persistence,
@@ -494,7 +491,7 @@ export class Tabs {
         });
       } else if (tab instanceof DormantTab) {
         savedTabs.push({
-          app: tab.app,
+          app: tab.app ?? null,
           url: tab.url,
           title: tab.title,
           persistence: tab.persistence,
