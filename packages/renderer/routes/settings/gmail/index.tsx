@@ -70,11 +70,11 @@ export function GmailSettings() {
             />
             <ConfigSwitchField
               label="Extend Dark Theme"
-              description="Extends Gmail's native dark theme to emails and the compose window. Requires Gmail's theme to be set to dark. This feature is experimental — if you run into any issues, please report them so it can be improved."
+              description="Extends Gmail's native dark theme to emails and the compose window. Requires Gmail's theme to be set to dark. This feature is in beta — if you run into any issues, please report them so it can be improved."
               configKey="gmail.extendDarkTheme"
               restartRequired
               licenseKeyRequired
-              experimental
+              beta
             />
           </FieldSet>
           <FieldSeparator />
