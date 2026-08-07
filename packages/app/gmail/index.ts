@@ -730,9 +730,7 @@ export class Gmail {
         }
 
         if (licenseKey.isValid && config.get("verificationCodes.autoCopy")) {
-          const verificationCode = extractVerificationCode(
-            [subtitle, body].filter((text) => typeof text === "string"),
-          );
+          const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
             clipboard.writeText(verificationCode);
