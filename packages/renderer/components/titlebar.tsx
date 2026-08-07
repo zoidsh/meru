@@ -50,6 +50,17 @@ export function TitlebarPageTitle({ children }: { children: string }) {
   );
 }
 
+export function TitlebarTitle({ children }: { children: string }) {
+  return (
+    <div
+      className="absolute top-1/2 left-1/2 max-w-xs -translate-x-1/2 -translate-y-1/2 truncate text-xs"
+      title={children}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
     <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
