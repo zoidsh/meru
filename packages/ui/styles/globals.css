@@ -126,7 +126,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply cursor-default bg-background text-foreground antialiased;
+  }
+
+  input,
+  textarea {
+    @apply cursor-text;
   }
 }
 
