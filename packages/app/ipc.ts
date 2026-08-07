@@ -18,8 +18,6 @@ import {
   type MenuItemConstructorOptions,
   nativeImage,
   nativeTheme,
-  Notification,
-  type WebContents,
   session,
   shell,
 } from "electron";
@@ -50,20 +48,6 @@ function clearUndoSendLapseTimeout(browserWindowId: number) {
   }
 
   undoSendLapseTimeouts.delete(browserWindowId);
-}
-
-function logWorkspaceAppNotification(
-  senderWebContents: WebContents,
-  message: string,
-  detail?: unknown,
-) {
-  log.info("[meru:notifications]", message, detail);
-
-  senderWebContents
-    .executeJavaScript(
-      `console.log("[meru:notifications] (main)", ${JSON.stringify(message)}, ${JSON.stringify(detail ?? null)})`,
-    )
-    .catch(() => {});
 }
 
 function getNavigationWebContents(workspaceAppId?: string) {
@@ -637,29 +621,17 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApp.showNotification", (event, notification) => {
-      logWorkspaceAppNotification(event.sender, "main received", notification);
-
       if (!config.get("notifications.allowFromWorkspaceApps")) {
-        logWorkspaceAppNotification(event.sender, "dropped, allowFromWorkspaceApps is off");
-
         return;
       }
 
       const notifyingWorkspaceApp = WorkspaceApp.tryFromViewWebContents(event.sender);
 
       if (!notifyingWorkspaceApp) {
-        logWorkspaceAppNotification(event.sender, "dropped, no workspace app for sender");
-
         return;
       }
 
-      logWorkspaceAppNotification(
-        event.sender,
-        "Notification.isSupported",
-        Notification.isSupported(),
-      );
-
-      const workspaceAppNotification = createNotification({
+      createNotification({
         title: notification.title,
         body: notification.body,
         silent: notification.silent,
@@ -681,24 +653,6 @@ class Ipc {
             accounts.selectAccount(notifyingWorkspaceApp.accountId);
           }
         },
-      });
-
-      if (!workspaceAppNotification) {
-        logWorkspaceAppNotification(event.sender, "createNotification returned nothing");
-
-        return;
-      }
-
-      workspaceAppNotification.on("show", () => {
-        logWorkspaceAppNotification(event.sender, "shown");
-      });
-
-      workspaceAppNotification.on("failed", (_event, error) => {
-        logWorkspaceAppNotification(event.sender, "failed", String(error));
-      });
-
-      workspaceAppNotification.on("close", () => {
-        logWorkspaceAppNotification(event.sender, "closed");
       });
     });
 
