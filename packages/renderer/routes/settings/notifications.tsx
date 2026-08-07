@@ -33,7 +33,6 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
-import { platform } from "@/lib/utils";
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
@@ -163,13 +162,11 @@ export function NotificationsSettings() {
                     description="Display the email subject in notifications."
                     configKey="notifications.showSubject"
                   />
-                  {platform.isMacOS && (
-                    <ConfigSwitchField
-                      label="Show Summary"
-                      description="Display the email summary in notifications."
-                      configKey="notifications.showSummary"
-                    />
-                  )}
+                  <ConfigSwitchField
+                    label="Show Summary"
+                    description="Display the email summary in notifications."
+                    configKey="notifications.showSummary"
+                  />
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
                       Notification Times
