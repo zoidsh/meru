@@ -23,7 +23,9 @@ function RecentDownloadHistory() {
         <XIcon />
       </Button>
       <ScrollArea className="flex-1 overflow-hidden px-4">
-        <DownloadHistoryList limit={MAX_RECENT_DOWNLOAD_HISTORY_ITEMS} />
+        <div className="flex h-full flex-col">
+          <DownloadHistoryList limit={MAX_RECENT_DOWNLOAD_HISTORY_ITEMS} />
+        </div>
       </ScrollArea>
       <div className="mt-4 flex justify-end border-t bg-muted/50 p-4">
         <Button
