@@ -191,10 +191,10 @@ export function AppTitlebar() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  if (location !== "/") {
+  if (location.startsWith("/settings/")) {
     return (
       <Titlebar>
-        {location.startsWith("/settings/") && <TitlebarTitle>Settings</TitlebarTitle>}
+        <TitlebarTitle>Settings</TitlebarTitle>
         <AppMenuButton className="ml-auto" />
       </Titlebar>
     );
@@ -203,6 +203,10 @@ export function AppTitlebar() {
   if (!config || !accounts) {
     return;
   }
+
+  const isAccountLocation = location === "/";
+
+  const isUnifiedInboxLocation = location === "/unified-inbox";
 
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
@@ -229,7 +233,7 @@ export function AppTitlebar() {
     return accounts.map((account) => (
       <Button
         key={account.config.id}
-        variant={account.config.selected ? "secondary" : "ghost"}
+        variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
         className="draggable-none"
         onClick={() => {
@@ -306,6 +310,7 @@ export function AppTitlebar() {
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
               canGoForward={Boolean(activeTab?.navigationHistory.canGoForward)}
               isLoading={Boolean(activeTab?.loading)}
+              disabled={isUnifiedInboxLocation}
               onGoBack={() => {
                 ipc.main.send("workspaceApp.goBack");
               }}
@@ -326,6 +331,7 @@ export function AppTitlebar() {
                 <TitlebarDropdownMenu
                   title="Workspace Apps"
                   icon={<LayoutGridIcon />}
+                  disabled={isUnifiedInboxLocation}
                   isOpen={isWorkspaceAppsLauncherOpen}
                   onOpenChange={setIsWorkspaceAppsLauncherOpen}
                 >
@@ -351,7 +357,7 @@ export function AppTitlebar() {
               )}
               {shouldShowUnifiedInboxButton && (
                 <Button
-                  variant="ghost"
+                  variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
                   size="icon"
                   className="size-7 draggable-none"
                   onClick={() => {
@@ -392,7 +398,7 @@ export function AppTitlebar() {
                 title="Saved Searches"
                 icon={<MailSearchIcon />}
                 side="left"
-                disabled={isWorkspaceAppTabActive}
+                disabled={isUnifiedInboxLocation || isWorkspaceAppTabActive}
                 isOpen={isGmailSavedSearchesOpen}
                 onOpenChange={setIsGmailSavedSearchesOpen}
               >
