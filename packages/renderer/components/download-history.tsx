@@ -14,13 +14,12 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@meru/ui/components/item";
-import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
 import { DownloadIcon, FolderIcon, XIcon } from "lucide-react";
 import { DateFromNow } from "@/components/date-from-now";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
-export function DownloadHistory({ limit }: { limit?: number }) {
+export function DownloadHistoryList({ limit }: { limit?: number }) {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -49,81 +48,79 @@ export function DownloadHistory({ limit }: { limit?: number }) {
   }
 
   return (
-    <ScrollArea className="flex-1 overflow-hidden px-4">
-      <div className="space-y-2">
-        {(limit ? downloadHistory.slice(0, limit) : downloadHistory).map(
-          ({ id, fileName, createdAt, filePath, exists }) => (
-            <Item
-              variant="outline"
-              key={id}
-              className={cn({
-                "transition-colors hover:bg-muted/50": exists,
-              })}
-              onClick={
-                exists
-                  ? () => {
-                      ipc.main.send("downloads.openFile", { id, filePath });
-                    }
-                  : undefined
-              }
-              onDragStart={
-                exists
-                  ? (event) => {
-                      event.preventDefault();
+    <div className="space-y-2">
+      {(limit ? downloadHistory.slice(0, limit) : downloadHistory).map(
+        ({ id, fileName, createdAt, filePath, exists }) => (
+          <Item
+            variant="outline"
+            key={id}
+            className={cn({
+              "transition-colors hover:bg-muted/50": exists,
+            })}
+            onClick={
+              exists
+                ? () => {
+                    ipc.main.send("downloads.openFile", { id, filePath });
+                  }
+                : undefined
+            }
+            onDragStart={
+              exists
+                ? (event) => {
+                    event.preventDefault();
 
-                      ipc.main.send("downloads.dragFile", { id, filePath });
-                    }
-                  : undefined
-              }
-              draggable={exists}
-            >
-              <ItemContent className="overflow-hidden">
-                <ItemTitle
-                  className={cn("block w-full truncate", {
-                    "text-muted-foreground line-through": !exists,
-                  })}
-                  title={fileName}
-                >
-                  {fileName}
-                </ItemTitle>
-                <ItemDescription className="first-letter:capitalize">
-                  {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                {exists && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Show in folder"
-                    onClick={(event) => {
-                      event.stopPropagation();
-
-                      ipc.main.send("downloads.showFileInFolder", { id, filePath });
-                    }}
-                  >
-                    <FolderIcon />
-                  </Button>
-                )}
+                    ipc.main.send("downloads.dragFile", { id, filePath });
+                  }
+                : undefined
+            }
+            draggable={exists}
+          >
+            <ItemContent className="overflow-hidden">
+              <ItemTitle
+                className={cn("block w-full truncate", {
+                  "text-muted-foreground line-through": !exists,
+                })}
+                title={fileName}
+              >
+                {fileName}
+              </ItemTitle>
+              <ItemDescription className="first-letter:capitalize">
+                {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              {exists && (
                 <Button
                   size="sm"
                   variant="ghost"
-                  title="Remove from history"
+                  title="Show in folder"
                   onClick={(event) => {
                     event.stopPropagation();
 
-                    configMutation.mutate({
-                      "downloads.history": downloadHistory.filter((item) => item.id !== id),
-                    });
+                    ipc.main.send("downloads.showFileInFolder", { id, filePath });
                   }}
                 >
-                  <XIcon />
+                  <FolderIcon />
                 </Button>
-              </ItemActions>
-            </Item>
-          ),
-        )}
-      </div>
-    </ScrollArea>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Remove from history"
+                onClick={(event) => {
+                  event.stopPropagation();
+
+                  configMutation.mutate({
+                    "downloads.history": downloadHistory.filter((item) => item.id !== id),
+                  });
+                }}
+              >
+                <XIcon />
+              </Button>
+            </ItemActions>
+          </Item>
+        ),
+      )}
+    </div>
   );
 }

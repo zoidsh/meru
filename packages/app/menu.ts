@@ -362,11 +362,11 @@ export class AppMenu {
             label: "Downloads",
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
-              const parentWindow = BrowserWindow.getFocusedWindow() ?? main.window;
+              downloads.closeRecentDownloadHistoryPopup();
 
-              if (downloads.toggleDownloadHistoryPopup(parentWindow)) {
-                downloads.checkDownloadHistoryItems();
-              }
+              main.navigate("/download-history");
+
+              downloads.checkDownloadHistoryItems();
             },
           },
           {

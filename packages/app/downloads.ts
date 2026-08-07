@@ -22,10 +22,6 @@ class Downloads {
 
   recentDownloadHistoryParentWindow: BrowserWindow | null = null;
 
-  downloadHistoryView: WebContentsView | null = null;
-
-  downloadHistoryParentWindow: BrowserWindow | null = null;
-
   downloadHistoryPopupOnBlurEnabled = false;
 
   addDownloadHistoryItem({ fileName, filePath, createdAt, exists }: Omit<DownloadItem, "id">) {
@@ -198,74 +194,6 @@ class Downloads {
     parentWindow.on("resize", this.setRecentDownloadHistoryPopupBounds);
 
     this.recentDownloadHistoryView.setBorderRadius(BASE_SPACING * 2);
-
-    return true;
-  }
-
-  setDownloadHistoryPopupBounds = () => {
-    if (!this.downloadHistoryView || !this.downloadHistoryParentWindow) {
-      return;
-    }
-
-    const parentWindowBounds = platform.isWindows
-      ? this.downloadHistoryParentWindow.getContentBounds()
-      : this.downloadHistoryParentWindow.getBounds();
-
-    this.downloadHistoryView.setBounds({
-      x: 0,
-      y: APP_TITLEBAR_HEIGHT,
-      width: parentWindowBounds.width,
-      height: parentWindowBounds.height - APP_TITLEBAR_HEIGHT,
-    });
-  };
-
-  closeDownloadHistoryPopup = () => {
-    if (this.downloadHistoryView && this.downloadHistoryParentWindow) {
-      this.downloadHistoryView.webContents.removeAllListeners();
-
-      this.downloadHistoryView.webContents.close();
-
-      this.downloadHistoryParentWindow.contentView.removeChildView(this.downloadHistoryView);
-
-      this.downloadHistoryParentWindow.removeListener("resize", this.setDownloadHistoryPopupBounds);
-
-      this.downloadHistoryView = null;
-      this.downloadHistoryParentWindow = null;
-    }
-  };
-
-  toggleDownloadHistoryPopup(parentWindow: BrowserWindow) {
-    if (this.downloadHistoryView) {
-      const wasSameWindow = this.downloadHistoryParentWindow === parentWindow;
-
-      this.closeDownloadHistoryPopup();
-
-      if (wasSameWindow) {
-        return false;
-      }
-    }
-
-    this.downloadHistoryView = new WebContentsView({
-      webPreferences: {
-        preload: getPreloadPath("renderer"),
-      },
-    });
-
-    this.downloadHistoryParentWindow = parentWindow;
-
-    this.downloadHistoryView.setBackgroundColor("#00000000");
-
-    loadRenderer(this.downloadHistoryView, {
-      page: "download-history",
-    });
-
-    parentWindow.contentView.addChildView(this.downloadHistoryView);
-
-    this.setDownloadHistoryPopupBounds();
-
-    this.downloadHistoryView.webContents.focus();
-
-    parentWindow.on("resize", this.setDownloadHistoryPopupBounds);
 
     return true;
   }

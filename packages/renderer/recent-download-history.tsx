@@ -1,8 +1,9 @@
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
+import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
-import { DownloadHistory } from "@/components/download-history";
+import { DownloadHistoryList } from "@/components/download-history";
 import { PopupWindow } from "@/components/popup-window";
 import { renderApp } from "@/lib/react";
 
@@ -21,13 +22,15 @@ function RecentDownloadHistory() {
       >
         <XIcon />
       </Button>
-      <DownloadHistory limit={MAX_RECENT_DOWNLOAD_HISTORY_ITEMS} />
+      <ScrollArea className="flex-1 overflow-hidden px-4">
+        <DownloadHistoryList limit={MAX_RECENT_DOWNLOAD_HISTORY_ITEMS} />
+      </ScrollArea>
       <div className="mt-4 flex justify-end border-t bg-muted/50 p-4">
         <Button
           size="sm"
           variant="outline"
           onClick={() => {
-            ipc.main.send("downloads.openDownloadHistoryPopup");
+            ipc.main.send("downloads.openDownloadHistory");
           }}
         >
           <SquareArrowOutUpRightIcon /> Full Download History
