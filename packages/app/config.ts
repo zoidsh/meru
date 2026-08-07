@@ -346,22 +346,15 @@ export const config = new Store<Config>({
       // @ts-expect-error: `workspaceApps.openAppsInNewWindow` was removed
       store.delete("workspaceApps.openAppsInNewWindow");
 
-      const previousLauncherAppsKeys = [
-        "workspaceApps.pinnedApps",
-        "workspaceApps.bookmarkedApps",
-      ] as const;
+      // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.launcherApps'
+      const pinnedApps = store.get("workspaceApps.pinnedApps");
 
-      for (const previousLauncherAppsKey of previousLauncherAppsKeys) {
-        // @ts-expect-error: `workspaceApps.pinnedApps` and `workspaceApps.bookmarkedApps` are now 'workspaceApps.launcherApps'
-        const launcherApps = store.get(previousLauncherAppsKey);
-
-        if (typeof launcherApps !== "undefined") {
-          // @ts-expect-error
-          store.set("workspaceApps.launcherApps", launcherApps);
-        }
+      if (typeof pinnedApps !== "undefined") {
+        // @ts-expect-error
+        store.set("workspaceApps.launcherApps", pinnedApps);
 
         // @ts-expect-error
-        store.delete(previousLauncherAppsKey);
+        store.delete("workspaceApps.pinnedApps");
       }
 
       const accounts = store.get("accounts");
