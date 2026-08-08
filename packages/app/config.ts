@@ -96,6 +96,7 @@ export const config = new Store<Config>({
     "workspaceApps.openBehavior": "tab",
     "workspaceApps.launcherApps": [],
     "workspaceApps.launcherDisplay": "menu",
+    "workspaceApps.launcherPosition": "left",
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,

@@ -5,6 +5,7 @@ import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
   type WorkspaceAppsLauncherDisplay,
+  type WorkspaceAppsLauncherPosition,
 } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -172,10 +173,12 @@ function DoNotDisturb() {
 function WorkspaceAppsLauncher({
   launcherApps,
   display,
+  position,
   disabled,
 }: {
   launcherApps: LauncherWorkspaceApp[];
   display: WorkspaceAppsLauncherDisplay;
+  position: WorkspaceAppsLauncherPosition;
   disabled: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -204,6 +207,7 @@ function WorkspaceAppsLauncher({
     <TitlebarDropdownMenu
       title="Workspace Apps"
       icon={<LayoutGridIcon />}
+      side={position === "right" ? "left" : "right"}
       disabled={disabled}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
@@ -271,8 +275,16 @@ export function AppTitlebar() {
 
   const isUnifiedInboxLocation = location === "/unified-inbox";
 
+  const launcherPosition = config["workspaceApps.launcherPosition"];
+
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
+
+  const shouldShowWorkspaceAppsLauncherOnLeft =
+    shouldShowWorkspaceAppsLauncher && launcherPosition === "left";
+
+  const shouldShowWorkspaceAppsLauncherOnRight =
+    shouldShowWorkspaceAppsLauncher && launcherPosition === "right";
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -365,6 +377,15 @@ export function AppTitlebar() {
 
     const accountButtons = renderAccounts();
 
+    const workspaceAppsLauncher = (
+      <WorkspaceAppsLauncher
+        launcherApps={config["workspaceApps.launcherApps"]}
+        display={config["workspaceApps.launcherDisplay"]}
+        position={launcherPosition}
+        disabled={isUnifiedInboxLocation}
+      />
+    );
+
     return (
       <>
         <TitlebarLeft>
@@ -388,15 +409,9 @@ export function AppTitlebar() {
               }}
             />
           </TitlebarButtonGroup>
-          {(shouldShowWorkspaceAppsLauncher || shouldShowUnifiedInboxButton) && (
+          {(shouldShowWorkspaceAppsLauncherOnLeft || shouldShowUnifiedInboxButton) && (
             <TitlebarButtonGroup>
-              {shouldShowWorkspaceAppsLauncher && (
-                <WorkspaceAppsLauncher
-                  launcherApps={config["workspaceApps.launcherApps"]}
-                  display={config["workspaceApps.launcherDisplay"]}
-                  disabled={isUnifiedInboxLocation}
-                />
-              )}
+              {shouldShowWorkspaceAppsLauncherOnLeft && workspaceAppsLauncher}
               {shouldShowUnifiedInboxButton && (
                 <Button
                   variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
@@ -435,6 +450,9 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
+            {shouldShowWorkspaceAppsLauncherOnRight && (
+              <TitlebarButtonGroup>{workspaceAppsLauncher}</TitlebarButtonGroup>
+            )}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"

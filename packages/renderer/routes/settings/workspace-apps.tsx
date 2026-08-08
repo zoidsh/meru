@@ -8,6 +8,7 @@ import {
   workspaceAppOpenBehaviors,
   workspaceApps,
   workspaceAppsLauncherDisplays,
+  workspaceAppsLauncherPositions,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -296,6 +297,17 @@ export function WorkspaceAppsSettings() {
             placeholder="Select display"
             licenseKeyRequired
             items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          <ConfigSelectField
+            label="Launcher Position"
+            description="Show the launcher on the left or right side of the titlebar."
+            configKey="workspaceApps.launcherPosition"
+            placeholder="Select position"
+            licenseKeyRequired
+            items={Object.entries(workspaceAppsLauncherPositions).map(([value, label]) => ({
               value,
               label,
             }))}

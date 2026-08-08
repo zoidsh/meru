@@ -56,6 +56,13 @@ export const workspaceAppsLauncherDisplays = {
 
 export type WorkspaceAppsLauncherDisplay = keyof typeof workspaceAppsLauncherDisplays;
 
+export const workspaceAppsLauncherPositions = {
+  left: "Left",
+  right: "Right",
+} as const;
+
+export type WorkspaceAppsLauncherPosition = keyof typeof workspaceAppsLauncherPositions;
+
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
   newWindow: "New Window",
