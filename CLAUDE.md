@@ -1,42 +1,12 @@
 # Meru – Claude Code Guidelines
 
-## Dependencies — Install Before Code Changes or Scripts
-
-**Run this before making any code changes or running any scripts, no exceptions:**
+## Setup
 
 ```sh
 bun install --frozen-lockfile
 ```
 
-This installs dependencies and runs postinstall scripts (including the lefthook pre-commit hook). Skipping this causes missing packages, broken type checks, and unwanted build artifacts. Answering questions or exploring the codebase doesn't require it — only run it once you're about to change code or run a script.
-
-## Variable Naming
-
-- Always use descriptive names. Never use single-letter or abbreviated names anywhere — including callback parameters.
-  - `time` not `t`, `hours`/`minutes` not `h`/`m`
-  - `startMinutes`/`endMinutes` not `s`/`e`
-  - `aStart`/`aEnd`/`bStart`/`bEnd` not `aS`/`aE`/`bS`/`bE`
-  - `event` not `e`, `error` not `err`, `index` not `i` (unless in a for loop counter)
-- Avoid generic/contextless names even when they're full words — pick a name that carries the domain. `raw`, `data`, `parsed`, `record`, `result`, `value`, `item`, `obj`, `tmp` are all red flags on their own. Prefer `gtkDecorationLayout` over `layout`, `savedLanguages` over `languages`, `accountConfigs` over `configs`, `parentWindowBounds` over `parentBounds`. This lets a reader understand a line without tracing back to where the value came from.
-- Applies equally to instance fields — `recentDownloadHistoryParentWindow` beats `popupParentWindow` because the field participates in the same "is the popup open?" check as `recentDownloadHistoryView`, and matching the domain prefix makes the pairing obvious.
-
-## Code Formatting
-
-- Separate logically distinct operations with empty lines. Only group lines that belong to the same context.
-- Always use block-style `if` statements — never inline single-line returns:
-
-  ```ts
-  // correct
-  if (!times.length) {
-    return true;
-  }
-
-  // wrong
-  if (!times.length) return true;
-  ```
-
-- Add an empty line before `if` blocks when preceded by other statements.
-- Add an empty line before `return` statements when preceded by other statements.
+This runs postinstall scripts, including the lefthook pre-commit hook. Skipping it causes missing packages, broken type checks, and unwanted build artifacts.
 
 ## Comments
 
@@ -73,7 +43,7 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 ## Dependencies
 
-- Always install packages as dev dependencies with `bun add -d <package>`. Rolldown/Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly. Never edit `package.json` or `bun.lock` manually to add or bump dependencies.
+- Always install packages as dev dependencies with `bun add -d <package>`. Rolldown/Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly.
 
 ## Inline Single-Use Values
 
@@ -145,12 +115,11 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 ## Linting and Formatting
 
-- Never use `!` non-null assertions in TypeScript — enforced via `typescript/no-non-null-assertion` in `.oxlintrc.json`. Refactor the code to avoid them instead.
 - Do not run `bun run lint` or `bun run fmt:check` manually. The lefthook pre-commit hook runs `oxfmt` and `oxlint --fix` on staged files on every commit, so formatting and linting are enforced automatically.
 
 ## Type Checking
 
-- Always run `bun types:ci` after making code changes to verify there are no type errors. (Type checks are NOT part of the pre-commit hook.)
+- Type checks are NOT part of the pre-commit hook. Run `bun types:ci` after making code changes.
 
 ## General
 
@@ -168,19 +137,12 @@ This installs dependencies and runs postinstall scripts (including the lefthook 
 
 - Don't use Conventional Commits. Match the style of the existing history: a short, lowercase, imperative summary with no type prefix (e.g. `add custom Gmail label colors`, `fix google app window not closing fully`, `remove stale todo`). The occasional `ci:` prefix on CI-only changes is the lone exception.
 - Keep each commit to a single logical change.
-- Always rebase onto the latest `main` before pushing (`git pull --rebase origin main`) — never merge. `main` must stay linear; merge commits are not allowed on it.
-- Always push the branch once the work is finished and `bun types:ci` passes, without being asked. The user pulls it on their own machine to test the changes, so unpushed work blocks them.
-- Never push to `main` on your own. It's fine when the user asks for it in that moment, and only then — a past go-ahead doesn't carry over to the next branch. Push the branch to `main` as a fast-forward so the history stays linear.
 - After a push to `main` lands, cleaning up doesn't need a separate approval: delete the merged branch locally and on the remote.
 
 ## Pull Requests
 
 - Titles follow the same style as commit summaries: short, lowercase, imperative, no type prefix.
-- Once a pull request is open, make further changes as new commits — don't amend and force-push. Incremental commits let the reviewer see what changed since their last look; pull requests are squash-merged, so `main` stays clean regardless.
-- Keep the title and description accurate at all times. They describe what the branch contains **now**, not what it contained when the pull request was opened.
-- Whenever the branch changes, update the title and description in the same step — never leave them describing an earlier version. This applies to reworks after review feedback, added or dropped scope, and rebases that change what the diff means.
-- The description should cover the problem being solved, the changes made, and anything a reviewer needs in order to judge them — including deliberate omissions, known risks, and what has not been verified.
-- End every description with a **Test plan** section: a numbered list of concrete steps to walk through in the running app to verify the work. Write each step as a user action with its expected outcome, and cover the changed behavior's edge cases (gated states, empty states, platform differences), not just the happy path. Keep it in sync with the branch like the rest of the description.
+- Pull requests are squash-merged, so `main` stays clean regardless of how many commits the branch carries.
 - Check the state of a pull request before acting on it rather than assuming it is unchanged. `gh pr list` only shows open pull requests, so one disappearing from the list means it was merged or closed.
 - When new work depends on a pull request that is still open, don't wait for it to merge and don't base the work on `main` — branch off the open pull request's branch, open the new pull request with that branch as its base, and link the chain into a GitHub stack with `gh stack link <bottom> ... <top>` (bottom to top; PR numbers or branch names). GitHub then shows the stack on each pull request and retargets bases as parts merge; merge a whole chain atomically with `gh stack merge` instead of merging its pull requests one by one.
 
