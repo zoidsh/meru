@@ -49,6 +49,13 @@ export const launcherWorkspaceApps = Object.fromEntries(
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<LauncherWorkspaceApp, string>;
 
+export const workspaceAppsLauncherDisplays = {
+  menu: "Menu",
+  inline: "Inline",
+} as const;
+
+export type WorkspaceAppsLauncherDisplay = keyof typeof workspaceAppsLauncherDisplays;
+
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
   newWindow: "New Window",
