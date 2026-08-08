@@ -7,6 +7,7 @@ import {
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
+  workspaceAppsLauncherDisplays,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -288,6 +289,17 @@ export function WorkspaceAppsSettings() {
               )}
             </div>
           </Field>
+          <ConfigSelectField
+            label="Launcher Display"
+            description="Show launcher apps in a menu behind a single button or inline as individual buttons in the titlebar."
+            configKey="workspaceApps.launcherDisplay"
+            placeholder="Select display"
+            licenseKeyRequired
+            items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
         </FieldGroup>
       </SettingsContent>
     </Settings>
