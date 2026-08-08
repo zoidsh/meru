@@ -1,6 +1,6 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig, TabPersistence } from "./schemas";
-import type { SupportedWorkspaceApp } from "./workspace-apps";
+import type { SupportedWorkspaceApp, WorkspaceAppOpenBehavior } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
 
@@ -43,6 +43,17 @@ export function getTabSection(tab: Pick<TabState, "id" | "persistence" | "dorman
   }
 
   return "normal";
+}
+
+export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "windowed">>(
+  tabs: VerticalTab[],
+  workspaceAppsOpenBehavior: WorkspaceAppOpenBehavior,
+) {
+  if (workspaceAppsOpenBehavior !== "newWindow") {
+    return tabs;
+  }
+
+  return tabs.filter((tab) => !tab.windowed);
 }
 
 export function getVerticalTabsWidth(

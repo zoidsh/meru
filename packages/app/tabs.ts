@@ -7,7 +7,7 @@ import { accounts } from "./accounts";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { appMenu } from "./menu";
-import { WorkspaceApp } from "./workspace-app";
+import { resolveWorkspaceAppOpenBehavior, WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
 
@@ -373,6 +373,10 @@ export class Tabs {
 
     if (!reopenedTabUrl) {
       return;
+    }
+
+    if (resolveWorkspaceAppOpenBehavior() === "newWindow") {
+      return this.openWindowedTab(reopenedTabUrl);
     }
 
     const workspaceApp = this.openTab(reopenedTabUrl);
