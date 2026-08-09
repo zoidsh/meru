@@ -370,7 +370,6 @@ export function AppTitlebar() {
                 <WorkspaceAppsLauncher
                   launcherApps={config["workspaceApps.launcherApps"]}
                   display={config["workspaceApps.launcherDisplay"]}
-                  presentation="titlebar"
                   disabled={isUnifiedInboxLocation}
                 />
               </TitlebarButtonGroup>

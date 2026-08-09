@@ -14,8 +14,8 @@ import type { Ref } from "react";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import {
+  VerticalTabsWorkspaceAppsLauncher,
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
-  WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
@@ -256,8 +256,6 @@ export function VerticalTabs() {
 
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
-  const launcherDisplay = config?.["workspaceApps.launcherDisplay"] ?? "auto";
-
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
   const gmailTabStatus = {
@@ -350,18 +348,8 @@ export function VerticalTabs() {
         ))}
       </DragDropProvider>
       {shouldShowWorkspaceAppsLauncher && (
-        <div
-          className={cn(
-            "mt-auto flex border-t pt-2",
-            WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
-            isWide ? "flex-row flex-wrap justify-center gap-1" : "flex-col gap-2",
-          )}
-        >
-          <WorkspaceAppsLauncher
-            launcherApps={launcherApps}
-            display={launcherDisplay}
-            presentation="verticalTabs"
-          />
+        <div className={cn(WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME, isWide && "w-full")}>
+          <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
         </div>
       )}
     </div>

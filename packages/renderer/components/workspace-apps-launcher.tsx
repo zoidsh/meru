@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
+import { cn } from "@meru/ui/lib/utils";
 import { LayoutGridIcon } from "lucide-react";
 import { type MouseEvent, useState } from "react";
 import {
@@ -33,24 +34,12 @@ import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 export const WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME =
   "transition-[opacity,display] transition-discrete duration-150 starting:opacity-0";
 
-export function WorkspaceAppsLauncher({
-  launcherApps,
-  display,
-  presentation,
-  disabled,
-}: {
-  launcherApps: LauncherWorkspaceApp[];
-  display: WorkspaceAppsLauncherDisplay;
-  presentation: "titlebar" | "verticalTabs";
-  disabled?: boolean;
-}) {
+function useLauncherApps() {
   const [isOpen, setIsOpen] = useState(false);
 
   useCloseOnWindowBlur(isOpen, () => {
     setIsOpen(false);
   });
-
-  const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
 
   const getLauncherAppProps = (app: LauncherWorkspaceApp) => ({
     title: launcherWorkspaceApps[app],
@@ -68,44 +57,70 @@ export function WorkspaceAppsLauncher({
     },
   });
 
-  if (resolvedDisplay === "expanded") {
-    return launcherApps.map((app) =>
-      presentation === "titlebar" ? (
-        <TitlebarIconButton key={app} disabled={disabled} {...getLauncherAppProps(app)}>
-          <WorkspaceAppIcon app={app} className="size-4" />
-        </TitlebarIconButton>
-      ) : (
-        <Button key={app} variant="ghost" size="icon" {...getLauncherAppProps(app)}>
-          <WorkspaceAppIcon app={app} className="size-4" />
-        </Button>
-      ),
-    );
+  return { isOpen, setIsOpen, getLauncherAppProps };
+}
+
+export function WorkspaceAppsLauncher({
+  launcherApps,
+  display,
+  disabled,
+}: {
+  launcherApps: LauncherWorkspaceApp[];
+  display: WorkspaceAppsLauncherDisplay;
+  disabled?: boolean;
+}) {
+  const { isOpen, setIsOpen, getLauncherAppProps } = useLauncherApps();
+
+  if (resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length) === "expanded") {
+    return launcherApps.map((app) => (
+      <TitlebarIconButton key={app} disabled={disabled} {...getLauncherAppProps(app)}>
+        <WorkspaceAppIcon app={app} className="size-4" />
+      </TitlebarIconButton>
+    ));
   }
 
-  if (presentation === "titlebar") {
-    return (
-      <TitlebarDropdownMenu
-        title="Workspace Apps"
-        icon={<LayoutGridIcon />}
-        side="left"
-        disabled={disabled}
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-      >
-        {launcherApps.map((app) => (
-          <TitlebarDropdownMenuItem key={app} {...getLauncherAppProps(app)}>
-            <WorkspaceAppIcon app={app} className="size-4" />
-          </TitlebarDropdownMenuItem>
-        ))}
-      </TitlebarDropdownMenu>
-    );
-  }
+  return (
+    <TitlebarDropdownMenu
+      title="Workspace Apps"
+      icon={<LayoutGridIcon />}
+      side="left"
+      disabled={disabled}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      {launcherApps.map((app) => (
+        <TitlebarDropdownMenuItem key={app} {...getLauncherAppProps(app)}>
+          <WorkspaceAppIcon app={app} className="size-4" />
+        </TitlebarDropdownMenuItem>
+      ))}
+    </TitlebarDropdownMenu>
+  );
+}
+
+/**
+ * Always a single button: the strip is a column of app icons already, so
+ * launcher apps laid out inline there would read as tabs rather than as a way
+ * to open one. The display setting stays a titlebar concern.
+ */
+export function VerticalTabsWorkspaceAppsLauncher({
+  launcherApps,
+  isWide,
+}: {
+  launcherApps: LauncherWorkspaceApp[];
+  isWide: boolean;
+}) {
+  const { isOpen, setIsOpen, getLauncherAppProps } = useLauncherApps();
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" title="Workspace Apps">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(isWide && "w-full")}
+            title="Workspace Apps"
+          >
             <LayoutGridIcon />
           </Button>
         }
