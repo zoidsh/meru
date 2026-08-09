@@ -1,0 +1,121 @@
+import { ipc } from "@meru/shared/renderer/ipc";
+import {
+  type LauncherWorkspaceApp,
+  launcherWorkspaceApps,
+  resolveWorkspaceAppsLauncherDisplay,
+  type WorkspaceAppsLauncherDisplay,
+} from "@meru/shared/workspace-apps";
+import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuBackdrop,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
+import { LayoutGridIcon } from "lucide-react";
+import { type MouseEvent, useState } from "react";
+import {
+  TitlebarDropdownMenu,
+  TitlebarDropdownMenuItem,
+  TitlebarIconButton,
+} from "@/components/titlebar";
+import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
+import { useCloseOnWindowBlur } from "@/lib/hooks";
+import { getModifierOpenBehavior } from "@/lib/workspace-apps";
+
+export function WorkspaceAppsLauncher({
+  launcherApps,
+  display,
+  presentation,
+  disabled,
+}: {
+  launcherApps: LauncherWorkspaceApp[];
+  display: WorkspaceAppsLauncherDisplay;
+  presentation: "titlebar" | "verticalTabs";
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useCloseOnWindowBlur(isOpen, () => {
+    setIsOpen(false);
+  });
+
+  const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
+
+  const getLauncherAppProps = (app: LauncherWorkspaceApp) => ({
+    title: launcherWorkspaceApps[app],
+    onClick: (event: MouseEvent) => {
+      ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+
+      setIsOpen(false);
+    },
+    onAuxClick: (event: MouseEvent) => {
+      if (event.button === 1) {
+        ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+        setIsOpen(false);
+      }
+    },
+  });
+
+  if (resolvedDisplay === "inline") {
+    return launcherApps.map((app) =>
+      presentation === "titlebar" ? (
+        <TitlebarIconButton key={app} disabled={disabled} {...getLauncherAppProps(app)}>
+          <WorkspaceAppIcon app={app} className="size-4" />
+        </TitlebarIconButton>
+      ) : (
+        <Button key={app} variant="ghost" size="icon" {...getLauncherAppProps(app)}>
+          <WorkspaceAppIcon app={app} className="size-4" />
+        </Button>
+      ),
+    );
+  }
+
+  if (presentation === "titlebar") {
+    return (
+      <TitlebarDropdownMenu
+        title="Workspace Apps"
+        icon={<LayoutGridIcon />}
+        side="left"
+        disabled={disabled}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+      >
+        {launcherApps.map((app) => (
+          <TitlebarDropdownMenuItem key={app} {...getLauncherAppProps(app)}>
+            <WorkspaceAppIcon app={app} className="size-4" />
+          </TitlebarDropdownMenuItem>
+        ))}
+      </TitlebarDropdownMenu>
+    );
+  }
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" title="Workspace Apps">
+            <LayoutGridIcon />
+          </Button>
+        }
+      />
+      <DropdownMenuBackdrop />
+      {/* Opens upward at trigger width so it stays inside the strip — anything
+          wider would be painted over by the workspace app view next to it. */}
+      <DropdownMenuContent
+        side="top"
+        align="center"
+        collisionPadding={0}
+        className="flex w-auto min-w-0 flex-col gap-1 p-0.5"
+      >
+        {launcherApps.map((app) => (
+          <DropdownMenuItem key={app} className="justify-center" {...getLauncherAppProps(app)}>
+            <WorkspaceAppIcon app={app} className="size-4" />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

@@ -9,7 +9,8 @@ import {
 } from "@meru/ui/components/dropdown-menu";
 import { cn } from "@meru/ui/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
+import { useCloseOnWindowBlur } from "@/lib/hooks";
 
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
@@ -84,21 +85,9 @@ export function TitlebarDropdownMenu({
   onOpenChange: (isOpen: boolean) => void;
   children: ReactNode;
 }) {
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleWindowBlur = () => {
-      onOpenChange(false);
-    };
-
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [isOpen, onOpenChange]);
+  useCloseOnWindowBlur(isOpen, () => {
+    onOpenChange(false);
+  });
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={onOpenChange} orientation="horizontal">
