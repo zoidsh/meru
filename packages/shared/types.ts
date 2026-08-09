@@ -13,6 +13,7 @@ import type { AccountTabsState, BookmarkState, VerticalTabsWidth } from "./tabs"
 import type {
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
+  WorkspaceAppBookmarkState,
   WorkspaceAppOpenBehavior,
   WorkspaceAppsLauncherDisplay,
   WorkspaceAppsMode,
@@ -169,6 +170,7 @@ export type IpcMainEvents =
       "gmail.search": [searchQuery: string];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
       "workspaceApp.showMenu": [workspaceAppId: string];
+      "workspaceApp.toggleBookmark": [workspaceAppId: string];
       "workspaceApp.showNotification": [notification: WorkspaceAppNotification];
       "gmail.navigateTo": [hashLocation: GmailHashLocation];
       "gmail.closeComposeWindow": [];
@@ -224,6 +226,7 @@ export type IpcMainEvents =
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
       "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
+      "workspaceApp.getBookmarkState": (workspaceAppId: string) => WorkspaceAppBookmarkState;
       "bookmarks.getBookmarks": () => BookmarkState[];
     };
 
@@ -254,5 +257,6 @@ export type IpcRendererEvent = {
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "workspaceApp.pageTitleChanged": [title: string];
   "workspaceApp.loadingStateChanged": [loading: boolean];
+  "workspaceApp.bookmarkStateChanged": [bookmarkState: WorkspaceAppBookmarkState];
   "config.configChanged": [config: Config];
 };

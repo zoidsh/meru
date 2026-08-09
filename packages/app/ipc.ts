@@ -227,12 +227,23 @@ class Ipc {
       selectedAccount.instance.gmail.search(searchQuery);
     });
 
+    this.main.handle("workspaceApp.getBookmarkState", (_event, workspaceAppId) => {
+      return WorkspaceApp.fromId(workspaceAppId).bookmarkState;
+    });
+
+    ipc.main.on("workspaceApp.toggleBookmark", (_event, workspaceAppId) => {
+      const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
+
+      workspaceApp.account.instance.tabs.setTabPersistence(
+        workspaceApp.id,
+        workspaceApp.persistence === "bookmarked" ? null : "bookmarked",
+      );
+    });
+
     ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
       const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
-
-      const isSavableWorkspaceApp = !workspaceApp.isPopup && Boolean(workspaceApp.app);
 
       Menu.buildFromTemplate([
         ...(workspaceApp.isPopup || isWindowsMode
@@ -248,7 +259,7 @@ class Ipc {
                 type: "separator" as const,
               },
             ]),
-        ...(isSavableWorkspaceApp
+        ...(workspaceApp.isSavable
           ? [
               {
                 label: "Load on Launch",

@@ -466,6 +466,10 @@ export class Tabs {
       persistableTab.loadOnLaunch = false;
     }
 
+    if (persistableTab instanceof WorkspaceApp) {
+      persistableTab.broadcastBookmarkState();
+    }
+
     this.reorderTabs();
 
     this.broadcastTabsChanged();

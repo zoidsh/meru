@@ -82,3 +82,9 @@ export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
  * configured mode and the held modifier keys — never stored in the config.
  */
 export type WorkspaceAppOpenBehavior = "tab" | "backgroundTab" | "newWindow";
+
+export type WorkspaceAppBookmarkState = {
+  /** Popups such as the PDF viewer are never tabs, so they cannot be saved. */
+  savable: boolean;
+  bookmarked: boolean;
+};
