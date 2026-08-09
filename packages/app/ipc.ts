@@ -76,9 +76,12 @@ class Ipc {
     config.onDidAnyChange(() => {
       ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
 
-      if (downloads.recentDownloadHistoryView) {
+      const recentDownloadHistoryPopupWebContents =
+        downloads.recentDownloadHistoryPopup.webContents;
+
+      if (recentDownloadHistoryPopupWebContents) {
         ipc.renderer.send(
-          downloads.recentDownloadHistoryView.webContents,
+          recentDownloadHistoryPopupWebContents,
           "config.configChanged",
           config.store,
         );
@@ -919,21 +922,21 @@ class Ipc {
         return;
       }
 
-      if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
+      if (downloads.recentDownloadHistoryPopup.toggle(parentWindow)) {
         downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });
 
     ipc.main.on("downloads.closeRecentDownloadHistoryPopup", () => {
-      downloads.closeRecentDownloadHistoryPopup();
+      downloads.recentDownloadHistoryPopup.close();
     });
 
     ipc.main.on("downloads.setDownloadHistoryPopupOnBlurEnabled", (_event, enabled) => {
-      downloads.downloadHistoryPopupOnBlurEnabled = enabled;
+      downloads.recentDownloadHistoryPopup.closeOnBlurEnabled = enabled;
     });
 
     ipc.main.on("downloads.openDownloadHistory", () => {
-      downloads.closeRecentDownloadHistoryPopup();
+      downloads.recentDownloadHistoryPopup.close();
 
       main.navigate("/download-history");
 
