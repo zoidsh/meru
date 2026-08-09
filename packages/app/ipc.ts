@@ -221,8 +221,10 @@ class Ipc {
     ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
       const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
 
+      const isWindowsMode = config.get("workspaceApps.mode") === "windows";
+
       Menu.buildFromTemplate([
-        ...(workspaceApp.isPopup
+        ...(workspaceApp.isPopup || isWindowsMode
           ? []
           : [
               {
@@ -311,19 +313,31 @@ class Ipc {
         .slice(contextTabIndex + 1)
         .some((accountTab) => accountTab.persistence !== "pinned" && !accountTab.dormant);
 
+      const isWindowsMode = config.get("workspaceApps.mode") === "windows";
+
+      const openWorkspaceAppUrl = (url: string) => {
+        if (isWindowsMode) {
+          account.instance.tabs.openWindowedTab(url);
+
+          return;
+        }
+
+        const workspaceApp = account.instance.tabs.openTab(url);
+
+        account.instance.tabs.activateTab(workspaceApp.id);
+
+        if (account.config.selected) {
+          accounts.refreshSelectedAccountView();
+        }
+      };
+
       Menu.buildFromTemplate([
         ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
           ? [
               {
-                label: `New ${workspaceApps[tabApp].label} Tab`,
+                label: `New ${workspaceApps[tabApp].label} ${isWindowsMode ? "Window" : "Tab"}`,
                 click: () => {
-                  const workspaceApp = account.instance.tabs.openTab(getWorkspaceAppUrl(tabApp));
-
-                  account.instance.tabs.activateTab(workspaceApp.id);
-
-                  if (account.config.selected) {
-                    accounts.refreshSelectedAccountView();
-                  }
+                  openWorkspaceAppUrl(getWorkspaceAppUrl(tabApp));
                 },
               },
             ]
@@ -346,13 +360,7 @@ class Ipc {
             const duplicatedTabUrl =
               !currentTabUrl && tabApp ? getWorkspaceAppUrl(tabApp) : currentTabUrl;
 
-            const workspaceApp = account.instance.tabs.openTab(duplicatedTabUrl);
-
-            account.instance.tabs.activateTab(workspaceApp.id);
-
-            if (account.config.selected) {
-              accounts.refreshSelectedAccountView();
-            }
+            openWorkspaceAppUrl(duplicatedTabUrl);
           },
         },
         ...(tab instanceof WorkspaceApp && tab.isWindowed
