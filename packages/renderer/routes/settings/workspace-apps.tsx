@@ -13,14 +13,6 @@ import {
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@meru/ui/components/dialog";
-import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -36,7 +28,6 @@ import {
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
-import { useState } from "react";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -102,8 +93,6 @@ export function WorkspaceAppsSettings() {
     accountTabs.tabs.some((tab) => tab.id !== GMAIL_TAB_ID && !tab.dormant && !tab.windowed),
   );
 
-  const [isWindowsModeDialogOpen, setIsWindowsModeDialogOpen] = useState(false);
-
   if (!config) {
     return;
   }
@@ -164,12 +153,12 @@ export function WorkspaceAppsSettings() {
                   value,
                   label,
                 }))}
-                onValueChanged={(mode) => {
-                  if (mode !== "windows" || !hasOpenWorkspaceAppTabs) {
-                    return;
-                  }
-
-                  setIsWindowsModeDialogOpen(true);
+                confirmation={{
+                  when: (mode) => mode === "windows" && hasOpenWorkspaceAppTabs,
+                  title: "Switch to New Windows?",
+                  description:
+                    "Workspace Apps will open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides once you have closed them, or after a restart.",
+                  confirmLabel: "Switch to New Windows",
                 }}
               />
               <Field>
@@ -328,18 +317,6 @@ export function WorkspaceAppsSettings() {
           />
         </FieldGroup>
       </SettingsContent>
-      <Dialog open={isWindowsModeDialogOpen} onOpenChange={setIsWindowsModeDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Workspace Apps now open in their own window</DialogTitle>
-          </DialogHeader>
-          <DialogDescription>
-            Your open tabs stay as they are. The tab strip hides once you have closed them, or after
-            a restart.
-          </DialogDescription>
-          <DialogFooter showCloseButton />
-        </DialogContent>
-      </Dialog>
     </Settings>
   );
 }
