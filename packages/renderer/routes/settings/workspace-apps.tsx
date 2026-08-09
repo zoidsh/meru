@@ -13,6 +13,14 @@ import {
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@meru/ui/components/dialog";
+import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -28,7 +36,7 @@ import {
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -93,6 +101,8 @@ export function WorkspaceAppsSettings() {
   const hasOpenWorkspaceAppTabs = accountsTabs.some((accountTabs) =>
     accountTabs.tabs.some((tab) => tab.id !== GMAIL_TAB_ID && !tab.dormant && !tab.windowed),
   );
+
+  const [isWindowsModeDialogOpen, setIsWindowsModeDialogOpen] = useState(false);
 
   if (!config) {
     return;
@@ -159,10 +169,7 @@ export function WorkspaceAppsSettings() {
                     return;
                   }
 
-                  toast.info("Workspace Apps now open in their own window", {
-                    description:
-                      "Your open tabs stay as they are — the tab strip hides once you close them or restart Meru.",
-                  });
+                  setIsWindowsModeDialogOpen(true);
                 }}
               />
               <Field>
@@ -321,6 +328,18 @@ export function WorkspaceAppsSettings() {
           />
         </FieldGroup>
       </SettingsContent>
+      <Dialog open={isWindowsModeDialogOpen} onOpenChange={setIsWindowsModeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Workspace Apps now open in their own window</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Your open tabs stay as they are. The tab strip hides once you have closed them, or after
+            a restart.
+          </DialogDescription>
+          <DialogFooter showCloseButton />
+        </DialogContent>
+      </Dialog>
     </Settings>
   );
 }
