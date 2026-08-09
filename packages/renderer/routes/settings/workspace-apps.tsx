@@ -220,7 +220,7 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the left.
+                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the right.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
@@ -291,7 +291,7 @@ export function WorkspaceAppsSettings() {
           </Field>
           <ConfigSelectField
             label="Launcher Display"
-            description="Show launcher apps in a menu behind a single button or inline as individual buttons in the titlebar."
+            description="How launcher apps are shown in the titlebar. Auto shows up to three apps inline as individual buttons and moves to a menu beyond that. Menu always keeps them behind a single button, Inline always shows them as individual buttons."
             configKey="workspaceApps.launcherDisplay"
             placeholder="Select display"
             licenseKeyRequired

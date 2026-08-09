@@ -4,6 +4,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
+  resolveWorkspaceAppsLauncherDisplay,
   type WorkspaceAppsLauncherDisplay,
 } from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
@@ -180,7 +181,9 @@ function WorkspaceAppsLauncher({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  if (display === "inline") {
+  const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
+
+  if (resolvedDisplay === "inline") {
     return launcherApps.map((app) => (
       <TitlebarIconButton
         key={app}
@@ -204,6 +207,7 @@ function WorkspaceAppsLauncher({
     <TitlebarDropdownMenu
       title="Workspace Apps"
       icon={<LayoutGridIcon />}
+      side="left"
       disabled={disabled}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
@@ -388,28 +392,19 @@ export function AppTitlebar() {
               }}
             />
           </TitlebarButtonGroup>
-          {(shouldShowWorkspaceAppsLauncher || shouldShowUnifiedInboxButton) && (
+          {shouldShowUnifiedInboxButton && (
             <TitlebarButtonGroup>
-              {shouldShowWorkspaceAppsLauncher && (
-                <WorkspaceAppsLauncher
-                  launcherApps={config["workspaceApps.launcherApps"]}
-                  display={config["workspaceApps.launcherDisplay"]}
-                  disabled={isUnifiedInboxLocation}
-                />
-              )}
-              {shouldShowUnifiedInboxButton && (
-                <Button
-                  variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
-                  size="icon"
-                  className="size-7 draggable-none"
-                  onClick={() => {
-                    navigate("/unified-inbox");
-                  }}
-                  title="Unified Inbox"
-                >
-                  <InboxIcon />
-                </Button>
-              )}
+              <Button
+                variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
+                size="icon"
+                className="size-7 draggable-none"
+                onClick={() => {
+                  navigate("/unified-inbox");
+                }}
+                title="Unified Inbox"
+              >
+                <InboxIcon />
+              </Button>
             </TitlebarButtonGroup>
           )}
           {(shouldShowOutOfOfficeButton || accountButtons) && (
@@ -435,6 +430,15 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
+            {shouldShowWorkspaceAppsLauncher && (
+              <TitlebarButtonGroup>
+                <WorkspaceAppsLauncher
+                  launcherApps={config["workspaceApps.launcherApps"]}
+                  display={config["workspaceApps.launcherDisplay"]}
+                  disabled={isUnifiedInboxLocation}
+                />
+              </TitlebarButtonGroup>
+            )}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"
