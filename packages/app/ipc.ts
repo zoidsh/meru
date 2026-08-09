@@ -722,6 +722,21 @@ class Ipc {
         return;
       }
 
+      // `Open in App` and its exclusions govern every way an app opens, links
+      // and launcher alike — otherwise the launcher would be the one path that
+      // ignores the setting.
+      if (
+        !config.get("workspaceApps.openInApp") ||
+        config.get("workspaceApps.openInAppExcludedApps").includes(app)
+      ) {
+        openExternalUrl(getWorkspaceAppUrl(app), {
+          skipTrustedHostCheck: true,
+          focusBrowser: modifierOpenBehavior !== "backgroundTab",
+        });
+
+        return;
+      }
+
       const openBehavior = resolveWorkspaceAppOpenBehavior(modifierOpenBehavior);
 
       const selectedAccount = accounts.getSelectedAccount();
