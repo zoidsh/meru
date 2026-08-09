@@ -148,6 +148,7 @@ export type Config = {
   "unifiedInbox.showSenderIcons": boolean;
   "unifiedInbox.rowsPerPage": number;
   "spellchecker.languages": string[];
+  "verticalTabs.showWindows": boolean;
   "verticalTabs.width": VerticalTabsWidth;
 };
 

@@ -111,6 +111,7 @@ export const config = new Store<Config>({
     "unifiedInbox.showSenderIcons": true,
     "unifiedInbox.rowsPerPage": 10,
     "spellchecker.languages": [],
+    "verticalTabs.showWindows": true,
     "verticalTabs.width": "auto",
   },
   migrations: {
