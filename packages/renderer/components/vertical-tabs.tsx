@@ -5,12 +5,7 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
-import {
-  GMAIL_TAB_ID,
-  getTabSection,
-  getVerticalTabsWidth,
-  type TabState,
-} from "@meru/shared/tabs";
+import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -18,9 +13,13 @@ import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "
 import type { Ref } from "react";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
+import {
+  VerticalTabsWorkspaceAppsLauncher,
+  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+} from "@/components/workspace-apps-launcher";
+import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
-import { useAccountsStore, useTabsStore } from "../lib/stores";
 
 const verticalTabsPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
 
@@ -233,36 +232,31 @@ function SortableVerticalTab({
 }
 
 export function VerticalTabs() {
-  const accounts = useAccountsStore((state) => state.accounts);
-  const accountsTabs = useTabsStore((state) => state.accountsTabs);
-
   const { config } = useConfig();
 
-  const selectedAccount = accounts.find((account) => account.config.selected);
+  const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const selectedAccountTabs = accountsTabs.find(
-    (accountTabs) => accountTabs.accountId === selectedAccount?.config.id,
-  );
+  const {
+    selectedAccount,
+    tabs: selectedAccountTabs,
+    width: verticalTabsWidth,
+  } = useVerticalTabs();
 
-  const verticalTabsWidth = selectedAccountTabs
-    ? getVerticalTabsWidth(selectedAccountTabs.tabs, config?.["verticalTabs.width"] ?? "auto")
-    : 0;
-
-  if (!selectedAccount || !selectedAccountTabs || verticalTabsWidth === 0) {
+  if (!selectedAccount || verticalTabsWidth === 0) {
     return;
   }
 
   const isWide = verticalTabsWidth === VERTICAL_TABS_WIDE_WIDTH;
 
-  const pinnedSectionTabs = selectedAccountTabs.tabs.filter(
-    (tab) => getTabSection(tab) === "pinned",
-  );
+  const pinnedSectionTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "pinned");
 
-  const normalTabs = selectedAccountTabs.tabs.filter((tab) => getTabSection(tab) === "normal");
+  const normalTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "normal");
 
-  const bookmarkedTabs = selectedAccountTabs.tabs.filter(
-    (tab) => getTabSection(tab) === "bookmarks",
-  );
+  const bookmarkedTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "bookmarks");
+
+  const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
+
+  const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
   const gmailTabStatus = {
     attentionRequired: selectedAccount.gmail.attentionRequired,
@@ -353,6 +347,11 @@ export function VerticalTabs() {
           />
         ))}
       </DragDropProvider>
+      {shouldShowWorkspaceAppsLauncher && (
+        <div className={cn(WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME, isWide && "w-full")}>
+          <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
+        </div>
+      )}
     </div>
   );
 }

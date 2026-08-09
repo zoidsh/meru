@@ -1,12 +1,6 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import {
-  type LauncherWorkspaceApp,
-  launcherWorkspaceApps,
-  resolveWorkspaceAppsLauncherDisplay,
-  type WorkspaceAppsLauncherDisplay,
-} from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -16,7 +10,6 @@ import {
   DownloadIcon,
   EllipsisVerticalIcon,
   InboxIcon,
-  LayoutGridIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
@@ -36,15 +29,16 @@ import {
   TitlebarTitle,
 } from "@/components/titlebar";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
-import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
-import { useIsLicenseKeyValid } from "@/lib/hooks";
+import {
+  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+  WorkspaceAppsLauncher,
+} from "@/components/workspace-apps-launcher";
+import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
-import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 import {
   useAccountsStore,
   useAppUpdaterStore,
   useFindInPageStore,
-  useTabsStore,
   useTrialStore,
 } from "../lib/stores";
 
@@ -170,80 +164,12 @@ function DoNotDisturb() {
   );
 }
 
-function WorkspaceAppsLauncher({
-  launcherApps,
-  display,
-  disabled,
-}: {
-  launcherApps: LauncherWorkspaceApp[];
-  display: WorkspaceAppsLauncherDisplay;
-  disabled: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
-
-  if (resolvedDisplay === "expanded") {
-    return launcherApps.map((app) => (
-      <TitlebarIconButton
-        key={app}
-        title={launcherWorkspaceApps[app]}
-        disabled={disabled}
-        onClick={(event) => {
-          ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-        }}
-        onAuxClick={(event) => {
-          if (event.button === 1) {
-            ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-          }
-        }}
-      >
-        <WorkspaceAppIcon app={app} className="size-4" />
-      </TitlebarIconButton>
-    ));
-  }
-
-  return (
-    <TitlebarDropdownMenu
-      title="Workspace Apps"
-      icon={<LayoutGridIcon />}
-      side="left"
-      disabled={disabled}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-    >
-      {launcherApps.map((app) => (
-        <TitlebarDropdownMenuItem
-          key={app}
-          title={launcherWorkspaceApps[app]}
-          onClick={(event) => {
-            ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-          }}
-          onAuxClick={(event) => {
-            if (event.button === 1) {
-              ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-
-              setIsOpen(false);
-            }
-          }}
-        >
-          <WorkspaceAppIcon app={app} className="size-4" />
-        </TitlebarDropdownMenuItem>
-      ))}
-    </TitlebarDropdownMenu>
-  );
-}
-
 export function AppTitlebar() {
   const accounts = useAccountsStore((state) => state.accounts);
 
-  const selectedAccount = accounts.find((account) => account.config.selected);
+  const { tabs: selectedAccountTabs, width: verticalTabsWidth } = useVerticalTabs();
 
-  const accountsTabs = useTabsStore((state) => state.accountsTabs);
-
-  const activeTab = accountsTabs
-    .find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
-    ?.tabs.find((tab) => tab.active);
+  const activeTab = selectedAccountTabs.find((tab) => tab.active);
 
   const [location] = useLocation();
 
@@ -277,6 +203,10 @@ export function AppTitlebar() {
 
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
+
+  // The vertical tabs strip hosts the launcher whenever it is there, so that
+  // opening another app stays in the same place as switching between them.
+  const isWorkspaceAppsLauncherHostedByVerticalTabs = verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -431,7 +361,12 @@ export function AppTitlebar() {
             <Trial />
             <FindInPage />
             {shouldShowWorkspaceAppsLauncher && (
-              <TitlebarButtonGroup>
+              <TitlebarButtonGroup
+                className={cn(
+                  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+                  isWorkspaceAppsLauncherHostedByVerticalTabs && "hidden opacity-0",
+                )}
+              >
                 <WorkspaceAppsLauncher
                   launcherApps={config["workspaceApps.launcherApps"]}
                   display={config["workspaceApps.launcherDisplay"]}

@@ -9,7 +9,8 @@ import {
 } from "@meru/ui/components/dropdown-menu";
 import { cn } from "@meru/ui/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
+import { useCloseOnWindowBlur } from "@/lib/hooks";
 
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
@@ -38,8 +39,14 @@ export function TitlebarRight({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-2">{children}</div>;
 }
 
-export function TitlebarButtonGroup({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-1">{children}</div>;
+export function TitlebarButtonGroup({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return <div className={cn("flex items-center gap-1", className)}>{children}</div>;
 }
 
 export function TitlebarPageTitle({ children }: { children: string }) {
@@ -84,21 +91,9 @@ export function TitlebarDropdownMenu({
   onOpenChange: (isOpen: boolean) => void;
   children: ReactNode;
 }) {
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleWindowBlur = () => {
-      onOpenChange(false);
-    };
-
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [isOpen, onOpenChange]);
+  useCloseOnWindowBlur(isOpen, () => {
+    onOpenChange(false);
+  });
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={onOpenChange} orientation="horizontal">
