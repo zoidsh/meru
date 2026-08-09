@@ -58,3 +58,7 @@ Plain "horizontal instead of vertical" is not the answer — horizontal tabs sto
 ### Show/hide toggle for the strip
 
 A button to collapse and restore the vertical tabs strip. Open questions: where the toggle lives (titlebar, or an edge affordance on the strip itself), whether the collapsed state persists and per account or globally, and how it interacts with the launcher moving between the strip and the titlebar.
+
+### Bookmarks reachable from the titlebar
+
+Bookmarked workspace apps live only in the tab strip, so in the `New Windows` mode added by #734 they cannot be reached at all — and there is no way to bookmark anything either, since bookmarking is a tab context-menu action. Both need an entry point that does not depend on the strip, most likely in the titlebar alongside the Workspace Apps launcher. Until that exists, #732 documents the gap as a known limitation of `New Windows` mode, and #734's switch confirmation deliberately does not warn about bookmarks, because the state it would describe is on its way out.
