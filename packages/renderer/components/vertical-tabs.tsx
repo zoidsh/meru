@@ -9,7 +9,7 @@ import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
@@ -63,19 +63,6 @@ function TabIcon({ tab }: { tab: TabState }) {
   }
 
   return <GlobeIcon />;
-}
-
-function WindowedTabBadge({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
-        className,
-      )}
-    >
-      <AppWindowIcon className="size-2.5" />
-    </div>
-  );
 }
 
 type GmailTabStatus = {
@@ -166,14 +153,10 @@ function VerticalTab({
             {tab.title}
           </span>
         )}
-        {isWideRow && tab.windowed && (
-          <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
-        )}
         {isWideRow && tab.persistence === "bookmarked" && (
           <BookmarkIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
       </Button>
-      {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {isCloseable && (
         <Button

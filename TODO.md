@@ -21,7 +21,7 @@ The planning notes for this feature lived in machine-local files; this section i
 
 ### 3. Strip polish memos (2026-08-05)
 
-- List **all** of an account's workspace-app windows in the strip with the window indicator, not just detached tabs (decided 2026-08-05 when scoping the persistent-tab rework of the detach PR; needs a design pass for edge cases like PDF-viewer popups and `alwaysOpenAsWindow` apps). Concrete missing case: apps opened directly as a window (Shift+click in the "+" menu) never appear in the strip but should.
+- ~~List **all** of an account's workspace-app windows in the strip with the window indicator, not just detached tabs.~~ **Reversed 2026-08-09:** the strip now shows only tabs that live in the main window, and windowed apps are represented by their window alone — the window indicator and its badge are gone. Any future work here starts from "windows are not in the strip", not from listing more of them.
 
 ### Wording conventions
 
