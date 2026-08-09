@@ -118,7 +118,7 @@ export function VerticalTabsWorkspaceAppsLauncher({
           <Button
             variant="ghost"
             size={isWide ? "sm" : "icon"}
-            className={cn("opacity-50 hover:opacity-100", isWide && "w-full justify-start")}
+            className={cn("text-muted-foreground", isWide && "w-full justify-start")}
             title="New Tab"
           >
             <PlusIcon />
