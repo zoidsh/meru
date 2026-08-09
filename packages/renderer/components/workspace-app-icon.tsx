@@ -1,10 +1,17 @@
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useId } from "react";
 
 export function WorkspaceAppIcon({
   app,
   ...props
 }: { app: SupportedWorkspaceApp } & ComponentProps<"svg">) {
+  // Every mask, gradient and filter below is referenced by `url(#id)`, which
+  // resolves to the first matching id in the document. Without a per-instance
+  // suffix, two icons rendered at once share one set of definitions — and an
+  // icon inside a `display: none` subtree has no definitions at all, so
+  // whichever copy comes first in the DOM decides whether the rest render.
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
+
   switch (app) {
     case "calendar": {
       return (
@@ -18,7 +25,7 @@ export function WorkspaceAppIcon({
             d="M2.03 6.553A3.488 3.488 0 0 1 5.488 2.61h13.51a3.488 3.488 0 0 1 3.458 3.943l-.822 6.252.822 6.252A3.488 3.488 0 0 1 18.998 23H5.488a3.488 3.488 0 0 1-3.458-3.943l.823-6.252-.823-6.252Z"
           />
           <mask
-            id="a"
+            id={`a-${instanceId}`}
             width={21}
             height={21}
             x={2}
@@ -33,11 +40,11 @@ export function WorkspaceAppIcon({
               d="M2.03 6.553A3.488 3.488 0 0 1 5.488 2.61h13.51a3.488 3.488 0 0 1 3.458 3.943l-.822 6.252.822 6.252A3.488 3.488 0 0 1 18.998 23H5.488a3.488 3.488 0 0 1-3.458-3.943l.823-6.252-.823-6.252Z"
             />
           </mask>
-          <g mask="url(#a)">
-            <path fill="url(#b)" d="M1.11 23h22.267V12.805H1.11V23Z" />
+          <g mask={`url(#a-${instanceId})`}>
+            <path fill={`url(#b-${instanceId})`} d="M1.11 23h22.267V12.805H1.11V23Z" />
           </g>
           <mask
-            id="c"
+            id={`c-${instanceId}`}
             width={21}
             height={21}
             x={2}
@@ -52,9 +59,9 @@ export function WorkspaceAppIcon({
               d="M2.03 6.553A3.488 3.488 0 0 1 5.488 2.61h13.51a3.488 3.488 0 0 1 3.458 3.943l-.822 6.252.822 6.252A3.488 3.488 0 0 1 18.998 23H5.488a3.488 3.488 0 0 1-3.458-3.943l.823-6.252-.823-6.252Z"
             />
           </mask>
-          <g filter="url(#d)" mask="url(#c)">
+          <g filter={`url(#d-${instanceId})`} mask={`url(#c-${instanceId})`}>
             <path
-              fill="url(#e)"
+              fill={`url(#e-${instanceId})`}
               d="M3.658 3.576A2.576 2.576 0 0 1 6.234 1h12.02a2.576 2.576 0 0 1 2.575 2.576v9.229H3.658v-9.23Z"
             />
           </g>
@@ -64,7 +71,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <linearGradient
-              id="b"
+              id={`b-${instanceId}`}
               x1={12.243}
               x2={12.243}
               y1={12.805}
@@ -75,7 +82,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#3186FF" />
             </linearGradient>
             <linearGradient
-              id="e"
+              id={`e-${instanceId}`}
               x1={11.312}
               x2={11.312}
               y1={2.845}
@@ -86,7 +93,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.8} stopColor="#3C90FF" />
             </linearGradient>
             <filter
-              id="d"
+              id={`d-${instanceId}`}
               width={20.39}
               height={15.024}
               x={2.048}
@@ -111,7 +118,7 @@ export function WorkspaceAppIcon({
             d="M16.625 5.5a6.375 6.375 0 1 1 0 12.75h-4.547l-4.357 2.883c-.483.318-.724.477-.922.49a.75.75 0 0 1-.701-.378C6 21.073 6 20.784 6 20.206v-2.105A6.375 6.375 0 0 1 7.375 5.5h9.25Z"
           />
           <mask
-            id="a"
+            id={`a-${instanceId}`}
             width={22}
             height={17}
             x={1}
@@ -126,9 +133,9 @@ export function WorkspaceAppIcon({
               d="M16.625 5.5a6.375 6.375 0 1 1 0 12.75H12.09l-4.928 3.237A.75.75 0 0 1 6 20.86v-2.759A6.375 6.375 0 0 1 7.375 5.5h9.25Z"
             />
           </mask>
-          <g mask="url(#a)">
+          <g mask={`url(#a-${instanceId})`}>
             <path fill="#0EBC5F" d="M16 3H8a6 6 0 1 0 0 12h8a6 6 0 0 0 0-12Z" />
-            <path fill="url(#b)" d="M16 3H8a6 6 0 1 0 0 12h8a6 6 0 0 0 0-12Z" />
+            <path fill={`url(#b-${instanceId})`} d="M16 3H8a6 6 0 1 0 0 12h8a6 6 0 0 0 0-12Z" />
             <path
               stroke="#fff"
               strokeLinecap="round"
@@ -137,7 +144,14 @@ export function WorkspaceAppIcon({
             />
           </g>
           <defs>
-            <linearGradient id="b" x1={12} x2={12} y1={3} y2={15} gradientUnits="userSpaceOnUse">
+            <linearGradient
+              id={`b-${instanceId}`}
+              x1={12}
+              x2={12}
+              y1={3}
+              y2={15}
+              gradientUnits="userSpaceOnUse"
+            >
               <stop offset={0.09} stopColor="#94D4FF" />
               <stop offset={0.28} stopColor="#78C9FF" />
               <stop offset={0.88} stopColor="#01AE58" stopOpacity={0} />
@@ -156,7 +170,7 @@ export function WorkspaceAppIcon({
           {...props}
         >
           <mask
-            id="mask0_2004_2"
+            id={`mask0_2004_2-${instanceId}`}
             style={{
               maskType: "luminance",
             }}
@@ -171,7 +185,7 @@ export function WorkspaceAppIcon({
               fill="white"
             />
           </mask>
-          <g mask="url(#mask0_2004_2)">
+          <g mask={`url(#mask0_2004_2-${instanceId})`}>
             <path d="M3 5H21V20H3V5Z" fill="#0F9D58" />
             <path
               d="M16 13C16.6213 13 17.125 12.4963 17.125 11.875C17.125 11.2538 16.6213 10.75 16 10.75C15.3788 10.75 14.875 11.2538 14.875 11.875C14.875 12.4963 15.3788 13 16 13ZM16 13.75C14.795 13.75 13.5 14.3888 13.5 15.1788V16H18.5V15.1788C18.5 14.3888 17.205 13.75 16 13.75ZM8 13C8.62125 13 9.125 12.4963 9.125 11.875C9.125 11.2538 8.62125 10.75 8 10.75C7.37875 10.75 6.875 11.2538 6.875 11.875C6.875 12.4963 7.37875 13 8 13ZM8 13.75C6.795 13.75 5.5 14.3888 5.5 15.1788V16H10.5V15.1788C10.5 14.3888 9.205 13.75 8 13.75Z"
@@ -181,7 +195,13 @@ export function WorkspaceAppIcon({
               d="M12.0013 12C12.8288 12 13.5 11.3288 13.5 10.5C13.5 9.6725 12.8288 9 12.0013 9C11.1725 9 10.5 9.6725 10.5 10.5C10.5 11.3288 11.1725 12 12.0013 12ZM12 13C10.3125 13 8.5 13.895 8.5 15V16H15.5V15C15.5 13.895 13.6875 13 12 13Z"
               fill="#F7F7F7"
             />
-            <rect x={13.25} y={18.25} width={6} height={2.52} fill="url(#pattern0_2004_2)" />
+            <rect
+              x={13.25}
+              y={18.25}
+              width={6}
+              height={2.52}
+              fill={`url(#pattern0_2004_2-${instanceId})`}
+            />
             <path d="M14 19H18.5V20H14V19Z" fill="#F1F1F1" />
             <path
               d="M21.5 3H2.5C1.67125 3 1 3.67125 1 4.5V20.5C1 21.3288 1.67125 22 2.5 22H21.5C22.3288 22 23 21.3288 23 20.5V4.5C23 3.67125 22.3288 3 21.5 3ZM21 20H3V5H21V20Z"
@@ -199,12 +219,12 @@ export function WorkspaceAppIcon({
             />
             <path
               d="M18.4925 20H13.9925L15.9913 22H20.4888L18.4925 20Z"
-              fill="url(#paint0_linear_2004_2)"
+              fill={`url(#paint0_linear_2004_2-${instanceId})`}
             />
             <path opacity={0.2} d="M3 4.875H21V5H3V4.875Z" fill="#263238" />
           </g>
           <mask
-            id="mask1_2004_2"
+            id={`mask1_2004_2-${instanceId}`}
             style={{
               maskType: "luminance",
             }}
@@ -219,24 +239,27 @@ export function WorkspaceAppIcon({
               fill="white"
             />
           </mask>
-          <g mask="url(#mask1_2004_2)">
+          <g mask={`url(#mask1_2004_2-${instanceId})`}>
             <path opacity={0.2} d="M3 20H21V20.125H3V20Z" fill="white" />
           </g>
           <path
             d="M21.5 3H2.5C1.67125 3 1 3.67125 1 4.5V20.5C1 21.3288 1.67125 22 2.5 22H21.5C22.3288 22 23 21.3288 23 20.5V4.5C23 3.67125 22.3288 3 21.5 3Z"
-            fill="url(#paint1_radial_2004_2)"
+            fill={`url(#paint1_radial_2004_2-${instanceId})`}
           />
           <defs>
             <pattern
-              id="pattern0_2004_2"
+              id={`pattern0_2004_2-${instanceId}`}
               patternContentUnits="objectBoundingBox"
               width={1}
               height={1}
             >
-              <use xlinkHref="#image0_2004_2" transform="scale(0.00490196 0.0113636)" />
+              <use
+                xlinkHref={`#image0_2004_2-${instanceId}`}
+                transform="scale(0.00490196 0.0113636)"
+              />
             </pattern>
             <linearGradient
-              id="paint0_linear_2004_2"
+              id={`paint0_linear_2004_2-${instanceId}`}
               x1={17.2403}
               y1={20.0278}
               x2={17.2403}
@@ -247,7 +270,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#BF360C" stopOpacity={0.02} />
             </linearGradient>
             <radialGradient
-              id="paint1_radial_2004_2"
+              id={`paint1_radial_2004_2-${instanceId}`}
               cx={0}
               cy={0}
               r={1}
@@ -258,7 +281,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="white" stopOpacity={0} />
             </radialGradient>
             <image
-              id="image0_2004_2"
+              id={`image0_2004_2-${instanceId}`}
               width={204}
               height={88}
               preserveAspectRatio="none"
@@ -290,7 +313,7 @@ export function WorkspaceAppIcon({
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <mask
-            id="mask0_2007_28"
+            id={`mask0_2007_28-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -305,15 +328,15 @@ export function WorkspaceAppIcon({
               fill="#3186FF"
             />
           </mask>
-          <g mask="url(#mask0_2007_28)">
+          <g mask={`url(#mask0_2007_28-${instanceId})`}>
             <path
               d="M20.3259 23.0833H4.33338V1.08333H12.8334L20.3334 8.58333L20.3259 23.0833Z"
               fill="#3186FF"
             />
-            <g filter="url(#filter0_f_2007_28)">
+            <g filter={`url(#filter0_f_2007_28-${instanceId})`}>
               <path
                 d="M5.70839 24.0833H18.9584V2.58333H5.70839V24.0833Z"
-                fill="url(#paint0_linear_2007_28)"
+                fill={`url(#paint0_linear_2007_28-${instanceId})`}
               />
             </g>
           </g>
@@ -331,7 +354,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <filter
-              id="filter0_f_2007_28"
+              id={`filter0_f_2007_28-${instanceId}`}
               x={4.20839}
               y={1.08333}
               width={16.25}
@@ -344,7 +367,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.75} result="effect1_foregroundBlur_2007_28" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_28"
+              id={`paint0_linear_2007_28-${instanceId}`}
               x1={12.3334}
               y1={7.49333}
               x2={7.15964}
@@ -362,7 +385,7 @@ export function WorkspaceAppIcon({
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <mask
-            id="mask0_2007_46"
+            id={`mask0_2007_46-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -377,23 +400,23 @@ export function WorkspaceAppIcon({
               fill="#B43333"
             />
           </mask>
-          <g mask="url(#mask0_2007_46)">
+          <g mask={`url(#mask0_2007_46-${instanceId})`}>
             <path
               d="M26.6823 22.3902H14.5176L12.0003 18.0302L18.0826 7.49512L26.6823 22.3902Z"
-              fill="url(#paint0_linear_2007_46)"
+              fill={`url(#paint0_linear_2007_46-${instanceId})`}
             />
             <path
               d="M-2.68417 22.3883L5.91552 7.49326V7.49352L3.39912 11.8525H8.43245L14.5153 22.3881L-2.68404 22.3882L-2.68417 22.3883Z"
-              fill="url(#paint1_linear_2007_46)"
+              fill={`url(#paint1_linear_2007_46-${instanceId})`}
             />
             <path
               d="M12.0009 -3.04192L18.0837 7.49406L15.5669 11.8533H3.40125L12.0009 -3.04192Z"
-              fill="url(#paint2_linear_2007_46)"
+              fill={`url(#paint2_linear_2007_46-${instanceId})`}
             />
           </g>
           <defs>
             <linearGradient
-              id="paint0_linear_2007_46"
+              id={`paint0_linear_2007_46-${instanceId}`}
               x1={24.9209}
               y1={21.5403}
               x2={12.9386}
@@ -404,7 +427,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#FEC700" />
             </linearGradient>
             <linearGradient
-              id="paint1_linear_2007_46"
+              id={`paint1_linear_2007_46-${instanceId}`}
               x1={14.4359}
               y1={23.6598}
               x2={1.34686}
@@ -416,7 +439,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.48} stopColor="#3186FF" />
             </linearGradient>
             <linearGradient
-              id="paint2_linear_2007_46"
+              id={`paint2_linear_2007_46-${instanceId}`}
               x1={16.3529}
               y1={4.63186}
               x2={3.0904}
@@ -450,7 +473,7 @@ export function WorkspaceAppIcon({
             fill="#5746E3"
           />
           <mask
-            id="mask0_2007_66"
+            id={`mask0_2007_66-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -465,12 +488,12 @@ export function WorkspaceAppIcon({
               fill="#5F54F4"
             />
           </mask>
-          <g mask="url(#mask0_2007_66)">
+          <g mask={`url(#mask0_2007_66-${instanceId})`}>
             <path
               d="M19.3816 1H11.8553C9.85687 1 8.23685 2.62002 8.23685 4.61842C8.23685 6.61682 9.85687 8.23684 11.8553 8.23684H19.3816C21.38 8.23684 23 6.61682 23 4.61842C23 2.62002 21.38 1 19.3816 1Z"
               fill="#7372FE"
             />
-            <g filter="url(#filter0_f_2007_66)">
+            <g filter={`url(#filter0_f_2007_66-${instanceId})`}>
               <path
                 d="M6.21053 9.82895C9.08822 9.82895 11.4211 7.49612 11.4211 4.61842C11.4211 1.74073 9.08822 -0.592105 6.21053 -0.592105C3.33283 -0.592105 1 1.74073 1 4.61842C1 7.49612 3.33283 9.82895 6.21053 9.82895Z"
                 fill="#64AFFF"
@@ -493,7 +516,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <filter
-              id="filter0_f_2007_66"
+              id={`filter0_f_2007_66-${instanceId}`}
               x={-1.85711}
               y={-3.44921}
               width={16.1353}
@@ -512,9 +535,9 @@ export function WorkspaceAppIcon({
     case "gemini": {
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-          <g clipPath="url(#clip0_2007_90)">
+          <g clipPath={`url(#clip0_2007_90-${instanceId})`}>
             <mask
-              id="mask0_2007_90"
+              id={`mask0_2007_90-${instanceId}`}
               style={{
                 maskType: "alpha",
               }}
@@ -530,71 +553,71 @@ export function WorkspaceAppIcon({
               />
               <path
                 d="M11.9821 1C12.2122 1 12.4129 1.15738 12.4691 1.38077C12.6408 2.064 12.8671 2.73235 13.1457 3.37938C13.8741 5.07169 14.8735 6.5528 16.1424 7.82169C17.412 9.09092 18.8928 10.0904 20.5847 10.8188C21.2319 11.0973 21.9004 11.3236 22.5837 11.4954C22.8071 11.5515 22.9641 11.7519 22.9641 11.9821C22.9641 12.2122 22.8071 12.4129 22.5834 12.4691C21.9001 12.6408 21.2318 12.8671 20.5847 13.1457C18.8924 13.8741 17.4117 14.8735 16.1424 16.1424C14.8735 17.412 13.8741 18.8928 13.1457 20.5847C12.867 21.2319 12.6407 21.9004 12.4688 22.5837C12.4416 22.6922 12.3789 22.7886 12.2908 22.8575C12.2026 22.9264 12.094 22.9639 11.9821 22.9641C11.7519 22.9641 11.5515 22.8071 11.4954 22.5834C11.3235 21.9001 11.0972 21.2318 10.8184 20.5847C10.0904 18.8924 9.09126 17.4117 7.82169 16.1424C6.55246 14.8735 5.07169 13.8741 3.37938 13.1457C2.73233 12.867 2.06398 12.6407 1.38077 12.4688C1.27222 12.4416 1.17583 12.3791 1.10685 12.291C1.03788 12.2029 1.00028 12.0943 1 11.9824C1 11.7522 1.15738 11.5519 1.38077 11.4957C2.06401 11.3239 2.73236 11.0975 3.37938 10.8188C5.07169 10.0907 6.5528 9.09126 7.82169 7.82203C9.09092 6.55314 10.0904 5.07203 10.8188 3.37972C11.0973 2.73265 11.3236 2.06431 11.4954 1.38111C11.5224 1.27244 11.585 1.17593 11.6732 1.10688C11.7614 1.03784 11.8701 1.00022 11.9821 1Z"
-                fill="url(#paint0_linear_2007_90)"
+                fill={`url(#paint0_linear_2007_90-${instanceId})`}
               />
             </mask>
-            <g mask="url(#mask0_2007_90)">
-              <g filter="url(#filter0_f_2007_90)">
+            <g mask={`url(#mask0_2007_90-${instanceId})`}>
+              <g filter={`url(#filter0_f_2007_90-${instanceId})`}>
                 <path
                   d="M-0.983054 18.1715C1.55473 19.0728 4.47159 17.3829 5.53199 14.397C6.59239 11.4114 5.39458 8.26034 2.85679 7.35902C0.319008 6.45769 -2.59785 8.14763 -3.65859 11.1332C-4.71865 14.1191 -3.52084 17.2702 -0.983054 18.1715Z"
                   fill="#FFE432"
                 />
               </g>
-              <g filter="url(#filter1_f_2007_90)">
+              <g filter={`url(#filter1_f_2007_90-${instanceId})`}>
                 <path
                   d="M10.285 8.32735C13.7712 8.32735 16.5977 5.43858 16.5977 1.8756C16.5977 -1.68772 13.7715 -4.57615 10.285 -4.57615C6.79853 -4.57615 3.97169 -1.68739 3.97169 1.8756C3.97169 5.43858 6.79819 8.32735 10.285 8.32735Z"
                   fill="#FC413D"
                 />
               </g>
-              <g filter="url(#filter2_f_2007_90)">
+              <g filter={`url(#filter2_f_2007_90-${instanceId})`}>
                 <path
                   d="M7.83151 28.9596C11.471 28.7819 14.2345 24.8155 14.004 20.1007C13.7739 15.386 10.6363 11.7079 6.99687 11.8859C3.35739 12.064 0.593852 16.0301 0.824345 20.7448C1.05484 25.4596 4.19204 29.1377 7.83151 28.9596Z"
                   fill="#00B95C"
                 />
               </g>
-              <g filter="url(#filter3_f_2007_90)">
+              <g filter={`url(#filter3_f_2007_90-${instanceId})`}>
                 <path
                   d="M7.83151 28.9596C11.471 28.7819 14.2345 24.8155 14.004 20.1007C13.7739 15.386 10.6363 11.7079 6.99687 11.8859C3.35739 12.064 0.593852 16.0301 0.824345 20.7448C1.05484 25.4596 4.19204 29.1377 7.83151 28.9596Z"
                   fill="#00B95C"
                 />
               </g>
-              <g filter="url(#filter4_f_2007_90)">
+              <g filter={`url(#filter4_f_2007_90-${instanceId})`}>
                 <path
                   d="M11.4767 26.1074C14.5276 24.251 15.3443 20.0232 13.3007 16.6643C11.2571 13.3051 7.12683 12.087 4.0756 13.9431C1.02437 15.7999 0.207658 20.0276 2.25129 23.3869C4.2956 26.7458 8.4255 27.9639 11.4767 26.1074Z"
                   fill="#00B95C"
                 />
               </g>
-              <g filter="url(#filter5_f_2007_90)">
+              <g filter={`url(#filter5_f_2007_90-${instanceId})`}>
                 <path
                   d="M23.8093 15.5515C27.2386 15.5515 30.0187 12.8742 30.0187 9.57221C30.0187 6.26985 27.2386 3.59262 23.8093 3.59262C20.38 3.59262 17.5999 6.26985 17.5999 9.57221C17.5999 12.8746 20.38 15.5515 23.8093 15.5515Z"
                   fill="#3186FF"
                 />
               </g>
-              <g filter="url(#filter6_f_2007_90)">
+              <g filter={`url(#filter6_f_2007_90-${instanceId})`}>
                 <path
                   d="M-3.422 14.858C-0.264149 17.259 4.34874 16.5059 6.88145 13.1751C9.41416 9.84468 8.90782 5.19794 5.74997 2.79689C2.59213 0.395507 -2.02043 1.14858 -4.55347 4.47938C-7.08618 7.80985 -6.5795 12.4569 -3.422 14.858Z"
                   fill="#FBBC04"
                 />
               </g>
-              <g filter="url(#filter7_f_2007_90)">
+              <g filter={`url(#filter7_f_2007_90-${instanceId})`}>
                 <path
                   d="M12.7582 18.4071C16.5269 20.9983 21.523 20.2767 23.9166 16.7946C26.3105 13.3129 25.1956 8.38997 21.4265 5.79871C17.6574 3.20677 12.6617 3.92905 10.2678 7.41046C7.87415 10.8926 8.98871 15.8155 12.7578 18.4071H12.7582Z"
                   fill="#3186FF"
                 />
               </g>
-              <g filter="url(#filter8_f_2007_90)">
+              <g filter={`url(#filter8_f_2007_90-${instanceId})`}>
                 <path
                   d="M19.61 0.209353C20.5688 1.51311 19.3365 4.04751 16.858 5.8708C14.3791 7.69409 11.5925 8.11514 10.6336 6.81172C9.67478 5.50763 10.9068 2.97289 13.3853 1.14994C15.8642 -0.673355 18.6511 -1.0944 19.6096 0.209015L19.61 0.209353Z"
                   fill="#749BFF"
                 />
               </g>
-              <g filter="url(#filter9_f_2007_90)">
+              <g filter={`url(#filter9_f_2007_90-${instanceId})`}>
                 <path
                   d="M11.7384 6.45058C15.5718 2.89471 16.8874 -1.91957 14.6772 -4.30234C12.4671 -6.68511 7.56751 -5.73471 3.73409 -2.17883C-0.0993246 1.37705 -1.41526 6.19132 0.795229 8.57409C3.00538 10.9569 7.90495 10.0065 11.7384 6.45058Z"
                   fill="#FC413D"
                 />
               </g>
-              <g filter="url(#filter10_f_2007_90)">
+              <g filter={`url(#filter10_f_2007_90-${instanceId})`}>
                 <path
                   d="M3.88032 19.2221C6.15884 20.8528 8.77447 21.1006 9.72284 19.7758C10.6712 18.4507 9.59287 16.0548 7.31435 14.4241C5.03616 12.7934 2.42019 12.5456 1.47216 13.8703C0.523792 15.1954 1.60179 17.5914 3.88032 19.2221Z"
                   fill="#FFEE48"
@@ -604,7 +627,7 @@ export function WorkspaceAppIcon({
           </g>
           <defs>
             <filter
-              id="filter0_f_2007_90"
+              id={`filter0_f_2007_90-${instanceId}`}
               x={-5.70991}
               y={5.45135}
               width={13.2934}
@@ -617,7 +640,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.832615} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter1_f_2007_90"
+              id={`filter1_f_2007_90-${instanceId}`}
               x={-4.0776}
               y={-12.6254}
               width={28.7246}
@@ -630,7 +653,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={4.02465} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter2_f_2007_90"
+              id={`filter2_f_2007_90-${instanceId}`}
               x={-6.0321}
               y={5.03672}
               width={26.8926}
@@ -643,7 +666,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={3.42151} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter3_f_2007_90"
+              id={`filter3_f_2007_90-${instanceId}`}
               x={-6.0321}
               y={5.03672}
               width={26.8926}
@@ -656,7 +679,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={3.42151} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter4_f_2007_90"
+              id={`filter4_f_2007_90-${instanceId}`}
               x={-5.71716}
               y={6.23198}
               width={26.9863}
@@ -669,7 +692,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={3.42151} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter5_f_2007_90"
+              id={`filter5_f_2007_90-${instanceId}`}
               x={11.0973}
               y={-2.90991}
               width={25.4239}
@@ -682,7 +705,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={3.25126} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter6_f_2007_90"
+              id={`filter6_f_2007_90-${instanceId}`}
               x={-12.0589}
               y={-4.50106}
               width={26.4459}
@@ -695,7 +718,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={2.94665} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter7_f_2007_90"
+              id={`filter7_f_2007_90-${instanceId}`}
               x={3.74362}
               y={-1.01961}
               width={26.6972}
@@ -708,7 +731,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={2.63154} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter8_f_2007_90"
+              id={`filter8_f_2007_90-${instanceId}`}
               x={5.59887}
               y={-5.2576}
               width={19.0458}
@@ -721,7 +744,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={2.35468} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter9_f_2007_90"
+              id={`filter9_f_2007_90-${instanceId}`}
               x={-4.25494}
               y={-9.5928}
               width={23.9822}
@@ -734,7 +757,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={1.9888} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <filter
-              id="filter10_f_2007_90"
+              id={`filter10_f_2007_90-${instanceId}`}
               x={-3.79541}
               y={8.09533}
               width={18.7858}
@@ -747,7 +770,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={2.46163} result="effect1_foregroundBlur_2007_90" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_90"
+              id={`paint0_linear_2007_90-${instanceId}`}
               x1={7.2436}
               y1={15.696}
               x2={18.6518}
@@ -759,7 +782,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.777} stopColor="#969DFF" />
               <stop offset={1} stopColor="#BD99FE" />
             </linearGradient>
-            <clipPath id="clip0_2007_90">
+            <clipPath id={`clip0_2007_90-${instanceId}`}>
               <rect width={22} height={22} fill="white" transform="translate(1 1)" />
             </clipPath>
           </defs>
@@ -771,7 +794,7 @@ export function WorkspaceAppIcon({
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
           <path
             d="M18.25 5.25003H23V19C23 19.8284 22.3283 20.5 21.5 20.5H19C18.8011 20.5 18.6103 20.421 18.4696 20.2803C18.329 20.1397 18.25 19.9489 18.25 19.75V5.25003Z"
-            fill="url(#paint0_linear_2010_2)"
+            fill={`url(#paint0_linear_2010_2-${instanceId})`}
           />
           <path
             d="M5.75001 5.25003H1.00002V19C1.00002 19.8284 1.67165 20.5 2.50002 20.5H5.00001C5.19892 20.5 5.38969 20.421 5.53034 20.2803C5.67099 20.1397 5.75001 19.9489 5.75001 19.75V5.25003Z"
@@ -779,11 +802,11 @@ export function WorkspaceAppIcon({
           />
           <path
             d="M4.90326 3.55703C3.89914 2.71304 2.40102 2.84279 1.55702 3.84691C0.713024 4.8509 0.842774 6.34903 1.8469 7.19315L11.3566 15.1868C11.5368 15.3382 11.7647 15.4213 12.0001 15.4213C12.2355 15.4213 12.4633 15.3382 12.6435 15.1868L22.1532 7.19302C23.1572 6.34903 23.287 4.8509 22.443 3.84678C21.599 2.84278 20.1008 2.71304 19.0968 3.55703L12 9.52252L4.90326 3.55703Z"
-            fill="url(#paint1_linear_2010_2)"
+            fill={`url(#paint1_linear_2010_2-${instanceId})`}
           />
           <defs>
             <linearGradient
-              id="paint0_linear_2010_2"
+              id={`paint0_linear_2010_2-${instanceId}`}
               x1={20.625}
               y1={5.25003}
               x2={20.625}
@@ -798,7 +821,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#3186FF" />
             </linearGradient>
             <linearGradient
-              id="paint1_linear_2010_2"
+              id={`paint1_linear_2010_2-${instanceId}`}
               x1={1.00002}
               y1={5.51628}
               x2={23}
@@ -848,7 +871,7 @@ export function WorkspaceAppIcon({
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <mask
-            id="mask0_2007_134"
+            id={`mask0_2007_134-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -860,24 +883,24 @@ export function WorkspaceAppIcon({
           >
             <path
               d="M20.3034 9.65169C20.3034 13.0048 18.3958 15.8786 15.6067 17.3146C14.4213 17.9249 13.0767 18.3034 11.6517 18.3034C10.2266 18.3034 8.88191 17.9249 7.69663 17.3146C4.90757 15.8786 3 13.0048 3 9.65169C3 4.87348 6.87348 1 11.6517 1C16.4299 1 20.3034 4.87348 20.3034 9.65169Z"
-              fill="url(#paint0_linear_2007_134)"
+              fill={`url(#paint0_linear_2007_134-${instanceId})`}
             />
           </mask>
-          <g mask="url(#mask0_2007_134)">
+          <g mask={`url(#mask0_2007_134-${instanceId})`}>
             <path
               d="M11.6517 18.3034C16.4299 18.3034 20.3034 14.4299 20.3034 9.65169C20.3034 4.87349 16.4299 1 11.6517 1C6.87349 1 3 4.87349 3 9.65169C3 14.4299 6.87349 18.3034 11.6517 18.3034Z"
-              fill="url(#paint1_linear_2007_134)"
+              fill={`url(#paint1_linear_2007_134-${instanceId})`}
             />
-            <g filter="url(#filter0_f_2007_134)">
+            <g filter={`url(#filter0_f_2007_134-${instanceId})`}>
               <path
                 d="M6.21349 15.3371C6.21349 10.6235 8.04394 7.92135 11.6517 7.92135C15.2594 7.92135 17.0899 10.6235 17.0899 15.3371C17.0899 19.4327 14.6552 22.7528 11.6517 22.7528C8.64819 22.7528 6.21349 19.4327 6.21349 15.3371Z"
                 fill="#FDFD6D"
               />
             </g>
-            <g filter="url(#filter1_f_2007_134)">
+            <g filter={`url(#filter1_f_2007_134-${instanceId})`}>
               <path
                 d="M7.69662 12.618C7.69662 10.4337 9.46738 8.66292 11.6517 8.66292C13.836 8.66292 15.6067 10.4337 15.6067 12.618V19.0449C15.6067 21.2292 13.836 23 11.6517 23C9.46738 23 7.69662 21.2292 7.69662 19.0449V12.618Z"
-                fill="url(#paint2_linear_2007_134)"
+                fill={`url(#paint2_linear_2007_134-${instanceId})`}
               />
             </g>
             <path
@@ -886,7 +909,7 @@ export function WorkspaceAppIcon({
             />
           </g>
           <mask
-            id="mask1_2007_134"
+            id={`mask1_2007_134-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -898,7 +921,7 @@ export function WorkspaceAppIcon({
           >
             <path d="M6.70787 17.3146H16.5955V23H6.70787V17.3146Z" fill="#FFBE00" />
           </mask>
-          <g mask="url(#mask1_2007_134)">
+          <g mask={`url(#mask1_2007_134-${instanceId})`}>
             <path
               d="M11.6517 6.93258C9.37752 6.93258 7.69662 8.71236 7.69662 11.0854V18.8472C7.69662 21.2202 9.37752 23 11.6517 23C13.9258 23 15.6067 21.2202 15.6067 18.8472V11.0854C15.6067 8.71236 13.9258 6.93258 11.6517 6.93258Z"
               fill="#F6A100"
@@ -906,7 +929,7 @@ export function WorkspaceAppIcon({
           </g>
           <defs>
             <filter
-              id="filter0_f_2007_134"
+              id={`filter0_f_2007_134-${instanceId}`}
               x={-0.905615}
               y={0.802248}
               width={25.1146}
@@ -919,7 +942,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={3.55955} result="effect1_foregroundBlur_2007_134" />
             </filter>
             <filter
-              id="filter1_f_2007_134"
+              id={`filter1_f_2007_134-${instanceId}`}
               x={6.21348}
               y={7.17978}
               width={10.8764}
@@ -932,7 +955,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.741573} result="effect1_foregroundBlur_2007_134" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_134"
+              id={`paint0_linear_2007_134-${instanceId}`}
               x1={8.66438}
               y1={18.3034}
               x2={19.17}
@@ -944,7 +967,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.86} stopColor="#FFBE00" />
             </linearGradient>
             <linearGradient
-              id="paint1_linear_2007_134"
+              id={`paint1_linear_2007_134-${instanceId}`}
               x1={11.6517}
               y1={17.3196}
               x2={11.6517}
@@ -956,7 +979,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.96} stopColor="#FFBE00" />
             </linearGradient>
             <linearGradient
-              id="paint2_linear_2007_134"
+              id={`paint2_linear_2007_134-${instanceId}`}
               x1={11.6517}
               y1={6.33809}
               x2={11.6517}
@@ -975,14 +998,14 @@ export function WorkspaceAppIcon({
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <path
             d="M13.7519 13.235C12.8983 12.6452 12.8868 11.3878 13.7295 10.7825L20.625 5.83038C21.6175 5.11775 23 5.82563 23 7.0475V16.7669C23 17.9762 21.6424 18.6868 20.6474 17.9993L13.7519 13.235Z"
-            fill="url(#paint0_linear_2007_180)"
+            fill={`url(#paint0_linear_2007_180-${instanceId})`}
           />
           <path
             d="M1 8.5C1 5.4625 3.4625 3 6.5 3H14.5C15.8807 3 17 4.11925 17 5.5V17.75C17 19.1307 15.8807 20.25 14.5 20.25H3.5C2.11925 20.25 1 19.1307 1 17.75V8.5Z"
-            fill="url(#paint1_radial_2007_180)"
+            fill={`url(#paint1_radial_2007_180-${instanceId})`}
           />
           <mask
-            id="mask0_2007_180"
+            id={`mask0_2007_180-${instanceId}`}
             style={{
               maskType: "luminance",
             }}
@@ -997,11 +1020,11 @@ export function WorkspaceAppIcon({
               fill="white"
             />
           </mask>
-          <g mask="url(#mask0_2007_180)">
-            <g filter="url(#filter0_f_2007_180)">
+          <g mask={`url(#mask0_2007_180-${instanceId})`}>
+            <g filter={`url(#filter0_f_2007_180-${instanceId})`}>
               <path
                 d="M9.23825 12.0247L22.9883 4.125V19.625L9.23825 12.0247Z"
-                fill="url(#paint2_linear_2007_180)"
+                fill={`url(#paint2_linear_2007_180-${instanceId})`}
               />
             </g>
           </g>
@@ -1011,7 +1034,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <filter
-              id="filter0_f_2007_180"
+              id={`filter0_f_2007_180-${instanceId}`}
               x={5.73825}
               y={0.625}
               width={20.75}
@@ -1024,7 +1047,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={1.75} result="effect1_foregroundBlur_2007_180" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_180"
+              id={`paint0_linear_2007_180-${instanceId}`}
               x1={16.1}
               y1={12.68}
               x2={28.4}
@@ -1035,7 +1058,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#FFBE00" />
             </linearGradient>
             <radialGradient
-              id="paint1_radial_2007_180"
+              id={`paint1_radial_2007_180-${instanceId}`}
               cx={0}
               cy={0}
               r={1}
@@ -1046,7 +1069,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#FEC700" />
             </radialGradient>
             <linearGradient
-              id="paint2_linear_2007_180"
+              id={`paint2_linear_2007_180-${instanceId}`}
               x1={17.0275}
               y1={11.04}
               x2={9.8125}
@@ -1076,7 +1099,7 @@ export function WorkspaceAppIcon({
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <mask
-            id="mask0_2007_241"
+            id={`mask0_2007_241-${instanceId}`}
             style={{
               maskType: "luminance",
             }}
@@ -1088,7 +1111,7 @@ export function WorkspaceAppIcon({
           >
             <path d="M1 1H23V23H1V1Z" fill="white" />
           </mask>
-          <g mask="url(#mask0_2007_241)">
+          <g mask={`url(#mask0_2007_241-${instanceId})`}>
             <path
               d="M13.2604 6.95833H10.7396C6.6262 6.95833 3.29166 10.2929 3.29166 14.4062C3.29166 18.5196 6.6262 21.8542 10.7396 21.8542H13.2604C17.3738 21.8542 20.7083 18.5196 20.7083 14.4062C20.7083 10.2929 17.3738 6.95833 13.2604 6.95833Z"
               fill="#BBE2FF"
@@ -1098,7 +1121,7 @@ export function WorkspaceAppIcon({
               fill="#3186FF"
             />
             <mask
-              id="mask1_2007_241"
+              id={`mask1_2007_241-${instanceId}`}
               style={{
                 maskType: "alpha",
               }}
@@ -1113,16 +1136,16 @@ export function WorkspaceAppIcon({
                 fill="#3C90FF"
               />
             </mask>
-            <g mask="url(#mask1_2007_241)">
-              <g filter="url(#filter0_f_2007_241)">
+            <g mask={`url(#mask1_2007_241-${instanceId})`}>
+              <g filter={`url(#filter0_f_2007_241-${instanceId})`}>
                 <path
                   d="M13.2604 6.95833H10.7396C6.6262 6.95833 3.29166 10.2929 3.29166 14.4062C3.29166 18.5196 6.6262 21.8542 10.7396 21.8542H13.2604C17.3738 21.8542 20.7083 18.5196 20.7083 14.4062C20.7083 10.2929 17.3738 6.95833 13.2604 6.95833Z"
-                  fill="url(#paint0_linear_2007_241)"
+                  fill={`url(#paint0_linear_2007_241-${instanceId})`}
                 />
               </g>
             </g>
             <mask
-              id="mask2_2007_241"
+              id={`mask2_2007_241-${instanceId}`}
               style={{
                 maskType: "luminance",
               }}
@@ -1134,7 +1157,7 @@ export function WorkspaceAppIcon({
             >
               <path d="M6.04166 5.35417H17.9583V17.2708H6.04166V5.35417Z" fill="white" />
             </mask>
-            <g mask="url(#mask2_2007_241)">
+            <g mask={`url(#mask2_2007_241-${instanceId})`}>
               <path
                 d="M7.98959 11.3125L10.5301 13.853C10.6161 13.939 10.7326 13.9872 10.8542 13.9872C10.9757 13.9872 11.0923 13.939 11.1782 13.853L16.8125 8.21875"
                 stroke="white"
@@ -1146,7 +1169,7 @@ export function WorkspaceAppIcon({
           </g>
           <defs>
             <filter
-              id="filter0_f_2007_241"
+              id={`filter0_f_2007_241-${instanceId}`}
               x={1.91666}
               y={5.58333}
               width={20.1667}
@@ -1159,7 +1182,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.6875} result="effect1_foregroundBlur_2007_241" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_241"
+              id={`paint0_linear_2007_241-${instanceId}`}
               x1={12}
               y1={20.124}
               x2={12.5317}
@@ -1181,7 +1204,7 @@ export function WorkspaceAppIcon({
             fill="#009954"
           />
           <mask
-            id="mask0_2007_260"
+            id={`mask0_2007_260-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -1196,12 +1219,12 @@ export function WorkspaceAppIcon({
               fill="#0EBC5F"
             />
           </mask>
-          <g mask="url(#mask0_2007_260)">
+          <g mask={`url(#mask0_2007_260-${instanceId})`}>
             <path d="M3 4H23V20H3V4Z" fill="#0EBC5F" />
-            <g filter="url(#filter0_f_2007_260)">
+            <g filter={`url(#filter0_f_2007_260-${instanceId})`}>
               <path
                 d="M15.8 18.375H4.2C2.43269 18.375 1 16.9423 1 15.175V8.825C1 7.05769 2.43269 5.625 4.2 5.625H15.8C17.5673 5.625 19 7.05769 19 8.825V15.175C19 16.9423 17.5673 18.375 15.8 18.375Z"
-                fill="url(#paint0_linear_2007_260)"
+                fill={`url(#paint0_linear_2007_260-${instanceId})`}
               />
             </g>
           </g>
@@ -1213,7 +1236,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <filter
-              id="filter0_f_2007_260"
+              id={`filter0_f_2007_260-${instanceId}`}
               x={-0.5}
               y={4.125}
               width={21}
@@ -1226,7 +1249,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.75} result="effect1_foregroundBlur_2007_260" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_260"
+              id={`paint0_linear_2007_260-${instanceId}`}
               x1={16.28}
               y1={12.9613}
               x2={3.595}
@@ -1244,7 +1267,7 @@ export function WorkspaceAppIcon({
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
           <mask
-            id="mask0_2009_23"
+            id={`mask0_2009_23-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -1259,7 +1282,7 @@ export function WorkspaceAppIcon({
               fill="#579FFF"
             />
           </mask>
-          <g mask="url(#mask0_2009_23)">
+          <g mask={`url(#mask0_2009_23-${instanceId})`}>
             <path d="M1 3H23V21.3333H1V3Z" fill="#4FA0FF" />
             <path
               d="M18.9405 15.5714H18.4167C17.4765 15.5714 16.7143 16.3336 16.7143 17.2738C16.7143 18.214 17.4765 18.9762 18.4167 18.9762H18.9405C19.8807 18.9762 20.6429 18.214 20.6429 17.2738C20.6429 16.3336 19.8807 15.5714 18.9405 15.5714Z"
@@ -1272,7 +1295,7 @@ export function WorkspaceAppIcon({
             <path d="M1 3H23V8.7619H1V3Z" fill="#3186FF" />
           </g>
           <mask
-            id="mask1_2009_23"
+            id={`mask1_2009_23-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -1287,17 +1310,17 @@ export function WorkspaceAppIcon({
               fill="#3983FF"
             />
           </mask>
-          <g mask="url(#mask1_2009_23)">
-            <g filter="url(#filter0_f_2009_23)">
+          <g mask={`url(#mask1_2009_23-${instanceId})`}>
+            <g filter={`url(#filter0_f_2009_23-${instanceId})`}>
               <path
                 d="M-0.0476074 3H7.54763V21.3333H-0.0476074V3Z"
-                fill="url(#paint0_linear_2009_23)"
+                fill={`url(#paint0_linear_2009_23-${instanceId})`}
               />
             </g>
           </g>
           <defs>
             <filter
-              id="filter0_f_2009_23"
+              id={`filter0_f_2009_23-${instanceId}`}
               x={-1.7238}
               y={1.32381}
               width={10.9476}
@@ -1310,7 +1333,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.838095} result="effect1_foregroundBlur_2009_23" />
             </filter>
             <linearGradient
-              id="paint0_linear_2009_23"
+              id={`paint0_linear_2009_23-${instanceId}`}
               x1={4.67061}
               y1={8.83393}
               x2={8.31894}
@@ -1329,14 +1352,14 @@ export function WorkspaceAppIcon({
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
           <path
             d="M1.07739 7.32739C0.750925 5.32879 2.10641 3.444 4.10501 3.11753L16.7712 1.04848C18.7698 0.722151 20.6546 2.07764 20.9811 4.0761L22.9103 15.8866C23.2368 17.8852 21.8813 19.77 19.8827 20.0964L7.21644 22.1655C5.21784 22.4919 3.33304 21.1364 3.00658 19.1379L1.07739 7.32739Z"
-            fill="url(#paint0_linear_2007_207)"
+            fill={`url(#paint0_linear_2007_207-${instanceId})`}
           />
           <path
             d="M1 7.10241C1 5.93131 1 5.34569 1.18399 4.8812C1.3157 4.54854 1.51417 4.24639 1.76717 3.99339C2.02016 3.7404 2.32231 3.54192 2.65498 3.41021C3.11946 3.22622 3.70495 3.22622 4.87619 3.22622H19.1238C20.2949 3.22622 20.8805 3.22622 21.345 3.41008C21.6777 3.54179 21.9799 3.74028 22.2329 3.9933C22.4859 4.24632 22.6844 4.5485 22.8161 4.8812C23 5.34569 23 5.93131 23 7.10241V16.1119C23 17.283 23 17.8687 22.8161 18.3332C22.6844 18.6659 22.4859 18.968 22.2329 19.2211C21.9799 19.4741 21.6777 19.6726 21.345 19.8043C20.8805 19.9881 20.2949 19.9881 19.1238 19.9881H4.87619C3.70508 19.9881 3.11946 19.9881 2.65485 19.8043C2.32219 19.6725 2.02006 19.474 1.76709 19.221C1.51412 18.968 1.31567 18.6658 1.18399 18.3332C1 17.8687 1 17.283 1 16.1119V7.10241Z"
-            fill="url(#paint1_linear_2007_207)"
+            fill={`url(#paint1_linear_2007_207-${instanceId})`}
           />
           <mask
-            id="mask0_2007_207"
+            id={`mask0_2007_207-${instanceId}`}
             style={{
               maskType: "alpha",
             }}
@@ -1351,15 +1374,15 @@ export function WorkspaceAppIcon({
               fill="#FEC700"
             />
           </mask>
-          <g mask="url(#mask0_2007_207)">
-            <g filter="url(#filter0_f_2007_207)">
+          <g mask={`url(#mask0_2007_207-${instanceId})`}>
+            <g filter={`url(#filter0_f_2007_207-${instanceId})`}>
               <path
                 d="M3.84691 24.1152L22.7559 21.2893L19.5041 -0.469123L0.594971 2.35683L3.84691 24.1152Z"
                 fill="#FFBE00"
               />
               <path
                 d="M3.84691 24.1152L22.7559 21.2893L19.5041 -0.469123L0.594971 2.35683L3.84691 24.1152Z"
-                fill="url(#paint2_linear_2007_207)"
+                fill={`url(#paint2_linear_2007_207-${instanceId})`}
               />
             </g>
           </g>
@@ -1371,7 +1394,7 @@ export function WorkspaceAppIcon({
           />
           <defs>
             <filter
-              id="filter0_f_2007_207"
+              id={`filter0_f_2007_207-${instanceId}`}
               x={-0.976458}
               y={-2.04055}
               width={25.3038}
@@ -1384,7 +1407,7 @@ export function WorkspaceAppIcon({
               <feGaussianBlur stdDeviation={0.785714} result="effect1_foregroundBlur_2007_207" />
             </filter>
             <linearGradient
-              id="paint0_linear_2007_207"
+              id={`paint0_linear_2007_207-${instanceId}`}
               x1={10.4377}
               y1={2.08301}
               x2={20.0143}
@@ -1396,7 +1419,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.91} stopColor="#FFA8E3" />
             </linearGradient>
             <linearGradient
-              id="paint1_linear_2007_207"
+              id={`paint1_linear_2007_207-${instanceId}`}
               x1={12}
               y1={3.22622}
               x2={12}
@@ -1407,7 +1430,7 @@ export function WorkspaceAppIcon({
               <stop offset={1} stopColor="#FEC700" />
             </linearGradient>
             <linearGradient
-              id="paint2_linear_2007_207"
+              id={`paint2_linear_2007_207-${instanceId}`}
               x1={13.6395}
               y1={21.0567}
               x2={10.4233}
@@ -1425,7 +1448,7 @@ export function WorkspaceAppIcon({
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
           <mask
-            id="mask0_2009_45"
+            id={`mask0_2009_45-${instanceId}`}
             style={{
               maskType: "luminance",
             }}
@@ -1437,17 +1460,17 @@ export function WorkspaceAppIcon({
           >
             <path d="M1 1H23V23H1V1Z" fill="white" />
           </mask>
-          <g mask="url(#mask0_2009_45)">
+          <g mask={`url(#mask0_2009_45-${instanceId})`}>
             <path
               d="M2.74499 6.13L2.74999 6.12512C3.72774 5.16662 5.29724 5.1725 6.26761 6.14275L7.89824 7.77338C8.67924 8.5545 8.67924 9.82088 7.89824 10.6018L7.31074 11.1894C6.72486 11.7751 6.72486 12.7249 7.31074 13.3108L10.4394 16.4391C11.0251 17.0249 11.9749 17.0249 12.5606 16.4391L13.1481 15.8516C13.9291 15.0706 15.1955 15.0706 15.9765 15.8516L17.857 17.7321C18.8272 18.7024 18.8331 20.2716 17.8747 21.2494V21.2504L17.8541 21.2705L17.7509 21.3738C17.7503 21.3743 17.7496 21.3743 17.7489 21.3738L17.7484 21.3734L17.7479 21.3733L17.7474 21.3734L17.747 21.3738C15.5296 23.4581 12.042 23.4171 9.87499 21.2501L2.74999 14.1251C0.582988 11.9581 0.541863 8.4705 2.62611 6.25313L2.62644 6.25264L2.62655 6.25206L2.62644 6.25149L2.62611 6.251L2.62574 6.25049L2.62561 6.24988L2.62574 6.24926L2.62611 6.24875L2.73199 6.14288L2.74499 6.13Z"
               fill="#00AF57"
             />
             <path
               d="M2.74499 6.13L2.74999 6.12512C3.72774 5.16662 5.29724 5.1725 6.26761 6.14275L7.89824 7.77338C8.67924 8.5545 8.67924 9.82088 7.89824 10.6018L7.31074 11.1894C6.72486 11.7751 6.72486 12.7249 7.31074 13.3108L10.4394 16.4391C11.0251 17.0249 11.9749 17.0249 12.5606 16.4391L13.1481 15.8516C13.9291 15.0706 15.1955 15.0706 15.9765 15.8516L17.857 17.7321C18.8272 18.7024 18.8331 20.2716 17.8747 21.2494V21.2504L17.8541 21.2705L17.7509 21.3738C17.7503 21.3743 17.7496 21.3743 17.7489 21.3738L17.7484 21.3734L17.7479 21.3733L17.7474 21.3734L17.747 21.3738C15.5296 23.4581 12.042 23.4171 9.87499 21.2501L2.74999 14.1251C0.582988 11.9581 0.541863 8.4705 2.62611 6.25313L2.62644 6.25264L2.62655 6.25206L2.62644 6.25149L2.62611 6.251L2.62574 6.25049L2.62561 6.24988L2.62574 6.24926L2.62611 6.24875L2.73199 6.14288L2.74499 6.13Z"
-              fill="url(#paint0_linear_2009_45)"
+              fill={`url(#paint0_linear_2009_45-${instanceId})`}
             />
             <mask
-              id="mask1_2009_45"
+              id={`mask1_2009_45-${instanceId}`}
               style={{
                 maskType: "alpha",
               }}
@@ -1462,16 +1485,16 @@ export function WorkspaceAppIcon({
                 fill="#D9D9D9"
               />
             </mask>
-            <g mask="url(#mask1_2009_45)">
+            <g mask={`url(#mask1_2009_45-${instanceId})`}>
               <path
                 d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23Z"
-                fill="url(#paint1_radial_2009_45)"
+                fill={`url(#paint1_radial_2009_45-${instanceId})`}
               />
             </g>
           </g>
           <defs>
             <linearGradient
-              id="paint0_linear_2009_45"
+              id={`paint0_linear_2009_45-${instanceId}`}
               x1={7.49999}
               y1={16.75}
               x2={13.8125}
@@ -1482,7 +1505,7 @@ export function WorkspaceAppIcon({
               <stop offset={0.75} stopColor="#78C9FF" />
             </linearGradient>
             <radialGradient
-              id="paint1_radial_2009_45"
+              id={`paint1_radial_2009_45-${instanceId}`}
               cx={0}
               cy={0}
               r={1}
