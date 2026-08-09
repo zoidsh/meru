@@ -1,7 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { GMAIL_TAB_ID } from "@meru/shared/tabs";
+import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
@@ -24,7 +24,9 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
   FieldSeparator,
+  FieldSet,
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
@@ -218,6 +220,31 @@ export function WorkspaceAppsSettings() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </Field>
+            </>
+          )}
+          {config["workspaceApps.mode"] === "tabs" && (
+            <>
+              <FieldSeparator />
+              <FieldSet>
+                <FieldLegend>Vertical Tabs</FieldLegend>
+                <ConfigSwitchField
+                  label="Show Windows"
+                  description="List Workspace Apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
+                  configKey="verticalTabs.showWindows"
+                  licenseKeyRequired
+                />
+                <ConfigSelectField
+                  label="Width"
+                  description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide automatically based on the open tabs."
+                  configKey="verticalTabs.width"
+                  placeholder="Select width"
+                  licenseKeyRequired
+                  items={Object.entries(verticalTabsWidths).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              </FieldSet>
             </>
           )}
           <FieldSeparator />

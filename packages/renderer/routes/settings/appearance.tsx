@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { verticalTabsWidths } from "@meru/shared/tabs";
 import {
   Field,
   FieldContent,
@@ -167,27 +166,6 @@ export function AppearanceSettings() {
               description="Hide all unread badges if disabled regardless of individual account settings."
               configKey="accounts.unreadBadge"
               restartRequired
-            />
-          </FieldSet>
-          <FieldSeparator />
-          <FieldSet>
-            <FieldLegend>Vertical Tabs</FieldLegend>
-            <ConfigSwitchField
-              label="Show Windows"
-              description="List Workspace Apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward. Has no effect in the New Windows mode, where the sidebar is hidden."
-              configKey="verticalTabs.showWindows"
-              licenseKeyRequired
-            />
-            <ConfigSelectField
-              label="Width"
-              description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide automatically based on the open tabs."
-              configKey="verticalTabs.width"
-              placeholder="Select width"
-              licenseKeyRequired
-              items={Object.entries(verticalTabsWidths).map(([value, label]) => ({
-                value,
-                label,
-              }))}
             />
           </FieldSet>
           <FieldSeparator />
