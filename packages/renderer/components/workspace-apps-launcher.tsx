@@ -128,16 +128,22 @@ export function VerticalTabsWorkspaceAppsLauncher({
       />
       <DropdownMenuBackdrop />
       {/* Opens upward at trigger width so it stays inside the strip — anything
-          wider would be painted over by the workspace app view next to it. */}
+          wider would be painted over by the workspace app view next to it.
+          That leaves room for app names only in the wide strip. */}
       <DropdownMenuContent
         side="top"
         align="center"
         collisionPadding={0}
-        className="flex w-auto min-w-0 flex-col gap-1 p-0.5"
+        className={cn("flex flex-col gap-1 p-0.5", !isWide && "w-auto min-w-0")}
       >
         {launcherApps.map((app) => (
-          <DropdownMenuItem key={app} className="justify-center" {...getLauncherAppProps(app)}>
+          <DropdownMenuItem
+            key={app}
+            className={cn(!isWide && "justify-center")}
+            {...getLauncherAppProps(app)}
+          >
             <WorkspaceAppIcon app={app} className="size-4" />
+            {isWide && launcherWorkspaceApps[app]}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
