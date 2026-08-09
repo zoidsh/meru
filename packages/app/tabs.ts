@@ -8,6 +8,7 @@ import { config } from "./config";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { appMenu } from "./menu";
+import { openExternalUrl } from "./url";
 import { resolveWorkspaceAppOpenBehavior, WorkspaceApp } from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
@@ -26,6 +27,13 @@ export function registerTabBroadcasts(view: WebContentsView) {
 
 export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
+}
+
+function canOpenWorkspaceAppInApp(app: SupportedWorkspaceApp) {
+  return (
+    config.get("workspaceApps.openInApp") &&
+    !config.get("workspaceApps.openInAppExcludedApps").includes(app)
+  );
 }
 
 type SavedWorkspaceApp = WorkspaceApp & {
@@ -214,6 +222,12 @@ export class Tabs {
     }
 
     if (activatedTab instanceof DormantTab) {
+      if (!canOpenWorkspaceAppInApp(activatedTab.app)) {
+        openExternalUrl(activatedTab.url, { skipTrustedHostCheck: true });
+
+        return;
+      }
+
       const materializedTab = this.materializeDormantTab(activatedTab);
 
       if (!materializedTab.isWindowed) {
@@ -255,7 +269,7 @@ export class Tabs {
 
   loadLaunchTabs() {
     for (const tab of this.tabs.slice()) {
-      if (tab instanceof DormantTab && tab.loadOnLaunch) {
+      if (tab instanceof DormantTab && tab.loadOnLaunch && canOpenWorkspaceAppInApp(tab.app)) {
         this.materializeDormantTab(tab);
       }
     }
