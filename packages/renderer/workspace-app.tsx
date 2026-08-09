@@ -1,6 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
-import { DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
+import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
+import { cn } from "@meru/ui/lib/utils";
+import { BookmarkIcon, DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountBadge } from "@/components/account-badge";
 import { FindInPage } from "@/components/find-in-page";
@@ -32,6 +33,42 @@ function RecentDownloadHistoryButton() {
       title="Recent Download History"
     >
       <DownloadIcon />
+    </TitlebarIconButton>
+  );
+}
+
+/**
+ * Bookmarking is otherwise a tab context-menu action, which `New Windows` mode
+ * leaves no way to reach — this is the entry point that does not need a strip.
+ */
+function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
+  const [bookmarkState, setBookmarkState] = useState<WorkspaceAppBookmarkState>({
+    savable: false,
+    bookmarked: false,
+  });
+
+  useEffect(() => {
+    const unsubscribe = ipc.renderer.on("workspaceApp.bookmarkStateChanged", (_event, state) => {
+      setBookmarkState(state);
+    });
+
+    ipc.main.invoke("workspaceApp.getBookmarkState", workspaceAppId).then(setBookmarkState);
+
+    return unsubscribe;
+  }, [workspaceAppId]);
+
+  if (!bookmarkState.savable) {
+    return;
+  }
+
+  return (
+    <TitlebarIconButton
+      title={bookmarkState.bookmarked ? "Remove Bookmark" : "Bookmark"}
+      onClick={() => {
+        ipc.main.send("workspaceApp.toggleBookmark", workspaceAppId);
+      }}
+    >
+      <BookmarkIcon className={cn(bookmarkState.bookmarked && "fill-current")} />
     </TitlebarIconButton>
   );
 }
@@ -163,6 +200,7 @@ function WorkspaceApp() {
         <FindInPageControls />
         <TitlebarButtonGroup>
           <RecentDownloadHistoryButton />
+          <BookmarkButton workspaceAppId={workspaceAppId} />
           <TitlebarIconButton
             title="More Options"
             onClick={() => {

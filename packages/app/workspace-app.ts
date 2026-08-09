@@ -5,6 +5,7 @@ import type { AccountConfig, TabPersistence } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
   type SupportedWorkspaceApp,
+  type WorkspaceAppBookmarkState,
   type WorkspaceAppOpenBehavior,
   workspaceApps,
 } from "@meru/shared/workspace-apps";
@@ -381,6 +382,17 @@ export class WorkspaceApp {
 
   get isPopup() {
     return !this.account.instance.tabs.getTab(this.id);
+  }
+
+  get isSavable() {
+    return !this.isPopup && Boolean(this.app);
+  }
+
+  get bookmarkState(): WorkspaceAppBookmarkState {
+    return {
+      savable: this.isSavable,
+      bookmarked: this.persistence === "bookmarked",
+    };
   }
 
   private get chromeWebContents() {
@@ -802,6 +814,22 @@ export class WorkspaceApp {
       this.chromeWebContents,
       "workspaceApp.loadingStateChanged",
       this.view.webContents.isLoading(),
+    );
+  };
+
+  /**
+   * Only a window has a bookmark button to keep in sync — an embedded tab shows
+   * its state in the strip, which redraws from the tabs broadcast.
+   */
+  broadcastBookmarkState = () => {
+    if (!this._window) {
+      return;
+    }
+
+    ipc.renderer.send(
+      this.chromeWebContents,
+      "workspaceApp.bookmarkStateChanged",
+      this.bookmarkState,
     );
   };
 
