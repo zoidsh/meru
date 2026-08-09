@@ -43,6 +43,7 @@ export type Tab = {
   title: string;
   persistence: TabPersistence | null;
   dormant: boolean;
+  loadOnLaunch?: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -236,6 +237,7 @@ export class Tabs {
       persistence: dormantTab.persistence,
       loadOnLaunch: dormantTab.loadOnLaunch,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
+      savedAsWindow: dormantTab.windowed,
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
     });
@@ -344,7 +346,7 @@ export class Tabs {
           title: savedWorkspaceApp.title,
           persistence: savedWorkspaceApp.persistence,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
-          windowed: savedWorkspaceApp.isWindowed,
+          windowed: savedWorkspaceApp.opensAsWindow,
         },
         savedWorkspaceApp.zoomFactor,
       ),
@@ -513,7 +515,7 @@ export class Tabs {
           title: tab.title,
           persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
-          windowed: tab.isWindowed,
+          windowed: tab.opensAsWindow,
         });
       } else if (tab instanceof DormantTab) {
         savedTabs.push({
@@ -546,6 +548,7 @@ export class Tabs {
       persistence: tab.persistence,
       dormant: tab.dormant,
       windowed: isWindowedTab(tab),
+      loadOnLaunch: Boolean(tab.loadOnLaunch),
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
       active: tab.id === this.activeTabId,

@@ -19,6 +19,7 @@ export type TabState = {
   persistence: TabPersistence | null;
   dormant: boolean;
   windowed: boolean;
+  loadOnLaunch: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   active: boolean;
