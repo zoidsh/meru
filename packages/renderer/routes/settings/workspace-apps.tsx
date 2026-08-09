@@ -291,7 +291,7 @@ export function WorkspaceAppsSettings() {
           </Field>
           <ConfigSelectField
             label="Launcher Display"
-            description="How launcher apps are shown in the titlebar. Auto shows up to three apps inline as individual buttons and moves to a menu beyond that. Menu always keeps them behind a single button, Inline always shows them as individual buttons."
+            description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, Expanded always shows them as individual buttons."
             configKey="workspaceApps.launcherDisplay"
             placeholder="Select display"
             licenseKeyRequired

@@ -49,12 +49,12 @@ export const launcherWorkspaceApps = Object.fromEntries(
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<LauncherWorkspaceApp, string>;
 
-const LAUNCHER_INLINE_APPS_THRESHOLD = 3;
+const LAUNCHER_EXPANDED_APPS_THRESHOLD = 3;
 
 export const workspaceAppsLauncherDisplays = {
   auto: "Auto",
-  menu: "Menu",
-  inline: "Inline",
+  collapsed: "Collapsed",
+  expanded: "Expanded",
 } as const;
 
 export type WorkspaceAppsLauncherDisplay = keyof typeof workspaceAppsLauncherDisplays;
@@ -67,7 +67,7 @@ export function resolveWorkspaceAppsLauncherDisplay(
     return launcherDisplay;
   }
 
-  return launcherAppCount > LAUNCHER_INLINE_APPS_THRESHOLD ? "menu" : "inline";
+  return launcherAppCount > LAUNCHER_EXPANDED_APPS_THRESHOLD ? "collapsed" : "expanded";
 }
 
 export const workspaceAppOpenBehaviors = {

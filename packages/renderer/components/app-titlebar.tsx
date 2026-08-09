@@ -183,7 +183,7 @@ function WorkspaceAppsLauncher({
 
   const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
 
-  if (resolvedDisplay === "inline") {
+  if (resolvedDisplay === "expanded") {
     return launcherApps.map((app) => (
       <TitlebarIconButton
         key={app}
