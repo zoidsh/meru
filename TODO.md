@@ -44,3 +44,17 @@ Later steps of converging `Gmail` onto the `WorkspaceApp` architecture (the near
 ## Workspace App context-menu entries
 
 Add "Copy Link" and "Open in Default Browser" entries to the right-click context menu for non-Gmail-view windows — extend `setupWindowContextMenu` in `packages/app/context-menu.ts`, guarded with `window !== accounts.getSelectedAccount().instance.gmail.view`. Gives immediate discoverability even for users who don't end up using the toolbar UI.
+
+## Vertical tabs strip — parked ideas (2026-08-09)
+
+Both came out of the post-3.58.0 feedback round and were deliberately parked while the launcher and Workspace Apps mode work landed. Neither is started.
+
+### Horizontal tabs for pinned workspace apps
+
+Users who keep only a few workspace apps pinned (three or so) find a full-height vertical strip a poor trade for the width it costs. The idea is an option to lay pinned workspace apps out horizontally, browser-style, instead.
+
+Plain "horizontal instead of vertical" is not the answer — horizontal tabs stop scaling as soon as many tabs are open, which is why the strip is vertical in the first place. The shape worth exploring is the hybrid: **pinned workspace apps horizontal, normal tabs still vertical**. That needs a design pass before any code — where the horizontal row sits relative to the titlebar, what happens to the strip when no normal tabs are open, and how the Workspace Apps launcher (which now lives in the strip while the strip is visible) fits in.
+
+### Show/hide toggle for the strip
+
+A button to collapse and restore the vertical tabs strip. Open questions: where the toggle lives (titlebar, or an edge affordance on the strip itself), whether the collapsed state persists and per account or globally, and how it interacts with the launcher moving between the strip and the titlebar.
