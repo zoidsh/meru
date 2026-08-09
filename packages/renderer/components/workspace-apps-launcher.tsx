@@ -1,3 +1,4 @@
+import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import {
   type LauncherWorkspaceApp,
@@ -23,6 +24,12 @@ import {
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useCloseOnWindowBlur } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
+
+/**
+ * Matches the `duration-150` on the fade classes its hosts render it with, so
+ * the launcher stays mounted for as long as its fade-out takes.
+ */
+export const WORKSPACE_APPS_LAUNCHER_FADE_DURATION = ms("150ms");
 
 export function WorkspaceAppsLauncher({
   launcherApps,
@@ -59,7 +66,7 @@ export function WorkspaceAppsLauncher({
     },
   });
 
-  if (resolvedDisplay === "inline") {
+  if (resolvedDisplay === "expanded") {
     return launcherApps.map((app) =>
       presentation === "titlebar" ? (
         <TitlebarIconButton key={app} disabled={disabled} {...getLauncherAppProps(app)}>

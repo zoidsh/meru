@@ -25,6 +25,33 @@ export function useMouseAccountSwitching() {
   }, []);
 }
 
+/**
+ * Keeps content mounted for `duration` after it turns invisible, so it can play
+ * a fade-out before leaving the DOM. Keep `duration` in step with the animation
+ * duration on the element itself.
+ */
+export function useDelayedUnmount(isVisible: boolean, duration: number) {
+  const [isMounted, setIsMounted] = useState(isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      setIsMounted(true);
+
+      return;
+    }
+
+    const unmountTimeout = setTimeout(() => {
+      setIsMounted(false);
+    }, duration);
+
+    return () => {
+      clearTimeout(unmountTimeout);
+    };
+  }, [isVisible, duration]);
+
+  return isMounted;
+}
+
 export function useCloseOnWindowBlur(isOpen: boolean, onClose: () => void) {
   useEffect(() => {
     if (!isOpen) {

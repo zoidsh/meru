@@ -39,8 +39,14 @@ export function TitlebarRight({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-2">{children}</div>;
 }
 
-export function TitlebarButtonGroup({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-1">{children}</div>;
+export function TitlebarButtonGroup({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return <div className={cn("flex items-center gap-1", className)}>{children}</div>;
 }
 
 export function TitlebarPageTitle({ children }: { children: string }) {

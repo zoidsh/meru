@@ -349,7 +349,7 @@ export function VerticalTabs() {
       {shouldShowWorkspaceAppsLauncher && (
         <div
           className={cn(
-            "mt-auto flex border-t pt-2",
+            "mt-auto flex animate-in border-t pt-2 duration-150 fade-in-0",
             isWide ? "flex-row flex-wrap justify-center gap-1" : "flex-col gap-2",
           )}
         >
