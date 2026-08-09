@@ -26,6 +26,27 @@ export function getConfig() {
   return queryClient.fetchQuery(configOptions);
 }
 
+ipc.renderer.on("bookmarks.changed", (_event, bookmarks) => {
+  queryClient.setQueryData(["bookmarks"], bookmarks);
+});
+
+/**
+ * Only the bookmarks popup runs this: it is a view of its own, so it fetches
+ * the list on mount and the main process pushes it again whenever tabs change
+ * underneath it.
+ */
+export function useBookmarks() {
+  const { data } = useQuery(
+    queryOptions({
+      queryKey: ["bookmarks"],
+      queryFn: () => ipc.main.invoke("bookmarks.getBookmarks"),
+      staleTime: Number.POSITIVE_INFINITY,
+    }),
+  );
+
+  return { bookmarks: data };
+}
+
 export function useConfigMutation({
   onSuccess,
 }: {

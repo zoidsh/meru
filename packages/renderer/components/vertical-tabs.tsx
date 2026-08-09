@@ -9,10 +9,10 @@ import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
+import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
-import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import {
   VerticalTabsWorkspaceAppsLauncher,
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
@@ -55,14 +55,6 @@ function moveSectionTab(
   }
 
   ipc.main.send("tabs.moveTab", accountId, movedTabId, movedSectionTabIds.indexOf(movedTabId));
-}
-
-function TabIcon({ tab }: { tab: TabState }) {
-  if (tab.app && tab.app !== "myaccount") {
-    return <WorkspaceAppIcon app={tab.app} className="size-4" />;
-  }
-
-  return <GlobeIcon />;
 }
 
 function WindowedTabBadge({ className }: { className?: string }) {
@@ -160,7 +152,7 @@ function VerticalTab({
           ipc.main.send("tabs.showTabContextMenu", accountId, tab.id);
         }}
       >
-        <TabIcon tab={tab} />
+        <TabIcon app={tab.app} />
         {isWideRow && (
           <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
             {tab.title}

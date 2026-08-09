@@ -44,27 +44,37 @@ export function useCloseOnWindowBlur(isOpen: boolean, onClose: () => void) {
 }
 
 /**
+ * Every tab of the selected account, before the vertical tabs strip narrows
+ * them down — the titlebar surfaces entries the strip does not show.
+ */
+export function useSelectedAccountTabs() {
+  const accounts = useAccountsStore((state) => state.accounts);
+
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+
+  const selectedAccount = accounts.find((account) => account.config.selected);
+
+  const tabs =
+    accountsTabs.find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
+      ?.tabs ?? [];
+
+  return { selectedAccount, tabs };
+}
+
+/**
  * The tabs the vertical tabs strip renders and the width it takes up. The
  * titlebar reads it too, to know whether the strip is there to host the
  * Workspace Apps launcher.
  */
 export function useVerticalTabs() {
-  const accounts = useAccountsStore((state) => state.accounts);
-
-  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+  const { selectedAccount, tabs: selectedAccountTabs } = useSelectedAccountTabs();
 
   const { config } = useConfig();
 
-  const selectedAccount = accounts.find((account) => account.config.selected);
-
-  const tabs = getVisibleVerticalTabs(
-    accountsTabs.find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
-      ?.tabs ?? [],
-    {
-      workspaceAppsMode: config?.["workspaceApps.mode"] ?? "tabs",
-      showWindows: config?.["verticalTabs.showWindows"] ?? true,
-    },
-  );
+  const tabs = getVisibleVerticalTabs(selectedAccountTabs, {
+    workspaceAppsMode: config?.["workspaceApps.mode"] ?? "tabs",
+    showWindows: config?.["verticalTabs.showWindows"] ?? true,
+  });
 
   const width = getVerticalTabsWidth(tabs, config?.["verticalTabs.width"] ?? "auto");
 

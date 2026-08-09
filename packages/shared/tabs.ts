@@ -30,6 +30,26 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
+/**
+ * A bookmarked entry as the titlebar's bookmarks popup lists it. Unlike the
+ * strip's `bookmarks` section, which only holds the dormant ones because an
+ * open bookmark moves into `normal`, this lists every bookmarked entry — the
+ * popup is a list of bookmarks, not of what is currently closed.
+ */
+export type BookmarkState = {
+  accountId: AccountConfig["id"];
+  tabId: string;
+  app: SupportedWorkspaceApp | undefined;
+  title: string;
+  windowed: boolean;
+};
+
+export function getBookmarkedTabs<BookmarkedTab extends Pick<TabState, "persistence">>(
+  tabs: BookmarkedTab[],
+) {
+  return tabs.filter((tab) => tab.persistence === "bookmarked");
+}
+
 export const tabSections = ["pinned", "normal", "bookmarks"] as const;
 
 export type TabSection = (typeof tabSections)[number];

@@ -24,6 +24,7 @@ import {
 } from "electron";
 import { machineId } from "node-machine-id";
 import { accounts } from "@/accounts";
+import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -913,6 +914,32 @@ class Ipc {
           "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABFklEQVR4nN3RzysEcRjH8afd1kE5ODg4ODgoBwcHRSFEfs0f4V9x9D+478HZqCmllB+llFLYqG1mWzTM0jhY6vtWa5GDnhnPiXe9Ls/38Dl8Rf5d3j3LXoPIa8CPEpyXcOElrOQemI+JFu4gs5jVXAOzt6CpNKGcwtzH7Ya1zAPTddA8vLqWjdQx075N1TOOTESgiV/cp/KjY7J9H69l+JOxKmium+6b9cS17qNVztWBkSvQ7KeO6PnLwZN7f7vEqQPDFbAQraEzsBCtwVOwEK2BE7AQrf5jsBCtviOwEK3eQ7AQrZ49sBCt7l2wEK2uHbAQrc5tsBCtUkDUEcBvlAJCdaDos1TwCQtbkItPWNxkUR34c70BSSmcO++HIKkAAAAASUVORK5CYII=",
         ),
       });
+    });
+
+    ipc.main.handle("bookmarks.getBookmarks", () => {
+      return bookmarks.serialize();
+    });
+
+    ipc.main.on("bookmarks.togglePopup", (event) => {
+      const parentWindow = BrowserWindow.fromWebContents(event.sender);
+
+      if (!parentWindow) {
+        return;
+      }
+
+      bookmarks.popup.toggle(parentWindow);
+    });
+
+    ipc.main.on("bookmarks.closePopup", () => {
+      bookmarks.popup.close();
+    });
+
+    ipc.main.on("bookmarks.setPopupCloseOnBlurEnabled", (_event, enabled) => {
+      bookmarks.popup.closeOnBlurEnabled = enabled;
+    });
+
+    ipc.main.on("bookmarks.removeBookmark", (_event, accountId, tabId) => {
+      accounts.getAccount(accountId).instance.tabs.setTabPersistence(tabId, null);
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
