@@ -1,13 +1,14 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
   type SupportedWorkspaceApp,
-  workspaceAppOpenBehaviors,
   workspaceApps,
   workspaceAppsLauncherDisplays,
+  workspaceAppsModes,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -36,6 +37,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useTabsStore } from "@/lib/stores";
 import { platform } from "@/lib/utils";
 
 function SortableLauncherAppItem({
@@ -85,6 +87,12 @@ export function WorkspaceAppsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+
+  const hasOpenWorkspaceAppTabs = accountsTabs.some((accountTabs) =>
+    accountTabs.tabs.some((tab) => tab.id !== GMAIL_TAB_ID && !tab.dormant && !tab.windowed),
+  );
+
   if (!config) {
     return;
   }
@@ -129,22 +137,29 @@ export function WorkspaceAppsSettings() {
           {config["workspaceApps.openInApp"] && (
             <>
               <ConfigSelectField
-                label="Open Behavior"
+                label="Mode"
                 description={
                   <>
-                    How Workspace Apps open: as a tab in the main window (default), in a new window,
-                    or as a background tab. Hold <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to
-                    always open as a background tab or <Kbd>Shift</Kbd> to always open in a new
-                    window.
+                    How Workspace Apps open: as tabs in the main window (default), or each in its
+                    own window with no tab strip. In Tabs, hold{" "}
+                    <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to open a background tab or{" "}
+                    <Kbd>Shift</Kbd> to open a new window.
                   </>
                 }
-                configKey="workspaceApps.openBehavior"
-                placeholder="Select behavior"
+                configKey="workspaceApps.mode"
+                placeholder="Select mode"
                 licenseKeyRequired
-                items={Object.entries(workspaceAppOpenBehaviors).map(([value, label]) => ({
+                items={Object.entries(workspaceAppsModes).map(([value, label]) => ({
                   value,
                   label,
                 }))}
+                confirmation={{
+                  when: (mode) => mode === "windows" && hasOpenWorkspaceAppTabs,
+                  title: "Switch to New Windows?",
+                  description:
+                    "Workspace Apps will open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides once you have closed them, or after a restart.",
+                  confirmLabel: "Switch to New Windows",
+                }}
               />
               <Field>
                 <FieldContent>

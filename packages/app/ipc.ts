@@ -29,7 +29,7 @@ import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { DormantTab } from "@/tabs";
-import { WorkspaceApp } from "@/workspace-app";
+import { resolveWorkspaceAppOpenBehavior, WorkspaceApp } from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -687,7 +687,7 @@ class Ipc {
         return;
       }
 
-      const openBehavior = modifierOpenBehavior ?? config.get("workspaceApps.openBehavior");
+      const openBehavior = resolveWorkspaceAppOpenBehavior(modifierOpenBehavior);
 
       const selectedAccount = accounts.getSelectedAccount();
 

@@ -1,4 +1,14 @@
 import type { Config } from "@meru/shared/types";
+import { Button } from "@meru/ui/components/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@meru/ui/components/dialog";
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@meru/ui/components/field";
 import {
   Select,
@@ -7,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
@@ -22,6 +32,7 @@ export function ConfigSelectField({
   licenseKeyRequired,
   disabled,
   restartRequired,
+  confirmation,
 }: {
   configKey: keyof Config;
   label: string;
@@ -31,6 +42,17 @@ export function ConfigSelectField({
   licenseKeyRequired?: boolean;
   disabled?: boolean;
   restartRequired?: boolean;
+  /**
+   * Holds the value back until the user confirms it. The field keeps rendering
+   * the value from config while the dialog is open, so cancelling needs no
+   * reverting — nothing was written.
+   */
+  confirmation?: {
+    when: (value: string) => boolean;
+    title: string;
+    description: ReactNode;
+    confirmLabel: string;
+  };
 }) {
   const { config } = useConfig();
 
@@ -44,6 +66,8 @@ export function ConfigSelectField({
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const [confirmableValue, setConfirmableValue] = useState<string | null>(null);
+
   if (!config) {
     return;
   }
@@ -55,6 +79,12 @@ export function ConfigSelectField({
   }
 
   const isDisabled = disabled || (licenseKeyRequired && !isLicenseKeyValid);
+
+  const setValue = (newValue: string) => {
+    configMutation.mutate({
+      [configKey]: newValue,
+    });
+  };
 
   return (
     <Field>
@@ -69,11 +99,17 @@ export function ConfigSelectField({
         items={items}
         value={value}
         onValueChange={(newValue) => {
-          if (newValue) {
-            configMutation.mutate({
-              [configKey]: newValue,
-            });
+          if (!newValue) {
+            return;
           }
+
+          if (confirmation?.when(newValue)) {
+            setConfirmableValue(newValue);
+
+            return;
+          }
+
+          setValue(newValue);
         }}
         disabled={isDisabled}
       >
@@ -88,6 +124,37 @@ export function ConfigSelectField({
           ))}
         </SelectContent>
       </Select>
+      {confirmation && (
+        <Dialog
+          open={confirmableValue !== null}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setConfirmableValue(null);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{confirmation.title}</DialogTitle>
+            </DialogHeader>
+            <DialogDescription>{confirmation.description}</DialogDescription>
+            <DialogFooter>
+              <DialogClose render={<Button variant="outline">Cancel</Button>} />
+              <Button
+                onClick={() => {
+                  if (confirmableValue) {
+                    setValue(confirmableValue);
+                  }
+
+                  setConfirmableValue(null);
+                }}
+              >
+                {confirmation.confirmLabel}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Field>
   );
 }
