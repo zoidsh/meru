@@ -6,10 +6,12 @@ import type {
   AccountConfigInput,
   AccountConfigs,
   AccountInstances,
+  Bookmark,
+  BookmarkState,
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
-import type { AccountTabsState, BookmarkState, VerticalTabsWidth } from "./tabs";
+import type { AccountTabsState, VerticalTabsWidth } from "./tabs";
 import type {
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
@@ -198,7 +200,13 @@ export type IpcMainEvents =
       "bookmarks.togglePopup": [];
       "bookmarks.closePopup": [];
       "bookmarks.setPopupCloseOnBlurEnabled": [enabled: boolean];
-      "bookmarks.removeBookmark": [accountId: AccountConfig["id"], tabId: string];
+      "bookmarks.openBookmark": [accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]];
+      "bookmarks.removeBookmark": [accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]];
+      "bookmarks.moveBookmark": [
+        accountId: AccountConfig["id"],
+        bookmarkId: Bookmark["id"],
+        targetIndex: number,
+      ];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

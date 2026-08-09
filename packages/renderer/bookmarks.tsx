@@ -1,5 +1,5 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { BookmarkState } from "@meru/shared/tabs";
+import type { BookmarkState } from "@meru/shared/schemas";
 import { Button } from "@meru/ui/components/button";
 import {
   Empty,
@@ -9,7 +9,7 @@ import {
   EmptyTitle,
 } from "@meru/ui/components/empty";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
-import { AppWindowIcon, BookmarkIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, XIcon } from "lucide-react";
 import { PopupWindow } from "@/components/popup-window";
 import { TabIcon } from "@/components/tab-icon";
 import { renderApp } from "@/lib/react";
@@ -19,7 +19,7 @@ function closePopup() {
   ipc.main.send("bookmarks.closePopup");
 }
 
-function Bookmark({ accountId, tabId, app, title, windowed }: BookmarkState) {
+function Bookmark({ accountId, id, app, title }: BookmarkState) {
   return (
     <div className="group relative">
       <Button
@@ -28,7 +28,7 @@ function Bookmark({ accountId, tabId, app, title, windowed }: BookmarkState) {
         className="w-full justify-start group-hover:pr-7"
         title={title}
         onClick={() => {
-          ipc.main.send("tabs.selectTab", accountId, tabId);
+          ipc.main.send("bookmarks.openBookmark", accountId, id);
 
           closePopup();
         }}
@@ -37,7 +37,6 @@ function Bookmark({ accountId, tabId, app, title, windowed }: BookmarkState) {
         <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
           {title}
         </span>
-        {windowed && <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />}
       </Button>
       <Button
         variant="secondary"
@@ -45,7 +44,7 @@ function Bookmark({ accountId, tabId, app, title, windowed }: BookmarkState) {
         className="absolute top-1/2 right-1 size-5 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         title="Remove Bookmark"
         onClick={() => {
-          ipc.main.send("bookmarks.removeBookmark", accountId, tabId);
+          ipc.main.send("bookmarks.removeBookmark", accountId, id);
         }}
       >
         <XIcon className="size-3" />
@@ -69,7 +68,7 @@ function BookmarkList() {
             <BookmarkIcon />
           </EmptyMedia>
           <EmptyTitle>No bookmarks yet</EmptyTitle>
-          <EmptyDescription>Bookmarked workspace apps appear here.</EmptyDescription>
+          <EmptyDescription>Bookmarked pages appear here.</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -78,7 +77,7 @@ function BookmarkList() {
   return (
     <div className="flex flex-col gap-1">
       {bookmarks.map((bookmark) => (
-        <Bookmark key={bookmark.tabId} {...bookmark} />
+        <Bookmark key={bookmark.id} {...bookmark} />
       ))}
     </div>
   );

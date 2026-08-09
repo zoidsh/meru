@@ -1,5 +1,5 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
-import type { AccountConfig, TabPersistence } from "./schemas";
+import type { AccountConfig } from "./schemas";
 import type { SupportedWorkspaceApp, WorkspaceAppsMode } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
@@ -16,7 +16,7 @@ export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
-  persistence: TabPersistence | null;
+  pinned: boolean;
   dormant: boolean;
   windowed: boolean;
   loadOnLaunch: boolean;
@@ -30,37 +30,13 @@ export type AccountTabsState = {
   tabs: TabState[];
 };
 
-/**
- * A bookmarked entry as the titlebar's bookmarks popup lists it. Unlike the
- * strip's `bookmarks` section, which only holds the dormant ones because an
- * open bookmark moves into `normal`, this lists every bookmarked entry — the
- * popup is a list of bookmarks, not of what is currently closed.
- */
-export type BookmarkState = {
-  accountId: AccountConfig["id"];
-  tabId: string;
-  app: SupportedWorkspaceApp | undefined;
-  title: string;
-  windowed: boolean;
-};
-
-export function getBookmarkedTabs<BookmarkedTab extends Pick<TabState, "persistence">>(
-  tabs: BookmarkedTab[],
-) {
-  return tabs.filter((tab) => tab.persistence === "bookmarked");
-}
-
-export const tabSections = ["pinned", "normal", "bookmarks"] as const;
+export const tabSections = ["pinned", "normal"] as const;
 
 export type TabSection = (typeof tabSections)[number];
 
-export function getTabSection(tab: Pick<TabState, "id" | "persistence" | "dormant">): TabSection {
-  if (tab.id === GMAIL_TAB_ID || tab.persistence === "pinned") {
+export function getTabSection(tab: Pick<TabState, "id" | "pinned">): TabSection {
+  if (tab.id === GMAIL_TAB_ID || tab.pinned) {
     return "pinned";
-  }
-
-  if (tab.persistence === "bookmarked" && tab.dormant) {
-    return "bookmarks";
   }
 
   return "normal";
@@ -86,30 +62,43 @@ export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dorma
   return showWindows ? tabs : tabs.filter((tab) => !tab.windowed);
 }
 
-export function getVerticalTabsWidth(
-  tabs: Pick<TabState, "app" | "persistence">[],
-  configuredVerticalTabsWidth: VerticalTabsWidth,
+/**
+ * The strip is the home of the bookmarks section, and `windows` mode hides the
+ * strip — there the titlebar popup lists them instead.
+ */
+export function getVisibleBookmarks<VisibleBookmark>(
+  bookmarks: VisibleBookmark[],
+  workspaceAppsMode: WorkspaceAppsMode,
 ) {
-  if (tabs.length <= 1) {
+  return workspaceAppsMode === "windows" ? [] : bookmarks;
+}
+
+export function getVerticalTabsWidth(
+  tabs: Pick<TabState, "app" | "pinned">[],
+  { bookmarkCount, configuredWidth }: { bookmarkCount: number; configuredWidth: VerticalTabsWidth },
+) {
+  if (tabs.length <= 1 && bookmarkCount === 0) {
     return 0;
   }
 
-  if (configuredVerticalTabsWidth === "narrow") {
+  if (configuredWidth === "narrow") {
     return VERTICAL_TABS_NARROW_WIDTH;
   }
 
-  if (configuredVerticalTabsWidth === "wide") {
+  if (configuredWidth === "wide") {
     return VERTICAL_TABS_WIDE_WIDTH;
   }
 
-  if (tabs.some((tab) => tab.persistence === "bookmarked")) {
+  // Bookmarks are told apart by their title rather than by their app icon,
+  // which several of them can share.
+  if (bookmarkCount > 0) {
     return VERTICAL_TABS_WIDE_WIDTH;
   }
 
   const workspaceAppTabCounts = new Map<SupportedWorkspaceApp, number>();
 
   for (const tab of tabs) {
-    if (tab.app && tab.persistence !== "pinned") {
+    if (tab.app && !tab.pinned) {
       workspaceAppTabCounts.set(tab.app, (workspaceAppTabCounts.get(tab.app) ?? 0) + 1);
     }
   }

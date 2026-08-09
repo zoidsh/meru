@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
-import type { AccountConfig, TabPersistence } from "@meru/shared/schemas";
+import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
   type SupportedWorkspaceApp,
@@ -22,6 +22,7 @@ import {
   type WebContentsViewConstructorOptions,
 } from "electron";
 import { accounts } from "./accounts";
+import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { createChildWebContentsView, openViewDevToolsInDev } from "./lib/web-contents";
@@ -100,7 +101,7 @@ type WorkspaceAppOptions = {
   view?: WebContentsViewConstructorOptions;
   asWindow?: boolean;
   savedAsWindow?: boolean;
-  persistence?: TabPersistence | null;
+  pinned?: boolean;
   loadOnLaunch?: boolean;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
@@ -138,6 +139,12 @@ export class WorkspaceApp {
   static applyPersistedZoomFactors() {
     for (const instance of WorkspaceApp.instances.values()) {
       instance.applyPersistedZoomFactor();
+    }
+  }
+
+  static broadcastBookmarkStates() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.broadcastBookmarkState();
     }
   }
 
@@ -388,11 +395,28 @@ export class WorkspaceApp {
     return !this.isPopup && Boolean(this.app);
   }
 
+  /**
+   * A bookmark saves the URL it was created from, so the button reflects the
+   * URL on display rather than anything about the app holding it — browsing on
+   * from a bookmarked page leaves the button empty again.
+   */
   get bookmarkState(): WorkspaceAppBookmarkState {
     return {
       savable: this.isSavable,
-      bookmarked: this.persistence === "bookmarked",
+      bookmarked: bookmarks.isBookmarked(this.accountId, this.url),
     };
+  }
+
+  toggleBookmark() {
+    if (!this.app) {
+      return;
+    }
+
+    bookmarks.toggle(this.accountId, {
+      app: this.app,
+      url: this.url,
+      title: this.title,
+    });
   }
 
   private get chromeWebContents() {
@@ -401,7 +425,7 @@ export class WorkspaceApp {
 
   view: WebContentsView;
 
-  persistence: TabPersistence | null;
+  pinned: boolean;
 
   dormant = false;
 
@@ -428,14 +452,14 @@ export class WorkspaceApp {
     view,
     asWindow,
     savedAsWindow,
-    persistence,
+    pinned,
     loadOnLaunch,
     app,
     zoomFactor,
   }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
-    this.persistence = persistence ?? null;
+    this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
     this.opensAsWindow =
       savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");
@@ -637,18 +661,28 @@ export class WorkspaceApp {
   }
 
   private registerWindowedViewListeners() {
-    this.view.webContents.on("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.on("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.on("did-navigate", this.handleWindowedNavigation);
+    this.view.webContents.on("did-navigate-in-page", this.handleWindowedNavigation);
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
   }
 
   private unregisterWindowedViewListeners() {
-    this.view.webContents.off("did-navigate", this.broadcastNavigationState);
-    this.view.webContents.off("did-navigate-in-page", this.broadcastNavigationState);
+    this.view.webContents.off("did-navigate", this.handleWindowedNavigation);
+    this.view.webContents.off("did-navigate-in-page", this.handleWindowedNavigation);
     this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
   }
+
+  /**
+   * The bookmark button is keyed on the URL on display, so it has to be redrawn
+   * wherever the window navigates, alongside the back and forward controls.
+   */
+  private handleWindowedNavigation = () => {
+    this.broadcastNavigationState();
+
+    this.broadcastBookmarkState();
+  };
 
   private registerWindowListeners() {
     this.window.on("resize", this.updateViewBounds);
@@ -687,7 +721,7 @@ export class WorkspaceApp {
 
     this.account.instance.tabs.deactivateTab(this.id);
 
-    if (this.persistence) {
+    if (this.pinned) {
       accounts.saveTabs();
     }
   }
@@ -734,7 +768,7 @@ export class WorkspaceApp {
 
     this.updateViewBounds();
 
-    if (this.persistence) {
+    if (this.pinned) {
       accounts.saveTabs();
     }
   }
@@ -818,11 +852,11 @@ export class WorkspaceApp {
   };
 
   /**
-   * Only a window has a bookmark button to keep in sync — an embedded tab shows
-   * its state in the strip, which redraws from the tabs broadcast.
+   * Only a window has a bookmark button to keep in sync — an embedded tab is
+   * bookmarked from its context menu, which is built fresh on every open.
    */
   broadcastBookmarkState = () => {
-    if (!this._window) {
+    if (!this._window || this.viewDestroyed) {
       return;
     }
 

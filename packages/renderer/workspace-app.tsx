@@ -38,8 +38,10 @@ function RecentDownloadHistoryButton() {
 }
 
 /**
- * Bookmarking is otherwise a tab context-menu action, which `New Windows` mode
- * leaves no way to reach — this is the entry point that does not need a strip.
+ * Saves the URL on display, or drops the bookmark holding it — filled while the
+ * window sits on a bookmarked URL, empty as soon as it browses on. Bookmarking
+ * is otherwise a tab context-menu action, which `New Windows` mode leaves no
+ * way to reach.
  */
 function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
   const [bookmarkState, setBookmarkState] = useState<WorkspaceAppBookmarkState>({

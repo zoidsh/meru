@@ -1,8 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
+import type { SavedTab } from "@meru/shared/schemas";
 import type { Config } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
+
+/** A saved tab as it was written before bookmarks became a list of their own. */
+type LegacySavedTab = SavedTab & {
+  persistence?: "pinned" | "bookmarked";
+};
 
 export const DEFAULT_WINDOW_STATE_BOUNDS = {
   width: 1280,
@@ -29,6 +35,7 @@ export const config = new Store<Config>({
         },
         workspaceApps: {
           savedTabs: [],
+          bookmarks: [],
         },
       },
     ],
@@ -364,7 +371,7 @@ export const config = new Store<Config>({
       if (Array.isArray(accounts)) {
         for (const account of accounts) {
           if (typeof account.workspaceApps === "undefined") {
-            account.workspaceApps = { savedTabs: [] };
+            account.workspaceApps = { savedTabs: [], bookmarks: [] };
           }
         }
 
@@ -405,6 +412,39 @@ export const config = new Store<Config>({
 
       // @ts-expect-error
       store.delete("workspaceApps.openBehavior");
+
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        for (const account of accounts) {
+          const savedTabs = (account.workspaceApps?.savedTabs ?? []) as LegacySavedTab[];
+
+          // A bookmark used to be a saved tab flagged as bookmarked, which made
+          // it follow wherever that tab navigated. Bookmarks are a list of
+          // saved URLs of their own now, and every saved tab is a pinned one.
+          account.workspaceApps = {
+            savedTabs: savedTabs
+              .filter((savedTab) => savedTab.persistence !== "bookmarked")
+              .map((savedTab) => ({
+                app: savedTab.app,
+                url: savedTab.url,
+                title: savedTab.title,
+                loadOnLaunch: savedTab.loadOnLaunch,
+                windowed: savedTab.windowed,
+              })),
+            bookmarks: savedTabs
+              .filter((savedTab) => savedTab.persistence === "bookmarked")
+              .map((savedTab) => ({
+                id: randomUUID(),
+                app: savedTab.app,
+                url: savedTab.url,
+                title: savedTab.title,
+              })),
+          };
+        }
+
+        store.set("accounts", accounts);
+      }
     },
   },
 });

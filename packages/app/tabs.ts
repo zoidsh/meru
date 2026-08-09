@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { SavedTab, TabPersistence } from "@meru/shared/schemas";
+import type { SavedTab } from "@meru/shared/schemas";
 import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
@@ -36,18 +36,18 @@ export function isWindowedTab(tab: Tab) {
 
 type SavedWorkspaceApp = WorkspaceApp & {
   app: SupportedWorkspaceApp;
-  persistence: TabPersistence;
+  pinned: true;
 };
 
 function isSavedWorkspaceApp(tab: Tab): tab is SavedWorkspaceApp {
-  return tab instanceof WorkspaceApp && tab.persistence !== null && tab.app !== undefined;
+  return tab instanceof WorkspaceApp && tab.pinned && tab.app !== undefined;
 }
 
 export type Tab = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
   title: string;
-  persistence: TabPersistence | null;
+  pinned: boolean;
   dormant: boolean;
   loadOnLaunch?: boolean;
   isLoading: boolean;
@@ -56,6 +56,10 @@ export type Tab = {
   updateViewBounds?: () => void;
 };
 
+/**
+ * A saved tab that has not been opened yet. Only pinned tabs are saved, so a
+ * dormant tab is always a pinned one waiting to be materialized.
+ */
 export class DormantTab {
   id = randomUUID();
 
@@ -63,7 +67,7 @@ export class DormantTab {
 
   url: string;
 
-  persistence: TabPersistence;
+  pinned = true;
 
   dormant = true;
 
@@ -83,7 +87,6 @@ export class DormantTab {
     this.app = savedTab.app;
     this.url = savedTab.url;
     this.title = savedTab.title;
-    this.persistence = savedTab.persistence;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
     this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
@@ -106,7 +109,7 @@ export class Tabs {
       {
         id: GMAIL_TAB_ID,
         app: gmail.app,
-        persistence: null,
+        pinned: false,
         dormant: false,
         get title() {
           return gmail.title;
@@ -205,7 +208,7 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
-    if (removedTab?.persistence) {
+    if (removedTab?.pinned) {
       accounts.saveTabs();
     }
   }
@@ -246,7 +249,7 @@ export class Tabs {
     const workspaceApp = new WorkspaceApp({
       accountId: this.accountId,
       url: dormantTab.url,
-      persistence: dormantTab.persistence,
+      pinned: dormantTab.pinned,
       loadOnLaunch: dormantTab.loadOnLaunch,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       savedAsWindow: dormantTab.windowed,
@@ -356,7 +359,6 @@ export class Tabs {
           app: savedWorkspaceApp.app,
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
-          persistence: savedWorkspaceApp.persistence,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
@@ -387,6 +389,29 @@ export class Tabs {
     }
   }
 
+  /**
+   * Opens a URL the way the configured mode dictates — in a window of its own,
+   * or in a tab that is activated right away. Apps that may not open inside
+   * Meru go to the default browser instead, leaving nothing to return.
+   */
+  openUrl(url: string) {
+    if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(url))) {
+      openExternalUrl(url, { skipTrustedHostCheck: true });
+
+      return;
+    }
+
+    if (resolveWorkspaceAppOpenBehavior() === "newWindow") {
+      return this.openWindowedTab(url);
+    }
+
+    const workspaceApp = this.openTab(url);
+
+    this.activateTab(workspaceApp.id);
+
+    return workspaceApp;
+  }
+
   reopenClosedTab() {
     const reopenedTabUrl = this.recentlyClosedTabUrls.pop();
 
@@ -394,21 +419,7 @@ export class Tabs {
       return;
     }
 
-    if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(reopenedTabUrl))) {
-      openExternalUrl(reopenedTabUrl, { skipTrustedHostCheck: true });
-
-      return;
-    }
-
-    if (resolveWorkspaceAppOpenBehavior() === "newWindow") {
-      return this.openWindowedTab(reopenedTabUrl);
-    }
-
-    const workspaceApp = this.openTab(reopenedTabUrl);
-
-    this.activateTab(workspaceApp.id);
-
-    return workspaceApp;
+    return this.openUrl(reopenedTabUrl);
   }
 
   get hasRecentlyClosedTabs() {
@@ -419,7 +430,7 @@ export class Tabs {
     const previousActiveTabId = this.activeTabId;
 
     for (const tab of this.tabs.slice()) {
-      if (tab.id !== keptTabId && tab.id !== GMAIL_TAB_ID && tab.persistence !== "pinned") {
+      if (tab.id !== keptTabId && tab.id !== GMAIL_TAB_ID && !tab.pinned) {
         this.closeTab(tab.id);
       }
     }
@@ -435,7 +446,7 @@ export class Tabs {
     const tabIndex = this.tabs.findIndex((tab) => tab.id === tabId);
 
     for (const tab of this.tabs.slice(tabIndex + 1)) {
-      if (tab.persistence !== "pinned") {
+      if (!tab.pinned) {
         this.closeTab(tab.id);
       }
     }
@@ -445,29 +456,24 @@ export class Tabs {
     }
   }
 
-  setTabPersistence(tabId: string, persistence: TabPersistence | null) {
-    const persistableTab = this.getTab(tabId);
+  setTabPinned(tabId: string, pinned: boolean) {
+    const pinnableTab = this.getTab(tabId);
 
-    if (persistableTab instanceof DormantTab) {
-      if (!persistence) {
-        this.removeTab(tabId);
+    // Unpinning a tab that was never opened leaves nothing behind to keep.
+    if (!pinned && pinnableTab instanceof DormantTab) {
+      this.removeTab(tabId);
 
-        return;
-      }
-
-      persistableTab.persistence = persistence;
-    } else if (persistableTab instanceof WorkspaceApp) {
-      persistableTab.persistence = persistence;
-    } else {
       return;
     }
 
-    if (persistence !== "pinned") {
-      persistableTab.loadOnLaunch = false;
+    if (!(pinnableTab instanceof WorkspaceApp)) {
+      return;
     }
 
-    if (persistableTab instanceof WorkspaceApp) {
-      persistableTab.broadcastBookmarkState();
+    pinnableTab.pinned = pinned;
+
+    if (!pinned) {
+      pinnableTab.loadOnLaunch = false;
     }
 
     this.reorderTabs();
@@ -515,7 +521,7 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
-    if (movedTab.persistence) {
+    if (movedTab.pinned) {
       accounts.saveTabs();
     }
   }
@@ -530,12 +536,11 @@ export class Tabs {
     const savedTabs: SavedTab[] = [];
 
     for (const tab of this.tabs) {
-      if (tab instanceof WorkspaceApp && tab.persistence && tab.app) {
+      if (tab instanceof WorkspaceApp && tab.pinned && tab.app) {
         savedTabs.push({
           app: tab.app,
           url: tab.url,
           title: tab.title,
-          persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
           windowed: tab.opensAsWindow,
         });
@@ -544,7 +549,6 @@ export class Tabs {
           app: tab.app,
           url: tab.url,
           title: tab.title,
-          persistence: tab.persistence,
           loadOnLaunch: tab.loadOnLaunch,
           windowed: tab.windowed,
         });
@@ -567,7 +571,7 @@ export class Tabs {
       id: tab.id,
       app: tab.app,
       title: tab.title,
-      persistence: tab.persistence,
+      pinned: tab.pinned,
       dormant: tab.dormant,
       windowed: isWindowedTab(tab),
       loadOnLaunch: Boolean(tab.loadOnLaunch),
