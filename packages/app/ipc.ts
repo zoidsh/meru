@@ -223,6 +223,8 @@ class Ipc {
 
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
+      const isSavableWorkspaceApp = !workspaceApp.isPopup && Boolean(workspaceApp.app);
+
       Menu.buildFromTemplate([
         ...(workspaceApp.isPopup || isWindowsMode
           ? []
@@ -237,6 +239,31 @@ class Ipc {
                 type: "separator" as const,
               },
             ]),
+        ...(isSavableWorkspaceApp
+          ? [
+              {
+                label: "Load on Launch",
+                type: "checkbox" as const,
+                checked: workspaceApp.persistence === "pinned" && workspaceApp.loadOnLaunch,
+                click: () => {
+                  if (workspaceApp.loadOnLaunch) {
+                    workspaceApp.loadOnLaunch = false;
+
+                    accounts.saveTabs();
+
+                    return;
+                  }
+
+                  workspaceApp.loadOnLaunch = true;
+
+                  workspaceApp.account.instance.tabs.setTabPersistence(workspaceApp.id, "pinned");
+                },
+              },
+              {
+                type: "separator" as const,
+              },
+            ]
+          : []),
         {
           label: "Copy Link",
           click: () => {
