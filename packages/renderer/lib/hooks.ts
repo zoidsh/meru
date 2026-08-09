@@ -60,7 +60,10 @@ export function useVerticalTabs() {
   const tabs = getVisibleVerticalTabs(
     accountsTabs.find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
       ?.tabs ?? [],
-    config?.["workspaceApps.mode"] ?? "tabs",
+    {
+      workspaceAppsMode: config?.["workspaceApps.mode"] ?? "tabs",
+      showWindows: config?.["verticalTabs.showWindows"] ?? true,
+    },
   );
 
   const width = getVerticalTabsWidth(tabs, config?.["verticalTabs.width"] ?? "auto");

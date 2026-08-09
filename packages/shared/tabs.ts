@@ -47,19 +47,23 @@ export function getTabSection(tab: Pick<TabState, "id" | "persistence" | "dorman
 }
 
 /**
- * In `windows` mode the strip only shows tabs that live in the main window:
+ * `windows` mode leaves the strip with only what lives in the main window:
  * windowed apps have a window of their own, and dormant entries would open as
- * one. Everything filtered out here stays saved and comes back in `tabs` mode.
+ * one. In `tabs` mode windowed apps are listed alongside the tabs unless the
+ * user turns that off. Everything filtered out here stays saved either way.
  */
 export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dormant" | "windowed">>(
   tabs: VerticalTab[],
-  workspaceAppsMode: WorkspaceAppsMode,
+  {
+    workspaceAppsMode,
+    showWindows,
+  }: { workspaceAppsMode: WorkspaceAppsMode; showWindows: boolean },
 ) {
-  if (workspaceAppsMode === "tabs") {
-    return tabs;
+  if (workspaceAppsMode === "windows") {
+    return tabs.filter((tab) => !tab.dormant && !tab.windowed);
   }
 
-  return tabs.filter((tab) => !tab.dormant && !tab.windowed);
+  return showWindows ? tabs : tabs.filter((tab) => !tab.windowed);
 }
 
 export function getVerticalTabsWidth(

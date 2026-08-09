@@ -48,6 +48,10 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
+    config.onDidChange("verticalTabs.showWindows", () => {
+      accounts.updateAllViewBounds();
+    });
+
     config.onDidChange("workspaceApps.mode", () => {
       accounts.updateAllViewBounds();
     });
@@ -108,10 +112,10 @@ class Accounts {
 
   getVerticalTabsWidth() {
     return getVerticalTabsWidth(
-      getVisibleVerticalTabs(
-        this.getSelectedAccount().instance.tabs.serialize(),
-        config.get("workspaceApps.mode"),
-      ),
+      getVisibleVerticalTabs(this.getSelectedAccount().instance.tabs.serialize(), {
+        workspaceAppsMode: config.get("workspaceApps.mode"),
+        showWindows: config.get("verticalTabs.showWindows"),
+      }),
       config.get("verticalTabs.width"),
     );
   }
