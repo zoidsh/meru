@@ -239,10 +239,13 @@ export function AppTitlebar() {
 
   const isWorkspaceAppTabActive = Boolean(activeTab?.app && activeTab.app !== "gmail");
 
-  // The strip is the only other place bookmarks are listed, and `New Windows`
-  // mode hides it — so the button is what keeps them reachable there. It stays
-  // out of the way until there is something to list.
-  const hasBookmarks = getBookmarkedTabs(allSelectedAccountTabs).length > 0;
+  // `New Windows` mode hides the strip, which is where bookmarks are otherwise
+  // listed — so the button exists to replace it, not to sit beside it. In
+  // `Tabs` mode the strip already has them. It also waits until there is
+  // something to list.
+  const shouldShowBookmarksButton =
+    config["workspaceApps.mode"] === "windows" &&
+    getBookmarkedTabs(allSelectedAccountTabs).length > 0;
 
   const shouldShowOutOfOfficeButton =
     accounts.length === 1 &&
@@ -423,7 +426,7 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            {hasBookmarks && <BookmarksButton />}
+            {shouldShowBookmarksButton && <BookmarksButton />}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
