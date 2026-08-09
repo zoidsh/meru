@@ -22,6 +22,7 @@ export function ConfigSelectField({
   licenseKeyRequired,
   disabled,
   restartRequired,
+  onValueChanged,
 }: {
   configKey: keyof Config;
   label: string;
@@ -31,6 +32,7 @@ export function ConfigSelectField({
   licenseKeyRequired?: boolean;
   disabled?: boolean;
   restartRequired?: boolean;
+  onValueChanged?: (value: string) => void;
 }) {
   const { config } = useConfig();
 
@@ -70,9 +72,16 @@ export function ConfigSelectField({
         value={value}
         onValueChange={(newValue) => {
           if (newValue) {
-            configMutation.mutate({
-              [configKey]: newValue,
-            });
+            configMutation.mutate(
+              {
+                [configKey]: newValue,
+              },
+              {
+                onSuccess: () => {
+                  onValueChanged?.(newValue);
+                },
+              },
+            );
           }
         }}
         disabled={isDisabled}

@@ -93,7 +93,7 @@ export const config = new Store<Config>({
     "trial.expired": false,
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],
-    "workspaceApps.openBehavior": "tab",
+    "workspaceApps.mode": "tabs",
     "workspaceApps.launcherApps": [],
     "workspaceApps.launcherDisplay": "auto",
     "workspaceApps.showAccountColor": true,
@@ -393,6 +393,17 @@ export const config = new Store<Config>({
 
       // @ts-expect-error
       store.delete("gmail.fullDarkTheme");
+    },
+    ">3.58.0": (store) => {
+      // @ts-expect-error: `workspaceApps.openBehavior` is now 'workspaceApps.mode'
+      const openBehavior = store.get("workspaceApps.openBehavior");
+
+      if (typeof openBehavior === "string") {
+        store.set("workspaceApps.mode", openBehavior === "newWindow" ? "windows" : "tabs");
+      }
+
+      // @ts-expect-error
+      store.delete("workspaceApps.openBehavior");
     },
   },
 });

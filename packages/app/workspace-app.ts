@@ -68,6 +68,16 @@ function getWorkspaceAppFromUrl(url: string) {
   return workspaceAppsBySubdomain.get(workspaceAppSubdomain);
 }
 
+export function resolveWorkspaceAppOpenBehavior(
+  requestedOpenBehavior?: WorkspaceAppOpenBehavior,
+): WorkspaceAppOpenBehavior {
+  if (config.get("workspaceApps.mode") === "windows") {
+    return "newWindow";
+  }
+
+  return requestedOpenBehavior ?? "tab";
+}
+
 type WorkspaceAppOptions = {
   accountId: AccountConfig["id"];
   url: string;
@@ -244,12 +254,14 @@ export class WorkspaceApp {
         return { action: "deny" };
       }
 
-      const openBehavior: WorkspaceAppOpenBehavior =
+      const requestedOpenBehavior =
         disposition === "new-window"
           ? "newWindow"
           : disposition === "background-tab"
             ? "backgroundTab"
-            : config.get("workspaceApps.openBehavior");
+            : undefined;
+
+      const openBehavior = resolveWorkspaceAppOpenBehavior(requestedOpenBehavior);
 
       const account = accounts.getAccount(accountId);
 

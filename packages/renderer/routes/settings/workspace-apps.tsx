@@ -1,13 +1,14 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
   type SupportedWorkspaceApp,
-  workspaceAppOpenBehaviors,
   workspaceApps,
   workspaceAppsLauncherDisplays,
+  workspaceAppsModes,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -27,6 +28,7 @@ import {
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -36,6 +38,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useTabsStore } from "@/lib/stores";
 import { platform } from "@/lib/utils";
 
 function SortableLauncherAppItem({
@@ -85,6 +88,12 @@ export function WorkspaceAppsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const accountsTabs = useTabsStore((state) => state.accountsTabs);
+
+  const hasOpenWorkspaceAppTabs = accountsTabs.some((accountTabs) =>
+    accountTabs.tabs.some((tab) => tab.id !== GMAIL_TAB_ID && !tab.dormant && !tab.windowed),
+  );
+
   if (!config) {
     return;
   }
@@ -129,22 +138,32 @@ export function WorkspaceAppsSettings() {
           {config["workspaceApps.openInApp"] && (
             <>
               <ConfigSelectField
-                label="Open Behavior"
+                label="Mode"
                 description={
                   <>
-                    How Workspace Apps open: as a tab in the main window (default), in a new window,
-                    or as a background tab. Hold <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to
-                    always open as a background tab or <Kbd>Shift</Kbd> to always open in a new
-                    window.
+                    How Workspace Apps open: as tabs in the main window (default), or each in its
+                    own window with no tab strip. In Tabs, hold{" "}
+                    <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to open a background tab or{" "}
+                    <Kbd>Shift</Kbd> to open a new window.
                   </>
                 }
-                configKey="workspaceApps.openBehavior"
-                placeholder="Select behavior"
+                configKey="workspaceApps.mode"
+                placeholder="Select mode"
                 licenseKeyRequired
-                items={Object.entries(workspaceAppOpenBehaviors).map(([value, label]) => ({
+                items={Object.entries(workspaceAppsModes).map(([value, label]) => ({
                   value,
                   label,
                 }))}
+                onValueChanged={(mode) => {
+                  if (mode !== "windows" || !hasOpenWorkspaceAppTabs) {
+                    return;
+                  }
+
+                  toast.info("Workspace Apps now open in their own window", {
+                    description:
+                      "Your open tabs stay as they are — the tab strip hides once you close them or restart Meru.",
+                  });
+                }}
               />
               <Field>
                 <FieldContent>

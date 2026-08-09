@@ -15,6 +15,7 @@ import type {
   SupportedWorkspaceApp,
   WorkspaceAppOpenBehavior,
   WorkspaceAppsLauncherDisplay,
+  WorkspaceAppsMode,
 } from "./workspace-apps";
 
 export type DesktopSource = { id: string; name: string; thumbnail: string };
@@ -129,7 +130,7 @@ export type Config = {
   "trial.expired": boolean;
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];
-  "workspaceApps.openBehavior": WorkspaceAppOpenBehavior;
+  "workspaceApps.mode": WorkspaceAppsMode;
   "workspaceApps.launcherApps": LauncherWorkspaceApp[];
   "workspaceApps.launcherDisplay": WorkspaceAppsLauncherDisplay;
   "workspaceApps.showAccountColor": boolean;

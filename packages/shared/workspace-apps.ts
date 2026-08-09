@@ -70,10 +70,15 @@ export function resolveWorkspaceAppsLauncherDisplay(
   return launcherAppCount > LAUNCHER_EXPANDED_APPS_THRESHOLD ? "collapsed" : "expanded";
 }
 
-export const workspaceAppOpenBehaviors = {
-  tab: "Tab",
-  newWindow: "New Window",
-  backgroundTab: "Background Tab",
+export const workspaceAppsModes = {
+  tabs: "Tabs",
+  windows: "New Windows",
 } as const;
 
-export type WorkspaceAppOpenBehavior = keyof typeof workspaceAppOpenBehaviors;
+export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
+
+/**
+ * How a single Workspace App ends up being opened. Resolved per click from the
+ * configured mode and the held modifier keys — never stored in the config.
+ */
+export type WorkspaceAppOpenBehavior = "tab" | "backgroundTab" | "newWindow";
