@@ -362,7 +362,7 @@ export class AppMenu {
             label: "Downloads",
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
-              downloads.closeRecentDownloadHistoryPopup();
+              downloads.recentDownloadHistoryPopup.close();
 
               main.navigate("/download-history");
 
