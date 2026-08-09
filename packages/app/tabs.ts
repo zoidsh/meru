@@ -4,6 +4,7 @@ import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/s
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
+import { config } from "./config";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { appMenu } from "./menu";
@@ -234,7 +235,7 @@ export class Tabs {
       url: dormantTab.url,
       persistence: dormantTab.persistence,
       loadOnLaunch: dormantTab.loadOnLaunch,
-      asWindow: dormantTab.windowed,
+      asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
     });
@@ -275,7 +276,11 @@ export class Tabs {
   }
 
   private activateAdjacentTab(direction: "next" | "previous") {
-    const cyclableTabs = this.tabs.filter((tab) => !isWindowedTab(tab));
+    const isWindowsMode = config.get("workspaceApps.mode") === "windows";
+
+    const cyclableTabs = this.tabs.filter(
+      (tab) => !isWindowedTab(tab) && !(isWindowsMode && tab.dormant),
+    );
 
     const activeTabIndex = cyclableTabs.findIndex((tab) => tab.id === this.activeTabId);
 

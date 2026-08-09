@@ -48,7 +48,7 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
-    config.onDidChange("workspaceApps.openBehavior", () => {
+    config.onDidChange("workspaceApps.mode", () => {
       accounts.updateAllViewBounds();
     });
 
@@ -110,7 +110,7 @@ class Accounts {
     return getVerticalTabsWidth(
       getVisibleVerticalTabs(
         this.getSelectedAccount().instance.tabs.serialize(),
-        config.get("workspaceApps.openBehavior"),
+        config.get("workspaceApps.mode"),
       ),
       config.get("verticalTabs.width"),
     );

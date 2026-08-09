@@ -1,6 +1,6 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig, TabPersistence } from "./schemas";
-import type { SupportedWorkspaceApp, WorkspaceAppOpenBehavior } from "./workspace-apps";
+import type { SupportedWorkspaceApp, WorkspaceAppsMode } from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
 
@@ -45,15 +45,20 @@ export function getTabSection(tab: Pick<TabState, "id" | "persistence" | "dorman
   return "normal";
 }
 
-export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "windowed">>(
+/**
+ * In `windows` mode the strip only shows tabs that live in the main window:
+ * windowed apps have a window of their own, and dormant entries would open as
+ * one. Everything filtered out here stays saved and comes back in `tabs` mode.
+ */
+export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dormant" | "windowed">>(
   tabs: VerticalTab[],
-  workspaceAppsOpenBehavior: WorkspaceAppOpenBehavior,
+  workspaceAppsMode: WorkspaceAppsMode,
 ) {
-  if (workspaceAppsOpenBehavior !== "newWindow") {
+  if (workspaceAppsMode === "tabs") {
     return tabs;
   }
 
-  return tabs.filter((tab) => !tab.windowed);
+  return tabs.filter((tab) => !tab.dormant && !tab.windowed);
 }
 
 export function getVerticalTabsWidth(
