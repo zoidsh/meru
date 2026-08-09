@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getVerticalTabsWidth } from "@meru/shared/tabs";
+import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { Account } from "./account";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -45,6 +45,10 @@ class Accounts {
     });
 
     config.onDidChange("verticalTabs.width", () => {
+      accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("workspaceApps.mode", () => {
       accounts.updateAllViewBounds();
     });
 
@@ -104,7 +108,10 @@ class Accounts {
 
   getVerticalTabsWidth() {
     return getVerticalTabsWidth(
-      this.getSelectedAccount().instance.tabs.serialize(),
+      getVisibleVerticalTabs(
+        this.getSelectedAccount().instance.tabs.serialize(),
+        config.get("workspaceApps.mode"),
+      ),
       config.get("verticalTabs.width"),
     );
   }

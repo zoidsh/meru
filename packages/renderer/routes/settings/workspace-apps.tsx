@@ -93,6 +93,10 @@ export function WorkspaceAppsSettings() {
     accountTabs.tabs.some((tab) => tab.id !== GMAIL_TAB_ID && !tab.dormant && !tab.windowed),
   );
 
+  const hasLoadOnLaunchWorkspaceApps = accountsTabs.some((accountTabs) =>
+    accountTabs.tabs.some((tab) => tab.loadOnLaunch),
+  );
+
   if (!config) {
     return;
   }
@@ -154,10 +158,18 @@ export function WorkspaceAppsSettings() {
                   label,
                 }))}
                 confirmation={{
-                  when: (mode) => mode === "windows" && hasOpenWorkspaceAppTabs,
+                  when: (mode) =>
+                    mode === "windows" && (hasOpenWorkspaceAppTabs || hasLoadOnLaunchWorkspaceApps),
                   title: "Switch to New Windows?",
-                  description:
-                    "Workspace Apps will open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides once you have closed them, or after a restart.",
+                  description: (
+                    <>
+                      Workspace Apps will open in their own window from now on.
+                      {hasOpenWorkspaceAppTabs &&
+                        " The tabs you already have open stay as they are, and the tab strip hides once you have closed them, or after a restart."}
+                      {hasLoadOnLaunchWorkspaceApps &&
+                        " Pinned apps set to load on launch will open as windows the next time you start Meru."}
+                    </>
+                  ),
                   confirmLabel: "Switch to New Windows",
                 }}
               />

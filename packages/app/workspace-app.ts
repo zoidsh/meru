@@ -84,6 +84,7 @@ type WorkspaceAppOptions = {
   window?: BrowserWindowConstructorOptions;
   view?: WebContentsViewConstructorOptions;
   asWindow?: boolean;
+  savedAsWindow?: boolean;
   persistence?: TabPersistence | null;
   loadOnLaunch?: boolean;
   app?: SupportedWorkspaceApp;
@@ -381,6 +382,14 @@ export class WorkspaceApp {
 
   loadOnLaunch = false;
 
+  /**
+   * Whether this app should be restored in its own window, as opposed to
+   * whether it currently has one. The two only differ in `windows` mode, where
+   * every app is windowed because the mode says so rather than because the user
+   * asked — persisting `isWindowed` there would rewrite the user's choice.
+   */
+  opensAsWindow: boolean;
+
   private powerSaveBlockerId: number | undefined;
 
   private viewDestroyed = false;
@@ -393,6 +402,7 @@ export class WorkspaceApp {
     window,
     view,
     asWindow,
+    savedAsWindow,
     persistence,
     loadOnLaunch,
     app,
@@ -402,6 +412,8 @@ export class WorkspaceApp {
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.persistence = persistence ?? null;
     this.loadOnLaunch = Boolean(loadOnLaunch);
+    this.opensAsWindow =
+      savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");
 
     if (asWindow) {
       this._window = this.createBrowserWindow(window);
@@ -624,6 +636,8 @@ export class WorkspaceApp {
   }
 
   detachToWindow() {
+    this.opensAsWindow = true;
+
     main.window.contentView.removeChildView(this.view);
 
     this._window = this.createBrowserWindow();
@@ -660,6 +674,8 @@ export class WorkspaceApp {
   }
 
   adoptIntoTabs() {
+    this.opensAsWindow = false;
+
     const discardedWindow = this.window;
 
     discardedWindow.off("resize", this.updateViewBounds);

@@ -2,7 +2,7 @@ import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getVerticalTabsWidth } from "@meru/shared/tabs";
+import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { useEffect, useRef, useState } from "react";
 import { useConfig } from "./react-query";
 import { useAccountsStore, useTabsStore, useTrialStore } from "./stores";
@@ -57,9 +57,11 @@ export function useVerticalTabs() {
 
   const selectedAccount = accounts.find((account) => account.config.selected);
 
-  const tabs =
+  const tabs = getVisibleVerticalTabs(
     accountsTabs.find((accountTabs) => accountTabs.accountId === selectedAccount?.config.id)
-      ?.tabs ?? [];
+      ?.tabs ?? [],
+    config?.["workspaceApps.mode"] ?? "tabs",
+  );
 
   const width = getVerticalTabsWidth(tabs, config?.["verticalTabs.width"] ?? "auto");
 
