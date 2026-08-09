@@ -139,6 +139,7 @@ export function WorkspaceAppsSettings() {
             description="Open Workspace Apps in app instead of external browser."
             configKey="workspaceApps.openInApp"
             licenseKeyRequired
+            restartRequired
           />
           {config["workspaceApps.openInApp"] && (
             <>

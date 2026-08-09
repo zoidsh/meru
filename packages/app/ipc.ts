@@ -29,7 +29,12 @@ import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { DormantTab } from "@/tabs";
-import { resolveWorkspaceAppOpenBehavior, WorkspaceApp } from "@/workspace-app";
+import {
+  canOpenWorkspaceAppInApp,
+  getWorkspaceAppFromUrl,
+  resolveWorkspaceAppOpenBehavior,
+  WorkspaceApp,
+} from "@/workspace-app";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -343,6 +348,12 @@ class Ipc {
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
       const openWorkspaceAppUrl = (url: string) => {
+        if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(url))) {
+          openExternalUrl(url, { skipTrustedHostCheck: true });
+
+          return;
+        }
+
         if (isWindowsMode) {
           account.instance.tabs.openWindowedTab(url);
 
@@ -722,13 +733,7 @@ class Ipc {
         return;
       }
 
-      // `Open in App` and its exclusions govern every way an app opens, links
-      // and launcher alike — otherwise the launcher would be the one path that
-      // ignores the setting.
-      if (
-        !config.get("workspaceApps.openInApp") ||
-        config.get("workspaceApps.openInAppExcludedApps").includes(app)
-      ) {
+      if (!canOpenWorkspaceAppInApp(app)) {
         openExternalUrl(getWorkspaceAppUrl(app), {
           skipTrustedHostCheck: true,
           focusBrowser: modifierOpenBehavior !== "backgroundTab",

@@ -58,7 +58,7 @@ const SUPPORTED_WORKSPACE_APPS_URL_REGEXP = new RegExp(
   `(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
-function getWorkspaceAppFromUrl(url: string) {
+export function getWorkspaceAppFromUrl(url: string) {
   const workspaceAppSubdomain = url.match(SUPPORTED_WORKSPACE_APPS_URL_REGEXP)?.[1];
 
   if (!workspaceAppSubdomain) {
@@ -66,6 +66,20 @@ function getWorkspaceAppFromUrl(url: string) {
   }
 
   return workspaceAppsBySubdomain.get(workspaceAppSubdomain);
+}
+
+/**
+ * Whether an app may open inside Meru at all. `Open in App` and its exclusions
+ * govern every way one opens — links, launcher, restoring a saved tab — so this
+ * is the single place that answers it. An unrecognised URL only has the switch
+ * to go on.
+ */
+export function canOpenWorkspaceAppInApp(app: SupportedWorkspaceApp | undefined) {
+  if (!config.get("workspaceApps.openInApp")) {
+    return false;
+  }
+
+  return !app || !config.get("workspaceApps.openInAppExcludedApps").includes(app);
 }
 
 export function resolveWorkspaceAppOpenBehavior(
@@ -245,8 +259,7 @@ export class WorkspaceApp {
       licenseKey.isValid &&
       matchedSupportedWorkspaceApp &&
       !workspaceApps[matchedSupportedWorkspaceApp].singleInstance &&
-      config.get("workspaceApps.openInApp") &&
-      !config.get("workspaceApps.openInAppExcludedApps").includes(matchedSupportedWorkspaceApp);
+      canOpenWorkspaceAppInApp(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
       if (workspaceApps[matchedSupportedWorkspaceApp].popupOnly) {
