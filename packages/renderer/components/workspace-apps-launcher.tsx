@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
 import { cn } from "@meru/ui/lib/utils";
-import { LayoutGridIcon } from "lucide-react";
+import { LayoutGridIcon, PlusIcon } from "lucide-react";
 import { type MouseEvent, useState } from "react";
 import {
   TitlebarDropdownMenu,
@@ -117,11 +117,12 @@ export function VerticalTabsWorkspaceAppsLauncher({
         render={
           <Button
             variant="ghost"
-            size="icon"
-            className={cn(isWide && "w-full")}
-            title="Workspace Apps"
+            size={isWide ? "sm" : "icon"}
+            className={cn("opacity-50 hover:opacity-100", isWide && "w-full justify-start")}
+            title="New Tab"
           >
-            <LayoutGridIcon />
+            <PlusIcon />
+            {isWide && "New Tab"}
           </Button>
         }
       />
