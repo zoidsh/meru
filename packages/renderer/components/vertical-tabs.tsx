@@ -13,7 +13,10 @@ import { AppWindowIcon, BookmarkIcon, CircleAlertIcon, GlobeIcon, XIcon } from "
 import type { Ref } from "react";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
-import { WorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
+import {
+  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+  WorkspaceAppsLauncher,
+} from "@/components/workspace-apps-launcher";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
@@ -349,7 +352,8 @@ export function VerticalTabs() {
       {shouldShowWorkspaceAppsLauncher && (
         <div
           className={cn(
-            "mt-auto flex animate-in border-t pt-2 duration-150 fade-in-0",
+            "mt-auto flex border-t pt-2",
+            WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
             isWide ? "flex-row flex-wrap justify-center gap-1" : "flex-col gap-2",
           )}
         >

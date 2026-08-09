@@ -1,4 +1,3 @@
-import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import {
   type LauncherWorkspaceApp,
@@ -26,10 +25,13 @@ import { useCloseOnWindowBlur } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
 /**
- * Matches the `duration-150` on the fade classes its hosts render it with, so
- * the launcher stays mounted for as long as its fade-out takes.
+ * Fades the launcher in when it takes over a host and out when it hands over,
+ * without either host having to keep it mounted: `transition-discrete` holds
+ * the `display` flip until the fade has played, and `starting:` supplies the
+ * transparent state it fades in from.
  */
-export const WORKSPACE_APPS_LAUNCHER_FADE_DURATION = ms("150ms");
+export const WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME =
+  "transition-[opacity,display] transition-discrete duration-150 starting:opacity-0";
 
 export function WorkspaceAppsLauncher({
   launcherApps,

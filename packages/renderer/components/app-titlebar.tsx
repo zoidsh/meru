@@ -30,10 +30,10 @@ import {
 } from "@/components/titlebar";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import {
-  WORKSPACE_APPS_LAUNCHER_FADE_DURATION,
+  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
   WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
-import { useDelayedUnmount, useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
+import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
   useAccountsStore,
@@ -184,18 +184,6 @@ export function AppTitlebar() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  // The vertical tabs strip hosts the launcher whenever it is there, so that
-  // opening another app stays in the same place as switching between them.
-  const isWorkspaceAppsLauncherVisible =
-    isLicenseKeyValid &&
-    Boolean(config?.["workspaceApps.launcherApps"].length) &&
-    verticalTabsWidth === 0;
-
-  const shouldRenderWorkspaceAppsLauncher = useDelayedUnmount(
-    isWorkspaceAppsLauncherVisible,
-    WORKSPACE_APPS_LAUNCHER_FADE_DURATION,
-  );
-
   if (location.startsWith("/settings/")) {
     return (
       <Titlebar>
@@ -212,6 +200,13 @@ export function AppTitlebar() {
   const isAccountLocation = location === "/";
 
   const isUnifiedInboxLocation = location === "/unified-inbox";
+
+  const shouldShowWorkspaceAppsLauncher =
+    isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
+
+  // The vertical tabs strip hosts the launcher whenever it is there, so that
+  // opening another app stays in the same place as switching between them.
+  const isWorkspaceAppsLauncherHostedByVerticalTabs = verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -365,13 +360,11 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
-            {shouldRenderWorkspaceAppsLauncher && (
+            {shouldShowWorkspaceAppsLauncher && (
               <TitlebarButtonGroup
                 className={cn(
-                  "duration-150",
-                  isWorkspaceAppsLauncherVisible
-                    ? "animate-in fade-in-0"
-                    : "animate-out fade-out-0 fill-mode-forwards",
+                  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+                  isWorkspaceAppsLauncherHostedByVerticalTabs && "hidden opacity-0",
                 )}
               >
                 <WorkspaceAppsLauncher
