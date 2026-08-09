@@ -9,7 +9,7 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
-import type { AccountTabsState, VerticalTabsWidth } from "./tabs";
+import type { AccountTabsState, BookmarkState, VerticalTabsWidth } from "./tabs";
 import type {
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
@@ -193,6 +193,10 @@ export type IpcMainEvents =
         app: SupportedWorkspaceApp,
         openBehavior?: WorkspaceAppOpenBehavior,
       ];
+      "bookmarks.togglePopup": [];
+      "bookmarks.closePopup": [];
+      "bookmarks.setPopupCloseOnBlurEnabled": [enabled: boolean];
+      "bookmarks.removeBookmark": [accountId: AccountConfig["id"], tabId: string];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
@@ -220,6 +224,7 @@ export type IpcMainEvents =
       "about.getInfo": () => { version: string; os: string; deviceId: string };
       "about.exportLogs": () => { canceled: boolean };
       "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
+      "bookmarks.getBookmarks": () => BookmarkState[];
     };
 
 export type IpcRendererEvent = {
@@ -233,6 +238,7 @@ export type IpcRendererEvent = {
   "theme.darkModeChanged": [darkMode: boolean];
   "accounts.changed": [accounts: AccountInstances];
   "tabs.changed": [accountsTabs: AccountTabsState[]];
+  "bookmarks.changed": [bookmarks: BookmarkState[]];
   "accounts.openAddAccountDialog": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];

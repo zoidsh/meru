@@ -1,10 +1,12 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { getBookmarkedTabs } from "@meru/shared/tabs";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
 import {
+  BookmarkIcon,
   BriefcaseIcon,
   CircleAlertIcon,
   DownloadIcon,
@@ -33,7 +35,7 @@ import {
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
   WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
-import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
+import { useIsLicenseKeyValid, useSelectedAccountTabs, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
   useAccountsStore,
@@ -41,6 +43,25 @@ import {
   useFindInPageStore,
   useTrialStore,
 } from "../lib/stores";
+
+function BookmarksButton() {
+  return (
+    <TitlebarIconButton
+      onClick={() => {
+        ipc.main.send("bookmarks.togglePopup");
+      }}
+      onMouseEnter={() => {
+        ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", false);
+      }}
+      onMouseLeave={() => {
+        ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", true);
+      }}
+      title="Bookmarks"
+    >
+      <BookmarkIcon />
+    </TitlebarIconButton>
+  );
+}
 
 function RecentDownloadHistoryButton() {
   return (
@@ -169,6 +190,8 @@ export function AppTitlebar() {
 
   const { tabs: selectedAccountTabs, width: verticalTabsWidth } = useVerticalTabs();
 
+  const { tabs: allSelectedAccountTabs } = useSelectedAccountTabs();
+
   const activeTab = selectedAccountTabs.find((tab) => tab.active);
 
   const [location] = useLocation();
@@ -215,6 +238,11 @@ export function AppTitlebar() {
     config["gmail.savedSearches"].length > 0 && Boolean(config.licenseKey);
 
   const isWorkspaceAppTabActive = Boolean(activeTab?.app && activeTab.app !== "gmail");
+
+  // The strip is the only other place bookmarks are listed, and `New Windows`
+  // mode hides it — so the button is what keeps them reachable there. It stays
+  // out of the way until there is something to list.
+  const hasBookmarks = getBookmarkedTabs(allSelectedAccountTabs).length > 0;
 
   const shouldShowOutOfOfficeButton =
     accounts.length === 1 &&
@@ -395,6 +423,7 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
+            {hasBookmarks && <BookmarksButton />}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>

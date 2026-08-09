@@ -3,6 +3,7 @@ import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { Account } from "./account";
+import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
@@ -229,6 +230,8 @@ class Accounts {
     this.updateAllViewBounds();
 
     this.refreshSelectedAccountView();
+
+    bookmarks.sendChangedToPopup();
   }
 
   selectPreviousAccount() {
@@ -421,6 +424,8 @@ class Accounts {
         tabs: account.instance.tabs.serialize(),
       })),
     );
+
+    bookmarks.sendChangedToPopup();
   }
 
   sendAccountsChangedToRenderer() {
