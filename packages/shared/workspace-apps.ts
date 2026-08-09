@@ -49,6 +49,27 @@ export const launcherWorkspaceApps = Object.fromEntries(
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<LauncherWorkspaceApp, string>;
 
+const LAUNCHER_EXPANDED_APPS_THRESHOLD = 3;
+
+export const workspaceAppsLauncherDisplays = {
+  auto: "Auto",
+  collapsed: "Collapsed",
+  expanded: "Expanded",
+} as const;
+
+export type WorkspaceAppsLauncherDisplay = keyof typeof workspaceAppsLauncherDisplays;
+
+export function resolveWorkspaceAppsLauncherDisplay(
+  launcherDisplay: WorkspaceAppsLauncherDisplay,
+  launcherAppCount: number,
+): Exclude<WorkspaceAppsLauncherDisplay, "auto"> {
+  if (launcherDisplay !== "auto") {
+    return launcherDisplay;
+  }
+
+  return launcherAppCount > LAUNCHER_EXPANDED_APPS_THRESHOLD ? "collapsed" : "expanded";
+}
+
 export const workspaceAppOpenBehaviors = {
   tab: "Tab",
   newWindow: "New Window",

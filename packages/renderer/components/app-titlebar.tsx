@@ -1,7 +1,12 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { launcherWorkspaceApps } from "@meru/shared/workspace-apps";
+import {
+  type LauncherWorkspaceApp,
+  launcherWorkspaceApps,
+  resolveWorkspaceAppsLauncherDisplay,
+  type WorkspaceAppsLauncherDisplay,
+} from "@meru/shared/workspace-apps";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -165,6 +170,70 @@ function DoNotDisturb() {
   );
 }
 
+function WorkspaceAppsLauncher({
+  launcherApps,
+  display,
+  disabled,
+}: {
+  launcherApps: LauncherWorkspaceApp[];
+  display: WorkspaceAppsLauncherDisplay;
+  disabled: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const resolvedDisplay = resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length);
+
+  if (resolvedDisplay === "expanded") {
+    return launcherApps.map((app) => (
+      <TitlebarIconButton
+        key={app}
+        title={launcherWorkspaceApps[app]}
+        disabled={disabled}
+        onClick={(event) => {
+          ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+        }}
+        onAuxClick={(event) => {
+          if (event.button === 1) {
+            ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+          }
+        }}
+      >
+        <WorkspaceAppIcon app={app} className="size-4" />
+      </TitlebarIconButton>
+    ));
+  }
+
+  return (
+    <TitlebarDropdownMenu
+      title="Workspace Apps"
+      icon={<LayoutGridIcon />}
+      side="left"
+      disabled={disabled}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      {launcherApps.map((app) => (
+        <TitlebarDropdownMenuItem
+          key={app}
+          title={launcherWorkspaceApps[app]}
+          onClick={(event) => {
+            ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
+          }}
+          onAuxClick={(event) => {
+            if (event.button === 1) {
+              ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
+
+              setIsOpen(false);
+            }
+          }}
+        >
+          <WorkspaceAppIcon app={app} className="size-4" />
+        </TitlebarDropdownMenuItem>
+      ))}
+    </TitlebarDropdownMenu>
+  );
+}
+
 export function AppTitlebar() {
   const accounts = useAccountsStore((state) => state.accounts);
 
@@ -182,8 +251,6 @@ export function AppTitlebar() {
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
 
   const { config } = useConfig();
-
-  const [isWorkspaceAppsLauncherOpen, setIsWorkspaceAppsLauncherOpen] = useState(false);
 
   const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] = useState(false);
 
@@ -325,49 +392,19 @@ export function AppTitlebar() {
               }}
             />
           </TitlebarButtonGroup>
-          {(shouldShowWorkspaceAppsLauncher || shouldShowUnifiedInboxButton) && (
+          {shouldShowUnifiedInboxButton && (
             <TitlebarButtonGroup>
-              {shouldShowWorkspaceAppsLauncher && (
-                <TitlebarDropdownMenu
-                  title="Workspace Apps"
-                  icon={<LayoutGridIcon />}
-                  disabled={isUnifiedInboxLocation}
-                  isOpen={isWorkspaceAppsLauncherOpen}
-                  onOpenChange={setIsWorkspaceAppsLauncherOpen}
-                >
-                  {config["workspaceApps.launcherApps"].map((app) => (
-                    <TitlebarDropdownMenuItem
-                      key={app}
-                      title={launcherWorkspaceApps[app]}
-                      onClick={(event) => {
-                        ipc.main.send("workspaceApps.openApp", app, getModifierOpenBehavior(event));
-                      }}
-                      onAuxClick={(event) => {
-                        if (event.button === 1) {
-                          ipc.main.send("workspaceApps.openApp", app, "backgroundTab");
-
-                          setIsWorkspaceAppsLauncherOpen(false);
-                        }
-                      }}
-                    >
-                      <WorkspaceAppIcon app={app} className="size-4" />
-                    </TitlebarDropdownMenuItem>
-                  ))}
-                </TitlebarDropdownMenu>
-              )}
-              {shouldShowUnifiedInboxButton && (
-                <Button
-                  variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
-                  size="icon"
-                  className="size-7 draggable-none"
-                  onClick={() => {
-                    navigate("/unified-inbox");
-                  }}
-                  title="Unified Inbox"
-                >
-                  <InboxIcon />
-                </Button>
-              )}
+              <Button
+                variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
+                size="icon"
+                className="size-7 draggable-none"
+                onClick={() => {
+                  navigate("/unified-inbox");
+                }}
+                title="Unified Inbox"
+              >
+                <InboxIcon />
+              </Button>
             </TitlebarButtonGroup>
           )}
           {(shouldShowOutOfOfficeButton || accountButtons) && (
@@ -393,6 +430,15 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
+            {shouldShowWorkspaceAppsLauncher && (
+              <TitlebarButtonGroup>
+                <WorkspaceAppsLauncher
+                  launcherApps={config["workspaceApps.launcherApps"]}
+                  display={config["workspaceApps.launcherDisplay"]}
+                  disabled={isUnifiedInboxLocation}
+                />
+              </TitlebarButtonGroup>
+            )}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"

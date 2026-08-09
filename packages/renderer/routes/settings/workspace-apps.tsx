@@ -7,6 +7,7 @@ import {
   type SupportedWorkspaceApp,
   workspaceAppOpenBehaviors,
   workspaceApps,
+  workspaceAppsLauncherDisplays,
 } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { ButtonGroup } from "@meru/ui/components/button-group";
@@ -219,7 +220,7 @@ export function WorkspaceAppsSettings() {
                 {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
               </FieldLabel>
               <FieldDescription>
-                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the left.
+                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the right.
               </FieldDescription>
             </FieldContent>
             <div className="flex flex-col gap-4">
@@ -288,6 +289,17 @@ export function WorkspaceAppsSettings() {
               )}
             </div>
           </Field>
+          <ConfigSelectField
+            label="Launcher Display"
+            description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, Expanded always shows them as individual buttons."
+            configKey="workspaceApps.launcherDisplay"
+            placeholder="Select display"
+            licenseKeyRequired
+            items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
         </FieldGroup>
       </SettingsContent>
     </Settings>
