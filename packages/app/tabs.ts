@@ -9,7 +9,12 @@ import type { Gmail } from "./gmail";
 import { main } from "./main";
 import { appMenu } from "./menu";
 import { openExternalUrl } from "./url";
-import { resolveWorkspaceAppOpenBehavior, WorkspaceApp } from "./workspace-app";
+import {
+  canOpenWorkspaceAppInApp,
+  getWorkspaceAppFromUrl,
+  resolveWorkspaceAppOpenBehavior,
+  WorkspaceApp,
+} from "./workspace-app";
 
 const MAX_RECENTLY_CLOSED_TAB_URLS = 20;
 
@@ -27,13 +32,6 @@ export function registerTabBroadcasts(view: WebContentsView) {
 
 export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
-}
-
-function canOpenWorkspaceAppInApp(app: SupportedWorkspaceApp) {
-  return (
-    config.get("workspaceApps.openInApp") &&
-    !config.get("workspaceApps.openInAppExcludedApps").includes(app)
-  );
 }
 
 type SavedWorkspaceApp = WorkspaceApp & {
@@ -393,6 +391,12 @@ export class Tabs {
     const reopenedTabUrl = this.recentlyClosedTabUrls.pop();
 
     if (!reopenedTabUrl) {
+      return;
+    }
+
+    if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(reopenedTabUrl))) {
+      openExternalUrl(reopenedTabUrl, { skipTrustedHostCheck: true });
+
       return;
     }
 
