@@ -41,7 +41,7 @@ function Bookmark({ accountId, id, app, title }: BookmarkState) {
       <Button
         variant="secondary"
         size="icon"
-        className="absolute top-1/2 right-1 size-5 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+        className="absolute inset-y-0 right-1 my-auto size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         title="Remove Bookmark"
         onClick={() => {
           ipc.main.send("bookmarks.removeBookmark", accountId, id);

@@ -223,7 +223,9 @@ function VerticalTab({
           size="icon"
           data-tab-action
           className={cn(
-            "absolute top-1/2 size-5 -translate-y-1/2 transition-colors",
+            // Centred with margins rather than a transform, which the button's
+            // own press nudge would overwrite
+            "absolute inset-y-0 my-auto size-5 transition-colors",
             tab.bookmarked
               ? "right-1 bg-transparent text-muted-foreground group-hover:right-7 group-hover:bg-secondary group-hover:text-secondary-foreground"
               : "right-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
@@ -244,7 +246,7 @@ function VerticalTab({
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
-              ? "top-1/2 right-1 size-5 -translate-y-1/2 transition-colors"
+              ? "inset-y-0 right-1 my-auto size-5 transition-colors"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
           title="Close"
@@ -333,9 +335,7 @@ function VerticalTabsBookmark({
         data-tab-action
         className={cn(
           "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
-          isWide
-            ? "top-1/2 right-1 size-5 -translate-y-1/2"
-            : "-top-1 -right-1 size-4 rounded-full",
+          isWide ? "inset-y-0 right-1 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
         )}
         title="Remove Bookmark"
         onClick={() => {
