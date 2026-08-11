@@ -19,7 +19,7 @@ function Main() {
     <Router hook={useHashLocation}>
       <div className="flex h-screen flex-col">
         <AppTitlebar />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden bg-sidebar">
           <Switch>
             <Route path="/">
               <VerticalTabs />

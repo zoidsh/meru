@@ -325,7 +325,7 @@ export function VerticalTabs() {
 
   return (
     <div
-      className={cn("flex flex-col border-r", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
+      className={cn("flex flex-col", isWide ? "gap-1 p-2" : "items-center gap-2 py-2")}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
         if (event.defaultPrevented) {
