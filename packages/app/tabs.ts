@@ -537,6 +537,8 @@ export class Tabs {
 
     designatedTab.opensLinksForApp = app;
 
+    this.broadcastTabsChanged();
+
     accounts.saveTabs();
   }
 
