@@ -120,6 +120,7 @@ export const config = new Store<Config>({
     "spellchecker.languages": [],
     "verticalTabs.showWindows": true,
     "verticalTabs.width": "auto",
+    "verticalTabs.hideUnreadBadgeWhenActive": false,
   },
   migrations: {
     ">=3.4.0": (store) => {
