@@ -11,6 +11,8 @@ import { cn } from "@meru/ui/lib/utils";
 import {
   AppWindowIcon,
   BookOpenIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
   CircleAlertIcon,
   MergeIcon,
   StarIcon,
@@ -22,7 +24,7 @@ import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { VerticalTabsWorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
 import { sortablePlugins, sortableSensors } from "@/lib/dnd";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
-import { useConfig } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { HOST_HANDOVER_FADE_CLASS_NAME } from "@/lib/utils";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
@@ -331,6 +333,31 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
   );
 }
 
+/**
+ * Sets the width setting to whichever of the two widths the strip is not on, so
+ * it can be widened or narrowed where it stands rather than through settings.
+ * That leaves `auto` behind for good: a width picked by hand stays picked, the
+ * same as choosing one in settings.
+ */
+function VerticalTabsWidthToggle({ isWide }: { isWide: boolean }) {
+  const configMutation = useConfigMutation();
+
+  return (
+    <Button
+      variant="ghost"
+      size={isWide ? "sm" : "icon"}
+      className={cn("mt-auto text-muted-foreground", isWide && "w-full justify-start")}
+      title={isWide ? "Narrow Tabs" : "Wide Tabs"}
+      onClick={() => {
+        configMutation.mutate({ "verticalTabs.width": isWide ? "narrow" : "wide" });
+      }}
+    >
+      {isWide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
+      {isWide && "Narrow Tabs"}
+    </Button>
+  );
+}
+
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -446,6 +473,7 @@ export function VerticalTabs() {
         </div>
       )}
       <VerticalTabsBookmarks isWide={isWide} />
+      <VerticalTabsWidthToggle isWide={isWide} />
     </div>
   );
 }
