@@ -246,7 +246,7 @@ export function WorkspaceAppsSettings() {
                   }))}
                 />
                 <ConfigSwitchField
-                  label="Hide Unread Badge When Active"
+                  label="Hide Gmail Unread Badge When Active"
                   description="Hide the unread badge on the Gmail tab while it is the active tab, since the inbox is already in front. Accounts that need attention are still flagged."
                   configKey="verticalTabs.hideUnreadBadgeWhenActive"
                   licenseKeyRequired
