@@ -121,6 +121,7 @@ export const config = new Store<Config>({
     "verticalTabs.showWindows": true,
     "verticalTabs.width": "auto",
     "verticalTabs.hideUnreadBadgeWhenActive": false,
+    "verticalTabs.showAppLinksBadge": true,
   },
   migrations: {
     ">=3.4.0": (store) => {

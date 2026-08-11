@@ -126,6 +126,8 @@ function VerticalTab({
   gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
+  const { config } = useConfig();
+
   const isPinnedSectionTab = getTabSection(tab) === "pinned";
 
   const isCloseable = !isPinnedSectionTab && !tab.dormant;
@@ -149,9 +151,13 @@ function VerticalTab({
   const canOpenSecondInstance =
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
 
+  const showsAppLinksBadge = Boolean(
+    config?.["verticalTabs.showAppLinksBadge"] && tab.opensLinksForApp,
+  );
+
   /**
    * The mark on a designated tab cannot name the app it stands for, so the tab's
-   * own tooltip does.
+   * own tooltip does — and it keeps saying so once the badge is turned off.
    */
   const tooltip = tab.opensLinksForApp
     ? `${tab.title} — Opens ${workspaceApps[tab.opensLinksForApp].label} Links`
@@ -203,7 +209,7 @@ function VerticalTab({
             {tab.title}
           </span>
         )}
-        {isWideRow && tab.opensLinksForApp && (
+        {isWideRow && showsAppLinksBadge && (
           <MergeIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
         {isWideRow && tab.windowed && (
@@ -211,7 +217,7 @@ function VerticalTab({
         )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
-      {!isWideRow && tab.opensLinksForApp && <AppLinksTabBadge className="-bottom-1 -left-1" />}
+      {!isWideRow && showsAppLinksBadge && <AppLinksTabBadge className="-bottom-1 -left-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {/*
        * A bookmarked row keeps this button on show at rest, on the edge and

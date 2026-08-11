@@ -251,6 +251,12 @@ export function WorkspaceAppsSettings() {
                   configKey="verticalTabs.hideUnreadBadgeWhenActive"
                   licenseKeyRequired
                 />
+                <ConfigSwitchField
+                  label="Show App Links Badge"
+                  description="Mark the tab that opens all of an app's links, set from the tab's context menu. With this off the tab still takes the links, and its tooltip still says so."
+                  configKey="verticalTabs.showAppLinksBadge"
+                  licenseKeyRequired
+                />
               </FieldSet>
             </>
           )}
