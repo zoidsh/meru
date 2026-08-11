@@ -8,8 +8,15 @@ import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, BookOpenIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
-import type { Ref } from "react";
+import {
+  AppWindowIcon,
+  BookOpenIcon,
+  CircleAlertIcon,
+  MergeIcon,
+  StarIcon,
+  XIcon,
+} from "lucide-react";
+import type { ReactNode, Ref } from "react";
 import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { VerticalTabsWorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
@@ -45,16 +52,38 @@ function moveSectionTab(
   ipc.main.send("tabs.moveTab", accountId, movedTabId, movedSectionTabIds.indexOf(movedTabId));
 }
 
-function WindowedTabBadge({ className }: { className?: string }) {
+function TabBadge({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <div
       className={cn(
-        "absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
+        "pointer-events-none absolute flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground",
         className,
       )}
     >
-      <AppWindowIcon className="size-2.5" />
+      {children}
     </div>
+  );
+}
+
+function WindowedTabBadge({ className }: { className?: string }) {
+  return (
+    <TabBadge className={className}>
+      <AppWindowIcon className="size-2.5" />
+    </TabBadge>
+  );
+}
+
+/**
+ * Two lanes becoming one: every link to the app opens in this tab. It takes the
+ * corner opposite the windowed badge, so a tab that is both keeps each mark to
+ * itself. Which app it stands for is left to the tab's tooltip — the tab keeps
+ * the designation after browsing elsewhere, so the mark alone cannot say.
+ */
+function AppLinksTabBadge({ className }: { className?: string }) {
+  return (
+    <TabBadge className={className}>
+      <MergeIcon className="size-2.5" />
+    </TabBadge>
   );
 }
 
@@ -120,6 +149,14 @@ function VerticalTab({
   const canOpenSecondInstance =
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
 
+  /**
+   * The mark on a designated tab cannot name the app it stands for, so the tab's
+   * own tooltip does.
+   */
+  const tooltip = tab.opensLinksForApp
+    ? `${tab.title} — Opens ${workspaceApps[tab.opensLinksForApp].label} Links`
+    : tab.title;
+
   return (
     <div ref={ref} className={cn("group relative", className)}>
       <Button
@@ -137,7 +174,7 @@ function VerticalTab({
           showsRestingStar && "pr-7",
           presentation === "gridIcon" && "w-full",
         )}
-        title={tab.title}
+        title={tooltip}
         onClick={(event) => {
           const modifierOpenBehavior = getModifierOpenBehavior(event);
 
@@ -166,11 +203,15 @@ function VerticalTab({
             {tab.title}
           </span>
         )}
+        {isWideRow && tab.opensLinksForApp && (
+          <MergeIcon className="size-3 shrink-0 text-muted-foreground" />
+        )}
         {isWideRow && tab.windowed && (
           <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
+      {!isWideRow && tab.opensLinksForApp && <AppLinksTabBadge className="-bottom-1 -left-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {/*
        * A bookmarked row keeps this button on show at rest, on the edge and

@@ -21,6 +21,11 @@ export type TabState = {
   windowed: boolean;
   /** Whether the URL the tab is on is among the account's bookmarks. */
   bookmarked: boolean;
+  /**
+   * The app whose links all open in this tab, which the tab keeps holding even
+   * after browsing on to another app — so it is not always `app`.
+   */
+  opensLinksForApp: SupportedWorkspaceApp | null;
   loadOnLaunch: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
