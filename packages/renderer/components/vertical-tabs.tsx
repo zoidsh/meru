@@ -149,12 +149,10 @@ function VerticalTab({
    */
   const isBookmarkable = isWideRow && !tab.dormant && Boolean(tab.app);
 
-  const wideRowActionCount = (isBookmarkable ? 1 : 0) + (isCloseable ? 1 : 0);
-
   /**
-   * A bookmarked row shows its star whether pointed at or not, so the room for
-   * the controls is there from the start rather than made on hover — a title
-   * growing back under a star that stays put reads as the star sliding away.
+   * A bookmarked row shows its star at rest, on the row's edge, and hands that
+   * spot over when pointed at: the star steps left, the close button takes the
+   * edge. The room for one control is therefore held from the start.
    */
   const showsRestingStar = isBookmarkable && tab.bookmarked;
 
@@ -169,10 +167,13 @@ function VerticalTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && wideRowActionCount === 1 && (showsRestingStar ? "pr-7" : "group-hover:pr-7"),
-          isWideRow &&
-            wideRowActionCount === 2 &&
-            (showsRestingStar ? "pr-13" : "group-hover:pr-13"),
+          // The hover controls take their room instantly rather than over a
+          // transition, which would slide the resting star out from under the
+          // one that replaces it
+          isWideRow && "transition-colors",
+          isWideRow && isBookmarkable && "group-hover:pr-13",
+          isWideRow && !isBookmarkable && isCloseable && "group-hover:pr-7",
+          showsRestingStar && "pr-7",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -211,10 +212,10 @@ function VerticalTab({
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {/*
-       * A bookmarked row keeps its star on show and drops the button around it,
-       * so the mark at rest and the toggle on hover are one element that never
-       * moves. The close button, which only ever shows on hover, keeps the
-       * row's right edge.
+       * A bookmarked row keeps this button on show at rest, on the edge and
+       * stripped back to its star, so the mark and the control it stands for
+       * are one thing. Pointing at the row gives it back its button and moves
+       * it left, clearing the edge for the close button.
        */}
       {isBookmarkable && (
         <Button
@@ -222,11 +223,10 @@ function VerticalTab({
           size="icon"
           data-tab-action
           className={cn(
-            "absolute top-1/2 size-5 -translate-y-1/2",
-            isCloseable ? "right-7" : "right-1",
+            "absolute top-1/2 size-5 -translate-y-1/2 transition-colors",
             tab.bookmarked
-              ? "bg-transparent text-muted-foreground group-hover:bg-secondary group-hover:text-secondary-foreground"
-              : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+              ? "right-1 bg-transparent text-muted-foreground group-hover:right-7 group-hover:bg-secondary group-hover:text-secondary-foreground"
+              : "right-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
           title={tab.bookmarked ? "Remove Bookmark" : "Bookmark"}
           onClick={() => {
@@ -244,7 +244,7 @@ function VerticalTab({
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
-              ? "top-1/2 right-1 size-5 -translate-y-1/2"
+              ? "top-1/2 right-1 size-5 -translate-y-1/2 transition-colors"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
           title="Close"
