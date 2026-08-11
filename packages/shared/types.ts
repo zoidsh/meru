@@ -202,6 +202,11 @@ export type IpcMainEvents =
       "bookmarks.setPopupCloseOnBlurEnabled": [enabled: boolean];
       "bookmarks.openBookmark": [accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]];
       "bookmarks.removeBookmark": [accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]];
+      "bookmarks.moveBookmark": [
+        accountId: AccountConfig["id"],
+        bookmarkId: Bookmark["id"],
+        targetIndex: number,
+      ];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];

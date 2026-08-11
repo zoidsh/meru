@@ -936,6 +936,10 @@ class Ipc {
       bookmarks.remove(accountId, bookmarkId);
     });
 
+    ipc.main.on("bookmarks.moveBookmark", (_event, accountId, bookmarkId, targetIndex) => {
+      bookmarks.move(accountId, bookmarkId, targetIndex);
+    });
+
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
       const parentWindow = BrowserWindow.fromWebContents(event.sender);
 

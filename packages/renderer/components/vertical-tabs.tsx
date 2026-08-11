@@ -1,6 +1,5 @@
-import { Accessibility, defaultPreset, PointerActivationConstraints } from "@dnd-kit/dom";
 import { move } from "@dnd-kit/helpers";
-import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/react";
+import { type DragEndEvent, DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -17,19 +16,10 @@ import {
   VerticalTabsWorkspaceAppsLauncher,
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
 } from "@/components/workspace-apps-launcher";
+import { sortablePlugins, sortableSensors } from "@/lib/dnd";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
-
-const verticalTabsPlugins = defaultPreset.plugins.filter((plugin) => plugin !== Accessibility);
-
-const verticalTabsSensors = [
-  PointerSensor.configure({
-    activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
-    preventActivation: (event) =>
-      event.target instanceof Element && event.target.closest("[data-tab-action]") !== null,
-  }),
-];
 
 function moveSectionTab(
   accountId: AccountConfig["id"],
@@ -194,7 +184,7 @@ function VerticalTab({
         <Button
           variant="secondary"
           size="icon"
-          data-tab-action
+          data-sortable-action
           className={cn(
             // Centred with margins rather than a transform, which the button's
             // own press nudge would overwrite
@@ -215,7 +205,7 @@ function VerticalTab({
         <Button
           variant="secondary"
           size="icon"
-          data-tab-action
+          data-sortable-action
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
@@ -312,8 +302,8 @@ export function VerticalTabs() {
       }}
     >
       <DragDropProvider
-        plugins={verticalTabsPlugins}
-        sensors={verticalTabsSensors}
+        plugins={sortablePlugins}
+        sensors={sortableSensors}
         onDragEnd={(event) => {
           moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
         }}
@@ -348,8 +338,8 @@ export function VerticalTabs() {
         )}
       </DragDropProvider>
       <DragDropProvider
-        plugins={verticalTabsPlugins}
-        sensors={verticalTabsSensors}
+        plugins={sortablePlugins}
+        sensors={sortableSensors}
         onDragEnd={(event) => {
           moveSectionTab(selectedAccount.config.id, normalTabs, event);
         }}

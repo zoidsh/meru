@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { BASE_SPACING } from "@meru/shared/constants";
 import type { AccountConfig, Bookmark, BookmarkState } from "@meru/shared/schemas";
+import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -73,6 +74,22 @@ class Bookmarks {
       accountId,
       this.getAccountBookmarks(accountId).filter((bookmark) => bookmark.id !== bookmarkId),
     );
+  }
+
+  move(accountId: AccountConfig["id"], bookmarkId: Bookmark["id"], targetIndex: number) {
+    const accountBookmarks = this.getAccountBookmarks(accountId);
+
+    const movedBookmark = accountBookmarks.find((bookmark) => bookmark.id === bookmarkId);
+
+    if (!movedBookmark) {
+      return;
+    }
+
+    const remainingBookmarks = accountBookmarks.filter((bookmark) => bookmark.id !== bookmarkId);
+
+    remainingBookmarks.splice(clamp(targetIndex, 0, remainingBookmarks.length), 0, movedBookmark);
+
+    this.setAccountBookmarks(accountId, remainingBookmarks);
   }
 
   open(accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]) {
