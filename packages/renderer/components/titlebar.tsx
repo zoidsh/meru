@@ -49,6 +49,39 @@ export function TitlebarButtonGroup({
   return <div className={cn("flex items-center gap-1", className)}>{children}</div>;
 }
 
+/**
+ * Keeps a titlebar button mounted while it is hidden so appearing and
+ * disappearing animate instead of snapping: the button fades while its width
+ * collapses, which slides whatever sits left of it — the row is anchored to the
+ * right edge, so the buttons after it never move. The surrounding row's gap
+ * would otherwise survive the collapse and leave a hidden button taking up
+ * space, hence `collapsedMarginClassName` cancelling it.
+ *
+ * Sized for the `icon-sm` buttons the titlebar is built from; a wider child
+ * would be clipped rather than measured.
+ */
+export function TitlebarCollapsibleButton({
+  isVisible,
+  collapsedMarginClassName = "-mr-2",
+  children,
+}: {
+  isVisible: boolean;
+  collapsedMarginClassName?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      inert={!isVisible}
+      className={cn(
+        "overflow-hidden transition-[width,opacity,margin] duration-150 ease-out motion-reduce:transition-none",
+        isVisible ? "w-7 opacity-100" : cn("w-0 opacity-0", collapsedMarginClassName),
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function TitlebarPageTitle({ children }: { children: string }) {
   return (
     <div className="max-w-xs truncate text-xs" title={children}>

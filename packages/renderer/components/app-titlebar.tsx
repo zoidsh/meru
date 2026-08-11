@@ -22,6 +22,7 @@ import { FindInPage as UiFindInPage } from "@/components/find-in-page";
 import {
   Titlebar,
   TitlebarButtonGroup,
+  TitlebarCollapsibleButton,
   TitlebarDropdownMenu,
   TitlebarDropdownMenuItem,
   TitlebarIconButton,
@@ -424,7 +425,9 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            {shouldShowBookmarksButton && <BookmarksButton />}
+            <TitlebarCollapsibleButton isVisible={shouldShowBookmarksButton}>
+              <BookmarksButton />
+            </TitlebarCollapsibleButton>
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
