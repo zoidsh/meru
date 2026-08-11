@@ -503,37 +503,41 @@ class Ipc {
                     },
                   ]
                 : []),
-              ...(!appLinksApp ||
-              workspaceApps[appLinksApp].singleInstance ||
-              workspaceApps[appLinksApp].popupOnly
-                ? []
-                : [
-                    {
-                      label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
-                        tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
-                      }`,
-                      type: "checkbox" as const,
-                      checked: Boolean(tab.opensLinksForApp),
-                      click: async () => {
-                        if (tab.opensLinksForApp) {
-                          account.instance.tabs.setTabOpensLinksForApp(tabId, null);
+            ]
+          : []),
+        ...(appLinksApp &&
+        !workspaceApps[appLinksApp].singleInstance &&
+        !workspaceApps[appLinksApp].popupOnly
+          ? [
+              // A tab that browsed off Google has no app and so no menu group of
+              // its own, but it can still be holding a designation from before —
+              // which then needs a separator to sit under.
+              ...(tabApp ? [] : [{ type: "separator" as const }]),
+              {
+                label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
+                  tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
+                }`,
+                type: "checkbox" as const,
+                checked: Boolean(tab.opensLinksForApp),
+                click: async () => {
+                  if (tab.opensLinksForApp) {
+                    account.instance.tabs.setTabOpensLinksForApp(tabId, null);
 
-                          return;
-                        }
+                    return;
+                  }
 
-                        const appLinksTab = account.instance.tabs.getAppLinksTab(appLinksApp);
+                  const appLinksTab = account.instance.tabs.getAppLinksTab(appLinksApp);
 
-                        if (
-                          appLinksTab &&
-                          !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title))
-                        ) {
-                          return;
-                        }
+                  if (
+                    appLinksTab &&
+                    !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title))
+                  ) {
+                    return;
+                  }
 
-                        account.instance.tabs.setTabOpensLinksForApp(tabId, appLinksApp);
-                      },
-                    },
-                  ]),
+                  account.instance.tabs.setTabOpensLinksForApp(tabId, appLinksApp);
+                },
+              },
             ]
           : []),
         {
