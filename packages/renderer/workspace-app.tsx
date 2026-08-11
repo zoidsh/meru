@@ -42,6 +42,10 @@ function RecentDownloadHistoryButton() {
  * window sits on a bookmarked URL, empty as soon as it browses on. Bookmarking
  * is otherwise a tab context-menu action, which `New Windows` mode leaves no
  * way to reach.
+ *
+ * It sits first in the group on purpose: the group is anchored to the window's
+ * right edge, so a button that comes and goes only shifts what precedes it, and
+ * from here there is nothing to shift.
  */
 function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
   const [bookmarkState, setBookmarkState] = useState<WorkspaceAppBookmarkState>({
@@ -201,8 +205,8 @@ function WorkspaceApp() {
       <TitlebarRight>
         <FindInPageControls />
         <TitlebarButtonGroup>
-          <RecentDownloadHistoryButton />
           <BookmarkButton workspaceAppId={workspaceAppId} />
+          <RecentDownloadHistoryButton />
           <TitlebarIconButton
             title="More Options"
             onClick={() => {
