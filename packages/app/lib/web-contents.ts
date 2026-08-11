@@ -8,6 +8,7 @@ import {
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
+import { getBackgroundColor } from "./window";
 
 export function applyViewZoomLimits(view: WebContentsView) {
   view.webContents.on("dom-ready", () => {
@@ -59,6 +60,11 @@ export function createChildWebContentsView({
       preload,
     },
   });
+
+  // The rounded corner mask antialiases the view's layer background against
+  // what sits behind it — left at Electron's default white, that paints a grey
+  // fringe along the curve in dark mode.
+  view.setBackgroundColor(getBackgroundColor());
 
   view.setBorderRadius(TAB_VIEW_BORDER_RADIUS);
 
