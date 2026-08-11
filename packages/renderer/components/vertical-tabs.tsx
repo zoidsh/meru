@@ -198,6 +198,14 @@ function VerticalTab({
         {isWideRow && tab.windowed && (
           <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
+        {/*
+         * A bookmarked row says so at rest, alongside the windowed marker. It
+         * steps aside on hover, where the toggle below takes over showing the
+         * same star.
+         */}
+        {isBookmarkable && tab.bookmarked && (
+          <StarIcon className="size-3 shrink-0 fill-current text-muted-foreground group-hover:hidden" />
+        )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
