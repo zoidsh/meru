@@ -471,7 +471,7 @@ export function VerticalTabs() {
         // the resizing — stay put rather than stepping out from under the
         // pointer. The scrolling sections reach past that gutter and lay it out
         // again themselves, so a scrollbar can never take it from the column.
-        "flex flex-col border-r p-4 select-none",
+        "flex flex-col p-4 select-none",
         isWide ? "gap-1" : "items-center gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}

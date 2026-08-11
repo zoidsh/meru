@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL, TAB_VIEW_INSET } from "@meru/shared/constants";
 import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -1011,10 +1011,10 @@ export class WorkspaceApp {
     const verticalTabsWidth = this._window ? 0 : accounts.getVerticalTabsWidth();
 
     this.view.setBounds({
-      x: verticalTabsWidth,
-      y: APP_TITLEBAR_HEIGHT,
-      width: width - verticalTabsWidth,
-      height: height - APP_TITLEBAR_HEIGHT,
+      x: verticalTabsWidth + TAB_VIEW_INSET,
+      y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+      width: width - verticalTabsWidth - TAB_VIEW_INSET * 2,
+      height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
     });
   };
 

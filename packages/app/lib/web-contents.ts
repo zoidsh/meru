@@ -1,3 +1,4 @@
+import { TAB_VIEW_BORDER_RADIUS } from "@meru/shared/constants";
 import {
   type Session,
   type WebContents,
@@ -115,6 +116,8 @@ export function createChildWebContentsView({
       preload,
     },
   });
+
+  view.setBorderRadius(TAB_VIEW_BORDER_RADIUS);
 
   attachView(view);
 
