@@ -6,7 +6,7 @@ import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
 import {
-  BookmarkIcon,
+  BookOpenIcon,
   BriefcaseIcon,
   CircleAlertIcon,
   DownloadIcon,
@@ -58,7 +58,7 @@ function BookmarksButton() {
       }}
       title="Bookmarks"
     >
-      <BookmarkIcon />
+      <BookOpenIcon />
     </TitlebarIconButton>
   );
 }
