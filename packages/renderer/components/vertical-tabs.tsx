@@ -403,14 +403,15 @@ export function VerticalTabs() {
   return (
     <div
       className={cn(
-        "flex flex-col border-r select-none",
-        // The wide gutter is the narrow strip's, not a gutter of its own: a
-        // centred icon button in the narrow strip stands 16px off the edge, so
-        // the wide strip insets its rows by the same. The column then hinges on
-        // its left edge as the strip resizes, and the controls at the foot —
-        // the width toggle above all, which does the resizing — stay put rather
-        // than stepping sideways under the pointer.
-        isWide ? "gap-1 px-4 py-2" : "items-center gap-2 py-2",
+        // The one gutter on every edge of both widths is the narrow strip's own
+        // measure: it leaves exactly an icon button's width between its sides,
+        // which is what a 32px button centred in a 64px strip already sat on.
+        // The column therefore hinges on its left edge as the strip resizes,
+        // and the controls at the foot — the width toggle above all, which does
+        // the resizing — stay put rather than stepping out from under the
+        // pointer.
+        "flex flex-col border-r p-4 select-none",
+        isWide ? "gap-1" : "items-center gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
