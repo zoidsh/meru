@@ -160,6 +160,7 @@ export type Config = {
   "verticalTabs.showWindows": boolean;
   "verticalTabs.width": VerticalTabsWidth;
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
+  "verticalTabs.showAppLinksBadge": boolean;
 };
 
 export type IpcMainEvents =
