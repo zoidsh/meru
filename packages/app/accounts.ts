@@ -110,19 +110,6 @@ class Accounts {
     });
   }
 
-  /**
-   * Whether the vertical tabs strip is asking for the wide strip while one of
-   * its controls is open. The strip draws itself, but the views next to it are
-   * laid out here, so it tells the main process as the state flips.
-   */
-  private isVerticalTabsExpanded = false;
-
-  setVerticalTabsExpanded(expanded: boolean) {
-    this.isVerticalTabsExpanded = expanded;
-
-    this.updateAllViewBounds();
-  }
-
   getVerticalTabsWidth() {
     const selectedAccount = this.getSelectedAccount();
 
@@ -131,10 +118,7 @@ class Accounts {
         workspaceAppsMode: config.get("workspaceApps.mode"),
         showWindows: config.get("verticalTabs.showWindows"),
       }),
-      {
-        configuredWidth: config.get("verticalTabs.width"),
-        expanded: this.isVerticalTabsExpanded,
-      },
+      { configuredWidth: config.get("verticalTabs.width") },
     );
   }
 

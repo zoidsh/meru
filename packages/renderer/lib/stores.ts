@@ -46,23 +46,6 @@ ipc.renderer.on("tabs.changed", (_event, accountsTabs) => {
   useTabsStore.setState({ accountsTabs });
 });
 
-/**
- * Whether a control in the vertical tabs strip is asking for the wide strip
- * while it is open. The main process lays the views next to the strip out to
- * the width it takes, so it is told as the state flips.
- */
-export const useVerticalTabsExpandedStore = create<{
-  isExpanded: boolean;
-  setIsExpanded: (isExpanded: boolean) => void;
-}>((set) => ({
-  isExpanded: false,
-  setIsExpanded: (isExpanded) => {
-    ipc.main.send("verticalTabs.setExpanded", isExpanded);
-
-    set({ isExpanded });
-  },
-}));
-
 export const useFindInPageStore = create<{
   isActive: boolean;
   deactivate: () => void;

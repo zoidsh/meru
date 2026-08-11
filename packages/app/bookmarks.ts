@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { BASE_SPACING } from "@meru/shared/constants";
 import type { AccountConfig, Bookmark, BookmarkState } from "@meru/shared/schemas";
+import type { BookmarksPopupPlacement } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
+import type { BrowserWindow } from "electron";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -12,10 +14,10 @@ import { TitlebarPopup } from "./lib/titlebar-popup";
  * created from and never follows what the user browses to afterwards — opening
  * one loads that URL again.
  *
- * The titlebar's popup is the one surface that lists them, and it is always
- * there — unlike the vertical tabs strip, which is gone in `New Windows` mode
- * and absent in `Tabs` mode until a second tab opens. The popup stays reachable
- * while empty, where it explains how to add a bookmark.
+ * A popup is the one surface that lists them, and the titlebar button that opens
+ * it is always there — unlike the vertical tabs strip, which is gone in `New
+ * Windows` mode and absent in `Tabs` mode until a second tab opens. The popup
+ * stays reachable while empty, where it explains how to add a bookmark.
  */
 class Bookmarks {
   popup = new TitlebarPopup({
@@ -23,6 +25,18 @@ class Bookmarks {
     width: BASE_SPACING * 40,
     height: BASE_SPACING * 44,
   });
+
+  /**
+   * The popup comes up where it was asked for: beside the vertical tabs strip
+   * for the button that sits in the strip, and at the end of the titlebar for
+   * the one that sits there.
+   */
+  togglePopup(parentWindow: BrowserWindow, placement: BookmarksPopupPlacement) {
+    return this.popup.toggle(parentWindow, {
+      anchorX:
+        placement === "verticalTabs" ? accounts.getVerticalTabsWidth() + BASE_SPACING : undefined,
+    });
+  }
 
   getAccountBookmarks(accountId: AccountConfig["id"]): Bookmark[] {
     const accountConfig = config.get("accounts").find((account) => account.id === accountId);

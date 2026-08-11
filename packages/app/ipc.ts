@@ -564,10 +564,6 @@ class Ipc {
       ]).popup();
     });
 
-    ipc.main.on("verticalTabs.setExpanded", (_event, expanded) => {
-      accounts.setVerticalTabsExpanded(expanded);
-    });
-
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(
@@ -914,14 +910,14 @@ class Ipc {
       return bookmarks.serialize();
     });
 
-    ipc.main.on("bookmarks.togglePopup", (event) => {
+    ipc.main.on("bookmarks.togglePopup", (event, placement) => {
       const parentWindow = BrowserWindow.fromWebContents(event.sender);
 
       if (!parentWindow) {
         return;
       }
 
-      bookmarks.popup.toggle(parentWindow);
+      bookmarks.togglePopup(parentWindow, placement);
     });
 
     ipc.main.on("bookmarks.closePopup", () => {

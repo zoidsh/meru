@@ -22,6 +22,13 @@ export class TitlebarPopup {
   private parentWindow: BrowserWindow | null = null;
 
   /**
+   * Where the popup starts horizontally, for a caller that wants it somewhere
+   * other than the end of the titlebar — the bookmarks button in the vertical
+   * tabs strip hangs it beside the strip instead.
+   */
+  private anchorX: number | null = null;
+
+  /**
    * Held off while the pointer is over the button that toggles the popup, so
    * that clicking the button closes it rather than the blur closing it and the
    * click reopening it right away.
@@ -48,7 +55,7 @@ export class TitlebarPopup {
       : this.parentWindow.getBounds();
 
     this.view.setBounds({
-      x: parentWindowBounds.width - this.width - BASE_SPACING,
+      x: this.anchorX ?? parentWindowBounds.width - this.width - BASE_SPACING,
       y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
       width: this.width,
       height: this.height,
@@ -74,16 +81,18 @@ export class TitlebarPopup {
 
   /**
    * Returns whether the popup ended up open, so callers can refresh what it is
-   * about to show. Toggling from the window it is already open in closes it;
-   * from another window it moves there.
+   * about to show. Toggling from where it is already hanging closes it; from
+   * another window, or from a button that hangs it elsewhere, it moves there.
    */
-  toggle(parentWindow: BrowserWindow) {
+  toggle(parentWindow: BrowserWindow, { anchorX }: { anchorX?: number } = {}) {
     if (this.view) {
       const wasSameWindow = this.parentWindow === parentWindow;
 
+      const wasSameAnchorX = this.anchorX === (anchorX ?? null);
+
       this.close();
 
-      if (wasSameWindow) {
+      if (wasSameWindow && wasSameAnchorX) {
         return false;
       }
     }
@@ -95,6 +104,8 @@ export class TitlebarPopup {
     });
 
     this.parentWindow = parentWindow;
+
+    this.anchorX = anchorX ?? null;
 
     loadRenderer(this.view, { page: this.page });
 

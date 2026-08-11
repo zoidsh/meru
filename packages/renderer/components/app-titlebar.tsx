@@ -47,7 +47,7 @@ function BookmarksButton() {
   return (
     <TitlebarIconButton
       onClick={() => {
-        ipc.main.send("bookmarks.togglePopup");
+        ipc.main.send("bookmarks.togglePopup", "titlebar");
       }}
       onMouseEnter={() => {
         ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", false);

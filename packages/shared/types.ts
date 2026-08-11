@@ -44,6 +44,12 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
+/**
+ * Which button asked for the bookmarks popup, and so where it hangs: at the end
+ * of the titlebar, or beside the vertical tabs strip.
+ */
+export type BookmarksPopupPlacement = "titlebar" | "verticalTabs";
+
 export type WorkspaceAppNotification = {
   title: string;
   body?: string;
@@ -193,12 +199,11 @@ export type IpcMainEvents =
       "tabs.moveTab": [accountId: AccountConfig["id"], tabId: string, targetSectionIndex: number];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showVerticalTabsContextMenu": [accountId: AccountConfig["id"]];
-      "verticalTabs.setExpanded": [expanded: boolean];
       "workspaceApps.openApp": [
         app: SupportedWorkspaceApp,
         openBehavior?: WorkspaceAppOpenBehavior,
       ];
-      "bookmarks.togglePopup": [];
+      "bookmarks.togglePopup": [placement: BookmarksPopupPlacement];
       "bookmarks.closePopup": [];
       "bookmarks.setPopupCloseOnBlurEnabled": [enabled: boolean];
       "bookmarks.openBookmark": [accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]];
