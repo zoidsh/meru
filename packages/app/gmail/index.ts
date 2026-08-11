@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, TAB_VIEW_INSET } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
@@ -474,10 +474,10 @@ export class Gmail {
     const verticalTabsWidth = accounts.getVerticalTabsWidth();
 
     this.view.setBounds({
-      x: verticalTabsWidth,
-      y: APP_TITLEBAR_HEIGHT,
-      width: width - verticalTabsWidth,
-      height: height - APP_TITLEBAR_HEIGHT,
+      x: verticalTabsWidth + TAB_VIEW_INSET,
+      y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+      width: width - verticalTabsWidth - TAB_VIEW_INSET * 2,
+      height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
     });
   }
 

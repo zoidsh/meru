@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL, TAB_VIEW_INSET } from "@meru/shared/constants";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
@@ -853,10 +853,10 @@ export class WorkspaceApp {
       const verticalTabsWidth = accounts.getVerticalTabsWidth();
 
       this.view.setBounds({
-        x: verticalTabsWidth,
-        y: APP_TITLEBAR_HEIGHT,
-        width: width - verticalTabsWidth,
-        height: height - APP_TITLEBAR_HEIGHT,
+        x: verticalTabsWidth + TAB_VIEW_INSET,
+        y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+        width: width - verticalTabsWidth - TAB_VIEW_INSET * 2,
+        height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
       });
 
       return;
@@ -865,10 +865,10 @@ export class WorkspaceApp {
     const { width, height } = this.window.getContentBounds();
 
     this.view.setBounds({
-      x: 0,
-      y: APP_TITLEBAR_HEIGHT,
-      width,
-      height: height - APP_TITLEBAR_HEIGHT,
+      x: TAB_VIEW_INSET,
+      y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+      width: width - TAB_VIEW_INSET * 2,
+      height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
     });
   };
 
