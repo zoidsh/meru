@@ -1,4 +1,6 @@
+import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog } from "electron";
+import { main } from "./main";
 
 export async function showRestartDialog() {
   const { response } = await dialog.showMessageBox({
@@ -14,4 +16,26 @@ export async function showRestartDialog() {
     app.relaunch();
     app.quit();
   }
+}
+
+/**
+ * Only one tab per app can take that app's links, so designating a new one
+ * takes it away from the tab holding it. Asks before doing so.
+ */
+export async function confirmAppLinksTabHandover(
+  workspaceApp: SupportedWorkspaceApp,
+  appLinksTabTitle: string,
+) {
+  const appLabel = workspaceApps[workspaceApp].label;
+
+  const { response } = await dialog.showMessageBox(main.window, {
+    type: "info",
+    buttons: ["Open Links Here", "Cancel"],
+    message: `Open ${appLabel} links in this tab?`,
+    detail: `“${appLinksTabTitle}” opens all ${appLabel} links right now. It will stop doing so.`,
+    defaultId: 0,
+    cancelId: 1,
+  });
+
+  return response === 0;
 }

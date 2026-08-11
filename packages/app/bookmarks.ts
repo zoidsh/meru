@@ -119,7 +119,9 @@ class Bookmarks {
 
     const account = accounts.getAccount(accountId);
 
-    account.instance.tabs.openUrl(openedBookmark.url);
+    if (!account.instance.tabs.openInAppLinksTab(openedBookmark.url)) {
+      account.instance.tabs.openUrl(openedBookmark.url);
+    }
 
     if (account.config.selected) {
       accounts.refreshSelectedAccountView();

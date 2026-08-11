@@ -59,6 +59,7 @@ export type Tab = {
   pinned: boolean;
   dormant: boolean;
   loadOnLaunch?: boolean;
+  opensAppLinks?: boolean;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -86,6 +87,8 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
+  opensAppLinks: boolean;
+
   windowed: boolean;
 
   title: string;
@@ -97,6 +100,7 @@ export class DormantTab {
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
+    this.opensAppLinks = Boolean(savedTab.opensAppLinks);
     this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
   }
@@ -232,19 +236,7 @@ export class Tabs {
     }
 
     if (activatedTab instanceof DormantTab) {
-      if (!canOpenWorkspaceAppInApp(activatedTab.app)) {
-        openExternalUrl(activatedTab.url, { skipTrustedHostCheck: true });
-
-        return;
-      }
-
-      const materializedTab = this.materializeDormantTab(activatedTab);
-
-      if (!materializedTab.isWindowed) {
-        this.activeTabId = materializedTab.id;
-      }
-
-      this.broadcastTabsChanged();
+      this.openDormantTab(activatedTab);
 
       return;
     }
@@ -254,12 +246,36 @@ export class Tabs {
     this.broadcastTabsChanged();
   }
 
-  private materializeDormantTab(dormantTab: DormantTab) {
+  /**
+   * Wakes a saved tab up and brings it forward, optionally on a URL other than
+   * the one it was saved on — that is how a link lands in a designated tab that
+   * has not been opened yet.
+   */
+  private openDormantTab(dormantTab: DormantTab, url?: string) {
+    if (!canOpenWorkspaceAppInApp(dormantTab.app)) {
+      openExternalUrl(url ?? dormantTab.url, { skipTrustedHostCheck: true });
+
+      return;
+    }
+
+    const materializedTab = this.materializeDormantTab(dormantTab, url);
+
+    if (!materializedTab.isWindowed) {
+      this.activeTabId = materializedTab.id;
+    }
+
+    this.broadcastTabsChanged();
+
+    return materializedTab;
+  }
+
+  private materializeDormantTab(dormantTab: DormantTab, url?: string) {
     const workspaceApp = new WorkspaceApp({
       accountId: this.accountId,
-      url: dormantTab.url,
+      url: url ?? dormantTab.url,
       pinned: dormantTab.pinned,
       loadOnLaunch: dormantTab.loadOnLaunch,
+      opensAppLinks: dormantTab.opensAppLinks,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       savedAsWindow: dormantTab.windowed,
       app: dormantTab.app,
@@ -369,6 +385,7 @@ export class Tabs {
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
+          opensAppLinks: savedWorkspaceApp.opensAppLinks,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
         savedWorkspaceApp.zoomFactor,
@@ -492,6 +509,68 @@ export class Tabs {
     accounts.saveTabs();
   }
 
+  /**
+   * The tab every link to `app` opens in, if the user designated one. Only one
+   * tab per app can hold it, but a tab that browsed onto another app carries the
+   * designation with it, so the first match wins.
+   */
+  getAppLinksTab(app: SupportedWorkspaceApp) {
+    return this.tabs.find((tab) => tab.opensAppLinks && tab.app === app);
+  }
+
+  setTabOpensAppLinks(tabId: string, opensAppLinks: boolean) {
+    const designatedTab = this.getTab(tabId);
+
+    if (!designatedTab?.app) {
+      return;
+    }
+
+    if (opensAppLinks) {
+      for (const tab of this.tabs) {
+        if (tab.opensAppLinks && tab.app === designatedTab.app) {
+          tab.opensAppLinks = false;
+        }
+      }
+    }
+
+    designatedTab.opensAppLinks = opensAppLinks;
+
+    accounts.saveTabs();
+  }
+
+  /**
+   * Opens a URL in the tab designated for its app, and returns that tab so the
+   * caller knows the URL was taken. Apps that may not open inside Meru are left
+   * to the caller, which falls back to the default browser.
+   */
+  openInAppLinksTab(url: string) {
+    const app = getWorkspaceAppFromUrl(url);
+
+    if (!app || !canOpenWorkspaceAppInApp(app)) {
+      return;
+    }
+
+    const appLinksTab = this.getAppLinksTab(app);
+
+    if (!appLinksTab) {
+      return;
+    }
+
+    if (appLinksTab instanceof DormantTab) {
+      return this.openDormantTab(appLinksTab, url);
+    }
+
+    if (!(appLinksTab instanceof WorkspaceApp)) {
+      return;
+    }
+
+    appLinksTab.navigate(url);
+
+    this.activateTab(appLinksTab.id);
+
+    return appLinksTab;
+  }
+
   moveTab(tabId: string, targetSectionIndex: number) {
     if (tabId === GMAIL_TAB_ID) {
       return;
@@ -551,6 +630,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          opensAppLinks: tab.opensAppLinks,
           windowed: tab.opensAsWindow,
         });
       } else if (tab instanceof DormantTab) {
@@ -559,6 +639,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          opensAppLinks: tab.opensAppLinks,
           windowed: tab.windowed,
         });
       }

@@ -35,6 +35,7 @@ import {
   resolveWorkspaceAppOpenBehavior,
   WorkspaceApp,
 } from "@/workspace-app";
+import { confirmAppLinksTabHandover } from "./dialogs";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -497,6 +498,34 @@ class Ipc {
                     },
                   ]
                 : []),
+              ...(workspaceApps[tabApp].singleInstance
+                ? []
+                : [
+                    {
+                      label: `Open ${workspaceApps[tabApp].label} Links in This Tab`,
+                      type: "checkbox" as const,
+                      checked: Boolean(tab.opensAppLinks),
+                      click: async () => {
+                        if (tab.opensAppLinks) {
+                          account.instance.tabs.setTabOpensAppLinks(tabId, false);
+
+                          return;
+                        }
+
+                        const appLinksTab = account.instance.tabs.getAppLinksTab(tabApp);
+
+                        if (
+                          appLinksTab &&
+                          appLinksTab.id !== tabId &&
+                          !(await confirmAppLinksTabHandover(tabApp, appLinksTab.title))
+                        ) {
+                          return;
+                        }
+
+                        account.instance.tabs.setTabOpensAppLinks(tabId, true);
+                      },
+                    },
+                  ]),
             ]
           : []),
         {
