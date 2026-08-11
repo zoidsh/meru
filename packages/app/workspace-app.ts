@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
-import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
@@ -48,27 +48,6 @@ const GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR = "CommandOrControl+Shift+2";
 const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
 
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
-
-const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>(
-  (Object.keys(workspaceApps) as SupportedWorkspaceApp[]).map((workspaceApp) => [
-    new URL(getWorkspaceAppUrl(workspaceApp)).hostname.replace(".google.com", ""),
-    workspaceApp,
-  ]),
-);
-
-const SUPPORTED_WORKSPACE_APPS_URL_REGEXP = new RegExp(
-  `(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,
-);
-
-export function getWorkspaceAppFromUrl(url: string) {
-  const workspaceAppSubdomain = url.match(SUPPORTED_WORKSPACE_APPS_URL_REGEXP)?.[1];
-
-  if (!workspaceAppSubdomain) {
-    return undefined;
-  }
-
-  return workspaceAppsBySubdomain.get(workspaceAppSubdomain);
-}
 
 /**
  * Whether an app may open inside Meru at all. `Open in App` and its exclusions

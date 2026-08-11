@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { getWorkspaceAppFromUrl } from "@meru/shared/google";
 import type { SavedTab } from "@meru/shared/schemas";
 import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
@@ -11,7 +12,6 @@ import { appMenu } from "./menu";
 import { openExternalUrl } from "./url";
 import {
   canOpenWorkspaceAppInApp,
-  getWorkspaceAppFromUrl,
   resolveWorkspaceAppOpenBehavior,
   WorkspaceApp,
 } from "./workspace-app";
