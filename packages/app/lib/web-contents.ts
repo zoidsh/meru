@@ -10,6 +10,7 @@ import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLoadFailureWorthLogging } from "./load-failures";
 import { log } from "./log";
+import { getBackgroundColor } from "./window";
 
 /**
  * Says why a view is empty. A load that never arrives leaves nothing behind on
@@ -116,6 +117,11 @@ export function createChildWebContentsView({
       preload,
     },
   });
+
+  // The rounded corner mask antialiases the view's layer background against
+  // what sits behind it — left at Electron's default white, that paints a grey
+  // fringe along the curve in dark mode.
+  view.setBackgroundColor(getBackgroundColor());
 
   view.setBorderRadius(TAB_VIEW_BORDER_RADIUS);
 
