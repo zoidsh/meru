@@ -224,9 +224,10 @@ export function AppTitlebar() {
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
 
-  // The vertical tabs strip hosts the launcher whenever it is there, so that
-  // opening another app stays in the same place as switching between them.
-  const isWorkspaceAppsLauncherHostedByVerticalTabs = verticalTabsWidth > 0;
+  // The vertical tabs strip hosts the launcher and the bookmarks button
+  // whenever it is there, so that opening another app or a bookmarked page
+  // stays in the same place as switching between tabs.
+  const areLauncherAndBookmarksHostedByVerticalTabs = verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -384,7 +385,7 @@ export function AppTitlebar() {
               <TitlebarButtonGroup
                 className={cn(
                   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
-                  isWorkspaceAppsLauncherHostedByVerticalTabs && "hidden opacity-0",
+                  areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
                 )}
               >
                 <WorkspaceAppsLauncher
@@ -415,7 +416,7 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            <BookmarksButton />
+            {!areLauncherAndBookmarksHostedByVerticalTabs && <BookmarksButton />}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
