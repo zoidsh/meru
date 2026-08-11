@@ -15,6 +15,10 @@ const args = parseArgs({
     dev: {
       type: "boolean",
     },
+    devtools: {
+      type: "boolean",
+      short: "d",
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -148,7 +152,7 @@ if (args.values.dev) {
   let isRestartingElectron = false;
 
   const startElectron = () => {
-    electron = spawn(["electron", "."], {
+    electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
       onExit: async () => {
         if (isRestartingElectron) {
           isRestartingElectron = false;

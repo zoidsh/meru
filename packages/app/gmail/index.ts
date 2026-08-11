@@ -30,7 +30,7 @@ import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
-import { createChildWebContentsView, openViewDevToolsInDev } from "@/lib/web-contents";
+import { createChildWebContentsView, openViewDevToolsOnLaunch } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import { licenseKey } from "@/license-key";
@@ -421,7 +421,7 @@ export class Gmail {
 
     registerTabBroadcasts(this.view);
 
-    openViewDevToolsInDev(this.view);
+    openViewDevToolsOnLaunch(this.view);
 
     return this.view.webContents.loadURL(this.url);
   }

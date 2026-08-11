@@ -25,7 +25,7 @@ import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { ipc } from "./ipc";
-import { createChildWebContentsView, openViewDevToolsInDev } from "./lib/web-contents";
+import { createChildWebContentsView, openViewDevToolsOnLaunch } from "./lib/web-contents";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -558,7 +558,7 @@ export class WorkspaceApp {
 
     view.webContents.loadURL(url);
 
-    openViewDevToolsInDev(view);
+    openViewDevToolsOnLaunch(view);
 
     return view;
   }
