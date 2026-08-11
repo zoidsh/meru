@@ -498,11 +498,13 @@ class Ipc {
                     },
                   ]
                 : []),
-              ...(workspaceApps[tabApp].singleInstance
+              ...(workspaceApps[tabApp].singleInstance || workspaceApps[tabApp].popupOnly
                 ? []
                 : [
                     {
-                      label: `Open ${workspaceApps[tabApp].label} Links in This Tab`,
+                      label: `Open ${workspaceApps[tabApp].label} Links in This ${
+                        tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
+                      }`,
                       type: "checkbox" as const,
                       checked: Boolean(tab.opensAppLinks),
                       click: async () => {
@@ -519,6 +521,12 @@ class Ipc {
                           appLinksTab.id !== tabId &&
                           !(await confirmAppLinksTabHandover(tabApp, appLinksTab.title))
                         ) {
+                          return;
+                        }
+
+                        // The tab keeps browsing while the dialog is up, and it
+                        // is a different app's tab once it navigates away.
+                        if (account.instance.tabs.getTab(tabId)?.app !== tabApp) {
                           return;
                         }
 

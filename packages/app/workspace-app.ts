@@ -266,8 +266,10 @@ export class WorkspaceApp {
       const account = accounts.getAccount(accountId);
 
       // A tab designated for this app takes the link, unless the modifier keys
-      // asked for a window or a background tab of its own.
-      if (!requestedOpenBehavior) {
+      // asked for a window or a background tab of its own. A Chat attachment is
+      // a download dressed as a Chat URL, so it must never land in the tab the
+      // user is chatting in.
+      if (!requestedOpenBehavior && !GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
         const appLinksTab = account.instance.tabs.openInAppLinksTab(url);
 
         if (appLinksTab) {
