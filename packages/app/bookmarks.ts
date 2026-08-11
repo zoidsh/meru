@@ -12,9 +12,11 @@ import { TitlebarPopup } from "./lib/titlebar-popup";
  * created from and never follows what the user browses to afterwards — opening
  * one loads that URL again.
  *
- * Bookmarks render in the vertical tabs strip, which `New Windows` mode hides
- * entirely — so the titlebar carries a popup of its own to keep them reachable,
- * and it is the only surface that lists them when there is no strip.
+ * Bookmarks render in the vertical tabs strip, but the titlebar's popup lists
+ * them unconditionally — the strip is gone in `New Windows` mode and absent in
+ * `Tabs` mode until a second tab opens, so the popup is the one surface that is
+ * always there. It stays reachable while empty, where it explains how to add
+ * one.
  */
 class Bookmarks {
   popup = new TitlebarPopup({

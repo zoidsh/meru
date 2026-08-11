@@ -34,7 +34,7 @@ import {
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
   WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
-import { useIsLicenseKeyValid, useSelectedAccountBookmarks, useVerticalTabs } from "@/lib/hooks";
+import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
   useAccountsStore,
@@ -189,8 +189,6 @@ export function AppTitlebar() {
 
   const { tabs: selectedAccountTabs, width: verticalTabsWidth } = useVerticalTabs();
 
-  const selectedAccountBookmarks = useSelectedAccountBookmarks();
-
   const activeTab = selectedAccountTabs.find((tab) => tab.active);
 
   const [location] = useLocation();
@@ -237,13 +235,6 @@ export function AppTitlebar() {
     config["gmail.savedSearches"].length > 0 && Boolean(config.licenseKey);
 
   const isWorkspaceAppTabActive = Boolean(activeTab?.app && activeTab.app !== "gmail");
-
-  // `New Windows` mode hides the strip, which is where bookmarks are otherwise
-  // listed — so the button exists to replace it, not to sit beside it. In
-  // `Tabs` mode the strip already has them. It also waits until there is
-  // something to list.
-  const shouldShowBookmarksButton =
-    config["workspaceApps.mode"] === "windows" && selectedAccountBookmarks.length > 0;
 
   const shouldShowOutOfOfficeButton =
     accounts.length === 1 &&
@@ -424,7 +415,7 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            {shouldShowBookmarksButton && <BookmarksButton />}
+            <BookmarksButton />
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
