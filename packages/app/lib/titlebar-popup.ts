@@ -15,11 +15,19 @@ export class TitlebarPopup {
 
   private width: number;
 
-  private height: number;
+  /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
+  private height: number | "fill";
 
   private view: WebContentsView | null = null;
 
   private parentWindow: BrowserWindow | null = null;
+
+  /**
+   * Where the popup starts horizontally, for a caller that wants it somewhere
+   * other than the end of the titlebar — the bookmarks button in the vertical
+   * tabs strip hangs it beside the strip instead.
+   */
+  private anchorX: number | null = null;
 
   /**
    * Held off while the pointer is over the button that toggles the popup, so
@@ -28,7 +36,15 @@ export class TitlebarPopup {
    */
   closeOnBlurEnabled = false;
 
-  constructor({ page, width, height }: { page: RendererPage; width: number; height: number }) {
+  constructor({
+    page,
+    width,
+    height,
+  }: {
+    page: RendererPage;
+    width: number;
+    height: number | "fill";
+  }) {
     this.page = page;
     this.width = width;
     this.height = height;
@@ -47,11 +63,13 @@ export class TitlebarPopup {
       ? this.parentWindow.getContentBounds()
       : this.parentWindow.getBounds();
 
+    const y = APP_TITLEBAR_HEIGHT + BASE_SPACING;
+
     this.view.setBounds({
-      x: parentWindowBounds.width - this.width - BASE_SPACING,
-      y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
+      x: this.anchorX ?? parentWindowBounds.width - this.width - BASE_SPACING,
+      y,
       width: this.width,
-      height: this.height,
+      height: this.height === "fill" ? parentWindowBounds.height - y - BASE_SPACING : this.height,
     });
   };
 
@@ -74,16 +92,18 @@ export class TitlebarPopup {
 
   /**
    * Returns whether the popup ended up open, so callers can refresh what it is
-   * about to show. Toggling from the window it is already open in closes it;
-   * from another window it moves there.
+   * about to show. Toggling from where it is already hanging closes it; from
+   * another window, or from a button that hangs it elsewhere, it moves there.
    */
-  toggle(parentWindow: BrowserWindow) {
+  toggle(parentWindow: BrowserWindow, { anchorX }: { anchorX?: number } = {}) {
     if (this.view) {
       const wasSameWindow = this.parentWindow === parentWindow;
 
+      const wasSameAnchorX = this.anchorX === (anchorX ?? null);
+
       this.close();
 
-      if (wasSameWindow) {
+      if (wasSameWindow && wasSameAnchorX) {
         return false;
       }
     }
@@ -95,6 +115,8 @@ export class TitlebarPopup {
     });
 
     this.parentWindow = parentWindow;
+
+    this.anchorX = anchorX ?? null;
 
     loadRenderer(this.view, { page: this.page });
 

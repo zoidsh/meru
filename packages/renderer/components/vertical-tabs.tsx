@@ -8,7 +8,7 @@ import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, BookOpenIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
@@ -257,6 +257,35 @@ function SortableVerticalTab({
   );
 }
 
+/**
+ * Opens the same popup the titlebar's bookmarks button does, hung beside the
+ * strip rather than at the end of the titlebar so it comes up where it was asked
+ * for. A popup rather than a dropdown because it is a child view, which paints
+ * above the workspace app views a renderer-drawn list would be covered by.
+ */
+function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
+  return (
+    <Button
+      variant="ghost"
+      size={isWide ? "sm" : "icon"}
+      className={cn("text-muted-foreground", isWide && "w-full justify-start")}
+      title="Bookmarks"
+      onClick={() => {
+        ipc.main.send("bookmarks.togglePopup", "verticalTabs");
+      }}
+      onMouseEnter={() => {
+        ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", false);
+      }}
+      onMouseLeave={() => {
+        ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", true);
+      }}
+    >
+      <BookOpenIcon />
+      {isWide && "Bookmarks"}
+    </Button>
+  );
+}
+
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -359,6 +388,7 @@ export function VerticalTabs() {
           <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
         </div>
       )}
+      <VerticalTabsBookmarks isWide={isWide} />
     </div>
   );
 }
