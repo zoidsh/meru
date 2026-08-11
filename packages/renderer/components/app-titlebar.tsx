@@ -395,6 +395,7 @@ export function AppTitlebar() {
                 />
               </TitlebarButtonGroup>
             )}
+            {!areLauncherAndBookmarksHostedByVerticalTabs && <BookmarksButton />}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"
@@ -416,7 +417,6 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            {!areLauncherAndBookmarksHostedByVerticalTabs && <BookmarksButton />}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
