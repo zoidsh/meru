@@ -236,7 +236,7 @@ export function WorkspaceAppsSettings() {
                 />
                 <ConfigSelectField
                   label="Width"
-                  description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide automatically based on the open tabs."
+                  description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide automatically based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide as well."
                   configKey="verticalTabs.width"
                   placeholder="Select width"
                   licenseKeyRequired
