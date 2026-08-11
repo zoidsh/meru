@@ -151,6 +151,13 @@ function VerticalTab({
 
   const wideRowActionCount = (isBookmarkable ? 1 : 0) + (isCloseable ? 1 : 0);
 
+  /**
+   * A bookmarked row shows its star whether pointed at or not, so the room for
+   * the controls is there from the start rather than made on hover — a title
+   * growing back under a star that stays put reads as the star sliding away.
+   */
+  const showsRestingStar = isBookmarkable && tab.bookmarked;
+
   const canOpenSecondInstance =
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
 
@@ -162,12 +169,10 @@ function VerticalTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          // The padding that clears room for the hover controls snaps rather
-          // than animates: growing it over time drags the markers at the end of
-          // the row along with it
-          isWideRow && "transition-colors",
-          isWideRow && wideRowActionCount === 1 && "group-hover:pr-7",
-          isWideRow && wideRowActionCount === 2 && "group-hover:pr-13",
+          isWideRow && wideRowActionCount === 1 && (showsRestingStar ? "pr-7" : "group-hover:pr-7"),
+          isWideRow &&
+            wideRowActionCount === 2 &&
+            (showsRestingStar ? "pr-13" : "group-hover:pr-13"),
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -202,29 +207,27 @@ function VerticalTab({
         {isWideRow && tab.windowed && (
           <AppWindowIcon className="size-3 shrink-0 text-muted-foreground" />
         )}
-        {/*
-         * A bookmarked row says so at rest, after the windowed marker and over
-         * the toggle's own spot, so hovering swaps the two where they stand.
-         */}
-        {isBookmarkable && tab.bookmarked && (
-          <StarIcon className="size-3 shrink-0 fill-current text-muted-foreground group-hover:hidden" />
-        )}
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {/*
-       * The toggle owns the row's right edge, landing on the marker above
-       * rather than beside it: hovering a bookmarked row wraps the star it
-       * already shows in a button instead of moving it. The close button only
-       * ever shows on hover, so it takes the room to the left, where its coming
-       * and going shifts nothing.
+       * A bookmarked row keeps its star on show and drops the button around it,
+       * so the mark at rest and the toggle on hover are one element that never
+       * moves. The close button, which only ever shows on hover, keeps the
+       * row's right edge.
        */}
       {isBookmarkable && (
         <Button
           variant="secondary"
           size="icon"
           data-tab-action
-          className="absolute top-1/2 right-1 size-5 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          className={cn(
+            "absolute top-1/2 size-5 -translate-y-1/2",
+            isCloseable ? "right-7" : "right-1",
+            tab.bookmarked
+              ? "bg-transparent text-muted-foreground group-hover:bg-secondary group-hover:text-secondary-foreground"
+              : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+          )}
           title={tab.bookmarked ? "Remove Bookmark" : "Bookmark"}
           onClick={() => {
             ipc.main.send("workspaceApp.toggleBookmark", tab.id);
@@ -241,7 +244,7 @@ function VerticalTab({
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
-              ? cn("top-1/2 size-5 -translate-y-1/2", isBookmarkable ? "right-7" : "right-1")
+              ? "top-1/2 right-1 size-5 -translate-y-1/2"
               : "-top-1 -right-1 size-4 rounded-full",
           )}
           title="Close"
