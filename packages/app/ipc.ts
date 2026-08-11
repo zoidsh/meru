@@ -96,12 +96,8 @@ class Ipc {
       accounts.sendAccountsChangedToRenderer();
 
       // Bookmarks live in the account config, so every surface reflecting them
-      // redraws from here rather than from a change event of its own. The strip
-      // is one of them, and it can grow or vanish with them, so the views around
-      // it have to be laid out again. Its tab rows star the URL they sit on, so
-      // they are sent again too.
-      accounts.updateAllViewBounds();
-
+      // redraws from here rather than from a change event of its own. The strip's
+      // tab rows star the URL they sit on, so they are sent again too.
       accounts.sendTabsChangedToRenderer();
 
       bookmarks.sendChangedToPopup();
@@ -938,10 +934,6 @@ class Ipc {
 
     ipc.main.on("bookmarks.removeBookmark", (_event, accountId, bookmarkId) => {
       bookmarks.remove(accountId, bookmarkId);
-    });
-
-    ipc.main.on("bookmarks.moveBookmark", (_event, accountId, bookmarkId, targetIndex) => {
-      bookmarks.move(accountId, bookmarkId, targetIndex);
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {

@@ -4,7 +4,7 @@ import { type DragEndEvent, DragDropProvider, PointerSensor } from "@dnd-kit/rea
 import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { AccountConfig, Bookmark } from "@meru/shared/schemas";
+import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
@@ -55,33 +55,6 @@ function moveSectionTab(
   }
 
   ipc.main.send("tabs.moveTab", accountId, movedTabId, movedSectionTabIds.indexOf(movedTabId));
-}
-
-function moveBookmark(accountId: AccountConfig["id"], bookmarks: Bookmark[], event: DragEndEvent) {
-  if (event.canceled) {
-    return;
-  }
-
-  const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
-
-  const movedBookmarkIds = move(bookmarkIds, event);
-
-  if (movedBookmarkIds === bookmarkIds) {
-    return;
-  }
-
-  const movedBookmarkId = event.operation.source?.id;
-
-  if (typeof movedBookmarkId !== "string") {
-    return;
-  }
-
-  ipc.main.send(
-    "bookmarks.moveBookmark",
-    accountId,
-    movedBookmarkId,
-    movedBookmarkIds.indexOf(movedBookmarkId),
-  );
 }
 
 function WindowedTabBadge({ className }: { className?: string }) {
@@ -294,87 +267,6 @@ function SortableVerticalTab({
   );
 }
 
-/**
- * A saved URL rather than an open tab: there is nothing to close, and opening
- * it loads the URL it was bookmarked at.
- */
-function VerticalTabsBookmark({
-  ref,
-  bookmark,
-  accountId,
-  isWide,
-  className,
-}: {
-  ref?: Ref<HTMLDivElement>;
-  bookmark: Bookmark;
-  accountId: AccountConfig["id"];
-  isWide: boolean;
-  className?: string;
-}) {
-  return (
-    <div ref={ref} className={cn("group relative", className)}>
-      <Button
-        variant="ghost"
-        size={isWide ? "sm" : "icon"}
-        className={cn(isWide && "w-full justify-start group-hover:pr-7")}
-        title={bookmark.title}
-        onClick={() => {
-          ipc.main.send("bookmarks.openBookmark", accountId, bookmark.id);
-        }}
-      >
-        <TabIcon app={bookmark.app} />
-        {isWide && (
-          <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
-            {bookmark.title}
-          </span>
-        )}
-      </Button>
-      <Button
-        variant="secondary"
-        size="icon"
-        data-tab-action
-        className={cn(
-          "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
-          isWide ? "inset-y-0 right-1 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
-        )}
-        title="Remove Bookmark"
-        onClick={() => {
-          ipc.main.send("bookmarks.removeBookmark", accountId, bookmark.id);
-        }}
-      >
-        <XIcon className="size-3" />
-      </Button>
-    </div>
-  );
-}
-
-function SortableVerticalTabsBookmark({
-  bookmark,
-  accountId,
-  isWide,
-  sectionIndex,
-}: {
-  bookmark: Bookmark;
-  accountId: AccountConfig["id"];
-  isWide: boolean;
-  sectionIndex: number;
-}) {
-  const { ref, isDragging } = useSortable({
-    id: bookmark.id,
-    index: sectionIndex,
-  });
-
-  return (
-    <VerticalTabsBookmark
-      ref={ref}
-      bookmark={bookmark}
-      accountId={accountId}
-      isWide={isWide}
-      className={cn("touch-none", isDragging && "opacity-50")}
-    />
-  );
-}
-
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -383,7 +275,6 @@ export function VerticalTabs() {
   const {
     selectedAccount,
     tabs: selectedAccountTabs,
-    bookmarks: selectedAccountBookmarks,
     width: verticalTabsWidth,
   } = useVerticalTabs();
 
@@ -470,23 +361,6 @@ export function VerticalTabs() {
             accountId={selectedAccount.config.id}
             presentation={isWide ? "wideRow" : "narrowIcon"}
             sectionIndex={normalTabIndex}
-          />
-        ))}
-      </DragDropProvider>
-      <DragDropProvider
-        plugins={verticalTabsPlugins}
-        sensors={verticalTabsSensors}
-        onDragEnd={(event) => {
-          moveBookmark(selectedAccount.config.id, selectedAccountBookmarks, event);
-        }}
-      >
-        {selectedAccountBookmarks.map((bookmark, bookmarkIndex) => (
-          <SortableVerticalTabsBookmark
-            key={bookmark.id}
-            bookmark={bookmark}
-            accountId={selectedAccount.config.id}
-            isWide={isWide}
-            sectionIndex={bookmarkIndex}
           />
         ))}
       </DragDropProvider>

@@ -1,13 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import {
-  getVerticalTabsWidth,
-  getVisibleBookmarks,
-  getVisibleVerticalTabs,
-} from "@meru/shared/tabs";
+import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { Account } from "./account";
-import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
@@ -118,20 +113,12 @@ class Accounts {
   getVerticalTabsWidth() {
     const selectedAccount = this.getSelectedAccount();
 
-    const workspaceAppsMode = config.get("workspaceApps.mode");
-
     return getVerticalTabsWidth(
       getVisibleVerticalTabs(selectedAccount.instance.tabs.serialize(), {
-        workspaceAppsMode,
+        workspaceAppsMode: config.get("workspaceApps.mode"),
         showWindows: config.get("verticalTabs.showWindows"),
       }),
-      {
-        bookmarkCount: getVisibleBookmarks(
-          bookmarks.getAccountBookmarks(selectedAccount.config.id),
-          workspaceAppsMode,
-        ).length,
-        configuredWidth: config.get("verticalTabs.width"),
-      },
+      { configuredWidth: config.get("verticalTabs.width") },
     );
   }
 

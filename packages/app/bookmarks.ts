@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { BASE_SPACING } from "@meru/shared/constants";
 import type { AccountConfig, Bookmark, BookmarkState } from "@meru/shared/schemas";
-import { clamp } from "@meru/shared/utils";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -12,11 +11,10 @@ import { TitlebarPopup } from "./lib/titlebar-popup";
  * created from and never follows what the user browses to afterwards — opening
  * one loads that URL again.
  *
- * Bookmarks render in the vertical tabs strip, but the titlebar's popup lists
- * them unconditionally — the strip is gone in `New Windows` mode and absent in
- * `Tabs` mode until a second tab opens, so the popup is the one surface that is
- * always there. It stays reachable while empty, where it explains how to add
- * one.
+ * The titlebar's popup is the one surface that lists them, and it is always
+ * there — unlike the vertical tabs strip, which is gone in `New Windows` mode
+ * and absent in `Tabs` mode until a second tab opens. The popup stays reachable
+ * while empty, where it explains how to add a bookmark.
  */
 class Bookmarks {
   popup = new TitlebarPopup({
@@ -75,22 +73,6 @@ class Bookmarks {
       accountId,
       this.getAccountBookmarks(accountId).filter((bookmark) => bookmark.id !== bookmarkId),
     );
-  }
-
-  move(accountId: AccountConfig["id"], bookmarkId: Bookmark["id"], targetIndex: number) {
-    const accountBookmarks = this.getAccountBookmarks(accountId);
-
-    const movedBookmark = accountBookmarks.find((bookmark) => bookmark.id === bookmarkId);
-
-    if (!movedBookmark) {
-      return;
-    }
-
-    const remainingBookmarks = accountBookmarks.filter((bookmark) => bookmark.id !== bookmarkId);
-
-    remainingBookmarks.splice(clamp(targetIndex, 0, remainingBookmarks.length), 0, movedBookmark);
-
-    this.setAccountBookmarks(accountId, remainingBookmarks);
   }
 
   open(accountId: AccountConfig["id"], bookmarkId: Bookmark["id"]) {

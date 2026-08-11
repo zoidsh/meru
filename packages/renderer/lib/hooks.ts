@@ -2,11 +2,7 @@ import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
-import {
-  getVerticalTabsWidth,
-  getVisibleBookmarks,
-  getVisibleVerticalTabs,
-} from "@meru/shared/tabs";
+import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { useEffect, useRef, useState } from "react";
 import { useConfig } from "./react-query";
 import { useAccountsStore, useTabsStore, useTrialStore } from "./stores";
@@ -66,17 +62,6 @@ export function useSelectedAccountTabs() {
 }
 
 /**
- * The bookmarks of the selected account. They are saved in its config, so the
- * accounts broadcast carries them to every surface that lists them.
- */
-export function useSelectedAccountBookmarks() {
-  const accounts = useAccountsStore((state) => state.accounts);
-
-  // Accounts written before bookmarks became a list of their own carry none
-  return accounts.find((account) => account.config.selected)?.config.workspaceApps.bookmarks ?? [];
-}
-
-/**
  * What the vertical tabs strip renders and the width it takes up. The titlebar
  * reads it too, to know whether the strip is there to host the Workspace Apps
  * launcher.
@@ -84,25 +69,18 @@ export function useSelectedAccountBookmarks() {
 export function useVerticalTabs() {
   const { selectedAccount, tabs: selectedAccountTabs } = useSelectedAccountTabs();
 
-  const selectedAccountBookmarks = useSelectedAccountBookmarks();
-
   const { config } = useConfig();
 
-  const workspaceAppsMode = config?.["workspaceApps.mode"] ?? "tabs";
-
   const tabs = getVisibleVerticalTabs(selectedAccountTabs, {
-    workspaceAppsMode,
+    workspaceAppsMode: config?.["workspaceApps.mode"] ?? "tabs",
     showWindows: config?.["verticalTabs.showWindows"] ?? true,
   });
 
-  const bookmarks = getVisibleBookmarks(selectedAccountBookmarks, workspaceAppsMode);
-
   const width = getVerticalTabsWidth(tabs, {
-    bookmarkCount: bookmarks.length,
     configuredWidth: config?.["verticalTabs.width"] ?? "auto",
   });
 
-  return { selectedAccount, tabs, bookmarks, width };
+  return { selectedAccount, tabs, width };
 }
 
 export function useIsLicenseKeyValid() {

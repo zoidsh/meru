@@ -64,22 +64,11 @@ export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dorma
   return showWindows ? tabs : tabs.filter((tab) => !tab.windowed);
 }
 
-/**
- * The strip is the home of the bookmarks section, and `windows` mode hides the
- * strip — there the titlebar popup lists them instead.
- */
-export function getVisibleBookmarks<VisibleBookmark>(
-  bookmarks: VisibleBookmark[],
-  workspaceAppsMode: WorkspaceAppsMode,
-) {
-  return workspaceAppsMode === "windows" ? [] : bookmarks;
-}
-
 export function getVerticalTabsWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  { bookmarkCount, configuredWidth }: { bookmarkCount: number; configuredWidth: VerticalTabsWidth },
+  { configuredWidth }: { configuredWidth: VerticalTabsWidth },
 ) {
-  if (tabs.length <= 1 && bookmarkCount === 0) {
+  if (tabs.length <= 1) {
     return 0;
   }
 
@@ -88,12 +77,6 @@ export function getVerticalTabsWidth(
   }
 
   if (configuredWidth === "wide") {
-    return VERTICAL_TABS_WIDE_WIDTH;
-  }
-
-  // Bookmarks are told apart by their title rather than by their app icon,
-  // which several of them can share.
-  if (bookmarkCount > 0) {
     return VERTICAL_TABS_WIDE_WIDTH;
   }
 
