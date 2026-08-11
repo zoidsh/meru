@@ -9,7 +9,7 @@ import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, CircleAlertIcon, XIcon } from "lucide-react";
+import { AppWindowIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
 import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
@@ -27,7 +27,7 @@ const verticalTabsSensors = [
   PointerSensor.configure({
     activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
     preventActivation: (event) =>
-      event.target instanceof Element && event.target.closest("[data-tab-close]") !== null,
+      event.target instanceof Element && event.target.closest("[data-tab-action]") !== null,
   }),
 ];
 
@@ -142,6 +142,15 @@ function VerticalTab({
 
   const isWideRow = presentation === "wideRow";
 
+  /**
+   * The same toggle a workspace app window carries in its titlebar: it saves the
+   * URL the tab is on and empties again as the tab browses on. Only the wide row
+   * has the space for it — the other presentations keep the context menu.
+   */
+  const isBookmarkable = isWideRow && !tab.dormant && Boolean(tab.app);
+
+  const wideRowActionCount = (isBookmarkable ? 1 : 0) + (isCloseable ? 1 : 0);
+
   const canOpenSecondInstance =
     tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
 
@@ -153,7 +162,8 @@ function VerticalTab({
         className={cn(
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          isWideRow && isCloseable && "group-hover:pr-7",
+          isWideRow && wideRowActionCount === 1 && "group-hover:pr-7",
+          isWideRow && wideRowActionCount === 2 && "group-hover:pr-13",
           presentation === "gridIcon" && "w-full",
         )}
         title={tab.title}
@@ -191,11 +201,28 @@ function VerticalTab({
       </Button>
       {!isWideRow && tab.windowed && <WindowedTabBadge className="-right-1 -bottom-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
+      {isBookmarkable && (
+        <Button
+          variant="secondary"
+          size="icon"
+          data-tab-action
+          className={cn(
+            "absolute top-1/2 size-5 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+            isCloseable ? "right-7" : "right-1",
+          )}
+          title={tab.bookmarked ? "Remove Bookmark" : "Bookmark"}
+          onClick={() => {
+            ipc.main.send("workspaceApp.toggleBookmark", tab.id);
+          }}
+        >
+          <StarIcon className={cn("size-3", tab.bookmarked && "fill-current")} />
+        </Button>
+      )}
       {isCloseable && (
         <Button
           variant="secondary"
           size="icon"
-          data-tab-close
+          data-tab-action
           className={cn(
             "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
             isWideRow
@@ -285,7 +312,7 @@ function VerticalTabsBookmark({
       <Button
         variant="secondary"
         size="icon"
-        data-tab-close
+        data-tab-action
         className={cn(
           "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           isWide

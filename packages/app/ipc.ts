@@ -95,11 +95,14 @@ class Ipc {
     config.onDidChange("accounts", () => {
       accounts.sendAccountsChangedToRenderer();
 
-      // Bookmarks live in the account config, so every surface listing them
-      // redraws from here rather than from a change event of its own. The
-      // strip is one of them, and it can grow or vanish with them, so the
-      // views around it have to be laid out again.
+      // Bookmarks live in the account config, so every surface reflecting them
+      // redraws from here rather than from a change event of its own. The strip
+      // is one of them, and it can grow or vanish with them, so the views around
+      // it have to be laid out again. Its tab rows star the URL they sit on, so
+      // they are sent again too.
       accounts.updateAllViewBounds();
+
+      accounts.sendTabsChangedToRenderer();
 
       bookmarks.sendChangedToPopup();
 
