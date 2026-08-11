@@ -118,13 +118,16 @@ export function VerticalTabsWorkspaceAppsLauncher({
         }
       />
       <DropdownMenuBackdrop />
-      {/* Opens upward at trigger width so it stays inside the strip — anything
-          wider would be painted over by the workspace app view next to it.
-          That leaves room for app names only in the wide strip. */}
+      {/* Always opens downward — the button sits below the tabs, so flipping
+          upward once enough tabs stack above it would make the menu jump around.
+          Trigger width keeps it inside the strip: anything wider would be
+          painted over by the workspace app view next to it, which leaves room
+          for app names only in the wide strip. */}
       <DropdownMenuContent
-        side="top"
+        side="bottom"
         align="center"
         collisionPadding={0}
+        collisionAvoidance={{ side: "none", fallbackAxisSide: "none" }}
         className={cn("flex flex-col gap-1 p-0.5", !isWide && "w-auto min-w-0")}
       >
         {launcherApps.map((app) => (
