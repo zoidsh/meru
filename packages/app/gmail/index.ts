@@ -522,7 +522,14 @@ export class Gmail {
   }
 
   destroy() {
-    this.view.webContents.removeAllListeners();
+    // Electron registers listeners of its own on every webContents, and taking
+    // those down along with ours leaves it unable to tear itself down — see the
+    // same carve-out in `WorkspaceApp.teardown`
+    for (const registeredEvent of this.view.webContents.eventNames()) {
+      if (registeredEvent !== "destroyed") {
+        this.view.webContents.removeAllListeners(registeredEvent);
+      }
+    }
 
     this.view.webContents.close();
 
