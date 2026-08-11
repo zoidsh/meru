@@ -9,7 +9,7 @@ import {
   EmptyTitle,
 } from "@meru/ui/components/empty";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
-import { BookmarkIcon, XIcon } from "lucide-react";
+import { BookOpenIcon, XIcon } from "lucide-react";
 import { PopupWindow } from "@/components/popup-window";
 import { TabIcon } from "@/components/tab-icon";
 import { renderApp } from "@/lib/react";
@@ -65,7 +65,7 @@ function BookmarkList() {
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <BookmarkIcon />
+            <BookOpenIcon />
           </EmptyMedia>
           <EmptyTitle>No bookmarks yet</EmptyTitle>
           <EmptyDescription>Bookmarked pages appear here.</EmptyDescription>

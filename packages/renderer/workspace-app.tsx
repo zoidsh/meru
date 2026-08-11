@@ -1,7 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
 import { cn } from "@meru/ui/lib/utils";
-import { BookmarkIcon, DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
+import { DownloadIcon, EllipsisVerticalIcon, StarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountBadge } from "@/components/account-badge";
 import { FindInPage } from "@/components/find-in-page";
@@ -70,7 +70,7 @@ function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
         ipc.main.send("workspaceApp.toggleBookmark", workspaceAppId);
       }}
     >
-      <BookmarkIcon className={cn(bookmarkState.bookmarked && "fill-current")} />
+      <StarIcon className={cn(bookmarkState.bookmarked && "fill-current")} />
     </TitlebarIconButton>
   );
 }
