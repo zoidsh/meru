@@ -69,6 +69,9 @@ function BookmarkList() {
           </EmptyMedia>
           <EmptyTitle>No bookmarks yet</EmptyTitle>
           <EmptyDescription>Bookmarked pages appear here.</EmptyDescription>
+          <EmptyDescription>
+            Bookmark a page with the star in its window titlebar, or from a tab's context menu.
+          </EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
