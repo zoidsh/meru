@@ -667,6 +667,7 @@ export class Tabs {
       dormant: tab.dormant,
       windowed: isWindowedTab(tab),
       bookmarked: isBookmarkableTab(tab) && bookmarks.isBookmarked(this.accountId, tab.url),
+      opensLinksForApp: tab.opensLinksForApp ?? null,
       loadOnLaunch: Boolean(tab.loadOnLaunch),
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
