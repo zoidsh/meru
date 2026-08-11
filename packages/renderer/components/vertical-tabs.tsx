@@ -3,13 +3,20 @@ import { type DragEndEvent, DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { AccountConfig } from "@meru/shared/schemas";
+import type { AccountConfig, Bookmark } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuBackdrop,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import { cn } from "@meru/ui/lib/utils";
-import { AppWindowIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
-import type { Ref } from "react";
+import { AppWindowIcon, BookOpenIcon, CircleAlertIcon, StarIcon, XIcon } from "lucide-react";
+import { type Ref, useEffect } from "react";
 import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import {
@@ -17,8 +24,14 @@ import {
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
 } from "@/components/workspace-apps-launcher";
 import { sortablePlugins, sortableSensors } from "@/lib/dnd";
-import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
+import {
+  useCloseOnWindowBlur,
+  useIsLicenseKeyValid,
+  useSelectedAccountBookmarks,
+  useVerticalTabs,
+} from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
+import { useVerticalTabsExpandedStore } from "@/lib/stores";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
 function moveSectionTab(
@@ -257,6 +270,83 @@ function SortableVerticalTab({
   );
 }
 
+/**
+ * The saved URLs of the selected account, in a dropdown rather than in the strip
+ * itself: they are told apart by their title, and a list of them would crowd out
+ * the tabs. Opening it expands the strip so the titles have room, whatever width
+ * the strip is on — a bookmark is not an open tab, so there is nothing to close
+ * here and the star on a tab row is still how one is added.
+ */
+function VerticalTabsBookmarks({
+  bookmarks,
+  accountId,
+  isWide,
+}: {
+  bookmarks: Bookmark[];
+  accountId: AccountConfig["id"];
+  isWide: boolean;
+}) {
+  // The strip is expanded for as long as the dropdown is open, so the store
+  // holding that width is what the dropdown opens and closes on
+  const isOpen = useVerticalTabsExpandedStore((state) => state.isExpanded);
+
+  const setIsOpen = useVerticalTabsExpandedStore((state) => state.setIsExpanded);
+
+  useCloseOnWindowBlur(isOpen, () => {
+    setIsOpen(false);
+  });
+
+  // Closing the last tab but one takes the strip away, dropdown and all, so the
+  // width it asked for has to go with it
+  useEffect(() => {
+    return () => {
+      setIsOpen(false);
+    };
+  }, [setIsOpen]);
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size={isWide ? "sm" : "icon"}
+            className={cn("text-muted-foreground", isWide && "w-full justify-start")}
+            title="Bookmarks"
+          >
+            <BookOpenIcon />
+            {isWide && "Bookmarks"}
+          </Button>
+        }
+      />
+      <DropdownMenuBackdrop />
+      {/* Opens upward at trigger width so it stays inside the strip — anything
+          wider would be painted over by the workspace app view next to it. */}
+      <DropdownMenuContent
+        side="top"
+        align="center"
+        collisionPadding={0}
+        className="flex flex-col gap-1 p-0.5"
+      >
+        {bookmarks.map((bookmark) => (
+          <DropdownMenuItem
+            key={bookmark.id}
+            title={bookmark.title}
+            onClick={() => {
+              ipc.main.send("bookmarks.openBookmark", accountId, bookmark.id);
+            }}
+          >
+            <TabIcon app={bookmark.app} />
+            <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
+              {bookmark.title}
+            </span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -267,6 +357,8 @@ export function VerticalTabs() {
     tabs: selectedAccountTabs,
     width: verticalTabsWidth,
   } = useVerticalTabs();
+
+  const selectedAccountBookmarks = useSelectedAccountBookmarks();
 
   if (!selectedAccount || verticalTabsWidth === 0) {
     return;
@@ -358,6 +450,13 @@ export function VerticalTabs() {
         <div className={cn(WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME, isWide && "w-full")}>
           <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
         </div>
+      )}
+      {selectedAccountBookmarks.length > 0 && (
+        <VerticalTabsBookmarks
+          bookmarks={selectedAccountBookmarks}
+          accountId={selectedAccount.config.id}
+          isWide={isWide}
+        />
       )}
     </div>
   );

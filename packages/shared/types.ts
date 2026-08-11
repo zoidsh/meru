@@ -193,6 +193,7 @@ export type IpcMainEvents =
       "tabs.moveTab": [accountId: AccountConfig["id"], tabId: string, targetSectionIndex: number];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showVerticalTabsContextMenu": [accountId: AccountConfig["id"]];
+      "verticalTabs.setExpanded": [expanded: boolean];
       "workspaceApps.openApp": [
         app: SupportedWorkspaceApp,
         openBehavior?: WorkspaceAppOpenBehavior,

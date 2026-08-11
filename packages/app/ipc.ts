@@ -564,6 +564,10 @@ class Ipc {
       ]).popup();
     });
 
+    ipc.main.on("verticalTabs.setExpanded", (_event, expanded) => {
+      accounts.setVerticalTabsExpanded(expanded);
+    });
+
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(

@@ -66,10 +66,17 @@ export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dorma
 
 export function getVerticalTabsWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  { configuredWidth }: { configuredWidth: VerticalTabsWidth },
+  { configuredWidth, expanded }: { configuredWidth: VerticalTabsWidth; expanded: boolean },
 ) {
   if (tabs.length <= 1) {
     return 0;
+  }
+
+  // A control in the strip can ask for the wide strip while it is open, and the
+  // bookmarks dropdown does: its entries are told apart by their title, which
+  // the narrow strip has no room for. It hands the width back on close.
+  if (expanded) {
+    return VERTICAL_TABS_WIDE_WIDTH;
   }
 
   if (configuredWidth === "narrow") {
