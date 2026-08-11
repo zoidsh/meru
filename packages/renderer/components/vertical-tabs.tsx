@@ -309,9 +309,16 @@ export function VerticalTabs() {
 
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
+  // Gmail is already in front while its tab is active, so its unread count is
+  // only in the way there. Attention still has to be flagged either way.
+  const isGmailTabActive = selectedAccountTabs.some((tab) => tab.id === GMAIL_TAB_ID && tab.active);
+
   const gmailTabStatus = {
     attentionRequired: selectedAccount.gmail.attentionRequired,
-    unreadCount: config?.["accounts.unreadBadge"] ? selectedAccount.gmail.unreadCount : null,
+    unreadCount:
+      config?.["accounts.unreadBadge"] && !isGmailTabActive
+        ? selectedAccount.gmail.unreadCount
+        : null,
   };
 
   return (
