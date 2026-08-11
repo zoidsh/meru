@@ -6,12 +6,12 @@ import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
 import {
+  BookOpenIcon,
   BriefcaseIcon,
   CircleAlertIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
   InboxIcon,
-  LibraryBigIcon,
   MailSearchIcon,
   MoonIcon,
   SparklesIcon,
@@ -58,7 +58,7 @@ function BookmarksButton() {
       }}
       title="Bookmarks"
     >
-      <LibraryBigIcon />
+      <BookOpenIcon />
     </TitlebarIconButton>
   );
 }
