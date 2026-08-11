@@ -15,7 +15,7 @@ import { useCloseOnWindowBlur } from "@/lib/hooks";
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative border-b bg-background select-none draggable"
+      className="relative border-b select-none draggable"
       style={{ height: APP_TITLEBAR_HEIGHT }}
     >
       <div

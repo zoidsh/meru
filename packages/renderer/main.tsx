@@ -1,4 +1,5 @@
 import { Toaster } from "@meru/ui/components/sonner";
+import { cn } from "@meru/ui/lib/utils";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { AppMain } from "@/components/app-main";
@@ -8,6 +9,7 @@ import { VerticalTabs } from "@/components/vertical-tabs";
 import { useMouseAccountSwitching } from "@/lib/hooks";
 import { renderApp } from "@/lib/react";
 import { useThemeStore } from "@/lib/theme";
+import { platform } from "@/lib/utils";
 import "@/lib/ipc";
 
 function Main() {
@@ -19,7 +21,7 @@ function Main() {
     <Router hook={useHashLocation}>
       <div className="flex h-screen flex-col">
         <AppTitlebar />
-        <div className="flex flex-1 overflow-hidden bg-sidebar">
+        <div className={cn("flex flex-1 overflow-hidden", !platform.isMacOS && "bg-sidebar")}>
           <Switch>
             <Route path="/">
               <VerticalTabs />

@@ -17,6 +17,7 @@ import {
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { renderApp } from "@/lib/react";
 import { useConfig } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -189,7 +190,7 @@ function WorkspaceApp() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-sidebar">
+    <div className={cn("flex h-screen flex-col", !platform.isMacOS && "bg-sidebar")}>
       <Titlebar>
         <TitlebarLeft>
           <TitlebarButtonGroup>
