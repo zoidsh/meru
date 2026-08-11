@@ -19,6 +19,8 @@ export type TabState = {
   pinned: boolean;
   dormant: boolean;
   windowed: boolean;
+  /** Whether the URL the tab is on is among the account's bookmarks. */
+  bookmarked: boolean;
   loadOnLaunch: boolean;
   loading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };

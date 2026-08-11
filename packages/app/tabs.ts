@@ -5,6 +5,7 @@ import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/s
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import type { WebContentsView } from "electron";
 import { accounts } from "./accounts";
+import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import type { Gmail } from "./gmail";
 import { main } from "./main";
@@ -32,6 +33,14 @@ export function registerTabBroadcasts(view: WebContentsView) {
 
 export function isWindowedTab(tab: Tab) {
   return tab instanceof WorkspaceApp && tab.isWindowed;
+}
+
+/**
+ * The Gmail tab stands for the account's inbox rather than a URL, so it is the
+ * one tab with nothing to save.
+ */
+function isBookmarkableTab(tab: Tab): tab is WorkspaceApp | DormantTab {
+  return tab instanceof WorkspaceApp || tab instanceof DormantTab;
 }
 
 type SavedWorkspaceApp = WorkspaceApp & {
@@ -574,6 +583,7 @@ export class Tabs {
       pinned: tab.pinned,
       dormant: tab.dormant,
       windowed: isWindowedTab(tab),
+      bookmarked: isBookmarkableTab(tab) && bookmarks.isBookmarked(this.accountId, tab.url),
       loadOnLaunch: Boolean(tab.loadOnLaunch),
       loading: tab.isLoading,
       navigationHistory: tab.navigationHistory,
