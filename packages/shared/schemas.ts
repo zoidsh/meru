@@ -28,8 +28,8 @@ const workspaceAppSchema = z.custom<SupportedWorkspaceApp>(
 /**
  * A pinned tab as it is restored on the next launch. It keeps following the app
  * it holds, so its `url` and `title` are rewritten as the user browses.
- * `opensAppLinks` marks the one tab of its app that every link to that app
- * opens in.
+ * `opensLinksForApp` names the app whose links all open in this tab, which the
+ * tab keeps holding even after browsing on to another app.
  */
 export const savedTabSchema = z.object({
   app: workspaceAppSchema,
@@ -37,7 +37,7 @@ export const savedTabSchema = z.object({
   title: z.string(),
   loadOnLaunch: z.boolean(),
   windowed: z.boolean(),
-  opensAppLinks: z.boolean(),
+  opensLinksForApp: workspaceAppSchema.nullable(),
 });
 
 export type SavedTab = z.infer<typeof savedTabSchema>;

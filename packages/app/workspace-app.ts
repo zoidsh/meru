@@ -82,7 +82,7 @@ type WorkspaceAppOptions = {
   savedAsWindow?: boolean;
   pinned?: boolean;
   loadOnLaunch?: boolean;
-  opensAppLinks?: boolean;
+  opensLinksForApp?: SupportedWorkspaceApp | null;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
 };
@@ -435,7 +435,7 @@ export class WorkspaceApp {
    * Whether every link to this tab's app opens here instead of in a new tab.
    * Only one tab per app can hold it.
    */
-  opensAppLinks = false;
+  opensLinksForApp: SupportedWorkspaceApp | null = null;
 
   /**
    * Whether this app should be restored in its own window, as opposed to
@@ -460,7 +460,7 @@ export class WorkspaceApp {
     savedAsWindow,
     pinned,
     loadOnLaunch,
-    opensAppLinks,
+    opensLinksForApp,
     app,
     zoomFactor,
   }: WorkspaceAppOptions) {
@@ -468,7 +468,7 @@ export class WorkspaceApp {
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
-    this.opensAppLinks = Boolean(opensAppLinks);
+    this.opensLinksForApp = opensLinksForApp ?? null;
     this.opensAsWindow =
       savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");
 

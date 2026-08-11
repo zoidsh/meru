@@ -348,6 +348,11 @@ class Ipc {
 
       const tabApp = tab.app;
 
+      // A designated tab keeps offering the app it was designated for even
+      // after browsing on, so that the designation stays visible and removable
+      // from the tab holding it.
+      const appLinksApp = tab.opensLinksForApp ?? tabApp;
+
       const hasOtherClosableTabs = account.instance.tabs.tabs.some(
         (accountTab) =>
           accountTab.id !== tabId &&
@@ -498,39 +503,34 @@ class Ipc {
                     },
                   ]
                 : []),
-              ...(workspaceApps[tabApp].singleInstance || workspaceApps[tabApp].popupOnly
+              ...(!appLinksApp ||
+              workspaceApps[appLinksApp].singleInstance ||
+              workspaceApps[appLinksApp].popupOnly
                 ? []
                 : [
                     {
-                      label: `Open ${workspaceApps[tabApp].label} Links in This ${
+                      label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
                         tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
                       }`,
                       type: "checkbox" as const,
-                      checked: Boolean(tab.opensAppLinks),
+                      checked: Boolean(tab.opensLinksForApp),
                       click: async () => {
-                        if (tab.opensAppLinks) {
-                          account.instance.tabs.setTabOpensAppLinks(tabId, false);
+                        if (tab.opensLinksForApp) {
+                          account.instance.tabs.setTabOpensLinksForApp(tabId, null);
 
                           return;
                         }
 
-                        const appLinksTab = account.instance.tabs.getAppLinksTab(tabApp);
+                        const appLinksTab = account.instance.tabs.getAppLinksTab(appLinksApp);
 
                         if (
                           appLinksTab &&
-                          appLinksTab.id !== tabId &&
-                          !(await confirmAppLinksTabHandover(tabApp, appLinksTab.title))
+                          !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title))
                         ) {
                           return;
                         }
 
-                        // The tab keeps browsing while the dialog is up, and it
-                        // is a different app's tab once it navigates away.
-                        if (account.instance.tabs.getTab(tabId)?.app !== tabApp) {
-                          return;
-                        }
-
-                        account.instance.tabs.setTabOpensAppLinks(tabId, true);
+                        account.instance.tabs.setTabOpensLinksForApp(tabId, appLinksApp);
                       },
                     },
                   ]),

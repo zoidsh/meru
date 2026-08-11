@@ -59,7 +59,7 @@ export type Tab = {
   pinned: boolean;
   dormant: boolean;
   loadOnLaunch?: boolean;
-  opensAppLinks?: boolean;
+  opensLinksForApp?: SupportedWorkspaceApp | null;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -87,7 +87,7 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
-  opensAppLinks: boolean;
+  opensLinksForApp: SupportedWorkspaceApp | null;
 
   windowed: boolean;
 
@@ -100,7 +100,7 @@ export class DormantTab {
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
-    this.opensAppLinks = Boolean(savedTab.opensAppLinks);
+    this.opensLinksForApp = savedTab.opensLinksForApp ?? null;
     this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
   }
@@ -252,7 +252,9 @@ export class Tabs {
    * has not been opened yet.
    */
   private openDormantTab(dormantTab: DormantTab, url?: string) {
-    if (!canOpenWorkspaceAppInApp(dormantTab.app)) {
+    // A designated tab is woken on the link's app, which is not necessarily the
+    // one it was saved on.
+    if (!canOpenWorkspaceAppInApp(url ? getWorkspaceAppFromUrl(url) : dormantTab.app)) {
       openExternalUrl(url ?? dormantTab.url, { skipTrustedHostCheck: true });
 
       return;
@@ -275,7 +277,7 @@ export class Tabs {
       url: url ?? dormantTab.url,
       pinned: dormantTab.pinned,
       loadOnLaunch: dormantTab.loadOnLaunch,
-      opensAppLinks: dormantTab.opensAppLinks,
+      opensLinksForApp: dormantTab.opensLinksForApp,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       savedAsWindow: dormantTab.windowed,
       app: dormantTab.app,
@@ -385,7 +387,7 @@ export class Tabs {
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
-          opensAppLinks: savedWorkspaceApp.opensAppLinks,
+          opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
         savedWorkspaceApp.zoomFactor,
@@ -510,30 +512,30 @@ export class Tabs {
   }
 
   /**
-   * The tab every link to `app` opens in, if the user designated one. Only one
-   * tab per app can hold it, but a tab that browsed onto another app carries the
-   * designation with it, so the first match wins.
+   * The tab every link to `app` opens in, if the user designated one. The tab
+   * holds the app it was designated for rather than the one it happens to be
+   * showing, so browsing on never hands the designation to another app.
    */
   getAppLinksTab(app: SupportedWorkspaceApp) {
-    return this.tabs.find((tab) => tab.opensAppLinks && tab.app === app);
+    return this.tabs.find((tab) => tab.opensLinksForApp === app);
   }
 
-  setTabOpensAppLinks(tabId: string, opensAppLinks: boolean) {
+  setTabOpensLinksForApp(tabId: string, app: SupportedWorkspaceApp | null) {
     const designatedTab = this.getTab(tabId);
 
-    if (!designatedTab?.app) {
+    if (!(designatedTab instanceof WorkspaceApp) && !(designatedTab instanceof DormantTab)) {
       return;
     }
 
-    if (opensAppLinks) {
-      for (const tab of this.tabs) {
-        if (tab.opensAppLinks && tab.app === designatedTab.app) {
-          tab.opensAppLinks = false;
-        }
+    if (app) {
+      const previousAppLinksTab = this.getAppLinksTab(app);
+
+      if (previousAppLinksTab) {
+        previousAppLinksTab.opensLinksForApp = null;
       }
     }
 
-    designatedTab.opensAppLinks = opensAppLinks;
+    designatedTab.opensLinksForApp = app;
 
     accounts.saveTabs();
   }
@@ -630,7 +632,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
-          opensAppLinks: tab.opensAppLinks,
+          opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.opensAsWindow,
         });
       } else if (tab instanceof DormantTab) {
@@ -639,7 +641,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
-          opensAppLinks: tab.opensAppLinks,
+          opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.windowed,
         });
       }

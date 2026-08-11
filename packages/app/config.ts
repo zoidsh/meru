@@ -432,7 +432,7 @@ export const config = new Store<Config>({
                 title: savedTab.title,
                 loadOnLaunch: savedTab.loadOnLaunch,
                 windowed: savedTab.windowed,
-                opensAppLinks: false,
+                opensLinksForApp: null,
               })),
             bookmarks: savedTabs
               .filter((savedTab) => savedTab.persistence === "bookmarked")
