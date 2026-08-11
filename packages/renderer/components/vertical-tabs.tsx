@@ -12,13 +12,11 @@ import { AppWindowIcon, BookOpenIcon, CircleAlertIcon, StarIcon, XIcon } from "l
 import type { Ref } from "react";
 import { TabIcon } from "@/components/tab-icon";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
-import {
-  VerticalTabsWorkspaceAppsLauncher,
-  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
-} from "@/components/workspace-apps-launcher";
+import { VerticalTabsWorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
 import { sortablePlugins, sortableSensors } from "@/lib/dnd";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
+import { HOST_HANDOVER_FADE_CLASS_NAME } from "@/lib/utils";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
 function moveSectionTab(
@@ -384,7 +382,7 @@ export function VerticalTabs() {
         ))}
       </DragDropProvider>
       {shouldShowWorkspaceAppsLauncher && (
-        <div className={cn(WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME, isWide && "w-full")}>
+        <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
           <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
         </div>
       )}

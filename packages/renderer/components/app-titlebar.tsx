@@ -30,12 +30,10 @@ import {
   TitlebarTitle,
 } from "@/components/titlebar";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
-import {
-  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
-  WorkspaceAppsLauncher,
-} from "@/components/workspace-apps-launcher";
+import { WorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
+import { HOST_HANDOVER_FADE_CLASS_NAME } from "@/lib/utils";
 import {
   useAccountsStore,
   useAppUpdaterStore,
@@ -43,9 +41,10 @@ import {
   useTrialStore,
 } from "../lib/stores";
 
-function BookmarksButton() {
+function BookmarksButton({ className }: { className?: string }) {
   return (
     <TitlebarIconButton
+      className={className}
       onClick={() => {
         ipc.main.send("bookmarks.togglePopup", "titlebar");
       }}
@@ -384,7 +383,7 @@ export function AppTitlebar() {
             {shouldShowWorkspaceAppsLauncher && (
               <TitlebarButtonGroup
                 className={cn(
-                  WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
+                  HOST_HANDOVER_FADE_CLASS_NAME,
                   areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
                 )}
               >
@@ -395,6 +394,12 @@ export function AppTitlebar() {
                 />
               </TitlebarButtonGroup>
             )}
+            <BookmarksButton
+              className={cn(
+                HOST_HANDOVER_FADE_CLASS_NAME,
+                areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
+              )}
+            />
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"
@@ -416,7 +421,6 @@ export function AppTitlebar() {
                 ))}
               </TitlebarDropdownMenu>
             )}
-            {!areLauncherAndBookmarksHostedByVerticalTabs && <BookmarksButton />}
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
