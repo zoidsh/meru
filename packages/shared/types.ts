@@ -158,6 +158,7 @@ export type Config = {
   "unifiedInbox.rowsPerPage": number;
   "spellchecker.languages": string[];
   "verticalTabs.showWindows": boolean;
+  "verticalTabs.visible": boolean;
   "verticalTabs.width": VerticalTabsWidth;
 };
 

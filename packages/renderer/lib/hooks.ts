@@ -64,7 +64,7 @@ export function useSelectedAccountTabs() {
 /**
  * What the vertical tabs strip renders and the width it takes up. The titlebar
  * reads it too, to know whether the strip is there to host the Workspace Apps
- * launcher.
+ * launcher and whether to offer the toggle that hides it.
  */
 export function useVerticalTabs() {
   const { selectedAccount, tabs: selectedAccountTabs } = useSelectedAccountTabs();
@@ -76,11 +76,14 @@ export function useVerticalTabs() {
     showWindows: config?.["verticalTabs.showWindows"] ?? true,
   });
 
-  const width = getVerticalTabsWidth(tabs, {
+  /** The width the strip takes when shown, and 0 when it has nothing to show. */
+  const shownWidth = getVerticalTabsWidth(tabs, {
     configuredWidth: config?.["verticalTabs.width"] ?? "auto",
   });
 
-  return { selectedAccount, tabs, width };
+  const isVisible = config?.["verticalTabs.visible"] ?? true;
+
+  return { selectedAccount, tabs, canShow: shownWidth > 0, width: isVisible ? shownWidth : 0 };
 }
 
 export function useIsLicenseKeyValid() {

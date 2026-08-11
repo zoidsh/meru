@@ -52,6 +52,10 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
+    config.onDidChange("verticalTabs.visible", () => {
+      accounts.updateAllViewBounds();
+    });
+
     config.onDidChange("workspaceApps.mode", () => {
       accounts.updateAllViewBounds();
     });
@@ -111,6 +115,10 @@ class Accounts {
   }
 
   getVerticalTabsWidth() {
+    if (!config.get("verticalTabs.visible")) {
+      return 0;
+    }
+
     const selectedAccount = this.getSelectedAccount();
 
     return getVerticalTabsWidth(

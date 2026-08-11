@@ -13,6 +13,8 @@ import {
   InboxIcon,
   MailSearchIcon,
   MoonIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   SparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -35,13 +37,33 @@ import {
   WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
-import { useConfig } from "@/lib/react-query";
+import { useConfig, useConfigMutation } from "@/lib/react-query";
 import {
   useAccountsStore,
   useAppUpdaterStore,
   useFindInPageStore,
   useTrialStore,
 } from "../lib/stores";
+
+/**
+ * Puts the vertical tabs strip away and brings it back. It sits next to the
+ * navigation controls, where the strip it collapses starts, and is only offered
+ * while the strip has tabs to show — hiding an empty strip would do nothing.
+ */
+function VerticalTabsToggleButton({ isVisible }: { isVisible: boolean }) {
+  const configMutation = useConfigMutation();
+
+  return (
+    <TitlebarIconButton
+      title={isVisible ? "Hide Vertical Tabs" : "Show Vertical Tabs"}
+      onClick={() => {
+        configMutation.mutate({ "verticalTabs.visible": !isVisible });
+      }}
+    >
+      {isVisible ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
+    </TitlebarIconButton>
+  );
+}
 
 function BookmarksButton() {
   return (
@@ -187,7 +209,11 @@ function DoNotDisturb() {
 export function AppTitlebar() {
   const accounts = useAccountsStore((state) => state.accounts);
 
-  const { tabs: selectedAccountTabs, width: verticalTabsWidth } = useVerticalTabs();
+  const {
+    tabs: selectedAccountTabs,
+    canShow: canShowVerticalTabs,
+    width: verticalTabsWidth,
+  } = useVerticalTabs();
 
   const activeTab = selectedAccountTabs.find((tab) => tab.active);
 
@@ -322,6 +348,11 @@ export function AppTitlebar() {
     return (
       <>
         <TitlebarLeft>
+          {canShowVerticalTabs && (
+            <TitlebarButtonGroup>
+              <VerticalTabsToggleButton isVisible={config["verticalTabs.visible"]} />
+            </TitlebarButtonGroup>
+          )}
           <TitlebarButtonGroup>
             <TitlebarNavigationControls
               canGoBack={Boolean(activeTab?.navigationHistory.canGoBack)}
