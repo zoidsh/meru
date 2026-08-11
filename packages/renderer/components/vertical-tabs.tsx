@@ -338,6 +338,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * it can be widened or narrowed where it stands rather than through settings.
  * That leaves `auto` behind for good: a width picked by hand stays picked, the
  * same as choosing one in settings.
+ *
+ * The only control in the strip that keeps its icon shape in both widths, where
+ * the others grow a label: it is the one that resizes what it sits in, so it
+ * stays the same button under the pointer and only turns its arrow around.
  */
 function VerticalTabsWidthToggle({ isWide }: { isWide: boolean }) {
   const configMutation = useConfigMutation();
@@ -345,15 +349,14 @@ function VerticalTabsWidthToggle({ isWide }: { isWide: boolean }) {
   return (
     <Button
       variant="ghost"
-      size={isWide ? "sm" : "icon"}
-      className={cn("mt-auto text-muted-foreground", isWide && "w-full justify-start")}
+      size="icon"
+      className="mt-auto text-muted-foreground"
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
         configMutation.mutate({ "verticalTabs.width": isWide ? "narrow" : "wide" });
       }}
     >
       {isWide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
-      {isWide && "Narrow Tabs"}
     </Button>
   );
 }
