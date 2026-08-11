@@ -23,7 +23,9 @@ class Bookmarks {
   popup = new TitlebarPopup({
     page: "bookmarks",
     width: BASE_SPACING * 40,
-    height: BASE_SPACING * 44,
+    // A list of saved URLs is as long as the account made it, so it takes the
+    // window rather than a height of its own and scrolls within it
+    height: "fill",
   });
 
   /**

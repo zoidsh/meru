@@ -15,7 +15,8 @@ export class TitlebarPopup {
 
   private width: number;
 
-  private height: number;
+  /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
+  private height: number | "fill";
 
   private view: WebContentsView | null = null;
 
@@ -35,7 +36,15 @@ export class TitlebarPopup {
    */
   closeOnBlurEnabled = false;
 
-  constructor({ page, width, height }: { page: RendererPage; width: number; height: number }) {
+  constructor({
+    page,
+    width,
+    height,
+  }: {
+    page: RendererPage;
+    width: number;
+    height: number | "fill";
+  }) {
     this.page = page;
     this.width = width;
     this.height = height;
@@ -54,11 +63,13 @@ export class TitlebarPopup {
       ? this.parentWindow.getContentBounds()
       : this.parentWindow.getBounds();
 
+    const y = APP_TITLEBAR_HEIGHT + BASE_SPACING;
+
     this.view.setBounds({
       x: this.anchorX ?? parentWindowBounds.width - this.width - BASE_SPACING,
-      y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
+      y,
       width: this.width,
-      height: this.height,
+      height: this.height === "fill" ? parentWindowBounds.height - y - BASE_SPACING : this.height,
     });
   };
 
