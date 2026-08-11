@@ -9,6 +9,7 @@ import {
   screen,
   WebContentsView,
 } from "electron";
+import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
 
 const CASCADE_OFFSET = 30;
@@ -151,7 +152,9 @@ export function loadRenderer(
   if (is.dev) {
     window.webContents.loadURL(`http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
 
-    window.webContents.openDevTools({ mode: "detach" });
+    if (shouldOpenDevToolsOnLaunch) {
+      window.webContents.openDevTools({ mode: "detach" });
+    }
   } else {
     window.webContents.loadFile(path.join("build-js", "renderer", pageFileName), {
       search: searchParams.toString(),

@@ -1,4 +1,3 @@
-import { is } from "@electron-toolkit/utils";
 import {
   type Session,
   type WebContents,
@@ -7,6 +6,7 @@ import {
 } from "electron";
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
+import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 
 export function applyViewZoomLimits(view: WebContentsView) {
   view.webContents.on("dom-ready", () => {
@@ -14,8 +14,8 @@ export function applyViewZoomLimits(view: WebContentsView) {
   });
 }
 
-export function openViewDevToolsInDev(view: WebContentsView) {
-  if (is.dev) {
+export function openViewDevToolsOnLaunch(view: WebContentsView) {
+  if (shouldOpenDevToolsOnLaunch) {
     view.webContents.openDevTools({ mode: "bottom" });
   }
 }
