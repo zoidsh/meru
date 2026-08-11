@@ -1,7 +1,6 @@
 import { accountColorsMap } from "@meru/shared/accounts";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
-import { getBookmarkedTabs } from "@meru/shared/tabs";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { cn } from "@meru/ui/lib/utils";
@@ -35,7 +34,7 @@ import {
   WORKSPACE_APPS_LAUNCHER_FADE_CLASS_NAME,
   WorkspaceAppsLauncher,
 } from "@/components/workspace-apps-launcher";
-import { useIsLicenseKeyValid, useSelectedAccountTabs, useVerticalTabs } from "@/lib/hooks";
+import { useIsLicenseKeyValid, useSelectedAccountBookmarks, useVerticalTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 import {
   useAccountsStore,
@@ -190,7 +189,7 @@ export function AppTitlebar() {
 
   const { tabs: selectedAccountTabs, width: verticalTabsWidth } = useVerticalTabs();
 
-  const { tabs: allSelectedAccountTabs } = useSelectedAccountTabs();
+  const selectedAccountBookmarks = useSelectedAccountBookmarks();
 
   const activeTab = selectedAccountTabs.find((tab) => tab.active);
 
@@ -244,8 +243,7 @@ export function AppTitlebar() {
   // `Tabs` mode the strip already has them. It also waits until there is
   // something to list.
   const shouldShowBookmarksButton =
-    config["workspaceApps.mode"] === "windows" &&
-    getBookmarkedTabs(allSelectedAccountTabs).length > 0;
+    config["workspaceApps.mode"] === "windows" && selectedAccountBookmarks.length > 0;
 
   const shouldShowOutOfOfficeButton =
     accounts.length === 1 &&

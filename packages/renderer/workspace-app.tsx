@@ -1,7 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
 import { cn } from "@meru/ui/lib/utils";
-import { BookmarkIcon, DownloadIcon, EllipsisVerticalIcon } from "lucide-react";
+import { DownloadIcon, EllipsisVerticalIcon, StarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountBadge } from "@/components/account-badge";
 import { FindInPage } from "@/components/find-in-page";
@@ -38,8 +38,10 @@ function RecentDownloadHistoryButton() {
 }
 
 /**
- * Bookmarking is otherwise a tab context-menu action, which `New Windows` mode
- * leaves no way to reach — this is the entry point that does not need a strip.
+ * Saves the URL on display, or drops the bookmark holding it — filled while the
+ * window sits on a bookmarked URL, empty as soon as it browses on. Bookmarking
+ * is otherwise a tab context-menu action, which `New Windows` mode leaves no
+ * way to reach.
  */
 function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
   const [bookmarkState, setBookmarkState] = useState<WorkspaceAppBookmarkState>({
@@ -68,7 +70,7 @@ function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
         ipc.main.send("workspaceApp.toggleBookmark", workspaceAppId);
       }}
     >
-      <BookmarkIcon className={cn(bookmarkState.bookmarked && "fill-current")} />
+      <StarIcon className={cn(bookmarkState.bookmarked && "fill-current")} />
     </TitlebarIconButton>
   );
 }

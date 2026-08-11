@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
+import {
+  getVerticalTabsWidth,
+  getVisibleBookmarks,
+  getVisibleVerticalTabs,
+} from "@meru/shared/tabs";
 import { Account } from "./account";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
@@ -112,12 +116,22 @@ class Accounts {
   }
 
   getVerticalTabsWidth() {
+    const selectedAccount = this.getSelectedAccount();
+
+    const workspaceAppsMode = config.get("workspaceApps.mode");
+
     return getVerticalTabsWidth(
-      getVisibleVerticalTabs(this.getSelectedAccount().instance.tabs.serialize(), {
-        workspaceAppsMode: config.get("workspaceApps.mode"),
+      getVisibleVerticalTabs(selectedAccount.instance.tabs.serialize(), {
+        workspaceAppsMode,
         showWindows: config.get("verticalTabs.showWindows"),
       }),
-      config.get("verticalTabs.width"),
+      {
+        bookmarkCount: getVisibleBookmarks(
+          bookmarks.getAccountBookmarks(selectedAccount.config.id),
+          workspaceAppsMode,
+        ).length,
+        configuredWidth: config.get("verticalTabs.width"),
+      },
     );
   }
 
@@ -230,8 +244,6 @@ class Accounts {
     this.updateAllViewBounds();
 
     this.refreshSelectedAccountView();
-
-    bookmarks.sendChangedToPopup();
   }
 
   selectPreviousAccount() {
@@ -286,6 +298,7 @@ class Accounts {
       },
       workspaceApps: {
         savedTabs: [],
+        bookmarks: [],
       },
     };
 
@@ -404,6 +417,7 @@ class Accounts {
         return {
           ...accountConfig,
           workspaceApps: {
+            ...accountConfig.workspaceApps,
             savedTabs: instance.tabs.serializeSavedTabs(),
           },
         };
@@ -424,8 +438,6 @@ class Accounts {
         tabs: account.instance.tabs.serialize(),
       })),
     );
-
-    bookmarks.sendChangedToPopup();
   }
 
   sendAccountsChangedToRenderer() {

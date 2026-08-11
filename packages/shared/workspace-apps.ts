@@ -84,7 +84,8 @@ export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
 export type WorkspaceAppOpenBehavior = "tab" | "backgroundTab" | "newWindow";
 
 export type WorkspaceAppBookmarkState = {
-  /** Popups such as the PDF viewer are never tabs, so they cannot be saved. */
+  /** Popups such as the PDF viewer are never tabs, so they offer no bookmarking. */
   savable: boolean;
+  /** Whether the URL on display is among the account's bookmarks. */
   bookmarked: boolean;
 };

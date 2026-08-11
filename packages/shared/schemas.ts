@@ -21,22 +21,37 @@ export const accountColors = [
   "pink",
 ] as const;
 
-export const tabPersistenceSchema = z.enum(["pinned", "bookmarked"]);
+const workspaceAppSchema = z.custom<SupportedWorkspaceApp>(
+  (value) => typeof value === "string" && value in workspaceApps,
+);
 
-export type TabPersistence = z.infer<typeof tabPersistenceSchema>;
-
+/**
+ * A pinned tab as it is restored on the next launch. It keeps following the app
+ * it holds, so its `url` and `title` are rewritten as the user browses.
+ */
 export const savedTabSchema = z.object({
-  app: z.custom<SupportedWorkspaceApp>(
-    (value) => typeof value === "string" && value in workspaceApps,
-  ),
+  app: workspaceAppSchema,
   url: z.string(),
   title: z.string(),
-  persistence: tabPersistenceSchema,
   loadOnLaunch: z.boolean(),
   windowed: z.boolean(),
 });
 
 export type SavedTab = z.infer<typeof savedTabSchema>;
+
+/**
+ * A saved URL, captured when the bookmark was created. Unlike a saved tab, a
+ * bookmark never follows what the user browses to afterwards — opening one
+ * loads the URL it was created from.
+ */
+export const bookmarkSchema = z.object({
+  id: z.string(),
+  app: workspaceAppSchema,
+  url: z.string(),
+  title: z.string(),
+});
+
+export type Bookmark = z.infer<typeof bookmarkSchema>;
 
 export const accountConfigSchema = z.object({
   id: z.string(),
@@ -51,12 +66,21 @@ export const accountConfigSchema = z.object({
   }),
   workspaceApps: z.object({
     savedTabs: z.array(savedTabSchema),
+    bookmarks: z.array(bookmarkSchema),
   }),
 });
 
 export type AccountConfig = z.infer<typeof accountConfigSchema>;
 
 export type AccountConfigs = AccountConfig[];
+
+/**
+ * A bookmark as the surfaces listing it receive it, tagged with the account it
+ * belongs to so that opening or removing it targets the right one.
+ */
+export type BookmarkState = Bookmark & {
+  accountId: AccountConfig["id"];
+};
 
 export const accountConfigInputSchema = accountConfigSchema
   .pick({

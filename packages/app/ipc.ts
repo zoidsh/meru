@@ -32,7 +32,6 @@ import { appMenu } from "@/menu";
 import { DormantTab } from "@/tabs";
 import {
   canOpenWorkspaceAppInApp,
-  getWorkspaceAppFromUrl,
   resolveWorkspaceAppOpenBehavior,
   WorkspaceApp,
 } from "@/workspace-app";
@@ -95,6 +94,16 @@ class Ipc {
 
     config.onDidChange("accounts", () => {
       accounts.sendAccountsChangedToRenderer();
+
+      // Bookmarks live in the account config, so every surface listing them
+      // redraws from here rather than from a change event of its own. The
+      // strip is one of them, and it can grow or vanish with them, so the
+      // views around it have to be laid out again.
+      accounts.updateAllViewBounds();
+
+      bookmarks.sendChangedToPopup();
+
+      WorkspaceApp.broadcastBookmarkStates();
     });
 
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
@@ -232,12 +241,7 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApp.toggleBookmark", (_event, workspaceAppId) => {
-      const workspaceApp = WorkspaceApp.fromId(workspaceAppId);
-
-      workspaceApp.account.instance.tabs.setTabPersistence(
-        workspaceApp.id,
-        workspaceApp.persistence === "bookmarked" ? null : "bookmarked",
-      );
+      WorkspaceApp.fromId(workspaceAppId).toggleBookmark();
     });
 
     ipc.main.on("workspaceApp.showMenu", (_event, workspaceAppId) => {
@@ -264,7 +268,7 @@ class Ipc {
               {
                 label: "Load on Launch",
                 type: "checkbox" as const,
-                checked: workspaceApp.persistence === "pinned" && workspaceApp.loadOnLaunch,
+                checked: workspaceApp.pinned && workspaceApp.loadOnLaunch,
                 click: () => {
                   if (workspaceApp.loadOnLaunch) {
                     workspaceApp.loadOnLaunch = false;
@@ -276,7 +280,7 @@ class Ipc {
 
                   workspaceApp.loadOnLaunch = true;
 
-                  workspaceApp.account.instance.tabs.setTabPersistence(workspaceApp.id, "pinned");
+                  workspaceApp.account.instance.tabs.setTabPinned(workspaceApp.id, true);
                 },
               },
               {
@@ -348,7 +352,7 @@ class Ipc {
         (accountTab) =>
           accountTab.id !== tabId &&
           accountTab.id !== GMAIL_TAB_ID &&
-          accountTab.persistence !== "pinned" &&
+          !accountTab.pinned &&
           !accountTab.dormant,
       );
 
@@ -358,26 +362,12 @@ class Ipc {
 
       const hasClosableTabsBelow = account.instance.tabs.tabs
         .slice(contextTabIndex + 1)
-        .some((accountTab) => accountTab.persistence !== "pinned" && !accountTab.dormant);
+        .some((accountTab) => !accountTab.pinned && !accountTab.dormant);
 
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
       const openWorkspaceAppUrl = (url: string) => {
-        if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(url))) {
-          openExternalUrl(url, { skipTrustedHostCheck: true });
-
-          return;
-        }
-
-        if (isWindowsMode) {
-          account.instance.tabs.openWindowedTab(url);
-
-          return;
-        }
-
-        const workspaceApp = account.instance.tabs.openTab(url);
-
-        account.instance.tabs.activateTab(workspaceApp.id);
+        account.instance.tabs.openUrl(url);
 
         if (account.config.selected) {
           accounts.refreshSelectedAccountView();
@@ -478,33 +468,23 @@ class Ipc {
               {
                 type: "separator" as const,
               },
-              tab.persistence === "pinned"
-                ? {
-                    label: "Unpin",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, null);
-                    },
-                  }
-                : {
-                    label: "Pin",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, "pinned");
-                    },
-                  },
-              tab.persistence === "bookmarked"
-                ? {
-                    label: "Remove Bookmark",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, null);
-                    },
-                  }
-                : {
-                    label: "Bookmark",
-                    click: () => {
-                      account.instance.tabs.setTabPersistence(tabId, "bookmarked");
-                    },
-                  },
-              ...(tab.persistence === "pinned"
+              {
+                label: tab.pinned ? "Unpin" : "Pin",
+                click: () => {
+                  account.instance.tabs.setTabPinned(tabId, !tab.pinned);
+                },
+              },
+              {
+                label: bookmarks.isBookmarked(accountId, tab.url) ? "Remove Bookmark" : "Bookmark",
+                click: () => {
+                  bookmarks.toggle(accountId, {
+                    app: tabApp,
+                    url: tab.url,
+                    title: tab.title,
+                  });
+                },
+              },
+              ...(tab.pinned
                 ? [
                     {
                       label: "Load on Launch",
@@ -949,8 +929,16 @@ class Ipc {
       bookmarks.popup.closeOnBlurEnabled = enabled;
     });
 
-    ipc.main.on("bookmarks.removeBookmark", (_event, accountId, tabId) => {
-      accounts.getAccount(accountId).instance.tabs.setTabPersistence(tabId, null);
+    ipc.main.on("bookmarks.openBookmark", (_event, accountId, bookmarkId) => {
+      bookmarks.open(accountId, bookmarkId);
+    });
+
+    ipc.main.on("bookmarks.removeBookmark", (_event, accountId, bookmarkId) => {
+      bookmarks.remove(accountId, bookmarkId);
+    });
+
+    ipc.main.on("bookmarks.moveBookmark", (_event, accountId, bookmarkId, targetIndex) => {
+      bookmarks.move(accountId, bookmarkId, targetIndex);
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
