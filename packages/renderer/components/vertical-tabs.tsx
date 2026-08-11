@@ -404,7 +404,13 @@ export function VerticalTabs() {
     <div
       className={cn(
         "flex flex-col border-r select-none",
-        isWide ? "gap-1 p-2" : "items-center gap-2 py-2",
+        // The wide gutter is the narrow strip's, not a gutter of its own: a
+        // centred icon button in the narrow strip stands 16px off the edge, so
+        // the wide strip insets its rows by the same. The column then hinges on
+        // its left edge as the strip resizes, and the controls at the foot —
+        // the width toggle above all, which does the resizing — stay put rather
+        // than stepping sideways under the pointer.
+        isWide ? "gap-1 px-4 py-2" : "items-center gap-2 py-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
