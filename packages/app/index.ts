@@ -3,6 +3,7 @@ import { APP_ID } from "@meru/shared/constants";
 import { app, session } from "electron";
 import { accounts } from "@/accounts";
 import { blocker } from "@/blocker";
+import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
@@ -188,6 +189,12 @@ async function init() {
 
       main.isQuittingApp = true;
     }
+
+    // Taken down before the windows they hang on, so quitting never reaches
+    // into a view the window destroyed underneath it
+    bookmarks.popup.close();
+
+    downloads.recentDownloadHistoryPopup.close();
   });
 }
 

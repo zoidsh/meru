@@ -55,7 +55,7 @@ export class TitlebarPopup {
   }
 
   private setBounds = () => {
-    if (!this.view || !this.parentWindow) {
+    if (!this.view || !this.parentWindow || this.parentWindow.isDestroyed()) {
       return;
     }
 
@@ -73,21 +73,45 @@ export class TitlebarPopup {
     });
   };
 
-  close = () => {
-    if (!this.view || !this.parentWindow) {
-      return;
+  private handleBlur = () => {
+    if (this.closeOnBlurEnabled) {
+      this.close();
     }
+  };
 
-    this.view.webContents.removeAllListeners();
-
-    this.view.webContents.close();
-
-    this.parentWindow.contentView.removeChildView(this.view);
-
-    this.parentWindow.removeListener("resize", this.setBounds);
+  /**
+   * Quitting tears the window down underneath an open popup, and the blur that
+   * comes with it lands here while the window and the view are already going
+   * away — so the state is dropped up front and every native object is checked
+   * before it is touched, leaving nothing half torn down to hang the quit on.
+   */
+  close = () => {
+    const { view, parentWindow } = this;
 
     this.view = null;
     this.parentWindow = null;
+    this.anchorX = null;
+    this.closeOnBlurEnabled = false;
+
+    if (!view || !parentWindow) {
+      return;
+    }
+
+    if (!parentWindow.isDestroyed()) {
+      parentWindow.removeListener("resize", this.setBounds);
+
+      parentWindow.removeListener("closed", this.close);
+
+      parentWindow.contentView.removeChildView(view);
+    }
+
+    if (!view.webContents.isDestroyed()) {
+      // Only the listener this class added comes off: removing them all takes
+      // Electron's own with it and leaves the webContents unable to tear down.
+      view.webContents.off("blur", this.handleBlur);
+
+      view.webContents.close();
+    }
   };
 
   /**
@@ -124,13 +148,13 @@ export class TitlebarPopup {
 
     this.setBounds();
 
-    this.view.webContents.once("blur", () => {
-      if (this.closeOnBlurEnabled) {
-        this.close();
-      }
-    });
+    this.view.webContents.once("blur", this.handleBlur);
 
     parentWindow.on("resize", this.setBounds);
+
+    // A window closing out from under the popup — a workspace app window it was
+    // hung on, or the main window on quit — leaves the view attached to it
+    parentWindow.once("closed", this.close);
 
     this.view.setBorderRadius(BASE_SPACING * 2);
 
