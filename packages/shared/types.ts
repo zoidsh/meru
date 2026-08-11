@@ -159,6 +159,7 @@ export type Config = {
   "spellchecker.languages": string[];
   "verticalTabs.showWindows": boolean;
   "verticalTabs.width": VerticalTabsWidth;
+  "verticalTabs.hideUnreadBadgeWhenActive": boolean;
 };
 
 export type IpcMainEvents =
