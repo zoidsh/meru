@@ -59,6 +59,7 @@ export type Tab = {
   pinned: boolean;
   dormant: boolean;
   loadOnLaunch?: boolean;
+  opensLinksForApp?: SupportedWorkspaceApp | null;
   isLoading: boolean;
   navigationHistory: { canGoBack: boolean; canGoForward: boolean };
   view?: WebContentsView;
@@ -86,6 +87,8 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
+  opensLinksForApp: SupportedWorkspaceApp | null;
+
   windowed: boolean;
 
   title: string;
@@ -97,6 +100,7 @@ export class DormantTab {
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
+    this.opensLinksForApp = savedTab.opensLinksForApp ?? null;
     this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
   }
@@ -232,19 +236,7 @@ export class Tabs {
     }
 
     if (activatedTab instanceof DormantTab) {
-      if (!canOpenWorkspaceAppInApp(activatedTab.app)) {
-        openExternalUrl(activatedTab.url, { skipTrustedHostCheck: true });
-
-        return;
-      }
-
-      const materializedTab = this.materializeDormantTab(activatedTab);
-
-      if (!materializedTab.isWindowed) {
-        this.activeTabId = materializedTab.id;
-      }
-
-      this.broadcastTabsChanged();
+      this.openDormantTab(activatedTab);
 
       return;
     }
@@ -254,12 +246,38 @@ export class Tabs {
     this.broadcastTabsChanged();
   }
 
-  private materializeDormantTab(dormantTab: DormantTab) {
+  /**
+   * Wakes a saved tab up and brings it forward, optionally on a URL other than
+   * the one it was saved on — that is how a link lands in a designated tab that
+   * has not been opened yet.
+   */
+  private openDormantTab(dormantTab: DormantTab, url?: string) {
+    // A designated tab is woken on the link's app, which is not necessarily the
+    // one it was saved on.
+    if (!canOpenWorkspaceAppInApp(url ? getWorkspaceAppFromUrl(url) : dormantTab.app)) {
+      openExternalUrl(url ?? dormantTab.url, { skipTrustedHostCheck: true });
+
+      return;
+    }
+
+    const materializedTab = this.materializeDormantTab(dormantTab, url);
+
+    if (!materializedTab.isWindowed) {
+      this.activeTabId = materializedTab.id;
+    }
+
+    this.broadcastTabsChanged();
+
+    return materializedTab;
+  }
+
+  private materializeDormantTab(dormantTab: DormantTab, url?: string) {
     const workspaceApp = new WorkspaceApp({
       accountId: this.accountId,
-      url: dormantTab.url,
+      url: url ?? dormantTab.url,
       pinned: dormantTab.pinned,
       loadOnLaunch: dormantTab.loadOnLaunch,
+      opensLinksForApp: dormantTab.opensLinksForApp,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       savedAsWindow: dormantTab.windowed,
       app: dormantTab.app,
@@ -369,6 +387,7 @@ export class Tabs {
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
+          opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
         savedWorkspaceApp.zoomFactor,
@@ -492,6 +511,68 @@ export class Tabs {
     accounts.saveTabs();
   }
 
+  /**
+   * The tab every link to `app` opens in, if the user designated one. The tab
+   * holds the app it was designated for rather than the one it happens to be
+   * showing, so browsing on never hands the designation to another app.
+   */
+  getAppLinksTab(app: SupportedWorkspaceApp) {
+    return this.tabs.find((tab) => tab.opensLinksForApp === app);
+  }
+
+  setTabOpensLinksForApp(tabId: string, app: SupportedWorkspaceApp | null) {
+    const designatedTab = this.getTab(tabId);
+
+    if (!(designatedTab instanceof WorkspaceApp) && !(designatedTab instanceof DormantTab)) {
+      return;
+    }
+
+    if (app) {
+      const previousAppLinksTab = this.getAppLinksTab(app);
+
+      if (previousAppLinksTab) {
+        previousAppLinksTab.opensLinksForApp = null;
+      }
+    }
+
+    designatedTab.opensLinksForApp = app;
+
+    accounts.saveTabs();
+  }
+
+  /**
+   * Opens a URL in the tab designated for its app, and returns that tab so the
+   * caller knows the URL was taken. Apps that may not open inside Meru are left
+   * to the caller, which falls back to the default browser.
+   */
+  openInAppLinksTab(url: string) {
+    const app = getWorkspaceAppFromUrl(url);
+
+    if (!app || !canOpenWorkspaceAppInApp(app)) {
+      return;
+    }
+
+    const appLinksTab = this.getAppLinksTab(app);
+
+    if (!appLinksTab) {
+      return;
+    }
+
+    if (appLinksTab instanceof DormantTab) {
+      return this.openDormantTab(appLinksTab, url);
+    }
+
+    if (!(appLinksTab instanceof WorkspaceApp)) {
+      return;
+    }
+
+    appLinksTab.navigate(url);
+
+    this.activateTab(appLinksTab.id);
+
+    return appLinksTab;
+  }
+
   moveTab(tabId: string, targetSectionIndex: number) {
     if (tabId === GMAIL_TAB_ID) {
       return;
@@ -551,6 +632,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.opensAsWindow,
         });
       } else if (tab instanceof DormantTab) {
@@ -559,6 +641,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.windowed,
         });
       }

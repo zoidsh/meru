@@ -35,6 +35,7 @@ import {
   resolveWorkspaceAppOpenBehavior,
   WorkspaceApp,
 } from "@/workspace-app";
+import { confirmAppLinksTabHandover } from "./dialogs";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -347,6 +348,11 @@ class Ipc {
 
       const tabApp = tab.app;
 
+      // A designated tab keeps offering the app it was designated for even
+      // after browsing on, so that the designation stays visible and removable
+      // from the tab holding it.
+      const appLinksApp = tab.opensLinksForApp ?? tabApp;
+
       const hasOtherClosableTabs = account.instance.tabs.tabs.some(
         (accountTab) =>
           accountTab.id !== tabId &&
@@ -497,6 +503,41 @@ class Ipc {
                     },
                   ]
                 : []),
+            ]
+          : []),
+        ...(appLinksApp &&
+        !workspaceApps[appLinksApp].singleInstance &&
+        !workspaceApps[appLinksApp].popupOnly
+          ? [
+              // A tab that browsed off Google has no app and so no menu group of
+              // its own, but it can still be holding a designation from before —
+              // which then needs a separator to sit under.
+              ...(tabApp ? [] : [{ type: "separator" as const }]),
+              {
+                label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
+                  tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
+                }`,
+                type: "checkbox" as const,
+                checked: Boolean(tab.opensLinksForApp),
+                click: async () => {
+                  if (tab.opensLinksForApp) {
+                    account.instance.tabs.setTabOpensLinksForApp(tabId, null);
+
+                    return;
+                  }
+
+                  const appLinksTab = account.instance.tabs.getAppLinksTab(appLinksApp);
+
+                  if (
+                    appLinksTab &&
+                    !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title))
+                  ) {
+                    return;
+                  }
+
+                  account.instance.tabs.setTabOpensLinksForApp(tabId, appLinksApp);
+                },
+              },
             ]
           : []),
         {

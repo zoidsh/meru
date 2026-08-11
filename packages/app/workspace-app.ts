@@ -35,7 +35,7 @@ import {
 } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
-import { registerTabBroadcasts } from "./tabs";
+import { isWindowedTab, registerTabBroadcasts } from "./tabs";
 import { openExternalUrl } from "./url";
 
 export const MIN_ZOOM_FACTOR = 0.1;
@@ -82,6 +82,7 @@ type WorkspaceAppOptions = {
   savedAsWindow?: boolean;
   pinned?: boolean;
   loadOnLaunch?: boolean;
+  opensLinksForApp?: SupportedWorkspaceApp | null;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
 };
@@ -262,9 +263,29 @@ export class WorkspaceApp {
             ? "backgroundTab"
             : undefined;
 
-      const openBehavior = resolveWorkspaceAppOpenBehavior(requestedOpenBehavior);
-
       const account = accounts.getAccount(accountId);
+
+      // A tab designated for this app takes the link, unless the modifier keys
+      // asked for a window or a background tab of its own. A Chat attachment is
+      // a download dressed as a Chat URL, so it must never land in the tab the
+      // user is chatting in.
+      if (!requestedOpenBehavior && !GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+        const appLinksTab = account.instance.tabs.openInAppLinksTab(url);
+
+        if (appLinksTab) {
+          // A designated tab living in its own window has already been focused,
+          // and raising the main window over it would undo that.
+          if (!isWindowedTab(appLinksTab)) {
+            accounts.selectAccount(accountId);
+
+            main.show();
+          }
+
+          return { action: "deny" };
+        }
+      }
+
+      const openBehavior = resolveWorkspaceAppOpenBehavior(requestedOpenBehavior);
 
       if (openBehavior === "newWindow") {
         account.instance.tabs.openWindowedTab(url);
@@ -411,6 +432,12 @@ export class WorkspaceApp {
   loadOnLaunch = false;
 
   /**
+   * Whether every link to this tab's app opens here instead of in a new tab.
+   * Only one tab per app can hold it.
+   */
+  opensLinksForApp: SupportedWorkspaceApp | null = null;
+
+  /**
    * Whether this app should be restored in its own window, as opposed to
    * whether it currently has one. The two only differ in `windows` mode, where
    * every app is windowed because the mode says so rather than because the user
@@ -433,6 +460,7 @@ export class WorkspaceApp {
     savedAsWindow,
     pinned,
     loadOnLaunch,
+    opensLinksForApp,
     app,
     zoomFactor,
   }: WorkspaceAppOptions) {
@@ -440,6 +468,7 @@ export class WorkspaceApp {
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
+    this.opensLinksForApp = opensLinksForApp ?? null;
     this.opensAsWindow =
       savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");
 
@@ -878,6 +907,10 @@ export class WorkspaceApp {
 
   goForward() {
     this.view.webContents.navigationHistory.goForward();
+  }
+
+  navigate(url: string) {
+    this.view.webContents.loadURL(url);
   }
 
   reload() {
