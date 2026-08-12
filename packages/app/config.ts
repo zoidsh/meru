@@ -60,7 +60,7 @@ export const config = new Store<Config>({
     "notifications.showSubject": true,
     "notifications.showSummary": true,
     "notifications.playSound": true,
-    "notifications.allowFromWorkspaceApps": false,
+    "notifications.allowFromWorkspaceApps": true,
     "notifications.sound": "linen",
     "notifications.volume": 1,
     "notifications.downloadCompleted": true,
@@ -406,6 +406,10 @@ export const config = new Store<Config>({
       store.delete("gmail.fullDarkTheme");
     },
     ">3.58.0": (store) => {
+      // Workspace app notifications are on by default now, so everyone who
+      // never turned them on gets them and opts out instead.
+      store.set("notifications.allowFromWorkspaceApps", true);
+
       // @ts-expect-error: `workspaceApps.openBehavior` is now 'workspaceApps.mode'
       const openBehavior = store.get("workspaceApps.openBehavior");
 

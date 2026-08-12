@@ -28,6 +28,10 @@ export function isWithinNotificationTimes() {
   return checkWithinNotificationTimes(config.get("notifications.times"), new Date());
 }
 
+export function areWorkspaceAppNotificationsAllowed() {
+  return licenseKey.isValid && config.get("notifications.allowFromWorkspaceApps");
+}
+
 export function createNewEmailNotification({
   click,
   action,
