@@ -32,6 +32,22 @@ export function broadcastFoundInPageResults(
   });
 }
 
+/**
+ * Takes down every listener on a webContents except `"destroyed"`: Electron
+ * pairs a "destroyed" listener on a webContents with a
+ * "current-render-view-deleted" listener on its opener when the view was
+ * created via a window open handler. Removing the "destroyed" listener leaves
+ * the opener-side listener dangling, which then crashes the app by calling into
+ * this destroyed webContents (e.g. on quit).
+ */
+export function removeWebContentsListeners(webContents: WebContents) {
+  for (const registeredEvent of webContents.eventNames()) {
+    if (registeredEvent !== "destroyed") {
+      webContents.removeAllListeners(registeredEvent);
+    }
+  }
+}
+
 export function createChildWebContentsView({
   session,
   preload,
