@@ -333,16 +333,14 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * widened or narrowed where it stands rather than through settings. It leaves
  * the setting alone: the width is this account's for this run of the app.
  *
- * `default` rather than the `sm` its neighbours widen into, because that is the
- * one size that matches `icon`'s height and glyph. That width lands at once
- * too — the button's default `transition-all` would animate the box out of step
- * with the strip the click has already resized, so the transition names its
- * properties instead.
+ * The same square button at both widths, rather than one that widens with its
+ * neighbours: the wide strip sends it to its right edge instead, which is the
+ * side the arrow points at and the side the strip grows from. The button's
+ * default `transition-all` would animate that box out of step with the strip
+ * the click has already resized, so the transition names its properties.
  *
- * Opacity is the one of them the button does animate: a width the app is
- * unlikely to be asked for twice in a sitting has no business holding an arrow
- * at the foot of the strip for good. An auto margin is what puts it at the
- * foot: the tabs and the controls under them take only the height they need.
+ * An auto margin is what puts it at the foot: the tabs and the controls under
+ * them take only the height they need.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -354,10 +352,10 @@ function VerticalTabsWidthToggle({
   return (
     <Button
       variant="ghost"
-      size={isWide ? "default" : "icon"}
+      size="icon"
       className={cn(
-        "mt-auto text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
-        isWide && "w-full",
+        "mt-auto text-muted-foreground transition-[color,background-color]",
+        isWide && "self-end",
       )}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
@@ -434,6 +432,8 @@ export function VerticalTabs() {
 
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
+  const showsWidthToggle = config?.["verticalTabs.showWidthToggle"] ?? true;
+
   // Gmail is already in front while its tab is active, so the count can be
   // taken as read there. Attention is still flagged either way.
   const hidesUnreadCount =
@@ -451,12 +451,6 @@ export function VerticalTabs() {
   return (
     <div
       className={cn(
-        // The group is named so that pointing at the strip reaches the width
-        // toggle at its foot and nothing else: every tab row is an unnamed
-        // group already, and an unnamed one here would hand each of them its
-        // hover state at once, opening every close button in the column
-        // together.
-        //
         // The one gutter on every edge of both widths is the narrow strip's own
         // measure: it leaves exactly an icon button's width between its sides,
         // which is what a 32px button centred in a 64px strip already sat on.
@@ -465,7 +459,7 @@ export function VerticalTabs() {
         // the resizing — stay put rather than stepping out from under the
         // pointer. The scrolling sections reach past that gutter and lay it out
         // again themselves, so a scrollbar can never take it from the column.
-        "group/vertical-tabs flex flex-col border-r p-4 select-none",
+        "flex flex-col border-r p-4 select-none",
         isWide ? "gap-1" : "items-center gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
@@ -589,7 +583,9 @@ export function VerticalTabs() {
         </div>
       )}
       <VerticalTabsBookmarks isWide={isWide} />
-      <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
+      {showsWidthToggle && (
+        <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
+      )}
     </div>
   );
 }

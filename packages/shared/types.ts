@@ -156,6 +156,7 @@ export type Config = {
   "spellchecker.languages": string[];
   "verticalTabs.showWindows": boolean;
   "verticalTabs.width": VerticalTabsWidth;
+  "verticalTabs.showWidthToggle": boolean;
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
   "verticalTabs.showAppLinksBadge": boolean;
 };
