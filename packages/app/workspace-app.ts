@@ -25,7 +25,11 @@ import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { ipc } from "./ipc";
-import { createChildWebContentsView, openViewDevToolsOnLaunch } from "./lib/web-contents";
+import {
+  createChildWebContentsView,
+  openViewDevToolsOnLaunch,
+  removeWebContentsListeners,
+} from "./lib/web-contents";
 import {
   createBrowserWindow,
   getCascadedWindowBounds,
@@ -593,16 +597,7 @@ export class WorkspaceApp {
 
   private teardown() {
     if (!this.viewDestroyed) {
-      // Electron pairs a "destroyed" listener on this webContents with a
-      // "current-render-view-deleted" listener on its opener when the view was
-      // created via a window open handler. Removing the "destroyed" listener
-      // leaves the opener-side listener dangling, which then crashes the app by
-      // calling into this destroyed webContents (e.g. on quit).
-      for (const registeredEvent of this.view.webContents.eventNames()) {
-        if (registeredEvent !== "destroyed") {
-          this.view.webContents.removeAllListeners(registeredEvent);
-        }
-      }
+      removeWebContentsListeners(this.view.webContents);
 
       this.view.webContents.close();
     }

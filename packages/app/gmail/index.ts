@@ -30,7 +30,11 @@ import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
-import { createChildWebContentsView, openViewDevToolsOnLaunch } from "@/lib/web-contents";
+import {
+  createChildWebContentsView,
+  openViewDevToolsOnLaunch,
+  removeWebContentsListeners,
+} from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
 import { licenseKey } from "@/license-key";
@@ -522,14 +526,7 @@ export class Gmail {
   }
 
   destroy() {
-    // Electron registers listeners of its own on every webContents, and taking
-    // those down along with ours leaves it unable to tear itself down — see the
-    // same carve-out in `WorkspaceApp.teardown`
-    for (const registeredEvent of this.view.webContents.eventNames()) {
-      if (registeredEvent !== "destroyed") {
-        this.view.webContents.removeAllListeners(registeredEvent);
-      }
-    }
+    removeWebContentsListeners(this.view.webContents);
 
     this.view.webContents.close();
 
