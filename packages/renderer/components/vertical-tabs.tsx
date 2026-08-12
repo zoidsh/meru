@@ -366,6 +366,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * that crossing the strip on the way somewhere else doesn't read as a flicker.
  * It holds its room in the column throughout, so the controls above it stay
  * where they are, and focus brings it back for the keyboard.
+ *
+ * An auto margin is what puts it at the foot: the tabs and the controls under
+ * them take only the height they need, so this is the one thing in the strip
+ * that has to be sent down to reach it.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -379,7 +383,7 @@ function VerticalTabsWidthToggle({
       variant="ghost"
       size={isWide ? "default" : "icon"}
       className={cn(
-        "text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
+        "mt-auto text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
         isWide && "w-full",
       )}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
@@ -449,7 +453,7 @@ export function VerticalTabs() {
         // pointer. The scrolling sections reach past that gutter and lay it out
         // again themselves, so a scrollbar can never take it from the column.
         "group/vertical-tabs flex flex-col border-r p-4 select-none",
-        isWide ? "gap-1" : "gap-2",
+        isWide ? "gap-1" : "items-center gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
@@ -463,15 +467,20 @@ export function VerticalTabs() {
       }}
     >
       {/*
-       * Everything between the head of the strip and its foot, split in the
-       * pinned section's favour: the pinned tabs are laid out at whatever
-       * height they come to, under no ceiling and no share of the strip they
-       * may not pass, and the normal tabs — measured from nothing upwards — are
-       * left with what remains. Pinning heavily is therefore meant to squeeze
-       * the normal tabs into a thin scrolling column rather than to cost the
-       * pinned ones a row.
+       * The tabs take the height they come to and no more, so the launcher and
+       * the bookmarks button carry on straight under the last of them rather
+       * than being sent to the foot. What they give up, they give up to the
+       * strip's own controls: those hold their height, and the tabs are the one
+       * thing here that yields, which is what keeps them in the strip however
+       * many are open.
+       *
+       * They then divide what is left between them in the pinned section's
+       * favour. The pinned tabs never yield — no ceiling, no share of the strip
+       * they may not pass — and the normal tabs give up everything they have
+       * first, so pinning heavily squeezes the normal tabs into a thin
+       * scrolling column rather than costing the pinned ones a row.
        */}
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <div className="flex min-h-0 w-full flex-col gap-2">
         <DragDropProvider
           plugins={sortablePlugins}
           sensors={sortableSensors}
@@ -480,10 +489,14 @@ export function VerticalTabs() {
           }}
         >
           {/*
-           * Scrolls only where there is genuinely nowhere left to put the
-           * pinned tabs — the normal tabs having already given up everything
-           * they had — so that heavy pinning can never push the section's own
-           * rows out of the strip the way it used to.
+           * Yields to nothing: the normal tabs give up everything they have
+           * before a pinned row gives up a pixel. The one bound on it is the
+           * height the two sections have between them, which it can only reach
+           * once the normal tabs are down to nothing, and reaching it is the
+           * single case where this section scrolls — so the pinned tabs can
+           * never be what pushes the strip's controls out. That bound carries
+           * the section's own bleed with it, the height it is measured against
+           * being the one the bleed has already taken back.
            *
            * Both sections reach out to the strip's sides and set the gutter out
            * again inside themselves, so the scrollbar rides in the gutter
@@ -492,7 +505,7 @@ export function VerticalTabs() {
            * the badges the icons hang over their corners, which the edge a
            * scroll container clips at would otherwise shave off.
            */}
-          <ScrollArea className="-mx-4 -my-1 min-h-0">
+          <ScrollArea className="-mx-4 -my-1 max-h-[calc(100%+0.5rem)] shrink-0">
             <div
               className={cn(
                 "px-4 py-1",
@@ -518,44 +531,45 @@ export function VerticalTabs() {
             </div>
           </ScrollArea>
         </DragDropProvider>
-        <DragDropProvider
-          plugins={sortablePlugins}
-          sensors={sortableSensors}
-          onDragEnd={(event) => {
-            moveSectionTab(selectedAccount.config.id, normalTabs, event);
-          }}
-        >
-          <ScrollArea className="-mx-4 -my-1 min-h-0 flex-1">
-            <div className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}>
-              {normalTabs.map((tab, normalTabIndex) => (
-                <SortableVerticalTab
-                  key={tab.id}
-                  tab={tab}
-                  accountId={selectedAccount.config.id}
-                  presentation={isWide ? "wideRow" : "narrowIcon"}
-                  sectionIndex={normalTabIndex}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        </DragDropProvider>
-      </div>
-      {/*
-       * The foot of the strip stands outside the scrolling: these are the
-       * controls that have to be there however many tabs are open, the width
-       * toggle most of all, which has to be where the pointer that just clicked
-       * it left it. The sections above take all the room going, so the foot
-       * needs no pushing down of its own.
-       */}
-      <div className={cn("flex flex-col", isWide ? "gap-1" : "items-center gap-2")}>
-        {shouldShowWorkspaceAppsLauncher && (
-          <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
-            <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
-          </div>
+        {/*
+         * Left out entirely while there is nothing to put in it, rather than
+         * standing as an empty row's worth of space between the pinned tabs and
+         * the launcher.
+         */}
+        {normalTabs.length > 0 && (
+          <DragDropProvider
+            plugins={sortablePlugins}
+            sensors={sortableSensors}
+            onDragEnd={(event) => {
+              moveSectionTab(selectedAccount.config.id, normalTabs, event);
+            }}
+          >
+            {/* The section that gives ground: it scrolls from the first row it cannot show */}
+            <ScrollArea className="-mx-4 -my-1 min-h-0">
+              <div
+                className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
+              >
+                {normalTabs.map((tab, normalTabIndex) => (
+                  <SortableVerticalTab
+                    key={tab.id}
+                    tab={tab}
+                    accountId={selectedAccount.config.id}
+                    presentation={isWide ? "wideRow" : "narrowIcon"}
+                    sectionIndex={normalTabIndex}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </DragDropProvider>
         )}
-        <VerticalTabsBookmarks isWide={isWide} />
-        <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
       </div>
+      {shouldShowWorkspaceAppsLauncher && (
+        <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
+          <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
+        </div>
+      )}
+      <VerticalTabsBookmarks isWide={isWide} />
+      <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
     </div>
   );
 }
