@@ -246,6 +246,12 @@ export function WorkspaceAppsSettings() {
                   }))}
                 />
                 <ConfigSwitchField
+                  label="Show Width Button"
+                  description="Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
+                  configKey="verticalTabs.showWidthToggle"
+                  licenseKeyRequired
+                />
+                <ConfigSwitchField
                   label="Hide Gmail Unread Badge When Active"
                   description="Hide the unread badge on the Gmail tab while it is the active tab, since the inbox is already in front. Accounts that need attention are still flagged."
                   configKey="verticalTabs.hideUnreadBadgeWhenActive"
