@@ -250,12 +250,6 @@ export class WorkspaceApp {
       canOpenWorkspaceAppInApp(matchedSupportedWorkspaceApp);
 
     if (isWorkspaceAppEnabledToOpenInApp) {
-      if (workspaceApps[matchedSupportedWorkspaceApp].popupOnly) {
-        new WorkspaceApp({ accountId, url, asWindow: true });
-
-        return { action: "deny" };
-      }
-
       const requestedOpenBehavior =
         disposition === "new-window"
           ? "newWindow"

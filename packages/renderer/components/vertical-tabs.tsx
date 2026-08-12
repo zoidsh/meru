@@ -151,8 +151,7 @@ function VerticalTab({
    */
   const showsRestingStar = isBookmarkable && tab.bookmarked;
 
-  const canOpenSecondInstance =
-    tab.app && !workspaceApps[tab.app].singleInstance && !workspaceApps[tab.app].popupOnly;
+  const canOpenSecondInstance = tab.app && !workspaceApps[tab.app].singleInstance;
 
   const showsAppLinksBadge = Boolean(
     config?.["verticalTabs.showAppLinksBadge"] && tab.opensLinksForApp,

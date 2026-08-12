@@ -380,7 +380,7 @@ class Ipc {
       };
 
       Menu.buildFromTemplate([
-        ...(tabApp && !workspaceApps[tabApp].singleInstance && !workspaceApps[tabApp].popupOnly
+        ...(tabApp && !workspaceApps[tabApp].singleInstance
           ? [
               {
                 label: `New ${workspaceApps[tabApp].label} ${isWindowsMode ? "Window" : "Tab"}`,
@@ -505,9 +505,7 @@ class Ipc {
                 : []),
             ]
           : []),
-        ...(appLinksApp &&
-        !workspaceApps[appLinksApp].singleInstance &&
-        !workspaceApps[appLinksApp].popupOnly
+        ...(appLinksApp && !workspaceApps[appLinksApp].singleInstance
           ? [
               // A tab that browsed off Google has no app and so no menu group of
               // its own, but it can still be holding a designation from before —
