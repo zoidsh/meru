@@ -37,10 +37,15 @@ description: Write release notes for Meru. Use when drafting or updating GitHub 
 - Reference settings paths in backticks, with an ellipsis character rather than three dots: `` `Settings… → Section → Option` ``.
 - Wrap keyboard shortcuts in `<kbd>` tags and write them per platform: `<kbd>Cmd</kbd>+<kbd>F</kbd> on macOS, <kbd>Ctrl</kbd>+<kbd>F</kbd> on Windows/Linux`.
 
+## Review
+
+- Print the drafted notes in chat and ask the user whether anything should be added, removed or reworded before they go onto the release. Ask every time, including when folding changes into notes that already exist.
+- Apply the feedback, print the revised notes, and ask again. Only write once the user is happy with them.
+
 ## Output
 
 - Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file, and do not write the notes anywhere inside the repo. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
 - Write the finished notes onto the release for the version commit's tag: `gh release edit v<version> --notes-file <path>`, with the notes in a temporary file outside the repo. Pass a file rather than `--notes` so the markdown, backticks and `<kbd>` tags survive the shell.
-- Read the current body first with `gh release view v<version> --json body -q .body`. When the release already has notes, fold the changes into them and overwrite without asking — editing replaces the body wholesale, so always pass the complete set of notes, never just the new bullets.
+- Read the current body first with `gh release view v<version> --json body -q .body`. When the release already has notes, fold the changes into them — editing replaces the body wholesale, so always pass the complete set of notes, never just the new bullets.
 - If no release exists for the tag yet, stop and ask — creating one triggers the build-and-publish workflow, which is not this skill's job.
-- Share the release URL after writing, and print the notes in chat as well.
+- Share the release URL after writing.
