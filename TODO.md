@@ -63,7 +63,7 @@ Found while testing PR #723. Presenting in Slides and going fullscreen in Meet b
 
 Nothing in the app listens for `enter-html-full-screen` / `leave-html-full-screen` on a view's `webContents`; the only fullscreen handling is `main.ts:150`, a `leave-full-screen` listener on the `BrowserWindow` for window-level fullscreen. So a page entering HTML fullscreen changes nothing about how the shell is laid out.
 
-Newly reachable rather than newly broken: before #723 the `fullscreen` permission request fell through the request handler's `switch` without ever invoking `callback`, so it never settled and pages could not enter fullscreen at all.
+Newly reachable rather than newly broken, confirmed by testing on main: before #723 the `fullscreen` permission request fell through the request handler's `switch` without ever invoking `callback`, so it never settled and pages could not enter fullscreen at all.
 
 To decide when picking this up: whether HTML fullscreen should take over the whole window (hide titlebar and strip, resize the view to the full content bounds) or also put the `BrowserWindow` itself into fullscreen, and how that interacts with a workspace app that is already in its own window.
 
