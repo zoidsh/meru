@@ -342,8 +342,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  *
  * The only control in the strip that goes without a label in either width: the
  * arrow it turns around already says which way the strip is about to go. In the
- * wide strip it still takes the full row the controls above it take, so its icon
- * sits in the same column as theirs rather than alone in the corner.
+ * wide strip it takes the full row the controls above it take, but keeps that
+ * arrow centred rather than dropping it into their icon column: with nothing to
+ * the right of it, an icon column of one would only read as a label gone
+ * missing, and centred it stays where the narrow strip has it.
  *
  * `default` rather than the `sm` its neighbours widen into, because that is the
  * one size that matches `icon`'s height and glyph: only the button's width may
@@ -363,10 +365,7 @@ function VerticalTabsWidthToggle({
     <Button
       variant="ghost"
       size={isWide ? "default" : "icon"}
-      className={cn(
-        "mt-auto text-muted-foreground transition-colors",
-        isWide && "w-full justify-start",
-      )}
+      className={cn("mt-auto text-muted-foreground transition-colors", isWide && "w-full")}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
