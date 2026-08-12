@@ -354,9 +354,17 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * `default` rather than the `sm` its neighbours widen into, because that is the
  * one size that matches `icon`'s height and glyph: only the button's width may
  * change under the pointer that just resized the strip. That width lands at
- * once too — `transition-colors` in place of the button's default
- * `transition-all`, which would animate the box and its padding out of step
- * with the strip the click has already resized, dragging the arrow along.
+ * once too — the button's default `transition-all` would animate the box and
+ * its padding out of step with the strip the click has already resized,
+ * dragging the arrow along, so the transition names its properties instead.
+ *
+ * Opacity is the one of them the button does animate: the strip is a column of
+ * tabs, and a width the app is unlikely to be asked for twice in a sitting has
+ * no business holding an arrow at the foot of it for good. Pointing anywhere at
+ * the strip fades the arrow in, and leaving fades it back out — softly enough
+ * that crossing the strip on the way somewhere else doesn't read as a flicker.
+ * It holds its room in the column throughout, so the controls above it stay
+ * where they are, and focus brings it back for the keyboard.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -369,7 +377,10 @@ function VerticalTabsWidthToggle({
     <Button
       variant="ghost"
       size={isWide ? "default" : "icon"}
-      className={cn("mt-auto text-muted-foreground transition-colors", isWide && "w-full")}
+      className={cn(
+        "mt-auto text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
+        isWide && "w-full",
+      )}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
@@ -422,6 +433,12 @@ export function VerticalTabs() {
   return (
     <div
       className={cn(
+        // The group is named so that pointing at the strip reaches the width
+        // toggle at its foot and nothing else: every tab row is an unnamed
+        // group already, and an unnamed one here would hand each of them its
+        // hover state at once, opening every close button in the column
+        // together.
+        //
         // The one gutter on every edge of both widths is the narrow strip's own
         // measure: it leaves exactly an icon button's width between its sides,
         // which is what a 32px button centred in a 64px strip already sat on.
@@ -429,7 +446,7 @@ export function VerticalTabs() {
         // and the controls at the foot — the width toggle above all, which does
         // the resizing — stay put rather than stepping out from under the
         // pointer.
-        "flex flex-col border-r p-4 select-none",
+        "group/vertical-tabs flex flex-col border-r p-4 select-none",
         isWide ? "gap-1" : "items-center gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
