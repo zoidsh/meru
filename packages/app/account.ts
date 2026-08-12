@@ -87,7 +87,9 @@ export class Account {
     this.session.setPermissionRequestHandler((_webContents, permission, callback) => {
       switch (permission) {
         case "clipboard-sanitized-write":
-        case "media": {
+        case "fullscreen":
+        case "media":
+        case "speaker-selection": {
           callback(true);
           break;
         }
