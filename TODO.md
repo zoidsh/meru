@@ -57,6 +57,26 @@ Two things are waiting on it. The nine `Ctrl+Shift+1..9` jumps to pinned tabs ar
 
 Surfaced by the comment audit. `Accounts.init` (`packages/app/accounts.ts:116`) blindly calls `refreshSelectedAccountView()` on the main window's `show` and `restore` events because the account views sometimes don't render after the window comes back — the view just doesn't paint sometimes when only `main.window.contentView.addChildView()` is called. The suspicion is a bug in Electron itself, but that is unconfirmed; the root cause was never found, and the refresh is the workaround. To investigate: pin down a reproduction, check whether a minimal Electron app shows it, search/file an upstream issue, and either link the issue at the workaround or replace it with a real fix.
 
+## HTML fullscreen leaves the app shell visible (2026-08-12)
+
+Found while testing PR #723. Presenting in Slides and going fullscreen in Meet both enter fullscreen inside the view, but the titlebar and the vertical tabs strip stay on screen — the page fills only the region its `WebContentsView` already occupied instead of the whole window.
+
+Nothing in the app listens for `enter-html-full-screen` / `leave-html-full-screen` on a view's `webContents`; the only fullscreen handling is `main.ts:150`, a `leave-full-screen` listener on the `BrowserWindow` for window-level fullscreen. So a page entering HTML fullscreen changes nothing about how the shell is laid out.
+
+Newly reachable rather than newly broken, confirmed by testing on main: before #723 the `fullscreen` permission request fell through the request handler's `switch` without ever invoking `callback`, so it never settled and pages could not enter fullscreen at all.
+
+To decide when picking this up: whether HTML fullscreen should take over the whole window (hide titlebar and strip, resize the view to the full content bounds) or also put the `BrowserWindow` itself into fullscreen, and how that interacts with a workspace app that is already in its own window.
+
+## Google Docs menu paste wants a Chrome extension (2026-08-12)
+
+Found while testing PR #723. Edit → Paste in Docs shows a dialog asking for the Google Docs extension to be installed instead of pasting. Menu Copy works, and Cmd/Ctrl+V is unaffected.
+
+Not a permission problem, despite looking like one. The Docs page requests `chrome-extension://ghbmnnjooekpmoecnnnilnnbdlolhkhi/page_embed_script.js` — the Google Docs Offline extension — and the load fails with `ERR_FAILED`, because Electron has no Chrome extensions installed. Docs reads the missing script as "extension not installed" and offers the dialog without ever consulting a permission. `clipboard-read` is granted since #723 and `navigator.clipboard.readText()` returns the clipboard contents, so the async clipboard path underneath is working.
+
+Routes if picked up: load the extension through `session.loadExtension` (needs a CRX off the Web Store, and Electron supports only part of the extension API), or intercept that `chrome-extension://` URL and serve a stub. Both want a look at what `page_embed_script.js` actually provides before either is worth attempting.
+
+Worth knowing while debugging anything permission-shaped: `navigator.permissions.query()` is not a useful signal in Meru. The check handler in `packages/app/account.ts` returns `true` for everything except notifications, so almost every permission reports `granted` whether or not a request for it would be.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
