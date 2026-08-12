@@ -79,14 +79,14 @@ describe("checkWithinNotificationTimes", () => {
   });
 
   test("returns true when current day matches a day-specific window", () => {
-    const times = [makeTime("09:00", "17:00", [1, 2, 3, 4, 5])]; // weekdays Mon–Fri
-    const monday = makeDate(1, 12, 0); // Jan 1 2024 = Monday
+    const times = [makeTime("09:00", "17:00", [1, 2, 3, 4, 5])];
+    const monday = makeDate(1, 12, 0);
     expect(checkWithinNotificationTimes(times, monday)).toBe(true);
   });
 
   test("returns false when current day does not match a day-specific window", () => {
-    const times = [makeTime("09:00", "17:00", [1, 2, 3, 4, 5])]; // weekdays Mon–Fri
-    const saturday = makeDate(6, 12, 0); // Jan 6 2024 = Saturday
+    const times = [makeTime("09:00", "17:00", [1, 2, 3, 4, 5])];
+    const saturday = makeDate(6, 12, 0);
     expect(checkWithinNotificationTimes(times, saturday)).toBe(false);
   });
 
@@ -97,12 +97,12 @@ describe("checkWithinNotificationTimes", () => {
   });
 
   test("day-agnostic and day-specific windows are independent (no precedence)", () => {
-    const everyDay = makeTime("09:00", "17:00"); // no days = every day
-    const mondayOnly = makeTime("10:00", "12:00", [1]); // Monday only
+    const everyDay = makeTime("09:00", "17:00");
+    const mondayOnly = makeTime("10:00", "12:00", [1]);
     const times = [everyDay, mondayOnly];
 
     // Monday 9:30 — everyDay matches even though mondayOnly does not cover 9:30
-    const monday930 = makeDate(1, 9, 30); // Jan 1 2024 = Monday
+    const monday930 = makeDate(1, 9, 30);
     expect(checkWithinNotificationTimes(times, monday930)).toBe(true);
   });
 

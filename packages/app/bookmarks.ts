@@ -16,23 +16,15 @@ import { TitlebarPopup } from "./lib/titlebar-popup";
  *
  * A popup is the one surface that lists them, and the titlebar button that opens
  * it is always there — unlike the vertical tabs strip, which is gone in `New
- * Windows` mode and absent in `Tabs` mode until a second tab opens. The popup
- * stays reachable while empty, where it explains how to add a bookmark.
+ * Windows` mode and absent in `Tabs` mode until a second tab opens.
  */
 class Bookmarks {
   popup = new TitlebarPopup({
     page: "bookmarks",
     width: BASE_SPACING * 40,
-    // A list of saved URLs is as long as the account made it, so it takes the
-    // window rather than a height of its own and scrolls within it
     height: "fill",
   });
 
-  /**
-   * The popup comes up where it was asked for: beside the vertical tabs strip
-   * for the button that sits in the strip, and at the end of the titlebar for
-   * the one that sits there.
-   */
   togglePopup(parentWindow: BrowserWindow, placement: BookmarksPopupPlacement) {
     return this.popup.toggle(parentWindow, {
       anchorX:
@@ -68,10 +60,6 @@ class Bookmarks {
     return this.getAccountBookmarks(accountId).some((bookmark) => bookmark.url === url);
   }
 
-  /**
-   * Saves the given URL, or drops what is saved for it — the surfaces that
-   * offer bookmarking are toggles on the URL they are showing.
-   */
   toggle(accountId: AccountConfig["id"], { app, url, title }: Omit<Bookmark, "id">) {
     const accountBookmarks = this.getAccountBookmarks(accountId);
 

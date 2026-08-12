@@ -393,11 +393,6 @@ export class WorkspaceApp {
     return !this.isPopup && Boolean(this.app);
   }
 
-  /**
-   * A bookmark saves the URL it was created from, so the button reflects the
-   * URL on display rather than anything about the app holding it — browsing on
-   * from a bookmarked page leaves the button empty again.
-   */
   get bookmarkState(): WorkspaceAppBookmarkState {
     return {
       savable: this.isSavable,
@@ -429,10 +424,6 @@ export class WorkspaceApp {
 
   loadOnLaunch = false;
 
-  /**
-   * Whether every link to this tab's app opens here instead of in a new tab.
-   * Only one tab per app can hold it.
-   */
   opensLinksForApp: SupportedWorkspaceApp | null = null;
 
   /**
@@ -671,10 +662,6 @@ export class WorkspaceApp {
     this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
   }
 
-  /**
-   * The bookmark button is keyed on the URL on display, so it has to be redrawn
-   * wherever the window navigates, alongside the back and forward controls.
-   */
   private handleWindowedNavigation = () => {
     this.broadcastNavigationState();
 

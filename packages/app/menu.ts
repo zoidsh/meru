@@ -164,8 +164,7 @@ export class AppMenu {
 
     /**
      * The nth entry of the pinned section as the strip shows it, Gmail counting
-     * as the first: the numbers stand for what is on screen, so the filters the
-     * strip renders through decide what they land on.
+     * as the first.
      */
     const selectPinnedTab = (pinnedTabIndex: number) => {
       const selectedAccountTabs = accounts.getSelectedAccount().instance.tabs;

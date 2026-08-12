@@ -18,10 +18,6 @@ export async function showRestartDialog() {
   }
 }
 
-/**
- * Only one tab per app can take that app's links, so designating a new one
- * takes it away from the tab holding it. Asks before doing so.
- */
 export async function confirmAppLinksTabHandover(
   workspaceApp: SupportedWorkspaceApp,
   appLinksTabTitle: string,

@@ -247,9 +247,8 @@ export class Tabs {
   }
 
   /**
-   * Wakes a saved tab up and brings it forward, optionally on a URL other than
-   * the one it was saved on — that is how a link lands in a designated tab that
-   * has not been opened yet.
+   * Wakes a saved tab up and brings it forward — that is how a link lands in a
+   * designated tab that has not been opened yet.
    */
   private openDormantTab(dormantTab: DormantTab, url?: string) {
     // A designated tab is woken on the link's app, which is not necessarily the
@@ -418,9 +417,8 @@ export class Tabs {
   }
 
   /**
-   * Opens a URL the way the configured mode dictates — in a window of its own,
-   * or in a tab that is activated right away. Apps that may not open inside
-   * Meru go to the default browser instead, leaving nothing to return.
+   * Apps that may not open inside Meru go to the default browser instead,
+   * leaving nothing to return.
    */
   openUrl(url: string) {
     if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(url))) {
@@ -517,9 +515,10 @@ export class Tabs {
   }
 
   /**
-   * The tab every link to `app` opens in, if the user designated one. The tab
-   * holds the app it was designated for rather than the one it happens to be
-   * showing, so browsing on never hands the designation to another app.
+   * The tab every link to `app` opens in, if the user designated one. Only one
+   * tab per app can take that app's links. The tab holds the app it was
+   * designated for rather than the one it happens to be showing, so browsing on
+   * never hands the designation to another app.
    */
   getAppLinksTab(app: SupportedWorkspaceApp) {
     return this.tabs.find((tab) => tab.opensLinksForApp === app);

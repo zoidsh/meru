@@ -116,8 +116,7 @@ export class TitlebarPopup {
 
   /**
    * Returns whether the popup ended up open, so callers can refresh what it is
-   * about to show. Toggling from where it is already hanging closes it; from
-   * another window, or from a button that hangs it elsewhere, it moves there.
+   * about to show.
    */
   toggle(parentWindow: BrowserWindow, { anchorX }: { anchorX?: number } = {}) {
     if (this.view) {
@@ -153,7 +152,8 @@ export class TitlebarPopup {
     parentWindow.on("resize", this.setBounds);
 
     // A window closing out from under the popup — a workspace app window it was
-    // hung on, or the main window on quit — leaves the view attached to it
+    // hung on, or the main window on quit — leaves the view attached to
+    // something that is going away, so the popup comes down with it
     parentWindow.once("closed", this.close);
 
     this.view.setBorderRadius(BASE_SPACING * 2);
