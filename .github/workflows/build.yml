@@ -1,16 +1,17 @@
-name: main
+name: build
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "**.md"
   pull_request:
+    paths-ignore:
+      - "**.md"
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
   build:
-    needs: ci
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
