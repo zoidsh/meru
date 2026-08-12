@@ -67,6 +67,12 @@ Routes if picked up: load the extension through `session.loadExtension` (needs a
 
 Worth knowing while debugging anything permission-shaped: `navigator.permissions.query()` is not a useful signal in Meru. The check handler in `packages/app/account.ts` returns `true` for everything except notifications, so almost every permission reports `granted` whether or not a request for it would be.
 
+## Cmd+, should open Meru's settings (2026-08-12)
+
+`Command+,` is currently the accelerator for **Gmail Settings…** in the app menu (`packages/app/menu.ts:264`), while **Settings…** — Meru's own settings — has no accelerator at all. Native apps put their own preferences on `Cmd+,`, so the two should swap: `Cmd+,` navigates to `/settings/general`, and Gmail Settings gets a different key or none.
+
+To decide: what Gmail Settings moves to (`Cmd+Shift+,` is the obvious candidate), and whether the Windows/Linux side gains `Ctrl+,` at the same time — the current accelerator is macOS-only.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
