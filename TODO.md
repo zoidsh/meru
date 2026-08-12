@@ -81,6 +81,12 @@ Add a setting that hides it, **on by default**. Follow the config-field conventi
 
 To work out when picked up: where the hiding happens — injected CSS in the Gmail preload against whatever container Gmail wraps these in, versus a DOM-removal observer — and how stable the selector is across Gmail's markup churn, since a stale selector should degrade to "banner still shows", never to a broken inbox. Also worth checking whether the same treatment should cover Gmail's other top-of-list promos (Workspace upsells, "get the app", tips) or only this one.
 
+## Setting to keep the launcher and bookmarks in the titlebar (2026-08-13)
+
+The Workspace Apps launcher and the bookmarks button sit in the top left of the titlebar while the vertical tab strip is hidden, and move into the strip as soon as it appears. Add a setting that keeps them in the titlebar regardless, so their position never changes as tabs open and close.
+
+Related to the parked question in "Resting state when only Gmail is open" above — that one asks whether the strip should appear and disappear at all; this one is the smaller fix of pinning the two controls to one host either way. Decide whether they are worth two settings or whether one of them subsumes the other.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
