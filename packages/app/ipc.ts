@@ -602,7 +602,24 @@ class Ipc {
             }
           },
         },
+        {
+          type: "separator",
+        },
+        // The way back from a width set by the button, which is otherwise the
+        // Width setting's to give — and there is nothing to reset to on `auto`,
+        // where picking it again in settings changes nothing.
+        {
+          label: "Reset Width",
+          enabled: Boolean(account.instance.verticalTabsWidth),
+          click: () => {
+            accounts.setVerticalTabsWidth(accountId, null);
+          },
+        },
       ]).popup();
+    });
+
+    ipc.main.on("tabs.setVerticalTabsWidth", (_event, accountId, width) => {
+      accounts.setVerticalTabsWidth(accountId, width);
     });
 
     ipc.main.handle("config.getConfig", () => config.store);

@@ -12,6 +12,13 @@ export const verticalTabsWidths = {
 
 export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
 
+/**
+ * A width picked by hand in the strip, for one account until the app quits. It
+ * is one of the two real widths: `auto` is a rule for choosing between them,
+ * which is what picking by hand steps over.
+ */
+export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
+
 export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;
@@ -71,10 +78,20 @@ export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dorma
 
 export function getVerticalTabsWidth(
   tabs: Pick<TabState, "app" | "pinned">[],
-  { configuredWidth }: { configuredWidth: VerticalTabsWidth },
+  {
+    configuredWidth,
+    sessionWidth,
+  }: { configuredWidth: VerticalTabsWidth; sessionWidth: VerticalTabsSessionWidth | null },
 ) {
   if (tabs.length <= 1) {
     return 0;
+  }
+
+  // A width picked in the strip stands in front of the setting, but only for as
+  // long as there is a strip to pick it in: it cannot bring back one the tab
+  // count has taken away.
+  if (sessionWidth) {
+    return sessionWidth === "narrow" ? VERTICAL_TABS_NARROW_WIDTH : VERTICAL_TABS_WIDE_WIDTH;
   }
 
   if (configuredWidth === "narrow") {

@@ -11,7 +11,7 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
-import type { AccountTabsState, VerticalTabsWidth } from "./tabs";
+import type { AccountTabsState, VerticalTabsSessionWidth, VerticalTabsWidth } from "./tabs";
 import type {
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
@@ -201,6 +201,10 @@ export type IpcMainEvents =
       "tabs.moveTab": [accountId: AccountConfig["id"], tabId: string, targetSectionIndex: number];
       "tabs.showTabContextMenu": [accountId: AccountConfig["id"], tabId: string];
       "tabs.showVerticalTabsContextMenu": [accountId: AccountConfig["id"]];
+      "tabs.setVerticalTabsWidth": [
+        accountId: AccountConfig["id"],
+        width: VerticalTabsSessionWidth,
+      ];
       "workspaceApps.openApp": [
         app: SupportedWorkspaceApp,
         openBehavior?: WorkspaceAppOpenBehavior,
