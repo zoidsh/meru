@@ -396,6 +396,36 @@ function VerticalTabsWidthToggle({
   );
 }
 
+/**
+ * What the pinned tabs have to leave the normal ones as the strip fills: the
+ * rows the list has, up to three of them and the eight pixels of a fourth that
+ * say it carries on past the three. A shorter list is left whole — the room
+ * held for it is the room it fills, so none of it can stand empty between the
+ * last tab and the launcher.
+ *
+ * The rows are measured here rather than left to the layout because the room is
+ * held open from above, as a ceiling on the pinned tabs: see the section for
+ * why it cannot be a floor under these ones.
+ */
+function getNormalSectionReservedHeight(normalTabCount: number, isWide: boolean) {
+  if (normalTabCount === 0) {
+    return 0;
+  }
+
+  // A row as each width lays it out: the narrow strip's 32px icon button or the
+  // wide strip's 28px row, each in a tab box standing four pixels taller than
+  // the button it holds, and under it the gap the section sets between rows.
+  const rowHeight = isWide ? 34 : 36;
+
+  const rowGap = isWide ? 4 : 8;
+
+  const listHeight = normalTabCount * rowHeight + (normalTabCount - 1) * rowGap;
+
+  const threeRowsAndASliver = rowHeight * 3 + rowGap * 2 + 8;
+
+  return Math.min(listHeight, threeRowsAndASliver);
+}
+
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -417,14 +447,7 @@ export function VerticalTabs() {
 
   const normalTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "normal");
 
-  /**
-   * The room the pinned tabs leave the normal ones is three rows and the sliver
-   * of a fourth that says the list goes on, and it is only worth holding open
-   * for a list with three rows to put in it: any shorter and it would stand
-   * part empty under the last tab, which is the one thing the strip's controls
-   * may not have above them.
-   */
-  const holdsNormalSectionFloor = normalTabs.length >= 3;
+  const normalSectionReservedHeight = getNormalSectionReservedHeight(normalTabs.length, isWide);
 
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
@@ -485,8 +508,9 @@ export function VerticalTabs() {
        *
        * They then divide what is left between them in the pinned section's
        * favour. The pinned tabs take the height they come to and hold it while
-       * the normal tabs give ground, down to the last three rows they are left
-       * with; only past that do the pinned tabs give any. Pinning heavily
+       * the normal tabs give ground, down to the three rows and the sliver of a
+       * fourth held for them — or to the whole of a list too short to fill even
+       * that; only past there do the pinned tabs give any. Pinning heavily
        * therefore squeezes the normal tabs into a thin scrolling column rather
        * than costing the pinned ones a row, but it can no longer squeeze them
        * out of sight.
@@ -500,20 +524,20 @@ export function VerticalTabs() {
           }}
         >
           {/*
-           * Yields to nothing until the normal tabs are down to their floor,
-           * and reaching that is the one case where this section scrolls rather
-           * than takes the room it wants.
+           * Yields to nothing until the normal tabs are down to the room held
+           * for them, and reaching that is the one case where this section
+           * scrolls rather than takes the height it wants.
            *
-           * The floor is held open from up here, as a ceiling on this section
+           * That room is held open from up here, as a ceiling on this section
            * rather than a floor under that one. A floor would hold its room
            * open at rest as well, standing between the last tab and the
            * launcher, and being a minimum it could not give way on a window too
            * short to honour it — it would run the two sections over the very
            * controls this is all in aid of. A ceiling only ever takes room
-           * away, so it can push nothing out of the strip; where the room for a
-           * floor isn't there at all, it stands aside and the two sections
-           * halve what there is between them. Its measure is the floor plus the
-           * gap over it, less the bleed below, which is the floor exactly.
+           * away, so it can push nothing out of the strip; where the room held
+           * isn't there to hold, it stands aside and the two sections halve
+           * what there is between them. Its measure is the room plus the gap
+           * over it, less the bleed below, and the two cancel.
            *
            * Both sections reach out to the strip's sides and set the gutter out
            * again inside themselves, so the scrollbar rides in the gutter
@@ -523,12 +547,12 @@ export function VerticalTabs() {
            * scroll container clips at would otherwise shave off.
            */}
           <ScrollArea
-            className={cn(
-              "-mx-4 -my-1 shrink-0",
-              holdsNormalSectionFloor
-                ? "max-h-[max(50%,calc(100%-7rem))]"
-                : "max-h-[calc(100%+0.5rem)]",
-            )}
+            className="-mx-4 -my-1 shrink-0"
+            style={{
+              maxHeight: normalSectionReservedHeight
+                ? `max(50%, calc(100% - ${normalSectionReservedHeight}px))`
+                : "calc(100% + 0.5rem)",
+            }}
           >
             <div
               className={cn(
@@ -570,8 +594,8 @@ export function VerticalTabs() {
           >
             {/*
              * The section that gives ground: it scrolls from the first row it
-             * cannot show, and gives no further than the three rows the ceiling
-             * above holds open for it.
+             * cannot show, and gives no further than the room the ceiling above
+             * holds open for it.
              */}
             <ScrollArea className="-mx-4 -my-1 min-h-0">
               <div
