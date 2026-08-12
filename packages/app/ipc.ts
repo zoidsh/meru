@@ -40,7 +40,11 @@ import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { log } from "./lib/log";
-import { createNewEmailNotification, createNotification } from "./notifications";
+import {
+  areWorkspaceAppNotificationsAllowed,
+  createNewEmailNotification,
+  createNotification,
+} from "./notifications";
 import { MAILTO_PROTOCOL } from "./protocol";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
@@ -716,7 +720,7 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApp.showNotification", (event, notification) => {
-      if (!config.get("notifications.allowFromWorkspaceApps")) {
+      if (!areWorkspaceAppNotificationsAllowed()) {
         return;
       }
 

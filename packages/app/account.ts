@@ -10,6 +10,7 @@ import { Gmail } from "./gmail";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
+import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
@@ -95,7 +96,7 @@ export class Account {
           break;
         }
         case "notifications": {
-          callback(config.get("notifications.allowFromWorkspaceApps"));
+          callback(areWorkspaceAppNotificationsAllowed());
           break;
         }
         default: {
@@ -108,7 +109,7 @@ export class Account {
   private registerSessionPermissionsCheckHandler() {
     this.session.setPermissionCheckHandler((_webContents, permission) => {
       if (permission === "notifications") {
-        return config.get("notifications.allowFromWorkspaceApps");
+        return areWorkspaceAppNotificationsAllowed();
       }
 
       return true;
