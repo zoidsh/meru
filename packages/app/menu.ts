@@ -1,6 +1,6 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
-import { getTabSection, GMAIL_TAB_ID } from "@meru/shared/tabs";
+import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import {
   app,
   BrowserWindow,
@@ -161,6 +161,54 @@ export class AppMenu {
 
       accounts.refreshSelectedAccountView();
     };
+
+    /**
+     * The nth entry of the pinned section as the strip shows it, Gmail counting
+     * as the first: the numbers stand for what is on screen, so the filters the
+     * strip renders through decide what they land on.
+     */
+    const selectPinnedTab = (pinnedTabIndex: number) => {
+      const selectedAccountTabs = accounts.getSelectedAccount().instance.tabs;
+
+      const pinnedTabs = getVisibleVerticalTabs(selectedAccountTabs.serialize(), {
+        workspaceAppsMode: config.get("workspaceApps.mode"),
+        showWindows: config.get("verticalTabs.showWindows"),
+      }).filter((tab) => getTabSection(tab) === "pinned");
+
+      const pinnedTab = pinnedTabs[pinnedTabIndex];
+
+      if (!pinnedTab) {
+        return;
+      }
+
+      selectedAccountTabs.activateTab(pinnedTab.id);
+
+      // A windowed entry is brought forward in its own window, which leaves the
+      // main window showing whatever it already was.
+      if (pinnedTab.windowed) {
+        return;
+      }
+
+      main.navigate("/");
+
+      accounts.refreshSelectedAccountView();
+    };
+
+    const selectPinnedTabItems: MenuItemConstructorOptions[] = Array.from(
+      { length: 9 },
+      (_pinnedTabEntry, pinnedTabIndex) => ({
+        label: `Select Pinned Tab ${pinnedTabIndex + 1} (hidden shortcut)`,
+        // Literal Ctrl on every platform, like the Ctrl+Tab pair above:
+        // Command+Shift+3..6 are macOS screenshot shortcuts that never reach the
+        // app, and Command/Ctrl+1..9 already select accounts.
+        accelerator: `Ctrl+Shift+${pinnedTabIndex + 1}`,
+        visible: is.dev,
+        acceleratorWorksWhenHidden: true,
+        click: () => {
+          selectPinnedTab(pinnedTabIndex);
+        },
+      }),
+    );
 
     const selectedAccountActiveTab = selectedAccount.instance.tabs.activeTab;
 
@@ -499,6 +547,7 @@ export class AppMenu {
             acceleratorWorksWhenHidden: true,
             click: selectPreviousTab,
           },
+          ...selectPinnedTabItems,
           {
             type: "separator",
           },
