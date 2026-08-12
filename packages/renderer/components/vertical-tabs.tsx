@@ -145,9 +145,8 @@ function VerticalTab({
   const isBookmarkable = isWideRow && !tab.dormant && Boolean(tab.app);
 
   /**
-   * A bookmarked row shows its star at rest, on the row's edge, and hands that
-   * spot over when pointed at: the star steps left, the close button takes the
-   * edge. The room for one control is therefore held from the start.
+   * A bookmarked row shows its star at rest, on the row's edge, so the room for
+   * one control is held from the start.
    */
   const showsRestingStar = isBookmarkable && tab.bookmarked;
 
@@ -168,11 +167,10 @@ function VerticalTab({
         size={isWideRow ? "sm" : "icon"}
         className={cn(
           // Colours transition, the box never does. The hover controls take
-          // their room instantly rather than over a transition, which would
-          // slide the resting star out from under the one that replaces it;
-          // and the tab takes the shape its new presentation gives it in the
-          // same step the strip changes width, rather than animating into it
-          // once the strip has already arrived.
+          // their room instantly rather than over a transition, and the tab
+          // takes the shape its new presentation gives it in the same step the
+          // strip changes width, rather than animating into it once the strip
+          // has already arrived.
           "transition-colors",
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
@@ -221,9 +219,8 @@ function VerticalTab({
       {!isWideRow && showsAppLinksBadge && <AppLinksTabBadge className="-bottom-1 -left-1" />}
       {gmailStatus && <GmailTabStatusBadge {...gmailStatus} />}
       {/*
-       * A bookmarked row keeps this button on show at rest, on the edge and
-       * stripped back to its star, so the mark and the control it stands for
-       * are one thing.
+       * A bookmarked row keeps this button on show at rest, stripped back to
+       * its star, so the mark and the control it stands for are one thing.
        */}
       {isBookmarkable && (
         <Button
@@ -233,10 +230,10 @@ function VerticalTab({
           className={cn(
             // Centred with margins rather than a transform, which the button's
             // own press nudge would overwrite
-            "absolute inset-y-0 my-auto size-5 transition-colors",
+            "absolute inset-y-0 right-1 my-auto size-5 transition-colors",
             tab.bookmarked
-              ? "right-1 bg-transparent text-muted-foreground group-hover:right-7 group-hover:bg-secondary group-hover:text-secondary-foreground"
-              : "right-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+              ? "bg-transparent text-muted-foreground group-hover:bg-secondary group-hover:text-secondary-foreground"
+              : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
           title={tab.bookmarked ? "Remove Bookmark" : "Bookmark"}
           onClick={() => {
@@ -253,7 +250,8 @@ function VerticalTab({
           data-sortable-action
           className={cn(
             "absolute opacity-0 transition-colors group-hover:opacity-100 focus-visible:opacity-100",
-            isWideRow ? "inset-y-0 right-1 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
+            isWideRow ? "inset-y-0 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
+            isWideRow && (isBookmarkable ? "right-7" : "right-1"),
           )}
           title="Close"
           onClick={() => {
