@@ -1,6 +1,6 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
-import { GMAIL_TAB_ID } from "@meru/shared/tabs";
+import { getTabSection, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import {
   app,
   BrowserWindow,
@@ -161,6 +161,14 @@ export class AppMenu {
 
       accounts.refreshSelectedAccountView();
     };
+
+    const selectedAccountActiveTab = selectedAccount.instance.tabs.activeTab;
+
+    // Exactly what the strip's close button offers: the pinned section — Gmail
+    // included — and dormant entries carry no close button, so the shortcut has
+    // nothing to close there either.
+    const isActiveTabCloseable =
+      getTabSection(selectedAccountActiveTab) !== "pinned" && !selectedAccountActiveTab.dormant;
 
     const isGmailVisible =
       focusedWindow === main.window &&
@@ -493,6 +501,18 @@ export class AppMenu {
           },
           {
             type: "separator",
+          },
+          {
+            label: "Close Tab",
+            accelerator: "CommandOrControl+Shift+W",
+            enabled: isActiveTabCloseable,
+            click: () => {
+              const selectedAccountTabs = accounts.getSelectedAccount().instance.tabs;
+
+              selectedAccountTabs.closeTab(selectedAccountTabs.activeTabId);
+
+              accounts.refreshSelectedAccountView();
+            },
           },
           {
             label: "Reopen Closed Tab",
