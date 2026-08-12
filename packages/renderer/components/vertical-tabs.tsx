@@ -417,6 +417,15 @@ export function VerticalTabs() {
 
   const normalTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "normal");
 
+  /**
+   * The room the pinned tabs leave the normal ones is three rows and the sliver
+   * of a fourth that says the list goes on, and it is only worth holding open
+   * for a list with three rows to put in it: any shorter and it would stand
+   * part empty under the last tab, which is the one thing the strip's controls
+   * may not have above them.
+   */
+  const holdsNormalSectionFloor = normalTabs.length >= 3;
+
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
@@ -475,10 +484,12 @@ export function VerticalTabs() {
        * many are open.
        *
        * They then divide what is left between them in the pinned section's
-       * favour. The pinned tabs never yield — no ceiling, no share of the strip
-       * they may not pass — and the normal tabs give up everything they have
-       * first, so pinning heavily squeezes the normal tabs into a thin
-       * scrolling column rather than costing the pinned ones a row.
+       * favour. The pinned tabs take the height they come to and hold it while
+       * the normal tabs give ground, down to the last three rows they are left
+       * with; only past that do the pinned tabs give any. Pinning heavily
+       * therefore squeezes the normal tabs into a thin scrolling column rather
+       * than costing the pinned ones a row, but it can no longer squeeze them
+       * out of sight.
        */}
       <div className="flex min-h-0 w-full flex-col gap-2">
         <DragDropProvider
@@ -489,14 +500,20 @@ export function VerticalTabs() {
           }}
         >
           {/*
-           * Yields to nothing: the normal tabs give up everything they have
-           * before a pinned row gives up a pixel. The one bound on it is the
-           * height the two sections have between them, which it can only reach
-           * once the normal tabs are down to nothing, and reaching it is the
-           * single case where this section scrolls — so the pinned tabs can
-           * never be what pushes the strip's controls out. That bound carries
-           * the section's own bleed with it, the height it is measured against
-           * being the one the bleed has already taken back.
+           * Yields to nothing until the normal tabs are down to their floor,
+           * and reaching that is the one case where this section scrolls rather
+           * than takes the room it wants.
+           *
+           * The floor is held open from up here, as a ceiling on this section
+           * rather than a floor under that one. A floor would hold its room
+           * open at rest as well, standing between the last tab and the
+           * launcher, and being a minimum it could not give way on a window too
+           * short to honour it — it would run the two sections over the very
+           * controls this is all in aid of. A ceiling only ever takes room
+           * away, so it can push nothing out of the strip; where the room for a
+           * floor isn't there at all, it stands aside and the two sections
+           * halve what there is between them. Its measure is the floor plus the
+           * gap over it, less the bleed below, which is the floor exactly.
            *
            * Both sections reach out to the strip's sides and set the gutter out
            * again inside themselves, so the scrollbar rides in the gutter
@@ -505,7 +522,14 @@ export function VerticalTabs() {
            * the badges the icons hang over their corners, which the edge a
            * scroll container clips at would otherwise shave off.
            */}
-          <ScrollArea className="-mx-4 -my-1 max-h-[calc(100%+0.5rem)] shrink-0">
+          <ScrollArea
+            className={cn(
+              "-mx-4 -my-1 shrink-0",
+              holdsNormalSectionFloor
+                ? "max-h-[max(50%,calc(100%-7rem))]"
+                : "max-h-[calc(100%+0.5rem)]",
+            )}
+          >
             <div
               className={cn(
                 "px-4 py-1",
@@ -544,7 +568,11 @@ export function VerticalTabs() {
               moveSectionTab(selectedAccount.config.id, normalTabs, event);
             }}
           >
-            {/* The section that gives ground: it scrolls from the first row it cannot show */}
+            {/*
+             * The section that gives ground: it scrolls from the first row it
+             * cannot show, and gives no further than the three rows the ceiling
+             * above holds open for it.
+             */}
             <ScrollArea className="-mx-4 -my-1 min-h-0">
               <div
                 className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
