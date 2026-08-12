@@ -333,11 +333,11 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * widened or narrowed where it stands rather than through settings. It leaves
  * the setting alone: the width is this account's for this run of the app.
  *
- * `default` rather than the `sm` its neighbours widen into, because that is the
- * one size that matches `icon`'s height and glyph. That width lands at once
- * too — the button's default `transition-all` would animate the box out of step
- * with the strip the click has already resized, so the transition names its
- * properties instead.
+ * The same square button at both widths, rather than one that widens with its
+ * neighbours: the wide strip sends it to its right edge instead, which is the
+ * side the arrow points at and the side the strip grows from. The button's
+ * default `transition-all` would animate that box out of step with the strip
+ * the click has already resized, so the transition names its properties.
  *
  * An auto margin is what puts it at the foot: the tabs and the controls under
  * them take only the height they need.
@@ -352,10 +352,10 @@ function VerticalTabsWidthToggle({
   return (
     <Button
       variant="ghost"
-      size={isWide ? "default" : "icon"}
+      size="icon"
       className={cn(
         "mt-auto text-muted-foreground transition-[color,background-color]",
-        isWide && "w-full",
+        isWide && "self-end",
       )}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
