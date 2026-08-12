@@ -1083,6 +1083,46 @@ export function WorkspaceAppIcon({
         </svg>
       );
     }
+    // Drawn by hand in the style of the icons around it — the account avatar as
+    // Meru renders it, not Google's own artwork.
+    case "myaccount": {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+          <mask
+            id={`mask0_myaccount-${instanceId}`}
+            style={{
+              maskType: "alpha",
+            }}
+            maskUnits="userSpaceOnUse"
+            x={1}
+            y={1}
+            width={22}
+            height={22}
+          >
+            <circle cx={12} cy={12} r={11} fill="white" />
+          </mask>
+          <circle cx={12} cy={12} r={11} fill={`url(#paint0_linear_myaccount-${instanceId})`} />
+          <g mask={`url(#mask0_myaccount-${instanceId})`}>
+            <circle cx={12} cy={9.6} r={3.7} fill="white" />
+            <ellipse cx={12} cy={22.2} rx={8} ry={6.2} fill="white" />
+          </g>
+          <defs>
+            <linearGradient
+              id={`paint0_linear_myaccount-${instanceId}`}
+              x1={12}
+              y1={1}
+              x2={12}
+              y2={23}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#78C9FF" />
+              <stop offset={0.55} stopColor="#3186FF" />
+              <stop offset={1} stopColor="#0057CC" />
+            </linearGradient>
+          </defs>
+        </svg>
+      );
+    }
     case "notebooklm": {
       return (
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

@@ -4,7 +4,6 @@ type WorkspaceAppDefinition = {
   label: string;
   url?: string;
   availableInLauncher?: boolean;
-  popupOnly?: boolean;
   singleInstance?: boolean;
 };
 
@@ -21,7 +20,7 @@ const workspaceAppDefinitions = {
   groups: { label: "Groups" },
   keep: { label: "Keep" },
   meet: { label: "Meet" },
-  myaccount: { label: "My Account", availableInLauncher: false, popupOnly: true },
+  myaccount: { label: "My Account", availableInLauncher: false },
   notebooklm: { label: "NotebookLM" },
   sheets: { label: "Sheets" },
   sites: { label: "Sites" },
