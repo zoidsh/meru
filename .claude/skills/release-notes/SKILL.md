@@ -7,7 +7,7 @@ description: Write release notes for Meru. Use when drafting or updating GitHub 
 
 ## Gathering the changes
 
-- The range runs from the last published release to `HEAD`: check it with `gh release list -L 1`, then `git log --oneline v<latest>..HEAD`.
+- The release being written is the one the version commit at `HEAD` bumps to — a commit whose subject is the bare version number, matching `version` in `package.json` (e.g. `3.58.0`, tagged `v3.58.0`). The range runs from the previous release's tag to that commit; `gh release list -L 2` gives both tags.
 - Triage the log before opening a single diff. Drop on the commit subject alone: comment and docs edits, refactors and extractions, `TODO.md` notes, tests, CI, and dependency bumps other than Electron. A release of 40 commits usually has around 10 user-facing ones.
 - For the commits that survive, `gh pr view <number>` is the fastest read — the PR body states what changed for the user, the commit subject often doesn't. Fall back to `git show` when there is no PR.
 - Don't trust a commit message's scope — verify the actual fix from the diff. Messages often name a single platform or quote a GitHub issue title (e.g. "fix window position resetting after Windows reboot") when the underlying bug affects every platform. Only scope a note to a platform with `**macOS:**`/`**Windows:**` when the code confirms the fix is platform-specific.
@@ -39,5 +39,8 @@ description: Write release notes for Meru. Use when drafting or updating GitHub 
 
 ## Output
 
-- Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file, and do not write the notes to a file in the repo. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
-- Output the notes in chat wrapped in a fenced markdown code block, so the raw markdown can be copied straight into the GitHub release.
+- Release notes live only on GitHub Releases — do not commit a `RELEASE_NOTES.md` or `CHANGELOG.md` file, and do not write the notes anywhere inside the repo. Match the style of recent published releases at https://github.com/zoidsh/meru/releases.
+- Write the finished notes onto the release for the version commit's tag: `gh release edit v<version> --notes-file <path>`, with the notes in a temporary file outside the repo. Pass a file rather than `--notes` so the markdown, backticks and `<kbd>` tags survive the shell.
+- Read the current body first with `gh release view v<version> --json body -q .body`. Editing replaces it wholesale, so when it isn't empty, show the notes in chat and confirm before overwriting.
+- If no release exists for the tag yet, stop and ask — creating one triggers the build-and-publish workflow, which is not this skill's job.
+- Share the release URL after writing, and print the notes in chat as well.
