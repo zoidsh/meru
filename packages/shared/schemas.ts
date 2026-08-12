@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidCssColorInput } from "./color";
 import type { GmailState } from "./gmail";
+import type { VerticalTabsSessionWidth } from "./tabs";
 import { type SupportedWorkspaceApp, workspaceApps } from "./workspace-apps";
 
 export const accountColors = [
@@ -100,6 +101,8 @@ export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;
 export type AccountInstance = {
   config: AccountConfig;
   gmail: GmailState;
+  /** The width the account's tab strip was last given by hand, for this run. */
+  verticalTabsWidth: VerticalTabsSessionWidth | null;
 };
 
 export type AccountInstances = AccountInstance[];

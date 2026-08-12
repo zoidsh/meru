@@ -65,6 +65,7 @@ class Main {
         accounts.getAccounts().map((account) => ({
           config: account.config,
           gmail: account.instance.gmail.store.getState(),
+          verticalTabsWidth: account.instance.verticalTabsWidth,
         })),
       ),
     );

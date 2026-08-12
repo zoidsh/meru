@@ -24,7 +24,7 @@ import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { VerticalTabsWorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
 import { sortablePlugins, sortableSensors } from "@/lib/dnd";
 import { useIsLicenseKeyValid, useVerticalTabs } from "@/lib/hooks";
-import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { useConfig } from "@/lib/react-query";
 import { HOST_HANDOVER_FADE_CLASS_NAME } from "@/lib/utils";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
@@ -334,18 +334,23 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
 }
 
 /**
- * Sets the width setting to whichever of the two widths the strip is not on, so
- * it can be widened or narrowed where it stands rather than through settings.
- * That leaves `auto` behind for good: a width picked by hand stays picked, the
- * same as choosing one in settings.
+ * Puts the strip on whichever of the two widths it is not on, so it can be
+ * widened or narrowed where it stands rather than through settings. It leaves
+ * the setting alone: the width is this account's for this run of the app, and
+ * the setting — `auto` included — has the strip back on the next one, or as
+ * soon as it is set again.
  *
  * The only control in the strip that keeps its icon shape in both widths, where
  * the others grow a label: it is the one that resizes what it sits in, so it
  * stays the same button under the pointer and only turns its arrow around.
  */
-function VerticalTabsWidthToggle({ isWide }: { isWide: boolean }) {
-  const configMutation = useConfigMutation();
-
+function VerticalTabsWidthToggle({
+  accountId,
+  isWide,
+}: {
+  accountId: AccountConfig["id"];
+  isWide: boolean;
+}) {
   return (
     <Button
       variant="ghost"
@@ -353,7 +358,7 @@ function VerticalTabsWidthToggle({ isWide }: { isWide: boolean }) {
       className="mt-auto text-muted-foreground"
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
-        configMutation.mutate({ "verticalTabs.width": isWide ? "narrow" : "wide" });
+        ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
       }}
     >
       {isWide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
@@ -483,7 +488,7 @@ export function VerticalTabs() {
         </div>
       )}
       <VerticalTabsBookmarks isWide={isWide} />
-      <VerticalTabsWidthToggle isWide={isWide} />
+      <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
     </div>
   );
 }

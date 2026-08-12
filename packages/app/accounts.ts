@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import type { AccountConfig } from "@meru/shared/schemas";
-import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
+import {
+  getVerticalTabsWidth,
+  getVisibleVerticalTabs,
+  type VerticalTabsSessionWidth,
+} from "@meru/shared/tabs";
 import { Account } from "./account";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -44,8 +48,17 @@ class Accounts {
       }
     });
 
+    // A width chosen in settings speaks for every account, so it takes back the
+    // strips a button press had set aside for this run — otherwise picking a
+    // width there would leave them where they stand and read as broken.
     config.onDidChange("verticalTabs.width", () => {
+      for (const account of accounts.instances.values()) {
+        account.verticalTabsWidth = null;
+      }
+
       accounts.updateAllViewBounds();
+
+      accounts.sendAccountsChangedToRenderer();
     });
 
     config.onDidChange("verticalTabs.showWindows", () => {
@@ -118,8 +131,19 @@ class Accounts {
         workspaceAppsMode: config.get("workspaceApps.mode"),
         showWindows: config.get("verticalTabs.showWindows"),
       }),
-      { configuredWidth: config.get("verticalTabs.width") },
+      {
+        configuredWidth: config.get("verticalTabs.width"),
+        sessionWidth: selectedAccount.instance.verticalTabsWidth,
+      },
     );
+  }
+
+  setVerticalTabsWidth(accountId: AccountConfig["id"], width: VerticalTabsSessionWidth) {
+    this.getAccount(accountId).instance.verticalTabsWidth = width;
+
+    this.updateAllViewBounds();
+
+    this.sendAccountsChangedToRenderer();
   }
 
   updateAllViewBounds() {
@@ -438,6 +462,7 @@ class Accounts {
       this.getAccounts().map((account) => ({
         config: account.config,
         gmail: account.instance.gmail.store.getState(),
+        verticalTabsWidth: account.instance.verticalTabsWidth,
       })),
     );
   }

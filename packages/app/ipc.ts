@@ -605,6 +605,10 @@ class Ipc {
       ]).popup();
     });
 
+    ipc.main.on("tabs.setVerticalTabsWidth", (_event, accountId, width) => {
+      accounts.setVerticalTabsWidth(accountId, width);
+    });
+
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(

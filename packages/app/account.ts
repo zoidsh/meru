@@ -1,6 +1,7 @@
 import { platform } from "@electron-toolkit/utils";
 import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
+import type { VerticalTabsSessionWidth } from "@meru/shared/tabs";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import { app, type IpcMainEvent, ipcMain, type Session, session } from "electron";
 import { blocker } from "./blocker";
@@ -20,6 +21,13 @@ export class Account {
   gmail: Gmail;
 
   tabs: Tabs;
+
+  /**
+   * The width the strip was last given by hand, kept here rather than in the
+   * config so it belongs to this account for this run of the app and is gone by
+   * the next one. `null` leaves the width to the setting.
+   */
+  verticalTabsWidth: VerticalTabsSessionWidth | null = null;
 
   constructor(accountConfig: AccountConfig) {
     this.accountId = accountConfig.id;

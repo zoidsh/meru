@@ -78,6 +78,7 @@ export function useVerticalTabs() {
 
   const width = getVerticalTabsWidth(tabs, {
     configuredWidth: config?.["verticalTabs.width"] ?? "auto",
+    sessionWidth: selectedAccount?.verticalTabsWidth ?? null,
   });
 
   return { selectedAccount, tabs, width };
