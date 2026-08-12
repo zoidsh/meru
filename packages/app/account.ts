@@ -86,6 +86,7 @@ export class Account {
   private registerSessionPermissionsRequestsHandler() {
     this.session.setPermissionRequestHandler((_webContents, permission, callback) => {
       switch (permission) {
+        case "clipboard-read":
         case "clipboard-sanitized-write":
         case "fullscreen":
         case "media":
