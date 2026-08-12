@@ -87,9 +87,6 @@ export function getVerticalTabsWidth(
     return 0;
   }
 
-  // A width picked in the strip stands in front of the setting, but only for as
-  // long as there is a strip to pick it in: it cannot bring back one the tab
-  // count has taken away.
   if (sessionWidth) {
     return sessionWidth === "narrow" ? VERTICAL_TABS_NARROW_WIDTH : VERTICAL_TABS_WIDE_WIDTH;
   }

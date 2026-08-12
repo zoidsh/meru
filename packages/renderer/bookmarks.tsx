@@ -80,10 +80,7 @@ function SortableBookmark({ bookmark, index }: { bookmark: BookmarkState; index:
   );
 }
 
-/**
- * The list is the order bookmarks are saved in, so dragging one writes that
- * order back to the account it belongs to.
- */
+/** The list is the order bookmarks are saved in. */
 function moveBookmark(bookmarks: BookmarkState[], event: DragEndEvent) {
   if (event.canceled) {
     return;

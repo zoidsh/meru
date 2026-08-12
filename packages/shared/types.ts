@@ -44,10 +44,7 @@ export type NotificationTime = {
   days?: number[]; // 0=Sun,1=Mon,...,6=Sat; undefined/empty = all days
 };
 
-/**
- * Which button asked for the bookmarks popup, and so where it hangs: at the end
- * of the titlebar, or beside the vertical tabs strip.
- */
+/** Which button asked for the bookmarks popup, and so where it hangs. */
 export type BookmarksPopupPlacement = "titlebar" | "verticalTabs";
 
 export type WorkspaceAppNotification = {

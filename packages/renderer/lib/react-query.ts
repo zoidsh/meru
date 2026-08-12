@@ -31,9 +31,9 @@ ipc.renderer.on("bookmarks.changed", (_event, bookmarks) => {
 });
 
 /**
- * Only the bookmarks popup runs this: it is a view of its own, so it fetches
- * the list on mount and the main process pushes it again whenever the saved
- * bookmarks change underneath it.
+ * The bookmarks popup is a view of its own, so it fetches the list on mount and
+ * the main process pushes it again whenever the saved bookmarks change
+ * underneath it.
  */
 export function useBookmarks() {
   const { data } = useQuery(
