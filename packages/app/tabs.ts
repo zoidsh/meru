@@ -508,6 +508,11 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
+    // Pinning carries a tab in and out of the section that cannot be closed
+    // without changing which tab is active, so nothing else would rebuild the
+    // menu on the Close Tab entry's behalf.
+    appMenu.refresh();
+
     accounts.saveTabs();
   }
 
