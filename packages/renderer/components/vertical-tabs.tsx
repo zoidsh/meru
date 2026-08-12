@@ -344,6 +344,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * arrow it turns around already says which way the strip is about to go. In the
  * wide strip it still takes the full row the controls above it take, so its icon
  * sits in the same column as theirs rather than alone in the corner.
+ *
+ * `default` rather than the `sm` its neighbours widen into, because that is the
+ * one size that matches `icon`'s height and glyph: only the button's width may
+ * change under the pointer that just resized the strip.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -355,7 +359,7 @@ function VerticalTabsWidthToggle({
   return (
     <Button
       variant="ghost"
-      size={isWide ? "sm" : "icon"}
+      size={isWide ? "default" : "icon"}
       className={cn("mt-auto text-muted-foreground", isWide && "w-full justify-start")}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
