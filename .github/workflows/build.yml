@@ -1,4 +1,4 @@
-name: main
+name: build
 
 on:
   push:
@@ -11,10 +11,7 @@ on:
       - "**.md"
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
   build:
-    needs: ci
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
