@@ -77,10 +77,10 @@ function WindowedTabBadge({ className }: { className?: string }) {
 }
 
 /**
- * Two lanes becoming one: every link to the app opens in this tab. It takes the
- * corner opposite the windowed badge, so a tab that is both keeps each mark to
- * itself. Which app it stands for is left to the tab's tooltip — the tab keeps
- * the designation after browsing elsewhere, so the mark alone cannot say.
+ * It takes the corner opposite the windowed badge, so a tab that is both keeps
+ * each mark to itself. Which app it stands for is left to the tab's tooltip —
+ * the tab keeps the designation after browsing elsewhere, so the mark alone
+ * cannot say.
  */
 function AppLinksTabBadge({ className }: { className?: string }) {
   return (
@@ -138,9 +138,9 @@ function VerticalTab({
   const isWideRow = presentation === "wideRow";
 
   /**
-   * The same toggle a workspace app window carries in its titlebar: it saves the
-   * URL the tab is on and empties again as the tab browses on. Only the wide row
-   * has the space for it — the other presentations keep the context menu.
+   * The same toggle a workspace app window carries in its titlebar. Only the
+   * wide row has the space for it — the other presentations keep the context
+   * menu.
    */
   const isBookmarkable = isWideRow && !tab.dormant && Boolean(tab.app);
 
@@ -157,10 +157,6 @@ function VerticalTab({
     config?.["verticalTabs.showAppLinksBadge"] && tab.opensLinksForApp,
   );
 
-  /**
-   * The mark on a designated tab cannot name the app it stands for, so the tab's
-   * own tooltip does — and it keeps saying so once the badge is turned off.
-   */
   const tooltip = tab.opensLinksForApp
     ? `${tab.title} — Opens ${workspaceApps[tab.opensLinksForApp].label} Links`
     : tab.title;
@@ -227,8 +223,7 @@ function VerticalTab({
       {/*
        * A bookmarked row keeps this button on show at rest, on the edge and
        * stripped back to its star, so the mark and the control it stands for
-       * are one thing. Pointing at the row gives it back its button and moves
-       * it left, clearing the edge for the close button.
+       * are one thing.
        */}
       {isBookmarkable && (
         <Button
@@ -316,9 +311,7 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
     <Button
       variant="ghost"
       size={isWide ? "sm" : "icon"}
-      // Colours transition, the box never does: the button takes its new width
-      // in the same step the strip does rather than animating into it once the
-      // strip has already arrived
+      // Colours transition, the box never does, as in `VerticalTab`
       className={cn("text-muted-foreground transition-colors", isWide && "w-full justify-start")}
       title="Bookmarks"
       onClick={() => {
@@ -340,35 +333,18 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
 /**
  * Puts the strip on whichever of the two widths it is not on, so it can be
  * widened or narrowed where it stands rather than through settings. It leaves
- * the setting alone: the width is this account's for this run of the app, and
- * the setting — `auto` included — has the strip back on the next one, or as
- * soon as it is set again or the strip's context menu resets the width.
- *
- * The only control in the strip that goes without a label in either width: the
- * arrow it turns around already says which way the strip is about to go. In the
- * wide strip it takes the full row the controls above it take, but keeps that
- * arrow centred rather than dropping it into their icon column: with nothing to
- * the right of it, an icon column of one would only read as a label gone
- * missing, and centred it stays where the narrow strip has it.
+ * the setting alone: the width is this account's for this run of the app.
  *
  * `default` rather than the `sm` its neighbours widen into, because that is the
- * one size that matches `icon`'s height and glyph: only the button's width may
- * change under the pointer that just resized the strip. That width lands at
- * once too — the button's default `transition-all` would animate the box and
- * its padding out of step with the strip the click has already resized,
- * dragging the arrow along, so the transition names its properties instead.
+ * one size that matches `icon`'s height and glyph. That width lands at once
+ * too — the button's default `transition-all` would animate the box out of step
+ * with the strip the click has already resized, so the transition names its
+ * properties instead.
  *
- * Opacity is the one of them the button does animate: the strip is a column of
- * tabs, and a width the app is unlikely to be asked for twice in a sitting has
- * no business holding an arrow at the foot of it for good. Pointing anywhere at
- * the strip fades the arrow in, and leaving fades it back out — softly enough
- * that crossing the strip on the way somewhere else doesn't read as a flicker.
- * It holds its room in the column throughout, so the controls above it stay
- * where they are, and focus brings it back for the keyboard.
- *
- * An auto margin is what puts it at the foot: the tabs and the controls under
- * them take only the height they need, so this is the one thing in the strip
- * that has to be sent down to reach it.
+ * Opacity is the one of them the button does animate: a width the app is
+ * unlikely to be asked for twice in a sitting has no business holding an arrow
+ * at the foot of the strip for good. An auto margin is what puts it at the
+ * foot: the tabs and the controls under them take only the height they need.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -514,13 +490,9 @@ export function VerticalTabs() {
        * many are open.
        *
        * They then divide what is left between them in the pinned section's
-       * favour. The pinned tabs take the height they come to and hold it while
-       * the normal tabs give ground, down to the three rows and the sliver of a
-       * fourth held for them — or to the whole of a list too short to fill even
-       * that; only past there do the pinned tabs give any. Pinning heavily
-       * therefore squeezes the normal tabs into a thin scrolling column rather
-       * than costing the pinned ones a row, but it can no longer squeeze them
-       * out of sight.
+       * favour. Pinning heavily therefore squeezes the normal tabs into a thin
+       * scrolling column rather than costing the pinned ones a row, but it can
+       * no longer squeeze them out of sight.
        */}
       <div className="flex min-h-0 w-full flex-col gap-2">
         <DragDropProvider
@@ -586,11 +558,6 @@ export function VerticalTabs() {
             </div>
           </ScrollArea>
         </DragDropProvider>
-        {/*
-         * Left out entirely while there is nothing to put in it, rather than
-         * standing as an empty row's worth of space between the pinned tabs and
-         * the launcher.
-         */}
         {normalTabs.length > 0 && (
           <DragDropProvider
             plugins={sortablePlugins}
@@ -599,11 +566,7 @@ export function VerticalTabs() {
               moveSectionTab(selectedAccount.config.id, normalTabs, event);
             }}
           >
-            {/*
-             * The section that gives ground: it scrolls from the first row it
-             * cannot show, and gives no further than the room the ceiling above
-             * holds open for it.
-             */}
+            {/* The section that gives ground, no further than the ceiling above holds open for it */}
             <ScrollArea className="-mx-4 -my-1 min-h-0">
               <div
                 className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
