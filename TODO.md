@@ -14,8 +14,7 @@ Tabs reorder by dragging, using `@dnd-kit/react` with a sortable context per sec
 
 ### Needs discussion before implementation (parked)
 
-- Resting state when only Gmail is open: without bookmarked apps the strip is hidden (then the only first-tab entry points are links and settings); with bookmarks it shows permanently as lone Gmail tab + "+". Is that the desired resting state? Auto-hide? Does the no-bookmarks state need an entry point?
-- Zoom targeting: menu zoom still drives the `gmail.zoomFactor` config; `WorkspaceApp` has its own `zoomIn/zoomOut/resetZoom`. One API over the active tab is wanted (overlaps the convergence backlog below).
+- Resting state when only Gmail is open: the strip is hidden, since `getVerticalTabsWidth` gives it no width below two visible tabs. Reaching a second app is no longer the worry the original note had — the launcher and the bookmarks button move to the titlebar whenever the strip is not there, with a fade for the handover. What is left is whether appearing and disappearing across that one-tab line is right at all, given it shifts the window's contents and moves two controls between hosts every time it is crossed, or whether the strip should stay once it has been used.
 
 ### 3. Strip polish memos (2026-08-05)
 
@@ -35,7 +34,6 @@ Tabs reorder by dragging, using `@dnd-kit/react` with a sortable context per sec
 Later steps of converging `Gmail` onto the `WorkspaceApp` architecture (the near-term steps — live getters, store dedupe, shared view-event wiring, Gmail tab title — are being done as part of the feature work):
 
 - **Shared `createView` recipe** — both classes build a `WebContentsView` with session+preload, add it as a child view, wire context menu, zoom limits, find-in-page broadcasts, window-open handler, devtools, and `loadURL`. Extract once into `packages/app/lib/web-contents.ts`.
-- **Zoom unification** — `WorkspaceApp` has `zoomIn/zoomOut/resetZoom` with clamping; Gmail zoom lives in the `gmail.zoomFactor` config plus menu branches. One API over the active tab's webContents should serve both (also needed by the menu rework phase).
 - **`Account.windows` diet** — the `Set<BrowserWindow | WebContentsView>` predates the tabs collection; embedded views are tracked twice. Making it windowed-only simplifies the `instanceof BrowserWindow` filters in the display-media handler and `gmail.closeComposeWindow`.
 - **Lazy view creation (needs discussion)** — every null-safe Gmail getter exists because `Gmail` instances are constructed in `accounts.init()` before the main window exists, while `WorkspaceApp` creates its view in the constructor. `Gmail extends WorkspaceApp` only becomes clean if Gmail instance/view creation moves after `main.init()` — an ordering change that would retire the `_view`-throwing-getter pattern entirely. Discuss before attempting.
 
