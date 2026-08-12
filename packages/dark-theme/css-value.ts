@@ -32,8 +32,8 @@ function isHexDigitCharCode(charCode: number): boolean {
   );
 }
 
-// The length of a case-insensitive `rgb(`/`rgba(`/`hsl(`/`hsla(` opener at the
-// given position, or 0 when the position doesn't start one.
+// The length of a case-insensitive color-function opener at the given position,
+// or 0 when the position doesn't start one.
 function colorFunctionStartLengthAt(value: string, index: number): number {
   const firstLetter = value.charCodeAt(index) | LOWERCASE_BIT;
   let cursor: number;
@@ -177,8 +177,8 @@ function isCustomPropertyNameCharCode(charCode: number): boolean {
   );
 }
 
-// The position right after `var(` + whitespace + `--name` + whitespace, or -1
-// when the position doesn't start a var() reference with a custom property name.
+// The position right after `var(` + `--name`, or -1 when the position doesn't
+// start a var() reference with a custom property name.
 function varReferenceBodyStart(value: string, varStart: number): number {
   let cursor = varStart + 4;
 

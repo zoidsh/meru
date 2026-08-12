@@ -203,8 +203,7 @@ function isPackableChannel(channelValue: number): boolean {
   return Number.isInteger(channelValue) && channelValue >= 0 && channelValue <= 255;
 }
 
-// Bounded like the parse cache: arbitrary email HTML feeds an open-ended stream
-// of distinct colors, and dropping entries only costs recomputation.
+// Bounded like the parse cache.
 const COLOR_CACHE_MAX_ENTRIES = 4096;
 
 function remapThroughCache(

@@ -347,8 +347,8 @@ function rememberImageDetails(url: string, details: ImageDetails | null) {
 }
 
 // The same url often appears many times in one batch (a logo repeated through a
-// message, a sprite shared by many elements); deduping in-flight analyses keeps
-// that from spawning parallel fetches and full decodes of the same image.
+// message, a sprite shared by many elements), which would otherwise spawn
+// parallel fetches and full decodes of the same image.
 const pendingImageDetailsByUrl = new Map<string, Promise<ImageDetails | null>>();
 
 async function loadAndAnalyzeImage(url: string): Promise<ImageDetails | null> {

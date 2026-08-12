@@ -76,8 +76,8 @@ export type DarkThemeOptions = Partial<Theme> & {
 };
 
 export type DarkThemeController = {
-  // Undo theming on a still-live subtree: disconnect the observer, restore every
-  // element's original inline styles, and release references.
+  // Undo theming on a still-live subtree: restore every element's original inline
+  // styles.
   revert: () => void;
   // Tear down without restoring styles: disconnect the observer and release
   // references. Use when the themed subtree is being discarded (e.g. removed from
@@ -454,8 +454,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     let id = pseudoIds.get(element);
 
     if (id === undefined) {
-      // Nothing to do for an element that has never had, and still has no, pseudo
-      // rules — avoids stamping ids and rebuilding the sheet for the common case.
+      // Avoids stamping ids and rebuilding the sheet for the common case.
       if (pseudos.length === 0) {
         return;
       }
@@ -620,11 +619,10 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       }
 
       // All additions and refreshes across the mutation list are collected first
-      // and processed as two batches — handling each node separately would
-      // interleave getComputedStyle reads with inline-style writes and force a
-      // synchronous style recalc per node during bursty re-renders. Sets dedupe
-      // an element reported through several mutation records (added directly and
-      // inside an added ancestor), which would otherwise be snapshotted twice.
+      // and processed as two batches, for the same read-then-write reason as
+      // processBatch. Sets dedupe an element reported through several mutation
+      // records (added directly and inside an added ancestor), which would
+      // otherwise be snapshotted twice.
       const addedElements = new Set<HTMLElement>();
       const refreshTargets = new Set<HTMLElement>();
       const removedElements = new Set<HTMLElement>();
@@ -679,8 +677,6 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       childList: true,
       subtree: true,
       attributes: true,
-      // class plus aria-checked, the attributes that drive a state style swap (a
-      // scroll shadow, a star icon that changes on toggle) so re-theming catches it.
       attributeFilter: ["class", "aria-checked"],
     });
   }

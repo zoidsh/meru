@@ -68,13 +68,11 @@ function darkenCandidateDeclarations(candidate: StateRuleCandidate, theme: Theme
   const darkenedDeclarations: DarkenedStateRule["declarations"] = [];
 
   for (const { property, value } of candidate.declarations) {
-    // The variable's runtime value is out of reach — the page may define it
-    // via inline styles or constructed stylesheets no stylesheet walk can
-    // see — so `var(--x, fallback)` is pinned to its darkened fallback
-    // instead of trusting the var to resolve dark. Pinning also applies when
-    // the fallback needs no darkening (a light live value would still leak),
-    // but not when the flattened value carries no visible color (keeps a bare
-    // `var(--x, transparent)` from emitting a useless override).
+    // Pinning `var(--x, fallback)` to its darkened fallback (see
+    // substituteVarFallbacks) also applies when the fallback needs no darkening
+    // (a light live value would still leak), but not when the flattened value
+    // carries no visible color (keeps a bare `var(--x, transparent)` from
+    // emitting a useless override).
     const flattenedValue = substituteVarFallbacks(value);
     const darkenedValue = darkenDeclaration(property, flattenedValue, theme);
 
@@ -140,8 +138,7 @@ function getDarkenedStateRules(collection: StylesheetCollection, theme: Theme) {
 // verbatim and wrapping the whole set in `@scope (scopeSelector)` so they apply
 // only inside the themed subtree, never the natively-dark Gmail shell around it.
 //
-// Only same-origin stylesheets can be read (cross-origin sheets throw on
-// cssRules, the same CORS wall image analysis hits).
+// Only same-origin stylesheets can be read (see stylesheets.ts).
 export function buildDarkStateOverrides(
   root: HTMLElement,
   theme: Theme,
@@ -192,9 +189,9 @@ export function buildDarkStateOverrides(
   const collection = getStylesheetCollection(root.ownerDocument);
 
   for (const darkenedRule of getDarkenedStateRules(collection, theme)) {
-    // The live selector matching behind applicableIgnoreRules only runs when an
-    // ignore rule actually covers one of the darkened properties — for the vast
-    // majority of state rules none does, and the query can be skipped outright.
+    // For the vast majority of state rules no ignore rule covers a darkened
+    // property, and the live selector matching behind applicableIgnoreRules can
+    // be skipped outright.
     const isCoveredByIgnoreRules = ignorePropertyRules.some((ignoreRule) =>
       darkenedRule.declarations.some(({ property }) =>
         coversProperty(ignoreRule.properties, property),

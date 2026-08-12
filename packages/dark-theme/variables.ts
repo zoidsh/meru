@@ -29,7 +29,7 @@ const hasLightColorToken = (value: string) => {
 // the same strings on every message open), so the light-token check and
 // darkening memoize per value string. Keyed by value rather than property name
 // because a property can resolve differently per themed root. Bounded like the
-// parse caches — dropping entries only costs recomputation.
+// parse caches.
 const DARKENED_VALUE_CACHE_MAX_ENTRIES = 4096;
 const darkenedValuesByThemeKey = new Map<string, Map<string, string | null>>();
 
@@ -75,9 +75,8 @@ function darkenLightValue(value: string, theme: Theme) {
 // whole subtree and stops at its boundary, without touching the natively-dark
 // Gmail shell around it.
 //
-// Only same-origin stylesheets can be read (cross-origin sheets throw on
-// cssRules, the same CORS wall image analysis hits), so properties declared only
-// in cross-origin sheets are missed.
+// Only same-origin stylesheets can be read (see stylesheets.ts), so properties
+// declared only in cross-origin sheets are missed.
 export function buildDarkVariableOverrides(
   root: HTMLElement,
   theme: Theme,

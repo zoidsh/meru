@@ -81,8 +81,7 @@ function isGradientLayer(layer: string): boolean {
   return false;
 }
 
-// The url a `url(...)` layer points at, with matching outer quotes stripped, or
-// null when the layer isn't a url function at all.
+// The url a `url(...)` layer points at, with matching outer quotes stripped.
 function readUrlLayerTarget(layer: string): string | null {
   if (layer.length < 5 || !layer.endsWith(")") || layer.slice(0, 4).toLowerCase() !== "url(") {
     return null;

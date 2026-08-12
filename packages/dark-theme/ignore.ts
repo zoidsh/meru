@@ -6,7 +6,6 @@ export type IgnorePropertyRule = {
 };
 
 // Whether an ignore rule's property list covers a property the engine is about to set.
-// "border-color" is a shorthand for the four per-side colors the engine writes.
 export function coversProperty(properties: string[], property: string) {
   if (properties.includes(property)) {
     return true;

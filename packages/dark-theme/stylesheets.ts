@@ -113,9 +113,8 @@ function isInjectedStyleSheet(sheet: CSSStyleSheet) {
   );
 }
 
-// Walks every style rule in the document, descending into grouping rules (media,
-// supports, scope). Cross-origin stylesheets throw on cssRules — the same CORS
-// wall image analysis hits — so their rules are skipped.
+// Cross-origin stylesheets throw on cssRules — the same CORS wall image analysis
+// hits — so their rules are skipped.
 function forEachStyleRule(ownerDocument: Document, visit: (rule: CSSStyleRule) => void) {
   for (const sheet of ownerDocument.styleSheets) {
     if (isInjectedStyleSheet(sheet)) {
