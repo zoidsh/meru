@@ -4,17 +4,15 @@ Follow-up work that should be picked up in a **new session** — items unrelated
 
 ## Workspace apps tabs — remaining roadmap (handoff, 2026-08-04, updated 2026-08-05)
 
-The planning notes for this feature lived in machine-local files; this section is the complete, self-contained handoff. All planned workspace-apps-tabs work through PR #668 is merged: embedded tabs with pinned-tab persistence and restore, bookmarked apps in the "+" New Tab menu, Chrome modifier gestures (#650), reopen closed tab (#651), tab context-menu polish with Chrome wording (#655), "Google " prefix stripped from tab titles (#656), pinned/unpinned divider in the narrow strip (#657), the Arc-style pinned icon grid in the wide strip (#658), the Meet screen-share fix for embedded tabs (#659), the tab strip width setting (#662), Chrome-wording close tooltip (#663), page-link actions in the workspace-app context menu (#664) later moved into the window titlebar menu (#666), and detach/adopt tab ↔ window — detached tabs persist in the strip with a window indicator, "Move to Tab" lives in the titlebar menu (#660, #661), narrow-strip pinned apps as outline buttons without the divider (#667), and fade-out tab titles instead of ellipsis truncation (#668). Remaining work, in recommended order:
+The planning notes for this feature lived in machine-local files; this section is the complete, self-contained handoff. All planned workspace-apps-tabs work through PR #668 is merged: embedded tabs with pinned-tab persistence and restore, bookmarked apps in the "+" New Tab menu, Chrome modifier gestures (#650), reopen closed tab (#651), tab context-menu polish with Chrome wording (#655), "Google " prefix stripped from tab titles (#656), pinned/unpinned divider in the narrow strip (#657), the Arc-style pinned icon grid in the wide strip (#658), the Meet screen-share fix for embedded tabs (#659), the tab strip width setting (#662), Chrome-wording close tooltip (#663), page-link actions in the workspace-app context menu (#664) later moved into the window titlebar menu (#666), and detach/adopt tab ↔ window — detached tabs persist in the strip with a window indicator, "Move to Tab" lives in the titlebar menu (#660, #661), narrow-strip pinned apps as outline buttons without the divider (#667), and fade-out tab titles instead of ellipsis truncation (#668). What has shipped since, and what is left:
 
-### 1. Drag-and-drop tab reordering (plan agreed, not started)
+### Drag-and-drop tab reordering (shipped)
 
-- Use `@dnd-kit/react` following the existing pattern in the bookmarked-apps editor (`packages/renderer-main/routes/settings/workspace-apps.tsx`).
-- `useSortable` per strip tab; the Gmail tab is fixed (not draggable, nothing can drop above it).
-- Dragging across the pinned/unpinned boundary pins/unpins the tab, like Chrome.
-- New `tabs.moveTab` IPC → `Tabs.moveTab` in `packages/app/tabs.ts`: splice to the new index, then `reorderTabs()` (enforces Gmail → pinned → unpinned) and `savePinnedTabs()` — pinned order persists for free because `serializePinnedTabs` walks the list in order.
-- Risk to verify first: dnd-kit sorting across the two differently-laid-out containers (pinned grid vs unpinned list) in the wide strip.
+Tabs reorder by dragging, using `@dnd-kit/react` with a sortable context per section in `packages/renderer/components/vertical-tabs.tsx` and a `tabs.moveTab` IPC into `Tabs.moveTab`. The Gmail tab is fixed and nothing drops above it.
 
-### 2. Needs discussion before implementation (parked)
+**A tab can only be dragged within its own section** — decided 2026-08-12, against the original plan of pinning and unpinning by dragging across the boundary the way Chrome does. Crossing that line by accident silently changes whether a tab survives a restart, which is too much to hang on a drag that overshoots. Pin and unpin stay context-menu actions. `moveTab` enforces the rule in the main process by clamping the target index into the moved tab's own section, so it holds even if the renderer ever offers a wider drop area.
+
+### Needs discussion before implementation (parked)
 
 - Resting state when only Gmail is open: without bookmarked apps the strip is hidden (then the only first-tab entry points are links and settings); with bookmarks it shows permanently as lone Gmail tab + "+". Is that the desired resting state? Auto-hide? Does the no-bookmarks state need an entry point?
 - Zoom targeting: menu zoom still drives the `gmail.zoomFactor` config; `WorkspaceApp` has its own `zoomIn/zoomOut/resetZoom`. One API over the active tab is wanted (overlaps the convergence backlog below).
@@ -44,6 +42,18 @@ Later steps of converging `Gmail` onto the `WorkspaceApp` architecture (the near
 ## Workspace App context-menu entries
 
 Add "Copy Link" and "Open in Default Browser" entries to the right-click context menu for non-Gmail-view windows — extend `setupWindowContextMenu` in `packages/app/context-menu.ts`, guarded with `window !== accounts.getSelectedAccount().instance.gmail.view`. Gives immediate discoverability even for users who don't end up using the toolbar UI.
+
+## New Tab as a command palette (2026-08-12)
+
+Meru has no blank tab — a tab is a workspace app — so New Tab has to be a chooser rather than an empty page. The shape wanted is a `Cmd+K` style dialog: a list to pick from, a field to type into, filtering as you type, Enter to open what is highlighted. `Cmd/Ctrl+T` is free for it.
+
+To decide before building: what the list holds — the launcher apps, the bookmarks, every supported workspace app, or a ranked mix — and whether the field also takes a URL. Where it draws is the constraint that will shape it: child `WebContentsView`s paint above the renderer's HTML, which is why the bookmarks list is a popup rather than a dropdown (see CLAUDE.md). A dialog over the tab area has the same problem.
+
+## Keyboard shortcuts settings page (2026-08-12)
+
+Came out of choosing the Close Tab binding on 2026-08-12: the app now carries enough shortcuts that which key does what should be the user's answer rather than ours. A settings page listing every command with its keys, rebindable, resettable.
+
+Two things are waiting on it. The nine `Ctrl+Shift+1..9` jumps to pinned tabs are hidden accelerators with nothing in the menu to reveal them, so until this page exists they can only be found by being told. And `Cmd/Ctrl+W` closes the main window rather than the active tab — a deliberate divergence from browsers, since keeping Gmail and the workspace apps open is the point of the app, closing the window is cheap and reversible, and closing a tab is the destructive act; Close Tab sits on `Cmd/Ctrl+Shift+W` instead. Anyone who wants the browser arrangement should be able to swap the two here.
 
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
