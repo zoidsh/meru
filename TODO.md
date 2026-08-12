@@ -45,20 +45,10 @@ Later steps of converging `Gmail` onto the `WorkspaceApp` architecture (the near
 
 Add "Copy Link" and "Open in Default Browser" entries to the right-click context menu for non-Gmail-view windows — extend `setupWindowContextMenu` in `packages/app/context-menu.ts`, guarded with `window !== accounts.getSelectedAccount().instance.gmail.view`. Gives immediate discoverability even for users who don't end up using the toolbar UI.
 
-## Vertical tabs strip — parked ideas (2026-08-09)
+## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
-Both came out of the post-3.58.0 feedback round and were deliberately parked while the launcher and Workspace Apps mode work landed. Neither is started.
-
-### Horizontal tabs for pinned workspace apps
+Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
 
 Users who keep only a few workspace apps pinned (three or so) find a full-height vertical strip a poor trade for the width it costs. The idea is an option to lay pinned workspace apps out horizontally, browser-style, instead.
 
 Plain "horizontal instead of vertical" is not the answer — horizontal tabs stop scaling as soon as many tabs are open, which is why the strip is vertical in the first place. The shape worth exploring is the hybrid: **pinned workspace apps horizontal, normal tabs still vertical**. That needs a design pass before any code — where the horizontal row sits relative to the titlebar, what happens to the strip when no normal tabs are open, and how the Workspace Apps launcher (which now lives in the strip while the strip is visible) fits in.
-
-### Show/hide toggle for the strip
-
-A button to collapse and restore the vertical tabs strip. Open questions: where the toggle lives (titlebar, or an edge affordance on the strip itself), whether the collapsed state persists and per account or globally, and how it interacts with the launcher moving between the strip and the titlebar.
-
-### Bookmarks reachable from the titlebar
-
-Bookmarked workspace apps live only in the tab strip, so in the `New Windows` mode added by #734 they cannot be reached at all — and there is no way to bookmark anything either, since bookmarking is a tab context-menu action. Both need an entry point that does not depend on the strip, most likely in the titlebar alongside the Workspace Apps launcher. Until that exists, #732 documents the gap as a known limitation of `New Windows` mode, and #734's switch confirmation deliberately does not warn about bookmarks, because the state it would describe is on its way out.
