@@ -412,11 +412,19 @@ function getNormalSectionReservedHeight(normalTabCount: number, isWide: boolean)
     return 0;
   }
 
-  // A row as each width lays it out: the narrow strip's 32px icon button or the
-  // wide strip's 28px row, each in a tab box standing four pixels taller than
-  // the button it holds, and under it the gap the section sets between rows.
-  const rowHeight = isWide ? 34 : 36;
+  // A row is the button and nothing besides: the narrow strip's `icon` at 32px,
+  // the wide strip's `sm` at 28px. The tab's own box is a block around an
+  // inline-flex button and so lays it on a line, but at the 16px over 24px the
+  // strip inherits, that line's strut sits inside the button's own descent and
+  // adds nothing to it. The room it has to do that in is four pixels in the
+  // wide row and six in the narrow, measured against Inter: a face that hangs
+  // further below its baseline, or a taller inherited line-height, would start
+  // adding a pixel or two to a row here without anything failing to say so.
+  // Nothing breaks when it does — the ceiling would hold a shade under three
+  // rows open, and show a shade less of the fourth.
+  const rowHeight = isWide ? 28 : 32;
 
+  // As the section sets it between its rows
   const rowGap = isWide ? 4 : 8;
 
   const listHeight = normalTabCount * rowHeight + (normalTabCount - 1) * rowGap;
