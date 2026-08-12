@@ -67,6 +67,16 @@ Newly reachable rather than newly broken, confirmed by testing on main: before #
 
 To decide when picking this up: whether HTML fullscreen should take over the whole window (hide titlebar and strip, resize the view to the full content bounds) or also put the `BrowserWindow` itself into fullscreen, and how that interacts with a workspace app that is already in its own window.
 
+## Google Docs menu paste wants a Chrome extension (2026-08-12)
+
+Found while testing PR #723. Edit → Paste in Docs shows a dialog asking for the Google Docs extension to be installed instead of pasting. Menu Copy works, and Cmd/Ctrl+V is unaffected.
+
+Not a permission problem, despite looking like one. The Docs page requests `chrome-extension://ghbmnnjooekpmoecnnnilnnbdlolhkhi/page_embed_script.js` — the Google Docs Offline extension — and the load fails with `ERR_FAILED`, because Electron has no Chrome extensions installed. Docs reads the missing script as "extension not installed" and offers the dialog without ever consulting a permission. `clipboard-read` is granted since #723 and `navigator.clipboard.readText()` returns the clipboard contents, so the async clipboard path underneath is working.
+
+Routes if picked up: load the extension through `session.loadExtension` (needs a CRX off the Web Store, and Electron supports only part of the extension API), or intercept that `chrome-extension://` URL and serve a stub. Both want a look at what `page_embed_script.js` actually provides before either is worth attempting.
+
+Worth knowing while debugging anything permission-shaped: `navigator.permissions.query()` is not a useful signal in Meru. The check handler in `packages/app/account.ts` returns `true` for everything except notifications, so almost every permission reports `granted` whether or not a request for it would be.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
