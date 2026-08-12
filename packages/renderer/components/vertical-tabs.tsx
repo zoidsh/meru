@@ -338,7 +338,7 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * widened or narrowed where it stands rather than through settings. It leaves
  * the setting alone: the width is this account's for this run of the app, and
  * the setting — `auto` included — has the strip back on the next one, or as
- * soon as it is set again.
+ * soon as it is set again or the strip's context menu resets the width.
  *
  * The only control in the strip that keeps its icon shape in both widths, where
  * the others grow a label: it is the one that resizes what it sits in, so it

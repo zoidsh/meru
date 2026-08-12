@@ -138,7 +138,8 @@ class Accounts {
     );
   }
 
-  setVerticalTabsWidth(accountId: AccountConfig["id"], width: VerticalTabsSessionWidth) {
+  /** `null` hands the width back to the setting, `auto` included. */
+  setVerticalTabsWidth(accountId: AccountConfig["id"], width: VerticalTabsSessionWidth | null) {
     this.getAccount(accountId).instance.verticalTabsWidth = width;
 
     this.updateAllViewBounds();
