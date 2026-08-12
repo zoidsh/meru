@@ -171,12 +171,15 @@ function VerticalTab({
         variant={tab.active ? "secondary" : !isWideRow && isPinnedSectionTab ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
         className={cn(
+          // Colours transition, the box never does. The hover controls take
+          // their room instantly rather than over a transition, which would
+          // slide the resting star out from under the one that replaces it;
+          // and the tab takes the shape its new presentation gives it in the
+          // same step the strip changes width, rather than animating into it
+          // once the strip has already arrived.
+          "transition-colors",
           tab.dormant && "opacity-50",
           isWideRow && "w-full justify-start",
-          // The hover controls take their room instantly rather than over a
-          // transition, which would slide the resting star out from under the
-          // one that replaces it
-          isWideRow && "transition-colors",
           isWideRow && isBookmarkable && "group-hover:pr-13",
           isWideRow && !isBookmarkable && isCloseable && "group-hover:pr-7",
           showsRestingStar && "pr-7",
@@ -254,10 +257,8 @@ function VerticalTab({
           size="icon"
           data-sortable-action
           className={cn(
-            "absolute opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
-            isWideRow
-              ? "inset-y-0 right-1 my-auto size-5 transition-colors"
-              : "-top-1 -right-1 size-4 rounded-full",
+            "absolute opacity-0 transition-colors group-hover:opacity-100 focus-visible:opacity-100",
+            isWideRow ? "inset-y-0 right-1 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
           )}
           title="Close"
           onClick={() => {
@@ -315,7 +316,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
     <Button
       variant="ghost"
       size={isWide ? "sm" : "icon"}
-      className={cn("text-muted-foreground", isWide && "w-full justify-start")}
+      // Colours transition, the box never does: the button takes its new width
+      // in the same step the strip does rather than animating into it once the
+      // strip has already arrived
+      className={cn("text-muted-foreground transition-colors", isWide && "w-full justify-start")}
       title="Bookmarks"
       onClick={() => {
         ipc.main.send("bookmarks.togglePopup", "verticalTabs");
