@@ -21,7 +21,7 @@ The planning notes for this feature lived in machine-local files; this section i
 
 ### 3. Strip polish memos (2026-08-05)
 
-- List **all** of an account's workspace-app windows in the strip with the window indicator, not just detached tabs (decided 2026-08-05 when scoping the persistent-tab rework of the detach PR). **Mostly done as of 2026-08-09:** apps opened straight into a window are pushed onto the tabs list, so they show like any other windowed entry, and `Settings… → Appearance → Vertical Tabs → Show Windows` turns the whole listing off for anyone who wants the strip to mean tabs only. Still outside the list: popups such as the PDF viewer, which are never tabs. Whether they belong there needs the design pass the original note asked for.
+- List **all** of an account's workspace-app windows in the strip with the window indicator, not just detached tabs (decided 2026-08-05 when scoping the persistent-tab rework of the detach PR). **Mostly done as of 2026-08-09:** apps opened straight into a window are pushed onto the tabs list, so they show like any other windowed entry, and `Settings… → Workspace Apps → Vertical Tabs → Show Windows` turns the whole listing off for anyone who wants the strip to mean tabs only. Still outside the list: popups such as the PDF viewer, which are never tabs. Whether they belong there needs the design pass the original note asked for.
 
 ### Wording conventions
 
@@ -44,3 +44,11 @@ Later steps of converging `Gmail` onto the `WorkspaceApp` architecture (the near
 ## Workspace App context-menu entries
 
 Add "Copy Link" and "Open in Default Browser" entries to the right-click context menu for non-Gmail-view windows — extend `setupWindowContextMenu` in `packages/app/context-menu.ts`, guarded with `window !== accounts.getSelectedAccount().instance.gmail.view`. Gives immediate discoverability even for users who don't end up using the toolbar UI.
+
+## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
+
+Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
+
+Users who keep only a few workspace apps pinned (three or so) find a full-height vertical strip a poor trade for the width it costs. The idea is an option to lay pinned workspace apps out horizontally, browser-style, instead.
+
+Plain "horizontal instead of vertical" is not the answer — horizontal tabs stop scaling as soon as many tabs are open, which is why the strip is vertical in the first place. The shape worth exploring is the hybrid: **pinned workspace apps horizontal, normal tabs still vertical**. That needs a design pass before any code — where the horizontal row sits relative to the titlebar, what happens to the strip when no normal tabs are open, and how the Workspace Apps launcher (which now lives in the strip while the strip is visible) fits in.
