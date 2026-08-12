@@ -7,6 +7,7 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
+import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
 import {
   AppWindowIcon,
@@ -378,7 +379,7 @@ function VerticalTabsWidthToggle({
       variant="ghost"
       size={isWide ? "default" : "icon"}
       className={cn(
-        "mt-auto text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
+        "text-muted-foreground opacity-0 transition-[color,background-color,opacity] group-hover/vertical-tabs:opacity-100 focus-visible:opacity-100",
         isWide && "w-full",
       )}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
@@ -445,9 +446,10 @@ export function VerticalTabs() {
         // The column therefore hinges on its left edge as the strip resizes,
         // and the controls at the foot — the width toggle above all, which does
         // the resizing — stay put rather than stepping out from under the
-        // pointer.
+        // pointer. The scrolling sections reach past that gutter and lay it out
+        // again themselves, so a scrollbar can never take it from the column.
         "group/vertical-tabs flex flex-col border-r p-4 select-none",
-        isWide ? "gap-1" : "items-center gap-2",
+        isWide ? "gap-1" : "gap-2",
       )}
       style={{ width: verticalTabsWidth, minWidth: verticalTabsWidth }}
       onContextMenu={(event) => {
@@ -460,66 +462,100 @@ export function VerticalTabs() {
         ipc.main.send("tabs.showVerticalTabsContextMenu", selectedAccount.config.id);
       }}
     >
-      <DragDropProvider
-        plugins={sortablePlugins}
-        sensors={sortableSensors}
-        onDragEnd={(event) => {
-          moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
-        }}
-      >
-        {isWide ? (
-          <div className="mb-1 grid w-full grid-cols-2 gap-2">
-            {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-              <SortableVerticalTab
-                key={tab.id}
-                tab={tab}
-                accountId={selectedAccount.config.id}
-                presentation="gridIcon"
-                sectionIndex={pinnedSectionTabIndex}
-                gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
-                className={cn(
-                  pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
-                )}
-              />
-            ))}
+      {/*
+       * Everything between the head of the strip and its foot, split in the
+       * pinned section's favour: the pinned tabs are laid out at whatever
+       * height they come to, under no ceiling and no share of the strip they
+       * may not pass, and the normal tabs — measured from nothing upwards — are
+       * left with what remains. Pinning heavily is therefore meant to squeeze
+       * the normal tabs into a thin scrolling column rather than to cost the
+       * pinned ones a row.
+       */}
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <DragDropProvider
+          plugins={sortablePlugins}
+          sensors={sortableSensors}
+          onDragEnd={(event) => {
+            moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
+          }}
+        >
+          {/*
+           * Scrolls only where there is genuinely nowhere left to put the
+           * pinned tabs — the normal tabs having already given up everything
+           * they had — so that heavy pinning can never push the section's own
+           * rows out of the strip the way it used to.
+           *
+           * Both sections reach out to the strip's sides and set the gutter out
+           * again inside themselves, so the scrollbar rides in the gutter
+           * rather than over the tabs, and the column stands in the same place
+           * whether there is one or not. The four pixels top and bottom are for
+           * the badges the icons hang over their corners, which the edge a
+           * scroll container clips at would otherwise shave off.
+           */}
+          <ScrollArea className="-mx-4 -my-1 min-h-0">
+            <div
+              className={cn(
+                "px-4 py-1",
+                isWide ? "grid grid-cols-2 gap-2" : "flex flex-col items-center gap-2",
+              )}
+            >
+              {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
+                <SortableVerticalTab
+                  key={tab.id}
+                  tab={tab}
+                  accountId={selectedAccount.config.id}
+                  presentation={isWide ? "gridIcon" : "narrowIcon"}
+                  sectionIndex={pinnedSectionTabIndex}
+                  gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
+                  className={cn(
+                    isWide &&
+                      pinnedSectionTabs.length % 2 === 1 &&
+                      pinnedSectionTabIndex === 0 &&
+                      "col-span-2",
+                  )}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </DragDropProvider>
+        <DragDropProvider
+          plugins={sortablePlugins}
+          sensors={sortableSensors}
+          onDragEnd={(event) => {
+            moveSectionTab(selectedAccount.config.id, normalTabs, event);
+          }}
+        >
+          <ScrollArea className="-mx-4 -my-1 min-h-0 flex-1">
+            <div className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}>
+              {normalTabs.map((tab, normalTabIndex) => (
+                <SortableVerticalTab
+                  key={tab.id}
+                  tab={tab}
+                  accountId={selectedAccount.config.id}
+                  presentation={isWide ? "wideRow" : "narrowIcon"}
+                  sectionIndex={normalTabIndex}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </DragDropProvider>
+      </div>
+      {/*
+       * The foot of the strip stands outside the scrolling: these are the
+       * controls that have to be there however many tabs are open, the width
+       * toggle most of all, which has to be where the pointer that just clicked
+       * it left it. The sections above take all the room going, so the foot
+       * needs no pushing down of its own.
+       */}
+      <div className={cn("flex flex-col", isWide ? "gap-1" : "items-center gap-2")}>
+        {shouldShowWorkspaceAppsLauncher && (
+          <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
+            <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
           </div>
-        ) : (
-          pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-            <SortableVerticalTab
-              key={tab.id}
-              tab={tab}
-              accountId={selectedAccount.config.id}
-              presentation="narrowIcon"
-              sectionIndex={pinnedSectionTabIndex}
-              gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
-            />
-          ))
         )}
-      </DragDropProvider>
-      <DragDropProvider
-        plugins={sortablePlugins}
-        sensors={sortableSensors}
-        onDragEnd={(event) => {
-          moveSectionTab(selectedAccount.config.id, normalTabs, event);
-        }}
-      >
-        {normalTabs.map((tab, normalTabIndex) => (
-          <SortableVerticalTab
-            key={tab.id}
-            tab={tab}
-            accountId={selectedAccount.config.id}
-            presentation={isWide ? "wideRow" : "narrowIcon"}
-            sectionIndex={normalTabIndex}
-          />
-        ))}
-      </DragDropProvider>
-      {shouldShowWorkspaceAppsLauncher && (
-        <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
-          <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
-        </div>
-      )}
-      <VerticalTabsBookmarks isWide={isWide} />
-      <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
+        <VerticalTabsBookmarks isWide={isWide} />
+        <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
+      </div>
     </div>
   );
 }
