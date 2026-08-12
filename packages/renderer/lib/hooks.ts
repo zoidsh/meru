@@ -43,10 +43,7 @@ export function useCloseOnWindowBlur(isOpen: boolean, onClose: () => void) {
   }, [isOpen, onClose]);
 }
 
-/**
- * Every tab of the selected account, before the vertical tabs strip narrows
- * them down to the ones it shows.
- */
+/** Every tab of the selected account, before the vertical tabs strip narrows them down. */
 export function useSelectedAccountTabs() {
   const accounts = useAccountsStore((state) => state.accounts);
 

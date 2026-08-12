@@ -29,8 +29,6 @@ const workspaceAppSchema = z.custom<SupportedWorkspaceApp>(
 /**
  * A pinned tab as it is restored on the next launch. It keeps following the app
  * it holds, so its `url` and `title` are rewritten as the user browses.
- * `opensLinksForApp` names the app whose links all open in this tab, which the
- * tab keeps holding even after browsing on to another app.
  */
 export const savedTabSchema = z.object({
   app: workspaceAppSchema,
@@ -78,10 +76,7 @@ export type AccountConfig = z.infer<typeof accountConfigSchema>;
 
 export type AccountConfigs = AccountConfig[];
 
-/**
- * A bookmark as the surfaces listing it receive it, tagged with the account it
- * belongs to so that opening or removing it targets the right one.
- */
+/** Tagged with the account it belongs to so that opening or removing it targets the right one. */
 export type BookmarkState = Bookmark & {
   accountId: AccountConfig["id"];
 };
