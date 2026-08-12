@@ -440,6 +440,8 @@ export class WorkspaceApp {
 
   private isClosing = false;
 
+  private htmlFullscreen = false;
+
   constructor({
     accountId,
     url,
@@ -640,6 +642,8 @@ export class WorkspaceApp {
     this.view.webContents.on("did-navigate", this.handleDidNavigate);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+    this.view.webContents.on("enter-html-full-screen", this.handleEnterHtmlFullscreen);
+    this.view.webContents.on("leave-html-full-screen", this.handleLeaveHtmlFullscreen);
 
     if (this._window) {
       this.registerWindowedViewListeners();
@@ -781,6 +785,18 @@ export class WorkspaceApp {
     WorkspaceApp.handleRedirect(event, url, this.view.webContents);
   };
 
+  private handleEnterHtmlFullscreen = () => {
+    this.htmlFullscreen = true;
+
+    this.updateViewBounds();
+  };
+
+  private handleLeaveHtmlFullscreen = () => {
+    this.htmlFullscreen = false;
+
+    this.updateViewBounds();
+  };
+
   get navigationHistory() {
     return {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
@@ -852,27 +868,22 @@ export class WorkspaceApp {
   };
 
   updateViewBounds = () => {
-    if (!this._window) {
-      const { width, height } = main.getWindowBounds();
+    const { width, height } = this._window
+      ? this.window.getContentBounds()
+      : main.getWindowBounds();
 
-      const verticalTabsWidth = accounts.getVerticalTabsWidth();
-
-      this.view.setBounds({
-        x: verticalTabsWidth,
-        y: APP_TITLEBAR_HEIGHT,
-        width: width - verticalTabsWidth,
-        height: height - APP_TITLEBAR_HEIGHT,
-      });
+    if (this.htmlFullscreen) {
+      this.view.setBounds({ x: 0, y: 0, width, height });
 
       return;
     }
 
-    const { width, height } = this.window.getContentBounds();
+    const verticalTabsWidth = this._window ? 0 : accounts.getVerticalTabsWidth();
 
     this.view.setBounds({
-      x: 0,
+      x: verticalTabsWidth,
       y: APP_TITLEBAR_HEIGHT,
-      width,
+      width: width - verticalTabsWidth,
       height: height - APP_TITLEBAR_HEIGHT,
     });
   };

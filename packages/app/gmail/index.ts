@@ -252,6 +252,8 @@ export class Gmail {
 
   private pageTitle = "";
 
+  private htmlFullscreen = false;
+
   get title() {
     return WorkspaceApp.resolveTitle(this.pageTitle, this.app);
   }
@@ -423,6 +425,14 @@ export class Gmail {
       this.pageTitle = explicitSet ? pageTitle : "";
     });
 
+    this.view.webContents.on("enter-html-full-screen", () => {
+      this.setHtmlFullscreen(true);
+    });
+
+    this.view.webContents.on("leave-html-full-screen", () => {
+      this.setHtmlFullscreen(false);
+    });
+
     registerTabBroadcasts(this.view);
 
     openViewDevToolsOnLaunch(this.view);
@@ -472,8 +482,20 @@ export class Gmail {
     });
   }
 
+  private setHtmlFullscreen(htmlFullscreen: boolean) {
+    this.htmlFullscreen = htmlFullscreen;
+
+    this.updateViewBounds();
+  }
+
   updateViewBounds() {
     const { width, height } = main.getWindowBounds();
+
+    if (this.htmlFullscreen) {
+      this.view.setBounds({ x: 0, y: 0, width, height });
+
+      return;
+    }
 
     const verticalTabsWidth = accounts.getVerticalTabsWidth();
 
