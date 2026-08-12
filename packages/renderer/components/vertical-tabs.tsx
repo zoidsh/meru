@@ -340,9 +340,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * the setting — `auto` included — has the strip back on the next one, or as
  * soon as it is set again or the strip's context menu resets the width.
  *
- * The only control in the strip that keeps its icon shape in both widths, where
- * the others grow a label: it is the one that resizes what it sits in, so it
- * stays the same button under the pointer and only turns its arrow around.
+ * The only control in the strip that goes without a label in either width: the
+ * arrow it turns around already says which way the strip is about to go. In the
+ * wide strip it still takes the full row the controls above it take, so its icon
+ * sits in the same column as theirs rather than alone in the corner.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -354,8 +355,8 @@ function VerticalTabsWidthToggle({
   return (
     <Button
       variant="ghost"
-      size="icon"
-      className="mt-auto text-muted-foreground"
+      size={isWide ? "sm" : "icon"}
+      className={cn("mt-auto text-muted-foreground", isWide && "w-full justify-start")}
       title={isWide ? "Narrow Tabs" : "Wide Tabs"}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
