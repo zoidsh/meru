@@ -348,9 +348,7 @@ class Ipc {
 
       const tabApp = tab.app;
 
-      // A designated tab keeps offering the app it was designated for even
-      // after browsing on, so that the designation stays visible and removable
-      // from the tab holding it.
+      // The designation stays visible and removable from the tab holding it.
       const appLinksApp = tab.opensLinksForApp ?? tabApp;
 
       const hasOtherClosableTabs = account.instance.tabs.tabs.some(

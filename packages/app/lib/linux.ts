@@ -22,7 +22,6 @@ async function getGtkDecorationLayout() {
     // gsettings not available or schema not installed
   }
 
-  // Fallback
   const settingsFiles = [
     join(homedir(), ".config", "gtk-3.0", "settings.ini"),
     join(homedir(), ".config", "gtk-4.0", "settings.ini"),
@@ -38,9 +37,7 @@ async function getGtkDecorationLayout() {
       if (match?.[1]) {
         return match[1].trim();
       }
-    } catch {
-      // File doesn't exist or can't be read
-    }
+    } catch {}
   }
 
   return null;
