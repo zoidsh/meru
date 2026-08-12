@@ -73,6 +73,14 @@ Worth knowing while debugging anything permission-shaped: `navigator.permissions
 
 To decide: what Gmail Settings moves to (`Cmd+Shift+,` is the obvious candidate), and whether the Windows/Linux side gains `Ctrl+,` at the same time — the current accelerator is macOS-only.
 
+## Setting to hide Gmail's promo banner (2026-08-12)
+
+Gmail shows a recommendation banner above the message list — e.g. a green "Security / Keep your team data safe / Upgrade to Standard for stronger defences in Gmail and Drive" strip with a "Try at no cost" button and an X. It eats vertical space on every inbox visit and comes back after being dismissed.
+
+Add a setting that hides it, **on by default**. Follow the config-field conventions in CLAUDE.md (a boolean key + `ConfigSwitchField`).
+
+To work out when picked up: where the hiding happens — injected CSS in the Gmail preload against whatever container Gmail wraps these in, versus a DOM-removal observer — and how stable the selector is across Gmail's markup churn, since a stale selector should degrade to "banner still shows", never to a broken inbox. Also worth checking whether the same treatment should cover Gmail's other top-of-list promos (Workspace upsells, "get the app", tips) or only this one.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
