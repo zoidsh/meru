@@ -7,6 +7,7 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, getTabSection, type TabState } from "@meru/shared/tabs";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import { Button } from "@meru/ui/components/button";
+import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
 import {
   AppWindowIcon,
@@ -365,6 +366,10 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
  * that crossing the strip on the way somewhere else doesn't read as a flicker.
  * It holds its room in the column throughout, so the controls above it stay
  * where they are, and focus brings it back for the keyboard.
+ *
+ * An auto margin is what puts it at the foot: the tabs and the controls under
+ * them take only the height they need, so this is the one thing in the strip
+ * that has to be sent down to reach it.
  */
 function VerticalTabsWidthToggle({
   accountId,
@@ -391,6 +396,44 @@ function VerticalTabsWidthToggle({
   );
 }
 
+/**
+ * What the pinned tabs have to leave the normal ones as the strip fills: the
+ * rows the list has, up to three of them and the eight pixels of a fourth that
+ * say it carries on past the three. A shorter list is left whole — the room
+ * held for it is the room it fills, so none of it can stand empty between the
+ * last tab and the launcher.
+ *
+ * The rows are measured here rather than left to the layout because the room is
+ * held open from above, as a ceiling on the pinned tabs: see the section for
+ * why it cannot be a floor under these ones.
+ */
+function getNormalSectionReservedHeight(normalTabCount: number, isWide: boolean) {
+  if (normalTabCount === 0) {
+    return 0;
+  }
+
+  // A row is the button and nothing besides: the narrow strip's `icon` at 32px,
+  // the wide strip's `sm` at 28px. The tab's own box is a block around an
+  // inline-flex button and so lays it on a line, but at the 16px over 24px the
+  // strip inherits, that line's strut sits inside the button's own descent and
+  // adds nothing to it. The room it has to do that in is four pixels in the
+  // wide row and six in the narrow, measured against Inter: a face that hangs
+  // further below its baseline, or a taller inherited line-height, would start
+  // adding a pixel or two to a row here without anything failing to say so.
+  // Nothing breaks when it does — the ceiling would hold a shade under three
+  // rows open, and show a shade less of the fourth.
+  const rowHeight = isWide ? 28 : 32;
+
+  // As the section sets it between its rows
+  const rowGap = isWide ? 4 : 8;
+
+  const listHeight = normalTabCount * rowHeight + (normalTabCount - 1) * rowGap;
+
+  const threeRowsAndASliver = rowHeight * 3 + rowGap * 2 + 8;
+
+  return Math.min(listHeight, threeRowsAndASliver);
+}
+
 export function VerticalTabs() {
   const { config } = useConfig();
 
@@ -411,6 +454,8 @@ export function VerticalTabs() {
   const pinnedSectionTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "pinned");
 
   const normalTabs = selectedAccountTabs.filter((tab) => getTabSection(tab) === "normal");
+
+  const normalSectionReservedHeight = getNormalSectionReservedHeight(normalTabs.length, isWide);
 
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
@@ -445,7 +490,8 @@ export function VerticalTabs() {
         // The column therefore hinges on its left edge as the strip resizes,
         // and the controls at the foot — the width toggle above all, which does
         // the resizing — stay put rather than stepping out from under the
-        // pointer.
+        // pointer. The scrolling sections reach past that gutter and lay it out
+        // again themselves, so a scrollbar can never take it from the column.
         "group/vertical-tabs flex flex-col border-r p-4 select-none",
         isWide ? "gap-1" : "items-center gap-2",
       )}
@@ -460,59 +506,123 @@ export function VerticalTabs() {
         ipc.main.send("tabs.showVerticalTabsContextMenu", selectedAccount.config.id);
       }}
     >
-      <DragDropProvider
-        plugins={sortablePlugins}
-        sensors={sortableSensors}
-        onDragEnd={(event) => {
-          moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
-        }}
-      >
-        {isWide ? (
-          <div className="mb-1 grid w-full grid-cols-2 gap-2">
-            {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-              <SortableVerticalTab
-                key={tab.id}
-                tab={tab}
-                accountId={selectedAccount.config.id}
-                presentation="gridIcon"
-                sectionIndex={pinnedSectionTabIndex}
-                gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
-                className={cn(
-                  pinnedSectionTabs.length % 2 === 1 && pinnedSectionTabIndex === 0 && "col-span-2",
-                )}
-              />
-            ))}
-          </div>
-        ) : (
-          pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
-            <SortableVerticalTab
-              key={tab.id}
-              tab={tab}
-              accountId={selectedAccount.config.id}
-              presentation="narrowIcon"
-              sectionIndex={pinnedSectionTabIndex}
-              gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
-            />
-          ))
+      {/*
+       * The tabs take the height they come to and no more, so the launcher and
+       * the bookmarks button carry on straight under the last of them rather
+       * than being sent to the foot. What they give up, they give up to the
+       * strip's own controls: those hold their height, and the tabs are the one
+       * thing here that yields, which is what keeps them in the strip however
+       * many are open.
+       *
+       * They then divide what is left between them in the pinned section's
+       * favour. The pinned tabs take the height they come to and hold it while
+       * the normal tabs give ground, down to the three rows and the sliver of a
+       * fourth held for them — or to the whole of a list too short to fill even
+       * that; only past there do the pinned tabs give any. Pinning heavily
+       * therefore squeezes the normal tabs into a thin scrolling column rather
+       * than costing the pinned ones a row, but it can no longer squeeze them
+       * out of sight.
+       */}
+      <div className="flex min-h-0 w-full flex-col gap-2">
+        <DragDropProvider
+          plugins={sortablePlugins}
+          sensors={sortableSensors}
+          onDragEnd={(event) => {
+            moveSectionTab(selectedAccount.config.id, pinnedSectionTabs, event);
+          }}
+        >
+          {/*
+           * Yields to nothing until the normal tabs are down to the room held
+           * for them, and reaching that is the one case where this section
+           * scrolls rather than takes the height it wants.
+           *
+           * That room is held open from up here, as a ceiling on this section
+           * rather than a floor under that one. A floor would hold its room
+           * open at rest as well, standing between the last tab and the
+           * launcher, and being a minimum it could not give way on a window too
+           * short to honour it — it would run the two sections over the very
+           * controls this is all in aid of. A ceiling only ever takes room
+           * away, so it can push nothing out of the strip; where the room held
+           * isn't there to hold, it stands aside and the two sections halve
+           * what there is between them. Its measure is the room plus the gap
+           * over it, less the bleed below, and the two cancel.
+           *
+           * Both sections reach out to the strip's sides and set the gutter out
+           * again inside themselves, so the scrollbar rides in the gutter
+           * rather than over the tabs, and the column stands in the same place
+           * whether there is one or not. The four pixels top and bottom are for
+           * the badges the icons hang over their corners, which the edge a
+           * scroll container clips at would otherwise shave off.
+           */}
+          <ScrollArea
+            className="-mx-4 -my-1 shrink-0"
+            style={{
+              maxHeight: normalSectionReservedHeight
+                ? `max(50%, calc(100% - ${normalSectionReservedHeight}px))`
+                : "calc(100% + 0.5rem)",
+            }}
+          >
+            <div
+              className={cn(
+                "px-4 py-1",
+                isWide ? "grid grid-cols-2 gap-2" : "flex flex-col items-center gap-2",
+              )}
+            >
+              {pinnedSectionTabs.map((tab, pinnedSectionTabIndex) => (
+                <SortableVerticalTab
+                  key={tab.id}
+                  tab={tab}
+                  accountId={selectedAccount.config.id}
+                  presentation={isWide ? "gridIcon" : "narrowIcon"}
+                  sectionIndex={pinnedSectionTabIndex}
+                  gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
+                  className={cn(
+                    isWide &&
+                      pinnedSectionTabs.length % 2 === 1 &&
+                      pinnedSectionTabIndex === 0 &&
+                      "col-span-2",
+                  )}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </DragDropProvider>
+        {/*
+         * Left out entirely while there is nothing to put in it, rather than
+         * standing as an empty row's worth of space between the pinned tabs and
+         * the launcher.
+         */}
+        {normalTabs.length > 0 && (
+          <DragDropProvider
+            plugins={sortablePlugins}
+            sensors={sortableSensors}
+            onDragEnd={(event) => {
+              moveSectionTab(selectedAccount.config.id, normalTabs, event);
+            }}
+          >
+            {/*
+             * The section that gives ground: it scrolls from the first row it
+             * cannot show, and gives no further than the room the ceiling above
+             * holds open for it.
+             */}
+            <ScrollArea className="-mx-4 -my-1 min-h-0">
+              <div
+                className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
+              >
+                {normalTabs.map((tab, normalTabIndex) => (
+                  <SortableVerticalTab
+                    key={tab.id}
+                    tab={tab}
+                    accountId={selectedAccount.config.id}
+                    presentation={isWide ? "wideRow" : "narrowIcon"}
+                    sectionIndex={normalTabIndex}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </DragDropProvider>
         )}
-      </DragDropProvider>
-      <DragDropProvider
-        plugins={sortablePlugins}
-        sensors={sortableSensors}
-        onDragEnd={(event) => {
-          moveSectionTab(selectedAccount.config.id, normalTabs, event);
-        }}
-      >
-        {normalTabs.map((tab, normalTabIndex) => (
-          <SortableVerticalTab
-            key={tab.id}
-            tab={tab}
-            accountId={selectedAccount.config.id}
-            presentation={isWide ? "wideRow" : "narrowIcon"}
-            sectionIndex={normalTabIndex}
-          />
-        ))}
-      </DragDropProvider>
+      </div>
       {shouldShowWorkspaceAppsLauncher && (
         <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
           <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
