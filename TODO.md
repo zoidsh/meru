@@ -53,6 +53,10 @@ Came out of choosing the Close Tab binding on 2026-08-12: the app now carries en
 
 Two things are waiting on it. The nine `Ctrl+Shift+1..9` jumps to pinned tabs are hidden accelerators with nothing in the menu to reveal them, so until this page exists they can only be found by being told. And `Cmd/Ctrl+W` closes the main window rather than the active tab — a deliberate divergence from browsers, since keeping Gmail and the workspace apps open is the point of the app, closing the window is cheap and reversible, and closing a tab is the destructive act; Close Tab sits on `Cmd/Ctrl+Shift+W` instead. Anyone who wants the browser arrangement should be able to swap the two here.
 
+## Investigate account views not rendering after show/restore (2026-08-12)
+
+Surfaced by the comment audit. `Accounts.init` (`packages/app/accounts.ts:116`) blindly calls `refreshSelectedAccountView()` on the main window's `show` and `restore` events because the account views sometimes don't render after the window comes back — the view just doesn't paint sometimes when only `main.window.contentView.addChildView()` is called. The suspicion is a bug in Electron itself, but that is unconfirmed; the root cause was never found, and the refresh is the workaround. To investigate: pin down a reproduction, check whether a minimal Electron app shows it, search/file an upstream issue, and either link the issue at the workaround or replace it with a real fix.
+
 ## Horizontal tabs for pinned workspace apps (parked, 2026-08-09)
 
 Came out of the post-3.58.0 feedback round and was deliberately parked while the launcher and Workspace Apps mode work landed. Not started.
