@@ -6,6 +6,12 @@
 bun install --frozen-lockfile
 ```
 
+## Docs
+
+- `docs/` is a separately cloned private docs repo, gitignored here; it may be absent on fresh checkouts. When present, read `docs/README.md` for what lives where.
+- Check `docs/decisions.md` before reopening a settled design decision.
+- Keep `docs/architecture/` current when changing the app's structure; larger features start as a design doc in `docs/features/` before implementation.
+
 ## Dependencies
 
 - Always install packages as dev dependencies with `bun add -d <package>`. Rolldown/Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly.
