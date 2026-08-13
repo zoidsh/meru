@@ -5,12 +5,11 @@ import { WebContentsView } from "electron";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
 /**
- * A renderer page hung under the titlebar of the window it was opened from, as
- * a child view rather than renderer-drawn markup: child views paint above the
- * main window's HTML, so a dropdown would be covered wherever a workspace app
- * view sits.
+ * A renderer page drawn over the window it was opened from, as a child view
+ * rather than renderer-drawn markup: child views paint above the main window's
+ * HTML, so a dropdown would be covered wherever a workspace app view sits.
  */
-export class TitlebarPopup {
+export class Popup {
   private page: RendererPage;
 
   private width: number;
@@ -136,6 +135,10 @@ export class TitlebarPopup {
         preload: getPreloadPath("renderer"),
       },
     });
+
+    // The page paints its own background as it fades in, so the view stays clear
+    // instead of flashing white until the first frame lands
+    this.view.setBackgroundColor("#00000000");
 
     this.parentWindow = parentWindow;
 

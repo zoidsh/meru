@@ -7,7 +7,7 @@ import type { BrowserWindow } from "electron";
 import { accounts } from "./accounts";
 import { config } from "./config";
 import { ipc } from "./ipc";
-import { TitlebarPopup } from "./lib/titlebar-popup";
+import { Popup } from "./lib/popup";
 
 /**
  * The URLs an account has saved. A bookmark keeps the URL, title and app it was
@@ -19,7 +19,7 @@ import { TitlebarPopup } from "./lib/titlebar-popup";
  * Windows` mode and absent in `Tabs` mode until a second tab opens.
  */
 class Bookmarks {
-  popup = new TitlebarPopup({
+  popup = new Popup({
     page: "bookmarks",
     width: BASE_SPACING * 40,
     height: "fill",
