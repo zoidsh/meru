@@ -56,4 +56,4 @@ bun install --frozen-lockfile
 ## Scope and Review Bandwidth
 
 - When the full feature spans several concerns (e.g. IPC wiring, UI, state broadcasting), land the plumbing first, then each consumer in its own turn. Track the follow-ups in the conversation, the PR description, or the feature's doc in `docs/features/` so they aren't lost.
-- Open items to pick up in a **new session** — work unrelated enough to the current feature's goal that it shouldn't ride along with it — go to `docs/TODO.md`: short entries linking into `docs/` for context. It is not a backlog for the in-progress feature, and it holds no knowledge: settled decisions go to `docs/decisions.md`, feature roadmaps and handoffs to `docs/features/`.
+- Open items to pick up in a **new session** — work unrelated enough to the current feature's goal that it shouldn't ride along with it — go to `docs/todo.md`: short entries linking into `docs/` for context. It is not a backlog for the in-progress feature, and it holds no knowledge: settled decisions go to `docs/decisions.md`, feature roadmaps and handoffs to `docs/features/`.
