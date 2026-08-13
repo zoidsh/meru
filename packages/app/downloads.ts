@@ -9,7 +9,7 @@ import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
 import { fileExists } from "./lib/fs";
-import { TitlebarPopup } from "./lib/titlebar-popup";
+import { Popup } from "./lib/popup";
 
 const FILE_MANAGER_NAME = platform.isMacOS
   ? "Finder"
@@ -18,7 +18,7 @@ const FILE_MANAGER_NAME = platform.isMacOS
     : "your file manager";
 
 class Downloads {
-  recentDownloadHistoryPopup = new TitlebarPopup({
+  recentDownloadHistoryPopup = new Popup({
     page: "recent-download-history",
     width: BASE_SPACING * 48,
     height: BASE_SPACING * 44,

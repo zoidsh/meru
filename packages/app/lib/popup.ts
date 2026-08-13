@@ -5,14 +5,18 @@ import { WebContentsView } from "electron";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
 /**
- * A renderer page hung under the titlebar of the window it was opened from, as
- * a child view rather than renderer-drawn markup: child views paint above the
- * main window's HTML, so a dropdown would be covered wherever a workspace app
- * view sits.
+ * A renderer page drawn over the window it was opened from, as a child view
+ * rather than renderer-drawn markup: child views paint above the main window's
+ * HTML, so a dropdown would be covered wherever a workspace app view sits.
+ *
+ * The view spans `BASE_SPACING` past the popup on every side and the page pads
+ * itself by the same amount, so the popup sits where the gaps put it and its
+ * entrance animation has room to move without being cut off at the view edge.
  */
-export class TitlebarPopup {
+export class Popup {
   private page: RendererPage;
 
+  /** The size of the popup itself, without the gaps the view spans. */
   private width: number;
 
   /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
@@ -63,13 +67,16 @@ export class TitlebarPopup {
       ? this.parentWindow.getContentBounds()
       : this.parentWindow.getBounds();
 
-    const y = APP_TITLEBAR_HEIGHT + BASE_SPACING;
+    const y = APP_TITLEBAR_HEIGHT;
+
+    const width = this.width + BASE_SPACING * 2;
 
     this.view.setBounds({
-      x: this.anchorX ?? parentWindowBounds.width - this.width - BASE_SPACING,
+      x: this.anchorX === null ? parentWindowBounds.width - width : this.anchorX - BASE_SPACING,
       y,
-      width: this.width,
-      height: this.height === "fill" ? parentWindowBounds.height - y - BASE_SPACING : this.height,
+      width,
+      height:
+        this.height === "fill" ? parentWindowBounds.height - y : this.height + BASE_SPACING * 2,
     });
   };
 
@@ -137,6 +144,10 @@ export class TitlebarPopup {
       },
     });
 
+    // The page paints its own background as it fades in, so the view stays clear
+    // instead of flashing white until the first frame lands
+    this.view.setBackgroundColor("#00000000");
+
     this.parentWindow = parentWindow;
 
     this.anchorX = anchorX ?? null;
@@ -155,8 +166,6 @@ export class TitlebarPopup {
     // hung on, or the main window on quit — leaves the view attached to
     // something that is going away, so the popup comes down with it
     parentWindow.once("closed", this.close);
-
-    this.view.setBorderRadius(BASE_SPACING * 2);
 
     return true;
   }

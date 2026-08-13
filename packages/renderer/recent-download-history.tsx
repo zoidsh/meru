@@ -4,12 +4,12 @@ import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 import { DownloadHistoryList } from "@/components/download-history";
-import { PopupWindow } from "@/components/popup-window";
+import { Popup } from "@/components/popup";
 import { renderApp } from "@/lib/react";
 
 function RecentDownloadHistory() {
   return (
-    <div className="flex h-screen flex-col rounded-2xl border">
+    <>
       <div className="p-4 font-semibold">Recent Download History</div>
       <Button
         size="icon"
@@ -38,19 +38,19 @@ function RecentDownloadHistory() {
           <SquareArrowOutUpRightIcon /> Full Download History
         </Button>
       </div>
-    </div>
+    </>
   );
 }
 
 function RecentDownloadHistoryPopup() {
   return (
-    <PopupWindow
+    <Popup
       onClose={() => {
         ipc.main.send("downloads.closeRecentDownloadHistoryPopup");
       }}
     >
       <RecentDownloadHistory />
-    </PopupWindow>
+    </Popup>
   );
 }
 

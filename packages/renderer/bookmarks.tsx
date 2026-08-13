@@ -15,7 +15,7 @@ import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
 import { BookOpenIcon, XIcon } from "lucide-react";
 import type { Ref } from "react";
-import { PopupWindow } from "@/components/popup-window";
+import { Popup } from "@/components/popup";
 import { TabIcon } from "@/components/tab-icon";
 import { sortablePlugins, sortableSensors } from "@/lib/dnd";
 import { renderApp } from "@/lib/react";
@@ -158,7 +158,7 @@ function BookmarkList() {
 
 function Bookmarks() {
   return (
-    <div className="flex h-screen flex-col rounded-2xl border">
+    <>
       <div className="p-4 font-semibold">Bookmarks</div>
       <Button
         size="icon"
@@ -174,15 +174,15 @@ function Bookmarks() {
           <BookmarkList />
         </div>
       </ScrollArea>
-    </div>
+    </>
   );
 }
 
 function BookmarksPopup() {
   return (
-    <PopupWindow onClose={closePopup}>
+    <Popup onClose={closePopup}>
       <Bookmarks />
-    </PopupWindow>
+    </Popup>
   );
 }
 
