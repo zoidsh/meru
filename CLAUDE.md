@@ -22,7 +22,7 @@ bun install --frozen-lockfile
 - Never repeat shared classes across the branches of a conditional `className`. Hoist them and merge with the `cn` helper (`@meru/ui/lib/utils`): `cn("absolute hidden", isWide ? "size-5" : "size-4")`.
 - Consider the platform when showing platform-specific information (modifier keys, OS names): branch on the existing `platform` helper — `@/lib/utils` in the renderer, `@electron-toolkit/utils` in the main process — e.g. `platform.isMacOS ? "Cmd" : "Ctrl"`.
 - Render keyboard keys in user-facing text with the `Kbd` component (`@meru/ui/components/kbd`), not as plain text: `Hold <Kbd>Shift</Kbd> to …`.
-- Child `WebContentsView`s always paint above the main window's HTML, so renderer-drawn overlays (dropdowns, tooltips, dialogs) get covered wherever a view sits. Keep overlays inside the regions the renderer owns (titlebar, vertical tabs) — e.g. vertical tabs menus open with `side="top"` at anchor width. For overlays over view content, use a native `Menu.popup` or a dedicated `WebContentsView` (see the recent-downloads popup).
+- Child `WebContentsView`s always paint above the main window's HTML, so renderer-drawn overlays (dropdowns, tooltips, dialogs) get covered wherever a view sits. Keep overlays inside the regions the renderer owns (titlebar, vertical tabs) — e.g. vertical tabs menus open with `side="top"` at anchor width. For overlays over view content, use a native `Menu.popup` or a dedicated `WebContentsView` (see `Popup` in `packages/app/lib/popup.ts`).
 
 ## Settings UI Patterns
 
@@ -55,5 +55,5 @@ bun install --frozen-lockfile
 
 ## Scope and Review Bandwidth
 
-- When the full feature spans several concerns (e.g. IPC wiring, UI, state broadcasting), land the plumbing first, then each consumer in its own turn. Track the follow-ups inline in the conversation and/or in the PR description so they aren't lost.
-- `TODO.md` (at the repo root) is reserved for work that should be picked up in a **new session** — items unrelated enough to the current feature's goal that they shouldn't ride along with it. Do not use `TODO.md` as a backlog for the in-progress feature itself.
+- When the full feature spans several concerns (e.g. IPC wiring, UI, state broadcasting), land the plumbing first, then each consumer in its own turn. Track the follow-ups in the conversation, the PR description, or the feature's doc in `docs/features/` so they aren't lost.
+- Open items to pick up in a **new session** — work unrelated enough to the current feature's goal that it shouldn't ride along with it — go to `docs/todo.md`: short entries linking into `docs/` for context. It is not a backlog for the in-progress feature, and it holds no knowledge: settled decisions go to `docs/decisions.md`, feature roadmaps and handoffs to `docs/features/`.
