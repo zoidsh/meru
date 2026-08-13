@@ -10,10 +10,11 @@ export function Popup({ children, onClose }: { children: React.ReactNode; onClos
     <PopupWindow onClose={onClose}>
       <div
         className="h-screen p-2"
-        onClick={(event) => {
-          // The view covers the gaps, so a click on one lands in the popup
-          // instead of blurring it — closing here is the blur that would
-          // have been
+        onPointerDown={(event) => {
+          // The view covers the gaps, so a press on one lands in the popup
+          // instead of blurring it — closing here is the blur that would have
+          // been. On the press, not the click: a click that only ends on a gap
+          // — a text selection dragged past the frame — lands here too
           if (event.target === event.currentTarget) {
             onClose();
           }
