@@ -255,13 +255,14 @@ export class AppMenu {
           },
           {
             label: "Settings...",
+            accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
             },
           },
           {
             label: "Gmail Settings...",
-            accelerator: "Command+,",
+            accelerator: "Command+Shift+,",
             click: () => {
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
