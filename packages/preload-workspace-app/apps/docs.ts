@@ -1,4 +1,3 @@
-import { WORKSPACE_APP_PRELOAD_ARGUMENTS } from "@meru/shared/workspace-apps";
 import { webFrame } from "electron";
 
 declare global {
@@ -22,14 +21,6 @@ function markDocsOfflineExtensionAsInstalled() {
 }
 
 export function initDocsPreload() {
-  // Only views created for the Docs app carry `enableDeprecatedPaste`. A view
-  // that navigated here in place has no paste grant, so advertising the
-  // extension would make Docs' menu paste fail silently — keep the install
-  // prompt there instead.
-  if (!process.argv.includes(WORKSPACE_APP_PRELOAD_ARGUMENTS.docsMenuClipboard)) {
-    return;
-  }
-
   webFrame
     .executeJavaScript(`(${markDocsOfflineExtensionAsInstalled.toString()})()`)
     .catch((error) => {

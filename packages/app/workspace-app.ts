@@ -5,7 +5,6 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
 import {
   type SupportedWorkspaceApp,
-  WORKSPACE_APP_PRELOAD_ARGUMENTS,
   type WorkspaceAppBookmarkState,
   type WorkspaceAppOpenBehavior,
   workspaceApps,
@@ -539,23 +538,16 @@ export class WorkspaceApp {
     url: string;
     options?: WebContentsViewConstructorOptions;
   }) {
-    const isDocsView = this.app === "docs";
-
     const view = createChildWebContentsView({
       session: this.account.instance.session,
       preload: getPreloadPath("workspace-app"),
-      ...(isDocsView && {
-        additionalArguments: [WORKSPACE_APP_PRELOAD_ARGUMENTS.docsMenuClipboard],
-      }),
       viewOptions: {
         ...options,
         webPreferences: {
           ...options?.webPreferences,
           // Docs cuts, copies and pastes from its Edit menu through
-          // `document.execCommand`, which Electron gates behind this preference.
-          // The argument above tells the Docs preload the grant exists — the
-          // two must always travel together.
-          enableDeprecatedPaste: isDocsView,
+          // `document.execCommand`, which Electron gates behind this preference
+          enableDeprecatedPaste: true,
         },
       },
       attachView: (createdView) => {

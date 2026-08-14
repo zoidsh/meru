@@ -42,10 +42,6 @@ export type LauncherWorkspaceApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
-export const WORKSPACE_APP_PRELOAD_ARGUMENTS = {
-  docsMenuClipboard: "--meru-docs-menu-clipboard",
-};
-
 export const launcherWorkspaceApps = Object.fromEntries(
   Object.entries(workspaceApps)
     .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.availableInLauncher !== false)
