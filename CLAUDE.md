@@ -6,11 +6,24 @@
 bun install --frozen-lockfile
 ```
 
+## Commands
+
+```sh
+bun run dev        # run the app in development
+bun run types      # type check every package (CI runs `bun run types:ci`)
+bun run lint       # oxlint
+bun run fmt:check  # oxfmt check; `bun run fmt` writes
+bun test           # tests across every package
+```
+
+- `bun run types`, `bun run lint` and `bun run fmt:check` must pass before pushing.
+
 ## Docs
 
 - `docs/` is a separately cloned private docs repo, gitignored here; it may be absent on fresh checkouts. When present, read `docs/README.md` for what lives where.
 - Check `docs/decisions.md` before reopening a settled design decision.
 - Keep `docs/architecture/` current when changing the app's structure; larger features start as a design doc in `docs/features/` before implementation.
+- When renaming a main-process class or file, grep `docs/` for the old name and fix every reference — the docs repo has no other mechanism to catch renames.
 
 ## Dependencies
 
