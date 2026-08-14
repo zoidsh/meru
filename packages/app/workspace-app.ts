@@ -541,7 +541,15 @@ export class WorkspaceApp {
     const view = createChildWebContentsView({
       session: this.account.instance.session,
       preload: getPreloadPath("workspace-app"),
-      viewOptions: options,
+      viewOptions: {
+        ...options,
+        webPreferences: {
+          ...options?.webPreferences,
+          // Docs cuts, copies and pastes from its Edit menu through
+          // `document.execCommand`, which Electron gates behind this preference
+          enableDeprecatedPaste: true,
+        },
+      },
       attachView: (createdView) => {
         if (this._window) {
           this._window.contentView.addChildView(createdView);

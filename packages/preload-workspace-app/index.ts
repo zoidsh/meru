@@ -1,10 +1,12 @@
 import "@meru/shared/electron-api";
 import "./ipc";
+import { initDocsPreload } from "./apps/docs";
 import { initMailPreload } from "./apps/mail";
 import { initMeetPreload } from "./apps/meet";
 import { initServiceWorkerNotifications } from "./service-worker-notifications";
 
 const appPreloadScripts: Record<string, () => void> = {
+  "docs.google.com": initDocsPreload,
   "mail.google.com": initMailPreload,
   "meet.google.com": initMeetPreload,
 };
