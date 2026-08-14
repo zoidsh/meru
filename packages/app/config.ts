@@ -123,6 +123,7 @@ export const config = new Store<Config>({
     "verticalTabs.showWidthToggle": true,
     "verticalTabs.hideUnreadBadgeWhenActive": false,
     "verticalTabs.showAppLinksBadge": true,
+    "verticalTabs.launcherAndBookmarksHost": "auto",
   },
   migrations: {
     ">=3.4.0": (store) => {

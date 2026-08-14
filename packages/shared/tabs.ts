@@ -19,6 +19,14 @@ export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
  */
 export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
 
+export const verticalTabsLauncherAndBookmarksHosts = {
+  auto: "Follow Sidebar",
+  titlebar: "Titlebar",
+} as const;
+
+export type VerticalTabsLauncherAndBookmarksHost =
+  keyof typeof verticalTabsLauncherAndBookmarksHosts;
+
 export type TabState = {
   id: string;
   app: SupportedWorkspaceApp | undefined;

@@ -1,7 +1,11 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
+import {
+  GMAIL_TAB_ID,
+  verticalTabsLauncherAndBookmarksHosts,
+  verticalTabsWidths,
+} from "@meru/shared/tabs";
 import {
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
@@ -250,6 +254,19 @@ export function WorkspaceAppsSettings() {
                   description="Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
                   configKey="verticalTabs.showWidthToggle"
                   licenseKeyRequired
+                />
+                <ConfigSelectField
+                  label="Launcher and Bookmarks"
+                  description="Where the Workspace Apps launcher and the bookmarks button sit. Follow Sidebar moves them to the bottom of the sidebar while it is shown, Titlebar keeps them in the titlebar at all times."
+                  configKey="verticalTabs.launcherAndBookmarksHost"
+                  placeholder="Select host"
+                  licenseKeyRequired
+                  items={Object.entries(verticalTabsLauncherAndBookmarksHosts).map(
+                    ([value, label]) => ({
+                      value,
+                      label,
+                    }),
+                  )}
                 />
                 <ConfigSwitchField
                   label="Hide Gmail Unread Badge When Active"
