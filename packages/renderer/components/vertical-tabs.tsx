@@ -433,8 +433,7 @@ export function VerticalTabs() {
   const hostsLauncherAndBookmarks =
     (config?.["verticalTabs.launcherAndBookmarksHost"] ?? "auto") === "auto";
 
-  const shouldShowWorkspaceAppsLauncher =
-    hostsLauncherAndBookmarks && isLicenseKeyValid && launcherApps.length > 0;
+  const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
   const showsWidthToggle = config?.["verticalTabs.showWidthToggle"] ?? true;
 
@@ -581,12 +580,26 @@ export function VerticalTabs() {
           </DragDropProvider>
         )}
       </div>
-      {shouldShowWorkspaceAppsLauncher && (
-        <div className={cn(HOST_HANDOVER_FADE_CLASS_NAME, isWide && "w-full")}>
-          <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
+      {/*
+       * One group, so the handover to and from the titlebar fades the two
+       * controls together rather than each on its own. It sets out again the
+       * spacing and alignment they took from the strip, which they no longer
+       * sit directly in.
+       */}
+      {hostsLauncherAndBookmarks && (
+        <div
+          className={cn(
+            HOST_HANDOVER_FADE_CLASS_NAME,
+            "flex flex-col",
+            isWide ? "w-full gap-1" : "items-center gap-2",
+          )}
+        >
+          {shouldShowWorkspaceAppsLauncher && (
+            <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
+          )}
+          <VerticalTabsBookmarks isWide={isWide} />
         </div>
       )}
-      {hostsLauncherAndBookmarks && <VerticalTabsBookmarks isWide={isWide} />}
       {showsWidthToggle && (
         <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
       )}

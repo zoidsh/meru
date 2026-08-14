@@ -41,10 +41,9 @@ import {
   useTrialStore,
 } from "../lib/stores";
 
-function BookmarksButton({ className }: { className?: string }) {
+function BookmarksButton() {
   return (
     <TitlebarIconButton
-      className={className}
       onClick={() => {
         ipc.main.send("bookmarks.togglePopup", "titlebar");
       }}
@@ -382,26 +381,21 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
-            {shouldShowWorkspaceAppsLauncher && (
-              <TitlebarButtonGroup
-                className={cn(
-                  HOST_HANDOVER_FADE_CLASS_NAME,
-                  areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
-                )}
-              >
+            <TitlebarButtonGroup
+              className={cn(
+                HOST_HANDOVER_FADE_CLASS_NAME,
+                areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
+              )}
+            >
+              {shouldShowWorkspaceAppsLauncher && (
                 <WorkspaceAppsLauncher
                   launcherApps={config["workspaceApps.launcherApps"]}
                   display={config["workspaceApps.launcherDisplay"]}
                   disabled={isUnifiedInboxLocation}
                 />
-              </TitlebarButtonGroup>
-            )}
-            <BookmarksButton
-              className={cn(
-                HOST_HANDOVER_FADE_CLASS_NAME,
-                areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
               )}
-            />
+              <BookmarksButton />
+            </TitlebarButtonGroup>
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"
