@@ -430,7 +430,11 @@ export function VerticalTabs() {
 
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
-  const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
+  const hostsLauncherAndBookmarks =
+    (config?.["verticalTabs.launcherAndBookmarksHost"] ?? "auto") === "auto";
+
+  const shouldShowWorkspaceAppsLauncher =
+    hostsLauncherAndBookmarks && isLicenseKeyValid && launcherApps.length > 0;
 
   const showsWidthToggle = config?.["verticalTabs.showWidthToggle"] ?? true;
 
@@ -582,7 +586,7 @@ export function VerticalTabs() {
           <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
         </div>
       )}
-      <VerticalTabsBookmarks isWide={isWide} />
+      {hostsLauncherAndBookmarks && <VerticalTabsBookmarks isWide={isWide} />}
       {showsWidthToggle && (
         <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
       )}
