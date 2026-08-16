@@ -1,5 +1,6 @@
 import { createCommands } from "./api/commands";
 import { createContextMenus } from "./api/context-menus";
+import { installNativeMessaging } from "./api/native-messaging";
 import { createNotifications } from "./api/notifications";
 import { createPrivacy } from "./api/privacy";
 import { createTabs } from "./api/tabs";
@@ -31,14 +32,20 @@ export function createChromeFacade(): ChromeNamespace {
 
 /**
  * Completes an extension API object in place — the `chrome` object of a service
- * worker, a popup, an options page, any `chrome-extension://` frame. Nothing
- * native is replaced or wrapped: every namespace and member Electron implements
- * is left exactly as it is, and only the gaps around it are filled (see the
- * noop-first decision in the feature docs).
+ * worker, a popup, an options page, any `chrome-extension://` frame. Almost
+ * nothing native is replaced or wrapped: every namespace and member Electron
+ * implements is left exactly as it is, and only the gaps around it are filled
+ * (see the noop-first decision in the feature docs).
+ *
+ * Native messaging is the one exception, and it is one because filling gaps
+ * cannot help there: Electron implements `connectNative` and refuses every host
+ * from it (see `api/native-messaging.ts`).
  */
 export function installChromeFacade(
   extensionApi: ChromeNamespace,
   facade: ChromeNamespace = createChromeFacade(),
 ) {
   fillMissing(extensionApi, facade);
+
+  installNativeMessaging(extensionApi);
 }
