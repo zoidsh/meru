@@ -21,6 +21,7 @@ export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
 
 export const verticalTabsLauncherAndBookmarksHosts = {
   auto: "Follow Sidebar",
+  sidebar: "Sidebar",
   titlebar: "Titlebar",
 } as const;
 
@@ -89,9 +90,16 @@ export function getVerticalTabsWidth(
   {
     configuredWidth,
     sessionWidth,
-  }: { configuredWidth: VerticalTabsWidth; sessionWidth: VerticalTabsSessionWidth | null },
+    launcherAndBookmarksHost,
+  }: {
+    configuredWidth: VerticalTabsWidth;
+    sessionWidth: VerticalTabsSessionWidth | null;
+    launcherAndBookmarksHost: VerticalTabsLauncherAndBookmarksHost;
+  },
 ) {
-  if (tabs.length <= 1) {
+  // `sidebar` hands the strip the launcher and the bookmarks button for good,
+  // so it has to stay even with nothing to switch between.
+  if (tabs.length <= 1 && launcherAndBookmarksHost !== "sidebar") {
     return 0;
   }
 

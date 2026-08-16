@@ -257,7 +257,7 @@ export function WorkspaceAppsSettings() {
                 />
                 <ConfigSelectField
                   label="Launcher and Bookmarks"
-                  description="Where the Workspace Apps launcher and the bookmarks button sit. Follow Sidebar moves them to the bottom of the sidebar while it is shown, Titlebar keeps them in the titlebar at all times."
+                  description="Where the Workspace Apps launcher and the bookmarks button sit. Follow Sidebar moves them to the bottom of the sidebar while it is shown, Sidebar keeps them there and holds the sidebar open even with a single tab, Titlebar keeps them in the titlebar at all times."
                   configKey="verticalTabs.launcherAndBookmarksHost"
                   placeholder="Select host"
                   licenseKeyRequired

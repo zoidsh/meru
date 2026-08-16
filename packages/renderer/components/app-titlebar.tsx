@@ -224,10 +224,11 @@ export function AppTitlebar() {
 
   // On `auto` the vertical tabs strip hosts the launcher and the bookmarks
   // button whenever it is there, so that opening another app or a bookmarked
-  // page stays in the same place as switching between tabs. `titlebar` keeps
-  // them here whatever the strip does.
+  // page stays in the same place as switching between tabs. `sidebar` keeps the
+  // strip there for them, so the width is never 0; `titlebar` keeps them here
+  // whatever the strip does.
   const areLauncherAndBookmarksHostedByVerticalTabs =
-    config["verticalTabs.launcherAndBookmarksHost"] === "auto" && verticalTabsWidth > 0;
+    config["verticalTabs.launcherAndBookmarksHost"] !== "titlebar" && verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
