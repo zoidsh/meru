@@ -100,7 +100,15 @@ export class Account {
   }
 
   private registerSessionPermissionsRequestsHandler() {
-    this.session.setPermissionRequestHandler((_webContents, permission, callback) => {
+    this.session.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+      // Extensions are loaded deliberately and Chromium checks their requests
+      // against the permissions they declare, unlike web content
+      if (extensions.isLoadedExtensionUrl(this.session, details.requestingUrl)) {
+        callback(true);
+
+        return;
+      }
+
       switch (permission) {
         case "clipboard-read":
         case "clipboard-sanitized-write":
