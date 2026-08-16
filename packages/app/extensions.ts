@@ -9,6 +9,10 @@ import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
 
+// 1Password overrides `navigator.credentials` in the page, which is what lets a
+// passkey sign-in go through in Electron and makes the passkey dialog moot
+export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
 /**
  * Unpacked extensions to load into every account session, one directory holding
  * a `manifest.json` per extension:

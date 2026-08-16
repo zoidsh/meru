@@ -18,6 +18,7 @@ import {
   dialog,
   globalShortcut,
   powerSaveBlocker,
+  type Session,
   type WebContents,
   type WebContentsView,
   type WebContentsViewConstructorOptions,
@@ -25,6 +26,7 @@ import {
 import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
+import { extensions, ONEPASSWORD_EXTENSION_ID } from "./extensions";
 import { ipc } from "./ipc";
 import {
   createChildWebContentsView,
@@ -154,7 +156,7 @@ export class WorkspaceApp {
     }
   }
 
-  static async handleNavigate(url: string) {
+  static async handleNavigate(url: string, session: Session) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
     }
@@ -165,6 +167,10 @@ export class WorkspaceApp {
     }
 
     if (config.get("workspaceApps.hidePasskeyDialog")) {
+      return;
+    }
+
+    if (extensions.isExtensionLoaded(session, ONEPASSWORD_EXTENSION_ID)) {
       return;
     }
 
@@ -818,7 +824,7 @@ export class WorkspaceApp {
   private handleDidNavigate = (_event: Electron.Event, url: string) => {
     this.updateAppFromNavigation(url);
 
-    WorkspaceApp.handleNavigate(url);
+    WorkspaceApp.handleNavigate(url, this.account.instance.session);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {

@@ -327,6 +327,23 @@ describe("Extensions", () => {
     ).toBe(false);
   });
 
+  test("reports an extension as loaded in that session only", async () => {
+    const { session: sessionWithExtension } = createSession();
+    const { session: sessionWithoutExtension } = createSession();
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    await extensions.setupSession(sessionWithExtension);
+
+    expect(extensions.isExtensionLoaded(sessionWithExtension, "aaa")).toBe(true);
+    expect(extensions.isExtensionLoaded(sessionWithExtension, "bbb")).toBe(false);
+    expect(extensions.isExtensionLoaded(sessionWithoutExtension, "aaa")).toBe(false);
+
+    extensions.teardownSession(sessionWithExtension);
+
+    expect(extensions.isExtensionLoaded(sessionWithExtension, "aaa")).toBe(false);
+  });
+
   test("unloads what it loaded and forgets the session", async () => {
     const { session, removedExtensionIds } = createSession();
 

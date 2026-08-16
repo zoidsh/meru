@@ -331,6 +331,15 @@ export class Extensions {
     }
   }
 
+  /**
+   * Whether one particular extension is loaded into this session, for stepping
+   * a behavior of the embedder's own aside while the extension takes it over —
+   * a password manager overriding WebAuthn in the page, say.
+   */
+  isExtensionLoaded(session: Session, extensionId: string) {
+    return this.loadedExtensionIdsBySession.get(session)?.has(extensionId) ?? false;
+  }
+
   isLoadedExtensionUrl(session: Session, url: string) {
     const loadedExtensionIds = this.loadedExtensionIdsBySession.get(session);
 
