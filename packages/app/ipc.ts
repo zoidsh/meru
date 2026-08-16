@@ -1005,7 +1005,7 @@ class Ipc {
         return;
       }
 
-      if (downloads.recentDownloadHistoryPopup.toggle(parentWindow)) {
+      if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
         downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });
