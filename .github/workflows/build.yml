@@ -36,9 +36,72 @@ jobs:
         run: bun run build:linux -- --publish never
       - if: startsWith(matrix.os, 'windows')
         run: bun run build:win -- --publish never
-      - uses: actions/upload-artifact@v7
+      # One artifact per installer, uncompressed: installers are already compressed, and a
+      # bundled artifact forces downloading every file to test one. Auto-update zips and
+      # blockmaps are omitted — only the release publish flow needs them.
+      - if: startsWith(matrix.os, 'macos')
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ github.event.repository.name }}-${{ matrix.os }}
+          name: Meru-mac-x64.dmg
+          compression-level: 0
           path: |
-            dist/*.*
-            !dist/*.yml
+            dist/*.dmg
+            !dist/*-arm64.dmg
+      - if: startsWith(matrix.os, 'macos')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-mac-arm64.dmg
+          compression-level: 0
+          path: dist/*-arm64.dmg
+      - if: startsWith(matrix.os, 'windows')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-win-setup.exe
+          compression-level: 0
+          path: dist/Meru-Setup-*.exe
+      - if: startsWith(matrix.os, 'windows')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-win-portable.exe
+          compression-level: 0
+          path: |
+            dist/*.exe
+            !dist/Meru-Setup-*.exe
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-x64.AppImage
+          compression-level: 0
+          path: |
+            dist/*.AppImage
+            !dist/*-arm64.AppImage
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-arm64.AppImage
+          compression-level: 0
+          path: dist/*-arm64.AppImage
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-amd64.deb
+          compression-level: 0
+          path: dist/*_amd64.deb
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-arm64.deb
+          compression-level: 0
+          path: dist/*_arm64.deb
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-x86_64.rpm
+          compression-level: 0
+          path: dist/*.x86_64.rpm
+      - if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Meru-linux-aarch64.rpm
+          compression-level: 0
+          path: dist/*.aarch64.rpm
