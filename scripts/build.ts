@@ -41,6 +41,11 @@ function buildAppFiles() {
                   "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
                 }
               : {}),
+            ...(process.env.APPLE_TEAM_ID
+              ? {
+                  "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
+                }
+              : {}),
           }
         : undefined,
     },
