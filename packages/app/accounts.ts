@@ -334,6 +334,8 @@ class Accounts {
 
     account.instance.tabs.closeAll();
 
+    WorkspaceApp.closeAccountInstances(selectedAccountId);
+
     account.instance.gmail.destroy();
 
     account.instance.destroy();
