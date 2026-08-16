@@ -2,8 +2,12 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import fs, { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os, { tmpdir } from "node:os";
 import path from "node:path";
-import type { Extension, Session } from "electron";
+import type { ClearStorageDataOptions, Extension, Session } from "electron";
 import { Extensions } from "./extensions";
+import {
+  NATIVE_MESSAGING_ORIGIN,
+  NATIVE_MESSAGING_PATHS,
+} from "./native-messaging/bridge-protocol";
 
 let workDir: string;
 
@@ -21,7 +25,7 @@ afterEach(async () => {
   await rm(workDir, { recursive: true, force: true });
 });
 
-async function createExtensionDir(name: string) {
+async function createExtensionDir(name: string, key?: string) {
   const extensionDir = path.join(workDir, name);
 
   await mkdir(extensionDir, { recursive: true });
@@ -32,6 +36,7 @@ async function createExtensionDir(name: string) {
       name,
       version: "1.0.0",
       manifest_version: 3,
+      ...(key && { key }),
       background: { service_worker: "background.js", type: "module" },
     }),
   );
@@ -86,25 +91,56 @@ function createSession({
 
   const handledSchemes: string[] = [];
 
+  const sessionEvents: string[] = [];
+
+  let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
+
   const session = {
     extensions: {
-      loadExtension,
+      loadExtension: async (extensionDir: string) => {
+        sessionEvents.push("loadExtension");
+
+        return loadExtension(extensionDir);
+      },
       removeExtension: (extensionId: string) => {
         removedExtensionIds.push(extensionId);
       },
     },
     protocol: {
-      handle: (scheme: string) => {
+      handle: (scheme: string, handler: (request: GlobalRequest) => Promise<Response>) => {
         handledSchemes.push(scheme);
+
+        requestHandler = handler;
       },
       unhandle: (scheme: string) => {
         handledSchemes.splice(handledSchemes.indexOf(scheme), 1);
       },
     },
+    clearStorageData: async ({ origin, storages }: ClearStorageDataOptions) => {
+      sessionEvents.push(`clearStorageData ${origin} ${storages?.join()}`);
+    },
     getStoragePath: () => storagePath,
   } as unknown as Session;
 
-  return { session, removedExtensionIds, handledSchemes };
+  return {
+    session,
+    removedExtensionIds,
+    handledSchemes,
+    sessionEvents,
+    request: (body: Record<string, unknown>) =>
+      requestHandler?.({
+        url: `${NATIVE_MESSAGING_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`,
+        headers: new Headers(),
+        json: async () => body,
+      } as unknown as GlobalRequest) as Promise<Response>,
+  };
+}
+
+/** The token the derived copy of the facade carries into the extension. */
+async function readBridgeToken(derivedDir: string) {
+  const facade = await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8");
+
+  return facade.match(/"(.+)"/)?.[1];
 }
 
 async function createPartitionDir(entryPaths: string[]) {
@@ -168,6 +204,57 @@ describe("Extensions", () => {
     await extensions.setupSession(createSession({ loadExtension }).session);
 
     expect(loadedExtensionDirs[0]).toBe(loadedExtensionDirs[1] as string);
+  });
+
+  test("drops the cached service worker before loading an extension", async () => {
+    const { session, sessionEvents } = createSession();
+
+    // Chromium serves the worker it cached on first registration forever, so a
+    // copy of the facade older than this launch would run without it
+    await createExtensions([await createExtensionDir("one", "dGVzdC1rZXk=")]).setupSession(session);
+
+    expect(sessionEvents).toEqual([
+      "clearStorageData chrome-extension://gckpihaehgepkpiokicpmgbmojmemdja serviceworkers",
+      "loadExtension",
+    ]);
+  });
+
+  test("keeps the service worker of an extension it has no id for", async () => {
+    const { session, sessionEvents } = createSession();
+
+    await createExtensions([await createExtensionDir("one")]).setupSession(session);
+
+    expect(sessionEvents).toEqual(["loadExtension"]);
+  });
+
+  test("answers the bridge in every session sharing a derived copy", async () => {
+    const derivedDirs: string[] = [];
+
+    const loadExtension = async (extensionDir: string) => {
+      derivedDirs.push(extensionDir);
+
+      return createExtension("aaa", extensionDir);
+    };
+
+    const first = createSession({ loadExtension });
+    const second = createSession({ loadExtension });
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    await extensions.setupSession(first.session);
+    await extensions.setupSession(second.session);
+
+    const bridgeToken = await readBridgeToken(derivedDirs[0] as string);
+
+    const connect = (
+      request: ReturnType<typeof createSession>["request"],
+      token: string | undefined,
+      portId: string,
+    ) => request({ token, portId, hostName: "com.meru.test" });
+
+    expect((await connect(first.request, bridgeToken, "first")).status).not.toBe(403);
+    expect((await connect(second.request, bridgeToken, "second")).status).not.toBe(403);
+    expect((await connect(first.request, "not-a-token", "third")).status).toBe(403);
   });
 
   test("does nothing without extension directories", async () => {

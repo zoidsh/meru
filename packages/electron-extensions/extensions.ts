@@ -146,7 +146,9 @@ export class Extensions {
 
     for (const extensionDir of this.extensionDirs) {
       try {
-        const { derivedDir, bridgeToken } = await this.deriveExtension(extensionDir);
+        const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(extensionDir);
+
+        await this.dropServiceWorkerRegistration(session, extensionId);
 
         const extension = await session.extensions.loadExtension(derivedDir);
 
@@ -175,6 +177,31 @@ export class Extensions {
     }
 
     this.emitActionsChanged(session);
+  }
+
+  /**
+   * Chromium stores an extension's service worker script when the worker first
+   * registers and serves that copy for as long as the partition exists: it
+   * never fetches the script again, not on a later launch and not when the file
+   * on disk has changed. Everything the derive writes into the worker — the
+   * facade above all, and the bridge token it carries — would therefore be a
+   * copy from the launch the partition was created in, which is what answered
+   * every native messaging call with 403 (measured 2026-08-16).
+   *
+   * Dropping the registration first makes Chromium fetch the script again.
+   * `clearData` walks past `chrome-extension://` origins, so `clearStorageData`
+   * is the way in; an extension without a `manifest.key` has no id to address
+   * its storage by and keeps the worker Chromium already has.
+   */
+  private async dropServiceWorkerRegistration(session: Session, extensionId: string | undefined) {
+    if (!extensionId) {
+      return;
+    }
+
+    await session.clearStorageData({
+      origin: `chrome-extension://${extensionId}`,
+      storages: ["serviceworkers"],
+    });
   }
 
   /** A broken icon costs the button its icon, not the extension its button. */

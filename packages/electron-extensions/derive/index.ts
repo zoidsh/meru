@@ -5,6 +5,7 @@ import {
   NATIVE_MESSAGING_SCHEME,
   NATIVE_MESSAGING_TOKEN_GLOBAL,
 } from "../native-messaging/bridge-protocol";
+import { getExtensionIdFromManifestKey } from "./extension-id";
 import { injectFacadeScript } from "./html";
 import { deriveManifest, type ExtensionManifest } from "./manifest";
 
@@ -74,6 +75,8 @@ export async function deriveExtension({
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
 
+  const sourceManifest = JSON.parse(manifestSource) as ExtensionManifest;
+
   const derivedDir = path.join(derivedExtensionsDir, hash(sourceDir).slice(0, 16));
 
   const stampPath = `${derivedDir}.json`;
@@ -93,14 +96,11 @@ export async function deriveExtension({
 
     await cp(sourceDir, derivedDir, { recursive: true });
 
-    const { manifest, serviceWorkerWrapper } = deriveManifest(
-      JSON.parse(manifestSource) as ExtensionManifest,
-      {
-        facadeFileName: FACADE_FILE_NAME,
-        serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
-        bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
-      },
-    );
+    const { manifest, serviceWorkerWrapper } = deriveManifest(sourceManifest, {
+      facadeFileName: FACADE_FILE_NAME,
+      serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
+      bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
+    });
 
     await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
 
@@ -124,5 +124,9 @@ export async function deriveExtension({
     )}`,
   );
 
-  return { derivedDir, bridgeToken };
+  return {
+    derivedDir,
+    bridgeToken,
+    extensionId: getExtensionIdFromManifestKey(sourceManifest.key),
+  };
 }

@@ -168,6 +168,28 @@ describe("deriveExtension", () => {
     expect(rederived.bridgeToken).not.toBe(bridgeToken);
   });
 
+  test("reports the id the extension will be loaded as", async () => {
+    const { extensionId } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(extensionId).toBe("gkodpobagfoadfbnehppbpmagfgmimpa");
+  });
+
+  test("reports no id for an extension without a key", async () => {
+    await writeManifest({ ...manifest, key: undefined });
+
+    const { extensionId } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(extensionId).toBeUndefined();
+  });
+
   test("injects the facade into a page only once", async () => {
     const derivedDir = await derive();
 
