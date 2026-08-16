@@ -1,9 +1,57 @@
-import { describe, expect, test } from "bun:test";
-import fs from "node:fs/promises";
-import os from "node:os";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import fs, { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os, { tmpdir } from "node:os";
 import path from "node:path";
 import type { Extension, Session } from "electron";
 import { Extensions } from "./extensions";
+
+let workDir: string;
+
+let facadeScriptPath: string;
+
+beforeEach(async () => {
+  workDir = await mkdtemp(path.join(tmpdir(), "electron-extensions-"));
+
+  facadeScriptPath = path.join(workDir, "facade.js");
+
+  await writeFile(facadeScriptPath, "// facade\n");
+});
+
+afterEach(async () => {
+  await rm(workDir, { recursive: true, force: true });
+});
+
+async function createExtensionDir(name: string) {
+  const extensionDir = path.join(workDir, name);
+
+  await mkdir(extensionDir, { recursive: true });
+
+  await writeFile(
+    path.join(extensionDir, "manifest.json"),
+    JSON.stringify({
+      name,
+      version: "1.0.0",
+      manifest_version: 3,
+      background: { service_worker: "background.js", type: "module" },
+    }),
+  );
+
+  await writeFile(path.join(extensionDir, "background.js"), "// background\n");
+
+  return extensionDir;
+}
+
+function createExtensions(
+  extensionDirs: string[],
+  logger?: ConstructorParameters<typeof Extensions>[0]["logger"],
+) {
+  return new Extensions({
+    extensionDirs,
+    facadeScriptPath,
+    derivedExtensionsDir: path.join(workDir, "derived"),
+    logger,
+  });
+}
 
 function createExtension(id: string, extensionDir: string) {
   return {
@@ -59,7 +107,7 @@ async function listPartitionDir(partitionPath: string) {
 }
 
 describe("Extensions", () => {
-  test("loads every directory into the session", async () => {
+  test("loads a copy of every directory, with the facade in it", async () => {
     const loadedExtensionDirs: string[] = [];
 
     const { session } = createSession({
@@ -70,11 +118,35 @@ describe("Extensions", () => {
       },
     });
 
-    const extensions = new Extensions({ extensionDirs: ["/extensions/one", "/extensions/two"] });
+    const extensionDirs = [await createExtensionDir("one"), await createExtensionDir("two")];
 
-    await extensions.setupSession(session);
+    await createExtensions(extensionDirs).setupSession(session);
 
-    expect(loadedExtensionDirs).toEqual(["/extensions/one", "/extensions/two"]);
+    expect(loadedExtensionDirs).toHaveLength(2);
+    expect(loadedExtensionDirs).not.toContain(extensionDirs[0]);
+
+    for (const loadedExtensionDir of loadedExtensionDirs) {
+      expect(await readFile(path.join(loadedExtensionDir, "chrome-facade.js"), "utf8")).toBe(
+        "// facade\n",
+      );
+    }
+  });
+
+  test("loads the same copy into every session", async () => {
+    const loadedExtensionDirs: string[] = [];
+
+    const loadExtension = async (extensionDir: string) => {
+      loadedExtensionDirs.push(extensionDir);
+
+      return createExtension("aaa", extensionDir);
+    };
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    await extensions.setupSession(createSession({ loadExtension }).session);
+    await extensions.setupSession(createSession({ loadExtension }).session);
+
+    expect(loadedExtensionDirs[0]).toBe(loadedExtensionDirs[1] as string);
   });
 
   test("does nothing without extension directories", async () => {
@@ -88,7 +160,7 @@ describe("Extensions", () => {
       },
     });
 
-    const extensions = new Extensions({ extensionDirs: [] });
+    const extensions = createExtensions([]);
 
     await extensions.setupSession(session);
 
@@ -103,30 +175,23 @@ describe("Extensions", () => {
   test("keeps loading after a directory fails", async () => {
     const loggedErrors: Record<string, unknown>[] = [];
 
-    const { session } = createSession({
-      loadExtension: async (extensionDir) => {
-        if (extensionDir === "/extensions/broken") {
-          throw new Error("Could not load extension");
-        }
+    const brokenExtensionDir = path.join(workDir, "broken");
 
-        return createExtension("aaa", extensionDir);
-      },
-    });
+    await mkdir(brokenExtensionDir);
 
-    const extensions = new Extensions({
-      extensionDirs: ["/extensions/broken", "/extensions/one"],
-      logger: {
-        info: () => {},
-        error: (_message, details) => {
-          loggedErrors.push(details);
-        },
+    const { session } = createSession();
+
+    const extensions = createExtensions([brokenExtensionDir, await createExtensionDir("one")], {
+      info: () => {},
+      error: (_message, details) => {
+        loggedErrors.push(details);
       },
     });
 
     await extensions.setupSession(session);
 
     expect(loggedErrors).toHaveLength(1);
-    expect(loggedErrors[0]?.extensionDir).toBe("/extensions/broken");
+    expect(loggedErrors[0]?.extensionDir).toBe(brokenExtensionDir);
     expect(extensions.isLoadedExtensionUrl(session, "chrome-extension://aaa/popup.html")).toBe(
       true,
     );
@@ -136,7 +201,7 @@ describe("Extensions", () => {
     const { session: sessionWithExtension } = createSession();
     const { session: sessionWithoutExtension } = createSession();
 
-    const extensions = new Extensions({ extensionDirs: ["/extensions/one"] });
+    const extensions = createExtensions([await createExtensionDir("one")]);
 
     await extensions.setupSession(sessionWithExtension);
 
@@ -157,7 +222,7 @@ describe("Extensions", () => {
   test("unloads what it loaded and forgets the session", async () => {
     const { session, removedExtensionIds } = createSession();
 
-    const extensions = new Extensions({ extensionDirs: ["/extensions/one"] });
+    const extensions = createExtensions([await createExtensionDir("one")]);
 
     await extensions.setupSession(session);
 
@@ -254,7 +319,10 @@ describe("Extensions", () => {
       loadExtension: () => loadExtensionPromise,
     });
 
-    const extensions = new Extensions({ extensionDirs: ["/extensions/one", "/extensions/two"] });
+    const extensions = createExtensions([
+      await createExtensionDir("one"),
+      await createExtensionDir("two"),
+    ]);
 
     const setupSessionPromise = extensions.setupSession(session);
 

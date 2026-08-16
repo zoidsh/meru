@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
 import { Extensions } from "@meru/electron-extensions";
+import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
 
@@ -32,6 +33,8 @@ function getExtensionDirs() {
 
 export const extensions = new Extensions({
   extensionDirs: getExtensionDirs(),
+  facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
+  derivedExtensionsDir: path.join(app.getPath("userData"), "derived-extensions"),
   logger: {
     info: (message, details) => {
       log.info(message, details);
