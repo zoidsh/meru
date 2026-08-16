@@ -3,7 +3,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
 import {
-  launcherAndBookmarksHosts,
+  launcherAndBookmarksPlacements,
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
   type SupportedWorkspaceApp,
@@ -382,12 +382,12 @@ export function WorkspaceAppsSettings() {
             />
             {config["workspaceApps.mode"] === "tabs" && (
               <ConfigSelectField
-                label="Host"
+                label="Placement"
                 description="Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown, Sidebar keeps them there and holds the sidebar open even with a single tab, Titlebar keeps them in the titlebar at all times."
-                configKey="workspaceApps.launcherAndBookmarksHost"
-                placeholder="Select host"
+                configKey="workspaceApps.launcherAndBookmarksPlacement"
+                placeholder="Select placement"
                 licenseKeyRequired
-                items={Object.entries(launcherAndBookmarksHosts).map(([value, label]) => ({
+                items={Object.entries(launcherAndBookmarksPlacements).map(([value, label]) => ({
                   value,
                   label,
                 }))}

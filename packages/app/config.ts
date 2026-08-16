@@ -103,7 +103,7 @@ export const config = new Store<Config>({
     "workspaceApps.mode": "tabs",
     "workspaceApps.launcherApps": [],
     "workspaceApps.launcherDisplay": "auto",
-    "workspaceApps.launcherAndBookmarksHost": "auto",
+    "workspaceApps.launcherAndBookmarksPlacement": "auto",
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,

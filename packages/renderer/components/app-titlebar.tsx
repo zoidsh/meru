@@ -227,8 +227,8 @@ export function AppTitlebar() {
   // page stays in the same place as switching between tabs. `sidebar` keeps the
   // strip there for them, so the width is never 0; `titlebar` keeps them here
   // whatever the strip does.
-  const areLauncherAndBookmarksHostedByVerticalTabs =
-    config["workspaceApps.launcherAndBookmarksHost"] !== "titlebar" && verticalTabsWidth > 0;
+  const areLauncherAndBookmarksPlacementedByVerticalTabs =
+    config["workspaceApps.launcherAndBookmarksPlacement"] !== "titlebar" && verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
@@ -385,7 +385,7 @@ export function AppTitlebar() {
             <TitlebarButtonGroup
               className={cn(
                 HOST_HANDOVER_FADE_CLASS_NAME,
-                areLauncherAndBookmarksHostedByVerticalTabs && "hidden opacity-0",
+                areLauncherAndBookmarksPlacementedByVerticalTabs && "hidden opacity-0",
               )}
             >
               {shouldShowWorkspaceAppsLauncher && (

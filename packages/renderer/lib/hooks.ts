@@ -76,7 +76,8 @@ export function useVerticalTabs() {
   const width = getVerticalTabsWidth(tabs, {
     configuredWidth: config?.["verticalTabs.width"] ?? "auto",
     sessionWidth: selectedAccount?.verticalTabsWidth ?? null,
-    launcherAndBookmarksHost: config?.["workspaceApps.launcherAndBookmarksHost"] ?? "auto",
+    launcherAndBookmarksPlacement:
+      config?.["workspaceApps.launcherAndBookmarksPlacement"] ?? "auto",
   });
 
   return { selectedAccount, tabs, width };

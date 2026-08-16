@@ -69,13 +69,13 @@ export function resolveWorkspaceAppsLauncherDisplay(
   return launcherAppCount > LAUNCHER_EXPANDED_APPS_THRESHOLD ? "collapsed" : "expanded";
 }
 
-export const launcherAndBookmarksHosts = {
+export const launcherAndBookmarksPlacements = {
   auto: "Auto",
   sidebar: "Sidebar",
   titlebar: "Titlebar",
 } as const;
 
-export type LauncherAndBookmarksHost = keyof typeof launcherAndBookmarksHosts;
+export type LauncherAndBookmarksPlacement = keyof typeof launcherAndBookmarksPlacements;
 
 export const workspaceAppsModes = {
   tabs: "Tabs",

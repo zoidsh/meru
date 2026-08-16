@@ -13,7 +13,7 @@ import type {
 } from "./schemas";
 import type { AccountTabsState, VerticalTabsSessionWidth, VerticalTabsWidth } from "./tabs";
 import type {
-  LauncherAndBookmarksHost,
+  LauncherAndBookmarksPlacement,
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
   WorkspaceAppBookmarkState,
@@ -140,7 +140,7 @@ export type Config = {
   "workspaceApps.mode": WorkspaceAppsMode;
   "workspaceApps.launcherApps": LauncherWorkspaceApp[];
   "workspaceApps.launcherDisplay": WorkspaceAppsLauncherDisplay;
-  "workspaceApps.launcherAndBookmarksHost": LauncherAndBookmarksHost;
+  "workspaceApps.launcherAndBookmarksPlacement": LauncherAndBookmarksPlacement;
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;

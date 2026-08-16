@@ -1,7 +1,7 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
 import type {
-  LauncherAndBookmarksHost,
+  LauncherAndBookmarksPlacement,
   SupportedWorkspaceApp,
   WorkspaceAppsMode,
 } from "./workspace-apps";
@@ -85,16 +85,16 @@ export function getVerticalTabsWidth(
   {
     configuredWidth,
     sessionWidth,
-    launcherAndBookmarksHost,
+    launcherAndBookmarksPlacement,
   }: {
     configuredWidth: VerticalTabsWidth;
     sessionWidth: VerticalTabsSessionWidth | null;
-    launcherAndBookmarksHost: LauncherAndBookmarksHost;
+    launcherAndBookmarksPlacement: LauncherAndBookmarksPlacement;
   },
 ) {
   // `sidebar` hands the strip the launcher and the bookmarks button for good,
   // so it has to stay even with nothing to switch between.
-  if (tabs.length <= 1 && launcherAndBookmarksHost !== "sidebar") {
+  if (tabs.length <= 1 && launcherAndBookmarksPlacement !== "sidebar") {
     return 0;
   }
 
