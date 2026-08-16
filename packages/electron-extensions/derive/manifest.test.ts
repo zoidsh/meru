@@ -103,6 +103,31 @@ describe("deriveManifest", () => {
 
     expect(manifest.permissions).toBeUndefined();
   });
+
+  test("derives the copy without the manifest keys it was told to strip", () => {
+    const { manifest } = deriveManifest(
+      {
+        name: "1Password",
+        content_scripts: [{ js: ["inline/inject-content-scripts.js"] }],
+        declarative_net_request: { rule_resources: [] },
+      },
+      { ...fileNames, strippedManifestKeys: ["content_scripts", "declarative_net_request"] },
+    );
+
+    expect(manifest).toEqual({ name: "1Password" });
+  });
+
+  test("strips nothing an extension does not have", () => {
+    const { manifest } = deriveManifest(
+      { name: "1Password" },
+      {
+        ...fileNames,
+        strippedManifestKeys: ["content_scripts"],
+      },
+    );
+
+    expect(manifest).toEqual({ name: "1Password" });
+  });
 });
 
 describe("allowConnectSource", () => {

@@ -23,6 +23,12 @@ export type DeriveExtensionOptions = {
   sourceDir: string;
   derivedExtensionsDir: string;
   facadeScriptPath: string;
+  /**
+   * Manifest keys the copy is derived without, to run an extension with one of
+   * its parts taken away — `content_scripts`, `declarative_net_request` — and
+   * see what changes.
+   */
+  strippedManifestKeys?: string[];
 };
 
 function hash(value: string) {
@@ -72,6 +78,7 @@ export async function deriveExtension({
   sourceDir,
   derivedExtensionsDir,
   facadeScriptPath,
+  strippedManifestKeys = [],
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
 
@@ -82,11 +89,13 @@ export async function deriveExtension({
   const stampPath = `${derivedDir}.json`;
 
   // The source is copied again when its manifest changes, which is what an
-  // installed extension moving to a new version does
+  // installed extension moving to a new version does, and when what the derive
+  // makes of it changes
   const stamp = JSON.stringify({
     deriveVersion: DERIVE_VERSION,
     sourceDir,
     manifest: hash(manifestSource),
+    strippedManifestKeys,
   });
 
   if ((await readStamp(stampPath)) !== stamp) {
@@ -100,6 +109,7 @@ export async function deriveExtension({
       facadeFileName: FACADE_FILE_NAME,
       serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
       bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
+      strippedManifestKeys,
     });
 
     await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));

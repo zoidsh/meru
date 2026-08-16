@@ -46,6 +46,12 @@ export type ExtensionsOptions = {
   /** A directory the loader owns, holding the copy it loads of each extension. */
   derivedExtensionsDir: string;
   /**
+   * Manifest keys every extension is derived without, for taking a part of an
+   * extension away — `content_scripts`, `declarative_net_request` — to find out
+   * which one is behind a misbehaving page.
+   */
+  strippedManifestKeys?: string[];
+  /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
@@ -71,6 +77,8 @@ export class Extensions {
 
   private derivedExtensionsDir: string;
 
+  private strippedManifestKeys: string[] | undefined;
+
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
@@ -87,6 +95,7 @@ export class Extensions {
     extensionDirs,
     facadeScriptPath,
     derivedExtensionsDir,
+    strippedManifestKeys,
     isNativeMessagingHostAllowed,
     logger,
   }: ExtensionsOptions) {
@@ -95,6 +104,8 @@ export class Extensions {
     this.facadeScriptPath = facadeScriptPath;
 
     this.derivedExtensionsDir = derivedExtensionsDir;
+
+    this.strippedManifestKeys = strippedManifestKeys;
 
     this.logger = logger;
 
@@ -117,6 +128,7 @@ export class Extensions {
         sourceDir,
         derivedExtensionsDir: this.derivedExtensionsDir,
         facadeScriptPath: this.facadeScriptPath,
+        strippedManifestKeys: this.strippedManifestKeys,
       });
 
       this.derivedExtensions.set(sourceDir, derivedExtension);

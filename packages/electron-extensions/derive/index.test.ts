@@ -178,6 +178,27 @@ describe("deriveExtension", () => {
     expect(extensionId).toBe("gkodpobagfoadfbnehppbpmagfgmimpa");
   });
 
+  test("derives the copy again when the keys it strips change", async () => {
+    await writeManifest({ ...manifest, content_scripts: [{ js: ["content.js"] }] });
+
+    const derivedDir = await derive();
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+    ).toHaveProperty("content_scripts");
+
+    await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      strippedManifestKeys: ["content_scripts"],
+    });
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+    ).not.toHaveProperty("content_scripts");
+  });
+
   test("reports no id for an extension without a key", async () => {
     await writeManifest({ ...manifest, key: undefined });
 

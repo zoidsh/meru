@@ -1,4 +1,6 @@
+/** Only what the derive reads or rewrites is spelled out; the rest is carried. */
 export type ExtensionManifest = {
+  [manifestKey: string]: unknown;
   name?: string;
   version?: string;
   key?: string;
@@ -142,10 +144,13 @@ export function deriveManifest(
     facadeFileName,
     serviceWorkerFileName,
     bridgeConnectSource,
+    strippedManifestKeys = [],
   }: {
     facadeFileName: string;
     serviceWorkerFileName: string;
     bridgeConnectSource: string;
+    /** Manifest keys to leave out of the copy, e.g. `content_scripts`. */
+    strippedManifestKeys?: string[];
   },
 ): DerivedManifest {
   const derivedManifest: ExtensionManifest = {
@@ -153,6 +158,10 @@ export function deriveManifest(
     permissions: derivePermissions(manifest.permissions),
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
   };
+
+  for (const strippedManifestKey of strippedManifestKeys) {
+    delete derivedManifest[strippedManifestKey];
+  }
 
   const backgroundFileName = manifest.background?.service_worker?.replace(/^\//, "");
 
