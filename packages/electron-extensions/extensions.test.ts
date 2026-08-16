@@ -254,7 +254,7 @@ describe("Extensions", () => {
 
     const { session } = createSession({ storagePath: partitionPath });
 
-    const extensions = new Extensions({ extensionDirs: ["/extensions/one"] });
+    const extensions = createExtensions([await createExtensionDir("one")]);
 
     await extensions.setupSession(session);
 
@@ -280,13 +280,10 @@ describe("Extensions", () => {
 
     const { session } = createSession();
 
-    const extensions = new Extensions({
-      extensionDirs: ["/extensions/one"],
-      logger: {
-        info: () => {},
-        error: (_message, details) => {
-          loggedErrors.push(details);
-        },
+    const extensions = createExtensions([await createExtensionDir("one")], {
+      info: () => {},
+      error: (_message, details) => {
+        loggedErrors.push(details);
       },
     });
 
@@ -302,7 +299,7 @@ describe("Extensions", () => {
 
     const { session } = createSession({ storagePath: partitionPath });
 
-    const extensions = new Extensions({ extensionDirs: [] });
+    const extensions = createExtensions([]);
 
     await extensions.clearSessionData(session);
 
