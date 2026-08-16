@@ -1,6 +1,10 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { Extensions, findExtensionDirs } from "@meru/electron-extensions";
+import {
+  Extensions,
+  findExtensionDirs,
+  registerNativeMessagingScheme,
+} from "@meru/electron-extensions";
 import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
@@ -26,6 +30,10 @@ function getExtensionDirs() {
 
   return findExtensionDirs(path.join(app.getAppPath(), "extensions"));
 }
+
+// Extension contexts reach the native messaging bridge over a custom scheme,
+// and Electron only takes scheme privileges while modules are still loading
+registerNativeMessagingScheme();
 
 export const extensions = new Extensions({
   extensionDirs: getExtensionDirs(),

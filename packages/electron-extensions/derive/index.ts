@@ -1,6 +1,10 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  NATIVE_MESSAGING_SCHEME,
+  NATIVE_MESSAGING_TOKEN_GLOBAL,
+} from "../native-messaging/bridge-protocol";
 import { injectFacadeScript } from "./html";
 import { deriveManifest, type ExtensionManifest } from "./manifest";
 
@@ -11,7 +15,7 @@ const FACADE_FILE_NAME = "chrome-facade.js";
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 1;
+const DERIVE_VERSION = 2;
 
 export type DeriveExtensionOptions = {
   /** The unpacked extension the embedder handed over, never written to. */
@@ -59,6 +63,9 @@ async function injectFacadeIntoPages(derivedDir: string) {
  * to write to — it is a verified install, or a directory a developer is working
  * in. The copy sits at a path derived from the source path, so an extension
  * without a `manifest.key` keeps the same generated id across launches.
+ *
+ * The facade is written rather than copied so that this extension's copy can
+ * carry the token its native messaging bridge requests are recognised by.
  */
 export async function deriveExtension({
   sourceDir,
@@ -88,12 +95,16 @@ export async function deriveExtension({
 
     const { manifest, serviceWorkerWrapper } = deriveManifest(
       JSON.parse(manifestSource) as ExtensionManifest,
-      { facadeFileName: FACADE_FILE_NAME, serviceWorkerFileName: SERVICE_WORKER_FILE_NAME },
+      {
+        facadeFileName: FACADE_FILE_NAME,
+        serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
+        bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
+      },
     );
 
-    if (serviceWorkerWrapper) {
-      await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
+    await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
 
+    if (serviceWorkerWrapper) {
       await writeFile(path.join(derivedDir, SERVICE_WORKER_FILE_NAME), serviceWorkerWrapper);
     }
 
@@ -103,7 +114,15 @@ export async function deriveExtension({
   }
 
   // Always, so a rebuilt facade reaches copies that are otherwise up to date
-  await cp(facadeScriptPath, path.join(derivedDir, FACADE_FILE_NAME));
+  const bridgeToken = randomUUID();
 
-  return derivedDir;
+  await writeFile(
+    path.join(derivedDir, FACADE_FILE_NAME),
+    `globalThis.${NATIVE_MESSAGING_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
+      facadeScriptPath,
+      "utf8",
+    )}`,
+  );
+
+  return { derivedDir, bridgeToken };
 }

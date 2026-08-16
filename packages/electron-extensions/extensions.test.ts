@@ -84,6 +84,8 @@ function createSession({
 } = {}) {
   const removedExtensionIds: string[] = [];
 
+  const handledSchemes: string[] = [];
+
   const session = {
     extensions: {
       loadExtension,
@@ -91,10 +93,18 @@ function createSession({
         removedExtensionIds.push(extensionId);
       },
     },
+    protocol: {
+      handle: (scheme: string) => {
+        handledSchemes.push(scheme);
+      },
+      unhandle: (scheme: string) => {
+        handledSchemes.splice(handledSchemes.indexOf(scheme), 1);
+      },
+    },
     getStoragePath: () => storagePath,
   } as unknown as Session;
 
-  return { session, removedExtensionIds };
+  return { session, removedExtensionIds, handledSchemes };
 }
 
 async function createPartitionDir(entryPaths: string[]) {
@@ -137,7 +147,7 @@ describe("Extensions", () => {
     expect(loadedExtensionDirs).not.toContain(extensionDirs[0]);
 
     for (const loadedExtensionDir of loadedExtensionDirs) {
-      expect(await readFile(path.join(loadedExtensionDir, "chrome-facade.js"), "utf8")).toBe(
+      expect(await readFile(path.join(loadedExtensionDir, "chrome-facade.js"), "utf8")).toEndWith(
         "// facade\n",
       );
     }
