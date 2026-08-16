@@ -302,18 +302,22 @@ export class Gmail {
 
   private storeUnsubscribers: (() => void)[] = [];
 
+  private extensionsLoaded: Promise<void> | undefined;
+
   constructor({
     accountId,
     session,
     unreadCountEnabled,
     unifiedInboxEnabled,
     delegatedAccountId,
+    extensionsLoaded,
   }: {
     accountId: string;
     session: Session;
     unreadCountEnabled: boolean;
     unifiedInboxEnabled: boolean;
     delegatedAccountId: string | null;
+    extensionsLoaded?: Promise<void>;
   }) {
     const additionalArguments: string[] = [];
 
@@ -373,6 +377,8 @@ export class Gmail {
 
     this.additionalArguments = additionalArguments;
 
+    this.extensionsLoaded = extensionsLoaded;
+
     this.unreadCountEnabled = unreadCountEnabled;
 
     this.unifiedInboxEnabled = unifiedInboxEnabled;
@@ -388,7 +394,7 @@ export class Gmail {
     }, ms("5m"));
   }
 
-  createView(options?: WebContentsViewConstructorOptions) {
+  async createView(options?: WebContentsViewConstructorOptions) {
     this.view = createChildWebContentsView({
       session: this.session,
       preload: getPreloadPath("gmail"),
@@ -444,6 +450,14 @@ export class Gmail {
     registerTabBroadcasts(this.view);
 
     openViewDevToolsOnLaunch(this.view);
+
+    // An extension that finishes loading while a navigation is still provisional
+    // makes Chromium abort that navigation, leaving the view empty
+    await this.extensionsLoaded;
+
+    if (!this._view) {
+      return;
+    }
 
     return loadUrl(this.view.webContents, this.url);
   }
