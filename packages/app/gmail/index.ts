@@ -296,6 +296,10 @@ export class Gmail {
 
   private previousNewMessages: Map<string, number> = new Map();
 
+  private previousNewMessagesPruneInterval: NodeJS.Timeout;
+
+  private storeUnsubscribers: (() => void)[] = [];
+
   constructor({
     accountId,
     session,
@@ -373,7 +377,7 @@ export class Gmail {
 
     this.subscribeToStore();
 
-    setInterval(() => {
+    this.previousNewMessagesPruneInterval = setInterval(() => {
       for (const [messageId, timestamp] of this.previousNewMessages) {
         if (Date.now() - timestamp > ms("5m")) {
           this.previousNewMessages.delete(messageId);
@@ -555,6 +559,16 @@ export class Gmail {
     this.view.removeAllListeners();
 
     main.window.contentView.removeChildView(this.view);
+
+    clearInterval(this.previousNewMessagesPruneInterval);
+
+    for (const unsubscribe of this.storeUnsubscribers) {
+      unsubscribe();
+    }
+
+    this.storeUnsubscribers = [];
+
+    this._view = undefined;
   }
 
   private setDelegatedAccountId(delegatedAccountId: string | null) {
@@ -887,54 +901,60 @@ export class Gmail {
   }
 
   subscribeToStore() {
-    this.store.subscribe(
-      (state) => state.attentionRequired,
-      () => {
-        accounts.sendAccountsChangedToRenderer();
+    this.storeUnsubscribers.push(
+      this.store.subscribe(
+        (state) => state.attentionRequired,
+        () => {
+          accounts.sendAccountsChangedToRenderer();
 
-        accounts.sendTabsChangedToRenderer();
-      },
+          accounts.sendTabsChangedToRenderer();
+        },
+      ),
     );
 
     if (this.getIsUnreadCountEnabled()) {
       const dockUnreadBadge = config.get("dock.unreadBadge");
 
-      this.store.subscribe(
-        (state) => state.unreadCount,
-        () => {
-          const totalUnreadCount = accounts.getTotalUnreadCount();
+      this.storeUnsubscribers.push(
+        this.store.subscribe(
+          (state) => state.unreadCount,
+          () => {
+            const totalUnreadCount = accounts.getTotalUnreadCount();
 
-          if (dockUnreadBadge) {
-            if (platform.isMacOS && app.dock) {
-              app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
-            } else if (platform.isLinux) {
-              app.badgeCount = totalUnreadCount;
-            } else if (platform.isWindows) {
-              if (totalUnreadCount) {
-                ipc.renderer.send(
-                  main.window.webContents,
-                  "taskbar.setOverlayIcon",
-                  totalUnreadCount,
-                );
-              } else {
-                main.window.setOverlayIcon(null, "");
+            if (dockUnreadBadge) {
+              if (platform.isMacOS && app.dock) {
+                app.dock.setBadge(totalUnreadCount ? totalUnreadCount.toString() : "");
+              } else if (platform.isLinux) {
+                app.badgeCount = totalUnreadCount;
+              } else if (platform.isWindows) {
+                if (totalUnreadCount) {
+                  ipc.renderer.send(
+                    main.window.webContents,
+                    "taskbar.setOverlayIcon",
+                    totalUnreadCount,
+                  );
+                } else {
+                  main.window.setOverlayIcon(null, "");
+                }
               }
             }
-          }
 
-          appTray.updateUnreadStatus(totalUnreadCount);
+            appTray.updateUnreadStatus(totalUnreadCount);
 
-          accounts.sendAccountsChangedToRenderer();
-        },
+            accounts.sendAccountsChangedToRenderer();
+          },
+        ),
       );
     }
 
     if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-      this.store.subscribe(
-        (state) => state.unreadInbox,
-        () => {
-          accounts.sendAccountsChangedToRenderer();
-        },
+      this.storeUnsubscribers.push(
+        this.store.subscribe(
+          (state) => state.unreadInbox,
+          () => {
+            accounts.sendAccountsChangedToRenderer();
+          },
+        ),
       );
     }
   }
