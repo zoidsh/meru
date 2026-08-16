@@ -16,7 +16,7 @@ const FACADE_FILE_NAME = "chrome-facade.js";
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 2;
+const DERIVE_VERSION = 3;
 
 export type DeriveExtensionOptions = {
   /** The unpacked extension the embedder handed over, never written to. */

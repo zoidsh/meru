@@ -2,6 +2,7 @@ export type ExtensionManifest = {
   name?: string;
   version?: string;
   key?: string;
+  permissions?: string[];
   background?: {
     service_worker?: string;
     type?: string;
@@ -36,6 +37,24 @@ function createServiceWorkerWrapper(
   }
 
   return `${header}importScripts("/${facadeFileName}", "/${backgroundFileName}");\n`;
+}
+
+/**
+ * Permissions whose bindings Electron declares but ships no implementation for.
+ * Chromium builds the namespace from the schema the moment anything touches it,
+ * looks for the JavaScript module behind it, finds none and hits a NOTREACHED —
+ * once for `webRequest` and once per event on it, in every extension context.
+ * That is a `DumpWithoutCrashing` in the builds Meru ships and a fatal check in
+ * others, and it costs the extension nothing to avoid: extension-side
+ * `webRequest` listeners never see a request in Electron, measured in the spike.
+ *
+ * Dropped from the derived copy, the namespace is missing rather than broken,
+ * and the facade's noop `webRequest` stands in for it.
+ */
+const DROPPED_PERMISSIONS = new Set(["webRequest", "webRequestAuthProvider"]);
+
+function derivePermissions(permissions: ExtensionManifest["permissions"]) {
+  return permissions?.filter((permission) => !DROPPED_PERMISSIONS.has(permission));
 }
 
 function parseDirectives(contentSecurityPolicy: string) {
@@ -110,11 +129,12 @@ function deriveContentSecurityPolicy(
 }
 
 /**
- * Points the manifest's service worker at a generated wrapper and lets its
- * content security policy reach the native messaging bridge. Everything else is
- * carried over untouched — `key` above all, since without it Chromium derives
- * the extension id from the directory it was loaded from and the derived copy
- * would answer to a different id than the extension it came from.
+ * Points the manifest's service worker at a generated wrapper, lets its content
+ * security policy reach the native messaging bridge and drops the permissions
+ * Electron cannot serve. Everything else is carried over untouched — `key`
+ * above all, since without it Chromium derives the extension id from the
+ * directory it was loaded from and the derived copy would answer to a different
+ * id than the extension it came from.
  */
 export function deriveManifest(
   manifest: ExtensionManifest,
@@ -130,6 +150,7 @@ export function deriveManifest(
 ): DerivedManifest {
   const derivedManifest: ExtensionManifest = {
     ...manifest,
+    permissions: derivePermissions(manifest.permissions),
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
   };
 

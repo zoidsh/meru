@@ -86,6 +86,23 @@ describe("deriveManifest", () => {
 
     expect(manifest.content_security_policy).toBeUndefined();
   });
+
+  test("drops the permissions Electron declares but cannot serve", () => {
+    const { manifest } = deriveManifest(
+      {
+        permissions: ["storage", "webRequest", "nativeMessaging", "webRequestAuthProvider", "tabs"],
+      },
+      fileNames,
+    );
+
+    expect(manifest.permissions).toEqual(["storage", "nativeMessaging", "tabs"]);
+  });
+
+  test("leaves a manifest without permissions alone", () => {
+    const { manifest } = deriveManifest({ name: "No permissions" }, fileNames);
+
+    expect(manifest.permissions).toBeUndefined();
+  });
 });
 
 describe("allowConnectSource", () => {
