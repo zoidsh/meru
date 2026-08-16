@@ -4,9 +4,23 @@ import {
   WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
+import { serializeError } from "serialize-error";
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
+import { log } from "./log";
+
+/**
+ * `loadURL` rejects when the load never commits — a renderer that went away
+ * mid-navigation, a network stack that gave up — and nothing waits on the
+ * promise, which turns every such load into an unhandled rejection. There is
+ * nothing to do about a failed load beyond saying what happened.
+ */
+export function loadUrl(webContents: WebContents, url: string) {
+  return webContents.loadURL(url).catch((error: unknown) => {
+    log.error("Failed to load URL", { url, error: serializeError(error) });
+  });
+}
 
 export function applyViewZoomLimits(view: WebContentsView) {
   view.webContents.on("dom-ready", () => {

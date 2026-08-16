@@ -32,6 +32,7 @@ import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import {
   createChildWebContentsView,
+  loadUrl,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
 } from "@/lib/web-contents";
@@ -441,7 +442,7 @@ export class Gmail {
 
     openViewDevToolsOnLaunch(this.view);
 
-    return this.view.webContents.loadURL(this.url);
+    return loadUrl(this.view.webContents, this.url);
   }
 
   async applyLabelColors() {
@@ -598,7 +599,7 @@ export class Gmail {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
-          window.webContents.loadURL(url);
+          loadUrl(window.webContents, url);
 
           this.setDelegatedAccountId(gmailDelegatedAccountId);
 
@@ -606,7 +607,7 @@ export class Gmail {
         }
 
         if (url === `${GMAIL_URL}/`) {
-          window.webContents.loadURL(url);
+          loadUrl(window.webContents, url);
 
           const account = accounts.getAccount(this.accountId);
 
