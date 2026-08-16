@@ -1,34 +1,30 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { Extensions } from "@meru/electron-extensions";
+import { Extensions, findExtensionDirs } from "@meru/electron-extensions";
 import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
 
 /**
- * Unpacked extension directories to load into every account session, separated
- * by the platform's path delimiter:
+ * Unpacked extensions to load into every account session, one directory holding
+ * a `manifest.json` per extension:
  *
- *   MERU_EXTENSIONS_DIRS=/path/to/1password bun run dev
+ *   <repo root>/extensions/1password/manifest.json
+ *
+ * The folder is gitignored, and `app.getAppPath()` is the repo root in
+ * development because `bun run dev` starts Electron as `electron .` there.
  *
  * Until extensions are installed from the curated list, this is the only source
  * of extensions, and it is read in development only — a packaged build has no
  * way to turn extensions on, so nothing is loaded and account sessions stay
  * exactly as they are today.
  */
-const EXTENSION_DIRS_ENV_VAR = "MERU_EXTENSIONS_DIRS";
-
 function getExtensionDirs() {
-  const extensionDirs = is.dev ? process.env[EXTENSION_DIRS_ENV_VAR] : undefined;
-
-  if (!extensionDirs) {
+  if (!is.dev) {
     return [];
   }
 
-  return extensionDirs
-    .split(path.delimiter)
-    .filter(Boolean)
-    .map((extensionDir) => path.resolve(extensionDir));
+  return findExtensionDirs(path.join(app.getAppPath(), "extensions"));
 }
 
 export const extensions = new Extensions({

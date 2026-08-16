@@ -37,6 +37,7 @@
         "electron-updater": "^6.6.2",
         "element-ready": "^7.0.0",
         "fast-xml-parser": "^5.5.7",
+        "fflate": "^0.8.3",
         "frimousse": "^0.3.0",
         "is-online": "^12.0.2",
         "lefthook": "^2.1.2",
@@ -988,6 +989,8 @@
     "fetch-blob": ["fetch-blob@3.2.0", "", { "dependencies": { "node-domexception": "^1.0.0", "web-streams-polyfill": "^3.0.3" } }, "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ=="],
 
     "fetch-extras": ["fetch-extras@1.0.0", "", {}, "sha512-T3cM9tgxSVdNzIsLr2Eyx+NeW90GNY07wjUxpIuAj5b3zOTATrRaDhqyOBxp9o0tU1gzZoU+4FkRos4cTnQfzg=="],
+
+    "fflate": ["fflate@0.8.3", "", {}, "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA=="],
 
     "figures": ["figures@6.1.0", "", { "dependencies": { "is-unicode-supported": "^2.0.0" } }, "sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg=="],
 
