@@ -107,6 +107,7 @@ export const config = new Store<Config>({
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,
     "workspaceApps.zoomFactors": {},
+    "workspaceApps.hidePasskeyDialog": false,
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,

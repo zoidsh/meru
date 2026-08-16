@@ -148,6 +148,7 @@ export type Config = {
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
+  "workspaceApps.hidePasskeyDialog": boolean;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;
