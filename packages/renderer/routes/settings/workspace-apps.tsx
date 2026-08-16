@@ -8,6 +8,8 @@ import {
   launcherWorkspaceApps,
   type SupportedWorkspaceApp,
   workspaceApps,
+  workspaceAppsHibernations,
+  workspaceAppsHibernationTimeouts,
   workspaceAppsLauncherDisplays,
   workspaceAppsModes,
 } from "@meru/shared/workspace-apps";
@@ -289,6 +291,29 @@ export function WorkspaceAppsSettings() {
             description="Remember the zoom level of Workspace Apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
             configKey="workspaceApps.persistZoom"
             licenseKeyRequired
+          />
+          <FieldSeparator />
+          <ConfigSelectField
+            label="Hibernate Idle Tabs"
+            description="Unload pinned tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it. Selected Tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
+            configKey="workspaceApps.hibernation"
+            placeholder="Select tabs"
+            licenseKeyRequired
+            items={Object.entries(workspaceAppsHibernations).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          <ConfigSelectField
+            label="Hibernate After"
+            description="How long a pinned tab has to go unused before it hibernates. The active tab, tabs in their own window and tabs playing audio are left alone."
+            configKey="workspaceApps.hibernationTimeout"
+            placeholder="Select timeout"
+            licenseKeyRequired
+            items={Object.entries(workspaceAppsHibernationTimeouts).map(([value, label]) => ({
+              value,
+              label,
+            }))}
           />
           <FieldSeparator />
           <FieldSet>

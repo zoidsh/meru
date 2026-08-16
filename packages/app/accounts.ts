@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
+import { ms } from "@meru/shared/ms";
 import type { AccountConfig } from "@meru/shared/schemas";
 import {
   getVerticalTabsWidth,
@@ -14,6 +15,8 @@ import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { isWindowedTab } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
+
+const HIBERNATION_SWEEP_INTERVAL = ms("1m");
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -83,6 +86,14 @@ class Accounts {
         account.gmail.applyPersistedZoomFactor();
       }
     });
+
+    // Every tick reads the hibernation settings afresh, so changing them takes
+    // effect on the next sweep without a listener of their own.
+    setInterval(() => {
+      for (const account of accounts.instances.values()) {
+        account.tabs.hibernateIdleTabs();
+      }
+    }, HIBERNATION_SWEEP_INTERVAL);
   }
 
   async createViews() {

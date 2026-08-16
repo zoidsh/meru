@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getWorkspaceAppFromUrl } from "@meru/shared/google";
+import { ms } from "@meru/shared/ms";
 import type { SavedTab } from "@meru/shared/schemas";
 import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
@@ -87,6 +88,8 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
+  hibernatesWhenIdle: boolean;
+
   opensLinksForApp: SupportedWorkspaceApp | null;
 
   windowed: boolean;
@@ -100,6 +103,7 @@ export class DormantTab {
     this.url = savedTab.url;
     this.title = savedTab.title;
     this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
+    this.hibernatesWhenIdle = Boolean(savedTab.hibernatesWhenIdle);
     this.opensLinksForApp = savedTab.opensLinksForApp ?? null;
     this.windowed = Boolean(savedTab.windowed);
     this.zoomFactor = zoomFactor;
@@ -241,6 +245,10 @@ export class Tabs {
       return;
     }
 
+    if (activatedTab instanceof WorkspaceApp) {
+      activatedTab.lastActiveAt = Date.now();
+    }
+
     this.activeTabId = tabId;
 
     this.broadcastTabsChanged();
@@ -276,6 +284,7 @@ export class Tabs {
       url: url ?? dormantTab.url,
       pinned: dormantTab.pinned,
       loadOnLaunch: dormantTab.loadOnLaunch,
+      hibernatesWhenIdle: dormantTab.hibernatesWhenIdle,
       opensLinksForApp: dormantTab.opensLinksForApp,
       asWindow: dormantTab.windowed || config.get("workspaceApps.mode") === "windows",
       savedAsWindow: dormantTab.windowed,
@@ -386,6 +395,7 @@ export class Tabs {
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
+          hibernatesWhenIdle: savedWorkspaceApp.hibernatesWhenIdle,
           opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
@@ -402,6 +412,41 @@ export class Tabs {
     this.broadcastTabsChanged();
 
     accounts.saveTabs();
+  }
+
+  /**
+   * Unloads saved tabs the user has left alone for the configured timeout,
+   * giving back the renderer process each one holds. A hibernated tab keeps its
+   * place in the strip and loads again when it is opened.
+   */
+  hibernateIdleTabs() {
+    const now = Date.now();
+
+    const activeTab = this.activeTab;
+
+    if (activeTab instanceof WorkspaceApp) {
+      activeTab.lastActiveAt = now;
+    }
+
+    const hibernatesEveryTab = config.get("workspaceApps.hibernation") === "all";
+
+    const idleTimeout = ms(config.get("workspaceApps.hibernationTimeout"));
+
+    for (const tab of this.tabs.slice()) {
+      if (!isSavedWorkspaceApp(tab) || tab.id === this.activeTabId || tab.isWindowed) {
+        continue;
+      }
+
+      if (!hibernatesEveryTab && !tab.hibernatesWhenIdle) {
+        continue;
+      }
+
+      if (tab.isAudible || now - tab.lastActiveAt < idleTimeout) {
+        continue;
+      }
+
+      this.closeTab(tab.id);
+    }
   }
 
   private recordRecentlyClosedTab(closedTabUrl: string) {
@@ -638,6 +683,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          hibernatesWhenIdle: tab.hibernatesWhenIdle,
           opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.opensAsWindow,
         });
@@ -647,6 +693,7 @@ export class Tabs {
           url: tab.url,
           title: tab.title,
           loadOnLaunch: tab.loadOnLaunch,
+          hibernatesWhenIdle: tab.hibernatesWhenIdle,
           opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.windowed,
         });

@@ -85,6 +85,27 @@ export const workspaceAppsModes = {
 export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
 
 /**
+ * Which tabs an idle sweep is allowed to unload. There is no off — `selected`
+ * with no tab marked hibernates nothing.
+ */
+export const workspaceAppsHibernations = {
+  selected: "Selected Tabs",
+  all: "All Tabs",
+} as const;
+
+export type WorkspaceAppsHibernation = keyof typeof workspaceAppsHibernations;
+
+/** Keys double as durations for `ms`. */
+export const workspaceAppsHibernationTimeouts = {
+  "1h": "1 Hour",
+  "30m": "30 Minutes",
+  "3h": "3 Hours",
+  "6h": "6 Hours",
+} as const;
+
+export type WorkspaceAppsHibernationTimeout = keyof typeof workspaceAppsHibernationTimeouts;
+
+/**
  * How a single Workspace App ends up being opened. Resolved per click from the
  * configured mode and the held modifier keys — never stored in the config.
  */

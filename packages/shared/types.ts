@@ -18,6 +18,8 @@ import type {
   SupportedWorkspaceApp,
   WorkspaceAppBookmarkState,
   WorkspaceAppOpenBehavior,
+  WorkspaceAppsHibernation,
+  WorkspaceAppsHibernationTimeout,
   WorkspaceAppsLauncherDisplay,
   WorkspaceAppsMode,
 } from "./workspace-apps";
@@ -174,6 +176,8 @@ export type Config = {
   "workspaceApps.persistZoom": boolean;
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
   "workspaceApps.hidePasskeyDialog": boolean;
+  "workspaceApps.hibernation": WorkspaceAppsHibernation;
+  "workspaceApps.hibernationTimeout": WorkspaceAppsHibernationTimeout;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;
