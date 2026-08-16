@@ -20,7 +20,7 @@ export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
 export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
 
 export const verticalTabsLauncherAndBookmarksHosts = {
-  auto: "Follow Sidebar",
+  auto: "Auto",
   sidebar: "Sidebar",
   titlebar: "Titlebar",
 } as const;
