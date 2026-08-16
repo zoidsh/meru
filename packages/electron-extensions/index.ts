@@ -1,4 +1,6 @@
 export type { ExtensionAction } from "./action";
+export { compareExtensionVersions, verifyCrx } from "./crx";
+export type { VerifiedCrx } from "./crx";
 export { Extensions } from "./extensions";
 export type { ActionsChangedListener, ExtensionsOptions } from "./extensions";
 export type { ExtensionsLogger } from "./logger";
