@@ -153,7 +153,7 @@ export class WorkspaceApp {
     }
   }
 
-  static handleNavigate(url: string) {
+  static async handleNavigate(url: string) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
     }
@@ -163,12 +163,28 @@ export class WorkspaceApp {
       return;
     }
 
-    dialog.showMessageBox({
+    if (config.get("signIn.hidePasskeyDialog")) {
+      return;
+    }
+
+    // The team id is only inlined into signed builds, which are the only ones
+    // where Touch ID passkeys are configured (see `init` in index.ts).
+    const touchIdAvailable = platform.isMacOS && Boolean(process.env.APPLE_TEAM_ID);
+
+    const { checkboxChecked } = await dialog.showMessageBox({
       type: "info",
-      message: "Passkey sign-in isn't supported on this platform yet",
-      detail:
-        "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.",
+      message: touchIdAvailable
+        ? "Only passkeys created in Meru work here"
+        : "Passkey sign-in isn't supported on this platform yet",
+      detail: touchIdAvailable
+        ? "Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud or your phone can't be used here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings."
+        : "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.",
+      checkboxLabel: "Don't show again",
     });
+
+    if (checkboxChecked) {
+      config.set("signIn.hidePasskeyDialog", true);
+    }
   }
 
   static handleRedirect(event: Electron.Event, url: string, webContents: WebContents) {

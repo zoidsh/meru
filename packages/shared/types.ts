@@ -127,6 +127,7 @@ export type Config = {
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
   "screenShare.useSystemPicker": boolean;
+  "signIn.hidePasskeyDialog": boolean;
   "window.lastState": {
     bounds: {
       width: number;
