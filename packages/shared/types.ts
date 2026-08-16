@@ -127,7 +127,6 @@ export type Config = {
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
   "screenShare.useSystemPicker": boolean;
-  "passkeys.hideSignInDialog": boolean;
   "window.lastState": {
     bounds: {
       width: number;
@@ -149,6 +148,7 @@ export type Config = {
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
+  "workspaceApps.hidePasskeyDialog": boolean;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;

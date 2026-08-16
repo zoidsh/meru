@@ -163,7 +163,7 @@ export class WorkspaceApp {
       return;
     }
 
-    if (config.get("passkeys.hideSignInDialog")) {
+    if (config.get("workspaceApps.hidePasskeyDialog")) {
       return;
     }
 
@@ -183,7 +183,7 @@ export class WorkspaceApp {
     });
 
     if (checkboxChecked) {
-      config.set("passkeys.hideSignInDialog", true);
+      config.set("workspaceApps.hidePasskeyDialog", true);
     }
   }
 

@@ -91,7 +91,6 @@ export const config = new Store<Config>({
     "gmail.extendDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
     "screenShare.useSystemPicker": true,
-    "passkeys.hideSignInDialog": false,
     "window.lastState": {
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,
       fullscreen: false,
@@ -108,6 +107,7 @@ export const config = new Store<Config>({
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,
     "workspaceApps.zoomFactors": {},
+    "workspaceApps.hidePasskeyDialog": false,
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,
