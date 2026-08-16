@@ -28,6 +28,7 @@ import { config } from "./config";
 import { ipc } from "./ipc";
 import {
   createChildWebContentsView,
+  loadUrl,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
 } from "./lib/web-contents";
@@ -197,7 +198,7 @@ export class WorkspaceApp {
 
     event.preventDefault();
 
-    webContents.loadURL(`${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+    loadUrl(webContents, `${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
   }
 
   static handleWindowOpen({
@@ -594,7 +595,7 @@ export class WorkspaceApp {
       },
     });
 
-    view.webContents.loadURL(url);
+    loadUrl(view.webContents, url);
 
     openViewDevToolsOnLaunch(view);
 
@@ -936,7 +937,7 @@ export class WorkspaceApp {
   }
 
   navigate(url: string) {
-    this.view.webContents.loadURL(url);
+    loadUrl(this.view.webContents, url);
   }
 
   reload() {

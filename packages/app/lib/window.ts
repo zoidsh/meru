@@ -11,6 +11,7 @@ import {
 } from "electron";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
+import { loadUrl } from "./web-contents";
 
 const CASCADE_OFFSET = 30;
 
@@ -150,7 +151,7 @@ export function loadRenderer(
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
   if (is.dev) {
-    window.webContents.loadURL(`http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
+    loadUrl(window.webContents, `http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
 
     if (shouldOpenDevToolsOnLaunch) {
       window.webContents.openDevTools({ mode: "detach" });

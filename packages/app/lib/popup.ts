@@ -3,6 +3,7 @@ import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
 import type { BrowserWindow, Event, Input, Session, Size } from "electron";
 import { WebContentsView } from "electron";
+import { loadUrl } from "./web-contents";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
 /** What a popup shows: a renderer page, or any URL loaded in a given session. */
@@ -242,7 +243,7 @@ export class Popup {
     if (isPage) {
       loadRenderer(this.view, { page: content.page });
     } else {
-      this.view.webContents.loadURL(content.url);
+      loadUrl(this.view.webContents, content.url);
     }
 
     parentWindow.contentView.addChildView(this.view);
