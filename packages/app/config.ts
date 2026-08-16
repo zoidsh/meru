@@ -91,7 +91,7 @@ export const config = new Store<Config>({
     "gmail.extendDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
     "screenShare.useSystemPicker": true,
-    "signIn.hidePasskeyDialog": false,
+    "passkeys.hideSignInDialog": false,
     "window.lastState": {
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,
       fullscreen: false,
