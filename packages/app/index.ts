@@ -59,6 +59,16 @@ async function init() {
     app.setAppUserModelId(APP_ID);
   }
 
+  // The team id is only known to signed builds, and without it the keychain
+  // access group can't match the `keychain-access-groups` entitlement
+  if (platform.isMacOS && process.env.APPLE_TEAM_ID) {
+    app.configureWebAuthn({
+      touchID: {
+        keychainAccessGroup: `${process.env.APPLE_TEAM_ID}.${APP_ID}.webauthn`,
+      },
+    });
+  }
+
   setMeruProtocolClient();
 
   if (!app.requestSingleInstanceLock()) {
