@@ -11,13 +11,9 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
+import type { AccountTabsState, VerticalTabsSessionWidth, VerticalTabsWidth } from "./tabs";
 import type {
-  AccountTabsState,
-  VerticalTabsLauncherAndBookmarksHost,
-  VerticalTabsSessionWidth,
-  VerticalTabsWidth,
-} from "./tabs";
-import type {
+  LauncherAndBookmarksHost,
   LauncherWorkspaceApp,
   SupportedWorkspaceApp,
   WorkspaceAppBookmarkState,
@@ -144,6 +140,7 @@ export type Config = {
   "workspaceApps.mode": WorkspaceAppsMode;
   "workspaceApps.launcherApps": LauncherWorkspaceApp[];
   "workspaceApps.launcherDisplay": WorkspaceAppsLauncherDisplay;
+  "workspaceApps.launcherAndBookmarksHost": LauncherAndBookmarksHost;
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;
@@ -165,7 +162,6 @@ export type Config = {
   "verticalTabs.showWidthToggle": boolean;
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
   "verticalTabs.showAppLinksBadge": boolean;
-  "verticalTabs.launcherAndBookmarksHost": VerticalTabsLauncherAndBookmarksHost;
 };
 
 export type IpcMainEvents =

@@ -1,6 +1,10 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
-import type { SupportedWorkspaceApp, WorkspaceAppsMode } from "./workspace-apps";
+import type {
+  LauncherAndBookmarksHost,
+  SupportedWorkspaceApp,
+  WorkspaceAppsMode,
+} from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
 
@@ -18,15 +22,6 @@ export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
  * which is what picking by hand steps over.
  */
 export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
-
-export const verticalTabsLauncherAndBookmarksHosts = {
-  auto: "Auto",
-  sidebar: "Sidebar",
-  titlebar: "Titlebar",
-} as const;
-
-export type VerticalTabsLauncherAndBookmarksHost =
-  keyof typeof verticalTabsLauncherAndBookmarksHosts;
 
 export type TabState = {
   id: string;
@@ -94,7 +89,7 @@ export function getVerticalTabsWidth(
   }: {
     configuredWidth: VerticalTabsWidth;
     sessionWidth: VerticalTabsSessionWidth | null;
-    launcherAndBookmarksHost: VerticalTabsLauncherAndBookmarksHost;
+    launcherAndBookmarksHost: LauncherAndBookmarksHost;
   },
 ) {
   // `sidebar` hands the strip the launcher and the bookmarks button for good,

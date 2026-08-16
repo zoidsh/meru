@@ -228,7 +228,7 @@ export function AppTitlebar() {
   // strip there for them, so the width is never 0; `titlebar` keeps them here
   // whatever the strip does.
   const areLauncherAndBookmarksHostedByVerticalTabs =
-    config["verticalTabs.launcherAndBookmarksHost"] !== "titlebar" && verticalTabsWidth > 0;
+    config["workspaceApps.launcherAndBookmarksHost"] !== "titlebar" && verticalTabsWidth > 0;
 
   const shouldShowUnifiedInboxButton =
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;

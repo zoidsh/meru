@@ -65,13 +65,13 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
-    // `sidebar` holds the strip open where the other hosts let it go, so
-    // switching between them moves every view sideways.
-    config.onDidChange("verticalTabs.launcherAndBookmarksHost", () => {
+    config.onDidChange("workspaceApps.mode", () => {
       accounts.updateAllViewBounds();
     });
 
-    config.onDidChange("workspaceApps.mode", () => {
+    // `sidebar` holds the strip open where the other hosts let it go, so
+    // switching between them moves every view sideways.
+    config.onDidChange("workspaceApps.launcherAndBookmarksHost", () => {
       accounts.updateAllViewBounds();
     });
 
@@ -140,7 +140,7 @@ class Accounts {
       {
         configuredWidth: config.get("verticalTabs.width"),
         sessionWidth: selectedAccount.instance.verticalTabsWidth,
-        launcherAndBookmarksHost: config.get("verticalTabs.launcherAndBookmarksHost"),
+        launcherAndBookmarksHost: config.get("workspaceApps.launcherAndBookmarksHost"),
       },
     );
   }
