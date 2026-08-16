@@ -13,13 +13,18 @@ import { log } from "./log";
 /**
  * `loadURL` rejects when the load never commits — a renderer that went away
  * mid-navigation, a network stack that gave up — and nothing waits on the
- * promise, which turns every such load into an unhandled rejection. There is
- * nothing to do about a failed load beyond saying what happened.
+ * promise, which turns every such load into an unhandled rejection. Says what
+ * happened and answers whether the page arrived.
  */
 export function loadUrl(webContents: WebContents, url: string) {
-  return webContents.loadURL(url).catch((error: unknown) => {
-    log.error("Failed to load URL", { url, error: serializeError(error) });
-  });
+  return webContents
+    .loadURL(url)
+    .then(() => true)
+    .catch((error: unknown) => {
+      log.error("Failed to load URL", { url, error: serializeError(error) });
+
+      return false;
+    });
 }
 
 /**

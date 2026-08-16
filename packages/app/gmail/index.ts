@@ -455,11 +455,19 @@ export class Gmail {
     // makes Chromium abort that navigation, leaving the view empty
     await this.extensionsLoaded;
 
-    if (!this._view) {
+    if (!this._view || this._view.webContents.isDestroyed()) {
       return;
     }
 
-    return loadUrl(this.view.webContents, this.url);
+    const loaded = await loadUrl(this.view.webContents, this.url);
+
+    if (loaded || !this._view || this._view.webContents.isDestroyed()) {
+      return;
+    }
+
+    log.info("Retrying Gmail load", { url: this.url });
+
+    await loadUrl(this.view.webContents, this.url);
   }
 
   async applyLabelColors() {
