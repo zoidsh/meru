@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { deriveExtension } from "./index";
@@ -20,8 +20,26 @@ const manifest = {
   background: { service_worker: "background/background.js", type: "module" },
 };
 
+let writeCount = 0;
+
+/**
+ * Gives every write an mtime of its own, so a rewrite is a change the derive
+ * can see whatever the filesystem's timestamp granularity is.
+ */
+async function writeSourceFile(fileName: string, content: string) {
+  const filePath = path.join(sourceDir, fileName);
+
+  await writeFile(filePath, content);
+
+  writeCount += 1;
+
+  const writtenAt = new Date(Date.now() + writeCount * 1000);
+
+  await utimes(filePath, writtenAt, writtenAt);
+}
+
 async function writeManifest(manifestSource: Record<string, unknown>) {
-  await writeFile(path.join(sourceDir, "manifest.json"), JSON.stringify(manifestSource));
+  await writeSourceFile("manifest.json", JSON.stringify(manifestSource));
 }
 
 beforeEach(async () => {
@@ -37,9 +55,9 @@ beforeEach(async () => {
 
   await writeManifest(manifest);
 
-  await writeFile(path.join(sourceDir, "background", "background.js"), "// background\n");
+  await writeSourceFile(path.join("background", "background.js"), "// background\n");
 
-  await writeFile(path.join(sourceDir, "popup.html"), "<html><head></head></html>");
+  await writeSourceFile("popup.html", "<html><head></head></html>");
 
   await writeFile(facadeScriptPath, "// facade\n");
 });
@@ -150,6 +168,28 @@ describe("deriveExtension", () => {
     expect(JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).version).toBe(
       "2.0.0",
     );
+  });
+
+  test("copies again when a file other than the manifest changed", async () => {
+    const derivedDir = await derive();
+
+    await writeSourceFile(path.join("background", "background.js"), "// edited\n");
+
+    await derive();
+
+    expect(await readFile(path.join(derivedDir, "background", "background.js"), "utf8")).toBe(
+      "// edited\n",
+    );
+  });
+
+  test("copies again when the source gained a file", async () => {
+    const derivedDir = await derive();
+
+    await writeSourceFile("content.js", "// content\n");
+
+    await derive();
+
+    expect(await readFile(path.join(derivedDir, "content.js"), "utf8")).toBe("// content\n");
   });
 
   test("gives every derived copy of the facade a bridge token of its own", async () => {
