@@ -48,6 +48,21 @@ export type NotificationTime = {
 /** Which button asked for the bookmarks popup, and so where it hangs. */
 export type BookmarksPopupPlacement = "titlebar" | "verticalTabs";
 
+/**
+ * One loaded extension's titlebar button. Everything here comes from the
+ * extension's manifest and never changes while it runs — Electron implements no
+ * part of `chrome.action`, so an extension setting an icon, a badge or a title
+ * at runtime changes nothing and leaves no state to read.
+ */
+export type ExtensionActionState = {
+  extensionId: string;
+  title: string;
+  iconDataUrl: string | null;
+};
+
+/** A titlebar button's rect, in its window's content coordinates. */
+export type ExtensionActionAnchorRect = { x: number; y: number; width: number; height: number };
+
 export type WorkspaceAppNotification = {
   title: string;
   body?: string;
@@ -220,6 +235,8 @@ export type IpcMainEvents =
         bookmarkId: Bookmark["id"],
         targetIndex: number,
       ];
+      "extensions.toggleActionPopup": [extensionId: string, anchorRect: ExtensionActionAnchorRect];
+      "extensions.setActionPopupCloseOnBlurEnabled": [enabled: boolean];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
@@ -249,6 +266,7 @@ export type IpcMainEvents =
       "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
       "workspaceApp.getBookmarkState": (workspaceAppId: string) => WorkspaceAppBookmarkState;
       "bookmarks.getBookmarks": () => BookmarkState[];
+      "extensions.getActions": () => ExtensionActionState[];
     };
 
 export type IpcRendererEvent = {
@@ -263,6 +281,7 @@ export type IpcRendererEvent = {
   "accounts.changed": [accounts: AccountInstances];
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];
+  "extensions.actionsChanged": [actions: ExtensionActionState[]];
   "accounts.openAddAccountDialog": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];

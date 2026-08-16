@@ -6,6 +6,7 @@ import { blocker } from "@/blocker";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
+import { extensionActions } from "@/extension-actions";
 import { extensions } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
@@ -124,6 +125,8 @@ async function init() {
 
   ipc.init();
 
+  extensionActions.init();
+
   theme.init();
 
   appMenu.init();
@@ -210,6 +213,8 @@ async function init() {
     bookmarks.popup.close();
 
     downloads.recentDownloadHistoryPopup.close();
+
+    extensionActions.popup.close();
   });
 }
 
