@@ -145,6 +145,14 @@ export class WorkspaceApp {
     );
   }
 
+  static closeAccountInstances(accountId: AccountConfig["id"]) {
+    for (const instance of Array.from(WorkspaceApp.instances.values())) {
+      if (instance.accountId === accountId) {
+        instance.close();
+      }
+    }
+  }
+
   static handleNavigate(url: string) {
     if (!url.startsWith(`${GOOGLE_ACCOUNTS_URL}/v3/signin/challenge/pk/presend`)) {
       return;
