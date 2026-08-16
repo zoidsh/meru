@@ -253,7 +253,7 @@ export class NativeMessaging {
       hostPath,
       extensionOrigin: `chrome-extension://${port.extensionId}/`,
       onStderr: (output) => {
-        this.options.logger?.error("Native messaging host wrote to stderr", {
+        this.options.logger?.info("Native messaging host wrote to stderr", {
           hostName: port.hostName,
           output,
         });
