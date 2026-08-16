@@ -6,6 +6,7 @@ import type { SelectedDesktopSource } from "@meru/shared/types";
 import { app, type IpcMainEvent, ipcMain, type Session, session } from "electron";
 import { blocker } from "./blocker";
 import { config } from "./config";
+import { extensions } from "./extensions";
 import { Gmail } from "./gmail";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
@@ -45,6 +46,8 @@ export class Account {
 
     blocker.setupSession(this.session);
 
+    extensions.setupSession(this.session);
+
     this.setSpellCheckerLanguages();
 
     this.gmail = new Gmail({
@@ -68,6 +71,8 @@ export class Account {
     this.session.setDisplayMediaRequestHandler(null);
 
     blocker.teardownSession(this.session);
+
+    extensions.teardownSession(this.session);
   }
 
   setSpellCheckerLanguages() {
