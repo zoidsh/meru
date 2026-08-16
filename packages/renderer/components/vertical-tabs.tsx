@@ -431,7 +431,7 @@ export function VerticalTabs() {
   const launcherApps = config?.["workspaceApps.launcherApps"] ?? [];
 
   const hostsLauncherAndBookmarks =
-    (config?.["verticalTabs.launcherAndBookmarksHost"] ?? "auto") === "auto";
+    (config?.["workspaceApps.launcherAndBookmarksPlacement"] ?? "auto") !== "titlebar";
 
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 

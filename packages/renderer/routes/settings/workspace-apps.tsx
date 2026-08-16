@@ -1,12 +1,9 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
 import {
-  GMAIL_TAB_ID,
-  verticalTabsLauncherAndBookmarksHosts,
-  verticalTabsWidths,
-} from "@meru/shared/tabs";
-import {
+  launcherAndBookmarksPlacements,
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
   type SupportedWorkspaceApp,
@@ -255,19 +252,6 @@ export function WorkspaceAppsSettings() {
                   configKey="verticalTabs.showWidthToggle"
                   licenseKeyRequired
                 />
-                <ConfigSelectField
-                  label="Launcher and Bookmarks"
-                  description="Where the Workspace Apps launcher and the bookmarks button sit. Follow Sidebar moves them to the bottom of the sidebar while it is shown, Titlebar keeps them in the titlebar at all times."
-                  configKey="verticalTabs.launcherAndBookmarksHost"
-                  placeholder="Select host"
-                  licenseKeyRequired
-                  items={Object.entries(verticalTabsLauncherAndBookmarksHosts).map(
-                    ([value, label]) => ({
-                      value,
-                      label,
-                    }),
-                  )}
-                />
                 <ConfigSwitchField
                   label="Hide Gmail Unread Badge When Active"
                   description="Hide the unread badge on the Gmail tab while it is the active tab, since the inbox is already in front. Accounts that need attention are still flagged."
@@ -307,93 +291,109 @@ export function WorkspaceAppsSettings() {
             licenseKeyRequired
           />
           <FieldSeparator />
-          <Field>
-            <FieldContent>
-              <FieldLabel className="flex items-center gap-2">
-                Launcher Apps
-                {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
-              </FieldLabel>
-              <FieldDescription>
-                Add Workspace Apps to the Workspace Apps launcher in the titlebar on the right.
-              </FieldDescription>
-            </FieldContent>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground">In Launcher</div>
-                {launcherApps.length === 0 ? (
-                  <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    No apps in the launcher. Add apps from Available below.
-                  </p>
-                ) : (
-                  <DragDropProvider
-                    onDragEnd={(event) => {
-                      if (event.canceled) {
-                        return;
-                      }
+          <FieldSet>
+            <FieldLegend>Launcher and Bookmarks</FieldLegend>
+            <Field>
+              <FieldContent>
+                <FieldLabel className="flex items-center gap-2">
+                  Launcher Apps
+                  {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
+                </FieldLabel>
+                <FieldDescription>
+                  Add Workspace Apps to the Workspace Apps launcher in the titlebar on the right.
+                </FieldDescription>
+              </FieldContent>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="text-xs font-medium text-muted-foreground">In Launcher</div>
+                  {launcherApps.length === 0 ? (
+                    <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+                      No apps in the launcher. Add apps from Available below.
+                    </p>
+                  ) : (
+                    <DragDropProvider
+                      onDragEnd={(event) => {
+                        if (event.canceled) {
+                          return;
+                        }
 
-                      configMutation.mutate({
-                        "workspaceApps.launcherApps": move(launcherApps, event),
-                      });
-                    }}
-                  >
+                        configMutation.mutate({
+                          "workspaceApps.launcherApps": move(launcherApps, event),
+                        });
+                      }}
+                    >
+                      <div className="flex flex-row flex-wrap gap-2">
+                        {launcherApps.map((app, index) => (
+                          <SortableLauncherAppItem
+                            key={app}
+                            app={app}
+                            index={index}
+                            onRemove={() => {
+                              configMutation.mutate({
+                                "workspaceApps.launcherApps": launcherApps.filter(
+                                  (value) => value !== app,
+                                ),
+                              });
+                            }}
+                            disabled={!isLicenseKeyValid}
+                          />
+                        ))}
+                      </div>
+                    </DragDropProvider>
+                  )}
+                </div>
+                {availableApps.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs font-medium text-muted-foreground">Available</div>
                     <div className="flex flex-row flex-wrap gap-2">
-                      {launcherApps.map((app, index) => (
-                        <SortableLauncherAppItem
+                      {availableApps.map((app) => (
+                        <Button
                           key={app}
-                          app={app}
-                          index={index}
-                          onRemove={() => {
+                          variant="outline"
+                          size="xs"
+                          onClick={() => {
                             configMutation.mutate({
-                              "workspaceApps.launcherApps": launcherApps.filter(
-                                (value) => value !== app,
-                              ),
+                              "workspaceApps.launcherApps": [...launcherApps, app],
                             });
                           }}
                           disabled={!isLicenseKeyValid}
-                        />
+                          aria-label={`Add ${launcherWorkspaceApps[app]} to launcher`}
+                        >
+                          <WorkspaceAppIcon app={app} className="size-3.5" />
+                          {launcherWorkspaceApps[app]}
+                          <PlusIcon />
+                        </Button>
                       ))}
                     </div>
-                  </DragDropProvider>
+                  </div>
                 )}
               </div>
-              {availableApps.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <div className="text-xs font-medium text-muted-foreground">Available</div>
-                  <div className="flex flex-row flex-wrap gap-2">
-                    {availableApps.map((app) => (
-                      <Button
-                        key={app}
-                        variant="outline"
-                        size="xs"
-                        onClick={() => {
-                          configMutation.mutate({
-                            "workspaceApps.launcherApps": [...launcherApps, app],
-                          });
-                        }}
-                        disabled={!isLicenseKeyValid}
-                        aria-label={`Add ${launcherWorkspaceApps[app]} to launcher`}
-                      >
-                        <WorkspaceAppIcon app={app} className="size-3.5" />
-                        {launcherWorkspaceApps[app]}
-                        <PlusIcon />
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Field>
-          <ConfigSelectField
-            label="Launcher Display"
-            description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, Expanded always shows them as individual buttons."
-            configKey="workspaceApps.launcherDisplay"
-            placeholder="Select display"
-            licenseKeyRequired
-            items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-          />
+            </Field>
+            <ConfigSelectField
+              label="Launcher Display"
+              description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, Expanded always shows them as individual buttons."
+              configKey="workspaceApps.launcherDisplay"
+              placeholder="Select display"
+              licenseKeyRequired
+              items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
+            {config["workspaceApps.mode"] === "tabs" && (
+              <ConfigSelectField
+                label="Placement"
+                description="Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown, Sidebar keeps them there and holds the sidebar open even with a single tab, Titlebar keeps them in the titlebar at all times."
+                configKey="workspaceApps.launcherAndBookmarksPlacement"
+                placeholder="Select placement"
+                licenseKeyRequired
+                items={Object.entries(launcherAndBookmarksPlacements).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
+            )}
+          </FieldSet>
         </FieldGroup>
       </SettingsContent>
     </Settings>

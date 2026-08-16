@@ -1,6 +1,10 @@
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
-import type { SupportedWorkspaceApp, WorkspaceAppsMode } from "./workspace-apps";
+import type {
+  LauncherAndBookmarksPlacement,
+  SupportedWorkspaceApp,
+  WorkspaceAppsMode,
+} from "./workspace-apps";
 
 export const GMAIL_TAB_ID = "gmail";
 
@@ -18,14 +22,6 @@ export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
  * which is what picking by hand steps over.
  */
 export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
-
-export const verticalTabsLauncherAndBookmarksHosts = {
-  auto: "Follow Sidebar",
-  titlebar: "Titlebar",
-} as const;
-
-export type VerticalTabsLauncherAndBookmarksHost =
-  keyof typeof verticalTabsLauncherAndBookmarksHosts;
 
 export type TabState = {
   id: string;
@@ -89,9 +85,16 @@ export function getVerticalTabsWidth(
   {
     configuredWidth,
     sessionWidth,
-  }: { configuredWidth: VerticalTabsWidth; sessionWidth: VerticalTabsSessionWidth | null },
+    launcherAndBookmarksPlacement,
+  }: {
+    configuredWidth: VerticalTabsWidth;
+    sessionWidth: VerticalTabsSessionWidth | null;
+    launcherAndBookmarksPlacement: LauncherAndBookmarksPlacement;
+  },
 ) {
-  if (tabs.length <= 1) {
+  // `sidebar` hands the strip the launcher and the bookmarks button for good,
+  // so it has to stay even with nothing to switch between.
+  if (tabs.length <= 1 && launcherAndBookmarksPlacement !== "sidebar") {
     return 0;
   }
 

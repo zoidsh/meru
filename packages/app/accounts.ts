@@ -69,6 +69,12 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
+    // `sidebar` holds the strip open where the other placements let it go, so
+    // switching between them moves every view sideways.
+    config.onDidChange("workspaceApps.launcherAndBookmarksPlacement", () => {
+      accounts.updateAllViewBounds();
+    });
+
     config.onDidChange("workspaceApps.zoomFactors", () => {
       WorkspaceApp.applyPersistedZoomFactors();
 
@@ -134,6 +140,7 @@ class Accounts {
       {
         configuredWidth: config.get("verticalTabs.width"),
         sessionWidth: selectedAccount.instance.verticalTabsWidth,
+        launcherAndBookmarksPlacement: config.get("workspaceApps.launcherAndBookmarksPlacement"),
       },
     );
   }

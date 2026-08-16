@@ -103,6 +103,7 @@ export const config = new Store<Config>({
     "workspaceApps.mode": "tabs",
     "workspaceApps.launcherApps": [],
     "workspaceApps.launcherDisplay": "auto",
+    "workspaceApps.launcherAndBookmarksPlacement": "auto",
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,
@@ -124,7 +125,6 @@ export const config = new Store<Config>({
     "verticalTabs.showWidthToggle": true,
     "verticalTabs.hideUnreadBadgeWhenActive": false,
     "verticalTabs.showAppLinksBadge": true,
-    "verticalTabs.launcherAndBookmarksHost": "auto",
   },
   migrations: {
     ">=3.4.0": (store) => {
