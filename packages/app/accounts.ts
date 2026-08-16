@@ -336,6 +336,8 @@ class Accounts {
 
     account.instance.gmail.destroy();
 
+    account.instance.destroy();
+
     await account.instance.session.clearData();
 
     this.instances.delete(selectedAccountId);

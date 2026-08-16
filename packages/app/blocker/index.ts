@@ -34,6 +34,10 @@ export class Blocker {
       session.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, this.onBeforeRequest);
     }
   }
+
+  teardownSession(session: Electron.Session) {
+    session.webRequest.onBeforeRequest(null);
+  }
 }
 
 export const blocker = new Blocker();

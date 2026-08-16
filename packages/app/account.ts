@@ -60,6 +60,16 @@ export class Account {
     this.tabs.restoreSavedTabs(accountConfig.workspaceApps.savedTabs);
   }
 
+  destroy() {
+    this.session.setPermissionRequestHandler(null);
+
+    this.session.setPermissionCheckHandler(null);
+
+    this.session.setDisplayMediaRequestHandler(null);
+
+    blocker.teardownSession(this.session);
+  }
+
   setSpellCheckerLanguages() {
     if (platform.isMacOS || !licenseKey.isValid) {
       return;
