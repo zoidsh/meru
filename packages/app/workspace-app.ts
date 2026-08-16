@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -149,10 +150,16 @@ export class WorkspaceApp {
       return;
     }
 
+    // Windows handles Google's platform passkeys natively via webauthn.dll.
+    if (platform.isWindows) {
+      return;
+    }
+
     dialog.showMessageBox({
       type: "info",
-      message: "Passkey sign-in not supported yet",
-      detail: "Please use password to sign in.",
+      message: "Passkey sign-in isn't supported on this platform yet",
+      detail:
+        "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.",
     });
   }
 
