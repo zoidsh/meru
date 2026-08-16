@@ -8,6 +8,7 @@ import {
 } from "@meru/shared/tabs";
 import { Account } from "./account";
 import { config } from "./config";
+import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
@@ -348,6 +349,8 @@ class Accounts {
     account.instance.destroy();
 
     await account.instance.session.clearData();
+
+    await extensions.clearSessionData(account.instance.session);
 
     this.instances.delete(selectedAccountId);
 

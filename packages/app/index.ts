@@ -6,6 +6,7 @@ import { blocker } from "@/blocker";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
+import { extensions } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { licenseKey } from "@/license-key";
@@ -38,7 +39,11 @@ async function resetApp() {
     accounts.map((account) => {
       const accountSession = session.fromPartition(`persist:${account.id}`);
 
-      return Promise.all([accountSession.clearCache(), accountSession.clearStorageData()]);
+      return Promise.all([
+        accountSession.clearCache(),
+        accountSession.clearStorageData(),
+        extensions.clearSessionData(accountSession),
+      ]);
     }),
   );
 
