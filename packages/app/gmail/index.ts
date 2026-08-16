@@ -33,6 +33,7 @@ import { log } from "@/lib/log";
 import {
   createChildWebContentsView,
   loadUrl,
+  logLoadFailures,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
 } from "@/lib/web-contents";
@@ -403,6 +404,8 @@ export class Gmail {
     });
 
     this.registerNavigationHandler(this.view);
+
+    logLoadFailures(this.view.webContents, "Gmail view");
 
     this.updateViewBounds();
 
