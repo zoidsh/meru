@@ -1,37 +1,76 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
-import type { BrowserWindow } from "electron";
+import { clamp } from "@meru/shared/utils";
+import type { BrowserWindow, Event, Input, Session, Size } from "electron";
 import { WebContentsView } from "electron";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
+/** What a popup shows: a renderer page, or any URL loaded in a given session. */
+export type PopupContent = { page: RendererPage } | { url: string; session: Session };
+
 /**
- * A renderer page drawn over the window it was opened from, as a child view
- * rather than renderer-drawn markup: child views paint above the main window's
- * HTML, so a dropdown would be covered wherever a workspace app view sits.
+ * Where the popup hangs from, in the parent window's content coordinates: `y`
+ * is the popup's top edge and `x` the edge named by `align`. Left unset, the
+ * popup hangs from the end of the titlebar, where the buttons that open it sit.
+ */
+export type PopupAnchor = { x: number; y: number; align: "start" | "end" };
+
+export type PopupOptions = {
+  content: PopupContent;
+  /** The size of the popup itself, without the gaps the view spans. */
+  width: number | "preferred";
+  /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
+  height: number | "fill" | "preferred";
+  anchor?: PopupAnchor;
+};
+
+/** What a popup sized by its page gets until the page has reported a size. */
+const PREFERRED_SIZE_FALLBACK = { width: BASE_SPACING * 44, height: BASE_SPACING * 60 };
+
+/** Chrome's ceiling for an action popup, which is what sizes itself here. */
+const PREFERRED_SIZE_MAX = { width: 800, height: 600 };
+
+function isSameContent(content: PopupContent, otherContent: PopupContent) {
+  if ("page" in content) {
+    return "page" in otherContent && content.page === otherContent.page;
+  }
+
+  return (
+    !("page" in otherContent) &&
+    content.url === otherContent.url &&
+    content.session === otherContent.session
+  );
+}
+
+function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor | undefined) {
+  if (!anchor || !otherAnchor) {
+    return anchor === otherAnchor;
+  }
+
+  return (
+    anchor.x === otherAnchor.x && anchor.y === otherAnchor.y && anchor.align === otherAnchor.align
+  );
+}
+
+/**
+ * A page drawn over the window it was opened from, as a child view rather than
+ * renderer-drawn markup: child views paint above the main window's HTML, so a
+ * dropdown would be covered wherever a workspace app view sits.
  *
- * The view spans `BASE_SPACING` past the popup on every side and the page pads
- * itself by the same amount, so the popup sits where the gaps put it and its
+ * A renderer page pads itself by `BASE_SPACING`, and the view spans that much
+ * past the popup on every side, so the popup sits where the gaps put it and its
  * entrance animation has room to move without being cut off at the view edge.
+ * Any other page fills its view instead — an extension's popup knows nothing of
+ * Meru's gaps and would paint over them.
  */
 export class Popup {
-  private page: RendererPage;
+  private options: PopupOptions | null = null;
 
-  /** The size of the popup itself, without the gaps the view spans. */
-  private width: number;
-
-  /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
-  private height: number | "fill";
+  private preferredSize: { width: number; height: number } | null = null;
 
   private view: WebContentsView | null = null;
 
   private parentWindow: BrowserWindow | null = null;
-
-  /**
-   * Where the popup starts horizontally, for a caller that wants it somewhere
-   * other than the end of the titlebar — the bookmarks button in the vertical
-   * tabs strip hangs it beside the strip instead.
-   */
-  private anchorX: number | null = null;
 
   /**
    * Held off while the pointer is over the button that toggles the popup, so
@@ -40,48 +79,79 @@ export class Popup {
    */
   closeOnBlurEnabled = false;
 
-  constructor({
-    page,
-    width,
-    height,
-  }: {
-    page: RendererPage;
-    width: number;
-    height: number | "fill";
-  }) {
-    this.page = page;
-    this.width = width;
-    this.height = height;
-  }
-
   get webContents() {
     return this.view?.webContents ?? null;
   }
 
   private setBounds = () => {
-    if (!this.view || !this.parentWindow || this.parentWindow.isDestroyed()) {
+    const { view, parentWindow, options } = this;
+
+    if (!view || !parentWindow || !options || parentWindow.isDestroyed()) {
       return;
     }
 
     const parentWindowBounds = platform.isWindows
-      ? this.parentWindow.getContentBounds()
-      : this.parentWindow.getBounds();
+      ? parentWindow.getContentBounds()
+      : parentWindow.getBounds();
 
-    const y = APP_TITLEBAR_HEIGHT;
+    const padding = "page" in options.content ? BASE_SPACING : 0;
 
-    const width = this.width + BASE_SPACING * 2;
+    const width =
+      options.width === "preferred"
+        ? Math.min(
+            this.preferredSize?.width ?? PREFERRED_SIZE_FALLBACK.width,
+            PREFERRED_SIZE_MAX.width,
+          )
+        : options.width;
 
-    this.view.setBounds({
-      x: this.anchorX === null ? parentWindowBounds.width - width : this.anchorX - BASE_SPACING,
-      y,
-      width,
-      height:
-        this.height === "fill" ? parentWindowBounds.height - y : this.height + BASE_SPACING * 2,
+    const anchor = options.anchor ?? {
+      x: parentWindowBounds.width - padding,
+      y: APP_TITLEBAR_HEIGHT + padding,
+      align: "end" as const,
+    };
+
+    const viewWidth = width + padding * 2;
+
+    const viewY = anchor.y - padding;
+
+    const availableHeight = Math.max(parentWindowBounds.height - viewY, 0);
+
+    const viewHeight =
+      options.height === "fill"
+        ? availableHeight
+        : options.height === "preferred"
+          ? Math.min(
+              this.preferredSize?.height ?? PREFERRED_SIZE_FALLBACK.height,
+              PREFERRED_SIZE_MAX.height,
+            )
+          : options.height + padding * 2;
+
+    view.setBounds({
+      x: clamp(
+        (anchor.align === "start" ? anchor.x : anchor.x - width) - padding,
+        0,
+        Math.max(parentWindowBounds.width - viewWidth, 0),
+      ),
+      y: viewY,
+      width: viewWidth,
+      height: Math.min(viewHeight, availableHeight),
     });
+  };
+
+  private handlePreferredSizeChanged = (_event: Event, size: Size) => {
+    this.preferredSize = size;
+
+    this.setBounds();
   };
 
   private handleBlur = () => {
     if (this.closeOnBlurEnabled) {
+      this.close();
+    }
+  };
+
+  private handleInput = (_event: Event, input: Input) => {
+    if (input.type === "keyDown" && input.key === "Escape") {
       this.close();
     }
   };
@@ -97,7 +167,8 @@ export class Popup {
 
     this.view = null;
     this.parentWindow = null;
-    this.anchorX = null;
+    this.options = null;
+    this.preferredSize = null;
     this.closeOnBlurEnabled = false;
 
     if (!view || !parentWindow) {
@@ -113,9 +184,13 @@ export class Popup {
     }
 
     if (!view.webContents.isDestroyed()) {
-      // Only the listener this class added comes off: removing them all takes
+      // Only the listeners this class added come off: removing them all takes
       // Electron's own with it and leaves the webContents unable to tear down.
       view.webContents.off("blur", this.handleBlur);
+
+      view.webContents.off("before-input-event", this.handleInput);
+
+      view.webContents.off("preferred-size-changed", this.handlePreferredSizeChanged);
 
       view.webContents.close();
     }
@@ -123,24 +198,36 @@ export class Popup {
 
   /**
    * Returns whether the popup ended up open, so callers can refresh what it is
-   * about to show.
+   * about to show. Toggling it with the same window, content and anchor closes
+   * it; anything else about the popup changing reopens it.
    */
-  toggle(parentWindow: BrowserWindow, { anchorX }: { anchorX?: number } = {}) {
-    if (this.view) {
-      const wasSameWindow = this.parentWindow === parentWindow;
+  toggle(parentWindow: BrowserWindow, options: PopupOptions) {
+    const openOptions = this.options;
 
-      const wasSameAnchorX = this.anchorX === (anchorX ?? null);
+    if (this.view) {
+      const wasSamePopup =
+        this.parentWindow === parentWindow &&
+        openOptions !== null &&
+        isSameContent(openOptions.content, options.content) &&
+        isSameAnchor(openOptions.anchor, options.anchor);
 
       this.close();
 
-      if (wasSameWindow && wasSameAnchorX) {
+      if (wasSamePopup) {
         return false;
       }
     }
 
+    const { content } = options;
+
+    const isPage = "page" in content;
+
+    const followsPreferredSize = options.width === "preferred" || options.height === "preferred";
+
     this.view = new WebContentsView({
       webPreferences: {
-        preload: getPreloadPath("renderer"),
+        ...(isPage ? { preload: getPreloadPath("renderer") } : { session: content.session }),
+        enablePreferredSizeMode: followsPreferredSize,
       },
     });
 
@@ -150,15 +237,35 @@ export class Popup {
 
     this.parentWindow = parentWindow;
 
-    this.anchorX = anchorX ?? null;
+    this.options = options;
 
-    loadRenderer(this.view, { page: this.page });
+    if (isPage) {
+      loadRenderer(this.view, { page: content.page });
+    } else {
+      this.view.webContents.loadURL(content.url);
+    }
 
     parentWindow.contentView.addChildView(this.view);
 
     this.setBounds();
 
+    if (followsPreferredSize) {
+      this.view.webContents.on("preferred-size-changed", this.handlePreferredSizeChanged);
+    }
+
     this.view.webContents.once("blur", this.handleBlur);
+
+    if (!isPage) {
+      // A renderer page closes itself on Escape and calls the view's own way
+      // back here; an arbitrary page has neither, and neither can blur before
+      // the view has been given focus
+      this.view.webContents.on("before-input-event", this.handleInput);
+
+      this.view.webContents.focus();
+
+      // Extension popups end themselves with `window.close()` once they are done
+      this.view.webContents.once("destroyed", this.close);
+    }
 
     parentWindow.on("resize", this.setBounds);
 

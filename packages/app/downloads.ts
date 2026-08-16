@@ -4,7 +4,7 @@ import { platform } from "@electron-toolkit/utils";
 import { BASE_SPACING } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { shell } from "electron";
+import { type BrowserWindow, shell } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
@@ -18,11 +18,15 @@ const FILE_MANAGER_NAME = platform.isMacOS
     : "your file manager";
 
 class Downloads {
-  recentDownloadHistoryPopup = new Popup({
-    page: "recent-download-history",
-    width: BASE_SPACING * 48,
-    height: BASE_SPACING * 44,
-  });
+  recentDownloadHistoryPopup = new Popup();
+
+  toggleRecentDownloadHistoryPopup(parentWindow: BrowserWindow) {
+    return this.recentDownloadHistoryPopup.toggle(parentWindow, {
+      content: { page: "recent-download-history" },
+      width: BASE_SPACING * 48,
+      height: BASE_SPACING * 44,
+    });
+  }
 
   addDownloadHistoryItem({ fileName, filePath, createdAt, exists }: Omit<DownloadItem, "id">) {
     const item = {

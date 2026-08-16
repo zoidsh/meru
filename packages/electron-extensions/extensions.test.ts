@@ -53,15 +53,26 @@ function createExtensions(
   });
 }
 
-function createExtension(id: string, extensionDir: string) {
+function createExtension(id: string, extensionDir: string, manifest: Record<string, unknown> = {}) {
   return {
     id,
     name: `Extension ${id}`,
     version: "1.0.0",
     path: extensionDir,
     url: `chrome-extension://${id}/`,
-    manifest: {},
+    manifest,
   } as Extension;
+}
+
+const ACTION_MANIFEST = {
+  action: { default_title: "Vault", default_popup: "popup/index.html" },
+  icons: { "48": "icon-48.png" },
+};
+
+async function createActionExtension(id: string, extensionDir: string) {
+  await writeFile(path.join(extensionDir, "icon-48.png"), "icon");
+
+  return createExtension(id, extensionDir, ACTION_MANIFEST);
 }
 
 function createSession({
@@ -306,6 +317,84 @@ describe("Extensions", () => {
     expect(await listPartitionDir(partitionPath)).toEqual(["Cookies"]);
 
     await fs.rm(partitionPath, { recursive: true, force: true });
+  });
+
+  test("assembles an action for every extension it loaded", async () => {
+    const { session } = createSession({
+      loadExtension: (extensionDir) => createActionExtension("aaa", extensionDir),
+    });
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    await extensions.setupSession(session);
+
+    expect(extensions.getSessionActions(session)).toEqual([
+      {
+        extensionId: "aaa",
+        name: "Extension aaa",
+        title: "Vault",
+        popupUrl: "chrome-extension://aaa/popup/index.html",
+        iconDataUrl: `data:image/png;base64,${Buffer.from("icon").toString("base64")}`,
+      },
+    ]);
+  });
+
+  test("keeps the button of an extension whose icon cannot be read", async () => {
+    const loggedErrors: Record<string, unknown>[] = [];
+
+    const { session } = createSession({
+      loadExtension: async (extensionDir) =>
+        createExtension("aaa", extensionDir, { icons: { "48": "missing.png" } }),
+    });
+
+    const extensions = createExtensions([await createExtensionDir("one")], {
+      info: () => {},
+      error: (_message, details) => {
+        loggedErrors.push(details);
+      },
+    });
+
+    await extensions.setupSession(session);
+
+    expect(loggedErrors).toHaveLength(1);
+    expect(extensions.getSessionActions(session)).toHaveLength(1);
+    expect(extensions.getSessionActions(session)[0]?.iconDataUrl).toBe(null);
+  });
+
+  test("has no actions for a session it loaded nothing into", async () => {
+    const { session } = createSession();
+
+    const extensions = createExtensions([]);
+
+    await extensions.setupSession(session);
+
+    expect(extensions.getSessionActions(session)).toEqual([]);
+  });
+
+  test("reports the actions of a session whenever they change", async () => {
+    const changes: { sessionActions: number }[] = [];
+
+    const { session } = createSession({
+      loadExtension: (extensionDir) => createActionExtension("aaa", extensionDir),
+    });
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    const unsubscribe = extensions.onActionsChanged((changedSession, actions) => {
+      expect(changedSession).toBe(session);
+
+      changes.push({ sessionActions: actions.length });
+    });
+
+    await extensions.setupSession(session);
+
+    extensions.teardownSession(session);
+
+    unsubscribe();
+
+    await extensions.setupSession(session);
+
+    expect(changes).toEqual([{ sessionActions: 1 }, { sessionActions: 0 }]);
   });
 
   test("unloads an extension that finished loading after teardown", async () => {

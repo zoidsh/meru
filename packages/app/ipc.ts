@@ -38,6 +38,7 @@ import {
 import { confirmAppLinksTabHandover } from "./dialogs";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
+import { extensionActions } from "./extension-actions";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { log } from "./lib/log";
 import {
@@ -998,6 +999,18 @@ class Ipc {
       bookmarks.move(accountId, bookmarkId, targetIndex);
     });
 
+    ipc.main.handle("extensions.getActions", (event) => {
+      return extensionActions.serialize(event.sender);
+    });
+
+    ipc.main.on("extensions.toggleActionPopup", (event, extensionId, anchorRect) => {
+      extensionActions.togglePopup(event.sender, extensionId, anchorRect);
+    });
+
+    ipc.main.on("extensions.setActionPopupCloseOnBlurEnabled", (_event, enabled) => {
+      extensionActions.popup.closeOnBlurEnabled = enabled;
+    });
+
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
       const parentWindow = BrowserWindow.fromWebContents(event.sender);
 
@@ -1005,7 +1018,7 @@ class Ipc {
         return;
       }
 
-      if (downloads.recentDownloadHistoryPopup.toggle(parentWindow)) {
+      if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
         downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });

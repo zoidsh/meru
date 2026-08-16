@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { navigate } from "wouter/use-hash-location";
+import { ExtensionActions } from "@/components/extension-actions";
 import { FindInPage as UiFindInPage } from "@/components/find-in-page";
 import {
   Titlebar,
@@ -397,6 +398,7 @@ export function AppTitlebar() {
               )}
               <BookmarksButton />
             </TitlebarButtonGroup>
+            <ExtensionActions />
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Saved Searches"

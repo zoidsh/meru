@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Session } from "electron";
+import {
+  type ActionExtension,
+  createExtensionAction,
+  type ExtensionAction,
+  readExtensionActionIcon,
+} from "./action";
 import { deriveExtension } from "./derive";
 
 /**
@@ -25,6 +31,8 @@ export type ExtensionsLogger = {
   error: (message: string, details: Record<string, unknown>) => void;
 };
 
+export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
+
 export type ExtensionsOptions = {
   /**
    * Unpacked extension directories, loaded into every session handed to
@@ -43,8 +51,9 @@ export type ExtensionsOptions = {
 
 /**
  * Loads unpacked extensions into Electron sessions and keeps track of what is
- * loaded where, so an embedder can unload them again and can tell whether a
- * `chrome-extension://` URL belongs to an extension it loaded itself.
+ * loaded where, so an embedder can unload them again, can tell whether a
+ * `chrome-extension://` URL belongs to an extension it loaded itself, and can
+ * draw a toolbar button for each of them.
  *
  * Chromium scopes an extension — content scripts, service worker, storage — to
  * the session it is loaded into, so the same directory loaded into several
@@ -61,6 +70,10 @@ export class Extensions {
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
+
+  private actionsBySession = new Map<Session, ExtensionAction[]>();
+
+  private actionsChangedListeners = new Set<ActionsChangedListener>();
 
   private derivedExtensionDirs = new Map<string, Promise<string>>();
 
@@ -109,6 +122,10 @@ export class Extensions {
 
     this.loadedExtensionIdsBySession.set(session, loadedExtensionIds);
 
+    const actions: ExtensionAction[] = [];
+
+    this.actionsBySession.set(session, actions);
+
     for (const extensionDir of this.extensionDirs) {
       try {
         const extension = await session.extensions.loadExtension(
@@ -124,6 +141,8 @@ export class Extensions {
 
         loadedExtensionIds.add(extension.id);
 
+        actions.push(await this.createAction(extension));
+
         this.logger?.info("Loaded extension", {
           id: extension.id,
           name: extension.name,
@@ -134,6 +153,21 @@ export class Extensions {
         this.logger?.error("Failed to load extension", { extensionDir, error });
       }
     }
+
+    this.emitActionsChanged(session);
+  }
+
+  /** A broken icon costs the button its icon, not the extension its button. */
+  private async createAction(extension: ActionExtension) {
+    const action = createExtensionAction(extension);
+
+    try {
+      action.iconDataUrl = await readExtensionActionIcon(extension);
+    } catch (error) {
+      this.logger?.error("Failed to read extension action icon", { id: extension.id, error });
+    }
+
+    return action;
   }
 
   teardownSession(session: Session) {
@@ -145,10 +179,38 @@ export class Extensions {
 
     this.loadedExtensionIdsBySession.delete(session);
 
+    this.actionsBySession.delete(session);
+
     for (const extensionId of loadedExtensionIds) {
       session.extensions.removeExtension(extensionId);
 
       this.logger?.info("Unloaded extension", { id: extensionId });
+    }
+
+    this.emitActionsChanged(session);
+  }
+
+  /**
+   * The toolbar buttons an embedder draws for this session, in the order the
+   * extensions were loaded. Empty until the extensions have finished loading,
+   * which is what `onActionsChanged` is for.
+   */
+  getSessionActions(session: Session): ExtensionAction[] {
+    return this.actionsBySession.get(session) ?? [];
+  }
+
+  /** Fires whenever the extensions loaded into a session change. */
+  onActionsChanged(listener: ActionsChangedListener) {
+    this.actionsChangedListeners.add(listener);
+
+    return () => {
+      this.actionsChangedListeners.delete(listener);
+    };
+  }
+
+  private emitActionsChanged(session: Session) {
+    for (const listener of this.actionsChangedListeners) {
+      listener(session, this.getSessionActions(session));
     }
   }
 

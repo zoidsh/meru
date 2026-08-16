@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { BASE_SPACING } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import type { AccountConfig, Bookmark, BookmarkState } from "@meru/shared/schemas";
 import type { BookmarksPopupPlacement } from "@meru/shared/types";
 import { clamp } from "@meru/shared/utils";
@@ -19,16 +19,21 @@ import { Popup } from "./lib/popup";
  * Windows` mode and absent in `Tabs` mode until a second tab opens.
  */
 class Bookmarks {
-  popup = new Popup({
-    page: "bookmarks",
-    width: BASE_SPACING * 40,
-    height: "fill",
-  });
+  popup = new Popup();
 
   togglePopup(parentWindow: BrowserWindow, placement: BookmarksPopupPlacement) {
     return this.popup.toggle(parentWindow, {
-      anchorX:
-        placement === "verticalTabs" ? accounts.getVerticalTabsWidth() + BASE_SPACING : undefined,
+      content: { page: "bookmarks" },
+      width: BASE_SPACING * 40,
+      height: "fill",
+      anchor:
+        placement === "verticalTabs"
+          ? {
+              x: accounts.getVerticalTabsWidth() + BASE_SPACING,
+              y: APP_TITLEBAR_HEIGHT + BASE_SPACING,
+              align: "start",
+            }
+          : undefined,
     });
   }
 

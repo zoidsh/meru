@@ -4,6 +4,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { DownloadIcon, EllipsisVerticalIcon, StarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountBadge } from "@/components/account-badge";
+import { ExtensionActions } from "@/components/extension-actions";
 import { FindInPage } from "@/components/find-in-page";
 import {
   Titlebar,
@@ -204,6 +205,7 @@ function WorkspaceApp() {
       </TitlebarLeft>
       <TitlebarRight>
         <FindInPageControls />
+        <ExtensionActions />
         <TitlebarButtonGroup>
           <BookmarkButton workspaceAppId={workspaceAppId} />
           <RecentDownloadHistoryButton />
