@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Session } from "electron";
+import { deriveExtension } from "./derive";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -30,6 +31,13 @@ export type ExtensionsOptions = {
    * `setupSession`.
    */
   extensionDirs: string[];
+  /**
+   * The bundled `chrome.*` facade script, copied into every extension so it
+   * runs in the extension's own contexts.
+   */
+  facadeScriptPath: string;
+  /** A directory the loader owns, holding the copy it loads of each extension. */
+  derivedExtensionsDir: string;
   logger?: ExtensionsLogger;
 };
 
@@ -46,14 +54,50 @@ export type ExtensionsOptions = {
 export class Extensions {
   private extensionDirs: string[];
 
+  private facadeScriptPath: string;
+
+  private derivedExtensionsDir: string;
+
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
 
-  constructor({ extensionDirs, logger }: ExtensionsOptions) {
+  private derivedExtensionDirs = new Map<string, Promise<string>>();
+
+  constructor({
+    extensionDirs,
+    facadeScriptPath,
+    derivedExtensionsDir,
+    logger,
+  }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
 
+    this.facadeScriptPath = facadeScriptPath;
+
+    this.derivedExtensionsDir = derivedExtensionsDir;
+
     this.logger = logger;
+  }
+
+  /**
+   * The copy of an extension that carries the facade. Sessions share it the way
+   * they shared the source directory: one copy on disk, one instance per
+   * session.
+   */
+  private deriveExtensionDir(sourceDir: string) {
+    let derivedExtensionDir = this.derivedExtensionDirs.get(sourceDir);
+
+    if (!derivedExtensionDir) {
+      derivedExtensionDir = deriveExtension({
+        sourceDir,
+        derivedExtensionsDir: this.derivedExtensionsDir,
+        facadeScriptPath: this.facadeScriptPath,
+      });
+
+      this.derivedExtensionDirs.set(sourceDir, derivedExtensionDir);
+    }
+
+    return derivedExtensionDir;
   }
 
   async setupSession(session: Session) {
@@ -67,7 +111,9 @@ export class Extensions {
 
     for (const extensionDir of this.extensionDirs) {
       try {
-        const extension = await session.extensions.loadExtension(extensionDir);
+        const extension = await session.extensions.loadExtension(
+          await this.deriveExtensionDir(extensionDir),
+        );
 
         // The session can be torn down while an extension is still loading
         if (this.loadedExtensionIdsBySession.get(session) !== loadedExtensionIds) {

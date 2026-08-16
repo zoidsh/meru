@@ -88,6 +88,25 @@ function buildAppFiles() {
       }),
     );
 
+  // Runs inside extensions rather than in Meru, so it is bundled like a preload
+  // and copied into every extension the loader derives
+  const buildExtensionsChromeFacade = () =>
+    rolldown({
+      ...rolldownOptions,
+      input: "./packages/electron-extensions/facade/index.ts",
+      platform: "browser",
+      transform: {
+        ...rolldownOptions.transform,
+        target: browserTarget,
+      },
+    }).then((bundle) =>
+      bundle.write({
+        file: path.join(process.cwd(), "build-js", "extensions-chrome-facade.js"),
+        codeSplitting: false,
+        format: "iife",
+      }),
+    );
+
   return Promise.all([
     rolldown({
       ...rolldownOptions,
@@ -109,6 +128,7 @@ function buildAppFiles() {
     buildPreloadFile("preload-gmail"),
     buildPreloadFile("preload-workspace-app"),
     buildPreloadFile("preload-renderer"),
+    buildExtensionsChromeFacade(),
   ]);
 }
 
