@@ -1,0 +1,249 @@
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import type { Session } from "electron";
+import {
+  NATIVE_MESSAGING_ORIGIN,
+  NATIVE_MESSAGING_PATHS,
+  NATIVE_MESSAGING_SCHEME,
+  type NativeMessagingFrame,
+} from "./bridge-protocol";
+import { NativeMessageDecoder } from "./framing";
+import { getHostManifestSearchPaths } from "./host-manifest";
+import { NativeMessaging } from "./native-messaging";
+
+const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
+const BRIDGE_TOKEN = "bridge-token";
+
+const HOST_NAME = "com.meru.test";
+
+/** Echoes every message back, so a round trip proves the whole path. */
+const HOST_SOURCE = `
+let buffered = Buffer.alloc(0);
+process.stdin.on("data", (chunk) => {
+  buffered = Buffer.concat([buffered, chunk]);
+  while (buffered.byteLength >= 4) {
+    const length = buffered.readUInt32LE(0);
+    if (buffered.byteLength < 4 + length) return;
+    const body = JSON.parse(buffered.subarray(4, 4 + length).toString("utf8"));
+    buffered = buffered.subarray(4 + length);
+    const reply = Buffer.from(JSON.stringify({ echo: body, origin: process.argv[2] }), "utf8");
+    const prefix = Buffer.alloc(4);
+    prefix.writeUInt32LE(reply.byteLength, 0);
+    process.stdout.write(Buffer.concat([prefix, reply]));
+  }
+});
+`;
+
+let workDir: string;
+
+let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
+
+let session: Session;
+
+beforeEach(async () => {
+  workDir = await mkdtemp(path.join(tmpdir(), "native-messaging-"));
+
+  const hostScriptPath = path.join(workDir, "host.js");
+
+  await writeFile(hostScriptPath, HOST_SOURCE);
+
+  await writeFile(
+    path.join(workDir, "host"),
+    `#!/bin/sh\nexec "${process.execPath}" "${hostScriptPath}" "$@"\n`,
+  );
+
+  await chmod(path.join(workDir, "host"), 0o755);
+
+  requestHandler = undefined;
+
+  session = {
+    protocol: {
+      handle: (_scheme: string, handler: (request: GlobalRequest) => Promise<Response>) => {
+        requestHandler = handler;
+      },
+      unhandle: () => {
+        requestHandler = undefined;
+      },
+    },
+  } as unknown as Session;
+});
+
+afterEach(async () => {
+  await rm(workDir, { recursive: true, force: true });
+});
+
+async function writeHostManifest(allowedExtensionId = EXTENSION_ID) {
+  const manifestPath = getHostManifestSearchPaths(HOST_NAME, { homeDir: workDir })[0] as string;
+
+  await mkdir(path.dirname(manifestPath), { recursive: true });
+
+  await writeFile(
+    manifestPath,
+    JSON.stringify({
+      name: HOST_NAME,
+      path: path.join(workDir, "host"),
+      type: "stdio",
+      allowed_origins: [`chrome-extension://${allowedExtensionId}/`],
+    }),
+  );
+}
+
+function createRequest(pathName: string, body: Record<string, unknown>) {
+  return {
+    url: `${NATIVE_MESSAGING_ORIGIN}${pathName}`,
+    headers: new Headers(),
+    json: async () => body,
+  } as unknown as GlobalRequest;
+}
+
+function connect(portId = "port-1") {
+  return requestHandler?.(
+    createRequest(NATIVE_MESSAGING_PATHS.connect, {
+      token: BRIDGE_TOKEN,
+      portId,
+      hostName: HOST_NAME,
+    }),
+  ) as Promise<Response>;
+}
+
+function createNativeMessaging(options: ConstructorParameters<typeof NativeMessaging>[0] = {}) {
+  const nativeMessaging = new NativeMessaging({
+    ...options,
+    hostManifestSearch: { homeDir: workDir },
+  });
+
+  nativeMessaging.setupSession(session, {
+    getExtensionId: (bridgeToken) => (bridgeToken === BRIDGE_TOKEN ? EXTENSION_ID : undefined),
+  });
+
+  return nativeMessaging;
+}
+
+/** Reads frames off a connect response until one has arrived. */
+async function readFrame(response: Response) {
+  const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+
+  const decoder = new NativeMessageDecoder();
+
+  for (;;) {
+    const { value, done } = await reader.read();
+
+    if (done) {
+      return undefined;
+    }
+
+    const [frame] = decoder.push(value) as NativeMessagingFrame[];
+
+    if (frame) {
+      return frame;
+    }
+  }
+}
+
+describe("NativeMessaging", () => {
+  test("carries messages both ways and tells the host who is calling", async () => {
+    await writeHostManifest();
+
+    const nativeMessaging = createNativeMessaging();
+
+    const response = await connect();
+
+    expect(response.status).toBe(200);
+
+    await requestHandler?.(
+      createRequest(NATIVE_MESSAGING_PATHS.post, {
+        token: BRIDGE_TOKEN,
+        portId: "port-1",
+        message: { hello: "host" },
+      }),
+    );
+
+    expect(await readFrame(response)).toEqual({
+      type: "message",
+      message: { echo: { hello: "host" }, origin: `chrome-extension://${EXTENSION_ID}/` },
+    });
+
+    nativeMessaging.teardownSession(session);
+  });
+
+  test("refuses a request without the token of a loaded extension", async () => {
+    await writeHostManifest();
+
+    createNativeMessaging();
+
+    const response = await requestHandler?.(
+      createRequest(NATIVE_MESSAGING_PATHS.connect, {
+        token: "guessed",
+        portId: "port-1",
+        hostName: HOST_NAME,
+      }),
+    );
+
+    expect(response?.status).toBe(403);
+  });
+
+  test("disconnects when the host does not list the extension", async () => {
+    await writeHostManifest("b".repeat(32));
+
+    createNativeMessaging();
+
+    expect(await readFrame(await connect())).toEqual({
+      type: "disconnect",
+      error: "Access to the specified native messaging host is forbidden.",
+    });
+  });
+
+  test("disconnects when no manifest names the host", async () => {
+    createNativeMessaging();
+
+    expect(await readFrame(await connect())).toEqual({
+      type: "disconnect",
+      error: "Specified native messaging host not found.",
+    });
+  });
+
+  test("lets an embedder refuse a host the manifest allows", async () => {
+    await writeHostManifest();
+
+    createNativeMessaging({ isHostAllowed: () => false });
+
+    expect(await readFrame(await connect())).toEqual({
+      type: "disconnect",
+      error: "Access to the specified native messaging host is forbidden.",
+    });
+  });
+
+  test("takes the session's ports down with the session", async () => {
+    await writeHostManifest();
+
+    const nativeMessaging = createNativeMessaging();
+
+    const response = await connect();
+
+    nativeMessaging.teardownSession(session);
+
+    expect(requestHandler).toBeUndefined();
+    expect(await readFrame(response)).toEqual({ type: "disconnect", error: undefined });
+  });
+
+  test("handles the scheme on the session it is set up for", () => {
+    const handledSchemes: string[] = [];
+
+    new NativeMessaging().setupSession(
+      {
+        protocol: {
+          handle: (scheme: string) => {
+            handledSchemes.push(scheme);
+          },
+          unhandle: () => undefined,
+        },
+      } as unknown as Session,
+      { getExtensionId: () => undefined },
+    );
+
+    expect(handledSchemes).toEqual([NATIVE_MESSAGING_SCHEME]);
+  });
+});

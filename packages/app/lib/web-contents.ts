@@ -4,9 +4,63 @@ import {
   WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
+import { serializeError } from "serialize-error";
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
+import { log } from "./log";
+
+/**
+ * `loadURL` rejects when the load never commits — a renderer that went away
+ * mid-navigation, a network stack that gave up — and nothing waits on the
+ * promise, which turns every such load into an unhandled rejection. Says what
+ * happened and answers whether the page arrived.
+ */
+export function loadUrl(webContents: WebContents, url: string) {
+  return webContents
+    .loadURL(url)
+    .then(() => true)
+    .catch((error: unknown) => {
+      log.error("Failed to load URL", { url, error: serializeError(error) });
+
+      return false;
+    });
+}
+
+/**
+ * Says why a view is empty. A load that never arrives leaves nothing behind on
+ * its own: the renderer that died, the frame that was refused and the error the
+ * network stack gave up with are all only in these events.
+ */
+export function logLoadFailures(webContents: WebContents, name: string) {
+  webContents.on("render-process-gone", (_event, { reason, exitCode }) => {
+    log.error(`${name} renderer is gone`, { reason, exitCode });
+  });
+
+  webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      log.error(`${name} failed to load`, {
+        errorCode,
+        errorDescription,
+        validatedURL,
+        isMainFrame,
+      });
+    },
+  );
+
+  webContents.on(
+    "did-fail-provisional-load",
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      log.error(`${name} failed to start loading`, {
+        errorCode,
+        errorDescription,
+        validatedURL,
+        isMainFrame,
+      });
+    },
+  );
+}
 
 export function applyViewZoomLimits(view: WebContentsView) {
   view.webContents.on("dom-ready", () => {

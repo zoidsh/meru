@@ -32,6 +32,8 @@ import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
 import {
   createChildWebContentsView,
+  loadUrl,
+  logLoadFailures,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
 } from "@/lib/web-contents";
@@ -300,18 +302,22 @@ export class Gmail {
 
   private storeUnsubscribers: (() => void)[] = [];
 
+  private extensionsLoaded: Promise<void> | undefined;
+
   constructor({
     accountId,
     session,
     unreadCountEnabled,
     unifiedInboxEnabled,
     delegatedAccountId,
+    extensionsLoaded,
   }: {
     accountId: string;
     session: Session;
     unreadCountEnabled: boolean;
     unifiedInboxEnabled: boolean;
     delegatedAccountId: string | null;
+    extensionsLoaded?: Promise<void>;
   }) {
     const additionalArguments: string[] = [];
 
@@ -371,6 +377,8 @@ export class Gmail {
 
     this.additionalArguments = additionalArguments;
 
+    this.extensionsLoaded = extensionsLoaded;
+
     this.unreadCountEnabled = unreadCountEnabled;
 
     this.unifiedInboxEnabled = unifiedInboxEnabled;
@@ -386,7 +394,7 @@ export class Gmail {
     }, ms("5m"));
   }
 
-  createView(options?: WebContentsViewConstructorOptions) {
+  async createView(options?: WebContentsViewConstructorOptions) {
     this.view = createChildWebContentsView({
       session: this.session,
       preload: getPreloadPath("gmail"),
@@ -402,6 +410,8 @@ export class Gmail {
     });
 
     this.registerNavigationHandler(this.view);
+
+    logLoadFailures(this.view.webContents, "Gmail view");
 
     this.updateViewBounds();
 
@@ -441,7 +451,23 @@ export class Gmail {
 
     openViewDevToolsOnLaunch(this.view);
 
-    return this.view.webContents.loadURL(this.url);
+    // An extension that finishes loading while a navigation is still provisional
+    // makes Chromium abort that navigation, leaving the view empty
+    await this.extensionsLoaded;
+
+    if (!this._view || this._view.webContents.isDestroyed()) {
+      return;
+    }
+
+    const loaded = await loadUrl(this.view.webContents, this.url);
+
+    if (loaded || !this._view || this._view.webContents.isDestroyed()) {
+      return;
+    }
+
+    log.info("Retrying Gmail load", { url: this.url });
+
+    await loadUrl(this.view.webContents, this.url);
   }
 
   async applyLabelColors() {
@@ -598,7 +624,7 @@ export class Gmail {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
-          window.webContents.loadURL(url);
+          loadUrl(window.webContents, url);
 
           this.setDelegatedAccountId(gmailDelegatedAccountId);
 
@@ -606,7 +632,7 @@ export class Gmail {
         }
 
         if (url === `${GMAIL_URL}/`) {
-          window.webContents.loadURL(url);
+          loadUrl(window.webContents, url);
 
           const account = accounts.getAccount(this.accountId);
 

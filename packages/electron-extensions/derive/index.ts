@@ -1,6 +1,11 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  NATIVE_MESSAGING_SCHEME,
+  NATIVE_MESSAGING_TOKEN_GLOBAL,
+} from "../native-messaging/bridge-protocol";
+import { getExtensionIdFromManifestKey } from "./extension-id";
 import { injectFacadeScript } from "./html";
 import { deriveManifest, type ExtensionManifest } from "./manifest";
 
@@ -11,13 +16,19 @@ const FACADE_FILE_NAME = "chrome-facade.js";
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 1;
+const DERIVE_VERSION = 3;
 
 export type DeriveExtensionOptions = {
   /** The unpacked extension the embedder handed over, never written to. */
   sourceDir: string;
   derivedExtensionsDir: string;
   facadeScriptPath: string;
+  /**
+   * Manifest keys the copy is derived without, to run an extension with one of
+   * its parts taken away — `content_scripts`, `declarative_net_request` — and
+   * see what changes.
+   */
+  strippedManifestKeys?: string[];
 };
 
 function hash(value: string) {
@@ -59,24 +70,32 @@ async function injectFacadeIntoPages(derivedDir: string) {
  * to write to — it is a verified install, or a directory a developer is working
  * in. The copy sits at a path derived from the source path, so an extension
  * without a `manifest.key` keeps the same generated id across launches.
+ *
+ * The facade is written rather than copied so that this extension's copy can
+ * carry the token its native messaging bridge requests are recognised by.
  */
 export async function deriveExtension({
   sourceDir,
   derivedExtensionsDir,
   facadeScriptPath,
+  strippedManifestKeys = [],
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
+
+  const sourceManifest = JSON.parse(manifestSource) as ExtensionManifest;
 
   const derivedDir = path.join(derivedExtensionsDir, hash(sourceDir).slice(0, 16));
 
   const stampPath = `${derivedDir}.json`;
 
   // The source is copied again when its manifest changes, which is what an
-  // installed extension moving to a new version does
+  // installed extension moving to a new version does, and when what the derive
+  // makes of it changes
   const stamp = JSON.stringify({
     deriveVersion: DERIVE_VERSION,
     sourceDir,
     manifest: hash(manifestSource),
+    strippedManifestKeys,
   });
 
   if ((await readStamp(stampPath)) !== stamp) {
@@ -86,14 +105,16 @@ export async function deriveExtension({
 
     await cp(sourceDir, derivedDir, { recursive: true });
 
-    const { manifest, serviceWorkerWrapper } = deriveManifest(
-      JSON.parse(manifestSource) as ExtensionManifest,
-      { facadeFileName: FACADE_FILE_NAME, serviceWorkerFileName: SERVICE_WORKER_FILE_NAME },
-    );
+    const { manifest, serviceWorkerWrapper } = deriveManifest(sourceManifest, {
+      facadeFileName: FACADE_FILE_NAME,
+      serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
+      bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
+      strippedManifestKeys,
+    });
+
+    await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
 
     if (serviceWorkerWrapper) {
-      await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
-
       await writeFile(path.join(derivedDir, SERVICE_WORKER_FILE_NAME), serviceWorkerWrapper);
     }
 
@@ -103,7 +124,19 @@ export async function deriveExtension({
   }
 
   // Always, so a rebuilt facade reaches copies that are otherwise up to date
-  await cp(facadeScriptPath, path.join(derivedDir, FACADE_FILE_NAME));
+  const bridgeToken = randomUUID();
 
-  return derivedDir;
+  await writeFile(
+    path.join(derivedDir, FACADE_FILE_NAME),
+    `globalThis.${NATIVE_MESSAGING_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
+      facadeScriptPath,
+      "utf8",
+    )}`,
+  );
+
+  return {
+    derivedDir,
+    bridgeToken,
+    extensionId: getExtensionIdFromManifestKey(sourceManifest.key),
+  };
 }

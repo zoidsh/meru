@@ -1,6 +1,10 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
-import { Extensions, findExtensionDirs } from "@meru/electron-extensions";
+import {
+  Extensions,
+  findExtensionDirs,
+  registerNativeMessagingScheme,
+} from "@meru/electron-extensions";
 import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
@@ -27,10 +31,32 @@ function getExtensionDirs() {
   return findExtensionDirs(path.join(app.getAppPath(), "extensions"));
 }
 
+/**
+ * `MERU_EXTENSIONS_STRIP=content_scripts,declarative_net_request` derives every
+ * extension without those manifest keys, so a run can tell which part of an
+ * extension a page is reacting to. Development only, like the extensions
+ * themselves.
+ */
+function getStrippedManifestKeys() {
+  if (!is.dev) {
+    return [];
+  }
+
+  return (process.env.MERU_EXTENSIONS_STRIP ?? "")
+    .split(",")
+    .map((manifestKey) => manifestKey.trim())
+    .filter(Boolean);
+}
+
+// Extension contexts reach the native messaging bridge over a custom scheme,
+// and Electron only takes scheme privileges while modules are still loading
+registerNativeMessagingScheme();
+
 export const extensions = new Extensions({
   extensionDirs: getExtensionDirs(),
   facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
   derivedExtensionsDir: path.join(app.getPath("userData"), "derived-extensions"),
+  strippedManifestKeys: getStrippedManifestKeys(),
   logger: {
     info: (message, details) => {
       log.info(message, details);

@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { deriveManifest } from "./manifest";
+import { allowConnectSource, deriveManifest } from "./manifest";
 
 const fileNames = {
   facadeFileName: "chrome-facade.js",
   serviceWorkerFileName: "chrome-facade-service-worker.js",
+  bridgeConnectSource: "extension-native-messaging:",
 };
 
 describe("deriveManifest", () => {
@@ -60,5 +61,105 @@ describe("deriveManifest", () => {
 
     expect(serviceWorkerWrapper).toBeNull();
     expect(manifest.background).toBeUndefined();
+  });
+
+  test("lets the content security policy reach the bridge", () => {
+    const { manifest } = deriveManifest(
+      {
+        content_security_policy: {
+          extension_pages: "default-src 'none'; connect-src https://1password.com",
+          sandbox: "sandbox allow-scripts",
+        },
+      },
+      fileNames,
+    );
+
+    expect(manifest.content_security_policy).toEqual({
+      extension_pages:
+        "default-src 'none'; connect-src https://1password.com extension-native-messaging:",
+      sandbox: "sandbox allow-scripts",
+    });
+  });
+
+  test("leaves a manifest without a content security policy alone", () => {
+    const { manifest } = deriveManifest({ name: "No policy" }, fileNames);
+
+    expect(manifest.content_security_policy).toBeUndefined();
+  });
+
+  test("drops the permissions Electron declares but cannot serve", () => {
+    const { manifest } = deriveManifest(
+      {
+        permissions: ["storage", "webRequest", "nativeMessaging", "webRequestAuthProvider", "tabs"],
+      },
+      fileNames,
+    );
+
+    expect(manifest.permissions).toEqual(["storage", "nativeMessaging", "tabs"]);
+  });
+
+  test("leaves a manifest without permissions alone", () => {
+    const { manifest } = deriveManifest({ name: "No permissions" }, fileNames);
+
+    expect(manifest.permissions).toBeUndefined();
+  });
+
+  test("derives the copy without the manifest keys it was told to strip", () => {
+    const { manifest } = deriveManifest(
+      {
+        name: "1Password",
+        content_scripts: [{ js: ["inline/inject-content-scripts.js"] }],
+        declarative_net_request: { rule_resources: [] },
+      },
+      { ...fileNames, strippedManifestKeys: ["content_scripts", "declarative_net_request"] },
+    );
+
+    expect(manifest).toEqual({ name: "1Password" });
+  });
+
+  test("strips nothing an extension does not have", () => {
+    const { manifest } = deriveManifest(
+      { name: "1Password" },
+      {
+        ...fileNames,
+        strippedManifestKeys: ["content_scripts"],
+      },
+    );
+
+    expect(manifest).toEqual({ name: "1Password" });
+  });
+});
+
+describe("allowConnectSource", () => {
+  const source = "extension-native-messaging:";
+
+  test("appends to an existing connect-src", () => {
+    expect(allowConnectSource("script-src 'self'; connect-src https://a.test", source)).toBe(
+      "script-src 'self'; connect-src https://a.test extension-native-messaging:",
+    );
+  });
+
+  test("adds nothing twice", () => {
+    const contentSecurityPolicy = `connect-src https://a.test ${source}`;
+
+    expect(allowConnectSource(contentSecurityPolicy, source)).toBe(contentSecurityPolicy);
+  });
+
+  test("derives connect-src from default-src, dropping 'none'", () => {
+    expect(allowConnectSource("default-src 'none'; script-src 'self'", source)).toBe(
+      "default-src 'none'; script-src 'self'; connect-src extension-native-messaging:",
+    );
+  });
+
+  test("carries the other default-src sources over", () => {
+    expect(allowConnectSource("default-src 'self' https://a.test", source)).toBe(
+      "default-src 'self' https://a.test; connect-src 'self' https://a.test extension-native-messaging:",
+    );
+  });
+
+  test("leaves a policy that restricts neither alone", () => {
+    expect(allowConnectSource("script-src 'self'; object-src 'self'", source)).toBe(
+      "script-src 'self'; object-src 'self'",
+    );
   });
 });

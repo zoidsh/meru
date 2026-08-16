@@ -48,8 +48,8 @@ afterEach(async () => {
   await rm(workDir, { recursive: true, force: true });
 });
 
-function derive() {
-  return deriveExtension({ sourceDir, derivedExtensionsDir, facadeScriptPath });
+async function derive() {
+  return (await deriveExtension({ sourceDir, derivedExtensionsDir, facadeScriptPath })).derivedDir;
 }
 
 describe("deriveExtension", () => {
@@ -67,7 +67,9 @@ describe("deriveExtension", () => {
       await readFile(path.join(derivedDir, "chrome-facade-service-worker.js"), "utf8"),
     ).toContain('import "./chrome-facade.js";');
 
-    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toBe("// facade\n");
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toEndWith(
+      "// facade\n",
+    );
 
     expect(await readFile(path.join(derivedDir, "popup.html"), "utf8")).toContain(
       '<script src="/chrome-facade.js"></script>',
@@ -107,7 +109,7 @@ describe("deriveExtension", () => {
 
     await writeFile(path.join(otherSourceDir, "manifest.json"), JSON.stringify(manifest));
 
-    const otherDerivedDir = await deriveExtension({
+    const { derivedDir: otherDerivedDir } = await deriveExtension({
       sourceDir: otherSourceDir,
       derivedExtensionsDir,
       facadeScriptPath,
@@ -128,7 +130,7 @@ describe("deriveExtension", () => {
     expect(await readFile(path.join(derivedDir, "background", "background.js"), "utf8")).toBe(
       "// stale\n",
     );
-    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toBe(
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toEndWith(
       "// rebuilt facade\n",
     );
   });
@@ -148,6 +150,65 @@ describe("deriveExtension", () => {
     expect(JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).version).toBe(
       "2.0.0",
     );
+  });
+
+  test("gives every derived copy of the facade a bridge token of its own", async () => {
+    const { bridgeToken, derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toContain(
+      JSON.stringify(bridgeToken),
+    );
+
+    const rederived = await deriveExtension({ sourceDir, derivedExtensionsDir, facadeScriptPath });
+
+    expect(rederived.bridgeToken).not.toBe(bridgeToken);
+  });
+
+  test("reports the id the extension will be loaded as", async () => {
+    const { extensionId } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(extensionId).toBe("gkodpobagfoadfbnehppbpmagfgmimpa");
+  });
+
+  test("derives the copy again when the keys it strips change", async () => {
+    await writeManifest({ ...manifest, content_scripts: [{ js: ["content.js"] }] });
+
+    const derivedDir = await derive();
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+    ).toHaveProperty("content_scripts");
+
+    await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      strippedManifestKeys: ["content_scripts"],
+    });
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+    ).not.toHaveProperty("content_scripts");
+  });
+
+  test("reports no id for an extension without a key", async () => {
+    await writeManifest({ ...manifest, key: undefined });
+
+    const { extensionId } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(extensionId).toBeUndefined();
   });
 
   test("injects the facade into a page only once", async () => {

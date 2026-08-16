@@ -4,10 +4,12 @@ import type { AccountConfig } from "@meru/shared/schemas";
 import type { VerticalTabsSessionWidth } from "@meru/shared/tabs";
 import type { SelectedDesktopSource } from "@meru/shared/types";
 import { app, type IpcMainEvent, ipcMain, type Session, session } from "electron";
+import { serializeError } from "serialize-error";
 import { blocker } from "./blocker";
 import { config } from "./config";
 import { extensions } from "./extensions";
 import { Gmail } from "./gmail";
+import { log } from "./lib/log";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
@@ -46,7 +48,9 @@ export class Account {
 
     blocker.setupSession(this.session);
 
-    extensions.setupSession(this.session);
+    const extensionsLoaded = extensions.setupSession(this.session).catch((error: unknown) => {
+      log.error("Failed to set up extensions", { error: serializeError(error) });
+    });
 
     this.setSpellCheckerLanguages();
 
@@ -56,6 +60,7 @@ export class Account {
       unreadCountEnabled: accountConfig.gmail.unreadBadge,
       unifiedInboxEnabled: accountConfig.gmail.unifiedInbox,
       delegatedAccountId: accountConfig.gmail.delegatedAccountId,
+      extensionsLoaded,
     });
 
     this.tabs = new Tabs(accountConfig.id, this.gmail);

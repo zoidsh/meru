@@ -8,6 +8,11 @@ import {
   readExtensionActionIcon,
 } from "./action";
 import { deriveExtension } from "./derive";
+import type { ExtensionsLogger } from "./logger";
+import {
+  NativeMessaging,
+  type NativeMessagingHostPolicy,
+} from "./native-messaging/native-messaging";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -25,12 +30,6 @@ const EXTENSION_STORAGE_DIR_NAMES = [
 /** `IndexedDB/chrome-extension_<extensionId>_0.indexeddb.leveldb` and friends. */
 const EXTENSION_INDEXED_DB_PREFIX = "chrome-extension_";
 
-/** Where the loader reports what it did, since an embedder logs its own way. */
-export type ExtensionsLogger = {
-  info: (message: string, details: Record<string, unknown>) => void;
-  error: (message: string, details: Record<string, unknown>) => void;
-};
-
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
 export type ExtensionsOptions = {
@@ -46,6 +45,17 @@ export type ExtensionsOptions = {
   facadeScriptPath: string;
   /** A directory the loader owns, holding the copy it loads of each extension. */
   derivedExtensionsDir: string;
+  /**
+   * Manifest keys every extension is derived without, for taking a part of an
+   * extension away — `content_scripts`, `declarative_net_request` — to find out
+   * which one is behind a misbehaving page.
+   */
+  strippedManifestKeys?: string[];
+  /**
+   * Narrows which native messaging hosts an extension may drive. Without it any
+   * host that lists the extension in its own `allowed_origins` is reachable.
+   */
+  isNativeMessagingHostAllowed?: NativeMessagingHostPolicy;
   logger?: ExtensionsLogger;
 };
 
@@ -67,6 +77,8 @@ export class Extensions {
 
   private derivedExtensionsDir: string;
 
+  private strippedManifestKeys: string[] | undefined;
+
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
@@ -75,12 +87,16 @@ export class Extensions {
 
   private actionsChangedListeners = new Set<ActionsChangedListener>();
 
-  private derivedExtensionDirs = new Map<string, Promise<string>>();
+  private derivedExtensions = new Map<string, ReturnType<typeof deriveExtension>>();
+
+  private nativeMessaging: NativeMessaging;
 
   constructor({
     extensionDirs,
     facadeScriptPath,
     derivedExtensionsDir,
+    strippedManifestKeys,
+    isNativeMessagingHostAllowed,
     logger,
   }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
@@ -89,7 +105,14 @@ export class Extensions {
 
     this.derivedExtensionsDir = derivedExtensionsDir;
 
+    this.strippedManifestKeys = strippedManifestKeys;
+
     this.logger = logger;
+
+    this.nativeMessaging = new NativeMessaging({
+      isHostAllowed: isNativeMessagingHostAllowed,
+      logger,
+    });
   }
 
   /**
@@ -97,20 +120,21 @@ export class Extensions {
    * they shared the source directory: one copy on disk, one instance per
    * session.
    */
-  private deriveExtensionDir(sourceDir: string) {
-    let derivedExtensionDir = this.derivedExtensionDirs.get(sourceDir);
+  private deriveExtension(sourceDir: string) {
+    let derivedExtension = this.derivedExtensions.get(sourceDir);
 
-    if (!derivedExtensionDir) {
-      derivedExtensionDir = deriveExtension({
+    if (!derivedExtension) {
+      derivedExtension = deriveExtension({
         sourceDir,
         derivedExtensionsDir: this.derivedExtensionsDir,
         facadeScriptPath: this.facadeScriptPath,
+        strippedManifestKeys: this.strippedManifestKeys,
       });
 
-      this.derivedExtensionDirs.set(sourceDir, derivedExtensionDir);
+      this.derivedExtensions.set(sourceDir, derivedExtension);
     }
 
-    return derivedExtensionDir;
+    return derivedExtension;
   }
 
   async setupSession(session: Session) {
@@ -126,11 +150,19 @@ export class Extensions {
 
     this.actionsBySession.set(session, actions);
 
+    const extensionIdsByBridgeToken = new Map<string, string>();
+
+    this.nativeMessaging.setupSession(session, {
+      getExtensionId: (bridgeToken) => extensionIdsByBridgeToken.get(bridgeToken),
+    });
+
     for (const extensionDir of this.extensionDirs) {
       try {
-        const extension = await session.extensions.loadExtension(
-          await this.deriveExtensionDir(extensionDir),
-        );
+        const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(extensionDir);
+
+        await this.dropServiceWorkerRegistration(session, extensionId);
+
+        const extension = await session.extensions.loadExtension(derivedDir);
 
         // The session can be torn down while an extension is still loading
         if (this.loadedExtensionIdsBySession.get(session) !== loadedExtensionIds) {
@@ -140,6 +172,8 @@ export class Extensions {
         }
 
         loadedExtensionIds.add(extension.id);
+
+        extensionIdsByBridgeToken.set(bridgeToken, extension.id);
 
         actions.push(await this.createAction(extension));
 
@@ -155,6 +189,31 @@ export class Extensions {
     }
 
     this.emitActionsChanged(session);
+  }
+
+  /**
+   * Chromium stores an extension's service worker script when the worker first
+   * registers and serves that copy for as long as the partition exists: it
+   * never fetches the script again, not on a later launch and not when the file
+   * on disk has changed. Everything the derive writes into the worker — the
+   * facade above all, and the bridge token it carries — would therefore be a
+   * copy from the launch the partition was created in, which is what answered
+   * every native messaging call with 403 (measured 2026-08-16).
+   *
+   * Dropping the registration first makes Chromium fetch the script again.
+   * `clearData` walks past `chrome-extension://` origins, so `clearStorageData`
+   * is the way in; an extension without a `manifest.key` has no id to address
+   * its storage by and keeps the worker Chromium already has.
+   */
+  private async dropServiceWorkerRegistration(session: Session, extensionId: string | undefined) {
+    if (!extensionId) {
+      return;
+    }
+
+    await session.clearStorageData({
+      origin: `chrome-extension://${extensionId}`,
+      storages: ["serviceworkers"],
+    });
   }
 
   /** A broken icon costs the button its icon, not the extension its button. */
@@ -180,6 +239,8 @@ export class Extensions {
     this.loadedExtensionIdsBySession.delete(session);
 
     this.actionsBySession.delete(session);
+
+    this.nativeMessaging.teardownSession(session);
 
     for (const extensionId of loadedExtensionIds) {
       session.extensions.removeExtension(extensionId);
