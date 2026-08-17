@@ -494,7 +494,7 @@ export class Gmail {
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.on("did-navigate", (_event, url) => {
-      WorkspaceApp.handleNavigate(url);
+      WorkspaceApp.handleNavigate(url, this.session);
 
       if (window === this.view) {
         this.store.setState({
