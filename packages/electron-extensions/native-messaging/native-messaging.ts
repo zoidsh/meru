@@ -296,7 +296,14 @@ export class NativeMessaging {
       return;
     }
 
-    port.controller.enqueue(encodeNativeMessage(frame));
+    try {
+      port.controller.enqueue(encodeNativeMessage(frame));
+    } catch {
+      // The stream no longer accepts frames when the extension cancelled it —
+      // a closed page, a restarted service worker — and a throw out of here
+      // would keep `closePort` from killing the port's host process
+      return;
+    }
 
     // Stop reading the host until the extension has taken what it was sent
     if ((port.controller.desiredSize ?? 1) <= 0) {

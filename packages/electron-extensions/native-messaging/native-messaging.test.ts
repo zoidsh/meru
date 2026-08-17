@@ -122,6 +122,21 @@ function createNativeMessaging(options: ConstructorParameters<typeof NativeMessa
   return nativeMessaging;
 }
 
+/** Kill with signal 0 probes for existence, and ESRCH says the process is gone. */
+async function waitForProcessExit(pid: number) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+
+  throw new Error(`Process ${pid} is still running`);
+}
+
 /** Reads frames off a connect response until one has arrived. */
 async function readFrame(response: Response) {
   const reader = (response.body as ReadableStream<Uint8Array>).getReader();
@@ -214,6 +229,37 @@ describe("NativeMessaging", () => {
       type: "disconnect",
       error: "Access to the specified native messaging host is forbidden.",
     });
+  });
+
+  test("kills the host when the extension side cancels the stream", async () => {
+    await writeHostManifest();
+
+    const logs: { message: string; details: Record<string, unknown> }[] = [];
+
+    const nativeMessaging = createNativeMessaging({
+      logger: {
+        info: (message, details) => {
+          logs.push({ message, details });
+        },
+        error: () => undefined,
+      },
+    });
+
+    const response = await connect();
+
+    const hostPid = logs.find(({ message }) => message === "Connected native messaging host")
+      ?.details.pid as number;
+
+    expect(hostPid).toBeGreaterThan(0);
+
+    // The extension context went away: a closed page, a restarted service worker
+    await (response.body as ReadableStream<Uint8Array>).cancel();
+
+    expect(logs.some(({ message }) => message === "Disconnected native messaging host")).toBe(true);
+
+    await waitForProcessExit(hostPid);
+
+    nativeMessaging.teardownSession(session);
   });
 
   test("takes the session's ports down with the session", async () => {
