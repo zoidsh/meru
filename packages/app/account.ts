@@ -17,6 +17,12 @@ import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
+const EXTENSION_PAGE_PERMISSIONS = new Set([
+  "clipboard-read",
+  "clipboard-sanitized-write",
+  "notifications",
+]);
+
 export class Account {
   accountId: AccountConfig["id"];
 
@@ -106,10 +112,14 @@ export class Account {
 
   private registerSessionPermissionsRequestsHandler() {
     this.session.setPermissionRequestHandler((_webContents, permission, callback, details) => {
-      // Extensions are loaded deliberately and Chromium checks their requests
-      // against the permissions they declare, unlike web content
+      // Extensions are loaded deliberately, but their pages still only get what
+      // a curated extension has business asking for — copying a password, a
+      // notification. Anything else, the microphone and camera above all, meets
+      // the same refusal as anywhere: manifest permissions don't gate these
+      // requests, and 1Password's own pages are framable by any page in the
+      // session
       if (extensions.isLoadedExtensionUrl(this.session, details.requestingUrl)) {
-        callback(true);
+        callback(EXTENSION_PAGE_PERMISSIONS.has(permission));
 
         return;
       }
