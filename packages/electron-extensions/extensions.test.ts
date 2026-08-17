@@ -329,6 +329,32 @@ describe("Extensions", () => {
     );
   });
 
+  test("derives again for the next session after a failed derive", async () => {
+    const extensionDir = path.join(workDir, "healed");
+
+    await mkdir(extensionDir);
+
+    const extensions = createExtensions([extensionDir], {
+      info: () => {},
+      error: () => {},
+    });
+
+    const firstSession = createSession();
+
+    await extensions.setupSession(firstSession.session);
+
+    expect(extensions.getSessionActions(firstSession.session)).toHaveLength(0);
+
+    // The directory is whole now — a finished install, a corrected dev folder
+    await createExtensionDir("healed");
+
+    const secondSession = createSession();
+
+    await extensions.setupSession(secondSession.session);
+
+    expect(extensions.getSessionActions(secondSession.session)).toHaveLength(1);
+  });
+
   test("matches URLs of extensions loaded into that session only", async () => {
     const { session: sessionWithExtension } = createSession();
     const { session: sessionWithoutExtension } = createSession();
