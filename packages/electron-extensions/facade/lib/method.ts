@@ -22,3 +22,25 @@ export function createNoopMethod(createResult: (callArguments: unknown[]) => unk
     return Promise.resolve(result);
   };
 }
+
+/**
+ * A method answered elsewhere — over the bridge, typically — with the same
+ * callback-or-promise duality as a noop. `produceResult` sees the call's
+ * arguments without any trailing callback, and must resolve rather than throw:
+ * a rejection would surface differently to the two calling styles.
+ */
+export function createBridgedMethod(produceResult: (callArguments: unknown[]) => Promise<unknown>) {
+  return (...callArguments: unknown[]) => {
+    const callback = callArguments.at(-1);
+
+    if (typeof callback === "function") {
+      void produceResult(callArguments.slice(0, -1)).then((result) => {
+        (callback as (callbackResult: unknown) => void)(result);
+      });
+
+      return undefined;
+    }
+
+    return produceResult(callArguments);
+  };
+}
