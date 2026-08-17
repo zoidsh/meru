@@ -1,8 +1,9 @@
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { Alert, AlertDescription, AlertTitle } from "@meru/ui/components/alert";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { FieldDescription } from "@meru/ui/components/field";
+import { FieldDescription, FieldLegend, FieldSet } from "@meru/ui/components/field";
 import {
   Item,
   ItemActions,
@@ -14,7 +15,7 @@ import {
 import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import { toast } from "sonner";
 import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -23,6 +24,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient, useConfig } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
+import { platform } from "@/lib/utils";
 
 const installedExtensionsQueryKey = ["installed-extensions"];
 
@@ -87,6 +89,46 @@ function ExtensionItem({
         />
       </ItemActions>
     </Item>
+  );
+}
+
+function PasskeysAlert() {
+  if (platform.isMacOS) {
+    return (
+      <Alert>
+        <KeyRoundIcon />
+        <AlertTitle>Meru can sign you in with a Touch ID passkey</AlertTitle>
+        <AlertDescription>
+          Add a passkey to your Google account from its security settings inside Meru and sign in
+          with Touch ID — lighter than running an extension. Existing iCloud passkeys can't be used,
+          and filling passwords still needs a password manager.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (platform.isWindows) {
+    return (
+      <Alert>
+        <KeyRoundIcon />
+        <AlertTitle>Meru can sign you in with your Windows passkeys</AlertTitle>
+        <AlertDescription>
+          Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
+          with no extension. Filling passwords still needs a password manager.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert>
+      <KeyRoundIcon />
+      <AlertTitle>Passkeys need a password manager on Linux</AlertTitle>
+      <AlertDescription>
+        Linux has no system passkey support, so a password manager extension is the only way to sign
+        in to Google with a passkey in Meru.
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -177,16 +219,24 @@ export function ExtensionsSettings() {
           Extensions are loaded into every account and take effect after a restart. Meru installs
           the official extensions from the Chrome Web Store.
         </FieldDescription>
-        <ItemGroup>
-          {curatedExtensions.map((extension) => (
-            <ExtensionItem
-              key={extension.id}
-              extension={extension}
-              installed={config["extensions.installed"].includes(extension.id)}
-              installedVersion={installedExtensions?.find(({ id }) => id === extension.id)?.version}
-            />
-          ))}
-        </ItemGroup>
+        <FieldSet>
+          <FieldLegend>Password Managers</FieldLegend>
+          <PasskeysAlert />
+          <ItemGroup>
+            {curatedExtensions
+              .filter(({ category }) => category === "passwordManager")
+              .map((extension) => (
+                <ExtensionItem
+                  key={extension.id}
+                  extension={extension}
+                  installed={config["extensions.installed"].includes(extension.id)}
+                  installedVersion={
+                    installedExtensions?.find(({ id }) => id === extension.id)?.version
+                  }
+                />
+              ))}
+          </ItemGroup>
+        </FieldSet>
       </SettingsContent>
     </Settings>
   );
