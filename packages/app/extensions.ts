@@ -192,11 +192,16 @@ export async function pruneDerivedExtensionCopies() {
  */
 class ExtensionUpdater {
   init() {
-    if (!licenseKey.isValid || config.get("extensions.installed").length === 0) {
+    if (!licenseKey.isValid) {
       return;
     }
 
-    this.checkForUpdates();
+    // The interval stands even when nothing is installed yet, and every check
+    // re-reads the opt-ins, so an extension installed mid-session is kept up to
+    // date without a restart
+    if (config.get("extensions.installed").length > 0) {
+      this.checkForUpdates();
+    }
 
     setInterval(() => {
       this.checkForUpdates();
