@@ -109,6 +109,7 @@
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "darkModeSupport": true,
+      "provisioningProfile": "build/embedded.provisionprofile",
       "target": {
         "target": "default",
         "arch": [

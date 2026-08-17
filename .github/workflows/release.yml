@@ -26,8 +26,13 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - if: startsWith(matrix.os, 'macos')
-        run: bun run build:mac -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
+        # The provisioning profile authorizes the Touch ID keychain access group entitlement;
+        # without it macOS refuses to launch the signed app.
+        run: |
+          echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode > build/embedded.provisionprofile
+          bun run build:mac -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
         env:
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}

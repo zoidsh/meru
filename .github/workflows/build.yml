@@ -38,8 +38,13 @@ jobs:
       - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS != 'true'
         run: bun run build:mac -- --publish never
       - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS == 'true'
-        run: bun run build:mac -- --publish never
+        # The provisioning profile authorizes the Touch ID keychain access group entitlement;
+        # without it macOS refuses to launch the signed app.
+        run: |
+          echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode > build/embedded.provisionprofile
+          bun run build:mac -- --publish never
         env:
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
           # electron-builder skips signing on PR builds unless this is true; fork PRs never
           # receive the secrets, so they still fall back to an unsigned build.
           CSC_FOR_PULL_REQUEST: "true"
