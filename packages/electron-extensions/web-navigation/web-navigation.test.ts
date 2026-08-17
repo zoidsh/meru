@@ -204,11 +204,12 @@ describe("WebNavigation", () => {
       getExtensionId: (bridgeToken) => (bridgeToken === "token" ? "aaa" : undefined),
     });
 
-    const response = await requestHandler?.({
-      url: `${EXTENSION_BRIDGE_ORIGIN}${WEB_NAVIGATION_PATHS.getFrame}`,
-      headers: new Headers(),
-      json: async () => ({ token: "token", details: { tabId: TAB_ID, frameId: 42 } }),
-    } as unknown as GlobalRequest);
+    const response = await requestHandler?.(
+      new Request(`${EXTENSION_BRIDGE_ORIGIN}${WEB_NAVIGATION_PATHS.getFrame}`, {
+        method: "POST",
+        body: JSON.stringify({ token: "token", details: { tabId: TAB_ID, frameId: 42 } }),
+      }) as GlobalRequest,
+    );
 
     expect(await response?.json()).toMatchObject({ frameId: 42, parentFrameId: 0 });
   });

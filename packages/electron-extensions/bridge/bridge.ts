@@ -2,6 +2,14 @@ import type { Session } from "electron";
 import type { ExtensionsLogger } from "../logger";
 import { EXTENSION_BRIDGE_SCHEME, type ExtensionBridgeRequest } from "./protocol";
 
+/**
+ * Far past what any bridge call has business sending, but a bound all the same:
+ * the scheme is reachable from every document in the session, and without one a
+ * page that never learns the token could still make the main process buffer an
+ * arbitrarily large body on the way to its 403.
+ */
+export const MAX_BRIDGE_REQUEST_BYTES = 64 * 1024 * 1024;
+
 export type ExtensionBridgeHandler = (request: {
   session: Session;
   /** The extension whose facade copy carried the request's token. */
@@ -64,7 +72,13 @@ export class ExtensionBridge {
     const { pathname } = new URL(request.url);
 
     try {
-      const body = (await request.json()) as ExtensionBridgeRequest & Record<string, unknown>;
+      const bodySource = await this.readBody(request);
+
+      if (bodySource === null) {
+        return new Response(null, { status: 413, headers });
+      }
+
+      const body = JSON.parse(bodySource) as ExtensionBridgeRequest & Record<string, unknown>;
 
       // Everything else in the session — Gmail, workspace apps, any page a user
       // navigated to — can reach this scheme just as well, and only the loaded
@@ -86,6 +100,40 @@ export class ExtensionBridge {
       this.logger?.error("Extension bridge request failed", { pathname, error });
 
       return new Response(null, { status: 400, headers });
+    }
+  }
+
+  /**
+   * The request body, or `null` the moment it runs past the cap — nothing more
+   * is read then, so an oversized body costs the cap and not its whole length.
+   */
+  private async readBody(request: GlobalRequest) {
+    if (!request.body) {
+      return "";
+    }
+
+    const reader = request.body.getReader();
+
+    const chunks: Uint8Array[] = [];
+
+    let byteLength = 0;
+
+    for (;;) {
+      const { value, done } = await reader.read();
+
+      if (done) {
+        return Buffer.concat(chunks).toString("utf8");
+      }
+
+      byteLength += value.byteLength;
+
+      if (byteLength > MAX_BRIDGE_REQUEST_BYTES) {
+        await reader.cancel();
+
+        return null;
+      }
+
+      chunks.push(value);
     }
   }
 }
