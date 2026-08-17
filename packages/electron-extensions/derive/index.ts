@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   NATIVE_MESSAGING_SCHEME,
@@ -33,6 +33,31 @@ export type DeriveExtensionOptions = {
 
 function hash(value: string) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+/**
+ * Digests the source tree from each file's path, size and mtime — never its
+ * contents, since an extension runs to tens of megabytes and this happens on
+ * every launch, and an edit always moves one of the two.
+ */
+async function hashSourceTree(sourceDir: string) {
+  const entryNames = await readdir(sourceDir, { recursive: true });
+
+  const fileEntries: string[] = [];
+
+  for (const entryName of entryNames) {
+    const stats = await stat(path.join(sourceDir, entryName));
+
+    if (!stats.isFile()) {
+      continue;
+    }
+
+    const relativePath = entryName.split(path.sep).join("/");
+
+    fileEntries.push(`${relativePath}\0${stats.size}\0${stats.mtimeMs}`);
+  }
+
+  return hash(fileEntries.sort().join("\n"));
 }
 
 async function readStamp(stampPath: string) {
@@ -88,13 +113,14 @@ export async function deriveExtension({
 
   const stampPath = `${derivedDir}.json`;
 
-  // The source is copied again when its manifest changes, which is what an
-  // installed extension moving to a new version does, and when what the derive
-  // makes of it changes
+  // The source is copied again when any of its files changes, which is what an
+  // installed extension moving to a new version does and what a developer
+  // working in an unpacked one does, and when what the derive makes of it
+  // changes
   const stamp = JSON.stringify({
     deriveVersion: DERIVE_VERSION,
     sourceDir,
-    manifest: hash(manifestSource),
+    sourceTree: await hashSourceTree(sourceDir),
     strippedManifestKeys,
   });
 
