@@ -11,8 +11,11 @@ import rehypeRaw from "rehype-raw";
 import z from "zod";
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { dayjs } from "@/lib/date";
+import { useConfig } from "@/lib/react-query";
 
 export function VersionHistorySettings() {
+  const { config } = useConfig();
+
   const { data: info } = useQuery({
     queryKey: ["about", "info"],
     queryFn: () => ipc.main.invoke("about.getInfo"),
@@ -33,6 +36,7 @@ export function VersionHistorySettings() {
             published_at: z.string(),
             body: z.string().nullable(),
             tag_name: z.string(),
+            prerelease: z.boolean(),
             id: z.number(),
           }),
         )
@@ -70,7 +74,12 @@ export function VersionHistorySettings() {
       );
     }
 
-    return data.map((release) => (
+    const releases =
+      config?.["updates.channel"] === "beta"
+        ? data
+        : data.filter((release) => !release.prerelease || release.tag_name === currentTagName);
+
+    return releases.map((release) => (
       <Item key={release.id} variant="muted">
         <ItemContent>
           <div className="flex items-center justify-between gap-2">
