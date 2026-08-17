@@ -100,8 +100,7 @@ function PasskeysAlert() {
         <AlertTitle>Meru can sign you in with a Touch ID passkey</AlertTitle>
         <AlertDescription>
           Add a passkey to your Google account from its security settings inside Meru and sign in
-          with Touch ID — lighter than running an extension. Existing iCloud passkeys can't be used,
-          and it won't fill passwords on other sites.
+          with Touch ID — lighter than running an extension. Existing iCloud passkeys can't be used.
         </AlertDescription>
       </Alert>
     );
