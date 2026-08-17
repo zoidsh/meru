@@ -185,6 +185,7 @@ export type Config = {
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
   "verticalTabs.showAppLinksBadge": boolean;
   "extensions.installed": string[];
+  "extensions.additionalSites": Record<string, string[]>;
 };
 
 export type IpcMainEvents =

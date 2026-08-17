@@ -29,3 +29,31 @@ export const curatedExtensions: CuratedExtension[] = [
 export function isCuratedExtensionId(extensionId: string) {
   return curatedExtensions.some((curatedExtension) => curatedExtension.id === extensionId);
 }
+
+/** The pattern a site the user added stands for, every path of it over HTTPS. */
+export function hostnameToMatchPattern(hostname: string) {
+  return `https://${hostname}/*`;
+}
+
+const HOSTNAME_LABEL = /^[a-z0-9-]+$/;
+
+/**
+ * The hostname a site the user typed holds, lowercased, or `undefined` when it is
+ * anything else — a URL, a host carrying a port, a path or a wildcard. It ends up
+ * in a match pattern verbatim, so only what `URL` reads back unchanged passes.
+ */
+export function normalizeExtensionSiteHostname(site: string) {
+  const hostname = site.trim().toLowerCase();
+
+  const labels = hostname.split(".");
+
+  if (labels.length < 2 || !labels.every((label) => HOSTNAME_LABEL.test(label))) {
+    return;
+  }
+
+  try {
+    return new URL(`https://${hostname}`).hostname === hostname ? hostname : undefined;
+  } catch {
+    return;
+  }
+}
