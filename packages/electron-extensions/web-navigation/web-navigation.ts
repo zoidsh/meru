@@ -87,11 +87,16 @@ export class WebNavigation {
       return null;
     }
 
+    // Destroyed first: a disposed frame's other accessors throw, and one dead
+    // frame in the subtree must not fail a query for a live one
     const frame =
       query.frameId === MAIN_FRAME_ID
         ? contents.mainFrame
         : contents.mainFrame.framesInSubtree.find(
-            (candidate) => candidate.parent !== null && candidate.frameTreeNodeId === query.frameId,
+            (candidate) =>
+              !candidate.isDestroyed() &&
+              candidate.parent !== null &&
+              candidate.frameTreeNodeId === query.frameId,
           );
 
     if (!frame || frame.isDestroyed()) {

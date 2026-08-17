@@ -138,6 +138,40 @@ describe("WebNavigation", () => {
     ).toBeNull();
   });
 
+  test("answers a live frame while another frame in the tree is disposed", () => {
+    const { contents, mainFrame } = createTab();
+
+    // A disposed WebFrameMain throws from every accessor but isDestroyed
+    const disposedFrame: FakeFrame = {
+      isDestroyed: () => true,
+      get frameTreeNodeId(): number {
+        throw new Error("Render frame was disposed before WebFrameMain could be accessed");
+      },
+      get url(): string {
+        throw new Error("Render frame was disposed before WebFrameMain could be accessed");
+      },
+      get parent(): FakeFrame | null {
+        throw new Error("Render frame was disposed before WebFrameMain could be accessed");
+      },
+      get processId(): number {
+        throw new Error("Render frame was disposed before WebFrameMain could be accessed");
+      },
+      framesInSubtree: [],
+    };
+
+    mainFrame.framesInSubtree.splice(1, 0, disposedFrame);
+
+    const webNavigation = createWebNavigation(contents);
+
+    expect(webNavigation.getFrame(SESSION, { tabId: TAB_ID, frameId: 42 })).toMatchObject({
+      frameId: 42,
+    });
+
+    expect(
+      webNavigation.getAllFrames(SESSION, { tabId: TAB_ID })?.map(({ frameId }) => frameId),
+    ).toEqual([0, 42, 77]);
+  });
+
   test("lists every live frame of a tab", () => {
     const { contents, nestedFrame } = createTab();
 
