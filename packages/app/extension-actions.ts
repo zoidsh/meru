@@ -6,6 +6,7 @@ import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { Popup } from "./lib/popup";
 import { main } from "./main";
+import { openExternalUrl } from "./url";
 import { WorkspaceApp } from "./workspace-app";
 
 /** The size a menu item's icon is drawn at. */
@@ -98,7 +99,7 @@ class ExtensionActions {
       return;
     }
 
-    this.popup.toggle(parentWindow, {
+    const opened = this.popup.toggle(parentWindow, {
       content: { url: action.popupUrl, session },
       width: "preferred",
       height: "preferred",
@@ -112,6 +113,18 @@ class ExtensionActions {
     // nothing holds the blur off the way hovering a button that toggles a popup
     // does — a click anywhere else closes it
     this.popup.closeOnBlurEnabled = true;
+
+    // A link out of the popup — "open 1password.com", a vault item's website —
+    // opens a browser tab in Chrome. The default browser is Meru's equivalent;
+    // the window Electron would otherwise create belongs to no titlebar and
+    // none of the app's navigation policing
+    if (opened) {
+      this.popup.webContents?.setWindowOpenHandler(({ url }) => {
+        openExternalUrl(url);
+
+        return { action: "deny" };
+      });
+    }
   }
 
   showMenu(webContents: WebContents, anchorRect: ExtensionActionAnchorRect) {
