@@ -28,9 +28,9 @@ import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { extensions, ONEPASSWORD_EXTENSION_ID } from "./extensions";
 import { ipc } from "./ipc";
+import { loadUrl } from "./lib/load-url";
 import {
   createChildWebContentsView,
-  loadUrl,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
 } from "./lib/web-contents";

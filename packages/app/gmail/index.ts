@@ -29,10 +29,10 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import {
   createChildWebContentsView,
-  loadUrl,
   logLoadFailures,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,

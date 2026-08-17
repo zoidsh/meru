@@ -3,7 +3,7 @@ import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
 import type { BrowserWindow, Event, Input, Session, Size } from "electron";
 import { WebContentsView } from "electron";
-import { loadUrl } from "./web-contents";
+import { loadUrl } from "./load-url";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
 /** What a popup shows: a renderer page, or any URL loaded in a given session. */
