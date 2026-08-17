@@ -11,7 +11,7 @@ import {
 } from "@meru/electron-extensions";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
-import type { InstalledExtensionState } from "@meru/shared/types";
+import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
 import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
@@ -202,6 +202,9 @@ export async function pruneDerivedExtensionCopies() {
  * derived for as long as they live.
  */
 class ExtensionUpdater {
+  /** The check in flight, which a second trigger joins instead of downloading again. */
+  private runningCheck: Promise<ExtensionUpdateResult[]> | undefined;
+
   init() {
     if (!licenseKey.isValid) {
       return;
@@ -219,7 +222,19 @@ class ExtensionUpdater {
     }, ms("3h"));
   }
 
-  private async checkForUpdates() {
+  checkForUpdates() {
+    if (!this.runningCheck) {
+      this.runningCheck = this.updateOptedInExtensions().finally(() => {
+        this.runningCheck = undefined;
+      });
+    }
+
+    return this.runningCheck;
+  }
+
+  private async updateOptedInExtensions() {
+    const results: ExtensionUpdateResult[] = [];
+
     for (const extensionId of getOptedInExtensionIds()) {
       try {
         const { updated, version } = await installLatestExtension({
@@ -232,10 +247,24 @@ class ExtensionUpdater {
           extensionId,
           version,
         });
+
+        results.push(
+          updated
+            ? { id: extensionId, status: "updated", version }
+            : { id: extensionId, status: "upToDate" },
+        );
       } catch (error) {
         log.error("Failed to update extension", { extensionId, error: serializeError(error) });
+
+        results.push({
+          id: extensionId,
+          status: "failed",
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
+
+    return results;
   }
 }
 

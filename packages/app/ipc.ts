@@ -42,6 +42,7 @@ import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { extensionActions } from "./extension-actions";
 import {
+  extensionUpdater,
   getInstalledExtensions,
   installCuratedExtension,
   uninstallCuratedExtension,
@@ -1054,6 +1055,14 @@ class Ipc {
           error: `Failed to uninstall extension: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
+    });
+
+    ipc.main.handle("extensions.update", async () => {
+      if (!licenseKey.isValid) {
+        return { error: "Meru Pro is required to update extensions" };
+      }
+
+      return { results: await extensionUpdater.checkForUpdates() };
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {

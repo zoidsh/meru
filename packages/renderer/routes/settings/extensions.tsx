@@ -1,6 +1,7 @@
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Badge } from "@meru/ui/components/badge";
+import { Button } from "@meru/ui/components/button";
 import { FieldDescription } from "@meru/ui/components/field";
 import {
   Item,
@@ -89,6 +90,66 @@ function ExtensionItem({
   );
 }
 
+function UpdateExtensionsButton() {
+  const updateExtensionsMutation = useMutation({
+    mutationFn: () => ipc.main.invoke("extensions.update"),
+    onSuccess: ({ error, results }) => {
+      if (error) {
+        toast.error(error);
+
+        return;
+      }
+
+      let updatedAny = false;
+
+      for (const result of results ?? []) {
+        const name = curatedExtensions.find(({ id }) => id === result.id)?.name ?? result.id;
+
+        switch (result.status) {
+          case "updated": {
+            updatedAny = true;
+
+            toast.success(`${name} updated to ${result.version}`);
+
+            break;
+          }
+          case "upToDate": {
+            toast.success(`${name} is up to date`);
+
+            break;
+          }
+          case "failed": {
+            toast.error(`Failed to update ${name}: ${result.error}`);
+
+            break;
+          }
+        }
+      }
+
+      if (updatedAny) {
+        queryClient.invalidateQueries({
+          queryKey: installedExtensionsQueryKey,
+        });
+
+        restartRequiredToast();
+      }
+    },
+  });
+
+  return (
+    <Button
+      variant="outline"
+      disabled={updateExtensionsMutation.isPending}
+      onClick={() => {
+        updateExtensionsMutation.mutate();
+      }}
+    >
+      {updateExtensionsMutation.isPending && <Spinner />}
+      Update Extensions
+    </Button>
+  );
+}
+
 export function ExtensionsSettings() {
   const { config } = useConfig();
 
@@ -108,6 +169,7 @@ export function ExtensionsSettings() {
           Extensions
           <BetaFieldBadge />
         </SettingsTitle>
+        {config["extensions.installed"].length > 0 && <UpdateExtensionsButton />}
       </SettingsHeader>
       <SettingsContent className="space-y-4">
         <LicenseKeyRequiredBanner />
