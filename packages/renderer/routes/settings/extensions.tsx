@@ -1,5 +1,6 @@
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { Badge } from "@meru/ui/components/badge";
 import { FieldDescription } from "@meru/ui/components/field";
 import {
   Item,
@@ -12,7 +13,9 @@ import {
 import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -57,13 +60,19 @@ function ExtensionItem({
     <Item variant="muted">
       <ItemContent>
         <ItemTitle>
-          {extension.name}
+          <a
+            href={`https://chromewebstore.google.com/detail/${extension.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 hover:underline"
+          >
+            {extension.name}
+            <ExternalLinkIcon className="size-3 text-muted-foreground" />
+          </a>
+          {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
           <LicenseKeyRequiredFieldBadge />
         </ItemTitle>
-        <ItemDescription>
-          {extension.description}
-          {installedVersion && ` Version ${installedVersion} is installed.`}
-        </ItemDescription>
+        <ItemDescription>{extension.description}</ItemDescription>
       </ItemContent>
       <ItemActions>
         {extensionMutation.isPending && <Spinner />}
@@ -95,12 +104,16 @@ export function ExtensionsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Extensions</SettingsTitle>
+        <SettingsTitle className="flex items-center gap-2">
+          Extensions
+          <BetaFieldBadge />
+        </SettingsTitle>
       </SettingsHeader>
       <SettingsContent className="space-y-4">
         <LicenseKeyRequiredBanner />
         <FieldDescription>
-          Extensions are loaded into every account and take effect after a restart.
+          Extensions are loaded into every account and take effect after a restart. Meru installs
+          the official extensions from the Chrome Web Store.
         </FieldDescription>
         <ItemGroup>
           {curatedExtensions.map((extension) => (
