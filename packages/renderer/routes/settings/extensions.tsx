@@ -1,5 +1,6 @@
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { Alert, AlertDescription, AlertTitle } from "@meru/ui/components/alert";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import { FieldDescription } from "@meru/ui/components/field";
@@ -14,7 +15,7 @@ import {
 import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import { toast } from "sonner";
 import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -23,6 +24,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient, useConfig } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
+import { platform } from "@/lib/utils";
 
 const installedExtensionsQueryKey = ["installed-extensions"];
 
@@ -87,6 +89,49 @@ function ExtensionItem({
         />
       </ItemActions>
     </Item>
+  );
+}
+
+function PasskeysAlert() {
+  if (platform.isMacOS) {
+    return (
+      <Alert>
+        <KeyRoundIcon />
+        <AlertTitle>Your Mac can sign you in with a passkey</AlertTitle>
+        <AlertDescription>
+          Instead of installing a password manager, you can add a Touch ID passkey to your Google
+          account — open myaccount.google.com inside Meru and enroll one under Security. Nothing to
+          install, and no per-account memory cost. It has to be a new passkey — existing iCloud
+          passkeys can't be used here — and it only signs you in to Google, it doesn't fill
+          passwords on other sites.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (platform.isWindows) {
+    return (
+      <Alert>
+        <KeyRoundIcon />
+        <AlertTitle>Passkeys already work without an extension</AlertTitle>
+        <AlertDescription>
+          Meru signs you in to Google through Windows' own passkey dialog, so Windows Hello and
+          synced passkey providers work with nothing installed. A password manager is still what
+          fills regular passwords.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert>
+      <KeyRoundIcon />
+      <AlertTitle>Passkeys need a password manager on Linux</AlertTitle>
+      <AlertDescription>
+        Linux has no system passkey support, so a password manager extension is the only way to sign
+        in to Google with a passkey in Meru.
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -177,6 +222,9 @@ export function ExtensionsSettings() {
           Extensions are loaded into every account and take effect after a restart. Meru installs
           the official extensions from the Chrome Web Store.
         </FieldDescription>
+        {curatedExtensions.some(({ category }) => category === "passwordManager") && (
+          <PasskeysAlert />
+        )}
         <ItemGroup>
           {curatedExtensions.map((extension) => (
             <ExtensionItem

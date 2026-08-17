@@ -1,8 +1,12 @@
+/** The class an extension belongs to, which is what the page can speak about. */
+export type CuratedExtensionCategory = "passwordManager";
+
 export type CuratedExtension = {
   /** The Chrome Web Store id, which every package has to be signed for. */
   id: string;
   name: string;
   description: string;
+  category: CuratedExtensionCategory;
   /**
    * Match patterns the derive writes over every `content_scripts[].matches` of
    * the extension, so its content scripts only reach the sites it is offered
@@ -22,6 +26,7 @@ export const curatedExtensions: CuratedExtension[] = [
     name: "1Password",
     description:
       "Password manager that fills logins and signs you in with passkeys stored in your vault.",
+    category: "passwordManager",
     contentScriptMatches: ["https://accounts.google.com/*"],
   },
 ];
