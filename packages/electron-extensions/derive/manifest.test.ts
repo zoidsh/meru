@@ -165,6 +165,58 @@ describe("deriveManifest", () => {
     expect(manifest.content_scripts).toEqual(contentScripts);
   });
 
+  test("refuses a manifest whose web accessible resources cover the facade", () => {
+    expect(() =>
+      deriveManifest(
+        {
+          web_accessible_resources: [{ resources: ["*.js"], matches: ["<all_urls>"] }],
+        },
+        fileNames,
+      ),
+    ).toThrow('web_accessible_resources pattern "*.js" makes "chrome-facade.js" fetchable');
+  });
+
+  test("refuses a pattern covering the service worker wrapper", () => {
+    expect(() =>
+      deriveManifest(
+        {
+          web_accessible_resources: [{ resources: ["chrome-facade-service-worker.js"] }],
+        },
+        fileNames,
+      ),
+    ).toThrow("chrome-facade-service-worker.js");
+  });
+
+  test("derives a manifest whose web accessible resources stay clear of the facade", () => {
+    const { manifest } = deriveManifest(
+      {
+        web_accessible_resources: [
+          {
+            resources: ["fonts/*.woff2", "images/*.png", "inline/injected.js", "*.js.map"],
+            matches: ["<all_urls>"],
+          },
+        ],
+      },
+      fileNames,
+    );
+
+    expect(manifest.web_accessible_resources).toEqual([
+      {
+        resources: ["fonts/*.woff2", "images/*.png", "inline/injected.js", "*.js.map"],
+        matches: ["<all_urls>"],
+      },
+    ]);
+  });
+
+  test("derives a manifest whose web accessible resources were stripped away", () => {
+    const { manifest } = deriveManifest(
+      { web_accessible_resources: [{ resources: ["*.js"] }] },
+      { ...fileNames, strippedManifestKeys: ["web_accessible_resources"] },
+    );
+
+    expect(manifest.web_accessible_resources).toBeUndefined();
+  });
+
   test("strips nothing an extension does not have", () => {
     const { manifest } = deriveManifest(
       { name: "1Password" },
