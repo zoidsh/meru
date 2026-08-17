@@ -9,6 +9,7 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@meru/ui/components/item";
+import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -65,6 +66,7 @@ function ExtensionItem({
         </ItemDescription>
       </ItemContent>
       <ItemActions>
+        {extensionMutation.isPending && <Spinner />}
         <Switch
           checked={isLicenseKeyValid && installed}
           disabled={!isLicenseKeyValid || extensionMutation.isPending}
