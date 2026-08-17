@@ -150,11 +150,12 @@ function createSession({
       }
     },
     request: (body: Record<string, unknown>) =>
-      requestHandler?.({
-        url: `${EXTENSION_BRIDGE_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`,
-        headers: new Headers(),
-        json: async () => body,
-      } as unknown as GlobalRequest) as Promise<Response>,
+      requestHandler?.(
+        new Request(`${EXTENSION_BRIDGE_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        }) as GlobalRequest,
+      ) as Promise<Response>,
   };
 }
 
