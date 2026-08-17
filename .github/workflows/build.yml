@@ -7,11 +7,20 @@ on:
     paths-ignore:
       - "**.md"
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
     paths-ignore:
       - "**.md"
 
 jobs:
   build:
+    # Signing and notarizing macOS adds ~4 minutes to a run, so pull request builds are
+    # unsigned by default: label a pull request `sign-macos` to sign that build and every
+    # build after it. Only that label starts a run; any other label is ignored.
+    if: github.event.action != 'labeled' || github.event.label.name == 'sign-macos'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -20,11 +29,15 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
+    env:
+      SIGN_MACOS: ${{ contains(github.event.pull_request.labels.*.name, 'sign-macos') }}
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - if: startsWith(matrix.os, 'macos')
+      - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS != 'true'
+        run: bun run build:mac -- --publish never
+      - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS == 'true'
         run: bun run build:mac -- --publish never
         env:
           # electron-builder skips signing on PR builds unless this is true; fork PRs never
