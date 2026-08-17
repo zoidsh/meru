@@ -4,7 +4,7 @@ export type { VerifiedCrx } from "./crx";
 export { pruneDerivedExtensions } from "./derive";
 export type { PruneDerivedExtensionsOptions } from "./derive";
 export { Extensions } from "./extensions";
-export type { ActionsChangedListener, ExtensionsOptions } from "./extensions";
+export type { ActionsChangedListener, ExtensionDirs, ExtensionsOptions } from "./extensions";
 export {
   buildCrxDownloadUrl,
   fetchCrx,

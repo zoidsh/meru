@@ -4,6 +4,7 @@ import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
+import { isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
@@ -23,6 +24,7 @@ import {
   shell,
 } from "electron";
 import { machineId } from "node-machine-id";
+import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
@@ -39,6 +41,11 @@ import { confirmAppLinksTabHandover } from "./dialogs";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { extensionActions } from "./extension-actions";
+import {
+  getInstalledExtensions,
+  installCuratedExtension,
+  uninstallCuratedExtension,
+} from "./extensions";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
 import { log } from "./lib/log";
 import {
@@ -1009,6 +1016,48 @@ class Ipc {
 
     ipc.main.on("extensions.setActionPopupCloseOnBlurEnabled", (_event, enabled) => {
       extensionActions.popup.closeOnBlurEnabled = enabled;
+    });
+
+    ipc.main.handle("extensions.getInstalled", () => {
+      return getInstalledExtensions();
+    });
+
+    ipc.main.handle("extensions.install", async (_event, extensionId) => {
+      if (!licenseKey.isValid) {
+        return { error: "Meru Pro is required to install extensions" };
+      }
+
+      if (!isCuratedExtensionId(extensionId)) {
+        return { error: "This extension is not part of the extensions Meru offers" };
+      }
+
+      try {
+        await installCuratedExtension(extensionId);
+
+        return {};
+      } catch (error) {
+        log.error("Failed to install extension", { extensionId, error: serializeError(error) });
+
+        return {
+          error: `Failed to install extension: ${error instanceof Error ? error.message : String(error)}`,
+        };
+      }
+    });
+
+    // Opting out is never gated, so an extension can be taken off a device that
+    // has lost its license
+    ipc.main.handle("extensions.uninstall", async (_event, extensionId) => {
+      try {
+        await uninstallCuratedExtension(extensionId);
+
+        return {};
+      } catch (error) {
+        log.error("Failed to uninstall extension", { extensionId, error: serializeError(error) });
+
+        return {
+          error: `Failed to uninstall extension: ${error instanceof Error ? error.message : String(error)}`,
+        };
+      }
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {

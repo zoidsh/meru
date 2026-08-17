@@ -3,31 +3,40 @@ import { is } from "@electron-toolkit/utils";
 import {
   Extensions,
   findExtensionDirs,
+  getInstalledExtension,
+  installLatestExtension,
+  pruneDerivedExtensions,
   registerNativeMessagingScheme,
+  uninstallExtension,
 } from "@meru/electron-extensions";
+import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
+import { ms } from "@meru/shared/ms";
+import type { InstalledExtensionState } from "@meru/shared/types";
 import { app } from "electron";
 import { serializeError } from "serialize-error";
+import { config } from "@/config";
 import { log } from "@/lib/log";
+import { licenseKey } from "@/license-key";
+
+/** Where the curated extensions are installed, `<installDir>/<id>/<version>`. */
+const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
+
+const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-extensions");
 
 // 1Password overrides `navigator.credentials` in the page, which is what lets a
 // passkey sign-in go through in Electron and makes the passkey dialog moot
 export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
 /**
- * Unpacked extensions to load into every account session, one directory holding
- * a `manifest.json` per extension:
+ * Unpacked extensions to load on top of the installed ones, one directory
+ * holding a `manifest.json` per extension:
  *
  *   <repo root>/extensions/1password/manifest.json
  *
  * The folder is gitignored, and `app.getAppPath()` is the repo root in
  * development because `bun run dev` starts Electron as `electron .` there.
- *
- * Until extensions are installed from the curated list, this is the only source
- * of extensions, and it is read in development only — a packaged build has no
- * way to turn extensions on, so nothing is loaded and account sessions stay
- * exactly as they are today.
  */
-function getExtensionDirs() {
+function getDevExtensionDirs() {
   if (!is.dev) {
     return [];
   }
@@ -52,14 +61,51 @@ function getStrippedManifestKeys() {
     .filter(Boolean);
 }
 
+/** The curated extensions the user opted into, and Pro is what they run on. */
+function getOptedInExtensionIds() {
+  if (!licenseKey.isValid) {
+    return [];
+  }
+
+  return config
+    .get("extensions.installed")
+    .filter((extensionId) => isCuratedExtensionId(extensionId));
+}
+
+async function getInstalledExtensionDirs() {
+  const extensionDirs: string[] = [];
+
+  for (const extensionId of getOptedInExtensionIds()) {
+    const installedExtension = await getInstalledExtension({
+      installDir: INSTALL_DIR,
+      extensionId,
+    });
+
+    if (installedExtension) {
+      extensionDirs.push(installedExtension.extensionDir);
+    }
+  }
+
+  return extensionDirs;
+}
+
+/**
+ * Everything an account session loads: what the user opted into, plus the
+ * development folder. Asked again for every session, so an account created
+ * after an install gets that extension without anything being rebuilt.
+ */
+async function getExtensionDirs() {
+  return [...getDevExtensionDirs(), ...(await getInstalledExtensionDirs())];
+}
+
 // Extension contexts reach the native messaging bridge over a custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerNativeMessagingScheme();
 
 export const extensions = new Extensions({
-  extensionDirs: getExtensionDirs(),
+  extensionDirs: getExtensionDirs,
   facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
-  derivedExtensionsDir: path.join(app.getPath("userData"), "derived-extensions"),
+  derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   logger: {
     info: (message, details) => {
@@ -70,3 +116,111 @@ export const extensions = new Extensions({
     },
   },
 });
+
+/**
+ * What is on disk, which config alone can't tell: an install carries a version,
+ * and an opt-in that never finished installing carries nothing.
+ */
+export async function getInstalledExtensions() {
+  const installedExtensions: InstalledExtensionState[] = [];
+
+  for (const curatedExtension of curatedExtensions) {
+    const installedExtension = await getInstalledExtension({
+      installDir: INSTALL_DIR,
+      extensionId: curatedExtension.id,
+    });
+
+    if (installedExtension) {
+      installedExtensions.push({ id: curatedExtension.id, version: installedExtension.version });
+    }
+  }
+
+  return installedExtensions;
+}
+
+/** Installs the latest version and records the opt-in, which is what loads it. */
+export async function installCuratedExtension(extensionId: string) {
+  const { version } = await installLatestExtension({
+    extensionId,
+    installDir: INSTALL_DIR,
+    chromeVersion: process.versions.chrome,
+  });
+
+  const installedExtensionIds = config.get("extensions.installed");
+
+  if (!installedExtensionIds.includes(extensionId)) {
+    config.set("extensions.installed", [...installedExtensionIds, extensionId]);
+  }
+
+  log.info("Installed extension", { extensionId, version });
+}
+
+export async function uninstallCuratedExtension(extensionId: string) {
+  config.set(
+    "extensions.installed",
+    config
+      .get("extensions.installed")
+      .filter((installedExtensionId) => installedExtensionId !== extensionId),
+  );
+
+  await uninstallExtension({ installDir: INSTALL_DIR, extensionId });
+
+  log.info("Uninstalled extension", { extensionId });
+}
+
+/**
+ * The copies the loader derived from extensions that are no longer loaded — an
+ * extension the user opted out of, a version an update replaced — are the
+ * embedder's to collect. Once per launch: every session derives from the same
+ * list.
+ */
+export async function pruneDerivedExtensionCopies() {
+  try {
+    await pruneDerivedExtensions({
+      derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
+      keptSourceDirs: await getExtensionDirs(),
+    });
+  } catch (error) {
+    log.error("Failed to prune derived extensions", { error: serializeError(error) });
+  }
+}
+
+/**
+ * Keeps the installed extensions at the version the update endpoint serves. A
+ * new version is loaded on the next launch, since sessions keep the copy they
+ * derived for as long as they live.
+ */
+class ExtensionUpdater {
+  init() {
+    if (!licenseKey.isValid || config.get("extensions.installed").length === 0) {
+      return;
+    }
+
+    this.checkForUpdates();
+
+    setInterval(() => {
+      this.checkForUpdates();
+    }, ms("3h"));
+  }
+
+  private async checkForUpdates() {
+    for (const extensionId of getOptedInExtensionIds()) {
+      try {
+        const { updated, version } = await installLatestExtension({
+          extensionId,
+          installDir: INSTALL_DIR,
+          chromeVersion: process.versions.chrome,
+        });
+
+        log.info(updated ? "Updated extension" : "Extension is up to date", {
+          extensionId,
+          version,
+        });
+      } catch (error) {
+        log.error("Failed to update extension", { extensionId, error: serializeError(error) });
+      }
+    }
+  }
+}
+
+export const extensionUpdater = new ExtensionUpdater();
