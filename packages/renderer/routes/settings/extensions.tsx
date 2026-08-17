@@ -3,7 +3,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { Alert, AlertDescription, AlertTitle } from "@meru/ui/components/alert";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { FieldDescription } from "@meru/ui/components/field";
+import { FieldDescription, FieldLegend, FieldSet } from "@meru/ui/components/field";
 import {
   Item,
   ItemActions,
@@ -97,13 +97,11 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Your Mac can sign you in with a passkey</AlertTitle>
+        <AlertTitle>Meru can sign you in with a Touch ID passkey</AlertTitle>
         <AlertDescription>
-          Instead of installing a password manager, you can add a Touch ID passkey to your Google
-          account — open myaccount.google.com inside Meru and enroll one under Security. Nothing to
-          install, and no per-account memory cost. It has to be a new passkey — existing iCloud
-          passkeys can't be used here — and it only signs you in to Google, it doesn't fill
-          passwords on other sites.
+          Add a passkey to your Google account from its security settings inside Meru and sign in
+          with Touch ID — lighter than running an extension. Existing iCloud passkeys can't be used,
+          and it won't fill passwords on other sites.
         </AlertDescription>
       </Alert>
     );
@@ -113,11 +111,10 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Passkeys already work without an extension</AlertTitle>
+        <AlertTitle>Meru can sign you in with your Windows passkeys</AlertTitle>
         <AlertDescription>
-          Meru signs you in to Google through Windows' own passkey dialog, so Windows Hello and
-          synced passkey providers work with nothing installed. A password manager is still what
-          fills regular passwords.
+          Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
+          with no extension. Filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
@@ -222,19 +219,24 @@ export function ExtensionsSettings() {
           Extensions are loaded into every account and take effect after a restart. Meru installs
           the official extensions from the Chrome Web Store.
         </FieldDescription>
-        {curatedExtensions.some(({ category }) => category === "passwordManager") && (
+        <FieldSet>
+          <FieldLegend>Password Managers</FieldLegend>
           <PasskeysAlert />
-        )}
-        <ItemGroup>
-          {curatedExtensions.map((extension) => (
-            <ExtensionItem
-              key={extension.id}
-              extension={extension}
-              installed={config["extensions.installed"].includes(extension.id)}
-              installedVersion={installedExtensions?.find(({ id }) => id === extension.id)?.version}
-            />
-          ))}
-        </ItemGroup>
+          <ItemGroup>
+            {curatedExtensions
+              .filter(({ category }) => category === "passwordManager")
+              .map((extension) => (
+                <ExtensionItem
+                  key={extension.id}
+                  extension={extension}
+                  installed={config["extensions.installed"].includes(extension.id)}
+                  installedVersion={
+                    installedExtensions?.find(({ id }) => id === extension.id)?.version
+                  }
+                />
+              ))}
+          </ItemGroup>
+        </FieldSet>
       </SettingsContent>
     </Settings>
   );
