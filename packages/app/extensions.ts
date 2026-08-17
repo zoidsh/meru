@@ -98,6 +98,16 @@ async function getExtensionDirs() {
   return [...getDevExtensionDirs(), ...(await getInstalledExtensionDirs())];
 }
 
+/**
+ * Where a curated extension's content scripts may run, from the catalog entry it
+ * is offered under. An extension the catalog says nothing about — a development
+ * folder — runs its content scripts as its author declared them.
+ */
+function getContentScriptMatches(extensionId: string) {
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.contentScriptMatches;
+}
+
 // Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerExtensionBridgeScheme();
@@ -107,6 +117,7 @@ export const extensions = new Extensions({
   facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
+  getContentScriptMatches,
   logger: {
     info: (message, details) => {
       log.info(message, details);

@@ -13,6 +13,7 @@ export type ExtensionManifest = {
     extension_pages?: string;
     sandbox?: string;
   };
+  content_scripts?: ({ matches?: string[] } & { [contentScriptKey: string]: unknown })[];
 };
 
 export type DerivedManifest = {
@@ -131,9 +132,29 @@ function deriveContentSecurityPolicy(
 }
 
 /**
+ * Narrows where the extension's content scripts run. Electron has no per-site
+ * extension controls, so the manifest is the only lever: an extension declaring
+ * `<all_urls>` injects into every frame of every view otherwise.
+ *
+ * Every entry keeps the rest of what its author wrote — which scripts run, when
+ * they run, which frames they reach — and only the sites they run on change.
+ */
+function deriveContentScripts(
+  contentScripts: ExtensionManifest["content_scripts"],
+  matches: string[] | undefined,
+) {
+  if (!contentScripts || !matches) {
+    return contentScripts;
+  }
+
+  return contentScripts.map((contentScript) => ({ ...contentScript, matches }));
+}
+
+/**
  * Points the manifest's service worker at a generated wrapper, lets its content
- * security policy reach the native messaging bridge and drops the permissions
- * Electron cannot serve. Everything else is carried over untouched — `key`
+ * security policy reach the native messaging bridge, clamps its content scripts
+ * to the sites they may run on and drops the permissions Electron cannot serve.
+ * Everything else is carried over untouched — `key`
  * above all, since without it Chromium derives the extension id from the
  * directory it was loaded from and the derived copy would answer to a different
  * id than the extension it came from.
@@ -145,18 +166,25 @@ export function deriveManifest(
     serviceWorkerFileName,
     bridgeConnectSource,
     strippedManifestKeys = [],
+    contentScriptMatches,
   }: {
     facadeFileName: string;
     serviceWorkerFileName: string;
     bridgeConnectSource: string;
     /** Manifest keys to leave out of the copy, e.g. `content_scripts`. */
     strippedManifestKeys?: string[];
+    /**
+     * Match patterns to write over every content script's own. Without them the
+     * extension's content scripts run wherever its author declared.
+     */
+    contentScriptMatches?: string[];
   },
 ): DerivedManifest {
   const derivedManifest: ExtensionManifest = {
     ...manifest,
     permissions: derivePermissions(manifest.permissions),
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
+    content_scripts: deriveContentScripts(manifest.content_scripts, contentScriptMatches),
   };
 
   for (const strippedManifestKey of strippedManifestKeys) {
