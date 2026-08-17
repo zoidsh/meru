@@ -3,12 +3,9 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Session } from "electron";
-import {
-  NATIVE_MESSAGING_ORIGIN,
-  NATIVE_MESSAGING_PATHS,
-  NATIVE_MESSAGING_SCHEME,
-  type NativeMessagingFrame,
-} from "./bridge-protocol";
+import { ExtensionBridge } from "../bridge/bridge";
+import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
+import { NATIVE_MESSAGING_PATHS, type NativeMessagingFrame } from "./bridge-protocol";
 import { NativeMessageDecoder } from "./framing";
 import { getHostManifestSearchPaths } from "./host-manifest";
 import { NativeMessaging } from "./native-messaging";
@@ -93,7 +90,7 @@ async function writeHostManifest(allowedExtensionId = EXTENSION_ID) {
 
 function createRequest(pathName: string, body: Record<string, unknown>) {
   return {
-    url: `${NATIVE_MESSAGING_ORIGIN}${pathName}`,
+    url: `${EXTENSION_BRIDGE_ORIGIN}${pathName}`,
     headers: new Headers(),
     json: async () => body,
   } as unknown as GlobalRequest;
@@ -115,11 +112,22 @@ function createNativeMessaging(options: ConstructorParameters<typeof NativeMessa
     hostManifestSearch: { homeDir: workDir },
   });
 
-  nativeMessaging.setupSession(session, {
+  const bridge = new ExtensionBridge();
+
+  nativeMessaging.registerRoutes(bridge);
+
+  bridge.setupSession(session, {
     getExtensionId: (bridgeToken) => (bridgeToken === BRIDGE_TOKEN ? EXTENSION_ID : undefined),
   });
 
-  return nativeMessaging;
+  return {
+    nativeMessaging,
+    teardown: () => {
+      bridge.teardownSession(session);
+
+      nativeMessaging.teardownSession(session);
+    },
+  };
 }
 
 /** Kill with signal 0 probes for existence, and ESRCH says the process is gone. */
@@ -162,7 +170,7 @@ describe("NativeMessaging", () => {
   test("carries messages both ways and tells the host who is calling", async () => {
     await writeHostManifest();
 
-    const nativeMessaging = createNativeMessaging();
+    const { teardown } = createNativeMessaging();
 
     const response = await connect();
 
@@ -181,23 +189,7 @@ describe("NativeMessaging", () => {
       message: { echo: { hello: "host" }, origin: `chrome-extension://${EXTENSION_ID}/` },
     });
 
-    nativeMessaging.teardownSession(session);
-  });
-
-  test("refuses a request without the token of a loaded extension", async () => {
-    await writeHostManifest();
-
-    createNativeMessaging();
-
-    const response = await requestHandler?.(
-      createRequest(NATIVE_MESSAGING_PATHS.connect, {
-        token: "guessed",
-        portId: "port-1",
-        hostName: HOST_NAME,
-      }),
-    );
-
-    expect(response?.status).toBe(403);
+    teardown();
   });
 
   test("disconnects when the host does not list the extension", async () => {
@@ -236,7 +228,7 @@ describe("NativeMessaging", () => {
 
     const logs: { message: string; details: Record<string, unknown> }[] = [];
 
-    const nativeMessaging = createNativeMessaging({
+    const { teardown } = createNativeMessaging({
       logger: {
         info: (message, details) => {
           logs.push({ message, details });
@@ -259,37 +251,19 @@ describe("NativeMessaging", () => {
 
     await waitForProcessExit(hostPid);
 
-    nativeMessaging.teardownSession(session);
+    teardown();
   });
 
   test("takes the session's ports down with the session", async () => {
     await writeHostManifest();
 
-    const nativeMessaging = createNativeMessaging();
+    const { teardown } = createNativeMessaging();
 
     const response = await connect();
 
-    nativeMessaging.teardownSession(session);
+    teardown();
 
     expect(requestHandler).toBeUndefined();
     expect(await readFrame(response)).toEqual({ type: "disconnect", error: undefined });
-  });
-
-  test("handles the scheme on the session it is set up for", () => {
-    const handledSchemes: string[] = [];
-
-    new NativeMessaging().setupSession(
-      {
-        protocol: {
-          handle: (scheme: string) => {
-            handledSchemes.push(scheme);
-          },
-          unhandle: () => undefined,
-        },
-      } as unknown as Session,
-      { getExtensionId: () => undefined },
-    );
-
-    expect(handledSchemes).toEqual([NATIVE_MESSAGING_SCHEME]);
   });
 });

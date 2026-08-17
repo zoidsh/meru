@@ -3,11 +3,9 @@ import fs, { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os, { tmpdir } from "node:os";
 import path from "node:path";
 import type { ClearStorageDataOptions, Extension, Session } from "electron";
+import { EXTENSION_BRIDGE_ORIGIN } from "./bridge/protocol";
 import { Extensions } from "./extensions";
-import {
-  NATIVE_MESSAGING_ORIGIN,
-  NATIVE_MESSAGING_PATHS,
-} from "./native-messaging/bridge-protocol";
+import { NATIVE_MESSAGING_PATHS } from "./native-messaging/bridge-protocol";
 
 let workDir: string;
 
@@ -129,7 +127,7 @@ function createSession({
     sessionEvents,
     request: (body: Record<string, unknown>) =>
       requestHandler?.({
-        url: `${NATIVE_MESSAGING_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`,
+        url: `${EXTENSION_BRIDGE_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`,
         headers: new Headers(),
         json: async () => body,
       } as unknown as GlobalRequest) as Promise<Response>,

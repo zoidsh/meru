@@ -1,10 +1,10 @@
 import { protocol } from "electron";
-import { NATIVE_MESSAGING_SCHEME } from "./bridge-protocol";
+import { EXTENSION_BRIDGE_SCHEME } from "./protocol";
 
 /**
- * Registers the scheme the native messaging bridge answers on. Electron only
- * takes scheme privileges before the app is ready, so an embedder has to call
- * this while its modules are still loading.
+ * Registers the scheme the extension bridge answers on. Electron only takes
+ * scheme privileges before the app is ready, so an embedder has to call this
+ * while its modules are still loading.
  *
  * `supportFetchAPI` and `corsEnabled` are what let an extension context fetch
  * the scheme at all, and `allowServiceWorkers` is what extends that to service
@@ -13,10 +13,10 @@ import { NATIVE_MESSAGING_SCHEME } from "./bridge-protocol";
  * asked (measured on Electron 43.2.0). Nothing can navigate to the scheme, so
  * the workers it allows to be registered on it are hypothetical.
  */
-export function registerNativeMessagingScheme() {
+export function registerExtensionBridgeScheme() {
   protocol.registerSchemesAsPrivileged([
     {
-      scheme: NATIVE_MESSAGING_SCHEME,
+      scheme: EXTENSION_BRIDGE_SCHEME,
       privileges: {
         standard: true,
         secure: true,

@@ -6,7 +6,7 @@ import {
   getInstalledExtension,
   installLatestExtension,
   pruneDerivedExtensions,
-  registerNativeMessagingScheme,
+  registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
@@ -98,9 +98,9 @@ async function getExtensionDirs() {
   return [...getDevExtensionDirs(), ...(await getInstalledExtensionDirs())];
 }
 
-// Extension contexts reach the native messaging bridge over a custom scheme,
+// Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
-registerNativeMessagingScheme();
+registerExtensionBridgeScheme();
 
 export const extensions = new Extensions({
   extensionDirs: getExtensionDirs,

@@ -7,6 +7,7 @@ import {
   type ExtensionAction,
   readExtensionActionIcon,
 } from "./action";
+import { ExtensionBridge } from "./bridge/bridge";
 import { deriveExtension } from "./derive";
 import type { ExtensionsLogger } from "./logger";
 import {
@@ -92,6 +93,8 @@ export class Extensions {
 
   private derivedExtensions = new Map<string, ReturnType<typeof deriveExtension>>();
 
+  private bridge: ExtensionBridge;
+
   private nativeMessaging: NativeMessaging;
 
   constructor({
@@ -112,10 +115,14 @@ export class Extensions {
 
     this.logger = logger;
 
+    this.bridge = new ExtensionBridge({ logger });
+
     this.nativeMessaging = new NativeMessaging({
       isHostAllowed: isNativeMessagingHostAllowed,
       logger,
     });
+
+    this.nativeMessaging.registerRoutes(this.bridge);
   }
 
   /**
@@ -169,7 +176,7 @@ export class Extensions {
 
     const extensionIdsByBridgeToken = new Map<string, string>();
 
-    this.nativeMessaging.setupSession(session, {
+    this.bridge.setupSession(session, {
       getExtensionId: (bridgeToken) => extensionIdsByBridgeToken.get(bridgeToken),
     });
 
@@ -256,6 +263,8 @@ export class Extensions {
     this.loadedExtensionIdsBySession.delete(session);
 
     this.actionsBySession.delete(session);
+
+    this.bridge.teardownSession(session);
 
     this.nativeMessaging.teardownSession(session);
 
