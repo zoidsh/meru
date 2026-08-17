@@ -11,7 +11,7 @@ import {
 } from "electron";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
-import { loadUrl } from "./web-contents";
+import { loadUrl } from "./load-url";
 
 const CASCADE_OFFSET = 30;
 
