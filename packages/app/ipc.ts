@@ -1010,12 +1010,8 @@ class Ipc {
       return extensionActions.serialize(event.sender);
     });
 
-    ipc.main.on("extensions.toggleActionPopup", (event, extensionId, anchorRect) => {
-      extensionActions.togglePopup(event.sender, extensionId, anchorRect);
-    });
-
-    ipc.main.on("extensions.setActionPopupCloseOnBlurEnabled", (_event, enabled) => {
-      extensionActions.popup.closeOnBlurEnabled = enabled;
+    ipc.main.on("extensions.showActionsMenu", (event, anchorRect) => {
+      extensionActions.showMenu(event.sender, anchorRect);
     });
 
     ipc.main.handle("extensions.getInstalled", () => {

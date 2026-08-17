@@ -1,6 +1,6 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { ExtensionActionAnchorRect } from "@meru/shared/types";
-import { BrowserWindow, type WebContents } from "electron";
+import { BrowserWindow, Menu, nativeImage, type WebContents } from "electron";
 import { accounts } from "./accounts";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
@@ -8,12 +8,30 @@ import { Popup } from "./lib/popup";
 import { main } from "./main";
 import { WorkspaceApp } from "./workspace-app";
 
+/** The size a menu item's icon is drawn at. */
+const MENU_ICON_SIZE = 16;
+
 /**
- * The titlebar buttons of the extensions loaded into an account's session, and
- * the popup a click on one opens.
+ * Action icons are read at twice the size a menu draws them at, and a data URL
+ * carries no scale factor for Electron to work that out from.
+ */
+function createMenuIcon(iconDataUrl: string) {
+  const icon = nativeImage.createFromDataURL(iconDataUrl);
+
+  // An icon `nativeImage` cannot decode — an SVG one — comes back empty
+  if (icon.isEmpty()) {
+    return undefined;
+  }
+
+  return icon.resize({ width: MENU_ICON_SIZE, height: MENU_ICON_SIZE });
+}
+
+/**
+ * The titlebar button listing the extensions loaded into an account's session,
+ * and the popup picking one from that list opens.
  *
- * Extensions load into every account, so every titlebar shows the same buttons
- * — the session a window belongs to only decides which of an extension's
+ * Extensions load into every account, so every titlebar shows the same list —
+ * the session a window belongs to only decides which of an extension's
  * per-account instances the popup runs against.
  */
 class ExtensionActions {
@@ -54,14 +72,13 @@ class ExtensionActions {
     }
   }
 
-  togglePopup(
+  private openPopup(
+    parentWindow: BrowserWindow,
     webContents: WebContents,
     extensionId: string,
     anchorRect: ExtensionActionAnchorRect,
   ) {
-    const parentWindow = BrowserWindow.fromWebContents(webContents);
-
-    if (!parentWindow) {
+    if (parentWindow.isDestroyed()) {
       return;
     }
 
@@ -90,6 +107,35 @@ class ExtensionActions {
       // short of it
       anchor: { x: anchorRect.x + anchorRect.width, y: APP_TITLEBAR_HEIGHT, align: "end" },
     });
+
+    // The menu the popup was picked from is gone by the time it opens, so
+    // nothing holds the blur off the way hovering a button that toggles a popup
+    // does — a click anywhere else closes it
+    this.popup.closeOnBlurEnabled = true;
+  }
+
+  showMenu(webContents: WebContents, anchorRect: ExtensionActionAnchorRect) {
+    const parentWindow = BrowserWindow.fromWebContents(webContents);
+
+    if (!parentWindow) {
+      return;
+    }
+
+    // A click on the button lands here through the blur that closes an open
+    // popup, so the menu takes over rather than opening on top of one
+    this.popup.close();
+
+    const menu = Menu.buildFromTemplate(
+      this.serialize(webContents).map(({ extensionId, title, iconDataUrl }) => ({
+        label: title,
+        icon: iconDataUrl ? createMenuIcon(iconDataUrl) : undefined,
+        click: () => {
+          this.openPopup(parentWindow, webContents, extensionId, anchorRect);
+        },
+      })),
+    );
+
+    menu.popup({ window: parentWindow, x: anchorRect.x, y: anchorRect.y + anchorRect.height });
   }
 }
 

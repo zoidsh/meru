@@ -49,10 +49,10 @@ export type NotificationTime = {
 export type BookmarksPopupPlacement = "titlebar" | "verticalTabs";
 
 /**
- * One loaded extension's titlebar button. Everything here comes from the
- * extension's manifest and never changes while it runs — Electron implements no
- * part of `chrome.action`, so an extension setting an icon, a badge or a title
- * at runtime changes nothing and leaves no state to read.
+ * One loaded extension's entry in the extensions menu. Everything here comes
+ * from the extension's manifest and never changes while it runs — Electron
+ * implements no part of `chrome.action`, so an extension setting an icon, a
+ * badge or a title at runtime changes nothing and leaves no state to read.
  */
 export type ExtensionActionState = {
   extensionId: string;
@@ -66,7 +66,7 @@ export type InstalledExtensionState = {
   version: string;
 };
 
-/** A titlebar button's rect, in its window's content coordinates. */
+/** The extensions titlebar button's rect, in its window's content coordinates. */
 export type ExtensionActionAnchorRect = { x: number; y: number; width: number; height: number };
 
 export type WorkspaceAppNotification = {
@@ -243,8 +243,7 @@ export type IpcMainEvents =
         bookmarkId: Bookmark["id"],
         targetIndex: number,
       ];
-      "extensions.toggleActionPopup": [extensionId: string, anchorRect: ExtensionActionAnchorRect];
-      "extensions.setActionPopupCloseOnBlurEnabled": [enabled: boolean];
+      "extensions.showActionsMenu": [anchorRect: ExtensionActionAnchorRect];
       "doNotDisturb.toggle": [];
       "doNotDisturb.showOptions": [];
       "downloads.toggleRecentDownloadHistoryPopup": [];
