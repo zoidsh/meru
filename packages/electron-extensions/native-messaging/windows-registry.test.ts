@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { WINDOWS_HOST_REGISTRY_KEYS } from "./host-manifest";
-import { parseRegistryQueryOutput } from "./windows-registry";
+import { expandEnvironmentVariables, parseRegistryQueryOutput } from "./windows-registry";
 
 describe("parseRegistryQueryOutput", () => {
   test("reads the manifest path out of a default string value", () => {
@@ -16,9 +16,19 @@ describe("parseRegistryQueryOutput", () => {
     ).toBe("C:\\Users\\Tim\\AppData\\Local\\1Password\\com.1password.1password.json");
   });
 
-  test("reads an expandable string value too", () => {
+  test("expands an expandable string value the way Windows reads it", () => {
     expect(
-      parseRegistryQueryOutput("    (Default)    REG_EXPAND_SZ    %LOCALAPPDATA%\\host.json\r\n"),
+      parseRegistryQueryOutput("    (Default)    REG_EXPAND_SZ    %LOCALAPPDATA%\\host.json\r\n", {
+        LOCALAPPDATA: "C:\\Users\\Tim\\AppData\\Local",
+      }),
+    ).toBe("C:\\Users\\Tim\\AppData\\Local\\host.json");
+  });
+
+  test("expands nothing in an ordinary string value", () => {
+    expect(
+      parseRegistryQueryOutput("    (Default)    REG_SZ    %LOCALAPPDATA%\\host.json", {
+        LOCALAPPDATA: "C:\\Users\\Tim\\AppData\\Local",
+      }),
     ).toBe("%LOCALAPPDATA%\\host.json");
   });
 
@@ -38,6 +48,29 @@ describe("parseRegistryQueryOutput", () => {
         "\r\nHKEY_CURRENT_USER\\Software\\Google\\Chrome\\NativeMessagingHosts\r\n",
       ),
     ).toBeUndefined();
+  });
+});
+
+describe("expandEnvironmentVariables", () => {
+  test("matches variable names without regard to case", () => {
+    expect(
+      expandEnvironmentVariables("%localappdata%\\host.json", {
+        LOCALAPPDATA: "C:\\Users\\Tim\\AppData\\Local",
+      }),
+    ).toBe("C:\\Users\\Tim\\AppData\\Local\\host.json");
+  });
+
+  test("leaves a reference nothing is set for as written", () => {
+    expect(expandEnvironmentVariables("%NOT_SET%\\host.json", {})).toBe("%NOT_SET%\\host.json");
+  });
+
+  test("expands several references in one value", () => {
+    expect(
+      expandEnvironmentVariables("%SystemDrive%%HOMEPATH%\\host.json", {
+        SystemDrive: "C:",
+        HOMEPATH: "\\Users\\Tim",
+      }),
+    ).toBe("C:\\Users\\Tim\\host.json");
   });
 });
 
