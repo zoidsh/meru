@@ -1,10 +1,9 @@
 import {
-  NATIVE_MESSAGING_ORIGIN,
   NATIVE_MESSAGING_PATHS,
-  NATIVE_MESSAGING_TOKEN_GLOBAL,
   type NativeMessagingFrame,
 } from "../../native-messaging/bridge-protocol";
 import { NativeMessageDecoder } from "../../native-messaging/framing";
+import { postBridge } from "../lib/bridge";
 import type { ChromeNamespace } from "../lib/chrome";
 import { createEvent } from "../lib/event";
 
@@ -19,19 +18,6 @@ type NativeMessagingPort = {
   onMessage: ReturnType<typeof createEvent>;
   onDisconnect: ReturnType<typeof createEvent>;
 };
-
-function post(pathName: string, body: Record<string, unknown>) {
-  const token = (globalThis as unknown as Record<string, string | undefined>)[
-    NATIVE_MESSAGING_TOKEN_GLOBAL
-  ];
-
-  return fetch(`${NATIVE_MESSAGING_ORIGIN}${pathName}`, {
-    method: "POST",
-    // A safelisted content type keeps this a simple request, so no preflight
-    headers: { "content-type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify({ ...body, token }),
-  });
-}
 
 /**
  * `chrome.runtime.lastError` the way Chrome exposes it: set for the duration of
@@ -90,7 +76,7 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
       }
 
       sendChain = sendChain
-        .then(() => post(NATIVE_MESSAGING_PATHS.post, { portId, message }))
+        .then(() => postBridge(NATIVE_MESSAGING_PATHS.post, { portId, message }))
         .catch(() => undefined);
     },
     disconnect() {
@@ -102,7 +88,7 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
       markOpened();
 
-      void post(NATIVE_MESSAGING_PATHS.disconnect, { portId });
+      void postBridge(NATIVE_MESSAGING_PATHS.disconnect, { portId });
     },
   };
 
@@ -122,7 +108,7 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
   };
 
   const readFrames = async () => {
-    const response = await post(NATIVE_MESSAGING_PATHS.connect, { portId, hostName });
+    const response = await postBridge(NATIVE_MESSAGING_PATHS.connect, { portId, hostName });
 
     if (!response.ok || !response.body) {
       throw new Error(`The native messaging bridge answered ${response.status}`);

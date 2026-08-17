@@ -1,10 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  NATIVE_MESSAGING_SCHEME,
-  NATIVE_MESSAGING_TOKEN_GLOBAL,
-} from "../native-messaging/bridge-protocol";
+import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { injectFacadeScript } from "./html";
 import { deriveManifest, type ExtensionManifest } from "./manifest";
@@ -19,7 +16,7 @@ const FACADE_FILE_NAME = "chrome-facade.js";
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 3;
+const DERIVE_VERSION = 4;
 
 export type DeriveExtensionOptions = {
   /** The unpacked extension the embedder handed over, never written to. */
@@ -140,7 +137,7 @@ export async function deriveExtension({
     const { manifest, serviceWorkerWrapper } = deriveManifest(sourceManifest, {
       facadeFileName: FACADE_FILE_NAME,
       serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
-      bridgeConnectSource: `${NATIVE_MESSAGING_SCHEME}:`,
+      bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
       strippedManifestKeys,
     });
 
@@ -160,7 +157,7 @@ export async function deriveExtension({
 
   await writeFile(
     path.join(derivedDir, FACADE_FILE_NAME),
-    `globalThis.${NATIVE_MESSAGING_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
+    `globalThis.${EXTENSION_BRIDGE_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
       facadeScriptPath,
       "utf8",
     )}`,

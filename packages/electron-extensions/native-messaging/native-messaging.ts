@@ -1,13 +1,12 @@
 import type { Session } from "electron";
+import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
 import {
   NATIVE_MESSAGING_PATHS,
-  NATIVE_MESSAGING_SCHEME,
   type NativeMessagingConnectRequest,
   type NativeMessagingDisconnectRequest,
   type NativeMessagingFrame,
   type NativeMessagingPostRequest,
-  type NativeMessagingRequest,
 } from "./bridge-protocol";
 import { encodeNativeMessage } from "./framing";
 import { NativeMessagingHost } from "./host";
@@ -46,11 +45,6 @@ export type NativeMessagingOptions = {
   logger?: ExtensionsLogger;
 };
 
-type NativeMessagingSession = {
-  /** The extension whose copy of the facade carries this token, if any. */
-  getExtensionId: (bridgeToken: string) => string | undefined;
-};
-
 type NativeMessagingPort = {
   id: string;
   session: Session;
@@ -70,14 +64,12 @@ type NativeMessagingPort = {
  * `DISALLOW` and `CreateReceiverForNativeApp` returns nullptr, so the built-in
  * `connectNative` disconnects every port with "Access to the native messaging
  * host was disabled by the system administrator" no matter where a host
- * manifest sits. The facade therefore replaces both methods and they land here,
- * which finds the host manifest the way Chromium would, honours its
- * `allowed_origins`, and runs one host process per port.
+ * manifest sits. The facade therefore replaces both methods and they land here
+ * over the extension bridge, which finds the host manifest the way Chromium
+ * would, honours its `allowed_origins`, and runs one host process per port.
  */
 export class NativeMessaging {
   private options: NativeMessagingOptions;
-
-  private sessions = new Map<Session, NativeMessagingSession>();
 
   private ports = new Map<string, NativeMessagingPort>();
 
@@ -93,83 +85,43 @@ export class NativeMessaging {
     });
   }
 
-  setupSession(session: Session, sessionOptions: NativeMessagingSession) {
-    this.sessions.set(session, sessionOptions);
-
-    session.protocol.handle(NATIVE_MESSAGING_SCHEME, (request) =>
-      this.handleRequest(session, request),
+  registerRoutes(bridge: ExtensionBridge) {
+    bridge.handle(NATIVE_MESSAGING_PATHS.connect, ({ session, extensionId, body, headers }) =>
+      this.handleConnect(
+        session,
+        extensionId,
+        body as unknown as NativeMessagingConnectRequest,
+        headers,
+      ),
     );
+
+    bridge.handle(NATIVE_MESSAGING_PATHS.post, ({ session, extensionId, body, headers }) => {
+      this.handlePost(session, extensionId, body as unknown as NativeMessagingPostRequest);
+
+      return new Response(null, { status: 204, headers });
+    });
+
+    bridge.handle(NATIVE_MESSAGING_PATHS.disconnect, ({ session, extensionId, body, headers }) => {
+      const port = this.getPort(
+        session,
+        extensionId,
+        (body as unknown as NativeMessagingDisconnectRequest).portId,
+      );
+
+      if (port) {
+        this.closePort(port);
+      }
+
+      return new Response(null, { status: 204, headers });
+    });
   }
 
   teardownSession(session: Session) {
-    if (!this.sessions.delete(session)) {
-      return;
-    }
-
-    session.protocol.unhandle(NATIVE_MESSAGING_SCHEME);
-
     for (const port of this.ports.values()) {
       if (port.session === session) {
         this.closePort(port);
       }
     }
-  }
-
-  private async handleRequest(session: Session, request: GlobalRequest) {
-    const headers = {
-      "access-control-allow-origin": request.headers.get("origin") ?? "*",
-      "cache-control": "no-store",
-    };
-
-    const { pathname } = new URL(request.url);
-
-    try {
-      const body = (await request.json()) as NativeMessagingRequest;
-
-      // Everything else in the session — Gmail, workspace apps, any page a user
-      // navigated to — can reach this scheme just as well, and only the loaded
-      // extensions know a token
-      const extensionId = this.sessions.get(session)?.getExtensionId(body.token);
-
-      if (!extensionId) {
-        return new Response(null, { status: 403, headers });
-      }
-
-      if (pathname === NATIVE_MESSAGING_PATHS.connect) {
-        return this.handleConnect(
-          session,
-          extensionId,
-          body as NativeMessagingConnectRequest,
-          headers,
-        );
-      }
-
-      if (pathname === NATIVE_MESSAGING_PATHS.post) {
-        this.handlePost(session, extensionId, body as NativeMessagingPostRequest);
-
-        return new Response(null, { status: 204, headers });
-      }
-
-      if (pathname === NATIVE_MESSAGING_PATHS.disconnect) {
-        const port = this.getPort(
-          session,
-          extensionId,
-          (body as NativeMessagingDisconnectRequest).portId,
-        );
-
-        if (port) {
-          this.closePort(port);
-        }
-
-        return new Response(null, { status: 204, headers });
-      }
-    } catch (error) {
-      this.options.logger?.error("Native messaging request failed", { pathname, error });
-
-      return new Response(null, { status: 400, headers });
-    }
-
-    return new Response(null, { status: 404, headers });
   }
 
   /**

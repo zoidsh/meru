@@ -1,4 +1,5 @@
 export type { ExtensionAction } from "./action";
+export { registerExtensionBridgeScheme } from "./bridge/scheme";
 export { compareExtensionVersions, verifyCrx } from "./crx";
 export type { VerifiedCrx } from "./crx";
 export { pruneDerivedExtensions } from "./derive";
@@ -25,5 +26,4 @@ export type {
 } from "./install";
 export type { ExtensionsLogger } from "./logger";
 export type { NativeMessagingHostPolicy } from "./native-messaging/native-messaging";
-export { registerNativeMessagingScheme } from "./native-messaging/scheme";
 export { findExtensionDirs } from "./scan";
