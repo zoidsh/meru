@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Session } from "electron";
+import type { Event as ElectronEvent, MessageDetails, Session } from "electron";
 import {
   type ActionExtension,
   createExtensionAction,
@@ -14,6 +14,7 @@ import {
   NativeMessaging,
   type NativeMessagingHostPolicy,
 } from "./native-messaging/native-messaging";
+import { WebNavigation } from "./web-navigation/web-navigation";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -30,6 +31,9 @@ const EXTENSION_STORAGE_DIR_NAMES = [
 
 /** `IndexedDB/chrome-extension_<extensionId>_0.indexeddb.leveldb` and friends. */
 const EXTENSION_INDEXED_DB_PREFIX = "chrome-extension_";
+
+/** Chromium's console levels run verbose, info, warning, error — 0 to 3. */
+const CONSOLE_ERROR_LEVEL = 3;
 
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
@@ -97,6 +101,13 @@ export class Extensions {
 
   private nativeMessaging: NativeMessaging;
 
+  private webNavigation: WebNavigation;
+
+  private serviceWorkerConsoleListeners = new Map<
+    Session,
+    (event: ElectronEvent, messageDetails: MessageDetails) => void
+  >();
+
   constructor({
     extensionDirs,
     facadeScriptPath,
@@ -123,6 +134,10 @@ export class Extensions {
     });
 
     this.nativeMessaging.registerRoutes(this.bridge);
+
+    this.webNavigation = new WebNavigation();
+
+    this.webNavigation.registerRoutes(this.bridge);
   }
 
   /**
@@ -179,6 +194,8 @@ export class Extensions {
     this.bridge.setupSession(session, {
       getExtensionId: (bridgeToken) => extensionIdsByBridgeToken.get(bridgeToken),
     });
+
+    this.pipeServiceWorkerConsole(session);
 
     for (const extensionDir of extensionDirs) {
       try {
@@ -240,6 +257,31 @@ export class Extensions {
     });
   }
 
+  /**
+   * An extension's service worker has no page and no devtools anywhere in the
+   * embedding app, so what it writes to its console — 1Password saying why it
+   * declined to fill, say — surfaces nowhere unless it is forwarded to the
+   * logger. Every worker on a `chrome-extension://` origin is one this loader
+   * put there, since nothing else loads extensions into the session.
+   */
+  private pipeServiceWorkerConsole(session: Session) {
+    const listener = (_event: ElectronEvent, { message, level, sourceUrl }: MessageDetails) => {
+      if (!sourceUrl.startsWith("chrome-extension://")) {
+        return;
+      }
+
+      if (level >= CONSOLE_ERROR_LEVEL) {
+        this.logger?.error("Extension service worker error", { sourceUrl, message });
+      } else {
+        this.logger?.info("Extension service worker log", { sourceUrl, message });
+      }
+    };
+
+    this.serviceWorkerConsoleListeners.set(session, listener);
+
+    session.serviceWorkers.on("console-message", listener);
+  }
+
   /** A broken icon costs the button its icon, not the extension its button. */
   private async createAction(extension: ActionExtension) {
     const action = createExtensionAction(extension);
@@ -267,6 +309,14 @@ export class Extensions {
     this.bridge.teardownSession(session);
 
     this.nativeMessaging.teardownSession(session);
+
+    const consoleListener = this.serviceWorkerConsoleListeners.get(session);
+
+    if (consoleListener) {
+      this.serviceWorkerConsoleListeners.delete(session);
+
+      session.serviceWorkers.removeListener("console-message", consoleListener);
+    }
 
     for (const extensionId of loadedExtensionIds) {
       session.extensions.removeExtension(extensionId);

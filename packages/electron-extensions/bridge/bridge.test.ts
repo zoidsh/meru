@@ -87,6 +87,10 @@ describe("ExtensionBridge", () => {
     createBridge(session);
 
     expect((await request("/unregistered", { token: BRIDGE_TOKEN })).status).toBe(404);
+
+    // The token is checked first, so an unauthenticated caller learns nothing
+    // about which paths exist
+    expect((await request("/unregistered", { token: "guessed" })).status).toBe(403);
   });
 
   test("answers 400 when the handler throws", async () => {

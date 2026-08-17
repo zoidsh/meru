@@ -93,6 +93,10 @@ function createSession({
 
   let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
 
+  const serviceWorkerConsoleListeners = new Set<
+    (event: unknown, messageDetails: Record<string, unknown>) => void
+  >();
+
   const session = {
     extensions: {
       loadExtension: async (extensionDir: string) => {
@@ -118,6 +122,20 @@ function createSession({
       sessionEvents.push(`clearStorageData ${origin} ${storages?.join()}`);
     },
     getStoragePath: () => storagePath,
+    serviceWorkers: {
+      on: (
+        _eventName: string,
+        listener: (event: unknown, messageDetails: Record<string, unknown>) => void,
+      ) => {
+        serviceWorkerConsoleListeners.add(listener);
+      },
+      removeListener: (
+        _eventName: string,
+        listener: (event: unknown, messageDetails: Record<string, unknown>) => void,
+      ) => {
+        serviceWorkerConsoleListeners.delete(listener);
+      },
+    },
   } as unknown as Session;
 
   return {
@@ -125,6 +143,12 @@ function createSession({
     removedExtensionIds,
     handledSchemes,
     sessionEvents,
+    serviceWorkerConsoleListeners,
+    emitServiceWorkerConsole: (messageDetails: Record<string, unknown>) => {
+      for (const listener of serviceWorkerConsoleListeners) {
+        listener(undefined, messageDetails);
+      }
+    },
     request: (body: Record<string, unknown>) =>
       requestHandler?.({
         url: `${EXTENSION_BRIDGE_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`,
@@ -277,6 +301,69 @@ describe("Extensions", () => {
     expect((await connect(first.request, bridgeToken, "first")).status).not.toBe(403);
     expect((await connect(second.request, bridgeToken, "second")).status).not.toBe(403);
     expect((await connect(first.request, "not-a-token", "third")).status).toBe(403);
+  });
+
+  test("forwards extension service worker console output to the logger", async () => {
+    const logs: { level: string; message: string; details: Record<string, unknown> }[] = [];
+
+    const { session, emitServiceWorkerConsole, serviceWorkerConsoleListeners } = createSession();
+
+    const extensions = createExtensions([await createExtensionDir("one")], {
+      info: (message, details) => {
+        logs.push({ level: "info", message, details });
+      },
+      error: (message, details) => {
+        logs.push({ level: "error", message, details });
+      },
+    });
+
+    await extensions.setupSession(session);
+
+    emitServiceWorkerConsole({
+      message: "Failed to relay message to parent frame",
+      level: 2,
+      sourceUrl: "chrome-extension://aaa/background.js",
+    });
+
+    emitServiceWorkerConsole({
+      message: "unlock failed",
+      level: 3,
+      sourceUrl: "chrome-extension://aaa/background.js",
+    });
+
+    // The session's own pages can run workers too, and they are not extensions
+    emitServiceWorkerConsole({
+      message: "mail worker chatter",
+      level: 3,
+      sourceUrl: "https://mail.google.com/worker.js",
+    });
+
+    const consoleLogs = logs.filter(({ message }) =>
+      message.startsWith("Extension service worker"),
+    );
+
+    expect(consoleLogs).toEqual([
+      {
+        level: "info",
+        message: "Extension service worker log",
+        details: {
+          sourceUrl: "chrome-extension://aaa/background.js",
+          message: "Failed to relay message to parent frame",
+        },
+      },
+      {
+        level: "error",
+        message: "Extension service worker error",
+        details: {
+          sourceUrl: "chrome-extension://aaa/background.js",
+          message: "unlock failed",
+        },
+      },
+    ]);
+
+    extensions.teardownSession(session);
+
+    expect(serviceWorkerConsoleListeners.size).toBe(0);
   });
 
   test("does nothing without extension directories", async () => {
