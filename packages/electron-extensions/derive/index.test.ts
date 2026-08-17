@@ -253,6 +253,83 @@ describe("deriveExtension", () => {
     ).not.toHaveProperty("content_scripts");
   });
 
+  // Nothing in the source changes between the two derives, so the copy is
+  // written again only because the matches did
+  test("clamps the content scripts of the copy and derives again when the matches change", async () => {
+    await writeManifest({
+      ...manifest,
+      content_scripts: [{ matches: ["<all_urls>"], js: ["content.js"], all_frames: true }],
+    });
+
+    const derivedDir = await derive();
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).content_scripts,
+    ).toEqual([{ matches: ["<all_urls>"], js: ["content.js"], all_frames: true }]);
+
+    await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      getContentScriptMatches: () => ["https://accounts.google.com/*"],
+    });
+
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).content_scripts,
+    ).toEqual([
+      { matches: ["https://accounts.google.com/*"], js: ["content.js"], all_frames: true },
+    ]);
+  });
+
+  test("asks for the matches by the id the extension will be loaded as", async () => {
+    const askedExtensionIds: string[] = [];
+
+    await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      getContentScriptMatches: (extensionId) => {
+        askedExtensionIds.push(extensionId);
+
+        return undefined;
+      },
+    });
+
+    expect(askedExtensionIds).toEqual(["gkodpobagfoadfbnehppbpmagfgmimpa"]);
+  });
+
+  test("clamps nothing for an extension without a key", async () => {
+    const contentScripts = [{ matches: ["<all_urls>"], js: ["content.js"] }];
+
+    await writeManifest({ ...manifest, key: undefined, content_scripts: contentScripts });
+
+    let asked = false;
+
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      getContentScriptMatches: () => {
+        asked = true;
+
+        return ["https://accounts.google.com/*"];
+      },
+    });
+
+    expect(asked).toBe(false);
+    expect(
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).content_scripts,
+    ).toEqual(contentScripts);
+  });
+
+  test("stamps a copy without matches as it did before they existed", async () => {
+    const derivedDir = await derive();
+
+    expect(JSON.parse(await readFile(`${derivedDir}.json`, "utf8"))).not.toHaveProperty(
+      "contentScriptMatches",
+    );
+  });
+
   test("reports no id for an extension without a key", async () => {
     await writeManifest({ ...manifest, key: undefined });
 

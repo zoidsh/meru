@@ -117,6 +117,54 @@ describe("deriveManifest", () => {
     expect(manifest).toEqual({ name: "1Password" });
   });
 
+  test("clamps every content script to the matches it was handed", () => {
+    const { manifest } = deriveManifest(
+      {
+        name: "1Password",
+        content_scripts: [
+          {
+            matches: ["<all_urls>"],
+            js: ["inline/inject-content-scripts.js"],
+            all_frames: true,
+            run_at: "document_start",
+          },
+          { matches: ["https://*/*"], js: ["content.js"] },
+        ],
+      },
+      { ...fileNames, contentScriptMatches: ["https://accounts.google.com/*"] },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      {
+        matches: ["https://accounts.google.com/*"],
+        js: ["inline/inject-content-scripts.js"],
+        all_frames: true,
+        run_at: "document_start",
+      },
+      { matches: ["https://accounts.google.com/*"], js: ["content.js"] },
+    ]);
+  });
+
+  test("clamps nothing in a manifest without content scripts", () => {
+    const { manifest } = deriveManifest(
+      { name: "No content scripts" },
+      { ...fileNames, contentScriptMatches: ["https://accounts.google.com/*"] },
+    );
+
+    expect(manifest.content_scripts).toBeUndefined();
+  });
+
+  test("leaves the content scripts alone without matches to clamp them to", () => {
+    const contentScripts = [{ matches: ["<all_urls>"], js: ["content.js"] }];
+
+    const { manifest } = deriveManifest(
+      { name: "1Password", content_scripts: contentScripts },
+      fileNames,
+    );
+
+    expect(manifest.content_scripts).toEqual(contentScripts);
+  });
+
   test("strips nothing an extension does not have", () => {
     const { manifest } = deriveManifest(
       { name: "1Password" },

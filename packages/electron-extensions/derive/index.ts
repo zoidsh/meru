@@ -29,6 +29,12 @@ export type DeriveExtensionOptions = {
    * see what changes.
    */
   strippedManifestKeys?: string[];
+  /**
+   * Match patterns the extension's content scripts are clamped to, asked for by
+   * the id the copy will be loaded as. An extension without a `manifest.key`
+   * has no id to be recognised by and keeps the patterns its author declared.
+   */
+  getContentScriptMatches?: (extensionId: string) => string[] | undefined;
 };
 
 function hash(value: string) {
@@ -107,10 +113,15 @@ export async function deriveExtension({
   derivedExtensionsDir,
   facadeScriptPath,
   strippedManifestKeys = [],
+  getContentScriptMatches,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
 
   const sourceManifest = JSON.parse(manifestSource) as ExtensionManifest;
+
+  const extensionId = getExtensionIdFromManifestKey(sourceManifest.key);
+
+  const contentScriptMatches = extensionId ? getContentScriptMatches?.(extensionId) : undefined;
 
   const derivedDir = path.join(derivedExtensionsDir, hash(sourceDir).slice(0, 16));
 
@@ -125,6 +136,7 @@ export async function deriveExtension({
     sourceDir,
     sourceTree: await hashSourceTree(sourceDir),
     strippedManifestKeys,
+    contentScriptMatches,
   });
 
   if ((await readStamp(stampPath)) !== stamp) {
@@ -139,6 +151,7 @@ export async function deriveExtension({
       serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
       bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
       strippedManifestKeys,
+      contentScriptMatches,
     });
 
     await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
@@ -163,11 +176,7 @@ export async function deriveExtension({
     )}`,
   );
 
-  return {
-    derivedDir,
-    bridgeToken,
-    extensionId: getExtensionIdFromManifestKey(sourceManifest.key),
-  };
+  return { derivedDir, bridgeToken, extensionId };
 }
 
 export type PruneDerivedExtensionsOptions = {

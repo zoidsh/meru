@@ -3,6 +3,12 @@ export type CuratedExtension = {
   id: string;
   name: string;
   description: string;
+  /**
+   * Match patterns the derive writes over every `content_scripts[].matches` of
+   * the extension, so its content scripts only reach the sites it is offered
+   * for. Absent leaves the manifest's own patterns in place.
+   */
+  contentScriptMatches?: string[];
 };
 
 /**
@@ -16,6 +22,7 @@ export const curatedExtensions: CuratedExtension[] = [
     name: "1Password",
     description:
       "Password manager that fills logins and signs you in with passkeys stored in your vault.",
+    contentScriptMatches: ["https://accounts.google.com/*"],
   },
 ];
 

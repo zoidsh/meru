@@ -60,6 +60,12 @@ export type ExtensionsOptions = {
    */
   strippedManifestKeys?: string[];
   /**
+   * Narrows where an extension's content scripts run, asked for by the id the
+   * extension is loaded as. Without it every extension injects wherever its own
+   * manifest says, which for a password manager is every frame of every view.
+   */
+  getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+  /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
@@ -87,6 +93,8 @@ export class Extensions {
 
   private strippedManifestKeys: string[] | undefined;
 
+  private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
+
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
@@ -113,6 +121,7 @@ export class Extensions {
     facadeScriptPath,
     derivedExtensionsDir,
     strippedManifestKeys,
+    getContentScriptMatches,
     isNativeMessagingHostAllowed,
     logger,
   }: ExtensionsOptions) {
@@ -123,6 +132,8 @@ export class Extensions {
     this.derivedExtensionsDir = derivedExtensionsDir;
 
     this.strippedManifestKeys = strippedManifestKeys;
+
+    this.getContentScriptMatches = getContentScriptMatches;
 
     this.logger = logger;
 
@@ -154,6 +165,7 @@ export class Extensions {
         derivedExtensionsDir: this.derivedExtensionsDir,
         facadeScriptPath: this.facadeScriptPath,
         strippedManifestKeys: this.strippedManifestKeys,
+        getContentScriptMatches: this.getContentScriptMatches,
       });
 
       this.derivedExtensions.set(sourceDir, derivedExtension);
