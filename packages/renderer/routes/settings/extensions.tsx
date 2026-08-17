@@ -13,6 +13,7 @@ import {
 import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -63,9 +64,10 @@ function ExtensionItem({
             href={`https://chromewebstore.google.com/detail/${extension.id}`}
             target="_blank"
             rel="noreferrer"
-            className="hover:underline"
+            className="flex items-center gap-1 hover:underline"
           >
             {extension.name}
+            <ExternalLinkIcon className="size-3 text-muted-foreground" />
           </a>
           {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
           <LicenseKeyRequiredFieldBadge />
@@ -111,8 +113,7 @@ export function ExtensionsSettings() {
         <LicenseKeyRequiredBanner />
         <FieldDescription>
           Extensions are loaded into every account and take effect after a restart. Meru installs
-          the official packages from the Chrome Web Store, and each extension's name links to its
-          listing.
+          the official extensions from the Chrome Web Store.
         </FieldDescription>
         <ItemGroup>
           {curatedExtensions.map((extension) => (
