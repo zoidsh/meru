@@ -1,5 +1,6 @@
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
+import { Badge } from "@meru/ui/components/badge";
 import { FieldDescription } from "@meru/ui/components/field";
 import {
   Item,
@@ -13,6 +14,7 @@ import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -58,11 +60,20 @@ function ExtensionItem({
       <ItemContent>
         <ItemTitle>
           {extension.name}
+          {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
           <LicenseKeyRequiredFieldBadge />
         </ItemTitle>
+        <ItemDescription>{extension.description}</ItemDescription>
         <ItemDescription>
-          {extension.description}
-          {installedVersion && ` Version ${installedVersion} is installed.`}
+          Installs the official extension from the{" "}
+          <a
+            href={`https://chromewebstore.google.com/detail/${extension.id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Chrome Web Store
+          </a>
+          .
         </ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -95,7 +106,10 @@ export function ExtensionsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Extensions</SettingsTitle>
+        <SettingsTitle className="flex items-center gap-2">
+          Extensions
+          <BetaFieldBadge />
+        </SettingsTitle>
       </SettingsHeader>
       <SettingsContent className="space-y-4">
         <LicenseKeyRequiredBanner />
