@@ -66,6 +66,12 @@ export type InstalledExtensionState = {
   version: string;
 };
 
+/** What an update check did to one extension, which is what the page reports. */
+export type ExtensionUpdateResult =
+  | { id: string; status: "updated"; version: string }
+  | { id: string; status: "upToDate" }
+  | { id: string; status: "failed"; error: string };
+
 /** The extensions titlebar button's rect, in its window's content coordinates. */
 export type ExtensionActionAnchorRect = { x: number; y: number; width: number; height: number };
 
@@ -277,6 +283,7 @@ export type IpcMainEvents =
       "extensions.getInstalled": () => InstalledExtensionState[];
       "extensions.install": (extensionId: string) => { error?: string };
       "extensions.uninstall": (extensionId: string) => { error?: string };
+      "extensions.update": () => { error?: string; results?: ExtensionUpdateResult[] };
     };
 
 export type IpcRendererEvent = {
