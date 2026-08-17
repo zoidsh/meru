@@ -98,6 +98,20 @@ describe("deriveExtension", () => {
     );
   });
 
+  test("injects the facade into pages of every name Chromium serves", async () => {
+    await writeSourceFile("options.htm", "<html><head></head></html>");
+
+    await writeSourceFile("Onboarding.HTML", "<html><head></head></html>");
+
+    const derivedDir = await derive();
+
+    for (const pageFileName of ["options.htm", "Onboarding.HTML"]) {
+      expect(await readFile(path.join(derivedDir, pageFileName), "utf8")).toContain(
+        '<script src="/chrome-facade.js"></script>',
+      );
+    }
+  });
+
   test("never writes to the directory it was handed", async () => {
     await derive();
 
