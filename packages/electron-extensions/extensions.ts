@@ -135,6 +135,17 @@ export class Extensions {
       });
 
       this.derivedExtensions.set(sourceDir, derivedExtension);
+
+      // A failure must not be the answer for every later session: dropped from
+      // the memo, the next setup derives again and can succeed once whatever
+      // failed — an unfinished install, a half-written dev directory — is gone
+      const failedDerivedExtension = derivedExtension;
+
+      derivedExtension.catch(() => {
+        if (this.derivedExtensions.get(sourceDir) === failedDerivedExtension) {
+          this.derivedExtensions.delete(sourceDir);
+        }
+      });
     }
 
     return derivedExtension;
