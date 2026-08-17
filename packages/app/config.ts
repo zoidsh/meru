@@ -125,6 +125,7 @@ export const config = new Store<Config>({
     "verticalTabs.showWidthToggle": true,
     "verticalTabs.hideUnreadBadgeWhenActive": false,
     "verticalTabs.showAppLinksBadge": true,
+    "extensions.installed": [],
   },
   migrations: {
     ">=3.4.0": (store) => {

@@ -7,7 +7,7 @@ import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { extensionActions } from "@/extension-actions";
-import { extensions } from "@/extensions";
+import { extensions, extensionUpdater, pruneDerivedExtensionCopies } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { licenseKey } from "@/license-key";
@@ -134,6 +134,10 @@ async function init() {
   appTray.init();
 
   appUpdater.init();
+
+  extensionUpdater.init();
+
+  pruneDerivedExtensionCopies();
 
   doNotDisturb.init();
 

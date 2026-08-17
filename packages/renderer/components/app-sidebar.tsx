@@ -10,6 +10,7 @@ import { AdvancedSettings } from "@/routes/settings/advanced";
 import { AppearanceSettings } from "@/routes/settings/appearance";
 import { BlockerSettings } from "@/routes/settings/blocker";
 import { DownloadsSettings } from "@/routes/settings/downloads";
+import { ExtensionsSettings } from "@/routes/settings/extensions";
 import { GeneralSettings } from "@/routes/settings/general";
 import { GmailSettings } from "@/routes/settings/gmail";
 import { LanguagesSettings } from "@/routes/settings/languages";
@@ -54,6 +55,11 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     label: "Workspace Apps",
     path: "/settings/workspace-apps",
     component: WorkspaceAppsSettings,
+  },
+  {
+    label: "Extensions",
+    path: "/settings/extensions",
+    component: ExtensionsSettings,
   },
   {
     label: "Languages",

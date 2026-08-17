@@ -32,12 +32,15 @@ const EXTENSION_INDEXED_DB_PREFIX = "chrome-extension_";
 
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
+export type ExtensionDirs = string[] | (() => Promise<string[]> | string[]);
+
 export type ExtensionsOptions = {
   /**
    * Unpacked extension directories, loaded into every session handed to
-   * `setupSession`.
+   * `setupSession`. A function is asked again for every session, so a session
+   * set up after an extension was installed loads that extension too.
    */
-  extensionDirs: string[];
+  extensionDirs: ExtensionDirs;
   /**
    * The bundled `chrome.*` facade script, copied into every extension so it
    * runs in the extension's own contexts.
@@ -71,7 +74,7 @@ export type ExtensionsOptions = {
  * between launches, which is why loading happens on every boot.
  */
 export class Extensions {
-  private extensionDirs: string[];
+  private extensionDirs: ExtensionDirs;
 
   private facadeScriptPath: string;
 
@@ -138,7 +141,10 @@ export class Extensions {
   }
 
   async setupSession(session: Session) {
-    if (this.extensionDirs.length === 0) {
+    const extensionDirs =
+      typeof this.extensionDirs === "function" ? await this.extensionDirs() : this.extensionDirs;
+
+    if (extensionDirs.length === 0) {
       return;
     }
 
@@ -156,7 +162,7 @@ export class Extensions {
       getExtensionId: (bridgeToken) => extensionIdsByBridgeToken.get(bridgeToken),
     });
 
-    for (const extensionDir of this.extensionDirs) {
+    for (const extensionDir of extensionDirs) {
       try {
         const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(extensionDir);
 

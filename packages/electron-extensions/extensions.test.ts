@@ -47,7 +47,7 @@ async function createExtensionDir(name: string, key?: string) {
 }
 
 function createExtensions(
-  extensionDirs: string[],
+  extensionDirs: ConstructorParameters<typeof Extensions>[0]["extensionDirs"],
   logger?: ConstructorParameters<typeof Extensions>[0]["logger"],
 ) {
   return new Extensions({
@@ -204,6 +204,30 @@ describe("Extensions", () => {
     await extensions.setupSession(createSession({ loadExtension }).session);
 
     expect(loadedExtensionDirs[0]).toBe(loadedExtensionDirs[1] as string);
+  });
+
+  test("asks for the directories of every session it sets up", async () => {
+    const loadedExtensionDirs: string[] = [];
+
+    const loadExtension = async (extensionDir: string) => {
+      loadedExtensionDirs.push(extensionDir);
+
+      return createExtension("aaa", extensionDir);
+    };
+
+    const extensionDirs = [await createExtensionDir("one")];
+
+    const extensions = createExtensions(async () => extensionDirs);
+
+    await extensions.setupSession(createSession({ loadExtension }).session);
+
+    // What an extension installed while the app is running looks like
+    extensionDirs.push(await createExtensionDir("two"));
+
+    await extensions.setupSession(createSession({ loadExtension }).session);
+
+    expect(loadedExtensionDirs).toHaveLength(3);
+    expect(new Set(loadedExtensionDirs).size).toBe(2);
   });
 
   test("drops the cached service worker before loading an extension", async () => {

@@ -60,6 +60,12 @@ export type ExtensionActionState = {
   iconDataUrl: string | null;
 };
 
+/** A curated extension as it is installed on disk, which config alone can't tell. */
+export type InstalledExtensionState = {
+  id: string;
+  version: string;
+};
+
 /** A titlebar button's rect, in its window's content coordinates. */
 export type ExtensionActionAnchorRect = { x: number; y: number; width: number; height: number };
 
@@ -177,6 +183,7 @@ export type Config = {
   "verticalTabs.showWidthToggle": boolean;
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
   "verticalTabs.showAppLinksBadge": boolean;
+  "extensions.installed": string[];
 };
 
 export type IpcMainEvents =
@@ -267,6 +274,9 @@ export type IpcMainEvents =
       "workspaceApp.getBookmarkState": (workspaceAppId: string) => WorkspaceAppBookmarkState;
       "bookmarks.getBookmarks": () => BookmarkState[];
       "extensions.getActions": () => ExtensionActionState[];
+      "extensions.getInstalled": () => InstalledExtensionState[];
+      "extensions.install": (extensionId: string) => { error?: string };
+      "extensions.uninstall": (extensionId: string) => { error?: string };
     };
 
 export type IpcRendererEvent = {
