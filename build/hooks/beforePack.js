@@ -5,6 +5,11 @@ import path from "node:path";
 // whose `keychain-access-groups` entitlement doesn't match the team it was signed with, so the
 // group Touch ID WebAuthn credentials live under is written out here with the team id that only
 // signed builds carry. Keep the group in sync with `configureWebAuthn` in `packages/app/index.ts`.
+//
+// `keychain-access-groups` is a restricted entitlement: Gatekeeper only honours it when the
+// provisioning profile embedded in the app authorizes it, and the profile only binds to the app
+// through the application and team identifiers below. `@electron/osx-sign` adds those two itself,
+// but only for sandboxed apps, so they are written out here too.
 export default async (context) => {
   if (context.packager.platform.name !== "mac") {
     return;
@@ -23,6 +28,10 @@ export default async (context) => {
     ? template.replace(
         "  </dict>",
         [
+          "    <key>com.apple.application-identifier</key>",
+          `    <string>${teamId}.${context.packager.appInfo.id}</string>`,
+          "    <key>com.apple.developer.team-identifier</key>",
+          `    <string>${teamId}</string>`,
           "    <key>keychain-access-groups</key>",
           "    <array>",
           `      <string>${teamId}.${context.packager.appInfo.id}.webauthn</string>`,
