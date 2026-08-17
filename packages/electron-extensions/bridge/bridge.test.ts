@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Session } from "electron";
-import { ExtensionBridge } from "./bridge";
+import { ExtensionBridge, MAX_BRIDGE_REQUEST_BYTES } from "./bridge";
 import { EXTENSION_BRIDGE_ORIGIN, EXTENSION_BRIDGE_SCHEME } from "./protocol";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
@@ -27,15 +27,21 @@ function createSession() {
     },
   } as unknown as Session;
 
+  const sendRequest = (pathName: string, bodySource: string, origin?: string) =>
+    requestHandler?.(
+      new Request(`${EXTENSION_BRIDGE_ORIGIN}${pathName}`, {
+        method: "POST",
+        headers: origin === undefined ? {} : { origin },
+        body: bodySource,
+      }) as GlobalRequest,
+    ) as Promise<Response>;
+
   return {
     session,
     handledSchemes,
+    sendRequest,
     request: (pathName: string, body: Record<string, unknown>, origin?: string) =>
-      requestHandler?.({
-        url: `${EXTENSION_BRIDGE_ORIGIN}${pathName}`,
-        headers: new Headers(origin === undefined ? {} : { origin }),
-        json: async () => body,
-      } as unknown as GlobalRequest) as Promise<Response>,
+      sendRequest(pathName, JSON.stringify(body), origin),
   };
 }
 
@@ -91,6 +97,28 @@ describe("ExtensionBridge", () => {
     // The token is checked first, so an unauthenticated caller learns nothing
     // about which paths exist
     expect((await request("/unregistered", { token: "guessed" })).status).toBe(403);
+  });
+
+  test("refuses a body past the cap without handling it, token or no token", async () => {
+    const { session, sendRequest } = createSession();
+
+    const bridge = createBridge(session);
+
+    let handled = false;
+
+    bridge.handle("/echo", ({ headers }) => {
+      handled = true;
+
+      return new Response(null, { status: 204, headers });
+    });
+
+    const response = await sendRequest(
+      "/echo",
+      `{"token":"${BRIDGE_TOKEN}","padding":"${"x".repeat(MAX_BRIDGE_REQUEST_BYTES)}"}`,
+    );
+
+    expect(response.status).toBe(413);
+    expect(handled).toBe(false);
   });
 
   test("answers 400 when the handler throws", async () => {

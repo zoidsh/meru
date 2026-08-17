@@ -89,11 +89,10 @@ async function writeHostManifest(allowedExtensionId = EXTENSION_ID) {
 }
 
 function createRequest(pathName: string, body: Record<string, unknown>) {
-  return {
-    url: `${EXTENSION_BRIDGE_ORIGIN}${pathName}`,
-    headers: new Headers(),
-    json: async () => body,
-  } as unknown as GlobalRequest;
+  return new Request(`${EXTENSION_BRIDGE_ORIGIN}${pathName}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  }) as GlobalRequest;
 }
 
 function connect(portId = "port-1") {
