@@ -59,22 +59,18 @@ function ExtensionItem({
     <Item variant="muted">
       <ItemContent>
         <ItemTitle>
-          {extension.name}
-          {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
-          <LicenseKeyRequiredFieldBadge />
-        </ItemTitle>
-        <ItemDescription>{extension.description}</ItemDescription>
-        <ItemDescription>
-          Installs the official extension from the{" "}
           <a
             href={`https://chromewebstore.google.com/detail/${extension.id}`}
             target="_blank"
             rel="noreferrer"
+            className="hover:underline"
           >
-            Chrome Web Store
+            {extension.name}
           </a>
-          .
-        </ItemDescription>
+          {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
+          <LicenseKeyRequiredFieldBadge />
+        </ItemTitle>
+        <ItemDescription>{extension.description}</ItemDescription>
       </ItemContent>
       <ItemActions>
         {extensionMutation.isPending && <Spinner />}
@@ -114,7 +110,9 @@ export function ExtensionsSettings() {
       <SettingsContent className="space-y-4">
         <LicenseKeyRequiredBanner />
         <FieldDescription>
-          Extensions are loaded into every account and take effect after a restart.
+          Extensions are loaded into every account and take effect after a restart. Meru installs
+          the official packages from the Chrome Web Store, and each extension's name links to its
+          listing.
         </FieldDescription>
         <ItemGroup>
           {curatedExtensions.map((extension) => (
