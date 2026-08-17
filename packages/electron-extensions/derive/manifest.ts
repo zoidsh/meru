@@ -1,3 +1,5 @@
+import { findWebAccessiblePattern, type WebAccessibleResources } from "./web-accessible";
+
 /** Only what the derive reads or rewrites is spelled out; the rest is carried. */
 export type ExtensionManifest = {
   [manifestKey: string]: unknown;
@@ -14,6 +16,7 @@ export type ExtensionManifest = {
     sandbox?: string;
   };
   content_scripts?: ({ matches?: string[] } & { [contentScriptKey: string]: unknown })[];
+  web_accessible_resources?: WebAccessibleResources;
 };
 
 export type DerivedManifest = {
@@ -189,6 +192,24 @@ export function deriveManifest(
 
   for (const strippedManifestKey of strippedManifestKeys) {
     delete derivedManifest[strippedManifestKey];
+  }
+
+  // The facade copy carries the bridge token, which only holds as a secret
+  // while nothing outside the extension can fetch it. Today no curated
+  // extension's `web_accessible_resources` comes near the facade, but an update
+  // widening a pattern to `*.js` would hand the token to every page in the
+  // session — refusing to derive is what keeps that an outage instead of a leak
+  for (const derivedFileName of [facadeFileName, serviceWorkerFileName]) {
+    const exposingPattern = findWebAccessiblePattern(
+      derivedManifest.web_accessible_resources,
+      derivedFileName,
+    );
+
+    if (exposingPattern) {
+      throw new Error(
+        `web_accessible_resources pattern "${exposingPattern}" makes "${derivedFileName}" fetchable by web pages`,
+      );
+    }
   }
 
   const backgroundFileName = manifest.background?.service_worker?.replace(/^\//, "");
