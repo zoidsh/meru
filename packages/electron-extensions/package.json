@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    ".": "./index.ts"
+    ".": "./index.ts",
+    "./crx": "./crx/index.ts"
   },
   "scripts": {
     "test": "bun test",
