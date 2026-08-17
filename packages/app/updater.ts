@@ -6,8 +6,26 @@ import { log } from "./lib/log";
 import { main } from "./main";
 
 class AppUpdater {
+  private applyChannel() {
+    const channel = config.get("updates.channel");
+
+    // The channel setter force-enables allowDowngrade, so it must be assigned last.
+    autoUpdater.channel = channel === "stable" ? null : channel;
+    autoUpdater.allowPrerelease = channel !== "stable";
+    autoUpdater.allowDowngrade =
+      channel === "stable" && autoUpdater.currentVersion.prerelease.length > 0;
+  }
+
   init() {
     autoUpdater.logger = log;
+
+    this.applyChannel();
+
+    config.onDidChange("updates.channel", () => {
+      this.applyChannel();
+
+      this.checkForUpdates();
+    });
 
     if (config.get("updates.showNotifications")) {
       autoUpdater.on("update-downloaded", (updateInfo) => {
