@@ -71,11 +71,14 @@ async function readStamp(stampPath: string) {
   }
 }
 
+/** Chromium serves `Popup.HTM` as a page just as well, so the net is this wide. */
+const PAGE_FILE_EXTENSIONS = new Set([".html", ".htm"]);
+
 async function injectFacadeIntoPages(derivedDir: string) {
   const fileNames = await readdir(derivedDir, { recursive: true });
 
   for (const fileName of fileNames) {
-    if (!fileName.endsWith(".html")) {
+    if (!PAGE_FILE_EXTENSIONS.has(path.extname(fileName).toLowerCase())) {
       continue;
     }
 
