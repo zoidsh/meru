@@ -39,6 +39,16 @@ describe("fetchCrx", () => {
     ]);
   });
 
+  test("names the endpoint's no-package answer for what it is", async () => {
+    await expect(
+      fetchCrx({
+        extensionId,
+        chromeVersion,
+        fetch: async () => new Response(null, { status: 204 }),
+      }),
+    ).rejects.toThrow(`Update endpoint has no package for ${extensionId}`);
+  });
+
   test("refuses an answer that is not a package", async () => {
     await expect(
       fetchCrx({

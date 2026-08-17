@@ -69,6 +69,13 @@ export async function fetchCrx({
     redirect: "follow",
   });
 
+  // No Content is the endpoint's no: an id it does not serve, or a request it
+  // could not place — and it counts as `ok`, so left alone it would surface as
+  // a verification error about an empty package
+  if (response.status === 204) {
+    throw new Error(`Update endpoint has no package for ${extensionId}`);
+  }
+
   if (!response.ok) {
     throw new Error(
       `Update endpoint answered ${response.status} ${response.statusText} for ${extensionId}`,
