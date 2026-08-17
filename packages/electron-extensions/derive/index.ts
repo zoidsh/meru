@@ -11,6 +11,9 @@ import { deriveManifest, type ExtensionManifest } from "./manifest";
 
 const MANIFEST_FILE_NAME = "manifest.json";
 
+/** What the stamp next to a derived copy is called: `<derivedDir>.json`. */
+const STAMP_FILE_EXTENSION = ".json";
+
 const FACADE_FILE_NAME = "chrome-facade.js";
 
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
@@ -111,7 +114,7 @@ export async function deriveExtension({
 
   const derivedDir = path.join(derivedExtensionsDir, hash(sourceDir).slice(0, 16));
 
-  const stampPath = `${derivedDir}.json`;
+  const stampPath = `${derivedDir}${STAMP_FILE_EXTENSION}`;
 
   // The source is copied again when any of its files changes, which is what an
   // installed extension moving to a new version does and what a developer
@@ -165,4 +168,75 @@ export async function deriveExtension({
     bridgeToken,
     extensionId: getExtensionIdFromManifestKey(sourceManifest.key),
   };
+}
+
+export type PruneDerivedExtensionsOptions = {
+  derivedExtensionsDir: string;
+  /**
+   * The source directories still being loaded. A copy derived from anything
+   * else is gone for good, since nothing but the source it names can recreate
+   * it.
+   */
+  keptSourceDirs: string[];
+};
+
+async function readStampSourceDir(stampPath: string) {
+  const stamp = await readStamp(stampPath);
+
+  if (!stamp) {
+    return undefined;
+  }
+
+  try {
+    return (JSON.parse(stamp) as { sourceDir?: string }).sourceDir;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Drops the derived copies of extensions the embedder no longer loads: the
+ * version directory an update replaced, an extension the user opted out of, a
+ * development extension whose folder is gone. Nothing points back from a copy
+ * to its source but its stamp, so a copy without one is unaccounted for and
+ * goes too.
+ *
+ * Meant to run once the embedder knows its load list, which is also why it is
+ * safe to delete: a copy still in use belongs to a source that is on the list.
+ */
+export async function pruneDerivedExtensions({
+  derivedExtensionsDir,
+  keptSourceDirs,
+}: PruneDerivedExtensionsOptions) {
+  let entryNames: string[];
+
+  try {
+    entryNames = await readdir(derivedExtensionsDir);
+  } catch {
+    return;
+  }
+
+  const derivedDirNames = new Set(
+    entryNames.map((entryName) =>
+      entryName.endsWith(STAMP_FILE_EXTENSION)
+        ? entryName.slice(0, -STAMP_FILE_EXTENSION.length)
+        : entryName,
+    ),
+  );
+
+  for (const derivedDirName of derivedDirNames) {
+    const derivedDir = path.join(derivedExtensionsDir, derivedDirName);
+
+    const stampPath = `${derivedDir}${STAMP_FILE_EXTENSION}`;
+
+    const sourceDir = await readStampSourceDir(stampPath);
+
+    if (sourceDir !== undefined && keptSourceDirs.includes(sourceDir)) {
+      continue;
+    }
+
+    await rm(derivedDir, { recursive: true, force: true });
+
+    await rm(stampPath, { force: true });
+  }
 }

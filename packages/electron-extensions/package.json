@@ -4,7 +4,8 @@
   "private": true,
   "exports": {
     ".": "./index.ts",
-    "./crx": "./crx/index.ts"
+    "./crx": "./crx/index.ts",
+    "./install": "./install/index.ts"
   },
   "scripts": {
     "test": "bun test",

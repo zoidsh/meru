@@ -11,8 +11,9 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
-// The crx entry, since the package's own entry reaches into Electron
+// The crx and install entries, since the package's own entry reaches into Electron
 import { verifyCrx } from "@meru/electron-extensions/crx";
+import { fetchCrx } from "@meru/electron-extensions/install";
 import { unzipSync } from "fflate";
 
 type CuratedExtension = {
@@ -44,24 +45,6 @@ const args = parseArgs({
 
 const extensionsDir = path.join(import.meta.dirname, "..", "extensions");
 
-/** Omaha answers 204 No Content until it knows which Chrome is asking. */
-function buildUpdateUrl(id: string) {
-  const searchParams = new URLSearchParams({
-    response: "redirect",
-    os: "linux",
-    arch: "x64",
-    os_arch: "x86_64",
-    nacl_arch: "x86-64",
-    prod: "chromiumcrx",
-    prodchannel: "unknown",
-    prodversion: CHROME_VERSION,
-    acceptformat: "crx2,crx3",
-    x: `id=${id}&installsource=ondemand&uc`,
-  });
-
-  return `https://clients2.google.com/service/update2/crx?${searchParams}`;
-}
-
 async function unpackZip(zip: Uint8Array, targetDir: string) {
   for (const [fileName, contents] of Object.entries(unzipSync(zip))) {
     if (fileName.endsWith("/")) {
@@ -77,13 +60,7 @@ async function unpackZip(zip: Uint8Array, targetDir: string) {
 }
 
 async function downloadExtension({ name, id }: CuratedExtension) {
-  const response = await fetch(buildUpdateUrl(id), { redirect: "follow" });
-
-  if (!response.ok) {
-    throw new Error(`Update endpoint answered ${response.status} ${response.statusText}`);
-  }
-
-  const crx = Buffer.from(await response.arrayBuffer());
+  const crx = await fetchCrx({ extensionId: id, chromeVersion: CHROME_VERSION });
 
   const { archive, publicKey } = verifyCrx(crx, id);
 

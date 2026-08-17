@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { deriveExtension } from "./index";
+import { deriveExtension, pruneDerivedExtensions } from "./index";
 
 let workDir: string;
 
@@ -259,5 +259,61 @@ describe("deriveExtension", () => {
     const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
 
     expect(page.split('<script src="/chrome-facade.js"></script>')).toHaveLength(2);
+  });
+});
+
+describe("pruneDerivedExtensions", () => {
+  async function deriveOtherExtension() {
+    const otherSourceDir = path.join(workDir, "other-source");
+
+    await mkdir(otherSourceDir, { recursive: true });
+
+    await writeFile(path.join(otherSourceDir, "manifest.json"), JSON.stringify(manifest));
+
+    const { derivedDir } = await deriveExtension({
+      sourceDir: otherSourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    return { otherSourceDir, otherDerivedDir: derivedDir };
+  }
+
+  test("keeps the copies of the sources it was handed and drops the rest", async () => {
+    const derivedDir = await derive();
+
+    const { otherSourceDir, otherDerivedDir } = await deriveOtherExtension();
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [otherSourceDir] });
+
+    expect((await readdir(derivedExtensionsDir)).sort()).toEqual([
+      path.basename(otherDerivedDir),
+      `${path.basename(otherDerivedDir)}.json`,
+    ]);
+
+    expect(await readFile(path.join(otherDerivedDir, "manifest.json"), "utf8")).toContain(
+      "chrome-facade-service-worker.js",
+    );
+
+    await deriveExtension({ sourceDir, derivedExtensionsDir, facadeScriptPath });
+
+    expect(await readdir(derivedDir)).toContain("manifest.json");
+  });
+
+  test("drops a copy no stamp accounts for", async () => {
+    const derivedDir = await derive();
+
+    await rm(`${derivedDir}.json`);
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [sourceDir] });
+
+    expect(await readdir(derivedExtensionsDir)).toEqual([]);
+  });
+
+  test("does nothing when nothing was derived yet", async () => {
+    await pruneDerivedExtensions({
+      derivedExtensionsDir: path.join(workDir, "missing"),
+      keptSourceDirs: [],
+    });
   });
 });
