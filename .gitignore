@@ -175,6 +175,7 @@ dist
 .DS_Store
 
 # Meru
+build/entitlements.mac.plist
 build-js
 docs/
 /extensions/

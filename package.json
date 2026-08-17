@@ -187,6 +187,7 @@
       "provider": "github",
       "releaseType": "release"
     },
+    "beforePack": "./build/hooks/beforePack.js",
     "afterPack": "./build/hooks/afterPack.js"
   },
   "patchedDependencies": {
