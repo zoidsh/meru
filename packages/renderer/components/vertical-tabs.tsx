@@ -133,7 +133,10 @@ function VerticalTab({
 
   const isPinnedSectionTab = getTabSection(tab) === "pinned";
 
-  const isCloseable = !isPinnedSectionTab && !tab.dormant;
+  // An unloaded tab closes as readily as a loaded one — it is the entry that
+  // goes, rather than a view. Pinned tabs are the ones with no close button,
+  // since closing one only unloads it.
+  const isCloseable = !isPinnedSectionTab;
 
   const isWideRow = presentation === "wideRow";
 

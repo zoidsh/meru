@@ -212,10 +212,9 @@ export class AppMenu {
     const selectedAccountActiveTab = selectedAccount.instance.tabs.activeTab;
 
     // Exactly what the strip's close button offers: the pinned section — Gmail
-    // included — and dormant entries carry no close button, so the shortcut has
-    // nothing to close there either.
-    const isActiveTabCloseable =
-      getTabSection(selectedAccountActiveTab) !== "pinned" && !selectedAccountActiveTab.dormant;
+    // included — carries no close button, so the shortcut has nothing to close
+    // there either.
+    const isActiveTabCloseable = getTabSection(selectedAccountActiveTab) !== "pinned";
 
     const isGmailVisible =
       focusedWindow === main.window &&

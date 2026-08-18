@@ -366,10 +366,7 @@ class Ipc {
 
       const hasOtherClosableTabs = account.instance.tabs.tabs.some(
         (accountTab) =>
-          accountTab.id !== tabId &&
-          accountTab.id !== GMAIL_TAB_ID &&
-          !accountTab.pinned &&
-          !accountTab.dormant,
+          accountTab.id !== tabId && accountTab.id !== GMAIL_TAB_ID && !accountTab.pinned,
       );
 
       const contextTabIndex = account.instance.tabs.tabs.findIndex(
@@ -378,7 +375,7 @@ class Ipc {
 
       const hasClosableTabsBelow = account.instance.tabs.tabs
         .slice(contextTabIndex + 1)
-        .some((accountTab) => !accountTab.pinned && !accountTab.dormant);
+        .some((accountTab) => !accountTab.pinned);
 
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
@@ -568,27 +565,36 @@ class Ipc {
         {
           type: "separator",
         },
-        tab instanceof DormantTab
-          ? {
-              label: "Open",
-              click: () => {
-                account.instance.tabs.activateTab(tabId);
+        ...(tab instanceof DormantTab
+          ? [
+              {
+                label: "Open",
+                click: () => {
+                  account.instance.tabs.activateTab(tabId);
 
-                if (account.config.selected) {
-                  accounts.refreshSelectedAccountView();
-                }
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
               },
-            }
-          : {
-              label: "Close",
-              click: () => {
-                account.instance.tabs.closeTab(tabId);
+            ]
+          : []),
+        // An unloaded pinned tab is the one thing with nothing left to close:
+        // it is already saved, and closing it again would drop what was pinned.
+        ...(tab instanceof DormantTab && tab.pinned
+          ? []
+          : [
+              {
+                label: "Close",
+                click: () => {
+                  account.instance.tabs.closeTab(tabId);
 
-                if (account.config.selected) {
-                  accounts.refreshSelectedAccountView();
-                }
+                  if (account.config.selected) {
+                    accounts.refreshSelectedAccountView();
+                  }
+                },
               },
-            },
+            ]),
         {
           label: "Close Other Tabs",
           enabled: hasOtherClosableTabs,

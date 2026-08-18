@@ -78,18 +78,24 @@ type UnloadedViewState = {
   restorableNavigationHistory?: RestoreOptions;
 };
 
+type DormantTabOptions = Omit<SavedTab, "app"> & {
+  app: SupportedWorkspaceApp | undefined;
+  pinned: boolean;
+};
+
 /**
- * A saved tab that has not been opened yet. Only pinned tabs are saved, so a
- * dormant tab is always a pinned one waiting to be materialized.
+ * A tab with no view behind it. It is either a pinned tab restored from disk
+ * that has not been opened yet, or a tab that was unloaded after sitting idle.
+ * Either way it holds its place in the strip until something materializes it.
  */
 export class DormantTab {
   id = randomUUID();
 
-  app: SupportedWorkspaceApp;
+  app: SupportedWorkspaceApp | undefined;
 
   url: string;
 
-  pinned = true;
+  pinned: boolean;
 
   dormant = true;
 
@@ -111,14 +117,15 @@ export class DormantTab {
 
   restorableNavigationHistory: RestoreOptions | undefined;
 
-  constructor(savedTab: SavedTab, unloadedViewState?: UnloadedViewState) {
-    this.app = savedTab.app;
-    this.url = savedTab.url;
-    this.title = savedTab.title;
-    this.loadOnLaunch = Boolean(savedTab.loadOnLaunch);
-    this.hibernatesWhenIdle = Boolean(savedTab.hibernatesWhenIdle);
-    this.opensLinksForApp = savedTab.opensLinksForApp ?? null;
-    this.windowed = Boolean(savedTab.windowed);
+  constructor(dormantTab: DormantTabOptions, unloadedViewState?: UnloadedViewState) {
+    this.app = dormantTab.app;
+    this.url = dormantTab.url;
+    this.title = dormantTab.title;
+    this.pinned = dormantTab.pinned;
+    this.loadOnLaunch = Boolean(dormantTab.loadOnLaunch);
+    this.hibernatesWhenIdle = Boolean(dormantTab.hibernatesWhenIdle);
+    this.opensLinksForApp = dormantTab.opensLinksForApp ?? null;
+    this.windowed = Boolean(dormantTab.windowed);
     this.zoomFactor = unloadedViewState?.zoomFactor;
     this.restorableNavigationHistory = unloadedViewState?.restorableNavigationHistory;
   }
@@ -332,7 +339,7 @@ export class Tabs {
 
   restoreSavedTabs(savedTabs: SavedTab[]) {
     for (const savedTab of savedTabs) {
-      this.tabs.push(new DormantTab(savedTab));
+      this.tabs.push(new DormantTab({ ...savedTab, pinned: true }));
     }
   }
 
@@ -348,7 +355,7 @@ export class Tabs {
     const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
     const cyclableTabs = this.tabs.filter(
-      (tab) => !isWindowedTab(tab) && !(isWindowsMode && tab.dormant),
+      (tab) => !isWindowedTab(tab) && !(isWindowsMode && tab.dormant && tab.pinned),
     );
 
     const activeTabIndex = cyclableTabs.findIndex((tab) => tab.id === this.activeTabId);
@@ -372,6 +379,21 @@ export class Tabs {
 
   closeTab(tabId: string) {
     const closableTab = this.getTab(tabId);
+
+    // An unloaded tab has no view to close, so closing it is closing the entry
+    // itself. A pinned one is saved, and closing it again would throw away what
+    // the user pinned.
+    if (closableTab instanceof DormantTab) {
+      if (closableTab.pinned) {
+        return;
+      }
+
+      this.recordRecentlyClosedTab(closableTab.url);
+
+      this.removeTab(tabId);
+
+      return;
+    }
 
     if (!(closableTab instanceof WorkspaceApp)) {
       return;
@@ -411,6 +433,7 @@ export class Tabs {
           app: savedWorkspaceApp.app,
           url: savedWorkspaceApp.url,
           title: savedWorkspaceApp.title,
+          pinned: savedWorkspaceApp.pinned,
           loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
           hibernatesWhenIdle: savedWorkspaceApp.hibernatesWhenIdle,
           opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
@@ -550,14 +573,7 @@ export class Tabs {
   setTabPinned(tabId: string, pinned: boolean) {
     const pinnableTab = this.getTab(tabId);
 
-    // Unpinning a tab that was never opened leaves nothing behind to keep.
-    if (!pinned && pinnableTab instanceof DormantTab) {
-      this.removeTab(tabId);
-
-      return;
-    }
-
-    if (!(pinnableTab instanceof WorkspaceApp)) {
+    if (!(pinnableTab instanceof WorkspaceApp) && !(pinnableTab instanceof DormantTab)) {
       return;
     }
 
@@ -707,7 +723,7 @@ export class Tabs {
           opensLinksForApp: tab.opensLinksForApp,
           windowed: tab.opensAsWindow,
         });
-      } else if (tab instanceof DormantTab) {
+      } else if (tab instanceof DormantTab && tab.pinned && tab.app) {
         savedTabs.push({
           app: tab.app,
           url: tab.url,
