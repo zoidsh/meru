@@ -25,7 +25,7 @@ export function createNoopMethod(createResult: (callArguments: unknown[]) => unk
 
 /**
  * A method answered elsewhere — over the bridge, typically — with the same
- * callback-or-promise duality as a noop. `produceResult` sees the call's
+ * callback-or-promise duality as a noop. `produceResult` receives the call's
  * arguments without any trailing callback. A rejection reaches a promise-style
  * caller as its own, the way Chrome's APIs reject; a callback-style caller is
  * answered `undefined`, never left waiting on a callback that no longer fires.

@@ -29,7 +29,7 @@ type ExtensionBridgeSession = {
  * per session, answered here and routed by path to whichever `chrome.*`
  * implementation registered it. The bridge owns what every route needs alike —
  * telling which extension is calling from the request's token, and turning
- * anything else away — so a route handler only ever sees an authenticated
+ * anything else away — so a route handler only ever receives an authenticated
  * caller.
  */
 export class ExtensionBridge {
@@ -81,8 +81,8 @@ export class ExtensionBridge {
       const body = JSON.parse(bodySource) as ExtensionBridgeRequest & Record<string, unknown>;
 
       // Everything else in the session — Gmail, workspace apps, any page a user
-      // navigated to — can reach this scheme just as well, and only the loaded
-      // extensions know a token
+      // navigated to — can reach this scheme too, and only the loaded extensions
+      // hold a token.
       const extensionId = this.sessions.get(session)?.getExtensionId(body.token);
 
       if (!extensionId) {

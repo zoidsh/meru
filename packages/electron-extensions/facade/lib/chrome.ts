@@ -1,6 +1,6 @@
 /**
- * The facade never knows what Electron's own `chrome` object holds, so every
- * namespace is treated as an opaque bag of values it may add to.
+ * What Electron's own `chrome` object holds isn't knowable from here, so every
+ * namespace is treated as an opaque bag of values the facade can add to.
  */
 export type ChromeNamespace = Record<string, unknown>;
 

@@ -5,7 +5,7 @@ import { createNoopEvent } from "../lib/event";
 import { createBridgedMethod } from "../lib/method";
 
 /**
- * A frame query answered by the main process, since only it sees the session's
+ * A frame query answered by the main process, since only it holds the session's
  * frame tree. `null` is Chrome's own answer for a frame or tab it cannot find,
  * and extensions handle it — so it also stands in when the bridge cannot be
  * reached.

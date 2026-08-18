@@ -10,9 +10,9 @@ import {
 const MAIN_FRAME_ID = 0;
 
 /**
- * The id an extension knows a frame by: Chromium's frame-tree-node id, with the
- * main frame pinned to 0 — which is why the main frame never answers to its own
- * node id.
+ * The id an extension addresses a frame by: Chromium's frame-tree-node id, with
+ * the main frame pinned to 0 — which is why the main frame never answers to its
+ * own node id.
  */
 function getExtensionFrameId(frame: WebFrameMain) {
   return frame.parent ? frame.frameTreeNodeId : MAIN_FRAME_ID;

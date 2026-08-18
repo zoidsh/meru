@@ -21,7 +21,7 @@ type NativeMessagingPort = {
 
 /**
  * `chrome.runtime.lastError` the way Chrome exposes it: set for the duration of
- * the callback that has to see it, gone again afterwards.
+ * the callback that reads it, gone again afterwards.
  */
 function withLastError(runtime: ChromeNamespace, error: string | undefined, run: () => void) {
   if (error === undefined) {
@@ -55,8 +55,8 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
   let markOpened = () => {};
 
   /**
-   * Resolves once the bridge has answered the connect request, which is when it
-   * knows the port id. Extensions post the moment `connectNative` returns, and
+   * Resolves once the bridge has answered the connect request, which is when the
+   * port id arrives. Extensions post the moment `connectNative` returns, and
    * two fetches have no order between them, so everything sent waits here and
    * then goes out in the order it was written.
    */
