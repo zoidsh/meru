@@ -244,7 +244,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Check for Updates...",
+            label: "Check for Updates…",
             click: () => {
               appUpdater.checkForUpdates();
             },
@@ -253,14 +253,14 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Settings...",
+            label: "Settings…",
             accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
             },
           },
           {
-            label: "Gmail Settings...",
+            label: "Gmail Settings…",
             accelerator: "Command+Shift+,",
             click: () => {
               ipc.renderer.send(
@@ -351,7 +351,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Find...",
+            label: "Find…",
             accelerator: "CommandOrControl+F",
             enabled: isFindInPageEnabled,
             click: () => {
@@ -632,7 +632,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Manage Accounts...",
+            label: "Manage Accounts…",
             click: () => {
               main.navigate("/settings/accounts");
             },
@@ -740,7 +740,7 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset App",
+                label: "Reset App…",
                 click: async () => {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
