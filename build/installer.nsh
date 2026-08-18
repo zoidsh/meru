@@ -1,7 +1,7 @@
 !macro customInstall
   # Capabilities
   WriteRegStr HKCU "Software\Meru\Capabilities" "ApplicationName" "Meru"
-  WriteRegStr HKCU "Software\Meru\Capabilities" "ApplicationDescription" "Gmail as a desktop app"
+  WriteRegStr HKCU "Software\Meru\Capabilities" "ApplicationDescription" "The Gmail experience you deserve"
   
   # URL Associations
   WriteRegStr HKCU "Software\Meru\Capabilities\URLAssociations" "mailto" "Meru.mailto"

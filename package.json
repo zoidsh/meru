@@ -2,7 +2,7 @@
   "name": "meru",
   "version": "3.59.0",
   "private": true,
-  "description": "Gmail as a desktop app, with several accounts, native notifications, and the Google Workspace apps alongside it",
+  "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
   "author": "Tim Cheung <tim@meru.so>",
   "repository": "zoidsh/meru",
   "workspaces": [
@@ -152,8 +152,8 @@
           ]
         }
       ],
-      "synopsis": "Gmail as a desktop app",
-      "description": "Gmail as a desktop app, with several accounts, native notifications, and the Google Workspace apps alongside it",
+      "synopsis": "The Gmail experience you deserve",
+      "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
       "category": "Network;Office"
     },
     "win": {

@@ -1,9 +1,9 @@
 <div align="center">
 	<img src="media/logo-round.svg" width="200" height="200" alt="Meru logo">
 	<h1>Meru (formerly Gmail Desktop)</h1>
-  <h3>Gmail as a desktop app</h3>
+  <h3>The Gmail experience you deserve</h3>
   <p>
-		Meru gives Gmail its own window, with several accounts, native notifications, and the Google Workspace apps alongside it.
+		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app.
 	</p>
   <p><a href="https://meru.so">Website</a></p>
   <p><a href="https://meru.so/download">Download for macOS, Windows, and Linux</a></p>
