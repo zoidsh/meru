@@ -31,7 +31,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Recent Download History"
+      title="Recent download history"
     >
       <DownloadIcon />
     </TitlebarIconButton>
@@ -70,7 +70,7 @@ function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
 
   return (
     <TitlebarIconButton
-      title={bookmarkState.bookmarked ? "Remove Bookmark" : "Bookmark"}
+      title={bookmarkState.bookmarked ? "Remove bookmark" : "Bookmark"}
       onClick={() => {
         ipc.main.send("workspaceApp.toggleBookmark", workspaceAppId);
       }}
@@ -210,7 +210,7 @@ function WorkspaceApp() {
           <BookmarkButton workspaceAppId={workspaceAppId} />
           <RecentDownloadHistoryButton />
           <TitlebarIconButton
-            title="More Options"
+            title="More options"
             onClick={() => {
               ipc.main.send("workspaceApp.showMenu", workspaceAppId);
             }}

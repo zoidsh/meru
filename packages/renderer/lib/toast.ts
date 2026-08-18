@@ -2,7 +2,7 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { toast } from "sonner";
 
 export function restartRequiredToast() {
-  toast.info("A restart is required for the changes to take full effect.", {
+  toast.info("Restart Meru to apply the changes.", {
     id: "restart-required",
     duration: Number.POSITIVE_INFINITY,
     action: {

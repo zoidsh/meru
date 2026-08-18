@@ -57,7 +57,7 @@ function Bookmark({
         size="icon"
         data-sortable-action
         className="absolute inset-y-0 right-1 my-auto size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-        title="Remove Bookmark"
+        title="Remove bookmark"
         onClick={() => {
           ipc.main.send("bookmarks.removeBookmark", accountId, id);
         }}

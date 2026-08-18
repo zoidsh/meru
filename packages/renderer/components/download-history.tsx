@@ -38,9 +38,9 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
             <DownloadIcon />
           </EmptyMedia>
           <EmptyTitle>No downloads yet</EmptyTitle>
-          <EmptyDescription>Your downloaded files will appear here.</EmptyDescription>
+          <EmptyDescription>Downloaded files appear here.</EmptyDescription>
           <EmptyDescription>
-            Downloads older than 30 days will be automatically removed from the history.
+            Downloads older than 30 days are removed from the history automatically.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

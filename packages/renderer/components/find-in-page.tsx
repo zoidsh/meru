@@ -81,7 +81,7 @@ export function FindInPage({
           onClick={() => {
             onFind(text, { forward: false, findNext: false });
           }}
-          title="Find Previous Match"
+          title="Find previous match"
         >
           <ChevronUpIcon />
         </Button>
@@ -91,11 +91,11 @@ export function FindInPage({
           onClick={() => {
             onFind(text, { findNext: false });
           }}
-          title="Find Next Match"
+          title="Find next match"
         >
           <ChevronDownIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} title="Close Find in Page">
+        <Button variant="ghost" size="icon-sm" onClick={onClose} title="Close find in page">
           <XIcon />
         </Button>
       </div>
