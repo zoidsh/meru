@@ -511,9 +511,9 @@ class Ipc {
                     },
                   ]
                 : []),
-              // Only saved tabs hibernate, and only the tabs picked here do
-              // while the setting is on Selected Tabs.
-              ...(config.get("workspaceApps.hibernation") === "selected" && tab.pinned
+              // While the setting is on Selected Tabs, only the tabs marked
+              // here hibernate.
+              ...(config.get("workspaceApps.hibernation") === "selected"
                 ? [
                     {
                       label: "Hibernate When Idle",
@@ -522,7 +522,11 @@ class Ipc {
                       click: () => {
                         tab.hibernatesWhenIdle = !tab.hibernatesWhenIdle;
 
-                        accounts.saveTabs();
+                        // An unpinned tab is not saved, so the mark lasts as
+                        // long as the tab itself does.
+                        if (tab.pinned) {
+                          accounts.saveTabs();
+                        }
                       },
                     },
                   ]

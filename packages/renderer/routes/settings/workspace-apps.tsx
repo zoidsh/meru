@@ -295,7 +295,7 @@ export function WorkspaceAppsSettings() {
           <FieldSeparator />
           <ConfigSelectField
             label="Hibernate Idle Tabs"
-            description="Unload pinned tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it. Selected Tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
+            description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Selected Tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
             configKey="workspaceApps.hibernation"
             placeholder="Select tabs"
             licenseKeyRequired
@@ -306,7 +306,7 @@ export function WorkspaceAppsSettings() {
           />
           <ConfigSelectField
             label="Hibernate After"
-            description="How long a pinned tab has to go unused before it hibernates. The active tab, tabs in their own window and tabs playing audio are left alone."
+            description="How long a tab has to go unused before it hibernates. The active tab, tabs in their own window and tabs playing audio are left alone."
             configKey="workspaceApps.hibernationTimeout"
             placeholder="Select timeout"
             licenseKeyRequired
