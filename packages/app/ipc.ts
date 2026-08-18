@@ -749,8 +749,8 @@ class Ipc {
     ipc.main.on("notifications.showTestNotification", () => {
       createNewEmailNotification({
         title: "Tim from Meru",
-        subtitle: "Your Test Notification Request",
-        body: "This is a test notification to show how notifications will appear.",
+        subtitle: "Your test notification request",
+        body: "This is a test notification, to show how a notification appears.",
       });
     });
 
@@ -1051,7 +1051,7 @@ class Ipc {
       }
 
       if (!isCuratedExtensionId(extensionId)) {
-        return { error: "This extension is not part of the extensions Meru offers" };
+        return { error: "Meru doesn't offer this extension." };
       }
 
       try {
@@ -1062,7 +1062,7 @@ class Ipc {
         log.error("Failed to install extension", { extensionId, error: serializeError(error) });
 
         return {
-          error: `Failed to install extension: ${error instanceof Error ? error.message : String(error)}`,
+          error: `Couldn't install the extension: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
     });
@@ -1078,7 +1078,7 @@ class Ipc {
         log.error("Failed to uninstall extension", { extensionId, error: serializeError(error) });
 
         return {
-          error: `Failed to uninstall extension: ${error instanceof Error ? error.message : String(error)}`,
+          error: `Couldn't uninstall the extension: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
     });

@@ -82,10 +82,10 @@ class Downloads {
             config.get("notifications.onClickDownloadCompleted") === "openFile";
 
           createNotification({
-            title: `Downloaded: ${fileName}`,
+            title: `Downloaded ${fileName}`,
             body: shouldOpenFile
-              ? "Click to open the file"
-              : `Click to show the file in ${FILE_MANAGER_NAME}`,
+              ? "Click to open the file."
+              : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
               if (shouldOpenFile) {
                 shell.openPath(filePath);

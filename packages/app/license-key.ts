@@ -13,7 +13,7 @@ class LicenseKey {
   showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
       type: "warning",
-      message: "Failed to activate license key",
+      message: "Couldn't activate the license key.",
       ...options,
     });
   }
@@ -45,7 +45,7 @@ class LicenseKey {
         if (error.code === "MAX_DEVICE_ACTIVATIONS_REACHED") {
           const { response } = await this.showActivationError({
             detail:
-              "This license key has reached its maximum number of device activations. Go to the Meru Portal to remove a device linked to this license key or contact support for further help.",
+              "This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support.",
             buttons: ["Open Meru Portal", "Cancel"],
             defaultId: 0,
             cancelId: 1,
@@ -56,7 +56,7 @@ class LicenseKey {
           }
         } else {
           await this.showActivationError({
-            detail: `${errorMessages[error.code]}. Please use another license key or contact support for further help.`,
+            detail: `${errorMessages[error.code]}. Use another license key, or contact support.`,
           });
         }
       } else {
@@ -72,8 +72,8 @@ class LicenseKey {
 
         await this.showActivationError({
           detail: (await isOnline())
-            ? `Please try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
-            : "It seems you are currently offline. Please connect to the internet and try again or contact support for further help.",
+            ? `Try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+            : "Meru can't reach the internet. Connect and try again.",
         });
       }
 
@@ -84,8 +84,8 @@ class LicenseKey {
 
     const { response } = await dialog.showMessageBox({
       type: "info",
-      message: "License key activated",
-      detail: "A restart is required to apply the changes.",
+      message: "License key activated.",
+      detail: "Restart Meru to apply the changes.",
       buttons: ["Restart", "Later"],
       defaultId: 0,
       cancelId: 1,
@@ -102,7 +102,7 @@ class LicenseKey {
   showValidationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
       type: "warning",
-      message: "Failed to validate license key",
+      message: "Couldn't validate the license key.",
       ...options,
     });
   }
@@ -124,15 +124,15 @@ class LicenseKey {
     if (error) {
       if (isDefined) {
         const errorMessages: Record<typeof error.code, string> = {
-          LICENSE_KEY_INVALID: "The license key is invalid",
-          LICENSE_DISABLED: "The license key has been disabled",
-          LICENSE_EXPIRED: "The license key has expired",
-          DEVICE_NOT_ACTIVATED: "The license key is not activated for this device",
+          LICENSE_KEY_INVALID: "This license key is invalid",
+          LICENSE_DISABLED: "This license key has been disabled",
+          LICENSE_EXPIRED: "This license key has expired",
+          DEVICE_NOT_ACTIVATED: "This license key isn't activated for this device",
         };
 
         const { response } = await this.showValidationError({
-          detail: `${errorMessages[error.code]} and will be removed on this device. Contact support if you need further help.`,
-          buttons: ["Continue", "Quit"],
+          detail: `${errorMessages[error.code]}, and Meru removes it from this device. Contact support if you need help.`,
+          buttons: ["Remove and Restart", "Quit"],
           defaultId: 0,
           cancelId: 1,
         });
@@ -155,8 +155,8 @@ class LicenseKey {
 
         const { response } = await this.showValidationError({
           detail: (await isOnline())
-            ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
-            : "It seems you are currently offline. Please connect to the internet and restart the app to try again or contact support for further help.",
+            ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+            : "Meru can't reach the internet. Connect, then restart Meru to try again.",
           buttons: ["Restart", "Quit"],
           defaultId: 0,
           cancelId: 1,

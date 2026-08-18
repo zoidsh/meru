@@ -187,10 +187,10 @@ export class WorkspaceApp {
     const { checkboxChecked } = await dialog.showMessageBox({
       type: "info",
       message: touchIdAvailable
-        ? "Only passkeys created in Meru work here"
-        : "Passkey sign-in isn't supported on this platform yet",
+        ? "Only passkeys created in Meru work here."
+        : "Passkey sign-in isn't supported on this platform yet.",
       detail: touchIdAvailable
-        ? "Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud or your phone can't be used here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings."
+        ? "Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings."
         : "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.",
       checkboxLabel: "Don't show again",
     });

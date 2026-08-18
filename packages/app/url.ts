@@ -26,11 +26,11 @@ export async function openExternalUrl(
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
         buttons: ["Open Link", "Copy Link", "Cancel"],
-        message: "Do you want to open this external link in your default browser?",
+        message: "Open this link in your default browser?",
         checkboxLabel: `Trust all links on ${origin}`,
         detail:
           cleanUrl.length > MAX_EXTERNAL_URL_LENGTH
-            ? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 3)}...`
+            ? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 1)}…`
             : cleanUrl,
       });
 
