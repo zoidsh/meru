@@ -23,10 +23,6 @@ const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
 
 const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-extensions");
 
-// 1Password overrides `navigator.credentials` in the page, which is what lets a
-// passkey sign-in go through in Electron and makes the passkey dialog moot
-export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
-
 /**
  * Unpacked extensions to load on top of the installed ones, one directory
  * holding a `manifest.json` per extension:

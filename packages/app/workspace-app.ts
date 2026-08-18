@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
@@ -26,7 +27,7 @@ import {
 import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
-import { extensions, ONEPASSWORD_EXTENSION_ID } from "./extensions";
+import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { loadUrl } from "./lib/load-url";
 import {
@@ -171,6 +172,8 @@ export class WorkspaceApp {
       return;
     }
 
+    // 1Password overrides `navigator.credentials` in the page, which is what lets
+    // a passkey sign-in go through in Electron and makes the passkey dialog moot.
     if (extensions.isExtensionLoaded(session, ONEPASSWORD_EXTENSION_ID)) {
       return;
     }
