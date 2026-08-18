@@ -4,7 +4,7 @@ import { ms } from "@meru/shared/ms";
 import type { SavedTab } from "@meru/shared/schemas";
 import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
-import type { WebContentsView } from "electron";
+import type { RestoreOptions, WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
@@ -68,6 +68,17 @@ export type Tab = {
 };
 
 /**
+ * What the view a tab left behind was holding, carried so that waking the tab
+ * lands where it was rather than at the top of a freshly loaded page. Only a
+ * tab hibernated in this session has any of it — a tab restored from disk at
+ * launch starts from its URL alone.
+ */
+type UnloadedViewState = {
+  zoomFactor?: number;
+  restorableNavigationHistory?: RestoreOptions;
+};
+
+/**
  * A saved tab that has not been opened yet. Only pinned tabs are saved, so a
  * dormant tab is always a pinned one waiting to be materialized.
  */
@@ -98,7 +109,9 @@ export class DormantTab {
 
   zoomFactor: number | undefined;
 
-  constructor(savedTab: SavedTab, zoomFactor?: number) {
+  restorableNavigationHistory: RestoreOptions | undefined;
+
+  constructor(savedTab: SavedTab, unloadedViewState?: UnloadedViewState) {
     this.app = savedTab.app;
     this.url = savedTab.url;
     this.title = savedTab.title;
@@ -106,7 +119,8 @@ export class DormantTab {
     this.hibernatesWhenIdle = Boolean(savedTab.hibernatesWhenIdle);
     this.opensLinksForApp = savedTab.opensLinksForApp ?? null;
     this.windowed = Boolean(savedTab.windowed);
-    this.zoomFactor = zoomFactor;
+    this.zoomFactor = unloadedViewState?.zoomFactor;
+    this.restorableNavigationHistory = unloadedViewState?.restorableNavigationHistory;
   }
 }
 
@@ -290,6 +304,9 @@ export class Tabs {
       savedAsWindow: dormantTab.windowed,
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
+      // A URL passed in wins: the tab is being woken to take that link, which
+      // the history it hibernated with knows nothing about.
+      navigationHistory: url ? undefined : dormantTab.restorableNavigationHistory,
     });
 
     if (workspaceApp.isWindowed) {
@@ -399,7 +416,10 @@ export class Tabs {
           opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
           windowed: savedWorkspaceApp.opensAsWindow,
         },
-        savedWorkspaceApp.zoomFactor,
+        {
+          zoomFactor: savedWorkspaceApp.zoomFactor,
+          restorableNavigationHistory: savedWorkspaceApp.restorableNavigationHistory,
+        },
       ),
     );
 

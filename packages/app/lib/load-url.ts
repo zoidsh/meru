@@ -1,4 +1,4 @@
-import type { WebContents } from "electron";
+import type { RestoreOptions, WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "./log";
 
@@ -18,6 +18,26 @@ export function loadUrl(webContents: WebContents, url: string) {
     .then(() => true)
     .catch((error: unknown) => {
       log.error("Failed to load URL", { url, error: serializeError(error) });
+
+      return false;
+    });
+}
+
+/**
+ * Brings a view back on the history the tab it belongs to went away with, so
+ * back and forward keep working and each page returns to the scroll position
+ * and form values it was left at. Restoring loads the entry it lands on, so it
+ * answers whether the page arrived just as `loadUrl` does.
+ */
+export function restoreNavigationHistory(webContents: WebContents, options: RestoreOptions) {
+  return webContents.navigationHistory
+    .restore(options)
+    .then(() => true)
+    .catch((error: unknown) => {
+      log.error("Failed to restore navigation history", {
+        url: options.entries.at(options.index ?? -1)?.url,
+        error: serializeError(error),
+      });
 
       return false;
     });

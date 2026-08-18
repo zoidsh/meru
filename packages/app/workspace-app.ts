@@ -18,6 +18,7 @@ import {
   dialog,
   globalShortcut,
   powerSaveBlocker,
+  type RestoreOptions,
   type Session,
   type WebContents,
   type WebContentsView,
@@ -28,7 +29,7 @@ import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { extensions, ONEPASSWORD_EXTENSION_ID } from "./extensions";
 import { ipc } from "./ipc";
-import { loadUrl } from "./lib/load-url";
+import { loadUrl, restoreNavigationHistory } from "./lib/load-url";
 import {
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
@@ -94,6 +95,7 @@ type WorkspaceAppOptions = {
   opensLinksForApp?: SupportedWorkspaceApp | null;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
+  navigationHistory?: RestoreOptions;
 };
 
 export class WorkspaceApp {
@@ -503,6 +505,7 @@ export class WorkspaceApp {
     opensLinksForApp,
     app,
     zoomFactor,
+    navigationHistory,
   }: WorkspaceAppOptions) {
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
@@ -517,7 +520,7 @@ export class WorkspaceApp {
       this._window = this.createBrowserWindow(window);
     }
 
-    this.view = this.createView({ url, options: view });
+    this.view = this.createView({ url, options: view, navigationHistory });
 
     this.updateViewBounds();
     this.registerViewListeners();
@@ -584,9 +587,11 @@ export class WorkspaceApp {
   private createView({
     url,
     options,
+    navigationHistory,
   }: {
     url: string;
     options?: WebContentsViewConstructorOptions;
+    navigationHistory?: RestoreOptions;
   }) {
     const view = createChildWebContentsView({
       session: this.account.instance.session,
@@ -613,7 +618,11 @@ export class WorkspaceApp {
       },
     });
 
-    loadUrl(view.webContents, url);
+    if (navigationHistory) {
+      restoreNavigationHistory(view.webContents, navigationHistory);
+    } else {
+      loadUrl(view.webContents, url);
+    }
 
     openViewDevToolsOnLaunch(view);
 
@@ -859,6 +868,18 @@ export class WorkspaceApp {
     return {
       canGoBack: this.view.webContents.navigationHistory.canGoBack(),
       canGoForward: this.view.webContents.navigationHistory.canGoForward(),
+    };
+  }
+
+  /**
+   * The back-forward stack as Chromium hands it over, entry page state and all,
+   * for a fresh view to be restored onto. It is what a tab takes with it into
+   * hibernation, so waking it lands on the page it left, scrolled where it was.
+   */
+  get restorableNavigationHistory(): RestoreOptions {
+    return {
+      entries: this.view.webContents.navigationHistory.getAllEntries(),
+      index: this.view.webContents.navigationHistory.getActiveIndex(),
     };
   }
 
