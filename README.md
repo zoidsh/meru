@@ -1,27 +1,27 @@
 <div align="center">
-	<img src="media/logo-round.svg" width="200" height="200">
+	<img src="media/logo-round.svg" width="200" height="200" alt="Meru logo">
 	<h1>Meru (formerly Gmail Desktop)</h1>
-  <h3>The Gmail experience you deserve</h3>
+  <h3>Gmail as a desktop app</h3>
   <p>
-		Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app.
+		Meru gives Gmail its own window, with several accounts, native notifications, and the Google Workspace apps alongside it.
 	</p>
   <p><a href="https://meru.so">Website</a></p>
-  <p><a href="https://meru.so/download">Download for macOS, Windows & Linux</a></p>
+  <p><a href="https://meru.so/download">Download for macOS, Windows, and Linux</a></p>
   <p><a href="https://meru.so/discord">Discord</a></p>
-  <img src="media/screenshot.png">
+  <img src="media/screenshot.png" alt="Two Meru windows, one light and one dark, each showing a Gmail inbox with tabs for a Personal and a Work account">
 </div>
 
 ## Maintainers
 
 - [Tim Cheung](https://github.com/timche)
 
-### Former
+### Former maintainers
 
 - [Mark Skelton](https://github.com/mskelton)
 
 ## Contributors
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+These people have contributed to Meru ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -48,8 +48,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome.
 
 ## Disclaimer
 
-Meru is a third-party app and not affiliated with Google.
+Meru is a third-party app and isn't affiliated with Google.

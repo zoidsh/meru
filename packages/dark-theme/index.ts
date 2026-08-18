@@ -48,40 +48,40 @@ type ColorSnapshot = {
 };
 
 export type DarkThemeOptions = Partial<Theme> & {
-  // Opt elements out of theming. A string selector keeps its matching elements and
-  // their descendants (via closest) fully original — e.g. coloured chips or badges. An
-  // object skips only the listed properties on elements matching its selector (via
-  // matches), leaving those to CSS — e.g. a border colour set in a stylesheet, which the
-  // engine's inline override would otherwise win over.
+  // Opts elements out of theming. A string selector keeps its matching elements and
+  // their descendants fully original, matched with closest — colored chips or badges,
+  // for example. An object skips only the listed properties on elements matching its
+  // selector, matched with matches, and leaves those properties to CSS — a border color
+  // set in a stylesheet, which the engine's inline override would otherwise win over.
   ignore?: Array<string | IgnorePropertyRule>;
-  // Watch the subtree and keep theming content added later, and re-theme an
-  // element when its class or aria state changes so state-driven styles (a
-  // scroll shadow, an icon that swaps on toggle) are re-evaluated. Defaults to
-  // true; when enabled, call the returned controller's revert() to disconnect.
+  // Watches the subtree and keeps theming content added later, and re-themes an
+  // element when its class or aria state changes, so that state-driven styles are
+  // re-evaluated — a scroll shadow, or an icon that swaps on toggle. Defaults to
+  // true. When enabled, call the returned controller's revert() to disconnect.
   observe?: boolean;
   // CSS injected into the document while the theme is active and removed on
-  // revert()/destroy(). Use for rules the inline-override engine can't reach —
-  // e.g. :hover backgrounds or ::before icons — scoped with [data-dark-theme].
+  // revert() or destroy(). Use it for rules the inline-override engine can't reach,
+  // such as :hover backgrounds or ::before icons, scoped with [data-dark-theme].
   css?: string;
-  // URL prefixes of dark monochrome icons (element background-images, or a
-  // pseudo-element's content/background-image) to blank-invert with
-  // `filter: invert(1)`. A pragmatic substitute for pixel analysis when the icon
-  // is cross-origin (CORS-tainted) and so can't be inspected — e.g. a site's
-  // material-icon CDN path. Matched by `startsWith`.
+  // URL prefixes of dark monochrome icons to blank-invert with `filter: invert(1)`,
+  // covering element background-images and a pseudo-element's content or
+  // background-image. It's a pragmatic substitute for pixel analysis when the icon is
+  // cross-origin, and therefore CORS-tainted and impossible to inspect — a site's
+  // material-icon CDN path, for example. Matched with `startsWith`.
   invertImageUrls?: string[];
-  // Filenames (the last path segment of the url) that `invertImageUrls` should
-  // skip even when their prefix matches — e.g. a coloured icon variant sharing the
-  // same CDN path as the monochrome ones, which inverting would wrongly recolour.
+  // Filenames, meaning the last path segment of the URL, that `invertImageUrls` skips
+  // even when their prefix matches. Use it for a colored icon variant that shares a CDN
+  // path with the monochrome ones, which inverting would recolor wrongly.
   invertImageExcludeFilenames?: string[];
 };
 
 export type DarkThemeController = {
-  // Undo theming on a still-live subtree: restore every element's original inline
-  // styles.
+  // Undoes theming on a still-live subtree by restoring every element's original
+  // inline styles.
   revert: () => void;
-  // Tear down without restoring styles: disconnect the observer and release
-  // references. Use when the themed subtree is being discarded (e.g. removed from
-  // the DOM), where restoring inline styles would be wasted work.
+  // Tears down without restoring styles, disconnecting the observer and releasing
+  // references. Use it when the themed subtree is being discarded, for example by
+  // removing it from the DOM, where restoring inline styles would be wasted work.
   destroy: () => void;
 };
 

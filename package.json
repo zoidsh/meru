@@ -2,7 +2,7 @@
   "name": "meru",
   "version": "3.59.0",
   "private": true,
-  "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+  "description": "Gmail as a desktop app, with several accounts, native notifications, and the Google Workspace apps alongside it",
   "author": "Tim Cheung <tim@meru.so>",
   "repository": "zoidsh/meru",
   "workspaces": [
@@ -123,8 +123,8 @@
           "meru",
           "mailto"
         ],
-        "NSCameraUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat.",
-        "NSMicrophoneUsageDescription": "Meru needs access to your camera for Google apps like Meet and Chat."
+        "NSCameraUsageDescription": "Meru uses your camera for video calls in Google apps such as Meet and Chat.",
+        "NSMicrophoneUsageDescription": "Meru uses your microphone for calls and voice input in Google apps such as Meet and Chat."
       }
     },
     "linux": {
@@ -152,8 +152,8 @@
           ]
         }
       ],
-      "synopsis": "The Gmail experience you deserve",
-      "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+      "synopsis": "Gmail as a desktop app",
+      "description": "Gmail as a desktop app, with several accounts, native notifications, and the Google Workspace apps alongside it",
       "category": "Network;Office"
     },
     "win": {
