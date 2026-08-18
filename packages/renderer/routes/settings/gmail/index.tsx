@@ -62,6 +62,13 @@ export function GmailSettings() {
               licenseKeyRequired
             />
             <ConfigSwitchField
+              label="Hide Promotional Banner"
+              description="Hides promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
+              configKey="gmail.hidePromoBanner"
+              restartRequired
+              licenseKeyRequired
+            />
+            <ConfigSwitchField
               label="Hide Upgrade Button"
               description="Hides the Upgrade button in Gmail."
               configKey="gmail.hideUpgradeButton"

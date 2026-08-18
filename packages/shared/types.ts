@@ -140,6 +140,7 @@ export type Config = {
   "gmail.hideGmailLogo": boolean;
   "gmail.hideInboxFooter": boolean;
   "gmail.hideOutOfOfficeBanner": boolean;
+  "gmail.hidePromoBanner": boolean;
   "gmail.hideUpgradeButton": boolean;
   "gmail.reverseConversation": boolean;
   "gmail.savedSearches": GmailSavedSearches;
