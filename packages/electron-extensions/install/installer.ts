@@ -3,7 +3,7 @@ import path from "node:path";
 import { unzipSync } from "fflate";
 import { verifyCrx } from "../crx/crx";
 import { compareExtensionVersions } from "../crx/version";
-import { type FetchImplementation, fetchCrx } from "./omaha";
+import { type FetchImplementation, fetchCrx, fetchCrxUpdate } from "./omaha";
 
 const MANIFEST_FILE_NAME = "manifest.json";
 
@@ -234,9 +234,11 @@ export type LatestExtensionInstall = InstalledExtension & {
  * how it is installed the first time and how it is kept up to date — a first
  * install is the case where nothing is installed yet.
  *
- * Nothing is written when the installed version is the served one or newer, so
- * a periodic check costs a download and a signature check and leaves the disk
- * alone.
+ * An install that already has a version asks the endpoint what it serves before
+ * asking for it, so a check that finds nothing new costs one small answer
+ * rather than a download and an unzip of tens of megabytes. The package is
+ * still the last word on the version, so a download that turns out to carry
+ * what is installed is written no further.
  */
 export async function installLatestExtension({
   extensionId,
@@ -244,11 +246,27 @@ export async function installLatestExtension({
   chromeVersion,
   fetch,
 }: InstallLatestExtensionOptions): Promise<LatestExtensionInstall> {
+  const installedExtension = await getInstalledExtension({ installDir, extensionId });
+
+  if (installedExtension) {
+    const crxUpdate = await fetchCrxUpdate({
+      extensionId,
+      chromeVersion,
+      installedVersion: installedExtension.version,
+      fetch,
+    });
+
+    if (
+      crxUpdate.status === "noupdate" ||
+      compareExtensionVersions(installedExtension.version, crxUpdate.version) >= 0
+    ) {
+      return { ...installedExtension, updated: false };
+    }
+  }
+
   const crx = await fetchCrx({ extensionId, chromeVersion, fetch });
 
   const extensionPackage = readCrxPackage(crx, extensionId);
-
-  const installedExtension = await getInstalledExtension({ installDir, extensionId });
 
   if (
     installedExtension &&

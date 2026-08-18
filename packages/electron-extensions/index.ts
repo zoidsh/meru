@@ -8,7 +8,9 @@ export { Extensions } from "./extensions";
 export type { ActionsChangedListener, ExtensionDirs, ExtensionsOptions } from "./extensions";
 export {
   buildCrxDownloadUrl,
+  buildUpdateCheckUrl,
   fetchCrx,
+  fetchCrxUpdate,
   getInstalledExtension,
   installExtension,
   installLatestExtension,
@@ -16,13 +18,16 @@ export {
 } from "./install";
 export type {
   CrxDownloadOptions,
+  CrxUpdate,
   FetchCrxOptions,
+  FetchCrxUpdateOptions,
   FetchImplementation,
   InstalledExtension,
   InstalledExtensionOptions,
   InstallExtensionOptions,
   InstallLatestExtensionOptions,
   LatestExtensionInstall,
+  UpdateCheckOptions,
 } from "./install";
 export type { ExtensionsLogger } from "./logger";
 export type { NativeMessagingHostPolicy } from "./native-messaging/native-messaging";

@@ -11,5 +11,12 @@ export type {
   InstallLatestExtensionOptions,
   LatestExtensionInstall,
 } from "./installer";
-export { buildCrxDownloadUrl, fetchCrx } from "./omaha";
-export type { CrxDownloadOptions, FetchCrxOptions, FetchImplementation } from "./omaha";
+export { buildCrxDownloadUrl, buildUpdateCheckUrl, fetchCrx, fetchCrxUpdate } from "./omaha";
+export type {
+  CrxDownloadOptions,
+  CrxUpdate,
+  FetchCrxOptions,
+  FetchCrxUpdateOptions,
+  FetchImplementation,
+  UpdateCheckOptions,
+} from "./omaha";

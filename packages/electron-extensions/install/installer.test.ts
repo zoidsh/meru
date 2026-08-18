@@ -36,8 +36,40 @@ function createExtensionCrx(version: string) {
   });
 }
 
-function createFetch(crx: Uint8Array): FetchImplementation {
-  return async () => new Response(crx);
+function createUpdateCheckResponse(servedVersion: string | undefined) {
+  const updateCheckElement = servedVersion
+    ? `<updatecheck codebase="https://packages.test/extension.crx" status="ok" version="${servedVersion}"/>`
+    : '<updatecheck status="noupdate"/>';
+
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?><gupdate protocol="2.0"><app appid="${extensionId}" status="ok">${updateCheckElement}</app></gupdate>`,
+  );
+}
+
+/**
+ * The endpoint as an install meets it: the update check naming the version it
+ * serves, and the package behind the download redirect. A fake without a
+ * package fails the download, so a check that should have stopped at the update
+ * check is caught rather than quietly downloading.
+ */
+function createFetch({ crx, servedVersion }: { crx?: Uint8Array; servedVersion?: string }) {
+  const downloadedUrls: string[] = [];
+
+  const fetch: FetchImplementation = async (url) => {
+    if (new URL(url).searchParams.get("response") !== "redirect") {
+      return createUpdateCheckResponse(servedVersion);
+    }
+
+    downloadedUrls.push(url);
+
+    if (!crx) {
+      throw new Error("Downloaded the package for an extension that is up to date");
+    }
+
+    return new Response(crx);
+  };
+
+  return { fetch, downloadedUrls };
 }
 
 async function readEntryNames(dirPath: string) {
@@ -150,11 +182,13 @@ describe("getInstalledExtension", () => {
 
 describe("installLatestExtension", () => {
   test("installs when nothing is installed yet", async () => {
+    const { fetch, downloadedUrls } = createFetch({ crx: createExtensionCrx("1.0.0") });
+
     const latestExtension = await installLatestExtension({
       extensionId,
       installDir,
       chromeVersion,
-      fetch: createFetch(createExtensionCrx("1.0.0")),
+      fetch,
     });
 
     expect(latestExtension).toEqual({
@@ -162,39 +196,97 @@ describe("installLatestExtension", () => {
       version: "1.0.0",
       extensionDir: path.join(extensionInstallDir, "1.0.0"),
     });
+    expect(downloadedUrls).toHaveLength(1);
   });
 
-  test("writes nothing when the served version is already installed", async () => {
+  test("downloads nothing when the endpoint serves the version already installed", async () => {
+    const { extensionDir } = await installExtension({
+      crx: createExtensionCrx("1.0.0"),
+      extensionId,
+      installDir,
+    });
+
+    await writeFile(path.join(extensionDir, "untouched"), "kept");
+
+    const { fetch, downloadedUrls } = createFetch({ servedVersion: "1.0.0" });
+
+    const latestExtension = await installLatestExtension({
+      extensionId,
+      installDir,
+      chromeVersion,
+      fetch,
+    });
+
+    expect(latestExtension).toEqual({ updated: false, version: "1.0.0", extensionDir });
+    expect(downloadedUrls).toEqual([]);
+    expect(await readFile(path.join(extensionDir, "untouched"), "utf8")).toBe("kept");
+  });
+
+  test("downloads nothing when the endpoint answers that nothing is newer", async () => {
+    await installExtension({ crx: createExtensionCrx("1.0.0"), extensionId, installDir });
+
+    const { fetch, downloadedUrls } = createFetch({});
+
+    const latestExtension = await installLatestExtension({
+      extensionId,
+      installDir,
+      chromeVersion,
+      fetch,
+    });
+
+    expect(latestExtension.updated).toBe(false);
+    expect(latestExtension.version).toBe("1.0.0");
+    expect(downloadedUrls).toEqual([]);
+  });
+
+  test("installs a newer version and drops the one it replaces", async () => {
+    await installExtension({ crx: createExtensionCrx("1.0.0"), extensionId, installDir });
+
+    const { fetch } = createFetch({ crx: createExtensionCrx("2.0.0"), servedVersion: "2.0.0" });
+
+    const latestExtension = await installLatestExtension({
+      extensionId,
+      installDir,
+      chromeVersion,
+      fetch,
+    });
+
+    expect(latestExtension.updated).toBe(true);
+    expect(latestExtension.version).toBe("2.0.0");
+    expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
+  });
+
+  test("writes nothing when the package turns out to carry the installed version", async () => {
     const crx = createExtensionCrx("1.0.0");
 
     const { extensionDir } = await installExtension({ crx, extensionId, installDir });
 
     await writeFile(path.join(extensionDir, "untouched"), "kept");
 
+    const { fetch } = createFetch({ crx, servedVersion: "2.0.0" });
+
     const latestExtension = await installLatestExtension({
       extensionId,
       installDir,
       chromeVersion,
-      fetch: createFetch(crx),
+      fetch,
     });
 
     expect(latestExtension).toEqual({ updated: false, version: "1.0.0", extensionDir });
     expect(await readFile(path.join(extensionDir, "untouched"), "utf8")).toBe("kept");
   });
 
-  test("installs a newer version and drops the one it replaces", async () => {
+  test("fails the check rather than reporting up to date when the answer cannot be read", async () => {
     await installExtension({ crx: createExtensionCrx("1.0.0"), extensionId, installDir });
 
-    const latestExtension = await installLatestExtension({
-      extensionId,
-      installDir,
-      chromeVersion,
-      fetch: createFetch(createExtensionCrx("2.0.0")),
-    });
-
-    expect(latestExtension.updated).toBe(true);
-    expect(latestExtension.version).toBe("2.0.0");
-    expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
+    await expect(
+      installLatestExtension({
+        extensionId,
+        installDir,
+        chromeVersion,
+        fetch: async () => new Response("<html><body>Try again later</body></html>"),
+      }),
+    ).rejects.toThrow(`Update endpoint answered an unreadable update check for ${extensionId}`);
   });
 });
 
