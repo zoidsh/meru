@@ -1,5 +1,5 @@
 /**
- * What the idle sweep reads off a tab to decide whether it may unload it. A
+ * What the idle sweep reads off a tab to determine whether it can unload it. A
  * `WorkspaceApp` satisfies it; nothing else is needed to make the call.
  */
 type HibernatableTab = {

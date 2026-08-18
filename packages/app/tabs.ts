@@ -313,7 +313,7 @@ export class Tabs {
       app: dormantTab.app,
       zoomFactor: dormantTab.zoomFactor,
       // A URL passed in wins: the tab is being woken to take that link, which
-      // the history it hibernated with knows nothing about.
+      // the history it hibernated with doesn't contain.
       navigationHistory: url ? undefined : dormantTab.restorableNavigationHistory,
     });
 
@@ -636,8 +636,8 @@ export class Tabs {
   }
 
   /**
-   * Opens a URL in the tab designated for its app, and returns that tab so the
-   * caller knows the URL was taken. Apps that may not open inside Meru are left
+   * Opens a URL in the tab designated for its app, and returns that tab to signal
+   * that the URL was taken. Apps that aren't allowed to open inside Meru are left
    * to the caller, which falls back to the default browser.
    */
   openInAppLinksTab(url: string) {

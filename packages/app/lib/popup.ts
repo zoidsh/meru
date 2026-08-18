@@ -61,7 +61,7 @@ function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor 
  * A renderer page pads itself by `BASE_SPACING`, and the view spans that much
  * past the popup on every side, so the popup sits where the gaps put it and its
  * entrance animation has room to move without being cut off at the view edge.
- * Any other page fills its view instead — an extension's popup knows nothing of
+ * Any other page fills its view instead — an extension's popup doesn't account for
  * Meru's gaps and would paint over them.
  */
 export class Popup {
@@ -161,7 +161,7 @@ export class Popup {
    * Quitting tears the window down underneath an open popup, and the blur that
    * comes with it lands here while the window and the view are already going
    * away — so the state is dropped up front and every native object is checked
-   * before it is touched, leaving nothing half torn down to hang the quit on.
+   * before it is touched, leaving nothing half torn down to stall the quit.
    */
   close = () => {
     const { view, parentWindow } = this;
