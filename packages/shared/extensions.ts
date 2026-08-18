@@ -15,6 +15,9 @@ export type CuratedExtension = {
   contentScriptMatches?: string[];
 };
 
+/** The 1Password Chrome Web Store id, which app and settings both single out. */
+export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
 /**
  * The extensions Meru offers, the only ones it installs. An id outside this
  * list is refused before anything is downloaded, and the settings page is a
@@ -22,7 +25,7 @@ export type CuratedExtension = {
  */
 export const curatedExtensions: CuratedExtension[] = [
   {
-    id: "aeblfdkhhhdcdjpifhhbdiojplfjncoa",
+    id: ONEPASSWORD_EXTENSION_ID,
     name: "1Password",
     description:
       "Password manager that fills logins and signs you in with passkeys stored in your vault.",
