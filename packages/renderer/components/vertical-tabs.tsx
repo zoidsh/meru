@@ -231,7 +231,7 @@ function VerticalTab({
           size="icon"
           data-sortable-action
           className={cn(
-            // Centred with margins rather than a transform, which the button's
+            // Centered with margins rather than a transform, which the button's
             // own press nudge would overwrite
             "absolute inset-y-0 right-1 my-auto size-5 transition-colors",
             tab.bookmarked
@@ -459,7 +459,7 @@ export function VerticalTabs() {
       className={cn(
         // The one gutter on every edge of both widths is the narrow strip's own
         // measure: it leaves exactly an icon button's width between its sides,
-        // which is what a 32px button centred in a 64px strip already sat on.
+        // which is what a 32px button centered in a 64px strip already sat on.
         // The column therefore hinges on its left edge as the strip resizes,
         // and the controls at the foot — the width toggle above all, which does
         // the resizing — stay put rather than stepping out from under the
@@ -488,7 +488,7 @@ export function VerticalTabs() {
        * many are open.
        *
        * They then divide what is left between them in the pinned section's
-       * favour. Pinning heavily therefore squeezes the normal tabs into a thin
+       * favor. Pinning heavily therefore squeezes the normal tabs into a thin
        * scrolling column rather than costing the pinned ones a row, but it can
        * no longer squeeze them out of sight.
        */}
@@ -503,13 +503,13 @@ export function VerticalTabs() {
           {/*
            * Yields to nothing until the normal tabs are down to the room held
            * for them, and reaching that is the one case where this section
-           * scrolls rather than takes the height it wants.
+           * scrolls rather than takes the height it needs.
            *
            * That room is held open from up here, as a ceiling on this section
            * rather than a floor under that one. A floor would hold its room
            * open at rest as well, standing between the last tab and the
            * launcher, and being a minimum it could not give way on a window too
-           * short to honour it — it would run the two sections over the very
+           * short to honor it — it would run the two sections over the very
            * controls this is all in aid of. A ceiling only ever takes room
            * away, so it can push nothing out of the strip; where the room held
            * isn't there to hold, it stands aside and the two sections halve

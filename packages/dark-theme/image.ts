@@ -47,7 +47,7 @@ let analysisContext: CanvasRenderingContext2D | null = null;
 // steady-state footprint stays at icon size instead of a fixed worst-case
 // allocation. Resizing a canvas resets its context state, so smoothing is
 // re-disabled after every growth — smoothed downscales would change the pixels
-// the classifier sees.
+// the classifier reads.
 function getAnalysisContext(
   requiredWidth: number,
   requiredHeight: number,
@@ -265,8 +265,8 @@ export function isImageElementLarge(image: HTMLImageElement): boolean {
 
 // A dark, mostly-transparent image is treated as a logo or icon that would
 // vanish against the dark background, so it gets inverted — unless it is large
-// or spans a photographic tonal range, which marks it as a photo (e.g. a dark
-// product shot on a transparent background) that inverting would ruin.
+// or spans a photographic tonal range, which marks it as a photo that inverting
+// would ruin — a dark product shot on a transparent background, for example.
 export function shouldInvertDarkImage(details: ImageDetails): boolean {
   return (
     details.isDark &&
@@ -279,7 +279,7 @@ export function shouldInvertDarkImage(details: ImageDetails): boolean {
 
 // Only the classifications that end up as a filtered SVG replacement (a dark
 // transparent icon to invert, a light non-solid image to darken) ever read the
-// dataURL, so it is built just for those instead of for every analyzed image.
+// dataURL, so it is built only for those instead of for every analyzed image.
 function shouldBuildDataURL(details: ImageDetails): boolean {
   if (details.isLarge) {
     return false;
@@ -292,7 +292,7 @@ function shouldBuildDataURL(details: ImageDetails): boolean {
   return details.isLight && !details.isTransparent && !details.solidColor;
 }
 
-// Bounded by total text length, not just entry count: an entry can carry a
+// Bounded by total text length, not by entry count: an entry can carry a
 // base64 dataURL of the full image, and a data: source url is itself the whole
 // image (it is the cache key even when analysis fails), so counting entries
 // alone would let a few hundred multi-megabyte strings pin tens of megabytes in
