@@ -9,6 +9,7 @@ import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import type { Gmail } from "./gmail";
+import { canHibernateTab } from "./lib/hibernation";
 import { main } from "./main";
 import { appMenu } from "./menu";
 import { openExternalUrl } from "./url";
@@ -400,7 +401,7 @@ export class Tabs {
     }
 
     if (isSavedWorkspaceApp(closableTab)) {
-      this.dormantizeSavedTab(closableTab);
+      this.dormantizeTab(closableTab);
     } else {
       this.recordRecentlyClosedTab(closableTab.url);
     }
@@ -414,7 +415,7 @@ export class Tabs {
     }
 
     if (isSavedWorkspaceApp(windowedTab)) {
-      this.dormantizeSavedTab(windowedTab);
+      this.dormantizeTab(windowedTab);
 
       return;
     }
@@ -424,29 +425,34 @@ export class Tabs {
     this.removeTab(windowedTab.id);
   }
 
-  private dormantizeSavedTab(savedWorkspaceApp: SavedWorkspaceApp) {
+  /**
+   * Swaps a tab's view for the entry it leaves behind, keeping its place in the
+   * strip. Only a pinned tab is written back to disk — an unpinned one lives
+   * for as long as the app runs either way.
+   */
+  private dormantizeTab(workspaceApp: WorkspaceApp) {
     this.tabs.splice(
-      this.tabs.indexOf(savedWorkspaceApp),
+      this.tabs.indexOf(workspaceApp),
       1,
       new DormantTab(
         {
-          app: savedWorkspaceApp.app,
-          url: savedWorkspaceApp.url,
-          title: savedWorkspaceApp.title,
-          pinned: savedWorkspaceApp.pinned,
-          loadOnLaunch: savedWorkspaceApp.loadOnLaunch,
-          hibernatesWhenIdle: savedWorkspaceApp.hibernatesWhenIdle,
-          opensLinksForApp: savedWorkspaceApp.opensLinksForApp,
-          windowed: savedWorkspaceApp.opensAsWindow,
+          app: workspaceApp.app,
+          url: workspaceApp.url,
+          title: workspaceApp.title,
+          pinned: workspaceApp.pinned,
+          loadOnLaunch: workspaceApp.loadOnLaunch,
+          hibernatesWhenIdle: workspaceApp.hibernatesWhenIdle,
+          opensLinksForApp: workspaceApp.opensLinksForApp,
+          windowed: workspaceApp.opensAsWindow,
         },
         {
-          zoomFactor: savedWorkspaceApp.zoomFactor,
-          restorableNavigationHistory: savedWorkspaceApp.restorableNavigationHistory,
+          zoomFactor: workspaceApp.zoomFactor,
+          restorableNavigationHistory: workspaceApp.restorableNavigationHistory,
         },
       ),
     );
 
-    if (this.activeTabId === savedWorkspaceApp.id) {
+    if (this.activeTabId === workspaceApp.id) {
       this.activeTabId = GMAIL_TAB_ID;
     }
 
@@ -454,13 +460,15 @@ export class Tabs {
 
     this.broadcastTabsChanged();
 
-    accounts.saveTabs();
+    if (workspaceApp.pinned) {
+      accounts.saveTabs();
+    }
   }
 
   /**
-   * Unloads saved tabs the user has left alone for the configured timeout,
-   * giving back the renderer process each one holds. A hibernated tab keeps its
-   * place in the strip and loads again when it is opened.
+   * Unloads tabs the user has left alone for the configured timeout, giving
+   * back the renderer process each one holds. A hibernated tab keeps its place
+   * in the strip and loads again when it is opened.
    */
   hibernateIdleTabs() {
     const now = Date.now();
@@ -476,20 +484,20 @@ export class Tabs {
     const idleTimeout = ms(config.get("workspaceApps.hibernationTimeout"));
 
     for (const tab of this.tabs.slice()) {
-      if (!isSavedWorkspaceApp(tab) || tab.id === this.activeTabId || tab.isWindowed) {
+      if (!(tab instanceof WorkspaceApp) || tab.id === this.activeTabId) {
         continue;
       }
 
-      if (!hibernatesEveryTab && !tab.hibernatesWhenIdle) {
-        continue;
+      if (canHibernateTab(tab, { hibernatesEveryTab, idleTimeout, now })) {
+        this.hibernateTab(tab);
       }
-
-      if (tab.isAudible || now - tab.lastActiveAt < idleTimeout) {
-        continue;
-      }
-
-      this.closeTab(tab.id);
     }
+  }
+
+  private hibernateTab(workspaceApp: WorkspaceApp) {
+    this.dormantizeTab(workspaceApp);
+
+    workspaceApp.close();
   }
 
   private recordRecentlyClosedTab(closedTabUrl: string) {
