@@ -189,12 +189,11 @@ function ExtensionItem({
             <LicenseKeyRequiredFieldBadge />
           </ItemTitle>
           <ItemDescription>{extension.description}</ItemDescription>
-        </ItemContent>
-        <ItemActions>
           {isOnePassword && (
             <Button
               variant="outline"
               size="sm"
+              className="mt-1 self-start"
               onClick={() => {
                 setIsSetupDialogOpen(true);
               }}
@@ -202,6 +201,8 @@ function ExtensionItem({
               Set up desktop app
             </Button>
           )}
+        </ItemContent>
+        <ItemActions>
           {extensionMutation.isPending && <Spinner />}
           <Switch
             checked={isLicenseKeyValid && installed}
