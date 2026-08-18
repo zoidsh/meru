@@ -62,11 +62,15 @@ export function getTabSection(tab: Pick<TabState, "id" | "pinned">): TabSection 
 
 /**
  * `windows` mode leaves the strip with only what lives in the main window:
- * windowed apps have a window of their own, and dormant entries would open as
- * one. In `tabs` mode windowed apps are listed alongside the tabs unless the
- * user turns that off. Everything filtered out here stays saved either way.
+ * windowed apps have a window of their own, and a pinned entry that has never
+ * been opened would open as one. An unloaded unpinned tab stays listed, because
+ * it is a tab the user opened and dropping it from the strip would read as
+ * closing it. In `tabs` mode windowed apps are listed alongside the tabs unless
+ * the user turns that off. Everything filtered out here stays saved either way.
  */
-export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dormant" | "windowed">>(
+export function getVisibleVerticalTabs<
+  VerticalTab extends Pick<TabState, "dormant" | "pinned" | "windowed">,
+>(
   tabs: VerticalTab[],
   {
     workspaceAppsMode,
@@ -74,7 +78,7 @@ export function getVisibleVerticalTabs<VerticalTab extends Pick<TabState, "dorma
   }: { workspaceAppsMode: WorkspaceAppsMode; showWindows: boolean },
 ) {
   if (workspaceAppsMode === "windows") {
-    return tabs.filter((tab) => !tab.dormant && !tab.windowed);
+    return tabs.filter((tab) => !(tab.dormant && tab.pinned) && !tab.windowed);
   }
 
   return showWindows ? tabs : tabs.filter((tab) => !tab.windowed);
