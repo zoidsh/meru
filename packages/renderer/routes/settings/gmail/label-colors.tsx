@@ -33,7 +33,7 @@ import { useConfig, useConfigMutation } from "@/lib/react-query";
 const HEX_COLOR_REGEXP = /^#[0-9a-fA-F]{6}$/;
 
 const textColorItems: { value: GmailLabelTextColor; label: string }[] = [
-  { value: "auto", label: "Auto (contrast)" },
+  { value: "auto", label: "Auto" },
   { value: "white", label: "White" },
   { value: "black", label: "Black" },
 ];
@@ -222,8 +222,8 @@ export function GmailLabelColors() {
   return (
     <Field>
       <FieldDescription>
-        Recolor Gmail labels by their exact name. The text color defaults to automatic contrast
-        against the background, or can be forced to white or black.
+        Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with
+        the background, and can be set to white or black instead.
       </FieldDescription>
       {config["gmail.labelColors"].length > 0 && (
         <ItemGroup className="grid grid-cols-2 gap-2">
@@ -258,9 +258,7 @@ export function GmailLabelColors() {
                   className="size-8 p-0"
                   variant="outline"
                   onClick={() => {
-                    const confirmed = window.confirm(
-                      `Are you sure you want to delete the color for ${labelColor.label}?`,
-                    );
+                    const confirmed = window.confirm(`Delete the color for ${labelColor.label}?`);
 
                     if (confirmed) {
                       configMutation.mutate({

@@ -103,7 +103,7 @@ function ActivateLicenseDialog({
           <DialogTitle>{variant === "activate" ? "Activate" : "Change"} License Key</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Please enter the license key you received at your email address after your purchase.
+          Enter the license key sent to your email address after your purchase.
         </DialogDescription>
         <LicenseKeyForm
           onSubmit={async ({ licenseKey }) => {
@@ -163,7 +163,7 @@ export function LicenseSettings() {
 
       formApi.reset();
 
-      toast("Device label updated successfully");
+      toast("Device label updated");
     },
   });
 
@@ -176,8 +176,8 @@ export function LicenseSettings() {
       return (
         <div className="space-y-4">
           <div className="text-sm">
-            You're using Meru Pro with professional features and for commercial use. Thank you for
-            supporting Meru!
+            You're using Meru Pro, with the professional features and a license for commercial use.
+            Thank you for supporting Meru.
           </div>
           <div>
             <FieldGroup>
@@ -185,7 +185,7 @@ export function LicenseSettings() {
                 <FieldLabel>License Key</FieldLabel>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Click to reveal license key"
+                    placeholder="Click to reveal the license key"
                     value={isLicenseKeyRevealed ? config.licenseKey : ""}
                     onFocus={() => {
                       setIsLicenseKeyRevealed(true);
@@ -209,7 +209,7 @@ export function LicenseSettings() {
                           if (config.licenseKey) {
                             navigator.clipboard.writeText(config.licenseKey);
 
-                            toast("Copied license key to clipboard");
+                            toast("License key copied to clipboard");
                           }
                         }}
                       >

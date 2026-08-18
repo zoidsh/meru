@@ -66,11 +66,11 @@ function ExportLogsField() {
     mutationFn: () => ipc.main.invoke("about.exportLogs"),
     onSuccess: ({ canceled }) => {
       if (!canceled) {
-        toast("Logs exported successfully");
+        toast("Logs exported");
       }
     },
     onError: () => {
-      toast.error("Failed to export logs");
+      toast.error("Couldn't export the logs.");
     },
   });
 
@@ -78,7 +78,7 @@ function ExportLogsField() {
     <Field>
       <FieldLabel>Logs</FieldLabel>
       <FieldDescription>
-        Export application logs to a file to help diagnose issues or share with support.
+        Export the application logs to a file, to diagnose a problem or to share with support.
       </FieldDescription>
       <div>
         <Button

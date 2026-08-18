@@ -17,8 +17,8 @@ export function UpdatesSettings() {
       <SettingsContent>
         <FieldGroup>
           <ConfigSwitchField
-            label="Check For Updates Automatically"
-            description="Automatically check for updates periodically."
+            label="Check for Updates Automatically"
+            description="Check for updates in the background."
             configKey="updates.autoCheck"
             restartRequired
           />
@@ -35,9 +35,9 @@ export function UpdatesSettings() {
             placeholder="Select channel"
             confirmation={{
               when: (value) => value === "beta",
-              title: "Switch to the beta channel?",
+              title: "Switch to the Beta Channel?",
               description:
-                "Beta releases are pre-release builds of upcoming versions. They may contain bugs or unfinished features. You can switch back to the stable channel at any time.",
+                "Beta releases are pre-release builds of upcoming versions. They might contain bugs or unfinished features. You can switch back to the stable channel at any time.",
               confirmLabel: "Switch to Beta",
             }}
           />

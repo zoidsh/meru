@@ -33,14 +33,14 @@ export function AdvancedSettings() {
             <FieldGroup>
               <ConfigSwitchField
                 label="Hardware Acceleration"
-                description="Enabling hardware acceleration can improve performance but can also cause compatibility issues on some systems."
+                description="Render with the GPU. This can improve performance, and can also cause compatibility problems on some systems."
                 configKey="app.hardwareAcceleration"
                 restartRequired
               />
               {platform.isMacOS && (
                 <ConfigSwitchField
                   label="Use Custom User Agent"
-                  description="Some Gmail or Workspace app features may not work with the default user agent. Enabling this option will use a custom user agent and may help resolve issues, but can also cause others. Disable this option if you experience instability."
+                  description="Send a custom user agent, for the Gmail and Workspace Apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
                   configKey="customUserAgent"
                   restartRequired
                 />

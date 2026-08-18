@@ -89,7 +89,7 @@ export function NotificationsSettings() {
     const slot = findFreeSlot(times);
 
     if (!slot) {
-      toast.error("No free time slot available to add a new window.");
+      toast.error("No free time slot left for another window. Remove or shorten one first.");
 
       return;
     }
@@ -103,7 +103,7 @@ export function NotificationsSettings() {
     const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
 
     if (hasOverlap(newTimes)) {
-      toast.error("Notification times overlap. Please adjust the time windows.");
+      toast.error("Notification times overlap. Adjust the windows so that none of them do.");
 
       return;
     }
@@ -173,8 +173,9 @@ export function NotificationsSettings() {
                       {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
                     </FieldLabel>
                     <FieldDescription>
-                      Configure time windows when notifications are active. Outside these windows,
-                      notifications will be silenced. Leave empty to always allow notifications.
+                      Set the time windows when notifications are active. Outside them,
+                      notifications stay silent. Leave the list empty to allow notifications at any
+                      time.
                     </FieldDescription>
                     {times.map((time) => (
                       <Item key={time.id} variant="muted">
@@ -237,16 +238,14 @@ export function NotificationsSettings() {
                   <Field>
                     <FieldLabel>Test Notification</FieldLabel>
                     <FieldDescription>
-                      Show a test notification to see how notifications will appear.
+                      Show a test notification to see how notifications appear.
                     </FieldDescription>
                     <div>
                       <Button
                         variant="outline"
                         onClick={() => {
                           if (config["doNotDisturb.enabled"]) {
-                            toast.error(
-                              "Unable show test notification while Do Not Disturb is enabled.",
-                            );
+                            toast.error("Turn off Do Not Disturb to show a test notification.");
 
                             return;
                           }
@@ -268,7 +267,7 @@ export function NotificationsSettings() {
             <FieldGroup>
               <ConfigSwitchField
                 label="Show Notification"
-                description="Show a notification when a download is completed, cancelled or failed."
+                description="Show a notification when a download is completed, canceled, or failed."
                 configKey="notifications.downloadCompleted"
               />
               {config["notifications.downloadCompleted"] && (
@@ -290,8 +289,8 @@ export function NotificationsSettings() {
             <FieldLegend>Workspace Apps</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Workspace Apps"
-                description="Allow notifications from Workspace Apps like Calendar, Meet, Chat, etc."
+                label="Show Notifications"
+                description="Show notifications from Workspace Apps such as Calendar, Meet, and Chat."
                 configKey="notifications.allowFromWorkspaceApps"
                 licenseKeyRequired
               />

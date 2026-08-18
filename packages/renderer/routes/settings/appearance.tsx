@@ -45,7 +45,7 @@ export function AppearanceSettings() {
   const renderPlatformIconSettings = () => {
     const selectAccountWithUnreadField = (
       <ConfigSwitchField
-        label="Select Account with Unread on Click"
+        label="Select First Unread Account on Click"
         description={`Automatically select the first account with unread emails when clicking the ${platform.isMacOS ? "menu bar" : "system tray"} icon.`}
         configKey="tray.selectAccountWithUnread"
         disabled={!config["tray.enabled"]}
@@ -163,7 +163,7 @@ export function AppearanceSettings() {
             <FieldLegend>Accounts</FieldLegend>
             <ConfigSwitchField
               label="Show Unread Badges"
-              description="Hide all unread badges if disabled regardless of individual account settings."
+              description="Show unread badges, following each account's own setting."
               configKey="accounts.unreadBadge"
               restartRequired
             />
@@ -175,7 +175,7 @@ export function AppearanceSettings() {
             <FieldLegend>Window</FieldLegend>
             <ConfigSwitchField
               label="Restrict Minimum Window Size"
-              description="Limit the minimum size of the application window to prevent it from being too small."
+              description="Stop the application window from being resized below a usable minimum."
               configKey="window.restrictMinimumSize"
             />
           </FieldSet>

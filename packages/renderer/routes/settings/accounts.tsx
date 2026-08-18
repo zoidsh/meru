@@ -88,7 +88,7 @@ function AccountForm({
                       <SelectValue>
                         {(value: keyof typeof accountColorsMap | null) => {
                           if (!value) {
-                            return "Optional";
+                            return "None";
                           }
 
                           const { label, className } = accountColorsMap[value];
@@ -339,7 +339,7 @@ function SortableAccountItem({
             className="size-8 p-0"
             variant="outline"
             onClick={() => {
-              const confirmed = window.confirm(`Are you sure you want to remove ${account.label}?`);
+              const confirmed = window.confirm(`Remove ${account.label}?`);
 
               if (confirmed) {
                 ipc.main.send("accounts.removeAccount", account.id);

@@ -31,21 +31,19 @@ export function DownloadsSettings() {
           <FieldLegend>General</FieldLegend>
           <ConfigSwitchField
             label="Show Save As Dialog Before Downloading"
-            description="Prompt for a location each time before a file is downloaded."
+            description="Ask where to save each file before it downloads."
             configKey="downloads.saveAs"
             restartRequired
           />
           <ConfigSwitchField
             label="Open Folder When Done"
-            description="Automatically open the folder containing the downloaded file when the download is complete."
+            description="Open the folder containing the file when a download finishes."
             configKey="downloads.openFolderWhenDone"
             restartRequired
           />
           <Field>
             <FieldLabel>Default Download Location</FieldLabel>
-            <FieldDescription>
-              This is the default location where downloaded files are saved.
-            </FieldDescription>
+            <FieldDescription>Where downloaded files are saved.</FieldDescription>
             <div className="flex gap-2">
               <Input value={config["downloads.location"]} readOnly />
               <Button
@@ -58,7 +56,7 @@ export function DownloadsSettings() {
                   }
                 }}
               >
-                Change
+                Change…
               </Button>
             </div>
           </Field>

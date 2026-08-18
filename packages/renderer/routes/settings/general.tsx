@@ -50,7 +50,7 @@ function LaunchAtLoginField() {
       <FieldContent>
         <FieldLabel htmlFor={fieldId}>Launch at Login</FieldLabel>
         <FieldDescription>
-          Enable this option to automatically start the application when you log into your computer.
+          Start the application automatically when you log in to your computer.
         </FieldDescription>
       </FieldContent>
       <Switch
@@ -99,7 +99,7 @@ function DefaultMailClientField() {
         </FieldLabel>
         <FieldDescription>
           {isDefaultMailtoClient
-            ? "Meru is set as default mail client."
+            ? "Meru is set as the default mail client."
             : "Set Meru as the default mail client to handle email links and related protocols."}
         </FieldDescription>
       </FieldContent>
@@ -135,7 +135,7 @@ export function GeneralSettings() {
             <LaunchAtLoginField />
             <ConfigSwitchField
               label="Launch Minimized"
-              description="Enable this option to start the application in a minimized state."
+              description="Start the application minimized."
               configKey="launchMinimized"
             />
           </FieldSet>
