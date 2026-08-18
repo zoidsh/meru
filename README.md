@@ -15,13 +15,13 @@
 
 - [Tim Cheung](https://github.com/timche)
 
-### Former maintainers
+### Former
 
 - [Mark Skelton](https://github.com/mskelton)
 
 ## Contributors
 
-These people have contributed to Meru ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -48,8 +48,8 @@ These people have contributed to Meru ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome.
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ## Disclaimer
 
-Meru is a third-party app and isn't affiliated with Google.
+Meru is a third-party app and not affiliated with Google.
