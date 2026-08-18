@@ -39,6 +39,12 @@ html.meru-hide-out-of-office-banner #\:7 {
   display: none !important;
 }
 
+/* Gmail Promotional Banner */
+html.meru-hide-promo-banner
+  [data-elevated-container-view-type="timely_bump"]:has([data-rp-onramp-container]) {
+  display: none !important;
+}
+
 html.meru-hide-gmail-upgrade div[data-pep-id="global-pep-gmail"],
 html.meru-hide-gmail-upgrade
   span:has(> div > div > div > div > div[data-action-behavior*="one.google.com/dynamic-plans"]) {

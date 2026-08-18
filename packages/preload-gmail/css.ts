@@ -17,6 +17,10 @@ export function initCss() {
     document.documentElement.classList.add("meru-hide-out-of-office-banner");
   }
 
+  if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.hidePromoBanner)) {
+    document.documentElement.classList.add("meru-hide-promo-banner");
+  }
+
   if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.hideUpgradeButton)) {
     document.documentElement.classList.add("meru-hide-gmail-upgrade");
   }

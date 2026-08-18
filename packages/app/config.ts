@@ -79,6 +79,7 @@ export const config = new Store<Config>({
     "gmail.hideGmailLogo": true,
     "gmail.hideInboxFooter": true,
     "gmail.hideOutOfOfficeBanner": false,
+    "gmail.hidePromoBanner": true,
     "gmail.hideUpgradeButton": true,
     "gmail.reverseConversation": false,
     "gmail.savedSearches": [],
