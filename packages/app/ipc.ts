@@ -514,6 +514,22 @@ class Ipc {
                     },
                   ]
                 : []),
+              // Only saved tabs hibernate, and only the tabs picked here do
+              // while the setting is on Selected Tabs.
+              ...(config.get("workspaceApps.hibernation") === "selected" && tab.pinned
+                ? [
+                    {
+                      label: "Hibernate When Idle",
+                      type: "checkbox" as const,
+                      checked: tab.hibernatesWhenIdle,
+                      click: () => {
+                        tab.hibernatesWhenIdle = !tab.hibernatesWhenIdle;
+
+                        accounts.saveTabs();
+                      },
+                    },
+                  ]
+                : []),
             ]
           : []),
         ...(appLinksApp && !workspaceApps[appLinksApp].singleInstance

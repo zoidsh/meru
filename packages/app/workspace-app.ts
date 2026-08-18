@@ -90,6 +90,7 @@ type WorkspaceAppOptions = {
   savedAsWindow?: boolean;
   pinned?: boolean;
   loadOnLaunch?: boolean;
+  hibernatesWhenIdle?: boolean;
   opensLinksForApp?: SupportedWorkspaceApp | null;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
@@ -462,6 +463,15 @@ export class WorkspaceApp {
 
   loadOnLaunch = false;
 
+  hibernatesWhenIdle = false;
+
+  /**
+   * When this tab was last the account's active one. The sweep keeps it on the
+   * clock for as long as it stays active, so the idle time it measures starts
+   * the moment another tab takes over.
+   */
+  lastActiveAt = Date.now();
+
   opensLinksForApp: SupportedWorkspaceApp | null = null;
 
   /**
@@ -489,6 +499,7 @@ export class WorkspaceApp {
     savedAsWindow,
     pinned,
     loadOnLaunch,
+    hibernatesWhenIdle,
     opensLinksForApp,
     app,
     zoomFactor,
@@ -497,6 +508,7 @@ export class WorkspaceApp {
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
+    this.hibernatesWhenIdle = Boolean(hibernatesWhenIdle);
     this.opensLinksForApp = opensLinksForApp ?? null;
     this.opensAsWindow =
       savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");
@@ -1052,6 +1064,10 @@ export class WorkspaceApp {
 
   get isLoading() {
     return this.view.webContents.isLoading();
+  }
+
+  get isAudible() {
+    return this.view.webContents.isCurrentlyAudible();
   }
 
   get url() {

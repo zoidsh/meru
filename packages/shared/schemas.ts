@@ -35,6 +35,7 @@ export const savedTabSchema = z.object({
   url: z.string(),
   title: z.string(),
   loadOnLaunch: z.boolean(),
+  hibernatesWhenIdle: z.boolean(),
   windowed: z.boolean(),
   opensLinksForApp: workspaceAppSchema.nullable(),
 });
