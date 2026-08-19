@@ -14,6 +14,7 @@ import type { ChromeNamespace } from "./lib/chrome";
  * Both are filled from one facade, so a namespace promoted to a real
  * implementation later has one set of listeners, whichever global reached it.
  */
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const extensionGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
 
 const facade = createChromeFacade();

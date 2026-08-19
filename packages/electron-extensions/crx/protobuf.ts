@@ -19,7 +19,11 @@ function readVarint(message: Uint8Array, offset: number) {
   let cursor = offset;
 
   while (cursor < message.byteLength) {
-    const byte = message[cursor] as number;
+    const byte = message[cursor];
+
+    if (byte === undefined) {
+      break;
+    }
 
     cursor += 1;
 

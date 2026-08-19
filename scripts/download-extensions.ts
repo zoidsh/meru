@@ -78,6 +78,9 @@ async function downloadExtension(extension: CuratedExtension) {
 
   const manifestPath = path.join(stagingDir, MANIFEST_FILE_NAME);
 
+  // The manifest of an extension this script just unpacked; a wrong shape here
+  // fails the download rather than reaching the app.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     version: string;
     key: string;

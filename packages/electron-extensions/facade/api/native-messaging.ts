@@ -6,6 +6,7 @@ import { NativeMessageDecoder } from "../../native-messaging/framing";
 import { postBridge } from "../lib/bridge";
 import type { ChromeNamespace } from "../lib/chrome";
 import { createEvent } from "../lib/event";
+import { isExtensionCallback } from "../lib/method";
 
 const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
@@ -39,8 +40,23 @@ function withLastError(runtime: ChromeNamespace, error: string | undefined, run:
   }
 }
 
+function isChromeNamespace(value: unknown): value is ChromeNamespace {
+  return typeof value === "object" && value !== null;
+}
+
+/** The bridge writes these, so an unrecognised one means a version skew. */
+function isNativeMessagingFrame(value: unknown): value is NativeMessagingFrame {
+  return isChromeNamespace(value) && (value.type === "message" || value.type === "disconnect");
+}
+
 function getLastErrorMessage(runtime: ChromeNamespace) {
-  return (runtime.lastError as { message?: string } | undefined)?.message;
+  const { lastError } = runtime;
+
+  if (!isChromeNamespace(lastError) || typeof lastError.message !== "string") {
+    return undefined;
+  }
+
+  return lastError.message;
 }
 
 function createPort(runtime: ChromeNamespace, hostName: string): NativeMessagingPort {
@@ -130,7 +146,7 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
         return;
       }
 
-      for (const frame of decoder.push(value) as NativeMessagingFrame[]) {
+      for (const frame of decoder.push(value).filter(isNativeMessagingFrame)) {
         if (frame.type === "message") {
           onMessage.emit(frame.message, port);
         } else {
@@ -174,17 +190,17 @@ function createSendNativeMessage(runtime: ChromeNamespace) {
       port.postMessage(message);
     });
 
-    if (typeof callback !== "function") {
+    if (!isExtensionCallback(callback)) {
       return reply;
     }
 
     reply.then(
       (response) => {
-        (callback as (response: unknown) => void)(response);
+        callback(response);
       },
       (error: unknown) => {
         withLastError(runtime, error instanceof Error ? error.message : String(error), () => {
-          (callback as (response: unknown) => void)(undefined);
+          callback(undefined);
         });
       },
     );
@@ -202,9 +218,9 @@ function createSendNativeMessage(runtime: ChromeNamespace) {
  * administrator". The replacements reach the package's own bridge instead.
  */
 export function installNativeMessaging(extensionApi: ChromeNamespace) {
-  const runtime = extensionApi.runtime as ChromeNamespace | undefined;
+  const { runtime } = extensionApi;
 
-  if (!runtime) {
+  if (!isChromeNamespace(runtime)) {
     return;
   }
 

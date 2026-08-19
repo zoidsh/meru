@@ -10,11 +10,11 @@ import { EXTENSION_BRIDGE_SCHEME, type ExtensionBridgeRequest } from "./protocol
  */
 export const MAX_BRIDGE_REQUEST_BYTES = 64 * 1024 * 1024;
 
-export type ExtensionBridgeHandler = (request: {
+export type ExtensionBridgeHandler<Body = Record<string, unknown>> = (request: {
   session: Session;
   /** The extension whose facade copy carried the request's token. */
   extensionId: string;
-  body: Record<string, unknown>;
+  body: Body;
   /** For the handler's `Response`, so every answer carries the CORS headers. */
   headers: Record<string, string>;
 }) => Promise<Response> | Response;
@@ -43,8 +43,13 @@ export class ExtensionBridge {
     this.logger = logger;
   }
 
-  handle(pathname: string, handler: ExtensionBridgeHandler) {
-    this.routes.set(pathname, handler);
+  /**
+   * `Body` is the shape the route expects of the JSON it is sent. Nothing has
+   * checked it — the bridge only vouches for who is calling.
+   */
+  handle<Body = Record<string, unknown>>(pathname: string, handler: ExtensionBridgeHandler<Body>) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    this.routes.set(pathname, handler as ExtensionBridgeHandler);
   }
 
   setupSession(session: Session, sessionOptions: ExtensionBridgeSession) {
@@ -78,6 +83,7 @@ export class ExtensionBridge {
         return new Response(null, { status: 413, headers });
       }
 
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const body = JSON.parse(bodySource) as ExtensionBridgeRequest & Record<string, unknown>;
 
       // Everything else in the session — Gmail, workspace apps, any page a user

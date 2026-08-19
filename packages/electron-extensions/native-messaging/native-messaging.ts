@@ -86,34 +86,33 @@ export class NativeMessaging {
   }
 
   registerRoutes(bridge: ExtensionBridge) {
-    bridge.handle(NATIVE_MESSAGING_PATHS.connect, ({ session, extensionId, body, headers }) =>
-      this.handleConnect(
-        session,
-        extensionId,
-        body as unknown as NativeMessagingConnectRequest,
-        headers,
-      ),
+    bridge.handle<NativeMessagingConnectRequest>(
+      NATIVE_MESSAGING_PATHS.connect,
+      ({ session, extensionId, body, headers }) =>
+        this.handleConnect(session, extensionId, body, headers),
     );
 
-    bridge.handle(NATIVE_MESSAGING_PATHS.post, ({ session, extensionId, body, headers }) => {
-      this.handlePost(session, extensionId, body as unknown as NativeMessagingPostRequest);
+    bridge.handle<NativeMessagingPostRequest>(
+      NATIVE_MESSAGING_PATHS.post,
+      ({ session, extensionId, body, headers }) => {
+        this.handlePost(session, extensionId, body);
 
-      return new Response(null, { status: 204, headers });
-    });
+        return new Response(null, { status: 204, headers });
+      },
+    );
 
-    bridge.handle(NATIVE_MESSAGING_PATHS.disconnect, ({ session, extensionId, body, headers }) => {
-      const port = this.getPort(
-        session,
-        extensionId,
-        (body as unknown as NativeMessagingDisconnectRequest).portId,
-      );
+    bridge.handle<NativeMessagingDisconnectRequest>(
+      NATIVE_MESSAGING_PATHS.disconnect,
+      ({ session, extensionId, body, headers }) => {
+        const port = this.getPort(session, extensionId, body.portId);
 
-      if (port) {
-        this.closePort(port);
-      }
+        if (port) {
+          this.closePort(port);
+        }
 
-      return new Response(null, { status: 204, headers });
-    });
+        return new Response(null, { status: 204, headers });
+      },
+    );
   }
 
   teardownSession(session: Session) {

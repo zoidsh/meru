@@ -88,9 +88,9 @@ export function allowConnectSource(contentSecurityPolicy: string, source: string
 
   const connectIndex = findDirective(directives, "connect-src");
 
-  if (connectIndex !== -1) {
-    const connectDirective = directives[connectIndex] as string;
+  const connectDirective = connectIndex === -1 ? undefined : directives[connectIndex];
 
+  if (connectDirective !== undefined) {
     if (connectDirective.split(/\s+/).includes(source)) {
       return contentSecurityPolicy;
     }
@@ -102,12 +102,14 @@ export function allowConnectSource(contentSecurityPolicy: string, source: string
 
   const defaultIndex = findDirective(directives, "default-src");
 
+  const defaultDirective = defaultIndex === -1 ? undefined : directives[defaultIndex];
+
   // Without either directive nothing restricts connections in the first place
-  if (defaultIndex === -1) {
+  if (defaultDirective === undefined) {
     return contentSecurityPolicy;
   }
 
-  const inheritedSources = (directives[defaultIndex] as string)
+  const inheritedSources = defaultDirective
     .split(/\s+/)
     .slice(1)
     // `'none'` alongside another source is ignored rather than obeyed

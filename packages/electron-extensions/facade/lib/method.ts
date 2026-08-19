@@ -1,4 +1,14 @@
 /**
+ * The trailing callback of a callback-style call. Chrome passes the result to
+ * it and nothing reads what it answers.
+ */
+export type ExtensionCallback = (callbackResult: unknown) => void;
+
+export function isExtensionCallback(value: unknown): value is ExtensionCallback {
+  return typeof value === "function";
+}
+
+/**
  * A method that does nothing and answers with `createResult`, the way Chrome
  * would: extensions written against MV3 await a promise, while
  * `webextension-polyfill` and older code pass a callback as the last argument
@@ -11,9 +21,9 @@ export function createNoopMethod(createResult: (callArguments: unknown[]) => unk
 
     const callback = callArguments.at(-1);
 
-    if (typeof callback === "function") {
+    if (isExtensionCallback(callback)) {
       queueMicrotask(() => {
-        (callback as (callbackResult: unknown) => void)(result);
+        callback(result);
       });
 
       return undefined;
@@ -34,13 +44,13 @@ export function createBridgedMethod(produceResult: (callArguments: unknown[]) =>
   return (...callArguments: unknown[]) => {
     const callback = callArguments.at(-1);
 
-    if (typeof callback === "function") {
+    if (isExtensionCallback(callback)) {
       produceResult(callArguments.slice(0, -1)).then(
         (result) => {
-          (callback as (callbackResult: unknown) => void)(result);
+          callback(result);
         },
         () => {
-          (callback as (callbackResult: unknown) => void)(undefined);
+          callback(undefined);
         },
       );
 

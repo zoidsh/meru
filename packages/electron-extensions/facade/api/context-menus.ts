@@ -1,6 +1,6 @@
 import type { ChromeNamespace } from "../lib/chrome";
 import { createNoopEvent } from "../lib/event";
-import { createNoopMethod } from "../lib/method";
+import { createNoopMethod, isExtensionCallback } from "../lib/method";
 
 let createdMenuItemCount = 0;
 
@@ -18,10 +18,6 @@ function takeMenuItemId(createProperties: unknown) {
   return createdMenuItemCount;
 }
 
-function isCreatedCallback(value: unknown): value is () => void {
-  return typeof value === "function";
-}
-
 /**
  * The one method here that answers synchronously with the id it assigned, using
  * its optional callback only to signal that the item was created.
@@ -31,9 +27,9 @@ function createMenuItem(...callArguments: unknown[]) {
 
   const callback = callArguments.at(-1);
 
-  if (isCreatedCallback(callback)) {
+  if (isExtensionCallback(callback)) {
     queueMicrotask(() => {
-      callback();
+      callback(undefined);
     });
   }
 

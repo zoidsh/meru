@@ -41,6 +41,8 @@ export type WebNavigationOptions = {
  * outside Electron, which is where this module's tests run.
  */
 function getElectronWebContentsById(tabId: number) {
+  // `require` answers `any`, and this module is the one place that calls it.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const { webContents } = require("electron") as typeof electron;
 
   return webContents.fromId(tabId);
@@ -66,14 +68,16 @@ export class WebNavigation {
   }
 
   registerRoutes(bridge: ExtensionBridge) {
-    bridge.handle(WEB_NAVIGATION_PATHS.getFrame, ({ session, body, headers }) =>
-      Response.json(this.getFrame(session, body.details as WebNavigationFrameQuery), { headers }),
+    bridge.handle<{ details: WebNavigationFrameQuery }>(
+      WEB_NAVIGATION_PATHS.getFrame,
+      ({ session, body, headers }) =>
+        Response.json(this.getFrame(session, body.details), { headers }),
     );
 
-    bridge.handle(WEB_NAVIGATION_PATHS.getAllFrames, ({ session, body, headers }) =>
-      Response.json(this.getAllFrames(session, body.details as WebNavigationFrameQuery), {
-        headers,
-      }),
+    bridge.handle<{ details: WebNavigationFrameQuery }>(
+      WEB_NAVIGATION_PATHS.getAllFrames,
+      ({ session, body, headers }) =>
+        Response.json(this.getAllFrames(session, body.details), { headers }),
     );
   }
 

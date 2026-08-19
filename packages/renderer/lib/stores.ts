@@ -8,6 +8,7 @@ import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
 
 // The main process serializes these into the window's URL, so the shape is its
 // own and only needs saying again here.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const initialAccounts = (
   accountsSearchParam ? JSON.parse(accountsSearchParam) : []
 ) as AccountInstances;

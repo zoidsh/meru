@@ -54,6 +54,8 @@ function readCrxPackage(crx: Uint8Array, extensionId: string): ExtensionPackage 
     throw new Error(`CRX for ${extensionId} carries no ${MANIFEST_FILE_NAME}`);
   }
 
+  // Straight out of the CRX, so the fields this reads are checked below.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const manifest = JSON.parse(new TextDecoder().decode(manifestSource)) as ExtensionManifest;
 
   if (typeof manifest.version !== "string") {

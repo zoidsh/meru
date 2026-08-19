@@ -117,6 +117,8 @@ export async function deriveExtension({
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
 
+  // Nothing has checked the manifest; what this reads off it is checked below.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const sourceManifest = JSON.parse(manifestSource) as ExtensionManifest;
 
   const extensionId = getExtensionIdFromManifestKey(sourceManifest.key);
@@ -197,6 +199,8 @@ async function readStampSourceDir(stampPath: string) {
   }
 
   try {
+    // The stamp is this package's own, and a malformed one falls to the catch.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return (JSON.parse(stamp) as { sourceDir?: string }).sourceDir;
   } catch {
     return undefined;

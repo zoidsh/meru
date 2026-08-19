@@ -6,6 +6,8 @@ import { EXTENSION_BRIDGE_ORIGIN, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../../br
  * extension is calling, since the request itself carries no sender.
  */
 export function postBridge(pathName: string, body: Record<string, unknown>) {
+  // The derived copy of the facade writes the token onto the global itself.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const token = (globalThis as unknown as Record<string, string | undefined>)[
     EXTENSION_BRIDGE_TOKEN_GLOBAL
   ];
