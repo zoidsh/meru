@@ -160,7 +160,7 @@ function VerticalTab({
   );
 
   const tooltip = tab.opensLinksForApp
-    ? `${tab.title} — Opens ${workspaceApps[tab.opensLinksForApp].label} Links`
+    ? `${tab.title} — opens ${workspaceApps[tab.opensLinksForApp].label} links`
     : tab.title;
 
   return (
@@ -238,7 +238,7 @@ function VerticalTab({
               ? "bg-transparent text-muted-foreground group-hover:bg-secondary group-hover:text-secondary-foreground"
               : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
-          title={tab.bookmarked ? "Remove Bookmark" : "Bookmark"}
+          title={tab.bookmarked ? "Remove bookmark" : "Bookmark"}
           onClick={() => {
             ipc.main.send("workspaceApp.toggleBookmark", tab.id);
           }}
@@ -360,7 +360,7 @@ function VerticalTabsWidthToggle({
         "mt-auto text-muted-foreground transition-[color,background-color]",
         isWide && "self-end",
       )}
-      title={isWide ? "Narrow Tabs" : "Wide Tabs"}
+      title={isWide ? "Narrow tabs" : "Wide tabs"}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
       }}

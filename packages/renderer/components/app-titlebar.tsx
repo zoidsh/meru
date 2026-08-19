@@ -73,7 +73,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Recent Download History"
+      title="Recent download history"
     >
       <DownloadIcon />
     </TitlebarIconButton>
@@ -127,7 +127,7 @@ function Trial() {
               : "less than a day"}
         </span>
         <span className="absolute inset-0 items-center justify-center opacity-0 fade-in group-hover:inline-flex group-hover:opacity-100">
-          Upgrade to Pro
+          Upgrade to Meru Pro
         </span>
       </a>
     </Badge>
@@ -313,7 +313,7 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.openVersionHistory");
               }}
             >
-              What's New?
+              What's New
             </Button>
           </div>
         </div>
@@ -367,7 +367,7 @@ export function AppTitlebar() {
                   variant="ghost"
                   size="icon-sm"
                   className="draggable-none"
-                  title="Out of Office"
+                  title="Out of office"
                   onClick={() => {
                     ipc.main.send("gmail.navigateTo", "settings");
                   }}

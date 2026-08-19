@@ -22,7 +22,7 @@ function DownloadHistoryClearAllButton() {
       }}
       disabled={config["downloads.history"].length === 0}
     >
-      Clear all
+      Clear All
     </Button>
   );
 }

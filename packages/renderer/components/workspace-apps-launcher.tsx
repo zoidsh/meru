@@ -116,7 +116,7 @@ export function VerticalTabsWorkspaceAppsLauncher({
               "text-muted-foreground transition-colors",
               isWide && "w-full justify-start",
             )}
-            title="Open App"
+            title="Open app"
           >
             <LayoutGridIcon />
             {isWide && "Open App"}

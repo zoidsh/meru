@@ -422,10 +422,10 @@ export function UnifiedInbox() {
               <EmptyMedia variant="icon">
                 <InboxIcon />
               </EmptyMedia>
-              <EmptyTitle>No Unread Messages</EmptyTitle>
+              <EmptyTitle>No unread messages</EmptyTitle>
               <EmptyDescription>
-                Your unified inbox will show all your unread messages in one place. Once you read a
-                message, it will disappear from the unified inbox.
+                The unified inbox shows every unread message from your accounts in one place. A
+                message leaves the list after you read it.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

@@ -660,7 +660,7 @@ export class AppMenu {
         role: "help",
         submenu: [
           {
-            label: "Version History",
+            label: "What's New",
             click: () => {
               main.navigate("/settings/version-history");
             },
