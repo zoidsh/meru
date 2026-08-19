@@ -353,6 +353,9 @@ export function ExtensionsSettings() {
           <PasskeysAlert />
           <ItemGroup>
             {curatedExtensions
+              // `passwordManager` is the only category so far, so the comparison
+              // is constant until a second one arrives.
+              // oxlint-disable-next-line typescript/no-unnecessary-condition
               .filter(({ category }) => category === "passwordManager")
               .map((extension) => (
                 <ExtensionItem

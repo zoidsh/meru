@@ -465,6 +465,9 @@ export class Gmail {
 
     const loaded = await loadUrl(this.view.webContents, this.url);
 
+    // `destroy` clears `_view`, which the load above gives it time to do — the
+    // narrowing the check before it left behind no longer holds.
+    // oxlint-disable-next-line typescript/no-unnecessary-condition
     if (loaded || !this._view || this._view.webContents.isDestroyed()) {
       return;
     }

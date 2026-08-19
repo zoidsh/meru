@@ -109,7 +109,7 @@ function ActivateLicenseDialog({
           onSubmit={async ({ licenseKey }) => {
             const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
 
-            if (success && props.onOpenChange) {
+            if (success) {
               props.onOpenChange(false);
             }
           }}

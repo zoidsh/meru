@@ -212,7 +212,7 @@ export function AppTitlebar() {
     );
   }
 
-  if (!config || !accounts) {
+  if (!config) {
     return;
   }
 

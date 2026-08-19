@@ -154,7 +154,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     const styleElement = root.ownerDocument.createElement("style");
     styleElement.setAttribute(INJECTED_STYLE_ATTRIBUTE, "");
     styleElement.textContent = styleText;
-    root.ownerDocument.head?.appendChild(styleElement);
+    root.ownerDocument.head.appendChild(styleElement);
     injectedStyleElements.push(styleElement);
   };
 
@@ -496,7 +496,7 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     if (!pseudoStyleElement) {
       pseudoStyleElement = root.ownerDocument.createElement("style");
       pseudoStyleElement.setAttribute(INJECTED_STYLE_ATTRIBUTE, "");
-      root.ownerDocument.head?.appendChild(pseudoStyleElement);
+      root.ownerDocument.head.appendChild(pseudoStyleElement);
       injectedStyleElements.push(pseudoStyleElement);
     }
 

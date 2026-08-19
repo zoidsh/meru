@@ -53,7 +53,7 @@ function isGradientLayer(layer: string): boolean {
   for (const opener of gradientFunctionOpeners) {
     let searchFrom = 0;
 
-    while (true) {
+    for (;;) {
       const openerIndex = layerLowercase.indexOf(opener, searchFrom);
 
       if (openerIndex === -1) {

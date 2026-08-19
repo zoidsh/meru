@@ -220,7 +220,7 @@ export function substituteVarFallbacks(value: string): string {
   let substitutedValue = value;
   let searchFrom = 0;
 
-  while (true) {
+  for (;;) {
     const varStart = substitutedValue.indexOf("var(", searchFrom);
 
     if (varStart === -1) {
