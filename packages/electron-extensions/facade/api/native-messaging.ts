@@ -179,8 +179,8 @@ function createSendNativeMessage(runtime: ChromeNamespace) {
       (response) => {
         (callback as (response: unknown) => void)(response);
       },
-      (error: Error) => {
-        withLastError(runtime, error.message, () => {
+      (error: unknown) => {
+        withLastError(runtime, error instanceof Error ? error.message : String(error), () => {
           (callback as (response: unknown) => void)(undefined);
         });
       },

@@ -81,7 +81,7 @@ export class NativeMessageDecoder {
     try {
       return JSON.parse(textDecoder.decode(body)) as unknown;
     } catch (error) {
-      throw new Error(`Native message is not valid JSON: ${String(error)}`);
+      throw new Error(`Native message is not valid JSON: ${String(error)}`, { cause: error });
     }
   }
 }

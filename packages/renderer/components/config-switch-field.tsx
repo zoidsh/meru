@@ -43,7 +43,7 @@ export function ConfigSwitchField({
   const checked = config[configKey];
 
   if (typeof checked !== "boolean") {
-    throw new Error(`ConfigSwitchField: Config key "${configKey}" is not a boolean`);
+    throw new TypeError(`ConfigSwitchField: Config key "${configKey}" is not a boolean`);
   }
 
   return (

@@ -123,7 +123,7 @@ export function parseHostManifest(source: string, hostName: string): NativeMessa
   }
 
   if (!Array.isArray(manifest.allowed_origins)) {
-    throw new Error("Host manifest has no allowed_origins");
+    throw new TypeError("Host manifest has no allowed_origins");
   }
 
   return {

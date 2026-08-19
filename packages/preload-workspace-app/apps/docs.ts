@@ -23,7 +23,7 @@ function markDocsOfflineExtensionAsInstalled() {
 export function initDocsPreload() {
   webFrame
     .executeJavaScript(`(${markDocsOfflineExtensionAsInstalled.toString()})()`)
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error("Failed to mark the Docs Offline extension as installed:", error);
     });
 }

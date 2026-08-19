@@ -75,7 +75,7 @@ export function ConfigSelectField({
   const value = config[configKey];
 
   if (typeof value !== "string") {
-    throw new Error(`ConfigSelectField: Config key "${configKey}" is not a string`);
+    throw new TypeError(`ConfigSelectField: Config key "${configKey}" is not a string`);
   }
 
   const isDisabled = disabled || (licenseKeyRequired && !isLicenseKeyValid);

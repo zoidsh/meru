@@ -29,7 +29,7 @@ export function initServiceWorkerNotifications() {
     },
   );
 
-  webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`).catch((error) => {
+  webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`).catch((error: unknown) => {
     console.error("Failed to patch service worker notifications:", error);
   });
 }

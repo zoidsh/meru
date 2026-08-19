@@ -993,7 +993,7 @@ export class Gmail {
   }
 
   createComposeWindow(url: string) {
-    new WorkspaceApp({
+    return new WorkspaceApp({
       accountId: this.accountId,
       url: `${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
       window: { width: 800, height: 600 },

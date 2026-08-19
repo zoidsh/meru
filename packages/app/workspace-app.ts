@@ -267,6 +267,8 @@ export class WorkspaceApp {
     }
 
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
+      // The instance registers itself, so opening the window is all there is to do.
+      // oxlint-disable-next-line no-new
       new WorkspaceApp({ accountId, url, asWindow: true });
 
       return { action: "deny" };

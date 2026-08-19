@@ -57,7 +57,7 @@ function readCrxPackage(crx: Uint8Array, extensionId: string): ExtensionPackage 
   const manifest = JSON.parse(new TextDecoder().decode(manifestSource)) as ExtensionManifest;
 
   if (typeof manifest.version !== "string") {
-    throw new Error(`CRX for ${extensionId} carries a manifest without a version`);
+    throw new TypeError(`CRX for ${extensionId} carries a manifest without a version`);
   }
 
   // An unpacked extension without a `key` loads under an id derived from its
