@@ -321,7 +321,7 @@ function SortableAccountItem({
           <div
             className={cn(
               "size-2 rounded-full",
-              account.color ? `${accountColorsMap[account.color].className}` : "border",
+              account.color ? accountColorsMap[account.color].className : "border",
             )}
           />
           {account.label}

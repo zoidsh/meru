@@ -123,10 +123,10 @@ export class DormantTab {
     this.url = dormantTab.url;
     this.title = dormantTab.title;
     this.pinned = dormantTab.pinned;
-    this.loadOnLaunch = Boolean(dormantTab.loadOnLaunch);
-    this.hibernatesWhenIdle = Boolean(dormantTab.hibernatesWhenIdle);
+    this.loadOnLaunch = dormantTab.loadOnLaunch;
+    this.hibernatesWhenIdle = dormantTab.hibernatesWhenIdle;
     this.opensLinksForApp = dormantTab.opensLinksForApp ?? null;
-    this.windowed = Boolean(dormantTab.windowed);
+    this.windowed = dormantTab.windowed;
     this.zoomFactor = unloadedViewState?.zoomFactor;
     this.restorableNavigationHistory = unloadedViewState?.restorableNavigationHistory;
   }

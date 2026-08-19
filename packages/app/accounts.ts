@@ -369,7 +369,7 @@ class Accounts {
       .get("accounts")
       .filter((accountConfig) => accountConfig.id !== selectedAccountId);
 
-    if (updatedAccounts.every((accountConfig) => accountConfig.selected === false)) {
+    if (updatedAccounts.every((accountConfig) => !accountConfig.selected)) {
       if (!updatedAccounts[0]) {
         throw new Error("Could not find first account");
       }

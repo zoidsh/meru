@@ -83,11 +83,11 @@ async function init() {
     return;
   }
 
-  if (config.get("app.hardwareAcceleration") === false) {
+  if (!config.get("app.hardwareAcceleration")) {
     app.disableHardwareAcceleration();
   }
 
-  if (config.get("resetApp") === true) {
+  if (config.get("resetApp")) {
     await resetApp();
 
     return;
