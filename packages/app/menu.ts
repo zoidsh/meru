@@ -746,7 +746,6 @@ export class AppMenu {
                     type: "warning",
                     buttons: ["Cancel", "Reset"],
                     defaultId: 1,
-                    title: "Reset App",
                     message: "Are you sure you want to reset the app?",
                     detail:
                       "This will clear all your accounts, settings, and data. This action cannot be undone.",
