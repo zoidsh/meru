@@ -20,9 +20,10 @@ const GOOGLE_TRACKER_HOSTS = [
   "getgoogletagmanager.com",
 ];
 
-// Google telemetry lives on first-party hosts the Workspace apps need, so it can only
-// be matched by these path/query markers rather than by hostname. gen_204/csi beacons
-// fire across every Workspace app (Docs, Calendar, Drive, Meet, …), not just Gmail.
+// Google telemetry lives on first-party hosts the Workspace Apps need, so it can only
+// be matched by these path and query markers rather than by hostname. The gen_204 and
+// csi beacons fire across every Workspace App, such as Docs, Calendar, Drive, and
+// Meet, not only Gmail.
 const GOOGLE_TELEMETRY_PATHS = [
   "generate_204",
   "gen_204",
@@ -519,7 +520,7 @@ function escapeRegExp(value: string) {
 
 function createHostBoundaryPattern(hosts: string[]) {
   // Match a blocked host only at a hostname label boundary in the URL authority,
-  // so paths and lookalike hosts (e.g. evildoubleclick.net) never match.
+  // so paths and lookalike hosts such as evildoubleclick.net never match.
   return new RegExp(`://(?:[a-z0-9-]+\\.)*(?:${hosts.map(escapeRegExp).join("|")})(?=[:/?#]|$)`);
 }
 

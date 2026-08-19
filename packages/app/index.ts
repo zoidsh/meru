@@ -212,7 +212,7 @@ async function init() {
       main.isQuittingApp = true;
     }
 
-    // Taken down before the windows they hang on, so quitting never reaches
+    // Taken down before the windows they depend on, so quitting never reaches
     // into a view the window destroyed underneath it
     bookmarks.popup.close();
 

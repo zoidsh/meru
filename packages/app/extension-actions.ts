@@ -32,7 +32,7 @@ function createMenuIcon(iconDataUrl: string) {
  * and the popup picking one from that list opens.
  *
  * Extensions load into every account, so every titlebar shows the same list —
- * the session a window belongs to only decides which of an extension's
+ * the session a window belongs to only determines which of an extension's
  * per-account instances the popup runs against.
  */
 class ExtensionActions {

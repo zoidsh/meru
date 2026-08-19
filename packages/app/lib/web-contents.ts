@@ -74,7 +74,7 @@ export function broadcastFoundInPageResults(
  * "current-render-view-deleted" listener on its opener when the view was
  * created via a window open handler. Removing the "destroyed" listener leaves
  * the opener-side listener dangling, which then crashes the app by calling into
- * this destroyed webContents (e.g. on quit).
+ * this destroyed webContents, on quit for example.
  */
 export function removeWebContentsListeners(webContents: WebContents) {
   for (const registeredEvent of webContents.eventNames()) {
