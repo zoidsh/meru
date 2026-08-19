@@ -337,7 +337,7 @@ export class AppMenu {
           },
           {
             role: "pasteAndMatchStyle",
-            accelerator: "CommandOrControl+Option+Shift+V",
+            accelerator: "CommandOrControl+Alt+Shift+V",
             visible: false,
             acceleratorWorksWhenHidden: platform.isMacOS,
           },
