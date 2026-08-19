@@ -175,7 +175,7 @@ export class Account {
 
   private registerSessionDisplayMediaRequestHandler() {
     this.session.setDisplayMediaRequestHandler(
-      async (_request, callback) => {
+      (_request, callback) => {
         const googleMeetParentWindow = this.findGoogleMeetParentWindow();
 
         if (!googleMeetParentWindow) {

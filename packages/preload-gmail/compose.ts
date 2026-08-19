@@ -19,7 +19,7 @@ const composeButtonElementSelector = createNotMatchingAttributeSelector(
   composeButtonProcessedAttribute,
 );
 
-export async function openComposeInNewWindow() {
+export function openComposeInNewWindow() {
   if (!isOpenComposeInNewWindowEnabled) {
     return;
   }
