@@ -10,6 +10,8 @@ import path from "node:path";
 // provisioning profile embedded in the app authorizes it, and the profile only binds to the app
 // through the application and team identifiers below. `@electron/osx-sign` adds those two itself,
 // but only for sandboxed apps, so they are written out here too.
+// electron-builder hands `beforePack` and `afterPack` the same context.
+/** @param {import("electron-builder").AfterPackContext} context */
 export default async (context) => {
   if (context.packager.platform.name !== "mac") {
     return;

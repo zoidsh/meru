@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+/** @param {import("electron-builder").AfterPackContext} context */
 export default async (context) => {
   if (context.packager.platform.name === "mac") {
     console.log("\n---------\n");
