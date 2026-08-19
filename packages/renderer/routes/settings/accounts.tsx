@@ -3,8 +3,11 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { AccountConfig } from "@meru/shared/schemas";
-import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
+import {
+  type AccountConfig,
+  type AccountConfigInput,
+  accountConfigInputSchema,
+} from "@meru/shared/schemas";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {

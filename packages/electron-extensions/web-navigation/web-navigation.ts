@@ -1,3 +1,4 @@
+import type * as electron from "electron";
 import type { Session, WebContents, WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import {
@@ -40,7 +41,7 @@ export type WebNavigationOptions = {
  * outside Electron, which is where this module's tests run.
  */
 function getElectronWebContentsById(tabId: number) {
-  const { webContents } = require("electron") as typeof import("electron");
+  const { webContents } = require("electron") as typeof electron;
 
   return webContents.fromId(tabId);
 }

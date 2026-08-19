@@ -8,7 +8,7 @@ import { Skeleton } from "@meru/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import z from "zod";
+import { z } from "zod";
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { dayjs } from "@/lib/date";
 import { useConfig } from "@/lib/react-query";

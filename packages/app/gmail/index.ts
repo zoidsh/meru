@@ -17,13 +17,13 @@ import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import {
   app,
-  BrowserWindow,
+  type BrowserWindow,
   clipboard,
   type Session,
   type WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
-import z from "zod";
+import { z } from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";

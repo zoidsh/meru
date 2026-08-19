@@ -7,7 +7,7 @@ import {
   type BrowserWindowConstructorOptions,
   nativeTheme,
   screen,
-  WebContentsView,
+  type WebContentsView,
 } from "electron";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
