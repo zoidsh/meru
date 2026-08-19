@@ -108,7 +108,9 @@ export function isValidHostName(hostName: string) {
 }
 
 export function parseHostManifest(source: string, hostName: string): NativeMessagingHostManifest {
-  // A manifest off disk, so every field it names is checked before it is used.
+  // A manifest off disk. The fields the connection turns on — `name`, `type`,
+  // `path` and `allowed_origins` — are checked below; `description` is carried
+  // through as whatever it was.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const manifest = JSON.parse(source) as Partial<NativeMessagingHostManifest>;
 

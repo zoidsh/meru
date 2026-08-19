@@ -146,7 +146,15 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
         return;
       }
 
-      for (const frame of decoder.push(value).filter(isNativeMessagingFrame)) {
+      for (const frame of decoder.push(value)) {
+        // Anything the bridge sends that isn't a frame closes the port, the same
+        // as a disconnect frame does — it means the two ends disagree.
+        if (!isNativeMessagingFrame(frame)) {
+          disconnected();
+
+          return;
+        }
+
         if (frame.type === "message") {
           onMessage.emit(frame.message, port);
         } else {

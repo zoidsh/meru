@@ -52,7 +52,9 @@ function InputGroupAddon({
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
       onClick={(e) => {
-        if (e.target instanceof HTMLElement && e.target.closest("button")) {
+        // `Element`, not `HTMLElement`: a click landing on an icon inside an
+        // addon button targets the `<svg>`, which is an `SVGElement`.
+        if (e.target instanceof Element && e.target.closest("button")) {
           return;
         }
         e.currentTarget.parentElement?.querySelector("input")?.focus();
