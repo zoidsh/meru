@@ -34,7 +34,7 @@ bun test           # tests across every package
 - Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components — `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`, for example. Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.
 - Never repeat shared classes across the branches of a conditional `className`. Hoist them and merge with the `cn` helper (`@meru/ui/lib/utils`): `cn("absolute hidden", isWide ? "size-5" : "size-4")`.
 - Consider the platform when showing platform-specific information such as modifier keys and OS names. Branch on the existing `platform` helper — `@/lib/utils` in the renderer, `@electron-toolkit/utils` in the main process — as in `platform.isMacOS ? "Cmd" : "Ctrl"`.
-- In Electron accelerators, `Command` and `Option` are only honoured on macOS. Use `CommandOrControl` and `Alt` for menu items that exist on every platform, and reach for bare `Command`/`Option` only when the shortcut is deliberately macOS-only.
+- In Electron accelerators, `Command` and `Option` are only honored on macOS. Use `CommandOrControl` and `Alt` for menu items that exist on every platform, and reach for bare `Command`/`Option` only when the shortcut is deliberately macOS-only.
 - Render keyboard keys in user-facing text with the `Kbd` component (`@meru/ui/components/kbd`), not as plain text: `Hold <Kbd>Shift</Kbd> to …`.
 - Child `WebContentsView`s always paint above the main window's HTML, so renderer-drawn overlays such as dropdowns, tooltips, and dialogs get covered wherever a view sits. Keep overlays inside the regions the renderer owns, meaning the titlebar and the vertical tabs — vertical tabs menus open with `side="top"` at anchor width, for example. For overlays over view content, use a native `Menu.popup` or a dedicated `WebContentsView`. See `Popup` in `packages/app/lib/popup.ts`.
 
@@ -42,7 +42,7 @@ bun test           # tests across every package
 
 - Structure settings fields like this: `Field` > `FieldLabel` + `FieldDescription` + control component.
 - Render config-backed fields with the existing wrapper components rather than hand-rolling `Field` + control: `ConfigSwitchField` for a boolean key, `ConfigSelectField` for a string-union key, both in `packages/renderer/components/`. Each enforces its key's type at runtime, so the value type dictates the component — a fixed set of named choices must be modeled as a string union with `ConfigSelectField`, not a boolean with a switch.
-- In a `ConfigSelectField`, list the option matching the config default first in `items`.
+- In a `ConfigSelectField`, list the option matching the config default first in `items`, unless the options carry an order of their own. A scale keeps its own order and lets the default fall where it does, as `workspaceAppsHibernationTimeouts` runs 30 Minutes through 6 Hours with a default of `1h` in second place.
 - Read the config with `useConfig()` and persist changes with `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
 
