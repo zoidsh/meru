@@ -86,7 +86,7 @@ function OnePasswordSetupSteps() {
       <li>
         {platform.isMacOS
           ? "Choose Meru in the Applications folder."
-          : "Choose Meru in the C:\\Program Files folder."}
+          : "Choose Meru in C:\\Program Files."}
       </li>
       <li>Restart Meru.</li>
     </>
@@ -107,8 +107,8 @@ function OnePasswordSetupDialog({
           <DialogTitle>Connect 1Password</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Filling passwords and passkeys needs the 1Password desktop app — Meru stores no vault data
-          of its own. Trust Meru in 1Password's settings to connect them.
+          Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no
+          vault data of its own. Trust Meru in 1Password's settings to connect the two.
         </DialogDescription>
         <ol className="ml-4 list-decimal space-y-2 marker:text-muted-foreground">
           <OnePasswordSetupSteps />
@@ -198,7 +198,7 @@ function ExtensionItem({
                 setIsSetupDialogOpen(true);
               }}
             >
-              Set up desktop app
+              Set Up Desktop App
             </Button>
           )}
         </ItemContent>
@@ -229,8 +229,8 @@ function PasskeysAlert() {
         <AlertTitle>Meru can sign you in with a Touch ID passkey</AlertTitle>
         <AlertDescription>
           Add a passkey to your Google account from its security settings inside Meru and sign in
-          with Touch ID — lighter than running an extension. Existing iCloud passkeys can't be used,
-          and filling passwords still needs a password manager.
+          with Touch ID — lighter than running an extension. iCloud passkeys don't work here, and
+          filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
@@ -290,7 +290,7 @@ function UpdateExtensionsButton() {
             break;
           }
           case "failed": {
-            toast.error(`Failed to update ${name}: ${result.error}`);
+            toast.error(`Couldn't update ${name}: ${result.error}`);
 
             break;
           }

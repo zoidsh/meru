@@ -50,34 +50,34 @@ export function GmailSettings() {
             <FieldLegend>Appearance</FieldLegend>
             <ConfigSwitchField
               label="Hide Gmail Logo"
-              description="Hides the Gmail logo on the top left corner."
+              description="Hide the Gmail logo in the top left corner."
               configKey="gmail.hideGmailLogo"
               restartRequired
             />
             <ConfigSwitchField
-              label="Hide Out of Office Banner"
-              description="Hides the out of office banner at the top of the window."
+              label="Hide Out-of-Office Banner"
+              description="Hide the out-of-office banner at the top of the window."
               configKey="gmail.hideOutOfOfficeBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
               label="Hide Promotional Banner"
-              description="Hides promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
+              description="Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
               configKey="gmail.hidePromoBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
               label="Hide Upgrade Button"
-              description="Hides the Upgrade button in Gmail."
+              description="Hide the Upgrade button in Gmail."
               configKey="gmail.hideUpgradeButton"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
               label="Extend Dark Theme"
-              description="Extends Gmail's native dark theme to emails and the compose window. Requires Gmail's theme to be set to dark. This feature is in beta — if you run into any issues, please report them so it can be improved."
+              description="Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
               configKey="gmail.extendDarkTheme"
               restartRequired
               licenseKeyRequired
@@ -89,14 +89,14 @@ export function GmailSettings() {
             <FieldLegend>Compose</FieldLegend>
             <ConfigSwitchField
               label="Always Compose New Emails in New Window"
-              description="Opens a new window for composing emails instead of inside Gmail."
+              description="Open a new window to compose an email, instead of composing inside Gmail."
               configKey="gmail.openComposeInNewWindow"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
               label="Close Compose Window After Send"
-              description="Automatically closes the compose window after pressing the send button."
+              description="Close the compose window after you send."
               configKey="gmail.closeComposeWindowAfterSend"
               restartRequired
               licenseKeyRequired
@@ -107,21 +107,21 @@ export function GmailSettings() {
             <FieldLegend>Conversation</FieldLegend>
             <ConfigSwitchField
               label="Reverse Conversation"
-              description="Displays email conversations in reverse order, showing the latest message at the top."
+              description="Show email conversations in reverse order, with the latest message at the top."
               configKey="gmail.reverseConversation"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
               label="Move Attachments to Top"
-              description="Moves email attachments to the top of the email."
+              description="Move email attachments to the top of the email."
               configKey="gmail.moveAttachmentsToTop"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Always Reply/Forward in Pop-Out"
-              description="Opens reply and forward in a pop-out instead of below the message."
+              label="Always Reply and Forward in a Pop-Out"
+              description="Open replies and forwards in a pop-out instead of below the message."
               configKey="gmail.replyForwardInPopOut"
               restartRequired
               licenseKeyRequired
@@ -132,7 +132,7 @@ export function GmailSettings() {
             <FieldLegend>Inbox</FieldLegend>
             <ConfigSwitchField
               label="Hide Inbox Footer"
-              description="Hides the footer at the bottom of the inbox."
+              description="Hide the footer at the bottom of the inbox."
               configKey="gmail.hideInboxFooter"
               restartRequired
             />
@@ -146,18 +146,18 @@ export function GmailSettings() {
             <ConfigSelectField
               configKey="gmail.unreadCountPreference"
               label="Unread Count Preference"
-              description="When using multiple inboxes, sets which sections contribute to the unread count shown on the app. Default combines all sections."
+              description="With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
               items={unreadCountPreferenceItems}
-              placeholder="Select unread count preference"
+              placeholder="Select preference"
               licenseKeyRequired
               restartRequired
             />
             <ConfigSelectField
               configKey="gmail.inboxCategoriesToMonitor"
               label="Categories to Monitor"
-              description="If using an inbox with categories, choose which inbox categories are monitored for new email notifications and included in the unified inbox."
+              description="With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
               items={inboxCategoriesToMonitorItems}
-              placeholder="Select inbox categories to monitor"
+              placeholder="Select categories"
               licenseKeyRequired
               restartRequired
             />
@@ -180,8 +180,8 @@ export function GmailSettings() {
                   <LicenseKeyRequiredFieldBadge />
                 </FieldLabel>
                 <FieldDescription>
-                  Add your own custom CSS to further personalize the Gmail interface. A restart is
-                  required after making changes.
+                  Add your own CSS to personalize the Gmail interface further. Changes take effect
+                  after a restart.
                 </FieldDescription>
               </FieldContent>
               <div className="flex gap-2">

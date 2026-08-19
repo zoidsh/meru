@@ -20,7 +20,7 @@ export function UnifiedInboxSettings() {
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Enabled"
+            label="Enable Unified Inbox"
             description="Show all unread messages from every account in a single unified inbox."
             configKey="unifiedInbox.enabled"
             licenseKeyRequired

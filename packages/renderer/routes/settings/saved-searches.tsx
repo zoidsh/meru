@@ -229,9 +229,7 @@ function SortableSavedSearchItem({
           className="size-8 p-0"
           variant="outline"
           onClick={() => {
-            const confirmed = window.confirm(
-              `Are you sure you want to delete ${savedSearch.label}?`,
-            );
+            const confirmed = window.confirm(`Delete ${savedSearch.label}?`);
 
             if (confirmed) {
               onDelete();

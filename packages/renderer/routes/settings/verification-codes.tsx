@@ -26,31 +26,28 @@ export function VerificationCodesSettings() {
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Automatically Copy Verification Code to Clipboard"
-            description="Verification code received via email will be automatically copied
-							to your clipboard for easy and instant pasting."
+            label="Copy Codes to Clipboard"
+            description="Copy a verification code to your clipboard as soon as it arrives by email."
             configKey="verificationCodes.autoCopy"
             licenseKeyRequired
           />
           <ConfigSelectField
             configKey="verificationCodes.confidence"
-            label="Verification Code Detection Confidence"
-            description="Choose the confidence level for detecting verification codes. Medium may result in false positives, while High checks for explicit keywords, but may miss some codes."
+            label="Detection Confidence"
+            description="Choose how certain Meru has to be before it treats something as a verification code. Medium can pick up codes that aren't there. High looks for explicit keywords and can miss some."
             items={verificationCodeConfidenceItems}
             placeholder="Select confidence"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Automatically Mark Email as Read After Copying Verification Code"
-            description="Email containing verification code will be automatically marked as read
-							after the code has been copied to your clipboard."
+            label="Mark Email as Read After Copying"
+            description="Mark the email as read once its verification code has been copied."
             configKey="verificationCodes.autoMarkAsRead"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Automatically Delete Email After Copying Verification Code"
-            description="Email containing verification code will be automatically deleted
-							after the code has been copied to your clipboard."
+            label="Delete Email After Copying"
+            description="Delete the email once its verification code has been copied."
             configKey="verificationCodes.autoDelete"
             licenseKeyRequired
           />
