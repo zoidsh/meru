@@ -23,6 +23,32 @@ import { WorkspaceApp } from "@/workspace-app";
 import { licenseKey } from "./license-key";
 import { createMeruMessageUrl } from "./protocol";
 
+async function clearCache() {
+  await Promise.all(accounts.getAccounts().map((account) => account.instance.session.clearCache()));
+
+  void showRestartDialog();
+}
+
+async function resetApp() {
+  const { response } = await dialog.showMessageBox({
+    type: "warning",
+    buttons: ["Cancel", "Reset"],
+    defaultId: 1,
+    message: "Are you sure you want to reset the app?",
+    detail: "This will clear all your accounts, settings, and data. This action cannot be undone.",
+  });
+
+  if (response === 0) {
+    return;
+  }
+
+  config.set("resetApp", true);
+
+  app.relaunch();
+
+  app.quit();
+}
+
 export class AppMenu {
   private _menu: Menu | undefined;
 
@@ -732,35 +758,14 @@ export class AppMenu {
               },
               {
                 label: "Clear Cache",
-                click: async () => {
-                  await Promise.all(
-                    accounts.getAccounts().map((account) => account.instance.session.clearCache()),
-                  );
-
-                  void showRestartDialog();
+                click: () => {
+                  void clearCache();
                 },
               },
               {
                 label: "Reset App…",
-                click: async () => {
-                  const { response } = await dialog.showMessageBox({
-                    type: "warning",
-                    buttons: ["Cancel", "Reset"],
-                    defaultId: 1,
-                    message: "Are you sure you want to reset the app?",
-                    detail:
-                      "This will clear all your accounts, settings, and data. This action cannot be undone.",
-                  });
-
-                  if (response === 0) {
-                    return;
-                  }
-
-                  config.set("resetApp", true);
-
-                  app.relaunch();
-
-                  app.quit();
+                click: () => {
+                  void resetApp();
                 },
               },
               {

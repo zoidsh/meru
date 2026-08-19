@@ -10,10 +10,14 @@ ipc.renderer.on("gmail.openMessage", (_event, messageId: string) => {
   window.location.hash = `#inbox/${messageId}`;
 });
 
-ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
+async function handleMessage(messageId: string, action: Parameters<typeof sendMailAction>[1]) {
   await sendMailAction(messageId, action);
 
   refreshInbox();
+}
+
+ipc.renderer.on("gmail.handleMessage", (_event, messageId, action) => {
+  void handleMessage(messageId, action);
 });
 
 ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {

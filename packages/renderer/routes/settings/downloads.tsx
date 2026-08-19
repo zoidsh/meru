@@ -14,6 +14,14 @@ import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 
+async function setDownloadLocation() {
+  const { canceled } = await ipc.main.invoke("downloads.setLocation");
+
+  if (!canceled) {
+    restartRequiredToast();
+  }
+}
+
 export function DownloadsSettings() {
   const { config } = useConfig();
 
@@ -48,12 +56,8 @@ export function DownloadsSettings() {
               <Input value={config["downloads.location"]} readOnly />
               <Button
                 variant="outline"
-                onClick={async () => {
-                  const { canceled } = await ipc.main.invoke("downloads.setLocation");
-
-                  if (!canceled) {
-                    restartRequiredToast();
-                  }
+                onClick={() => {
+                  void setDownloadLocation();
                 }}
               >
                 Change…

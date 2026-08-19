@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { platform } from "@electron-toolkit/utils";
 
+// Node types `execFile` as returning the ChildProcess, which `promisify`'s
+// signature expects to be void.
+// oxlint-disable-next-line typescript/strict-void-return
 const execFile = promisify(childProcess.execFile);
 
 let linuxWindowControlsEnabled: boolean | null = null;

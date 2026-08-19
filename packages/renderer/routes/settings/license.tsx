@@ -86,6 +86,14 @@ function LicenseKeyForm({
   );
 }
 
+async function activateLicenseKey(licenseKey: string, onOpenChange: (open: boolean) => void) {
+  const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
+
+  if (success) {
+    onOpenChange(false);
+  }
+}
+
 function ActivateLicenseDialog({
   variant = "activate",
   children,
@@ -106,12 +114,8 @@ function ActivateLicenseDialog({
           Enter the license key sent to your email address after your purchase.
         </DialogDescription>
         <LicenseKeyForm
-          onSubmit={async ({ licenseKey }) => {
-            const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
-
-            if (success) {
-              props.onOpenChange(false);
-            }
+          onSubmit={({ licenseKey }) => {
+            void activateLicenseKey(licenseKey, props.onOpenChange);
           }}
         />
       </DialogContent>

@@ -22,7 +22,7 @@ ipc.renderer.on("accounts.changed", (_event, accounts) => {
   useAccountsStore.setState({ accounts });
 });
 
-ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
+async function openAddAccountDialog() {
   const config = await getConfig();
 
   if (!config.licenseKey && !useTrialStore.getState().daysLeft) {
@@ -34,6 +34,10 @@ ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
   }
 
   useAccountsStore.setState({ isAddAccountDialogOpen: true });
+}
+
+ipc.renderer.on("accounts.openAddAccountDialog", () => {
+  void openAddAccountDialog();
 });
 
 export const useTabsStore = create<{

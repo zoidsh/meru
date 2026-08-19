@@ -138,7 +138,9 @@ async function waitForProcessExit(pid: number) {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 20);
+    });
   }
 
   throw new Error(`Process ${pid} is still running`);

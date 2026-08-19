@@ -1,6 +1,9 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+// Node types `execFile` as returning the ChildProcess, which `promisify`'s
+// signature expects to be void.
+// oxlint-disable-next-line typescript/strict-void-return
 const execFileAsync = promisify(execFile);
 
 /**
