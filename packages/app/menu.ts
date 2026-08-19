@@ -261,7 +261,7 @@ export class AppMenu {
           },
           {
             label: "Gmail Settings…",
-            accelerator: "Command+Shift+,",
+            accelerator: "CommandOrControl+Shift+,",
             click: () => {
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
