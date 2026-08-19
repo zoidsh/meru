@@ -131,7 +131,7 @@ export function generateGmailLabelColorsCss(labelColors: GmailLabelColors) {
   return labelColors
     .filter(({ label, color }) => label && isValidCssColorInput(color))
     .flatMap(({ label, color, textColor }) => {
-      const escapedLabel = label.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      const escapedLabel = label.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 
       const resolvedTextColor = resolveGmailLabelTextColor(color, textColor);
 

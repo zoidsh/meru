@@ -119,7 +119,7 @@ function createSession({
       },
     },
     clearStorageData: async ({ origin, storages }: ClearStorageDataOptions) => {
-      sessionEvents.push(`clearStorageData ${origin} ${storages?.join()}`);
+      sessionEvents.push(`clearStorageData ${origin} ${storages?.join(",")}`);
     },
     getStoragePath: () => storagePath,
     serviceWorkers: {

@@ -515,7 +515,7 @@ const EMAIL_TRACKER_PATTERNS = [
 ];
 
 function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function createHostBoundaryPattern(hosts: string[]) {
@@ -536,8 +536,7 @@ export function createBlockMatcher({ ads, tracking }: { ads: boolean; tracking: 
   if (tracking) {
     const literals = [...GOOGLE_TELEMETRY_PATHS, ...EMAIL_TRACKER_SUBSTRINGS].map(escapeRegExp);
 
-    patterns.push(new RegExp(literals.join("|")));
-    patterns.push(new RegExp(EMAIL_TRACKER_PATTERNS.join("|")));
+    patterns.push(new RegExp(literals.join("|")), new RegExp(EMAIL_TRACKER_PATTERNS.join("|")));
   }
 
   if (!patterns.length) {

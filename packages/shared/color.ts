@@ -8,7 +8,7 @@ function parseHexColor(input: string): Rgb | null {
   let hex = input.slice(1);
 
   if (hex.length === 3 || hex.length === 4) {
-    hex = hex.replace(/./g, (channel) => channel + channel);
+    hex = hex.replaceAll(/./g, (channel) => channel + channel);
   }
 
   if (hex.length !== 6 && hex.length !== 8) {

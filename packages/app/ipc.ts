@@ -1122,7 +1122,7 @@ class Ipc {
     this.main.on("gmail.unreadCountChanged", (event, unreadCountString) => {
       const parsedUnreadCountString = unreadCountString
         .split(":")
-        .map((count) => Number(count.replace(/\D/g, "")) || 0);
+        .map((count) => Number(count.replaceAll(/\D/g, "")) || 0);
 
       const unreadCountPreference = config.get("gmail.unreadCountPreference");
 

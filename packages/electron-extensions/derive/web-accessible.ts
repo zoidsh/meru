@@ -9,7 +9,7 @@ export type WebAccessibleResources = (
 )[];
 
 function escapeRegExp(literal: string) {
-  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return literal.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

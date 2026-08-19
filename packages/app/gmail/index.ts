@@ -148,7 +148,7 @@ function extractVerificationCode(texts: string[]) {
     const verificationCodeMatch = text.match(/\b([0-9]{3}[\s-][0-9]{3})\b/);
 
     if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+      return verificationCodeMatch[1].replaceAll(/[\s-]/g, "");
     }
   }
 
@@ -156,7 +156,7 @@ function extractVerificationCode(texts: string[]) {
     const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2})\b/);
 
     if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+      return verificationCodeMatch[1].replaceAll(/[\s-]/g, "");
     }
   }
 
@@ -173,7 +173,7 @@ function extractVerificationCode(texts: string[]) {
     const verificationCodeMatch = text.match(/\b([0-9]{4}[\s-][0-9]{4})\b/);
 
     if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+      return verificationCodeMatch[1].replaceAll(/[\s-]/g, "");
     }
   }
 
@@ -183,7 +183,7 @@ function extractVerificationCode(texts: string[]) {
     );
 
     if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+      return verificationCodeMatch[1].replaceAll(/[\s-]/g, "");
     }
   }
 
@@ -203,7 +203,7 @@ function extractVerificationCode(texts: string[]) {
     const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2})\b/);
 
     if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
+      return verificationCodeMatch[1].replaceAll(/[\s-]/g, "");
     }
   }
 

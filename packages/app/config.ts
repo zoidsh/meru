@@ -150,13 +150,13 @@ export const config = new Store<Config>({
 
         for (const account of accounts) {
           // @ts-expect-error: `unreadBadge` is now under 'gmail'
-          if (typeof account.unreadBadge === "undefined") {
+          if (account.unreadBadge === undefined) {
             // @ts-expect-error
             account.unreadBadge = true;
             accountsMigrated = true;
           }
 
-          if (typeof account.notifications === "undefined") {
+          if (account.notifications === undefined) {
             account.notifications = true;
             accountsMigrated = true;
           }
@@ -186,7 +186,7 @@ export const config = new Store<Config>({
         let accountsMigrated = false;
 
         for (const account of accounts) {
-          if (typeof account.gmail === "undefined") {
+          if (account.gmail === undefined) {
             // @ts-expect-error: `unreadBadge` is now under 'gmail'
             account.gmail = {
               delegatedAccountId: null,
@@ -223,7 +223,7 @@ export const config = new Store<Config>({
     },
     ">=3.18.0": (store) => {
       // @ts-expect-error: `app.doNotDisturb` is now 'doNotDisturb.enabled'
-      if (typeof store.get("app.doNotDisturb") !== "undefined") {
+      if (store.get("app.doNotDisturb") !== undefined) {
         // @ts-expect-error
         store.delete("app.doNotDisturb");
       }
@@ -235,7 +235,7 @@ export const config = new Store<Config>({
         let accountsMigrated = false;
 
         for (const account of accounts) {
-          if (typeof account.color === "undefined") {
+          if (account.color === undefined) {
             account.color = null;
 
             accountsMigrated = true;
@@ -257,7 +257,7 @@ export const config = new Store<Config>({
           if (
             // @ts-expect-error: `unreadBadge` is now under 'gmail'
             typeof account.unreadBadge === "boolean" &&
-            typeof account.gmail.unreadBadge === "undefined"
+            account.gmail.unreadBadge === undefined
           ) {
             // @ts-expect-error
             account.gmail.unreadBadge = account.unreadBadge;
@@ -353,7 +353,7 @@ export const config = new Store<Config>({
         // @ts-expect-error: `googleApps.*` keys are now 'workspaceApps.*'
         const value = store.get(previousKey);
 
-        if (typeof value !== "undefined") {
+        if (value !== undefined) {
           // @ts-expect-error
           store.set(renamedKey, value);
         }
@@ -368,7 +368,7 @@ export const config = new Store<Config>({
       // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.launcherApps'
       const pinnedApps = store.get("workspaceApps.pinnedApps");
 
-      if (typeof pinnedApps !== "undefined") {
+      if (pinnedApps !== undefined) {
         // @ts-expect-error
         store.set("workspaceApps.launcherApps", pinnedApps);
 
@@ -380,7 +380,7 @@ export const config = new Store<Config>({
 
       if (Array.isArray(accounts)) {
         for (const account of accounts) {
-          if (typeof account.workspaceApps === "undefined") {
+          if (account.workspaceApps === undefined) {
             account.workspaceApps = { savedTabs: [], bookmarks: [] };
           }
         }
@@ -404,7 +404,7 @@ export const config = new Store<Config>({
       // @ts-expect-error: `gmail.fullDarkTheme` is now 'gmail.extendDarkTheme'
       const fullDarkTheme = store.get("gmail.fullDarkTheme");
 
-      if (typeof fullDarkTheme !== "undefined") {
+      if (fullDarkTheme !== undefined) {
         // @ts-expect-error
         store.set("gmail.extendDarkTheme", fullDarkTheme);
       }

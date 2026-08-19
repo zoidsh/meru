@@ -18,7 +18,7 @@ export function expandEnvironmentVariables(
     Object.entries(environment).map(([name, variableValue]) => [name.toLowerCase(), variableValue]),
   );
 
-  return value.replace(
+  return value.replaceAll(
     /%([^%]+)%/g,
     (reference, name: string) => valuesByLowerCaseName.get(name.toLowerCase()) ?? reference,
   );

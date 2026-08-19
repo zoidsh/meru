@@ -17,7 +17,7 @@ async function getGtkDecorationLayout() {
       { timeout: 3000 },
     );
 
-    return layout.trim().replace(/^'|'$/g, "");
+    return layout.trim().replaceAll(/^'|'$/g, "");
   } catch {
     // gsettings not available or schema not installed
   }

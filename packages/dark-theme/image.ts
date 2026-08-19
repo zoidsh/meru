@@ -229,8 +229,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Unable to load image ${url}`));
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", () => reject(new Error(`Unable to load image ${url}`)));
     image.src = url;
   });
 }
@@ -414,7 +414,7 @@ const xmlEscapes: Record<string, string> = {
 };
 
 function escapeXML(text: string): string {
-  return text.replace(/[<>&'"]/g, (character) => xmlEscapes[character] ?? character);
+  return text.replaceAll(/[<>&'"]/g, (character) => xmlEscapes[character] ?? character);
 }
 
 export function getFilteredImageURL(details: ImageDetails, theme: Theme): string {

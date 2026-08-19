@@ -126,7 +126,7 @@ function formatFixed(value: number, digits = 0): string {
 
   const dotIndex = fixed.indexOf(".");
 
-  if (dotIndex < 0) {
+  if (dotIndex === -1) {
     return fixed;
   }
 

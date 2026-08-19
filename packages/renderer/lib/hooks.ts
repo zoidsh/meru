@@ -99,7 +99,7 @@ export function useUnifiedInbox() {
   const accounts = useAccountsStore((state) => state.accounts);
 
   const messages: UnifiedInboxMessage[] = accounts
-    .map((account) =>
+    .flatMap((account) =>
       account.gmail.unreadInbox.map((mail) => ({
         account: {
           id: account.config.id,
@@ -109,7 +109,6 @@ export function useUnifiedInbox() {
         ...mail,
       })),
     )
-    .flat()
     .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
 
   return { messages };
