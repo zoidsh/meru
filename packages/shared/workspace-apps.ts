@@ -97,8 +97,8 @@ export type WorkspaceAppsHibernation = keyof typeof workspaceAppsHibernations;
 
 /** Keys double as durations for `ms`. */
 export const workspaceAppsHibernationTimeouts = {
-  "1h": "1 Hour",
   "30m": "30 Minutes",
+  "1h": "1 Hour",
   "3h": "3 Hours",
   "6h": "6 Hours",
 } as const;
