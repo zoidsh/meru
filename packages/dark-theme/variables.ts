@@ -67,9 +67,9 @@ function darkenLightValue(value: string, theme: Theme) {
   return darkenedValue;
 }
 
-// Gmail's reading pane paints many surfaces via CSS custom properties (e.g.
-// `background: var(--pkw-background, #fff)`); a getComputedStyle snapshot of a
-// real element can't see the ones that only resolve in a state the walk never
+// Gmail's reading pane paints many surfaces through CSS custom properties, such
+// as `background: var(--pkw-background, #fff)`. A getComputedStyle snapshot of a
+// real element can't reach the ones that only resolve in a state the walk never
 // observes, so they leak light. Custom properties inherit, so redefining the
 // light ones — darkened — on the themed root cascades the dark value into the
 // whole subtree and stops at its boundary, without touching the natively-dark

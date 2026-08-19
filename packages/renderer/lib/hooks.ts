@@ -60,7 +60,7 @@ export function useSelectedAccountTabs() {
 
 /**
  * What the vertical tabs strip renders and the width it takes up. The titlebar
- * reads it too, to know whether the strip is there to host the Workspace Apps
+ * reads it too, to determine whether the strip is there to host the Workspace Apps
  * launcher.
  */
 export function useVerticalTabs() {

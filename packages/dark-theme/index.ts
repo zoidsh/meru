@@ -160,14 +160,14 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
 
   // Pseudo-elements can't be reached by inline styles, so their darkened paint is
   // collected into one injected stylesheet. Each element keeps a stable id so its
-  // rules can be rebuilt when a class change alters its pseudo styles — e.g. a star
-  // icon whose url, and so whether it's inverted, depends on its state.
+  // rules can be rebuilt when a class change alters its pseudo styles — a star
+  // icon, say, whose url, and so whether it's inverted, depends on its state.
   const pseudoIds = new WeakMap<HTMLElement, string>();
   const pseudoRulesById = new Map<string, string[]>();
   let pseudoRuleCounter = 0;
   let pseudoStyleElement: HTMLStyleElement | null = null;
 
-  // A pseudo-element's darkened colour paint is captured once and reused on
+  // A pseudo-element's darkened color paint is captured once and reused on
   // refresh: re-reading its computed style after we've injected the darkened rule
   // would return our own output and darken it again toward black on every state
   // change. Only the invert-image decision (below) is re-evaluated, since that

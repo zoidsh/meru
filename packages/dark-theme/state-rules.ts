@@ -132,8 +132,8 @@ function getDarkenedStateRules(collection: StylesheetCollection, theme: Theme) {
   return darkenedRules;
 }
 
-// `:hover`/`:focus` styles live in author rules a getComputedStyle snapshot never
-// sees (the state isn't active at theme time), so they leak light. This rewrites
+// `:hover` and `:focus` styles live in author rules a getComputedStyle snapshot
+// never captures, because the state isn't active at theme time, so they leak light. This rewrites
 // those rules' color-bearing declarations — darkened — keeping each selector
 // verbatim and wrapping the whole set in `@scope (scopeSelector)` so they apply
 // only inside the themed subtree, never the natively-dark Gmail shell around it.

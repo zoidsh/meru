@@ -193,8 +193,8 @@ type ComponentSpan = {
 
 // Reads the numeric components of a color function body: each span covers a
 // number and an optional trailing unit, and components are scaled so a value in
-// units maps onto its bound (e.g. 50% of 255 → 127.5). Bounds above 1 mark
-// integer channels and round; the alpha bound of 1 keeps fractions intact.
+// units maps onto its bound, so 50% of 255 becomes 127.5. Bounds above 1 mark
+// integer channels and round, and the alpha bound of 1 keeps fractions intact.
 function readColorComponents(
   functionText: string,
   componentBounds: number[],

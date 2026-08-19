@@ -9,7 +9,7 @@ export function WorkspaceAppIcon({
   // resolves to the first matching id in the document. Without a per-instance
   // suffix, two icons rendered at once share one set of definitions — and an
   // icon inside a `display: none` subtree has no definitions at all, so
-  // whichever copy comes first in the DOM decides whether the rest render.
+  // whichever copy comes first in the DOM determines whether the rest render.
   const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   switch (app) {
