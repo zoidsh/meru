@@ -72,7 +72,7 @@ class LicenseKey {
 
         await this.showActivationError({
           detail: (await isOnline())
-            ? `Try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+            ? `Try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${String(error.cause)})`
             : "Meru can't reach the internet. Connect and try again.",
         });
       }
@@ -155,7 +155,7 @@ class LicenseKey {
 
         const { response } = await this.showValidationError({
           detail: (await isOnline())
-            ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+            ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${String(error.cause)})`
             : "Meru can't reach the internet. Connect, then restart Meru to try again.",
           buttons: ["Restart", "Quit"],
           defaultId: 0,
@@ -187,7 +187,7 @@ class LicenseKey {
     const { error, data } = await (
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.getDeviceInfo({
-      licenseKey: licenseKey,
+      licenseKey,
       deviceId: await machineId(),
     });
 
@@ -221,7 +221,7 @@ class LicenseKey {
     const { error } = await (
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.updateDeviceInfo({
-      licenseKey: licenseKey,
+      licenseKey,
       deviceId: await machineId(),
       label: input.label,
     });

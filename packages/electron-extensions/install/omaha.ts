@@ -41,7 +41,7 @@ export function buildCrxDownloadUrl({ extensionId, chromeVersion }: CrxDownloadO
     x: `id=${extensionId}&installsource=ondemand&uc`,
   });
 
-  return `${CRX_UPDATE_ENDPOINT}?${searchParams}`;
+  return `${CRX_UPDATE_ENDPOINT}?${searchParams.toString()}`;
 }
 
 export type UpdateCheckOptions = CrxDownloadOptions & {
@@ -64,7 +64,7 @@ export function buildUpdateCheckUrl({
     x: `id=${extensionId}&v=${installedVersion}&uc`,
   });
 
-  return `${CRX_UPDATE_ENDPOINT}?${searchParams}`;
+  return `${CRX_UPDATE_ENDPOINT}?${searchParams.toString()}`;
 }
 
 /**

@@ -152,7 +152,7 @@ async function buildRenderer(rendererName: string, port: number) {
     build: {
       outDir: path.join(process.cwd(), "build-js", rendererName),
       target: browserTarget,
-      rollupOptions: {
+      rolldownOptions: {
         input: pageFileNames.map((pageFileName) => path.join(rendererRoot, pageFileName)),
       },
     },
@@ -204,7 +204,7 @@ if (args.values.dev) {
     startElectron();
   };
 
-  await startElectron();
+  startElectron();
 
   const watcher = watch("./packages", { recursive: true });
 

@@ -39,7 +39,7 @@ class Trial {
         type: "error",
         message: "Couldn't validate your Meru Pro trial.",
         detail: (await isOnline())
-          ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+          ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${String(error.cause)})`
           : "Meru can't reach the internet. Connect, then restart Meru to try again.",
         buttons: ["Restart", "Quit"],
         defaultId: 0,

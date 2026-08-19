@@ -607,6 +607,7 @@ export class WorkspaceApp {
           ...options?.webPreferences,
           // Docs cuts, copies and pastes from its Edit menu through
           // `document.execCommand`, which Electron gates behind this preference
+          // oxlint-disable-next-line typescript/no-deprecated
           enableDeprecatedPaste: true,
         },
       },

@@ -22,7 +22,7 @@ class Accounts {
   instances: Map<string, Account> = new Map();
 
   init() {
-    let accountConfigs = config.get("accounts");
+    const accountConfigs = config.get("accounts");
 
     if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
       for (const [index, accountConfig] of accountConfigs.entries()) {
