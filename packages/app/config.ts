@@ -139,7 +139,7 @@ export const config = new Store<Config>({
       if (typeof showDockIcon === "boolean") {
         store.set("dock.enabled", showDockIcon);
 
-        // @ts-expect-error
+        // @ts-expect-error: `showDockIcon` is now 'dock.enabled'
         store.delete("showDockIcon");
       }
 
@@ -151,7 +151,7 @@ export const config = new Store<Config>({
         for (const account of accounts) {
           // @ts-expect-error: `unreadBadge` is now under 'gmail'
           if (account.unreadBadge === undefined) {
-            // @ts-expect-error
+            // @ts-expect-error: `unreadBadge` is now under 'gmail'
             account.unreadBadge = true;
             accountsMigrated = true;
           }
@@ -172,10 +172,10 @@ export const config = new Store<Config>({
       const lastWindowState = store.get("lastWindowState");
 
       if (lastWindowState) {
-        // @ts-expect-error
+        // @ts-expect-error: `lastWindowState` is now 'window.lastState'
         store.set("window.lastState", lastWindowState);
 
-        // @ts-expect-error
+        // @ts-expect-error: `lastWindowState` is now 'window.lastState'
         store.delete("lastWindowState");
       }
     },
@@ -216,7 +216,7 @@ export const config = new Store<Config>({
       // @ts-expect-error: `googleApps.openInExternalBrowser` is now 'googleApps.openInApp'
       if (typeof store.get("googleApps.openInExternalBrowser") === "boolean") {
         store.delete(
-          // @ts-expect-error
+          // @ts-expect-error: `googleApps.openInExternalBrowser` is now 'googleApps.openInApp'
           "googleApps.openInExternalBrowser",
         );
       }
@@ -224,7 +224,7 @@ export const config = new Store<Config>({
     ">=3.18.0": (store) => {
       // @ts-expect-error: `app.doNotDisturb` is now 'doNotDisturb.enabled'
       if (store.get("app.doNotDisturb") !== undefined) {
-        // @ts-expect-error
+        // @ts-expect-error: `app.doNotDisturb` is now 'doNotDisturb.enabled'
         store.delete("app.doNotDisturb");
       }
     },
@@ -259,10 +259,10 @@ export const config = new Store<Config>({
             typeof account.unreadBadge === "boolean" &&
             account.gmail.unreadBadge === undefined
           ) {
-            // @ts-expect-error
+            // @ts-expect-error: `unreadBadge` is now under 'gmail'
             account.gmail.unreadBadge = account.unreadBadge;
 
-            // @ts-expect-error
+            // @ts-expect-error: `unreadBadge` is now under 'gmail'
             delete account.unreadBadge;
 
             accountsMigrated = true;
@@ -286,7 +286,7 @@ export const config = new Store<Config>({
     ">3.38.0": (store) => {
       // @ts-expect-error: `downloadHistory.alwaysOpenInNewWindow` has been removed
       if (typeof store.get("downloadHistory.alwaysOpenInNewWindow") === "boolean") {
-        // @ts-expect-error
+        // @ts-expect-error: `downloadHistory.alwaysOpenInNewWindow` has been removed
         store.delete("downloadHistory.alwaysOpenInNewWindow");
       }
     },
@@ -318,14 +318,14 @@ export const config = new Store<Config>({
     ">3.42.0": (store) => {
       // @ts-expect-error: `resetConfig` has been removed
       if (store.has("resetConfig")) {
-        // @ts-expect-error
+        // @ts-expect-error: `resetConfig` has been removed
         store.delete("resetConfig");
       }
     },
     ">3.45.0": (store) => {
       // @ts-expect-error: `updates.notificationDelay` has been removed
       if (store.has("updates.notificationDelay")) {
-        // @ts-expect-error
+        // @ts-expect-error: `updates.notificationDelay` has been removed
         store.delete("updates.notificationDelay");
       }
     },
@@ -334,7 +334,7 @@ export const config = new Store<Config>({
       if (typeof store.get("hardwareAcceleration") === "boolean") {
         store.set("app.hardwareAcceleration", true);
 
-        // @ts-expect-error
+        // @ts-expect-error: `hardwareAcceleration` is now 'app.hardwareAcceleration'
         store.delete("hardwareAcceleration");
       }
     },
@@ -354,11 +354,11 @@ export const config = new Store<Config>({
         const value = store.get(previousKey);
 
         if (value !== undefined) {
-          // @ts-expect-error
+          // @ts-expect-error: `googleApps.*` keys are now 'workspaceApps.*'
           store.set(renamedKey, value);
         }
 
-        // @ts-expect-error
+        // @ts-expect-error: `googleApps.*` keys are now 'workspaceApps.*'
         store.delete(previousKey);
       }
 
@@ -369,10 +369,10 @@ export const config = new Store<Config>({
       const pinnedApps = store.get("workspaceApps.pinnedApps");
 
       if (pinnedApps !== undefined) {
-        // @ts-expect-error
+        // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.launcherApps'
         store.set("workspaceApps.launcherApps", pinnedApps);
 
-        // @ts-expect-error
+        // @ts-expect-error: `workspaceApps.pinnedApps` is now 'workspaceApps.launcherApps'
         store.delete("workspaceApps.pinnedApps");
       }
 
@@ -398,18 +398,18 @@ export const config = new Store<Config>({
         });
       }
 
-      // @ts-expect-error
+      // @ts-expect-error: `gmail.zoomFactor` is now an entry in 'workspaceApps.zoomFactors'
       store.delete("gmail.zoomFactor");
 
       // @ts-expect-error: `gmail.fullDarkTheme` is now 'gmail.extendDarkTheme'
       const fullDarkTheme = store.get("gmail.fullDarkTheme");
 
       if (fullDarkTheme !== undefined) {
-        // @ts-expect-error
+        // @ts-expect-error: `gmail.fullDarkTheme` is now 'gmail.extendDarkTheme'
         store.set("gmail.extendDarkTheme", fullDarkTheme);
       }
 
-      // @ts-expect-error
+      // @ts-expect-error: `gmail.fullDarkTheme` is now 'gmail.extendDarkTheme'
       store.delete("gmail.fullDarkTheme");
     },
     ">3.58.0": (store) => {
@@ -424,7 +424,7 @@ export const config = new Store<Config>({
         store.set("workspaceApps.mode", openBehavior === "newWindow" ? "windows" : "tabs");
       }
 
-      // @ts-expect-error
+      // @ts-expect-error: `workspaceApps.openBehavior` is now 'workspaceApps.mode'
       store.delete("workspaceApps.openBehavior");
 
       const accounts = store.get("accounts");
