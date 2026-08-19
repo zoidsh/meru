@@ -3,6 +3,7 @@ import { getWorkspaceAppFromUrl } from "./google";
 
 describe("getWorkspaceAppFromUrl", () => {
   test("resolves an app from its own subdomain", () => {
+    expect(getWorkspaceAppFromUrl("https://admin.google.com/ac/home")).toBe("admin");
     expect(getWorkspaceAppFromUrl("https://calendar.google.com/calendar/u/0/r")).toBe("calendar");
     expect(getWorkspaceAppFromUrl("https://drive.google.com/drive/u/0/my-drive")).toBe("drive");
     expect(getWorkspaceAppFromUrl("https://keep.google.com/u/0/")).toBe("keep");

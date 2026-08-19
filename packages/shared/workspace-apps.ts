@@ -8,6 +8,7 @@ type WorkspaceAppDefinition = {
 };
 
 const workspaceAppDefinitions = {
+  admin: { label: "Admin" },
   calendar: { label: "Calendar" },
   chat: { label: "Chat" },
   classroom: { label: "Classroom" },
