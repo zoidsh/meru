@@ -2,6 +2,7 @@ import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { app, dialog } from "electron";
 import { accounts } from "./accounts";
+import { showProUpgradeDialog } from "./dialogs";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
@@ -22,10 +23,7 @@ export function isMailtoUrl(url: string) {
 
 export async function handleMailtoUrl(url: string) {
   if (!licenseKey.isValid) {
-    dialog.showMessageBox(main.window, {
-      type: "warning",
-      message: "Meru Pro is required to use Meru as default mail client",
-    });
+    showProUpgradeDialog("Meru Pro is required to set Meru as the default mail client.");
 
     return;
   }
@@ -43,8 +41,7 @@ export async function handleMailtoUrl(url: string) {
 
     const { response } = await dialog.showMessageBox(main.window, {
       type: "question",
-      message: "Compose new email",
-      detail: "Which account would you like to use?",
+      message: "Which account should compose this email?",
       buttons: [...accountConfigs.map((account) => account.label), "Cancel"],
       cancelId,
     });
@@ -99,10 +96,7 @@ export function isMeruUrl(url: string) {
 
 export function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
-    dialog.showMessageBox(main.window, {
-      type: "warning",
-      message: "Meru Pro is required to open Meru links",
-    });
+    showProUpgradeDialog("Meru Pro is required to open Meru links.");
 
     return;
   }

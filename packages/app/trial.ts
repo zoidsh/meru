@@ -37,10 +37,10 @@ class Trial {
 
       const { response } = await dialog.showMessageBox({
         type: "error",
-        message: "Failed to validate Meru Pro trial",
+        message: "Couldn't validate your Meru Pro trial.",
         detail: (await isOnline())
-          ? `Please restart the app to try again or contact support for further help with the error: ${error.message} (${error.cause}) - Hint: Could a VPN or firewall block the connection?`
-          : "It seems you are currently offline. Please connect to the internet and restart the app to try again.",
+          ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
+          : "Meru can't reach the internet. Connect, then restart Meru to try again.",
         buttons: ["Restart", "Quit"],
         defaultId: 0,
         cancelId: 1,
@@ -64,9 +64,9 @@ class Trial {
 
       const { response } = await dialog.showMessageBox({
         type: "info",
-        message: "Your Meru Pro trial has ended",
-        detail: "Upgrade to Pro to keep using all features or continue with the free version.",
-        buttons: ["Upgrade to Pro", "Continue with Free", "Quit"],
+        message: "Your Meru Pro trial has ended.",
+        detail: "Upgrade to Meru Pro to keep every feature, or continue with the free version.",
+        buttons: ["Upgrade to Meru Pro", "Continue with Free", "Quit"],
         defaultId: 0,
         cancelId: 2,
       });
