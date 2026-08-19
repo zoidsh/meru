@@ -78,6 +78,10 @@ export class DoNotDisturb {
       clearInterval(this.timer);
     }
 
+    // The default branch answers for the fixed durations, and `ms(duration)` is
+    // what holds it to those: an option this can't parse fails to compile here
+    // rather than reaching the branch.
+    // oxlint-disable-next-line typescript/switch-exhaustiveness-check
     switch (duration) {
       case "indefinite": {
         config.set("doNotDisturb.until", null);

@@ -124,6 +124,9 @@ export class Account {
         return;
       }
 
+      // Electron's permission list is long, grows between releases, and is
+      // answered default-deny — naming every one it refuses says nothing.
+      // oxlint-disable-next-line typescript/switch-exhaustiveness-check
       switch (permission) {
         case "clipboard-read":
         case "clipboard-sanitized-write":
