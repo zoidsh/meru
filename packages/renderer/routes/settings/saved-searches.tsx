@@ -33,8 +33,10 @@ import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/set
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
+const EMPTY_SAVED_SEARCH: GmailSavedSearchInput = { label: "", query: "" };
+
 export function SavedSearchForm({
-  savedSearch = { label: "", query: "" },
+  savedSearch = EMPTY_SAVED_SEARCH,
   labelPlaceholder = "Friends",
   queryPlaceholder = "label:friends is:unread",
   type,

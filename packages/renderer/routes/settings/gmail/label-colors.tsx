@@ -38,8 +38,14 @@ const textColorItems: { value: GmailLabelTextColor; label: string }[] = [
   { value: "black", label: "Black" },
 ];
 
+const EMPTY_LABEL_COLOR: GmailLabelColorInput = {
+  label: "",
+  color: "#1a73e8",
+  textColor: "auto",
+};
+
 function LabelColorForm({
-  labelColor = { label: "", color: "#1a73e8", textColor: "auto" },
+  labelColor = EMPTY_LABEL_COLOR,
   type,
   onSubmit,
 }: {

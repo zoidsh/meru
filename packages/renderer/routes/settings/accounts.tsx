@@ -40,13 +40,15 @@ import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 
+const EMPTY_ACCOUNT: AccountConfigInput = {
+  label: "",
+  color: null,
+  gmail: { unreadBadge: true, unifiedInbox: true },
+  notifications: true,
+};
+
 function AccountForm({
-  account = {
-    label: "",
-    color: null,
-    gmail: { unreadBadge: true, unifiedInbox: true },
-    notifications: true,
-  },
+  account = EMPTY_ACCOUNT,
   placeholder = "Work",
   onSubmit,
   type,

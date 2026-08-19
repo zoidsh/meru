@@ -158,6 +158,9 @@ function UnifiedInboxTable({
 
   const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
 
+  // TanStack Table hands back functions the React Compiler can't memoize, so it
+  // skips memoizing this component rather than risk stale rows.
+  // oxlint-disable-next-line react/incompatible-library
   const table = useReactTable({
     data: messages,
     columns,

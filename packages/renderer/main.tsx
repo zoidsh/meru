@@ -16,6 +16,8 @@ function Main() {
   useMouseAccountSwitching();
 
   return (
+    // Wouter takes the location hook as a value and calls it itself.
+    // oxlint-disable-next-line react/hooks
     <Router hook={useHashLocation}>
       <div className="flex h-screen flex-col">
         <AppTitlebar />

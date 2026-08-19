@@ -2,9 +2,13 @@ import { Toaster } from "@meru/ui/components/sonner";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useThemeStore } from "@/lib/theme";
 
+function closeWindow() {
+  window.close();
+}
+
 export function PopupWindow({
   children,
-  onClose = () => window.close(),
+  onClose = closeWindow,
 }: {
   children: React.ReactNode;
   onClose?: () => void;

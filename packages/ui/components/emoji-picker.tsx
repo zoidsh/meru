@@ -56,6 +56,7 @@ function EmojiPickerRow({ children, ...props }: EmojiPickerListRowProps) {
 function EmojiPickerEmoji({ emoji, className, ...props }: EmojiPickerListEmojiProps) {
   return (
     <button
+      type="button"
       {...props}
       className={cn(
         "flex size-7 items-center justify-center rounded-sm text-base data-[active]:bg-accent",

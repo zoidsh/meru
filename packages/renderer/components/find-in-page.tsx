@@ -27,6 +27,9 @@ export function FindInPage({
     onFind(searchText, { findNext: true });
   }, 250);
 
+  // Reactivating is the only thing that should re-run the search from here:
+  // typing goes through `debouncedOnFind` instead.
+  // oxlint-disable react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps
   useEffect(() => {
     if (isActive && text) {
       onFind(text, { findNext: true });
@@ -35,8 +38,8 @@ export function FindInPage({
         inputRef.current.select();
       }
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: refire when reactivated
   }, [isActive]);
+  // oxlint-enable react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps
 
   if (!isActive) {
     return;

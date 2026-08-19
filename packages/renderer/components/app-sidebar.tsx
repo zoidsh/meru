@@ -145,14 +145,15 @@ export function AppSidebar() {
             .filter((item) => !item.hidden)
             .map(({ type, label, path }, index) => {
               if (type === "separator") {
-                // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
+                // A separator carries nothing of its own to key on, and the list
+                // is a fixed one that never reorders.
+                // oxlint-disable-next-line react/no-array-index-key
                 return <Separator key={index} />;
               }
 
               return (
                 <Button
-                  // biome-ignore lint/suspicious/noArrayIndexKey: Key is acceptable here
-                  key={index}
+                  key={path}
                   onClick={() => {
                     navigate(path);
                   }}
