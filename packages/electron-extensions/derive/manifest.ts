@@ -52,7 +52,7 @@ function createServiceWorkerWrapper(
  * once for `webRequest` and once per event on it, in every extension context.
  * That is a `DumpWithoutCrashing` in the builds Meru ships and a fatal check in
  * others, and it costs the extension nothing to avoid: extension-side
- * `webRequest` listeners never see a request in Electron, measured in the spike.
+ * `webRequest` listeners never receive a request in Electron, measured in the spike.
  *
  * Dropped from the derived copy, the namespace is missing rather than broken,
  * and the facade's noop `webRequest` stands in for it.
@@ -174,7 +174,7 @@ export function deriveManifest(
     facadeFileName: string;
     serviceWorkerFileName: string;
     bridgeConnectSource: string;
-    /** Manifest keys to leave out of the copy, e.g. `content_scripts`. */
+    /** Manifest keys to leave out of the copy, such as `content_scripts`. */
     strippedManifestKeys?: string[];
     /**
      * Match patterns to write over every content script's own. Without them the

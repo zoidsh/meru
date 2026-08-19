@@ -23,9 +23,9 @@ const HOST_NOT_FOUND_ERROR = "Specified native messaging host not found.";
 const HOST_FORBIDDEN_ERROR = "Access to the specified native messaging host is forbidden.";
 
 /**
- * Whether an extension may drive this host. The host's own `allowed_origins`
- * has already said yes by the time this is asked; an embedder that wants a
- * narrower rule than "whatever the host trusts" says no here.
+ * Whether an extension can drive this host. The host's own `allowed_origins`
+ * has already allowed it by the time this runs, so an embedder needing a rule
+ * narrower than "whatever the host trusts" denies it here.
  */
 export type NativeMessagingHostPolicy = (details: {
   session: Session;
@@ -59,14 +59,14 @@ type NativeMessagingPort = {
  * `chrome.runtime.connectNative` and `sendNativeMessage` for extensions loaded
  * into Electron sessions.
  *
- * Electron ships Chromium's native messaging plumbing with the door nailed
- * shut: `ElectronMessagingDelegate::IsNativeMessagingHostAllowed` returns
+ * Electron ships Chromium's native messaging plumbing with its entry points
+ * disabled: `ElectronMessagingDelegate::IsNativeMessagingHostAllowed` returns
  * `DISALLOW` and `CreateReceiverForNativeApp` returns nullptr, so the built-in
  * `connectNative` disconnects every port with "Access to the native messaging
  * host was disabled by the system administrator" no matter where a host
  * manifest sits. The facade therefore replaces both methods and they land here
  * over the extension bridge, which finds the host manifest the way Chromium
- * would, honours its `allowed_origins`, and runs one host process per port.
+ * would, honors its `allowed_origins`, and runs one host process per port.
  */
 export class NativeMessaging {
   private options: NativeMessagingOptions;
@@ -251,7 +251,7 @@ export class NativeMessaging {
     try {
       port.controller.enqueue(encodeNativeMessage(frame));
     } catch {
-      // The stream no longer accepts frames when the extension cancelled it —
+      // The stream no longer accepts frames when the extension canceled it —
       // a closed page, a restarted service worker — and a throw out of here
       // would keep `closePort` from killing the port's host process
       return;
@@ -279,7 +279,7 @@ export class NativeMessaging {
     try {
       port.controller.close();
     } catch {
-      // The stream is already gone when the extension cancelled it
+      // The stream is already gone when the extension canceled it
     }
 
     this.options.logger?.info("Disconnected native messaging host", {

@@ -210,7 +210,7 @@ async function readStampSourceDir(stampPath: string) {
  * to its source but its stamp, so a copy without one is unaccounted for and
  * goes too.
  *
- * Meant to run once the embedder knows its load list, which is also why it is
+ * Meant to run once the embedder has its load list, which is also why it is
  * safe to delete: a copy still in use belongs to a source that is on the list.
  */
 export async function pruneDerivedExtensions({

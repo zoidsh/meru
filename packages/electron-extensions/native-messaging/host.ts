@@ -125,8 +125,8 @@ export class NativeMessagingHost {
   }
 
   /**
-   * Ends the host. Closing stdin is how a host is told to shut down, and the
-   * kill is what covers hosts that ignore it.
+   * Ends the host. Closing stdin is how a host is told to shut down, and
+   * terminating the process covers the hosts that ignore it.
    */
   kill() {
     if (this.isClosed) {

@@ -5,7 +5,7 @@ export type CrxDownloadOptions = {
   /**
    * The Chrome version the request speaks for, `process.versions.chrome` in an
    * Electron app. The endpoint answers 204 No Content without it, since it has
-   * no way to tell which package a browser it knows nothing about can run.
+   * no way to tell which package an unidentified browser can run.
    */
   chromeVersion: string;
 };
@@ -86,7 +86,7 @@ export type FetchCrxOptions = CrxDownloadOptions & {
  * Downloads the newest package for an extension id. The endpoint answers with a
  * redirect to Google's CDN, so redirects have to be followed.
  *
- * Nothing here decides whether the bytes are a package worth having: an answer
+ * Nothing here judges whether the bytes are a package worth having: an answer
  * that is not a CRX signed for this id fails in `verifyCrx`, which is the only
  * place allowed to say a package is good.
  */
@@ -183,7 +183,7 @@ export type FetchCrxUpdateOptions = UpdateCheckOptions & {
  * a check cheap enough to run on a schedule and on a button.
  *
  * The version it answers with is the endpoint's word rather than a verified
- * one, and nothing installs off it: it only decides whether `fetchCrx` runs,
+ * one, and nothing installs off it: it only gates whether `fetchCrx` runs,
  * and the package that brings back still has to pass `verifyCrx`.
  */
 export async function fetchCrxUpdate({

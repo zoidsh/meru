@@ -142,8 +142,8 @@ export function getExtensionOrigin(extensionId: string) {
 
 /**
  * Whether the host itself accepts this extension. The check is the host's, not
- * the browser's — it is how a host decides which extensions may drive it, and
- * skipping it would hand every loaded extension every host on the machine.
+ * the browser's — it is how a host declares which extensions can drive it, and
+ * skipping it would give every loaded extension every host on the machine.
  */
 export function isExtensionAllowed(manifest: NativeMessagingHostManifest, extensionId: string) {
   return manifest.allowed_origins.includes(getExtensionOrigin(extensionId));
