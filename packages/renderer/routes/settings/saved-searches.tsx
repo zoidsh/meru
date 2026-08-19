@@ -299,14 +299,17 @@ export function SavedSearchesSettings() {
 
                   configMutation.mutate({
                     "gmail.savedSearches": config["gmail.savedSearches"].filter(
-                      (savedSearch) => savedSearch.id !== deleteSavedSearchId,
+                      (existingSavedSearch) => existingSavedSearch.id !== deleteSavedSearchId,
                     ),
                   });
                 }}
                 onEdit={(editedSavedSearch) => {
                   configMutation.mutate({
-                    "gmail.savedSearches": config["gmail.savedSearches"].map((savedSearch) =>
-                      savedSearch.id === editedSavedSearch.id ? editedSavedSearch : savedSearch,
+                    "gmail.savedSearches": config["gmail.savedSearches"].map(
+                      (existingSavedSearch) =>
+                        existingSavedSearch.id === editedSavedSearch.id
+                          ? editedSavedSearch
+                          : existingSavedSearch,
                     ),
                   });
                 }}

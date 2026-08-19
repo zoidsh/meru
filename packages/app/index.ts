@@ -32,13 +32,13 @@ import { spellchecker } from "./spellchecker";
 import { trial } from "./trial";
 
 async function resetApp() {
-  const accounts = config.get("accounts");
+  const accountConfigs = config.get("accounts");
 
   await app.whenReady();
 
   await Promise.all(
-    accounts.map((account) => {
-      const accountSession = session.fromPartition(`persist:${account.id}`);
+    accountConfigs.map((accountConfig) => {
+      const accountSession = session.fromPartition(`persist:${accountConfig.id}`);
 
       return Promise.all([
         accountSession.clearCache(),

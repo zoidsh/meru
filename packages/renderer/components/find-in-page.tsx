@@ -23,8 +23,8 @@ export function FindInPage({
 
   const [text, setText] = useState("");
 
-  const debouncedOnFind = useDebouncedCallback((text: string) => {
-    onFind(text, { findNext: true });
+  const debouncedOnFind = useDebouncedCallback((searchText: string) => {
+    onFind(searchText, { findNext: true });
   }, 250);
 
   useEffect(() => {

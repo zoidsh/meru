@@ -65,12 +65,12 @@ const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pd
  * is the single place that answers it. An unrecognised URL only has the switch
  * to go on.
  */
-export function canOpenWorkspaceAppInApp(app: SupportedWorkspaceApp | undefined) {
+export function canOpenWorkspaceAppInApp(workspaceApp: SupportedWorkspaceApp | undefined) {
   if (!config.get("workspaceApps.openInApp")) {
     return false;
   }
 
-  return !app || !config.get("workspaceApps.openInAppExcludedApps").includes(app);
+  return !workspaceApp || !config.get("workspaceApps.openInAppExcludedApps").includes(workspaceApp);
 }
 
 export function resolveWorkspaceAppOpenBehavior(
@@ -395,12 +395,12 @@ export class WorkspaceApp {
     globalShortcut.unregister(GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR);
   }
 
-  static resolveTitle(pageTitle: string, app: SupportedWorkspaceApp | undefined) {
-    if (!app) {
+  static resolveTitle(pageTitle: string, workspaceApp: SupportedWorkspaceApp | undefined) {
+    if (!workspaceApp) {
       return pageTitle;
     }
 
-    const appLabel = workspaceApps[app].label;
+    const appLabel = workspaceApps[workspaceApp].label;
 
     if (!pageTitle) {
       return appLabel;
@@ -506,12 +506,12 @@ export class WorkspaceApp {
     loadOnLaunch,
     hibernatesWhenIdle,
     opensLinksForApp,
-    app,
+    app: workspaceApp,
     zoomFactor,
     navigationHistory,
   }: WorkspaceAppOptions) {
     this.accountId = accountId;
-    this.app = app ?? getWorkspaceAppFromUrl(url);
+    this.app = workspaceApp ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
     this.hibernatesWhenIdle = Boolean(hibernatesWhenIdle);

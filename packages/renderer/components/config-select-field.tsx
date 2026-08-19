@@ -117,9 +117,9 @@ export function ConfigSelectField({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {items.map(({ value, label }) => (
-            <SelectItem key={value} value={value}>
-              {label}
+          {items.map(({ value: itemValue, label: itemLabel }) => (
+            <SelectItem key={itemValue} value={itemValue}>
+              {itemLabel}
             </SelectItem>
           ))}
         </SelectContent>

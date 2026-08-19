@@ -131,13 +131,13 @@ export class AppTray {
     const mainWindowIsVisible = main.window.isVisible();
 
     const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-      ...accounts.getAccounts().map(({ config, instance }) => {
+      ...accounts.getAccounts().map(({ config: accountConfig, instance }) => {
         const unreadCount = instance.gmail.store.getState().unreadCount;
 
         return {
-          label: unreadCount ? `${config.label} (${unreadCount})` : config.label,
+          label: unreadCount ? `${accountConfig.label} (${unreadCount})` : accountConfig.label,
           click: () => {
-            accounts.selectAccount(config.id);
+            accounts.selectAccount(accountConfig.id);
 
             main.show();
           },

@@ -60,9 +60,9 @@ export function ConfigSwitchField({
         id={configKey}
         checked={disabled ? false : licenseKeyRequired && !isLicenseKeyValid ? false : checked}
         disabled={disabled || (licenseKeyRequired && !isLicenseKeyValid)}
-        onCheckedChange={(checked) => {
+        onCheckedChange={(newChecked) => {
           configMutation.mutate({
-            [configKey]: checked,
+            [configKey]: newChecked,
           });
         }}
       />

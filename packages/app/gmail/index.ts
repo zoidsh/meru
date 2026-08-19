@@ -681,13 +681,13 @@ export class Gmail {
         await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
       );
 
-      const body = await this.session
+      const inboxFeedXml = await this.session
         .fetch(
           `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
         )
         .then((res) => res.text());
 
-      const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
+      const { feed } = inboxFeedSchema.parse(xmlParser.parse(inboxFeedXml));
 
       const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 

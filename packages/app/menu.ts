@@ -355,11 +355,12 @@ export class AppMenu {
             accelerator: "CommandOrControl+F",
             enabled: isFindInPageEnabled,
             click: () => {
-              const focusedWindow = BrowserWindow.getFocusedWindow();
+              const windowFocusedOnClick = BrowserWindow.getFocusedWindow();
 
               const targetWebContents =
-                focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)
-                  ? focusedWindow.webContents
+                windowFocusedOnClick &&
+                WorkspaceApp.tryFromWebContents(windowFocusedOnClick.webContents)
+                  ? windowFocusedOnClick.webContents
                   : main.window.webContents;
 
               ipc.renderer.send(targetWebContents, "findInPage.activate");

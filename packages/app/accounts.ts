@@ -367,9 +367,9 @@ class Accounts {
 
     const updatedAccounts = config
       .get("accounts")
-      .filter((account) => account.id !== selectedAccountId);
+      .filter((accountConfig) => accountConfig.id !== selectedAccountId);
 
-    if (updatedAccounts.every((account) => account.selected === false)) {
+    if (updatedAccounts.every((accountConfig) => accountConfig.selected === false)) {
       if (!updatedAccounts[0]) {
         throw new Error("Could not find first account");
       }

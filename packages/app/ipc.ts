@@ -815,13 +815,13 @@ class Ipc {
       });
     });
 
-    ipc.main.on("workspaceApps.openApp", (_event, app, modifierOpenBehavior) => {
+    ipc.main.on("workspaceApps.openApp", (_event, workspaceApp, modifierOpenBehavior) => {
       if (!licenseKey.isValid) {
         return;
       }
 
-      if (!canOpenWorkspaceAppInApp(app)) {
-        void openExternalUrl(getWorkspaceAppUrl(app), {
+      if (!canOpenWorkspaceAppInApp(workspaceApp)) {
+        void openExternalUrl(getWorkspaceAppUrl(workspaceApp), {
           skipTrustedHostCheck: true,
           focusBrowser: modifierOpenBehavior !== "backgroundTab",
         });
@@ -834,18 +834,18 @@ class Ipc {
       const selectedAccount = accounts.getSelectedAccount();
 
       if (openBehavior === "newWindow") {
-        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(app));
+        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(workspaceApp));
 
         return;
       }
 
-      const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
+      const openedTab = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(workspaceApp));
 
       if (openBehavior === "backgroundTab") {
         return;
       }
 
-      selectedAccount.instance.tabs.activateTab(workspaceApp.id);
+      selectedAccount.instance.tabs.activateTab(openedTab.id);
 
       accounts.refreshSelectedAccountView();
     });
