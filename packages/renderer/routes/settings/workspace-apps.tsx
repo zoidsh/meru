@@ -2,6 +2,7 @@ import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
+import { objectEntries, objectKeys } from "@meru/shared/utils";
 import {
   launcherAndBookmarksPlacements,
   type LauncherWorkspaceApp,
@@ -33,7 +34,6 @@ import {
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
-import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -108,13 +108,13 @@ export function WorkspaceAppsSettings() {
 
   const launcherApps = config["workspaceApps.launcherApps"];
 
-  const availableApps = (Object.keys(launcherWorkspaceApps) as LauncherWorkspaceApp[]).filter(
+  const availableApps = objectKeys(launcherWorkspaceApps).filter(
     (app) => !launcherApps.includes(app),
   );
 
   const excludedApps = config["workspaceApps.openInAppExcludedApps"];
 
-  const excludedAppLabels = (Object.keys(workspaceApps) as SupportedWorkspaceApp[])
+  const excludedAppLabels = objectKeys(workspaceApps)
     .filter((app) => excludedApps.includes(app))
     .map((app) => workspaceApps[app].label);
 
@@ -200,7 +200,7 @@ export function WorkspaceAppsSettings() {
                     }
                   />
                   <DropdownMenuContent align="end">
-                    {(Object.entries(workspaceApps) as Entries<typeof workspaceApps>)
+                    {objectEntries(workspaceApps)
                       .filter(([, { singleInstance }]) => !singleInstance)
                       .map(([app, { label }]) => (
                         <DropdownMenuCheckboxItem

@@ -1,3 +1,4 @@
+import { objectKeys } from "./utils";
 import { type SupportedWorkspaceApp, workspaceApps } from "./workspace-apps";
 
 export function getWorkspaceAppUrl(app: SupportedWorkspaceApp) {
@@ -9,7 +10,7 @@ export function getGoogleDomainFaviconUrl(domain: string, size: number) {
 }
 
 const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>(
-  (Object.keys(workspaceApps) as SupportedWorkspaceApp[]).map((workspaceApp) => [
+  objectKeys(workspaceApps).map((workspaceApp) => [
     new URL(getWorkspaceAppUrl(workspaceApp)).hostname.replace(".google.com", ""),
     workspaceApp,
   ]),

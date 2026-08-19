@@ -8,6 +8,7 @@ import {
   type AccountConfigInput,
   accountConfigInputSchema,
 } from "@meru/shared/schemas";
+import { objectEntries } from "@meru/shared/utils";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -32,7 +33,6 @@ import { cn } from "@meru/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import type { Entries } from "type-fest";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -108,16 +108,14 @@ function AccountForm({
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {(Object.entries(accountColorsMap) as Entries<typeof accountColorsMap>).map(
-                        ([colorKey, { label, className }]) => (
-                          <SelectItem key={colorKey} value={colorKey}>
-                            <div className="flex items-center gap-2">
-                              <div className={`size-2 rounded-full ${className}`} />
-                              {label}
-                            </div>
-                          </SelectItem>
-                        ),
-                      )}
+                      {objectEntries(accountColorsMap).map(([colorKey, { label, className }]) => (
+                        <SelectItem key={colorKey} value={colorKey}>
+                          <div className="flex items-center gap-2">
+                            <div className={`size-2 rounded-full ${className}`} />
+                            {label}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {field.state.value && (
