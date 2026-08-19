@@ -63,7 +63,7 @@ async function hashSourceTree(sourceDir: string) {
     fileEntries.push(`${relativePath}\0${stats.size}\0${stats.mtimeMs}`);
   }
 
-  return hash(fileEntries.sort().join("\n"));
+  return hash(fileEntries.toSorted().join("\n"));
 }
 
 async function readStamp(stampPath: string) {

@@ -1,4 +1,4 @@
 {
-  "extends": "@total-typescript/tsconfig/bundler/no-dom",
+  "extends": "@meru/tsconfig/node",
   "exclude": ["packages"]
 }

@@ -74,7 +74,7 @@ function createFetch({ crx, servedVersion }: { crx?: Uint8Array; servedVersion?:
 
 async function readEntryNames(dirPath: string) {
   try {
-    return (await readdir(dirPath, { recursive: true })).sort();
+    return (await readdir(dirPath, { recursive: true })).toSorted();
   } catch {
     return [];
   }

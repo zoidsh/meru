@@ -115,7 +115,7 @@ describe("deriveExtension", () => {
   test("never writes to the directory it was handed", async () => {
     await derive();
 
-    expect((await readdir(sourceDir)).sort()).toEqual([
+    expect((await readdir(sourceDir)).toSorted()).toEqual([
       "background",
       "manifest.json",
       "popup.html",
@@ -377,7 +377,7 @@ describe("pruneDerivedExtensions", () => {
 
     await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [otherSourceDir] });
 
-    expect((await readdir(derivedExtensionsDir)).sort()).toEqual([
+    expect((await readdir(derivedExtensionsDir)).toSorted()).toEqual([
       path.basename(otherDerivedDir),
       `${path.basename(otherDerivedDir)}.json`,
     ]);

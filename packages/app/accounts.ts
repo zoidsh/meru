@@ -97,7 +97,7 @@ class Accounts {
   }
 
   async createViews() {
-    const accounts = this.getAccounts().sort((a, b) => {
+    const accounts = this.getAccounts().toSorted((a, b) => {
       if (a.config.selected && !b.config.selected) {
         return 1;
       }

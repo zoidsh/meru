@@ -101,6 +101,10 @@
       "name": "@meru/shared",
       "version": "0.0.0",
     },
+    "packages/tsconfig": {
+      "name": "@meru/tsconfig",
+      "version": "0.0.0",
+    },
     "packages/ui": {
       "name": "@meru/ui",
       "version": "0.0.0",
@@ -295,6 +299,8 @@
     "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 
     "@meru/shared": ["@meru/shared@workspace:packages/shared"],
+
+    "@meru/tsconfig": ["@meru/tsconfig@workspace:packages/tsconfig"],
 
     "@meru/ui": ["@meru/ui@workspace:packages/ui"],
 

@@ -25,7 +25,7 @@ export function findExtensionDirs(dirPath: string) {
   }
 
   return entryNames
-    .sort()
+    .toSorted()
     .map((entryName) => path.join(dirPath, entryName))
     .filter((extensionDir) => fs.existsSync(path.join(extensionDir, MANIFEST_FILE_NAME)))
     .map((extensionDir) => fs.realpathSync(extensionDir));

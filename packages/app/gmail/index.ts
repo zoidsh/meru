@@ -754,7 +754,7 @@ export class Gmail {
 
       const hasMultipleAccounts = accounts.getAccountConfigs().length > 1;
 
-      for (const newMailIndex of newMailIndexes.reverse()) {
+      for (const newMailIndex of newMailIndexes.toReversed()) {
         const newMail = unreadInbox[newMailIndex];
 
         if (!newMail) {

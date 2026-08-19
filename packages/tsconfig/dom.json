@@ -1,0 +1,6 @@
+{
+  "extends": "@total-typescript/tsconfig/bundler/dom",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"]
+  }
+}

@@ -80,7 +80,7 @@ function pickIconPath(icons: Record<string, string> | undefined) {
   const sizedIcons = Object.entries(icons)
     .map(([size, iconPath]) => ({ size: Number(size), iconPath }))
     .filter(({ size }) => Number.isFinite(size) && size > 0)
-    .sort((a, b) => a.size - b.size);
+    .toSorted((a, b) => a.size - b.size);
 
   const pickedIcon = sizedIcons.find(({ size }) => size >= ICON_SIZE) ?? sizedIcons.at(-1);
 

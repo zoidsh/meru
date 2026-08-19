@@ -109,7 +109,7 @@ export function useUnifiedInbox() {
         ...mail,
       })),
     )
-    .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
+    .toSorted((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
 
   return { messages };
 }

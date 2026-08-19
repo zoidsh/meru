@@ -191,7 +191,7 @@ export async function getInstalledExtension({
 }: InstalledExtensionOptions): Promise<InstalledExtension | undefined> {
   const extensionInstallDir = path.join(installDir, extensionId);
 
-  const [version] = (await readInstalledVersions(extensionInstallDir)).sort(
+  const [version] = (await readInstalledVersions(extensionInstallDir)).toSorted(
     (version, otherVersion) => compareExtensionVersions(otherVersion, version),
   );
 

@@ -183,7 +183,7 @@ async function createPartitionDir(entryPaths: string[]) {
 async function listPartitionDir(partitionPath: string) {
   const entryPaths = await fs.readdir(partitionPath, { recursive: true });
 
-  return entryPaths.sort();
+  return entryPaths.toSorted();
 }
 
 describe("Extensions", () => {

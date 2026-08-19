@@ -1,5 +1,5 @@
 {
-  "extends": "@total-typescript/tsconfig/bundler/no-dom",
+  "extends": "@meru/tsconfig/node",
   "compilerOptions": {
     "paths": {
       "@/*": ["./*"]

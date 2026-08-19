@@ -63,7 +63,7 @@ export function LanguagesSettings() {
   const languages = availableLanguages
     .filter((code) => code !== osLocale)
     .map((code) => ({ code, label: getLanguageLabel(code) }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .toSorted((a, b) => a.label.localeCompare(b.label));
 
   function toggleLanguage(code: string, checked: boolean) {
     const updated = checked ? [...selected, code] : selected.filter((l) => l !== code);
