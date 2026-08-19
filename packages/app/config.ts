@@ -380,9 +380,7 @@ export const config = new Store<Config>({
 
       if (Array.isArray(accounts)) {
         for (const account of accounts) {
-          if (account.workspaceApps === undefined) {
-            account.workspaceApps = { savedTabs: [], bookmarks: [] };
-          }
+          account.workspaceApps ??= { savedTabs: [], bookmarks: [] };
         }
 
         store.set("accounts", accounts);

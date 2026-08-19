@@ -211,7 +211,7 @@ export function getStylesheetCollection(ownerDocument: Document): StylesheetColl
   const fingerprint = getStylesheetFingerprint(ownerDocument);
   const cached = collectionCache.get(ownerDocument);
 
-  if (cached && cached.fingerprint === fingerprint) {
+  if (cached?.fingerprint === fingerprint) {
     return cached.collection;
   }
 

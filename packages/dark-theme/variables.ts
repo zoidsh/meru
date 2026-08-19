@@ -96,7 +96,7 @@ export function buildDarkVariableOverrides(
 
   for (const name of customPropertyNames) {
     const resolvedValue = rootStyle.getPropertyValue(name).trim();
-    const value = resolvedValue || customPropertyFallbacks.get(name) || "";
+    const value = resolvedValue || customPropertyFallbacks.get(name);
 
     if (!value) {
       continue;

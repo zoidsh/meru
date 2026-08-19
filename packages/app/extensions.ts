@@ -219,11 +219,9 @@ class ExtensionUpdater {
   }
 
   checkForUpdates() {
-    if (!this.runningCheck) {
-      this.runningCheck = this.updateOptedInExtensions().finally(() => {
-        this.runningCheck = undefined;
-      });
-    }
+    this.runningCheck ??= this.updateOptedInExtensions().finally(() => {
+      this.runningCheck = undefined;
+    });
 
     return this.runningCheck;
   }

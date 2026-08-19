@@ -147,7 +147,7 @@ export function LicenseSettings() {
 
   const deviceInfoForm = useTanStackForm({
     defaultValues: {
-      label: deviceInfo?.label || "",
+      label: deviceInfo?.label ?? "",
     },
     validators: {
       onSubmit: z.object({
