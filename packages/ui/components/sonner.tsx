@@ -9,6 +9,16 @@ import {
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
+// React's `CSSProperties` lists the known properties only, so the custom ones
+// have to be handed over as such.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
+const toasterStyle = {
+  "--normal-bg": "var(--popover)",
+  "--normal-text": "var(--popover-foreground)",
+  "--normal-border": "var(--border)",
+  "--border-radius": "var(--radius)",
+} as React.CSSProperties;
+
 const Toaster = ({ theme, ...props }: ToasterProps) => {
   return (
     <Sonner
@@ -21,14 +31,7 @@ const Toaster = ({ theme, ...props }: ToasterProps) => {
         error: <OctagonXIcon className="size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
+      style={toasterStyle}
       {...props}
     />
   );

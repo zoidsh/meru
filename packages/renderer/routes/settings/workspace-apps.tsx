@@ -7,7 +7,6 @@ import {
   launcherAndBookmarksPlacements,
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
-  type SupportedWorkspaceApp,
   workspaceApps,
   workspaceAppsHibernations,
   workspaceAppsHibernationTimeouts,

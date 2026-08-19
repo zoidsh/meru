@@ -9,6 +9,7 @@ import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+import { objectEntries } from "@meru/shared/utils";
 import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
@@ -667,9 +668,9 @@ class Ipc {
     ipc.main.handle("spellchecker.getOsLocale", () => app.getLocale());
 
     ipc.main.handle("config.setConfig", (_event, keyValues) => {
-      Object.entries(keyValues).forEach(([key, value]) => {
-        config.set(key as keyof typeof keyValues, value);
-      });
+      for (const [key, value] of objectEntries(keyValues)) {
+        config.set(key, value);
+      }
     });
 
     ipc.main.handle("downloads.setLocation", async () => {

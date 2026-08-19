@@ -1,4 +1,5 @@
 import { GMAIL_URL } from "./gmail";
+import { objectEntries } from "./utils";
 
 type WorkspaceAppDefinition = {
   label: string;
@@ -43,11 +44,18 @@ export type LauncherWorkspaceApp = {
 export const workspaceApps: Record<SupportedWorkspaceApp, WorkspaceAppDefinition> =
   workspaceAppDefinitions;
 
+// `Object.fromEntries` answers with an index signature; the entries it is given
+// here come from `workspaceApps`, so the keys are the ones the type names.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const launcherWorkspaceApps = Object.fromEntries(
-  Object.entries(workspaceApps)
+  objectEntries(workspaceApps)
     .filter(([, workspaceAppDefinition]) => workspaceAppDefinition.availableInLauncher !== false)
     .map(([workspaceApp, workspaceAppDefinition]) => [workspaceApp, workspaceAppDefinition.label]),
 ) as Record<LauncherWorkspaceApp, string>;
+
+export function isSupportedWorkspaceApp(value: unknown): value is SupportedWorkspaceApp {
+  return typeof value === "string" && Object.hasOwn(workspaceApps, value);
+}
 
 const LAUNCHER_EXPANDED_APPS_THRESHOLD = 3;
 

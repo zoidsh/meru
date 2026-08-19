@@ -1,5 +1,8 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
+import {
+  isSupportedWorkspaceApp,
+  type WorkspaceAppBookmarkState,
+} from "@meru/shared/workspace-apps";
 import { cn } from "@meru/ui/lib/utils";
 import { DownloadIcon, EllipsisVerticalIcon, StarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -181,7 +184,9 @@ function WorkspaceApp() {
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
   );
 
-  const workspaceApp = searchParams.get("workspaceApp") as SupportedWorkspaceApp | null;
+  const workspaceAppParam = searchParams.get("workspaceApp");
+
+  const workspaceApp = isSupportedWorkspaceApp(workspaceAppParam) ? workspaceAppParam : null;
 
   const workspaceAppId = searchParams.get("workspaceAppId");
 
