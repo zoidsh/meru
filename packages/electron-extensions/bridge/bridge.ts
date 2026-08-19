@@ -112,7 +112,10 @@ export class ExtensionBridge {
       return "";
     }
 
-    const reader = request.body.getReader();
+    // The ambient types leave the request body's stream unparameterized.
+    const body: ReadableStream<Uint8Array> = request.body;
+
+    const reader = body.getReader();
 
     const chunks: Uint8Array[] = [];
 

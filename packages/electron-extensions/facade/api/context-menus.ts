@@ -18,6 +18,10 @@ function takeMenuItemId(createProperties: unknown) {
   return createdMenuItemCount;
 }
 
+function isCreatedCallback(value: unknown): value is () => void {
+  return typeof value === "function";
+}
+
 /**
  * The one method here that answers synchronously with the id it assigned, using
  * its optional callback only to signal that the item was created.
@@ -27,7 +31,7 @@ function createMenuItem(...callArguments: unknown[]) {
 
   const callback = callArguments.at(-1);
 
-  if (typeof callback === "function") {
+  if (isCreatedCallback(callback)) {
     queueMicrotask(() => {
       callback();
     });

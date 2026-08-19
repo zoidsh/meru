@@ -116,7 +116,10 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
     markOpened();
 
-    const reader = response.body.getReader();
+    // The ambient types leave the response body's stream unparameterized.
+    const body: ReadableStream<Uint8Array> = response.body;
+
+    const reader = body.getReader();
 
     const decoder = new NativeMessageDecoder();
 

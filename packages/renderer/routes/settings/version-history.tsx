@@ -26,7 +26,7 @@ export function VersionHistorySettings() {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["github", "releases"],
     queryFn: async () => {
-      const res = await fetch("https://api.github.com/repos/zoidsh/meru/releases").then(
+      const res: unknown = await fetch("https://api.github.com/repos/zoidsh/meru/releases").then(
         (response) => response.json(),
       );
 

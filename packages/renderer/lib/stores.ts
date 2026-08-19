@@ -6,12 +6,18 @@ import { create } from "zustand";
 import { getConfig } from "./react-query";
 import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
 
+// The main process serializes these into the window's URL, so the shape is its
+// own and only needs saying again here.
+const initialAccounts = (
+  accountsSearchParam ? JSON.parse(accountsSearchParam) : []
+) as AccountInstances;
+
 export const useAccountsStore = create<{
   accounts: AccountInstances;
   isAddAccountDialogOpen: boolean;
   setIsAddAccountDialogOpen: (isOpen: boolean) => void;
 }>((set) => ({
-  accounts: accountsSearchParam ? JSON.parse(accountsSearchParam) : [],
+  accounts: initialAccounts,
   isAddAccountDialogOpen: false,
   setIsAddAccountDialogOpen: (isOpen) => {
     set({ isAddAccountDialogOpen: isOpen });

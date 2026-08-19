@@ -12,10 +12,19 @@ function Slider({
   max = 100,
   ...props
 }: SliderPrimitive.Root.Props) {
-  const _values = React.useMemo(
-    () => (Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min, max]),
-    [value, defaultValue, min, max],
-  );
+  // `Array.isArray` widens a `readonly number[]` to `any[]`, so the array case
+  // is picked out by `typeof` instead.
+  const _values = React.useMemo<readonly number[]>(() => {
+    if (typeof value === "object") {
+      return value;
+    }
+
+    if (typeof defaultValue === "object") {
+      return defaultValue;
+    }
+
+    return [min, max];
+  }, [value, defaultValue, min, max]);
 
   return (
     <SliderPrimitive.Root
