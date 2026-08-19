@@ -243,7 +243,7 @@ export class Popup {
     if (isPage) {
       loadRenderer(this.view, { page: content.page });
     } else {
-      loadUrl(this.view.webContents, content.url);
+      void loadUrl(this.view.webContents, content.url);
     }
 
     parentWindow.contentView.addChildView(this.view);

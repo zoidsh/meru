@@ -136,7 +136,7 @@ class Ipc {
     });
 
     this.main.on("accounts.removeAccount", (_event, selectedAccountId) => {
-      accounts.removeAccount(selectedAccountId);
+      void accounts.removeAccount(selectedAccountId);
     });
 
     this.main.on("accounts.updateAccount", (_event, updatedAccount) => {
@@ -217,7 +217,7 @@ class Ipc {
         return;
       }
 
-      shell.openPath(filePath);
+      void shell.openPath(filePath);
     });
 
     ipc.main.on("downloads.showFileInFolder", async (_event, { id, filePath }) => {
@@ -473,7 +473,7 @@ class Ipc {
               return;
             }
 
-            openExternalUrl(tab.url, { skipTrustedHostCheck: true });
+            void openExternalUrl(tab.url, { skipTrustedHostCheck: true });
           },
         },
         ...(tabApp
@@ -821,7 +821,7 @@ class Ipc {
       }
 
       if (!canOpenWorkspaceAppInApp(app)) {
-        openExternalUrl(getWorkspaceAppUrl(app), {
+        void openExternalUrl(getWorkspaceAppUrl(app), {
           skipTrustedHostCheck: true,
           focusBrowser: modifierOpenBehavior !== "backgroundTab",
         });
@@ -890,7 +890,7 @@ class Ipc {
       }
 
       if (openIn === "editor") {
-        shell.openPath(GMAIL_USER_STYLES_PATH);
+        void shell.openPath(GMAIL_USER_STYLES_PATH);
       } else {
         shell.showItemInFolder(GMAIL_USER_STYLES_PATH);
       }
@@ -1099,7 +1099,7 @@ class Ipc {
       }
 
       if (downloads.toggleRecentDownloadHistoryPopup(parentWindow)) {
-        downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
+        void downloads.checkDownloadHistoryItems(MAX_RECENT_DOWNLOAD_HISTORY_ITEMS);
       }
     });
 
@@ -1116,7 +1116,7 @@ class Ipc {
 
       main.navigate("/download-history");
 
-      downloads.checkDownloadHistoryItems();
+      void downloads.checkDownloadHistoryItems();
     });
 
     this.main.on("gmail.unreadCountChanged", (event, unreadCountString) => {
@@ -1141,7 +1141,7 @@ class Ipc {
         if (event.sender.id === account.gmail.view.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
-          account.gmail.fetchInboxFeed();
+          void account.gmail.fetchInboxFeed();
 
           break;
         }

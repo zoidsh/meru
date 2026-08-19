@@ -24,5 +24,5 @@ export function playNotificationSound({
 
   audio.volume = volume;
 
-  audio.play();
+  void audio.play();
 }

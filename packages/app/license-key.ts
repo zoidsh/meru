@@ -52,7 +52,7 @@ class LicenseKey {
           });
 
           if (response === 0) {
-            openExternalUrl("https://portal.meru.so");
+            void openExternalUrl("https://portal.meru.so");
           }
         } else {
           await this.showActivationError({

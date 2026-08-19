@@ -210,11 +210,11 @@ class ExtensionUpdater {
     // re-reads the opt-ins, so an extension installed mid-session is kept up to
     // date without a restart
     if (config.get("extensions.installed").length > 0) {
-      this.checkForUpdates();
+      void this.checkForUpdates();
     }
 
     setInterval(() => {
-      this.checkForUpdates();
+      void this.checkForUpdates();
     }, ms("3h"));
   }
 

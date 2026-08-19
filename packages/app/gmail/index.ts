@@ -425,18 +425,18 @@ export class Gmail {
 
     this.view.webContents.on("dom-ready", () => {
       if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
-        this.view.webContents.insertCSS(gmailCSS);
+        void this.view.webContents.insertCSS(gmailCSS);
 
         if (licenseKey.isValid && GMAIL_USER_STYLES) {
-          this.view.webContents.insertCSS(GMAIL_USER_STYLES);
+          void this.view.webContents.insertCSS(GMAIL_USER_STYLES);
         }
 
         this.labelColorsCssKey = null;
 
-        this.applyLabelColors();
+        void this.applyLabelColors();
       }
 
-      this.view.webContents.insertCSS(meruCSS);
+      void this.view.webContents.insertCSS(meruCSS);
     });
 
     this.view.webContents.on("page-title-updated", (_event, pageTitle, explicitSet) => {
@@ -498,7 +498,7 @@ export class Gmail {
 
   private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
     window.webContents.on("did-navigate", (_event, url) => {
-      WorkspaceApp.handleNavigate(url, this.session);
+      void WorkspaceApp.handleNavigate(url, this.session);
 
       if (window === this.view) {
         this.store.setState({
@@ -628,7 +628,7 @@ export class Gmail {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
-          loadUrl(window.webContents, url);
+          void loadUrl(window.webContents, url);
 
           this.setDelegatedAccountId(gmailDelegatedAccountId);
 
@@ -636,7 +636,7 @@ export class Gmail {
         }
 
         if (url === `${GMAIL_URL}/`) {
-          loadUrl(window.webContents, url);
+          void loadUrl(window.webContents, url);
 
           const account = accounts.getAccount(this.accountId);
 
@@ -698,7 +698,7 @@ export class Gmail {
 
         await wait(ms("1s"));
 
-        this.fetchInboxFeed(fetchAttempt + 1);
+        void this.fetchInboxFeed(fetchAttempt + 1);
 
         return;
       }
@@ -999,7 +999,7 @@ export class Gmail {
   }
 
   search(query: string) {
-    this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
+    void this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
   }
 
   navigateToHash(urlOrHash: string) {
@@ -1009,6 +1009,6 @@ export class Gmail {
       return;
     }
 
-    this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
+    void this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
   }
 }

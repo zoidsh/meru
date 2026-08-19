@@ -64,7 +64,7 @@ export function VersionHistorySettings() {
           <EmptyContent>
             <Button
               onClick={() => {
-                refetch();
+                void refetch();
               }}
             >
               Try Again

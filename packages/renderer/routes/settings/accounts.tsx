@@ -72,7 +72,7 @@ function AccountForm({
       onSubmit={(event) => {
         event.preventDefault();
 
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
     >
       <FieldGroup>

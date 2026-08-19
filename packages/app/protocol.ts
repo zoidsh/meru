@@ -23,7 +23,7 @@ export function isMailtoUrl(url: string) {
 
 export async function handleMailtoUrl(url: string) {
   if (!licenseKey.isValid) {
-    showProUpgradeDialog("Meru Pro is required to set Meru as the default mail client.");
+    void showProUpgradeDialog("Meru Pro is required to set Meru as the default mail client.");
 
     return;
   }
@@ -96,7 +96,7 @@ export function isMeruUrl(url: string) {
 
 export function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
-    showProUpgradeDialog("Meru Pro is required to open Meru links.");
+    void showProUpgradeDialog("Meru Pro is required to open Meru links.");
 
     return;
   }

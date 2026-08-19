@@ -47,6 +47,6 @@ export async function showProUpgradeDialog(message: string) {
   });
 
   if (response === 0) {
-    openExternalUrl(`${WEBSITE_URL}/#pricing`, { skipTrustedHostCheck: true });
+    void openExternalUrl(`${WEBSITE_URL}/#pricing`, { skipTrustedHostCheck: true });
   }
 }

@@ -88,7 +88,7 @@ class Downloads {
               : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
               if (shouldOpenFile) {
-                shell.openPath(filePath);
+                void shell.openPath(filePath);
               } else {
                 shell.showItemInFolder(filePath);
               }

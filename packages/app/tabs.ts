@@ -284,7 +284,7 @@ export class Tabs {
     // A designated tab is woken on the link's app, which is not necessarily the
     // one it was saved on.
     if (!canOpenWorkspaceAppInApp(url ? getWorkspaceAppFromUrl(url) : dormantTab.app)) {
-      openExternalUrl(url ?? dormantTab.url, { skipTrustedHostCheck: true });
+      void openExternalUrl(url ?? dormantTab.url, { skipTrustedHostCheck: true });
 
       return;
     }
@@ -518,7 +518,7 @@ export class Tabs {
    */
   openUrl(url: string) {
     if (!canOpenWorkspaceAppInApp(getWorkspaceAppFromUrl(url))) {
-      openExternalUrl(url, { skipTrustedHostCheck: true });
+      void openExternalUrl(url, { skipTrustedHostCheck: true });
 
       return;
     }

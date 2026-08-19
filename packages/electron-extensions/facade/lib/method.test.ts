@@ -33,7 +33,7 @@ describe("createBridgedMethod", () => {
 
     const { promise: answered, resolve } = Promise.withResolvers<unknown>();
 
-    method("a", resolve);
+    void method("a", resolve);
 
     expect(await answered).toBeUndefined();
   });

@@ -210,7 +210,7 @@ export class WorkspaceApp {
 
     event.preventDefault();
 
-    loadUrl(webContents, `${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
+    void loadUrl(webContents, `${GOOGLE_ACCOUNTS_URL}/ServiceLogin?service=mail`);
   }
 
   static handleWindowOpen({
@@ -244,7 +244,7 @@ export class WorkspaceApp {
               return;
             }
 
-            openExternalUrl(navigationUrl);
+            void openExternalUrl(navigationUrl);
 
             newWindow.webContents.close();
 
@@ -354,7 +354,7 @@ export class WorkspaceApp {
       return { action: "deny" };
     }
 
-    openExternalUrl(url, {
+    void openExternalUrl(url, {
       skipTrustedHostCheck: Boolean(matchedSupportedWorkspaceApp),
       focusBrowser: disposition !== "background-tab",
     });
@@ -622,9 +622,9 @@ export class WorkspaceApp {
     });
 
     if (navigationHistory) {
-      restoreNavigationHistory(view.webContents, navigationHistory);
+      void restoreNavigationHistory(view.webContents, navigationHistory);
     } else {
-      loadUrl(view.webContents, url);
+      void loadUrl(view.webContents, url);
     }
 
     openViewDevToolsOnLaunch(view);
@@ -848,7 +848,7 @@ export class WorkspaceApp {
   private handleDidNavigate = (_event: Electron.Event, url: string) => {
     this.updateAppFromNavigation(url);
 
-    WorkspaceApp.handleNavigate(url, this.account.instance.session);
+    void WorkspaceApp.handleNavigate(url, this.account.instance.session);
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
@@ -979,7 +979,7 @@ export class WorkspaceApp {
   }
 
   navigate(url: string) {
-    loadUrl(this.view.webContents, url);
+    void loadUrl(this.view.webContents, url);
   }
 
   reload() {
@@ -1103,7 +1103,7 @@ export class WorkspaceApp {
   }
 
   openInBrowser() {
-    openExternalUrl(this.view.webContents.getURL(), { skipTrustedHostCheck: true });
+    void openExternalUrl(this.view.webContents.getURL(), { skipTrustedHostCheck: true });
   }
 
   get account() {

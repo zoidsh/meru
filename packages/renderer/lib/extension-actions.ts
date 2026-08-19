@@ -19,6 +19,6 @@ ipc.renderer.on("extensions.actionsChanged", (_event, actions) => {
 
 // Extensions finish loading on their own schedule, and a window can open long
 // after they did, so what is already there is asked for rather than waited for
-ipc.main.invoke("extensions.getActions").then((actions) => {
+void ipc.main.invoke("extensions.getActions").then((actions) => {
   useExtensionActionsStore.setState({ actions });
 });

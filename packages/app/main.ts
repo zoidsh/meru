@@ -136,7 +136,7 @@ class Main {
     });
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
-      openExternalUrl(url, { skipTrustedHostCheck: true });
+      void openExternalUrl(url, { skipTrustedHostCheck: true });
 
       return {
         action: "deny",
@@ -194,7 +194,7 @@ class Main {
     }
 
     if (app.dock?.isVisible) {
-      app.dock.show();
+      void app.dock.show();
     }
   }
 

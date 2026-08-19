@@ -421,7 +421,7 @@ export class AppMenu {
 
               main.navigate("/download-history");
 
-              downloads.checkDownloadHistoryItems();
+              void downloads.checkDownloadHistoryItems();
             },
           },
           {
@@ -671,13 +671,13 @@ export class AppMenu {
           {
             label: "Website",
             click: () => {
-              openExternalUrl(WEBSITE_URL);
+              void openExternalUrl(WEBSITE_URL);
             },
           },
           {
             label: "Source Code",
             click: () => {
-              openExternalUrl(GITHUB_REPO_URL);
+              void openExternalUrl(GITHUB_REPO_URL);
             },
           },
           {
@@ -686,7 +686,7 @@ export class AppMenu {
           {
             label: "Gmail Keyboard Shortcuts",
             click: () => {
-              openExternalUrl("https://support.google.com/mail/answer/6594");
+              void openExternalUrl("https://support.google.com/mail/answer/6594");
             },
           },
           {
@@ -723,7 +723,7 @@ export class AppMenu {
               {
                 label: "Edit Config",
                 click: () => {
-                  config.openInEditor();
+                  void config.openInEditor();
                 },
               },
               {
@@ -736,7 +736,7 @@ export class AppMenu {
                     accounts.getAccounts().map((account) => account.instance.session.clearCache()),
                   );
 
-                  showRestartDialog();
+                  void showRestartDialog();
                 },
               },
               {
@@ -768,7 +768,7 @@ export class AppMenu {
               {
                 label: "View Logs",
                 click: () => {
-                  shell.openPath(log.transports.file.getFile().path);
+                  void shell.openPath(log.transports.file.getFile().path);
                 },
               },
             ],

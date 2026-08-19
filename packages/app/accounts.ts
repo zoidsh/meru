@@ -48,7 +48,7 @@ class Accounts {
 
     config.onDidChange("gmail.labelColors", () => {
       for (const account of accounts.instances.values()) {
-        account.gmail.applyLabelColors();
+        void account.gmail.applyLabelColors();
       }
     });
 
@@ -335,7 +335,7 @@ class Accounts {
 
     const instance = new Account(createdAccount);
 
-    instance.gmail.createView();
+    void instance.gmail.createView();
 
     this.instances.set(createdAccount.id, instance);
 

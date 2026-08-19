@@ -59,7 +59,7 @@ function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
       setBookmarkState(state);
     });
 
-    ipc.main.invoke("workspaceApp.getBookmarkState", workspaceAppId).then(setBookmarkState);
+    void ipc.main.invoke("workspaceApp.getBookmarkState", workspaceAppId).then(setBookmarkState);
 
     return unsubscribe;
   }, [workspaceAppId]);
@@ -98,7 +98,7 @@ function NavigationControls({ workspaceAppId }: { workspaceAppId: string }) {
       setIsLoading(loading);
     });
 
-    ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setIsLoading);
+    void ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setIsLoading);
 
     return unsubscribe;
   }, [workspaceAppId]);

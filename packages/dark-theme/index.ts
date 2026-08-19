@@ -724,7 +724,7 @@ function invertDarkImageElement(image: HTMLImageElement, theme: Theme, isCancell
       return;
     }
 
-    getImageDetails(source).then((details) => {
+    void getImageDetails(source).then((details) => {
       if (isCancelled() || !details) {
         return;
       }

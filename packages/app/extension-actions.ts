@@ -120,7 +120,7 @@ class ExtensionActions {
     // none of the app's navigation policing
     if (opened) {
       this.popup.webContents?.setWindowOpenHandler(({ url }) => {
-        openExternalUrl(url);
+        void openExternalUrl(url);
 
         return { action: "deny" };
       });

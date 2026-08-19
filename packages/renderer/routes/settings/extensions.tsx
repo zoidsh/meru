@@ -155,7 +155,7 @@ function ExtensionItem({
         return;
       }
 
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: installedExtensionsQueryKey,
       });
 
@@ -298,7 +298,7 @@ function UpdateExtensionsButton() {
       }
 
       if (updatedAny) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: installedExtensionsQueryKey,
         });
 

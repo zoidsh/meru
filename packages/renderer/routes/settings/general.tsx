@@ -33,7 +33,7 @@ function LaunchAtLoginField() {
     mutationFn: (settings: Partial<LoginItemSettings>) =>
       ipc.main.invoke("app.setLoginItemSettings", settings),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey,
       });
     },
@@ -77,7 +77,7 @@ function DefaultMailClientField() {
   const isDefaultMailtoClientMutation = useMutation({
     mutationFn: () => ipc.main.invoke("app.setAsDefaultMailtoClient"),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey,
       });
     },

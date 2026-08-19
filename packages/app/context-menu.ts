@@ -63,7 +63,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
           {
             label: "Open in Default Browser",
             click: () => {
-              openExternalUrl(window.webContents.getURL(), {
+              void openExternalUrl(window.webContents.getURL(), {
                 skipTrustedHostCheck: true,
               });
             },

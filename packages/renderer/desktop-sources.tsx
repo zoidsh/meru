@@ -13,7 +13,7 @@ function DesktopSources() {
   const [selectedDesktopSourceId, setSelectedDesktopSourceId] = useState<string>("");
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       setDesktopSources(await ipc.main.invoke("desktopSources.getSources"));
     })();
   }, []);

@@ -41,11 +41,11 @@ class AppUpdater {
       return;
     }
 
-    autoUpdater.checkForUpdates();
+    void autoUpdater.checkForUpdates();
 
     setInterval(
       () => {
-        autoUpdater.checkForUpdates();
+        void autoUpdater.checkForUpdates();
       },
       1000 * 60 * 60 * 3,
     );
@@ -56,7 +56,7 @@ class AppUpdater {
       return;
     }
 
-    autoUpdater.checkForUpdates();
+    void autoUpdater.checkForUpdates();
   }
 
   quitAndInstall() {

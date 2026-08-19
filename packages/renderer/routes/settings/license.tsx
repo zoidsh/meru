@@ -56,7 +56,7 @@ function LicenseKeyForm({
       onSubmit={(event) => {
         event.preventDefault();
 
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
     >
       <FieldGroup>
@@ -207,7 +207,7 @@ export function LicenseSettings() {
                       <DropdownMenuItem
                         onClick={() => {
                           if (config.licenseKey) {
-                            navigator.clipboard.writeText(config.licenseKey);
+                            void navigator.clipboard.writeText(config.licenseKey);
 
                             toast("License key copied to clipboard");
                           }
@@ -236,7 +236,7 @@ export function LicenseSettings() {
                   e.preventDefault();
                   e.stopPropagation();
 
-                  deviceInfoForm.handleSubmit();
+                  void deviceInfoForm.handleSubmit();
                 }}
               >
                 <deviceInfoForm.Field name="label">

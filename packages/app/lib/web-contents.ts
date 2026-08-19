@@ -46,7 +46,7 @@ export function logLoadFailures(webContents: WebContents, name: string) {
 
 export function applyViewZoomLimits(view: WebContentsView) {
   view.webContents.on("dom-ready", () => {
-    view.webContents.setVisualZoomLevelLimits(1, 3);
+    void view.webContents.setVisualZoomLevelLimits(1, 3);
   });
 }
 

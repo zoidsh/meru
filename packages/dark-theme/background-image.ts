@@ -162,7 +162,7 @@ export function modifyBackgroundImage(
     return;
   }
 
-  Promise.all(
+  void Promise.all(
     layers.map(async (layer) => {
       const imageUrl = readUrlLayerTarget(layer);
 

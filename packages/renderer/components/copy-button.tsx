@@ -17,7 +17,7 @@ export function CopyButton({
       size={size}
       {...props}
       onClick={() => {
-        navigator.clipboard.writeText(value);
+        void navigator.clipboard.writeText(value);
 
         markCopied();
       }}

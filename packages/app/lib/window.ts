@@ -151,13 +151,16 @@ export function loadRenderer(
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
   if (is.dev) {
-    loadUrl(window.webContents, `http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
+    void loadUrl(
+      window.webContents,
+      `http://localhost:3000/${pageFileName}?${searchParams.toString()}`,
+    );
 
     if (shouldOpenDevToolsOnLaunch) {
       window.webContents.openDevTools({ mode: "detach" });
     }
   } else {
-    window.webContents.loadFile(path.join("build-js", "renderer", pageFileName), {
+    void window.webContents.loadFile(path.join("build-js", "renderer", pageFileName), {
       search: searchParams.toString(),
     });
   }

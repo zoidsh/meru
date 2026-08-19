@@ -121,7 +121,7 @@ async function init() {
 
   main.loadURL();
 
-  accounts.createViews();
+  void accounts.createViews();
 
   ipc.init();
 
@@ -137,13 +137,13 @@ async function init() {
 
   extensionUpdater.init();
 
-  pruneDerivedExtensionCopies();
+  void pruneDerivedExtensionCopies();
 
   doNotDisturb.init();
 
   if (!platform.isMacOS) {
     if (PROCESS_MAILTO_URL_ARG) {
-      handleMailtoUrl(PROCESS_MAILTO_URL_ARG);
+      void handleMailtoUrl(PROCESS_MAILTO_URL_ARG);
     } else if (PROCESS_MERU_URL_ARG) {
       handleMeruUrl(PROCESS_MERU_URL_ARG);
     }
@@ -156,7 +156,7 @@ async function init() {
       const mailtoUrlArg = findMailtoUrlArg(argv);
 
       if (mailtoUrlArg) {
-        handleMailtoUrl(mailtoUrlArg);
+        void handleMailtoUrl(mailtoUrlArg);
 
         return;
       }
@@ -184,7 +184,7 @@ async function init() {
 
     app.on("open-url", (_event, url) => {
       if (isMailtoUrl(url)) {
-        handleMailtoUrl(url);
+        void handleMailtoUrl(url);
       }
 
       if (isMeruUrl(url)) {
@@ -222,4 +222,4 @@ async function init() {
   });
 }
 
-init();
+void init();
