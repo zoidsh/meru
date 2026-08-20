@@ -34,7 +34,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
           menuItems.push(
             {
-              label: "Copy Message Link",
+              label: "Copy message link",
               click: () => {
                 clipboard.writeText(meruMessageUrl);
               },
@@ -55,13 +55,13 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       if (window !== selectedAccount.instance.gmail.view) {
         menuItems.push(
           {
-            label: "Copy Link",
+            label: "Copy link",
             click: () => {
               clipboard.writeText(window.webContents.getURL());
             },
           },
           {
-            label: "Open in Default Browser",
+            label: "Open in default browser",
             click: () => {
               openExternalUrl(window.webContents.getURL(), {
                 skipTrustedHostCheck: true,
@@ -75,7 +75,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       }
 
       menuItems.push({
-        label: "Inspect Element",
+        label: "Inspect element",
         click: () => {
           window.webContents.inspectElement(parameters.x, parameters.y);
 

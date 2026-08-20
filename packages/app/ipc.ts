@@ -267,7 +267,7 @@ class Ipc {
           ? []
           : [
               {
-                label: "Move to Tab",
+                label: "Move to tab",
                 click: () => {
                   workspaceApp.adoptIntoTabs();
                 },
@@ -279,7 +279,7 @@ class Ipc {
         ...(workspaceApp.isSavable
           ? [
               {
-                label: "Load on Launch",
+                label: "Load on launch",
                 type: "checkbox" as const,
                 checked: workspaceApp.pinned && workspaceApp.loadOnLaunch,
                 click: () => {
@@ -302,13 +302,13 @@ class Ipc {
             ]
           : []),
         {
-          label: "Copy Link",
+          label: "Copy link",
           click: () => {
             workspaceApp.copyUrl();
           },
         },
         {
-          label: "Open in Default Browser",
+          label: "Open in default browser",
           click: () => {
             workspaceApp.openInBrowser();
           },
@@ -391,7 +391,7 @@ class Ipc {
         ...(tabApp && !workspaceApps[tabApp].singleInstance
           ? [
               {
-                label: `New ${workspaceApps[tabApp].label} ${isWindowsMode ? "Window" : "Tab"}`,
+                label: `New ${workspaceApps[tabApp].label} ${isWindowsMode ? "window" : "tab"}`,
                 click: () => {
                   openWorkspaceAppUrl(getWorkspaceAppUrl(tabApp));
                 },
@@ -422,7 +422,7 @@ class Ipc {
         ...(tab instanceof WorkspaceApp && tab.isWindowed
           ? [
               {
-                label: "Move to Tab",
+                label: "Move to tab",
                 click: () => {
                   if (tab instanceof WorkspaceApp) {
                     tab.adoptIntoTabs();
@@ -436,7 +436,7 @@ class Ipc {
             ]
           : [
               {
-                label: "Move to New Window",
+                label: "Move to new window",
                 enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
                 click: () => {
                   if (tab instanceof WorkspaceApp) {
@@ -453,7 +453,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Copy Link",
+          label: "Copy link",
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.copyUrl();
@@ -465,7 +465,7 @@ class Ipc {
           },
         },
         {
-          label: "Open in Default Browser",
+          label: "Open in default browser",
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.openInBrowser();
@@ -488,7 +488,7 @@ class Ipc {
                 },
               },
               {
-                label: bookmarks.isBookmarked(accountId, tab.url) ? "Remove Bookmark" : "Bookmark",
+                label: bookmarks.isBookmarked(accountId, tab.url) ? "Remove bookmark" : "Bookmark",
                 click: () => {
                   bookmarks.toggle(accountId, {
                     app: tabApp,
@@ -500,7 +500,7 @@ class Ipc {
               ...(tab.pinned
                 ? [
                     {
-                      label: "Load on Launch",
+                      label: "Load on launch",
                       type: "checkbox" as const,
                       checked: tab.loadOnLaunch,
                       click: () => {
@@ -516,7 +516,7 @@ class Ipc {
               ...(config.get("workspaceApps.hibernation") === "selected"
                 ? [
                     {
-                      label: "Hibernate When Idle",
+                      label: "Hibernate when idle",
                       type: "checkbox" as const,
                       checked: tab.hibernatesWhenIdle,
                       click: () => {
@@ -540,8 +540,8 @@ class Ipc {
               // which then needs a separator to sit under.
               ...(tabApp ? [] : [{ type: "separator" as const }]),
               {
-                label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
-                  tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
+                label: `Open ${workspaceApps[appLinksApp].label} links in this ${
+                  tab instanceof WorkspaceApp && tab.isWindowed ? "window" : "tab"
                 }`,
                 type: "checkbox" as const,
                 checked: Boolean(tab.opensLinksForApp),
@@ -600,7 +600,7 @@ class Ipc {
               },
             ]),
         {
-          label: "Close Other Tabs",
+          label: "Close other tabs",
           enabled: hasOtherClosableTabs,
           click: () => {
             account.instance.tabs.closeOtherTabs(tabId);
@@ -611,7 +611,7 @@ class Ipc {
           },
         },
         {
-          label: "Close Tabs Below",
+          label: "Close tabs below",
           enabled: hasClosableTabsBelow,
           click: () => {
             account.instance.tabs.closeTabsBelow(tabId);
@@ -629,7 +629,7 @@ class Ipc {
 
       Menu.buildFromTemplate([
         {
-          label: "Reopen Closed Tab",
+          label: "Reopen closed tab",
           enabled: account.instance.tabs.hasRecentlyClosedTabs,
           click: () => {
             if (account.instance.tabs.reopenClosedTab() && account.config.selected) {
@@ -644,7 +644,7 @@ class Ipc {
         // Width setting's to give — and there is nothing to reset to on `auto`,
         // where picking it again in settings changes nothing.
         {
-          label: "Reset Width",
+          label: "Reset width",
           enabled: Boolean(account.instance.verticalTabsWidth),
           click: () => {
             accounts.setVerticalTabsWidth(accountId, null);

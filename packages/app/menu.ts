@@ -95,11 +95,11 @@ export class AppMenu {
         role: "hide",
       },
       {
-        label: "Hide Others",
+        label: "Hide others",
         role: "hideOthers",
       },
       {
-        label: "Show All",
+        label: "Show all",
         role: "unhide",
       },
       {
@@ -196,7 +196,7 @@ export class AppMenu {
     const selectPinnedTabItems: MenuItemConstructorOptions[] = Array.from(
       { length: 9 },
       (_pinnedTabEntry, pinnedTabIndex) => ({
-        label: `Select Pinned Tab ${pinnedTabIndex + 1} (hidden shortcut)`,
+        label: `Select pinned tab ${pinnedTabIndex + 1} (hidden shortcut)`,
         // Literal Ctrl on every platform, like the Ctrl+Tab pair above:
         // Command+Shift+3..6 are macOS screenshot shortcuts that never reach the
         // app, and Command/Ctrl+1..9 already select accounts.
@@ -244,7 +244,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Check for Updates…",
+            label: "Check for updates…",
             click: () => {
               appUpdater.checkForUpdates();
             },
@@ -260,7 +260,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Gmail Settings…",
+            label: "Gmail settings…",
             accelerator: "CommandOrControl+Shift+,",
             click: () => {
               ipc.renderer.send(
@@ -378,7 +378,7 @@ export class AppMenu {
         visible: licenseKey.isValid,
         submenu: [
           {
-            label: "Copy Message Link",
+            label: "Copy message link",
             enabled: Boolean(copyOrShareMessageLink),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
@@ -405,7 +405,7 @@ export class AppMenu {
         label: "View",
         submenu: [
           {
-            label: "Unified Inbox",
+            label: "Unified inbox",
             enabled:
               licenseKey.isValid && config.get("unifiedInbox.enabled") && allAccounts.length > 1,
             accelerator: "CommandOrControl+Shift+I",
@@ -428,31 +428,31 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Reset Zoom",
+            label: "Reset zoom",
             accelerator: "CommandOrControl+0",
             click: () => {
               getActiveZoomTarget()?.resetZoom();
             },
           },
           {
-            label: "Zoom In",
+            label: "Zoom in",
             accelerator: "CommandOrControl+Plus",
             click: zoomIn,
           },
           {
-            label: "Zoom In (hidden shortcut 1)",
+            label: "Zoom in (hidden shortcut 1)",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
             accelerator: "CommandOrControl+numadd",
             click: zoomIn,
           },
           {
-            label: "Zoom Out",
+            label: "Zoom out",
             accelerator: "CommandOrControl+-",
             click: zoomOut,
           },
           {
-            label: "Zoom Out (hidden shortcut 1)",
+            label: "Zoom out (hidden shortcut 1)",
             visible: is.dev,
             accelerator: "CommandOrControl+numsub",
             click: zoomOut,
@@ -468,7 +468,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Hard Reload",
+            label: "Hard reload",
             accelerator: "CommandOrControl+Shift+R",
             click: () => {
               getActiveViewWebContents().reloadIgnoringCache();
@@ -478,7 +478,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Developer Tools",
+            label: "Developer tools",
             accelerator: is.dev && platform.isMacOS ? "Command+Alt+I" : undefined,
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -523,24 +523,24 @@ export class AppMenu {
         label: "Tabs",
         submenu: [
           {
-            label: "Select Next Tab",
+            label: "Select next tab",
             accelerator: "Ctrl+Tab",
             click: selectNextTab,
           },
           {
-            label: "Select Next Tab (hidden shortcut 1)",
+            label: "Select next tab (hidden shortcut 1)",
             accelerator: platform.isMacOS ? "Command+Option+Down" : "Ctrl+PageDown",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
             click: selectNextTab,
           },
           {
-            label: "Select Previous Tab",
+            label: "Select previous tab",
             accelerator: "Ctrl+Shift+Tab",
             click: selectPreviousTab,
           },
           {
-            label: "Select Previous Tab (hidden shortcut 1)",
+            label: "Select previous tab (hidden shortcut 1)",
             accelerator: platform.isMacOS ? "Command+Option+Up" : "Ctrl+PageUp",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -551,7 +551,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Close Tab",
+            label: "Close tab",
             accelerator: "CommandOrControl+Shift+W",
             enabled: isActiveTabCloseable,
             click: () => {
@@ -563,7 +563,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Reopen Closed Tab",
+            label: "Reopen closed tab",
             accelerator: "CommandOrControl+Shift+T",
             click: () => {
               if (accounts.getSelectedAccount().instance.tabs.reopenClosedTab()) {
@@ -589,7 +589,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Select Next Account",
+            label: "Select next account",
             accelerator: platform.isMacOS ? "Command+Shift+]" : undefined,
             click: () => {
               accounts.selectNextAccount();
@@ -598,7 +598,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Next Account (hidden shortcut 1)",
+            label: "Select next account (hidden shortcut 1)",
             accelerator: "Command+Option+Right",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -609,7 +609,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account",
+            label: "Select previous account",
             accelerator: platform.isMacOS ? "Command+Shift+[" : undefined,
             click: () => {
               accounts.selectPreviousAccount();
@@ -618,7 +618,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account (hidden shortcut 1)",
+            label: "Select previous account (hidden shortcut 1)",
             accelerator: "Command+Option+Left",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -632,7 +632,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Manage Accounts…",
+            label: "Manage accounts…",
             click: () => {
               main.navigate("/settings/accounts");
             },
@@ -660,7 +660,7 @@ export class AppMenu {
         role: "help",
         submenu: [
           {
-            label: "What's New",
+            label: "What's new",
             click: () => {
               main.navigate("/settings/version-history");
             },
@@ -675,7 +675,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Source Code",
+            label: "Source code",
             click: () => {
               openExternalUrl(GITHUB_REPO_URL);
             },
@@ -684,7 +684,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Gmail Keyboard Shortcuts",
+            label: "Gmail keyboard shortcuts",
             click: () => {
               openExternalUrl("https://support.google.com/mail/answer/6594");
             },
@@ -693,13 +693,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Ask Question",
+            label: "Ask question",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow("mailto:tim@meru.so");
             },
           },
           {
-            label: "Request Feature",
+            label: "Request feature",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Feature%20Request:%20",
@@ -707,7 +707,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Report Issue",
+            label: "Report issue",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Report Issue:%20",
@@ -721,7 +721,7 @@ export class AppMenu {
             label: "Troubleshooting",
             submenu: [
               {
-                label: "Edit Config",
+                label: "Edit config",
                 click: () => {
                   config.openInEditor();
                 },
@@ -730,7 +730,7 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "Clear Cache",
+                label: "Clear cache",
                 click: async () => {
                   await Promise.all(
                     accounts.getAccounts().map((account) => account.instance.session.clearCache()),
@@ -740,7 +740,7 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset App…",
+                label: "Reset app…",
                 click: async () => {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
@@ -766,7 +766,7 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "View Logs",
+                label: "View logs",
                 click: () => {
                   shell.openPath(log.transports.file.getFile().path);
                 },

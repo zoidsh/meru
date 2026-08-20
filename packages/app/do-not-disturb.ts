@@ -9,43 +9,43 @@ export class DoNotDisturb {
       duration: "indefinite",
     },
     {
-      label: "5 Minutes",
+      label: "5 minutes",
       duration: "5m",
     },
     {
-      label: "10 Minutes",
+      label: "10 minutes",
       duration: "10m",
     },
     {
-      label: "15 Minutes",
+      label: "15 minutes",
       duration: "15m",
     },
     {
-      label: "30 Minutes",
+      label: "30 minutes",
       duration: "30m",
     },
     {
-      label: "1 Hour",
+      label: "1 hour",
       duration: "1h",
     },
     {
-      label: "2 Hours",
+      label: "2 hours",
       duration: "2h",
     },
     {
-      label: "4 Hours",
+      label: "4 hours",
       duration: "4h",
     },
     {
-      label: "8 Hours",
+      label: "8 hours",
       duration: "8h",
     },
     {
-      label: "12 Hours",
+      label: "12 hours",
       duration: "12h",
     },
     {
-      label: "Until Tomorrow",
+      label: "Until tomorrow",
       duration: "until tomorrow",
     },
   ] as const;
