@@ -46,7 +46,7 @@ export function PhishingProtectionSettings() {
                   <FieldLabel>Trusted Hosts</FieldLabel>
                   {config["externalLinks.trustedHosts"].length === 0 && (
                     <FieldDescription>
-                      No trusted hosts yet. Choosing "Trust all links" in the link prompt adds one.
+                      No trusted hosts yet. Choosing “Trust all links” in the link prompt adds one.
                     </FieldDescription>
                   )}
                 </FieldContent>

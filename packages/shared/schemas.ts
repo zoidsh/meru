@@ -105,8 +105,8 @@ export type AccountInstances = AccountInstance[];
 
 export const gmailSavedSearchSchema = z.object({
   id: z.string(),
-  label: z.string().min(1),
-  query: z.string().min(1),
+  label: z.string().min(1, "Enter a label"),
+  query: z.string().min(1, "Enter a search query"),
 });
 
 export const gmailSavedSearchInputSchema = gmailSavedSearchSchema.omit({
@@ -125,8 +125,11 @@ export type GmailLabelTextColor = (typeof gmailLabelTextColors)[number];
 
 export const gmailLabelColorSchema = z.object({
   id: z.string(),
-  label: z.string().min(1),
-  color: z.string().min(1).refine(isValidCssColorInput, "Enter a valid hex, rgb, or rgba color"),
+  label: z.string().min(1, "Enter a label"),
+  color: z
+    .string()
+    .min(1, "Enter a color")
+    .refine(isValidCssColorInput, "Enter a valid hex, rgb, or rgba color"),
   textColor: z.enum(gmailLabelTextColors),
 });
 

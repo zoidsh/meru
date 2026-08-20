@@ -750,7 +750,7 @@ class Ipc {
       createNewEmailNotification({
         title: "Tim from Meru",
         subtitle: "Your test notification request",
-        body: "This is a test notification, to show how a notification appears.",
+        body: "This is what a new email notification looks like.",
       });
     });
 
