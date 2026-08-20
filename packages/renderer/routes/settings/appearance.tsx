@@ -45,7 +45,7 @@ export function AppearanceSettings() {
   const renderPlatformIconSettings = () => {
     const selectAccountWithUnreadField = (
       <ConfigSwitchField
-        label="Select First Unread Account on Click"
+        label="Select first unread account on click"
         description={`Automatically select the first account with unread emails when clicking the ${platform.isMacOS ? "menu bar" : "system tray"} icon.`}
         configKey="tray.selectAccountWithUnread"
         disabled={!config["tray.enabled"]}
@@ -56,16 +56,16 @@ export function AppearanceSettings() {
       return (
         <>
           <FieldSet>
-            <FieldLegend>Dock Icon</FieldLegend>
+            <FieldLegend>Dock icon</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Enable Dock Icon"
+                label="Enable dock icon"
                 description="Show the application icon in the dock."
                 configKey="dock.enabled"
                 restartRequired
               />
               <ConfigSwitchField
-                label="Show Unread Badge"
+                label="Show unread badge"
                 description="Show an unread badge on the dock icon when there are unread emails."
                 configKey="dock.unreadBadge"
                 restartRequired
@@ -74,16 +74,16 @@ export function AppearanceSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Menu Bar Icon</FieldLegend>
+            <FieldLegend>Menu bar icon</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Enable Menu Bar Icon"
+                label="Enable menu bar icon"
                 description="Show the application icon in the menu bar."
                 configKey="tray.enabled"
                 restartRequired
               />
               <ConfigSwitchField
-                label="Show Unread Count"
+                label="Show unread count"
                 description="Show an unread count next to the menu bar icon when there are unread emails."
                 configKey="tray.unreadCount"
                 disabled={!config["tray.enabled"]}
@@ -98,9 +98,9 @@ export function AppearanceSettings() {
 
     return (
       <FieldSet>
-        <FieldLegend>System Tray Icon</FieldLegend>
+        <FieldLegend>System tray icon</FieldLegend>
         <ConfigSwitchField
-          label="Enable System Tray Icon"
+          label="Enable system tray icon"
           description="Show the application icon in the system tray."
           configKey="tray.enabled"
           restartRequired
@@ -162,7 +162,7 @@ export function AppearanceSettings() {
           <FieldSet>
             <FieldLegend>Accounts</FieldLegend>
             <ConfigSwitchField
-              label="Show Unread Badges"
+              label="Show unread badges"
               description="Show unread badges, following each account's own setting."
               configKey="accounts.unreadBadge"
               restartRequired
@@ -174,7 +174,7 @@ export function AppearanceSettings() {
           <FieldSet>
             <FieldLegend>Window</FieldLegend>
             <ConfigSwitchField
-              label="Restrict Minimum Window Size"
+              label="Restrict minimum window size"
               description="Stop the application window from being resized below a usable minimum."
               configKey="window.restrictMinimumSize"
             />

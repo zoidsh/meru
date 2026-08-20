@@ -20,13 +20,13 @@ import { useConfig } from "@/lib/react-query";
 import { GmailLabelColors } from "./label-colors";
 
 const unreadCountPreferenceItems = [
-  { value: "first-section", label: "First Section Only" },
-  { value: "inbox", label: "Inbox Only" },
+  { value: "first-section", label: "First section only" },
+  { value: "inbox", label: "Inbox only" },
 ];
 
 const inboxCategoriesToMonitorItems = [
-  { value: "primary", label: "Primary Only" },
-  { value: "all", label: "All Categories" },
+  { value: "primary", label: "Primary only" },
+  { value: "all", label: "All categories" },
 ];
 
 export function GmailSettings() {
@@ -49,34 +49,34 @@ export function GmailSettings() {
           <FieldSet>
             <FieldLegend>Appearance</FieldLegend>
             <ConfigSwitchField
-              label="Hide Gmail Logo"
+              label="Hide Gmail logo"
               description="Hide the Gmail logo in the top left corner."
               configKey="gmail.hideGmailLogo"
               restartRequired
             />
             <ConfigSwitchField
-              label="Hide Out-of-Office Banner"
+              label="Hide out-of-office banner"
               description="Hide the out-of-office banner at the top of the window."
               configKey="gmail.hideOutOfOfficeBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Hide Promotional Banner"
+              label="Hide promotional banner"
               description="Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
               configKey="gmail.hidePromoBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Hide Upgrade Button"
+              label="Hide upgrade button"
               description="Hide the Upgrade button in Gmail."
               configKey="gmail.hideUpgradeButton"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Extend Dark Theme"
+              label="Extend dark theme"
               description="Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
               configKey="gmail.extendDarkTheme"
               restartRequired
@@ -88,14 +88,14 @@ export function GmailSettings() {
           <FieldSet>
             <FieldLegend>Compose</FieldLegend>
             <ConfigSwitchField
-              label="Always Compose New Emails in New Window"
+              label="Always compose new emails in new window"
               description="Open a new window to compose an email, instead of composing inside Gmail."
               configKey="gmail.openComposeInNewWindow"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Close Compose Window After Send"
+              label="Close compose window after send"
               description="Close the compose window after you send."
               configKey="gmail.closeComposeWindowAfterSend"
               restartRequired
@@ -106,21 +106,21 @@ export function GmailSettings() {
           <FieldSet>
             <FieldLegend>Conversation</FieldLegend>
             <ConfigSwitchField
-              label="Reverse Conversation"
+              label="Reverse conversation"
               description="Show email conversations in reverse order, with the latest message at the top."
               configKey="gmail.reverseConversation"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Move Attachments to Top"
+              label="Move attachments to top"
               description="Move email attachments to the top of the email."
               configKey="gmail.moveAttachmentsToTop"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Always Reply and Forward in a Pop-Out"
+              label="Always reply and forward in a pop-out"
               description="Open replies and forwards in a pop-out instead of below the message."
               configKey="gmail.replyForwardInPopOut"
               restartRequired
@@ -131,13 +131,13 @@ export function GmailSettings() {
           <FieldSet>
             <FieldLegend>Inbox</FieldLegend>
             <ConfigSwitchField
-              label="Hide Inbox Footer"
+              label="Hide inbox footer"
               description="Hide the footer at the bottom of the inbox."
               configKey="gmail.hideInboxFooter"
               restartRequired
             />
             <ConfigSwitchField
-              label="Show Sender Icons"
+              label="Show sender icons"
               description="Show sender icons next to the senders in your inbox."
               configKey="gmail.showSenderIcons"
               restartRequired
@@ -145,7 +145,7 @@ export function GmailSettings() {
             />
             <ConfigSelectField
               configKey="gmail.unreadCountPreference"
-              label="Unread Count Preference"
+              label="Unread count preference"
               description="With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
               items={unreadCountPreferenceItems}
               placeholder="Select preference"
@@ -154,7 +154,7 @@ export function GmailSettings() {
             />
             <ConfigSelectField
               configKey="gmail.inboxCategoriesToMonitor"
-              label="Categories to Monitor"
+              label="Categories to monitor"
               description="With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
               items={inboxCategoriesToMonitorItems}
               placeholder="Select categories"

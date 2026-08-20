@@ -64,7 +64,7 @@ function LicenseKeyForm({
           {(field) => {
             return (
               <Field>
-                <FieldLabel>License Key</FieldLabel>
+                <FieldLabel>License key</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -100,7 +100,7 @@ function ActivateLicenseDialog({
       {children}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{variant === "activate" ? "Activate" : "Change"} License Key</DialogTitle>
+          <DialogTitle>{variant === "activate" ? "Activate" : "Change"} license key</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Enter the license key sent to your email address after your purchase.
@@ -182,7 +182,7 @@ export function LicenseSettings() {
           <div>
             <FieldGroup>
               <Field>
-                <FieldLabel>License Key</FieldLabel>
+                <FieldLabel>License key</FieldLabel>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Click to reveal the license key"
@@ -245,7 +245,7 @@ export function LicenseSettings() {
 
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Device Label</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>Device label</FieldLabel>
                         <div className="flex items-end gap-2">
                           <InputGroup>
                             <InputGroupInput

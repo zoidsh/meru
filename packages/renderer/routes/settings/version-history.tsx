@@ -84,7 +84,7 @@ export function VersionHistorySettings() {
         <ItemContent>
           <div className="flex items-center justify-between gap-2">
             <ItemTitle className="text-2xl font-semibold">{release.tag_name}</ItemTitle>
-            {release.tag_name === currentTagName ? <Badge>Current Version</Badge> : null}
+            {release.tag_name === currentTagName ? <Badge>Current version</Badge> : null}
           </div>
           <ItemDescription>{dayjs(release.published_at).fromNow()}</ItemDescription>
           <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 mt-6 text-sm">
@@ -106,7 +106,7 @@ export function VersionHistorySettings() {
   return (
     <>
       <SettingsHeader className="flex-col items-start justify-start gap-1">
-        <SettingsTitle>What's New</SettingsTitle>
+        <SettingsTitle>What's new</SettingsTitle>
         {info ? <SettingsDescription>Current version: v{info.version}</SettingsDescription> : null}
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>

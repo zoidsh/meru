@@ -110,7 +110,7 @@ function LabelColorForm({
       <form.Field name="textColor">
         {(field) => (
           <Field>
-            <FieldLabel htmlFor={field.name}>Text Color</FieldLabel>
+            <FieldLabel htmlFor={field.name}>Text color</FieldLabel>
             <Select
               items={textColorItems}
               value={field.state.value}
@@ -157,7 +157,7 @@ function AddLabelColorButton({ onAdd }: { onAdd: (labelColor: GmailLabelColorInp
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Label Color</DialogTitle>
+          <DialogTitle>Add label color</DialogTitle>
         </DialogHeader>
         <LabelColorForm
           type="add"
@@ -192,7 +192,7 @@ function EditLabelColorButton({
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Label Color</DialogTitle>
+          <DialogTitle>Edit label color</DialogTitle>
         </DialogHeader>
         <LabelColorForm
           labelColor={labelColor}

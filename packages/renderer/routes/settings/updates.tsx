@@ -17,28 +17,28 @@ export function UpdatesSettings() {
       <SettingsContent>
         <FieldGroup>
           <ConfigSwitchField
-            label="Check for Updates Automatically"
+            label="Check for updates automatically"
             description="Check for updates in the background."
             configKey="updates.autoCheck"
             restartRequired
           />
           <ConfigSwitchField
-            label="Notify When Updates Are Available"
+            label="Notify when updates are available"
             description="Receive notifications when updates are available."
             configKey="updates.showNotifications"
           />
           <ConfigSelectField
-            label="Release Channel"
+            label="Release channel"
             description="Choose which releases to receive. The beta channel gets upcoming features early."
             configKey="updates.channel"
             items={releaseChannelItems}
             placeholder="Select channel"
             confirmation={{
               when: (value) => value === "beta",
-              title: "Switch to the Beta Channel?",
+              title: "Switch to the beta channel?",
               description:
                 "Beta releases are pre-release builds of upcoming versions. They might contain bugs or unfinished features. You can switch back to the stable channel at any time.",
-              confirmLabel: "Switch to Beta",
+              confirmLabel: "Switch to beta",
             }}
           />
         </FieldGroup>

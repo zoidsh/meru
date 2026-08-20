@@ -132,14 +132,14 @@ export function WorkspaceAppsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Workspace Apps</SettingsTitle>
+        <SettingsTitle>Workspace apps</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Open in App"
-            description="Open Workspace Apps in the app instead of the external browser."
+            label="Open in app"
+            description="Open Workspace apps in the app instead of the external browser."
             configKey="workspaceApps.openInApp"
             licenseKeyRequired
             restartRequired
@@ -150,8 +150,8 @@ export function WorkspaceAppsSettings() {
                 label="Mode"
                 description={
                   <>
-                    How Workspace Apps open. Tabs, the default, opens them in the main window. New
-                    Windows gives each one its own window with no tab strip. In Tabs, hold{" "}
+                    How Workspace apps open. Tabs, the default, opens them in the main window. New
+                    windows gives each one its own window with no tab strip. In Tabs, hold{" "}
                     <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to open a background tab or{" "}
                     <Kbd>Shift</Kbd> to open a new window.
                   </>
@@ -166,27 +166,27 @@ export function WorkspaceAppsSettings() {
                 confirmation={{
                   when: (mode) =>
                     mode === "windows" && (hasOpenWorkspaceAppTabs || hasLoadOnLaunchWorkspaceApps),
-                  title: "Switch to New Windows?",
+                  title: "Switch to new windows?",
                   description: (
                     <>
-                      Workspace Apps open in their own window from now on.
+                      Workspace apps open in their own window from now on.
                       {hasOpenWorkspaceAppTabs &&
                         " The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart."}
                       {hasLoadOnLaunchWorkspaceApps &&
                         " Pinned apps set to load on launch open as windows the next time you start Meru."}
                     </>
                   ),
-                  confirmLabel: "Switch to New Windows",
+                  confirmLabel: "Switch to new windows",
                 }}
               />
               <Field>
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">
-                    Excluded Apps
+                    Excluded apps
                     {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
                   </FieldLabel>
                   <FieldDescription>
-                    Select the Workspace Apps that open in the external browser instead of the app.
+                    Select the Workspace apps that open in the external browser instead of the app.
                   </FieldDescription>
                 </FieldContent>
                 <DropdownMenu>
@@ -229,16 +229,16 @@ export function WorkspaceAppsSettings() {
             <>
               <FieldSeparator />
               <FieldSet>
-                <FieldLegend>Vertical Tabs</FieldLegend>
+                <FieldLegend>Vertical tabs</FieldLegend>
                 <ConfigSwitchField
-                  label="Show Windows"
-                  description="List Workspace Apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
+                  label="Show windows"
+                  description="List Workspace apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
                   configKey="verticalTabs.showWindows"
                   licenseKeyRequired
                 />
                 <ConfigSelectField
                   label="Width"
-                  description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
+                  description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset width to hand it back."
                   configKey="verticalTabs.width"
                   placeholder="Select width"
                   licenseKeyRequired
@@ -248,19 +248,19 @@ export function WorkspaceAppsSettings() {
                   }))}
                 />
                 <ConfigSwitchField
-                  label="Show Width Button"
-                  description="Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
+                  label="Show width button"
+                  description="Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset width from the sidebar's context menu or the Width setting above."
                   configKey="verticalTabs.showWidthToggle"
                   licenseKeyRequired
                 />
                 <ConfigSwitchField
-                  label="Hide Gmail Unread Badge When Active"
+                  label="Hide Gmail unread badge when active"
                   description="Hide the unread badge on the Gmail tab while it is the active tab, because the inbox is already in front. Accounts that need attention are still flagged."
                   configKey="verticalTabs.hideUnreadBadgeWhenActive"
                   licenseKeyRequired
                 />
                 <ConfigSwitchField
-                  label="Show App Links Badge"
+                  label="Show app links badge"
                   description="Mark the tab that opens all of an app's links, set from the tab's context menu. With this off, the tab still takes the links, and its tooltip still says so."
                   configKey="verticalTabs.showAppLinksBadge"
                   licenseKeyRequired
@@ -272,29 +272,29 @@ export function WorkspaceAppsSettings() {
           <FieldSet>
             <FieldLegend>Windows</FieldLegend>
             <ConfigSwitchField
-              label="Show Account Label"
-              description="Show the account label in the titlebar of Workspace Apps windows, with more than one account."
+              label="Show account label"
+              description="Show the account label in the titlebar of Workspace apps windows, with more than one account."
               configKey="workspaceApps.showAccountLabel"
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Show Account Color"
-              description="Show a colored indicator on top of a Workspace Apps window, naming the account in use. It appears only for accounts that have a color."
+              label="Show account color"
+              description="Show a colored indicator on top of a Workspace apps window, naming the account in use. It appears only for accounts that have a color."
               configKey="workspaceApps.showAccountColor"
               licenseKeyRequired
             />
           </FieldSet>
           <FieldSeparator />
           <ConfigSwitchField
-            label="Persist Zoom"
-            description="Remember the zoom level of Workspace Apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
+            label="Persist zoom"
+            description="Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
             configKey="workspaceApps.persistZoom"
             licenseKeyRequired
           />
           <FieldSeparator />
           <ConfigSelectField
-            label="Hibernate Idle Tabs"
-            description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Selected Tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
+            label="Hibernate idle tabs"
+            description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Selected tabs only hibernates the tabs you mark with Hibernate when idle in the tab's context menu."
             configKey="workspaceApps.hibernation"
             placeholder="Select which tabs"
             licenseKeyRequired
@@ -304,7 +304,7 @@ export function WorkspaceAppsSettings() {
             }))}
           />
           <ConfigSelectField
-            label="Hibernate After"
+            label="Hibernate after"
             description="How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
             configKey="workspaceApps.hibernationTimeout"
             placeholder="Select timeout"
@@ -316,7 +316,7 @@ export function WorkspaceAppsSettings() {
           />
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Launcher and Bookmarks</FieldLegend>
+            <FieldLegend>Launcher and bookmarks</FieldLegend>
             <Field>
               <FieldContent>
                 <FieldLabel className="flex items-center gap-2">
@@ -324,12 +324,12 @@ export function WorkspaceAppsSettings() {
                   {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
                 </FieldLabel>
                 <FieldDescription>
-                  Add Workspace Apps to the launcher on the right of the titlebar.
+                  Add Workspace apps to the launcher on the right of the titlebar.
                 </FieldDescription>
               </FieldContent>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <div className="text-xs font-medium text-muted-foreground">In Launcher</div>
+                  <div className="text-xs font-medium text-muted-foreground">In launcher</div>
                   {launcherApps.length === 0 ? (
                     <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
                       No apps in the launcher yet. Add one from Available.
@@ -394,7 +394,7 @@ export function WorkspaceAppsSettings() {
               </div>
             </Field>
             <ConfigSelectField
-              label="Launcher Display"
+              label="Launcher display"
               description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
               configKey="workspaceApps.launcherDisplay"
               placeholder="Select display"

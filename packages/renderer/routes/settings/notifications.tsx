@@ -146,31 +146,31 @@ export function NotificationsSettings() {
             <FieldLegend>Emails</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="New Emails"
+                label="New emails"
                 description="Show notifications for new emails."
                 configKey="notifications.enabled"
               />
               {config["notifications.enabled"] && (
                 <>
                   <ConfigSwitchField
-                    label="Show Sender"
+                    label="Show sender"
                     description="Display the email sender's name in notifications."
                     configKey="notifications.showSender"
                   />
                   <ConfigSwitchField
-                    label="Show Subject"
+                    label="Show subject"
                     description="Display the email subject in notifications."
                     configKey="notifications.showSubject"
                   />
                   <ConfigSwitchField
-                    label="Show Summary"
+                    label="Show summary"
                     description="Display the email summary in notifications."
                     configKey="notifications.showSummary"
                   />
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
                       Notification Times
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
                     </FieldLabel>
                     <FieldDescription>
                       Set the time windows when notifications are active. Outside them,
@@ -232,12 +232,12 @@ export function NotificationsSettings() {
                     ))}
                     <div>
                       <Button variant="outline" onClick={addTime} disabled={!isLicenseKeyValid}>
-                        <Plus /> Add Time Window
+                        <Plus /> Add time window
                       </Button>
                     </div>
                   </Field>
                   <Field>
-                    <FieldLabel>Test Notification</FieldLabel>
+                    <FieldLabel>Test notification</FieldLabel>
                     <FieldDescription>
                       Show a test notification to see how notifications appear.
                     </FieldDescription>
@@ -246,7 +246,7 @@ export function NotificationsSettings() {
                         variant="outline"
                         onClick={() => {
                           if (config["doNotDisturb.enabled"]) {
-                            toast.error("Turn off Do Not Disturb to show a test notification.");
+                            toast.error("Turn off Do not disturb to show a test notification.");
 
                             return;
                           }
@@ -254,7 +254,7 @@ export function NotificationsSettings() {
                           ipc.main.send("notifications.showTestNotification");
                         }}
                       >
-                        Show Test Notification
+                        Show test notification
                       </Button>
                     </div>
                   </Field>
@@ -267,19 +267,19 @@ export function NotificationsSettings() {
             <FieldLegend>Downloads</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Show Notification"
+                label="Show notification"
                 description="Show a notification when a download finishes."
                 configKey="notifications.downloadCompleted"
               />
               {config["notifications.downloadCompleted"] && (
                 <ConfigSelectField
-                  label="On Click"
+                  label="On click"
                   description="Choose what happens when clicking the download notification."
                   configKey="notifications.onClickDownloadCompleted"
                   placeholder="Select action"
                   items={[
-                    { value: "showInFolder", label: "Show in Folder" },
-                    { value: "openFile", label: "Open File" },
+                    { value: "showInFolder", label: "Show in folder" },
+                    { value: "openFile", label: "Open file" },
                   ]}
                 />
               )}
@@ -287,11 +287,11 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Workspace Apps</FieldLegend>
+            <FieldLegend>Workspace apps</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Show Notifications"
-                description="Show notifications from Workspace Apps such as Calendar, Meet, and Chat."
+                label="Show notifications"
+                description="Show notifications from Workspace apps such as Calendar, Meet, and Chat."
                 configKey="notifications.allowFromWorkspaceApps"
                 licenseKeyRequired
               />
@@ -302,7 +302,7 @@ export function NotificationsSettings() {
             <FieldLegend>Sound</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Play Sound"
+                label="Play sound"
                 description="Play a sound when showing a notification."
                 configKey="notifications.playSound"
               />
@@ -311,7 +311,7 @@ export function NotificationsSettings() {
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
                       Sound
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
                     </FieldLabel>
                     <FieldDescription>Select the sound to play for notifications.</FieldDescription>
                     <Select

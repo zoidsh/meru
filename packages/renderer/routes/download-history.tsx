@@ -31,7 +31,7 @@ export function DownloadHistory() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Download History</SettingsTitle>
+        <SettingsTitle>Download history</SettingsTitle>
         <DownloadHistoryClearAllButton />
       </SettingsHeader>
       <DownloadHistoryList />

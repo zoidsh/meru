@@ -48,7 +48,7 @@ function LaunchAtLoginField() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>Launch at Login</FieldLabel>
+        <FieldLabel htmlFor={fieldId}>Launch at login</FieldLabel>
         <FieldDescription>
           Start the application automatically when you log in to your computer.
         </FieldDescription>
@@ -134,7 +134,7 @@ export function GeneralSettings() {
             <FieldLegend>Startup</FieldLegend>
             <LaunchAtLoginField />
             <ConfigSwitchField
-              label="Launch Minimized"
+              label="Launch minimized"
               description="Start the application minimized."
               configKey="launchMinimized"
             />

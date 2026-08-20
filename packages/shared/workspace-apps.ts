@@ -80,7 +80,7 @@ export type LauncherAndBookmarksPlacement = keyof typeof launcherAndBookmarksPla
 
 export const workspaceAppsModes = {
   tabs: "Tabs",
-  windows: "New Windows",
+  windows: "New windows",
 } as const;
 
 export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
@@ -90,18 +90,18 @@ export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
  * with no tab marked hibernates nothing.
  */
 export const workspaceAppsHibernations = {
-  selected: "Selected Tabs",
-  all: "All Tabs",
+  selected: "Selected tabs",
+  all: "All tabs",
 } as const;
 
 export type WorkspaceAppsHibernation = keyof typeof workspaceAppsHibernations;
 
 /** Keys double as durations for `ms`. */
 export const workspaceAppsHibernationTimeouts = {
-  "30m": "30 Minutes",
-  "1h": "1 Hour",
-  "3h": "3 Hours",
-  "6h": "6 Hours",
+  "30m": "30 minutes",
+  "1h": "1 hour",
+  "3h": "3 hours",
+  "6h": "6 hours",
 } as const;
 
 export type WorkspaceAppsHibernationTimeout = keyof typeof workspaceAppsHibernationTimeouts;

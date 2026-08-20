@@ -52,7 +52,7 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     component: GmailSettings,
   },
   {
-    label: "Workspace Apps",
+    label: "Workspace apps",
     path: "/settings/workspace-apps",
     component: WorkspaceAppsSettings,
   },
@@ -73,17 +73,17 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     component: NotificationsSettings,
   },
   {
-    label: "Phishing Protection",
+    label: "Phishing protection",
     path: "/settings/phishing-protection",
     component: PhishingProtectionSettings,
   },
   {
-    label: "Saved Searches",
+    label: "Saved searches",
     path: "/settings/saved-searches",
     component: SavedSearchesSettings,
   },
   {
-    label: "Unified Inbox",
+    label: "Unified inbox",
     path: "/settings/unified-inbox",
     component: UnifiedInboxSettings,
   },
@@ -93,7 +93,7 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     component: UpdatesSettings,
   },
   {
-    label: "Verification Codes",
+    label: "Verification codes",
     path: "/settings/verification-codes",
     component: VerificationCodesSettings,
   },
@@ -105,7 +105,7 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   { type: "separator" },
   { label: "License", path: "/settings/license", component: LicenseSettings },
   {
-    label: "What's New",
+    label: "What's new",
     path: "/settings/version-history",
     component: VersionHistorySettings,
   },

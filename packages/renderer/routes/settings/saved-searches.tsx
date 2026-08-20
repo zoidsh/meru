@@ -139,7 +139,7 @@ export function AddSavedSearchButton({
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Saved Search</DialogTitle>
+          <DialogTitle>Add saved search</DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           type="add"
@@ -174,7 +174,7 @@ function EditSavedSearchButton({
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Saved Search</DialogTitle>
+          <DialogTitle>Edit saved search</DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           savedSearch={savedSearch}
@@ -260,7 +260,7 @@ export function SavedSearchesSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Saved Searches</SettingsTitle>
+        <SettingsTitle>Saved searches</SettingsTitle>
         <AddSavedSearchButton
           onAdd={(savedSearch) => {
             configMutation.mutate({
