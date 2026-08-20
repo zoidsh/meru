@@ -29,6 +29,11 @@ bun test           # tests across every package
 
 - Always install packages as dev dependencies with `bun add -d <package>`. Rolldown and Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly.
 
+## Interface text
+
+- Interface text is sentence case everywhere: buttons, menu items, field labels, section headings, page and dialog titles, select options, badges, and tooltips. Capitalize the first word, and after that only names — Meru, Meru Pro, Gmail, Google's app names such as Calendar and My Account, 1Password, Touch ID, Windows Hello, and the Save As dialog. `Hide Gmail logo`, not `Hide Gmail Logo`.
+- Where a description names a control, spell it the way the control now reads: "choose Reset width", not "choose Reset Width".
+
 ## UI components
 
 - Components in `packages/ui` follow shadcn conventions. Many are compound components with named sub-components — `Item` → `ItemContent`, `ItemActions`, `ItemTitle`, `ItemDescription`, for example. Always read the component file before use to find available sub-components and use them instead of plain `<div>` wrappers.
@@ -42,7 +47,7 @@ bun test           # tests across every package
 
 - Structure settings fields like this: `Field` > `FieldLabel` + `FieldDescription` + control component.
 - Render config-backed fields with the existing wrapper components rather than hand-rolling `Field` + control: `ConfigSwitchField` for a boolean key, `ConfigSelectField` for a string-union key, both in `packages/renderer/components/`. Each enforces its key's type at runtime, so the value type dictates the component — a fixed set of named choices must be modeled as a string union with `ConfigSelectField`, not a boolean with a switch.
-- In a `ConfigSelectField`, list the option matching the config default first in `items`, unless the options carry an order of their own. A scale keeps its own order and lets the default fall where it does, as `workspaceAppsHibernationTimeouts` runs 30 Minutes through 6 Hours with a default of `1h` in second place.
+- In a `ConfigSelectField`, list the option matching the config default first in `items`, unless the options carry an order of their own. A scale keeps its own order and lets the default fall where it does, as `workspaceAppsHibernationTimeouts` runs 30 minutes through 6 hours with a default of `1h` in second place.
 - Read the config with `useConfig()` and persist changes with `useConfigMutation()`.
 - Use `toast.error()` for validation errors — never throw or console.error for user-facing feedback.
 
