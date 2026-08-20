@@ -746,9 +746,9 @@ export class AppMenu {
                     type: "warning",
                     buttons: ["Cancel", "Reset"],
                     defaultId: 1,
-                    message: "Are you sure you want to reset the app?",
+                    message: "Reset Meru to its original state?",
                     detail:
-                      "This will clear all your accounts, settings, and data. This action cannot be undone.",
+                      "This signs out of every account and clears all settings and data on this device. It can't be undone.",
                   });
 
                   if (response === 0) {

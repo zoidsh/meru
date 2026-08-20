@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import { Field, FieldGroup, FieldLabel } from "@meru/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import {
   Item,
@@ -86,6 +86,7 @@ export function SavedSearchForm({
                   modal
                 />
               </div>
+              <FieldError errors={field.state.meta.errors} />
             </Field>
           )}
         </form.Field>
@@ -101,6 +102,7 @@ export function SavedSearchForm({
                 onChange={(event) => field.handleChange(event.target.value)}
                 placeholder={queryPlaceholder}
               />
+              <FieldError errors={field.state.meta.errors} />
             </Field>
           )}
         </form.Field>

@@ -151,7 +151,7 @@ export function LicenseSettings() {
     },
     validators: {
       onSubmit: z.object({
-        label: z.string().min(1, "Device label is required"),
+        label: z.string().min(1, "Enter a device label"),
       }),
     },
     onSubmit: async ({ value, formApi }) => {

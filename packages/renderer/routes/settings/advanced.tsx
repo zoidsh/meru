@@ -40,7 +40,7 @@ export function AdvancedSettings() {
               {platform.isMacOS && (
                 <ConfigSwitchField
                   label="Use Custom User Agent"
-                  description="Send a custom user agent, for the Gmail and Workspace Apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
+                  description="Send a custom user agent for the Gmail and Workspace Apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
                   configKey="customUserAgent"
                   restartRequired
                 />

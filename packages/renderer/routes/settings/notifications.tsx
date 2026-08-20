@@ -267,7 +267,7 @@ export function NotificationsSettings() {
             <FieldGroup>
               <ConfigSwitchField
                 label="Show Notification"
-                description="Show a notification when a download is completed, canceled, or failed."
+                description="Show a notification when a download finishes."
                 configKey="notifications.downloadCompleted"
               />
               {config["notifications.downloadCompleted"] && (
