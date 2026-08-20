@@ -181,3 +181,6 @@ build-js
 docs
 docs/
 /extensions/
+
+# Claude
+.claude/worktrees/
