@@ -122,6 +122,7 @@ function AccountForm({
                       onClick={() => {
                         form.setFieldValue("color", null);
                       }}
+                      title="Clear color"
                     >
                       <XIcon />
                     </Button>
@@ -253,7 +254,7 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="outline">
+          <Button size="icon" className="size-8 p-0" variant="outline" title="Edit account">
             <PencilIcon />
           </Button>
         }
@@ -338,6 +339,7 @@ function SortableAccountItem({
             size="icon"
             className="size-8 p-0"
             variant="outline"
+            title="Remove account"
             onClick={() => {
               const confirmed = window.confirm(`Remove ${account.label}?`);
 

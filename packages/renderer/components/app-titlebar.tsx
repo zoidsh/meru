@@ -93,6 +93,7 @@ function AppMenuButton({ className }: { className?: string }) {
         onClick={() => {
           ipc.main.send("titleBar.toggleAppMenu");
         }}
+        title="App menu"
       >
         <EllipsisVerticalIcon />
       </Button>

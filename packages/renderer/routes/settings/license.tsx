@@ -198,7 +198,7 @@ export function LicenseSettings() {
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
-                        <Button size="icon" variant="secondary">
+                        <Button size="icon" variant="secondary" title="More options">
                           <MoreHorizontalIcon />
                         </Button>
                       }

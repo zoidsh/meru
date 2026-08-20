@@ -20,7 +20,7 @@ export function EmojiPickerButton({
     <Popover onOpenChange={setIsOpen} open={isOpen} {...props}>
       <PopoverTrigger
         render={
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" title="Pick emoji">
             <SmileIcon />
           </Button>
         }

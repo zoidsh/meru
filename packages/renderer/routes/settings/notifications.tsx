@@ -223,6 +223,7 @@ export function NotificationsSettings() {
                             size="icon"
                             onClick={() => removeTime(time.id)}
                             disabled={!isLicenseKeyValid}
+                            title="Remove time window"
                           >
                             <X />
                           </Button>
