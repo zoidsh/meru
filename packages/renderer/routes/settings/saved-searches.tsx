@@ -167,7 +167,7 @@ function EditSavedSearchButton({
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="outline">
+          <Button size="icon" className="size-8 p-0" variant="outline" title="Edit saved search">
             <PencilIcon />
           </Button>
         }
@@ -230,6 +230,7 @@ function SortableSavedSearchItem({
           size="icon"
           className="size-8 p-0"
           variant="outline"
+          title="Delete saved search"
           onClick={() => {
             const confirmed = window.confirm(`Delete ${savedSearch.label}?`);
 

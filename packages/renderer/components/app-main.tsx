@@ -18,7 +18,13 @@ function CloseButton() {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Button variant="outline" size="icon" onClick={closeSettings} className="rounded-full">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={closeSettings}
+        className="rounded-full"
+        title="Close settings"
+      >
         <XIcon />
       </Button>
       <div className="text-xs font-semibold text-muted-foreground">ESC</div>

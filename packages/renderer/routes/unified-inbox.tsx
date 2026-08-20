@@ -370,6 +370,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.firstPage()}
+            title="First page"
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronsLeftIcon />
@@ -378,6 +379,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.previousPage()}
+            title="Previous page"
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronLeftIcon />
@@ -386,6 +388,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.nextPage()}
+            title="Next page"
             disabled={!table.getCanNextPage()}
           >
             <ChevronRightIcon />
@@ -394,6 +397,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.lastPage()}
+            title="Last page"
             disabled={!table.getCanNextPage()}
           >
             <ChevronsRightIcon />
