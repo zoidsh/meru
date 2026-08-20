@@ -173,7 +173,7 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title="Do Not Disturb"
+      title="Do not disturb"
     >
       <MoonIcon
         className={cn({
@@ -355,7 +355,7 @@ export function AppTitlebar() {
                 onClick={() => {
                   navigate("/unified-inbox");
                 }}
-                title="Unified Inbox"
+                title="Unified inbox"
               >
                 <InboxIcon />
               </Button>
@@ -402,7 +402,7 @@ export function AppTitlebar() {
             <ExtensionActions />
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
-                title="Saved Searches"
+                title="Saved searches"
                 icon={<MailSearchIcon />}
                 side="left"
                 disabled={isUnifiedInboxLocation || isWorkspaceAppTabActive}

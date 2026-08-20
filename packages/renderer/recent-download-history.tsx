@@ -10,7 +10,7 @@ import { renderApp } from "@/lib/react";
 function RecentDownloadHistory() {
   return (
     <>
-      <div className="p-4 font-semibold">Recent Download History</div>
+      <div className="p-4 font-semibold">Recent download history</div>
       <Button
         size="icon"
         variant="ghost"
