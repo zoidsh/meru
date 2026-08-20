@@ -25,7 +25,7 @@ export async function openExternalUrl(
     if (!options?.skipTrustedHostCheck && !trustedHosts.includes(origin)) {
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
-        buttons: ["Open Link", "Copy Link", "Cancel"],
+        buttons: ["Open link", "Copy link", "Cancel"],
         message: "Open this link in your default browser?",
         checkboxLabel: `Trust all links on ${origin}`,
         detail:

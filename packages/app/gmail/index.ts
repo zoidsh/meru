@@ -846,7 +846,7 @@ export class Gmail {
               type: "button",
             },
             {
-              text: "Mark as Read",
+              text: "Mark as read",
               type: "button",
             },
             {
@@ -854,7 +854,7 @@ export class Gmail {
               type: "button",
             },
             {
-              text: "Mark as Spam",
+              text: "Mark as spam",
               type: "button",
             },
           ],
