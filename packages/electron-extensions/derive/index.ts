@@ -74,6 +74,14 @@ async function readStamp(stampPath: string) {
   }
 }
 
+async function directoryExists(dirPath: string) {
+  try {
+    return (await stat(dirPath)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 /** Chromium serves `Popup.HTM` as a page just as well, so the net is this wide. */
 const PAGE_FILE_EXTENSIONS = new Set([".html", ".htm"]);
 
@@ -139,7 +147,10 @@ export async function deriveExtension({
     contentScriptMatches,
   });
 
-  if ((await readStamp(stampPath)) !== stamp) {
+  // A stamp that matches while its copy is gone would otherwise skip the copy
+  // and go on writing the facade into nothing, on this launch and every one
+  // after it, since nothing but a copy moves the stamp back off a match
+  if ((await readStamp(stampPath)) !== stamp || !(await directoryExists(derivedDir))) {
     await rm(derivedDir, { recursive: true, force: true });
 
     await rm(stampPath, { force: true });
