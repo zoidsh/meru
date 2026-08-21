@@ -64,11 +64,6 @@ function DiagnosticInfo() {
 function ExportLogsField() {
   const exportLogsMutation = useMutation({
     mutationFn: () => ipc.main.invoke("about.exportLogs"),
-    onSuccess: ({ canceled }) => {
-      if (!canceled) {
-        toast("Logs exported");
-      }
-    },
     onError: () => {
       toast.error("Couldn't export the logs.");
     },
