@@ -5,17 +5,6 @@ import {
   type GmailLabelTextColor,
   gmailLabelColorInputSchema,
 } from "@meru/shared/schemas";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@meru/ui/components/alert-dialog";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -264,42 +253,21 @@ export function GmailLabelColors() {
                     });
                   }}
                 />
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        className="size-8 p-0"
-                        variant="outline"
-                        title="Delete label color"
-                      >
-                        <TrashIcon />
-                      </Button>
-                    }
-                  />
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete the color for {labelColor.label}?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        The label goes back to its color in Gmail.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel />
-                      <AlertDialogAction
-                        onClick={() => {
-                          configMutation.mutate({
-                            "gmail.labelColors": config["gmail.labelColors"].filter(
-                              (existingLabelColor) => existingLabelColor.id !== labelColor.id,
-                            ),
-                          });
-                        }}
-                      >
-                        Delete color
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  size="icon"
+                  className="size-8 p-0"
+                  variant="outline"
+                  title="Delete label color"
+                  onClick={() => {
+                    configMutation.mutate({
+                      "gmail.labelColors": config["gmail.labelColors"].filter(
+                        (existingLabelColor) => existingLabelColor.id !== labelColor.id,
+                      ),
+                    });
+                  }}
+                >
+                  <TrashIcon />
+                </Button>
               </ItemActions>
             </Item>
           ))}
