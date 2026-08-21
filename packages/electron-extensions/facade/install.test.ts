@@ -67,10 +67,13 @@ describe("installChromeFacade", () => {
     }
   });
 
-  test("adds the constants extensions compare ids against", () => {
+  test("adds the constants Electron leaves off the namespaces", () => {
     const chrome = install();
 
     expect(namespaceOf(chrome, "tabs").TAB_ID_NONE).toBe(-1);
+    expect(namespaceOf(chrome, "tabs").TAB_INDEX_NONE).toBe(-1);
+    expect(namespaceOf(chrome, "tabs").SPLIT_VIEW_ID_NONE).toBe(-1);
+    expect(namespaceOf(chrome, "tabs").MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND).toBe(2);
     expect(namespaceOf(chrome, "windows").WINDOW_ID_NONE).toBe(-1);
     expect(namespaceOf(chrome, "windows").WINDOW_ID_CURRENT).toBe(-2);
   });
