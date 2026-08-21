@@ -15,6 +15,7 @@ export {
   getInstalledExtension,
   installExtension,
   installLatestExtension,
+  pruneExtensionVersions,
   uninstallExtension,
 } from "./install";
 export type {
@@ -28,6 +29,7 @@ export type {
   InstallExtensionOptions,
   InstallLatestExtensionOptions,
   LatestExtensionInstall,
+  PruneExtensionVersionsOptions,
   UpdateCheckOptions,
 } from "./install";
 export type { ExtensionsLogger } from "./logger";

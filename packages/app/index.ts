@@ -7,7 +7,12 @@ import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { extensionActions } from "@/extension-actions";
-import { extensions, extensionUpdater, pruneDerivedExtensionCopies } from "@/extensions";
+import {
+  extensions,
+  extensionUpdater,
+  pruneDerivedExtensionCopies,
+  pruneInstalledExtensionVersions,
+} from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { licenseKey } from "@/license-key";
@@ -113,6 +118,12 @@ async function init() {
 
   spellchecker.init();
 
+  // Both prunes delete what the sessions are about to read from, so they run
+  // before the first session derives its copies rather than alongside
+  await pruneInstalledExtensionVersions();
+
+  await pruneDerivedExtensionCopies();
+
   accounts.init();
 
   await initLinuxWindowControls();
@@ -136,8 +147,6 @@ async function init() {
   appUpdater.init();
 
   extensionUpdater.init();
-
-  pruneDerivedExtensionCopies();
 
   doNotDisturb.init();
 

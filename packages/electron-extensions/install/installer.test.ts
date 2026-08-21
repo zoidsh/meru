@@ -9,6 +9,7 @@ import {
   getInstalledExtension,
   installExtension,
   installLatestExtension,
+  pruneExtensionVersions,
   uninstallExtension,
 } from "./index";
 import type { FetchImplementation } from "./omaha";
@@ -255,7 +256,7 @@ describe("installLatestExtension", () => {
     expect(downloadedUrls).toEqual([]);
   });
 
-  test("installs a newer version and drops the one it replaces", async () => {
+  test("installs a newer version and leaves the one it replaces on disk", async () => {
     await installExtension({ crx: createExtensionCrx("1.0.0"), extensionId, installDir });
 
     const { fetch } = createFetch({ crx: createExtensionCrx("2.0.0"), servedVersion: "2.0.0" });
@@ -269,7 +270,10 @@ describe("installLatestExtension", () => {
 
     expect(latestExtension.updated).toBe(true);
     expect(latestExtension.version).toBe("2.0.0");
-    expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
+
+    // A session can still be deriving its copy from the version that was
+    // replaced, so the launch-time prune is what drops it
+    expect((await readdir(extensionInstallDir)).sort()).toEqual(["1.0.0", "2.0.0"]);
   });
 
   test("writes nothing when the package turns out to carry the installed version", async () => {
@@ -303,6 +307,49 @@ describe("installLatestExtension", () => {
         fetch: async () => new Response("<html><body>Try again later</body></html>"),
       }),
     ).rejects.toThrow(`Update endpoint answered an unreadable update check for ${extensionId}`);
+  });
+});
+
+describe("pruneExtensionVersions", () => {
+  async function writeVersionDir(id: string, dirName: string) {
+    await mkdir(path.join(installDir, id, dirName), { recursive: true });
+
+    await writeFile(path.join(installDir, id, dirName, "manifest.json"), "{}");
+  }
+
+  test("keeps the newest version of every extension and drops what it replaced", async () => {
+    const otherExtensionId = "otherextensionidwithnoversions";
+
+    await writeVersionDir(extensionId, "1.0.0");
+
+    await writeVersionDir(extensionId, "2.0.0");
+
+    await writeVersionDir(otherExtensionId, "3.0.0");
+
+    await pruneExtensionVersions({ installDir });
+
+    expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
+    expect(await readdir(path.join(installDir, otherExtensionId))).toEqual(["3.0.0"]);
+  });
+
+  test("drops what a crashed install left behind", async () => {
+    await writeVersionDir(extensionId, "1.0.0");
+
+    await writeVersionDir(extensionId, "2.0.0.staging");
+
+    await mkdir(path.join(extensionInstallDir, "3.0.0"));
+
+    await pruneExtensionVersions({ installDir });
+
+    expect(await readdir(extensionInstallDir)).toEqual(["1.0.0"]);
+  });
+
+  test("does nothing when nothing is installed", async () => {
+    await rm(installDir, { recursive: true, force: true });
+
+    await pruneExtensionVersions({ installDir });
+
+    expect(await readEntryNames(installDir)).toEqual([]);
   });
 });
 

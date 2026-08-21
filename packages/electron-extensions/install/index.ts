@@ -2,6 +2,7 @@ export {
   getInstalledExtension,
   installExtension,
   installLatestExtension,
+  pruneExtensionVersions,
   uninstallExtension,
 } from "./installer";
 export type {
@@ -10,6 +11,7 @@ export type {
   InstallExtensionOptions,
   InstallLatestExtensionOptions,
   LatestExtensionInstall,
+  PruneExtensionVersionsOptions,
 } from "./installer";
 export { buildCrxDownloadUrl, buildUpdateCheckUrl, fetchCrx, fetchCrxUpdate } from "./omaha";
 export type {

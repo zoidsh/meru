@@ -184,6 +184,21 @@ describe("deriveExtension", () => {
     );
   });
 
+  test("copies again when the copy is gone and its stamp still matches", async () => {
+    const derivedDir = await derive();
+
+    await rm(derivedDir, { recursive: true, force: true });
+
+    await derive();
+
+    expect(await readFile(path.join(derivedDir, "background", "background.js"), "utf8")).toBe(
+      "// background\n",
+    );
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).toEndWith(
+      "// facade\n",
+    );
+  });
+
   test("copies again when a file other than the manifest changed", async () => {
     const derivedDir = await derive();
 

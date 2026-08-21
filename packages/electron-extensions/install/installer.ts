@@ -1,3 +1,4 @@
+import type { Dirent } from "node:fs";
 import { access, mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unzipSync } from "fflate";
@@ -217,19 +218,48 @@ export async function getInstalledExtension({
   return { version, extensionDir: path.join(extensionInstallDir, version) };
 }
 
-/**
- * Everything under the id except the version just installed: older versions,
- * and staging directories a crashed install left behind.
- *
- * Dropping an older version out from under a running session is safe because
- * sessions load a derived copy of an extension, never the install itself.
- */
-async function pruneOtherVersions(extensionInstallDir: string, keptVersion: string) {
-  const entryNames = await readdir(extensionInstallDir);
+export type PruneExtensionVersionsOptions = {
+  /** The directory installs live under, `<installDir>/<extensionId>/<version>`. */
+  installDir: string;
+};
 
-  for (const entryName of entryNames) {
-    if (entryName !== keptVersion) {
-      await rm(path.join(extensionInstallDir, entryName), { recursive: true, force: true });
+/**
+ * Drops everything an install superseded: the version directories an update
+ * replaced, and staging directories a crashed install left behind. What is kept
+ * for every extension is the newest version installed, which is the one an
+ * embedder loads.
+ *
+ * A launch-time sweep rather than part of the install, because a session reads
+ * an install directory while deriving its copy of the extension, and an update
+ * that dropped the version being read would fail that load. Nothing reads an
+ * install before the first session is set up, so that is where deletion belongs
+ * — an extension updated mid-session keeps its old version until the next
+ * launch, which is one directory per updated extension.
+ */
+export async function pruneExtensionVersions({ installDir }: PruneExtensionVersionsOptions) {
+  let installEntries: Dirent[];
+
+  try {
+    installEntries = await readdir(installDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const installEntry of installEntries) {
+    if (!installEntry.isDirectory()) {
+      continue;
+    }
+
+    const extensionId = installEntry.name;
+
+    const extensionInstallDir = path.join(installDir, extensionId);
+
+    const installedExtension = await getInstalledExtension({ installDir, extensionId });
+
+    for (const entryName of await readdir(extensionInstallDir)) {
+      if (entryName !== installedExtension?.version) {
+        await rm(path.join(extensionInstallDir, entryName), { recursive: true, force: true });
+      }
     }
   }
 }
@@ -294,8 +324,6 @@ export async function installLatestExtension({
     extensionId,
     installDir,
   });
-
-  await pruneOtherVersions(path.join(installDir, extensionId), latestExtension.version);
 
   return { ...latestExtension, updated: true };
 }

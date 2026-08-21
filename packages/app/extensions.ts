@@ -7,6 +7,7 @@ import {
   installLatestExtension,
   type LatestExtensionInstall,
   pruneDerivedExtensions,
+  pruneExtensionVersions,
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
@@ -199,10 +200,23 @@ export async function uninstallCuratedExtension(extensionId: string) {
 }
 
 /**
+ * The version directories an update replaced, and the staging directories a
+ * crashed install left behind. Runs before the first session is set up, since
+ * that is where deriving reads an install directory from.
+ */
+export async function pruneInstalledExtensionVersions() {
+  try {
+    await pruneExtensionVersions({ installDir: INSTALL_DIR });
+  } catch (error) {
+    log.error("Failed to prune installed extension versions", { error: serializeError(error) });
+  }
+}
+
+/**
  * The copies the loader derived from extensions that are no longer loaded — an
  * extension the user opted out of, a version an update replaced — are the
- * embedder's to collect. Once per launch: every session derives from the same
- * list.
+ * embedder's to collect. Once per launch, before the sessions derive: a copy is
+ * unaccounted for the moment a derive drops its stamp to write it again.
  */
 export async function pruneDerivedExtensionCopies() {
   try {
