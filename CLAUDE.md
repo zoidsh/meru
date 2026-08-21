@@ -21,6 +21,7 @@ bun test           # tests across every package
 ## Docs
 
 - `docs/` is a separately cloned private docs repo, gitignored here, and it might be absent on fresh checkouts. When it's present, read `docs/README.md` for what lives where.
+- When `docs/` is missing, run `bun run docs:clone` to clone it. If you keep repositories in a shared directory, clone it there instead and symlink `docs/` to it, so several worktrees share one clone — set `MERU_DOCS_PATH` to that directory and the script does both.
 - Check `docs/decisions.md` before reopening a settled design decision.
 - Keep `docs/architecture/` current when changing the app's structure. Larger features start as a design doc in `docs/features/` before implementation.
 - When renaming a main-process class or file, grep `docs/` for the old name and fix every reference — the docs repo has no other mechanism to catch renames.
