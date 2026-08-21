@@ -22,10 +22,6 @@ export function useConfig() {
   };
 }
 
-export function getConfig() {
-  return queryClient.fetchQuery(configOptions);
-}
-
 ipc.renderer.on("bookmarks.changed", (_event, bookmarks) => {
   queryClient.setQueryData(["bookmarks"], bookmarks);
 });
