@@ -318,7 +318,7 @@ describe("pruneExtensionVersions", () => {
   }
 
   test("keeps the newest version of every extension and drops what it replaced", async () => {
-    const otherExtensionId = "otherextensionidwithnoversions";
+    const otherExtensionId = "abcdefghijklmnopabcdefghijklmnop";
 
     await writeVersionDir(extensionId, "1.0.0");
 
@@ -330,6 +330,23 @@ describe("pruneExtensionVersions", () => {
 
     expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
     expect(await readdir(path.join(installDir, otherExtensionId))).toEqual(["3.0.0"]);
+  });
+
+  test("keeps pruning past a directory that isn't an extension", async () => {
+    const strayDir = path.join(installDir, "not-an-extension");
+
+    await mkdir(strayDir);
+
+    await writeFile(path.join(strayDir, "kept"), "kept");
+
+    await writeVersionDir(extensionId, "1.0.0");
+
+    await writeVersionDir(extensionId, "2.0.0");
+
+    await pruneExtensionVersions({ installDir });
+
+    expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
+    expect(await readFile(path.join(strayDir, "kept"), "utf8")).toBe("kept");
   });
 
   test("drops what a crashed install left behind", async () => {
