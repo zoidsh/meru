@@ -3,8 +3,10 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { Button, buttonVariants } from "@meru/ui/components/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -83,9 +85,10 @@ function LicenseKeyForm({
           }}
         </form.Field>
       </FieldGroup>
-      <div className="flex items-center justify-end">
+      <DialogFooter>
+        <DialogClose render={<Button variant="outline">Cancel</Button>} />
         <Button type="submit">Activate</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }
