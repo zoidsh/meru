@@ -6,7 +6,7 @@ export function restartRequiredToast() {
     id: "restart-required",
     duration: Number.POSITIVE_INFINITY,
     action: {
-      label: "Restart Now",
+      label: "Restart",
       onClick: () => {
         ipc.main.send("app.relaunch");
       },

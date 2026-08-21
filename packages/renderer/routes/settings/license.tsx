@@ -15,7 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@meru/ui/components/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@meru/ui/components/input-group";
 import { Spinner } from "@meru/ui/components/spinner";
@@ -23,7 +29,6 @@ import { useForm, useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontalIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode, useState } from "react";
-import { toast } from "sonner";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
@@ -164,8 +169,6 @@ export function LicenseSettings() {
       await refetchDeviceInfo();
 
       formApi.reset();
-
-      toast("Device label updated");
     },
   });
 
@@ -185,9 +188,9 @@ export function LicenseSettings() {
             <FieldGroup>
               <Field>
                 <FieldLabel>License key</FieldLabel>
+                <FieldDescription>Select the field to show the key.</FieldDescription>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Click to reveal the license key"
                     value={isLicenseKeyRevealed ? config.licenseKey : ""}
                     onFocus={() => {
                       setIsLicenseKeyRevealed(true);
@@ -210,8 +213,6 @@ export function LicenseSettings() {
                         onClick={() => {
                           if (config.licenseKey) {
                             navigator.clipboard.writeText(config.licenseKey);
-
-                            toast("License key copied to clipboard");
                           }
                         }}
                       >

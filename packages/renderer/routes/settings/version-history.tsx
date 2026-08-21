@@ -1,7 +1,13 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@meru/ui/components/empty";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@meru/ui/components/empty";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@meru/ui/components/item";
 import { Kbd } from "@meru/ui/components/kbd";
 import { Skeleton } from "@meru/ui/components/skeleton";
@@ -60,6 +66,9 @@ export function VersionHistorySettings() {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Couldn't load what's new</EmptyTitle>
+            <EmptyDescription>
+              The release notes come from GitHub. Check your connection, then try again.
+            </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button

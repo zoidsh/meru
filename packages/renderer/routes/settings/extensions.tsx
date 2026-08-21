@@ -120,8 +120,42 @@ function OnePasswordSetupDialog({
               ipc.main.send("app.relaunch");
             }}
           >
-            Restart now
+            Restart
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type ExtensionError = {
+  title: string;
+  description: string;
+};
+
+function ExtensionErrorDialog({
+  error,
+  onDismiss,
+}: {
+  error: ExtensionError | null;
+  onDismiss: () => void;
+}) {
+  return (
+    <Dialog
+      open={Boolean(error)}
+      onOpenChange={(open) => {
+        if (!open) {
+          onDismiss();
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{error?.title}</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="whitespace-pre-line">{error?.description}</DialogDescription>
+        <DialogFooter>
+          <DialogClose render={<Button>OK</Button>} />
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -143,6 +177,8 @@ function ExtensionItem({
 
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
 
+  const [extensionError, setExtensionError] = useState<ExtensionError | null>(null);
+
   const extensionMutation = useMutation({
     mutationFn: (install: boolean) =>
       install
@@ -150,7 +186,12 @@ function ExtensionItem({
         : ipc.main.invoke("extensions.uninstall", extension.id),
     onSuccess: ({ error }, install) => {
       if (error) {
-        toast.error(error);
+        setExtensionError({
+          title: install
+            ? `Couldn't install ${extension.name}`
+            : `Couldn't uninstall ${extension.name}`,
+          description: error,
+        });
 
         return;
       }
@@ -217,6 +258,12 @@ function ExtensionItem({
       {isOnePassword && (
         <OnePasswordSetupDialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen} />
       )}
+      <ExtensionErrorDialog
+        error={extensionError}
+        onDismiss={() => {
+          setExtensionError(null);
+        }}
+      />
     </>
   );
 }
@@ -226,7 +273,7 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Meru can sign you in with a Touch ID passkey</AlertTitle>
+        <AlertTitle>Passkeys work with Touch ID</AlertTitle>
         <AlertDescription>
           Add a passkey to your Google account from its security settings inside Meru and sign in
           with Touch ID — lighter than running an extension. iCloud passkeys don't work here, and
@@ -240,7 +287,7 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Meru can sign you in with your Windows passkeys</AlertTitle>
+        <AlertTitle>Passkeys work with Windows Hello</AlertTitle>
         <AlertDescription>
           Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
           with no extension. Filling passwords still needs a password manager.
@@ -252,7 +299,7 @@ function PasskeysAlert() {
   return (
     <Alert>
       <KeyRoundIcon />
-      <AlertTitle>Passkeys need a password manager on Linux</AlertTitle>
+      <AlertTitle>Passkeys need a password manager</AlertTitle>
       <AlertDescription>
         Linux has no system passkey support, so a password manager extension is the only way to sign
         in to Google with a passkey in Meru.
@@ -262,16 +309,20 @@ function PasskeysAlert() {
 }
 
 function UpdateExtensionsButton() {
+  const [extensionError, setExtensionError] = useState<ExtensionError | null>(null);
+
   const updateExtensionsMutation = useMutation({
     mutationFn: () => ipc.main.invoke("extensions.update"),
     onSuccess: ({ error, results }) => {
       if (error) {
-        toast.error(error);
+        setExtensionError({ title: "Couldn't update extensions", description: error });
 
         return;
       }
 
       let updatedAny = false;
+
+      const failedUpdates: { name: string; reason: string }[] = [];
 
       for (const result of results ?? []) {
         const name = curatedExtensions.find(({ id }) => id === result.id)?.name ?? result.id;
@@ -290,11 +341,25 @@ function UpdateExtensionsButton() {
             break;
           }
           case "failed": {
-            toast.error(`Couldn't update ${name}: ${result.error}`);
+            failedUpdates.push({ name, reason: result.error });
 
             break;
           }
         }
+      }
+
+      const [firstFailedUpdate] = failedUpdates;
+
+      if (firstFailedUpdate) {
+        setExtensionError({
+          title:
+            failedUpdates.length === 1
+              ? `Couldn't update ${firstFailedUpdate.name}`
+              : `Couldn't update ${failedUpdates.length} extensions`,
+          description: `${failedUpdates
+            .map(({ name, reason }) => `${name}: ${reason}`)
+            .join("\n")}\n\nTry updating again.`,
+        });
       }
 
       if (updatedAny) {
@@ -308,16 +373,24 @@ function UpdateExtensionsButton() {
   });
 
   return (
-    <Button
-      variant="outline"
-      disabled={updateExtensionsMutation.isPending}
-      onClick={() => {
-        updateExtensionsMutation.mutate();
-      }}
-    >
-      {updateExtensionsMutation.isPending && <Spinner />}
-      Update extensions
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        disabled={updateExtensionsMutation.isPending}
+        onClick={() => {
+          updateExtensionsMutation.mutate();
+        }}
+      >
+        {updateExtensionsMutation.isPending && <Spinner />}
+        Update extensions
+      </Button>
+      <ExtensionErrorDialog
+        error={extensionError}
+        onDismiss={() => {
+          setExtensionError(null);
+        }}
+      />
+    </>
   );
 }
 

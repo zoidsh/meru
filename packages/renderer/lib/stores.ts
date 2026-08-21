@@ -26,8 +26,8 @@ ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
   const config = await getConfig();
 
   if (!config.licenseKey && !useTrialStore.getState().daysLeft) {
-    toast.error("Meru Pro required", {
-      description: "Upgrade to Meru Pro to add more accounts.",
+    toast.error("Meru Pro is required to add more accounts.", {
+      description: "Upgrade to Meru Pro to continue.",
     });
 
     return;
