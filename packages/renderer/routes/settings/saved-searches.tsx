@@ -21,7 +21,9 @@ import {
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -119,9 +121,10 @@ export function SavedSearchForm({
           )}
         </form.Field>
       </FieldGroup>
-      <div className="flex justify-end">
+      <DialogFooter>
+        <DialogClose render={<Button variant="outline">Cancel</Button>} />
         <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

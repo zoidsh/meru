@@ -21,7 +21,9 @@ import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -215,9 +217,10 @@ function AccountForm({
           </form.Field>
         </FieldSet>
       </FieldGroup>
-      <div className="flex items-center justify-end">
+      <DialogFooter>
+        <DialogClose render={<Button variant="outline">Cancel</Button>} />
         <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }
