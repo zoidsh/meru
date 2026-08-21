@@ -54,7 +54,7 @@ function BookmarksButton() {
       onMouseLeave={() => {
         ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", true);
       }}
-      title="Bookmarks"
+      title="Show bookmarks"
     >
       <BookOpenIcon />
     </TitlebarIconButton>
@@ -73,7 +73,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Recent download history"
+      title="Show recent download history"
     >
       <DownloadIcon />
     </TitlebarIconButton>
@@ -173,7 +173,7 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title="Do Not Disturb"
+      title={config["doNotDisturb.enabled"] ? "Turn Do Not Disturb off" : "Turn Do Not Disturb on"}
     >
       <MoonIcon
         className={cn({
@@ -293,7 +293,7 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.quitAndInstall");
               }}
             >
-              Restart Now
+              Restart now
             </Button>
             <Button
               variant="outline"
@@ -314,7 +314,7 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.openVersionHistory");
               }}
             >
-              What's New
+              What's new
             </Button>
           </div>
         </div>
@@ -355,7 +355,7 @@ export function AppTitlebar() {
                 onClick={() => {
                   navigate("/unified-inbox");
                 }}
-                title="Unified Inbox"
+                title="Open unified inbox"
               >
                 <InboxIcon />
               </Button>
@@ -368,7 +368,7 @@ export function AppTitlebar() {
                   variant="ghost"
                   size="icon-sm"
                   className="draggable-none"
-                  title="Out of office"
+                  title="Open Gmail settings to turn off out of office"
                   onClick={() => {
                     ipc.main.send("gmail.navigateTo", "settings");
                   }}
@@ -402,7 +402,7 @@ export function AppTitlebar() {
             <ExtensionActions />
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
-                title="Saved Searches"
+                title="Show saved searches"
                 icon={<MailSearchIcon />}
                 side="left"
                 disabled={isUnifiedInboxLocation || isWorkspaceAppTabActive}
@@ -432,7 +432,7 @@ export function AppTitlebar() {
                 setIsAppUpdateDetailsOpen(true);
               }}
             >
-              <SparklesIcon /> Update Available
+              <SparklesIcon /> Update available
             </Button>
           )}
           <AppMenuButton />

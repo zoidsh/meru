@@ -449,7 +449,7 @@ export function UnifiedInbox() {
   return (
     <>
       <SettingsHeader className="flex-col">
-        <SettingsTitle>Unified Inbox</SettingsTitle>
+        <SettingsTitle>Unified inbox</SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>

@@ -22,7 +22,7 @@ function DownloadHistoryClearAllButton() {
       }}
       disabled={config["downloads.history"].length === 0}
     >
-      Clear All
+      Clear all
     </Button>
   );
 }
@@ -31,7 +31,7 @@ export function DownloadHistory() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Download History</SettingsTitle>
+        <SettingsTitle>Download history</SettingsTitle>
         <DownloadHistoryClearAllButton />
       </SettingsHeader>
       <DownloadHistoryList />
