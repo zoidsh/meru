@@ -5,10 +5,10 @@ import {
   FieldContent,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldLegend,
   FieldSeparator,
   FieldSet,
+  FieldTitle,
 } from "@meru/ui/components/field";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -173,10 +173,10 @@ export function GmailSettings() {
             <FieldLegend>Advanced</FieldLegend>
             <Field>
               <FieldContent>
-                <FieldLabel className="flex items-center gap-2">
+                <FieldTitle>
                   User styles
                   <LicenseKeyRequiredFieldBadge />
-                </FieldLabel>
+                </FieldTitle>
                 <FieldDescription>
                   Add your own CSS to personalize the Gmail interface further. Changes take effect
                   after a restart.

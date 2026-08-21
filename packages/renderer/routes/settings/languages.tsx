@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
-import { FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
+import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@meru/ui/components/field";
 import { cn } from "@meru/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
@@ -80,10 +80,10 @@ export function LanguagesSettings() {
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLabel className="flex items-center gap-2">
+            <FieldLegend variant="label" className="flex items-center gap-2">
               Spellchecker
               <LicenseKeyRequiredFieldBadge />
-            </FieldLabel>
+            </FieldLegend>
             <FieldDescription>
               Select additional languages for spellchecking alongside the system language.
             </FieldDescription>

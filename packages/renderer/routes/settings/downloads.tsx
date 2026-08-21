@@ -9,6 +9,7 @@ import {
   FieldSet,
 } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
+import { useId } from "react";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
@@ -16,6 +17,8 @@ import { restartRequiredToast } from "@/lib/toast";
 
 export function DownloadsSettings() {
   const { config } = useConfig();
+
+  const locationFieldId = useId();
 
   if (!config) {
     return null;
@@ -41,10 +44,10 @@ export function DownloadsSettings() {
             configKey="downloads.openFolderWhenDone"
           />
           <Field>
-            <FieldLabel>Default download location</FieldLabel>
+            <FieldLabel htmlFor={locationFieldId}>Default download location</FieldLabel>
             <FieldDescription>Where downloaded files are saved.</FieldDescription>
             <div className="flex gap-2">
-              <Input value={config["downloads.location"]} readOnly />
+              <Input id={locationFieldId} value={config["downloads.location"]} readOnly />
               <Button
                 variant="outline"
                 onClick={async () => {

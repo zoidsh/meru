@@ -26,7 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@meru/ui/components/field";
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import {
@@ -89,14 +89,14 @@ function AccountForm({
           <form.Field name="color">
             {(field) => (
               <Field>
-                <FieldLabel>Color</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Color</FieldLabel>
                 <div className="flex gap-2">
                   <Select
                     name={field.name}
                     value={field.state.value}
                     onValueChange={field.handleChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id={field.name}>
                       <SelectValue>
                         {(value: keyof typeof accountColorsMap | null) => {
                           if (!value) {
@@ -149,7 +149,7 @@ function AccountForm({
 
               return (
                 <Field>
-                  <FieldLabel>Label</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Label</FieldLabel>
                   <div className="flex gap-2">
                     <Input
                       id={field.name}
@@ -173,7 +173,7 @@ function AccountForm({
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLabel>Options</FieldLabel>
+          <FieldLegend variant="label">Options</FieldLegend>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
               <Field orientation="horizontal" className="w-fit">
@@ -183,7 +183,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unread badge</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -196,7 +196,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unified inbox</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -209,7 +209,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Notifications</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
               </Field>
             )}
           </form.Field>

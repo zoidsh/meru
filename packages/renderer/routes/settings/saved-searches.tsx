@@ -81,7 +81,7 @@ export function SavedSearchForm({
         <form.Field name="label">
           {(field) => (
             <Field>
-              <FieldLabel>Label</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Label</FieldLabel>
               <div className="flex gap-2">
                 <Input
                   id={field.name}
@@ -105,7 +105,7 @@ export function SavedSearchForm({
         <form.Field name="query">
           {(field) => (
             <Field>
-              <FieldLabel>Query</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Query</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}

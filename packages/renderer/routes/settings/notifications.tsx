@@ -24,6 +24,7 @@ import {
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
 import { Plus, X } from "lucide-react";
+import { useId } from "react";
 import { toast } from "sonner";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -74,6 +75,8 @@ function findFreeSlot(existingTimes: NotificationTime[]) {
 
 export function NotificationsSettings() {
   const { config } = useConfig();
+
+  const soundFieldId = useId();
 
   const configMutation = useConfigMutation();
 
@@ -168,10 +171,10 @@ export function NotificationsSettings() {
                     configKey="notifications.showSummary"
                   />
                   <Field>
-                    <FieldLabel className="flex items-center gap-2">
+                    <FieldTitle>
                       Notification times
                       <LicenseKeyRequiredFieldBadge />
-                    </FieldLabel>
+                    </FieldTitle>
                     <FieldDescription>
                       Set the time windows when notifications are active. Outside them,
                       notifications stay silent. Leave the list empty to allow notifications at any
@@ -237,7 +240,7 @@ export function NotificationsSettings() {
                     </div>
                   </Field>
                   <Field>
-                    <FieldLabel>Test notification</FieldLabel>
+                    <FieldTitle>Test notification</FieldTitle>
                     <FieldDescription>
                       Show a test notification to see how notifications appear.
                     </FieldDescription>
@@ -308,7 +311,7 @@ export function NotificationsSettings() {
               {config["notifications.playSound"] && (
                 <>
                   <Field>
-                    <FieldLabel className="flex items-center gap-2">
+                    <FieldLabel htmlFor={soundFieldId} className="flex items-center gap-2">
                       Sound
                       <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
