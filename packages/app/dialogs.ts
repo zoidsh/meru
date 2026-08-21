@@ -29,7 +29,7 @@ export async function confirmAppLinksTabHandover(
     type: "info",
     buttons: ["Open links here", "Cancel"],
     message: `Open ${appLabel} links in this tab?`,
-    detail: `“${appLinksTabTitle}” opens all ${appLabel} links right now, and gives them up to this tab.`,
+    detail: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This tab will open them instead.`,
     defaultId: 0,
     cancelId: 1,
   });
