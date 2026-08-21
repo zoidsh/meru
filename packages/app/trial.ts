@@ -66,7 +66,7 @@ class Trial {
         type: "info",
         message: "Your Meru Pro trial has ended.",
         detail: "Upgrade to Meru Pro to keep every feature, or continue with the free version.",
-        buttons: ["Upgrade to Meru Pro", "Continue with Free", "Quit"],
+        buttons: ["Upgrade to Meru Pro", "Continue with the free version", "Quit"],
         defaultId: 0,
         cancelId: 2,
       });

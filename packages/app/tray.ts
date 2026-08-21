@@ -147,7 +147,7 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: mainWindowIsVisible ? "Hide" : "Show",
+        label: mainWindowIsVisible ? "Hide Meru" : "Show Meru",
         click: () => {
           main.window[mainWindowIsVisible ? "hide" : "show"]();
         },
