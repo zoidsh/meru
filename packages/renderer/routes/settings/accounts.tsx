@@ -365,6 +365,7 @@ function SortableAccountItem({
               <AlertDialogFooter>
                 <AlertDialogCancel />
                 <AlertDialogAction
+                  variant="destructive"
                   onClick={() => {
                     ipc.main.send("accounts.removeAccount", account.id);
                   }}

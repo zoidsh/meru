@@ -259,7 +259,9 @@ function SortableSavedSearchItem({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel />
-              <AlertDialogAction onClick={onDelete}>Delete saved search</AlertDialogAction>
+              <AlertDialogAction variant="destructive" onClick={onDelete}>
+                Delete saved search
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
