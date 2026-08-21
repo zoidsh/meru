@@ -63,8 +63,6 @@ class Downloads {
   }
 
   init() {
-    const openFolderWhenDone = config.get("downloads.openFolderWhenDone");
-
     const handleStarted = (item: Electron.DownloadItem) => {
       item.once("done", (_, state) => {
         const filePath = item.getSavePath();
@@ -77,7 +75,15 @@ class Downloads {
           exists: true,
         });
 
-        if (state === "completed" && config.get("notifications.downloadCompleted")) {
+        if (state !== "completed") {
+          return;
+        }
+
+        if (config.get("downloads.openFolderWhenDone")) {
+          shell.showItemInFolder(filePath);
+        }
+
+        if (config.get("notifications.downloadCompleted")) {
           const shouldOpenFile =
             config.get("notifications.onClickDownloadCompleted") === "openFile";
 
@@ -98,12 +104,13 @@ class Downloads {
       });
     };
 
+    // `openFolderWhenDone` is handled above rather than by electron-dl, which
+    // reads the option once when the listener is registered.
     electronDl({
       saveAs: config.get("downloads.saveAs"),
-      openFolderWhenDone,
       directory: config.get("downloads.location"),
       showBadge: false,
-      onStarted: openFolderWhenDone ? undefined : handleStarted,
+      onStarted: handleStarted,
     });
 
     const cleanupDownloadsHistory = () => {

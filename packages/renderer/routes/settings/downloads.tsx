@@ -39,7 +39,6 @@ export function DownloadsSettings() {
             label="Open folder when done"
             description="Open the folder containing the file when a download finishes."
             configKey="downloads.openFolderWhenDone"
-            restartRequired
           />
           <Field>
             <FieldLabel>Default download location</FieldLabel>
