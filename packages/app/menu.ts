@@ -107,19 +107,40 @@ export class AppMenu {
       },
     ];
 
+    const minimizeItem: MenuItemConstructorOptions = {
+      label: "Minimize",
+      accelerator: "CommandOrControl+M",
+      role: "minimize",
+    };
+
     // Zoom and Bring All to Front are macOS-only roles, and the Window menu
-    // itself is a macOS convention.
-    const macOSWindowArrangementItems: MenuItemConstructorOptions[] = [
+    // itself is a macOS convention, so the whole menu ships on macOS alone.
+    const macOSWindowMenuItems: MenuItemConstructorOptions[] = [
       {
-        role: "zoom",
-      },
-      {
-        type: "separator",
-      },
-      {
-        role: "front",
+        label: "Window",
+        role: "window",
+        submenu: [
+          minimizeItem,
+          {
+            role: "zoom",
+          },
+          {
+            type: "separator",
+          },
+          {
+            role: "front",
+          },
+        ],
       },
     ];
+
+    // Windows and Linux minimize from the titlebar window controls, and nothing
+    // else binds Ctrl+M there, so the File menu carries Minimize as a shortcut
+    // with no visible entry.
+    const nonMacOSMinimizeItem: MenuItemConstructorOptions = {
+      ...minimizeItem,
+      visible: false,
+    };
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
@@ -238,8 +259,15 @@ export class AppMenu {
     const userEmail = selectedAccount.instance.gmail.userEmail;
     const messageId = selectedAccount.instance.gmail.messageId;
 
+    // The Message menu carries the license check, but a disabled parent leaves
+    // its children live — their accelerators still fire on Windows and Linux —
+    // so the license gates the link itself as well.
     const copyOrShareMessageLink =
-      isGmailVisible && userEmail && messageId && createMeruMessageUrl(userEmail, messageId);
+      licenseKey.isValid &&
+      isGmailVisible &&
+      userEmail &&
+      messageId &&
+      createMeruMessageUrl(userEmail, messageId);
 
     const isFindInPageEnabled =
       Boolean(focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)) ||
@@ -304,7 +332,7 @@ export class AppMenu {
         submenu: [
           {
             label: "Compose",
-            visible: isGmailVisible,
+            enabled: isGmailVisible,
             click: () => {
               ipc.renderer.send(
                 selectedAccount.instance.gmail.view.webContents,
@@ -317,11 +345,11 @@ export class AppMenu {
           },
           {
             type: "separator",
-            visible: isGmailVisible,
           },
           {
             role: "close",
           },
+          ...(platform.isMacOS ? [] : [nonMacOSMinimizeItem]),
         ],
       },
       {
@@ -488,7 +516,7 @@ export class AppMenu {
       },
       {
         label: "Message",
-        visible: licenseKey.isValid,
+        enabled: licenseKey.isValid,
         submenu: [
           {
             label: "Copy Message Link",
@@ -653,18 +681,7 @@ export class AppMenu {
           },
         ],
       },
-      {
-        label: "Window",
-        role: "window",
-        submenu: [
-          {
-            label: "Minimize",
-            accelerator: "CommandOrControl+M",
-            role: "minimize",
-          },
-          ...(platform.isMacOS ? macOSWindowArrangementItems : []),
-        ],
-      },
+      ...(platform.isMacOS ? macOSWindowMenuItems : []),
       {
         label: "Help",
         role: "help",
