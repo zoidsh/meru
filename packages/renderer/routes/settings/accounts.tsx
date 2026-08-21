@@ -9,6 +9,7 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -363,14 +364,15 @@ function SortableAccountItem({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel />
-                <AlertDialogAction
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogClose
+                  render={<AlertDialogAction variant="destructive" />}
                   onClick={() => {
                     ipc.main.send("accounts.removeAccount", account.id);
                   }}
                 >
                   Remove account
-                </AlertDialogAction>
+                </AlertDialogClose>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

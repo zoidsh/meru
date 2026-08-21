@@ -10,6 +10,7 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -258,8 +259,13 @@ function SortableSavedSearchItem({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel />
-              <AlertDialogAction onClick={onDelete}>Delete saved search</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogClose
+                render={<AlertDialogAction variant="destructive" />}
+                onClick={onDelete}
+              >
+                Delete saved search
+              </AlertDialogClose>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
