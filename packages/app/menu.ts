@@ -89,7 +89,7 @@ export class AppMenu {
   }
 
   createMenu() {
-    const macOSWindowItems: MenuItemConstructorOptions[] = [
+    const macOSAppHideItems: MenuItemConstructorOptions[] = [
       {
         label: `Hide ${app.name}`,
         role: "hide",
@@ -104,6 +104,20 @@ export class AppMenu {
       },
       {
         type: "separator",
+      },
+    ];
+
+    // Zoom and Bring All to Front are macOS-only roles, and the Window menu
+    // itself is a macOS convention.
+    const macOSWindowArrangementItems: MenuItemConstructorOptions[] = [
+      {
+        role: "zoom",
+      },
+      {
+        type: "separator",
+      },
+      {
+        role: "front",
       },
     ];
 
@@ -253,14 +267,14 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Settings…",
+            label: "Settings",
             accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
             },
           },
           {
-            label: "Gmail Settings…",
+            label: "Gmail Settings",
             accelerator: "CommandOrControl+Shift+,",
             click: () => {
               ipc.renderer.send(
@@ -275,7 +289,7 @@ export class AppMenu {
           {
             type: "separator",
           },
-          ...(platform.isMacOS ? macOSWindowItems : []),
+          ...(platform.isMacOS ? macOSAppHideItems : []),
           {
             label: `Quit ${app.name}`,
             accelerator: "CommandOrControl+Q",
@@ -374,34 +388,6 @@ export class AppMenu {
         ],
       },
       {
-        label: "Message",
-        visible: licenseKey.isValid,
-        submenu: [
-          {
-            label: "Copy Message Link",
-            enabled: Boolean(copyOrShareMessageLink),
-            accelerator: "CommandOrControl+Shift+C",
-            click: () => {
-              if (copyOrShareMessageLink) {
-                clipboard.writeText(copyOrShareMessageLink);
-              }
-            },
-          },
-          copyOrShareMessageLink
-            ? {
-                role: "shareMenu",
-                sharingItem: {
-                  urls: [copyOrShareMessageLink],
-                },
-              }
-            : {
-                label: "Share",
-                enabled: false,
-                submenu: [],
-              },
-        ],
-      },
-      {
         label: "View",
         submenu: [
           {
@@ -428,7 +414,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Reset Zoom",
+            label: "Actual Size",
             accelerator: "CommandOrControl+0",
             click: () => {
               getActiveZoomTarget()?.resetZoom();
@@ -498,6 +484,34 @@ export class AppMenu {
               getActiveViewWebContents().openDevTools();
             },
           },
+        ],
+      },
+      {
+        label: "Message",
+        visible: licenseKey.isValid,
+        submenu: [
+          {
+            label: "Copy Message Link",
+            enabled: Boolean(copyOrShareMessageLink),
+            accelerator: "CommandOrControl+Shift+C",
+            click: () => {
+              if (copyOrShareMessageLink) {
+                clipboard.writeText(copyOrShareMessageLink);
+              }
+            },
+          },
+          copyOrShareMessageLink
+            ? {
+                role: "shareMenu",
+                sharingItem: {
+                  urls: [copyOrShareMessageLink],
+                },
+              }
+            : {
+                label: "Share",
+                enabled: false,
+                submenu: [],
+              },
         ],
       },
       {
@@ -632,7 +646,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Manage Accounts…",
+            label: "Manage Accounts",
             click: () => {
               main.navigate("/settings/accounts");
             },
@@ -648,11 +662,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+M",
             role: "minimize",
           },
-          {
-            label: "Close",
-            accelerator: "CommandOrControl+W",
-            role: "close",
-          },
+          ...(platform.isMacOS ? macOSWindowArrangementItems : []),
         ],
       },
       {
@@ -693,13 +703,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Ask Question",
+            label: "Ask Question…",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow("mailto:tim@meru.so");
             },
           },
           {
-            label: "Request Feature",
+            label: "Request Feature…",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Feature%20Request:%20",
@@ -707,7 +717,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Report Issue",
+            label: "Report Issue…",
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Report Issue:%20",
@@ -727,6 +737,12 @@ export class AppMenu {
                 },
               },
               {
+                label: "View Logs",
+                click: () => {
+                  shell.openPath(log.transports.file.getFile().path);
+                },
+              },
+              {
                 type: "separator",
               },
               {
@@ -740,7 +756,10 @@ export class AppMenu {
                 },
               },
               {
-                label: "Reset App…",
+                type: "separator",
+              },
+              {
+                label: "Reset App",
                 click: async () => {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
@@ -760,15 +779,6 @@ export class AppMenu {
                   app.relaunch();
 
                   app.quit();
-                },
-              },
-              {
-                type: "separator",
-              },
-              {
-                label: "View Logs",
-                click: () => {
-                  shell.openPath(log.transports.file.getFile().path);
                 },
               },
             ],
