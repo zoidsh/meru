@@ -140,6 +140,16 @@ describe("installExtension", () => {
 
     expect(await readEntryNames(extensionInstallDir)).toEqual([]);
   });
+
+  test("refuses an id that is not one, before it reads the package", async () => {
+    await expect(
+      installExtension({
+        crx: createExtensionCrx("1.2.3"),
+        extensionId: "../elsewhere",
+        installDir,
+      }),
+    ).rejects.toThrow("Not an extension id: ../elsewhere");
+  });
 });
 
 describe("getInstalledExtension", () => {
@@ -177,6 +187,12 @@ describe("getInstalledExtension", () => {
       version: "1.0.0",
       extensionDir: path.join(extensionInstallDir, "1.0.0"),
     });
+  });
+
+  test("refuses an id that is not one", async () => {
+    await expect(
+      getInstalledExtension({ installDir, extensionId: "../elsewhere" }),
+    ).rejects.toThrow("Not an extension id: ../elsewhere");
   });
 });
 
@@ -300,5 +316,22 @@ describe("uninstallExtension", () => {
 
     expect(await readEntryNames(extensionInstallDir)).toEqual([]);
     expect(await getInstalledExtension({ installDir, extensionId })).toBeUndefined();
+  });
+
+  test("refuses an id that is not one, rather than deleting what it climbs to", async () => {
+    const outsideDir = path.join(installDir, "outside");
+
+    await mkdir(outsideDir);
+
+    await writeFile(path.join(outsideDir, "kept"), "kept");
+
+    await expect(
+      uninstallExtension({
+        installDir: path.join(installDir, "extensions"),
+        extensionId: "../outside",
+      }),
+    ).rejects.toThrow("Not an extension id: ../outside");
+
+    expect(await readFile(path.join(outsideDir, "kept"), "utf8")).toBe("kept");
   });
 });

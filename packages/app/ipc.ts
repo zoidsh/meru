@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
+import { isExtensionId } from "@meru/electron-extensions";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
@@ -1072,6 +1073,10 @@ class Ipc {
     // Opting out is never gated, so an extension can be taken off a device that
     // has lost its license
     ipc.main.handle("extensions.uninstall", async (_event, extensionId) => {
+      if (!isExtensionId(extensionId)) {
+        return { error: "Meru doesn't know this extension." };
+      }
+
       try {
         await uninstallCuratedExtension(extensionId);
 

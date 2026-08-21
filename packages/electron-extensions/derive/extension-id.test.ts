@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getExtensionIdFromManifestKey } from "./extension-id";
+import { getExtensionIdFromManifestKey, isExtensionId } from "./extension-id";
 
 /** 1Password 8.12.32.33, whose Chrome Web Store id this key has to derive. */
 const ONE_PASSWORD_KEY =
@@ -18,5 +18,29 @@ describe("getExtensionIdFromManifestKey", () => {
 
   test("has no id for a manifest without a key", () => {
     expect(getExtensionIdFromManifestKey(undefined)).toBeUndefined();
+  });
+});
+
+describe("isExtensionId", () => {
+  test("accepts an id Chromium would write", () => {
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjncoa")).toBe(true);
+  });
+
+  test("refuses a string outside the a-p alphabet", () => {
+    expect(isExtensionId("zeblfdkhhhdcdjpifhhbdiojplfjncoa")).toBe(false);
+    expect(isExtensionId("AEBLFDKHHHDCDJPIFHHBDIOJPLFJNCOA")).toBe(false);
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjnco1")).toBe(false);
+  });
+
+  test("refuses a string that is not 32 characters", () => {
+    expect(isExtensionId("")).toBe(false);
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjnco")).toBe(false);
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjncoaa")).toBe(false);
+  });
+
+  test("refuses a path rather than an id", () => {
+    expect(isExtensionId("../..")).toBe(false);
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjnco/")).toBe(false);
+    expect(isExtensionId("aeblfdkhhhdcdjpifhhbdiojplfjncoa\n")).toBe(false);
   });
 });
