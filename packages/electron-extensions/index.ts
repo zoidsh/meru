@@ -4,6 +4,7 @@ export { compareExtensionVersions, verifyCrx } from "./crx";
 export type { VerifiedCrx } from "./crx";
 export { pruneDerivedExtensions } from "./derive";
 export type { PruneDerivedExtensionsOptions } from "./derive";
+export { isExtensionId } from "./derive/extension-id";
 export { Extensions } from "./extensions";
 export type { ActionsChangedListener, ExtensionDirs, ExtensionsOptions } from "./extensions";
 export {

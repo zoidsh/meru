@@ -3,6 +3,7 @@ import path from "node:path";
 import { unzipSync } from "fflate";
 import { verifyCrx } from "../crx/crx";
 import { compareExtensionVersions } from "../crx/version";
+import { isExtensionId } from "../derive/extension-id";
 import { type FetchImplementation, fetchCrx, fetchCrxUpdate } from "./omaha";
 
 const MANIFEST_FILE_NAME = "manifest.json";
@@ -32,6 +33,16 @@ type ExtensionPackage = {
   files: Record<string, Uint8Array>;
   manifest: ExtensionManifest;
 };
+
+/**
+ * Refuses an id that isn't shaped like one before it is joined onto the install
+ * directory, so a caller can't reach outside it with a traversal.
+ */
+function assertExtensionId(extensionId: string) {
+  if (!isExtensionId(extensionId)) {
+    throw new Error(`Not an extension id: ${extensionId}`);
+  }
+}
 
 /**
  * Turns CRX bytes into the files an install writes, refusing everything a
@@ -133,6 +144,8 @@ export type InstallExtensionOptions = {
  * the directory so an update check can read what is installed off the disk.
  */
 export async function installExtension({ crx, extensionId, installDir }: InstallExtensionOptions) {
+  assertExtensionId(extensionId);
+
   return installExtensionPackage(readCrxPackage(crx, extensionId), { extensionId, installDir });
 }
 
@@ -189,6 +202,8 @@ export async function getInstalledExtension({
   installDir,
   extensionId,
 }: InstalledExtensionOptions): Promise<InstalledExtension | undefined> {
+  assertExtensionId(extensionId);
+
   const extensionInstallDir = path.join(installDir, extensionId);
 
   const [version] = (await readInstalledVersions(extensionInstallDir)).sort(
@@ -291,5 +306,7 @@ export async function installLatestExtension({
  * extension wrote lives in the session rather than here.
  */
 export async function uninstallExtension({ installDir, extensionId }: InstalledExtensionOptions) {
+  assertExtensionId(extensionId);
+
   await rm(path.join(installDir, extensionId), { recursive: true, force: true });
 }

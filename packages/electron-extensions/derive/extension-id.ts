@@ -43,3 +43,15 @@ export function getExtensionIdFromManifestKey(key: string | undefined) {
 
   return getExtensionIdFromPublicKey(Buffer.from(key, "base64"));
 }
+
+/** The a-p alphabet over the 16 bytes an id is made of, two characters a byte. */
+const EXTENSION_ID_PATTERN = new RegExp(`^[a-p]{${EXTENSION_ID_BYTE_LENGTH * 2}}$`);
+
+/**
+ * Whether a string is shaped like an extension id, which is what makes it safe
+ * to build a path from: an id names a directory under the install directory and
+ * can never climb out of it.
+ */
+export function isExtensionId(value: string) {
+  return EXTENSION_ID_PATTERN.test(value);
+}
