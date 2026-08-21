@@ -14,13 +14,13 @@ export function UnifiedInboxSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Unified Inbox</SettingsTitle>
+        <SettingsTitle>Unified inbox</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Enable Unified Inbox"
+            label="Enable unified inbox"
             description="Show all unread messages from every account in a single unified inbox."
             configKey="unifiedInbox.enabled"
             licenseKeyRequired
@@ -28,7 +28,7 @@ export function UnifiedInboxSettings() {
           />
           {config["unifiedInbox.enabled"] && (
             <ConfigSwitchField
-              label="Show Sender Icons"
+              label="Show sender icons"
               description="Show sender icons next to the senders in the unified inbox."
               configKey="unifiedInbox.showSenderIcons"
               licenseKeyRequired

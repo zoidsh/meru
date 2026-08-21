@@ -171,7 +171,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unread Badge</FieldLabel>
+                <FieldLabel>Unread badge</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -184,7 +184,7 @@ function AccountForm({
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel>Unified Inbox</FieldLabel>
+                <FieldLabel>Unified inbox</FieldLabel>
               </Field>
             )}
           </form.Field>
@@ -232,7 +232,7 @@ function AddAccountButton() {
       <DialogTrigger render={<Button>Add</Button>} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Account</DialogTitle>
+          <DialogTitle>Add account</DialogTitle>
         </DialogHeader>
         <AccountForm
           onSubmit={(account) => {
@@ -261,7 +261,7 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Account</DialogTitle>
+          <DialogTitle>Edit account</DialogTitle>
         </DialogHeader>
         <AccountForm
           account={account}
@@ -326,8 +326,8 @@ function SortableAccountItem({
         </ItemTitle>
         {(account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
-            {account.gmail.unreadBadge && <Badge variant="outline">Unread Badge</Badge>}
-            {account.gmail.unifiedInbox && <Badge variant="outline">Unified Inbox</Badge>}
+            {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
+            {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
           </div>
         )}

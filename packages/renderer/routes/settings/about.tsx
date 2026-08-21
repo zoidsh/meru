@@ -39,8 +39,8 @@ function DiagnosticInfo() {
   }
 
   const rows = [
-    { label: "Application Version", value: info.version },
-    { label: "Operating System", value: info.os },
+    { label: "Application version", value: info.version },
+    { label: "Operating system", value: info.os },
     { label: "Device ID", value: info.deviceId },
   ];
 
@@ -88,7 +88,7 @@ function ExportLogsField() {
           }}
           disabled={exportLogsMutation.isPending}
         >
-          Export Logs
+          Export logs
         </Button>
       </div>
     </Field>

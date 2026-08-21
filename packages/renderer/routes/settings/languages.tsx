@@ -82,7 +82,7 @@ export function LanguagesSettings() {
           <FieldSet>
             <FieldLabel className="flex items-center gap-2">
               Spellchecker
-              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>}
+              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
             </FieldLabel>
             <FieldDescription>
               Select additional languages for spellchecking alongside the system language.

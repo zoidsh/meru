@@ -20,33 +20,33 @@ export function VerificationCodesSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Verification Codes</SettingsTitle>
+        <SettingsTitle>Verification codes</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Copy Codes to Clipboard"
+            label="Copy codes to clipboard"
             description="Copy a verification code to your clipboard as soon as it arrives by email."
             configKey="verificationCodes.autoCopy"
             licenseKeyRequired
           />
           <ConfigSelectField
             configKey="verificationCodes.confidence"
-            label="Detection Confidence"
+            label="Detection confidence"
             description="Choose how certain Meru has to be before it treats something as a verification code. Medium can pick up codes that aren't there. High looks for explicit keywords and can miss some."
             items={verificationCodeConfidenceItems}
             placeholder="Select confidence"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Mark Email as Read After Copying"
+            label="Mark email as read after copying"
             description="Mark the email as read once its verification code has been copied."
             configKey="verificationCodes.autoMarkAsRead"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Delete Email After Copying"
+            label="Delete email after copying"
             description="Delete the email once its verification code has been copied."
             configKey="verificationCodes.autoDelete"
             licenseKeyRequired

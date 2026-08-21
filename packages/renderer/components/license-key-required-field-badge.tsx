@@ -4,5 +4,5 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 export function LicenseKeyRequiredFieldBadge() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  return !isLicenseKeyValid && <Badge variant="secondary">Meru Pro Required</Badge>;
+  return !isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>;
 }

@@ -27,13 +27,13 @@ export function PhishingProtectionSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Phishing Protection</SettingsTitle>
+        <SettingsTitle>Phishing protection</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Confirm External Links Before Opening"
+            label="Confirm external links before opening"
             description="Prompt for confirmation before opening links from untrusted hosts in your browser."
             configKey="externalLinks.confirm"
             licenseKeyRequired
@@ -43,10 +43,11 @@ export function PhishingProtectionSettings() {
               <FieldSeparator />
               <Field>
                 <FieldContent>
-                  <FieldLabel>Trusted Hosts</FieldLabel>
+                  <FieldLabel>Trusted hosts</FieldLabel>
                   {config["externalLinks.trustedHosts"].length === 0 && (
                     <FieldDescription>
-                      No trusted hosts yet. Choosing “Trust all links” in the link prompt adds one.
+                      No trusted hosts yet. Selecting Trust all links on a host in the link prompt
+                      adds it here.
                     </FieldDescription>
                   )}
                 </FieldContent>
