@@ -5,6 +5,7 @@ import {
   findExtensionDirs,
   getInstalledExtension,
   installLatestExtension,
+  type LatestExtensionInstall,
   pruneDerivedExtensions,
   registerExtensionBridgeScheme,
   uninstallExtension,
@@ -145,13 +146,35 @@ export async function getInstalledExtensions() {
   return installedExtensions;
 }
 
+/**
+ * The install in flight per extension, which a second call joins rather than
+ * starting its own. Two installs of one extension — the user toggling it on
+ * while the updater is checking it — unpack into the same staging directory,
+ * where their writes tread on each other and one of the two renames fails.
+ */
+const runningInstalls = new Map<string, Promise<LatestExtensionInstall>>();
+
+function installLatestCuratedExtension(extensionId: string) {
+  let runningInstall = runningInstalls.get(extensionId);
+
+  if (!runningInstall) {
+    runningInstall = installLatestExtension({
+      extensionId,
+      installDir: INSTALL_DIR,
+      chromeVersion: process.versions.chrome,
+    }).finally(() => {
+      runningInstalls.delete(extensionId);
+    });
+
+    runningInstalls.set(extensionId, runningInstall);
+  }
+
+  return runningInstall;
+}
+
 /** Installs the latest version and records the opt-in, which is what loads it. */
 export async function installCuratedExtension(extensionId: string) {
-  const { version } = await installLatestExtension({
-    extensionId,
-    installDir: INSTALL_DIR,
-    chromeVersion: process.versions.chrome,
-  });
+  const { version } = await installLatestCuratedExtension(extensionId);
 
   const installedExtensionIds = config.get("extensions.installed");
 
@@ -233,11 +256,7 @@ class ExtensionUpdater {
 
     for (const extensionId of getOptedInExtensionIds()) {
       try {
-        const { updated, version } = await installLatestExtension({
-          extensionId,
-          installDir: INSTALL_DIR,
-          chromeVersion: process.versions.chrome,
-        });
+        const { updated, version } = await installLatestCuratedExtension(extensionId);
 
         log.info(updated ? "Updated extension" : "Extension is up to date", {
           extensionId,

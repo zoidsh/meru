@@ -155,4 +155,20 @@ describe("readExtensionActionIcon", () => {
       readExtensionActionIcon(createExtension({ icons: { "48": "missing.png" } })),
     ).rejects.toThrow();
   });
+
+  test("refuses an icon the manifest points outside the extension at", async () => {
+    await writeFile(path.join(path.dirname(extensionDir), "outside.png"), "outside");
+
+    expect(
+      readExtensionActionIcon(createExtension({ icons: { "48": "../outside.png" } })),
+    ).rejects.toThrow(/outside the extension/);
+  });
+
+  test("reads an icon declared from the extension root", async () => {
+    await writeFile(path.join(extensionDir, "icon-48.png"), "icon");
+
+    expect(
+      await readExtensionActionIcon(createExtension({ icons: { "48": "/icon-48.png" } })),
+    ).toBe(`data:image/png;base64,${Buffer.from("icon").toString("base64")}`);
+  });
 });

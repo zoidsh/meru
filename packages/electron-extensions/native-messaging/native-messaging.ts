@@ -161,7 +161,20 @@ export class NativeMessaging {
     });
 
     if (port) {
-      await this.startHost(port);
+      try {
+        await this.startHost(port);
+      } catch (error) {
+        // Nothing here throws of its own accord, so this is an embedder policy
+        // that did. The port has to go with it: it is already in `this.ports`
+        // and would sit there for the life of the process
+        this.options.logger?.error("Failed to start native messaging host", {
+          hostName: port.hostName,
+          extensionId: port.extensionId,
+          error,
+        });
+
+        this.closePort(port, HOST_FORBIDDEN_ERROR);
+      }
     }
 
     return new Response(body, {

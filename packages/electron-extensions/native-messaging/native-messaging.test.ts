@@ -222,6 +222,26 @@ describe("NativeMessaging", () => {
     });
   });
 
+  test("disconnects when the embedder's policy throws", async () => {
+    await writeHostManifest();
+
+    createNativeMessaging({
+      isHostAllowed: () => {
+        throw new Error("Policy is unavailable");
+      },
+    });
+
+    const response = await connect();
+
+    expect(await readFrame(response)).toEqual({
+      type: "disconnect",
+      error: "Access to the specified native messaging host is forbidden.",
+    });
+
+    // The port is gone with it, which a second connect on the same id proves
+    expect((await connect()).status).toBe(200);
+  });
+
   test("kills the host when the extension side cancels the stream", async () => {
     await writeHostManifest();
 

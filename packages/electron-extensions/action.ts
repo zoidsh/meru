@@ -140,7 +140,17 @@ export async function readExtensionActionIcon(extension: ActionExtension) {
     return null;
   }
 
-  const icon = await readFile(path.join(extension.path, iconPath));
+  const extensionDir = path.resolve(extension.path);
+
+  const iconFilePath = path.join(extensionDir, iconPath);
+
+  // Chrome resolves an icon against the extension root and never outside it, so
+  // a manifest reaching out with `..` names a file the extension never shipped
+  if (!iconFilePath.startsWith(`${extensionDir}${path.sep}`)) {
+    throw new Error(`Manifest declares "${iconPath}", which is outside the extension`);
+  }
+
+  const icon = await readFile(iconFilePath);
 
   return `data:${mimeType};base64,${icon.toString("base64")}`;
 }
