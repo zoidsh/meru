@@ -1,9 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstances } from "@meru/shared/schemas";
 import type { AccountTabsState } from "@meru/shared/tabs";
-import { toast } from "sonner";
 import { create } from "zustand";
-import { getConfig } from "./react-query";
 import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
 
 export const useAccountsStore = create<{
@@ -20,20 +18,6 @@ export const useAccountsStore = create<{
 
 ipc.renderer.on("accounts.changed", (_event, accounts) => {
   useAccountsStore.setState({ accounts });
-});
-
-ipc.renderer.on("accounts.openAddAccountDialog", async (_event) => {
-  const config = await getConfig();
-
-  if (!config.licenseKey && !useTrialStore.getState().daysLeft) {
-    toast.error("Meru Pro is required to add more accounts.", {
-      description: "Upgrade to Meru Pro to continue.",
-    });
-
-    return;
-  }
-
-  useAccountsStore.setState({ isAddAccountDialogOpen: true });
 });
 
 export const useTabsStore = create<{

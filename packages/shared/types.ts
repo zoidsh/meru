@@ -304,7 +304,6 @@ export type IpcRendererEvent = {
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];
   "extensions.actionsChanged": [actions: ExtensionActionState[]];
-  "accounts.openAddAccountDialog": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];
   "trial.daysLeftChanged": [daysLeft: number];
