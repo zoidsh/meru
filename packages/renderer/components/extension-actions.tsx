@@ -20,7 +20,7 @@ export function ExtensionActions() {
 
   return (
     <TitlebarIconButton
-      title="Extensions"
+      title="Show extensions"
       onClick={(event) => {
         const { x, y, width, height } = event.currentTarget.getBoundingClientRect();
 

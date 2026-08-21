@@ -27,7 +27,7 @@ function CloseButton() {
       >
         <XIcon />
       </Button>
-      <div className="text-xs font-semibold text-muted-foreground">ESC</div>
+      <div className="text-xs font-semibold text-muted-foreground">Esc</div>
     </div>
   );
 }

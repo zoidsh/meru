@@ -147,18 +147,18 @@ export function TitlebarNavigationControls({
 
   return (
     <>
-      <TitlebarIconButton title="Back" disabled={disabled || !canGoBack} onClick={onGoBack}>
+      <TitlebarIconButton title="Go back" disabled={disabled || !canGoBack} onClick={onGoBack}>
         <ArrowLeftIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
-        title="Forward"
+        title="Go forward"
         disabled={disabled || !canGoForward}
         onClick={onGoForward}
       >
         <ArrowRightIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
-        title={isLoading ? "Stop" : "Reload"}
+        title={isLoading ? "Stop loading" : "Reload page"}
         disabled={disabled}
         onMouseEnter={() => setIsReloadHovered(true)}
         onMouseLeave={() => setIsReloadHovered(false)}

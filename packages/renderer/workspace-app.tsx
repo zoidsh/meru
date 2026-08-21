@@ -31,7 +31,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Recent download history"
+      title="Show recent download history"
     >
       <DownloadIcon />
     </TitlebarIconButton>

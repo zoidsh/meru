@@ -38,10 +38,7 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
             <DownloadIcon />
           </EmptyMedia>
           <EmptyTitle>No downloads yet</EmptyTitle>
-          <EmptyDescription>Downloaded files appear here.</EmptyDescription>
-          <EmptyDescription>
-            Downloads older than 30 days are removed from the history automatically.
-          </EmptyDescription>
+          <EmptyDescription>Files you download appear here for 30 days.</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -85,7 +82,7 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
                 {fileName}
               </ItemTitle>
               <ItemDescription className="first-letter:capitalize">
-                {exists ? <DateFromNow timestamp={createdAt} /> : "File not found"}
+                {exists ? <DateFromNow timestamp={createdAt} /> : "File moved or deleted"}
               </ItemDescription>
             </ItemContent>
             <ItemActions>

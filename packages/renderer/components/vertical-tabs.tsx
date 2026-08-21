@@ -314,7 +314,7 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
       size={isWide ? "sm" : "icon"}
       // Colours transition, the box never does, as in `VerticalTab`
       className={cn("text-muted-foreground transition-colors", isWide && "w-full justify-start")}
-      title="Bookmarks"
+      title="Show bookmarks"
       onClick={() => {
         ipc.main.send("bookmarks.togglePopup", "verticalTabs");
       }}
@@ -360,7 +360,7 @@ function VerticalTabsWidthToggle({
         "mt-auto text-muted-foreground transition-[color,background-color]",
         isWide && "self-end",
       )}
-      title={isWide ? "Narrow tabs" : "Wide tabs"}
+      title={isWide ? "Narrow the tab strip" : "Widen the tab strip"}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
       }}

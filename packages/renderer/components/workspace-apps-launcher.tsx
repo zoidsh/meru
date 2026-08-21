@@ -72,7 +72,7 @@ export function WorkspaceAppsLauncher({
 
   return (
     <TitlebarDropdownMenu
-      title="Workspace Apps"
+      title="Open workspace app"
       icon={<LayoutGridIcon />}
       side="left"
       disabled={disabled}
@@ -119,7 +119,7 @@ export function VerticalTabsWorkspaceAppsLauncher({
             title="Open app"
           >
             <LayoutGridIcon />
-            {isWide && "Open App"}
+            {isWide && "Open app"}
           </Button>
         }
       />

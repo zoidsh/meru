@@ -129,7 +129,6 @@ function BookmarkList() {
             <BookOpenIcon />
           </EmptyMedia>
           <EmptyTitle>No bookmarks yet</EmptyTitle>
-          <EmptyDescription>Bookmarked pages appear here.</EmptyDescription>
           <EmptyDescription>
             Bookmark a page with the star on its tab or window titlebar, or from a tab's context
             menu.

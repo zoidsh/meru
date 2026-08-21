@@ -10,7 +10,7 @@ import { renderApp } from "@/lib/react";
 function RecentDownloadHistory() {
   return (
     <>
-      <div className="p-4 font-semibold">Recent Download History</div>
+      <div className="p-4 font-semibold">Recent download history</div>
       <Button
         size="icon"
         variant="ghost"
@@ -35,7 +35,7 @@ function RecentDownloadHistory() {
             ipc.main.send("downloads.openDownloadHistory");
           }}
         >
-          <SquareArrowOutUpRightIcon /> Full Download History
+          <SquareArrowOutUpRightIcon /> Full download history
         </Button>
       </div>
     </>
