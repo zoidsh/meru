@@ -84,7 +84,7 @@ export function VersionHistorySettings() {
     }
 
     const releases =
-      config?.["updates.channel"] === "beta"
+      config?.["updates.channel"] === "alpha"
         ? data
         : data.filter((release) => !release.prerelease || release.tag_name === currentTagName);
 

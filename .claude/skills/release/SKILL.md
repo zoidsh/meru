@@ -1,7 +1,7 @@
 ---
 name: release
 description: Cut a Meru release. Use when asked to release, cut a release, ship a version, or bump the version.
-argument-hint: [major|minor|patch|beta]
+argument-hint: [major|minor|patch|experimental]
 ---
 
 # Release
@@ -16,7 +16,7 @@ Check all of these first. If one fails, report it and stop — never work around
 - The last `main` workflow run is for the current `HEAD` and passed: `gh run list --workflow=main.yml --branch=main -L 1 --json headSha,status,conclusion,url`.
   - `headSha` must equal `git rev-parse HEAD`. A `HEAD` with no run yet, or a run still `in_progress`, means waiting — say which and ask whether to wait for it.
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
-- There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For a beta it's the last release of any kind, from `gh release list -L 1`.
+- There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For an experimental release it's the last release of any kind, from `gh release list -L 1`.
 
 ## Choose the bump
 
@@ -28,13 +28,15 @@ Read `git log --oneline <lastTag>..HEAD` — a release usually runs to a few doz
 
 Arguments naming a level or an explicit version override this triage — take them, and still confirm.
 
-## Beta releases
+## Experimental releases
 
-A `beta` argument, or an explicit `-beta.N` version, cuts a pre-release for the beta update channel instead of a stable release. Only cut one when asked — never propose a beta unprompted.
+An `experimental` argument, or an explicit `-alpha.N` version, cuts a prerelease for the Experimental update channel instead of a stable release. Only cut one when asked — never propose one unprompted.
 
-- The version is the next stable version per the triage above with `-beta.N` appended: the first beta of a cycle is `X.Y.Z-beta.1`. Each further beta before that stable ships increments `N`.
+The channel is named Experimental in the app and versioned `alpha` on the wire, so the interface says Experimental everywhere the version string says `-alpha.N`. That seam is deliberate, and the version suffix is never `-experimental.N`. The reasoning is in `docs/decisions.md` under "The prerelease channel is named Experimental and versioned as `alpha`".
+
+- The version is the next stable version per the triage above with `-alpha.N` appended: the first experimental release of a cycle is `X.Y.Z-alpha.1`. Each further one before that stable ships increments `N`.
 - Everything else follows the stable flow, with two differences: `gh release create` gets `--prerelease`, and the triage range runs from the last release of any kind, not the last stable.
-- Promoting a beta to stable is the normal stable flow with the suffix dropped, as in `3.60.0-beta.2` → `3.60.0`. Beta users are moved onto the stable build automatically.
+- Promoting an experimental release to stable is the normal stable flow with the suffix dropped, as in `3.60.0-alpha.2` → `3.60.0`. Experimental users are moved onto the stable build automatically.
 
 ## Confirm the bump
 
@@ -54,7 +56,7 @@ Always confirm before editing `package.json`, even when the bump is obvious.
 
 - `gh release create v<version> --target "$(git rev-parse HEAD)" --notes ""`.
   - `--target` pins the tag to the version commit rather than wherever `main` has drifted to.
-  - For a beta, add `--prerelease`. It keeps the release off `/releases/latest`, so stable users never see it, and it makes `release.yml` publish `beta*.yml` update metadata instead of `latest*.yml`.
+  - For an experimental release, add `--prerelease`. It keeps the release off `/releases/latest`, so stable users never see it, and it makes `release.yml` publish `alpha*.yml` update metadata instead of `latest*.yml`.
   - Pass no `--title`. Every prior release leaves the title empty, so GitHub shows the tag.
   - Empty notes are deliberate — the next step writes them. Don't pass `--generate-notes`.
 - Never create it as a draft. `release.yml` triggers on `released` or `prereleased` only, so a draft never builds.

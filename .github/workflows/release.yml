@@ -30,7 +30,7 @@ jobs:
         # without it macOS refuses to launch the signed app.
         run: |
           echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode > build/embedded.provisionprofile
-          bun run build:mac -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
+          bun run build:mac -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=alpha' || '' }}
         env:
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -40,10 +40,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: startsWith(matrix.os, 'ubuntu')
-        run: bun run build:linux -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
+        run: bun run build:linux -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=alpha' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: startsWith(matrix.os, 'windows')
-        run: bun run build:win -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
+        run: bun run build:win -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=alpha' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
