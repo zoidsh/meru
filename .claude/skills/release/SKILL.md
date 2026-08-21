@@ -13,9 +13,13 @@ The version commit goes straight onto `main` — no branch, no PR. Publishing th
 Check all of these first. If one fails, report it and stop — never work around it.
 
 - On `main`, clean and up to date: `git status --porcelain` empty, then `git checkout main && git pull --ff-only`.
-- The last `main` workflow run is for the current `HEAD` and passed: `gh run list --workflow=main.yml --branch=main -L 1 --json headSha,status,conclusion,url`.
+- The workflow names below are real: `.github/workflows/` holds `ci.yml` and `build.yml`. Check that before running either command — GitHub answers a renamed workflow with its pre-rename runs instead of an error, so a stale name here reads as "no run yet" on every release and never verifies anything.
+- The last `ci.yml` run is for the current `HEAD` and passed: `gh run list --workflow=ci.yml --branch=main -L 1 --json headSha,status,conclusion,url`.
   - `headSha` must equal `git rev-parse HEAD`. A `HEAD` with no run yet, or a run still `in_progress`, means waiting — say which and ask whether to wait for it.
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
+- The newest `build.yml` run on `main` is not a failure: `gh run list --workflow=build.yml --branch=main -L 1 --json headSha,status,conclusion,url`. A green `ci.yml` says nothing about whether the app compiles, and `release.yml` builds all three platforms — a broken build fails the release where it costs the most.
+  - A `conclusion` of `failure` means the release build will fail too. Report the run URL and stop. A run still `in_progress` means waiting — ask whether to wait for it.
+  - Its `headSha` may lag `HEAD`, because `build.yml` ignores commits that only touch Markdown. Don't require a match, and don't wait for a run that will never start.
 - There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For an experimental release it's the last release of any kind, from `gh release list -L 1`.
 
 ## Choose the bump
