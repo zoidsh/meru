@@ -259,15 +259,11 @@ export function GmailLabelColors() {
                   variant="outline"
                   title="Delete label color"
                   onClick={() => {
-                    const confirmed = window.confirm(`Delete the color for ${labelColor.label}?`);
-
-                    if (confirmed) {
-                      configMutation.mutate({
-                        "gmail.labelColors": config["gmail.labelColors"].filter(
-                          (existingLabelColor) => existingLabelColor.id !== labelColor.id,
-                        ),
-                      });
-                    }
+                    configMutation.mutate({
+                      "gmail.labelColors": config["gmail.labelColors"].filter(
+                        (existingLabelColor) => existingLabelColor.id !== labelColor.id,
+                      ),
+                    });
                   }}
                 >
                   <TrashIcon />

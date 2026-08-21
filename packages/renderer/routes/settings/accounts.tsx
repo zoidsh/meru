@@ -5,6 +5,17 @@ import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@meru/ui/components/alert-dialog";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -335,21 +346,34 @@ function SortableAccountItem({
       <ItemActions>
         <EditAccountButton account={account} />
         {removable && (
-          <Button
-            size="icon"
-            className="size-8 p-0"
-            variant="outline"
-            title="Remove account"
-            onClick={() => {
-              const confirmed = window.confirm(`Remove ${account.label}?`);
-
-              if (confirmed) {
-                ipc.main.send("accounts.removeAccount", account.id);
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button size="icon" className="size-8 p-0" variant="outline" title="Remove account">
+                  <TrashIcon />
+                </Button>
               }
-            }}
-          >
-            <TrashIcon />
-          </Button>
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove {account.label}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Meru signs out of this account and clears its data from this computer, including
+                  saved tabs and bookmarks. Your Gmail account isn't affected.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel />
+                <AlertDialogAction
+                  onClick={() => {
+                    ipc.main.send("accounts.removeAccount", account.id);
+                  }}
+                >
+                  Remove account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </ItemActions>
     </Item>

@@ -6,6 +6,17 @@ import {
   type GmailSavedSearchInput,
   gmailSavedSearchInputSchema,
 } from "@meru/shared/schemas";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@meru/ui/components/alert-dialog";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
@@ -226,21 +237,32 @@ function SortableSavedSearchItem({
       </ItemContent>
       <ItemActions>
         <EditSavedSearchButton savedSearch={savedSearch} onEdit={onEdit} />
-        <Button
-          size="icon"
-          className="size-8 p-0"
-          variant="outline"
-          title="Delete saved search"
-          onClick={() => {
-            const confirmed = window.confirm(`Delete ${savedSearch.label}?`);
-
-            if (confirmed) {
-              onDelete();
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button
+                size="icon"
+                className="size-8 p-0"
+                variant="outline"
+                title="Delete saved search"
+              >
+                <TrashIcon />
+              </Button>
             }
-          }}
-        >
-          <TrashIcon />
-        </Button>
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {savedSearch.label}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This deletes the saved search, not the mail it finds.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel />
+              <AlertDialogAction onClick={onDelete}>Delete saved search</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </ItemActions>
     </Item>
   );
