@@ -30,9 +30,11 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
+  FieldTitle,
 } from "@meru/ui/components/field";
 import { Kbd } from "@meru/ui/components/kbd";
 import { ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "lucide-react";
+import { useId } from "react";
 import type { Entries } from "type-fest";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -87,6 +89,8 @@ function SortableLauncherAppItem({
 
 export function WorkspaceAppsSettings() {
   const { config } = useConfig();
+
+  const excludedAppsFieldId = useId();
 
   const configMutation = useConfigMutation();
 
@@ -180,7 +184,7 @@ export function WorkspaceAppsSettings() {
               />
               <Field>
                 <FieldContent>
-                  <FieldLabel className="flex items-center gap-2">
+                  <FieldLabel htmlFor={excludedAppsFieldId} className="flex items-center gap-2">
                     Excluded apps
                     <LicenseKeyRequiredFieldBadge />
                   </FieldLabel>
@@ -190,6 +194,7 @@ export function WorkspaceAppsSettings() {
                 </FieldContent>
                 <DropdownMenu>
                   <DropdownMenuTrigger
+                    id={excludedAppsFieldId}
                     disabled={!isLicenseKeyValid}
                     render={
                       <Button variant="outline" className="justify-between font-normal">
@@ -315,10 +320,10 @@ export function WorkspaceAppsSettings() {
             <FieldLegend>Launcher and bookmarks</FieldLegend>
             <Field>
               <FieldContent>
-                <FieldLabel className="flex items-center gap-2">
+                <FieldTitle>
                   Launcher apps
                   <LicenseKeyRequiredFieldBadge />
-                </FieldLabel>
+                </FieldTitle>
                 <FieldDescription>
                   Add Workspace apps to the launcher on the right of the titlebar.
                 </FieldDescription>

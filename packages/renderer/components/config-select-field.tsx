@@ -87,7 +87,7 @@ export function ConfigSelectField({
   return (
     <Field>
       <FieldContent>
-        <FieldLabel className="flex items-center gap-2">
+        <FieldLabel htmlFor={configKey} className="flex items-center gap-2">
           {label}
           {licenseKeyRequired && <LicenseKeyRequiredFieldBadge />}
         </FieldLabel>
@@ -111,7 +111,7 @@ export function ConfigSelectField({
         }}
         disabled={isDisabled}
       >
-        <SelectTrigger>
+        <SelectTrigger id={configKey}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
+import { useId } from "react";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -37,6 +38,8 @@ const systemTrayIconColorItems = [
 
 export function AppearanceSettings() {
   const { config } = useConfig();
+
+  const themeFieldId = useId();
 
   if (!config) {
     return;
@@ -128,7 +131,7 @@ export function AppearanceSettings() {
             <FieldLegend>General</FieldLegend>
             <Field>
               <FieldContent>
-                <FieldLabel>Theme</FieldLabel>
+                <FieldLabel htmlFor={themeFieldId}>Theme</FieldLabel>
                 <FieldDescription>Select the application theme.</FieldDescription>
               </FieldContent>
               <Select
@@ -144,7 +147,7 @@ export function AppearanceSettings() {
                   }
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id={themeFieldId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

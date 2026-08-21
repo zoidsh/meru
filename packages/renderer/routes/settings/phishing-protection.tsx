@@ -4,8 +4,8 @@ import {
   FieldContent,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
+  FieldTitle,
 } from "@meru/ui/components/field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -43,7 +43,7 @@ export function PhishingProtectionSettings() {
               <FieldSeparator />
               <Field>
                 <FieldContent>
-                  <FieldLabel>Trusted hosts</FieldLabel>
+                  <FieldTitle>Trusted hosts</FieldTitle>
                   {config["externalLinks.trustedHosts"].length === 0 && (
                     <FieldDescription>
                       No trusted hosts yet. Selecting Trust all links on a host in the link prompt

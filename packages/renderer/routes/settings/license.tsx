@@ -27,7 +27,7 @@ import { Spinner } from "@meru/ui/components/spinner";
 import { useForm, useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { EyeIcon, EyeOffIcon, MoreHorizontalIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
@@ -68,7 +68,7 @@ function LicenseKeyForm({
           {(field) => {
             return (
               <Field>
-                <FieldLabel>License key</FieldLabel>
+                <FieldLabel htmlFor={field.name}>License key</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -142,6 +142,8 @@ export function LicenseSettings() {
 
   const [isLicenseKeyRevealed, setIsLicenseKeyRevealed] = useState(false);
 
+  const licenseKeyFieldId = useId();
+
   const { config } = useConfig();
 
   const deviceInfoQueryKey = ["license.getDeviceInfo"];
@@ -186,10 +188,11 @@ export function LicenseSettings() {
           <div>
             <FieldGroup>
               <Field>
-                <FieldLabel>License key</FieldLabel>
+                <FieldLabel htmlFor={licenseKeyFieldId}>License key</FieldLabel>
                 <div className="flex gap-2">
                   <InputGroup>
                     <InputGroupInput
+                      id={licenseKeyFieldId}
                       value={config.licenseKey}
                       type={isLicenseKeyRevealed ? "text" : "password"}
                       readOnly

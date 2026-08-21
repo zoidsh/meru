@@ -4,9 +4,9 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
   FieldSet,
+  FieldTitle,
 } from "@meru/ui/components/field";
 import {
   Item,
@@ -71,7 +71,7 @@ function ExportLogsField() {
 
   return (
     <Field>
-      <FieldLabel>Logs</FieldLabel>
+      <FieldTitle>Logs</FieldTitle>
       <FieldDescription>
         Export the application logs to a file, to diagnose a problem or to share with support.
       </FieldDescription>
