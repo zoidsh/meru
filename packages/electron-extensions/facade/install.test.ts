@@ -151,6 +151,22 @@ describe("installChromeFacade", () => {
     });
   });
 
+  test("serves the deprecated privacy settings Chrome still ships", async () => {
+    const services = namespaceOf(namespaceOf(install(), "privacy"), "services");
+
+    // Deprecated since Chrome 70 and still in the API, so an extension reaching
+    // for the old key must find a setting rather than dereference `undefined`
+    const autofillEnabled = namespaceOf(services, "autofillEnabled");
+
+    expect(await methodOf(autofillEnabled, "get")({})).toEqual({
+      value: false,
+      levelOfControl: "not_controllable",
+    });
+    expect(await methodOf(autofillEnabled, "set")({ value: true })).toBeUndefined();
+    expect(await methodOf(autofillEnabled, "clear")({})).toBeUndefined();
+    expect(eventOf(autofillEnabled, "onChange").addListener).toBeFunction();
+  });
+
   test("shares one facade between the chrome and browser globals", () => {
     const facade = createChromeFacade();
 

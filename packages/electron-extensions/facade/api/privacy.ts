@@ -37,6 +37,7 @@ export function createPrivacy(): ChromeNamespace {
       alternateErrorPagesEnabled: false,
       autofillAddressEnabled: false,
       autofillCreditCardEnabled: false,
+      autofillEnabled: false,
       passwordSavingEnabled: false,
       safeBrowsingEnabled: false,
       safeBrowsingExtendedReportingEnabled: false,
