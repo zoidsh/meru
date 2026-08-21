@@ -30,19 +30,19 @@ export function DownloadsSettings() {
         <FieldSet>
           <FieldLegend>General</FieldLegend>
           <ConfigSwitchField
-            label="Show Save As Dialog Before Downloading"
+            label="Show Save As dialog before downloading"
             description="Ask where to save each file before it downloads."
             configKey="downloads.saveAs"
             restartRequired
           />
           <ConfigSwitchField
-            label="Open Folder When Done"
+            label="Open folder when done"
             description="Open the folder containing the file when a download finishes."
             configKey="downloads.openFolderWhenDone"
             restartRequired
           />
           <Field>
-            <FieldLabel>Default Download Location</FieldLabel>
+            <FieldLabel>Default download location</FieldLabel>
             <FieldDescription>Where downloaded files are saved.</FieldDescription>
             <div className="flex gap-2">
               <Input value={config["downloads.location"]} readOnly />

@@ -15,10 +15,10 @@ export function AdvancedSettings() {
         <FieldGroup>
           {platform.isMacOS && (
             <FieldSet>
-              <FieldLegend>Screen Sharing</FieldLegend>
+              <FieldLegend>Screen sharing</FieldLegend>
               <FieldGroup>
                 <ConfigSwitchField
-                  label="Use System Picker"
+                  label="Use system picker"
                   description="Use the system's native screen sharing picker when sharing your screen."
                   configKey="screenShare.useSystemPicker"
                   licenseKeyRequired
@@ -32,15 +32,15 @@ export function AdvancedSettings() {
             <FieldLegend>Miscellaneous</FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Hardware Acceleration"
+                label="Hardware acceleration"
                 description="Render with the GPU. This can improve performance, and can also cause compatibility problems on some systems."
                 configKey="app.hardwareAcceleration"
                 restartRequired
               />
               {platform.isMacOS && (
                 <ConfigSwitchField
-                  label="Use Custom User Agent"
-                  description="Send a custom user agent for the Gmail and Workspace Apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
+                  label="Use custom user agent"
+                  description="Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
                   configKey="customUserAgent"
                   restartRequired
                 />

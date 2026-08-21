@@ -120,7 +120,7 @@ function OnePasswordSetupDialog({
               ipc.main.send("app.relaunch");
             }}
           >
-            Restart Now
+            Restart now
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -198,7 +198,7 @@ function ExtensionItem({
                 setIsSetupDialogOpen(true);
               }}
             >
-              Set Up Desktop App
+              Set up desktop app
             </Button>
           )}
         </ItemContent>
@@ -316,7 +316,7 @@ function UpdateExtensionsButton() {
       }}
     >
       {updateExtensionsMutation.isPending && <Spinner />}
-      Update Extensions
+      Update extensions
     </Button>
   );
 }
@@ -349,7 +349,7 @@ export function ExtensionsSettings() {
           the official extensions from the Chrome Web Store.
         </FieldDescription>
         <FieldSet>
-          <FieldLegend>Password Managers</FieldLegend>
+          <FieldLegend>Password managers</FieldLegend>
           <PasskeysAlert />
           <ItemGroup>
             {curatedExtensions

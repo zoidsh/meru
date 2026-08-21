@@ -20,7 +20,7 @@ export function BlockerSettings() {
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Enable Blocker"
+            label="Enable blocker"
             description="Block unwanted content and network requests."
             configKey="blocker.enabled"
             licenseKeyRequired
@@ -28,7 +28,7 @@ export function BlockerSettings() {
           />
           <FieldSeparator />
           <ConfigSwitchField
-            label="Block Ads"
+            label="Block ads"
             description="Block advertisements on the pages you open."
             configKey="blocker.ads"
             disabled={!config["blocker.enabled"]}
@@ -36,7 +36,7 @@ export function BlockerSettings() {
             restartRequired
           />
           <ConfigSwitchField
-            label="Block Trackers"
+            label="Block trackers"
             description="Block the scripts that follow you from site to site."
             configKey="blocker.tracking"
             disabled={!config["blocker.enabled"]}
