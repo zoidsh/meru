@@ -28,7 +28,6 @@ export function ConfigSelectField({
   label,
   description,
   items,
-  placeholder,
   licenseKeyRequired,
   disabled,
   restartRequired,
@@ -38,7 +37,6 @@ export function ConfigSelectField({
   label: string;
   description: ReactNode;
   items: { value: string; label: string }[];
-  placeholder: string;
   licenseKeyRequired?: boolean;
   disabled?: boolean;
   restartRequired?: boolean;
@@ -114,7 +112,7 @@ export function ConfigSelectField({
         disabled={isDisabled}
       >
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {items.map(({ value, label }) => (

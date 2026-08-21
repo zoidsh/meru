@@ -1,7 +1,6 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
-import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -29,6 +28,7 @@ import { toast } from "sonner";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
@@ -170,7 +170,7 @@ export function NotificationsSettings() {
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
                       Notification times
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
+                      <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
                     <FieldDescription>
                       Set the time windows when notifications are active. Outside them,
@@ -276,7 +276,6 @@ export function NotificationsSettings() {
                   label="On click"
                   description="Choose what happens when clicking the download notification."
                   configKey="notifications.onClickDownloadCompleted"
-                  placeholder="Select action"
                   items={[
                     { value: "showInFolder", label: "Show in folder" },
                     { value: "openFile", label: "Open file" },
@@ -311,7 +310,7 @@ export function NotificationsSettings() {
                   <Field>
                     <FieldLabel className="flex items-center gap-2">
                       Sound
-                      {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
+                      <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
                     <FieldDescription>Select the sound to play for notifications.</FieldDescription>
                     <Select
@@ -337,7 +336,7 @@ export function NotificationsSettings() {
                       disabled={!isLicenseKeyValid}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select sound" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => (

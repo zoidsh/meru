@@ -23,7 +23,7 @@ export function LicenseKeyRequiredBanner({ children, ...props }: ComponentProps<
           rel="noreferrer"
           className={buttonVariants({ size: "sm" })}
         >
-          Purchase
+          Upgrade
         </a>
       </ItemActions>
     </Item>

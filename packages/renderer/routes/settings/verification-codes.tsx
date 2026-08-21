@@ -36,7 +36,6 @@ export function VerificationCodesSettings() {
             label="Detection confidence"
             description="Choose how certain Meru has to be before it treats something as a verification code. Medium can pick up codes that aren't there. High looks for explicit keywords and can miss some."
             items={verificationCodeConfidenceItems}
-            placeholder="Select confidence"
             licenseKeyRequired
           />
           <ConfigSwitchField

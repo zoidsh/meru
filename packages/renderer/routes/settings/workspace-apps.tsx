@@ -157,7 +157,6 @@ export function WorkspaceAppsSettings() {
                   </>
                 }
                 configKey="workspaceApps.mode"
-                placeholder="Select mode"
                 licenseKeyRequired
                 items={Object.entries(workspaceAppsModes).map(([value, label]) => ({
                   value,
@@ -183,7 +182,7 @@ export function WorkspaceAppsSettings() {
                 <FieldContent>
                   <FieldLabel className="flex items-center gap-2">
                     Excluded apps
-                    {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
+                    <LicenseKeyRequiredFieldBadge />
                   </FieldLabel>
                   <FieldDescription>
                     Select the Workspace apps that open in the external browser instead of the app.
@@ -240,7 +239,6 @@ export function WorkspaceAppsSettings() {
                   label="Width"
                   description="How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
                   configKey="verticalTabs.width"
-                  placeholder="Select width"
                   licenseKeyRequired
                   items={Object.entries(verticalTabsWidths).map(([value, label]) => ({
                     value,
@@ -296,7 +294,6 @@ export function WorkspaceAppsSettings() {
             label="Hibernate idle tabs"
             description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Selected tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
             configKey="workspaceApps.hibernation"
-            placeholder="Select which tabs"
             licenseKeyRequired
             items={Object.entries(workspaceAppsHibernations).map(([value, label]) => ({
               value,
@@ -307,7 +304,6 @@ export function WorkspaceAppsSettings() {
             label="Hibernate after"
             description="How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
             configKey="workspaceApps.hibernationTimeout"
-            placeholder="Select timeout"
             licenseKeyRequired
             items={Object.entries(workspaceAppsHibernationTimeouts).map(([value, label]) => ({
               value,
@@ -321,7 +317,7 @@ export function WorkspaceAppsSettings() {
               <FieldContent>
                 <FieldLabel className="flex items-center gap-2">
                   Launcher apps
-                  {!isLicenseKeyValid && <LicenseKeyRequiredFieldBadge />}
+                  <LicenseKeyRequiredFieldBadge />
                 </FieldLabel>
                 <FieldDescription>
                   Add Workspace apps to the launcher on the right of the titlebar.
@@ -397,7 +393,6 @@ export function WorkspaceAppsSettings() {
               label="Launcher display"
               description="How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
               configKey="workspaceApps.launcherDisplay"
-              placeholder="Select display"
               licenseKeyRequired
               items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
                 value,
@@ -409,7 +404,6 @@ export function WorkspaceAppsSettings() {
                 label="Placement"
                 description="Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
                 configKey="workspaceApps.launcherAndBookmarksPlacement"
-                placeholder="Select placement"
                 licenseKeyRequired
                 items={Object.entries(launcherAndBookmarksPlacements).map(([value, label]) => ({
                   value,

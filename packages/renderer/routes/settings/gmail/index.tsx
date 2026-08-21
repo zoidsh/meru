@@ -148,7 +148,6 @@ export function GmailSettings() {
               label="Unread count preference"
               description="With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
               items={unreadCountPreferenceItems}
-              placeholder="Select preference"
               licenseKeyRequired
               restartRequired
             />
@@ -157,7 +156,6 @@ export function GmailSettings() {
               label="Categories to monitor"
               description="With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
               items={inboxCategoriesToMonitorItems}
-              placeholder="Select categories"
               licenseKeyRequired
               restartRequired
             />
