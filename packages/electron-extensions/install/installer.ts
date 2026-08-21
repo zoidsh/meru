@@ -252,6 +252,12 @@ export async function pruneExtensionVersions({ installDir }: PruneExtensionVersi
 
     const extensionId = installEntry.name;
 
+    // The names come off disk, so a directory that isn't an extension at all is
+    // left alone rather than aborting the prune for every extension after it.
+    if (!isExtensionId(extensionId)) {
+      continue;
+    }
+
     const extensionInstallDir = path.join(installDir, extensionId);
 
     const installedExtension = await getInstalledExtension({ installDir, extensionId });
