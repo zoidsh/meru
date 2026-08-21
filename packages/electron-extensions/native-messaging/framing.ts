@@ -1,6 +1,6 @@
 /**
- * Chrome's native messaging wire format: a 4-byte little-endian byte length in
- * the platform's native byte order, then that many bytes of UTF-8 JSON.
+ * Chrome's native messaging wire format: a 4-byte little-endian byte length,
+ * then that many bytes of UTF-8 JSON.
  *
  * The same framing carries messages twice — between Meru and the host over the
  * host's stdio, and between Meru and the extension over the bridge stream — so
