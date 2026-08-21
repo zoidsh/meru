@@ -1047,7 +1047,9 @@ class Ipc {
 
     ipc.main.handle("extensions.install", async (_event, extensionId) => {
       if (!licenseKey.isValid) {
-        return { error: "Meru Pro is required to install extensions" };
+        return {
+          error: "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue.",
+        };
       }
 
       if (!isCuratedExtensionId(extensionId)) {
@@ -1085,7 +1087,9 @@ class Ipc {
 
     ipc.main.handle("extensions.update", async () => {
       if (!licenseKey.isValid) {
-        return { error: "Meru Pro is required to update extensions" };
+        return {
+          error: "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue.",
+        };
       }
 
       return { results: await extensionUpdater.checkForUpdates() };

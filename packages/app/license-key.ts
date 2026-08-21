@@ -131,8 +131,8 @@ class LicenseKey {
         };
 
         const { response } = await this.showValidationError({
-          detail: `${errorMessages[error.code]}, and Meru removes it from this device. Contact support if you need help.`,
-          buttons: ["Remove and Restart", "Quit"],
+          detail: `${errorMessages[error.code]}. Contact support if you need help.`,
+          buttons: ["Remove and restart", "Quit"],
           defaultId: 0,
           cancelId: 1,
         });

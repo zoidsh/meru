@@ -8,7 +8,7 @@ export async function showRestartDialog() {
   const { response } = await dialog.showMessageBox({
     type: "info",
     buttons: ["Restart", "Later"],
-    message: "Restart Meru to apply the changes?",
+    message: "Restart Meru to apply the changes.",
     defaultId: 0,
     cancelId: 1,
   });
@@ -27,7 +27,7 @@ export async function confirmAppLinksTabHandover(
 
   const { response } = await dialog.showMessageBox(main.window, {
     type: "info",
-    buttons: ["Open Links Here", "Cancel"],
+    buttons: ["Open links here", "Cancel"],
     message: `Open ${appLabel} links in this tab?`,
     detail: `“${appLinksTabTitle}” opens all ${appLabel} links right now, and gives them up to this tab.`,
     defaultId: 0,
