@@ -15,19 +15,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@meru/ui/components/dropdown-menu";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@meru/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@meru/ui/components/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@meru/ui/components/input-group";
 import { Spinner } from "@meru/ui/components/spinner";
 import { useForm, useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { MoreHorizontalIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, MoreHorizontalIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode, useState } from "react";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -188,18 +187,25 @@ export function LicenseSettings() {
             <FieldGroup>
               <Field>
                 <FieldLabel>License key</FieldLabel>
-                <FieldDescription>Select the field to show the key.</FieldDescription>
                 <div className="flex gap-2">
-                  <Input
-                    value={isLicenseKeyRevealed ? config.licenseKey : ""}
-                    onFocus={() => {
-                      setIsLicenseKeyRevealed(true);
-                    }}
-                    onBlur={() => {
-                      setIsLicenseKeyRevealed(false);
-                    }}
-                    readOnly
-                  />
+                  <InputGroup>
+                    <InputGroupInput
+                      value={config.licenseKey}
+                      type={isLicenseKeyRevealed ? "text" : "password"}
+                      readOnly
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        size="icon-xs"
+                        title={isLicenseKeyRevealed ? "Hide license key" : "Show license key"}
+                        onClick={() => {
+                          setIsLicenseKeyRevealed((isRevealed) => !isRevealed);
+                        }}
+                      >
+                        {isLicenseKeyRevealed ? <EyeOffIcon /> : <EyeIcon />}
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
