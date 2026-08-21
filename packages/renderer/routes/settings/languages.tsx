@@ -1,5 +1,4 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
   DropdownMenu,
@@ -13,6 +12,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
@@ -82,7 +82,7 @@ export function LanguagesSettings() {
           <FieldSet>
             <FieldLabel className="flex items-center gap-2">
               Spellchecker
-              {!isLicenseKeyValid && <Badge variant="secondary">Meru Pro required</Badge>}
+              <LicenseKeyRequiredFieldBadge />
             </FieldLabel>
             <FieldDescription>
               Select additional languages for spellchecking alongside the system language.

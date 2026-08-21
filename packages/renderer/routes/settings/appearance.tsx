@@ -110,7 +110,6 @@ export function AppearanceSettings() {
           label="Color"
           description="Choose the color of the system tray icon."
           items={systemTrayIconColorItems}
-          placeholder="Select color"
           restartRequired
         />
         {selectAccountWithUnreadField}
@@ -146,7 +145,7 @@ export function AppearanceSettings() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select theme" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {themeItems.map(({ value, label }) => (

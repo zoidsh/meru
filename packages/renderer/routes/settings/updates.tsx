@@ -32,7 +32,6 @@ export function UpdatesSettings() {
             description="Choose which releases to receive. The beta channel gets upcoming features early."
             configKey="updates.channel"
             items={releaseChannelItems}
-            placeholder="Select channel"
             confirmation={{
               when: (value) => value === "beta",
               title: "Switch to the beta channel?",
