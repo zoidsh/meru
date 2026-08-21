@@ -38,8 +38,41 @@ describe("parseRegistryQueryOutput", () => {
     ).toBe("C:\\Program Files\\1Password\\h.json");
   });
 
+  test("reads the manifest path when Windows localizes the value name", () => {
+    expect(
+      parseRegistryQueryOutput(
+        [
+          "",
+          "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.1password.1password",
+          "    (Standard)    REG_SZ    C:\\Users\\Tim\\AppData\\Local\\1Password\\com.1password.1password.json",
+          "",
+        ].join("\r\n"),
+      ),
+    ).toBe("C:\\Users\\Tim\\AppData\\Local\\1Password\\com.1password.1password.json");
+  });
+
+  test("reads the manifest path when the localized value name has a space in it", () => {
+    expect(
+      parseRegistryQueryOutput(
+        "    (par défaut)    REG_SZ    C:\\Program Files\\1Password\\host.json\r\n",
+      ),
+    ).toBe("C:\\Program Files\\1Password\\host.json");
+  });
+
+  test("expands an expandable string value under a localized value name", () => {
+    expect(
+      parseRegistryQueryOutput("    (Standard)    REG_EXPAND_SZ    %LOCALAPPDATA%\\host.json", {
+        LOCALAPPDATA: "C:\\Users\\Tim\\AppData\\Local",
+      }),
+    ).toBe("C:\\Users\\Tim\\AppData\\Local\\host.json");
+  });
+
   test("ignores a value that is not a string", () => {
     expect(parseRegistryQueryOutput("    (Default)    REG_DWORD    0x1")).toBeUndefined();
+  });
+
+  test("ignores a value that is not a string under a localized value name", () => {
+    expect(parseRegistryQueryOutput("    (Standard)    REG_DWORD    0x1")).toBeUndefined();
   });
 
   test("answers with nothing when the key has no default value", () => {
