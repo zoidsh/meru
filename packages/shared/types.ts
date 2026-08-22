@@ -182,7 +182,6 @@ export type Config = {
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;
-  "verificationCodes.confidence": "high" | "medium";
   "doNotDisturb.enabled": boolean;
   "doNotDisturb.duration": string | null;
   "doNotDisturb.until": number | null;

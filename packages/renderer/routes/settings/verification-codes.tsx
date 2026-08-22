@@ -1,14 +1,8 @@
 import { FieldGroup } from "@meru/ui/components/field";
-import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
-
-const verificationCodeConfidenceItems = [
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-];
 
 export function VerificationCodesSettings() {
   const { config } = useConfig();
@@ -29,13 +23,6 @@ export function VerificationCodesSettings() {
             label="Copy codes to clipboard"
             description="Copy a verification code to your clipboard as soon as it arrives by email."
             configKey="verificationCodes.autoCopy"
-            licenseKeyRequired
-          />
-          <ConfigSelectField
-            configKey="verificationCodes.confidence"
-            label="Detection confidence"
-            description="Choose how certain Meru has to be before it treats something as a verification code. Medium can pick up codes that aren't there. High looks for explicit keywords and can miss some."
-            items={verificationCodeConfidenceItems}
             licenseKeyRequired
           />
           <ConfigSwitchField

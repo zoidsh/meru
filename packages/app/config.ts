@@ -116,7 +116,6 @@ export const config = new Store<Config>({
     "verificationCodes.autoCopy": false,
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,
-    "verificationCodes.confidence": "high",
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
@@ -460,6 +459,13 @@ export const config = new Store<Config>({
         }
 
         store.set("accounts", accounts);
+      }
+    },
+    ">=3.60.0": (store) => {
+      // @ts-expect-error: `verificationCodes.confidence` has been removed
+      if (store.has("verificationCodes.confidence")) {
+        // @ts-expect-error
+        store.delete("verificationCodes.confidence");
       }
     },
   },

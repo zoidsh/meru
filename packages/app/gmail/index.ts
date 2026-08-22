@@ -15,6 +15,7 @@ import {
 import { ms } from "@meru/shared/ms";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
+import { extractVerificationCode } from "@meru/verification-code";
 import {
   app,
   BrowserWindow,
@@ -89,126 +90,6 @@ const inboxFeedSchema = z.object({
 });
 
 const inboxTypeSchema = z.string();
-
-function extractVerificationCode(texts: string[]) {
-  const confidence = config.get("verificationCodes.confidence");
-
-  let textIncludesHighConfidencePattern = false;
-  let textIncludesMediumConfidencePattern = false;
-  let textIncludesNegativePattern = false;
-
-  if (confidence === "high") {
-    for (const text of texts) {
-      if (
-        /\b(verification|sign[-\s]in|sign[-\s]up|single[-\s]use|one[-\s]time|security|authentication)\b/i.test(
-          text,
-        )
-      ) {
-        textIncludesHighConfidencePattern = true;
-
-        break;
-      }
-    }
-  }
-
-  for (const text of texts) {
-    if (/\bcode\b/i.test(text)) {
-      textIncludesMediumConfidencePattern = true;
-
-      break;
-    }
-  }
-
-  for (const text of texts) {
-    if (/\b(pick[-\s]up|delivery|collection)\b/i.test(text)) {
-      textIncludesNegativePattern = true;
-
-      break;
-    }
-  }
-
-  if (
-    (confidence === "high" && !textIncludesHighConfidencePattern) ||
-    !textIncludesMediumConfidencePattern ||
-    textIncludesNegativePattern
-  ) {
-    return null;
-  }
-
-  // 6-digit codes
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{6})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1];
-    }
-  }
-
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{3}[\s-][0-9]{3})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
-    }
-  }
-
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
-    }
-  }
-
-  // 8-digit codes
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{8})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1];
-    }
-  }
-
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{4}[\s-][0-9]{4})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
-    }
-  }
-
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(
-      /\b([0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2}[\s-][0-9]{2})\b/,
-    );
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
-    }
-  }
-
-  // 4-digit codes
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{4})\b/);
-
-    if (
-      verificationCodeMatch?.[1] &&
-      verificationCodeMatch[1] !== new Date().getFullYear().toString()
-    ) {
-      return verificationCodeMatch[1];
-    }
-  }
-
-  for (const text of texts) {
-    const verificationCodeMatch = text.match(/\b([0-9]{2}[\s-][0-9]{2})\b/);
-
-    if (verificationCodeMatch?.[1]) {
-      return verificationCodeMatch[1].replace(/[\s-]/g, "");
-    }
-  }
-
-  return null;
-}
 
 export class Gmail {
   accountId: string;
