@@ -172,8 +172,9 @@ describe("extractVerificationCode", () => {
     expect(extractVerificationCode(["Your verification code is 493-021", ""])).toBe("493021");
   });
 
-  test("extracts a delivery one-time code despite the delivery penalty", () => {
-    expect(extractVerificationCode(["Your delivery code is 493021", ""])).toBe("493021");
+  test("ignores a delivery-named code", () => {
+    expect(extractVerificationCode(["Your delivery code is 493021", ""])).toBeNull();
+    expect(extractVerificationCode(["Your pickup code is 493021", ""])).toBeNull();
   });
 
   test("breaks a tie between equal scores in favor of the subject", () => {

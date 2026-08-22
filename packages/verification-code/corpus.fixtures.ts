@@ -90,9 +90,16 @@ export const corpus: CorpusEntry[] = [
   {
     subject: "Delivery confirmation code",
     summary: "Your delivery code is 4930. Share it with the courier when your parcel arrives.",
-    expected: "4930",
+    expected: null,
     language: "en",
-    note: "delivery wording must stay a penalty, not a veto — a genuine delivery OTP survives on proximity",
+    note: "a pickup code is read aloud to the courier, never pasted — out of scope by decision",
+  },
+  {
+    subject: "Your package arrives today",
+    summary: "Your delivery OTP is 123456. Tell it to the delivery associate at the door.",
+    expected: null,
+    language: "en",
+    note: "delivery-named OTP — out of scope by decision",
   },
   {
     subject: "Security code",

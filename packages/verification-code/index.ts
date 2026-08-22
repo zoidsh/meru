@@ -90,8 +90,10 @@ const contextWords: LexiconEntry[] = [
   { name: "imut (he)", pattern: unanchored("אימות") },
 ];
 
-// A delivery message can still carry a genuine one-time code, so these only cost
-// the message score — they are not the hard veto the previous extractor applied.
+// Delivery-named codes are excluded at the gate above: they are read aloud at a
+// handover, so a clipboard copy is useless and mark-read or delete would hide the
+// email while it is still needed. These terms catch the rest of the topic as a
+// score penalty, so a sign-in code in an email that mentions shipping survives.
 const deliveryTerms: LexiconEntry[] = [
   { name: "deliver (en)", pattern: prefixAnchored("deliver") },
   { name: "pick-up (en)", pattern: wordBounded("pick[-\\s]?up") },
@@ -113,9 +115,10 @@ const deliveryTerms: LexiconEntry[] = [
   { name: "baesong (ko)", pattern: unanchored("배송") },
 ];
 
-// A code word directly behind one of these names a different kind of code entirely —
-// a discount code, a postal code, a QR code — so the match doesn't open the gate.
-// The German entries cover compounds such as "Rabattcode" and "Gutscheincode".
+// A code word directly behind one of these names a code that is never pasted into
+// a website — a discount code, a postal code, a QR code, a delivery pickup code
+// read aloud to a courier — so the match doesn't open the gate. The German entries
+// cover compounds such as "Rabattcode", "Gutscheincode", and "Abholcode".
 const codeWordDisqualifierPrecedes = new RegExp(
   `(?:${[
     "discount",
@@ -134,6 +137,11 @@ const codeWordDisqualifierPrecedes = new RegExp(
     "country",
     "bar",
     "tracking",
+    "delivery",
+    "pick[\\s-]?up",
+    "collection",
+    "abhol",
+    "liefer",
     "rabatt",
     "gutschein",
     "werbe",
