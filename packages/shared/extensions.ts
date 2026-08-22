@@ -30,7 +30,11 @@ export const curatedExtensions: CuratedExtension[] = [
     description:
       "Password manager that fills logins and signs you in with passkeys stored in your vault.",
     category: "passwordManager",
-    contentScriptMatches: ["https://accounts.google.com/*"],
+    // Sign-in runs on accounts.google.com, and account settings — creating a
+    // passkey, changing a password — on myaccount.google.com. Both hosts, not
+    // the settings paths alone: Google reshuffles those and redirects between
+    // them, and a path that falls outside the clamp offers nothing, silently
+    contentScriptMatches: ["https://accounts.google.com/*", "https://myaccount.google.com/*"],
   },
 ];
 
