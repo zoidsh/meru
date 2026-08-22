@@ -1,4 +1,6 @@
+import { verificationCodeCopyModes } from "@meru/shared/verification-codes";
 import { FieldGroup } from "@meru/ui/components/field";
+import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -21,8 +23,19 @@ export function VerificationCodesSettings() {
         <FieldGroup>
           <ConfigSwitchField
             label="Copy codes to clipboard"
-            description="Copy a verification code to your clipboard as soon as it arrives by email."
+            description="Detect a verification code in an incoming email and copy it to your clipboard."
             configKey="verificationCodes.autoCopy"
+            licenseKeyRequired
+          />
+          <ConfigSelectField
+            label="When to copy"
+            description="A notification shows the code either way. Copying on click leaves your clipboard untouched until you act."
+            configKey="verificationCodes.copyMode"
+            items={Object.entries(verificationCodeCopyModes).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            disabled={!config["verificationCodes.autoCopy"]}
             licenseKeyRequired
           />
           <ConfigSwitchField

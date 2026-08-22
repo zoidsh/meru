@@ -684,25 +684,45 @@ export class Gmail {
           const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
-            clipboard.writeText(verificationCode);
+            const copyVerificationCode = () => {
+              clipboard.writeText(verificationCode);
+
+              if (config.get("verificationCodes.autoMarkAsRead")) {
+                ipc.renderer.send(
+                  this.view.webContents,
+                  "gmail.handleMessage",
+                  newMail.id,
+                  "markAsRead",
+                );
+              }
+
+              if (config.get("verificationCodes.autoDelete")) {
+                ipc.renderer.send(
+                  this.view.webContents,
+                  "gmail.handleMessage",
+                  newMail.id,
+                  "delete",
+                );
+              }
+            };
+
+            // Marking as read and deleting ride along with the copy rather than
+            // with the detection, so that nothing touches an email the user has
+            // not yet acted on.
+            const copiesOnNotificationClick =
+              config.get("verificationCodes.copyMode") === "notificationClick";
+
+            if (!copiesOnNotificationClick) {
+              copyVerificationCode();
+            }
 
             createNotification({
               title: notificationTitle,
-              body: `Copied verification code ${verificationCode}`,
+              body: copiesOnNotificationClick
+                ? `Click to copy verification code ${verificationCode}`
+                : `Copied verification code ${verificationCode}`,
+              click: copiesOnNotificationClick ? copyVerificationCode : undefined,
             });
-
-            if (config.get("verificationCodes.autoMarkAsRead")) {
-              ipc.renderer.send(
-                this.view.webContents,
-                "gmail.handleMessage",
-                newMail.id,
-                "markAsRead",
-              );
-            }
-
-            if (config.get("verificationCodes.autoDelete")) {
-              ipc.renderer.send(this.view.webContents, "gmail.handleMessage", newMail.id, "delete");
-            }
 
             continue;
           }
