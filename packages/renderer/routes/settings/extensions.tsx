@@ -16,7 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@meru/ui/components/dialog";
-import { FieldDescription, FieldLegend, FieldSeparator, FieldSet } from "@meru/ui/components/field";
+import {
+  FieldDescription,
+  FieldGroup,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+} from "@meru/ui/components/field";
 import {
   Item,
   ItemActions,
@@ -416,37 +422,39 @@ export function ExtensionsSettings() {
         </SettingsTitle>
         {config["extensions.installed"].length > 0 && <UpdateExtensionsButton />}
       </SettingsHeader>
-      <SettingsContent className="space-y-4">
+      <SettingsContent>
         <LicenseKeyRequiredBanner />
-        <FieldDescription>
-          Extensions are loaded into every account and take effect after a restart. Meru installs
-          the official extensions from the Chrome Web Store.
-        </FieldDescription>
-        <FieldSet>
-          <FieldLegend>Password managers</FieldLegend>
-          <PasskeysAlert />
-          <ItemGroup>
-            {curatedExtensions
-              .filter(({ category }) => category === "passwordManager")
-              .map((extension) => (
-                <ExtensionItem
-                  key={extension.id}
-                  extension={extension}
-                  installed={config["extensions.installed"].includes(extension.id)}
-                  installedVersion={
-                    installedExtensions?.find(({ id }) => id === extension.id)?.version
-                  }
-                />
-              ))}
-          </ItemGroup>
-        </FieldSet>
-        <FieldSeparator />
-        <ConfigSwitchField
-          label="Show extensions button"
-          description="Show a titlebar button that lists the installed extensions and opens their popups."
-          configKey="extensions.showTitlebarButton"
-          licenseKeyRequired
-        />
+        <FieldGroup>
+          <FieldDescription>
+            Extensions are loaded into every account and take effect after a restart. Meru installs
+            the official extensions from the Chrome Web Store.
+          </FieldDescription>
+          <FieldSet>
+            <FieldLegend>Password managers</FieldLegend>
+            <PasskeysAlert />
+            <ItemGroup>
+              {curatedExtensions
+                .filter(({ category }) => category === "passwordManager")
+                .map((extension) => (
+                  <ExtensionItem
+                    key={extension.id}
+                    extension={extension}
+                    installed={config["extensions.installed"].includes(extension.id)}
+                    installedVersion={
+                      installedExtensions?.find(({ id }) => id === extension.id)?.version
+                    }
+                  />
+                ))}
+            </ItemGroup>
+          </FieldSet>
+          <FieldSeparator />
+          <ConfigSwitchField
+            label="Show extensions button"
+            description="Show a titlebar button that lists the installed extensions and opens their popups."
+            configKey="extensions.showTitlebarButton"
+            licenseKeyRequired
+          />
+        </FieldGroup>
       </SettingsContent>
     </Settings>
   );
