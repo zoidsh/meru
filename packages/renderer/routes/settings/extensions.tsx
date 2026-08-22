@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@meru/ui/components/dialog";
-import { FieldDescription, FieldLegend, FieldSet } from "@meru/ui/components/field";
+import { FieldDescription, FieldLegend, FieldSeparator, FieldSet } from "@meru/ui/components/field";
 import {
   Item,
   ItemActions,
@@ -33,6 +33,7 @@ import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 import { toast } from "sonner";
 import { BetaFieldBadge } from "@/components/beta-field-badge";
+import { ConfigSwitchField } from "@/components/config-switch-field";
 import { CopyButton } from "@/components/copy-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
@@ -439,6 +440,13 @@ export function ExtensionsSettings() {
               ))}
           </ItemGroup>
         </FieldSet>
+        <FieldSeparator />
+        <ConfigSwitchField
+          label="Show extensions button"
+          description="Show a titlebar button that lists the installed extensions and opens their popups."
+          configKey="extensions.showTitlebarButton"
+          licenseKeyRequired
+        />
       </SettingsContent>
     </Settings>
   );

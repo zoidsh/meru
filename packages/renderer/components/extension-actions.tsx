@@ -2,19 +2,27 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import { PuzzleIcon } from "lucide-react";
 import { TitlebarIconButton } from "@/components/titlebar";
 import { useExtensionActionsStore } from "@/lib/extension-actions";
+import { useConfig } from "@/lib/react-query";
 
 /**
  * The titlebar button listing the extensions loaded into the account this window
- * shows, drawing nothing at all while no extension is loaded — which is every
- * window until extensions can be installed.
+ * shows, drawing nothing at all unless the user has asked for it and an
+ * extension is loaded.
+ *
+ * It's off by default because 1Password, the only extension Meru curates, does
+ * its work in the page: the inline autofill menu and the WebAuthn override both
+ * run as content scripts on the Google sign-in pages, so the popup the button
+ * opens is a surface most users never need.
  *
  * The list itself is a native menu the main process pops up: a renderer-drawn
  * one would be covered wherever a workspace app view sits.
  */
 export function ExtensionActions() {
+  const { config } = useConfig();
+
   const actions = useExtensionActionsStore((state) => state.actions);
 
-  if (actions.length === 0) {
+  if (!config?.["extensions.showTitlebarButton"] || actions.length === 0) {
     return;
   }
 
