@@ -22,14 +22,19 @@ export async function showRestartDialog() {
 export async function confirmAppLinksTabHandover(
   workspaceApp: SupportedWorkspaceApp,
   appLinksTabTitle: string,
+  { isTargetWindowed }: { isTargetWindowed: boolean },
 ) {
   const appLabel = workspaceApps[workspaceApp].label;
+
+  // The tab taking the links can be living in its own window, and the context
+  // menu item that opens this dialog already says so.
+  const targetLabel = isTargetWindowed ? "window" : "tab";
 
   const { response } = await dialog.showMessageBox(main.window, {
     type: "info",
     buttons: ["Open links here", "Cancel"],
-    message: `Open ${appLabel} links in this tab?`,
-    detail: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This tab will open them instead.`,
+    message: `Open ${appLabel} links in this ${targetLabel}?`,
+    detail: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This ${targetLabel} will open them instead.`,
     defaultId: 0,
     cancelId: 1,
   });
