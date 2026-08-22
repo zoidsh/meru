@@ -32,7 +32,7 @@ import { config } from "@/config";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
-import { DormantTab } from "@/tabs";
+import { DormantTab, isWindowedTab } from "@/tabs";
 import {
   canOpenWorkspaceAppInApp,
   resolveWorkspaceAppOpenBehavior,
@@ -380,6 +380,8 @@ class Ipc {
 
       const isWindowsMode = config.get("workspaceApps.mode") === "windows";
 
+      const isTabWindowed = isWindowedTab(tab);
+
       const openWorkspaceAppUrl = (url: string) => {
         account.instance.tabs.openUrl(url);
 
@@ -542,7 +544,7 @@ class Ipc {
               ...(tabApp ? [] : [{ type: "separator" as const }]),
               {
                 label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
-                  tab instanceof WorkspaceApp && tab.isWindowed ? "Window" : "Tab"
+                  isTabWindowed ? "Window" : "Tab"
                 }`,
                 type: "checkbox" as const,
                 checked: Boolean(tab.opensLinksForApp),
@@ -557,7 +559,9 @@ class Ipc {
 
                   if (
                     appLinksTab &&
-                    !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title))
+                    !(await confirmAppLinksTabHandover(appLinksApp, appLinksTab.title, {
+                      isTargetWindowed: isTabWindowed,
+                    }))
                   ) {
                     return;
                   }
