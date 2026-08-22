@@ -12,6 +12,7 @@ import type {
   GmailSavedSearches,
 } from "./schemas";
 import type { AccountTabsState, VerticalTabsSessionWidth, VerticalTabsWidth } from "./tabs";
+import type { VerificationCodeCopyMode } from "./verification-codes";
 import type {
   LauncherAndBookmarksPlacement,
   LauncherWorkspaceApp,
@@ -180,6 +181,7 @@ export type Config = {
   "workspaceApps.hibernation": WorkspaceAppsHibernation;
   "workspaceApps.hibernationTimeout": WorkspaceAppsHibernationTimeout;
   "verificationCodes.autoCopy": boolean;
+  "verificationCodes.copyMode": VerificationCodeCopyMode;
   "verificationCodes.autoDelete": boolean;
   "verificationCodes.autoMarkAsRead": boolean;
   "doNotDisturb.enabled": boolean;

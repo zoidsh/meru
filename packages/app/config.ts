@@ -114,6 +114,7 @@ export const config = new Store<Config>({
     "workspaceApps.hibernation": "selected",
     "workspaceApps.hibernationTimeout": "1h",
     "verificationCodes.autoCopy": false,
+    "verificationCodes.copyMode": "immediately",
     "verificationCodes.autoDelete": false,
     "verificationCodes.autoMarkAsRead": false,
     "doNotDisturb.enabled": false,
