@@ -32,8 +32,8 @@ export function VerificationCodesSettings() {
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Delete email after copying"
-            description="Delete the email once its verification code has been copied."
+            label="Move email to Trash after copying"
+            description="Move the email to Trash once its verification code has been copied. Detection can misfire, and a real email can be moved too — Mark email as read is the safer choice."
             configKey="verificationCodes.autoDelete"
             licenseKeyRequired
           />
