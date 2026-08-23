@@ -1,4 +1,12 @@
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@meru/ui/components/empty";
 import { cn } from "@meru/ui/lib/utils";
+import { EyeOffIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { renderApp } from "@/lib/react";
 import { playgroundComponents } from "./components";
@@ -59,9 +67,18 @@ function Preview({ scenario }: { scenario: Scenario }) {
         {playgroundComponentRenderers[scenario.component]()}
       </div>
       {rendersNothing && (
-        <div className="border-t px-6 py-3 text-sm text-muted-foreground">
-          This component renders nothing in this scenario.
-        </div>
+        <Empty className="flex-none border-t">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <EyeOffIcon />
+            </EmptyMedia>
+            <EmptyTitle>Nothing rendered</EmptyTitle>
+            <EmptyDescription>
+              This component draws nothing in this scenario, which is a state of its own rather than
+              a failure.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   );

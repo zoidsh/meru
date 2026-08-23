@@ -1,5 +1,20 @@
+import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
-import { Label } from "@meru/ui/components/label";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@meru/ui/components/empty";
+import { Field, FieldLabel } from "@meru/ui/components/field";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@meru/ui/components/item";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import {
   Select,
@@ -8,10 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
+import { Separator } from "@meru/ui/components/separator";
 import { Switch } from "@meru/ui/components/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@meru/ui/components/table";
 import { cn } from "@meru/ui/lib/utils";
-import { RotateCwIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { CableIcon, RotateCwIcon } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { playgroundComponents } from "./components";
 import {
@@ -65,6 +89,12 @@ function buildPreviewSource({
 
 type LoggedCall = IpcCall & { id: number };
 
+/**
+ * The scenarios grouped under the call site they render, in the catalog's
+ * order. It follows the app's own sidebar rather than a list of its own: the
+ * selected entry is a `secondary` button and the rest are `ghost`, which is
+ * where the hover, focus and selected states come from.
+ */
 function ScenarioList({
   scenarioId,
   onSelect,
@@ -72,32 +102,34 @@ function ScenarioList({
   scenarioId: string;
   onSelect: (scenarioId: string) => void;
 }) {
+  const componentIds = Object.keys(playgroundComponents) as (keyof typeof playgroundComponents)[];
+
   return (
     <ScrollArea className="flex-1">
-      <div className="space-y-6 p-4">
-        {Object.entries(playgroundComponents).map(([componentId, component]) => (
-          <div key={componentId} className="space-y-1">
-            <div className="px-2 text-xs font-semibold text-muted-foreground">{component.name}</div>
+      <div className="space-y-2 p-4">
+        {componentIds.map((componentId, componentIndex) => (
+          <Fragment key={componentId}>
+            {componentIndex > 0 && <Separator />}
+            <div className="px-2 pt-2 text-xs font-semibold text-muted-foreground">
+              {playgroundComponents[componentId].name}
+            </div>
             {scenarios
               .filter((scenario) => scenario.component === componentId)
               .map((scenario) => (
-                <button
+                <Button
                   key={scenario.id}
-                  type="button"
+                  variant={scenario.id === scenarioId ? "secondary" : "ghost"}
                   onClick={() => {
                     onSelect(scenario.id);
                   }}
-                  className={cn(
-                    "block w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                    scenario.id === scenarioId
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-muted/50",
-                  )}
+                  className={cn("w-full justify-start font-normal", {
+                    "text-muted-foreground hover:text-muted-foreground": scenario.id !== scenarioId,
+                  })}
                 >
                   {scenario.name}
-                </button>
+                </Button>
               ))}
-          </div>
+          </Fragment>
         ))}
       </div>
     </ScrollArea>
@@ -112,24 +144,50 @@ function CallLog({ calls }: { calls: LoggedCall[] }) {
       </div>
       <ScrollArea className="flex-1">
         {calls.length === 0 ? (
-          <div className="p-4 text-sm text-muted-foreground">Nothing yet.</div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CableIcon />
+              </EmptyMedia>
+              <EmptyTitle>Nothing asked for yet</EmptyTitle>
+              <EmptyDescription>
+                Every send and invoke the component makes shows up here.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
-          <div className="space-y-1 p-4 font-mono text-xs">
-            {calls.map((call) => (
-              <div key={call.id} className="flex gap-2">
-                <span className="w-12 shrink-0 text-muted-foreground">{call.kind}</span>
-                <span
-                  className={cn("shrink-0", call.unanswered && "text-destructive")}
-                  title={call.unanswered ? "No scenario answers this channel" : undefined}
-                >
-                  {call.channel}
-                </span>
-                <span className="truncate text-muted-foreground">
-                  {call.args.map((argument) => JSON.stringify(argument)).join(", ")}
-                </span>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20 pl-4">Kind</TableHead>
+                <TableHead className="w-72">Channel</TableHead>
+                <TableHead className="pr-4">Arguments</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {calls.map((call) => (
+                <TableRow key={call.id}>
+                  <TableCell className="pl-4">
+                    <Badge variant={call.kind === "send" ? "secondary" : "outline"}>
+                      {call.kind}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {call.unanswered ? (
+                      <Badge variant="destructive" title="No scenario answers this channel">
+                        {call.channel}
+                      </Badge>
+                    ) : (
+                      call.channel
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-0 truncate pr-4 font-mono text-xs text-muted-foreground">
+                    {call.args.map((argument) => JSON.stringify(argument)).join(", ")}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </ScrollArea>
     </div>
@@ -226,57 +284,64 @@ function Shell() {
 
   return (
     <div className="flex h-screen">
-      <div className="flex w-72 flex-col border-r">
-        <div className="border-b px-4 py-3">
-          <div className="font-semibold">Component playground</div>
-          <div className="text-xs text-muted-foreground">
-            Meru's components over a fake preload bridge
-          </div>
+      <div className="flex w-72 flex-col border-r bg-sidebar">
+        <div className="border-b">
+          <Item>
+            <ItemContent>
+              <ItemTitle>Component playground</ItemTitle>
+              <ItemDescription>Meru's components over a fake preload bridge</ItemDescription>
+            </ItemContent>
+          </Item>
         </div>
         <ScenarioList scenarioId={scenarioId} onSelect={selectScenario} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-6 border-b px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">{scenario?.name}</div>
-            <div className="truncate text-xs text-muted-foreground" title={scenario?.description}>
-              {scenario?.description}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="dark-mode">Dark mode</Label>
-            <Switch id="dark-mode" checked={darkMode} onCheckedChange={toggleDarkMode} />
-          </div>
-          <Select
-            items={platformItems}
-            value={platform}
-            onValueChange={(value) => {
-              if (value) {
-                selectPlatform(value as PlaygroundPlatform);
-              }
-            }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {platformItems.map(({ value, label }) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="icon"
-            title="Reload the preview"
-            onClick={() => {
-              setReloadCount((count) => count + 1);
-            }}
-          >
-            <RotateCwIcon />
-          </Button>
+        <div className="border-b">
+          <Item>
+            <ItemContent className="min-w-0">
+              <ItemTitle>{scenario?.name}</ItemTitle>
+              <ItemDescription>{scenario?.description}</ItemDescription>
+            </ItemContent>
+            <ItemActions className="gap-4">
+              <Field orientation="horizontal" className="w-fit">
+                <FieldLabel htmlFor="dark-mode">Dark mode</FieldLabel>
+                <Switch id="dark-mode" checked={darkMode} onCheckedChange={toggleDarkMode} />
+              </Field>
+              <Field orientation="horizontal" className="w-fit">
+                <FieldLabel htmlFor="platform">Platform</FieldLabel>
+                <Select
+                  items={platformItems}
+                  value={platform}
+                  onValueChange={(value) => {
+                    if (value) {
+                      selectPlatform(value as PlaygroundPlatform);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="platform" className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {platformItems.map(({ value, label }) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Button
+                variant="outline"
+                size="icon"
+                title="Reload the preview"
+                onClick={() => {
+                  setReloadCount((count) => count + 1);
+                }}
+              >
+                <RotateCwIcon />
+              </Button>
+            </ItemActions>
+          </Item>
         </div>
         <iframe
           key={previewKey}
