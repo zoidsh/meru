@@ -24,6 +24,29 @@ export function getPlaygroundPlatform(searchParams: URLSearchParams): Playground
 /** The account every scenario's fixtures belong to. */
 export const PLAYGROUND_ACCOUNT_ID = "playground-account";
 
+/**
+ * The playground's own page carries its state as plain search parameters, while
+ * Storybook packs its globals into one. Expanding the packed form here leaves
+ * everything downstream reading a single flat set, whichever host is serving.
+ */
+export function readPlaygroundSearchParams(search: string): URLSearchParams {
+  const searchParams = new URLSearchParams(search);
+
+  const globals = searchParams.get("globals");
+
+  if (globals) {
+    for (const entry of globals.split(";")) {
+      const [name, value] = entry.split(":");
+
+      if (name && value) {
+        searchParams.set(name, value.replace(/^!/, ""));
+      }
+    }
+  }
+
+  return searchParams;
+}
+
 /** Names the preview reads out of its own URL, and the shell writes into it. */
 export const PLAYGROUND_SEARCH_PARAMS = {
   scenario: "scenario",
