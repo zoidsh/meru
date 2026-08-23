@@ -23,7 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import { Separator } from "@meru/ui/components/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@meru/ui/components/sidebar";
 import { Switch } from "@meru/ui/components/switch";
 import {
   Table,
@@ -33,9 +47,8 @@ import {
   TableHeader,
   TableRow,
 } from "@meru/ui/components/table";
-import { cn } from "@meru/ui/lib/utils";
 import { CableIcon, RotateCwIcon } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { playgroundComponents } from "./components";
 import {
@@ -90,10 +103,12 @@ function buildPreviewSource({
 type LoggedCall = IpcCall & { id: number };
 
 /**
- * The scenarios grouped under the call site they render, in the catalog's
- * order. It follows the app's own sidebar rather than a list of its own: the
- * selected entry is a `secondary` button and the rest are `ghost`, which is
- * where the hover, focus and selected states come from.
+ * One `SidebarGroup` per call site, its scenarios the menu under it. The active
+ * entry and the hover and focus rings come from the sidebar's own parts.
+ *
+ * It collapses off-canvas rather than to icons, which is the default: a
+ * scenario is named and has no icon, so icon mode would leave a column of blank
+ * squares. Collapsing it hands the whole window to the preview.
  */
 function ScenarioList({
   scenarioId,
@@ -105,34 +120,31 @@ function ScenarioList({
   const componentIds = Object.keys(playgroundComponents) as (keyof typeof playgroundComponents)[];
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="space-y-2 p-4">
-        {componentIds.map((componentId, componentIndex) => (
-          <Fragment key={componentId}>
-            {componentIndex > 0 && <Separator />}
-            <div className="px-2 pt-2 text-xs font-semibold text-muted-foreground">
-              {playgroundComponents[componentId].name}
-            </div>
-            {scenarios
-              .filter((scenario) => scenario.component === componentId)
-              .map((scenario) => (
-                <Button
-                  key={scenario.id}
-                  variant={scenario.id === scenarioId ? "secondary" : "ghost"}
-                  onClick={() => {
-                    onSelect(scenario.id);
-                  }}
-                  className={cn("w-full justify-start font-normal", {
-                    "text-muted-foreground hover:text-muted-foreground": scenario.id !== scenarioId,
-                  })}
-                >
-                  {scenario.name}
-                </Button>
-              ))}
-          </Fragment>
-        ))}
-      </div>
-    </ScrollArea>
+    <SidebarContent>
+      {componentIds.map((componentId) => (
+        <SidebarGroup key={componentId}>
+          <SidebarGroupLabel>{playgroundComponents[componentId].name}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {scenarios
+                .filter((scenario) => scenario.component === componentId)
+                .map((scenario) => (
+                  <SidebarMenuItem key={scenario.id}>
+                    <SidebarMenuButton
+                      isActive={scenario.id === scenarioId}
+                      onClick={() => {
+                        onSelect(scenario.id);
+                      }}
+                    >
+                      <span>{scenario.name}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      ))}
+    </SidebarContent>
   );
 }
 
@@ -283,21 +295,23 @@ function Shell() {
   const scenario = scenarios.find((candidate) => candidate.id === scenarioId);
 
   return (
-    <div className="flex h-screen">
-      <div className="flex w-72 flex-col border-r bg-sidebar">
-        <div className="border-b">
-          <Item>
+    <SidebarProvider className="h-screen min-h-0">
+      <Sidebar>
+        <SidebarHeader>
+          <Item size="xs">
             <ItemContent>
               <ItemTitle>Component playground</ItemTitle>
               <ItemDescription>Meru's components over a fake preload bridge</ItemDescription>
             </ItemContent>
           </Item>
-        </div>
+        </SidebarHeader>
         <ScenarioList scenarioId={scenarioId} onSelect={selectScenario} />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col">
+        <SidebarRail />
+      </Sidebar>
+      <SidebarInset className="min-w-0 overflow-hidden">
         <div className="border-b">
           <Item>
+            <SidebarTrigger />
             <ItemContent className="min-w-0">
               <ItemTitle>{scenario?.name}</ItemTitle>
               <ItemDescription>{scenario?.description}</ItemDescription>
@@ -351,8 +365,8 @@ function Shell() {
           className="min-h-0 flex-1 border-0"
         />
         <CallLog calls={calls} />
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
