@@ -1,8 +1,9 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
 import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
-import { config, DEFAULT_WINDOW_STATE_BOUNDS } from "@/config";
+import { config } from "@/config";
 import {
   getCommonBrowserWindowOptions,
   getTitleBarOptions,
