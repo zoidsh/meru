@@ -1,7 +1,13 @@
 import type { ElectronAPI, IpcRendererListener } from "@electron-toolkit/preload";
 import { createDefaultConfig } from "@meru/shared/config";
 import type { Config, IpcRendererEvent } from "@meru/shared/types";
-import { getPlaygroundPlatform, PLAYGROUND_ACCOUNT_ID, type PlaygroundPlatform } from "./constants";
+import {
+  getPlaygroundPlatform,
+  PLAYGROUND_ACCOUNT_ID,
+  PLAYGROUND_SEARCH_PARAMS,
+  type PlaygroundPlatform,
+} from "./constants";
+import { scenarios } from "./scenarios";
 import type { IpcCall, IpcCallChannel, IpcInvokeReplies, Scenario, ScenarioEvent } from "./types";
 
 /**
@@ -14,7 +20,9 @@ type FakeElectronApi = {
   process: Pick<ElectronAPI["process"], "platform">;
 };
 
-const platform = getPlaygroundPlatform(new URLSearchParams(window.location.search));
+const searchParams = new URLSearchParams(window.location.search);
+
+const platform = getPlaygroundPlatform(searchParams);
 
 const downloadsLocations: Record<PlaygroundPlatform, string> = {
   darwin: "/Users/you/Downloads",
@@ -33,9 +41,26 @@ function createPlaygroundConfig(overrides: Partial<Config> | undefined): Config 
   };
 }
 
-let config = createPlaygroundConfig(undefined);
+const scenarioId = searchParams.get(PLAYGROUND_SEARCH_PARAMS.scenario);
 
-let invokeReplies: IpcInvokeReplies = {};
+/**
+ * The scenario is resolved and applied here rather than in the entry point,
+ * because a renderer module is free to invoke as it evaluates — `lib/
+ * extension-actions.ts` asks for the loaded extensions that way — and every
+ * import in the entry point runs before its own first statement does. By the
+ * time anything can ask, the answers are already in place.
+ */
+const resolvedScenario = scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0];
+
+if (!resolvedScenario) {
+  throw new Error("The playground has no scenarios to render");
+}
+
+export const playgroundScenario: Scenario = resolvedScenario;
+
+let config = createPlaygroundConfig(playgroundScenario.config);
+
+const invokeReplies: IpcInvokeReplies = playgroundScenario.invoke ?? {};
 
 const rendererListeners = new Map<string, Set<IpcRendererListener>>();
 
@@ -91,17 +116,6 @@ export function onIpcCall(listener: (call: IpcCall) => void): () => void {
   return () => {
     callListeners.delete(listener);
   };
-}
-
-/**
- * Puts the fake back into a scenario's starting state. The config is rebuilt
- * from the app's real defaults every time, so a scenario that overrides a key
- * can't leak it into the next one.
- */
-export function applyScenario(scenario: Scenario): void {
-  config = createPlaygroundConfig(scenario.config);
-
-  invokeReplies = scenario.invoke ?? {};
 }
 
 const fakeElectron: FakeElectronApi = {

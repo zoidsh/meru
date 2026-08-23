@@ -2,25 +2,15 @@ import { cn } from "@meru/ui/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { renderApp } from "@/lib/react";
 import { playgroundComponents } from "./components";
-import { PLAYGROUND_SEARCH_PARAMS } from "./constants";
-import { applyScenario, emitRendererEvent, onIpcCall, pushScenarioEvent } from "./fake-electron";
+import {
+  emitRendererEvent,
+  onIpcCall,
+  playgroundScenario,
+  pushScenarioEvent,
+} from "./fake-electron";
 import { isShellMessage, type PreviewMessage } from "./messages";
 import { playgroundComponentRenderers } from "./render";
-import { scenarios } from "./scenarios";
 import type { Scenario } from "./types";
-
-const searchParams = new URLSearchParams(window.location.search);
-
-const scenarioId = searchParams.get(PLAYGROUND_SEARCH_PARAMS.scenario);
-
-const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0];
-
-if (!scenario) {
-  throw new Error("The playground has no scenarios to render");
-}
-
-// Before anything reads the config or the stores, and so before `renderApp`.
-applyScenario(scenario);
 
 onIpcCall((call) => {
   const message: PreviewMessage = { type: "ipcCall", call };
@@ -77,4 +67,4 @@ function Preview({ scenario }: { scenario: Scenario }) {
   );
 }
 
-renderApp(() => <Preview scenario={scenario} />);
+renderApp(() => <Preview scenario={playgroundScenario} />);
