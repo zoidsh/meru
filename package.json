@@ -26,6 +26,7 @@
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
     "playground": "bun run scripts/playground.ts",
     "postinstall": "electron-builder install-app-deps",
+    "storybook": "bun node_modules/storybook/dist/bin/dispatcher.js dev -p 3002 -c packages/renderer/.storybook --no-open",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",
     "types:ci": "tsc && bun run --filter='*' types"
   },
@@ -38,6 +39,7 @@
     "@electron-toolkit/typed-ipc": "^1.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/inter": "^5.2.5",
+    "@storybook/react-vite": "10.5.10",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
@@ -82,6 +84,7 @@
     "serialize-error": "^13.0.1",
     "shadcn": "^4.1.0",
     "sonner": "^2.0.7",
+    "storybook": "10.5.10",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.2.2",
     "tw-animate-css": "^1.4.0",
