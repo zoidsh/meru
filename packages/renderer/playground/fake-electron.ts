@@ -6,6 +6,7 @@ import {
   PLAYGROUND_ACCOUNT_ID,
   PLAYGROUND_SEARCH_PARAMS,
   type PlaygroundPlatform,
+  readPlaygroundSearchParams,
 } from "./constants";
 import { scenarios } from "./scenarios";
 import type { IpcCall, IpcCallChannel, IpcInvokeReplies, Scenario, ScenarioEvent } from "./types";
@@ -20,7 +21,7 @@ type FakeElectronApi = {
   process: Pick<ElectronAPI["process"], "platform">;
 };
 
-const searchParams = new URLSearchParams(window.location.search);
+const searchParams = readPlaygroundSearchParams(window.location.search);
 
 const platform = getPlaygroundPlatform(searchParams);
 
@@ -41,26 +42,49 @@ function createPlaygroundConfig(overrides: Partial<Config> | undefined): Config 
   };
 }
 
-const scenarioId = searchParams.get(PLAYGROUND_SEARCH_PARAMS.scenario);
-
 /**
  * The scenario is resolved and applied here rather than in the entry point,
  * because a renderer module is free to invoke as it evaluates — `lib/
  * extension-actions.ts` asks for the loaded extensions that way — and every
  * import in the entry point runs before its own first statement does. By the
  * time anything can ask, the answers are already in place.
+ *
+ * Which scenario that is comes out of the URL, which the shell writes as a
+ * scenario id and Storybook writes as a story id ending in one.
  */
-const resolvedScenario = scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0];
+function resolveInitialScenario(): Scenario {
+  const scenarioId = searchParams.get(PLAYGROUND_SEARCH_PARAMS.scenario);
 
-if (!resolvedScenario) {
-  throw new Error("The playground has no scenarios to render");
+  const storyId = searchParams.get("id");
+
+  const scenario =
+    scenarios.find(
+      (candidate) => candidate.id === scenarioId || storyId?.endsWith(`--${candidate.id}`),
+    ) ?? scenarios[0];
+
+  if (!scenario) {
+    throw new Error("The playground has no scenarios to render");
+  }
+
+  return scenario;
 }
 
-export const playgroundScenario: Scenario = resolvedScenario;
+export const playgroundScenario: Scenario = resolveInitialScenario();
 
 let config = createPlaygroundConfig(playgroundScenario.config);
 
-const invokeReplies: IpcInvokeReplies = playgroundScenario.invoke ?? {};
+let invokeReplies: IpcInvokeReplies = playgroundScenario.invoke ?? {};
+
+/**
+ * Puts the fake back to what a scenario says, for a host that switches scenario
+ * without reloading the page. The listeners stay registered, because they
+ * belong to renderer modules that only evaluate once.
+ */
+export function applyScenario(scenario: Scenario): void {
+  config = createPlaygroundConfig(scenario.config);
+
+  invokeReplies = scenario.invoke ?? {};
+}
 
 const rendererListeners = new Map<string, Set<IpcRendererListener>>();
 
