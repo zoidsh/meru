@@ -1,6 +1,9 @@
 {
   "extends": "@total-typescript/tsconfig/bundler/dom",
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@meru/ui/*": ["./*"]
+    }
   }
 }
