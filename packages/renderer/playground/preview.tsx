@@ -9,7 +9,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { EyeOffIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { renderApp } from "@/lib/react";
-import { playgroundComponents } from "./components";
+import { type PlaygroundComponent, playgroundComponents } from "./components";
 import {
   emitRendererEvent,
   onIpcCall,
@@ -33,6 +33,13 @@ window.addEventListener("message", (event) => {
 
   emitRendererEvent("theme.darkModeChanged", [event.data.darkMode]);
 });
+
+/** How the preview frames each of the catalog's layouts. */
+const PREVIEW_LAYOUT_CLASS_NAMES = {
+  padded: "overflow-auto p-6",
+  fill: "flex overflow-hidden",
+  flush: "overflow-auto",
+} satisfies Record<PlaygroundComponent["layout"], string>;
 
 function Preview({ scenario }: { scenario: Scenario }) {
   const { layout } = playgroundComponents[scenario.component];
@@ -60,10 +67,7 @@ function Preview({ scenario }: { scenario: Scenario }) {
 
   return (
     <div className="flex h-screen flex-col">
-      <div
-        ref={containerRef}
-        className={cn("flex-1", layout === "padded" ? "overflow-auto p-6" : "flex overflow-hidden")}
-      >
+      <div ref={containerRef} className={cn("flex-1", PREVIEW_LAYOUT_CLASS_NAMES[layout])}>
         {playgroundComponentRenderers[scenario.component]()}
       </div>
       {rendersNothing && (

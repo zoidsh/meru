@@ -1,5 +1,6 @@
+import type { GmailState } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
-import type { AccountInstance } from "@meru/shared/schemas";
+import type { AccountConfig, AccountInstance } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID, type TabState } from "@meru/shared/tabs";
 import type { DownloadItem } from "@meru/shared/types";
 import { PLAYGROUND_ACCOUNT_ID } from "./constants";
@@ -33,31 +34,68 @@ const downloadHistory: DownloadItem[] = [
   createDownload("logo-mark.svg", { createdAt: unixSecondsAgo(ms("3w")) }),
 ];
 
-const playgroundAccount: AccountInstance = {
-  config: {
-    id: PLAYGROUND_ACCOUNT_ID,
-    label: "Work",
-    color: "blue",
-    selected: true,
-    notifications: true,
+function createAccount({
+  id,
+  label,
+  color = null,
+  selected = false,
+  gmail,
+}: {
+  id: string;
+  label: string;
+  color?: AccountConfig["color"];
+  selected?: boolean;
+  gmail?: Partial<GmailState>;
+}): AccountInstance {
+  return {
+    config: {
+      id,
+      label,
+      color,
+      selected,
+      notifications: true,
+      gmail: {
+        unreadBadge: true,
+        delegatedAccountId: null,
+        unifiedInbox: true,
+      },
+      workspaceApps: {
+        savedTabs: [],
+        bookmarks: [],
+      },
+    },
     gmail: {
-      unreadBadge: true,
-      delegatedAccountId: null,
-      unifiedInbox: true,
+      unreadCount: null,
+      unreadInbox: [],
+      outOfOffice: false,
+      attentionRequired: false,
+      ...gmail,
     },
-    workspaceApps: {
-      savedTabs: [],
-      bookmarks: [],
-    },
-  },
-  gmail: {
-    unreadCount: 12,
-    unreadInbox: [],
-    outOfOffice: false,
-    attentionRequired: false,
-  },
-  verticalTabsWidth: null,
-};
+    verticalTabsWidth: null,
+  };
+}
+
+const playgroundAccount = createAccount({
+  id: PLAYGROUND_ACCOUNT_ID,
+  label: "Work",
+  color: "blue",
+  selected: true,
+  gmail: { unreadCount: 12 },
+});
+
+const personalAccount = createAccount({
+  id: "playground-account-personal",
+  label: "Personal",
+  color: "emerald",
+  gmail: { unreadCount: 3 },
+});
+
+const consultingAccount = createAccount({
+  id: "playground-account-consulting",
+  label: "Consulting",
+  color: "amber",
+  gmail: { attentionRequired: true, outOfOffice: true },
+});
 
 function createTab(tab: Pick<TabState, "id" | "title"> & Partial<TabState>): TabState {
   return {
@@ -81,7 +119,14 @@ const gmailTab = createTab({
   title: "Gmail",
   pinned: true,
   active: true,
+  navigationHistory: { canGoBack: true, canGoForward: false },
 });
+
+function accountTabs(tabs: TabState[]) {
+  return [{ accountId: PLAYGROUND_ACCOUNT_ID, tabs }];
+}
+
+const PLAYGROUND_LICENSE_KEY = "MERU-PLAYGROUND-KEY";
 
 /**
  * Every state the playground can be put into, as data. A scenario names the
@@ -177,7 +222,7 @@ export const scenarios: Scenario[] = [
     name: "Licensed",
     description: "A license key in the config, which hides the banner just as the trial does.",
     component: "licenseKeyRequiredBanner",
-    config: { licenseKey: "MERU-PLAYGROUND-KEY" },
+    config: { licenseKey: PLAYGROUND_LICENSE_KEY },
   },
   {
     id: "vertical-tabs-gmail-only",
@@ -244,7 +289,7 @@ export const scenarios: Scenario[] = [
       "The wide strip, which labels every tab and puts the Workspace Apps launcher above the bookmarks button. The launcher needs a license, so this scenario carries one.",
     component: "verticalTabs",
     config: {
-      licenseKey: "MERU-PLAYGROUND-KEY",
+      licenseKey: PLAYGROUND_LICENSE_KEY,
       "verticalTabs.width": "wide",
       "workspaceApps.launcherApps": ["calendar", "drive", "keep", "tasks"],
     },
@@ -266,6 +311,106 @@ export const scenarios: Scenario[] = [
           ],
         ],
       },
+    ],
+  },
+  {
+    id: "titlebar-gmail-only",
+    name: "One account, Gmail alone",
+    description:
+      "Nothing open but Gmail, so the tab strip is not there and the titlebar hosts the Workspace Apps launcher and the bookmarks button itself.",
+    component: "appTitlebar",
+    events: [
+      { channel: "accounts.changed", args: [[playgroundAccount]] },
+      { channel: "tabs.changed", args: [accountTabs([gmailTab])] },
+    ],
+  },
+  {
+    id: "titlebar-tabs-open",
+    name: "Tabs open, controls handed over",
+    description:
+      "With a tab strip beside it, the titlebar hands the launcher and the bookmarks button over to the strip and fades its own group out.",
+    component: "appTitlebar",
+    config: { "workspaceApps.launcherApps": ["calendar", "drive", "keep"] },
+    events: [
+      { channel: "accounts.changed", args: [[playgroundAccount]] },
+      {
+        channel: "tabs.changed",
+        args: [
+          accountTabs([
+            gmailTab,
+            createTab({ id: "docs", app: "docs", title: "Roadmap — Google Docs" }),
+            createTab({ id: "sheets", app: "sheets", title: "Headcount" }),
+          ]),
+        ],
+      },
+    ],
+  },
+  {
+    id: "titlebar-multiple-accounts",
+    name: "Three accounts",
+    description:
+      "Account buttons with their colors, unread counts, an account wanting attention and one out of office. The unified inbox button needs a license and more than one account, so both are here.",
+    component: "appTitlebar",
+    config: { licenseKey: PLAYGROUND_LICENSE_KEY },
+    events: [
+      {
+        channel: "accounts.changed",
+        args: [[playgroundAccount, personalAccount, consultingAccount]],
+      },
+      { channel: "tabs.changed", args: [accountTabs([gmailTab])] },
+    ],
+  },
+  {
+    id: "titlebar-trial-ending",
+    name: "Trial with two days left",
+    description:
+      "The trial badge, which turns red at three days or fewer. Do Not Disturb is missing because the trial is what stands in for a license, and it has not been pushed yet when the badge is read.",
+    component: "appTitlebar",
+    events: [
+      { channel: "accounts.changed", args: [[playgroundAccount]] },
+      { channel: "tabs.changed", args: [accountTabs([gmailTab])] },
+      { channel: "trial.daysLeftChanged", args: [2] },
+    ],
+  },
+  {
+    id: "titlebar-update-available",
+    name: "Update available",
+    description:
+      "An update pushed through `appUpdater.updateAvailable`. The button opens the detail row, which takes over the whole titlebar.",
+    component: "appTitlebar",
+    config: { licenseKey: PLAYGROUND_LICENSE_KEY },
+    events: [
+      { channel: "accounts.changed", args: [[playgroundAccount]] },
+      { channel: "tabs.changed", args: [accountTabs([gmailTab])] },
+      { channel: "appUpdater.updateAvailable", args: ["3.60.0"] },
+    ],
+  },
+  {
+    id: "titlebar-everything-on",
+    name: "Saved searches, launcher and extensions",
+    description:
+      "Every optional control at once, with the launcher pinned to the titlebar rather than left to the strip. The extensions button reads `extensions.getActions`, which is the one scenario here fixturing an invoke.",
+    component: "appTitlebar",
+    config: {
+      licenseKey: PLAYGROUND_LICENSE_KEY,
+      "workspaceApps.launcherAndBookmarksPlacement": "titlebar",
+      "workspaceApps.launcherApps": ["calendar", "drive", "keep", "tasks"],
+      "workspaceApps.launcherDisplay": "expanded",
+      "extensions.showTitlebarButton": true,
+      "gmail.savedSearches": [
+        { id: "unread", label: "Unread", query: "is:unread" },
+        { id: "attachments", label: "With attachments", query: "has:attachment" },
+      ],
+      "doNotDisturb.enabled": true,
+    },
+    invoke: {
+      "extensions.getActions": [
+        { extensionId: "1password", title: "1Password", iconDataUrl: null },
+      ],
+    },
+    events: [
+      { channel: "accounts.changed", args: [[playgroundAccount]] },
+      { channel: "tabs.changed", args: [accountTabs([gmailTab])] },
     ],
   },
 ];

@@ -1,11 +1,16 @@
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 
-type PlaygroundComponent = {
+export type PlaygroundComponent = {
   name: string;
   /** Where the component itself lives, so the file is one search away. */
   source: string;
-  /** `fill` hands over the whole preview area, as the app's own layout does. */
-  layout: "padded" | "fill";
+  /**
+   * How the preview frames the component:
+   * - `padded` leaves room around it, for something sitting inside a page
+   * - `fill` hands over the whole area as a row, as the tab strip needs
+   * - `flush` gives it the full width at the top edge, as the titlebar sits
+   */
+  layout: "padded" | "fill" | "flush";
 };
 
 /**
@@ -43,6 +48,11 @@ export const playgroundComponents = {
     name: "VerticalTabs",
     source: "components/vertical-tabs.tsx",
     layout: "fill",
+  },
+  appTitlebar: {
+    name: "AppTitlebar",
+    source: "components/app-titlebar.tsx",
+    layout: "flush",
   },
 } satisfies Record<string, PlaygroundComponent>;
 
