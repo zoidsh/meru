@@ -24,6 +24,7 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
+    "playground": "bun run scripts/playground.ts",
     "postinstall": "electron-builder install-app-deps",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",
     "types:ci": "tsc && bun run --filter='*' types"
