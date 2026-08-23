@@ -14,9 +14,8 @@ type PlaygroundComponent = {
  * different props in different places earns an entry for each. A scenario picks
  * an entry by id and supplies everything the component reads through IPC.
  *
- * This holds no React, because the shell renders the picker beside the preview
- * and must not pull the renderer's modules into a page with no fake bridge
- * under it. `render.tsx` is where an id becomes a component.
+ * This holds no React, because the story indexer reads it from Node to build
+ * the catalog Storybook lists. `render.tsx` is where an id becomes a component.
  */
 export const playgroundComponents = {
   downloadHistoryList: {

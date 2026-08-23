@@ -4,7 +4,6 @@ import type { Config, IpcRendererEvent } from "@meru/shared/types";
 import {
   getPlaygroundPlatform,
   PLAYGROUND_ACCOUNT_ID,
-  PLAYGROUND_SEARCH_PARAMS,
   type PlaygroundPlatform,
   readPlaygroundSearchParams,
 } from "./constants";
@@ -49,18 +48,14 @@ function createPlaygroundConfig(overrides: Partial<Config> | undefined): Config 
  * import in the entry point runs before its own first statement does. By the
  * time anything can ask, the answers are already in place.
  *
- * Which scenario that is comes out of the URL, which the shell writes as a
- * scenario id and Storybook writes as a story id ending in one.
+ * Which scenario that is comes out of the story id in the URL, which the story
+ * indexer pins to end in the scenario's own id for exactly this reason.
  */
 function resolveInitialScenario(): Scenario {
-  const scenarioId = searchParams.get(PLAYGROUND_SEARCH_PARAMS.scenario);
-
   const storyId = searchParams.get("id");
 
   const scenario =
-    scenarios.find(
-      (candidate) => candidate.id === scenarioId || storyId?.endsWith(`--${candidate.id}`),
-    ) ?? scenarios[0];
+    scenarios.find((candidate) => storyId?.endsWith(`--${candidate.id}`)) ?? scenarios[0];
 
   if (!scenario) {
     throw new Error("The playground has no scenarios to render");
@@ -76,9 +71,9 @@ let config = createPlaygroundConfig(playgroundScenario.config);
 let invokeReplies: IpcInvokeReplies = playgroundScenario.invoke ?? {};
 
 /**
- * Puts the fake back to what a scenario says, for a host that switches scenario
- * without reloading the page. The listeners stay registered, because they
- * belong to renderer modules that only evaluate once.
+ * Puts the fake back to what a scenario says, which Storybook needs because it
+ * switches story without reloading the page. The listeners stay registered,
+ * because they belong to renderer modules that only evaluate once.
  */
 export function applyScenario(scenario: Scenario): void {
   config = createPlaygroundConfig(scenario.config);
@@ -207,7 +202,7 @@ const fakeElectron: FakeElectronApi = {
 
 // The renderer's stores, query cache, and theme all register `ipc.renderer.on`
 // handlers as they are imported, so the fake has to be in place before any of
-// them evaluates. `preview.html` loads this module in a script tag of its own,
-// ahead of the entry point's, because a comment on an import would not survive
-// the formatter's import sorting.
+// them evaluates. `.storybook/main.ts` lists this module in `previewAnnotations`,
+// which Storybook imports ahead of its own preview file and of every story, so
+// nothing here rests on the order imports happen to be written in.
 window.electron = fakeElectron as ElectronAPI;

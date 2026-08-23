@@ -24,7 +24,6 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
-    "playground": "bun run scripts/playground.ts",
     "postinstall": "electron-builder install-app-deps",
     "storybook": "bun node_modules/storybook/dist/bin/dispatcher.js dev -p 3002 -c packages/renderer/.storybook --no-open",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",

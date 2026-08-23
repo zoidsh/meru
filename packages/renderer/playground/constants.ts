@@ -25,9 +25,9 @@ export function getPlaygroundPlatform(searchParams: URLSearchParams): Playground
 export const PLAYGROUND_ACCOUNT_ID = "playground-account";
 
 /**
- * The playground's own page carries its state as plain search parameters, while
- * Storybook packs its globals into one. Expanding the packed form here leaves
- * everything downstream reading a single flat set, whichever host is serving.
+ * Storybook packs every toolbar global into one search parameter, as
+ * `platform:darwin;darkMode:!true`. Expanding it leaves the rest of the
+ * playground reading plain parameters rather than knowing that shape.
  */
 export function readPlaygroundSearchParams(search: string): URLSearchParams {
   const searchParams = new URLSearchParams(search);
@@ -46,10 +46,3 @@ export function readPlaygroundSearchParams(search: string): URLSearchParams {
 
   return searchParams;
 }
-
-/** Names the preview reads out of its own URL, and the shell writes into it. */
-export const PLAYGROUND_SEARCH_PARAMS = {
-  scenario: "scenario",
-  platform: "platform",
-  darkMode: "darkMode",
-} as const;
