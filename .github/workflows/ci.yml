@@ -36,7 +36,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun test
-  boot:
+  e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -48,11 +48,11 @@ jobs:
       - run: bun run build:linux -- --dir --x64 --publish never
       # The runner image ships Xvfb. -a takes a free display rather than
       # colliding on :99.
-      - run: xvfb-run -a bun run test:boot
+      - run: xvfb-run -a bun run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: boot-smoke-test
+          name: e2e
           if-no-files-found: ignore
           # The trace opens in the trace viewer and is the thing worth having;
           # the report is the readable index into it.

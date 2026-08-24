@@ -25,7 +25,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
     "postinstall": "electron-builder install-app-deps",
-    "test:boot": "playwright test",
+    "test:e2e": "playwright test",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",
     "types:ci": "tsc && bun run --filter='*' types"
   },

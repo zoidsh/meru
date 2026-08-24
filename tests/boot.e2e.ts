@@ -7,7 +7,7 @@
  *     bun run build:linux -- --dir --x64
  *
  * and a display. On a machine without one, wrap the command: `xvfb-run -a bun
- * run test:boot`. The -a matters, because it picks a free display number
+ * run test:e2e`. The -a matters, because it picks a free display number
  * rather than colliding on :99 with another run.
  */
 import { mkdtemp, rm } from "node:fs/promises";
@@ -37,7 +37,7 @@ const test = base.extend<{ app: ElectronApplication }>({
      * directory is what makes a local run start from the same empty config CI
      * gets.
      */
-    const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
+    const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
 
     // The built binary, not `electron .`: only a packaged app has isPackaged
     // true, which is what sends loadRenderer down its production loadFile
