@@ -63,7 +63,10 @@ jobs:
         run: xvfb-run -a bun run test:e2e
       - if: runner.os != 'Linux'
         run: bun run test:e2e
-      - if: failure()
+      # always(), not failure(): a job killed for running long counts as
+      # cancelled rather than failed, and that is the run whose trace is most
+      # worth having.
+      - if: always()
         uses: actions/upload-artifact@v7
         with:
           name: e2e-${{ matrix.os }}

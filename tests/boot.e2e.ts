@@ -44,6 +44,8 @@ function resolveExecutablePath() {
 
 const EXECUTABLE_PATH = resolveExecutablePath();
 
+const CLOSE_TIMEOUT = 15_000;
+
 function launchArguments(userDataDir: string) {
   const args = [`--user-data-dir=${userDataDir}`];
 
@@ -61,6 +63,26 @@ function launchArguments(userDataDir: string) {
   }
 
   return args;
+}
+
+/**
+ * Quitting can hang, and Playwright's own close() takes no timeout until after
+ * 1.62, so the process gets killed rather than left to stall the worker for its
+ * whole teardown budget.
+ */
+async function closeApp(app: ElectronApplication) {
+  const closed = await Promise.race([
+    app.close().then(() => true),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), CLOSE_TIMEOUT);
+    }),
+  ]).catch(() => false);
+
+  if (!closed) {
+    console.log(`[e2e] the app did not quit within ${CLOSE_TIMEOUT}ms; killing it`);
+
+    app.process().kill("SIGKILL");
+  }
 }
 
 const test = base.extend<{ app: ElectronApplication }>({
@@ -132,9 +154,28 @@ const test = base.extend<{ app: ElectronApplication }>({
           .join("\n"),
         contentType: "text/plain",
       });
+
+      // Also to stdout, not only the attachments: a job that is killed for
+      // running long never uploads its artifacts, and that is exactly the run
+      // whose state is worth seeing.
+      console.log(`[e2e] windows: ${JSON.stringify(app.windows().map((window) => window.url()))}`);
+
+      const mainProcessWindows = await app
+        .evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows().map((window) => ({
+            title: window.getTitle(),
+            url: window.webContents.getURL(),
+            isVisible: window.isVisible(),
+            isLoading: window.webContents.isLoading(),
+            crashed: window.webContents.isCrashed(),
+          })),
+        )
+        .catch((error: Error) => `unreachable: ${error.message}`);
+
+      console.log(`[e2e] main process: ${JSON.stringify(mainProcessWindows)}`);
     }
 
-    await app.close();
+    await closeApp(app);
 
     await rm(userDataDir, { recursive: true, force: true });
   },
