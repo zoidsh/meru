@@ -1,26 +1,27 @@
 /*
- * Proves the app still starts. Launches it through `bun run dev:headless`,
- * attaches to it over the Chrome DevTools Protocol and checks the renderer
- * actually painted, then shuts it down.
+ * Proves the app still starts. Builds the app, serves the renderer from a dev
+ * server in this process, launches the app through the container launcher and
+ * checks the renderer actually painted, then shuts it down.
  *
- * Needs Docker and Linux, because that is what `dev:headless` needs. Running
- * the app the same way developers do is the point: a separate CI-only launch
- * path would let `scripts/headless` rot without anything noticing.
+ * Needs Docker and Linux, because that is what `scripts/headless/electron`
+ * needs. Running the app the same way developers do is the point: a separate
+ * CI-only launch path would let `scripts/headless` rot without anything
+ * noticing.
  */
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ms } from "@meru/shared/ms";
-import { type Subprocess, spawn } from "bun";
-import { type Browser, chromium, type Page } from "playwright-core";
+import { spawn } from "bun";
+import { _electron, type ElectronApplication, type Page } from "playwright-core";
+import { buildAppFiles, resetBuildDirectory, startRendererDevServer } from "../scripts/build";
 
-// Deliberately not the launcher's defaults, so a smoke test neither disturbs
+// Deliberately not the launcher's default, so a smoke test neither disturbs
 // nor is disturbed by a `bun run dev:headless` already running on the machine.
 const INSTANCE = "boot-smoke-test";
-const CDP_PORT = process.env.MERU_CDP_PORT ?? "9333";
 
-const CDP_URL = `http://127.0.0.1:${CDP_PORT}`;
 const CONTAINER_NAME = `meru-headless-${INSTANCE}`;
+const LAUNCHER_PATH = path.join(process.cwd(), "scripts", "headless", "electron");
 
 const SCREENSHOT_PATH = path.join(process.cwd(), "boot-smoke-test.png");
 
@@ -28,7 +29,6 @@ const SCREENSHOT_PATH = path.join(process.cwd(), "boot-smoke-test.png");
 // before the app can start at all, so this covers the pull as well as the boot.
 const BOOT_TIMEOUT = ms("10m");
 const RENDER_TIMEOUT = ms("1m");
-const SHUTDOWN_TIMEOUT = ms("10s");
 const POLL_INTERVAL = ms("0.5s");
 
 function log(message: string) {
@@ -36,55 +36,18 @@ function log(message: string) {
 }
 
 /**
- * The dev server treats Electron exiting as the user closing the app and exits
- * 0 itself, so its exit code says nothing about whether the app crashed. Only
- * the fact that it exited before the checks finished is meaningful.
+ * Every Gmail account and workspace app is a window of its own as far as
+ * Playwright is concerned, so the app's own window has to be picked out by the
+ * page it loaded. `firstWindow()` is not that window — it returns whichever
+ * one appeared first, which is usually an account. Nor does asking whether a
+ * page has a `BrowserWindow` separate them, because `BrowserWindow`
+ * `fromWebContents` resolves a `WebContentsView` to the window that owns it.
  */
-function watchForEarlyExit(devServer: Subprocess) {
-  let hasExited = false;
-
-  devServer.exited.then(() => {
-    hasExited = true;
-  });
-
-  return () => hasExited;
-}
-
-async function waitForDebuggerPort(hasDevServerExited: () => boolean) {
-  const deadline = Date.now() + BOOT_TIMEOUT;
-
-  while (Date.now() < deadline) {
-    if (hasDevServerExited()) {
-      throw new Error("The dev server exited before the app exposed a debugging port.");
-    }
-
-    try {
-      const response = await fetch(`${CDP_URL}/json/version`);
-
-      if (response.ok) {
-        return;
-      }
-    } catch {
-      // Nothing is listening yet, which is the normal case while the image is
-      // being pulled and the app is starting.
-    }
-
-    await Bun.sleep(POLL_INTERVAL);
-  }
-
-  throw new Error(`The app did not expose a debugging port within ${BOOT_TIMEOUT}ms.`);
-}
-
-/**
- * Every Gmail account and workspace app is a debugging target of its own, so
- * the app's own window has to be picked out by the page it loaded.
- */
-async function waitForRendererPage(browser: Browser) {
+async function waitForRendererWindow(app: ElectronApplication) {
   const deadline = Date.now() + RENDER_TIMEOUT;
 
   while (Date.now() < deadline) {
-    const pages = browser.contexts().flatMap((context) => context.pages());
-    const renderer = pages.find((page) => page.url().includes("main.html"));
+    const renderer = app.windows().find((window) => window.url().includes("main.html"));
 
     if (renderer) {
       return renderer;
@@ -123,6 +86,31 @@ async function assertRendererRendered(renderer: Page) {
 }
 
 /**
+ * Reaches the main process over its own Node inspector, which the debugging
+ * protocol alone cannot see. A window can be a debugging target while never
+ * being shown, so whether the app put something on screen is only answerable
+ * from here.
+ */
+async function assertWindowShown(app: ElectronApplication) {
+  const windows = await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().map((window) => ({
+      title: window.getTitle(),
+      isVisible: window.isVisible(),
+    })),
+  );
+
+  if (windows.length !== 1) {
+    throw new Error(
+      `Expected the app to own one window, but the main process reports ${windows.length}: ${JSON.stringify(windows)}.`,
+    );
+  }
+
+  if (!windows[0]?.isVisible) {
+    throw new Error("The app's window was never shown.");
+  }
+}
+
+/**
  * Captures the renderer's own HTML. Gmail and workspace apps are separate
  * views painted above it by the compositor, so they come out as blank
  * rectangles here — that is the protocol, not a broken app.
@@ -141,77 +129,86 @@ async function captureFailureScreenshot(renderer: Page | undefined) {
   }
 }
 
-async function logDebuggerTargets() {
-  try {
-    const response = await fetch(`${CDP_URL}/json/list`);
-    const targets = (await response.json()) as { type: string; url: string }[];
+function logWindows(app: ElectronApplication | undefined) {
+  if (!app) {
+    return;
+  }
 
-    log("Debugging targets the app exposed:");
+  log("Windows the app had open:");
 
-    for (const target of targets) {
-      log(`  ${target.type} ${target.url}`);
-    }
-  } catch (error) {
-    log(`Could not list debugging targets: ${error}`);
+  for (const window of app.windows()) {
+    log(`  ${window.url()}`);
   }
 }
 
 /**
- * Removing the container is what actually stops the app. The dev server
- * spawned the launcher rather than the app itself, so killing the dev server
- * does not reliably reach the container the launcher started.
+ * Closing quits the app through `app.quit()`, which lets the container exit and
+ * remove itself. The force-remove is the safety net for the paths that never
+ * reach the close, such as a failed assertion or a launch that timed out.
  */
-async function stopApp(devServer: Subprocess) {
+async function stopApp(app: ElectronApplication | undefined) {
+  try {
+    await app?.close();
+  } catch (error) {
+    log(`Could not close the app: ${error}`);
+  }
+
   await spawn(["docker", "rm", "--force", CONTAINER_NAME], {
     stdout: "ignore",
     stderr: "ignore",
   }).exited;
-
-  // With the app gone the dev server exits by itself, so it is only signalled
-  // when it does not. Killing it first would turn every clean shutdown into a
-  // reported signal, which reads like a failure in the CI log.
-  const hasStoppedOnItsOwn = await Promise.race([
-    devServer.exited.then(() => true),
-    Bun.sleep(SHUTDOWN_TIMEOUT).then(() => false),
-  ]);
-
-  if (hasStoppedOnItsOwn) {
-    return;
-  }
-
-  devServer.kill();
-
-  await devServer.exited;
 }
-
-const headlessHome = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
 
 // A fresh home every run, so a local run starts from the same empty config CI
 // gets and cannot pass on state left behind by an earlier one.
-const devServer = spawn(["bun", "run", "dev:headless"], {
-  env: {
-    ...process.env,
-    MERU_INSTANCE: INSTANCE,
-    MERU_CDP_PORT: CDP_PORT,
-    MERU_HEADLESS_HOME: headlessHome,
-  },
-  stdout: "inherit",
-  stderr: "inherit",
-});
+const headlessHome = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
 
-const hasDevServerExited = watchForEarlyExit(devServer);
+await resetBuildDirectory();
 
-let browser: Browser | undefined;
+const [, viteServer] = await Promise.all([
+  buildAppFiles({ dev: true }),
+  startRendererDevServer("renderer", 3000),
+]);
+
+const rendererUrl = viteServer.resolvedUrls?.local[0];
+
+let app: ElectronApplication | undefined;
 let renderer: Page | undefined;
 
 try {
+  if (!rendererUrl) {
+    throw new Error("The renderer dev server started without resolving a URL.");
+  }
+
   log("Waiting for the app to start…");
 
-  await waitForDebuggerPort(hasDevServerExited);
+  // The launcher is a stand-in for the Electron binary, so Playwright spawns it
+  // the same way it would spawn Electron itself and reads the app's debugging
+  // endpoints off its stderr. Those are ephemeral ports inside the container,
+  // reachable only because the launcher runs it with --network host.
+  app = await _electron.launch({
+    executablePath: LAUNCHER_PATH,
+    args: ["."],
+    cwd: process.cwd(),
+    timeout: BOOT_TIMEOUT,
+    env: {
+      ...process.env,
+      MERU_INSTANCE: INSTANCE,
+      MERU_HEADLESS_HOME: headlessHome,
+      MERU_RENDERER_URL: rendererUrl,
+    } as Record<string, string>,
+  });
 
-  browser = await chromium.connectOverCDP(CDP_URL);
+  // Launching proves nothing on its own: the debugging endpoint is announced
+  // before the app's own code runs, so a main process that throws immediately
+  // still launches successfully. The assertions below are what test the app.
+  let hasAppClosed = false;
 
-  renderer = await waitForRendererPage(browser);
+  app.on("close", () => {
+    hasAppClosed = true;
+  });
+
+  renderer = await waitForRendererWindow(app);
 
   const rendererErrors: Error[] = [];
 
@@ -221,7 +218,9 @@ try {
 
   await assertRendererRendered(renderer);
 
-  if (hasDevServerExited()) {
+  await assertWindowShown(app);
+
+  if (hasAppClosed) {
     throw new Error("The app exited while the smoke test was running.");
   }
 
@@ -237,15 +236,15 @@ try {
 } catch (error) {
   await captureFailureScreenshot(renderer);
 
-  await logDebuggerTargets();
+  logWindows(app);
 
   log(`Failed: ${error instanceof Error ? error.message : error}`);
 
   process.exitCode = 1;
 } finally {
-  await browser?.close();
+  await stopApp(app);
 
-  await stopApp(devServer);
+  await viteServer.close();
 
   await rm(headlessHome, { recursive: true, force: true });
 }
