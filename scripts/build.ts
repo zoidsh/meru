@@ -146,6 +146,10 @@ async function buildRenderer(rendererName: string, port: number) {
       tsconfigPaths: true,
     },
     server: {
+      // Pinned to one stack: "localhost" resolves to both 127.0.0.1 and ::1,
+      // and Vite's free-port probe claims only one of them, so simultaneous
+      // dev servers can each believe they own the same port.
+      host: "127.0.0.1",
       port,
     },
     build: {
