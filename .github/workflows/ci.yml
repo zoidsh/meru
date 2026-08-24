@@ -42,12 +42,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      # Unpacked and x64 only: the test launches the app, and nothing here
-      # installs it, so packing installers for two architectures would be time
-      # spent on output the test never opens.
-      - run: bun run build:linux -- --dir --x64 --publish never
-      # The runner image ships Xvfb. -a takes a free display rather than
-      # colliding on :99.
+      # test:e2e builds the app first, unpacked and x64 only: it launches the
+      # app rather than installing it, so packing installers for two
+      # architectures would be time spent on output no test opens. The runner
+      # image ships Xvfb; -a takes a free display rather than colliding on :99.
       - run: xvfb-run -a bun run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7

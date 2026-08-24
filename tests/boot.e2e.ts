@@ -2,13 +2,13 @@
  * Proves the app still starts. Launches the built app, routes it to appearance
  * settings and checks the renderer actually painted.
  *
- * Needs the app built first, unpacked rather than packed into an installer:
+ * `bun run test:e2e` builds the app before running this, so there is nothing
+ * to do first beyond having a display. On a machine without one, wrap the
+ * command: `xvfb-run -a bun run test:e2e`. The -a matters, because it picks a
+ * free display number rather than colliding on :99 with another run.
  *
- *     bun run build:linux -- --dir --x64
- *
- * and a display. On a machine without one, wrap the command: `xvfb-run -a bun
- * run test:e2e`. The -a matters, because it picks a free display number
- * rather than colliding on :99 with another run.
+ * That build is Linux only. Elsewhere, build the app for the platform and
+ * point MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
