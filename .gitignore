@@ -175,7 +175,8 @@ dist
 .DS_Store
 
 # Meru
-/boot-smoke-test.png
+/test-results/
+/playwright-report/
 build/embedded.provisionprofile
 build/entitlements.mac.plist
 build-js

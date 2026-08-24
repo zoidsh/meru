@@ -36,21 +36,51 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun test
-  boot:
-    runs-on: ubuntu-latest
+  e2e:
+    # Builds the app and launches it, so this is also what proves each platform
+    # still compiles. There is no separate build workflow: building without
+    # launching proved strictly less, and a signed build is only needed at
+    # release, which release.yml does itself.
+    runs-on: ${{ matrix.os }}
+    # A test that hangs rather than fails would otherwise sit on a runner for
+    # GitHub's six hour default. Two attempts of a two minute test, its build
+    # and its teardown fit inside this several times over.
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile --ignore-scripts
-      # The runner image ships Xvfb. -a takes a free display rather than
-      # colliding on :99. No step fetches Electron, because electron/index.js
-      # downloads the binary lazily on the first require and nothing here
-      # short-circuits that.
-      - run: xvfb-run -a bun run test:boot
-        timeout-minutes: 10
-      - if: failure()
+      - run: bun install --frozen-lockfile
+      # Only Linux needs a display server invented for it. -a takes a free
+      # display rather than colliding on :99.
+      # pw:browser prints the command Playwright launched and every line it read
+      # back, which is the only view into a launch that never returns: the app is
+      # running by then, but no fixture has been handed to a test, so nothing the
+      # test itself logs will ever run.
+      - if: runner.os == 'Linux'
+        run: xvfb-run -a bun run test:e2e
+        env:
+          DEBUG: pw:browser
+      - if: runner.os != 'Linux'
+        run: bun run test:e2e
+        env:
+          DEBUG: pw:browser
+      # always(), not failure(): a job killed for running long counts as
+      # cancelled rather than failed, and that is the run whose trace is most
+      # worth having.
+      - if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: boot-smoke-test
+          name: e2e-${{ matrix.os }}
           if-no-files-found: ignore
-          path: boot-smoke-test.png
+          # The trace opens in the trace viewer and is the thing worth having;
+          # the report is the readable index into it.
+          path: |
+            test-results/
+            playwright-report/

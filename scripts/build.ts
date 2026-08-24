@@ -9,18 +9,31 @@ import postcss from "postcss";
 import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
 
+const args = parseArgs({
+  args: Bun.argv,
+  options: {
+    dev: {
+      type: "boolean",
+    },
+    devtools: {
+      type: "boolean",
+      short: "d",
+    },
+  },
+  strict: true,
+  allowPositionals: true,
+});
+
+await rm("./build-js", { recursive: true, force: true });
+
 // Keep in sync with Electron
 const browserTarget = "chrome146";
 
-export function resetBuildDirectory() {
-  return rm("./build-js", { recursive: true, force: true });
-}
-
-export function buildAppFiles({ dev }: { dev: boolean }) {
+function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
     transform: {
-      define: !dev
+      define: !args.values.dev
         ? {
             "process.env.NODE_ENV": JSON.stringify("production"),
             ...(process.env.MERU_API_URL
@@ -119,12 +132,12 @@ export function buildAppFiles({ dev }: { dev: boolean }) {
   ]);
 }
 
-function createRendererViteConfig(rendererName: string, port: number): vite.InlineConfig {
+async function buildRenderer(rendererName: string, port: number) {
   const rendererRoot = path.join(process.cwd(), "packages", rendererName);
 
   const pageFileNames = Array.from(new Bun.Glob("*.html").scanSync(rendererRoot));
 
-  return {
+  const viteConfig: vite.InlineConfig = {
     configFile: false,
     root: rendererRoot,
     base: "./",
@@ -148,105 +161,68 @@ function createRendererViteConfig(rendererName: string, port: number): vite.Inli
     },
     clearScreen: false,
   };
-}
 
-export function buildRenderer(rendererName: string, port: number) {
-  return vite.build(createRendererViteConfig(rendererName, port));
-}
+  if (args.values.dev) {
+    const viteServer = await vite.createServer(viteConfig);
 
-/**
- * Resolves once the server is listening, so `resolvedUrls` carries the port it
- * actually took rather than the one it was asked for.
- */
-export async function startRendererDevServer(rendererName: string, port: number) {
-  const viteServer = await vite.createServer(createRendererViteConfig(rendererName, port));
-
-  await viteServer.listen();
-
-  return viteServer;
-}
-
-// Guarded so the boot smoke test can import the builders and run the dev server
-// in its own process. `_electron.launch` has to spawn the app itself, which the
-// branch below already does, so the two cannot both drive it.
-if (import.meta.main) {
-  const args = parseArgs({
-    args: Bun.argv,
-    options: {
-      dev: {
-        type: "boolean",
-      },
-      devtools: {
-        type: "boolean",
-        short: "d",
-      },
-    },
-    strict: true,
-    allowPositionals: true,
-  });
-
-  const isDev = args.values.dev === true;
-
-  await resetBuildDirectory();
-
-  if (!isDev) {
-    await Promise.all([buildAppFiles({ dev: false }), buildRenderer("renderer", 3000)]);
-  } else {
-    const [, viteServer] = await Promise.all([
-      buildAppFiles({ dev: true }),
-      startRendererDevServer("renderer", 3000),
-    ]);
+    await viteServer.listen();
 
     viteServer.printUrls();
 
-    const rendererUrl = viteServer.resolvedUrls?.local[0];
+    return viteServer.resolvedUrls?.local[0];
+  }
 
-    let electron: Subprocess;
-    let isRestartingElectron = false;
+  await vite.build(viteConfig);
+}
 
-    const startElectron = () => {
-      electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
-        env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
-        onExit: async () => {
-          if (isRestartingElectron) {
-            isRestartingElectron = false;
-          } else {
-            await electron.exited;
+const [, rendererUrl] = await Promise.all([buildAppFiles(), buildRenderer("renderer", 3000)]);
 
-            process.exit(0);
-          }
-        },
-      });
-    };
+if (args.values.dev) {
+  let electron: Subprocess;
+  let isRestartingElectron = false;
 
-    const stopElectron = () => {
-      electron.kill();
+  const startElectron = () => {
+    electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
+      env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
+      onExit: async () => {
+        if (isRestartingElectron) {
+          isRestartingElectron = false;
+        } else {
+          await electron.exited;
 
-      return electron.exited;
-    };
+          process.exit(0);
+        }
+      },
+    });
+  };
 
-    const restartElectron = async () => {
-      isRestartingElectron = true;
+  const stopElectron = () => {
+    electron.kill();
 
-      await stopElectron();
+    return electron.exited;
+  };
 
-      startElectron();
-    };
+  const restartElectron = async () => {
+    isRestartingElectron = true;
 
-    await startElectron();
+    await stopElectron();
 
-    const watcher = watch("./packages", { recursive: true });
+    startElectron();
+  };
 
-    for await (const event of watcher) {
-      const rendererPathnames = ["renderer/", "shared/renderer/", "ui/"];
+  await startElectron();
 
-      if (rendererPathnames.some((pathname) => event.filename?.startsWith(pathname))) {
-        continue;
-      }
+  const watcher = watch("./packages", { recursive: true });
 
-      await buildAppFiles({ dev: true });
+  for await (const event of watcher) {
+    const rendererPathnames = ["renderer/", "shared/renderer/", "ui/"];
 
-      await restartElectron();
+    if (rendererPathnames.some((pathname) => event.filename?.startsWith(pathname))) {
+      continue;
     }
+
+    await buildAppFiles();
+
+    await restartElectron();
   }
 }
