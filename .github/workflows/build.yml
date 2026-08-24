@@ -35,8 +35,20 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # What this job is for is catching a platform that no longer compiles, which
+      # `--dir` establishes: it runs the whole pipeline and stops before packing
+      # installers. One architecture is enough for that, and the runner's own costs
+      # nothing to cross-compile. Releases still build every target and architecture,
+      # in release.yml, which shares no jobs with this workflow.
       - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS != 'true'
-        run: bun run build:mac -- --publish never
+        run: bun run build:mac -- --dir --arm64 --publish never
+      - if: startsWith(matrix.os, 'ubuntu')
+        run: bun run build:linux -- --dir --x64 --publish never
+      - if: startsWith(matrix.os, 'windows')
+        run: bun run build:win -- --dir --x64 --publish never
+      # The signed path stays whole, because the point of the label is to come away
+      # with something installable: a signed build that is never packed into a dmg
+      # cannot be tested, and notarization is the part most worth proving early.
       - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS == 'true'
         # The provisioning profile authorizes the Touch ID keychain access group entitlement;
         # without it macOS refuses to launch the signed app.
@@ -53,14 +65,10 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      - if: startsWith(matrix.os, 'ubuntu')
-        run: bun run build:linux -- --publish never
-      - if: startsWith(matrix.os, 'windows')
-        run: bun run build:win -- --publish never
       # One artifact per installer, uncompressed: installers are already compressed, and a
       # bundled artifact forces downloading every file to test one. Auto-update zips and
       # blockmaps are omitted — only the release publish flow needs them.
-      - if: startsWith(matrix.os, 'macos')
+      - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: Meru-mac-x64.dmg
@@ -69,71 +77,10 @@ jobs:
           path: |
             dist/*.dmg
             !dist/*-arm64.dmg
-      - if: startsWith(matrix.os, 'macos')
+      - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: Meru-mac-arm64.dmg
           if-no-files-found: error
           compression-level: 0
           path: dist/*-arm64.dmg
-      - if: startsWith(matrix.os, 'windows')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-win-setup.exe
-          if-no-files-found: error
-          compression-level: 0
-          # The NSIS installer has spaces in its filename; the dashed name only exists on release assets.
-          path: dist/* Setup *.exe
-      - if: startsWith(matrix.os, 'windows')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-win-portable.exe
-          if-no-files-found: error
-          compression-level: 0
-          path: |
-            dist/*.exe
-            !dist/* Setup *.exe
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-x64.AppImage
-          if-no-files-found: error
-          compression-level: 0
-          path: |
-            dist/*.AppImage
-            !dist/*-arm64.AppImage
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-arm64.AppImage
-          if-no-files-found: error
-          compression-level: 0
-          path: dist/*-arm64.AppImage
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-amd64.deb
-          if-no-files-found: error
-          compression-level: 0
-          path: dist/*_amd64.deb
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-arm64.deb
-          if-no-files-found: error
-          compression-level: 0
-          path: dist/*_arm64.deb
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-x86_64.rpm
-          if-no-files-found: error
-          compression-level: 0
-          path: dist/*.x86_64.rpm
-      - if: startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Meru-linux-aarch64.rpm
-          if-no-files-found: error
-          compression-level: 0
-          path: dist/*.aarch64.rpm
