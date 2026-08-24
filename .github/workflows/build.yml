@@ -27,7 +27,6 @@ jobs:
       matrix:
         os:
           - macos-latest
-          - ubuntu-latest
           - windows-latest
     env:
       SIGN_MACOS: ${{ contains(github.event.pull_request.labels.*.name, 'sign-macos') }}
@@ -40,10 +39,13 @@ jobs:
       # installers. One architecture is enough for that, and the runner's own costs
       # nothing to cross-compile. Releases still build every target and architecture,
       # in release.yml, which shares no jobs with this workflow.
+      #
+      # Linux is absent because ci.yml's e2e job already builds it the same way
+      # before launching what it built, so a job here would build it twice. It
+      # stays in ci.yml rather than moving here because release.yml runs ci.yml
+      # and would otherwise stop running the tests.
       - if: startsWith(matrix.os, 'macos') && env.SIGN_MACOS != 'true'
         run: bun run build:mac -- --dir --arm64 --publish never
-      - if: startsWith(matrix.os, 'ubuntu')
-        run: bun run build:linux -- --dir --x64 --publish never
       - if: startsWith(matrix.os, 'windows')
         run: bun run build:win -- --dir --x64 --publish never
       # The signed path stays whole, because the point of the label is to come away
