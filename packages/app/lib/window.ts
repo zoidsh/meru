@@ -151,7 +151,9 @@ export function loadRenderer(
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
   if (is.dev) {
-    loadUrl(window.webContents, `http://localhost:3000/${pageFileName}?${searchParams.toString()}`);
+    const rendererUrl = process.env.MERU_RENDERER_URL ?? "http://localhost:3000/";
+
+    loadUrl(window.webContents, `${rendererUrl}${pageFileName}?${searchParams.toString()}`);
 
     if (shouldOpenDevToolsOnLaunch) {
       window.webContents.openDevTools({ mode: "detach" });
