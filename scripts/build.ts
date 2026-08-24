@@ -147,7 +147,6 @@ async function buildRenderer(rendererName: string, port: number) {
     },
     server: {
       port,
-      strictPort: true,
     },
     build: {
       outDir: path.join(process.cwd(), "build-js", rendererName),
@@ -165,12 +164,14 @@ async function buildRenderer(rendererName: string, port: number) {
     await viteServer.listen();
 
     viteServer.printUrls();
-  } else {
-    await vite.build(viteConfig);
+
+    return viteServer.resolvedUrls?.local[0];
   }
+
+  await vite.build(viteConfig);
 }
 
-await Promise.all([buildAppFiles(), buildRenderer("renderer", 3000)]);
+const [, rendererUrl] = await Promise.all([buildAppFiles(), buildRenderer("renderer", 3000)]);
 
 if (args.values.dev) {
   let electron: Subprocess;
@@ -178,6 +179,7 @@ if (args.values.dev) {
 
   const startElectron = () => {
     electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
+      env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
       onExit: async () => {
         if (isRestartingElectron) {
           isRestartingElectron = false;
