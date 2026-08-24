@@ -29,7 +29,7 @@ exec docker run --rm -i --init \
   --workdir "$PWD" \
   --user "$(id -u):$(id -g)" \
   --env HOME="$headless_home" \
-  --env MERU_RENDERER_URL="${MERU_RENDERER_URL:-}" \
+  --env MERU_RENDERER_URL \
   --env CDP_PORT="$cdp_port" \
   --env SCREEN="$screen" \
   --env USER_DATA_DIR="$headless_home/$instance" \

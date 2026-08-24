@@ -151,7 +151,9 @@ export function loadRenderer(
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
   if (is.dev) {
-    const rendererUrl = process.env.MERU_RENDERER_URL ?? "http://localhost:3000/";
+    // `||`, not `??`: an empty value is as unusable as an unset one, and
+    // keeping it loads the page with no origin to resolve against.
+    const rendererUrl = process.env.MERU_RENDERER_URL || "http://localhost:3000/";
 
     loadUrl(window.webContents, `${rendererUrl}${pageFileName}?${searchParams.toString()}`);
 
