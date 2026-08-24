@@ -1,33 +1,24 @@
 /*
  * Proves the app still starts. Builds the app, serves the renderer from a dev
- * server in this process, launches the app through the container launcher and
- * checks the renderer actually painted, then shuts it down.
+ * server in this process, launches the app and checks the renderer actually
+ * painted, then shuts it down.
  *
- * Needs Docker and Linux, because that is what `scripts/headless/electron`
- * needs. Running the app the same way developers do is the point: a separate
- * CI-only launch path would let `scripts/headless` rot without anything
- * noticing.
+ * Needs a display. On a machine without one, wrap the command: `xvfb-run -a
+ * bun run test:boot`. The -a matters, because it picks a free display number
+ * rather than colliding on :99 with another run.
  */
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ms } from "@meru/shared/ms";
-import { spawn } from "bun";
 import { _electron, type ElectronApplication, type Page } from "playwright-core";
 import { buildAppFiles, resetBuildDirectory, startRendererDevServer } from "../scripts/build";
 
-// Deliberately not the launcher's default, so a smoke test neither disturbs
-// nor is disturbed by a `bun run dev:headless` already running on the machine.
-const INSTANCE = "boot-smoke-test";
-
-const CONTAINER_NAME = `meru-headless-${INSTANCE}`;
-const LAUNCHER_PATH = path.join(process.cwd(), "scripts", "headless", "electron");
-
 const SCREENSHOT_PATH = path.join(process.cwd(), "boot-smoke-test.png");
 
-// Generous because the first run downloads a multi-gigabyte container image
-// before the app can start at all, so this covers the pull as well as the boot.
-const BOOT_TIMEOUT = ms("10m");
+// Generous because a fresh checkout downloads the Electron binary on the first
+// require, so this covers that as well as the boot.
+const BOOT_TIMEOUT = ms("5m");
 const RENDER_TIMEOUT = ms("1m");
 const POLL_INTERVAL = ms("0.5s");
 
@@ -141,30 +132,19 @@ function logWindows(app: ElectronApplication | undefined) {
   }
 }
 
-/**
- * Closing quits the app through `app.quit()`, which lets the container exit and
- * remove itself. The force-remove is the safety net for the paths that never
- * reach the close, such as a failed assertion or a launch that timed out.
+/*
+ * A user data directory of its own, for two reasons. The app takes a single
+ * instance lock scoped to that directory and quits when it loses, so runs
+ * sharing one cannot overlap — and several agents do work on this repository at
+ * once. It is also where the config lives, so a fresh directory is what makes a
+ * local run start from the same empty config CI gets.
  */
-async function stopApp(app: ElectronApplication | undefined) {
-  try {
-    await app?.close();
-  } catch (error) {
-    log(`Could not close the app: ${error}`);
-  }
-
-  await spawn(["docker", "rm", "--force", CONTAINER_NAME], {
-    stdout: "ignore",
-    stderr: "ignore",
-  }).exited;
-}
-
-// A fresh home every run, so a local run starts from the same empty config CI
-// gets and cannot pass on state left behind by an earlier one.
-const headlessHome = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
+const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
 
 await resetBuildDirectory();
 
+// Vite takes the next free port when 3000 is busy and reports which it took,
+// so concurrent runs get a dev server each.
 const [, viteServer] = await Promise.all([
   buildAppFiles({ dev: true }),
   startRendererDevServer("renderer", 3000),
@@ -182,19 +162,15 @@ try {
 
   log("Waiting for the app to start…");
 
-  // The launcher is a stand-in for the Electron binary, so Playwright spawns it
-  // the same way it would spawn Electron itself and reads the app's debugging
-  // endpoints off its stderr. Those are ephemeral ports inside the container,
-  // reachable only because the launcher runs it with --network host.
+  // No executablePath: letting Playwright resolve Electron itself is what makes
+  // it preload its own script into the main process, which holds `app.ready`
+  // until the connection is up. Passing a path skips that and races the app.
   app = await _electron.launch({
-    executablePath: LAUNCHER_PATH,
-    args: ["."],
+    args: [".", `--user-data-dir=${userDataDir}`],
     cwd: process.cwd(),
     timeout: BOOT_TIMEOUT,
     env: {
       ...process.env,
-      MERU_INSTANCE: INSTANCE,
-      MERU_HEADLESS_HOME: headlessHome,
       MERU_RENDERER_URL: rendererUrl,
     } as Record<string, string>,
   });
@@ -242,9 +218,13 @@ try {
 
   process.exitCode = 1;
 } finally {
-  await stopApp(app);
+  try {
+    await app?.close();
+  } catch (error) {
+    log(`Could not close the app: ${error}`);
+  }
 
   await viteServer.close();
 
-  await rm(headlessHome, { recursive: true, force: true });
+  await rm(userDataDir, { recursive: true, force: true });
 }
