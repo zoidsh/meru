@@ -154,6 +154,7 @@ export function LicenseSettings() {
   const { data: deviceInfo, refetch: refetchDeviceInfo } = useQuery({
     queryKey: deviceInfoQueryKey,
     queryFn: () => ipc.main.invoke("license.getDeviceInfo"),
+    enabled: Boolean(config?.licenseKey),
   });
 
   const deviceInfoForm = useTanStackForm({
