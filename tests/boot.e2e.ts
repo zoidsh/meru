@@ -1,10 +1,13 @@
 /*
- * Proves the app still starts. The renderer is served by the dev server in
- * playwright.config.ts; this launches the app against it and checks the
- * renderer actually painted.
+ * Proves the app still starts. Launches the built app, routes it to appearance
+ * settings and checks the renderer actually painted.
  *
- * Needs a display. On a machine without one, wrap the command: `xvfb-run -a
- * bun run test:boot`. The -a matters, because it picks a free display number
+ * Needs the app built first, unpacked rather than packed into an installer:
+ *
+ *     bun run build:linux -- --dir --x64
+ *
+ * and a display. On a machine without one, wrap the command: `xvfb-run -a bun
+ * run test:boot`. The -a matters, because it picks a free display number
  * rather than colliding on :99 with another run.
  */
 import { mkdtemp, rm } from "node:fs/promises";
@@ -14,9 +17,8 @@ import { test as base, expect } from "@playwright/test";
 import { _electron, type ElectronApplication, type Page } from "playwright";
 
 /*
- * electron-builder leaves the unpacked app next to the installers it packs, so
- * a `bun run build:linux` is enough and CI needs no separate build. The
- * override is for the other platforms' output, which lands elsewhere.
+ * Where electron-builder leaves the unpacked app on Linux. The override is for
+ * the other platforms, whose output lands under a directory of its own name.
  */
 const EXECUTABLE_PATH =
   process.env.MERU_EXECUTABLE ?? path.join(process.cwd(), "dist", "linux-unpacked", "meru");
