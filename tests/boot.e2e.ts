@@ -102,29 +102,19 @@ const test = base.extend<{ app: ElectronApplication }>({
     const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
 
     /*
-     * Startup checks Pro entitlement before it creates any window, and on
-     * failure waits on a native dialog that no one is here to dismiss: the app
-     * stays up with no window, and even the main process stops answering.
+     * Startup validates the Pro trial against Meru's API before it creates any
+     * window, and on failure waits on a native dialog that no one is here to
+     * dismiss: the app stays up with no window, and even the main process stops
+     * answering. `trial.validate` returns early on this key without calling
+     * anything, so seeding it keeps the test off the network entirely.
      *
-     * With a key, that check runs for real and the app boots as Pro. Without
-     * one -- a fork, which gets no secrets, or a local run -- `trial.expired`
-     * takes the early return in `trial.validate` and nothing is called at all,
-     * so the test still proves the app starts.
+     * Linux and Windows only pass without this because the call happens to
+     * succeed there, which makes a live third-party service part of the test on
+     * every platform. That is the reason to seed rather than to retry.
      */
     await writeFile(
       path.join(userDataDir, "config.json"),
-      JSON.stringify(
-        process.env.MERU_LICENSE_KEY
-          ? { licenseKey: process.env.MERU_LICENSE_KEY }
-          : { "trial.expired": true },
-        null,
-        "\t",
-      ),
-    );
-
-    // Never the key itself: this goes to a log anyone can read.
-    console.log(
-      `[e2e] entitlement: ${process.env.MERU_LICENSE_KEY ? "license key" : "no key, trial short-circuited"}`,
+      JSON.stringify({ "trial.expired": true }, null, "\t"),
     );
 
     // The built binary, not `electron .`: only a packaged app has isPackaged

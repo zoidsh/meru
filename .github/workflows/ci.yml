@@ -67,14 +67,10 @@ jobs:
         run: xvfb-run -a bun run test:e2e
         env:
           DEBUG: pw:browser
-          # Absent on forks, which get no secrets; the test falls back to a
-          # trial that needs no network.
-          MERU_LICENSE_KEY: ${{ secrets.MERU_LICENSE_KEY }}
       - if: runner.os != 'Linux'
         run: bun run test:e2e
         env:
           DEBUG: pw:browser
-          MERU_LICENSE_KEY: ${{ secrets.MERU_LICENSE_KEY }}
       # always(), not failure(): a job killed for running long counts as
       # cancelled rather than failed, and that is the run whose trace is most
       # worth having.
