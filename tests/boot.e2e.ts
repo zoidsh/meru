@@ -10,7 +10,7 @@
  * That build is Linux only. Elsewhere, build the app for the platform and
  * point MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test as base, expect } from "@playwright/test";
@@ -100,6 +100,22 @@ const test = base.extend<{ app: ElectronApplication }>({
      * gets.
      */
     const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
+
+    /*
+     * Startup validates the Pro trial against Meru's API before it creates any
+     * window, and on failure waits on a native dialog that no one is here to
+     * dismiss: the app stays up with no window, and even the main process stops
+     * answering. `trial.validate` returns early on this key without calling
+     * anything, so seeding it keeps the test off the network entirely.
+     *
+     * Linux and Windows only pass without this because the call happens to
+     * succeed there, which makes a live third-party service part of the test on
+     * every platform. That is the reason to seed rather than to retry.
+     */
+    await writeFile(
+      path.join(userDataDir, "config.json"),
+      JSON.stringify({ "trial.expired": true }, null, "\t"),
+    );
 
     // The built binary, not `electron .`: only a packaged app has isPackaged
     // true, which is what sends loadRenderer down its production loadFile
