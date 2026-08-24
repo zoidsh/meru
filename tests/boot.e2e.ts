@@ -16,12 +16,50 @@ import path from "node:path";
 import { test as base, expect } from "@playwright/test";
 import { _electron, type ElectronApplication, type Page } from "playwright";
 
-/*
- * Where electron-builder leaves the unpacked app on Linux. The override is for
- * the other platforms, whose output lands under a directory of its own name.
- */
-const EXECUTABLE_PATH =
-  process.env.MERU_EXECUTABLE ?? path.join(process.cwd(), "dist", "linux-unpacked", "meru");
+// Where electron-builder leaves the unpacked app, per platform. No productName
+// is configured, so every one of these is named after the package.
+const UNPACKED_PATHS: Record<string, string[]> = {
+  darwin: ["mac-arm64", "meru.app", "Contents", "MacOS", "meru"],
+  linux: ["linux-unpacked", "meru"],
+  win32: ["win-unpacked", "meru.exe"],
+};
+
+function resolveExecutablePath() {
+  if (process.env.MERU_EXECUTABLE) {
+    return process.env.MERU_EXECUTABLE;
+  }
+
+  const unpackedPath = UNPACKED_PATHS[process.platform];
+
+  if (!unpackedPath) {
+    throw new Error(
+      `No unpacked app path is known for ${process.platform}. Set MERU_EXECUTABLE to the built app.`,
+    );
+  }
+
+  return path.join(process.cwd(), "dist", ...unpackedPath);
+}
+
+const EXECUTABLE_PATH = resolveExecutablePath();
+
+function launchArguments(userDataDir: string) {
+  const args = [`--user-data-dir=${userDataDir}`];
+
+  // chrome-sandbox ships without its setuid bit outside an installed package,
+  // so an unpacked Linux build cannot use the sandbox. The packaged apps on the
+  // other platforms can, and are left alone.
+  if (process.platform === "linux") {
+    args.push("--no-sandbox");
+  }
+
+  // Hosted runners have no GPU worth using, and Chromium spends a while finding
+  // that out for itself.
+  if (process.env.CI) {
+    args.push("--disable-gpu");
+  }
+
+  return args;
+}
 
 const test = base.extend<{ app: ElectronApplication }>({
   // Playwright resolves a fixture's dependencies from its destructuring
@@ -44,9 +82,7 @@ const test = base.extend<{ app: ElectronApplication }>({
     // branch. Running the app the way it ships is the point.
     const app = await _electron.launch({
       executablePath: EXECUTABLE_PATH,
-      // chrome-sandbox ships without its setuid bit outside an installed
-      // package, so an unpacked build cannot use the sandbox.
-      args: [`--user-data-dir=${userDataDir}`, "--no-sandbox"],
+      args: launchArguments(userDataDir),
       cwd: process.cwd(),
     });
 
