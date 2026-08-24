@@ -115,6 +115,14 @@ function buildAppFiles() {
       transform: {
         ...rolldownOptions.transform,
         target: "node24",
+        define: {
+          ...rolldownOptions.transform?.define,
+          // zustand/middleware is a single barrel, so importing
+          // subscribeWithSelector also pulls in devtools and its
+          // `import.meta.env` reads, which rolldown warns about under the `cjs`
+          // format. devtools is tree-shaken out, so the value never matters.
+          "import.meta": "{}",
+        },
       },
       moduleTypes: {
         ".css": "text",
