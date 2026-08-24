@@ -16,12 +16,14 @@ import path from "node:path";
 import { test as base, expect } from "@playwright/test";
 import { _electron, type ElectronApplication, type Page } from "playwright";
 
-// Where electron-builder leaves the unpacked app, per platform. No productName
-// is configured, so every one of these is named after the package.
+// Where electron-builder leaves the unpacked app, per platform. macOS and
+// Windows name it after productName, "Meru"; Linux lowercases it. Getting that
+// case wrong is invisible on a Mac and on Windows, whose filesystems match it
+// either way, and breaks nowhere until someone runs on a case-sensitive one.
 const UNPACKED_PATHS: Record<string, string[]> = {
-  darwin: ["mac-arm64", "meru.app", "Contents", "MacOS", "meru"],
+  darwin: ["mac-arm64", "Meru.app", "Contents", "MacOS", "Meru"],
   linux: ["linux-unpacked", "meru"],
-  win32: ["win-unpacked", "meru.exe"],
+  win32: ["win-unpacked", "Meru.exe"],
 };
 
 function resolveExecutablePath() {

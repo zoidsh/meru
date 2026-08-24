@@ -42,6 +42,10 @@ jobs:
     # launching proved strictly less, and a signed build is only needed at
     # release, which release.yml does itself.
     runs-on: ${{ matrix.os }}
+    # A test that hangs rather than fails would otherwise sit on a runner for
+    # GitHub's six hour default. Two attempts of a two minute test, its build
+    # and its teardown fit inside this several times over.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
