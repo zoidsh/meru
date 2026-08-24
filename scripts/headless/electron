@@ -6,33 +6,33 @@
 #
 # Electron resolves its binary through ELECTRON_OVERRIDE_DIST_PATH, so
 # pointing that at this directory is enough for `bun run dev` to spawn this
-# believing it is the real thing. See `bun run dev:sandbox`.
+# believing it is the real thing. See `bun run dev:headless`.
 set -euo pipefail
 
 instance="${MERU_INSTANCE:-default}"
 image="${MERU_ELECTRON_IMAGE:-mcr.microsoft.com/playwright:v1.62.1-noble}"
 cdp_port="${MERU_CDP_PORT:-9222}"
 screen="${MERU_SCREEN:-1440x900x24}"
-sandbox_home="${MERU_SANDBOX_HOME:-$HOME/.cache/meru-sandbox}"
+headless_home="${MERU_HEADLESS_HOME:-$HOME/.cache/meru-headless}"
 
-mkdir -p "$sandbox_home"
+mkdir -p "$headless_home"
 
 # --ipc host: Chromium crashes on Docker's default 64MB /dev/shm.
 # --network host: the renderer is served from the host's dev server, and the
 #   container has to reach it on the same address the main process was given.
 exec docker run --rm -i --init \
-  --name "meru-sandbox-$instance" \
+  --name "meru-headless-$instance" \
   --network host \
   --ipc host \
   --volume "$PWD:$PWD" \
-  --volume "$sandbox_home:$sandbox_home" \
+  --volume "$headless_home:$headless_home" \
   --workdir "$PWD" \
   --user "$(id -u):$(id -g)" \
-  --env HOME="$sandbox_home" \
+  --env HOME="$headless_home" \
   --env MERU_RENDERER_URL="${MERU_RENDERER_URL:-}" \
   --env CDP_PORT="$cdp_port" \
   --env SCREEN="$screen" \
-  --env USER_DATA_DIR="$sandbox_home/$instance" \
+  --env USER_DATA_DIR="$headless_home/$instance" \
   "$image" bash -c '
     set -euo pipefail
 
