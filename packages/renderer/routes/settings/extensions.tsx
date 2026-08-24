@@ -242,6 +242,10 @@ function ExtensionItem({
               variant="outline"
               size="sm"
               className="mt-1 self-start"
+              // The dialog explains how to pair the extension with 1Password's
+              // desktop app, which there is nothing to pair until it is
+              // installed. Installing needs Meru Pro, so this locks with it.
+              disabled={!installed}
               onClick={() => {
                 setIsSetupDialogOpen(true);
               }}
