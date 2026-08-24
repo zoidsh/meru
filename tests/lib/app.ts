@@ -243,13 +243,18 @@ export type MeruApp = {
 };
 
 /**
- * Launches the app once for the file that calls this, and hands every test in
- * it the same window.
+ * Launches the app for every test in the file that calls this, and hands each
+ * one a window of its own.
  *
- * A launch costs about a second, so this is not about wall clock. It is that a
- * file's tests are usually steps through one surface, and reading them as one
- * session beats relaunching between each. Anything that needs an app of its own
- * — a different seeded config, a restart — belongs in a file of its own.
+ * One app per test rather than per file, because Playwright asks that "each test
+ * should be completely isolated from another test and should run independently
+ * with its own local storage, session storage, data, cookies etc." A shared app
+ * gave that up for about a second a test: a test that wrote to the config left
+ * it written for everything after it, and a retry — which Playwright runs in a
+ * fresh worker — saw a freshly seeded app where the first attempt had seen a
+ * mutated one. Two runs of the same test that disagree about the state they
+ * started from is the thing the rule exists to prevent, and it is worth more
+ * than the ten seconds it costs across this suite.
  */
 export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
   let launched: LaunchedApp | undefined;
@@ -264,8 +269,13 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
     return launched;
   }
 
+  // Playwright resolves which fixtures to set up from the destructuring
+  // pattern, so the empty one is the framework's contract for depending on
+  // nothing.
   // oxlint-disable-next-line no-empty-pattern
-  test.beforeAll(async ({}, testInfo) => {
+  test.beforeEach(async ({}, testInfo) => {
+    hasFailed = false;
+
     launched = await launchApp(seedConfig);
 
     /*
@@ -274,9 +284,9 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
      * that happens — makes this poll throw, and reporting on that failure and
      * cleaning up after it both need the handle to the app already running.
      *
-     * Reported from in here too, because a hook that throws takes its file's
-     * tests with it and `afterEach` never runs. That leaves this the only place
-     * the state of an app that never came up is still there to be read.
+     * Reported from in here too, because a hook that throws skips the test and
+     * `afterEach` with it, which leaves this the only place the state of an app
+     * that never came up is still there to be read.
      */
     try {
       launched.renderer = await findRendererWindow(launched.app);
@@ -289,27 +299,18 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
     }
   });
 
-  // Playwright resolves which fixtures to set up from the destructuring
-  // pattern, so the empty one is the framework's contract for depending on
-  // nothing.
   // oxlint-disable-next-line no-empty-pattern
   test.afterEach(async ({}, testInfo) => {
-    if (testInfo.status === testInfo.expectedStatus) {
-      return;
+    if (testInfo.status !== testInfo.expectedStatus) {
+      hasFailed = true;
+
+      await collectDiagnostics(current(), testInfo);
     }
 
-    hasFailed = true;
-
-    await collectDiagnostics(current(), testInfo);
-  });
-
-  // oxlint-disable-next-line no-empty-pattern
-  test.afterAll(async ({}, testInfo) => {
     const { app, userDataDir } = current();
 
     try {
-      // One trace covers the whole file, because one launch does. It is written
-      // only when something in the file failed; a passing run has nothing worth
+      // Written only when the test failed; a passing run has nothing worth
       // uploading.
       if (hasFailed) {
         const tracePath = testInfo.outputPath("trace.zip");
@@ -321,12 +322,15 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
         await app.context().tracing.stop();
       }
     } finally {
-      // Whatever the trace did. A file fails because the app is in a bad way,
+      // Whatever the trace did. A test fails because the app is in a bad way,
       // which is exactly when stopping the trace throws — and leaving the app
-      // running would take the next file's launch down with it.
+      // running would take the next test's launch down with it through the
+      // single instance lock.
       await closeApp(app);
 
       await rm(userDataDir, { recursive: true, force: true });
+
+      launched = undefined;
     }
   });
 
