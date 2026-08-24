@@ -20,21 +20,29 @@ export function buildAppFiles({ dev }: { dev: boolean }) {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
     transform: {
-      define: !dev
-        ? {
-            "process.env.NODE_ENV": JSON.stringify("production"),
-            ...(process.env.MERU_API_URL
-              ? {
-                  "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
-                }
-              : {}),
-            ...(process.env.APPLE_TEAM_ID
-              ? {
-                  "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
-                }
-              : {}),
-          }
-        : undefined,
+      define: {
+        // These outputs are CommonJS, where `import.meta` is not valid syntax,
+        // so it is replaced with an empty object either way. Saying so is what
+        // stops every build warning once per occurrence in a dependency —
+        // hundreds of lines from zustand alone, enough to block a parent
+        // process reading the build's output through a pipe.
+        "import.meta": "{}",
+        ...(!dev
+          ? {
+              "process.env.NODE_ENV": JSON.stringify("production"),
+              ...(process.env.MERU_API_URL
+                ? {
+                    "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
+                  }
+                : {}),
+              ...(process.env.APPLE_TEAM_ID
+                ? {
+                    "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
+                  }
+                : {}),
+            }
+          : {}),
+      },
     },
   });
 
@@ -119,7 +127,27 @@ export function buildAppFiles({ dev }: { dev: boolean }) {
   ]);
 }
 
-function createRendererViteConfig(rendererName: string, port: number): vite.InlineConfig {
+type RendererServerOptions = {
+  /**
+   * Fail rather than take the next free port. For a caller that was told which
+   * port to use and is waiting on that exact URL, moving to another one leaves
+   * it waiting for something that will never answer.
+   */
+  strictPort?: boolean;
+  /**
+   * Where Vite keeps its pre-bundled dependencies. Worth overriding for a
+   * server that starts while a previous one is still shutting down: they share
+   * `node_modules/.vite` by default, and the optimizer deadlocks on it, so the
+   * new server never finishes listening.
+   */
+  cacheDir?: string;
+};
+
+function createRendererViteConfig(
+  rendererName: string,
+  port: number,
+  { strictPort = false, cacheDir }: RendererServerOptions = {},
+): vite.InlineConfig {
   const rendererRoot = path.join(process.cwd(), "packages", rendererName);
 
   const pageFileNames = Array.from(new Bun.Glob("*.html").scanSync(rendererRoot));
@@ -128,6 +156,7 @@ function createRendererViteConfig(rendererName: string, port: number): vite.Inli
     configFile: false,
     root: rendererRoot,
     base: "./",
+    cacheDir,
     plugins: [viteReact(), viteTailwindcss()],
     resolve: {
       tsconfigPaths: true,
@@ -138,6 +167,7 @@ function createRendererViteConfig(rendererName: string, port: number): vite.Inli
       // dev servers can each believe they own the same port.
       host: "127.0.0.1",
       port,
+      strictPort,
     },
     build: {
       outDir: path.join(process.cwd(), "build-js", rendererName),
@@ -158,8 +188,12 @@ export function buildRenderer(rendererName: string, port: number) {
  * Resolves once the server is listening, so `resolvedUrls` carries the port it
  * actually took rather than the one it was asked for.
  */
-export async function startRendererDevServer(rendererName: string, port: number) {
-  const viteServer = await vite.createServer(createRendererViteConfig(rendererName, port));
+export async function startRendererDevServer(
+  rendererName: string,
+  port: number,
+  options: RendererServerOptions = {},
+) {
+  const viteServer = await vite.createServer(createRendererViteConfig(rendererName, port, options));
 
   await viteServer.listen();
 

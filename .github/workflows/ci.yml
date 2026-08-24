@@ -53,4 +53,8 @@ jobs:
         with:
           name: boot-smoke-test
           if-no-files-found: ignore
-          path: boot-smoke-test.png
+          # test-results carries the trace, which opens in the trace viewer and
+          # is the thing worth having; the report is the readable index into it.
+          path: |
+            test-results/
+            playwright-report/
