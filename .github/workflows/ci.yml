@@ -42,15 +42,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
-      # Bun does not run a dependency's postinstall unless it is trusted, so the
-      # Electron binary is missing after any install, with or without
-      # --ignore-scripts. Fetching it explicitly is the only way to get one.
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/electron
-          key: electron-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      - run: node install.js
-        working-directory: node_modules/electron
+      # electron/index.js downloads the binary lazily on first require, so a
+      # plain `bun run dev` heals itself. The ELECTRON_OVERRIDE_DIST_PATH branch
+      # dev:headless relies on returns before that check, and the launcher then
+      # execs node_modules/electron/dist/electron inside the container, so the
+      # headless path is the one that needs the binary fetched by hand.
+      - run: bunx install-electron
       # Pulls the container image on first use, so allow for that.
       - run: bun run test:boot
         timeout-minutes: 20
