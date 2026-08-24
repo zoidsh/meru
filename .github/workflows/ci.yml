@@ -36,3 +36,27 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun test
+  boot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      # Bun does not run a dependency's postinstall unless it is trusted, so the
+      # Electron binary is missing after any install, with or without
+      # --ignore-scripts. Fetching it explicitly is the only way to get one.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron
+          key: electron-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: node install.js
+        working-directory: node_modules/electron
+      # Pulls the container image on first use, so allow for that.
+      - run: bun run test:boot
+        timeout-minutes: 20
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: boot-smoke-test
+          if-no-files-found: ignore
+          path: boot-smoke-test.png
