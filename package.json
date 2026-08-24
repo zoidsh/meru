@@ -26,6 +26,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
     "postinstall": "electron-builder install-app-deps",
+    "test:boot": "bun run tests/boot-smoke-test.ts",
     "types": "tsc && bun run --filter='*' --elide-lines=0 types",
     "types:ci": "tsc && bun run --filter='*' types"
   },
@@ -71,6 +72,7 @@
     "node-machine-id": "^1.1.12",
     "oxfmt": "^0.57.0",
     "oxlint": "^1.72.0",
+    "playwright-core": "^1.62.1",
     "postcss": "^8.5.8",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

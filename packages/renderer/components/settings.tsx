@@ -6,7 +6,15 @@ export function SettingsHeader({ className, ...props }: ComponentProps<"div">) {
 }
 
 export function SettingsTitle({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("text-2xl font-semibold", className)} {...props} />;
+  // The boot smoke test waits for this to identify the settings page it routed
+  // to, so it does not have to match against copy that is free to change.
+  return (
+    <div
+      data-testid="settings-title"
+      className={cn("text-2xl font-semibold", className)}
+      {...props}
+    />
+  );
 }
 
 export function SettingsDescription({ className, ...props }: ComponentProps<"div">) {
