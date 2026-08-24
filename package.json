@@ -13,6 +13,7 @@
     "build:clean-dist": "bun run scripts/clean-dist.ts",
     "build:js": "bun run scripts/build.ts",
     "build:linux": "bun run build:js && bun run build:clean-dist && electron-builder --linux",
+    "build:linux:dir": "bun run build:js && bun run build:clean-dist && electron-builder --linux --dir --x64",
     "build:mac": "bun run build:js && bun run build:clean-dist && electron-builder --mac",
     "build:mac:arm64": "bun run build:mac -- --arm64",
     "build:mac:x64": "bun run build:mac -- --x64",

@@ -9,40 +9,45 @@ import postcss from "postcss";
 import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
 
+const args = parseArgs({
+  args: Bun.argv,
+  options: {
+    dev: {
+      type: "boolean",
+    },
+    devtools: {
+      type: "boolean",
+      short: "d",
+    },
+  },
+  strict: true,
+  allowPositionals: true,
+});
+
+await rm("./build-js", { recursive: true, force: true });
+
 // Keep in sync with Electron
 const browserTarget = "chrome146";
 
-export function resetBuildDirectory() {
-  return rm("./build-js", { recursive: true, force: true });
-}
-
-export function buildAppFiles({ dev }: { dev: boolean }) {
+function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
     transform: {
-      define: {
-        // These outputs are CommonJS, where `import.meta` is not valid syntax,
-        // so it is replaced with an empty object either way. Saying so is what
-        // stops every build warning once per occurrence in a dependency —
-        // hundreds of lines from zustand alone, enough to block a parent
-        // process reading the build's output through a pipe.
-        "import.meta": "{}",
-        ...(!dev
-          ? {
-              "process.env.NODE_ENV": JSON.stringify("production"),
-              ...(process.env.MERU_API_URL
-                ? {
-                    "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
-                  }
-                : {}),
-              ...(process.env.APPLE_TEAM_ID
-                ? {
-                    "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
-                  }
-                : {}),
-            }
-          : {}),
-      },
+      define: !args.values.dev
+        ? {
+            "process.env.NODE_ENV": JSON.stringify("production"),
+            ...(process.env.MERU_API_URL
+              ? {
+                  "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
+                }
+              : {}),
+            ...(process.env.APPLE_TEAM_ID
+              ? {
+                  "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
+                }
+              : {}),
+          }
+        : undefined,
     },
   });
 
@@ -127,36 +132,15 @@ export function buildAppFiles({ dev }: { dev: boolean }) {
   ]);
 }
 
-type RendererServerOptions = {
-  /**
-   * Fail rather than take the next free port. For a caller that was told which
-   * port to use and is waiting on that exact URL, moving to another one leaves
-   * it waiting for something that will never answer.
-   */
-  strictPort?: boolean;
-  /**
-   * Where Vite keeps its pre-bundled dependencies. Worth overriding for a
-   * server that starts while a previous one is still shutting down: they share
-   * `node_modules/.vite` by default, and the optimizer deadlocks on it, so the
-   * new server never finishes listening.
-   */
-  cacheDir?: string;
-};
-
-function createRendererViteConfig(
-  rendererName: string,
-  port: number,
-  { strictPort = false, cacheDir }: RendererServerOptions = {},
-): vite.InlineConfig {
+async function buildRenderer(rendererName: string, port: number) {
   const rendererRoot = path.join(process.cwd(), "packages", rendererName);
 
   const pageFileNames = Array.from(new Bun.Glob("*.html").scanSync(rendererRoot));
 
-  return {
+  const viteConfig: vite.InlineConfig = {
     configFile: false,
     root: rendererRoot,
     base: "./",
-    cacheDir,
     plugins: [viteReact(), viteTailwindcss()],
     resolve: {
       tsconfigPaths: true,
@@ -167,7 +151,6 @@ function createRendererViteConfig(
       // dev servers can each believe they own the same port.
       host: "127.0.0.1",
       port,
-      strictPort,
     },
     build: {
       outDir: path.join(process.cwd(), "build-js", rendererName),
@@ -178,109 +161,68 @@ function createRendererViteConfig(
     },
     clearScreen: false,
   };
-}
 
-export function buildRenderer(rendererName: string, port: number) {
-  return vite.build(createRendererViteConfig(rendererName, port));
-}
+  if (args.values.dev) {
+    const viteServer = await vite.createServer(viteConfig);
 
-/**
- * Resolves once the server is listening, so `resolvedUrls` carries the port it
- * actually took rather than the one it was asked for.
- */
-export async function startRendererDevServer(
-  rendererName: string,
-  port: number,
-  options: RendererServerOptions = {},
-) {
-  const viteServer = await vite.createServer(createRendererViteConfig(rendererName, port, options));
-
-  await viteServer.listen();
-
-  return viteServer;
-}
-
-// Guarded so the boot smoke test can import the builders and run the dev server
-// in its own process. `_electron.launch` has to spawn the app itself, which the
-// branch below already does, so the two cannot both drive it.
-if (import.meta.main) {
-  const args = parseArgs({
-    args: Bun.argv,
-    options: {
-      dev: {
-        type: "boolean",
-      },
-      devtools: {
-        type: "boolean",
-        short: "d",
-      },
-    },
-    strict: true,
-    allowPositionals: true,
-  });
-
-  const isDev = args.values.dev === true;
-
-  await resetBuildDirectory();
-
-  if (!isDev) {
-    await Promise.all([buildAppFiles({ dev: false }), buildRenderer("renderer", 3000)]);
-  } else {
-    const [, viteServer] = await Promise.all([
-      buildAppFiles({ dev: true }),
-      startRendererDevServer("renderer", 3000),
-    ]);
+    await viteServer.listen();
 
     viteServer.printUrls();
 
-    const rendererUrl = viteServer.resolvedUrls?.local[0];
+    return viteServer.resolvedUrls?.local[0];
+  }
 
-    let electron: Subprocess;
-    let isRestartingElectron = false;
+  await vite.build(viteConfig);
+}
 
-    const startElectron = () => {
-      electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
-        env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
-        onExit: async () => {
-          if (isRestartingElectron) {
-            isRestartingElectron = false;
-          } else {
-            await electron.exited;
+const [, rendererUrl] = await Promise.all([buildAppFiles(), buildRenderer("renderer", 3000)]);
 
-            process.exit(0);
-          }
-        },
-      });
-    };
+if (args.values.dev) {
+  let electron: Subprocess;
+  let isRestartingElectron = false;
 
-    const stopElectron = () => {
-      electron.kill();
+  const startElectron = () => {
+    electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
+      env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
+      onExit: async () => {
+        if (isRestartingElectron) {
+          isRestartingElectron = false;
+        } else {
+          await electron.exited;
 
-      return electron.exited;
-    };
+          process.exit(0);
+        }
+      },
+    });
+  };
 
-    const restartElectron = async () => {
-      isRestartingElectron = true;
+  const stopElectron = () => {
+    electron.kill();
 
-      await stopElectron();
+    return electron.exited;
+  };
 
-      startElectron();
-    };
+  const restartElectron = async () => {
+    isRestartingElectron = true;
 
-    await startElectron();
+    await stopElectron();
 
-    const watcher = watch("./packages", { recursive: true });
+    startElectron();
+  };
 
-    for await (const event of watcher) {
-      const rendererPathnames = ["renderer/", "shared/renderer/", "ui/"];
+  await startElectron();
 
-      if (rendererPathnames.some((pathname) => event.filename?.startsWith(pathname))) {
-        continue;
-      }
+  const watcher = watch("./packages", { recursive: true });
 
-      await buildAppFiles({ dev: true });
+  for await (const event of watcher) {
+    const rendererPathnames = ["renderer/", "shared/renderer/", "ui/"];
 
-      await restartElectron();
+    if (rendererPathnames.some((pathname) => event.filename?.startsWith(pathname))) {
+      continue;
     }
+
+    await buildAppFiles();
+
+    await restartElectron();
   }
 }

@@ -12,7 +12,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { test as base, expect } from "@playwright/test";
 import { _electron, type ElectronApplication, type Page } from "playwright";
-import { rendererUrl } from "../playwright.config";
+
+/*
+ * electron-builder leaves the unpacked app next to the installers it packs, so
+ * a `bun run build:linux` is enough and CI needs no separate build. The
+ * override is for the other platforms' output, which lands elsewhere.
+ */
+const EXECUTABLE_PATH =
+  process.env.MERU_EXECUTABLE ?? path.join(process.cwd(), "dist", "linux-unpacked", "meru");
 
 const test = base.extend<{ app: ElectronApplication }>({
   // Playwright resolves a fixture's dependencies from its destructuring
@@ -30,17 +37,15 @@ const test = base.extend<{ app: ElectronApplication }>({
      */
     const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-boot-smoke-test-"));
 
-    // No executablePath: letting Playwright resolve Electron itself is what
-    // makes it preload its own script into the main process, which holds
-    // `app.ready` until the connection is up. Passing a path skips that and
-    // races the app.
+    // The built binary, not `electron .`: only a packaged app has isPackaged
+    // true, which is what sends loadRenderer down its production loadFile
+    // branch. Running the app the way it ships is the point.
     const app = await _electron.launch({
-      args: [".", `--user-data-dir=${userDataDir}`],
+      executablePath: EXECUTABLE_PATH,
+      // chrome-sandbox ships without its setuid bit outside an installed
+      // package, so an unpacked build cannot use the sandbox.
+      args: [`--user-data-dir=${userDataDir}`, "--no-sandbox"],
       cwd: process.cwd(),
-      env: {
-        ...process.env,
-        MERU_RENDERER_URL: rendererUrl,
-      } as Record<string, string>,
     });
 
     // Started by hand rather than through the `trace` option, which only covers
