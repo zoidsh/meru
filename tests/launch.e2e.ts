@@ -1,5 +1,5 @@
 /*
- * Proves the app still starts. Launches the built app, routes it to appearance
+ * Proves the app still launches. Starts the built app, routes it to appearance
  * settings and checks the renderer actually painted.
  *
  * `bun run test:e2e` builds the app before running this, so there is nothing
@@ -213,7 +213,7 @@ async function findRendererWindow(app: ElectronApplication) {
   return app.windows().find((window) => window.url().includes("main.html")) as Page;
 }
 
-test("boots and renders appearance settings", async ({ app }) => {
+test("launches and renders appearance settings", async ({ app }) => {
   const renderer = await findRendererWindow(app);
 
   const rendererErrors: Error[] = [];
