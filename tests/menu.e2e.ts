@@ -154,12 +154,18 @@ test("a menu command drives the window", async () => {
   await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/settings/general");
 });
 
-test("Unified Inbox is disabled without a second account", async () => {
+test("a command with nothing to act on is disabled", async () => {
   const menuItems = await readMenuItems();
 
-  // The free version is what these tests run as, and it serves one account, so
-  // there is nothing for a unified inbox to unify.
+  /*
+   * Unified Inbox wants a valid license, the setting turned on and more than
+   * one account, and the free version these tests run as has none of the three.
+   * So this says an item can come up disabled and does — not which of the three
+   * disabled it, which would need an app that satisfies the other two.
+   */
   expect(menuItems.find(({ label }) => label === "Unified Inbox")?.enabled).toBe(false);
 
+  // The other half of the claim: something unconditional stays enabled, so a
+  // menu that came up dead all over would not read as this passing.
   expect(menuItems.find(({ label }) => label === "Downloads")?.enabled).toBe(true);
 });

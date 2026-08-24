@@ -46,6 +46,8 @@ const EXECUTABLE_PATH = resolveExecutablePath();
 
 const CLOSE_TIMEOUT = 15_000;
 
+const DIAGNOSTICS_TIMEOUT = 10_000;
+
 function launchArguments(userDataDir: string) {
   const args = [`--user-data-dir=${userDataDir}`];
 
@@ -83,9 +85,26 @@ async function findRendererWindow(app: ElectronApplication) {
 
 type LaunchedApp = {
   app: ElectronApplication;
-  renderer: Page;
+  /** Unset until the app has shown its window, which it may never do. */
+  renderer: Page | undefined;
   userDataDir: string;
 };
+
+/** Resolves true when the work finishes in time, false when it runs over. */
+async function withTimeout(work: Promise<unknown>, timeout: number) {
+  let timer: NodeJS.Timeout | undefined;
+
+  try {
+    return await Promise.race([
+      work.then(() => true),
+      new Promise<boolean>((resolve) => {
+        timer = setTimeout(() => resolve(false), timeout);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function launchApp(seedConfig: Partial<Config>): Promise<LaunchedApp> {
   /*
@@ -129,7 +148,7 @@ async function launchApp(seedConfig: Partial<Config>): Promise<LaunchedApp> {
   // contexts the runner creates itself, and this one is launched here.
   await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
 
-  return { app, renderer: await findRendererWindow(app), userDataDir };
+  return { app, renderer: undefined, userDataDir };
 }
 
 async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestInfo) {
@@ -137,11 +156,17 @@ async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestI
    * The renderer's own HTML. Gmail and workspace apps are separate views
    * painted above it by the compositor, so they come out as blank rectangles
    * here — that is the protocol, not a broken app.
+   *
+   * There may be no renderer at all: an app that came up and never showed a
+   * window is one of the failures worth reporting on, not a reason to report
+   * nothing.
    */
-  await testInfo.attach("renderer", {
-    body: await renderer.screenshot(),
-    contentType: "image/png",
-  });
+  if (renderer) {
+    await testInfo.attach("renderer", {
+      body: await renderer.screenshot(),
+      contentType: "image/png",
+    });
+  }
 
   await testInfo.attach("windows", {
     body: app
@@ -172,17 +197,33 @@ async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestI
 }
 
 /**
+ * Capped, because the main process can stop answering while staying up, and
+ * `evaluate` then never returns. Spending a hook's whole budget waiting costs
+ * the trace and the teardown that come after it, which is more than the
+ * diagnostics are worth.
+ */
+async function collectDiagnostics(launched: LaunchedApp, testInfo: TestInfo) {
+  const attached = await withTimeout(
+    attachDiagnostics(launched, testInfo),
+    DIAGNOSTICS_TIMEOUT,
+  ).catch((error: Error) => {
+    console.log(`[e2e] could not collect diagnostics: ${error.message}`);
+
+    return true;
+  });
+
+  if (!attached) {
+    console.log(`[e2e] diagnostics did not finish within ${DIAGNOSTICS_TIMEOUT}ms`);
+  }
+}
+
+/**
  * Quitting can hang, and Playwright's own close() takes no timeout until after
  * 1.62, so the process gets killed rather than left to stall the worker for its
  * whole teardown budget.
  */
 async function closeApp(app: ElectronApplication) {
-  const closed = await Promise.race([
-    app.close().then(() => true),
-    new Promise<boolean>((resolve) => {
-      setTimeout(() => resolve(false), CLOSE_TIMEOUT);
-    }),
-  ]).catch(() => false);
+  const closed = await withTimeout(app.close(), CLOSE_TIMEOUT).catch(() => false);
 
   if (!closed) {
     console.log(`[e2e] the app did not quit within ${CLOSE_TIMEOUT}ms; killing it`);
@@ -223,8 +264,29 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
     return launched;
   }
 
-  test.beforeAll(async () => {
+  // oxlint-disable-next-line no-empty-pattern
+  test.beforeAll(async ({}, testInfo) => {
     launched = await launchApp(seedConfig);
+
+    /*
+     * Assigned before the window is looked for, not after. An app that starts
+     * and never shows one — the trial dialog nobody is here to dismiss is how
+     * that happens — makes this poll throw, and reporting on that failure and
+     * cleaning up after it both need the handle to the app already running.
+     *
+     * Reported from in here too, because a hook that throws takes its file's
+     * tests with it and `afterEach` never runs. That leaves this the only place
+     * the state of an app that never came up is still there to be read.
+     */
+    try {
+      launched.renderer = await findRendererWindow(launched.app);
+    } catch (error) {
+      hasFailed = true;
+
+      await collectDiagnostics(current(), testInfo);
+
+      throw error;
+    }
   });
 
   // Playwright resolves which fixtures to set up from the destructuring
@@ -238,43 +300,58 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
 
     hasFailed = true;
 
-    await attachDiagnostics(current(), testInfo);
+    await collectDiagnostics(current(), testInfo);
   });
 
   // oxlint-disable-next-line no-empty-pattern
   test.afterAll(async ({}, testInfo) => {
     const { app, userDataDir } = current();
 
-    // One trace covers the whole file, because one launch does. It is written
-    // only when something in the file failed; a passing run has nothing worth
-    // uploading.
-    if (hasFailed) {
-      const tracePath = testInfo.outputPath("trace.zip");
+    try {
+      // One trace covers the whole file, because one launch does. It is written
+      // only when something in the file failed; a passing run has nothing worth
+      // uploading.
+      if (hasFailed) {
+        const tracePath = testInfo.outputPath("trace.zip");
 
-      await app.context().tracing.stop({ path: tracePath });
+        await app.context().tracing.stop({ path: tracePath });
 
-      await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
-    } else {
-      await app.context().tracing.stop();
+        await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
+      } else {
+        await app.context().tracing.stop();
+      }
+    } finally {
+      // Whatever the trace did. A file fails because the app is in a bad way,
+      // which is exactly when stopping the trace throws — and leaving the app
+      // running would take the next file's launch down with it.
+      await closeApp(app);
+
+      await rm(userDataDir, { recursive: true, force: true });
+    }
+  });
+
+  function currentRenderer() {
+    const { renderer } = current();
+
+    if (!renderer) {
+      throw new Error("The app has not shown its window");
     }
 
-    await closeApp(app);
-
-    await rm(userDataDir, { recursive: true, force: true });
-  });
+    return renderer;
+  }
 
   return {
     get app() {
       return current().app;
     },
     get renderer() {
-      return current().renderer;
+      return currentRenderer();
     },
     get userDataDir() {
       return current().userDataDir;
     },
     async goto(route) {
-      const { renderer } = current();
+      const renderer = currentRenderer();
 
       // Routing is hash based, so changing the fragment is what navigates. The
       // rest of the URL carries the accounts the main process handed over at
@@ -286,9 +363,19 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
       await renderer.goto(url.href);
     },
     async readConfig() {
-      const { userDataDir } = current();
+      const configPath = path.join(current().userDataDir, "config.json");
 
-      return JSON.parse(await readFile(path.join(userDataDir, "config.json"), "utf8"));
+      /*
+       * Retried once. The config is written by replacing the file, so a read
+       * landing between the two halves of that rename fails rather than
+       * returning half a file — and on Windows it fails as a sharing violation.
+       * A throw here would end a poll rather than let it come round again.
+       */
+      try {
+        return JSON.parse(await readFile(configPath, "utf8"));
+      } catch {
+        return JSON.parse(await readFile(configPath, "utf8"));
+      }
     },
   };
 }

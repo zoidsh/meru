@@ -125,8 +125,16 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 });
 
 test("every field label points at its control", async () => {
-  for (const [route] of SETTINGS_ROUTES) {
+  const labelledIds: string[] = [];
+
+  for (const [route, title] of SETTINGS_ROUTES) {
     await meru.goto(route);
+
+    // Waited on before reading the DOM. Every route is statically imported and
+    // renders in the same task as the hash change today, so a scan would find
+    // it anyway — but one lazily loaded route would have this reading the route
+    // before it and reporting nothing at all.
+    await expect(meru.renderer.getByTestId("settings-title"), route).toContainText(title);
 
     /*
      * A label naming an id nothing carries is a field whose text does not click
@@ -134,23 +142,35 @@ test("every field label points at its control", async () => {
      * It is also what the rest of these tests stand on, since they address a
      * control through the label that points at it.
      */
-    const danglingLabels = await meru.renderer
-      .locator("label[for]")
-      .evaluateAll((labels) =>
-        labels
-          .filter((label) => !label.ownerDocument.getElementById(label.getAttribute("for") ?? ""))
-          .map((label) => (label.textContent ?? "").trim()),
-      );
+    const labels = await meru.renderer.locator("label[for]").evaluateAll((labelElements) =>
+      labelElements.map((label) => ({
+        labelledId: label.getAttribute("for") ?? "",
+        resolves: Boolean(label.ownerDocument.getElementById(label.getAttribute("for") ?? "")),
+      })),
+    );
 
-    expect(danglingLabels, route).toEqual([]);
+    expect(
+      labels.filter(({ resolves }) => !resolves).map(({ labelledId }) => labelledId),
+      route,
+    ).toEqual([]);
+
+    labelledIds.push(...labels.map(({ labelledId }) => labelledId));
   }
+
+  // Guards the walk itself, the same way the gating walk does: labels that
+  // stopped naming their control would leave nothing to check and read clean.
+  expect(labelledIds).toContain("downloads.saveAs");
+  expect(labelledIds).toContain("notifications.enabled");
 });
 
 test("every Pro-gated control is locked on the free version", async () => {
   const lockedKeys: string[] = [];
 
-  for (const [route] of SETTINGS_ROUTES) {
+  for (const [route, title] of SETTINGS_ROUTES) {
     await meru.goto(route);
+
+    // As above: read the route this loop is on, not the one before it.
+    await expect(meru.renderer.getByTestId("settings-title"), route).toContainText(title);
 
     /*
      * The badge in a field's label is the claim that the field needs Meru Pro,
