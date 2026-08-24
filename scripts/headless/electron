@@ -57,11 +57,23 @@ exec docker run --rm -i --init \
 
     export DISPLAY=":$(cat /tmp/display)"
 
+    # A caller driving the app rather than watching it brings its own port,
+    # and Playwright asks for 0 so the OS picks a free one. Chromium honors
+    # the last of two, so passing both works and reads as though the fixed
+    # port were in force when it is not.
+    debugging_port=("--remote-debugging-port=$CDP_PORT")
+
+    for arg in "$@"; do
+      case "$arg" in
+        --remote-debugging-port=*) debugging_port=() ;;
+      esac
+    done
+
     # Electron holds a single instance lock scoped to the user data directory,
     # so a directory per instance is what lets several run side by side.
     exec ./node_modules/electron/dist/electron \
       --no-sandbox \
       --user-data-dir="$USER_DATA_DIR" \
-      --remote-debugging-port="$CDP_PORT" \
+      ${debugging_port[@]+"${debugging_port[@]}"} \
       "$@"
   ' -- "$@"
