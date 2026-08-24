@@ -184,10 +184,15 @@ test("every field label points at its control", async () => {
       })),
     );
 
-    expect(
-      labels.filter(({ resolves }) => !resolves).map(({ labelledId }) => labelledId),
-      page.label,
-    ).toEqual([]);
+    // Soft, so one bad page reports and the walk carries on to the rest. The
+    // navigation above stays hard: reading on past a page that never opened
+    // would report the page before it, over and over.
+    expect
+      .soft(
+        labels.filter(({ resolves }) => !resolves).map(({ labelledId }) => labelledId),
+        page.label,
+      )
+      .toEqual([]);
 
     labelledIds.push(...labels.map(({ labelledId }) => labelledId));
   }
@@ -199,47 +204,69 @@ test("every field label points at its control", async () => {
 });
 
 test("every Pro-gated control is locked on the free version", async () => {
-  const lockedKeys: string[] = [];
+  const gatedGroups: string[] = [];
 
   for (const page of await readSettingsPages()) {
     // As above: read the page this loop is on, not the one before it.
     await openSettingsPage(page);
 
     /*
-     * The badge in a field's label is the claim that the field needs Meru Pro,
-     * and the control being disabled is what makes the claim true. A field
-     * shipped with one and not the other is the regression this catches, so the
-     * two are read off the page together rather than from a list kept here.
+     * The badge is the claim that a field needs Meru Pro, and its controls being
+     * disabled is what makes the claim true. A field shipped with one and not
+     * the other is the regression this catches, so the two are read off the page
+     * together rather than from a list kept here.
      *
-     * Both field components label their control by pointing at it, and so do
-     * the hand-rolled fields, so `for` resolves to whatever actually holds the
-     * disabled state — the hidden checkbox behind a switch, a select's trigger.
+     * Found by the badge rather than by the label, because a badge sits in a
+     * `FieldLabel`, a `FieldLegend`, a `FieldTitle` or an `ItemTitle` depending
+     * on the field, and only the first of those is a `label`. Looking for labels
+     * alone saw a third of them — mostly the ones rendered by the two wrapper
+     * components, where badge and lock come from one expression and cannot
+     * disagree. The hand-rolled fields it missed are the ones worth checking.
      */
-    const gatedControls = await meru.renderer.locator("label[for]").evaluateAll((labels) =>
-      labels
-        .filter((label) => (label.textContent ?? "").includes("Meru Pro required"))
-        .map((label) => {
-          const labelledId = label.getAttribute("for") ?? "";
+    const gatedControls = await meru.renderer
+      .getByText("Meru Pro required", { exact: true })
+      .evaluateAll((badges) =>
+        badges.map((badge) => {
+          const group = badge.closest(
+            '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
+          );
+
+          /*
+           * Only what can carry a disabled state. A span never matches
+           * `:disabled`, so asserting on one would always read as unlocked.
+           *
+           * Typed off the badge rather than as an `Element`, because the runner
+           * compiles without the DOM library and `querySelectorAll` comes back
+           * as `unknown` there.
+           */
+          const controls = group
+            ? (Array.from(
+                group.querySelectorAll("input, button, select, textarea"),
+              ) as (typeof badge)[])
+            : [];
 
           return {
-            labelledId,
-            isDisabled: Boolean(
-              label.ownerDocument.getElementById(labelledId)?.matches(":disabled"),
-            ),
+            field: (group?.textContent ?? "").trim().slice(0, 60),
+            usable: controls
+              .filter((control) => !control.matches(":disabled"))
+              .map((control) => (control.textContent ?? "").trim()),
           };
         }),
-    );
+      );
 
-    for (const { labelledId, isDisabled } of gatedControls) {
-      expect(isDisabled, `${page.label} — ${labelledId}`).toBe(true);
+    for (const { field, usable } of gatedControls) {
+      // Soft, so every gated field on the page reports rather than only the
+      // first one to fail.
+      expect.soft(usable, `${page.label} — ${field}`).toEqual([]);
 
-      lockedKeys.push(labelledId);
+      gatedGroups.push(field);
     }
   }
 
-  // Guards the walk itself: a selector that stopped matching would otherwise
-  // report every route clean.
-  expect(lockedKeys).toContain("workspaceApps.openInApp");
-  expect(lockedKeys).toContain("gmail.extendDarkTheme");
-  expect(lockedKeys).toContain("unifiedInbox.enabled");
+  /*
+   * Guards the walk itself: a badge that stopped matching would leave every page
+   * with nothing to check and report clean. The count is asserted loosely, since
+   * the point is that gated fields were found at all, not how many there are.
+   */
+  expect(gatedGroups.length).toBeGreaterThan(30);
 });
