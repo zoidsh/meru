@@ -80,6 +80,13 @@ test("the menu bar carries every top-level menu, in order", async () => {
     ({ Menu }) => Menu.getApplicationMenu()?.items.map((menuItem) => menuItem.label) ?? [],
   );
 
+  /*
+   * Written out and compared whole, not derived from the app and not filtered
+   * down to what is expected. Deriving the list would leave nothing asserted —
+   * the menus would be whatever the app says they are — and filtering lets a
+   * menu bar grow a heading nobody reviewed. A menu bar is short and changes
+   * deliberately, so adding to it should fail here until someone says so.
+   */
   const expectedLabels = [
     "Meru",
     "File",
@@ -89,12 +96,13 @@ test("the menu bar carries every top-level menu, in order", async () => {
     "History",
     "Tabs",
     "Accounts",
+    // Zoom and Bring All to Front are macOS-only roles, and a Window menu is a
+    // macOS convention, so the whole menu ships there alone — ahead of Help.
+    ...(process.platform === "darwin" ? ["Window"] : []),
     "Help",
   ];
 
-  // Filtered rather than compared whole, because macOS ships a Window menu that
-  // the other platforms have no convention for.
-  expect(topLevelLabels.filter((label) => expectedLabels.includes(label))).toEqual(expectedLabels);
+  expect(topLevelLabels).toEqual(expectedLabels);
 });
 
 test("no two commands share an accelerator", async () => {
