@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Stand-in for the Electron binary that runs the app inside the official
+# Playwright image, which already carries Xvfb, fonts and every library
+# Chromium links against. Nothing has to be installed on the host and no
+# display is needed, so the app can run on a headless machine.
+#
+# Electron resolves its binary through ELECTRON_OVERRIDE_DIST_PATH, so
+# pointing that at this directory is enough for `bun run dev` to spawn this
+# believing it is the real thing. See `bun run dev:sandbox`.
+set -euo pipefail
+
+instance="${MERU_INSTANCE:-default}"
+image="${MERU_ELECTRON_IMAGE:-mcr.microsoft.com/playwright:v1.62.1-noble}"
+cdp_port="${MERU_CDP_PORT:-9222}"
+screen="${MERU_SCREEN:-1440x900x24}"
+sandbox_home="${MERU_SANDBOX_HOME:-$HOME/.cache/meru-sandbox}"
+
+mkdir -p "$sandbox_home"
+
+# --ipc host: Chromium crashes on Docker's default 64MB /dev/shm.
+# --network host: the renderer is served from the host's dev server, and the
+#   container has to reach it on the same address the main process was given.
+exec docker run --rm -i --init \
+  --name "meru-sandbox-$instance" \
+  --network host \
+  --ipc host \
+  --volume "$PWD:$PWD" \
+  --volume "$sandbox_home:$sandbox_home" \
+  --workdir "$PWD" \
+  --user "$(id -u):$(id -g)" \
+  --env HOME="$sandbox_home" \
+  --env MERU_RENDERER_URL="${MERU_RENDERER_URL:-}" \
+  --env CDP_PORT="$cdp_port" \
+  --env SCREEN="$screen" \
+  --env USER_DATA_DIR="$sandbox_home/$instance" \
+  "$image" bash -c '
+    set -euo pipefail
+
+    mkdir -p /tmp/.X11-unix
+
+    # -displayfd has Xvfb claim a free display and report which one it took,
+    # so instances starting at the same moment cannot pick the same number.
+    # xvfb-run looks equivalent but hides a failed start behind a DISPLAY
+    # that was never served, which surfaces much later as a missing X server.
+    Xvfb -displayfd 3 -screen 0 "$SCREEN" 3>/tmp/display 2>/tmp/xvfb.log &
+
+    for _ in $(seq 1 100); do
+      [ -s /tmp/display ] && break
+      sleep 0.1
+    done
+
+    if [ ! -s /tmp/display ]; then
+      echo "Xvfb failed to start:" >&2
+      cat /tmp/xvfb.log >&2
+      exit 1
+    fi
+
+    export DISPLAY=":$(cat /tmp/display)"
+
+    # Electron holds a single instance lock scoped to the user data directory,
+    # so a directory per instance is what lets several run side by side.
+    exec ./node_modules/electron/dist/electron \
+      --no-sandbox \
+      --user-data-dir="$USER_DATA_DIR" \
+      --remote-debugging-port="$CDP_PORT" \
+      "$@"
+  ' -- "$@"
