@@ -143,6 +143,8 @@ test("every field label points at its control", async () => {
 test("every Pro-gated control is locked on the free version", async () => {
   const gatedGroups: string[] = [];
 
+  let bannerCount = 0;
+
   const navigation = await meru.openSettings();
 
   for (const label of await readSettingsPageLabels(navigation)) {
@@ -191,6 +193,13 @@ test("every Pro-gated control is locked on the free version", async () => {
       }),
     );
 
+    /*
+     * The other half of the gate, and the only one some pages have. Saved
+     * searches locks its Add button straight off the license and carries no
+     * field badge at all, so the banner is what says the page is gated.
+     */
+    bannerCount += await meru.renderer.getByRole("link", { name: "Upgrade", exact: true }).count();
+
     for (const { field, usable } of gatedControls) {
       // Soft, so every gated field on the page reports rather than only the
       // first one to fail.
@@ -206,4 +215,9 @@ test("every Pro-gated control is locked on the free version", async () => {
    * the point is that gated fields were found at all, not how many there are.
    */
   expect(gatedGroups.length).toBeGreaterThan(30);
+
+  // Same guard for the banner: a selector that stopped matching would leave the
+  // Pro suite's inverse claim — that none of them are shown — passing on
+  // nothing at all.
+  expect(bannerCount).toBeGreaterThan(5);
 });

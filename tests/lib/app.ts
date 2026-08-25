@@ -471,7 +471,8 @@ export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions 
  * A real key against the production backend rather than a stub, so what these
  * tests prove is that Meru unlocks on the answer the live API actually gives
  * rather than on one a fake was told to give. CI passes it as a secret; a local
- * run keeps it in `.env.test.local`, which `playwright.config.ts` loads.
+ * run keeps it in `.env.test.local`, which the `test:e2e` script reads through
+ * `bun --env-file` and the Playwright process inherits.
  *
  * Thrown rather than skipped. A key that has been rotated away, or a workflow
  * that stopped passing it, is a broken run — and a suite that skipped itself

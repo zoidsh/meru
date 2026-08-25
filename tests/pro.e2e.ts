@@ -202,6 +202,17 @@ test("every Pro-gated control is unlocked", async () => {
       }),
     );
 
+    /*
+     * The page-level half of the gate, gone. It is what says a page is gated on
+     * the routes carrying no field badge — saved searches locks its Add button
+     * straight off the license — so its absence is the only claim covering
+     * them.
+     */
+    await expect(
+      meru.renderer.getByRole("link", { name: "Upgrade", exact: true }),
+      label,
+    ).toHaveCount(0);
+
     for (const { field, usable } of gatedControls) {
       /*
        * One is enough, and is the exact inverse of the free version's claim
