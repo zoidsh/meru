@@ -404,6 +404,12 @@ export class Gmail {
   }
 
   updateViewBounds() {
+    // The window is listened to from before the views exist, so a resize can
+    // arrive with nothing here yet to lay out.
+    if (!this._view) {
+      return;
+    }
+
     const { width, height } = main.getWindowBounds();
 
     if (this.htmlFullscreen) {
