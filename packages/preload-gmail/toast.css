@@ -1,0 +1,169 @@
+/*
+ * A toast, in the shape of the shadcn Base UI toast, written out by hand.
+ *
+ * The preload cannot reach the interface's stylesheet: importing it is what put
+ * 110 KB of compiled Tailwind and seven dead `@font-face` rules into every Gmail
+ * renderer. So the classes that toast is built from are resolved here into the
+ * values they compile to — `p-4` as 16px, `text-sm` as 14px/20px, `gap-3` as
+ * 12px, `size-7` as 28px — against the tokens in `@meru/ui/styles/globals.css`.
+ *
+ * In px rather than rem throughout, deliberately: a `rem` inside a shadow root
+ * is measured against the host page's root font size, and that belongs to Gmail
+ * rather than to us.
+ *
+ * The surface follows Meru's own floating surfaces rather than the shadcn toast,
+ * which draws a plain border. `popover.tsx` and `dropdown-menu.tsx` both use
+ * `rounded-lg bg-popover text-popover-foreground shadow-lg ring-1
+ * ring-foreground/10`, and a toast that sits over Gmail should look like the
+ * menus that open next to it.
+ */
+
+.toaster {
+  /* --popover, --popover-foreground, --muted-foreground, --muted, --border,
+   * --background and --foreground, from the light block. */
+  --toast-surface: oklch(1 0 0);
+  --toast-text: oklch(0.145 0 0);
+  --toast-muted-text: oklch(0.556 0 0);
+  --toast-hover-surface: oklch(0.97 0 0);
+  --toast-ring: oklch(0.145 0 0 / 10%);
+  --toast-button-surface: oklch(1 0 0);
+  --toast-button-border: oklch(0.922 0 0);
+  --toast-button-hover-surface: oklch(0.97 0 0);
+}
+
+/*
+ * The app's theme, without a single line of IPC. `theme.ts` sets
+ * `nativeTheme.themeSource` from the `theme` config key, and Chromium answers
+ * this query from it in every renderer — so light, dark and system all arrive
+ * here on their own. The interface's `.dark` block, resolved the same way as
+ * the light one above.
+ */
+@media (prefers-color-scheme: dark) {
+  .toaster {
+    --toast-surface: oklch(0.205 0 0);
+    --toast-text: oklch(0.985 0 0);
+    --toast-muted-text: oklch(0.708 0 0);
+    --toast-hover-surface: oklch(0.269 0 0);
+    --toast-ring: oklch(0.985 0 0 / 10%);
+    --toast-button-surface: oklch(1 0 0 / 4.5%);
+    --toast-button-border: oklch(1 0 0 / 15%);
+    --toast-button-hover-surface: oklch(1 0 0 / 7.5%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.toaster {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  display: flex;
+  width: 384px;
+  max-width: calc(100vw - 32px);
+  flex-direction: column;
+  gap: 12px;
+  color: var(--toast-text);
+  font-family:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--toast-surface);
+  box-shadow:
+    0 0 0 1px var(--toast-ring),
+    0 10px 15px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -4px rgb(0 0 0 / 10%);
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* Both ends of the fade. The class goes on before the element is in the
+ * document and comes off a frame later, so one rule covers entering and
+ * leaving. */
+.toast-hidden {
+  opacity: 0;
+}
+
+.toast-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toast-title {
+  font-weight: 500;
+}
+
+.toast-description {
+  color: var(--toast-muted-text);
+}
+
+/* `Button` at variant `outline`, size `sm`. */
+.toast-action {
+  display: inline-flex;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--toast-button-border);
+  border-radius: 8px;
+  background: var(--toast-button-surface);
+  background-clip: padding-box;
+  color: inherit;
+  font-family: inherit;
+  font-size: 12.8px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+  transition: background 200ms ease;
+}
+
+/* `Button` at variant `ghost`, size `icon-sm`, with the toast's own muted
+ * foreground until hover. */
+.toast-close {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--toast-muted-text);
+  cursor: default;
+  transition:
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.toast-action:hover {
+  background: var(--toast-button-hover-surface);
+}
+
+.toast-close:hover {
+  background: var(--toast-hover-surface);
+  color: var(--toast-text);
+}
+
+.toast-action:active,
+.toast-close:active {
+  transform: translateY(1px);
+}

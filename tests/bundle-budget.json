@@ -1,7 +1,7 @@
 {
   "app.js": 2294784,
   "extensions-chrome-facade.js": 25600,
-  "preload-gmail.js": 775168,
+  "preload-gmail.js": 108544,
   "preload-renderer.js": 5120,
   "preload-workspace-app.js": 84992,
   "renderer/assets/Separator.js": 3072,

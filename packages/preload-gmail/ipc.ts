@@ -1,6 +1,6 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { toast } from "sonner";
 import { refreshInbox, sendMailAction } from "./inbox";
+import { dismissToast, showToast } from "./toast";
 
 ipc.renderer.on("gmail.navigateTo", (_event, destination) => {
   window.location.hash = `#${destination}`;
@@ -17,10 +17,11 @@ ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
 });
 
 ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
-  toast.success("Message sent", {
+  // No duration: the main process ends this one when it closes the compose
+  // window, 30 seconds in, which is Gmail's own undo-send window.
+  showToast({
     id: browserWindowId,
-    duration: Number.POSITIVE_INFINITY,
-    closeButton: true,
+    title: "Message sent",
     action: {
       label: "Undo",
       onClick: () => {
@@ -31,5 +32,5 @@ ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: n
 });
 
 ipc.renderer.on("gmail.dismissMessageSentNotification", (_event, browserWindowId: number) => {
-  toast.dismiss(browserWindowId);
+  dismissToast(browserWindowId);
 });
