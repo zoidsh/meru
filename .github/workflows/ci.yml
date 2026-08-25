@@ -45,10 +45,15 @@ jobs:
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over, and the performance
-    # run that follows takes about a minute. Doubled from twenty when the base
-    # commit started being built and measured here as well, which is a second
-    # build of the whole app on every leg.
-    timeout-minutes: 45
+    # run that follows takes about a minute.
+    #
+    # Unchanged by the base measurement below, which was expected to need a much
+    # larger ceiling and does not. A second build of the whole app costs 5 to 12
+    # seconds here rather than the minutes the first one took: the first build
+    # in this job downloads Electron and fills the module cache, and the second
+    # reuses both. Measured across three platforms and two runs, base build and
+    # base measurement together add 10 to 24 seconds to a leg.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -87,9 +92,10 @@ jobs:
           # would fail the diff below rather than explain itself.
           git cat-file -e "$base^{tree}" 2>/dev/null || git fetch --depth=1 origin "$base"
 
-          # A diff of nothing but Markdown cannot have moved a byte of the app,
-          # and a second build on three platforms to prove that costs more than
-          # the answer is worth.
+          # A diff of nothing but Markdown cannot have moved a byte of the app.
+          # The build this skips turns out to be cheap, so what the skip is
+          # really for is the comment: a table of pure noise on a pull request
+          # that changed no code teaches whoever reads it to skip the next one.
           if [ -z "$(git diff --name-only "$base" HEAD -- . ':(exclude)*.md')" ]; then
             echo "The diff against $base is documentation only, so the app cannot have changed."
             exit 0
