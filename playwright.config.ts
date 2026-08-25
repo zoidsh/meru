@@ -17,10 +17,6 @@ loadTestEnvironment({ path: ".env.test.local", quiet: true });
 
 export default defineConfig({
   testDir: "tests",
-  // Activates the test license key for this machine before anything launches.
-  // A device the key has never been activated on fails validation at startup,
-  // which the app answers with a dialog on a windowless app.
-  globalSetup: "./tests/lib/global-setup.ts",
   // The app takes a single instance lock, and each test drives a window of its
   // own, so nothing here is safe to run against itself in parallel. Playwright's
   // own Electron suite and Element's desktop app both settle on the same.
