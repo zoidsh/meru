@@ -96,7 +96,22 @@ if (comparisons.length === 0) {
   process.exit(0);
 }
 
-const body = renderComparison(comparisons);
+/*
+ * Whether the matrix finished. A leg that failed before uploading is absent
+ * from the table rather than marked absent, and a table of two platforms where
+ * three belong reads as three that were fine — so the job's own result is
+ * carried in and said plainly.
+ */
+const e2eResult = process.env.MERU_E2E_RESULT;
+
+const body = renderComparison(
+  comparisons,
+  e2eResult && e2eResult !== "success"
+    ? [
+        `The end-to-end matrix finished as \`${e2eResult}\`. A platform missing from this table was not measured, rather than measured and unchanged.`,
+      ]
+    : [],
+);
 
 const repository = requireEnvironment("GITHUB_REPOSITORY");
 

@@ -96,7 +96,14 @@ jobs:
           # The build this skips turns out to be cheap, so what the skip is
           # really for is the comment: a table of pure noise on a pull request
           # that changed no code teaches whoever reads it to skip the next one.
-          if [ -z "$(git diff --name-only "$base" HEAD -- . ':(exclude)*.md')" ]; then
+          # Assigned rather than tested inline, so that a git failure stops the
+          # job. Inside `[ -z "$(...)" ]` its exit status is discarded and its
+          # empty output reads as a clean documentation-only diff, which would
+          # silently skip the comparison on exactly the error the fetch above
+          # exists to prevent.
+          changed=$(git diff --name-only "$base" HEAD -- . ':(exclude)*.md') || exit 1
+
+          if [ -z "$changed" ]; then
             echo "The diff against $base is documentation only, so the app cannot have changed."
             exit 0
           fi
@@ -211,6 +218,11 @@ jobs:
           MERU_SKIP_BUILD: "1"
           MERU_PERF_REPORT: perf-reports/base.json
           MERU_PERF_COMMIT: ${{ steps.base.outputs.sha }}
+          # Records the base build's bundle sizes without checking them against
+          # a budget file belonging to head. Pairing those two is not a check:
+          # a pull request that adds a chunk, removes one, or lowers a ceiling
+          # fails against a build made before it did any of them.
+          MERU_PERF_BASELINE: "1"
       # Printed into this job's log as well as posted as a comment later, because
       # a pull request from a fork gets a token that cannot comment and a job
       # killed for running long never uploads an artifact. The log survives both.
@@ -230,15 +242,18 @@ jobs:
     # column per platform, and three legs racing to rewrite one comment would
     # leave whichever finished last standing as the whole report.
     needs: e2e
-    # always(), because a leg that failed still measured whatever it reached, and
-    # a red pull request is exactly when someone wants to know what memory did.
+    # !cancelled() rather than always(), because a leg that failed still measured
+    # whatever it reached and a red pull request is exactly when someone wants to
+    # know what memory did — while a run someone cancelled has no such claim, and
+    # would overwrite a complete comment with whatever half of the matrix had
+    # finished.
     #
     # A pull request from a fork is skipped rather than failed: its token is
     # read-only by design, and there is nothing to fix about that. Meru has one
     # maintainer, so this may never happen — but a job that goes red on somebody
     # else's first contribution would be a poor way to find out.
     if: >-
-      always() && github.event_name == 'pull_request' &&
+      !cancelled() && github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     # Naming any permission drops every one that is not named, which is why the
@@ -266,3 +281,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MERU_PULL_REQUEST: ${{ github.event.pull_request.number }}
+          # Whether every leg of the matrix got there. A platform that failed
+          # before it uploaded is simply absent from the table, and a table with
+          # two columns where three belong reads as three that were fine.
+          MERU_E2E_RESULT: ${{ needs.e2e.result }}

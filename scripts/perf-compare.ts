@@ -163,6 +163,13 @@ const SUMMARY_FIGURES: Figure[] = [
      * Windows for two launches of an identical binary. A threshold quiet enough
      * to sit above a fifteen percent swing is so loose that only a doubling
      * would reach it, and a doubling is perfectly legible in the number itself.
+     *
+     * One caveat on that evidence, found afterwards and not yet retaken:
+     * every one of those launches ran with Playwright's tracer recording, which
+     * costs about 0.6 s of the CPU being measured. The spread was between two
+     * traced runs rather than caused by tracing, so it stands as a reading of
+     * what this harness reports — but the figure to set any future threshold
+     * against is the untraced one, which nobody has yet.
      */
     label: "Total CPU to idle",
     read: (report) => report.coldLaunch?.totalCpuSeconds,
@@ -476,24 +483,56 @@ function renderDetails(comparison: Comparison) {
 }
 
 function shortCommit(commit: string | undefined) {
-  return commit ? `\`${commit.slice(0, 7)}\`` : "the base commit";
+  return commit ? `\`${commit.slice(0, 7)}\`` : "an unnamed commit";
 }
 
-export function renderComparison(comparisons: Comparison[]) {
+/**
+ * What this report is not saying, said out loud.
+ *
+ * A column with no base reads as a column that simply did not move, and a
+ * platform whose leg died before it uploaded is not in the table at all — which
+ * looks exactly like a table of the platforms there are. Both are the failure
+ * where a report looks complete and is not, so both get a line of their own.
+ */
+function renderGaps(comparisons: Comparison[], warnings: string[]) {
+  const withoutBase = comparisons
+    .filter(({ base }) => !base)
+    .map(({ platform }) => PLATFORM_NAMES[platform] ?? platform);
+
+  return [
+    ...warnings,
+    ...(withoutBase.length > 0
+      ? [
+          `Columns for ${withoutBase.join(", ")} show this commit's figures alone: no base measurement completed there, so nothing in them is a delta.`,
+        ]
+      : []),
+  ];
+}
+
+export function renderComparison(comparisons: Comparison[], warnings: string[] = []) {
   const ordered = [...comparisons].sort(
     (one, other) => PLATFORM_ORDER.indexOf(one.platform) - PLATFORM_ORDER.indexOf(other.platform),
   );
 
   const base = ordered.find(({ base: report }) => report?.commit)?.base;
 
+  const head = ordered.find(({ head: report }) => report.commit)?.head;
+
+  const gaps = renderGaps(ordered, warnings);
+
   return [
     MARKER,
-    `### Performance against ${shortCommit(base?.commit)}`,
+    // Both commits named, because without the head one there is no way to tell
+    // a current report from one an out-of-order run left behind: two pushes
+    // seconds apart finish in whatever order they finish, and the later comment
+    // wins whichever push it describes.
+    `### Performance of ${shortCommit(head?.commit)} against ${shortCommit(base?.commit)}`,
     "",
     "Both commits were built and measured back to back on the same runner, in the same job. That is what makes the delta mean something: the figures themselves belong to the machine that produced them and are not comparable to any other run.",
     "",
     renderSummary(ordered),
     "",
+    ...(gaps.length > 0 ? [gaps.map((gap) => `> [!WARNING]\n> ${gap}`).join("\n\n"), ""] : []),
     `${FLAG} marks a sampled figure that moved by more than ${FLAG_RATIO * 100}%. CPU to idle and settle time carry no marker: both read how loaded the runner was as much as what the app did, and two launches of one binary have come out fifteen percent apart on CPU. Nothing here fails the job.`,
     "",
     "The leak rows are growth *within* the head run, across repeated passes over the settings pages. They have no base to compare against because they already compare a run to itself, which is why that check is the part of this that can fail.",
