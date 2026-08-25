@@ -4,7 +4,11 @@ import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { injectFacadeScript } from "./html";
-import { deriveManifest, type ExtensionManifest } from "./manifest";
+import {
+  deriveManifest,
+  type ExtensionManifest,
+  type SharedInstanceManifestOptions,
+} from "./manifest";
 
 const MANIFEST_FILE_NAME = "manifest.json";
 
@@ -15,8 +19,29 @@ const FACADE_FILE_NAME = "chrome-facade.js";
 
 const SERVICE_WORKER_FILE_NAME = "chrome-facade-service-worker.js";
 
+const RUNTIME_PROXY_SHIM_FILE_NAME = "chrome-runtime-proxy-shim.js";
+
+const RUNTIME_PROXY_RELAY_FILE_NAME = "chrome-runtime-proxy-relay.js";
+
+/**
+ * What the copy's derived directory is called next to the ordinary copy's, so
+ * the two exist side by side: one launch loads the full copy into the session
+ * that keeps the worker and this one into every other session.
+ */
+const CONTENT_SCRIPT_ONLY_DIR_SUFFIX = "-content-scripts";
+
 /** Bump whenever what is written into a derived copy changes. */
 const DERIVE_VERSION = 6;
+
+/**
+ * The copy's part in one shared extension instance serving every session (see
+ * `SharedInstanceManifestOptions` in `manifest.ts` for what each role changes
+ * in the manifest). Each role's proxy script is bundled on its own, like the
+ * facade, and written into the copy carrying the same bridge token.
+ */
+export type SharedInstanceDeriveOptions =
+  | { role: "worker"; relayScriptPath: string }
+  | { role: "contentScriptOnly"; shimScriptPath: string };
 
 export type DeriveExtensionOptions = {
   /** The unpacked extension the embedder handed over, never written to. */
@@ -35,6 +60,11 @@ export type DeriveExtensionOptions = {
    * has no id to be recognised by and keeps the patterns its author declared.
    */
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+  /**
+   * Derives the copy for its part in one shared instance across sessions.
+   * Without it the copy is derived exactly as it always was, byte for byte.
+   */
+  sharedInstance?: SharedInstanceDeriveOptions;
 };
 
 function hash(value: string) {
@@ -122,6 +152,7 @@ export async function deriveExtension({
   facadeScriptPath,
   strippedManifestKeys = [],
   getContentScriptMatches,
+  sharedInstance,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
 
@@ -131,7 +162,11 @@ export async function deriveExtension({
 
   const contentScriptMatches = extensionId ? getContentScriptMatches?.(extensionId) : undefined;
 
-  const derivedDir = path.join(derivedExtensionsDir, hash(sourceDir).slice(0, 16));
+  const derivedDirName = `${hash(sourceDir).slice(0, 16)}${
+    sharedInstance?.role === "contentScriptOnly" ? CONTENT_SCRIPT_ONLY_DIR_SUFFIX : ""
+  }`;
+
+  const derivedDir = path.join(derivedExtensionsDir, derivedDirName);
 
   const stampPath = `${derivedDir}${STAMP_FILE_EXTENSION}`;
 
@@ -139,12 +174,15 @@ export async function deriveExtension({
   // installed extension moving to a new version does and what a developer
   // working in an unpacked one does, and when what the derive makes of it
   // changes
+  // `sharedInstanceRole` is `undefined` — and so absent from the JSON — for the
+  // ordinary copy, which keeps its stamp what it was before roles existed
   const stamp = JSON.stringify({
     deriveVersion: DERIVE_VERSION,
     sourceDir,
     sourceTree: await hashSourceTree(sourceDir),
     strippedManifestKeys,
     contentScriptMatches,
+    sharedInstanceRole: sharedInstance?.role,
   });
 
   // A stamp that matches while its copy is gone would otherwise skip the copy
@@ -163,6 +201,7 @@ export async function deriveExtension({
       bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
       strippedManifestKeys,
       contentScriptMatches,
+      sharedInstance: toSharedInstanceManifestOptions(sharedInstance),
     });
 
     await writeFile(path.join(derivedDir, MANIFEST_FILE_NAME), JSON.stringify(manifest, null, 2));
@@ -179,15 +218,40 @@ export async function deriveExtension({
   // Always, so a rebuilt facade reaches copies that are otherwise up to date
   const bridgeToken = randomUUID();
 
-  await writeFile(
-    path.join(derivedDir, FACADE_FILE_NAME),
-    `globalThis.${EXTENSION_BRIDGE_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
-      facadeScriptPath,
-      "utf8",
-    )}`,
-  );
+  const writeTokenCarryingScript = async (fileName: string, scriptPath: string) =>
+    writeFile(
+      path.join(derivedDir, fileName),
+      `globalThis.${EXTENSION_BRIDGE_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
+        scriptPath,
+        "utf8",
+      )}`,
+    );
+
+  await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath);
+
+  // The proxy scripts run where the facade never loads — the shim in content
+  // scripts' isolated worlds — so each carries the token itself, the same way
+  if (sharedInstance?.role === "worker") {
+    await writeTokenCarryingScript(RUNTIME_PROXY_RELAY_FILE_NAME, sharedInstance.relayScriptPath);
+  }
+
+  if (sharedInstance?.role === "contentScriptOnly") {
+    await writeTokenCarryingScript(RUNTIME_PROXY_SHIM_FILE_NAME, sharedInstance.shimScriptPath);
+  }
 
   return { derivedDir, bridgeToken, extensionId };
+}
+
+function toSharedInstanceManifestOptions(
+  sharedInstance: SharedInstanceDeriveOptions | undefined,
+): SharedInstanceManifestOptions | undefined {
+  if (!sharedInstance) {
+    return undefined;
+  }
+
+  return sharedInstance.role === "worker"
+    ? { role: "worker", relayFileName: RUNTIME_PROXY_RELAY_FILE_NAME }
+    : { role: "contentScriptOnly", shimFileName: RUNTIME_PROXY_SHIM_FILE_NAME };
 }
 
 export type PruneDerivedExtensionsOptions = {

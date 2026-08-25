@@ -368,6 +368,146 @@ describe("deriveExtension", () => {
   });
 });
 
+describe("deriveExtension for a shared instance", () => {
+  let shimScriptPath: string;
+
+  let relayScriptPath: string;
+
+  beforeEach(async () => {
+    shimScriptPath = path.join(workDir, "shim.js");
+
+    relayScriptPath = path.join(workDir, "relay.js");
+
+    await writeFile(shimScriptPath, "// shim\n");
+
+    await writeFile(relayScriptPath, "// relay\n");
+
+    await writeManifest({
+      ...manifest,
+      content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+    });
+
+    await writeSourceFile("content.js", "// content\n");
+  });
+
+  test("the worker copy carries the relay client under the facade's token", async () => {
+    const { derivedDir, bridgeToken } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const relaySource = await readFile(
+      path.join(derivedDir, "chrome-runtime-proxy-relay.js"),
+      "utf8",
+    );
+
+    expect(relaySource).toContain(bridgeToken);
+    expect(relaySource).toEndWith("// relay\n");
+
+    expect(
+      await readFile(path.join(derivedDir, "chrome-facade-service-worker.js"), "utf8"),
+    ).toContain('import "./chrome-runtime-proxy-relay.js";');
+  });
+
+  test("the content-script-only copy loses the worker and gains the shim", async () => {
+    const { derivedDir, bridgeToken } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const derivedManifest = JSON.parse(
+      await readFile(path.join(derivedDir, "manifest.json"), "utf8"),
+    );
+
+    expect("background" in derivedManifest).toBe(false);
+    expect(derivedManifest.content_scripts).toEqual([
+      { matches: ["https://*/*"], js: ["chrome-runtime-proxy-shim.js", "content.js"] },
+    ]);
+
+    const shimSource = await readFile(
+      path.join(derivedDir, "chrome-runtime-proxy-shim.js"),
+      "utf8",
+    );
+
+    expect(shimSource).toContain(bridgeToken);
+    expect(shimSource).toEndWith("// shim\n");
+  });
+
+  test("the two copies exist side by side, from one source, as one extension id", async () => {
+    const workerCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const contentScriptCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    expect(contentScriptCopy.derivedDir).not.toBe(workerCopy.derivedDir);
+    expect(contentScriptCopy.extensionId).toBe(workerCopy.extensionId);
+
+    expect(
+      JSON.parse(await readFile(path.join(workerCopy.derivedDir, "manifest.json"), "utf8"))
+        .background,
+    ).toBeDefined();
+  });
+
+  test("a role toggle re-derives the copy in place", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const { derivedDir: plainDerivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(plainDerivedDir).toBe(derivedDir);
+
+    expect(
+      await readFile(path.join(plainDerivedDir, "chrome-facade-service-worker.js"), "utf8"),
+    ).not.toContain("chrome-runtime-proxy-relay.js");
+  });
+
+  test("pruning spares both copies of a kept source", async () => {
+    const workerCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const contentScriptCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [sourceDir] });
+
+    expect(await readdir(workerCopy.derivedDir)).toContain("manifest.json");
+    expect(await readdir(contentScriptCopy.derivedDir)).toContain("manifest.json");
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [] });
+
+    expect(await readdir(derivedExtensionsDir)).toEqual([]);
+  });
+});
+
 describe("pruneDerivedExtensions", () => {
   async function deriveOtherExtension() {
     const otherSourceDir = path.join(workDir, "other-source");
