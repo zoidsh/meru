@@ -49,8 +49,10 @@ const MEASURED_CYCLES = 5;
  * say so cleanly.
  *
  * The room left over each figure is deliberate slack for a slower or busier
- * machine, not headroom anyone should grow into. Tighten these when the numbers
- * a real runner produces are known.
+ * machine, not headroom anyone should grow into. Tighten these when a runner's
+ * own spread over repeated runs is known — hosted runners have since reported
+ * figures close to these, but one run apiece says how three platforms compare,
+ * not how far one of them wanders.
  */
 const NODE_GROWTH_LIMIT = 20;
 
@@ -240,28 +242,29 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
   expect.soft(growth.listeners, "JS event listeners").toBeLessThanOrEqual(LISTENER_GROWTH_LIMIT);
 
   /*
-   * The heaps are asserted on Linux alone for now, and reported everywhere.
+   * The heaps are asserted everywhere too, which they were not at first.
    *
-   * Their limits come from how caches fill on one Linux machine, which is not
-   * something anyone has watched a hosted macOS or Windows runner do — and this
-   * test gates a required job with no retry, so a limit that is merely wrong
-   * there turns an unrelated pull request red. That is the same objection
-   * already accepted against thresholds on absolute memory, and it applies to
-   * exactly the part of this check that shares their weakness rather than to the
-   * counts.
+   * Their limits come from how caches fill on one Linux machine, and until a
+   * hosted macOS or Windows runner had been watched doing the same, a limit
+   * merely wrong there would have turned an unrelated pull request red — this
+   * test gates a required job with no retry. So they reported on those
+   * platforms and gated only here. The first CI run retired that: over five
+   * cycles the renderer heap grew 537 KB on macOS, 601 KB on Linux and 522 KB
+   * on Windows, the Blink heap shrank on all three, and the main heap moved
+   * between 43 and 58 KB. Three platforms within 80 KB of each other, each
+   * figure at roughly a third of its limit.
    *
-   * Make these gate everywhere once each platform has produced a green run and
-   * its figures are known. The growth is in the report either way.
+   * The limits stay where they are. Agreement across three platforms is not the
+   * same as knowing one platform's spread over repeated runs, and that spread is
+   * what a tighter limit would have to be set against.
    */
-  if (process.platform === "linux") {
-    expect
-      .soft(growth.rendererHeapKb, "renderer JS heap in KB")
-      .toBeLessThanOrEqual(RENDERER_HEAP_GROWTH_LIMIT_KB);
-    expect
-      .soft(growth.rendererEmbedderHeapKb, "renderer Blink heap in KB")
-      .toBeLessThanOrEqual(RENDERER_EMBEDDER_HEAP_GROWTH_LIMIT_KB);
-    expect
-      .soft(growth.mainHeapKb, "main JS heap in KB")
-      .toBeLessThanOrEqual(MAIN_HEAP_GROWTH_LIMIT_KB);
-  }
+  expect
+    .soft(growth.rendererHeapKb, "renderer JS heap in KB")
+    .toBeLessThanOrEqual(RENDERER_HEAP_GROWTH_LIMIT_KB);
+  expect
+    .soft(growth.rendererEmbedderHeapKb, "renderer Blink heap in KB")
+    .toBeLessThanOrEqual(RENDERER_EMBEDDER_HEAP_GROWTH_LIMIT_KB);
+  expect
+    .soft(growth.mainHeapKb, "main JS heap in KB")
+    .toBeLessThanOrEqual(MAIN_HEAP_GROWTH_LIMIT_KB);
 });
