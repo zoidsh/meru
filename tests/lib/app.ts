@@ -124,6 +124,8 @@ type LaunchedApp = {
   /** Unset until the app has shown its window, which it may never do. */
   renderer: Page | undefined;
   userDataDir: string;
+  /** False for a profiled run, which is launched with no trace to stop. */
+  isTraced: boolean;
 };
 
 /** Resolves true when the work finishes in time, false when it runs over. */
@@ -183,11 +185,29 @@ async function launchApp(
     cwd: process.cwd(),
   });
 
-  // Started by hand rather than through the `trace` option, which only covers
-  // contexts the runner creates itself, and this one is launched here.
-  await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
+  /*
+   * Started by hand rather than through the `trace` option, which only covers
+   * contexts the runner creates itself, and this one is launched here.
+   *
+   * Never for a profiled run, because a trace instruments the page it records.
+   * With snapshots on, a sample of Meru's own window reads 173 nodes, 3
+   * listeners and about 112 KB of JavaScript heap that are Playwright's rather
+   * than the app's — none of them in the document, which walks to the same 75
+   * nodes traced or not — and the screencast keeps the app busy enough to add
+   * a quarter to its CPU to idle and roughly double how long it takes to
+   * settle. All of that lands in the report as the app's own cost. It is also
+   * what put `main.html` in two DOM states on hosted Linux: the samples
+   * reading 78 nodes are the ones the snapshotter never reached, and the app
+   * rendered the same DOM in both. A performance test that fails still has its
+   * report, its stdout and its screenshot.
+   */
+  const isTraced = !options.profile;
 
-  return { app, renderer: undefined, userDataDir };
+  if (isTraced) {
+    await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
+  }
+
+  return { app, renderer: undefined, userDataDir, isTraced };
 }
 
 async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestInfo) {
@@ -351,19 +371,21 @@ export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions 
       await collectDiagnostics(current(), testInfo);
     }
 
-    const { app, userDataDir } = current();
+    const { app, userDataDir, isTraced } = current();
 
     try {
-      // Written only when the test failed; a passing run has nothing worth
-      // uploading.
-      if (hasFailed) {
-        const tracePath = testInfo.outputPath("trace.zip");
+      if (isTraced) {
+        // Written only when the test failed; a passing run has nothing worth
+        // uploading.
+        if (hasFailed) {
+          const tracePath = testInfo.outputPath("trace.zip");
 
-        await app.context().tracing.stop({ path: tracePath });
+          await app.context().tracing.stop({ path: tracePath });
 
-        await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
-      } else {
-        await app.context().tracing.stop();
+          await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
+        } else {
+          await app.context().tracing.stop();
+        }
       }
     } finally {
       // Whatever the trace did. A test fails because the app is in a bad way,
