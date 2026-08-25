@@ -201,11 +201,45 @@ function readLayout() {
   });
 }
 
-test.beforeEach(() => {
-  test.skip(process.platform !== "win32", "the sizing modal loop is a Windows message loop");
-});
+/**
+ * Collects what a failure would need explaining and prints it only if one
+ * happens. These numbers are the difference between "the app did not keep up"
+ * and "the runner stopped resizing continuously", and a failure here is read
+ * from the job log of a machine nobody can look at — but a passing run has
+ * nothing to say and was saying it six times.
+ */
+function createDiagnostics() {
+  const lines: string[] = [];
+
+  return {
+    record(line: string) {
+      lines.push(line);
+    },
+    async whileReporting(assertions: () => Promise<void> | void) {
+      try {
+        await assertions();
+      } catch (error) {
+        for (const line of lines) {
+          console.log(`[e2e] ${line}`);
+        }
+
+        throw error;
+      }
+    },
+  };
+}
+
+/*
+ * At file scope rather than in a hook. `useApp` registers its own `beforeEach`
+ * when it is called above, and hooks run in registration order, so skipping from
+ * inside one launched the packaged app and waited for its renderer before
+ * deciding not to use it — twice per non-Windows job, every run.
+ */
+test.skip(process.platform !== "win32", "the sizing modal loop is a Windows message loop");
 
 test("the account view follows the window through a native drag-resize", async () => {
+  const diagnostics = createDiagnostics();
+
   const handle = await startRecording();
 
   const scriptPath = await writeScript("drag.ps1", MOUSE_SCRIPT);
@@ -218,9 +252,15 @@ test("the account view follows the window through a native drag-resize", async (
    */
   const { stdout, stderr, error } = await runPowerShell(scriptPath, [handle, "40"]);
 
-  console.log(`[e2e] drag stdout: ${stdout.trim() || "(none)"}`);
-  console.log(`[e2e] drag stderr: ${stderr.trim() || "(none)"}`);
-  console.log(`[e2e] drag error: ${error || "(none)"}`);
+  diagnostics.record(`drag stdout: ${stdout.trim() || "(none)"}`);
+
+  // Unconditional, unlike the rest. A script that failed to compile its P/Invoke
+  // stub is an environment fault rather than a test result, and it would
+  // otherwise be invisible on a run that somehow still passed.
+  if (stderr.trim() || error) {
+    console.log(`[e2e] drag stderr: ${stderr.trim() || "(none)"}`);
+    console.log(`[e2e] drag error: ${error || "(none)"}`);
+  }
 
   const samples = await readSamples();
   const layout = await readLayout();
@@ -231,89 +271,101 @@ test("the account view follows the window through a native drag-resize", async (
     return totals;
   }, {});
 
-  console.log(`[e2e] events: ${JSON.stringify(counts)}`);
-  console.log(`[e2e] final: ${JSON.stringify(layout)}`);
+  diagnostics.record(`events: ${JSON.stringify(counts)}`);
+  diagnostics.record(`final: ${JSON.stringify(layout)}`);
 
-  /*
-   * Asserted before anything about the view, because a gesture that did not
-   * happen would make every assertion below pass on nothing. `will-resize` comes
-   * from `WM_SIZING`, which arrives only inside the modal loop, and the width has
-   * to have actually moved.
-   */
-  expect(
-    counts["will-resize"] ?? 0,
-    "the window never entered the sizing modal loop",
-  ).toBeGreaterThan(0);
-  expect(layout.contentBounds?.width, "the drag did not widen the window").toBeGreaterThan(
-    START_SIZE.width,
-  );
+  await diagnostics.whileReporting(async () => {
+    /*
+     * Asserted before anything about the view, because a gesture that did not
+     * happen would make every assertion below pass on nothing. `will-resize` comes
+     * from `WM_SIZING`, which arrives only inside the modal loop, and the width has
+     * to have actually moved.
+     */
+    expect(
+      counts["will-resize"] ?? 0,
+      "the window never entered the sizing modal loop",
+    ).toBeGreaterThan(0);
+    expect(layout.contentBounds?.width, "the drag did not widen the window").toBeGreaterThan(
+      START_SIZE.width,
+    );
 
-  /*
-   * The guard that stops the assertion below passing on nothing. A drag that
-   * resizes once is a drag Windows drew as a rubber band and applied on release,
-   * and a view has no continuous phase to lag through — which is the whole of
-   * what this test is for. `SPI_SETDRAGFULLWINDOWS` is set before the gesture for
-   * exactly that reason, and this is what says it took.
-   */
-  expect(
-    counts.resize ?? 0,
-    "the window did not resize continuously, so the drag says nothing about a view keeping up",
-  ).toBeGreaterThan(5);
+    /*
+     * The guard that stops the assertion below passing on nothing. A drag that
+     * resizes once is a drag Windows drew as a rubber band and applied on release,
+     * and a view has no continuous phase to lag through — which is the whole of
+     * what this test is for. `SPI_SETDRAGFULLWINDOWS` is set before the gesture for
+     * exactly that reason, and this is what says it took.
+     */
+    expect(
+      counts.resize ?? 0,
+      "the window did not resize continuously, so the drag says nothing about a view keeping up",
+    ).toBeGreaterThan(5);
 
-  /*
-   * Every `resize` during the drag, not only the state it settled at. A view
-   * that lags the window is wrong for the whole gesture and right at the end of
-   * it, which is exactly what the report describes and exactly what asserting on
-   * the final state alone would miss.
-   */
-  const lagging = samples
-    .filter((sample) => sample.name === "resize")
-    .filter((sample) => {
-      const [contentWidth, contentHeight] = sample.content;
-      const view = sample.view;
+    /*
+     * Every `resize` during the drag, not only the state it settled at. A view
+     * that lags the window is wrong for the whole gesture and right at the end of
+     * it, which is exactly what the report describes and exactly what asserting on
+     * the final state alone would miss.
+     */
+    const lagging = samples
+      .filter((sample) => sample.name === "resize")
+      .filter((sample) => {
+        const [contentWidth, contentHeight] = sample.content;
+        const view = sample.view;
 
-      if (!view || contentWidth === undefined || contentHeight === undefined) {
-        return true;
-      }
+        if (!view || contentWidth === undefined || contentHeight === undefined) {
+          return true;
+        }
 
-      const [x, y, width, height] = view as [number, number, number, number];
+        const [x, y, width, height] = view as [number, number, number, number];
 
-      return x + width !== contentWidth || y + height !== contentHeight;
-    });
+        return x + width !== contentWidth || y + height !== contentHeight;
+      });
 
-  console.log(`[e2e] lagging samples: ${JSON.stringify(lagging.slice(0, 8))}`);
+    diagnostics.record(`lagging samples: ${JSON.stringify(lagging.slice(0, 8))}`);
 
-  expect(
-    lagging.length,
-    `the account view did not fill the window on ${lagging.length} of ${counts.resize ?? 0} resizes during the drag`,
-  ).toBe(0);
+    expect(
+      lagging.length,
+      `the account view did not fill the window on ${lagging.length} of ${counts.resize ?? 0} resizes during the drag`,
+    ).toBe(0);
+  });
 });
 
 test("the account view follows the window through a keyboard resize", async () => {
+  const diagnostics = createDiagnostics();
+
   const handle = await startRecording();
 
   const scriptPath = await writeScript("size.ps1", KEYBOARD_SCRIPT);
 
   const { stdout, stderr, error } = await runPowerShell(scriptPath, [handle]);
 
-  console.log(`[e2e] keyboard stdout: ${stdout.trim() || "(none)"}`);
-  console.log(`[e2e] keyboard stderr: ${stderr.trim() || "(none)"}`);
-  console.log(`[e2e] keyboard error: ${error || "(none)"}`);
+  diagnostics.record(`keyboard stdout: ${stdout.trim() || "(none)"}`);
+
+  // Unconditional, unlike the rest. A script that failed to compile its P/Invoke
+  // stub is an environment fault rather than a test result, and it would
+  // otherwise be invisible on a run that somehow still passed.
+  if (stderr.trim() || error) {
+    console.log(`[e2e] keyboard stderr: ${stderr.trim() || "(none)"}`);
+    console.log(`[e2e] keyboard error: ${error || "(none)"}`);
+  }
 
   const samples = await readSamples();
   const layout = await readLayout();
 
   const willResize = samples.filter((sample) => sample.name === "will-resize").length;
 
-  console.log(`[e2e] will-resize: ${willResize}, total: ${samples.length}`);
-  console.log(`[e2e] final: ${JSON.stringify(layout)}`);
+  diagnostics.record(`will-resize: ${willResize}, total: ${samples.length}`);
+  diagnostics.record(`final: ${JSON.stringify(layout)}`);
 
-  expect(willResize, "the window never entered the sizing modal loop").toBeGreaterThan(0);
+  await diagnostics.whileReporting(() => {
+    expect(willResize, "the window never entered the sizing modal loop").toBeGreaterThan(0);
 
-  const [view] = layout.views ?? [];
+    const [view] = layout.views ?? [];
 
-  expect({
-    right: (layout.contentBounds?.width ?? 0) - ((view?.x ?? 0) + (view?.width ?? 0)),
-    bottom: (layout.contentBounds?.height ?? 0) - ((view?.y ?? 0) + (view?.height ?? 0)),
-  }).toEqual({ right: 0, bottom: 0 });
+    expect({
+      right: (layout.contentBounds?.width ?? 0) - ((view?.x ?? 0) + (view?.width ?? 0)),
+      bottom: (layout.contentBounds?.height ?? 0) - ((view?.y ?? 0) + (view?.height ?? 0)),
+    }).toEqual({ right: 0, bottom: 0 });
+  });
 });
