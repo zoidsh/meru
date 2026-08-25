@@ -48,8 +48,19 @@ const CLOSE_TIMEOUT = 15_000;
 
 const DIAGNOSTICS_TIMEOUT = 10_000;
 
-function launchArguments(userDataDir: string) {
+function launchArguments(userDataDir: string, { profile }: UseAppOptions) {
   const args = [`--user-data-dir=${userDataDir}`];
+
+  /*
+   * Only for the performance tests, and never for the rest, because it is a
+   * departure from the app as it ships. It is what lets a sample collect
+   * garbage in the main process before reading its heap; without it a figure
+   * records when the collector last happened to run, which measured here is a
+   * larger difference than most regressions worth catching.
+   */
+  if (profile) {
+    args.push("--js-flags=--expose-gc");
+  }
 
   // chrome-sandbox ships without its setuid bit outside an installed package,
   // so an unpacked Linux build cannot use the sandbox. The packaged apps on the
@@ -98,6 +109,16 @@ async function findRendererWindow(app: ElectronApplication) {
   return renderer;
 }
 
+export type UseAppOptions = {
+  /**
+   * Launches the app so that its memory can be measured, which today means
+   * exposing the main process garbage collector. Set by the performance tests;
+   * leave it alone everywhere else, so that what the end-to-end suite exercises
+   * stays the app as it ships.
+   */
+  profile?: boolean;
+};
+
 type LaunchedApp = {
   app: ElectronApplication;
   /** Unset until the app has shown its window, which it may never do. */
@@ -121,7 +142,10 @@ async function withTimeout(work: Promise<unknown>, timeout: number) {
   }
 }
 
-async function launchApp(seedConfig: Partial<Config>): Promise<LaunchedApp> {
+async function launchApp(
+  seedConfig: Partial<Config>,
+  options: UseAppOptions,
+): Promise<LaunchedApp> {
   /*
    * A user data directory of its own, for two reasons. The app takes a single
    * instance lock scoped to that directory and quits when it loses, so runs
@@ -155,7 +179,7 @@ async function launchApp(seedConfig: Partial<Config>): Promise<LaunchedApp> {
   // branch. Running the app the way it ships is the point.
   const app = await _electron.launch({
     executablePath: EXECUTABLE_PATH,
-    args: launchArguments(userDataDir),
+    args: launchArguments(userDataDir, options),
     cwd: process.cwd(),
   });
 
@@ -276,7 +300,7 @@ export type MeruApp = {
  * started from is the thing the rule exists to prevent, and it is worth more
  * than the ten seconds it costs across this suite.
  */
-export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
+export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions = {}): MeruApp {
   let launched: LaunchedApp | undefined;
 
   let hasFailed = false;
@@ -296,7 +320,7 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
   test.beforeEach(async ({}, testInfo) => {
     hasFailed = false;
 
-    launched = await launchApp(seedConfig);
+    launched = await launchApp(seedConfig, options);
 
     /*
      * Assigned before the window is looked for, not after. An app that starts

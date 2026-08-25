@@ -30,8 +30,11 @@ async function run(command: string[]) {
 }
 
 // Skipped when MERU_EXECUTABLE names an app already built, so that a rerun
-// against the same build costs nothing.
-if (!process.env.MERU_EXECUTABLE) {
+// against the same build costs nothing, and when MERU_SKIP_BUILD says one is
+// already in dist. The second exists because the tests resolve that path per
+// platform themselves: naming it again to skip a build would be the same three
+// paths written down in a second place, free to drift from the first.
+if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
   const buildStatus = await run([
     "bun",
     "run",
