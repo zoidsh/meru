@@ -1,3 +1,4 @@
+import { reachesClampedSite } from "./match-pattern";
 import { findWebAccessiblePattern, type WebAccessibleResources } from "./web-accessible";
 
 /** Only what the derive reads or rewrites is spelled out; the rest is carried. */
@@ -177,8 +178,15 @@ function deriveContentSecurityPolicy(
  * extension controls, so the manifest is the only lever: an extension declaring
  * `<all_urls>` injects into every frame of every view otherwise.
  *
- * Every entry keeps the rest of what its author wrote — which scripts run, when
- * they run, which frames they reach — and only the sites they run on change.
+ * Each entry is clamped to the sites it already reached, and an entry that
+ * reached none of them is dropped rather than rewritten. Writing the clamp over
+ * every entry alike would widen the ones an author aimed at other sites: five of
+ * 1Password's eight entries name its own web app, Kolide, director.ai and
+ * autofill.me, and being handed the clamp put 427 KB of scripts that never ran
+ * on a Google page on every one of them.
+ *
+ * Every surviving entry keeps the rest of what its author wrote — which scripts
+ * run, when they run, which frames they reach — and only the sites change.
  */
 function deriveContentScripts(
   contentScripts: ExtensionManifest["content_scripts"],
@@ -188,7 +196,25 @@ function deriveContentScripts(
     return contentScripts;
   }
 
-  return contentScripts.map((contentScript) => ({ ...contentScript, matches }));
+  const clampedContentScripts: NonNullable<ExtensionManifest["content_scripts"]> = [];
+
+  for (const contentScript of contentScripts) {
+    // An entry with no patterns of its own runs nowhere, so there is nothing to
+    // narrow and nothing the clamp could hand it without inventing reach
+    const clampedMatches = matches.filter((clampPattern) =>
+      contentScript.matches?.some((contentScriptPattern) =>
+        reachesClampedSite(contentScriptPattern, clampPattern),
+      ),
+    );
+
+    if (clampedMatches.length === 0) {
+      continue;
+    }
+
+    clampedContentScripts.push({ ...contentScript, matches: clampedMatches });
+  }
+
+  return clampedContentScripts;
 }
 
 /**

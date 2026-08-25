@@ -167,6 +167,51 @@ describe("deriveManifest", () => {
     ]);
   });
 
+  test("drops a content script the clamped sites were never in reach of", () => {
+    const { manifest } = deriveManifest(
+      {
+        name: "1Password",
+        content_scripts: [
+          { matches: ["<all_urls>"], js: ["inline/inject-content-scripts.js"] },
+          { matches: ["https://app.kolide.com/*"], js: ["inline/injected/kolide.js"] },
+        ],
+      },
+      { ...fileNames, contentScriptMatches: ["https://accounts.google.com/*"] },
+    );
+
+    // Handed the clamp, Kolide's script would run on a Google sign-in page it
+    // never reached in the first place — 427 KB of 1Password's own such scripts
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://accounts.google.com/*"], js: ["inline/inject-content-scripts.js"] },
+    ]);
+  });
+
+  test("clamps a content script to the sites it reaches, not to every site named", () => {
+    const { manifest } = deriveManifest(
+      {
+        name: "1Password",
+        content_scripts: [{ matches: ["https://myaccount.google.com/*"], js: ["content.js"] }],
+      },
+      {
+        ...fileNames,
+        contentScriptMatches: ["https://accounts.google.com/*", "https://myaccount.google.com/*"],
+      },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://myaccount.google.com/*"], js: ["content.js"] },
+    ]);
+  });
+
+  test("drops a content script with no matches of its own to narrow", () => {
+    const { manifest } = deriveManifest(
+      { name: "1Password", content_scripts: [{ js: ["content.js"] }] },
+      { ...fileNames, contentScriptMatches: ["https://accounts.google.com/*"] },
+    );
+
+    expect(manifest.content_scripts).toEqual([]);
+  });
+
   test("clamps nothing in a manifest without content scripts", () => {
     const { manifest } = deriveManifest(
       { name: "No content scripts" },
