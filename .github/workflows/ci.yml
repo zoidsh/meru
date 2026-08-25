@@ -139,12 +139,16 @@ jobs:
       # binary.
       #
       # Allowed to fail the job, unlike a typical performance run, because of
-      # what is actually asserted in there. The cold-launch snapshot asserts
-      # nothing about its figures and only reports them — absolute memory belongs
-      # to the runner that produced it, and no threshold has been set from a
-      # runner yet. What can fail is the leak check, which compares a run to
-      # itself and so means the same thing on any machine, and the bundle
-      # budgets, which are the same bytes everywhere.
+      # what is actually asserted in there. Three things can fail, and none of
+      # them is a figure read off this runner and compared to another machine's.
+      # The leak check compares a run to itself, so it means the same thing
+      # anywhere. The bundle budgets are the same bytes everywhere. And the main
+      # process's JavaScript heap is held to a ceiling in
+      # tests/memory-budget.json — the one absolute memory figure measured to
+      # transfer between machines, at 7682 to 7734 KB across 21 samples on these
+      # three runners. Every other figure in the cold-launch snapshot is
+      # reported and asserted on only far enough to catch a reading that did not
+      # happen.
       #
       # MERU_PERF_REPORT is what puts the figures somewhere a program can find
       # them by name, next to the attachments a person reads. Set on both this
