@@ -138,7 +138,10 @@ class Accounts {
   }
 
   private registerWindowListeners() {
-    main.window.on("resize", () => {
+    // MUTATION, not for merge: lays the views out only once the drag is over,
+    // which is the reported symptom — the view frozen at its old size while the
+    // window moves around it, snapping into place on release.
+    main.window.on("resized", () => {
       this.updateAllViewBounds();
     });
 
