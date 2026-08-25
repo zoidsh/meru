@@ -63,17 +63,22 @@ async function readUnfilledSpace() {
 }
 
 async function expectViewToFillWindow(step: string) {
-  // Polled rather than read once: the resize the app is reacting to reaches it
-  // as an event, and the assertion is that it lands, not that it lands
-  // synchronously.
-  await expect
-    .poll(readUnfilledSpace, { message: `the account view did not fill the window after ${step}` })
-    .toEqual({ top: APP_TITLEBAR_HEIGHT, right: 0, bottom: 0 });
-
-  // Kept whether or not the assertion passed. A failure on one platform is read
-  // from the job log of a run nobody watched, and the numbers behind it are the
-  // whole diagnosis.
-  console.log(`[e2e] layout after ${step}: ${JSON.stringify(await readLayout())}`);
+  try {
+    // Polled rather than read once: the resize the app is reacting to reaches it
+    // as an event, and the assertion is that it lands, not that it lands
+    // synchronously.
+    await expect
+      .poll(readUnfilledSpace, {
+        message: `the account view did not fill the window after ${step}`,
+      })
+      .toEqual({ top: APP_TITLEBAR_HEIGHT, right: 0, bottom: 0 });
+  } finally {
+    // In a `finally`, so the failing run logs them too. A failure on one platform
+    // is read from the job log of a run nobody watched, and these numbers are the
+    // whole diagnosis — which of the window's two bounds moved, and whether the
+    // view moved with them.
+    console.log(`[e2e] layout after ${step}: ${JSON.stringify(await readLayout())}`);
+  }
 }
 
 /*
