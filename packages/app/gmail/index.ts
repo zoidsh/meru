@@ -568,11 +568,24 @@ export class Gmail {
         await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
       );
 
-      const body = await this.session
-        .fetch(
-          `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
-        )
-        .then((res) => res.text());
+      const feedUrl = `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`;
+
+      /*
+       * Fetched from the page rather than through `session.fetch`, because a
+       * main process request carries no frame. Electron hands its browser
+       * process loader factory to the extensions layer as a navigation with a
+       * null `RenderFrameHost`, and `MaybeProxyURLLoaderFactory` dereferences
+       * it — a segfault, not an exception, whenever an extension declaring
+       * `webRequest` or `declarativeNetRequest` is loaded into the session
+       * (electron/electron#45050). The blocker's own `onBeforeRequest` listener
+       * happens to suppress the proxy, so the crash only surfaced where that
+       * listener was absent: development, and Pro installs with the blocker
+       * turned off. The feed is same-origin with the page, so fetching it here
+       * carries the same cookies and keeps `Set-Cookie` rotation in the session.
+       */
+      const body: string = await this.view.webContents.executeJavaScript(
+        `fetch(${JSON.stringify(feedUrl)}).then((response) => response.text())`,
+      );
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
 
