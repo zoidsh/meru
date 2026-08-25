@@ -13,14 +13,20 @@
  * what Meru thinks. It costs a live dependency on every launch in this file,
  * which is the trade being made deliberately.
  *
- * Scope is the wiring rather than the rendering. How ~47 gated fields draw in
- * two states is a matrix that belongs where a state is cheap to reach; what
- * needs a running app is that an entitlement crosses the main process, the IPC
- * boundary and the menu — so there is one settings assertion here, as proof the
- * answer arrived, and not a walk of every route.
+ * Each claim is made where a user would meet it. The menu and the titlebar both
+ * carry the account list and the unified inbox, and they come by them
+ * differently — the menu from the main process directly, the titlebar from the
+ * accounts the renderer was handed at load — so both are asserted rather than
+ * one standing in for the other.
+ *
+ * The settings walk is the exact inverse of the free version's in
+ * `settings.e2e.ts`: the same marker, the same groups, the opposite
+ * expectation. Neither suite keeps a list of which fields are gated, so a field
+ * that gains or loses its gate is picked up by both or by neither.
  */
 import { expect, test } from "@playwright/test";
 import { useProApp } from "./lib/app";
+import { openSettingsPage, readSettingsPageLabels } from "./lib/settings";
 
 /** The shape `accounts` is stored in, with only the two labels differing. */
 function account(id: string, label: string, selected: boolean) {
@@ -41,6 +47,13 @@ function account(id: string, label: string, selected: boolean) {
  */
 const meru = useProApp({
   accounts: [account("first-account", "Personal", true), account("second-account", "Work", false)],
+  /*
+   * Turned on so that the field depending on it has its own precondition met.
+   * `verificationCodes.copyMode` is gated twice — by the license and by this
+   * switch — and leaving it off would have the walk below reading a lock the
+   * license had nothing to do with.
+   */
+  "verificationCodes.autoCopy": true,
 });
 
 test("both accounts survive into the app", async () => {
@@ -110,30 +123,107 @@ test("Unified Inbox is enabled once its three conditions hold", async () => {
   expect(unifiedInbox).toEqual({ enabled: true });
 });
 
-test("a Pro-gated settings page unlocks", async () => {
+test("both accounts are in the titlebar, and switching writes back", async () => {
+  /*
+   * The titlebar is how anyone actually switches account; the menu covers the
+   * same slicing from the main process side. An account button is only rendered
+   * when there is more than one account to choose between, so the free version
+   * — sliced to one — renders none of them at all.
+   */
+  const personal = meru.renderer.getByRole("button", { name: "Personal" });
+
+  const work = meru.renderer.getByRole("button", { name: "Work" });
+
+  await expect(personal).toBeVisible();
+
+  await expect(work).toBeVisible();
+
+  await work.click();
+
+  /*
+   * Polled against the config the main process writes rather than the button's
+   * own styling. Clicking sends `accounts.selectAccount`, which persists the
+   * selection, so this is the whole round trip — and the button would read as
+   * selected from its variant either way.
+   */
+  await expect
+    .poll(
+      async () => (await meru.readConfig()).accounts?.find((account) => account.selected)?.label,
+    )
+    .toBe("Work");
+});
+
+test("the unified inbox opens from the titlebar", async () => {
+  const unifiedInbox = meru.renderer.getByRole("button", { name: "Open unified inbox" });
+
+  // Same three conditions as the menu item, rendered where a user would reach
+  // for it: a valid license, the setting on, and more than one account.
+  await expect(unifiedInbox).toBeVisible();
+
+  await unifiedInbox.click();
+
+  await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/unified-inbox");
+});
+
+test("every Pro-gated control is unlocked", async () => {
+  const unlockedGroups: string[] = [];
+
   const navigation = await meru.openSettings();
 
-  await navigation.getByRole("button", { name: "Blocker", exact: true }).click();
+  for (const label of await readSettingsPageLabels(navigation)) {
+    // As in the free version's walk: read the page this loop is on, not the one
+    // before it.
+    await openSettingsPage(meru, navigation, label);
 
-  await expect(meru.renderer.getByTestId("settings-title")).toContainText("Blocker");
+    /*
+     * The exact inverse of `settings.e2e.ts`, over the same marker and the same
+     * groups. There the claim is that a gated field is locked; here it is that
+     * the same fields are usable once the license is valid. Neither keeps a
+     * list, so a field that gained or lost its gate is walked by both.
+     */
+    const gatedControls = await meru.renderer.locator("[data-meru-pro]").evaluateAll((markers) =>
+      markers.map((marker) => {
+        const group = marker.closest(
+          '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
+        );
 
-  /*
-   * One page rather than the walk `settings.e2e.ts` does, because this is here
-   * to prove the entitlement reached the renderer at all. Blocker is the page
-   * chosen for it: every field on it is gated, so there is nothing on it that
-   * would look the same either way.
-   */
-  await expect(meru.renderer.getByText("Meru Pro required", { exact: true })).toHaveCount(0);
+        const controls = group
+          ? (Array.from(
+              group.querySelectorAll("input, button, select, textarea"),
+            ) as (typeof marker)[])
+          : [];
 
-  /*
-   * And the controls the badge was making the claim about. A page that failed
-   * to render would also carry no badges, so the absence on its own is not the
-   * assertion — these being usable is.
-   */
-  for (const configKey of ["blocker.enabled", "blocker.ads", "blocker.tracking"]) {
-    await expect(
-      meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`),
-      configKey,
-    ).toBeEnabled();
+        return {
+          field: (group?.textContent ?? "").trim().slice(0, 60),
+          usable: controls
+            .filter((control) => !control.matches(":disabled"))
+            .map((control) => (control.textContent ?? "").trim()),
+        };
+      }),
+    );
+
+    for (const { field, usable } of gatedControls) {
+      /*
+       * One is enough, and is the exact inverse of the free version's claim
+       * that a gated group has no usable control at all. Demanding every
+       * control would fail on the ones carrying a second gate of their own —
+       * an extension that isn't installed, a select waiting on the switch
+       * above it — and neither of those is the license.
+       *
+       * Soft, so every gated field on the page reports rather than only the
+       * first one to fail. It also covers a group holding no controls at all,
+       * which would otherwise read as unlocked without anything being checked.
+       */
+      expect.soft(usable.length, `${label} — ${field}`).toBeGreaterThan(0);
+
+      unlockedGroups.push(field);
+    }
   }
+
+  /*
+   * Guards the walk itself, and ties it to the free version's: that suite
+   * asserts the same marker finds more than thirty gated fields, so a marker
+   * that stopped matching cannot leave both of them reporting clean.
+   */
+  expect(unlockedGroups.length).toBeGreaterThan(30);
 });
