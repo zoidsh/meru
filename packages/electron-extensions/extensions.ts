@@ -8,7 +8,7 @@ import {
   readExtensionActionIcon,
 } from "./action";
 import { ExtensionBridge } from "./bridge/bridge";
-import { deriveExtension } from "./derive";
+import { deriveExtension, type SharedInstanceDeriveOptions } from "./derive";
 import type { ExtensionsLogger } from "./logger";
 import {
   NativeMessaging,
@@ -38,6 +38,23 @@ const CONSOLE_ERROR_LEVEL = 3;
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
 export type ExtensionDirs = string[] | (() => Promise<string[]> | string[]);
+
+/**
+ * One extension instance serving every session, in place of the independent
+ * instance per session everything above describes. The loader stays out of
+ * how: it hands over its bridge once, asks what part each session plays as the
+ * session is set up — the answer is the derive option shaping that session's
+ * copy — and reports each session's teardown. `runtime-proxy/` holds the one
+ * implementation, and an embedder that never passes one runs exactly as
+ * before.
+ */
+export type SharedExtensionInstance = {
+  /** Called once, from the loader's constructor. */
+  install(context: { bridge: ExtensionBridge; logger?: ExtensionsLogger }): void;
+  /** Called per session before its extensions derive. */
+  adoptSession(session: Session): SharedInstanceDeriveOptions;
+  teardownSession(session: Session): void;
+};
 
 export type ExtensionsOptions = {
   /**
@@ -70,6 +87,12 @@ export type ExtensionsOptions = {
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
   isNativeMessagingHostAllowed?: NativeMessagingHostPolicy;
+  /**
+   * Lets one extension instance serve every session
+   * (`createSharedExtensionInstance` in `runtime-proxy/`). Without it every
+   * session runs its own.
+   */
+  sharedInstance?: SharedExtensionInstance;
   logger?: ExtensionsLogger;
 };
 
@@ -94,6 +117,8 @@ export class Extensions {
   private strippedManifestKeys: string[] | undefined;
 
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
+
+  private sharedInstance: SharedExtensionInstance | undefined;
 
   private logger: ExtensionsLogger | undefined;
 
@@ -123,6 +148,7 @@ export class Extensions {
     strippedManifestKeys,
     getContentScriptMatches,
     isNativeMessagingHostAllowed,
+    sharedInstance,
     logger,
   }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
@@ -134,6 +160,8 @@ export class Extensions {
     this.strippedManifestKeys = strippedManifestKeys;
 
     this.getContentScriptMatches = getContentScriptMatches;
+
+    this.sharedInstance = sharedInstance;
 
     this.logger = logger;
 
@@ -149,6 +177,8 @@ export class Extensions {
     this.webNavigation = new WebNavigation();
 
     this.webNavigation.registerRoutes(this.bridge);
+
+    this.sharedInstance?.install({ bridge: this.bridge, logger });
   }
 
   /**
@@ -156,8 +186,13 @@ export class Extensions {
    * they shared the source directory: one copy on disk, one instance per
    * session.
    */
-  private deriveExtension(sourceDir: string) {
-    let derivedExtension = this.derivedExtensions.get(sourceDir);
+  private deriveExtension(sourceDir: string, sharedInstanceDerive?: SharedInstanceDeriveOptions) {
+    // One derived copy per role, since a launch with a shared instance loads
+    // the worker copy into one session and the content-script-only copy into
+    // the rest, both from the one source
+    const derivedExtensionKey = `${sharedInstanceDerive?.role ?? "default"}\0${sourceDir}`;
+
+    let derivedExtension = this.derivedExtensions.get(derivedExtensionKey);
 
     if (!derivedExtension) {
       derivedExtension = deriveExtension({
@@ -166,9 +201,10 @@ export class Extensions {
         facadeScriptPath: this.facadeScriptPath,
         strippedManifestKeys: this.strippedManifestKeys,
         getContentScriptMatches: this.getContentScriptMatches,
+        sharedInstance: sharedInstanceDerive,
       });
 
-      this.derivedExtensions.set(sourceDir, derivedExtension);
+      this.derivedExtensions.set(derivedExtensionKey, derivedExtension);
 
       // A failure must not be the answer for every later session: dropped from
       // the memo, the next setup derives again and can succeed once whatever
@@ -176,8 +212,8 @@ export class Extensions {
       const failedDerivedExtension = derivedExtension;
 
       derivedExtension.catch(() => {
-        if (this.derivedExtensions.get(sourceDir) === failedDerivedExtension) {
-          this.derivedExtensions.delete(sourceDir);
+        if (this.derivedExtensions.get(derivedExtensionKey) === failedDerivedExtension) {
+          this.derivedExtensions.delete(derivedExtensionKey);
         }
       });
     }
@@ -209,9 +245,14 @@ export class Extensions {
 
     this.pipeServiceWorkerConsole(session);
 
+    const sharedInstanceDerive = this.sharedInstance?.adoptSession(session);
+
     for (const extensionDir of extensionDirs) {
       try {
-        const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(extensionDir);
+        const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(
+          extensionDir,
+          sharedInstanceDerive,
+        );
 
         await this.dropServiceWorkerRegistration(session, extensionId);
 
@@ -321,6 +362,8 @@ export class Extensions {
     this.bridge.teardownSession(session);
 
     this.nativeMessaging.teardownSession(session);
+
+    this.sharedInstance?.teardownSession(session);
 
     const consoleListener = this.serviceWorkerConsoleListeners.get(session);
 

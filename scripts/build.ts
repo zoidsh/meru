@@ -94,10 +94,10 @@ function buildAppFiles() {
 
   // Runs inside extensions rather than in Meru, so it is bundled like a preload
   // and copied into every extension the loader derives
-  const buildExtensionsChromeFacade = () =>
+  const buildExtensionScript = (inputPath: string, outputFileName: string) =>
     rolldown({
       ...rolldownOptions,
-      input: "./packages/electron-extensions/facade/index.ts",
+      input: inputPath,
       platform: "browser",
       transform: {
         ...rolldownOptions.transform,
@@ -105,7 +105,7 @@ function buildAppFiles() {
       },
     }).then((bundle) =>
       bundle.write({
-        file: path.join(process.cwd(), "build-js", "extensions-chrome-facade.js"),
+        file: path.join(process.cwd(), "build-js", outputFileName),
         codeSplitting: false,
         format: "iife",
       }),
@@ -140,7 +140,18 @@ function buildAppFiles() {
     buildPreloadFile("preload-gmail"),
     buildPreloadFile("preload-workspace-app"),
     buildPreloadFile("preload-renderer"),
-    buildExtensionsChromeFacade(),
+    buildExtensionScript(
+      "./packages/electron-extensions/facade/index.ts",
+      "extensions-chrome-facade.js",
+    ),
+    buildExtensionScript(
+      "./packages/electron-extensions/runtime-proxy/shim-entry.ts",
+      "extensions-runtime-proxy-shim.js",
+    ),
+    buildExtensionScript(
+      "./packages/electron-extensions/runtime-proxy/relay-entry.ts",
+      "extensions-runtime-proxy-relay.js",
+    ),
   ]);
 }
 
