@@ -9,7 +9,6 @@ import { darkThemeMessage } from "./dark-theme/message";
 import { observeOutOfOfficeBanner } from "./out-of-office";
 import { replyForwardInPopOut } from "./reply-forward";
 import { addSenderIcons } from "./sender-icons";
-import { initToaster } from "./toaster";
 import { observeUnreadCount } from "./unread-count";
 import { initUrlPreview } from "./url-preview";
 import { setUserEmail } from "./user-email";
@@ -43,7 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initCss();
   initUrlPreview();
-  initToaster();
 
   observeBodyMutations(runFeatures);
 });
