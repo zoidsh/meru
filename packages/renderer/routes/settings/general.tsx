@@ -8,6 +8,7 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
+  FieldTitle,
 } from "@meru/ui/components/field";
 import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -91,12 +92,26 @@ function DefaultMailClientField() {
     return;
   }
 
+  const heading = (
+    <>
+      Default mail client <LicenseKeyRequiredFieldBadge />
+    </>
+  );
+
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>
-          Default mail client <LicenseKeyRequiredFieldBadge />
-        </FieldLabel>
+        {/*
+         * A label only while there is a switch for it to label. Once Meru is the
+         * default there is nothing left to turn on, so the switch goes and the
+         * row states the fact instead — and a `label` naming an id that nothing
+         * on the page carries is read as unlabelled by assistive technology.
+         */}
+        {isDefaultMailtoClient ? (
+          <FieldTitle>{heading}</FieldTitle>
+        ) : (
+          <FieldLabel htmlFor={fieldId}>{heading}</FieldLabel>
+        )}
         <FieldDescription>
           {isDefaultMailtoClient
             ? "Meru is set as the default mail client."

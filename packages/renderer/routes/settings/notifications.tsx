@@ -338,7 +338,7 @@ export function NotificationsSettings() {
                       }}
                       disabled={!isLicenseKeyValid}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id={soundFieldId}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

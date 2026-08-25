@@ -59,18 +59,10 @@ jobs:
       - run: bun install --frozen-lockfile
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
-      # pw:browser prints the command Playwright launched and every line it read
-      # back, which is the only view into a launch that never returns: the app is
-      # running by then, but no fixture has been handed to a test, so nothing the
-      # test itself logs will ever run.
       - if: runner.os == 'Linux'
         run: xvfb-run -a bun run test:e2e
-        env:
-          DEBUG: pw:browser
       - if: runner.os != 'Linux'
         run: bun run test:e2e
-        env:
-          DEBUG: pw:browser
       # always(), not failure(): a job killed for running long counts as
       # cancelled rather than failed, and that is the run whose trace is most
       # worth having.

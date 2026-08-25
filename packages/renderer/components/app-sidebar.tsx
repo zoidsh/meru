@@ -138,7 +138,7 @@ export function AppSidebar() {
   const [location, navigate] = useLocation();
 
   return (
-    <div className="bg-sidebar p-4 pr-0">
+    <div className="bg-sidebar p-4 pr-0" data-testid="settings-nav">
       <ScrollArea className="h-full w-56">
         <div className="space-y-2">
           {sidebarNavItems
