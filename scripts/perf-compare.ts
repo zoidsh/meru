@@ -46,16 +46,6 @@ const FLAG_RATIO = 0.05;
 
 const MEMORY_FLOOR_KB = 256;
 
-/**
- * Well above the proportion, unlike the other two floors, because CPU to idle is
- * the noisiest figure the profiler takes. Two runs of the same binary on one
- * machine, minutes apart, came out 3.12 s and 3.26 s — a 4.5% spread with
- * nothing whatsoever changed between them, which a five percent marker would
- * have been within a rounding error of calling news. A marker that fires on half
- * of all runs is one nobody reads by the third pull request.
- */
-const CPU_FLOOR_SECONDS = 0.5;
-
 const BUNDLE_FLOOR_BYTES = 4 * 1024;
 
 const FLAG = "⚠️";
@@ -127,6 +117,12 @@ type Figure = {
    * counted. A process count moving from six to seven is a whole fact on its
    * own, and putting "+16.7%" next to it says nothing a reader wanted.
    */
+  proportional?: true;
+  /**
+   * How far the figure has to move in absolute terms before the marker is
+   * allowed, on top of the proportion. Left off for a row that is reported and
+   * never marked however far it moves.
+   */
   floor?: number;
 };
 
@@ -135,19 +131,30 @@ const SUMMARY_FIGURES: Figure[] = [
     label: "Total working set",
     read: (report) => report.coldLaunch?.totalWorkingSetKb,
     format: formatKb,
+    proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
+    /*
+     * Reported without a marker, for the reason the row below it carries.
+     *
+     * Measured rather than assumed: the first run of this comparison built one
+     * commit twice and read -14.2% on macOS, +4.8% on Linux and -3.4% on
+     * Windows for two launches of an identical binary. A threshold quiet enough
+     * to sit above a fifteen percent swing is so loose that only a doubling
+     * would reach it, and a doubling is perfectly legible in the number itself.
+     */
     label: "Total CPU to idle",
     read: (report) => report.coldLaunch?.totalCpuSeconds,
     format: formatSeconds,
-    floor: CPU_FLOOR_SECONDS,
+    proportional: true,
   },
   {
-    // Never marked, however far it moves. It is a reading on how loaded the
-    // runner was as much as on the app, and the profiler already reports it for
-    // that reason — a run that took three times as long to go quiet is one
-    // whose other figures deserve a second look, not a regression in itself.
+    // Never marked either, and for the plainer version of the same reason. It is
+    // a reading on how loaded the runner was as much as on the app, which is
+    // why the profiler reports it at all — a run that took three times as long
+    // to go quiet is one whose other figures deserve a second look, rather than
+    // a regression in itself.
     label: "Settled after",
     read: (report) => report.coldLaunch?.settleMs,
     format: formatMilliseconds,
@@ -161,24 +168,28 @@ const SUMMARY_FIGURES: Figure[] = [
     label: "Main JS heap",
     read: (report) => report.coldLaunch?.main.usedHeapKb,
     format: formatKb,
+    proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
     label: "Main private",
     read: (report) => report.coldLaunch?.main.privateKb,
     format: formatKb,
+    proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
     label: "Renderer JS heap",
     read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.usedHeapKb),
     format: formatKb,
+    proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
     label: "Renderer Blink heap",
     read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.embedderHeapKb),
     format: formatKb,
+    proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
@@ -198,6 +209,7 @@ const SUMMARY_FIGURES: Figure[] = [
         ? undefined
         : total(Object.values(report.bundles), (size) => size),
     format: formatBytes,
+    proportional: true,
     floor: BUNDLE_FLOOR_BYTES,
   },
 ];
@@ -247,19 +259,18 @@ function summaryCell(figure: Figure, comparison: Comparison) {
 
   const delta = head - base;
 
-  if (figure.floor === undefined) {
+  if (!figure.proportional || base === 0) {
     return `${figure.format(head)} (${formatSigned(delta, figure.format)})`;
   }
 
-  const ratio = base === 0 ? Number.POSITIVE_INFINITY : delta / base;
+  const ratio = delta / base;
 
-  const flagged = Math.abs(ratio) > FLAG_RATIO && Math.abs(delta) >= figure.floor;
+  const flagged =
+    figure.floor !== undefined && Math.abs(ratio) > FLAG_RATIO && Math.abs(delta) >= figure.floor;
 
-  const percentage = Number.isFinite(ratio)
-    ? `${formatSigned(ratio * 100, (value) => value.toFixed(1))}%`
-    : "new";
+  const percentage = formatSigned(ratio * 100, (value) => value.toFixed(1));
 
-  return `${figure.format(head)} (${percentage})${flagged ? ` ${FLAG}` : ""}`;
+  return `${figure.format(head)} (${percentage}%)${flagged ? ` ${FLAG}` : ""}`;
 }
 
 function renderRow(cells: string[]) {
@@ -444,7 +455,7 @@ export function renderComparison(comparisons: Comparison[]) {
     "",
     renderSummary(ordered),
     "",
-    `${FLAG} marks a sampled figure that moved by more than ${FLAG_RATIO * 100}%. Nothing here fails the job.`,
+    `${FLAG} marks a sampled figure that moved by more than ${FLAG_RATIO * 100}%. CPU to idle and settle time carry no marker: both read how loaded the runner was as much as what the app did, and two launches of one binary have come out fifteen percent apart on CPU. Nothing here fails the job.`,
     "",
     "The leak rows are growth *within* the head run, across repeated passes over the settings pages. They have no base to compare against because they already compare a run to itself, which is why that check is the part of this that can fail.",
     "",
