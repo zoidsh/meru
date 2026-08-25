@@ -45,8 +45,10 @@ jobs:
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over, and the performance
-    # run that follows takes about a minute.
-    timeout-minutes: 20
+    # run that follows takes about a minute. Doubled from twenty when the base
+    # commit started being built and measured here as well, which is a second
+    # build of the whole app on every leg.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -56,8 +58,45 @@ jobs:
           - windows-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The merge commit's first parent is the base branch tip GitHub merged
+          # against, and that is the commit the performance comparison measures.
+          # The default depth of one does not include it.
+          fetch-depth: 2
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # The comparison measures the base commit on this runner, in this job,
+      # minutes apart from head. Nothing else makes an absolute memory figure
+      # mean anything: the same commit reads 549 MB on a hosted Windows runner
+      # and 772 MB on a hosted Linux one, so a baseline from another machine, or
+      # another day, is not something a delta can honestly be taken against.
+      - name: Decide whether there is a base commit to compare against
+        id: base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull request, so there is no base commit to compare against."
+            exit 0
+          fi
+
+          base=$(git rev-parse HEAD^1)
+
+          # Depth two should already carry the base commit's contents alongside
+          # the merge commit's, and this is what makes it not matter whether it
+          # does: a shallow clone holding the parent's hash without its tree
+          # would fail the diff below rather than explain itself.
+          git cat-file -e "$base^{tree}" 2>/dev/null || git fetch --depth=1 origin "$base"
+
+          # A diff of nothing but Markdown cannot have moved a byte of the app,
+          # and a second build on three platforms to prove that costs more than
+          # the answer is worth.
+          if [ -z "$(git diff --name-only "$base" HEAD -- . ':(exclude)*.md')" ]; then
+            echo "The diff against $base is documentation only, so the app cannot have changed."
+            exit 0
+          fi
+
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'
@@ -76,14 +115,22 @@ jobs:
       # runner yet. What can fail is the leak check, which compares a run to
       # itself and so means the same thing on any machine, and the bundle
       # budgets, which are the same bytes everywhere.
+      #
+      # MERU_PERF_REPORT is what puts the figures somewhere a program can find
+      # them by name, next to the attachments a person reads. Set on both this
+      # run and the base run below, into two files the comparison then subtracts.
       - if: runner.os == 'Linux'
         run: xvfb-run -a bun run test:perf
         env:
           MERU_SKIP_BUILD: "1"
+          MERU_PERF_REPORT: perf-reports/head.json
+          MERU_PERF_COMMIT: ${{ github.event.pull_request.head.sha }}
       - if: runner.os != 'Linux'
         run: bun run test:perf
         env:
           MERU_SKIP_BUILD: "1"
+          MERU_PERF_REPORT: perf-reports/head.json
+          MERU_PERF_COMMIT: ${{ github.event.pull_request.head.sha }}
       # always(), not failure(): a job killed for running long counts as
       # cancelled rather than failed, and that is the run whose trace is most
       # worth having.
@@ -103,6 +150,10 @@ jobs:
           path: |
             test-results/e2e/
             playwright-report/e2e/
+      # Uploaded here rather than at the end of the job, because the base
+      # measurement below is a second `playwright test` run of the same project
+      # and empties both of these directories before it writes. This is the head
+      # run's report, and it is taken out of the way before that happens.
       - if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -113,3 +164,99 @@ jobs:
           path: |
             test-results/perf/
             playwright-report/perf/
+      # Built after head has been measured, because it overwrites dist and
+      # build-js with its own output. Head is then checked back out, so that the
+      # base binary is measured by this pull request's harness rather than by its
+      # own: the base commit has neither the report writer nor whatever this pull
+      # request changed in the profiler, and a comparison whose two readings came
+      # from different instruments is not a comparison.
+      #
+      # The build command is spelled out per platform instead of reusing
+      # `scripts/e2e.ts`, and that is not a duplication anyone can remove — the
+      # base checkout has only the scripts the base commit shipped.
+      - name: Build the base commit
+        if: steps.base.outputs.sha != ''
+        shell: bash
+        run: |
+          git checkout --detach ${{ steps.base.outputs.sha }}
+          bun install --frozen-lockfile
+          case "${{ runner.os }}" in
+            Linux) bun run build:linux -- --dir --x64 --publish never ;;
+            macOS) bun run build:mac -- --dir --arm64 --publish never ;;
+            Windows) bun run build:win -- --dir --x64 --publish never ;;
+          esac
+          git checkout --detach ${{ steps.base.outputs.head }}
+          bun install --frozen-lockfile
+      # Everything except the leak check, which compares a run to itself and has
+      # nothing to gain from a second run against another commit. The bundle
+      # sizes come along nearly free — build-js holds the base build at this
+      # point, and bytes are the one figure here carrying no measurement noise
+      # at all.
+      - name: Measure the base commit
+        if: steps.base.outputs.sha != ''
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run -a bun run test:perf "--grep-invert=does not leak"
+          else
+            bun run test:perf "--grep-invert=does not leak"
+          fi
+        env:
+          MERU_SKIP_BUILD: "1"
+          MERU_PERF_REPORT: perf-reports/base.json
+          MERU_PERF_COMMIT: ${{ steps.base.outputs.sha }}
+      # Printed into this job's log as well as posted as a comment later, because
+      # a pull request from a fork gets a token that cannot comment and a job
+      # killed for running long never uploads an artifact. The log survives both.
+      - name: Compare the two measurements
+        if: steps.base.outputs.sha != ''
+        run: bun run scripts/perf-compare.ts perf-reports
+      - if: always() && steps.base.outputs.sha != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: perf-reports-${{ matrix.os }}
+          if-no-files-found: ignore
+          # The two reports this leg took, which the job after the matrix turns
+          # into one comment with a column per platform.
+          path: perf-reports/
+  perf-comment:
+    # After the matrix rather than inside it. The comment is one table with a
+    # column per platform, and three legs racing to rewrite one comment would
+    # leave whichever finished last standing as the whole report.
+    needs: e2e
+    # always(), because a leg that failed still measured whatever it reached, and
+    # a red pull request is exactly when someone wants to know what memory did.
+    #
+    # A pull request from a fork is skipped rather than failed: its token is
+    # read-only by design, and there is nothing to fix about that. Meru has one
+    # maintainer, so this may never happen — but a job that goes red on somebody
+    # else's first contribution would be a poor way to find out.
+    if: >-
+      always() && github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    # Naming any permission drops every one that is not named, which is why the
+    # checkout's own read is spelled out here.
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      # One directory per platform, which is the shape the comparison expects.
+      # Merging them would collide: every leg names its two reports the same.
+      #
+      # Allowed to fail, because finding nothing is an ordinary outcome — a pull
+      # request whose diff is documentation only never measured anything, and the
+      # step after this says so and stops.
+      - uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          pattern: perf-reports-*
+          path: perf-reports
+      # No `bun install`: these two scripts import nothing outside node builtins,
+      # which is most of what keeps this job at seconds rather than minutes.
+      - run: bun run scripts/perf-comment.ts perf-reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERU_PULL_REQUEST: ${{ github.event.pull_request.number }}

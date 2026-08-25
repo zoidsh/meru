@@ -24,6 +24,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { recordSection } from "./lib/report";
 
 const BUNDLES_DIRECTORY = path.join(process.cwd(), "build-js");
 
@@ -164,6 +165,8 @@ test("no bundle is over budget", async ({}, testInfo) => {
     body: JSON.stringify(measured, null, 2),
     contentType: "application/json",
   });
+
+  await recordSection("bundles", measured);
 
   console.log(
     `[perf] bundle sizes\n${Object.entries(measured)

@@ -297,6 +297,15 @@ export type CycleSample = {
   mainUsedHeapKb: number;
 };
 
+/** What the last measured cycle retains over the first, figure by figure. */
+export type CycleGrowth = {
+  nodes: number;
+  listeners: number;
+  rendererHeapKb: number;
+  rendererEmbedderHeapKb: number;
+  mainHeapKb: number;
+};
+
 export async function takeCycleSample(app: ElectronApplication, page: Page): Promise<CycleSample> {
   await collectGarbage(app, [page]);
 
