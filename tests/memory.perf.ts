@@ -50,9 +50,9 @@ const MEASURED_CYCLES = 5;
  *
  * The room left over each figure is deliberate slack for a slower or busier
  * machine, not headroom anyone should grow into. Tighten these when a runner's
- * own spread over repeated runs is known — hosted runners have since reported
- * figures close to these, but one run apiece says how three platforms compare,
- * not how far one of them wanders.
+ * own spread over repeated runs is known — hosted runners report figures close
+ * to these, but runs agreeing with each other is not the same as knowing how
+ * far one of them can wander.
  */
 const NODE_GROWTH_LIMIT = 20;
 
@@ -61,11 +61,19 @@ const LISTENER_GROWTH_LIMIT = 10;
 const RENDERER_HEAP_GROWTH_LIMIT_KB = 1536;
 
 /**
- * Blink's own memory sits flat where the JavaScript heap climbs — 2.1 MB to
- * 2.2 MB across the same cycles, growing by -153 KB — so it gets a tight limit
- * rather than the JavaScript heap's slack. It is the figure that moves for a
- * leak the counts cannot see, an object URL never revoked or a decoded-image
- * cache that only grows, so a loose limit here would waste it.
+ * Blink's own memory sits flat where the JavaScript heap climbs — between 2.1
+ * and 2.2 MB across the same cycles, ending 153 KB below where it started — so
+ * it gets a smaller limit rather than the JavaScript heap's slack.
+ *
+ * What it reads is `embedderHeapUsedSize`, which is Oilpan, the garbage-collected
+ * heap Blink allocates its own C++ objects in. So it is retention on that heap
+ * this catches and nothing else: a detached DOM tree held alive by a C++
+ * reference is the case worth having, because the node count cannot see one
+ * that JavaScript no longer points at. It is not a general second opinion on
+ * renderer memory — a blob whose object URL is never revoked keeps its payload
+ * in the browser process, and a decoded-image cache lives in Skia's discardable
+ * memory, so neither moves this figure. Both would show up in the working set,
+ * which these cycles deliberately do not read.
  */
 const RENDERER_EMBEDDER_HEAP_GROWTH_LIMIT_KB = 512;
 
@@ -242,21 +250,40 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
   expect.soft(growth.listeners, "JS event listeners").toBeLessThanOrEqual(LISTENER_GROWTH_LIMIT);
 
   /*
+   * The Blink reading, before it is compared to anything. `embedderHeapUsedSize`
+   * is absent from Electron's type for the heap usage response and read through
+   * a cast, so a rename or a removal in some future Chromium reaches this file
+   * as zero rather than as an error. Every sample would then read zero, growth
+   * would be zero, and the limit below would pass forever on a figure nobody was
+   * measuring — and it is the one figure where that failure is invisible, since
+   * a healthy Blink heap shrinks across these cycles and a broken reading sits
+   * at zero, both comfortably under an upper bound. This is the same guard the
+   * cold-launch test puts on its own figures, for the same reason.
+   */
+  expect(
+    first.rendererEmbedderHeapKb,
+    "no Blink heap was reported, so its limit is guarding nothing",
+  ).toBeGreaterThan(0);
+
+  /*
    * The heaps are asserted everywhere too, which they were not at first.
    *
    * Their limits come from how caches fill on one Linux machine, and until a
    * hosted macOS or Windows runner had been watched doing the same, a limit
    * merely wrong there would have turned an unrelated pull request red — this
    * test gates a required job with no retry. So they reported on those
-   * platforms and gated only here. The first CI run retired that: over five
-   * cycles the renderer heap grew 537 KB on macOS, 601 KB on Linux and 522 KB
-   * on Windows, the Blink heap shrank on all three, and the main heap moved
-   * between 43 and 58 KB. Three platforms within 80 KB of each other, each
-   * figure at roughly a third of its limit.
+   * platforms and gated on Linux alone. CI retired that: over five cycles the
+   * renderer JS heap grew between 513 and 601 KB across the three, the Blink
+   * heap shrank on all of them, and the main heap moved between 43 and 58 KB.
+   * Every figure sits inside its limit with room to spare — the renderer heap,
+   * the closest, at about two fifths of it.
    *
-   * The limits stay where they are. Agreement across three platforms is not the
-   * same as knowing one platform's spread over repeated runs, and that spread is
-   * what a tighter limit would have to be set against.
+   * The limits stay where they are. A tighter one would have to be set against
+   * a platform's own spread over repeated runs, and two runs agreeing within
+   * 10 KB apiece is two points, not a spread. The threat to a tight limit is
+   * not run-to-run wander anyway but a step change — an Electron upgrade or a
+   * new runner image moving cache-fill behavior wholesale — which no spread
+   * data predicts and slack absorbs.
    */
   expect
     .soft(growth.rendererHeapKb, "renderer JS heap in KB")
