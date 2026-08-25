@@ -19,10 +19,12 @@
  *
  * Attribution. `getAppMetrics()` reports a `Tab` process with a pid and nothing
  * else, so the mapping from process to what it is running has to be built from
- * `webContents.getOSProcessId()`. Some processes belong to no `webContents` at
- * all — Chromium keeps spare renderers and isolates cross-origin subframes —
- * and those are labeled as unattributed rather than folded silently into a
- * total.
+ * `webContents.getOSProcessId()`. That alone leaves a gap: site isolation puts
+ * a cross-origin subframe in a process of its own, and no `webContents` reports
+ * it. Frames are therefore walked as well, so that the sign-in page's
+ * `accounts.youtube.com` frame is named rather than turning up as 86 MB nobody
+ * can account for. Anything still unclaimed keeps the unattributed label, which
+ * now means genuinely unexplained.
  */
 import { ms } from "@meru/shared/ms";
 import type { ElectronApplication, Page } from "playwright";
@@ -228,10 +230,13 @@ async function sampleRenderer(app: ElectronApplication, page: Page): Promise<Ren
 /**
  * What a process is, for a report to line up two runs by.
  *
- * A process no `webContents` claims is normal rather than a bug: Chromium keeps
- * spare renderers warm and isolates cross-origin subframes into processes of
- * their own. It gets named as such, because a nameless 86 MB inside a total is
- * worse than an honestly unexplained one.
+ * Hostnames are deduplicated because two accounts can embed the same
+ * cross-origin site, and Chromium may put both of those frames in one process —
+ * which would otherwise read as `renderer:host+host`.
+ *
+ * A renderer nothing claims should no longer happen now that frames are walked
+ * too. It keeps a label rather than being folded into a total, because a
+ * nameless 86 MB inside one is worse than an honestly unexplained process.
  */
 function processLabel(type: string, serviceName: string | null, urls: string[]) {
   if (type === "Browser") {
@@ -246,7 +251,9 @@ function processLabel(type: string, serviceName: string | null, urls: string[]) 
     return `utility:${serviceName ?? "unknown"}`;
   }
 
-  return urls.length > 0 ? `renderer:${urls.map(pageLabel).join("+")}` : "renderer:unattributed";
+  const pages = [...new Set(urls.map(pageLabel))];
+
+  return pages.length > 0 ? `renderer:${pages.join("+")}` : "renderer:unattributed";
 }
 
 /**
@@ -324,16 +331,30 @@ export async function takeSample(app: ElectronApplication): Promise<Sample> {
        */
       const urlsByPid = new Map<number, string[]>();
 
-      for (const contents of webContents.getAllWebContents()) {
-        let pid: number;
+      const claim = (pid: number, url: string) => {
+        urlsByPid.set(pid, [...(urlsByPid.get(pid) ?? []), url]);
+      };
 
+      for (const contents of webContents.getAllWebContents()) {
         try {
-          pid = contents.getOSProcessId();
+          const pid = contents.getOSProcessId();
+
+          claim(pid, contents.getURL());
+
+          /*
+           * Subframes in a process of their own, which is the only part of the
+           * app no `webContents` can name. Ones sharing their contents' process
+           * are skipped rather than claimed: the line above already names that
+           * process, and a same-origin frame would only repeat its hostname.
+           */
+          for (const frame of contents.mainFrame.framesInSubtree) {
+            if (frame.osProcessId !== pid) {
+              claim(frame.osProcessId, frame.url);
+            }
+          }
         } catch {
           continue;
         }
-
-        urlsByPid.set(pid, [...(urlsByPid.get(pid) ?? []), contents.getURL()]);
       }
 
       // Awaited, unlike the two below it: this one alone answers with a promise,
