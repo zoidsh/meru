@@ -24,6 +24,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { recordSection } from "./lib/report";
 
 const BUNDLES_DIRECTORY = path.join(process.cwd(), "build-js");
 
@@ -164,6 +165,30 @@ test("no bundle is over budget", async ({}, testInfo) => {
     body: JSON.stringify(measured, null, 2),
     contentType: "application/json",
   });
+
+  await recordSection("bundles", measured);
+
+  /*
+   * A base-commit run stops here, having recorded the sizes and checked nothing.
+   *
+   * It pairs an older build with this checkout's budget file, and that pairing
+   * is not a check of anything. A pull request that adds a chunk, removes one,
+   * or lowers a ceiling to lock in a win — the three things the header above
+   * tells people to do — fails an assertion below against a build made before
+   * it did any of them, and the failure surfaces in a step named after the base
+   * commit on a pull request that is perfectly healthy. Reproduced both ways:
+   * one added budget row and one lowered ceiling turn the base run red.
+   *
+   * The sizes are still recorded, because the delta between the two runs is the
+   * whole reason the base one happens.
+   */
+  if (process.env.MERU_PERF_BASELINE) {
+    console.log(
+      `[perf] recorded ${built.size} bundle sizes from the base build; the budgets belong to head and are not checked against it`,
+    );
+
+    return;
+  }
 
   console.log(
     `[perf] bundle sizes\n${Object.entries(measured)

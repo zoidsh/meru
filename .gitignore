@@ -177,6 +177,7 @@ dist
 # Meru
 /test-results/
 /playwright-report/
+/perf-reports/
 build/embedded.provisionprofile
 build/entitlements.mac.plist
 build-js

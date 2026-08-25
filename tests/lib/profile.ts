@@ -62,6 +62,16 @@ export type ProcessSample = {
 
 export type RendererSample = {
   label: string;
+  /**
+   * Whether this is one of the app's own pages rather than web content.
+   *
+   * Worth carrying, because only one of the two is something a change to this
+   * repository can move. Meru's renderer and the signed-out Gmail view weigh
+   * about the same — 5.2 MB against 5.0 MB of JavaScript heap — so a report
+   * that adds them together halves the size every figure of ours reads at, and
+   * mixes in a page whose markup Google changes without telling anyone.
+   */
+  isAppPage: boolean;
   usedHeapKb: number;
   totalHeapKb: number;
   /** Blink's share, which is the DOM rather than the JavaScript heap proper. */
@@ -114,6 +124,19 @@ function pageLabel(url: string) {
     return protocol === "file:" ? (pathname.split("/").pop() ?? url) : hostname;
   } catch {
     return url;
+  }
+}
+
+/**
+ * Whether a page came out of the app bundle rather than off the network. Meru
+ * loads its own pages from disk, which is the same `file:` test `pageLabel`
+ * makes to decide whether a path or a hostname is the useful name.
+ */
+function isAppUrl(url: string) {
+  try {
+    return new URL(url).protocol === "file:";
+  } catch {
+    return false;
   }
 }
 
@@ -213,6 +236,7 @@ async function sampleRenderer(app: ElectronApplication, page: Page): Promise<Ren
 
     return {
       label: pageLabel(page.url()),
+      isAppPage: isAppUrl(page.url()),
       usedHeapKb: bytesToKb(heap.usedSize),
       totalHeapKb: bytesToKb(heap.totalSize),
       embedderHeapKb: bytesToKb(
@@ -295,6 +319,15 @@ export type CycleSample = {
   rendererNodes: number;
   rendererListeners: number;
   mainUsedHeapKb: number;
+};
+
+/** What the last measured cycle retains over the first, figure by figure. */
+export type CycleGrowth = {
+  nodes: number;
+  listeners: number;
+  rendererHeapKb: number;
+  rendererEmbedderHeapKb: number;
+  mainHeapKb: number;
 };
 
 export async function takeCycleSample(app: ElectronApplication, page: Page): Promise<CycleSample> {

@@ -18,7 +18,14 @@
  */
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
-import { type CycleSample, type Sample, takeCycleSample, takeSample } from "./lib/profile";
+import {
+  type CycleGrowth,
+  type CycleSample,
+  type Sample,
+  takeCycleSample,
+  takeSample,
+} from "./lib/profile";
+import { recordSection } from "./lib/report";
 
 const meru = useApp({}, { profile: true });
 
@@ -149,6 +156,8 @@ test("cold launch", async ({}, testInfo) => {
     contentType: "application/json",
   });
 
+  await recordSection("coldLaunch", sample);
+
   console.log(`[perf] cold launch on ${process.platform}\n${formatSample(sample)}`);
 
   /*
@@ -210,7 +219,7 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
 
   const last = samples[samples.length - 1] as CycleSample;
 
-  const growth = {
+  const growth: CycleGrowth = {
     nodes: last.rendererNodes - first.rendererNodes,
     listeners: last.rendererListeners - first.rendererListeners,
     rendererHeapKb: last.rendererUsedHeapKb - first.rendererUsedHeapKb,
@@ -226,6 +235,8 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
     ),
     contentType: "application/json",
   });
+
+  await recordSection("settingsCycles", { pages: pageLabels.length, samples, growth });
 
   console.log(
     `[perf] ${MEASURED_CYCLES} measured cycles over ${pageLabels.length} settings pages\n${samples
