@@ -486,3 +486,51 @@ export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions 
     },
   };
 }
+
+/**
+ * The license key a Pro run launches with.
+ *
+ * A real key against the production backend rather than a stub, so what these
+ * tests prove is that Meru unlocks on the answer the live API actually gives
+ * rather than on one a fake was told to give. CI passes it as a secret; a local
+ * run keeps it in `.env.test.local`, which the `test:e2e` script reads through
+ * `bun --env-file` and the Playwright process inherits.
+ *
+ * Thrown rather than skipped. A key that has been rotated away, or a workflow
+ * that stopped passing it, is a broken run — and a suite that skipped itself
+ * would report that as green for as long as nobody looked.
+ */
+function requireLicenseKey() {
+  const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
+
+  if (!licenseKey) {
+    throw new Error(
+      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
+    );
+  }
+
+  return licenseKey;
+}
+
+/**
+ * Launches with Meru Pro unlocked, and is `useApp` in every other way.
+ *
+ * Startup validates the seeded key against the API and sets `licenseKey.isValid`
+ * on success, which is the single flag every Pro gate in the main process reads.
+ * The renderer unlocks separately, off `config.licenseKey`, so both halves come
+ * from the one seeded value and neither waits on an event.
+ *
+ * The free version's `trial.expired` seed is left in place underneath, because
+ * `trial.validate` returns early on a valid license before it looks at anything
+ * else. A Pro launch therefore makes exactly one API call, and never the trial
+ * one — which is also what a test asserting on the calls made can rely on.
+ *
+ * Pro and free-version tests cannot share a file: `useApp` is called once at
+ * module scope and registers the hooks that seed every test in it. That split is
+ * deliberate rather than incidental — the free version is what makes the gating
+ * walk in `settings.e2e.ts` possible, and this is what makes its inverse
+ * possible here.
+ */
+export function useProApp(seedConfig: Partial<Config> = {}): MeruApp {
+  return useApp({ licenseKey: requireLicenseKey(), ...seedConfig });
+}

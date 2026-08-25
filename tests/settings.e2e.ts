@@ -8,54 +8,15 @@
  * `<key>-label`, so the key is already a stable handle and adding test ids
  * would only give the two somewhere to drift apart.
  */
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
+import { openSettingsPage, readSettingsPageLabels } from "./lib/settings";
 
 const meru = useApp();
 
 /** The switch a config key is rendered by, found through the label it points at. */
 function configSwitch(configKey: string) {
   return meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`);
-}
-
-/**
- * Every settings page, taken from the sidebar the app renders rather than from
- * a list kept here.
- *
- * A list kept here is a copy of `sidebarNavItems` that nothing keeps in step: a
- * page added to the app is simply never walked, and every test below reports
- * clean without having looked at it. What each page has to satisfy is still
- * written out below; only which pages exist comes from the app.
- *
- * Walking what the sidebar lists also means walking what anyone can reach.
- * Languages is hidden from the sidebar on macOS, so it goes uncovered there —
- * which is right, because there is no way to open it there either.
- */
-async function readSettingsPageLabels(navigation: Locator) {
-  const labels = await navigation.getByRole("button").allInnerTexts();
-
-  /*
-   * Guards the reading itself. A selector that stopped matching would hand
-   * every walk an empty list, and each of them would pass having checked
-   * nothing at all.
-   */
-  expect(labels).toEqual(
-    expect.arrayContaining(["General", "Appearance", "Notifications", "License", "About Meru"]),
-  );
-
-  return labels;
-}
-
-/**
- * Opens a page from the sidebar and waits for it, which is what makes the walks
- * safe to read the DOM afterwards. The title is asserted against the label that
- * was clicked, so an item wired to the wrong page still fails.
- */
-async function openSettingsPage(navigation: Locator, label: string) {
-  await navigation.getByRole("button", { name: label, exact: true }).click();
-
-  // Contained, not equal: Extensions carries a beta badge inside its title.
-  await expect(meru.renderer.getByTestId("settings-title"), label).toContainText(label);
 }
 
 test("every settings page renders", async () => {
@@ -68,7 +29,7 @@ test("every settings page renders", async () => {
   const navigation = await meru.openSettings();
 
   for (const label of await readSettingsPageLabels(navigation)) {
-    await openSettingsPage(navigation, label);
+    await openSettingsPage(meru, navigation, label);
   }
 
   /*
@@ -80,7 +41,7 @@ test("every settings page renders", async () => {
 });
 
 test("a switch writes its key back to the config", async () => {
-  await openSettingsPage(await meru.openSettings(), "Downloads");
+  await openSettingsPage(meru, await meru.openSettings(), "Downloads");
 
   const saveAs = configSwitch("downloads.saveAs");
 
@@ -101,7 +62,7 @@ test("a switch writes its key back to the config", async () => {
 });
 
 test("a select behind a confirmation writes only once confirmed", async () => {
-  await openSettingsPage(await meru.openSettings(), "Updates");
+  await openSettingsPage(meru, await meru.openSettings(), "Updates");
 
   const releaseChannel = meru.renderer.locator('[id="updates.channel"]');
 
@@ -143,7 +104,7 @@ test("every field label points at its control", async () => {
     // imported and renders in the same task as the navigation today, so a scan
     // would find it anyway — but one lazily loaded page would have this reading
     // the page before it and reporting nothing at all.
-    await openSettingsPage(navigation, label);
+    await openSettingsPage(meru, navigation, label);
 
     /*
      * A label naming an id nothing carries is a field whose text does not click
@@ -182,55 +143,62 @@ test("every field label points at its control", async () => {
 test("every Pro-gated control is locked on the free version", async () => {
   const gatedGroups: string[] = [];
 
+  let bannerCount = 0;
+
   const navigation = await meru.openSettings();
 
   for (const label of await readSettingsPageLabels(navigation)) {
     // As above: read the page this loop is on, not the one before it.
-    await openSettingsPage(navigation, label);
+    await openSettingsPage(meru, navigation, label);
 
     /*
-     * The badge is the claim that a field needs Meru Pro, and its controls being
-     * disabled is what makes the claim true. A field shipped with one and not
-     * the other is the regression this catches, so the two are read off the page
-     * together rather than from a list kept here.
+     * The marker is the claim that a field needs Meru Pro, and its controls
+     * being disabled is what makes the claim true. A field shipped with one and
+     * not the other is the regression this catches, so the two are read off the
+     * page together rather than from a list kept here.
      *
-     * Found by the badge rather than by the label, because a badge sits in a
+     * Found by the marker rather than by the label, because it sits in a
      * `FieldLabel`, a `FieldLegend`, a `FieldTitle` or an `ItemTitle` depending
      * on the field, and only the first of those is a `label`. Looking for labels
      * alone saw a third of them — mostly the ones rendered by the two wrapper
      * components, where badge and lock come from one expression and cannot
      * disagree. The hand-rolled fields it missed are the ones worth checking.
      */
-    const gatedControls = await meru.renderer
-      .getByText("Meru Pro required", { exact: true })
-      .evaluateAll((badges) =>
-        badges.map((badge) => {
-          const group = badge.closest(
-            '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
-          );
+    const gatedControls = await meru.renderer.locator("[data-meru-pro]").evaluateAll((markers) =>
+      markers.map((marker) => {
+        const group = marker.closest(
+          '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
+        );
 
-          /*
-           * Only what can carry a disabled state. A span never matches
-           * `:disabled`, so asserting on one would always read as unlocked.
-           *
-           * Typed off the badge rather than as an `Element`, because the runner
-           * compiles without the DOM library and `querySelectorAll` comes back
-           * as `unknown` there.
-           */
-          const controls = group
-            ? (Array.from(
-                group.querySelectorAll("input, button, select, textarea"),
-              ) as (typeof badge)[])
-            : [];
+        /*
+         * Only what can carry a disabled state. A span never matches
+         * `:disabled`, so asserting on one would always read as unlocked.
+         *
+         * Typed off the marker rather than as an `Element`, because the runner
+         * compiles without the DOM library and `querySelectorAll` comes back
+         * as `unknown` there.
+         */
+        const controls = group
+          ? (Array.from(
+              group.querySelectorAll("input, button, select, textarea"),
+            ) as (typeof marker)[])
+          : [];
 
-          return {
-            field: (group?.textContent ?? "").trim().slice(0, 60),
-            usable: controls
-              .filter((control) => !control.matches(":disabled"))
-              .map((control) => (control.textContent ?? "").trim()),
-          };
-        }),
-      );
+        return {
+          field: (group?.textContent ?? "").trim().slice(0, 60),
+          usable: controls
+            .filter((control) => !control.matches(":disabled"))
+            .map((control) => (control.textContent ?? "").trim()),
+        };
+      }),
+    );
+
+    /*
+     * The other half of the gate, and the only one some pages have. Saved
+     * searches locks its Add button straight off the license and carries no
+     * field badge at all, so the banner is what says the page is gated.
+     */
+    bannerCount += await meru.renderer.getByRole("link", { name: "Upgrade", exact: true }).count();
 
     for (const { field, usable } of gatedControls) {
       // Soft, so every gated field on the page reports rather than only the
@@ -242,9 +210,14 @@ test("every Pro-gated control is locked on the free version", async () => {
   }
 
   /*
-   * Guards the walk itself: a badge that stopped matching would leave every page
-   * with nothing to check and report clean. The count is asserted loosely, since
+   * Guards the walk itself: a marker that stopped matching would leave every
+   * page with nothing to check and report clean. The count is asserted loosely, since
    * the point is that gated fields were found at all, not how many there are.
    */
   expect(gatedGroups.length).toBeGreaterThan(30);
+
+  // Same guard for the banner: a selector that stopped matching would leave the
+  // Pro suite's inverse claim — that none of them are shown — passing on
+  // nothing at all.
+  expect(bannerCount).toBeGreaterThan(5);
 });

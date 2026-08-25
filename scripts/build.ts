@@ -36,11 +36,15 @@ function buildAppFiles() {
       define: !args.values.dev
         ? {
             "process.env.NODE_ENV": JSON.stringify("production"),
-            ...(process.env.MERU_API_URL
-              ? {
-                  "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL),
-                }
-              : {}),
+            /*
+             * Defined whether or not it is set, unlike the team id below. A
+             * define added only when its variable happens to be set leaves the
+             * expression itself in the bundle, where the environment answers it
+             * at launch — which let a shipped app be pointed at any license
+             * server with one variable. An empty string is what the client
+             * reads as "use the production URL".
+             */
+            "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL ?? ""),
             ...(process.env.APPLE_TEAM_ID
               ? {
                   "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),
