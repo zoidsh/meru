@@ -21,6 +21,9 @@ import { useApp } from "./lib/app";
  */
 const meru = useApp({ "window.restrictMinimumSize": false });
 
+/** How long a step is given to settle before it is taken as never going to. */
+const ASSERTION_TIMEOUT = 15_000;
+
 /** How long a window manager is given to act on a maximize before it is taken as unsupported. */
 const MAXIMIZE_TIMEOUT = 5_000;
 
@@ -88,6 +91,13 @@ async function expectViewToFillWindow(step: string, { slack = 0 } = {}) {
     // Retried rather than read once: the resize the app is reacting to reaches
     // it as an event, and the assertion is that it lands, not that it lands
     // synchronously.
+    //
+    // Given a timeout of its own, because `toPass` has none by default and the
+    // suite sets only `expect.timeout`, which does not reach it. Left alone, a
+    // step that will never pass spins until the whole test times out — and a
+    // timed-out test body is abandoned where it stands, so the layout the
+    // `finally` below exists to report is never printed, on precisely the run
+    // that needed it.
     await expect(async () => {
       const unfilled = await readUnfilledSpace();
 
@@ -99,13 +109,15 @@ async function expectViewToFillWindow(step: string, { slack = 0 } = {}) {
         expect(unfilled[edge], `${edge} gap after ${step}`).toBeGreaterThanOrEqual(0);
         expect(unfilled[edge], `${edge} gap after ${step}`).toBeLessThanOrEqual(slack);
       }
-    }).toPass();
-  } finally {
-    // In a `finally`, so the failing run logs them too. A failure on one platform
-    // is read from the job log of a run nobody watched, and these numbers are the
-    // whole diagnosis — which of the window's two bounds moved, and whether the
-    // view moved with them.
+    }).toPass({ timeout: ASSERTION_TIMEOUT });
+  } catch (error) {
+    // Only when it failed. These numbers are the whole diagnosis — which of the
+    // window's two bounds moved, and whether the view moved with them — and a
+    // failure on one platform is read from the job log of a run nobody watched.
+    // A passing run has nothing to say, and said it a dozen times a job.
     console.log(`[e2e] layout after ${step}: ${JSON.stringify(await readLayout())}`);
+
+    throw error;
   }
 }
 
