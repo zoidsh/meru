@@ -13,13 +13,19 @@ import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 
-const meru = useApp();
+/*
+ * The minimum window size is lifted for these tests. It defaults to 912x512,
+ * and a runner's display is not much bigger — the Windows one has a work area of
+ * 1024x720 — which leaves under 120px of width to resize within, and a window
+ * that barely changes size is a window the view can fail to follow undetectably.
+ */
+const meru = useApp({ "window.restrictMinimumSize": false });
 
 /** How long a window manager is given to act on a maximize before it is taken as unsupported. */
 const MAXIMIZE_TIMEOUT = 5_000;
 
 function readLayout() {
-  return meru.app.evaluate(({ BrowserWindow }) => {
+  return meru.app.evaluate(({ BrowserWindow, screen }) => {
     const [window] = BrowserWindow.getAllWindows();
 
     if (!window) {
@@ -27,6 +33,9 @@ function readLayout() {
     }
 
     return {
+      // Logged with the rest, because the sizes below are derived from it and a
+      // failure is read off a job log from a machine nobody can look at.
+      workArea: screen.getDisplayMatching(window.getBounds()).workArea,
       // Both, because they differ on Windows — the window bounds there span the
       // invisible resize border that the content bounds stop short of, and only
       // the content bounds share a coordinate space with the child views.
@@ -90,12 +99,22 @@ async function waitForAccountView() {
   await expect.poll(async () => (await readLayout()).views.length).toBeGreaterThan(0);
 }
 
-async function resizeWindow(width: number, height: number) {
+/**
+ * Sized as a fraction of the display rather than in pixels. A literal size is
+ * either off-screen on a small runner or a barely perceptible change on a large
+ * one, and neither tells you whether the view followed.
+ */
+async function resizeWindowTo(fractionOfWorkArea: number) {
+  const { workArea } = await readLayout();
+
   await meru.app.evaluate(
     ({ BrowserWindow }, size) => {
       BrowserWindow.getAllWindows()[0]?.setBounds(size);
     },
-    { width, height },
+    {
+      width: Math.round(workArea.width * fractionOfWorkArea),
+      height: Math.round(workArea.height * fractionOfWorkArea),
+    },
   );
 }
 
@@ -107,11 +126,11 @@ test("the account view follows the window as it is resized", async () => {
   // Both directions, because a view left at its old size fills the window it was
   // shrunk from and overflows the one it was grown from, and only one of those
   // is visible as a gap.
-  await resizeWindow(1000, 640);
+  await resizeWindowTo(0.6);
 
   await expectViewToFillWindow("shrinking the window");
 
-  await resizeWindow(1240, 780);
+  await resizeWindowTo(0.9);
 
   await expectViewToFillWindow("growing the window");
 });
@@ -125,7 +144,7 @@ test("the account view follows the window into and out of maximize", async () =>
    * assertion below would then hold without the view having had to follow
    * anything — which is what a runner with a small display hands you.
    */
-  await resizeWindow(960, 600);
+  await resizeWindowTo(0.6);
 
   await expectViewToFillWindow("shrinking the window before maximizing");
 
