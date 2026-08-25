@@ -37,44 +37,6 @@ function readMenuItems() {
   });
 }
 
-/** Runs a command the way the menu bar would, and reports whether it was there. */
-function clickMenuItem(label: string) {
-  return meru.app.evaluate(({ Menu }, itemLabel) => {
-    const find = (menuItems: Electron.MenuItem[]): Electron.MenuItem | undefined => {
-      for (const menuItem of menuItems) {
-        if (menuItem.label === itemLabel) {
-          return menuItem;
-        }
-
-        const found = menuItem.submenu ? find(menuItem.submenu.items) : undefined;
-
-        if (found) {
-          return found;
-        }
-      }
-
-      return undefined;
-    };
-
-    const menuItem = find(Menu.getApplicationMenu()?.items ?? []);
-
-    /*
-     * Clicked on the next tick rather than here. A command that navigates
-     * rebuilds the application menu as it goes, and the item this call is
-     * standing in — along with the reply it owes the test — goes with the menu
-     * it belonged to, which reaches the runner as a collected promise. Letting
-     * the reply leave first sidesteps that entirely.
-     */
-    if (menuItem) {
-      setImmediate(() => {
-        menuItem.click();
-      });
-    }
-
-    return Boolean(menuItem);
-  }, label);
-}
-
 test("the menu bar carries every top-level menu, in order", async () => {
   const topLevelLabels = await meru.app.evaluate(
     ({ Menu }) => Menu.getApplicationMenu()?.items.map((menuItem) => menuItem.label) ?? [],
@@ -153,11 +115,11 @@ test("a menu command drives the window", async () => {
    * here would prove nothing about the menu. The keys themselves are covered by
    * asserting the accelerator each item carries.
    */
-  expect(await clickMenuItem("Downloads")).toBe(true);
+  expect(await meru.runMenuCommand("Downloads")).toBe(true);
 
   await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/download-history");
 
-  expect(await clickMenuItem("Settings")).toBe(true);
+  expect(await meru.runMenuCommand("Settings")).toBe(true);
 
   await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/settings/general");
 });
