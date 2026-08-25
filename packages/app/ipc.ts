@@ -236,6 +236,10 @@ class Ipc {
       );
     });
 
+    ipc.main.on("window.contentResized", () => {
+      accounts.updateAllViewBounds();
+    });
+
     ipc.main.on("appUpdater.quitAndInstall", () => {
       appUpdater.quitAndInstall();
     });

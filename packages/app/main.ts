@@ -1,7 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import {
@@ -216,28 +216,7 @@ class Main {
   }
 
   getWindowBounds() {
-    if (!platform.isWindows) {
-      return this.window.getBounds();
-    }
-
-    /*
-     * Taken from the display when maximized, because the window cannot be asked
-     * yet. Measured on Windows: `maximize` fires at +33ms with the content area
-     * reading 1024x718, and it settles at 1024x720 ten milliseconds later — with
-     * no `resize` behind that last change, since Electron gates the event on the
-     * window bounds and those had stopped moving before the content area did.
-     * Anything laid out on the event is two pixels short and never corrected.
-     *
-     * A maximized window's content area is the work area of the display it is
-     * on, which is the same number without the wait. Full screen is excluded
-     * because there the content area is the whole display rather than the part
-     * left over by the taskbar.
-     */
-    if (this.window.isMaximized() && !this.window.isFullScreen()) {
-      return screen.getDisplayMatching(this.window.getBounds()).workArea;
-    }
-
-    return this.window.getContentBounds();
+    return this.window[platform.isWindows ? "getContentBounds" : "getBounds"]();
   }
 }
 

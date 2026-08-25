@@ -47,3 +47,23 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
 ipc.renderer.on("notifications.playSound", (_event, { sound, volume }) => {
   playNotificationSound({ sound, volume });
 });
+
+/*
+ * The account views are laid out by the main process from the window's content
+ * bounds, and Windows can change those without the window bounds moving, which
+ * is the one case Electron's `resize` does not cover: it is gated on the window
+ * bounds. Maximizing is where it shows. Chromium asks the system for the
+ * auto-hide taskbar edges asynchronously, reserves two pixels along each while
+ * it waits, then recalculates the frame once the answer arrives — the content
+ * area grows by those two pixels with no window resize behind it, and anything
+ * laid out on the event is short by them for good.
+ *
+ * This page fills the content area, so its own resize is that missing signal,
+ * and it says nothing about the size: the main process re-reads the bounds
+ * itself, which keeps one source of truth and stays right whatever the page's
+ * zoom is doing. Laying out again is idempotent, so the resizes this shares
+ * with the window's own event cost a second pass and change nothing.
+ */
+window.addEventListener("resize", () => {
+  ipc.main.send("window.contentResized");
+});

@@ -228,6 +228,7 @@ export type IpcMainEvents =
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];
       "taskbar.setOverlayIcon": [dataUrl: string];
+      "window.contentResized": [];
       "appUpdater.quitAndInstall": [];
       "appUpdater.openVersionHistory": [];
       "app.relaunch": [];
