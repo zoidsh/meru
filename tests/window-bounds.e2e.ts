@@ -53,6 +53,7 @@ function readLayout() {
       bounds: window.getBounds(),
       contentBounds: window.getContentBounds(),
       isMaximized: window.isMaximized(),
+      resizeListeners: window.listenerCount("resize"),
       views: window.contentView.children
         .filter((child) => child.getVisible())
         .map((child) => child.getBounds()),
@@ -135,6 +136,31 @@ async function resizeWindowTo(fractionOfWorkArea: number) {
     },
   );
 }
+
+test("the window is listening for resizes by the time a view is attached", async () => {
+  await waitForAccountView();
+
+  /*
+   * Read at that instant rather than polled for, and that is the whole test.
+   * `createView` attaches the view and only then loads Gmail into it, and the
+   * listener that lays the views out used to be registered behind that load —
+   * so for as long as it took, every resize reached nobody and the views sat at
+   * the size they were created with. A drag survives it, because the resize
+   * after the listener arrives corrects it; a maximize does not, having no
+   * second event behind it.
+   *
+   * Polling here would wait out exactly the gap it is meant to catch. Measured
+   * at over a second on a Windows runner and nearly half of one on Linux, which
+   * is why this is asserted on the listener rather than on a resize landing:
+   * racing a page load would pass or fail on how fast the machine is.
+   */
+  const { resizeListeners, views } = await readLayout();
+
+  expect({ resizeListeners: resizeListeners > 0, views: views.length }).toEqual({
+    resizeListeners: true,
+    views: 1,
+  });
+});
 
 test("the account view follows the window as it is resized", async () => {
   await waitForAccountView();

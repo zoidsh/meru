@@ -97,15 +97,6 @@ class Accounts {
   }
 
   async createViews() {
-    /*
-     * Registered before the views are created rather than after, because
-     * `createView` resolves only once Gmail's page has loaded and this method is
-     * not awaited. Every window resize in between was reaching nobody, leaving
-     * the views at the size they were created with — and a maximize, unlike a
-     * drag, has no second resize afterwards to correct them.
-     */
-    this.registerWindowListeners();
-
     const accounts = this.getAccounts().sort((a, b) => {
       if (a.config.selected && !b.config.selected) {
         return 1;
@@ -135,6 +126,8 @@ class Accounts {
     for (const account of accounts) {
       account.instance.tabs.loadLaunchTabs();
     }
+
+    this.registerWindowListeners();
   }
 
   private registerWindowListeners() {
