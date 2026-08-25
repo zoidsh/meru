@@ -1,19 +1,5 @@
 import { ms } from "@meru/shared/ms";
 import { defineConfig } from "@playwright/test";
-import { config as loadTestEnvironment } from "dotenv";
-
-/*
- * The license key the Pro suite launches with. CI passes it as a secret, and a
- * local run keeps it in `.env.test.local`.
- *
- * Loaded here rather than left to Bun, which reads that file only when NODE_ENV
- * says test — nothing sets it — and never at all in a worker Playwright started
- * under Node. Every entry point loads this config, and so does every worker, so
- * this is the one place that covers `bun run test:e2e` and a bare
- * `playwright test` alike. An environment variable that is already set wins,
- * which is what leaves CI's secret in charge.
- */
-loadTestEnvironment({ path: ".env.test.local", quiet: true });
 
 export default defineConfig({
   testDir: "tests",
