@@ -9,6 +9,9 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    # Reusable workflows get none of the caller's secrets without this,
+    # so the e2e job would run without a license key and fail the release.
+    secrets: inherit
   build:
     needs: ci
     runs-on: ${{ matrix.os }}
