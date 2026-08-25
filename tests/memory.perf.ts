@@ -2,11 +2,23 @@
  * What the app costs to run, and whether repeating something makes it cost more.
  *
  * Two tests with deliberately different standing. The cold-launch snapshot
- * reports and never fails: its figures are absolute, and an absolute figure
- * belongs to the machine that produced it, so a threshold set from one machine
- * says nothing on another. The leak check fails, because it compares a run to
+ * mostly reports: its figures are absolute, and an absolute figure belongs to
+ * the machine that produced it, so a threshold set from one machine says
+ * nothing on another. The leak check fails, because it compares a run to
  * itself — the same app, the same machine, the same minute — and growth across
  * cycles means the same thing everywhere.
+ *
+ * One figure in the snapshot is the exception, and it is measured rather than
+ * argued. Over 21 CI samples — three platforms across seven runs, spanning two
+ * real code changes — the main process's JavaScript heap held between 7682 and
+ * 7734 KB, a 52 KB band, while total working set on those same samples ranged
+ * 530 to 776 MB. The reason is structural rather than lucky: a JavaScript heap
+ * figure is V8 counting objects the app allocated, and the same code allocates
+ * the same objects anywhere, where working set is the operating system
+ * attributing pages with shared ones charged in full to every process holding
+ * them. So that one figure carries a ceiling from `tests/memory-budget.json`
+ * and fails on every platform, the way bundle bytes already do. Every other
+ * figure here still only reports.
  *
  * What is not covered, and cannot be: no Gmail account signs in. The audit's
  * argument is that the dominant cost is Gmail's own document and heap in a view
@@ -16,6 +28,8 @@
  * hostname check, so everything it drags in is loaded and measured on the
  * sign-in page too.
  */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 import {
@@ -28,6 +42,28 @@ import {
 import { recordSection } from "./lib/report";
 
 const meru = useApp({}, { profile: true });
+
+const MEMORY_BUDGET_PATH = path.join(process.cwd(), "tests", "memory-budget.json");
+
+/**
+ * The one figure in the snapshot with a ceiling over it, named as the report
+ * spells it so that the budget file reads as a figure rather than as a number.
+ */
+const MAIN_HEAP_BUDGET_KEY = "main.usedHeapKb";
+
+/**
+ * When the heap comes in under its ceiling by more than a tenth, the ceiling is
+ * asked to come down.
+ *
+ * A proportion alone, where the bundle budgets pair one with an absolute gap.
+ * Their reason for the pair does not apply here: a proportion fires on every
+ * small chunk from the day those budgets are written, because the floor that
+ * keeps a 144-byte chunk from tripping over whitespace is most of its size.
+ * This is one figure of about 7.7 MB, so a tenth of its ceiling is 800 KB — a
+ * win worth locking in by any measure, and nothing a second threshold makes
+ * clearer.
+ */
+const SLACK_WARNING_RATIO = 0.9;
 
 /**
  * Discarded rather than measured. A first pass through a route allocates things
@@ -183,6 +219,64 @@ test("cold launch", async ({}, testInfo) => {
     sample.totalCpuSeconds,
     "no CPU was reported, so settling degraded to a fixed sleep",
   ).toBeGreaterThan(0);
+
+  /*
+   * The one figure here that is held to a number, and the only place in this
+   * report where an absolute reading fails a run. Why this figure and no other
+   * is in the file header; what the ceiling is for is this:
+   *
+   * Comparing a pull request against its own base commit on the same runner
+   * catches a change, and marks it with the pull request that made it and the
+   * process it landed in. It structurally cannot catch drift — a figure
+   * creeping a percent per pull request stays under that marker forever and
+   * adds up to anything. A ceiling is the second net, and the only one that
+   * ever sees the absolute number.
+   *
+   * It says "over" and nothing more. Which pull request, and which process, is
+   * the comparison's job, and a ceiling that tried to diagnose would be a worse
+   * copy of it.
+   *
+   * Read after the report is attached and printed, so a budget file that is
+   * missing or malformed still leaves the run's figures somewhere readable.
+   */
+  const budget: Record<string, number> = JSON.parse(await readFile(MEMORY_BUDGET_PATH, "utf8"));
+
+  const ceilingKb = budget[MAIN_HEAP_BUDGET_KEY];
+
+  /*
+   * Thrown rather than compared, and before anything is compared to it. A key
+   * renamed on one side of the pair, or an edit that drops it, would otherwise
+   * leave `undefined` on the right of a soft comparison that passes — a gate
+   * reporting green while measuring nothing, which is the failure every guard
+   * in this file exists to prevent.
+   */
+  if (ceilingKb === undefined || ceilingKb <= 0) {
+    throw new Error(
+      `tests/memory-budget.json has no usable ${MAIN_HEAP_BUDGET_KEY} ceiling, so nothing is gated.`,
+    );
+  }
+
+  console.log(
+    `[perf] main JS heap ${sample.main.usedHeapKb} KB of ${ceilingKb} KB ceiling in tests/memory-budget.json`,
+  );
+
+  // Soft for the reason the leak check's are, so that a run reports every figure
+  // that tripped rather than sending someone round the loop once per figure.
+  expect
+    .soft(sample.main.usedHeapKb, "main JS heap in KB is over its ceiling")
+    .toBeLessThanOrEqual(ceilingKb);
+
+  /*
+   * Reported, never failed. A build coming in well under its ceiling is a win,
+   * and failing the run for it would have the next person raise the ceiling to
+   * get green — the opposite of what a ceiling is for. Saying so in the log is
+   * what gets it lowered instead.
+   */
+  if (sample.main.usedHeapKb < ceilingKb * SLACK_WARNING_RATIO) {
+    console.log(
+      `[perf] main JS heap is under its ceiling by more than a tenth — lower ${MAIN_HEAP_BUDGET_KEY} in tests/memory-budget.json to keep the win`,
+    );
+  }
 });
 
 // oxlint-disable-next-line no-empty-pattern
