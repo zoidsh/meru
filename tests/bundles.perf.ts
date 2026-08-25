@@ -1,10 +1,13 @@
 /*
  * What the app ships, in bytes, against a budget kept next to this file.
  *
- * The only measurement here that is not a measurement at all. Every other figure
- * the performance tests take belongs to the machine that took it; a bundle is
- * the same number of bytes on every machine that builds it, so this one can hold
- * a checked-in budget and fail when the build outgrows it.
+ * The measurement here that is not a measurement at all. Most of what the
+ * performance tests take belongs to the machine that took it; a bundle is the
+ * same number of bytes on every machine that builds it, so this one can hold a
+ * checked-in budget and fail when the build outgrows it. The main process's
+ * JavaScript heap now holds one too, and `tests/memory.perf.ts` explains what
+ * earned it — a figure V8 counts rather than the operating system attributes,
+ * measured across three platforms before it was gated. Nothing else does.
  *
  * That makes most of the audit's P4 tier — bundle size — into something CI can
  * enforce. It is the direct proof for finding 1.4, a preload that carries React

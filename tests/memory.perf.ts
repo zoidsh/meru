@@ -17,8 +17,15 @@
  * the same objects anywhere, where working set is the operating system
  * attributing pages with shared ones charged in full to every process holding
  * them. So that one figure carries a ceiling from `tests/memory-budget.json`
- * and fails on every platform, the way bundle bytes already do. Every other
- * figure here still only reports.
+ * and fails against it. Every other figure here still only reports.
+ *
+ * It is checked on every platform, where the other checked-in ceiling in this
+ * suite is not: `tests/bundles.perf.ts` runs on Linux alone, because one
+ * platform's byte count is every platform's and running it three times would
+ * make a budget file into a claim about three toolchains nobody checked. A heap
+ * is read out of a process that is actually running, so there is no one
+ * platform whose answer stands for the others — the reason it can be gated
+ * everywhere is that the three were measured and agreed to 0.7%.
  *
  * What is not covered, and cannot be: no Gmail account signs in. The audit's
  * argument is that the dominant cost is Gmail's own document and heap in a view
@@ -238,7 +245,24 @@ test("cold launch", async ({}, testInfo) => {
    *
    * Read after the report is attached and printed, so a budget file that is
    * missing or malformed still leaves the run's figures somewhere readable.
+   *
+   * A base-commit run stops before it, having reported the figures and checked
+   * nothing, for the reason `tests/bundles.perf.ts` gives about its own
+   * budgets: that run pairs an older build with this checkout's ceiling, and a
+   * pull request that lowers the ceiling to lock a win in — which is what the
+   * warning below tells people to do — would fail against a build made before
+   * it did. The failure would surface in a step named after the base commit, on
+   * a pull request that is perfectly healthy.
+   *
+   * Worth knowing that it fails late rather than at once, which is why the
+   * guard is here and not left for whoever first trips it. A base binary passes
+   * this ceiling today, so the mismatch appears only the first time someone
+   * lowers the number.
    */
+  if (process.env.MERU_PERF_BASELINE) {
+    return;
+  }
+
   const budget: Record<string, number> = JSON.parse(await readFile(MEMORY_BUDGET_PATH, "utf8"));
 
   const ceilingKb = budget[MAIN_HEAP_BUDGET_KEY];
