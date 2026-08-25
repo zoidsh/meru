@@ -108,6 +108,26 @@ function total<Item>(items: Item[] | undefined, read: (item: Item) => number) {
   return items?.reduce((sum, item) => sum + read(item), 0);
 }
 
+/*
+ * The app's own pages and the web content it hosts, summed apart rather than
+ * together.
+ *
+ * They are close enough in size to hide each other — Meru's renderer reads
+ * 5.2 MB of JavaScript heap against a signed-out Gmail view's 5.0 MB — so one
+ * total means a change of ours reads at half its size. The halves also differ
+ * in what they are worth reading: measured over three CI runs, the sign-in
+ * page reported 663 nodes in fifteen samples out of eighteen, while Meru's own
+ * renderer came back with either 250 or 78. Whichever of those two is a bug, it
+ * is not one a summed row would ever have shown.
+ */
+function appRenderers(report: PerfReport) {
+  return report.coldLaunch?.renderers.filter((renderer) => renderer.isAppPage);
+}
+
+function webRenderers(report: PerfReport) {
+  return report.coldLaunch?.renderers.filter((renderer) => !renderer.isAppPage);
+}
+
 type Figure = {
   label: string;
   read: (report: PerfReport) => number | undefined;
@@ -179,28 +199,47 @@ const SUMMARY_FIGURES: Figure[] = [
     floor: MEMORY_FLOOR_KB,
   },
   {
-    label: "Renderer JS heap",
-    read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.usedHeapKb),
+    label: "Meru renderer JS heap",
+    read: (report) => total(appRenderers(report), (renderer) => renderer.usedHeapKb),
     format: formatKb,
     proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
-    label: "Renderer Blink heap",
-    read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.embedderHeapKb),
+    label: "Meru renderer Blink heap",
+    read: (report) => total(appRenderers(report), (renderer) => renderer.embedderHeapKb),
     format: formatKb,
     proportional: true,
     floor: MEMORY_FLOOR_KB,
   },
   {
-    label: "DOM nodes",
-    read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.nodes),
+    label: "Meru renderer DOM nodes",
+    read: (report) => total(appRenderers(report), (renderer) => renderer.nodes),
     format: formatCount,
   },
   {
-    label: "Event listeners",
-    read: (report) => total(report.coldLaunch?.renderers, (renderer) => renderer.jsEventListeners),
+    label: "Meru renderer listeners",
+    read: (report) => total(appRenderers(report), (renderer) => renderer.jsEventListeners),
     format: formatCount,
+  },
+  {
+    // Both heaps and neither count. A Gmail view's nodes and listeners are
+    // Google's markup, which changes when Google changes it and never because
+    // of anything in this repository. The heaps are here because one thing in
+    // this repository does reach them: the Gmail preload, which finding 1.4 is
+    // about, evaluates on that page before its hostname check bails out.
+    label: "Account views JS heap",
+    read: (report) => total(webRenderers(report), (renderer) => renderer.usedHeapKb),
+    format: formatKb,
+    proportional: true,
+    floor: MEMORY_FLOOR_KB,
+  },
+  {
+    label: "Account views Blink heap",
+    read: (report) => total(webRenderers(report), (renderer) => renderer.embedderHeapKb),
+    format: formatKb,
+    proportional: true,
+    floor: MEMORY_FLOOR_KB,
   },
   {
     label: "Shipped bytes",
