@@ -114,12 +114,31 @@ test("the account view follows the window as it is resized", async () => {
 test("the account view follows the window into and out of maximize", async () => {
   await waitForAccountView();
 
+  /*
+   * Shrunk first, so that maximizing is a change of size at all. A window that
+   * already fills the display maximizes to the size it was already, and the
+   * assertion below would then hold without the view having had to follow
+   * anything — which is what a runner with a small display hands you.
+   */
+  await resizeWindow(960, 600);
+
+  await expectViewToFillWindow("shrinking the window before maximizing");
+
+  const restoredHeight = (await readLayout()).contentBounds.height;
+
   await meru.app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.maximize();
   });
 
   const maximized = await expect
-    .poll(async () => (await readLayout()).isMaximized, { timeout: MAXIMIZE_TIMEOUT })
+    .poll(
+      async () => {
+        const layout = await readLayout();
+
+        return layout.isMaximized && layout.contentBounds.height > restoredHeight;
+      },
+      { timeout: MAXIMIZE_TIMEOUT },
+    )
     .toBe(true)
     .then(() => true)
     .catch(() => false);
@@ -129,7 +148,7 @@ test("the account view follows the window into and out of maximize", async () =>
    * a maximize and the window keeps the size it had. Skipping says that plainly
    * rather than passing on an assertion that never got to mean anything.
    */
-  test.skip(!maximized, "the window manager did not maximize the window");
+  test.skip(!maximized, "the window manager did not maximize the window to a larger size");
 
   await expectViewToFillWindow("maximizing the window");
 
