@@ -7,6 +7,19 @@ on:
   pull_request:
   workflow_call:
 
+# One run per pull request, with a superseded one cancelled rather than left to
+# finish. Two pushes seconds apart otherwise finish in whatever order they
+# finish, and the performance comment is whichever of them wrote last — which is
+# not necessarily the commit anyone is looking at. It also stops three app
+# builds being paid for on a commit that has already been replaced.
+#
+# Everything else gets a group of its own, because `run_id` is unique to a run:
+# a push to main and a release build never wait on each other, which is what a
+# shared group without cancellation would make them do.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   fmt:
     runs-on: ubuntu-latest

@@ -84,17 +84,27 @@ async function findExistingComment(repository: string, pullRequest: string, toke
   }
 }
 
+/**
+ * What stands in the comment's place when a push measured nothing.
+ *
+ * Posted only over a comment that is already there, never as a new one. An
+ * earlier push's table describes code the branch no longer has, and leaving it
+ * up is worse than having none: it reads as current, and nothing in it says
+ * which push it belongs to until someone checks the commit in its heading.
+ * A pull request that never measured anything gets no comment at all.
+ */
+const SKIPPED_BODY = [
+  MARKER,
+  "### Performance not measured",
+  "",
+  "Nothing was measured for this push, so the figures from an earlier one have been taken down rather than left standing as though they were current.",
+  "",
+  "A diff of nothing but Markdown skips the comparison, and so does a run whose reports never reached this job.",
+].join("\n");
+
 const roots = Bun.argv.slice(2);
 
 const comparisons = await readComparisons(roots.length > 0 ? roots : ["perf-reports"]);
-
-if (comparisons.length === 0) {
-  console.log(
-    `[perf] no reports were found in ${(roots.length > 0 ? roots : ["perf-reports"]).join(", ")}, so there is nothing to comment.`,
-  );
-
-  process.exit(0);
-}
 
 /*
  * Whether the matrix finished. A leg that failed before uploading is absent
@@ -104,14 +114,17 @@ if (comparisons.length === 0) {
  */
 const e2eResult = process.env.MERU_E2E_RESULT;
 
-const body = renderComparison(
-  comparisons,
-  e2eResult && e2eResult !== "success"
-    ? [
-        `The end-to-end matrix finished as \`${e2eResult}\`. A platform missing from this table was not measured, rather than measured and unchanged.`,
-      ]
-    : [],
-);
+const body =
+  comparisons.length === 0
+    ? SKIPPED_BODY
+    : renderComparison(
+        comparisons,
+        e2eResult && e2eResult !== "success"
+          ? [
+              `The end-to-end matrix finished as \`${e2eResult}\`. A platform missing from this table was not measured, rather than measured and unchanged.`,
+            ]
+          : [],
+      );
 
 const repository = requireEnvironment("GITHUB_REPOSITORY");
 
@@ -127,7 +140,13 @@ try {
       body,
     });
 
-    console.log(`[perf] rewrote comment ${existing.id} on #${pullRequest}.`);
+    console.log(
+      comparisons.length === 0
+        ? `[perf] nothing was measured; took down the figures in comment ${existing.id} on #${pullRequest}.`
+        : `[perf] rewrote comment ${existing.id} on #${pullRequest}.`,
+    );
+  } else if (comparisons.length === 0) {
+    console.log(`[perf] nothing was measured and #${pullRequest} carries no report to take down.`);
   } else {
     await call("POST", `${API}/repos/${repository}/issues/${pullRequest}/comments`, token, {
       body,
