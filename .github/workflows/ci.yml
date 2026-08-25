@@ -44,8 +44,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
-    # and its teardown fit inside this several times over.
-    timeout-minutes: 15
+    # and its teardown fit inside this several times over, and the performance
+    # run that follows takes about a minute.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -63,9 +64,35 @@ jobs:
         run: xvfb-run -a bun run test:e2e
       - if: runner.os != 'Linux'
         run: bun run test:e2e
+      # After the end-to-end run and against the build it just made, which is
+      # what MERU_SKIP_BUILD reuses: the app is already unpacked in dist by now,
+      # and building it again is several minutes per platform for an identical
+      # binary.
+      #
+      # Allowed to fail the job, unlike a typical performance run, because of
+      # what is actually asserted in there. The cold-launch snapshot asserts
+      # nothing about its figures and only reports them — absolute memory belongs
+      # to the runner that produced it, and no threshold has been set from a
+      # runner yet. What can fail is the leak check, which compares a run to
+      # itself and so means the same thing on any machine, and the bundle
+      # budgets, which are the same bytes everywhere.
+      - if: runner.os == 'Linux'
+        run: xvfb-run -a bun run test:perf
+        env:
+          MERU_SKIP_BUILD: "1"
+      - if: runner.os != 'Linux'
+        run: bun run test:perf
+        env:
+          MERU_SKIP_BUILD: "1"
       # always(), not failure(): a job killed for running long counts as
       # cancelled rather than failed, and that is the run whose trace is most
       # worth having.
+      #
+      # One artifact per project, from directories the two runs no longer share.
+      # They did share them until the performance project arrived, and a second
+      # `playwright test` run empties the report folder before writing — so the
+      # performance run was deleting the end-to-end traces, including the one
+      # from an attempt that failed before a retry passed.
       - if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -74,5 +101,15 @@ jobs:
           # The trace opens in the trace viewer and is the thing worth having;
           # the report is the readable index into it.
           path: |
-            test-results/
-            playwright-report/
+            test-results/e2e/
+            playwright-report/e2e/
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: perf-${{ matrix.os }}
+          if-no-files-found: ignore
+          # The reports are JSON attachments in here: the per-process table, the
+          # cycle-by-cycle leak figures, and the bundle sizes.
+          path: |
+            test-results/perf/
+            playwright-report/perf/

@@ -14,9 +14,12 @@ bun run types      # type check every package (CI runs `bun run types:ci`)
 bun run lint       # oxlint
 bun run fmt:check  # oxfmt check; `bun run fmt` writes
 bun test           # tests across every package
+bun run test:e2e   # end-to-end suite against the built app
+bun run test:perf  # memory, CPU and bundle-size report against the built app
 ```
 
 - `bun run types`, `bun run lint`, and `bun run fmt:check` must pass before pushing.
+- Both `test:e2e` and `test:perf` build the app first, and both need a display: on a machine without one, wrap them as `xvfb-run -a bun run test:e2e`. Set `MERU_SKIP_BUILD=1` to run against a build already in `dist`.
 
 ## Docs
 
