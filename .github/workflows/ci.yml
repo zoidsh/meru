@@ -63,11 +63,11 @@ jobs:
       - if: runner.os == 'Linux'
         run: xvfb-run -a bun run test:e2e
         env:
-          MERU_LICENSE_KEY: ${{ secrets.MERU_LICENSE_KEY }}
+          MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       - if: runner.os != 'Linux'
         run: bun run test:e2e
         env:
-          MERU_LICENSE_KEY: ${{ secrets.MERU_LICENSE_KEY }}
+          MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       # After the end-to-end run and against the build it just made, which is
       # what MERU_SKIP_BUILD reuses: the app is already unpacked in dist by now,
       # and building it again is several minutes per platform for an identical

@@ -478,11 +478,11 @@ export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions 
  * would report that as green for as long as nobody looked.
  */
 function requireLicenseKey() {
-  const licenseKey = process.env.MERU_LICENSE_KEY;
+  const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
 
   if (!licenseKey) {
     throw new Error(
-      "MERU_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
+      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
     );
   }
 

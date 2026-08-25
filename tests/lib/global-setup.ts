@@ -22,7 +22,7 @@ import { createMeruApiSafeClient } from "meru-api-client";
 import { machineId } from "node-machine-id";
 
 export default async function activateTestLicenseKey() {
-  const licenseKey = process.env.MERU_LICENSE_KEY;
+  const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
 
   /*
    * Absent is not an error here, because most of the suite is the free version
