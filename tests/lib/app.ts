@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Config } from "@meru/shared/types";
 import { expect, test, type TestInfo } from "@playwright/test";
-import { _electron, type ElectronApplication, type Page } from "playwright";
+import { _electron, type ElectronApplication, type Locator, type Page } from "playwright";
 
 // Where electron-builder leaves the unpacked app, per platform. macOS and
 // Windows name it after productName, "Meru"; Linux lowercases it. Getting that
@@ -80,7 +80,22 @@ async function findRendererWindow(app: ElectronApplication) {
     .poll(() => app.windows().some((window) => window.url().includes("main.html")))
     .toBe(true);
 
-  return app.windows().find((window) => window.url().includes("main.html")) as Page;
+  const renderer = app.windows().find((window) => window.url().includes("main.html")) as Page;
+
+  /*
+   * Waiting for the window's URL only says the page was told to load. React
+   * mounts long after that, and the listeners it registers as it imports are
+   * what receive `navigate` from the main process — a menu command issued
+   * before them is delivered to nobody and simply does not happen.
+   *
+   * The root having children is that moment. It is markup rather than anything
+   * a user would look for, which is the trade: a gate that asserts nothing and
+   * only has to be true on every platform, against a piece of the interface
+   * that might not be drawn on all three.
+   */
+  await expect(renderer.locator("#root > *").first()).toBeAttached();
+
+  return renderer;
 }
 
 type LaunchedApp = {
@@ -236,8 +251,13 @@ export type MeruApp = {
   readonly app: ElectronApplication;
   readonly renderer: Page;
   readonly userDataDir: string;
-  /** Navigates the renderer to a hash route, such as `/settings/appearance`. */
-  goto(route: string): Promise<void>;
+  /** Runs a menu command the way the menu bar would, and reports whether it was there. */
+  runMenuCommand(label: string): Promise<boolean>;
+  /**
+   * Opens settings through the menu, and hands back its navigation sidebar to
+   * pick a page from.
+   */
+  openSettings(): Promise<Locator>;
   /** The config as it stands on disk, which is where the main process wrote it. */
   readConfig(): Promise<Partial<Config>>;
 };
@@ -354,17 +374,54 @@ export function useApp(seedConfig: Partial<Config> = {}): MeruApp {
     get userDataDir() {
       return current().userDataDir;
     },
-    async goto(route) {
-      const renderer = currentRenderer();
+    runMenuCommand(label) {
+      return current().app.evaluate(({ Menu }, commandLabel) => {
+        const find = (menuItems: Electron.MenuItem[]): Electron.MenuItem | undefined => {
+          for (const menuItem of menuItems) {
+            if (menuItem.label === commandLabel) {
+              return menuItem;
+            }
 
-      // Routing is hash based, so changing the fragment is what navigates. The
-      // rest of the URL carries the accounts the main process handed over at
-      // load, and dropping it would reload the app without them.
-      const url = new URL(renderer.url());
+            const found = menuItem.submenu ? find(menuItem.submenu.items) : undefined;
 
-      url.hash = `#${route}`;
+            if (found) {
+              return found;
+            }
+          }
 
-      await renderer.goto(url.href);
+          return undefined;
+        };
+
+        const menuItem = find(Menu.getApplicationMenu()?.items ?? []);
+
+        /*
+         * Clicked on the next tick rather than here. A command that navigates
+         * rebuilds the application menu as it goes, and the item this call is
+         * standing in — along with the reply it owes the test — goes with the
+         * menu it belonged to, which reaches the runner as a collected promise.
+         * Letting the reply leave first sidesteps that entirely.
+         */
+        if (menuItem) {
+          setImmediate(() => {
+            menuItem.click();
+          });
+        }
+
+        return Boolean(menuItem);
+      }, label);
+    },
+    async openSettings() {
+      // The menu bar is the way in, and the only one the app offers. Setting the
+      // fragment by hand would reach the same page while proving nothing about
+      // whether anyone could get there.
+      expect(await this.runMenuCommand("Settings")).toBe(true);
+
+      const navigation = currentRenderer().getByTestId("settings-nav");
+
+      // Waiting for the sidebar is also what proves the command arrived.
+      await expect(navigation).toBeVisible();
+
+      return navigation;
     },
     async readConfig() {
       const configPath = path.join(current().userDataDir, "config.json");
