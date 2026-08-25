@@ -53,6 +53,7 @@ function readLayout() {
       bounds: window.getBounds(),
       contentBounds: window.getContentBounds(),
       isMaximized: window.isMaximized(),
+      resizeListeners: window.listenerCount("resize"),
       views: window.contentView.children
         .filter((child) => child.getVisible())
         .map((child) => child.getBounds()),
@@ -135,6 +136,43 @@ async function resizeWindowTo(fractionOfWorkArea: number) {
     },
   );
 }
+
+test("the window is listening for resizes by the time a view is attached", async () => {
+  await waitForAccountView();
+
+  /*
+   * Read at that instant rather than polled for, and that is the whole test.
+   * `createView` attaches the view and only then loads Gmail into it, and the
+   * listener that lays the views out used to be registered behind that load —
+   * so for as long as it took, every resize reached nobody and the views sat at
+   * the size they were created with. A drag survives it, because the resize
+   * after the listener arrives corrects it; a maximize does not, having no
+   * second event behind it.
+   *
+   * Polling here would wait out exactly the gap it is meant to catch. Measured
+   * at over a second on a Windows runner and nearly half of one on Linux, which
+   * is why this is asserted on the listener rather than on a resize landing:
+   * racing a page load would pass or fail on how fast the machine is.
+   *
+   * It only bites where that load takes time, and how hard varies. Run against
+   * the broken ordering deliberately, every platform reported zero listeners on
+   * the first, cold launch; macOS failed all three attempts, while Windows and
+   * Linux passed on the retry, whose launch is warm enough to close the gap
+   * before a test can look. So the run goes red, but macOS is what makes it
+   * reliable. Somewhere Gmail cannot be reached at all — a sandbox with no route
+   * to it — `createView` resolves immediately and this passes on the broken
+   * ordering too, which is why it was proved on CI rather than locally.
+   *
+   * It never fails on correct ordering, on any platform: the listener is on
+   * before a view exists to be found.
+   */
+  const { resizeListeners, views } = await readLayout();
+
+  expect({ resizeListeners: resizeListeners > 0, views: views.length }).toEqual({
+    resizeListeners: true,
+    views: 1,
+  });
+});
 
 test("the account view follows the window as it is resized", async () => {
   await waitForAccountView();
