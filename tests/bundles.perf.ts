@@ -6,10 +6,15 @@
  * the same number of bytes on every machine that builds it, so this one can hold
  * a checked-in budget and fail when the build outgrows it.
  *
- * That makes it the whole of the audit's P4 tier — bundle size and per-process
- * diet — expressed as something CI can enforce, and the direct proof for finding
- * 1.4, whose entire claim is that a preload carrying React for one toast is
- * three quarters of a megabyte.
+ * That makes most of the audit's P4 tier — bundle size — into something CI can
+ * enforce. It is the direct proof for finding 1.4, a preload that carries React
+ * and sonner for one toast and weighs three quarters of a megabyte in total, and
+ * for the two halves of finding 4.5 that are files: the notification sounds
+ * shipped as WAV, and the Inter subsets the interface never renders.
+ *
+ * The per-process half of P4 — spellcheck on views with no input, popups loading
+ * the full React chunk — is a runtime cost rather than a file, and belongs to
+ * the memory report rather than here.
  *
  * The budgets are ceilings with a little room, not a mirror of what the build
  * currently weighs. Landing a win means lowering the ceiling to lock it in, and
@@ -48,15 +53,34 @@ const SLACK_WARNING_BYTES = 16 * 1024;
 const HASHED_DIRECTORY = "renderer/assets/";
 
 /**
+ * What counts as something the app ships.
+ *
+ * Sounds and fonts are here rather than code alone, because two of them are an
+ * audit finding in their own right: roughly 1.7 MB of WAV notification sounds
+ * that Opus takes to under 100 KB, and four Inter subsets — Cyrillic, Greek and
+ * Vietnamese — the interface never renders a glyph from. Checking bytes while
+ * looking only at JavaScript left the largest single file in the build, and
+ * nearly 2 MB in total, unmeasured.
+ */
+const SHIPPED_EXTENSIONS = [".js", ".css", ".wav", ".woff2"];
+
+/**
  * The hash itself, which changes with every edit to what is in the chunk.
  * Budgets are keyed by the name without it, or `main-BVYKszf8.js` would need a
  * new budget row on every commit and the check would measure nothing but churn.
  *
- * A digit or a capital is required in it. Eight lowercase letters are as likely
- * to be a word someone meant as a hash, and eating one would quietly file two
- * different chunks under one name.
+ * Nothing is required of the eight characters beyond their being there. Asking
+ * for a digit or a capital, on the reasoning that eight lowercase letters read
+ * more like a word than a hash, turned out to be a way to fail: the alphabet is
+ * base64url, so `-` and `_` are in it, and about one hash in eight hundred is
+ * drawn entirely from the lowercase half. That build would key the file under
+ * its full name, report it as having no budget and its budget as belonging to
+ * nothing, and go red on a pull request that touched neither — then fix itself
+ * on the next commit. A guard that fires at random on unrelated work is worse
+ * than the case it guards against, which is a Vite configuration that stopped
+ * hashing at all, and the stale-budget check below catches that anyway.
  */
-const CONTENT_HASH = /-(?=[\w-]*[A-Z0-9])[\w-]{8}(?=\.[^.]+$)/;
+const CONTENT_HASH = /-[\w-]{8}(?=\.[^.]+$)/;
 
 function budgetKey(bundle: string) {
   // Separators are normalized, because Windows hands back backslashes and a
@@ -83,12 +107,14 @@ async function readBuiltBundles() {
    * repository that is Bun everywhere else — Playwright spawns its workers
    * itself, and importing `bun` from one throws at the import.
    *
-   * Recursive readdir lists directories alongside files; filtering on the two
+   * Recursive readdir lists directories alongside files; filtering on the
    * extensions drops them without a second stat per entry.
    */
   const entries = await readdir(BUNDLES_DIRECTORY, { recursive: true });
 
-  for (const bundle of entries.filter((entry) => entry.endsWith(".js") || entry.endsWith(".css"))) {
+  for (const bundle of entries.filter((entry) =>
+    SHIPPED_EXTENSIONS.some((extension) => entry.endsWith(extension)),
+  )) {
     const key = budgetKey(bundle);
 
     if (sizes.has(key)) {

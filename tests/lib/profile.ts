@@ -70,7 +70,8 @@ export type RendererSample = {
 };
 
 export type MainSample = {
-  residentSetKb: number;
+  /** Null on macOS, where Electron does not report it. */
+  residentSetKb: number | null;
   privateKb: number;
   sharedKb: number;
   usedHeapKb: number;
@@ -277,6 +278,13 @@ function disambiguate<Item extends { label: string }>(items: Item[]) {
  */
 export type CycleSample = {
   rendererUsedHeapKb: number;
+  /**
+   * Blink's own memory, which the JavaScript heap figure does not include.
+   * Without it a whole class of leak moves nothing that is compared: an object
+   * URL never revoked, a decoded-image or canvas cache that only grows. It costs
+   * nothing to carry, being read in the same call as the rest.
+   */
+  rendererEmbedderHeapKb: number;
   rendererNodes: number;
   rendererListeners: number;
   mainUsedHeapKb: number;
@@ -291,6 +299,7 @@ export async function takeCycleSample(app: ElectronApplication, page: Page): Pro
 
   return {
     rendererUsedHeapKb: renderer.usedHeapKb,
+    rendererEmbedderHeapKb: renderer.embedderHeapKb,
     rendererNodes: renderer.nodes,
     rendererListeners: renderer.jsEventListeners,
     mainUsedHeapKb,
@@ -371,7 +380,7 @@ export async function takeSample(app: ElectronApplication): Promise<Sample> {
       labeled.reduce((total, entry) => total + entry.cpuSeconds, 0).toFixed(2),
     ),
     main: {
-      residentSetKb: main.memoryInfo.residentSet ?? 0,
+      residentSetKb: main.memoryInfo.residentSet ?? null,
       privateKb: main.memoryInfo.private,
       sharedKb: main.memoryInfo.shared ?? 0,
       usedHeapKb: main.heap.usedHeapSize,

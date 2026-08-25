@@ -58,7 +58,24 @@ const LISTENER_GROWTH_LIMIT = 10;
 
 const RENDERER_HEAP_GROWTH_LIMIT_KB = 1536;
 
+/**
+ * Blink's own memory sits flat where the JavaScript heap climbs — 2.1 MB to
+ * 2.2 MB across the same cycles, growing by -153 KB — so it gets a tight limit
+ * rather than the JavaScript heap's slack. It is the figure that moves for a
+ * leak the counts cannot see, an object URL never revoked or a decoded-image
+ * cache that only grows, so a loose limit here would waste it.
+ */
+const RENDERER_EMBEDDER_HEAP_GROWTH_LIMIT_KB = 512;
+
 const MAIN_HEAP_GROWTH_LIMIT_KB = 512;
+
+/*
+ * What this scenario cannot reach, distinct from what the file header says about
+ * signing in: no view and no window is created or destroyed here, so the audit's
+ * own leak findings — the account-removal cluster at 2.1 to 2.3, and tab detach
+ * at 2.8 — are not exercisable by navigating settings. They need a scenario that
+ * adds and removes accounts, and that is its own piece of work.
+ */
 
 function formatKb(kilobytes: number) {
   return `${(kilobytes / 1024).toFixed(1)} MB`;
@@ -96,7 +113,18 @@ function formatSample(sample: Sample) {
 
   lines.push(
     "",
-    `main resident ${formatKb(sample.main.residentSetKb)}, private ${formatKb(sample.main.privateKb)}, JS heap ${formatKb(sample.main.usedHeapKb)}`,
+    // Resident is left out rather than shown as zero where the platform does not
+    // report it, which is macOS. A zero in a memory report reads as a broken
+    // reading, and someone would go looking for the break.
+    [
+      sample.main.residentSetKb === null
+        ? null
+        : `main resident ${formatKb(sample.main.residentSetKb)}`,
+      `private ${formatKb(sample.main.privateKb)}`,
+      `JS heap ${formatKb(sample.main.usedHeapKb)}`,
+    ]
+      .filter(Boolean)
+      .join(", "),
   );
 
   return lines.join("\n");
@@ -123,6 +151,19 @@ test("cold launch", async ({}, testInfo) => {
   expect(sample.renderers.length).toBeGreaterThan(0);
   expect(sample.main.usedHeapKb).toBeGreaterThan(0);
   expect(sample.totalWorkingSetKb).toBeGreaterThan(0);
+
+  /*
+   * Also the CPU column, because `cumulativeCPUUsage` is optional in Electron's
+   * types and carries no note about which platforms answer it. Where it is
+   * missing every reading defaults to zero, every interval looks quiet, and
+   * `settle` quietly stops being a wait for the app to go idle and becomes a
+   * two-second sleep. Nothing else would say so: the report would be a column
+   * of 0.00s that nobody has a reason to disbelieve.
+   */
+  expect(
+    sample.totalCpuSeconds,
+    "no CPU was reported, so settling degraded to a fixed sleep",
+  ).toBeGreaterThan(0);
 });
 
 // oxlint-disable-next-line no-empty-pattern
@@ -163,6 +204,7 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
     nodes: last.rendererNodes - first.rendererNodes,
     listeners: last.rendererListeners - first.rendererListeners,
     rendererHeapKb: last.rendererUsedHeapKb - first.rendererUsedHeapKb,
+    rendererEmbedderHeapKb: last.rendererEmbedderHeapKb - first.rendererEmbedderHeapKb,
     mainHeapKb: last.mainUsedHeapKb - first.mainUsedHeapKb,
   };
 
@@ -179,21 +221,47 @@ test("navigating settings repeatedly does not leak", async ({}, testInfo) => {
     `[perf] ${MEASURED_CYCLES} measured cycles over ${pageLabels.length} settings pages\n${samples
       .map(
         (sample, cycle) =>
-          `  cycle ${cycle + 1}: ${String(sample.rendererNodes).padStart(6)} nodes  ${String(sample.rendererListeners).padStart(6)} listeners  ${formatKb(sample.rendererUsedHeapKb).padStart(9)} renderer heap  ${formatKb(sample.mainUsedHeapKb).padStart(9)} main heap`,
+          `  cycle ${cycle + 1}: ${String(sample.rendererNodes).padStart(6)} nodes  ${String(sample.rendererListeners).padStart(6)} listeners  ${formatKb(sample.rendererUsedHeapKb).padStart(9)} JS heap  ${formatKb(sample.rendererEmbedderHeapKb).padStart(9)} Blink  ${formatKb(sample.mainUsedHeapKb).padStart(9)} main heap`,
       )
       .join("\n")}\n  growth: ${JSON.stringify(growth)}`,
   );
 
-  // Soft, so one run reports every figure that moved rather than only the first
-  // one to trip. Which of them grew is most of the diagnosis: nodes alone is a
-  // DOM that is never torn down, listeners alone is a subscription that is never
-  // removed, and heap alone is neither.
+  /*
+   * Soft, so one run reports every figure that moved rather than only the first
+   * one to trip. Which of them grew is most of the diagnosis: nodes alone is a
+   * DOM that is never torn down, listeners alone is a subscription that is never
+   * removed, and heap alone is neither.
+   *
+   * The counts are asserted on every platform. They are counted rather than
+   * sampled, so there is nothing in them for a machine to be different about,
+   * and a leak that moves them means the same thing wherever it is seen.
+   */
   expect.soft(growth.nodes, "DOM nodes").toBeLessThanOrEqual(NODE_GROWTH_LIMIT);
   expect.soft(growth.listeners, "JS event listeners").toBeLessThanOrEqual(LISTENER_GROWTH_LIMIT);
-  expect
-    .soft(growth.rendererHeapKb, "renderer JS heap in KB")
-    .toBeLessThanOrEqual(RENDERER_HEAP_GROWTH_LIMIT_KB);
-  expect
-    .soft(growth.mainHeapKb, "main JS heap in KB")
-    .toBeLessThanOrEqual(MAIN_HEAP_GROWTH_LIMIT_KB);
+
+  /*
+   * The heaps are asserted on Linux alone for now, and reported everywhere.
+   *
+   * Their limits come from how caches fill on one Linux machine, which is not
+   * something anyone has watched a hosted macOS or Windows runner do — and this
+   * test gates a required job with no retry, so a limit that is merely wrong
+   * there turns an unrelated pull request red. That is the same objection
+   * already accepted against thresholds on absolute memory, and it applies to
+   * exactly the part of this check that shares their weakness rather than to the
+   * counts.
+   *
+   * Make these gate everywhere once each platform has produced a green run and
+   * its figures are known. The growth is in the report either way.
+   */
+  if (process.platform === "linux") {
+    expect
+      .soft(growth.rendererHeapKb, "renderer JS heap in KB")
+      .toBeLessThanOrEqual(RENDERER_HEAP_GROWTH_LIMIT_KB);
+    expect
+      .soft(growth.rendererEmbedderHeapKb, "renderer Blink heap in KB")
+      .toBeLessThanOrEqual(RENDERER_EMBEDDER_HEAP_GROWTH_LIMIT_KB);
+    expect
+      .soft(growth.mainHeapKb, "main JS heap in KB")
+      .toBeLessThanOrEqual(MAIN_HEAP_GROWTH_LIMIT_KB);
+  }
 });

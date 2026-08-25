@@ -12,7 +12,23 @@ export default defineConfig({
   expect: {
     timeout: ms("1m"),
   },
-  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : [["list"]],
+  /*
+   * The HTML report goes to a folder of its own per project, which
+   * `scripts/e2e.ts` names. Both projects are separate `playwright test` runs,
+   * and a run empties the report folder before it writes — so sharing one meant
+   * the performance run replacing the end-to-end report, including the trace
+   * from an attempt that failed before a retry passed. That trace is the whole
+   * reason the report is uploaded.
+   */
+  reporter: process.env.CI
+    ? [
+        ["list"],
+        [
+          "html",
+          { open: "never", outputFolder: process.env.MERU_REPORT_DIR ?? "playwright-report" },
+        ],
+      ]
+    : [["list"]],
   retries: process.env.CI ? 2 : 0,
   /*
    * Two projects rather than one suite, so that `bun run test:e2e` and
@@ -23,10 +39,11 @@ export default defineConfig({
    * these files as unit tests, where Playwright's test() throws.
    */
   projects: [
-    { name: "e2e", testMatch: "**/*.e2e.ts" },
+    { name: "e2e", testMatch: "**/*.e2e.ts", outputDir: "test-results/e2e" },
     {
       name: "perf",
       testMatch: "**/*.perf.ts",
+      outputDir: "test-results/perf",
       // Longer than the suite default, because a leak check is several passes
       // over every settings page and a forced collection between each of them,
       // and there is no way to make that quick without measuring less.
