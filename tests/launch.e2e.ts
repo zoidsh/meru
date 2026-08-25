@@ -22,8 +22,14 @@ test("launches and renders appearance settings", async () => {
    * until the config arrives from the main process. Waiting for its title to
    * appear therefore proves the renderer bundle loaded, React mounted, routing
    * works and an IPC round trip completed — not merely that a window exists.
+   *
+   * Reached through the menu and then the sidebar, the way anyone would. Setting
+   * the fragment by hand arrives at the same page while proving nothing about
+   * whether the app offers a way to get there.
    */
-  await meru.goto("/settings/appearance");
+  const navigation = await meru.openSettings();
+
+  await navigation.getByRole("button", { name: "Appearance", exact: true }).click();
 
   await expect(meru.renderer.getByTestId("settings-title")).toHaveText("Appearance");
 

@@ -8,26 +8,15 @@
  * `<key>-label`, so the key is already a stable handle and adding test ids
  * would only give the two somewhere to drift apart.
  */
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 
 const meru = useApp();
-
-/**
- * Settings pages the app has but does not list, with the text their title
- * renders. Languages is hidden from the sidebar on macOS and stays routable, so
- * walking what is listed would stop covering it there.
- *
- * Anything reachable from the sidebar belongs in the sidebar, not here.
- */
-const UNLISTED_PAGES = [["/settings/languages", "Languages"]] as const;
 
 /** The switch a config key is rendered by, found through the label it points at. */
 function configSwitch(configKey: string) {
   return meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`);
 }
-
-type SettingsPage = { label: string; open: () => Promise<void> };
 
 /**
  * Every settings page, taken from the sidebar the app renders rather than from
@@ -35,54 +24,35 @@ type SettingsPage = { label: string; open: () => Promise<void> };
  *
  * A list kept here is a copy of `sidebarNavItems` that nothing keeps in step: a
  * page added to the app is simply never walked, and every test below reports
- * clean without having looked at it. Reading the sidebar costs the walk its
- * page-by-page route assertions, and buys coverage that arrives on its own —
- * which for a surface that grows is the better trade. What each page has to
- * satisfy is still written out below; only which pages exist comes from the app.
+ * clean without having looked at it. What each page has to satisfy is still
+ * written out below; only which pages exist comes from the app.
+ *
+ * Walking what the sidebar lists also means walking what anyone can reach.
+ * Languages is hidden from the sidebar on macOS, so it goes uncovered there —
+ * which is right, because there is no way to open it there either.
  */
-async function readSettingsPages(): Promise<SettingsPage[]> {
-  // The sidebar only renders on a settings route, so there has to be one open
-  // before there is anything to read.
-  await meru.goto("/settings/general");
-
-  const navigation = meru.renderer.getByTestId("settings-nav");
-
-  await expect(navigation).toBeVisible();
-
+async function readSettingsPageLabels(navigation: Locator) {
   const labels = await navigation.getByRole("button").allInnerTexts();
-
-  const pages: SettingsPage[] = labels.map((label) => ({
-    label,
-    open: async () => {
-      await navigation.getByRole("button", { name: label, exact: true }).click();
-    },
-  }));
-
-  for (const [route, label] of UNLISTED_PAGES) {
-    if (!labels.includes(label)) {
-      pages.push({ label, open: () => meru.goto(route) });
-    }
-  }
 
   /*
    * Guards the reading itself. A selector that stopped matching would hand
    * every walk an empty list, and each of them would pass having checked
    * nothing at all.
    */
-  expect(pages.map(({ label }) => label)).toEqual(
+  expect(labels).toEqual(
     expect.arrayContaining(["General", "Appearance", "Notifications", "License", "About Meru"]),
   );
 
-  return pages;
+  return labels;
 }
 
 /**
- * Opens a page and waits for it, which is what makes the walks safe to read the
- * DOM afterwards. The title is asserted against the sidebar's own label for the
- * page, so an item wired to the wrong route still fails.
+ * Opens a page from the sidebar and waits for it, which is what makes the walks
+ * safe to read the DOM afterwards. The title is asserted against the label that
+ * was clicked, so an item wired to the wrong page still fails.
  */
-async function openSettingsPage({ label, open }: SettingsPage) {
-  await open();
+async function openSettingsPage(navigation: Locator, label: string) {
+  await navigation.getByRole("button", { name: label, exact: true }).click();
 
   // Contained, not equal: Extensions carries a beta badge inside its title.
   await expect(meru.renderer.getByTestId("settings-title"), label).toContainText(label);
@@ -95,8 +65,10 @@ test("every settings page renders", async () => {
     rendererErrors.push(error);
   });
 
-  for (const page of await readSettingsPages()) {
-    await openSettingsPage(page);
+  const navigation = await meru.openSettings();
+
+  for (const label of await readSettingsPageLabels(navigation)) {
+    await openSettingsPage(navigation, label);
   }
 
   /*
@@ -108,7 +80,7 @@ test("every settings page renders", async () => {
 });
 
 test("a switch writes its key back to the config", async () => {
-  await meru.goto("/settings/downloads");
+  await openSettingsPage(await meru.openSettings(), "Downloads");
 
   const saveAs = configSwitch("downloads.saveAs");
 
@@ -129,7 +101,7 @@ test("a switch writes its key back to the config", async () => {
 });
 
 test("a select behind a confirmation writes only once confirmed", async () => {
-  await meru.goto("/settings/updates");
+  await openSettingsPage(await meru.openSettings(), "Updates");
 
   const releaseChannel = meru.renderer.locator('[id="updates.channel"]');
 
@@ -164,12 +136,14 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 test("every field label points at its control", async () => {
   const labelledIds: string[] = [];
 
-  for (const page of await readSettingsPages()) {
+  const navigation = await meru.openSettings();
+
+  for (const label of await readSettingsPageLabels(navigation)) {
     // Opened and waited for before the DOM is read. Every page is statically
     // imported and renders in the same task as the navigation today, so a scan
     // would find it anyway — but one lazily loaded page would have this reading
     // the page before it and reporting nothing at all.
-    await openSettingsPage(page);
+    await openSettingsPage(navigation, label);
 
     /*
      * A label naming an id nothing carries is a field whose text does not click
@@ -177,10 +151,12 @@ test("every field label points at its control", async () => {
      * It is also what the rest of these tests stand on, since they address a
      * control through the label that points at it.
      */
-    const labels = await meru.renderer.locator("label[for]").evaluateAll((labelElements) =>
-      labelElements.map((label) => ({
-        labelledId: label.getAttribute("for") ?? "",
-        resolves: Boolean(label.ownerDocument.getElementById(label.getAttribute("for") ?? "")),
+    const fieldLabels = await meru.renderer.locator("label[for]").evaluateAll((labelElements) =>
+      labelElements.map((labelElement) => ({
+        labelledId: labelElement.getAttribute("for") ?? "",
+        resolves: Boolean(
+          labelElement.ownerDocument.getElementById(labelElement.getAttribute("for") ?? ""),
+        ),
       })),
     );
 
@@ -189,12 +165,12 @@ test("every field label points at its control", async () => {
     // would report the page before it, over and over.
     expect
       .soft(
-        labels.filter(({ resolves }) => !resolves).map(({ labelledId }) => labelledId),
-        page.label,
+        fieldLabels.filter(({ resolves }) => !resolves).map(({ labelledId }) => labelledId),
+        label,
       )
       .toEqual([]);
 
-    labelledIds.push(...labels.map(({ labelledId }) => labelledId));
+    labelledIds.push(...fieldLabels.map(({ labelledId }) => labelledId));
   }
 
   // Guards the walk itself, the same way the gating walk does: labels that
@@ -206,9 +182,11 @@ test("every field label points at its control", async () => {
 test("every Pro-gated control is locked on the free version", async () => {
   const gatedGroups: string[] = [];
 
-  for (const page of await readSettingsPages()) {
+  const navigation = await meru.openSettings();
+
+  for (const label of await readSettingsPageLabels(navigation)) {
     // As above: read the page this loop is on, not the one before it.
-    await openSettingsPage(page);
+    await openSettingsPage(navigation, label);
 
     /*
      * The badge is the claim that a field needs Meru Pro, and its controls being
@@ -257,7 +235,7 @@ test("every Pro-gated control is locked on the free version", async () => {
     for (const { field, usable } of gatedControls) {
       // Soft, so every gated field on the page reports rather than only the
       // first one to fail.
-      expect.soft(usable, `${page.label} — ${field}`).toEqual([]);
+      expect.soft(usable, `${label} — ${field}`).toEqual([]);
 
       gatedGroups.push(field);
     }
