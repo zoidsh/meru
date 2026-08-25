@@ -59,8 +59,46 @@ function createServiceWorkerWrapper(
  */
 const DROPPED_PERMISSIONS = new Set(["webRequest", "webRequestAuthProvider"]);
 
+/**
+ * Permissions that put an extension into Chromium's WebRequest proxy count.
+ * Chromium proxies every URL loader factory built for the browser context as
+ * soon as one loaded extension declares any of them, counted from the manifest
+ * alone with no listener and no ruleset content required. Electron then hands
+ * it a browser process factory as a navigation with a null `RenderFrameHost`
+ * and `MaybeProxyURLLoaderFactory` dereferences it, which is a segfault rather
+ * than an exception, so no caller can catch it. electron/electron#45050 carries
+ * the one line that fixes it and has sat open and unmerged, so no upgrade
+ * avoids this.
+ *
+ * Dropped so a main process `session.fetch` against an account session stays a
+ * usable primitive. An account with no view has no other way to read its unread
+ * feed, which is what the hibernation and lazy view work is built on.
+ *
+ * The cost is 1Password's rules, which scrub `user-agent`, `accept-language`
+ * and `origin` from its DNS-over-HTTPS lookups and from the
+ * `/.well-known/webauthn` request behind related-origin passkeys. Every rule it
+ * ships is `modifyHeaders`, so nothing it asks for stops being requested, and
+ * its own call site reads the namespace through `?.` and carries on without it.
+ */
+const DROPPED_NETWORK_PERMISSIONS = new Set([
+  "declarativeWebRequest",
+  "declarativeNetRequest",
+  "declarativeNetRequestWithHostAccess",
+  "declarativeNetRequestFeedback",
+]);
+
+/**
+ * The rulesets those permissions carry. Chromium rejects a manifest declaring
+ * `declarative_net_request` without a permission to match, so the key has to go
+ * with them rather than be left behind as a load error.
+ */
+const DROPPED_MANIFEST_KEYS = ["declarative_net_request"];
+
 function derivePermissions(permissions: ExtensionManifest["permissions"]) {
-  return permissions?.filter((permission) => !DROPPED_PERMISSIONS.has(permission));
+  return permissions?.filter(
+    (permission) =>
+      !DROPPED_PERMISSIONS.has(permission) && !DROPPED_NETWORK_PERMISSIONS.has(permission),
+  );
 }
 
 function parseDirectives(contentSecurityPolicy: string) {
@@ -156,7 +194,8 @@ function deriveContentScripts(
 /**
  * Points the manifest's service worker at a generated wrapper, lets its content
  * security policy reach the native messaging bridge, clamps its content scripts
- * to the sites they may run on and drops the permissions Electron cannot serve.
+ * to the sites they may run on, and drops both the permissions Electron cannot
+ * serve and the ones that arm the extensions WebRequest proxy.
  * Everything else is carried over untouched — `key`
  * above all, since without it Chromium derives the extension id from the
  * directory it was loaded from and the derived copy would answer to a different
@@ -189,6 +228,10 @@ export function deriveManifest(
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
     content_scripts: deriveContentScripts(manifest.content_scripts, contentScriptMatches),
   };
+
+  for (const droppedManifestKey of DROPPED_MANIFEST_KEYS) {
+    delete derivedManifest[droppedManifestKey];
+  }
 
   for (const strippedManifestKey of strippedManifestKeys) {
     delete derivedManifest[strippedManifestKey];
