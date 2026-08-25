@@ -55,16 +55,23 @@ test("both accounts survive into the app", async () => {
       (menuItem) => menuItem.label === "Accounts",
     );
 
-    // Up to the first separator: everything after it is a command rather than
-    // an account, and commands are not what this is counting.
     const items = accountsMenu?.submenu?.items ?? [];
 
-    return items
-      .slice(
-        0,
-        items.findIndex((menuItem) => menuItem.type === "separator"),
-      )
-      .map((menuItem) => menuItem.label);
+    /*
+     * Up to the first separator: everything after it is a command rather than
+     * an account. Guarded rather than sliced straight, because findIndex
+     * answers -1 for a submenu that lost its separator and slice(0, -1) would
+     * quietly drop the last item and go on reporting a plausible list.
+     */
+    const separatorIndex = items.findIndex((menuItem) => menuItem.type === "separator");
+
+    if (separatorIndex === -1) {
+      throw new Error(
+        "The Accounts submenu has no separator, so its accounts cannot be told from its commands",
+      );
+    }
+
+    return items.slice(0, separatorIndex).map((menuItem) => menuItem.label);
   });
 
   expect(accountLabels).toEqual(["Personal", "Work"]);
