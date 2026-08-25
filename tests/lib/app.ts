@@ -144,10 +144,17 @@ async function withTimeout(work: Promise<unknown>, timeout: number) {
   }
 }
 
-async function launchApp(
-  seedConfig: Partial<Config>,
-  options: UseAppOptions,
-): Promise<LaunchedApp> {
+/**
+ * What a test seeds the config with. A function, when what it seeds has to
+ * depend on the directory the app is about to run in — a download location
+ * inside it, say — which is made per test and so is not there to be named
+ * while the file is being read.
+ */
+export type SeedConfig =
+  | Partial<Config>
+  | ((context: { userDataDir: string }) => Partial<Config> | Promise<Partial<Config>>);
+
+async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promise<LaunchedApp> {
   /*
    * A user data directory of its own, for two reasons. The app takes a single
    * instance lock scoped to that directory and quits when it loses, so runs
@@ -156,6 +163,11 @@ async function launchApp(
    * makes a local run start from the same empty config CI gets.
    */
   const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
+
+  // Resolved here rather than where the file is read, so a seed can name the
+  // directory the app is about to run in.
+  const seededConfig =
+    typeof seedConfig === "function" ? await seedConfig({ userDataDir }) : seedConfig;
 
   /*
    * Startup validates the Pro trial against Meru's API before it creates any
@@ -173,7 +185,7 @@ async function launchApp(
    */
   await writeFile(
     path.join(userDataDir, "config.json"),
-    JSON.stringify({ "trial.expired": true, ...seedConfig }, null, "\t"),
+    JSON.stringify({ "trial.expired": true, ...seededConfig }, null, "\t"),
   );
 
   // The built binary, not `electron .`: only a packaged app has isPackaged
@@ -320,7 +332,7 @@ export type MeruApp = {
  * started from is the thing the rule exists to prevent, and it is worth more
  * than the ten seconds it costs across this suite.
  */
-export function useApp(seedConfig: Partial<Config> = {}, options: UseAppOptions = {}): MeruApp {
+export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {}): MeruApp {
   let launched: LaunchedApp | undefined;
 
   let hasFailed = false;
@@ -531,6 +543,16 @@ function requireLicenseKey() {
  * walk in `settings.e2e.ts` possible, and this is what makes its inverse
  * possible here.
  */
-export function useProApp(seedConfig: Partial<Config> = {}): MeruApp {
-  return useApp({ licenseKey: requireLicenseKey(), ...seedConfig });
+export function useProApp(seedConfig: SeedConfig = {}): MeruApp {
+  // Read here rather than inside the seed, so a file missing the key still
+  // fails as the module is read rather than once per test inside a launch.
+  const licenseKey = requireLicenseKey();
+
+  // A seed function cannot be spread — doing so would quietly drop everything
+  // it seeds and launch a Pro app with none of it.
+  if (typeof seedConfig === "function") {
+    return useApp(async (context) => ({ licenseKey, ...(await seedConfig(context)) }));
+  }
+
+  return useApp({ licenseKey, ...seedConfig });
 }
