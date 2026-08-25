@@ -49,6 +49,8 @@ public static class NativeWindow {
   public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll", SetLastError = true)]
   public static extern bool GetCursorPos(out POINT point);
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern bool SystemParametersInfo(uint action, uint param, IntPtr value, uint winIni);
   [StructLayout(LayoutKind.Sequential)]
   public struct POINT { public int X; public int Y; }
 }
@@ -76,6 +78,12 @@ const MOUSE_SCRIPT = `param([string]$Hwnd, [int]$Steps)
 ${NATIVE_METHODS}
 $handle = [IntPtr][long]$Hwnd
 $point = New-Object NativeWindow+POINT
+
+# SPI_SETDRAGFULLWINDOWS. Off, Windows draws a rubber band through the drag and
+# applies the size once on release, so the window never resizes while the mouse
+# moves and there is no continuous phase to test. A runner has it off.
+$enabled = [NativeWindow]::SystemParametersInfo(0x0025, 1, [IntPtr]::Zero, 2)
+Write-Output "dragfullwindows $enabled"
 
 # Windows warps the cursor to the border it attaches to, so where it lands is
 # read back rather than guessed at.
@@ -239,6 +247,18 @@ test("the account view follows the window through a native drag-resize", async (
   expect(layout.contentBounds?.width, "the drag did not widen the window").toBeGreaterThan(
     START_SIZE.width,
   );
+
+  /*
+   * The guard that stops the assertion below passing on nothing. A drag that
+   * resizes once is a drag Windows drew as a rubber band and applied on release,
+   * and a view has no continuous phase to lag through — which is the whole of
+   * what this test is for. `SPI_SETDRAGFULLWINDOWS` is set before the gesture for
+   * exactly that reason, and this is what says it took.
+   */
+  expect(
+    counts.resize ?? 0,
+    "the window did not resize continuously, so the drag says nothing about a view keeping up",
+  ).toBeGreaterThan(5);
 
   /*
    * Every `resize` during the drag, not only the state it settled at. A view
