@@ -21,14 +21,6 @@ bun run test:perf  # memory, CPU and bundle-size report against the built app
 - `bun run types`, `bun run lint`, and `bun run fmt:check` must pass before pushing.
 - Both `test:e2e` and `test:perf` build the app first, and both need a display: on a machine without one, wrap them as `xvfb-run -a bun run test:e2e`. Set `MERU_SKIP_BUILD=1` to run against a build already in `dist`.
 
-## Docs
-
-- `docs/` is a separately cloned private docs repo, gitignored here, and it might be absent on fresh checkouts. When it's present, read `docs/README.md` for what lives where.
-- When `docs/` is missing, run `bun run docs:clone` to clone it. If you keep repositories in a shared directory, clone it there instead and symlink `docs/` to it, so several worktrees share one clone — set `MERU_DOCS_PATH` to that directory and the script does both.
-- Check `docs/decisions.md` before reopening a settled design decision.
-- Keep `docs/architecture/` current when changing the app's structure. Larger features start as a design doc in `docs/features/` before implementation.
-- When renaming a main-process class or file, grep `docs/` for the old name and fix every reference — the docs repo has no other mechanism to catch renames.
-
 ## Dependencies
 
 - Always install packages as dev dependencies with `bun add -d <package>`. Rolldown and Vite bundle everything at build time, and Electron builder re-bundles anything in `dependencies` into the shipped app, so normal deps would ship duplicated. The only exception is packages with native modules that Electron needs to load at runtime — those must go in `dependencies` so electron-builder can package them correctly.
@@ -70,8 +62,3 @@ bun run test:perf  # memory, CPU and bundle-size report against the built app
 ## Shared utilities
 
 - For time and duration values, import `ms` from `@meru/shared/ms` — don't install or import the `ms` npm package. Example: `import { ms } from "@meru/shared/ms"; const delay = ms("1d");`
-
-## Scope and review bandwidth
-
-- When the full feature spans several concerns such as IPC wiring, UI, and state broadcasting, land the plumbing first, then each consumer in its own turn. Track the follow-ups in the conversation, the PR description, or the feature's doc in `docs/features/` so they aren't lost.
-- Open items to pick up in a **new session** — work unrelated enough to the current feature's goal that it shouldn't ride along with it — go to `docs/todo.md`, as short entries linking into `docs/` for context. It isn't a backlog for the in-progress feature, and it holds no knowledge: settled decisions go to `docs/decisions.md`, and feature roadmaps and handoffs to `docs/features/`.

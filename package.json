@@ -18,7 +18,6 @@
     "build:mac:x64": "bun run build:mac -- --x64",
     "build:win": "bun run build:js && bun run build:clean-dist && electron-builder --win",
     "dev": "bun run scripts/build.ts --dev",
-    "docs:clone": "scripts/clone-docs.sh",
     "extensions:download": "bun run scripts/download-extensions.ts",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
