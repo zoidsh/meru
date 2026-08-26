@@ -181,8 +181,6 @@ dist
 build/embedded.provisionprofile
 build/entitlements.mac.plist
 build-js
-docs
-docs/
 /extensions/
 
 # Claude
