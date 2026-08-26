@@ -3,17 +3,20 @@ import { autoUpdater } from "electron-updater";
 import { config } from "@/config";
 import { ipc } from "./ipc";
 import { log } from "./lib/log";
+import { resolveUpdateChannel } from "./lib/update-channel";
 import { main } from "./main";
 
 class AppUpdater {
   private applyChannel() {
-    const channel = config.get("updates.channel");
+    const { channel, allowPrerelease, allowDowngrade } = resolveUpdateChannel(
+      config.get("updates.channel"),
+      autoUpdater.currentVersion,
+    );
 
     // The channel setter force-enables allowDowngrade, so it must be assigned last.
-    autoUpdater.channel = channel === "stable" ? null : channel;
-    autoUpdater.allowPrerelease = channel !== "stable";
-    autoUpdater.allowDowngrade =
-      channel === "stable" && autoUpdater.currentVersion.prerelease.length > 0;
+    autoUpdater.channel = channel;
+    autoUpdater.allowPrerelease = allowPrerelease;
+    autoUpdater.allowDowngrade = allowDowngrade;
   }
 
   init() {
