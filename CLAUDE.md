@@ -23,11 +23,11 @@ bun run test:perf  # memory, CPU and bundle-size report against the built app
 
 ## Docs
 
-- `docs/` is a symlink to a private docs directory kept outside this checkout, gitignored here, and it might be absent on fresh checkouts. When it's present, read `docs/README.md` for what lives where.
-- When `docs/` is missing, set `MERU_DOCS_PATH` to that directory and run `bun run docs:link`. One directory serves every worktree, and it syncs on its own, so an edit there needs no commit and no push.
-- Check `docs/decisions.md` before reopening a settled design decision.
-- Keep `docs/architecture/` current when changing the app's structure. Larger features start as a design doc in `docs/features/` before implementation.
-- When renaming a main-process class or file, grep `docs/` for the old name and fix every reference — the docs repo has no other mechanism to catch renames.
+- The private working docs are at `$HOME/docs/meru`, outside this checkout. There is no `docs/` directory here and nothing to clone, so on a machine without them that path is simply absent and the rest of these bullets don't apply. When it's there, read `$HOME/docs/meru/README.md` for what lives where.
+- The docs are one synced folder, so an edit reaches other sessions and devices with no commit and no push, and the copy on disk is always the current one.
+- Check `$HOME/docs/meru/decisions.md` before reopening a settled design decision.
+- Keep `$HOME/docs/meru/architecture/` current when changing the app's structure. Larger features start as a design doc in `$HOME/docs/meru/features/` before implementation.
+- When renaming a main-process class or file, grep `$HOME/docs/meru` for the old name and fix every reference — the docs have no other mechanism to catch renames.
 
 ## Dependencies
 
