@@ -15,6 +15,13 @@ const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
+/**
+ * How many job ids the client remembers to recognise a redelivery by. Far more
+ * than a stream flap can put in flight at once, and bounded so a worker that
+ * runs for hours does not grow a set for as long as it lives.
+ */
+const MAX_REMEMBERED_JOB_IDS = 1000;
+
 type WorkerPort = {
   externalPort: Record<string, unknown>;
   emitMessage: (message: unknown) => void;
@@ -48,6 +55,8 @@ export function createRelayClient({
   const connectListeners = new Set<ChromeEventListener>();
 
   const ports = new Map<string, WorkerPort>();
+
+  const handledJobIds = new Set<string>();
 
   let isStopped = false;
 
@@ -210,14 +219,44 @@ export function createRelayClient({
     result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult,
   ) => postToBridge(RUNTIME_PROXY_PATHS.workerReply, { jobId, result });
 
+  /**
+   * Whether this job is new here. The relay redelivers anything it has no ack
+   * for, and an ack can go missing on its own — `postToBridge` swallows a
+   * failed POST — so a job this worker already ran can come back. Dispatching
+   * it again would run the extension's listeners a second time, which for
+   * anything that changes state is a double apply rather than a retry.
+   */
+  const isFirstDelivery = (jobId: string) => {
+    if (handledJobIds.has(jobId)) {
+      return false;
+    }
+
+    handledJobIds.add(jobId);
+
+    if (handledJobIds.size > MAX_REMEMBERED_JOB_IDS) {
+      const oldestJobId = handledJobIds.values().next().value;
+
+      if (oldestJobId !== undefined) {
+        handledJobIds.delete(oldestJobId);
+      }
+    }
+
+    return true;
+  };
+
   const handleJob = (job: RuntimeProxyJob) => {
     if (typeof job?.jobId !== "string") {
       return;
     }
 
     // Acked first: the relay redelivers a job the worker died before taking,
-    // and the ack is what says this one was taken
+    // and the ack is what says this one was taken. A redelivery is acked again
+    // rather than ignored, since a lost ack is the reason it came back.
     void postToBridge(RUNTIME_PROXY_PATHS.workerAck, { jobId: job.jobId });
+
+    if (!isFirstDelivery(job.jobId)) {
+      return;
+    }
 
     switch (job.type) {
       case "sendMessage": {

@@ -213,6 +213,85 @@ describe("createRelayClient", () => {
     });
   });
 
+  /*
+   * The relay redelivers anything it holds no ack for, and an ack can go
+   * missing on its own since a failed POST is swallowed. A redelivered job that
+   * ran here already must not run again: for anything that changes state —
+   * unlocking a vault, saving an item — a second dispatch is a double apply
+   * rather than a retry.
+   */
+  test("a redelivered job is acked again but never dispatched twice", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    startClient([chrome]);
+
+    const heard: unknown[] = [];
+
+    ((chrome.runtime as ChromeNamespace).onMessage as WrappedEvent).addListener(
+      (message, _sender, sendResponse) => {
+        heard.push(message);
+
+        (sendResponse as (response: unknown) => void)({ unlocked: true });
+      },
+    );
+
+    await stub.waitForStream();
+
+    const job = {
+      type: "sendMessage" as const,
+      jobId: "job-1",
+      message: { kind: "unlock" },
+      sender: SENDER,
+    };
+
+    stub.pushJob(job);
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerReply).length === 1, "the reply");
+
+    stub.pushJob(job);
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerAck).length === 2, "the second ack");
+
+    expect(heard).toEqual([{ kind: "unlock" }]);
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerReply)).toHaveLength(1);
+  });
+
+  test("a redelivered connect does not open the port a second time", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    startClient([chrome]);
+
+    const connected: unknown[] = [];
+
+    ((chrome.runtime as ChromeNamespace).onConnect as WrappedEvent).addListener((port) => {
+      connected.push(port);
+    });
+
+    await stub.waitForStream();
+
+    const job = {
+      type: "connect" as const,
+      jobId: "job-1",
+      portId: "port-1",
+      name: "relay",
+      sender: SENDER,
+    };
+
+    stub.pushJob(job);
+
+    await waitFor(() => connected.length === 1, "the port");
+
+    stub.pushJob(job);
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerAck).length === 2, "the second ack");
+
+    expect(connected).toHaveLength(1);
+  });
+
   test("a listener returning true keeps the channel open for a later response", async () => {
     const stub = stubBridge();
 
