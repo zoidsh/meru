@@ -51,3 +51,35 @@ test("launches and renders appearance settings", async () => {
 
   expect(rendererErrors.map((error) => error.stack ?? error.message)).toEqual([]);
 });
+
+test("a packaged run without the fixture flag loads no extensions", async () => {
+  /*
+   * The checked-in fixture extension ships inside this build, and
+   * MERU_EXTENSIONS_FIXTURE is what may load it. This launch does not set the
+   * flag, so the account session has to come up with no extensions at all —
+   * the claim that a shipped Meru loads nothing unless told to.
+   *
+   * The account's id is generated on first launch, so it is read back from
+   * the config the app wrote rather than seeded.
+   */
+  let accountId: string | undefined;
+
+  await expect
+    .poll(async () => {
+      accountId = (await meru.readConfig()).accounts?.[0]?.id;
+
+      return accountId;
+    })
+    .toEqual(expect.any(String));
+
+  const loadedExtensions = await meru.app.evaluate(
+    ({ session }, partition) =>
+      session
+        .fromPartition(partition)
+        .extensions.getAllExtensions()
+        .map((extension) => extension.id),
+    `persist:${accountId}`,
+  );
+
+  expect(loadedExtensions).toEqual([]);
+});
