@@ -400,6 +400,63 @@ describe("RuntimeProxy", () => {
     expect(await (await unackedResponse).json()).toEqual({ status: "replied", reply: "finally" });
   });
 
+  /*
+   * A worker that crashes, is killed, or is taken by the out-of-memory killer
+   * may never make its session report it stopped, and the request's own abort
+   * signal never fires — so without a backstop the job stays in flight and the
+   * shim's `sendMessage`, whose response is held open until the job settles,
+   * neither resolves nor rejects.
+   */
+  test("a worker that dies without a word ends its acked job as a closed port", async () => {
+    const harness = createHarness({ inFlightTimeoutMs: 20 });
+
+    const workerStream = await harness.openWorkerStream();
+
+    const shimResponse = harness.sendShimMessage({ kind: "unlock" });
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    await harness.ackJob(job?.jobId as string);
+
+    // Nothing more from the worker: no reply, and no stopping event either
+    const response = await shimResponse;
+
+    expect(await response.json()).toEqual({ status: "closed" });
+  });
+
+  test("a job the worker never acked ends as a missing receiving end", async () => {
+    const harness = createHarness({ inFlightTimeoutMs: 20 });
+
+    const workerStream = await harness.openWorkerStream();
+
+    const shimResponse = harness.sendShimMessage({ kind: "unlock" });
+
+    await workerStream.waitForJobs(1);
+
+    const response = await shimResponse;
+
+    expect(await response.json()).toEqual({ status: "noListener" });
+  });
+
+  test("a worker that answers in time is not cut off by the backstop", async () => {
+    const harness = createHarness({ inFlightTimeoutMs: 50 });
+
+    const workerStream = await harness.openWorkerStream();
+
+    const shimResponse = harness.sendShimMessage({ kind: "unlock" });
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    await harness.ackJob(job?.jobId as string);
+
+    await harness.replyToJob(job?.jobId as string, { status: "replied", reply: "unlocked" });
+
+    expect(await (await shimResponse).json()).toEqual({ status: "replied", reply: "unlocked" });
+
+    // Long enough that a timer left running would have fired by now
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  });
+
   test("a job past its delivery attempts fails instead of chasing the worker", async () => {
     const harness = createHarness({ maxDeliveryAttempts: 1 });
 

@@ -32,6 +32,8 @@ type RelayJobBase = {
   /** How often the job has been handed to a stream, bounding redelivery. */
   attempts: number;
   state: "queued" | "handed" | "acked";
+  /** Runs while the job is in flight, so a worker that dies quietly ends it. */
+  timer: ReturnType<typeof setTimeout> | undefined;
 };
 
 type SendMessageJob = RelayJobBase & {
@@ -94,11 +96,26 @@ export type RuntimeProxyOptions = {
    * rather than chase a worker that takes jobs without ever acking them.
    */
   maxDeliveryAttempts?: number;
+  /**
+   * How long a job handed to the worker may go unanswered before it fails the
+   * way Chrome's closed message port does.
+   */
+  inFlightTimeoutMs?: number;
 };
 
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
 
 const DEFAULT_MAX_DELIVERY_ATTEMPTS = 3;
+
+/**
+ * Five minutes, which is a backstop rather than a latency budget. Chrome puts
+ * no deadline on a `sendMessage` reply and neither should this: 1Password's
+ * biometric unlock answers only once the desktop app has prompted the user and
+ * been satisfied, and a timeout tight enough to feel responsive would be the
+ * thing that broke it. What this bounds is the wedge — a worker that dies
+ * without the session ever reporting it stopped.
+ */
+const DEFAULT_IN_FLIGHT_TIMEOUT_MS = 5 * 60_000;
 
 /**
  * The main-process relay carrying `chrome.runtime` messaging between
@@ -125,6 +142,8 @@ export class RuntimeProxy {
 
   private maxDeliveryAttempts: number;
 
+  private inFlightTimeoutMs: number;
+
   private workerSession: Session | undefined;
 
   private removeWorkerSessionListener: (() => void) | undefined;
@@ -147,6 +166,7 @@ export class RuntimeProxy {
     getTabWebContents,
     wakeTimeoutMs = DEFAULT_WAKE_TIMEOUT_MS,
     maxDeliveryAttempts = DEFAULT_MAX_DELIVERY_ATTEMPTS,
+    inFlightTimeoutMs = DEFAULT_IN_FLIGHT_TIMEOUT_MS,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
@@ -155,6 +175,8 @@ export class RuntimeProxy {
     this.wakeTimeoutMs = wakeTimeoutMs;
 
     this.maxDeliveryAttempts = maxDeliveryAttempts;
+
+    this.inFlightTimeoutMs = inFlightTimeoutMs;
   }
 
   registerRoutes(bridge: ExtensionBridge) {
@@ -422,7 +444,7 @@ export class RuntimeProxy {
 
     // Nothing more comes back for these; the ack is the end of their story
     if (job.kind === "portMessage" || job.kind === "portDisconnect") {
-      this.inFlightJobs.delete(job.jobId);
+      this.removeInFlightJob(job);
     }
   }
 
@@ -433,7 +455,7 @@ export class RuntimeProxy {
       return;
     }
 
-    this.inFlightJobs.delete(job.jobId);
+    this.removeInFlightJob(job);
 
     if (job.kind === "sendMessage") {
       const sendMessageResult = result as RuntimeProxySendMessageResult;
@@ -530,7 +552,7 @@ export class RuntimeProxy {
         continue;
       }
 
-      this.inFlightJobs.delete(job.jobId);
+      this.removeInFlightJob(job);
 
       if (job.state === "acked") {
         this.failJob(job, "closed");
@@ -578,6 +600,7 @@ export class RuntimeProxy {
       shimSession,
       attempts: 0,
       state: "queued",
+      timer: undefined,
       kind,
       ...jobFields,
     } as unknown as Extract<RelayJob, { kind: Kind }>;
@@ -632,6 +655,8 @@ export class RuntimeProxy {
       job.attempts += 1;
 
       this.inFlightJobs.set(job.jobId, job);
+
+      this.startInFlightTimer(job);
 
       try {
         stream.controller.enqueue(encodeNativeMessage(this.toJobFrame(job)));
@@ -712,6 +737,46 @@ export class RuntimeProxy {
     }
   }
 
+  /**
+   * The only death signal a worker gives is its session's
+   * `running-status-changed`, and a worker that crashes, is killed, or is taken
+   * by the out-of-memory killer may never produce one — the request's own abort
+   * signal certainly does not. Without this a job handed to that worker stays
+   * in flight for good, and since `handleSendMessage` holds its response open
+   * until the job settles, the content script's `sendMessage` never resolves
+   * and never rejects, where Chrome would long since have errored.
+   *
+   * A job the worker acked and died holding is Chrome's closed message port,
+   * the same as losing the stream; one it never acked is treated as the missing
+   * receiving end it looks like from here.
+   */
+  private startInFlightTimer(job: RelayJob) {
+    job.timer = setTimeout(() => {
+      if (this.inFlightJobs.get(job.jobId) !== job) {
+        return;
+      }
+
+      this.removeInFlightJob(job);
+
+      this.logger?.error("Extension service worker never answered a relayed job", {
+        extensionId: job.extensionId,
+        kind: job.kind,
+      });
+
+      this.failJob(job, job.state === "acked" ? "closed" : "noListener");
+    }, this.inFlightTimeoutMs);
+  }
+
+  private removeInFlightJob(job: RelayJob) {
+    this.inFlightJobs.delete(job.jobId);
+
+    if (job.timer !== undefined) {
+      clearTimeout(job.timer);
+
+      job.timer = undefined;
+    }
+  }
+
   private failQueuedJobs(extensionId: string, failure: "noListener" | "closed") {
     for (const job of this.queue(extensionId).splice(0)) {
       this.failJob(job, failure);
@@ -751,7 +816,7 @@ export class RuntimeProxy {
 
     job.isSettled = true;
 
-    this.inFlightJobs.delete(job.jobId);
+    this.removeInFlightJob(job);
 
     job.settle(result);
   }
