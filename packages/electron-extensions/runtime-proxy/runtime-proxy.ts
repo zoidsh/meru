@@ -752,6 +752,13 @@ export class RuntimeProxy {
    */
   private startInFlightTimer(job: RelayJob) {
     job.timer = setTimeout(() => {
+      /*
+       * A timer that outlives its job is inert: the job it closes over is gone
+       * from the map, or a re-handing replaced it with another object under the
+       * same id. `removeInFlightJob` clears the handle as well, so the two
+       * guard the same thing twice over — which is also why no test here can
+       * observe the clearing, and why there isn't one pretending to.
+       */
       if (this.inFlightJobs.get(job.jobId) !== job) {
         return;
       }

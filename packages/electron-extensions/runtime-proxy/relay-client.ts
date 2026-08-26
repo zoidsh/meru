@@ -31,6 +31,8 @@ type WorkerPort = {
 export type CreateRelayClientOptions = {
   /** How long a failed job stream waits before it is opened again. */
   retryDelayMs?: number;
+  /** How many handled job ids to remember before forgetting the oldest. */
+  maxRememberedJobIds?: number;
 };
 
 /**
@@ -49,6 +51,7 @@ export type CreateRelayClientOptions = {
  */
 export function createRelayClient({
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+  maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
 }: CreateRelayClientOptions = {}) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -233,7 +236,7 @@ export function createRelayClient({
 
     handledJobIds.add(jobId);
 
-    if (handledJobIds.size > MAX_REMEMBERED_JOB_IDS) {
+    if (handledJobIds.size > maxRememberedJobIds) {
       const oldestJobId = handledJobIds.values().next().value;
 
       if (oldestJobId !== undefined) {

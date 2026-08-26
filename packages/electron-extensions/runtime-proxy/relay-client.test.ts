@@ -115,8 +115,8 @@ type WrappedEvent = {
   hasListeners: () => boolean;
 };
 
-function startClient(chromeObjects: ChromeNamespace[]) {
-  const client = createRelayClient({ retryDelayMs: 5 });
+function startClient(chromeObjects: ChromeNamespace[], maxRememberedJobIds?: number) {
+  const client = createRelayClient({ retryDelayMs: 5, maxRememberedJobIds });
 
   for (const chrome of chromeObjects) {
     client.wrapRuntime(chrome);
@@ -256,6 +256,63 @@ describe("createRelayClient", () => {
 
     expect(heard).toEqual([{ kind: "unlock" }]);
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerReply)).toHaveLength(1);
+  });
+
+  /*
+   * The set of handled ids is bounded, so a worker that lives for hours cannot
+   * grow one without limit. Eviction is oldest-first, and a job old enough to
+   * be forgotten runs again: at-least-once is the guarantee that survives, and
+   * running a very old job twice beats never running a new one.
+   */
+  test("the handled-job memory is bounded, and forgets oldest first", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    startClient([chrome], 2);
+
+    const heard: unknown[] = [];
+
+    ((chrome.runtime as ChromeNamespace).onMessage as WrappedEvent).addListener(
+      (message, _sender, sendResponse) => {
+        heard.push(message);
+
+        (sendResponse as (response: unknown) => void)({ unlocked: true });
+      },
+    );
+
+    await stub.waitForStream();
+
+    const jobAt = (index: number) => ({
+      type: "sendMessage" as const,
+      jobId: `job-${index}`,
+      message: { index },
+      sender: SENDER,
+    });
+
+    // Three against a bound of two, so the first id is the one evicted
+    for (const index of [1, 2, 3]) {
+      stub.pushJob(jobAt(index));
+    }
+
+    await waitFor(
+      () => stub.postsTo(RUNTIME_PROXY_PATHS.workerReply).length === 3,
+      "three replies",
+    );
+
+    // Still remembered, so it is acked and not run again
+    stub.pushJob(jobAt(3));
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerAck).length === 4, "the fourth ack");
+
+    expect(heard).toEqual([{ index: 1 }, { index: 2 }, { index: 3 }]);
+
+    // Forgotten, so it runs a second time
+    stub.pushJob(jobAt(1));
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerReply).length === 4, "the rerun");
+
+    expect(heard).toEqual([{ index: 1 }, { index: 2 }, { index: 3 }, { index: 1 }]);
   });
 
   test("a redelivered connect does not open the port a second time", async () => {

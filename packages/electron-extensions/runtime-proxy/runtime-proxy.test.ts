@@ -452,9 +452,6 @@ describe("RuntimeProxy", () => {
     await harness.replyToJob(job?.jobId as string, { status: "replied", reply: "unlocked" });
 
     expect(await (await shimResponse).json()).toEqual({ status: "replied", reply: "unlocked" });
-
-    // Long enough that a timer left running would have fired by now
-    await new Promise((resolve) => setTimeout(resolve, 80));
   });
 
   test("a job past its delivery attempts fails instead of chasing the worker", async () => {
