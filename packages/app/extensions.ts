@@ -44,6 +44,37 @@ function getDevExtensionDirs() {
 }
 
 /**
+ * Whether this run loads the checked-in fixture extension
+ * (`packages/electron-extensions/fixture`): always in development, and behind
+ * this flag in a packaged build, which is what the end-to-end suite runs. The
+ * flag is a boolean on purpose — one that took a path would hand a shipped
+ * Meru "load any unpacked extension into every account session" from an
+ * environment variable, around both the curated catalog and the license gate.
+ * Set, it can only ever enable the fixture the app already carries.
+ */
+function isFixtureExtensionEnabled() {
+  return Boolean(process.env.MERU_EXTENSIONS_FIXTURE);
+}
+
+/**
+ * The bundled fixture, which `scripts/build.ts` assembles into
+ * `build-js/fixture-extension`. That directory is `asarUnpack`ed, because
+ * deriving reads and copies it as plain files; in development the app path is
+ * the repo root and the replace matches nothing.
+ */
+function getFixtureExtensionDirs() {
+  if (!is.dev && !isFixtureExtensionEnabled()) {
+    return [];
+  }
+
+  return [
+    path
+      .join(app.getAppPath(), "build-js", "fixture-extension")
+      .replace("app.asar", "app.asar.unpacked"),
+  ];
+}
+
+/**
  * `MERU_EXTENSIONS_STRIP=content_scripts,declarative_net_request` derives every
  * extension without those manifest keys, so a run can tell which part of an
  * extension a page is reacting to. Development only, like the extensions
@@ -94,7 +125,11 @@ async function getInstalledExtensionDirs() {
  * after an install gets that extension without anything being rebuilt.
  */
 async function getExtensionDirs() {
-  return [...getDevExtensionDirs(), ...(await getInstalledExtensionDirs())];
+  return [
+    ...getDevExtensionDirs(),
+    ...getFixtureExtensionDirs(),
+    ...(await getInstalledExtensionDirs()),
+  ];
 }
 
 /**
@@ -120,10 +155,12 @@ export const extensions = new Extensions({
   // One shared extension instance across all account sessions — one 1Password
   // sign-in instead of one per account. It has never been run against
   // 1Password itself, so nothing loads it by default: development builds opt
-  // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, and deleting this one option
-  // removes the whole feature.
+  // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, the end-to-end suite does the
+  // same alongside the fixture flag — its packaged build is the only automated
+  // coverage the runtime proxy has — and deleting this one option removes the
+  // whole feature.
   sharedInstance:
-    is.dev && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
+    (is.dev || isFixtureExtensionEnabled()) && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
       ? createSharedExtensionInstance({
           shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
           relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),

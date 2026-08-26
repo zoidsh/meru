@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Meru fixture",
+  "version": "1.0.0",
+  "description": "Meru's own test extension. It ships inside the app, loads only in development or behind the end-to-end flag, and its content scripts match loopback pages alone.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjpdyC58E6LINMdwynN1Cr88rSysuYHtG0mRMs0o1Vhh3IdBugheaJhpWozxKi75SL2eOZI3hW0oiMnhxJW5mmPWdoRL90KXX+4FxREbGJXpmAtUgWs4yBDjeePSSBffHTd4vDtByrQ/0PHmoP1fRlWUU85oJoT1y26ZGQ9FQUvnx9PYG2rviHgF8in9dsopZ8QQHCQZe7qis4Ms8zoQcf0IzKNPEn3y7L6y9LbMGp9wDAtSGqXM9EoddVQnIekv62bM43TqFJVmFc2ZrsvWV2LT0rE5HY3crZ4XLYHdh0nXPuqecmAcIl4ZpG9FGNxCDLrBhmtqSvWQ6Xq8V8ckldQIDAQAB",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+      "js": ["probe.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["fixture-frame.html"],
+      "matches": ["http://127.0.0.1/*", "http://localhost/*"]
+    }
+  ]
+}

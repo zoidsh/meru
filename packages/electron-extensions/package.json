@@ -5,7 +5,9 @@
   "exports": {
     ".": "./index.ts",
     "./crx": "./crx/index.ts",
-    "./install": "./install/index.ts"
+    "./install": "./install/index.ts",
+    "./fixture/id": "./fixture/id.ts",
+    "./fixture/probes": "./fixture/probes.ts"
   },
   "scripts": {
     "test": "bun test",
