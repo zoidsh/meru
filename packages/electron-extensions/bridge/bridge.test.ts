@@ -77,18 +77,20 @@ function createSession() {
       requestHeaders.origin = sendOptions.origin;
     }
 
-    beforeSendHeadersListener?.(
-      {
-        url,
-        frame: sendOptions.frame ?? null,
-        requestHeaders,
-      } as OnBeforeSendHeadersListenerDetails,
-      ({ requestHeaders: stampedHeaders }) => {
-        if (stampedHeaders) {
-          requestHeaders = stampedHeaders;
-        }
-      },
-    );
+    if (sendOptions.frame !== undefined) {
+      beforeSendHeadersListener?.(
+        {
+          url,
+          frame: sendOptions.frame,
+          requestHeaders,
+        } as OnBeforeSendHeadersListenerDetails,
+        ({ requestHeaders: stampedHeaders }) => {
+          if (stampedHeaders) {
+            requestHeaders = stampedHeaders;
+          }
+        },
+      );
+    }
 
     return requestHeaders;
   };
@@ -279,7 +281,7 @@ describe("ExtensionBridge", () => {
     expect(senderFrames).toEqual([undefined]);
   });
 
-  test("a caller writing the stamp header itself buys nothing", async () => {
+  test("a stamp a caller wrote itself names no frame", async () => {
     const { session, request } = createSession();
 
     const bridge = createBridge(session);
@@ -294,8 +296,13 @@ describe("ExtensionBridge", () => {
       return new Response(null, { status: 204, headers });
     });
 
-    // A frameless caller cannot conjure a frame by naming a nonce, and a
-    // caller with a frame gets its own frame recorded, not the header it wrote
+    /*
+     * The frameless caller keeps the header it wrote, because the listener that
+     * would have stripped it is the one thing it never reaches — and it gains
+     * nothing, because the value names no record. The caller with a frame is
+     * stripped and stamped, so it is recorded as itself rather than as whatever
+     * it claimed.
+     */
     await request(
       "/echo",
       { token: BRIDGE_TOKEN },
@@ -305,13 +312,13 @@ describe("ExtensionBridge", () => {
     await request(
       "/echo",
       { token: BRIDGE_TOKEN },
-      { frame, headers: { "x-extension-bridge-caller": "guessed" } },
+      { frame, headers: { "X-Extension-Bridge-Caller": "guessed" } },
     );
 
     expect(senderFrames).toEqual([undefined, frame]);
   });
 
-  test("a stolen stamp is dropped before the bridge's own goes on", async () => {
+  test("a nonce is spent by the request it was minted for", async () => {
     const { session, stampHeaders, sendWithHeaders } = createSession();
 
     const bridge = createBridge(session);
@@ -326,17 +333,21 @@ describe("ExtensionBridge", () => {
       return new Response(null, { status: 204, headers });
     });
 
-    // A frameless caller presenting a live stamp lifted from another request
-    // is stripped of it, so the victim's frame is never handed over
+    /*
+     * A frameless caller replaying a stamp is the shape of the only attack the
+     * stripping never covers, and it is not reachable: a nonce is minted in the
+     * main process after the request has left the renderer, so nothing that
+     * runs in one can read a live value. Constructed here by hand for that
+     * reason. What answers it is that a record is spent when it is read — the
+     * victim's own request takes it, and the replay that follows finds nothing.
+     */
     const victimHeaders = stampHeaders(`${EXTENSION_BRIDGE_ORIGIN}/echo`, { frame: victimFrame });
 
-    const thiefHeaders = stampHeaders(`${EXTENSION_BRIDGE_ORIGIN}/echo`, {
-      headers: victimHeaders,
-    });
+    await sendWithHeaders("/echo", JSON.stringify({ token: BRIDGE_TOKEN }), victimHeaders);
 
-    await sendWithHeaders("/echo", JSON.stringify({ token: BRIDGE_TOKEN }), thiefHeaders);
+    await sendWithHeaders("/echo", JSON.stringify({ token: BRIDGE_TOKEN }), { ...victimHeaders });
 
-    expect(senderFrames).toEqual([undefined]);
+    expect(senderFrames).toEqual([victimFrame, undefined]);
   });
 
   test("a caller record answers exactly once", async () => {

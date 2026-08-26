@@ -27,9 +27,16 @@ export const EXTENSION_BRIDGE_CALLER_HEADER = "x-extension-bridge-caller";
 
 /**
  * Bounds the caller records that were stamped but never consumed — a request
- * canceled between its headers and the handler leaves its record behind. The
- * live gap between the two stages is a handful of requests, so evicting the
- * oldest past this many loses nothing that was still coming.
+ * canceled between its headers and the handler leaves its record behind.
+ *
+ * Records go in before the handler has read the token, because the token is in
+ * the body and this listener sees only headers, so every document in the
+ * session reaches it: a page with no token at all is recorded and then refused.
+ * A document making enough concurrent bridge requests can therefore evict an
+ * honest caller's record that was still coming, which costs that caller its
+ * frame and leaves it delivering a sender of `id` alone — refused rather than
+ * misattributed. Ordinary traffic never approaches this, and the eviction is
+ * oldest-first.
  */
 export const MAX_RECORDED_CALLER_FRAMES = 1024;
 
@@ -88,6 +95,12 @@ export class ExtensionBridge {
 
     this.sessions.set(session, { ...sessionOptions, callerFramesByNonce });
 
+    // A blocking callback is what puts the record in the map before the handler
+    // reads it. That ordering is measured on Electron 43.2.0 rather than
+    // promised by it, and it is allowed to be: a record that was not there
+    // leaves the sender at `id` alone, which the extension refuses, so the
+    // failure is a refusal rather than a wrong answer.
+    //
     // The filter keeps every other request of the session — Gmail's own
     // traffic above all — out of the listener entirely. `onBeforeSendHeaders`
     // rather than `onBeforeRequest`, which is left free for an embedder's own
@@ -118,10 +131,21 @@ export class ExtensionBridge {
   /**
    * The request's headers with the caller stamp on: the frame Chromium names
    * as the initiator goes on record under a fresh nonce, and the nonce rides
-   * the request to `handleRequest`. A request without a live frame — a service
-   * worker's — is passed through unstamped, and any caller-written stamp is
-   * dropped either way, so a header the handler reads is always the bridge's
-   * own.
+   * the request to `handleRequest`.
+   *
+   * The strip loop earns its place on case: a caller writing
+   * `X-Extension-Bridge-Caller` and a stamp written in lower case are two keys
+   * on the same object and both reach the handler, where the header lookup is
+   * case-insensitive and may read either. Removing the loop is caught by
+   * `a stamp a caller wrote itself names no frame`. It covers frame requests only, because
+   * this listener is the one thing a frameless caller never reaches: measured
+   * on Electron 43.2.0, a service worker's and a dedicated worker's requests
+   * skip `onBeforeSendHeaders` entirely and arrive at the handler with whatever
+   * headers they set. What makes that safe is not the stripping but the nonce:
+   * it is minted here, after the request has left the renderer, so no caller
+   * can name a live one, and a forged value simply misses the map and delivers
+   * a sender of `id` alone. The routes that read a frame are called from the
+   * shim, which only ever runs in one.
    */
   private stampCaller(
     callerFramesByNonce: Map<string, WebFrameMain>,
