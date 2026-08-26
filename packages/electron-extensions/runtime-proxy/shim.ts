@@ -17,20 +17,22 @@ import {
 const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
 /**
- * What the content script can say about where it runs, read from the isolated
- * world's own globals. The main process checks the claim against the session's
- * frame tree before anything trusts it.
+ * What a shimmed context can say about where it runs, read from its own
+ * globals. The same two facts serve a content script and an extension page: the
+ * main process checks the claim against the session's frame tree before
+ * anything trusts it, and reads a top-level document on the extension's own
+ * scheme as the page it is.
  */
-function getContentScriptSenderReport(): RuntimeProxySenderReport {
-  const contentScriptGlobals = globalThis as unknown as {
+function getContextSenderReport(): RuntimeProxySenderReport {
+  const contextGlobals = globalThis as unknown as {
     location?: { href?: string };
     self?: unknown;
     top?: unknown;
   };
 
   return {
-    url: contentScriptGlobals.location?.href ?? "",
-    isTopFrame: contentScriptGlobals.self === contentScriptGlobals.top,
+    url: contextGlobals.location?.href ?? "",
+    isTopFrame: contextGlobals.self === contextGlobals.top,
   };
 }
 
@@ -292,16 +294,21 @@ export type InstallRuntimeProxyShimOptions = {
 
 /**
  * Shadows `chrome.runtime.sendMessage` and `chrome.runtime.connect` in a
- * content script's isolated world, pointing both at the runtime proxy instead
- * of at this session's own extension instance, which has no service worker to
- * receive them. It runs before any of the extension's own content scripts —
- * the derive prepends it to every `content_scripts` entry — so the extension
- * only ever sees the shadowed functions. Everything else on `chrome.runtime`,
- * `getURL` and `id` above all, stays exactly as Electron made it.
+ * context of a content-script-only session, pointing both at the runtime proxy
+ * instead of at this session's own extension instance, which has no service
+ * worker to receive them. It runs before any of the extension's own code — the
+ * derive prepends it to every `content_scripts` entry and writes it into every
+ * extension page ahead of the page's own scripts — so the extension only ever
+ * sees the shadowed functions. Everything else on `chrome.runtime`, `getURL`
+ * and `id` above all, stays exactly as Electron made it.
+ *
+ * `onMessage` and `onConnect` are left native, which is what bounds the shim:
+ * an extension page hears what it opened a port for, and not what the worker
+ * broadcasts with `sendMessage` to a session it isn't in.
  */
 export function installRuntimeProxyShim(
   extensionApi: ChromeNamespace,
-  { getSenderReport = getContentScriptSenderReport }: InstallRuntimeProxyShimOptions = {},
+  { getSenderReport = getContextSenderReport }: InstallRuntimeProxyShimOptions = {},
 ) {
   const runtime = extensionApi.runtime as ChromeNamespace | undefined;
 

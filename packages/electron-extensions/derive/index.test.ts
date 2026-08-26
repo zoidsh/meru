@@ -388,6 +388,11 @@ describe("deriveExtension for a shared instance", () => {
     });
 
     await writeSourceFile("content.js", "// content\n");
+
+    await writeSourceFile(
+      "popup.html",
+      `<html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'"><script src="/popup.js"></script></head></html>`,
+    );
   });
 
   test("the worker copy carries the relay client under the facade's token", async () => {
@@ -435,6 +440,42 @@ describe("deriveExtension for a shared instance", () => {
 
     expect(shimSource).toContain(bridgeToken);
     expect(shimSource).toEndWith("// shim\n");
+  });
+
+  test("the content-script-only copy's pages run the shim and may reach the bridge", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    // The popup is where a password manager keeps its unlock UI, and this copy
+    // has no worker of its own for it to talk to
+    expect(page.indexOf("/chrome-facade.js")).toBeLessThan(
+      page.indexOf("/chrome-runtime-proxy-shim.js"),
+    );
+    expect(page.indexOf("/chrome-runtime-proxy-shim.js")).toBeLessThan(page.indexOf("/popup.js"));
+
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
+  });
+
+  test("the worker copy's pages are derived exactly as the ordinary copy's", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    expect(page).not.toContain("chrome-runtime-proxy-shim.js");
+    expect(page).toContain(`content="default-src 'none'; script-src 'self'"`);
   });
 
   test("the two copies exist side by side, from one source, as one extension id", async () => {

@@ -139,6 +139,47 @@ describe("reconstructSender", () => {
     expect(firstSender.tab?.id).not.toBe(secondSender.tab?.id);
   });
 
+  test("a top-level extension page is no tab, the way Chrome's popup is none", () => {
+    const popupUrl = `chrome-extension://${EXTENSION_ID}/popup/index.html`;
+
+    // The popup's own view lives in the session and would otherwise be found
+    const contents = createContents(7, "1Password", [createFrame(popupUrl, 12)]);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: popupUrl, isTopFrame: true },
+      getTabWebContents: () => [contents],
+    });
+
+    expect(sender).toEqual({
+      id: EXTENSION_ID,
+      url: popupUrl,
+      origin: `chrome-extension://${EXTENSION_ID}`,
+    });
+  });
+
+  test("an extension frame inside a page keeps the tab hosting it", () => {
+    const menuUrl = `chrome-extension://${EXTENSION_ID}/inline/menu/menu.html`;
+
+    const mainFrame = createFrame("https://accounts.google.com/", 12);
+
+    const menuFrame = createFrame(menuUrl, 34, mainFrame);
+
+    const contents = createContents(7, "Sign in", [mainFrame, menuFrame]);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: menuUrl, isTopFrame: false },
+      getTabWebContents: () => [contents],
+    });
+
+    expect(sender.frameId).toBe(34);
+    expect(sender.tab?.id).toBe(7);
+    expect(sender.origin).toBe(`chrome-extension://${EXTENSION_ID}`);
+  });
+
   test("a report no live frame backs still delivers, without tab and frame", () => {
     const contents = createContents(7, "Sign in", [
       createFrame("https://accounts.google.com/", 12),

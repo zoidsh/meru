@@ -185,7 +185,9 @@ function deriveContentSecurityPolicy(
  * `contentScriptOnly` copy loses its `background` key entirely — Electron still
  * injects its content scripts (measured 2026-08-25) — and gets the proxy's shim
  * prepended to every one of them, so its `chrome.runtime` messaging reaches the
- * one worker instead of a receiving end that does not exist.
+ * one worker instead of a receiving end that does not exist. Its extension
+ * pages are shimmed too, which is the derive's own job rather than the
+ * manifest's.
  */
 export type SharedInstanceManifestOptions =
   | { role: "worker"; relayFileName: string }

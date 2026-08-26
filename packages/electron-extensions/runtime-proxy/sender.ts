@@ -1,9 +1,10 @@
 import type { Session, WebContents } from "electron";
 import { getExtensionFrameId } from "../web-navigation/web-navigation";
-import type {
-  RuntimeProxySender,
-  RuntimeProxySenderReport,
-  RuntimeProxyTab,
+import {
+  EXTENSION_SCHEME_PREFIX,
+  type RuntimeProxySender,
+  type RuntimeProxySenderReport,
+  type RuntimeProxyTab,
 } from "./bridge-protocol";
 
 /**
@@ -78,6 +79,15 @@ export type ReconstructSenderOptions = {
  * and frame ids come from that frame, never from the report. A report no frame
  * backs — the page navigated away mid-flight — still delivers, as a sender
  * without `tab` and `frameId`.
+ *
+ * An extension page reports itself the same way, and a top-level one is no tab:
+ * Chrome gives an action popup's messages a sender of `id`, `url` and `origin`
+ * alone, so that is what the worker sees. An extension page in a subframe is a
+ * different thing — 1Password's inline menu is an iframe of the extension
+ * inside a web page — and keeps the host tab and its frame id, which the frame
+ * lookup finds without being told. Meru renders extension pages only as the
+ * popup; Chrome would hand one opened in a browser tab a `tab`, and there is no
+ * such surface here.
  */
 export function reconstructSender({
   session,
@@ -90,6 +100,10 @@ export function reconstructSender({
     url: report.url,
     origin: getOrigin(report.url),
   };
+
+  if (report.isTopFrame && report.url.startsWith(EXTENSION_SCHEME_PREFIX)) {
+    return sender;
+  }
 
   for (const contents of getTabWebContents(session)) {
     if (contents.isDestroyed()) {
@@ -115,7 +129,20 @@ export function reconstructSender({
   return sender;
 }
 
+/**
+ * `new URL().origin` answers "null" for every scheme it does not know as
+ * special, and outside a browser process `chrome-extension:` is one of those.
+ * Chromium gives an extension URL the origin the extension runs on, which is
+ * what an extension checking `sender.origin` against its own `getURL("")`
+ * expects — 1Password refuses a request from any other origin.
+ */
 function getOrigin(url: string) {
+  if (url.startsWith(EXTENSION_SCHEME_PREFIX)) {
+    const extensionId = url.slice(EXTENSION_SCHEME_PREFIX.length).replace(/[/?#].*$/, "");
+
+    return `${EXTENSION_SCHEME_PREFIX}${extensionId}`;
+  }
+
   try {
     return new URL(url).origin;
   } catch {

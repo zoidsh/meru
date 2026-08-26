@@ -3,7 +3,7 @@ import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
-import { injectFacadeScript } from "./html";
+import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
   deriveManifest,
   type ExtensionManifest,
@@ -31,7 +31,7 @@ const RUNTIME_PROXY_RELAY_FILE_NAME = "chrome-runtime-proxy-relay.js";
 const CONTENT_SCRIPT_ONLY_DIR_SUFFIX = "-content-scripts";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 6;
+const DERIVE_VERSION = 7;
 
 /**
  * The copy's part in one shared extension instance serving every session (see
@@ -115,7 +115,24 @@ async function directoryExists(dirPath: string) {
 /** Chromium serves `Popup.HTM` as a page just as well, so the net is this wide. */
 const PAGE_FILE_EXTENSIONS = new Set([".html", ".htm"]);
 
-async function injectFacadeIntoPages(derivedDir: string) {
+/**
+ * Writes the loader's scripts into every page of the copy. A content-script-only
+ * copy has no worker of its own to receive what its pages send, so the proxy's
+ * shim goes in behind the facade and its pages are let through to the bridge —
+ * both only for that role, so the ordinary copy is derived byte for byte as it
+ * always was.
+ */
+async function derivePages(
+  derivedDir: string,
+  sharedInstance: SharedInstanceDeriveOptions | undefined,
+) {
+  const isContentScriptOnly = sharedInstance?.role === "contentScriptOnly";
+
+  const scriptUrls = [
+    `/${FACADE_FILE_NAME}`,
+    ...(isContentScriptOnly ? [`/${RUNTIME_PROXY_SHIM_FILE_NAME}`] : []),
+  ];
+
   const fileNames = await readdir(derivedDir, { recursive: true });
 
   for (const fileName of fileNames) {
@@ -127,7 +144,11 @@ async function injectFacadeIntoPages(derivedDir: string) {
 
     const page = await readFile(pagePath, "utf8");
 
-    await writeFile(pagePath, injectFacadeScript(page, `/${FACADE_FILE_NAME}`));
+    const bridgeReachablePage = isContentScriptOnly
+      ? allowPageConnectSource(page, `${EXTENSION_BRIDGE_SCHEME}:`)
+      : page;
+
+    await writeFile(pagePath, injectPageScripts(bridgeReachablePage, scriptUrls));
   }
 }
 
@@ -210,7 +231,7 @@ export async function deriveExtension({
       await writeFile(path.join(derivedDir, SERVICE_WORKER_FILE_NAME), serviceWorkerWrapper);
     }
 
-    await injectFacadeIntoPages(derivedDir);
+    await derivePages(derivedDir, sharedInstance);
 
     await writeFile(stampPath, stamp);
   }
