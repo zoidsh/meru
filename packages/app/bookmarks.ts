@@ -8,6 +8,7 @@ import { accounts } from "./accounts";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { Popup } from "./lib/popup";
+import { licenseKey } from "./license-key";
 
 /**
  * The URLs an account has saved. A bookmark keeps the URL, title and app it was
@@ -37,7 +38,18 @@ class Bookmarks {
     });
   }
 
+  /**
+   * An account's bookmarks, which the free version has none of. A bookmark
+   * opens a workspace app, and those are Pro, so every reader here — the popup,
+   * the star on a tab row, opening one — is answered with an empty list rather
+   * than gated one at a time. A trial that ended would otherwise have left its
+   * bookmarks opening apps indefinitely.
+   */
   getAccountBookmarks(accountId: AccountConfig["id"]): Bookmark[] {
+    if (!licenseKey.isValid) {
+      return [];
+    }
+
     const accountConfig = config.get("accounts").find((account) => account.id === accountId);
 
     // Accounts written before bookmarks became a list of their own carry none
@@ -45,6 +57,13 @@ class Bookmarks {
   }
 
   private setAccountBookmarks(accountId: AccountConfig["id"], updatedBookmarks: Bookmark[]) {
+    // Every list written here is built from the empty one above, so a write
+    // without a license would erase the bookmarks a license or a trial made.
+    // Activating one brings them back.
+    if (!licenseKey.isValid) {
+      return;
+    }
+
     config.set(
       "accounts",
       config.get("accounts").map((accountConfig) =>

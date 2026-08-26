@@ -202,11 +202,30 @@ class Accounts {
     }
   }
 
+  /**
+   * The accounts the app runs on, which is not everything the config holds. A
+   * second account and a workspace app are both Pro, so the free version is
+   * handed one account carrying no saved tabs — and every consumer reads them
+   * from here, which is what keeps the gate off the paths that use a tab.
+   * Restoring one, loading it on launch and waking a dormant one were each
+   * ungated on their own, so a trial that ended left its pinned apps working
+   * indefinitely.
+   *
+   * What the config holds is left alone: this slices what it returns, so
+   * activating a license brings back the accounts and the tabs the user had.
+   * Nothing written back to disk may be built from this list.
+   */
   getAccountConfigs() {
     const accountConfigs = config.get("accounts");
 
     if (!licenseKey.isValid) {
-      return accountConfigs.slice(0, 1);
+      return accountConfigs.slice(0, 1).map((accountConfig) => ({
+        ...accountConfig,
+        workspaceApps: {
+          ...accountConfig.workspaceApps,
+          savedTabs: [],
+        },
+      }));
     }
 
     return accountConfigs;
@@ -273,9 +292,13 @@ class Accounts {
   }
 
   selectAccount(selectedAccountId: string) {
+    // Written from what the config holds rather than from `getAccountConfigs`,
+    // which is filtered down for the free version: selecting an account there
+    // would have persisted that filtering, dropping every account past the
+    // first and the saved tabs of the one that stayed.
     config.set(
       "accounts",
-      this.getAccountConfigs().map((accountConfig) => {
+      config.get("accounts").map((accountConfig) => {
         return {
           ...accountConfig,
           selected: accountConfig.id === selectedAccountId,
@@ -453,9 +476,16 @@ class Accounts {
       return;
     }
 
+    // The free version restores no saved tabs, so its accounts hold none to
+    // serialize — and writing that back would erase what the user pinned under
+    // a license or a trial, on the quit after it ended.
+    if (!licenseKey.isValid) {
+      return;
+    }
+
     config.set(
       "accounts",
-      this.getAccountConfigs().map((accountConfig) => {
+      config.get("accounts").map((accountConfig) => {
         const instance = this.instances.get(accountConfig.id);
 
         if (!instance) {

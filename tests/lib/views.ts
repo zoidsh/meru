@@ -22,6 +22,14 @@ export type ViewSnapshot = {
    */
   storagePath: string;
   isDefaultSession: boolean;
+  /**
+   * Whether the view is still loading. What it is for is timing: a view that has
+   * finished is proof the main process has run past whatever awaited that load,
+   * which is the only handle a test has on startup steps it cannot otherwise
+   * see. Asserting an absence before them passes against an app that was about
+   * to do the thing.
+   */
+  isLoading: boolean;
 };
 
 /**
@@ -49,6 +57,7 @@ export function readViews(meru: MeruApp): Promise<ViewSnapshot[]> {
         bounds: child.getBounds(),
         storagePath: webContents ? (webContents.session.storagePath ?? "") : "",
         isDefaultSession: webContents ? webContents.session === session.defaultSession : false,
+        isLoading: webContents ? webContents.isLoading() : false,
       };
     });
   });
