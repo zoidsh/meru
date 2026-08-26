@@ -15,7 +15,6 @@ export type ViewSnapshot = {
   url: string;
   title: string;
   bounds: Rectangle;
-  visible: boolean;
   /**
    * Where the view's session keeps its data. A partitioned session names the
    * partition in that path, which is what makes the account a view belongs to
@@ -48,7 +47,6 @@ export function readViews(meru: MeruApp): Promise<ViewSnapshot[]> {
         url: webContents ? webContents.getURL() : "",
         title: webContents ? webContents.getTitle() : "",
         bounds: child.getBounds(),
-        visible: child.getVisible(),
         storagePath: webContents ? (webContents.session.storagePath ?? "") : "",
         isDefaultSession: webContents ? webContents.session === session.defaultSession : false,
       };

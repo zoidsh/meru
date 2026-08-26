@@ -21,6 +21,7 @@ import { expect, test } from "@playwright/test";
 import { seedAccount, seedSavedTab } from "./lib/accounts";
 import { useApp } from "./lib/app";
 import { DOWNLOAD_BODY, DOWNLOAD_FILE_NAME, startTestServer, type TestServer } from "./lib/server";
+import { waitForVerticalTabs } from "./lib/strip";
 import { findViewByUrl, readUnfilledSpace, readViews } from "./lib/views";
 
 /*
@@ -35,6 +36,17 @@ const RESTORED_TAB_TITLE = "Calendar";
 
 /** The saved tab seeded without it, so it comes back as an entry with nothing behind it. */
 const DORMANT_TAB_TITLE = "Keep";
+
+/*
+ * What the served pages are titled, deliberately not the workspace app labels
+ * above. `WorkspaceApp.resolveTitle` falls back to the app's label when no page
+ * title ever arrives, so a page titled "Calendar" would leave the Calendar tab
+ * reading "Calendar" whether it loaded or not — and every assertion on the tab
+ * would hold against a view that never fetched anything.
+ */
+const RESTORED_PAGE_TITLE = "Restored Stand-In";
+
+const DORMANT_PAGE_TITLE = "Woken Stand-In";
 
 let server: TestServer;
 
@@ -59,6 +71,13 @@ const meru = useApp(async ({ userDataDir }) => {
 
   return {
     "downloads.location": downloadsLocation,
+    /*
+     * Seeded so that the launcher has apps to offer. Both hosts gate it on
+     * `isLicenseKeyValid && launcherApps.length > 0`, and the default list is
+     * empty — so without this the launcher is absent because it has nothing to
+     * show, and the assertion below would hold with the license check deleted.
+     */
+    "workspaceApps.launcherApps": ["calendar", "tasks"],
     accounts: [
       seedAccount({
         id: ACCOUNT_ID,
@@ -66,13 +85,13 @@ const meru = useApp(async ({ userDataDir }) => {
         savedTabs: [
           seedSavedTab({
             app: "calendar",
-            url: server.pageUrl(RESTORED_TAB_TITLE),
+            url: server.pageUrl(RESTORED_PAGE_TITLE),
             title: RESTORED_TAB_TITLE,
             loadOnLaunch: true,
           }),
           seedSavedTab({
             app: "keep",
-            url: server.pageUrl(DORMANT_TAB_TITLE),
+            url: server.pageUrl(DORMANT_PAGE_TITLE),
             title: DORMANT_TAB_TITLE,
           }),
         ],
@@ -113,19 +132,22 @@ test("a saved tab is restored into a child view of its own", async () => {
 
   const restoredView = findViewByUrl(views, server.origin);
 
-  expect(restoredView?.url).toBe(server.pageUrl(RESTORED_TAB_TITLE));
+  expect(restoredView?.url).toBe(server.pageUrl(RESTORED_PAGE_TITLE));
 
   // The view really loaded the page, rather than being attached with a URL set
   // on it: a title only exists once a document has parsed.
-  expect(restoredView?.title).toBe(RESTORED_TAB_TITLE);
+  expect(restoredView?.title).toBe(RESTORED_PAGE_TITLE);
 
   /*
-   * The tab the seed named is in the strip, and it is showing the page's title
-   * rather than the one it was saved with. A restored tab follows the app it
-   * holds, so those two agreeing here is the seeded title being overwritten by
-   * a page that actually arrived.
+   * And the strip is showing the page's title rather than the one the tab was
+   * saved with, which is a restored tab following the app it holds. The two
+   * titles are deliberately different, so this fails against a view that was
+   * attached and never fetched anything — where the tab would fall back to the
+   * workspace app's own label.
    */
-  await expect(meru.renderer.getByRole("button", { name: RESTORED_TAB_TITLE })).toBeVisible();
+  await expect(meru.renderer.getByRole("button", { name: RESTORED_PAGE_TITLE })).toBeVisible();
+
+  await expect(meru.renderer.getByRole("button", { name: RESTORED_TAB_TITLE })).toHaveCount(0);
 });
 
 test("a restored view is inset by the chrome the renderer owns", async () => {
@@ -170,7 +192,14 @@ test("waking a dormant tab adds a view and brings it to the front", async () => 
    */
   const viewsBefore = await readViews(meru);
 
-  expect(viewsBefore.at(-1)?.title).toBe("Gmail");
+  /*
+   * Named by what it is not, because the only other view is Gmail's and its
+   * title is whatever Google served — a sign-in page, or Chromium's network
+   * error page on a runner with no route out. Asserting that the restored
+   * workspace app is behind says the same thing about z-order and asks nothing
+   * of a third party.
+   */
+  expect(viewsBefore.at(-1)?.url.startsWith(server.origin)).toBe(false);
 
   /*
    * Opened by clicking the tab, which is how anyone opens one. The dormant tab
@@ -186,11 +215,11 @@ test("waking a dormant tab adds a view and brings it to the front", async () => 
   // The woken tab is the active one, so its view is the one in front now.
   await expect
     .poll(async () => (await readViews(meru)).at(-1)?.url)
-    .toBe(server.pageUrl(DORMANT_TAB_TITLE));
+    .toBe(server.pageUrl(DORMANT_PAGE_TITLE));
 
   // And the tab that was already open kept its view rather than being torn down
   // and rebuilt behind the new one.
-  expect(findViewByUrl(viewsAfter, server.pageUrl(RESTORED_TAB_TITLE))).toBeDefined();
+  expect(findViewByUrl(viewsAfter, server.pageUrl(RESTORED_PAGE_TITLE))).toBeDefined();
 });
 
 test("a workspace app view runs in its account's session", async () => {
@@ -226,11 +255,15 @@ test("the workspace apps launcher is absent without a license", async () => {
    * license unlocks, so a launcher that stopped being gated fails here, and one
    * that stopped appearing at all fails there.
    */
-  await expect(meru.renderer.getByRole("button", { name: "Open app" })).toHaveCount(0);
+  /*
+   * The strip is waited for first, which is what makes the absence below a
+   * decision the app made rather than a moment arriving too early. An earlier
+   * version of this test asserted straight away and passed while the app was
+   * showing the launcher — see `waitForVerticalTabs`.
+   */
+  await waitForVerticalTabs(meru);
 
-  // Read against something that is on screen, so a strip that failed to render
-  // at all cannot pass this by having nothing in it.
-  await expect(meru.renderer.getByRole("button", { name: "Gmail" })).toBeVisible();
+  await expect(meru.renderer.getByRole("button", { name: "Open app" })).toHaveCount(0);
 });
 
 test("a download from a workspace app lands on disk and in the history", async () => {

@@ -37,8 +37,12 @@ test.afterAll(async () => {
 });
 
 const meru = useProApp(() => ({
-  // Two, so the launcher resolves to a button with a menu behind it rather than
-  // laying its apps out inline, and so the menu has more than one thing in it.
+  /*
+   * Two, so the menu has more than one thing in it and so one of them is an app
+   * the selected account has never had as a saved tab. The strip's launcher is
+   * a single button with a dropdown whatever the count — the display setting
+   * that lays apps out inline is a titlebar concern.
+   */
   "workspaceApps.launcherApps": ["calendar", "tasks"],
   accounts: [
     seedAccount({
@@ -92,7 +96,7 @@ test("each account's views run in a session of its own", async () => {
    */
   expect(views).toHaveLength(4);
 
-  const storagePathsByAccount = new Map<string, string[]>();
+  const viewUrlsByAccount = new Map<string, string[]>();
 
   for (const view of views) {
     expect(view.isDefaultSession, view.url).toBe(false);
@@ -103,8 +107,8 @@ test("each account's views run in a session of its own", async () => {
 
     expect(accountId, `${view.url} is in no account's partition`).toBeDefined();
 
-    storagePathsByAccount.set(accountId as string, [
-      ...(storagePathsByAccount.get(accountId as string) ?? []),
+    viewUrlsByAccount.set(accountId as string, [
+      ...(viewUrlsByAccount.get(accountId as string) ?? []),
       view.url,
     ]);
   }
@@ -114,10 +118,10 @@ test("each account's views run in a session of its own", async () => {
    * that landed in the other account's partition would be signed in as the
    * wrong person — which is the whole reason the sessions are split.
    */
-  expect(storagePathsByAccount.size).toBe(2);
+  expect(viewUrlsByAccount.size).toBe(2);
 
-  expect(storagePathsByAccount.get(FIRST_ACCOUNT_ID)).toHaveLength(2);
-  expect(storagePathsByAccount.get(SECOND_ACCOUNT_ID)).toHaveLength(2);
+  expect(viewUrlsByAccount.get(FIRST_ACCOUNT_ID)).toHaveLength(2);
+  expect(viewUrlsByAccount.get(SECOND_ACCOUNT_ID)).toHaveLength(2);
 
   // The two partitions really are different directories, rather than one path
   // that happens to contain both ids.
@@ -145,7 +149,13 @@ test("the launcher opens a workspace app that was never a saved tab", async () =
 
   await expect(launcherMenu.getByRole("menuitem")).toHaveCount(2);
 
-  await launcherMenu.getByRole("menuitem").first().click();
+  /*
+   * The last item is Tasks, which the selected account has never held as a saved
+   * tab — the first is Calendar, which it has, so opening that one would prove
+   * nothing this test's name claims. Tasks is seeded on the other account, and
+   * an account's tabs are its own.
+   */
+  await launcherMenu.getByRole("menuitem").last().click();
 
   /*
    * A view is created for it. What that view goes on to load is a real Google

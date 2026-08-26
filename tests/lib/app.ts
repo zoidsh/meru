@@ -164,10 +164,25 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
    */
   const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
 
-  // Resolved here rather than where the file is read, so a seed can name the
-  // directory the app is about to run in.
-  const seededConfig =
-    typeof seedConfig === "function" ? await seedConfig({ userDataDir }) : seedConfig;
+  /*
+   * Resolved here rather than where the file is read, so a seed can name the
+   * directory the app is about to run in.
+   *
+   * A seed that throws takes the directory with it. Nothing has been assigned
+   * to `launched` yet, so `afterEach` would throw "The app has not been
+   * launched yet" over the top of the real error and leave the directory behind
+   * on every test in the file.
+   */
+  let seededConfig: Partial<Config>;
+
+  try {
+    seededConfig =
+      typeof seedConfig === "function" ? await seedConfig({ userDataDir }) : seedConfig;
+  } catch (error) {
+    await rm(userDataDir, { recursive: true, force: true });
+
+    throw error;
+  }
 
   /*
    * Startup validates the Pro trial against Meru's API before it creates any
