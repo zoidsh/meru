@@ -4,6 +4,7 @@ import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
 import { encodeNativeMessage } from "../native-messaging/framing";
 import {
+  EXTENSION_SCHEME_PREFIX,
   PORT_CLOSED_ERROR,
   RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
@@ -22,8 +23,6 @@ import {
   type RuntimeProxyWorkerReplyRequest,
 } from "./bridge-protocol";
 import { parseSenderReport, reconstructSender, type RuntimeProxyTabsProvider } from "./sender";
-
-const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 
 type RelayJobBase = {
   jobId: string;
@@ -103,8 +102,8 @@ const DEFAULT_MAX_DELIVERY_ATTEMPTS = 3;
 
 /**
  * The main-process relay carrying `chrome.runtime` messaging between
- * content-script-only sessions and the one session that keeps an extension's
- * service worker.
+ * content-script-only sessions — their content scripts and their extension
+ * pages alike — and the one session that keeps an extension's service worker.
  *
  * The shim's calls arrive as bridge requests; jobs flow to the worker on a
  * streaming response its relay client keeps parked, and replies come back as

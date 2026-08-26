@@ -5,8 +5,9 @@ import type { RuntimeProxyTabsProvider } from "./sender";
 
 export type CreateSharedExtensionInstanceOptions = {
   /**
-   * The bundled content-script shim, written into every content-script-only
-   * copy and prepended to each of its `content_scripts` entries.
+   * The bundled shim, written into every content-script-only copy, prepended to
+   * each of its `content_scripts` entries and injected into each of its
+   * extension pages.
    */
   shimScriptPath: string;
   /**
@@ -23,9 +24,11 @@ export type CreateSharedExtensionInstanceOptions = {
  * instance per session: the first session set up keeps the whole extension —
  * the one service worker, the one `chrome.storage` — and every later session
  * gets a content-script-only copy whose `chrome.runtime` messaging the
- * `RuntimeProxy` relays to that worker and back. The prize is one sign-in to a
- * password manager instead of one per account; one worker at any session count
- * instead of one per session comes with it.
+ * `RuntimeProxy` relays to that worker and back — from its content scripts and
+ * from its extension pages, which is where a password manager keeps its unlock
+ * UI. The prize is one sign-in to a password manager instead of one per
+ * account; one worker at any session count instead of one per session comes
+ * with it.
  *
  * The whole feature hangs off the one `sharedInstance` option this creates a
  * value for. An embedder that never passes it runs exactly as before, and

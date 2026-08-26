@@ -3,13 +3,17 @@
  * shared by the content-script shim, the worker-side relay client, and the
  * main-process relay.
  *
- * The proxy carries `chrome.runtime` messaging from content scripts in
- * worker-less sessions to the one session that keeps the extension's service
- * worker. Content-script calls go up as ordinary bridge POSTs; everything
- * flowing the other way rides a streaming response body — port frames to a
- * content script, jobs to the worker — in the same length-prefixed JSON frames
- * native messaging uses (`native-messaging/framing.ts`).
+ * The proxy carries `chrome.runtime` messaging from the contexts of a
+ * worker-less session — its content scripts and its extension pages, the action
+ * popup above all — to the one session that keeps the extension's service
+ * worker. Their calls go up as ordinary bridge POSTs; everything flowing the
+ * other way rides a streaming response body — port frames to the caller, jobs
+ * to the worker — in the same length-prefixed JSON frames native messaging uses
+ * (`native-messaging/framing.ts`).
  */
+
+/** What every extension URL starts with, from a worker scope to a page's own. */
+export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 
 export const RUNTIME_PROXY_PATHS = {
   /** Content-script side, called by the shim. */
@@ -38,11 +42,13 @@ export const RECEIVING_END_ERROR = "Could not establish connection. Receiving en
 export const PORT_CLOSED_ERROR = "The message port closed before a response was received.";
 
 /**
- * What a content script can truthfully say about itself: a bridge request
+ * What a shimmed context can truthfully say about itself: a bridge request
  * carries no sender at all — no `Origin` header, nothing — so the shim reports
  * where it runs and the main process checks the claim against the session's
  * real frame tree before building the sender the worker sees. The bridge token
- * has already proven the caller is the extension's own isolated world.
+ * has already proven the caller is the extension's own — its isolated world, or
+ * one of its pages. Together the two fields say which: a top-level document on
+ * the extension's own scheme is an extension page, and no tab.
  */
 export type RuntimeProxySenderReport = {
   url: string;
@@ -109,8 +115,9 @@ export type RuntimeProxyTab = {
 
 /**
  * The `MessageSender` a relayed message hands the worker's listeners. `tab` and
- * `frameId` are missing when the reported frame could not be found in the
- * session — it navigated away while the message was in flight.
+ * `frameId` are missing when the message came from an extension page, which is
+ * no tab, and when the reported frame could not be found in the session — it
+ * navigated away while the message was in flight.
  */
 export type RuntimeProxySender = {
   id: string;
