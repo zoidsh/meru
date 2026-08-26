@@ -255,6 +255,16 @@ export class Tabs {
   activateTab(tabId: string) {
     const activatedTab = this.getTab(tabId);
 
+    // A tab id outlives the tab it names: hibernating one swaps it for a
+    // `DormantTab` under an id of its own, so anything holding the old id —
+    // a notification click, above all — asks for a tab that is no longer here.
+    // Making it the active id instead is what turns that into a thrown
+    // `activeTab` on the menu refresh, the view refresh, and every sweep tick
+    // after it.
+    if (!activatedTab) {
+      return;
+    }
+
     if (activatedTab instanceof WorkspaceApp && activatedTab.isWindowed) {
       activatedTab.focusWindow();
 
