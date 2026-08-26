@@ -114,15 +114,18 @@ export type RuntimeProxyTab = {
 };
 
 /**
- * The `MessageSender` a relayed message hands the worker's listeners. `tab` and
- * `frameId` are missing when the message came from an extension page, which is
- * no tab, and when the reported frame could not be found in the session — it
- * navigated away while the message was in flight.
+ * The `MessageSender` a relayed message hands the worker's listeners. Only `id`
+ * is always there: everything else is held back unless a live frame of the
+ * session was found at the reported URL, so a report no frame backs — the page
+ * navigated away while the message was in flight, or the report was never true
+ * — arrives carrying nothing but the extension's own id. `tab` and `frameId`
+ * are missing on top of that when the message came from an extension page,
+ * which is no tab.
  */
 export type RuntimeProxySender = {
   id: string;
-  url: string;
-  origin: string;
+  url?: string;
+  origin?: string;
   frameId?: number;
   tab?: RuntimeProxyTab;
 };

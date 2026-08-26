@@ -96,24 +96,6 @@ describe("reconstructSender", () => {
     expect(sender.tab?.id).toBe(7);
   });
 
-  test("a report claiming top for a URL only a subframe has matches nothing", () => {
-    const mainFrame = createFrame("https://accounts.google.com/", 12);
-
-    const subFrame = createFrame("https://accounts.google.com/frame", 34, mainFrame);
-
-    const contents = createContents(7, "Sign in", [mainFrame, subFrame]);
-
-    const sender = reconstructSender({
-      session,
-      extensionId: EXTENSION_ID,
-      report: { url: "https://accounts.google.com/frame", isTopFrame: true },
-      getTabWebContents: () => [contents],
-    });
-
-    expect(sender.tab).toBeUndefined();
-    expect(sender.frameId).toBeUndefined();
-  });
-
   test("tab ids are WebContents ids, so two sessions' tabs never collide", () => {
     // Electron numbers WebContents across the app; the fake ids just mirror that
     const firstSessionContents = createContents(3, "First", [createFrame("https://a.test/", 1)]);
@@ -142,7 +124,7 @@ describe("reconstructSender", () => {
   test("a top-level extension page is no tab, the way Chrome's popup is none", () => {
     const popupUrl = `chrome-extension://${EXTENSION_ID}/popup/index.html`;
 
-    // The popup's own view lives in the session and would otherwise be found
+    // The popup's own view backs the report; what it does not become is a tab
     const contents = createContents(7, "1Password", [createFrame(popupUrl, 12)]);
 
     const sender = reconstructSender({
@@ -180,7 +162,7 @@ describe("reconstructSender", () => {
     expect(sender.origin).toBe(`chrome-extension://${EXTENSION_ID}`);
   });
 
-  test("a report no live frame backs still delivers, without tab and frame", () => {
+  test("a report no live frame backs is not honored, url and origin included", () => {
     const contents = createContents(7, "Sign in", [
       createFrame("https://accounts.google.com/", 12),
     ]);
@@ -192,14 +174,44 @@ describe("reconstructSender", () => {
       getTabWebContents: () => [contents],
     });
 
-    expect(sender).toEqual({
-      id: EXTENSION_ID,
-      url: "https://gone.test/",
-      origin: "https://gone.test",
-    });
+    // Reporting a URL the session does not have buys nothing but the id: an
+    // extension checking `sender.origin` against its own then refuses it
+    expect(sender).toEqual({ id: EXTENSION_ID });
   });
 
-  test("an unparseable URL still yields a sender", () => {
+  test("an extension page no live frame backs is not honored either", () => {
+    const contents = createContents(7, "Sign in", [
+      createFrame("https://accounts.google.com/", 12),
+    ]);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: `chrome-extension://${EXTENSION_ID}/popup/index.html`, isTopFrame: true },
+      getTabWebContents: () => [contents],
+    });
+
+    expect(sender).toEqual({ id: EXTENSION_ID });
+  });
+
+  test("a content script cannot borrow a frame by claiming the wrong side of the top-frame line", () => {
+    const mainFrame = createFrame("https://accounts.google.com/", 12);
+
+    const subFrame = createFrame("https://accounts.google.com/frame", 34, mainFrame);
+
+    const contents = createContents(7, "Sign in", [mainFrame, subFrame]);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: "https://accounts.google.com/frame", isTopFrame: true },
+      getTabWebContents: () => [contents],
+    });
+
+    expect(sender).toEqual({ id: EXTENSION_ID });
+  });
+
+  test("an unparseable URL backs nothing, so it yields the id alone", () => {
     const sender = reconstructSender({
       session,
       extensionId: EXTENSION_ID,
@@ -207,6 +219,6 @@ describe("reconstructSender", () => {
       getTabWebContents: () => [],
     });
 
-    expect(sender.origin).toBe("null");
+    expect(sender).toEqual({ id: EXTENSION_ID });
   });
 });
