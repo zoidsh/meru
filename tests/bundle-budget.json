@@ -1,6 +1,8 @@
 {
   "app.js": 2294784,
   "extensions-chrome-facade.js": 25600,
+  "extensions-runtime-proxy-relay.js": 15360,
+  "extensions-runtime-proxy-shim.js": 15360,
   "preload-gmail.js": 108544,
   "preload-renderer.js": 5120,
   "preload-workspace-app.js": 84992,
