@@ -464,7 +464,7 @@ describe("deriveExtension for a shared instance", () => {
     );
   });
 
-  test("the worker copy's pages are derived exactly as the ordinary copy's", async () => {
+  test("the worker copy's pages skip the shim but still reach the bridge", async () => {
     const { derivedDir } = await deriveExtension({
       sourceDir,
       derivedExtensionsDir,
@@ -475,7 +475,27 @@ describe("deriveExtension for a shared instance", () => {
     const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
 
     expect(page).not.toContain("chrome-runtime-proxy-shim.js");
-    expect(page).toContain(`content="default-src 'none'; script-src 'self'"`);
+
+    // The facade calls the bridge from pages whatever the copy's role —
+    // `connectNative` above all — and the page's own policy would refuse it
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
+  });
+
+  test("the ordinary copy's pages reach the bridge too, shared instance or none", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    expect(page).not.toContain("chrome-runtime-proxy-shim.js");
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
   });
 
   test("the two copies exist side by side, from one source, as one extension id", async () => {

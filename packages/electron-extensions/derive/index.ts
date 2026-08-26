@@ -31,7 +31,7 @@ const RUNTIME_PROXY_RELAY_FILE_NAME = "chrome-runtime-proxy-relay.js";
 const CONTENT_SCRIPT_ONLY_DIR_SUFFIX = "-content-scripts";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 7;
+const DERIVE_VERSION = 8;
 
 /**
  * The copy's part in one shared extension instance serving every session (see
@@ -62,7 +62,9 @@ export type DeriveExtensionOptions = {
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
   /**
    * Derives the copy for its part in one shared instance across sessions.
-   * Without it the copy is derived exactly as it always was, byte for byte.
+   * Without it the copy carries no proxy script and keeps its worker — the
+   * facade and the page policy that lets its calls through are the transport's
+   * and go into every copy alike.
    */
   sharedInstance?: SharedInstanceDeriveOptions;
 };
@@ -116,11 +118,14 @@ async function directoryExists(dirPath: string) {
 const PAGE_FILE_EXTENSIONS = new Set([".html", ".htm"]);
 
 /**
- * Writes the loader's scripts into every page of the copy. A content-script-only
- * copy has no worker of its own to receive what its pages send, so the proxy's
- * shim goes in behind the facade and its pages are let through to the bridge —
- * both only for that role, so the ordinary copy is derived byte for byte as it
- * always was.
+ * Writes the loader's scripts into every page of the copy, and lets every page
+ * through to the bridge. The facade calls the bridge from pages whatever the
+ * copy's role — `connectNative` and the webNavigation queries go over it — and
+ * a page's own `<meta>` policy governs alongside the manifest's widened one
+ * with the stricter deciding, so a page declaring `default-src 'none'` — which
+ * is what 1Password's popup declares — would refuse those calls however wide
+ * the manifest was made. The shim rides only in the content-script-only copy,
+ * which has no worker of its own to receive what its pages send.
  */
 async function derivePages(
   derivedDir: string,
@@ -144,9 +149,7 @@ async function derivePages(
 
     const page = await readFile(pagePath, "utf8");
 
-    const bridgeReachablePage = isContentScriptOnly
-      ? allowPageConnectSource(page, `${EXTENSION_BRIDGE_SCHEME}:`)
-      : page;
+    const bridgeReachablePage = allowPageConnectSource(page, `${EXTENSION_BRIDGE_SCHEME}:`);
 
     await writeFile(pagePath, injectPageScripts(bridgeReachablePage, scriptUrls));
   }
