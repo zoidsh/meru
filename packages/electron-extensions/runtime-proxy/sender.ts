@@ -1,4 +1,4 @@
-import type { Session, WebContents } from "electron";
+import type { Session, WebContents, WebFrameMain } from "electron";
 import { getExtensionFrameId } from "../web-navigation/web-navigation";
 import {
   EXTENSION_SCHEME_PREFIX,
@@ -8,21 +8,19 @@ import {
 } from "./bridge-protocol";
 
 /**
- * How the relay finds the pages that count as tabs in a session,
- * every live `WebContents` of the session by default.
+ * How a verified caller frame resolves to the `WebContents` hosting it,
+ * Electron's own mapping by default.
  */
-export type RuntimeProxyTabsProvider = (session: Session) => WebContents[];
+export type GetWebContentsFromFrame = (frame: WebFrameMain) => WebContents | undefined;
 
 /**
  * Resolved at call time: a value import of "electron" cannot even be loaded
  * outside Electron, which is where this module's tests run.
  */
-function getSessionWebContents(session: Session) {
+function getElectronWebContentsFromFrame(frame: WebFrameMain) {
   const { webContents } = require("electron") as typeof import("electron");
 
-  return webContents
-    .getAllWebContents()
-    .filter((contents) => !contents.isDestroyed() && contents.session === session);
+  return webContents.fromFrame(frame);
 }
 
 export function parseSenderReport(reported: unknown): RuntimeProxySenderReport | undefined {
@@ -68,7 +66,13 @@ export type ReconstructSenderOptions = {
   session: Session;
   extensionId: string;
   report: RuntimeProxySenderReport;
-  getTabWebContents?: RuntimeProxyTabsProvider;
+  /**
+   * The frame Chromium recorded as the bridge request's initiator, from the
+   * caller stamp the bridge put on the request (`bridge/bridge.ts`) — the one
+   * part of the sender the shim has no hand in.
+   */
+  senderFrame: WebFrameMain | undefined;
+  getWebContentsFromFrame?: GetWebContentsFromFrame;
 };
 
 /**
@@ -76,14 +80,17 @@ export type ReconstructSenderOptions = {
  * in-session messaging gets from Chromium and a bridge request carries nothing
  * of.
  *
- * Nothing the shim reports is passed on unbacked. A live frame of the calling
- * session has to be at the reported URL, on the reported side of the top-frame
- * line, and the sender is built from that frame — `url` and `origin` only
- * because a frame was found to hold them. A report no frame backs delivers as
- * `id` alone rather than as the URL it asked for: an extension checking
- * `sender.origin` against its own — which is what 1Password does before it will
- * answer — then refuses it, which is the right way for an unverifiable claim to
- * end.
+ * The sender is built from the frame the bridge recorded as the request's
+ * caller, never from any frame that merely resembles the report: with one URL
+ * open in two tabs of a session, the message is attributed to the tab that
+ * sent it. The shim's self-report still has to match that frame — same URL,
+ * same side of the top-frame line — and a report the caller's own frame does
+ * not back delivers as `id` alone rather than as the URL it asked for: an
+ * extension checking `sender.origin` against its own — which is what 1Password
+ * does before it will answer — then refuses it, which is the right way for an
+ * unverifiable claim to end. A mismatch is a document that navigated between
+ * the shim reading `location.href` and the request being handled, or a report
+ * that was never true, and neither is delivered.
  *
  * A top-level extension page is no tab, so it stops there. Chrome gives an
  * action popup's messages a sender of `id`, `url` and `origin` alone, and that
@@ -93,52 +100,40 @@ export type ReconstructSenderOptions = {
  * extension inside a web page, and it keeps the host tab and its frame id.
  * Meru renders extension pages only as the popup; Chrome would hand one opened
  * in a browser tab a `tab`, and there is no such surface here.
- *
- * What this cannot do is bind a message to the frame that sent it.
- * `protocol.handle` hands the bridge the session and never the calling frame
- * (`bridge/bridge.ts`), so one context of the extension in a session can still
- * report another live frame's URL in that same session and be believed. The
- * bridge token is what stands between a page and any of this, and it is the
- * extension's own contexts that hold it; this narrows a forged sender to URLs
- * the session really has open, and does not eliminate it.
  */
 export function reconstructSender({
   session,
   extensionId,
   report,
-  getTabWebContents = getSessionWebContents,
+  senderFrame,
+  getWebContentsFromFrame = getElectronWebContentsFromFrame,
 }: ReconstructSenderOptions): RuntimeProxySender {
-  const isExtensionPage = report.isTopFrame && report.url.startsWith(EXTENSION_SCHEME_PREFIX);
-
-  for (const contents of getTabWebContents(session)) {
-    if (contents.isDestroyed()) {
-      continue;
-    }
-
-    const frame = contents.mainFrame.framesInSubtree.find(
-      (candidate) =>
-        !candidate.isDestroyed() &&
-        candidate.url === report.url &&
-        (candidate.parent === null) === report.isTopFrame,
-    );
-
-    if (!frame) {
-      continue;
-    }
-
-    const sender: RuntimeProxySender = {
-      id: extensionId,
-      url: report.url,
-      origin: getOrigin(report.url),
-    };
-
-    return isExtensionPage
-      ? sender
-      : { ...sender, frameId: getExtensionFrameId(frame), tab: createTabDetails(contents) };
+  if (!senderFrame || senderFrame.isDestroyed()) {
+    return { id: extensionId };
   }
 
-  // The session holds nothing the report describes, so none of it is passed on
-  return { id: extensionId };
+  if (senderFrame.url !== report.url || (senderFrame.parent === null) !== report.isTopFrame) {
+    return { id: extensionId };
+  }
+
+  const contents = getWebContentsFromFrame(senderFrame);
+
+  if (!contents || contents.isDestroyed() || contents.session !== session) {
+    return { id: extensionId };
+  }
+
+  const sender: RuntimeProxySender = {
+    id: extensionId,
+    url: senderFrame.url,
+    origin: getOrigin(senderFrame.url),
+  };
+
+  const isExtensionPage =
+    senderFrame.parent === null && senderFrame.url.startsWith(EXTENSION_SCHEME_PREFIX);
+
+  return isExtensionPage
+    ? sender
+    : { ...sender, frameId: getExtensionFrameId(senderFrame), tab: createTabDetails(contents) };
 }
 
 function getOrigin(url: string) {

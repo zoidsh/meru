@@ -192,6 +192,9 @@ describe("WebNavigation", () => {
         },
         unhandle: () => undefined,
       },
+      webRequest: {
+        onBeforeSendHeaders: () => undefined,
+      },
     } as unknown as Session;
 
     const { contents } = createTab({ session: bridgeSession });

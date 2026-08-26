@@ -65,6 +65,9 @@ beforeEach(async () => {
         requestHandler = undefined;
       },
     },
+    webRequest: {
+      onBeforeSendHeaders: () => undefined,
+    },
   } as unknown as Session;
 });
 

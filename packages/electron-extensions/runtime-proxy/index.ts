@@ -1,7 +1,7 @@
 import type { Session } from "electron";
 import type { SharedExtensionInstance } from "../extensions";
 import { RuntimeProxy } from "./runtime-proxy";
-import type { RuntimeProxyTabsProvider } from "./sender";
+import type { GetWebContentsFromFrame } from "./sender";
 
 export type CreateSharedExtensionInstanceOptions = {
   /**
@@ -15,8 +15,8 @@ export type CreateSharedExtensionInstanceOptions = {
    * copy and imported by its service worker wrapper.
    */
   relayScriptPath: string;
-  /** How a session's tabs are enumerated for sender reconstruction. */
-  getTabWebContents?: RuntimeProxyTabsProvider;
+  /** How a caller frame resolves to its hosting tab for sender reconstruction. */
+  getWebContentsFromFrame?: GetWebContentsFromFrame;
 };
 
 /**
@@ -37,7 +37,7 @@ export type CreateSharedExtensionInstanceOptions = {
 export function createSharedExtensionInstance({
   shimScriptPath,
   relayScriptPath,
-  getTabWebContents,
+  getWebContentsFromFrame,
 }: CreateSharedExtensionInstanceOptions): SharedExtensionInstance {
   let proxy: RuntimeProxy | undefined;
 
@@ -45,7 +45,7 @@ export function createSharedExtensionInstance({
 
   return {
     install({ bridge, logger }) {
-      proxy = new RuntimeProxy({ logger, getTabWebContents });
+      proxy = new RuntimeProxy({ logger, getWebContentsFromFrame });
 
       proxy.registerRoutes(bridge);
     },

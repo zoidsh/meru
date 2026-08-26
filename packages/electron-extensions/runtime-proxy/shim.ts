@@ -19,9 +19,9 @@ const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 /**
  * What a shimmed context can say about where it runs, read from its own
  * globals. The same two facts serve a content script and an extension page: the
- * main process checks the claim against the session's frame tree before
- * anything trusts it, and reads a top-level document on the extension's own
- * scheme as the page it is.
+ * main process holds the claim against the frame Chromium recorded as the
+ * request's caller before anything trusts it, and reads a top-level document on
+ * the extension's own scheme as the page it is.
  */
 function getContextSenderReport(): RuntimeProxySenderReport {
   const contextGlobals = globalThis as unknown as {

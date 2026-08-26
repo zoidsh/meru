@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { Session, WebContents, WebFrameMain } from "electron";
+import type {
+  OnBeforeSendHeadersListenerDetails,
+  Session,
+  WebContents,
+  WebFrameMain,
+} from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
 import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
 import { NativeMessageDecoder } from "../native-messaging/framing";
@@ -40,8 +45,15 @@ async function waitFor(condition: () => boolean, what: string) {
 
 type StatusListener = (details: { versionId: number; runningStatus: string }) => void;
 
+type BeforeSendHeadersListener = (
+  details: OnBeforeSendHeadersListenerDetails,
+  callback: (response: { requestHeaders?: Record<string, string> }) => void,
+) => void;
+
 function createFakeSession() {
   let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
+
+  let beforeSendHeadersListener: BeforeSendHeadersListener | null = null;
 
   const statusListeners = new Set<StatusListener>();
 
@@ -58,6 +70,17 @@ function createFakeSession() {
       },
       unhandle: () => {
         requestHandler = undefined;
+      },
+    },
+    webRequest: {
+      onBeforeSendHeaders: (
+        filterOrListener: unknown,
+        maybeListener?: BeforeSendHeadersListener | null,
+      ) => {
+        beforeSendHeadersListener =
+          maybeListener === undefined
+            ? (filterOrListener as BeforeSendHeadersListener | null)
+            : maybeListener;
       },
     },
     serviceWorkers: {
@@ -105,31 +128,55 @@ function createFakeSession() {
         listener({ versionId, runningStatus: "stopping" });
       }
     },
-    request: (pathName: string, body: Record<string, unknown>) =>
-      requestHandler?.(
-        new Request(`${EXTENSION_BRIDGE_ORIGIN}${pathName}`, {
+    /**
+     * Sends a request the way Electron carries one: the bridge's headers
+     * listener runs first — recording `callerFrame` when the request has one,
+     * the way Chromium names a fetch's initiator — and the handler receives
+     * the request with whatever the listener stamped on it.
+     */
+    request: (pathName: string, body: Record<string, unknown>, callerFrame?: WebFrameMain) => {
+      const url = `${EXTENSION_BRIDGE_ORIGIN}${pathName}`;
+
+      let requestHeaders: Record<string, string> = {};
+
+      beforeSendHeadersListener?.(
+        { url, frame: callerFrame ?? null, requestHeaders } as OnBeforeSendHeadersListenerDetails,
+        ({ requestHeaders: stampedHeaders }) => {
+          if (stampedHeaders) {
+            requestHeaders = stampedHeaders;
+          }
+        },
+      );
+
+      return requestHandler?.(
+        new Request(url, {
           method: "POST",
+          headers: requestHeaders,
           body: JSON.stringify(body),
         }) as GlobalRequest,
-      ) as Promise<Response>,
+      ) as Promise<Response>;
+    },
   };
 }
 
-function createPageContents() {
+/** A page of the shim's session, its frame and the tab hosting it. */
+function createPage(shimSession: Session, contentsId = 7, url = PAGE_URL) {
   const frame = {
-    url: PAGE_URL,
+    url,
     frameTreeNodeId: 12,
     parent: null,
     isDestroyed: () => false,
-  };
+  } as unknown as WebFrameMain;
 
-  return {
-    id: 7,
+  const contents = {
+    id: contentsId,
+    session: shimSession,
     isDestroyed: () => false,
-    getURL: () => PAGE_URL,
+    getURL: () => url,
     getTitle: () => "Sign in",
-    mainFrame: { framesInSubtree: [frame] } as unknown as WebFrameMain,
   } as unknown as WebContents;
+
+  return { frame, contents };
 }
 
 function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
@@ -147,8 +194,17 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     getExtensionId: (bridgeToken) => (bridgeToken === SHIM_TOKEN ? EXTENSION_ID : undefined),
   });
 
+  const page = createPage(shimSession.session);
+
+  const secondPage = createPage(shimSession.session, 8);
+
+  const contentsByFrame = new Map([
+    [page.frame, page.contents],
+    [secondPage.frame, secondPage.contents],
+  ]);
+
   const proxy = new RuntimeProxy({
-    getTabWebContents: () => [createPageContents()],
+    getWebContentsFromFrame: (frame) => contentsByFrame.get(frame),
     ...proxyOptions,
   });
 
@@ -205,21 +261,30 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
   const replyToJob = (jobId: string, result: Record<string, unknown>) =>
     workerSession.request(RUNTIME_PROXY_PATHS.workerReply, { token: WORKER_TOKEN, jobId, result });
 
-  const sendShimMessage = (message: unknown) =>
-    shimSession.request(RUNTIME_PROXY_PATHS.sendMessage, {
-      token: SHIM_TOKEN,
-      message,
-      sender: SENDER_REPORT,
-    });
+  /** `null` sends the way a frameless caller would; omitted, the page calls. */
+  const sendShimMessage = (message: unknown, callerFrame: WebFrameMain | null = page.frame) =>
+    shimSession.request(
+      RUNTIME_PROXY_PATHS.sendMessage,
+      {
+        token: SHIM_TOKEN,
+        message,
+        sender: SENDER_REPORT,
+      },
+      callerFrame ?? undefined,
+    );
 
   /** Opens a shim port and collects the frames streamed back to it. */
   const connectShimPort = async (portId: string, name = "relay") => {
-    const response = await shimSession.request(RUNTIME_PROXY_PATHS.connect, {
-      token: SHIM_TOKEN,
-      portId,
-      name,
-      sender: SENDER_REPORT,
-    });
+    const response = await shimSession.request(
+      RUNTIME_PROXY_PATHS.connect,
+      {
+        token: SHIM_TOKEN,
+        portId,
+        name,
+        sender: SENDER_REPORT,
+      },
+      page.frame,
+    );
 
     expect(response.status).toBe(200);
 
@@ -257,6 +322,8 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     proxy,
     workerSession,
     shimSession,
+    page,
+    secondPage,
     openWorkerStream,
     ackJob,
     replyToJob,
@@ -307,6 +374,53 @@ describe("RuntimeProxy", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: "replied", reply: { unlocked: true } });
+  });
+
+  test("two tabs on one URL: the sender is the tab that called, not the first match", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    // Both pages sit at PAGE_URL; the message goes out from the second one
+    const shimResponse = harness.sendShimMessage("which tab am I?", harness.secondPage.frame);
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    if (job?.type !== "sendMessage") {
+      throw new Error("Expected a sendMessage job");
+    }
+
+    expect(job.sender.tab?.id).toBe(8);
+
+    await harness.ackJob(job.jobId);
+
+    await harness.replyToJob(job.jobId, { status: "replied" });
+
+    await shimResponse;
+  });
+
+  test("a report the caller's own frame does not back delivers the id alone", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    // The stamped caller is a service worker's frameless request, so nothing
+    // the report claims has backing
+    const shimResponse = harness.sendShimMessage("trust me", null);
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    if (job?.type !== "sendMessage") {
+      throw new Error("Expected a sendMessage job");
+    }
+
+    expect(job.sender).toEqual({ id: EXTENSION_ID });
+
+    await harness.ackJob(job.jobId);
+
+    await harness.replyToJob(job.jobId, { status: "replied" });
+
+    await shimResponse;
   });
 
   test("wakes a stopped worker and hands the job to the stream that follows", async () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Session } from "electron";
+import type { Session, WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
 import { encodeNativeMessage } from "../native-messaging/framing";
@@ -22,7 +22,7 @@ import {
   type RuntimeProxyWorkerPortPostRequest,
   type RuntimeProxyWorkerReplyRequest,
 } from "./bridge-protocol";
-import { parseSenderReport, reconstructSender, type RuntimeProxyTabsProvider } from "./sender";
+import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
 
 type RelayJobBase = {
   jobId: string;
@@ -84,8 +84,8 @@ type Wake = {
 
 export type RuntimeProxyOptions = {
   logger?: ExtensionsLogger;
-  /** How a session's tabs are enumerated for sender reconstruction. */
-  getTabWebContents?: RuntimeProxyTabsProvider;
+  /** How a caller frame resolves to its hosting tab for sender reconstruction. */
+  getWebContentsFromFrame?: GetWebContentsFromFrame;
   /**
    * How long jobs queued behind a worker wake wait for the woken worker's job
    * stream before they fail the way a missing receiving end does.
@@ -136,7 +136,7 @@ const DEFAULT_IN_FLIGHT_TIMEOUT_MS = 5 * 60_000;
 export class RuntimeProxy {
   private logger: ExtensionsLogger | undefined;
 
-  private getTabWebContents: RuntimeProxyTabsProvider | undefined;
+  private getWebContentsFromFrame: GetWebContentsFromFrame | undefined;
 
   private wakeTimeoutMs: number;
 
@@ -163,14 +163,14 @@ export class RuntimeProxy {
 
   constructor({
     logger,
-    getTabWebContents,
+    getWebContentsFromFrame,
     wakeTimeoutMs = DEFAULT_WAKE_TIMEOUT_MS,
     maxDeliveryAttempts = DEFAULT_MAX_DELIVERY_ATTEMPTS,
     inFlightTimeoutMs = DEFAULT_IN_FLIGHT_TIMEOUT_MS,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
-    this.getTabWebContents = getTabWebContents;
+    this.getWebContentsFromFrame = getWebContentsFromFrame;
 
     this.wakeTimeoutMs = wakeTimeoutMs;
 
@@ -180,12 +180,16 @@ export class RuntimeProxy {
   }
 
   registerRoutes(bridge: ExtensionBridge) {
-    bridge.handle(RUNTIME_PROXY_PATHS.sendMessage, ({ session, extensionId, body, headers }) =>
-      this.handleSendMessage(session, extensionId, body, headers),
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.sendMessage,
+      ({ session, extensionId, senderFrame, body, headers }) =>
+        this.handleSendMessage(session, extensionId, senderFrame, body, headers),
     );
 
-    bridge.handle(RUNTIME_PROXY_PATHS.connect, ({ session, extensionId, body, headers }) =>
-      this.handleConnect(session, extensionId, body, headers),
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.connect,
+      ({ session, extensionId, senderFrame, body, headers }) =>
+        this.handleConnect(session, extensionId, senderFrame, body, headers),
     );
 
     bridge.handle(RUNTIME_PROXY_PATHS.portPost, ({ session, extensionId, body, headers }) => {
@@ -328,6 +332,7 @@ export class RuntimeProxy {
   private async handleSendMessage(
     session: Session,
     extensionId: string,
+    senderFrame: WebFrameMain | undefined,
     body: Record<string, unknown>,
     headers: Record<string, string>,
   ) {
@@ -342,7 +347,7 @@ export class RuntimeProxy {
     const result = await new Promise<RuntimeProxySendMessageResult>((resolve) => {
       const job = this.createJob(session, extensionId, "sendMessage", {
         message: request.message,
-        sender: this.reconstructSender(session, extensionId, report),
+        sender: this.reconstructSender(session, extensionId, report, senderFrame),
         settle: resolve,
         isSettled: false,
       });
@@ -356,6 +361,7 @@ export class RuntimeProxy {
   private handleConnect(
     session: Session,
     extensionId: string,
+    senderFrame: WebFrameMain | undefined,
     body: Record<string, unknown>,
     headers: Record<string, string>,
   ) {
@@ -398,7 +404,7 @@ export class RuntimeProxy {
       this.createJob(session, extensionId, "connect", {
         portId: request.portId,
         name: typeof request.name === "string" ? request.name : undefined,
-        sender: this.reconstructSender(session, extensionId, report),
+        sender: this.reconstructSender(session, extensionId, report, senderFrame),
       }),
     );
 
@@ -915,12 +921,14 @@ export class RuntimeProxy {
     session: Session,
     extensionId: string,
     report: { url: string; isTopFrame: boolean },
+    senderFrame: WebFrameMain | undefined,
   ) {
     return reconstructSender({
       session,
       extensionId,
       report,
-      getTabWebContents: this.getTabWebContents,
+      senderFrame,
+      getWebContentsFromFrame: this.getWebContentsFromFrame,
     });
   }
 

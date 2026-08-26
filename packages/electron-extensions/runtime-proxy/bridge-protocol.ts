@@ -42,13 +42,14 @@ export const RECEIVING_END_ERROR = "Could not establish connection. Receiving en
 export const PORT_CLOSED_ERROR = "The message port closed before a response was received.";
 
 /**
- * What a shimmed context can truthfully say about itself: a bridge request
- * carries no sender at all — no `Origin` header, nothing — so the shim reports
- * where it runs and the main process checks the claim against the session's
- * real frame tree before building the sender the worker sees. The bridge token
- * has already proven the caller is the extension's own — its isolated world, or
- * one of its pages. Together the two fields say which: a top-level document on
- * the extension's own scheme is an extension page, and no tab.
+ * What a shimmed context can truthfully say about itself: a bridge request's
+ * body carries no sender of its own — no `Origin` header, nothing — so the shim
+ * reports where it runs and the main process holds the claim against the frame
+ * Chromium recorded as the request's caller (`bridge/bridge.ts`) before
+ * building the sender the worker sees. The bridge token has already proven the
+ * caller is the extension's own — its isolated world, or one of its pages.
+ * Together the two fields say which: a top-level document on the extension's
+ * own scheme is an extension page, and no tab.
  */
 export type RuntimeProxySenderReport = {
   url: string;
@@ -115,12 +116,12 @@ export type RuntimeProxyTab = {
 
 /**
  * The `MessageSender` a relayed message hands the worker's listeners. Only `id`
- * is always there: everything else is held back unless a live frame of the
- * session was found at the reported URL, so a report no frame backs — the page
- * navigated away while the message was in flight, or the report was never true
- * — arrives carrying nothing but the extension's own id. `tab` and `frameId`
- * are missing on top of that when the message came from an extension page,
- * which is no tab.
+ * is always there: everything else is held back unless the frame Chromium
+ * recorded as the request's caller backs the report, so a report the caller's
+ * own frame does not back — the page navigated away while the message was in
+ * flight, or the report was never true — arrives carrying nothing but the
+ * extension's own id. `tab` and `frameId` are missing on top of that when the
+ * message came from an extension page, which is no tab.
  */
 export type RuntimeProxySender = {
   id: string;
