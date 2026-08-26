@@ -62,8 +62,3 @@ bun run test:perf  # memory, CPU and bundle-size report against the built app
 ## Shared utilities
 
 - For time and duration values, import `ms` from `@meru/shared/ms` — don't install or import the `ms` npm package. Example: `import { ms } from "@meru/shared/ms"; const delay = ms("1d");`
-
-## Scope and review bandwidth
-
-- When the full feature spans several concerns such as IPC wiring, UI, and state broadcasting, land the plumbing first, then each consumer in its own turn. Track the follow-ups in the conversation, the PR description, or the feature's own doc under `features/` in the docs so they aren't lost.
-- Open items to pick up in a **new session** — work unrelated enough to the current feature's goal that it shouldn't ride along with it — go to `todo.md` in the docs, as short entries linking into the other docs for context. It isn't a backlog for the in-progress feature, and it holds no knowledge: settled decisions go to `decisions.md`, and feature roadmaps and handoffs to `features/`.
