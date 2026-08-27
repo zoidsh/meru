@@ -12,16 +12,23 @@ function makeLoadableWebContents({
   restore,
   loadURL,
   destroyed = false,
+  currentUrl = "",
 }: {
   restore: (options: RestoreOptions) => Promise<void>;
   loadURL: (url: string) => Promise<void>;
   destroyed?: boolean;
+  currentUrl?: string;
 }) {
   return {
     navigationHistory: { restore },
     loadURL,
     isDestroyed: () => destroyed,
+    getURL: () => currentUrl,
   } as unknown as WebContents;
+}
+
+function neverRestores(): Promise<void> {
+  throw new Error("Should not restore");
 }
 
 const url = "https://calendar.google.com/";
@@ -66,9 +73,7 @@ describe("loadUrlOrRestoreNavigationHistory", () => {
 
     const loaded = await loadUrlOrRestoreNavigationHistory(
       makeLoadableWebContents({
-        restore: async () => {
-          throw new Error("Should not restore without history");
-        },
+        restore: neverRestores,
         loadURL: async (requestedUrl) => {
           loadedUrls.push(requestedUrl);
         },
@@ -142,6 +147,47 @@ describe("loadUrlOrRestoreNavigationHistory", () => {
     );
 
     expect(loaded).toBe(false);
+    expect(loadedUrls).toEqual([]);
+  });
+
+  test("loads the URL when the tab hibernated before its first load committed", async () => {
+    const loadedUrls: string[] = [];
+
+    // A view that never committed answers `{ entries: [], index: -1 }`, which
+    // is not an index `restore` accepts.
+    const loaded = await loadUrlOrRestoreNavigationHistory(
+      makeLoadableWebContents({
+        restore: neverRestores,
+        loadURL: async (requestedUrl) => {
+          loadedUrls.push(requestedUrl);
+        },
+      }),
+      url,
+      { entries: [], index: -1 },
+    );
+
+    expect(loaded).toBe(true);
+    expect(loadedUrls).toEqual([url]);
+  });
+
+  test("leaves a restore that was superseded rather than failed alone", async () => {
+    const loadedUrls: string[] = [];
+
+    // Chromium aborts the entry being restored when another navigation takes
+    // over, which rejects the restore on a view that is showing a page.
+    const loaded = await loadUrlOrRestoreNavigationHistory(
+      makeLoadableWebContents({
+        restore: rejects,
+        loadURL: async (requestedUrl) => {
+          loadedUrls.push(requestedUrl);
+        },
+        currentUrl: "https://calendar.google.com/r/day",
+      }),
+      url,
+      { entries, index: 1 },
+    );
+
+    expect(loaded).toBe(true);
     expect(loadedUrls).toEqual([]);
   });
 });

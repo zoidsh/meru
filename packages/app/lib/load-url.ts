@@ -58,7 +58,10 @@ export async function loadUrlOrRestoreNavigationHistory(
   url: string,
   navigationHistory?: RestoreOptions,
 ) {
-  if (!navigationHistory) {
+  // Entries rather than the object: a tab that hibernated before its first
+  // load committed carries `{ entries: [], index: -1 }`, which is not a history
+  // to come back to and not an index `restore` accepts.
+  if (!navigationHistory?.entries.length) {
     return loadUrl(webContents, url);
   }
 
@@ -68,6 +71,16 @@ export async function loadUrlOrRestoreNavigationHistory(
   // and reaching for one throws rather than answering false.
   if (restored || webContents.isDestroyed()) {
     return restored;
+  }
+
+  // A restore is reported failed when it is superseded as well as when it
+  // fails: the entry it was loading aborts, and the navigation that replaced it
+  // — a redirect, a client-side route, a link the user clicked into the waking
+  // tab — is the one they want. Loading over that is the only thing here that
+  // could lose a page. What is worth rescuing is the view that arrived nowhere
+  // at all, and having committed nothing is what says so.
+  if (webContents.getURL()) {
+    return true;
   }
 
   return loadUrl(webContents, url);
