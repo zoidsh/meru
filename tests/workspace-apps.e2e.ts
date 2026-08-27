@@ -5,8 +5,8 @@
  * partitioning their sessions — is covered in
  * `tests/workspace-apps-pro.e2e.ts`, under the license workspace apps ship
  * behind. What is left here is the gate, asserted from the side a license does
- * not open: the launcher that offers an app, and the saved tabs and bookmarks
- * that a trial leaves behind when it ends.
+ * not open: the two controls that reach a workspace app, and the saved tabs a
+ * trial leaves behind when it ends.
  *
  * The pair is the point. Neither file keeps a list of what a license unlocks, so
  * a launcher that stopped being gated fails here, and one that stopped appearing
@@ -54,8 +54,9 @@ const meru = useApp(() => ({
    * width for an account with a single tab, and a free account has exactly that
    * — the saved tabs seeded below are refused, which is what this file asserts,
    * so they cannot be what makes a second. `sidebar` is the one placement that
-   * keeps the strip for good, because it hands it the launcher and the
-   * bookmarks button permanently.
+   * keeps the strip whatever it holds, and it reads the setting rather than the
+   * license, so it holds the strip open here for a Gmail row and the width
+   * toggle alone.
    */
   "workspaceApps.launcherAndBookmarksPlacement": "sidebar",
   accounts: [
@@ -88,36 +89,48 @@ const meru = useApp(() => ({
 
 /**
  * Resolves once startup has passed the point where a saved tab would have been
- * restored.
+ * restored, which is what makes the absences below a decision the app made
+ * rather than a moment that has not arrived yet — the same trap as
+ * `waitForVerticalTabs`, on the other side of the window.
  *
- * `accounts.createViews` awaits every account's Gmail view and then, with
- * nothing awaited in between, runs `loadLaunchTabs`. So a child view that has
- * finished loading is proof the launch tabs have already been dealt with —
- * which is what makes the absences below a decision the app made rather than a
- * moment that has not arrived yet. The same trap as `waitForVerticalTabs`, on
- * the other side of the window.
+ * `accounts.createViews` awaits every account's Gmail view, switches background
+ * throttling back on for each, and then runs `loadLaunchTabs`, with nothing
+ * awaited between the last two. A view reporting throttling on is therefore
+ * proof the launch tabs have already been dealt with.
  *
- * The view is not named by its URL, because the account's is Gmail's sign-in
- * page rather than Gmail: nobody is signed in here, and matching on the Gmail
- * URL waits for a page that never arrives.
+ * Nothing about the page the account view loaded goes into that, deliberately.
+ * Waiting on the Gmail URL waits for a page that never arrives, because nobody
+ * is signed in here and the view sits on the sign-in page instead. Waiting on a
+ * load that finished is worse than it looks: `Gmail.createView` retries once
+ * when the first load fails, so "loaded something, not loading now" is a state
+ * that also describes an app still on its way to the line this is anchored to.
  */
 async function waitForLaunchTabs() {
   await expect
-    .poll(async () => (await readViews(meru)).some((view) => view.url !== "" && !view.isLoading))
+    .poll(async () => (await readViews(meru)).some((view) => view.backgroundThrottling))
     .toBe(true);
 }
 
-test("the workspace apps launcher is absent without a license", async () => {
+test("neither control that reaches a workspace app is offered without a license", async () => {
   /*
-   * The strip is waited for first, which is what makes the absence below a
+   * The strip is waited for first, which is what makes the absences below a
    * decision the app made rather than a moment arriving too early. An earlier
    * version of this test asserted straight away and passed while the app was
-   * showing the launcher — see `waitForVerticalTabs` for why this anchor and not
-   * the bookmarks button beside it.
+   * showing the launcher — see `waitForVerticalTabs` for why the width toggle is
+   * the anchor and not one of the controls asserted here.
    */
   await waitForVerticalTabs(meru);
 
   await expect(meru.renderer.getByRole("button", { name: "Open app" })).toHaveCount(0);
+
+  /*
+   * The bookmarks button was ungated long after the launcher beside it was, and
+   * a bookmark opens a workspace app just as the launcher does. Both hosts draw
+   * it — the titlebar and the strip — and this account's placement puts it in
+   * the strip, so the titlebar's copy is `display: none` and out of the
+   * accessibility tree either way.
+   */
+  await expect(meru.renderer.getByRole("button", { name: "Show bookmarks" })).toHaveCount(0);
 });
 
 test("saved tabs are not restored without a license", async () => {
