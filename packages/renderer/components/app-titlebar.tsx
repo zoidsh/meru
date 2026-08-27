@@ -384,21 +384,29 @@ export function AppTitlebar() {
           <div className="flex items-center gap-2">
             <Trial />
             <FindInPage />
-            <TitlebarButtonGroup
-              className={cn(
-                HOST_HANDOVER_FADE_CLASS_NAME,
-                areLauncherAndBookmarksPlacementedByVerticalTabs && "hidden opacity-0",
-              )}
-            >
-              {shouldShowWorkspaceAppsLauncher && (
-                <WorkspaceAppsLauncher
-                  launcherApps={config["workspaceApps.launcherApps"]}
-                  display={config["workspaceApps.launcherDisplay"]}
-                  disabled={isUnifiedInboxLocation}
-                />
-              )}
-              <BookmarksButton />
-            </TitlebarButtonGroup>
+            {/*
+             * The group goes rather than emptying out on the free version.
+             * Both controls in it open a workspace app, which is Pro, and an
+             * empty group would still spend the gap between the controls
+             * either side of it.
+             */}
+            {isLicenseKeyValid && (
+              <TitlebarButtonGroup
+                className={cn(
+                  HOST_HANDOVER_FADE_CLASS_NAME,
+                  areLauncherAndBookmarksPlacementedByVerticalTabs && "hidden opacity-0",
+                )}
+              >
+                {shouldShowWorkspaceAppsLauncher && (
+                  <WorkspaceAppsLauncher
+                    launcherApps={config["workspaceApps.launcherApps"]}
+                    display={config["workspaceApps.launcherDisplay"]}
+                    disabled={isUnifiedInboxLocation}
+                  />
+                )}
+                <BookmarksButton />
+              </TitlebarButtonGroup>
+            )}
             <ExtensionActions />
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu

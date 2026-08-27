@@ -589,7 +589,12 @@ export function VerticalTabs() {
        * spacing and alignment they took from the strip, which they no longer
        * sit directly in.
        */}
-      {hostsLauncherAndBookmarks && (
+      {/*
+       * Nothing here on the free version: both controls open a workspace app,
+       * which is Pro, and the column would otherwise spend its gap on an empty
+       * row above the width toggle.
+       */}
+      {hostsLauncherAndBookmarks && isLicenseKeyValid && (
         <div
           className={cn(
             HOST_HANDOVER_FADE_CLASS_NAME,
