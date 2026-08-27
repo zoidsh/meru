@@ -20,8 +20,8 @@ import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
+import { createMeruMessageUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
-import { createMeruMessageUrl } from "./protocol";
 
 export class AppMenu {
   private _menu: Menu | undefined;

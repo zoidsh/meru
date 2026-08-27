@@ -22,13 +22,13 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
+import { isMeruUrl } from "./lib/deep-link";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
   handleMailtoUrl,
   handleMeruUrl,
   isMailtoUrl,
-  isMeruUrl,
   PROCESS_MAILTO_URL_ARG,
   PROCESS_MERU_URL_ARG,
   setMeruProtocolClient,
