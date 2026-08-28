@@ -721,11 +721,33 @@ export class RuntimeProxy {
           return;
         }
 
-        this.wakes.delete(extensionId);
+        /*
+         * A rejection is Chromium finding no registration for the scope, and
+         * at a cold launch that is a window rather than a verdict: the worker
+         * session is still loading its copy of the extension, and
+         * `startWorkerForScope` fails with "not found" until the first
+         * registration is stored. Another session's content scripts inject at
+         * document_start and can message inside that window on every launch,
+         * so the queued jobs wait for the stream the starting worker will
+         * park, bounded by the same wake timeout as the resolve path, instead
+         * of failing instantly as a receiving end that "does not exist". A
+         * scope no worker ever registers for still fails the same way, one
+         * timeout later — which is also closer to Chrome, where a message
+         * never races the extension's own startup.
+         */
+        this.logger?.info(
+          "Waking the extension service worker failed; waiting for it to register",
+          {
+            extensionId,
+            error,
+          },
+        );
 
-        this.logger?.error("Failed to wake extension service worker", { extensionId, error });
+        wake.timer = setTimeout(() => {
+          this.wakes.delete(extensionId);
 
-        this.failQueuedJobs(extensionId, "noListener");
+          this.failQueuedJobs(extensionId, "noListener");
+        }, this.wakeTimeoutMs);
       });
   }
 

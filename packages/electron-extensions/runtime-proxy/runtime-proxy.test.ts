@@ -584,14 +584,44 @@ describe("RuntimeProxy", () => {
     expect(await (await shimResponse).json()).toEqual({ status: "noListener" });
   });
 
-  test("a failed wake answers every queued job", async () => {
+  test("a wake that fails before the first registration hands its jobs to the worker that arrives", async () => {
     const harness = createHarness();
 
+    // Chromium rejects `startWorkerForScope` while the scope has no stored
+    // registration — the app's first moments, before the worker session has
+    // finished loading its copy of the extension
     harness.workerSession.setFailWorkerStart(true);
+
+    const shimResponse = harness.sendShimMessage("sent before the worker registered");
+
+    await waitFor(() => harness.workerSession.workerStarts.length === 1, "the wake attempt");
+
+    // The freshly registered worker parks its stream, exactly as the relay
+    // client does on its first start, and the job is waiting for it
+    const workerStream = await harness.openWorkerStream();
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    await harness.ackJob(job?.jobId as string);
+
+    await harness.replyToJob(job?.jobId as string, { status: "replied", reply: "made it" });
+
+    expect(await (await shimResponse).json()).toEqual({ status: "replied", reply: "made it" });
+  });
+
+  test("a failed wake nothing follows still answers every queued job, one timeout later", async () => {
+    const harness = createHarness({ wakeTimeoutMs: 20 });
+
+    harness.workerSession.setFailWorkerStart(true);
+
+    const startedAt = Date.now();
 
     const shimResponse = harness.sendShimMessage("no worker to wake");
 
     expect(await (await shimResponse).json()).toEqual({ status: "noListener" });
+
+    // The bounded wait, not the instant refusal that raced real launches
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(15);
   });
 
   test("a wake nothing follows times out instead of parking the job forever", async () => {
