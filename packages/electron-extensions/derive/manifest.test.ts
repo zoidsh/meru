@@ -297,6 +297,124 @@ describe("deriveManifest", () => {
   });
 });
 
+describe("deriveManifest for a shared instance", () => {
+  const workerOptions = { role: "worker", relayFileName: "chrome-runtime-proxy-relay.js" } as const;
+
+  const contentScriptOnlyOptions = {
+    role: "contentScriptOnly",
+    shimFileName: "chrome-runtime-proxy-shim.js",
+  } as const;
+
+  test("the worker copy's wrapper imports the relay client between facade and background", () => {
+    const { manifest, serviceWorkerWrapper } = deriveManifest(
+      { background: { service_worker: "background.js", type: "module" } },
+      { ...fileNames, sharedInstance: workerOptions },
+    );
+
+    expect(manifest.background?.service_worker).toBe("chrome-facade-service-worker.js");
+    expect(serviceWorkerWrapper).toBe(
+      "// Generated when the extension was derived, in place of its own service worker.\n" +
+        'import "./chrome-facade.js";\nimport "./chrome-runtime-proxy-relay.js";\nimport "./background.js";\n',
+    );
+  });
+
+  test("the worker copy's wrapper uses importScripts for a non-module worker", () => {
+    const { serviceWorkerWrapper } = deriveManifest(
+      { background: { service_worker: "background.js" } },
+      { ...fileNames, sharedInstance: workerOptions },
+    );
+
+    expect(serviceWorkerWrapper).toContain(
+      'importScripts("/chrome-facade.js", "/chrome-runtime-proxy-relay.js", "/background.js");',
+    );
+  });
+
+  test("the content-script-only copy loses its background key entirely", () => {
+    const { manifest, serviceWorkerWrapper } = deriveManifest(
+      {
+        background: { service_worker: "background.js", type: "module" },
+        content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+      },
+      { ...fileNames, sharedInstance: contentScriptOnlyOptions },
+    );
+
+    expect("background" in manifest).toBe(false);
+    expect(serviceWorkerWrapper).toBeNull();
+  });
+
+  test("the shim runs first in every content script entry that has scripts", () => {
+    const { manifest } = deriveManifest(
+      {
+        background: { service_worker: "background.js" },
+        content_scripts: [
+          { matches: ["https://*/*"], js: ["a.js", "b.js"] },
+          { matches: ["https://*/*"], css: ["styles.css"] },
+        ],
+      },
+      { ...fileNames, sharedInstance: contentScriptOnlyOptions },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://*/*"], js: ["chrome-runtime-proxy-shim.js", "a.js", "b.js"] },
+      { matches: ["https://*/*"], css: ["styles.css"] },
+    ]);
+  });
+
+  test("the shim is prepended after the clamp narrows the matches", () => {
+    const { manifest } = deriveManifest(
+      { content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }] },
+      {
+        ...fileNames,
+        contentScriptMatches: ["https://accounts.google.com/*"],
+        sharedInstance: contentScriptOnlyOptions,
+      },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      {
+        matches: ["https://accounts.google.com/*"],
+        js: ["chrome-runtime-proxy-shim.js", "content.js"],
+      },
+    ]);
+  });
+
+  test("refuses a pattern making the token-carrying shim fetchable by pages", () => {
+    expect(() =>
+      deriveManifest(
+        {
+          web_accessible_resources: [
+            { resources: ["chrome-runtime-proxy-shim.js"], matches: ["<all_urls>"] },
+          ],
+        },
+        { ...fileNames, sharedInstance: contentScriptOnlyOptions },
+      ),
+    ).toThrow(/chrome-runtime-proxy-shim\.js/);
+  });
+
+  test("refuses a pattern covering the worker copy's relay client", () => {
+    expect(() =>
+      deriveManifest(
+        {
+          background: { service_worker: "background.js" },
+          web_accessible_resources: [{ resources: ["*.js"], matches: ["<all_urls>"] }],
+        },
+        { ...fileNames, sharedInstance: workerOptions },
+      ),
+    ).toThrow();
+  });
+
+  test("derives without a role exactly as it does without the option", () => {
+    const manifest = {
+      background: { service_worker: "background.js", type: "module" },
+      content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+    };
+
+    expect(deriveManifest(manifest, { ...fileNames, sharedInstance: undefined })).toEqual(
+      deriveManifest(manifest, fileNames),
+    );
+  });
+});
+
 describe("allowConnectSource", () => {
   const source = "extension-native-messaging:";
 

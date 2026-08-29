@@ -6,6 +6,7 @@ import { NativeMessageDecoder } from "../../native-messaging/framing";
 import { postBridge } from "../lib/bridge";
 import type { ChromeNamespace } from "../lib/chrome";
 import { createEvent } from "../lib/event";
+import { getLastErrorMessage, withLastError } from "../lib/last-error";
 
 const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
@@ -18,30 +19,6 @@ type NativeMessagingPort = {
   onMessage: ReturnType<typeof createEvent>;
   onDisconnect: ReturnType<typeof createEvent>;
 };
-
-/**
- * `chrome.runtime.lastError` the way Chrome exposes it: set for the duration of
- * the callback that reads it, gone again afterwards.
- */
-function withLastError(runtime: ChromeNamespace, error: string | undefined, run: () => void) {
-  if (error === undefined) {
-    run();
-
-    return;
-  }
-
-  runtime.lastError = { message: error };
-
-  try {
-    run();
-  } finally {
-    delete runtime.lastError;
-  }
-}
-
-function getLastErrorMessage(runtime: ChromeNamespace) {
-  return (runtime.lastError as { message?: string } | undefined)?.message;
-}
 
 function createPort(runtime: ChromeNamespace, hostName: string): NativeMessagingPort {
   const portId = crypto.randomUUID();

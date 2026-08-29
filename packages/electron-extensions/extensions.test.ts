@@ -122,6 +122,9 @@ function createSession({
       sessionEvents.push(`clearStorageData ${origin} ${storages?.join()}`);
     },
     getStoragePath: () => storagePath,
+    webRequest: {
+      onBeforeSendHeaders: () => undefined,
+    },
     serviceWorkers: {
       on: (
         _eventName: string,

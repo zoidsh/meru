@@ -1,4 +1,5 @@
-import type { Session } from "electron";
+import { randomUUID } from "node:crypto";
+import type { OnBeforeSendHeadersListenerDetails, Session, WebFrameMain } from "electron";
 import type { ExtensionsLogger } from "../logger";
 import { EXTENSION_BRIDGE_SCHEME, type ExtensionBridgeRequest } from "./protocol";
 
@@ -10,10 +11,46 @@ import { EXTENSION_BRIDGE_SCHEME, type ExtensionBridgeRequest } from "./protocol
  */
 export const MAX_BRIDGE_REQUEST_BYTES = 64 * 1024 * 1024;
 
+/**
+ * The header the bridge stamps onto every request from a frame, carrying the
+ * nonce its caller record is filed under. `protocol.handle` hands the bridge
+ * only the session, but the session's `webRequest` sees the same request first
+ * and Chromium tells it the frame that made it — so the bridge's own
+ * `onBeforeSendHeaders` listener records that frame under a fresh nonce and
+ * writes the nonce into the request the handler is about to receive (measured
+ * on Electron 43.2.0: the listener runs before the handler, its callback gating
+ * the request, and the stamped header arrives intact). Whatever a caller puts
+ * in the header itself is dropped before the stamp goes on, so the nonce is
+ * only ever the main process's own word.
+ */
+export const EXTENSION_BRIDGE_CALLER_HEADER = "x-extension-bridge-caller";
+
+/**
+ * Bounds the caller records that were stamped but never consumed — a request
+ * canceled between its headers and the handler leaves its record behind.
+ *
+ * Records go in before the handler has read the token, because the token is in
+ * the body and this listener sees only headers, so every document in the
+ * session reaches it: a page with no token at all is recorded and then refused.
+ * A document making enough concurrent bridge requests can therefore evict an
+ * honest caller's record that was still coming, which costs that caller its
+ * frame and leaves it delivering a sender of `id` alone — refused rather than
+ * misattributed. Ordinary traffic never approaches this, and the eviction is
+ * oldest-first.
+ */
+export const MAX_RECORDED_CALLER_FRAMES = 1024;
+
 export type ExtensionBridgeHandler = (request: {
   session: Session;
   /** The extension whose facade copy carried the request's token. */
   extensionId: string;
+  /**
+   * The live frame Chromium recorded as the request's initiator — the page a
+   * content script runs in, or an extension page of the session. Missing when
+   * the request came from a service worker, which has no frame, and when the
+   * frame is gone by the time the request is handled.
+   */
+  senderFrame: WebFrameMain | undefined;
   body: Record<string, unknown>;
   /** For the handler's `Response`, so every answer carries the CORS headers. */
   headers: Record<string, string>;
@@ -24,18 +61,24 @@ type ExtensionBridgeSession = {
   getExtensionId: (bridgeToken: string) => string | undefined;
 };
 
+type ExtensionBridgeSessionState = ExtensionBridgeSession & {
+  /** The frames recorded as callers of in-flight requests, by stamped nonce. */
+  callerFramesByNonce: Map<string, WebFrameMain>;
+};
+
 /**
  * The main-process end of the facade's transport: one privileged custom scheme
  * per session, answered here and routed by path to whichever `chrome.*`
  * implementation registered it. The bridge owns what every route needs alike —
- * telling which extension is calling from the request's token, and turning
- * anything else away — so a route handler only ever receives an authenticated
- * caller.
+ * telling which extension is calling from the request's token, which frame is
+ * calling from the caller stamp its own `webRequest` listener put on the
+ * request, and turning anything else away — so a route handler only ever
+ * receives an authenticated caller.
  */
 export class ExtensionBridge {
   private logger: ExtensionsLogger | undefined;
 
-  private sessions = new Map<Session, ExtensionBridgeSession>();
+  private sessions = new Map<Session, ExtensionBridgeSessionState>();
 
   private routes = new Map<string, ExtensionBridgeHandler>();
 
@@ -48,7 +91,27 @@ export class ExtensionBridge {
   }
 
   setupSession(session: Session, sessionOptions: ExtensionBridgeSession) {
-    this.sessions.set(session, sessionOptions);
+    const callerFramesByNonce = new Map<string, WebFrameMain>();
+
+    this.sessions.set(session, { ...sessionOptions, callerFramesByNonce });
+
+    // A blocking callback is what puts the record in the map before the handler
+    // reads it. That ordering is measured on Electron 43.2.0 rather than
+    // promised by it, and it is allowed to be: a record that was not there
+    // leaves the sender at `id` alone, which the extension refuses, so the
+    // failure is a refusal rather than a wrong answer.
+    //
+    // The filter keeps every other request of the session — Gmail's own
+    // traffic above all — out of the listener entirely. `onBeforeSendHeaders`
+    // rather than `onBeforeRequest`, which is left free for an embedder's own
+    // listener — a session takes exactly one per event (`blocker` in
+    // `packages/app` holds that one).
+    session.webRequest.onBeforeSendHeaders(
+      { urls: [`${EXTENSION_BRIDGE_SCHEME}://*/*`] },
+      (details, callback) => {
+        callback({ requestHeaders: this.stampCaller(callerFramesByNonce, details) });
+      },
+    );
 
     session.protocol.handle(EXTENSION_BRIDGE_SCHEME, (request) =>
       this.handleRequest(session, request),
@@ -60,7 +123,79 @@ export class ExtensionBridge {
       return;
     }
 
+    session.webRequest.onBeforeSendHeaders(null);
+
     session.protocol.unhandle(EXTENSION_BRIDGE_SCHEME);
+  }
+
+  /**
+   * The request's headers with the caller stamp on: the frame Chromium names
+   * as the initiator goes on record under a fresh nonce, and the nonce rides
+   * the request to `handleRequest`.
+   *
+   * The strip loop earns its place on case: a caller writing
+   * `X-Extension-Bridge-Caller` and a stamp written in lower case are two keys
+   * on the same object and both reach the handler, where the header lookup is
+   * case-insensitive and may read either. Removing the loop is caught by
+   * `a stamp a caller wrote itself names no frame`. It covers frame requests only, because
+   * this listener is the one thing a frameless caller never reaches: measured
+   * on Electron 43.2.0, a service worker's and a dedicated worker's requests
+   * skip `onBeforeSendHeaders` entirely and arrive at the handler with whatever
+   * headers they set. What makes that safe is not the stripping but the nonce:
+   * it is minted here, after the request has left the renderer, so no caller
+   * can name a live one, and a forged value simply misses the map and delivers
+   * a sender of `id` alone. The routes that read a frame are called from the
+   * shim, which only ever runs in one.
+   */
+  private stampCaller(
+    callerFramesByNonce: Map<string, WebFrameMain>,
+    details: OnBeforeSendHeadersListenerDetails,
+  ) {
+    const requestHeaders: Record<string, string> = {};
+
+    for (const [headerName, headerValue] of Object.entries(details.requestHeaders)) {
+      if (headerName.toLowerCase() !== EXTENSION_BRIDGE_CALLER_HEADER) {
+        requestHeaders[headerName] = headerValue;
+      }
+    }
+
+    if (!details.frame || details.frame.isDestroyed()) {
+      return requestHeaders;
+    }
+
+    const callerNonce = randomUUID();
+
+    callerFramesByNonce.set(callerNonce, details.frame);
+
+    if (callerFramesByNonce.size > MAX_RECORDED_CALLER_FRAMES) {
+      const oldestNonce = callerFramesByNonce.keys().next().value;
+
+      if (oldestNonce !== undefined) {
+        callerFramesByNonce.delete(oldestNonce);
+      }
+    }
+
+    requestHeaders[EXTENSION_BRIDGE_CALLER_HEADER] = callerNonce;
+
+    return requestHeaders;
+  }
+
+  /**
+   * The frame recorded for the request's stamped nonce, consumed on the way
+   * out so a nonce answers exactly once, and only while the frame is alive.
+   */
+  private takeCallerFrame(sessionState: ExtensionBridgeSessionState, request: GlobalRequest) {
+    const callerNonce = request.headers.get(EXTENSION_BRIDGE_CALLER_HEADER);
+
+    if (callerNonce === null) {
+      return undefined;
+    }
+
+    const callerFrame = sessionState.callerFramesByNonce.get(callerNonce);
+
+    sessionState.callerFramesByNonce.delete(callerNonce);
+
+    return callerFrame && !callerFrame.isDestroyed() ? callerFrame : undefined;
   }
 
   private async handleRequest(session: Session, request: GlobalRequest) {
@@ -72,6 +207,12 @@ export class ExtensionBridge {
     const { pathname } = new URL(request.url);
 
     try {
+      const sessionState = this.sessions.get(session);
+
+      // Consumed whatever else the request turns out to be, so a nonce that
+      // reached a refused request cannot be presented again
+      const senderFrame = sessionState && this.takeCallerFrame(sessionState, request);
+
       const bodySource = await this.readBody(request);
 
       if (bodySource === null) {
@@ -83,7 +224,7 @@ export class ExtensionBridge {
       // Everything else in the session — Gmail, workspace apps, any page a user
       // navigated to — can reach this scheme too, and only the loaded extensions
       // hold a token.
-      const extensionId = this.sessions.get(session)?.getExtensionId(body.token);
+      const extensionId = sessionState?.getExtensionId(body.token);
 
       if (!extensionId) {
         return new Response(null, { status: 403, headers });
@@ -95,7 +236,7 @@ export class ExtensionBridge {
         return new Response(null, { status: 404, headers });
       }
 
-      return await handler({ session, extensionId, body, headers });
+      return await handler({ session, extensionId, senderFrame, body, headers });
     } catch (error) {
       this.logger?.error("Extension bridge request failed", { pathname, error });
 

@@ -35,15 +35,20 @@ function createServiceWorkerWrapper(
   facadeFileName: string,
   backgroundFileName: string,
   isModule: boolean,
+  relayFileName?: string,
 ) {
   const header =
     "// Generated when the extension was derived, in place of its own service worker.\n";
 
+  const wrappedFileNames = [facadeFileName, relayFileName, backgroundFileName].filter(
+    (fileName): fileName is string => fileName !== undefined,
+  );
+
   if (isModule) {
-    return `${header}import "./${facadeFileName}";\nimport "./${backgroundFileName}";\n`;
+    return `${header}${wrappedFileNames.map((fileName) => `import "./${fileName}";\n`).join("")}`;
   }
 
-  return `${header}importScripts("/${facadeFileName}", "/${backgroundFileName}");\n`;
+  return `${header}importScripts(${wrappedFileNames.map((fileName) => `"/${fileName}"`).join(", ")});\n`;
 }
 
 /**
@@ -174,6 +179,38 @@ function deriveContentSecurityPolicy(
 }
 
 /**
+ * How a derived copy takes part in one shared extension instance across
+ * sessions. The `worker` copy keeps the extension whole and additionally runs
+ * the runtime proxy's relay client next to its service worker; the
+ * `contentScriptOnly` copy loses its `background` key entirely — Electron still
+ * injects its content scripts (measured 2026-08-25) — and gets the proxy's shim
+ * prepended to every one of them, so its `chrome.runtime` messaging reaches the
+ * one worker instead of a receiving end that does not exist. Its extension
+ * pages are shimmed too, which is the derive's own job rather than the
+ * manifest's.
+ */
+export type SharedInstanceManifestOptions =
+  | { role: "worker"; relayFileName: string }
+  | { role: "contentScriptOnly"; shimFileName: string };
+
+/**
+ * Runs the shim ahead of the extension's own scripts in every content script
+ * entry, in the same isolated world, which is what lets it shadow
+ * `chrome.runtime.sendMessage` and `connect` before any extension code reads
+ * them. Entries without scripts — CSS-only ones — have nothing to shadow.
+ */
+function prependContentScriptShim(
+  contentScripts: ExtensionManifest["content_scripts"],
+  shimFileName: string,
+) {
+  return contentScripts?.map((contentScript) =>
+    Array.isArray(contentScript.js)
+      ? { ...contentScript, js: [shimFileName, ...contentScript.js] }
+      : contentScript,
+  );
+}
+
+/**
  * Narrows where the extension's content scripts run. Electron has no per-site
  * extension controls, so the manifest is the only lever: an extension declaring
  * `<all_urls>` injects into every frame of every view otherwise.
@@ -235,6 +272,7 @@ export function deriveManifest(
     bridgeConnectSource,
     strippedManifestKeys = [],
     contentScriptMatches,
+    sharedInstance,
   }: {
     facadeFileName: string;
     serviceWorkerFileName: string;
@@ -246,13 +284,26 @@ export function deriveManifest(
      * extension's content scripts run wherever its author declared.
      */
     contentScriptMatches?: string[];
+    /**
+     * The copy's part in one shared instance across sessions, or `undefined`
+     * for the ordinary copy every session gets its own instance of.
+     */
+    sharedInstance?: SharedInstanceManifestOptions;
   },
 ): DerivedManifest {
+  const clampedContentScripts = deriveContentScripts(
+    manifest.content_scripts,
+    contentScriptMatches,
+  );
+
   const derivedManifest: ExtensionManifest = {
     ...manifest,
     permissions: derivePermissions(manifest.permissions),
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
-    content_scripts: deriveContentScripts(manifest.content_scripts, contentScriptMatches),
+    content_scripts:
+      sharedInstance?.role === "contentScriptOnly"
+        ? prependContentScriptShim(clampedContentScripts, sharedInstance.shimFileName)
+        : clampedContentScripts,
   };
 
   for (const droppedManifestKey of DROPPED_MANIFEST_KEYS) {
@@ -268,7 +319,16 @@ export function deriveManifest(
   // extension's `web_accessible_resources` comes near the facade, but an update
   // widening a pattern to `*.js` would hand the token to every page in the
   // session — refusing to derive is what keeps that an outage instead of a leak
-  for (const derivedFileName of [facadeFileName, serviceWorkerFileName]) {
+  const sharedInstanceFileName =
+    sharedInstance?.role === "contentScriptOnly"
+      ? sharedInstance.shimFileName
+      : sharedInstance?.relayFileName;
+
+  for (const derivedFileName of [facadeFileName, serviceWorkerFileName, sharedInstanceFileName]) {
+    if (derivedFileName === undefined) {
+      continue;
+    }
+
     const exposingPattern = findWebAccessiblePattern(
       derivedManifest.web_accessible_resources,
       derivedFileName,
@@ -279,6 +339,16 @@ export function deriveManifest(
         `web_accessible_resources pattern "${exposingPattern}" makes "${derivedFileName}" fetchable by web pages`,
       );
     }
+  }
+
+  // The whole `background` key goes, not just the worker: a copy meant to run
+  // no worker must not leave Chromium anything to start. `strippedManifestKeys`
+  // cannot express this, since the wrapper branch below re-adds `background`
+  // after the strip — which is also why this is its own explicit option.
+  if (sharedInstance?.role === "contentScriptOnly") {
+    delete derivedManifest.background;
+
+    return { manifest: derivedManifest, serviceWorkerWrapper: null };
   }
 
   const backgroundFileName = manifest.background?.service_worker?.replace(/^\//, "");
@@ -296,6 +366,7 @@ export function deriveManifest(
       facadeFileName,
       backgroundFileName,
       manifest.background?.type === "module",
+      sharedInstance?.role === "worker" ? sharedInstance.relayFileName : undefined,
     ),
   };
 }

@@ -14,7 +14,7 @@ const MAIN_FRAME_ID = 0;
  * the main frame pinned to 0 — which is why the main frame never answers to its
  * own node id.
  */
-function getExtensionFrameId(frame: WebFrameMain) {
+export function getExtensionFrameId(frame: WebFrameMain) {
   return frame.parent ? frame.frameTreeNodeId : MAIN_FRAME_ID;
 }
 

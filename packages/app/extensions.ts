@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is } from "@electron-toolkit/utils";
 import {
+  createSharedExtensionInstance,
   Extensions,
   findExtensionDirs,
   getInstalledExtension,
@@ -116,6 +117,18 @@ export const extensions = new Extensions({
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
+  // One shared extension instance across all account sessions — one 1Password
+  // sign-in instead of one per account. It has never been run against
+  // 1Password itself, so nothing loads it by default: development builds opt
+  // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, and deleting this one option
+  // removes the whole feature.
+  sharedInstance:
+    is.dev && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
+      ? createSharedExtensionInstance({
+          shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
+          relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
+        })
+      : undefined,
   logger: {
     info: (message, details) => {
       log.info(message, details);

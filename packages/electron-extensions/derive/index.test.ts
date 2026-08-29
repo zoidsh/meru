@@ -368,6 +368,207 @@ describe("deriveExtension", () => {
   });
 });
 
+describe("deriveExtension for a shared instance", () => {
+  let shimScriptPath: string;
+
+  let relayScriptPath: string;
+
+  beforeEach(async () => {
+    shimScriptPath = path.join(workDir, "shim.js");
+
+    relayScriptPath = path.join(workDir, "relay.js");
+
+    await writeFile(shimScriptPath, "// shim\n");
+
+    await writeFile(relayScriptPath, "// relay\n");
+
+    await writeManifest({
+      ...manifest,
+      content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+    });
+
+    await writeSourceFile("content.js", "// content\n");
+
+    await writeSourceFile(
+      "popup.html",
+      `<html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'"><script src="/popup.js"></script></head></html>`,
+    );
+  });
+
+  test("the worker copy carries the relay client under the facade's token", async () => {
+    const { derivedDir, bridgeToken } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const relaySource = await readFile(
+      path.join(derivedDir, "chrome-runtime-proxy-relay.js"),
+      "utf8",
+    );
+
+    expect(relaySource).toContain(bridgeToken);
+    expect(relaySource).toEndWith("// relay\n");
+
+    expect(
+      await readFile(path.join(derivedDir, "chrome-facade-service-worker.js"), "utf8"),
+    ).toContain('import "./chrome-runtime-proxy-relay.js";');
+  });
+
+  test("the content-script-only copy loses the worker and gains the shim", async () => {
+    const { derivedDir, bridgeToken } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const derivedManifest = JSON.parse(
+      await readFile(path.join(derivedDir, "manifest.json"), "utf8"),
+    );
+
+    expect("background" in derivedManifest).toBe(false);
+    expect(derivedManifest.content_scripts).toEqual([
+      { matches: ["https://*/*"], js: ["chrome-runtime-proxy-shim.js", "content.js"] },
+    ]);
+
+    const shimSource = await readFile(
+      path.join(derivedDir, "chrome-runtime-proxy-shim.js"),
+      "utf8",
+    );
+
+    expect(shimSource).toContain(bridgeToken);
+    expect(shimSource).toEndWith("// shim\n");
+  });
+
+  test("the content-script-only copy's pages run the shim and may reach the bridge", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    // The popup is where a password manager keeps its unlock UI, and this copy
+    // has no worker of its own for it to talk to
+    expect(page.indexOf("/chrome-facade.js")).toBeLessThan(
+      page.indexOf("/chrome-runtime-proxy-shim.js"),
+    );
+    expect(page.indexOf("/chrome-runtime-proxy-shim.js")).toBeLessThan(page.indexOf("/popup.js"));
+
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
+  });
+
+  test("the worker copy's pages skip the shim but still reach the bridge", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    expect(page).not.toContain("chrome-runtime-proxy-shim.js");
+
+    // The facade calls the bridge from pages whatever the copy's role —
+    // `connectNative` above all — and the page's own policy would refuse it
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
+  });
+
+  test("the ordinary copy's pages reach the bridge too, shared instance or none", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    const page = await readFile(path.join(derivedDir, "popup.html"), "utf8");
+
+    expect(page).not.toContain("chrome-runtime-proxy-shim.js");
+    expect(page).toContain(
+      `content="default-src 'none'; script-src 'self'; connect-src extension-bridge:"`,
+    );
+  });
+
+  test("the two copies exist side by side, from one source, as one extension id", async () => {
+    const workerCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const contentScriptCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    expect(contentScriptCopy.derivedDir).not.toBe(workerCopy.derivedDir);
+    expect(contentScriptCopy.extensionId).toBe(workerCopy.extensionId);
+
+    expect(
+      JSON.parse(await readFile(path.join(workerCopy.derivedDir, "manifest.json"), "utf8"))
+        .background,
+    ).toBeDefined();
+  });
+
+  test("a role toggle re-derives the copy in place", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const { derivedDir: plainDerivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+    });
+
+    expect(plainDerivedDir).toBe(derivedDir);
+
+    expect(
+      await readFile(path.join(plainDerivedDir, "chrome-facade-service-worker.js"), "utf8"),
+    ).not.toContain("chrome-runtime-proxy-relay.js");
+  });
+
+  test("pruning spares both copies of a kept source", async () => {
+    const workerCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const contentScriptCopy = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [sourceDir] });
+
+    expect(await readdir(workerCopy.derivedDir)).toContain("manifest.json");
+    expect(await readdir(contentScriptCopy.derivedDir)).toContain("manifest.json");
+
+    await pruneDerivedExtensions({ derivedExtensionsDir, keptSourceDirs: [] });
+
+    expect(await readdir(derivedExtensionsDir)).toEqual([]);
+  });
+});
+
 describe("pruneDerivedExtensions", () => {
   async function deriveOtherExtension() {
     const otherSourceDir = path.join(workDir, "other-source");
