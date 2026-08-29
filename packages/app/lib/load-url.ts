@@ -42,3 +42,46 @@ export function restoreNavigationHistory(webContents: WebContents, options: Rest
       return false;
     });
 }
+
+/**
+ * Brings a view up on the history its tab hibernated with, and settles for the
+ * page itself when that history cannot be restored — a restore that never
+ * commits otherwise leaves a blank view under a tab still wearing the title it
+ * went to sleep with, with nothing the user can do about it. Losing the back
+ * stack and the scroll position is the price of the page being there at all.
+ *
+ * A view with no history to come back to is loaded outright, which is every
+ * tab that was opened rather than woken.
+ */
+export async function loadUrlOrRestoreNavigationHistory(
+  webContents: WebContents,
+  url: string,
+  navigationHistory?: RestoreOptions,
+) {
+  // Entries rather than the object: a tab that hibernated before its first
+  // load committed carries `{ entries: [], index: -1 }`, which is not a history
+  // to come back to and not an index `restore` accepts.
+  if (!navigationHistory?.entries.length) {
+    return loadUrl(webContents, url);
+  }
+
+  const restored = await restoreNavigationHistory(webContents, navigationHistory);
+
+  // A tab closed while its restore was in flight has no view left to load into,
+  // and reaching for one throws rather than answering false.
+  if (restored || webContents.isDestroyed()) {
+    return restored;
+  }
+
+  // A restore is reported failed when it is superseded as well as when it
+  // fails: the entry it was loading aborts, and the navigation that replaced it
+  // — a redirect, a client-side route, a link the user clicked into the waking
+  // tab — is the one they want. Loading over that is the only thing here that
+  // could lose a page. What is worth rescuing is the view that arrived nowhere
+  // at all, and having committed nothing is what says so.
+  if (webContents.getURL()) {
+    return true;
+  }
+
+  return loadUrl(webContents, url);
+}

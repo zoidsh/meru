@@ -30,7 +30,7 @@ import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
-import { loadUrl, restoreNavigationHistory } from "./lib/load-url";
+import { loadUrl, loadUrlOrRestoreNavigationHistory } from "./lib/load-url";
 import {
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
@@ -621,11 +621,7 @@ export class WorkspaceApp {
       },
     });
 
-    if (navigationHistory) {
-      restoreNavigationHistory(view.webContents, navigationHistory);
-    } else {
-      loadUrl(view.webContents, url);
-    }
+    loadUrlOrRestoreNavigationHistory(view.webContents, url, navigationHistory);
 
     openViewDevToolsOnLaunch(view);
 
