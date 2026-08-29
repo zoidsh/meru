@@ -4,6 +4,7 @@ import { app, dialog } from "electron";
 import { accounts } from "./accounts";
 import { showProUpgradeDialog } from "./dialogs";
 import { ipc } from "./ipc";
+import { isMeruUrl, MERU_PROTOCOL, type MeruDeepLink, parseMeruUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
@@ -21,6 +22,34 @@ export function isMailtoUrl(url: string) {
   return url.startsWith(`${MAILTO_PROTOCOL}:`);
 }
 
+/**
+ * Which account a protocol handler should act on. Answered without asking when
+ * there is only one account to answer with, and undefined when the user
+ * cancels the dialog.
+ */
+async function promptForAccount(message: string) {
+  const accountConfigs = accounts.getAccountConfigs();
+
+  if (accountConfigs.length <= 1) {
+    return accountConfigs[0]?.id;
+  }
+
+  const cancelId = accountConfigs.length;
+
+  const { response } = await dialog.showMessageBox(main.window, {
+    type: "question",
+    message,
+    buttons: [...accountConfigs.map((accountConfig) => accountConfig.label), "Cancel"],
+    cancelId,
+  });
+
+  if (response === cancelId) {
+    return undefined;
+  }
+
+  return accountConfigs[response]?.id;
+}
+
 export async function handleMailtoUrl(url: string) {
   if (!licenseKey.isValid) {
     showProUpgradeDialog("Meru Pro is required to set Meru as the default mail client.");
@@ -32,44 +61,17 @@ export async function handleMailtoUrl(url: string) {
     return;
   }
 
-  const accountConfigs = accounts.getAccountConfigs();
-
-  let accountId = accountConfigs[0]?.id;
-
-  if (accountConfigs.length > 1) {
-    const cancelId = accountConfigs.length + 1;
-
-    const { response } = await dialog.showMessageBox(main.window, {
-      type: "question",
-      message: "Which account should compose this email?",
-      buttons: [...accountConfigs.map((account) => account.label), "Cancel"],
-      cancelId,
-    });
-
-    if (response === cancelId) {
-      return;
-    }
-
-    const accountConfig = accountConfigs[response];
-
-    if (!accountConfig) {
-      throw new Error("Could not find account config");
-    }
-
-    accountId = accountConfig.id;
-  }
+  const accountId = await promptForAccount("Which account should compose this email?");
 
   if (!accountId) {
-    throw new Error("Could not determine account id");
+    return;
   }
 
   accounts.getAccount(accountId).instance.gmail.createComposeWindow(url);
 }
 
-export const MERU_PROTOCOL = "meru";
-
 export function findMeruUrlArg(argv: string[]) {
-  return argv.find((arg) => arg.startsWith(`${MERU_PROTOCOL}://`));
+  return argv.find(isMeruUrl);
 }
 
 export const PROCESS_MERU_URL_ARG = !platform.isMacOS ? findMeruUrlArg(process.argv) : undefined;
@@ -90,8 +92,16 @@ export function setMeruProtocolClient() {
   }
 }
 
-export function isMeruUrl(url: string) {
-  return url.startsWith(`${MERU_PROTOCOL}://`);
+function openMessageDeepLink({ email, messageId }: Extract<MeruDeepLink, { type: "message" }>) {
+  for (const [accountId, account] of accounts.instances) {
+    if (account.gmail.userEmail === email) {
+      accounts.selectAccount(accountId);
+
+      ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", messageId);
+
+      return;
+    }
+  }
 }
 
 export function handleMeruUrl(url: string) {
@@ -101,29 +111,16 @@ export function handleMeruUrl(url: string) {
     return;
   }
 
-  if (!isMeruUrl(url)) {
+  const deepLink = parseMeruUrl(url);
+
+  if (!deepLink) {
     return;
   }
 
-  const paths = url.replace(`${MERU_PROTOCOL}://`, "").split("/");
-
-  if (paths[0]?.includes("@")) {
-    const email = paths[0];
-
-    if (paths[1] === "message" && paths[2]) {
-      for (const [accountId, account] of accounts.instances) {
-        if (account.gmail.userEmail === email) {
-          accounts.selectAccount(accountId);
-
-          ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", paths[2]);
-
-          return;
-        }
-      }
-    }
+  if (deepLink.type === "message") {
+    openMessageDeepLink(deepLink);
   }
-}
 
-export function createMeruMessageUrl(userEmail: string, messageId: string) {
-  return `${MERU_PROTOCOL}://${userEmail}/message/${messageId}`;
+  // The open route parses but is not carried out yet; it lands in the slice
+  // that adds the routing behind it.
 }

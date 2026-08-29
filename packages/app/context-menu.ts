@@ -6,8 +6,8 @@ import {
 } from "electron";
 import electronContextMenu from "electron-context-menu";
 import { accounts } from "./accounts";
+import { createMeruMessageUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
-import { createMeruMessageUrl } from "./protocol";
 import { openExternalUrl } from "./url";
 
 export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) {
