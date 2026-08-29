@@ -117,6 +117,12 @@ export type UseAppOptions = {
    * stays the app as it ships.
    */
   profile?: boolean;
+  /**
+   * Extra environment for the launched app, on top of the runner's own rather
+   * than in place of it — the launch needs DISPLAY and friends either way.
+   * What the extension tests use to set the fixture and shared-instance flags.
+   */
+  env?: Record<string, string>;
 };
 
 type LaunchedApp = {
@@ -210,6 +216,7 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
     executablePath: EXECUTABLE_PATH,
     args: launchArguments(userDataDir, options),
     cwd: process.cwd(),
+    env: options.env ? { ...(process.env as Record<string, string>), ...options.env } : undefined,
   });
 
   /*
@@ -558,7 +565,7 @@ function requireLicenseKey() {
  * walk in `settings.e2e.ts` possible, and this is what makes its inverse
  * possible here.
  */
-export function useProApp(seedConfig: SeedConfig = {}): MeruApp {
+export function useProApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {}): MeruApp {
   // Read here rather than inside the seed, so a file missing the key still
   // fails as the module is read rather than once per test inside a launch.
   const licenseKey = requireLicenseKey();
@@ -566,8 +573,8 @@ export function useProApp(seedConfig: SeedConfig = {}): MeruApp {
   // A seed function cannot be spread — doing so would quietly drop everything
   // it seeds and launch a Pro app with none of it.
   if (typeof seedConfig === "function") {
-    return useApp(async (context) => ({ licenseKey, ...(await seedConfig(context)) }));
+    return useApp(async (context) => ({ licenseKey, ...(await seedConfig(context)) }), options);
   }
 
-  return useApp({ licenseKey, ...seedConfig });
+  return useApp({ licenseKey, ...seedConfig }, options);
 }

@@ -111,6 +111,47 @@ function buildAppFiles() {
       }),
     );
 
+  /*
+   * The checked-in fixture extension, assembled as a loadable unpacked
+   * extension: its scripts bundled like the other extension scripts — rolldown,
+   * never `bun build`, whose node polyfills once inflated the shim about 70x —
+   * and its static files copied next to them. It ships with the app so the
+   * end-to-end flag can only ever enable this directory, not name one.
+   */
+  const buildFixtureExtension = () => {
+    const fixtureDir = path.join(process.cwd(), "packages", "electron-extensions", "fixture");
+
+    const fixtureOutDir = path.join(process.cwd(), "build-js", "fixture-extension");
+
+    const buildFixtureScript = (scriptFileName: string) =>
+      rolldown({
+        ...rolldownOptions,
+        input: path.join(fixtureDir, `${scriptFileName}.ts`),
+        platform: "browser",
+        transform: {
+          ...rolldownOptions.transform,
+          target: browserTarget,
+        },
+      }).then((bundle) =>
+        bundle.write({
+          file: path.join(fixtureOutDir, `${scriptFileName}.js`),
+          codeSplitting: false,
+          format: "iife",
+        }),
+      );
+
+    const copyFixtureFile = (fileName: string) =>
+      Bun.write(path.join(fixtureOutDir, fileName), Bun.file(path.join(fixtureDir, fileName)));
+
+    return Promise.all([
+      buildFixtureScript("background"),
+      buildFixtureScript("probe"),
+      copyFixtureFile("manifest.json"),
+      copyFixtureFile("popup.html"),
+      copyFixtureFile("fixture-frame.html"),
+    ]);
+  };
+
   return Promise.all([
     rolldown({
       ...rolldownOptions,
@@ -152,6 +193,7 @@ function buildAppFiles() {
       "./packages/electron-extensions/runtime-proxy/relay-entry.ts",
       "extensions-runtime-proxy-relay.js",
     ),
+    buildFixtureExtension(),
   ]);
 }
 
