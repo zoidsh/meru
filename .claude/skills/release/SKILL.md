@@ -13,13 +13,12 @@ The version commit goes straight onto `main` — no branch, no PR. Publishing th
 Check all of these first. If one fails, report it and stop — never work around it.
 
 - On `main`, clean and up to date: `git status --porcelain` empty, then `git checkout main && git pull --ff-only`.
-- The workflow names below are real: `.github/workflows/` holds `ci.yml` and `build.yml`. Check that before running either command — GitHub answers a renamed workflow with its pre-rename runs instead of an error, so a stale name here reads as "no run yet" on every release and never verifies anything.
+- The workflow names below are real: `.github/workflows/` holds `ci.yml` and `release.yml`. Check that before running any `gh run list --workflow=` command — GitHub answers a renamed workflow with its pre-rename runs instead of an error, so a stale name here reads as "no run yet" on every release and never verifies anything.
 - The last `ci.yml` run is for the current `HEAD` and passed: `gh run list --workflow=ci.yml --branch=main -L 1 --json headSha,status,conclusion,url`.
   - `headSha` must equal `git rev-parse HEAD`. A `HEAD` with no run yet, or a run still `in_progress`, means waiting — say which and ask whether to wait for it.
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
-- The newest `build.yml` run on `main` is not a failure: `gh run list --workflow=build.yml --branch=main -L 1 --json headSha,status,conclusion,url`. A green `ci.yml` says nothing about whether the app compiles, and `release.yml` builds all three platforms — a broken build fails the release where it costs the most.
-  - A `conclusion` of `failure` means the release build will fail too. Report the run URL and stop. A run still `in_progress` means waiting — ask whether to wait for it.
-  - Its `headSha` may lag `HEAD`, because `build.yml` ignores commits that only touch Markdown. Don't require a match, and don't wait for a run that will never start.
+  - That run is also the build check. `ci.yml`'s `e2e` job builds the app with electron-builder and launches it on macOS, Windows and Linux, so a green run at `HEAD` is what says the app still compiles on all three — the thing `release.yml` does next, at the most expensive place for it to fail. There is no second workflow to query; `build.yml` was deleted when its jobs moved here.
+  - What it still doesn't cover: `e2e` builds `--dir` and unsigned, so installer packaging and macOS signing run for the first time in the release itself. That is a known risk of every release, not something to check here.
 - There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For an experimental release it's the last release of any kind, from `gh release list -L 1`.
 
 ## Choose the bump
@@ -36,7 +35,7 @@ Arguments naming a level or an explicit version override this triage — take th
 
 An `experimental` argument, or an explicit `-alpha.N` version, cuts a prerelease for the Experimental update channel instead of a stable release. Only cut one when asked — never propose one unprompted.
 
-The channel is named Experimental in the app and versioned `alpha` on the wire, so the interface says Experimental everywhere the version string says `-alpha.N`. That seam is deliberate, and the version suffix is never `-experimental.N`. The reasoning is in `docs/decisions.md` under "The prerelease channel is named Experimental and versioned as `alpha`".
+The channel is named Experimental in the app and versioned `alpha` on the wire, so the interface says Experimental everywhere the version string says `-alpha.N`. That seam is deliberate, and the version suffix is never `-experimental.N`. The reasoning is in the project docs, in `decisions.md` under "The prerelease channel is named Experimental and versioned as `alpha`".
 
 - The version is the next stable version per the triage above with `-alpha.N` appended: the first experimental release of a cycle is `X.Y.Z-alpha.1`. Each further one before that stable ships increments `N`.
 - Everything else follows the stable flow, with two differences: `gh release create` gets `--prerelease`, and the triage range runs from the last release of any kind, not the last stable.
