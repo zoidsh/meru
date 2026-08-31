@@ -54,16 +54,14 @@ const project = Bun.argv.slice(2).find((argument) => argument.startsWith(PROJECT
 // platform themselves: naming it again to skip a build would be the same three
 // paths written down in a second place, free to drift from the first.
 if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
-  const buildStatus = await run([
-    "bun",
-    "run",
-    build.script,
-    "--",
-    "--dir",
-    build.arch,
-    "--publish",
-    "never",
-  ]);
+  const buildStatus = await run(
+    ["bun", "run", build.script, "--", "--dir", build.arch, "--publish", "never"],
+    // The Experimental channel, because that is the build carrying every
+    // feature: the fixture extension the suite drives is written on that
+    // channel only. What stable weighs without them is checked separately, by
+    // `bun run test:bundles`.
+    { MERU_BUILD_CHANNEL: "alpha" },
+  );
 
   if (buildStatus !== 0) {
     process.exit(buildStatus);

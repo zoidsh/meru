@@ -1,3 +1,4 @@
+import { EXTENSIONS_ENABLED } from "@meru/shared/build-features";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { ExtensionActionAnchorRect } from "@meru/shared/types";
 import { BrowserWindow, Menu, nativeImage, type WebContents } from "electron";
@@ -152,4 +153,23 @@ class ExtensionActions {
   }
 }
 
-export const extensionActions = new ExtensionActions();
+/** The subset `index.ts` and `ipc.ts` reach the titlebar button through. */
+type AppExtensionActions = Pick<ExtensionActions, "popup" | "init" | "serialize" | "showMenu">;
+
+/**
+ * The button on a build with no extensions: nothing ever loads, so there is
+ * never an action to list and never a popup to open, and everything the menu and
+ * the popup are made of goes with the class. The `Popup` stays so that the
+ * quit-time close in `index.ts` reads like the two beside it; it is field
+ * initialization and nothing more until something opens it.
+ */
+const inertExtensionActions: AppExtensionActions = {
+  popup: new Popup(),
+  init: () => {},
+  serialize: () => [],
+  showMenu: () => {},
+};
+
+export const extensionActions: AppExtensionActions = EXTENSIONS_ENABLED
+  ? new ExtensionActions()
+  : inertExtensionActions;

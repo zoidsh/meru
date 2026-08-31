@@ -28,6 +28,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Each build step switches on the prerelease flag twice, and the two
+      # halves are not interchangeable. --config.publish.channel is
+      # electron-builder's, deciding which update metadata the release carries;
+      # MERU_BUILD_CHANNEL is read by scripts/build.ts, which has already
+      # finished by the time electron-builder sees its flag, and decides which
+      # features are compiled into the bundles at all.
       - if: startsWith(matrix.os, 'macos')
         # The provisioning profile authorizes the Touch ID keychain access group entitlement;
         # without it macOS refuses to launch the signed app.
@@ -42,11 +48,14 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERU_BUILD_CHANNEL: ${{ github.event.release.prerelease && 'alpha' || 'stable' }}
       - if: startsWith(matrix.os, 'ubuntu')
         run: bun run build:linux -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=alpha' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERU_BUILD_CHANNEL: ${{ github.event.release.prerelease && 'alpha' || 'stable' }}
       - if: startsWith(matrix.os, 'windows')
         run: bun run build:win -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=alpha' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERU_BUILD_CHANNEL: ${{ github.event.release.prerelease && 'alpha' || 'stable' }}

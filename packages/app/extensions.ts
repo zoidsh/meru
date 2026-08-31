@@ -12,6 +12,7 @@ import {
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
+import { EXTENSIONS_ENABLED } from "@meru/shared/build-features";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
@@ -21,10 +22,20 @@ import { config } from "@/config";
 import { log } from "@/lib/log";
 import { licenseKey } from "@/license-key";
 
-/** Where the curated extensions are installed, `<installDir>/<id>/<version>`. */
-const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
+/**
+ * Where the curated extensions are installed, `<installDir>/<id>/<version>`, and
+ * where the loader keeps the copies it derives from them.
+ *
+ * Empty on a build without extensions. Everything that reads them is compiled
+ * out, but a `path.join` is a call the bundler has to assume does something, so
+ * left alone these two would be the whole feature's only surviving trace in the
+ * bundle.
+ */
+const INSTALL_DIR = EXTENSIONS_ENABLED ? path.join(app.getPath("userData"), "extensions") : "";
 
-const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-extensions");
+const DERIVED_EXTENSIONS_DIR = EXTENSIONS_ENABLED
+  ? path.join(app.getPath("userData"), "derived-extensions")
+  : "";
 
 /**
  * Unpacked extensions to load on top of the installed ones, one directory
@@ -142,39 +153,77 @@ function getContentScriptMatches(extensionId: string) {
     ?.contentScriptMatches;
 }
 
-// Extension contexts reach the main process over the bridge's custom scheme,
-// and Electron only takes scheme privileges while modules are still loading
-registerExtensionBridgeScheme();
+/**
+ * What the rest of the app calls the extension layer through. Naming the subset
+ * it actually uses is what lets a build without extensions answer with an inert
+ * object of the same shape rather than making every call site check first.
+ */
+type AppExtensions = Pick<
+  Extensions,
+  | "setupSession"
+  | "teardownSession"
+  | "clearSessionData"
+  | "getSessionActions"
+  | "onActionsChanged"
+  | "isExtensionLoaded"
+  | "isLoadedExtensionUrl"
+>;
 
-export const extensions = new Extensions({
-  extensionDirs: getExtensionDirs,
-  facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
-  derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
-  strippedManifestKeys: getStrippedManifestKeys(),
-  getContentScriptMatches,
-  // One shared extension instance across all account sessions — one 1Password
-  // sign-in instead of one per account. It has never been run against
-  // 1Password itself, so nothing loads it by default: development builds opt
-  // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, the end-to-end suite does the
-  // same alongside the fixture flag — its packaged build is the only automated
-  // coverage the runtime proxy has — and deleting this one option removes the
-  // whole feature.
-  sharedInstance:
-    (is.dev || isFixtureExtensionEnabled()) && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
-      ? createSharedExtensionInstance({
-          shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
-          relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
-        })
-      : undefined,
-  logger: {
-    info: (message, details) => {
-      log.info(message, details);
-    },
-    error: (message, { error, ...details }) => {
-      log.error(message, { ...details, error: serializeError(error) });
-    },
-  },
-});
+/**
+ * The extension layer on a build that carries none: no session is ever set up,
+ * so no extension is loaded and no action exists, and the answers say so. The
+ * passkey dialog in `WorkspaceApp` is the one caller whose behavior this
+ * decides, and `false` there is what it did before extensions existed.
+ */
+const inertExtensions: AppExtensions = {
+  setupSession: async () => {},
+  teardownSession: () => {},
+  clearSessionData: async () => {},
+  getSessionActions: () => [],
+  onActionsChanged: () => () => {},
+  isExtensionLoaded: () => false,
+  isLoadedExtensionUrl: () => false,
+};
+
+if (EXTENSIONS_ENABLED) {
+  // Extension contexts reach the main process over the bridge's custom scheme,
+  // and Electron only takes scheme privileges while modules are still loading.
+  // It can't be deferred, which is why the constant is read here at module
+  // level rather than around the call sites.
+  registerExtensionBridgeScheme();
+}
+
+export const extensions: AppExtensions = EXTENSIONS_ENABLED
+  ? new Extensions({
+      extensionDirs: getExtensionDirs,
+      facadeScriptPath: path.join(__dirname, "extensions-chrome-facade.js"),
+      derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
+      strippedManifestKeys: getStrippedManifestKeys(),
+      getContentScriptMatches,
+      // One shared extension instance across all account sessions — one 1Password
+      // sign-in instead of one per account. It has never been run against
+      // 1Password itself, so nothing loads it by default: development builds opt
+      // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, the end-to-end suite does the
+      // same alongside the fixture flag — its packaged build is the only automated
+      // coverage the runtime proxy has — and deleting this one option removes the
+      // whole feature.
+      sharedInstance:
+        (is.dev || isFixtureExtensionEnabled()) && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
+          ? createSharedExtensionInstance({
+              shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
+              relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
+            })
+          : undefined,
+      logger: {
+        info: (message, details) => {
+          log.info(message, details);
+        },
+        error: (message, { error, ...details }) => {
+          log.error(message, { ...details, error: serializeError(error) });
+        },
+      },
+    })
+  : inertExtensions;
 
 /**
  * What is on disk, which config alone can't tell: an install carries a version,
@@ -255,6 +304,14 @@ export async function uninstallCuratedExtension(extensionId: string) {
  * that is where deriving reads an install directory from.
  */
 export async function pruneInstalledExtensionVersions() {
+  // Launch awaits both prunes before the first session, without asking whether
+  // extensions exist — so unlike the rest of this module, which is reached only
+  // through call sites that are themselves compiled out, these two answer for
+  // themselves
+  if (!EXTENSIONS_ENABLED) {
+    return;
+  }
+
   try {
     await pruneExtensionVersions({ installDir: INSTALL_DIR });
   } catch (error) {
@@ -269,6 +326,10 @@ export async function pruneInstalledExtensionVersions() {
  * unaccounted for the moment a derive drops its stamp to write it again.
  */
 export async function pruneDerivedExtensionCopies() {
+  if (!EXTENSIONS_ENABLED) {
+    return;
+  }
+
   try {
     await pruneDerivedExtensions({
       derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
@@ -347,4 +408,14 @@ class ExtensionUpdater {
   }
 }
 
-export const extensionUpdater = new ExtensionUpdater();
+/** What `ipc.ts` and launch call the updater through, inert without extensions. */
+type AppExtensionUpdater = Pick<ExtensionUpdater, "init" | "checkForUpdates">;
+
+const inertExtensionUpdater: AppExtensionUpdater = {
+  init: () => {},
+  checkForUpdates: async () => [],
+};
+
+export const extensionUpdater: AppExtensionUpdater = EXTENSIONS_ENABLED
+  ? new ExtensionUpdater()
+  : inertExtensionUpdater;

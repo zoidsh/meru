@@ -1,3 +1,4 @@
+import { EXTENSIONS_ENABLED } from "@meru/shared/build-features";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
@@ -56,11 +57,17 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
     path: "/settings/workspace-apps",
     component: WorkspaceAppsSettings,
   },
-  {
-    label: "Extensions",
-    path: "/settings/extensions",
-    component: ExtensionsSettings,
-  },
+  // Spread rather than `hidden`, which only stops the entry being drawn: a
+  // build without extensions has no settings page to route to
+  ...(EXTENSIONS_ENABLED
+    ? [
+        {
+          label: "Extensions",
+          path: "/settings/extensions",
+          component: ExtensionsSettings,
+        },
+      ]
+    : []),
   {
     label: "Languages",
     path: "/settings/languages",

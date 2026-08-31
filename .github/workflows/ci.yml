@@ -49,6 +49,18 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun test
+  bundles:
+    # What the stable artifact weighs, which nothing else measures: the e2e job
+    # builds the Experimental channel, because its fixture tests need the
+    # extensions stable leaves out, so that job's budget file describes a build
+    # nobody installs. `bun run build:js` alone is seconds, so this is its own
+    # small job rather than a step bolted onto that one.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run test:bundles
   e2e:
     # Builds the app and launches it, so this is also what proves each platform
     # still compiles. There is no separate build workflow: building without

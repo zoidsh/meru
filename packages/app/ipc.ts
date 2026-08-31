@@ -4,6 +4,7 @@ import path from "node:path";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { isExtensionId } from "@meru/electron-extensions";
+import { EXTENSIONS_ENABLED } from "@meru/shared/build-features";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
@@ -1038,71 +1039,77 @@ class Ipc {
       bookmarks.move(accountId, bookmarkId, targetIndex);
     });
 
-    ipc.main.handle("extensions.getActions", (event) => {
-      return extensionActions.serialize(event.sender);
-    });
+    // The whole extensions surface, registered only where the feature is
+    // built in. It is what keeps `@meru/electron-extensions` out of a stable
+    // bundle: `isExtensionId` below is the app's one direct import of it
+    // outside `extensions.ts`.
+    if (EXTENSIONS_ENABLED) {
+      ipc.main.handle("extensions.getActions", (event) => {
+        return extensionActions.serialize(event.sender);
+      });
 
-    ipc.main.on("extensions.showActionsMenu", (event, anchorRect) => {
-      extensionActions.showMenu(event.sender, anchorRect);
-    });
+      ipc.main.on("extensions.showActionsMenu", (event, anchorRect) => {
+        extensionActions.showMenu(event.sender, anchorRect);
+      });
 
-    ipc.main.handle("extensions.getInstalled", () => {
-      return getInstalledExtensions();
-    });
+      ipc.main.handle("extensions.getInstalled", () => {
+        return getInstalledExtensions();
+      });
 
-    ipc.main.handle("extensions.install", async (_event, extensionId) => {
-      if (!licenseKey.isValid) {
-        return {
-          error: "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue.",
-        };
-      }
+      ipc.main.handle("extensions.install", async (_event, extensionId) => {
+        if (!licenseKey.isValid) {
+          return {
+            error: "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue.",
+          };
+        }
 
-      if (!isCuratedExtensionId(extensionId)) {
-        return { error: "Meru doesn't offer this extension." };
-      }
+        if (!isCuratedExtensionId(extensionId)) {
+          return { error: "Meru doesn't offer this extension." };
+        }
 
-      try {
-        await installCuratedExtension(extensionId);
+        try {
+          await installCuratedExtension(extensionId);
 
-        return {};
-      } catch (error) {
-        log.error("Failed to install extension", { extensionId, error: serializeError(error) });
+          return {};
+        } catch (error) {
+          log.error("Failed to install extension", { extensionId, error: serializeError(error) });
 
-        return {
-          error: `Couldn't install the extension: ${error instanceof Error ? error.message : String(error)}`,
-        };
-      }
-    });
+          return {
+            error: `Couldn't install the extension: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
+      });
 
-    // Opting out is never gated, so an extension can be taken off a device that
-    // has lost its license
-    ipc.main.handle("extensions.uninstall", async (_event, extensionId) => {
-      if (!isExtensionId(extensionId)) {
-        return { error: "Meru doesn't know this extension." };
-      }
+      // Opting out is never gated, so an extension can be taken off a device that
+      // has lost its license
+      ipc.main.handle("extensions.uninstall", async (_event, extensionId) => {
+        if (!isExtensionId(extensionId)) {
+          return { error: "Meru doesn't know this extension." };
+        }
 
-      try {
-        await uninstallCuratedExtension(extensionId);
+        try {
+          await uninstallCuratedExtension(extensionId);
 
-        return {};
-      } catch (error) {
-        log.error("Failed to uninstall extension", { extensionId, error: serializeError(error) });
+          return {};
+        } catch (error) {
+          log.error("Failed to uninstall extension", { extensionId, error: serializeError(error) });
 
-        return {
-          error: `Couldn't uninstall the extension: ${error instanceof Error ? error.message : String(error)}`,
-        };
-      }
-    });
+          return {
+            error: `Couldn't uninstall the extension: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
+      });
 
-    ipc.main.handle("extensions.update", async () => {
-      if (!licenseKey.isValid) {
-        return {
-          error: "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue.",
-        };
-      }
+      ipc.main.handle("extensions.update", async () => {
+        if (!licenseKey.isValid) {
+          return {
+            error: "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue.",
+          };
+        }
 
-      return { results: await extensionUpdater.checkForUpdates() };
-    });
+        return { results: await extensionUpdater.checkForUpdates() };
+      });
+    }
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
       const parentWindow = BrowserWindow.fromWebContents(event.sender);

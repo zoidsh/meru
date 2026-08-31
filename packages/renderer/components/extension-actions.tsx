@@ -1,3 +1,4 @@
+import { EXTENSIONS_ENABLED } from "@meru/shared/build-features";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { PuzzleIcon } from "lucide-react";
 import { TitlebarIconButton } from "@/components/titlebar";
@@ -22,7 +23,7 @@ export function ExtensionActions() {
 
   const actions = useExtensionActionsStore((state) => state.actions);
 
-  if (!config?.["extensions.showTitlebarButton"] || actions.length === 0) {
+  if (!EXTENSIONS_ENABLED || !config?.["extensions.showTitlebarButton"] || actions.length === 0) {
     return;
   }
 
