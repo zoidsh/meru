@@ -110,7 +110,20 @@ export function getActionPopupUrl(extensionId: string, manifest: ActionManifest)
     return null;
   }
 
-  return new URL(defaultPopup, `chrome-extension://${extensionId}/`).href;
+  const popupUrl = new URL(defaultPopup, `chrome-extension://${extensionId}/`);
+
+  // An absolute `default_popup` resolves to itself, and the popup is loaded in
+  // the viewed account's session with that account's cookies, so a manifest
+  // declaring one would be handed a window on the signed-in user. Chrome
+  // refuses a non-relative `default_popup` when it parses the manifest; this is
+  // the same refusal, one step later. `URL.origin` is no use for the
+  // comparison, since it is `"null"` for every scheme the URL standard doesn't
+  // call special, `chrome-extension:` among them.
+  if (popupUrl.protocol !== "chrome-extension:" || popupUrl.host !== extensionId) {
+    return null;
+  }
+
+  return popupUrl.href;
 }
 
 export function createExtensionAction(extension: ActionExtension): ExtensionAction {
