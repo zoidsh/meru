@@ -514,6 +514,12 @@ export class Extensions {
     return this.loadedExtensionIdsBySession.get(session)?.has(extensionId) ?? false;
   }
 
+  /**
+   * Whether a URL belongs to an extension loaded into this session. A bare
+   * origin counts, since that is all a permission check is given, and Chromium
+   * serializes one with and without its trailing slash depending on where it
+   * came from.
+   */
   isLoadedExtensionUrl(session: Session, url: string) {
     const loadedExtensionIds = this.loadedExtensionIdsBySession.get(session);
 
@@ -522,7 +528,9 @@ export class Extensions {
     }
 
     for (const extensionId of loadedExtensionIds) {
-      if (url.startsWith(`chrome-extension://${extensionId}/`)) {
+      const extensionOrigin = `chrome-extension://${extensionId}`;
+
+      if (url === extensionOrigin || url.startsWith(`${extensionOrigin}/`)) {
         return true;
       }
     }

@@ -521,6 +521,18 @@ describe("Extensions", () => {
     ).toBe(false);
   });
 
+  test("matches a bare extension origin, which is all a permission check gets", async () => {
+    const { session } = createSession();
+
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    await extensions.setupSession(session);
+
+    expect(extensions.isLoadedExtensionUrl(session, "chrome-extension://aaa")).toBe(true);
+    expect(extensions.isLoadedExtensionUrl(session, "chrome-extension://aaa/")).toBe(true);
+    expect(extensions.isLoadedExtensionUrl(session, "chrome-extension://aaabbb")).toBe(false);
+  });
+
   test("reports an extension as loaded in that session only", async () => {
     const { session: sessionWithExtension } = createSession();
     const { session: sessionWithoutExtension } = createSession();

@@ -145,7 +145,16 @@ export class Account {
   }
 
   private registerSessionPermissionsCheckHandler() {
-    this.session.setPermissionCheckHandler((_webContents, permission) => {
+    this.session.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
+      // The same carve-out the request handler makes, because the two answers
+      // have to agree: answered here from the workspace-app setting, an
+      // extension page would be told its `requestPermission()` was granted
+      // while `Notification.permission` read denied and every notification it
+      // posted was dropped
+      if (extensions.isLoadedExtensionUrl(this.session, requestingOrigin)) {
+        return EXTENSION_PAGE_PERMISSIONS.has(permission);
+      }
+
       if (permission === "notifications") {
         return areWorkspaceAppNotificationsAllowed();
       }
