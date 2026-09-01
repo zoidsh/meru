@@ -47,12 +47,20 @@ function stubBridge() {
 
   const streamControllers: ReadableStreamDefaultController<Uint8Array>[] = [];
 
+  const refusals = new Map<string, number>();
+
   globalThis.fetch = (async (url: string, init: RequestInit) => {
     const { pathname: pathName } = new URL(url);
 
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
 
     posts.push({ pathName, body });
+
+    const refusalStatus = refusals.get(pathName);
+
+    if (refusalStatus !== undefined) {
+      return new Response(null, { status: refusalStatus });
+    }
 
     if (pathName === RUNTIME_PROXY_PATHS.workerJobs) {
       const stream = new ReadableStream<Uint8Array>({
@@ -69,6 +77,9 @@ function stubBridge() {
 
   return {
     posts,
+    refuse: (pathName: string, status: number) => {
+      refusals.set(pathName, status);
+    },
     postsTo: (pathName: string) => posts.filter((post) => post.pathName === pathName),
     waitForStream: async (streamCount = 1) => {
       await waitFor(() => streamControllers.length >= streamCount, `${streamCount} job streams`);
@@ -555,6 +566,68 @@ describe("createRelayClient", () => {
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortDisconnect)[0]?.body).toEqual({
       portId: "port-1",
     });
+  });
+
+  test("a refused post tears the worker port down with lastError set", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    const browser: ChromeNamespace = { runtime: chrome.runtime };
+
+    startClient([chrome, browser]);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    type RefusedPort = {
+      postMessage: (message: unknown) => void;
+      onDisconnect: WrappedEvent;
+    };
+
+    let port: RefusedPort | undefined;
+
+    (runtime.onConnect as WrappedEvent).addListener((connectedPort) => {
+      port = connectedPort as RefusedPort;
+    });
+
+    await stub.waitForStream();
+
+    stub.pushJob({
+      type: "connect",
+      jobId: "job-1",
+      portId: "port-1",
+      name: "relay",
+      sender: SENDER,
+    });
+
+    await waitFor(() => port !== undefined, "the port");
+
+    let lastErrorDuringListener: unknown;
+
+    port?.onDisconnect.addListener(() => {
+      lastErrorDuringListener = runtime.lastError;
+    });
+
+    // What a session already at its cap of bodies read at once answers
+    stub.refuse(RUNTIME_PROXY_PATHS.workerPortPost, 429);
+
+    port?.postMessage("refused");
+
+    await waitFor(
+      () => stub.postsTo(RUNTIME_PROXY_PATHS.workerPortDisconnect).length === 1,
+      "the disconnect post",
+    );
+
+    expect(lastErrorDuringListener).toEqual({ message: "The runtime proxy bridge answered 429" });
+    expect(runtime.lastError).toBeUndefined();
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortDisconnect)[0]?.body).toEqual({
+      portId: "port-1",
+    });
+
+    expect(() => port?.postMessage("too late")).toThrow(
+      "Attempting to use a disconnected port object",
+    );
   });
 
   test("parks a fresh job stream when the previous one ends", async () => {

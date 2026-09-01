@@ -36,6 +36,8 @@ function installFakeBridge() {
 
   let answerConnect = () => {};
 
+  const refusals = new Map<string, number>();
+
   const connectAnswered = new Promise<void>((resolve) => {
     answerConnect = resolve;
   });
@@ -44,6 +46,12 @@ function installFakeBridge() {
     const { pathname: path } = new URL(url);
 
     requests.push({ path, body: JSON.parse(init.body as string) });
+
+    const refusalStatus = refusals.get(path);
+
+    if (refusalStatus !== undefined) {
+      return new Response(null, { status: refusalStatus });
+    }
 
     if (path !== NATIVE_MESSAGING_PATHS.connect) {
       return new Response(null, { status: 204 });
@@ -67,6 +75,9 @@ function installFakeBridge() {
     requests,
     paths: () => requests.map(({ path }) => path),
     answerConnect,
+    refuse: (path: string, status: number) => {
+      refusals.set(path, status);
+    },
     sendFrame: (frame: NativeMessagingFrame) => {
       controller?.enqueue(encodeNativeMessage(frame));
     },
@@ -176,6 +187,45 @@ describe("facade connectNative", () => {
 
     // Chrome stays quiet about a port the extension disconnected itself
     expect(isDisconnectEmitted).toBe(false);
+  });
+
+  test("tears the port down when the bridge refuses a post", async () => {
+    const bridge = installFakeBridge();
+
+    const { runtime, port } = connectNative();
+
+    let disconnectError: string | undefined;
+
+    port.onDisconnect.addListener(() => {
+      disconnectError = (runtime.lastError as { message?: string } | undefined)?.message;
+    });
+
+    bridge.answerConnect();
+
+    // What a session already at its cap of bodies read at once answers
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    await waitFor("the disconnect request", () =>
+      bridge.paths().includes(NATIVE_MESSAGING_PATHS.disconnect),
+    );
+
+    expect(disconnectError).toBe("The native messaging bridge answered 429");
+
+    // Main closed nothing, so the port's own disconnect is what closes its
+    // record there and kills the host
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    expect(() => {
+      port.postMessage({ hello: "again" });
+    }).toThrow("Attempting to use a disconnected port object");
+
+    await waitFor("the stream cancel", () => bridge.isStreamCanceled());
   });
 
   test("refuses to post on a disconnected port", () => {

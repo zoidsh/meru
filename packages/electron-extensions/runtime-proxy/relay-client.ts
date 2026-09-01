@@ -1,6 +1,7 @@
 import { postBridge } from "../facade/lib/bridge";
 import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { createEvent } from "../facade/lib/event";
+import { withLastError } from "../facade/lib/last-error";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   MAX_RUNTIME_PROXY_FRAME_BYTES,
@@ -21,6 +22,11 @@ const DEFAULT_RETRY_DELAY_MS = 1000;
  * runs for hours does not grow a set for as long as it lives.
  */
 const MAX_REMEMBERED_JOB_IDS = 1000;
+
+/** What a refused bridge call reads as, whatever the call was. */
+function bridgeAnsweredError(status: number) {
+  return `The runtime proxy bridge answered ${status}`;
+}
 
 type WorkerPort = {
   externalPort: Record<string, unknown>;
@@ -61,10 +67,31 @@ export function createRelayClient({
 
   const handledJobIds = new Set<string>();
 
+  const wrappedRuntimes: ChromeNamespace[] = [];
+
   let isStopped = false;
 
   const postToBridge = (pathName: string, body: Record<string, unknown>) =>
     postBridge(pathName, body).catch(() => undefined);
+
+  /**
+   * `lastError` around an emit, set on every runtime object this client
+   * wrapped: Electron builds `chrome` and `browser` as two objects, one client
+   * serves both, and a listener reads whichever one it was written against.
+   */
+  const withRuntimesLastError = (error: string, emit: () => void) => {
+    let run = emit;
+
+    for (const runtime of wrappedRuntimes) {
+      const nextRun = run;
+
+      run = () => {
+        withLastError(runtime, error, nextRun);
+      };
+    }
+
+    run();
+  };
 
   /**
    * Wraps a native event with one that also mirrors its listeners here. The
@@ -185,19 +212,45 @@ export function createRelayClient({
         // Chained so two posts arrive in the order they were written
         sendChain = sendChain
           .then(() => postBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message }))
+          .then((response) => {
+            // A post the bridge refused, which is what a session at its cap of
+            // bodies read at once gets. Chrome has no answer for one message
+            // being refused, so this takes the nearest one it has: the port
+            // goes away with `lastError` set and later posts throw
+            if (!response.ok) {
+              tearDown(bridgeAnsweredError(response.status));
+            }
+          })
           .catch(() => undefined);
       },
       disconnect() {
-        if (isDisconnected) {
-          return;
-        }
-
-        isDisconnected = true;
-
-        ports.delete(portId);
-
-        void postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId });
+        tearDown();
       },
+    };
+
+    /**
+     * Closes the port from this side: main hears the disconnect and drops its
+     * end, and later posts throw. An error means the port went away rather
+     * than being disconnected, so the extension's own listeners hear it with
+     * `lastError` set; Chrome stays quiet about a port the worker closed
+     * itself, so without one nothing is emitted.
+     */
+    const tearDown = (error?: string) => {
+      if (isDisconnected) {
+        return;
+      }
+
+      isDisconnected = true;
+
+      ports.delete(portId);
+
+      void postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId });
+
+      if (error !== undefined) {
+        withRuntimesLastError(error, () => {
+          onDisconnect.emit(externalPort);
+        });
+      }
     };
 
     return {
@@ -320,7 +373,7 @@ export function createRelayClient({
         const response = await postBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
 
         if (!response.ok || !response.body) {
-          throw new Error(`The runtime proxy bridge answered ${response.status}`);
+          throw new Error(bridgeAnsweredError(response.status));
         }
 
         const reader = response.body.getReader();
@@ -360,6 +413,8 @@ export function createRelayClient({
       if (!runtime) {
         return;
       }
+
+      wrappedRuntimes.push(runtime);
 
       mirrorEvent(runtime, "onMessage", messageListeners);
 

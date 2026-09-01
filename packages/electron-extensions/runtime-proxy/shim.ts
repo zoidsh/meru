@@ -16,6 +16,11 @@ import {
 
 const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
+/** What a refused bridge call reads as, whatever the call was. */
+function bridgeAnsweredError(status: number) {
+  return `The runtime proxy bridge answered ${status}`;
+}
+
 /**
  * What a shimmed context can say about where it runs, read from its own
  * globals. The same two facts serve a content script and an extension page: the
@@ -107,7 +112,7 @@ function createProxiedSendMessage(
         });
 
         if (!response.ok) {
-          throw new Error(`The runtime proxy bridge answered ${response.status}`);
+          throw new Error(bridgeAnsweredError(response.status));
         }
 
         result = (await response.json()) as RuntimeProxySendMessageResult;
@@ -181,6 +186,11 @@ function createProxiedPort(
 
       sendChain = sendChain
         .then(() => postBridge(RUNTIME_PROXY_PATHS.portPost, { portId, message }))
+        .then((response) => {
+          if (!response.ok) {
+            refusePost(response.status);
+          }
+        })
         .catch(() => undefined);
     },
     disconnect() {
@@ -192,8 +202,12 @@ function createProxiedPort(
 
       markOpened();
 
-      void postBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId });
+      sendDisconnect();
     },
+  };
+
+  const sendDisconnect = () => {
+    void postBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId });
   };
 
   // Chrome stays quiet about a port the content script disconnected itself
@@ -211,6 +225,24 @@ function createProxiedPort(
     });
   };
 
+  /**
+   * A post the bridge refused, which is what a session at its cap of bodies
+   * read at once gets. Chrome has no answer for one message being refused, so
+   * this takes the nearest one it has: the port goes away with `lastError`
+   * set, and everything posted after it throws. Main has closed nothing on its
+   * side — the refusal is settled before the request reaches its handler — so
+   * the disconnect still goes out to close the port's record there.
+   */
+  const refusePost = (status: number) => {
+    if (isDisconnected) {
+      return;
+    }
+
+    disconnected(bridgeAnsweredError(status));
+
+    sendDisconnect();
+  };
+
   const readFrames = async () => {
     const response = await postBridge(RUNTIME_PROXY_PATHS.connect, {
       portId,
@@ -219,7 +251,7 @@ function createProxiedPort(
     });
 
     if (!response.ok || !response.body) {
-      throw new Error(`The runtime proxy bridge answered ${response.status}`);
+      throw new Error(bridgeAnsweredError(response.status));
     }
 
     markOpened();

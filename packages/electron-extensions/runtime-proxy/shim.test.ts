@@ -23,6 +23,18 @@ afterEach(() => {
 
 type RecordedRequest = { pathName: string; body: Record<string, unknown> };
 
+async function waitFor(condition: () => boolean, what: string) {
+  const deadline = Date.now() + 1000;
+
+  while (!condition()) {
+    if (Date.now() > deadline) {
+      throw new Error(`Timed out waiting for ${what}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+}
+
 function stubFetch(respond: (pathName: string, body: Record<string, unknown>) => Response) {
   const requests: RecordedRequest[] = [];
 
@@ -303,6 +315,55 @@ describe("shimmed connect", () => {
     expect(requests.some(({ pathName }) => pathName === RUNTIME_PROXY_PATHS.portDisconnect)).toBe(
       true,
     );
+
+    expect(() => port.postMessage("too late")).toThrow(
+      "Attempting to use a disconnected port object",
+    );
+  });
+
+  test("a refused post tears the port down and tells the relay", async () => {
+    const respondWithStream = respondWithPortStream({});
+
+    const refusals = new Map<string, number>();
+
+    const requests = stubFetch((pathName) => {
+      const refusalStatus = refusals.get(pathName);
+
+      // What a session already at its cap of bodies read at once answers
+      return refusalStatus === undefined
+        ? respondWithStream(pathName)
+        : new Response(null, { status: refusalStatus });
+    });
+
+    const runtime = createShimmedRuntime();
+
+    const port = (runtime.connect as Connect)();
+
+    let lastErrorDuringListener: unknown;
+
+    port.onDisconnect.addListener(() => {
+      lastErrorDuringListener = runtime.lastError;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    refusals.set(RUNTIME_PROXY_PATHS.portPost, 429);
+
+    port.postMessage("refused");
+
+    await waitFor(
+      () => requests.some(({ pathName }) => pathName === RUNTIME_PROXY_PATHS.portDisconnect),
+      "the disconnect post",
+    );
+
+    expect(lastErrorDuringListener).toEqual({ message: "The runtime proxy bridge answered 429" });
+    expect(runtime.lastError).toBeUndefined();
+
+    expect(requests.map(({ pathName }) => pathName)).toEqual([
+      RUNTIME_PROXY_PATHS.connect,
+      RUNTIME_PROXY_PATHS.portPost,
+      RUNTIME_PROXY_PATHS.portDisconnect,
+    ]);
 
     expect(() => port.postMessage("too late")).toThrow(
       "Attempting to use a disconnected port object",
