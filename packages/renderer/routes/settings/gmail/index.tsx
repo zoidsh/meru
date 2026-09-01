@@ -81,7 +81,7 @@ export function GmailSettings() {
               configKey="gmail.extendDarkTheme"
               restartRequired
               licenseKeyRequired
-              beta
+              maturity="Beta"
             />
           </FieldSet>
           <FieldSeparator />
