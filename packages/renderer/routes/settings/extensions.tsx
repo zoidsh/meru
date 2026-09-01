@@ -38,11 +38,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 import { toast } from "sonner";
-import { BetaFieldBadge } from "@/components/beta-field-badge";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { CopyButton } from "@/components/copy-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
+import { MaturityFieldBadge } from "@/components/maturity-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient, useConfig } from "@/lib/react-query";
@@ -422,7 +422,7 @@ export function ExtensionsSettings() {
       <SettingsHeader>
         <SettingsTitle className="flex items-center gap-2">
           Extensions
-          <BetaFieldBadge />
+          <MaturityFieldBadge maturity="Experimental" />
         </SettingsTitle>
         {config["extensions.installed"].length > 0 && <UpdateExtensionsButton />}
       </SettingsHeader>

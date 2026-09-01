@@ -43,6 +43,6 @@ export async function readSettingsPageLabels(navigation: Locator) {
 export async function openSettingsPage(meru: MeruApp, navigation: Locator, label: string) {
   await navigation.getByRole("button", { name: label, exact: true }).click();
 
-  // Contained, not equal: Extensions carries a beta badge inside its title.
+  // Contained, not equal: Extensions carries a maturity badge inside its title.
   await expect(meru.renderer.getByTestId("settings-title"), label).toContainText(label);
 }
