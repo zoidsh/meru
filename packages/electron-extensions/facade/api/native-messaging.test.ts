@@ -228,6 +228,73 @@ describe("facade connectNative", () => {
     await waitFor("the stream cancel", () => bridge.isStreamCanceled());
   });
 
+  test("tears a port down once however many posts the bridge refuses", async () => {
+    const bridge = installFakeBridge();
+
+    const { port } = connectNative();
+
+    let disconnectCount = 0;
+
+    port.onDisconnect.addListener(() => {
+      disconnectCount += 1;
+    });
+
+    bridge.answerConnect();
+
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    port.postMessage({ hello: "again" });
+
+    await waitFor("the disconnect request", () =>
+      bridge.paths().includes(NATIVE_MESSAGING_PATHS.disconnect),
+    );
+
+    // The second post was queued before the first was refused, so it still
+    // goes out, and the disconnect goes out behind it exactly once
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    expect(disconnectCount).toBe(1);
+  });
+
+  test("stays quiet about a post refused after the extension disconnected", async () => {
+    const bridge = installFakeBridge();
+
+    const { port } = connectNative();
+
+    let isDisconnectEmitted = false;
+
+    port.onDisconnect.addListener(() => {
+      isDisconnectEmitted = true;
+    });
+
+    bridge.answerConnect();
+
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    port.disconnect();
+
+    await waitFor("the stream cancel", () => bridge.isStreamCanceled());
+
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    // Chrome stays quiet about a port the extension disconnected itself, and
+    // the refusal arriving afterwards changes nothing
+    expect(isDisconnectEmitted).toBe(false);
+  });
+
   test("refuses to post on a disconnected port", () => {
     installFakeBridge();
 

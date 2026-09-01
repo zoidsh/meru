@@ -573,11 +573,17 @@ describe("createRelayClient", () => {
 
     const { chrome } = createWorkerChrome();
 
-    const browser: ChromeNamespace = { runtime: chrome.runtime };
+    // Two distinct runtime objects, as Electron builds them, so a `lastError`
+    // set on only the one the port happened to be created under would show
+    const browser: ChromeNamespace = {
+      runtime: { id: EXTENSION_ID, onMessage: createNativeEvent(), onConnect: createNativeEvent() },
+    };
 
     startClient([chrome, browser]);
 
     const runtime = chrome.runtime as ChromeNamespace;
+
+    const browserRuntime = browser.runtime as ChromeNamespace;
 
     type RefusedPort = {
       postMessage: (message: unknown) => void;
@@ -604,8 +610,12 @@ describe("createRelayClient", () => {
 
     let lastErrorDuringListener: unknown;
 
+    let browserLastErrorDuringListener: unknown;
+
     port?.onDisconnect.addListener(() => {
       lastErrorDuringListener = runtime.lastError;
+
+      browserLastErrorDuringListener = browserRuntime.lastError;
     });
 
     // What a session already at its cap of bodies read at once answers
@@ -619,7 +629,12 @@ describe("createRelayClient", () => {
     );
 
     expect(lastErrorDuringListener).toEqual({ message: "The runtime proxy bridge answered 429" });
+    expect(browserLastErrorDuringListener).toEqual({
+      message: "The runtime proxy bridge answered 429",
+    });
+
     expect(runtime.lastError).toBeUndefined();
+    expect(browserRuntime.lastError).toBeUndefined();
 
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortDisconnect)[0]?.body).toEqual({
       portId: "port-1",
