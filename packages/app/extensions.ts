@@ -47,7 +47,7 @@ const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-exten
  * `/etc/1password/custom_allowed_browsers`, so a development run can be
  * allowlisted there.
  *
- * `MERU_EXTENSIONS_ENABLE=<id>,<id>` loads them anyway, which is what working
+ * `MERU_DEV_ENABLED_EXTENSIONS=<id>,<id>` loads them anyway, which is what working
  * on the extension layer itself wants.
  */
 function getDevDisabledExtensionIds() {
@@ -55,7 +55,7 @@ function getDevDisabledExtensionIds() {
     return [];
   }
 
-  const enabledExtensionIds = (process.env.MERU_EXTENSIONS_ENABLE ?? "")
+  const enabledExtensionIds = (process.env.MERU_DEV_ENABLED_EXTENSIONS ?? "")
     .split(",")
     .map((extensionId) => extensionId.trim())
     .filter(Boolean);
