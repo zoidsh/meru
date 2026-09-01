@@ -100,6 +100,28 @@ describe("getActionPopupUrl", () => {
     expect(getActionPopupUrl("aaa", { action: { default_title: "Title" } })).toBe(null);
     expect(getActionPopupUrl("aaa", {})).toBe(null);
   });
+
+  test("refuses a popup that resolves outside the extension", () => {
+    expect(getActionPopupUrl("aaa", { action: { default_popup: "https://example.com/x" } })).toBe(
+      null,
+    );
+    expect(getActionPopupUrl("aaa", { action: { default_popup: "//example.com/x" } })).toBe(null);
+    expect(
+      getActionPopupUrl("aaa", { action: { default_popup: "chrome-extension://bbb/popup.html" } }),
+    ).toBe(null);
+  });
+
+  test("is nothing for a popup that isn't a URL", () => {
+    expect(
+      getActionPopupUrl("aaa", { action: { default_popup: "chrome-extension://aaa\\x" } }),
+    ).toBe(null);
+  });
+
+  test("keeps a page a relative path walks back to the extension root", () => {
+    expect(getActionPopupUrl("aaa", { action: { default_popup: "../../popup.html" } })).toBe(
+      "chrome-extension://aaa/popup.html",
+    );
+  });
 });
 
 describe("createExtensionAction", () => {

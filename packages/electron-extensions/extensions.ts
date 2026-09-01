@@ -514,6 +514,13 @@ export class Extensions {
     return this.loadedExtensionIdsBySession.get(session)?.has(extensionId) ?? false;
   }
 
+  /**
+   * Whether a URL belongs to an extension loaded into this session. A bare
+   * origin counts too, since that is all a permission check is given: Electron
+   * hands the check handler `GURL::spec()`, which for a standard scheme such as
+   * `chrome-extension` always carries the trailing slash, so this is belt and
+   * braces rather than a path anyone has hit.
+   */
   isLoadedExtensionUrl(session: Session, url: string) {
     const loadedExtensionIds = this.loadedExtensionIdsBySession.get(session);
 
@@ -522,7 +529,9 @@ export class Extensions {
     }
 
     for (const extensionId of loadedExtensionIds) {
-      if (url.startsWith(`chrome-extension://${extensionId}/`)) {
+      const extensionOrigin = `chrome-extension://${extensionId}`;
+
+      if (url === extensionOrigin || url.startsWith(`${extensionOrigin}/`)) {
         return true;
       }
     }
