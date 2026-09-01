@@ -245,6 +245,13 @@ export async function installCuratedExtension(extensionId: string) {
 }
 
 export async function uninstallCuratedExtension(extensionId: string) {
+  // An install of the same id in flight is writing into the very directories
+  // this is about to drop: the delete would pull the staging directory out from
+  // under it, and a rename landing after the delete would put a version back
+  // with no opt-in to account for it. Its outcome is the install's to report,
+  // so a failure here is only a reason to stop waiting.
+  await runningInstalls.get(extensionId)?.catch(() => {});
+
   config.set(
     "extensions.installed",
     config
@@ -258,13 +265,22 @@ export async function uninstallCuratedExtension(extensionId: string) {
 }
 
 /**
- * The version directories an update replaced, and the staging directories a
- * crashed install left behind. Runs before the first session is set up, since
- * that is where deriving reads an install directory from.
+ * The version directories an update replaced, the staging directories a crashed
+ * install left behind, and the installs no opt-in accounts for. Runs before the
+ * first session is set up, since that is where deriving reads an install
+ * directory from.
+ *
+ * What is kept is what the user opted into rather than what loads: an extension
+ * whose load the master switch or a lapsed license is holding back is one the
+ * user still owns, and turning the switch back on must not mean downloading it
+ * again.
  */
 export async function pruneInstalledExtensionVersions() {
   try {
-    await pruneExtensionVersions({ installDir: INSTALL_DIR });
+    await pruneExtensionVersions({
+      installDir: INSTALL_DIR,
+      keptExtensionIds: config.get("extensions.installed"),
+    });
   } catch (error) {
     log.error("Failed to prune installed extension versions", { error: serializeError(error) });
   }

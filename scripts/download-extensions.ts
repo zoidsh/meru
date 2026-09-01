@@ -12,7 +12,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 // The crx and install entries, since the package's own entry reaches into Electron
-import { verifyCrx } from "@meru/electron-extensions/crx";
+import { isExtensionVersion, verifyCrx } from "@meru/electron-extensions/crx";
 import { fetchCrx } from "@meru/electron-extensions/install";
 import { type CuratedExtension, curatedExtensions } from "@meru/shared/extensions";
 import { unzipSync } from "fflate";
@@ -82,6 +82,14 @@ async function downloadExtension(extension: CuratedExtension) {
     version: string;
     key: string;
   };
+
+  // The version is what a real install names its directory after, so a package
+  // the app would refuse is refused here too rather than unpacked
+  if (!isExtensionVersion(manifest.version)) {
+    throw new Error(
+      `${name}: the package carries the version "${manifest.version}", which is not an extension version`,
+    );
+  }
 
   // An unpacked extension without a `key` loads under an id derived from its
   // directory path, and everything keyed to its real id — native messaging

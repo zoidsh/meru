@@ -72,7 +72,89 @@ export function buildUpdateCheckUrl({
  * so a caller can hand over a plain function — a test's fake above all —
  * without matching every property a runtime hangs off its global.
  */
-export type FetchImplementation = (url: string, init: { redirect: "follow" }) => Promise<Response>;
+export type FetchImplementation = (
+  url: string,
+  init: { redirect: "follow"; signal: AbortSignal },
+) => Promise<Response>;
+
+/**
+ * How long each request to the endpoint has to answer, the whole exchange
+ * rather than a chunk of it. Node's `fetch` times out per chunk, so a server
+ * that trickles bytes holds the promise open with no deadline at all, and an
+ * embedder that coalesces calls onto the request in flight — which is what
+ * keeps two installs of one extension out of the same staging directory — has
+ * no way back: the scheduled check, the update button, and switching the
+ * extension on all join the stalled promise until the app restarts.
+ *
+ * They differ by two orders of what they carry. An update check is a few
+ * hundred bytes of XML, so anything but a stall answers well inside two
+ * minutes. A package is tens of megabytes — about 18 MB for 1Password, which is
+ * already 90 seconds at 200 KB/s and longer on hotel wifi — and it only ever
+ * downloads when the check said a newer version exists, so a generous bound
+ * there costs nothing in the steady state and a tight one fails a user whose
+ * connection was merely slow.
+ *
+ * Plain milliseconds rather than a duration helper, since this package carries
+ * no imports of Meru's own.
+ */
+const UPDATE_CHECK_TIMEOUT_MS = 2 * 60 * 1000;
+
+const DOWNLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+
+type FetchEndpointOptions<Body> = {
+  extensionId: string;
+  timeoutMs: number;
+  /**
+   * Reading the body is part of the request rather than something a caller does
+   * after it, because the deadline has to cover it: the case this exists for is
+   * a server that answers its headers at once and then trickles, where a
+   * deadline ending at the headers would leave the download uncovered.
+   */
+  readBody: (response: Response) => Promise<Body>;
+};
+
+/**
+ * A request to the endpoint under a deadline, with the abort surfaced as an
+ * ordinary failure. `AbortSignal.timeout` rejects with a `TimeoutError` and
+ * Electron's own stack with an `AbortError`, and an embedder showing the user
+ * either message would say the operation was aborted where what happened is
+ * that the endpoint went quiet.
+ */
+async function fetchEndpoint<Body>(
+  fetch: FetchImplementation,
+  url: string,
+  { extensionId, timeoutMs, readBody }: FetchEndpointOptions<Body>,
+) {
+  try {
+    const response = await fetch(url, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    // No Content is the endpoint's no: an id it does not serve, or a request it
+    // could not place — and it counts as `ok`, so left alone it would surface as
+    // a verification error about an empty package
+    if (response.status === 204) {
+      throw new Error(`Update endpoint has no package for ${extensionId}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Update endpoint answered ${response.status} ${response.statusText} for ${extensionId}`,
+      );
+    }
+
+    return await readBody(response);
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new Error(
+        `Update endpoint did not answer for ${extensionId} within ${timeoutMs / 1000} seconds`,
+      );
+    }
+
+    throw error;
+  }
+}
 
 export type FetchCrxOptions = CrxDownloadOptions & {
   /**
@@ -95,24 +177,11 @@ export async function fetchCrx({
   chromeVersion,
   fetch = globalThis.fetch,
 }: FetchCrxOptions) {
-  const response = await fetch(buildCrxDownloadUrl({ extensionId, chromeVersion }), {
-    redirect: "follow",
+  return fetchEndpoint(fetch, buildCrxDownloadUrl({ extensionId, chromeVersion }), {
+    extensionId,
+    timeoutMs: DOWNLOAD_TIMEOUT_MS,
+    readBody: async (response) => new Uint8Array(await response.arrayBuffer()),
   });
-
-  // No Content is the endpoint's no: an id it does not serve, or a request it
-  // could not place — and it counts as `ok`, so left alone it would surface as
-  // a verification error about an empty package
-  if (response.status === 204) {
-    throw new Error(`Update endpoint has no package for ${extensionId}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Update endpoint answered ${response.status} ${response.statusText} for ${extensionId}`,
-    );
-  }
-
-  return new Uint8Array(await response.arrayBuffer());
 }
 
 export type CrxUpdate =
@@ -192,20 +261,15 @@ export async function fetchCrxUpdate({
   installedVersion,
   fetch = globalThis.fetch,
 }: FetchCrxUpdateOptions) {
-  const response = await fetch(
+  const responseBody = await fetchEndpoint(
+    fetch,
     buildUpdateCheckUrl({ extensionId, chromeVersion, installedVersion }),
-    { redirect: "follow" },
+    {
+      extensionId,
+      timeoutMs: UPDATE_CHECK_TIMEOUT_MS,
+      readBody: (response) => response.text(),
+    },
   );
 
-  if (response.status === 204) {
-    throw new Error(`Update endpoint has no package for ${extensionId}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Update endpoint answered ${response.status} ${response.statusText} for ${extensionId}`,
-    );
-  }
-
-  return parseUpdateCheck(await response.text(), extensionId);
+  return parseUpdateCheck(responseBody, extensionId);
 }
