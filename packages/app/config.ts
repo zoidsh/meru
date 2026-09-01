@@ -5,13 +5,24 @@ import type { SavedTab } from "@meru/shared/schemas";
 import type { Config } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
+import { resolveMigrationVersion } from "./lib/migration-version";
 
 /** A saved tab as it was written before bookmarks became a list of their own. */
 type LegacySavedTab = SavedTab & {
   persistence?: "pinned" | "bookmarked";
 };
 
+/**
+ * electron-store omits conf's `projectVersion` from its options type and fills
+ * it with `app.getVersion()`, whose prerelease suffix on a Beta build misses
+ * every key in the ladder below. Its runtime still honors one we pass.
+ */
+const migrationVersion = {
+  projectVersion: resolveMigrationVersion(app.getVersion()),
+};
+
 export const config = new Store<Config>({
+  ...migrationVersion,
   name: is.dev ? "config.dev" : "config",
   accessPropertiesByDotNotation: false,
   defaults: createDefaultConfig({
