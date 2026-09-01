@@ -110,7 +110,14 @@ export function getActionPopupUrl(extensionId: string, manifest: ActionManifest)
     return null;
   }
 
-  const popupUrl = new URL(defaultPopup, `chrome-extension://${extensionId}/`);
+  const popupUrl = URL.parse(defaultPopup, `chrome-extension://${extensionId}/`);
+
+  // A `default_popup` that isn't a URL at all leaves the button with nothing to
+  // open, which is what no popup already means. Throwing here would take the
+  // whole extension down instead, since the load path catches per directory.
+  if (!popupUrl) {
+    return null;
+  }
 
   // An absolute `default_popup` resolves to itself, and the popup is loaded in
   // the viewed account's session with that account's cookies, so a manifest

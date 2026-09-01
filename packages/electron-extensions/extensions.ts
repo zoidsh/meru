@@ -516,9 +516,10 @@ export class Extensions {
 
   /**
    * Whether a URL belongs to an extension loaded into this session. A bare
-   * origin counts, since that is all a permission check is given, and Chromium
-   * serializes one with and without its trailing slash depending on where it
-   * came from.
+   * origin counts too, since that is all a permission check is given: Electron
+   * hands the check handler `GURL::spec()`, which for a standard scheme such as
+   * `chrome-extension` always carries the trailing slash, so this is belt and
+   * braces rather than a path anyone has hit.
    */
   isLoadedExtensionUrl(session: Session, url: string) {
     const loadedExtensionIds = this.loadedExtensionIdsBySession.get(session);

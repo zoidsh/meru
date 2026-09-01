@@ -111,6 +111,12 @@ describe("getActionPopupUrl", () => {
     ).toBe(null);
   });
 
+  test("is nothing for a popup that isn't a URL", () => {
+    expect(
+      getActionPopupUrl("aaa", { action: { default_popup: "chrome-extension://aaa\\x" } }),
+    ).toBe(null);
+  });
+
   test("keeps a page a relative path walks back to the extension root", () => {
     expect(getActionPopupUrl("aaa", { action: { default_popup: "../../popup.html" } })).toBe(
       "chrome-extension://aaa/popup.html",
