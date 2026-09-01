@@ -393,7 +393,8 @@ export class RuntimeProxy {
         this.ports.set(port.id, port);
       },
       cancel: () => {
-        // The content script's context went away with its page
+        // The content script's context went away with its page, or the shim
+        // canceled its reader behind a disconnect this bridge refused
         if (port) {
           this.closeShimPort(port, { notifyWorker: true });
         }

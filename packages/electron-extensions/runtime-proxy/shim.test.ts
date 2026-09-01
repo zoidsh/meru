@@ -35,7 +35,9 @@ async function waitFor(condition: () => boolean, what: string) {
   }
 }
 
-function stubFetch(respond: (pathName: string, body: Record<string, unknown>) => Response) {
+function stubFetch(
+  respond: (pathName: string, body: Record<string, unknown>) => Response | Promise<Response>,
+) {
   const requests: RecordedRequest[] = [];
 
   globalThis.fetch = (async (url: string, init: RequestInit) => {
@@ -319,6 +321,95 @@ describe("shimmed connect", () => {
     expect(() => port.postMessage("too late")).toThrow(
       "Attempting to use a disconnected port object",
     );
+  });
+
+  test("a message posted before a disconnect goes out ahead of it, and the reader is canceled after", async () => {
+    const events: string[] = [];
+
+    let answerConnect = () => {};
+
+    // The connect is held unanswered, which is the window an unchained
+    // disconnect overtakes it in. A stub that answers in the same tick closes
+    // that window and would pass whether the disconnect waits on `opened` or
+    // resolves it itself
+    const connectAnswered = new Promise<void>((resolve) => {
+      answerConnect = resolve;
+    });
+
+    stubFetch(async (pathName) => {
+      events.push(`request:${pathName}`);
+
+      if (pathName !== RUNTIME_PROXY_PATHS.connect) {
+        return new Response(null, { status: 204 });
+      }
+
+      await connectAnswered;
+
+      const stream = new ReadableStream<Uint8Array>({
+        cancel: () => {
+          events.push("cancel");
+        },
+      });
+
+      return new Response(stream, { status: 200 });
+    });
+
+    const runtime = createShimmedRuntime();
+
+    const port = (runtime.connect as Connect)();
+
+    port.postMessage("first");
+
+    port.disconnect();
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(events).toEqual([`request:${RUNTIME_PROXY_PATHS.connect}`]);
+
+    answerConnect();
+
+    await waitFor(() => events.includes("cancel"), "the reader cancel");
+
+    expect(events).toEqual([
+      `request:${RUNTIME_PROXY_PATHS.connect}`,
+      `request:${RUNTIME_PROXY_PATHS.portPost}`,
+      `request:${RUNTIME_PROXY_PATHS.portDisconnect}`,
+      "cancel",
+    ]);
+  });
+
+  test("a port the content script disconnected hears no more messages", async () => {
+    let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+    stubFetch(
+      respondWithPortStream({
+        enqueue: (controller) => {
+          streamController = controller;
+        },
+      }),
+    );
+
+    const runtime = createShimmedRuntime();
+
+    const port = (runtime.connect as Connect)();
+
+    let messagesHeard = 0;
+
+    port.onMessage.addListener(() => {
+      messagesHeard += 1;
+    });
+
+    await waitFor(() => streamController !== undefined, "the port stream");
+
+    port.disconnect();
+
+    // Still on its way when the content script hung up, the way the worker's
+    // last messages are
+    streamController?.enqueue(encodeFrame({ type: "message", message: "late" }));
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(messagesHeard).toBe(0);
   });
 
   test("a refused post tears the port down and tells the relay", async () => {

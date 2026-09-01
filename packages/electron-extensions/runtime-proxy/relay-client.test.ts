@@ -568,6 +568,52 @@ describe("createRelayClient", () => {
     });
   });
 
+  test("a message posted before a disconnect goes out ahead of it", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    startClient([chrome]);
+
+    type OrderedPort = { postMessage: (message: unknown) => void; disconnect: () => void };
+
+    let port: OrderedPort | undefined;
+
+    ((chrome.runtime as ChromeNamespace).onConnect as WrappedEvent).addListener((connectedPort) => {
+      port = connectedPort as OrderedPort;
+    });
+
+    await stub.waitForStream();
+
+    stub.pushJob({
+      type: "connect",
+      jobId: "job-1",
+      portId: "port-1",
+      name: "relay",
+      sender: SENDER,
+    });
+
+    await waitFor(() => port !== undefined, "the port");
+
+    port?.postMessage("first");
+
+    port?.disconnect();
+
+    await waitFor(
+      () => stub.postsTo(RUNTIME_PROXY_PATHS.workerPortDisconnect).length === 1,
+      "the disconnect post",
+    );
+
+    const portPaths: string[] = [
+      RUNTIME_PROXY_PATHS.workerPortPost,
+      RUNTIME_PROXY_PATHS.workerPortDisconnect,
+    ];
+
+    expect(
+      stub.posts.map(({ pathName }) => pathName).filter((pathName) => portPaths.includes(pathName)),
+    ).toEqual(portPaths);
+  });
+
   test("a refused post tears the worker port down with lastError set", async () => {
     const stub = stubBridge();
 

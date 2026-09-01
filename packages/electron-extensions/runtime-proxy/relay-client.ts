@@ -234,6 +234,12 @@ export function createRelayClient({
      * than being disconnected, so the extension's own listeners hear it with
      * `lastError` set; Chrome stays quiet about a port the worker closed
      * itself, so without one nothing is emitted.
+     *
+     * The disconnect rides `sendChain` like every post, so it lands behind
+     * what was written before it. Sent unchained it overtakes them, and main
+     * closes the port before the messages arrive. Unlike the shim's port there
+     * is no stream to cancel behind it, so a disconnect the bridge refuses in
+     * turn leaves main's record open; nothing this side holds can close it.
      */
     const tearDown = (error?: string) => {
       if (isDisconnected) {
@@ -244,7 +250,9 @@ export function createRelayClient({
 
       ports.delete(portId);
 
-      void postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId });
+      sendChain = sendChain.then(() =>
+        postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId }),
+      );
 
       if (error !== undefined) {
         withRuntimesLastError(error, () => {
