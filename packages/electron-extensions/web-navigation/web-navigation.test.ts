@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Session, WebContents } from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
-import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
+import { getExtensionBridgeUrl } from "../bridge/protocol";
 import { WEB_NAVIGATION_PATHS } from "./bridge-protocol";
 import { WebNavigation } from "./web-navigation";
 
@@ -208,9 +208,9 @@ describe("WebNavigation", () => {
     });
 
     const response = await requestHandler?.(
-      new Request(`${EXTENSION_BRIDGE_ORIGIN}${WEB_NAVIGATION_PATHS.getFrame}`, {
+      new Request(getExtensionBridgeUrl(WEB_NAVIGATION_PATHS.getFrame, "token"), {
         method: "POST",
-        body: JSON.stringify({ token: "token", details: { tabId: TAB_ID, frameId: 42 } }),
+        body: JSON.stringify({ details: { tabId: TAB_ID, frameId: 42 } }),
       }) as GlobalRequest,
     );
 

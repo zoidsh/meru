@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Session } from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
-import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
+import { getExtensionBridgeUrl } from "../bridge/protocol";
 import { NATIVE_MESSAGING_PATHS, type NativeMessagingFrame } from "./bridge-protocol";
 import { NativeMessageDecoder } from "./framing";
 import { getHostManifestSearchPaths } from "./host-manifest";
@@ -102,7 +102,7 @@ async function writeHostManifest(allowedExtensionId = EXTENSION_ID, hostName = "
 }
 
 function createRequest(pathName: string, body: Record<string, unknown>) {
-  return new Request(`${EXTENSION_BRIDGE_ORIGIN}${pathName}`, {
+  return new Request(getExtensionBridgeUrl(pathName, BRIDGE_TOKEN), {
     method: "POST",
     body: JSON.stringify(body),
   }) as GlobalRequest;
@@ -110,11 +110,7 @@ function createRequest(pathName: string, body: Record<string, unknown>) {
 
 function connect(portId = "port-1") {
   return requestHandler?.(
-    createRequest(NATIVE_MESSAGING_PATHS.connect, {
-      token: BRIDGE_TOKEN,
-      portId,
-      hostName: HOST_NAME,
-    }),
+    createRequest(NATIVE_MESSAGING_PATHS.connect, { portId, hostName: HOST_NAME }),
   ) as Promise<Response>;
 }
 
@@ -190,7 +186,6 @@ describe("NativeMessaging", () => {
 
     await requestHandler?.(
       createRequest(NATIVE_MESSAGING_PATHS.post, {
-        token: BRIDGE_TOKEN,
         portId: "port-1",
         message: { hello: "host" },
       }),

@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
 import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { encodeNativeMessage } from "../native-messaging/framing";
 import {
@@ -49,7 +48,7 @@ function stubBridge() {
   const streamControllers: ReadableStreamDefaultController<Uint8Array>[] = [];
 
   globalThis.fetch = (async (url: string, init: RequestInit) => {
-    const pathName = url.slice(EXTENSION_BRIDGE_ORIGIN.length);
+    const { pathname: pathName } = new URL(url);
 
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
 

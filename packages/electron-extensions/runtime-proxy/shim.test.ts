@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import { encodeNativeMessage } from "../native-messaging/framing";
 import {
@@ -22,7 +21,7 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-type RecordedRequest = { url: string; body: Record<string, unknown> };
+type RecordedRequest = { pathName: string; body: Record<string, unknown> };
 
 function stubFetch(respond: (pathName: string, body: Record<string, unknown>) => Response) {
   const requests: RecordedRequest[] = [];
@@ -30,9 +29,11 @@ function stubFetch(respond: (pathName: string, body: Record<string, unknown>) =>
   globalThis.fetch = (async (url: string, init: RequestInit) => {
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
 
-    requests.push({ url, body });
+    const { pathname: pathName } = new URL(url);
 
-    return respond(url.slice(EXTENSION_BRIDGE_ORIGIN.length), body);
+    requests.push({ pathName, body });
+
+    return respond(pathName, body);
   }) as unknown as typeof fetch;
 
   return requests;
@@ -95,7 +96,7 @@ describe("shimmed sendMessage", () => {
 
     expect(requests).toEqual([
       {
-        url: `${EXTENSION_BRIDGE_ORIGIN}${RUNTIME_PROXY_PATHS.sendMessage}`,
+        pathName: RUNTIME_PROXY_PATHS.sendMessage,
         body: { message: { kind: "unlock" }, sender: SENDER_REPORT },
       },
     ]);
@@ -232,7 +233,7 @@ describe("shimmed connect", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(requests.map(({ url }) => url.slice(EXTENSION_BRIDGE_ORIGIN.length))).toEqual([
+    expect(requests.map(({ pathName }) => pathName)).toEqual([
       RUNTIME_PROXY_PATHS.connect,
       RUNTIME_PROXY_PATHS.portPost,
     ]);
@@ -299,11 +300,9 @@ describe("shimmed connect", () => {
     await new Promise((resolve) => setTimeout(resolve, 5));
 
     expect(disconnectHeard).toBe(false);
-    expect(
-      requests.some(
-        ({ url }) => url === `${EXTENSION_BRIDGE_ORIGIN}${RUNTIME_PROXY_PATHS.portDisconnect}`,
-      ),
-    ).toBe(true);
+    expect(requests.some(({ pathName }) => pathName === RUNTIME_PROXY_PATHS.portDisconnect)).toBe(
+      true,
+    );
 
     expect(() => port.postMessage("too late")).toThrow(
       "Attempting to use a disconnected port object",
