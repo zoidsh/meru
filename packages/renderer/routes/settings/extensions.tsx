@@ -284,11 +284,11 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Passkeys work with Touch ID</AlertTitle>
+        <AlertTitle>Sign in to Google with a passkey and Touch ID</AlertTitle>
         <AlertDescription>
-          Add a passkey to your Google account from its security settings inside Meru and sign in
-          with Touch ID — lighter than running an extension. iCloud passkeys don't work here, and
-          filling passwords still needs a password manager.
+          Add a passkey to your Google account from its security settings inside Meru, then sign in
+          with Touch ID — no password manager extension to install, so Meru stays fast and light.
+          iCloud passkeys don't work here, and filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
@@ -298,10 +298,11 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Passkeys work with Windows Hello</AlertTitle>
+        <AlertTitle>Sign in to Google with a passkey and Windows Hello</AlertTitle>
         <AlertDescription>
           Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
-          with no extension. Filling passwords still needs a password manager.
+          with no password manager extension to install, keeping Meru fast and light. Filling
+          passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
