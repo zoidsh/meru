@@ -196,6 +196,7 @@ export type Config = {
   "verticalTabs.showWidthToggle": boolean;
   "verticalTabs.hideUnreadBadgeWhenActive": boolean;
   "verticalTabs.showAppLinksBadge": boolean;
+  "extensions.enabled": boolean;
   "extensions.installed": string[];
   "extensions.showTitlebarButton": boolean;
 };
