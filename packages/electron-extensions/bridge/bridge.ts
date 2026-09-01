@@ -38,16 +38,18 @@ export const MAX_BRIDGE_REQUEST_BYTES = 64 * 1024 * 1024;
 export const MAX_CONCURRENT_BRIDGE_BODY_READS = 16;
 
 /**
- * The header the bridge stamps onto every request from a frame, carrying the
- * nonce its caller record is filed under. `protocol.handle` hands the bridge
- * only the session, but the session's `webRequest` sees the same request first
- * and Chromium tells it the frame that made it — so the bridge's own
- * `onBeforeSendHeaders` listener records that frame under a fresh nonce and
+ * The header the bridge stamps onto an authenticated request from a frame,
+ * carrying the nonce its caller record is filed under. `protocol.handle` hands
+ * the bridge only the session, but the session's `webRequest` sees the same
+ * request first and Chromium tells it the frame that made it — so the bridge's
+ * own `onBeforeSendHeaders` listener records that frame under a fresh nonce and
  * writes the nonce into the request the handler is about to receive (measured
  * on Electron 43.2.0: the listener runs before the handler, its callback gating
- * the request, and the stamped header arrives intact). Whatever a caller puts
- * in the header itself is dropped before the stamp goes on, so the nonce is
- * only ever the main process's own word.
+ * the request, and the stamped header arrives intact). A request the listener
+ * declines to record — one carrying no token a loaded extension holds — reaches
+ * the handler without the header, and is refused there for the same reason.
+ * Whatever a caller puts in the header itself is dropped either way, so the
+ * nonce is only ever the main process's own word.
  */
 export const EXTENSION_BRIDGE_CALLER_HEADER = "x-extension-bridge-caller";
 
@@ -55,14 +57,13 @@ export const EXTENSION_BRIDGE_CALLER_HEADER = "x-extension-bridge-caller";
  * Bounds the caller records that were stamped but never consumed — a request
  * canceled between its headers and the handler leaves its record behind.
  *
- * A record goes in for every request the filter matches, whatever token the
- * request turns out to carry, so every document in the session reaches it: a
- * page with no token at all is recorded and then refused by the handler. A
- * document making enough concurrent bridge requests can therefore evict an
- * honest caller's record that was still coming, which costs that caller its
- * frame and leaves it delivering a sender of `id` alone — refused rather than
- * misattributed. Ordinary traffic never approaches this, and the eviction is
- * oldest-first.
+ * A record only ever goes in for a request whose token names a loaded
+ * extension, which the listener reads off the URL the same way the handler
+ * does, so what the cap bounds is the loaded extensions' own in-flight calls.
+ * Everything else in the session — a workspace app, an XSS in a mail page —
+ * holds no token and is never recorded, so no volume of its requests can evict
+ * an honest caller's record that was still coming. The eviction is oldest-first
+ * and ordinary traffic never approaches this.
  */
 export const MAX_RECORDED_CALLER_FRAMES = 1024;
 
@@ -119,9 +120,13 @@ export class ExtensionBridge {
   }
 
   setupSession(session: Session, sessionOptions: ExtensionBridgeSession) {
-    const callerFramesByNonce = new Map<string, WebFrameMain>();
+    const sessionState: ExtensionBridgeSessionState = {
+      ...sessionOptions,
+      callerFramesByNonce: new Map(),
+      bodyReadCount: 0,
+    };
 
-    this.sessions.set(session, { ...sessionOptions, callerFramesByNonce, bodyReadCount: 0 });
+    this.sessions.set(session, sessionState);
 
     // A blocking callback is what puts the record in the map before the handler
     // reads it. That ordering is measured on Electron 43.2.0 rather than
@@ -137,7 +142,7 @@ export class ExtensionBridge {
     session.webRequest.onBeforeSendHeaders(
       { urls: [`${EXTENSION_BRIDGE_SCHEME}://*/*`] },
       (details, callback) => {
-        callback({ requestHeaders: this.stampCaller(callerFramesByNonce, details) });
+        callback({ requestHeaders: this.stampCaller(sessionState, details) });
       },
     );
 
@@ -161,12 +166,27 @@ export class ExtensionBridge {
    * as the initiator goes on record under a fresh nonce, and the nonce rides
    * the request to `handleRequest`.
    *
+   * A record is minted only for a token that names a loaded extension, read off
+   * the URL exactly as `handleRequest` reads it, which is what keeps
+   * `MAX_RECORDED_CALLER_FRAMES` a bound on the extensions' own calls rather
+   * than on every document in the session. That is a condition on recording and
+   * not a gate on the request: an unknown token is stripped but not stamped,
+   * and goes on to the handler to be refused, since refusing here would buy no
+   * memory (see
+   * `MAX_BRIDGE_REQUEST_BYTES`) and would hand the page a network error where it
+   * expects a 403 — and a frameless caller never reaches this listener at all,
+   * so the handler's own check is the boundary either way.
+   *
    * The strip loop earns its place on case: a caller writing
    * `X-Extension-Bridge-Caller` and a stamp written in lower case are two keys
    * on the same object and both reach the handler, where the header lookup is
-   * case-insensitive and may read either. Removing the loop is caught by
-   * `a stamp a caller wrote itself names no frame`. It covers frame requests only, because
-   * this listener is the one thing a frameless caller never reaches: measured
+   * case-insensitive and may read either. It runs ahead of both conditions, so
+   * the caller that is stripped and then not stamped — no token, or one no
+   * extension holds — does not get its own value through in place of a real
+   * stamp. Removing the loop is caught by `a stamp a caller wrote itself names
+   * no frame` and by `an unrecorded caller's own stamp is stripped anyway`. It
+   * covers frame requests only, because this listener is the one thing a
+   * frameless caller never reaches: measured
    * on Electron 43.2.0, a service worker's and a dedicated worker's requests
    * skip `onBeforeSendHeaders` entirely and arrive at the handler with whatever
    * headers they set. What makes that safe is not the stripping but the nonce:
@@ -176,7 +196,7 @@ export class ExtensionBridge {
    * shim, which only ever runs in one.
    */
   private stampCaller(
-    callerFramesByNonce: Map<string, WebFrameMain>,
+    sessionState: ExtensionBridgeSessionState,
     details: OnBeforeSendHeadersListenerDetails,
   ) {
     const requestHeaders: Record<string, string> = {};
@@ -190,6 +210,14 @@ export class ExtensionBridge {
     if (!details.frame || details.frame.isDestroyed()) {
       return requestHeaders;
     }
+
+    const bridgeToken = new URL(details.url).searchParams.get(EXTENSION_BRIDGE_TOKEN_PARAM);
+
+    if (bridgeToken === null || !sessionState.getExtensionId(bridgeToken)) {
+      return requestHeaders;
+    }
+
+    const { callerFramesByNonce } = sessionState;
 
     const callerNonce = randomUUID();
 

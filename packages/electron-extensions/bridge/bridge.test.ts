@@ -468,6 +468,68 @@ describe("ExtensionBridge", () => {
     expect(senderFrames).toEqual([undefined, newestFrame]);
   });
 
+  test("a tokenless flood evicts no honest caller's record", async () => {
+    const { session, stampHeaders, sendWithHeaders } = createSession();
+
+    const bridge = createBridge(session);
+
+    const senderFrames: (WebFrameMain | undefined)[] = [];
+
+    bridge.handle("/echo", ({ senderFrame, headers }) => {
+      senderFrames.push(senderFrame);
+
+      return new Response(null, { status: 204, headers });
+    });
+
+    const honestFrame = createFrame("https://accounts.google.com/");
+
+    const honestHeaders = stampHeaders(bridgeUrl("/echo", BRIDGE_TOKEN), { frame: honestFrame });
+
+    /*
+     * Everything else in the session reaches the listener too, and neither
+     * shape of it is recorded: a page sending no token at all, and one sending
+     * a value no loaded extension holds. The cap of each and twice the cap
+     * together, so the honest record surviving is the token condition holding
+     * rather than the flood falling short — without it that record is the
+     * oldest of 1025 and goes on the first eviction.
+     */
+    for (let stamped = 0; stamped < MAX_RECORDED_CALLER_FRAMES; stamped += 1) {
+      const floodFrame = createFrame("https://workspace-app.test/");
+
+      stampHeaders(bridgeUrl("/echo", undefined), { frame: floodFrame });
+
+      stampHeaders(bridgeUrl("/echo", "guessed"), { frame: floodFrame });
+    }
+
+    await sendWithHeaders("/echo", "{}", honestHeaders, BRIDGE_TOKEN);
+
+    expect(senderFrames).toEqual([honestFrame]);
+  });
+
+  test("an unrecorded caller's own stamp is stripped anyway", () => {
+    const { session, stampHeaders } = createSession();
+
+    createBridge(session);
+
+    /*
+     * Nothing replaces it, so the strip is the whole of what keeps a forged
+     * value from reaching the handler as if the main process had written it.
+     * Both shapes the listener declines to record, the second being the page
+     * that guesses the token and the header alike.
+     */
+    const forgedHeaders = { "X-Extension-Bridge-Caller": "guessed" };
+
+    const frame = createFrame("https://workspace-app.test/");
+
+    expect(stampHeaders(bridgeUrl("/echo", undefined), { frame, headers: forgedHeaders })).toEqual(
+      {},
+    );
+
+    expect(stampHeaders(bridgeUrl("/echo", "guessed"), { frame, headers: forgedHeaders })).toEqual(
+      {},
+    );
+  });
+
   test("a frame destroyed since its request was stamped is not handed over", async () => {
     const { session, stampHeaders, sendWithHeaders } = createSession();
 
