@@ -187,6 +187,12 @@ function ExtensionItem({
   // these the way the license does
   const locked = !extensionsEnabled || !isLicenseKeyValid;
 
+  // Uninstalling is deliberately ungated, so that an extension can be taken off
+  // a device that has lost its license — which needs the switch to stay on and
+  // usable once something is installed, or the only way out of it is gone. The
+  // master switch still locks it, since nothing loads while that is off.
+  const toggleLocked = !extensionsEnabled || (!installed && !isLicenseKeyValid);
+
   const isOnePassword = extension.id === ONEPASSWORD_EXTENSION_ID;
 
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
@@ -265,8 +271,8 @@ function ExtensionItem({
         <ItemActions>
           {extensionMutation.isPending && <Spinner />}
           <Switch
-            checked={!locked && installed}
-            disabled={locked || extensionMutation.isPending}
+            checked={extensionsEnabled && installed}
+            disabled={toggleLocked || extensionMutation.isPending}
             onCheckedChange={(checked) => {
               extensionMutation.mutate(checked);
             }}
