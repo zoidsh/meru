@@ -129,7 +129,10 @@ export class NativeMessagingHost {
    * terminating the process covers the hosts that ignore it.
    */
   kill() {
-    if (this.isClosed) {
+    // Not `isClosed`: a host whose stdin broke is closed for reading and
+    // writing while its process is still running, and that is exactly the one
+    // that has to be killed
+    if (this.process.exitCode !== null || this.process.signalCode !== null) {
       return;
     }
 
