@@ -433,6 +433,13 @@ export function ExtensionsSettings() {
             Extensions are loaded into every account and take effect after a restart. Meru installs
             the official extensions from the Chrome Web Store.
           </FieldDescription>
+          <ConfigSwitchField
+            label="Show extensions button"
+            description="Show a titlebar button that lists the installed extensions and opens their popups."
+            configKey="extensions.showTitlebarButton"
+            licenseKeyRequired
+          />
+          <FieldSeparator />
           <FieldSet>
             <FieldLegend>Password managers</FieldLegend>
             <PasskeysAlert />
@@ -451,13 +458,6 @@ export function ExtensionsSettings() {
                 ))}
             </ItemGroup>
           </FieldSet>
-          <FieldSeparator />
-          <ConfigSwitchField
-            label="Show extensions button"
-            description="Show a titlebar button that lists the installed extensions and opens their popups."
-            configKey="extensions.showTitlebarButton"
-            licenseKeyRequired
-          />
         </FieldGroup>
       </SettingsContent>
     </Settings>
