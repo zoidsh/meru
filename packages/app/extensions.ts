@@ -1,5 +1,5 @@
 import path from "node:path";
-import { is } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import {
   createSharedExtensionInstance,
   Extensions,
@@ -9,10 +9,15 @@ import {
   type LatestExtensionInstall,
   pruneDerivedExtensions,
   pruneExtensionVersions,
+  readExtensionDirId,
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
-import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
+import {
+  curatedExtensions,
+  isCuratedExtensionId,
+  ONEPASSWORD_EXTENSION_ID,
+} from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
 import { app } from "electron";
@@ -27,6 +32,40 @@ const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
 const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-extensions");
 
 /**
+ * The curated extensions a development build doesn't load, because they can't
+ * work in one and a loaded extension that can't work is worse than an absent
+ * one. 1Password's desktop app verifies the calling browser's code signature
+ * before it talks to it, and `bun run dev` runs an unsigned `electron`, so the
+ * extension sits in every session unable to unlock — and while it is loaded
+ * `workspace-app.ts` holds back the passkey dialog that would otherwise carry
+ * sign-in, leaving neither route working.
+ *
+ * macOS is where that is measured: the host answers `BrowserVerificationFailed`
+ * and `UnknownBrowser`. Windows runs the same browser-trust flow and is
+ * probably the same, but nobody has checked, so it keeps loading until someone
+ * does. Linux trusts a binary name rather than a signature, through
+ * `/etc/1password/custom_allowed_browsers`, so a development run can be
+ * allowlisted there.
+ *
+ * `MERU_EXTENSIONS_ENABLE=<id>,<id>` loads them anyway, which is what working
+ * on the extension layer itself wants.
+ */
+function getDevDisabledExtensionIds() {
+  if (!is.dev) {
+    return [];
+  }
+
+  const enabledExtensionIds = (process.env.MERU_EXTENSIONS_ENABLE ?? "")
+    .split(",")
+    .map((extensionId) => extensionId.trim())
+    .filter(Boolean);
+
+  return (platform.isMacOS ? [ONEPASSWORD_EXTENSION_ID] : []).filter(
+    (extensionId) => !enabledExtensionIds.includes(extensionId),
+  );
+}
+
+/**
  * Unpacked extensions to load on top of the installed ones, one directory
  * holding a `manifest.json` per extension:
  *
@@ -34,13 +73,23 @@ const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-exten
  *
  * The folder is gitignored, and `app.getAppPath()` is the repo root in
  * development because `bun run dev` starts Electron as `electron .` there.
+ *
+ * A copy of an extension development disables is skipped here too, since the
+ * folder is how a development build gets one at all. An unpacked extension
+ * carrying no `manifest.key` has no id to match, and loads.
  */
 function getDevExtensionDirs() {
   if (!is.dev) {
     return [];
   }
 
-  return findExtensionDirs(path.join(app.getAppPath(), "extensions"));
+  const devDisabledExtensionIds = getDevDisabledExtensionIds();
+
+  return findExtensionDirs(path.join(app.getAppPath(), "extensions")).filter((extensionDir) => {
+    const extensionId = readExtensionDirId(extensionDir);
+
+    return !extensionId || !devDisabledExtensionIds.includes(extensionId);
+  });
 }
 
 /**
@@ -105,7 +154,13 @@ function getOptedInExtensionIds() {
 async function getInstalledExtensionDirs() {
   const extensionDirs: string[] = [];
 
+  const devDisabledExtensionIds = getDevDisabledExtensionIds();
+
   for (const extensionId of getOptedInExtensionIds()) {
+    if (devDisabledExtensionIds.includes(extensionId)) {
+      continue;
+    }
+
     const installedExtension = await getInstalledExtension({
       installDir: INSTALL_DIR,
       extensionId,

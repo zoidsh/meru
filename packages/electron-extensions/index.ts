@@ -41,4 +41,4 @@ export type { ExtensionsLogger } from "./logger";
 export type { NativeMessagingHostPolicy } from "./native-messaging/native-messaging";
 export { createSharedExtensionInstance } from "./runtime-proxy";
 export type { CreateSharedExtensionInstanceOptions } from "./runtime-proxy";
-export { findExtensionDirs } from "./scan";
+export { findExtensionDirs, readExtensionDirId } from "./scan";

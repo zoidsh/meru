@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { findExtensionDirs } from "./scan";
+import { FIXTURE_EXTENSION_ID } from "./fixture/id";
+import fixtureManifest from "./fixture/manifest.json";
+import { findExtensionDirs, readExtensionDirId } from "./scan";
 
 let workDir: string;
 
@@ -56,5 +58,38 @@ describe("findExtensionDirs", () => {
   test("returns nothing for an empty or missing directory", async () => {
     expect(findExtensionDirs(workDir)).toEqual([]);
     expect(findExtensionDirs(path.join(workDir, "missing"))).toEqual([]);
+  });
+});
+
+describe("readExtensionDirId", () => {
+  test("reads the id the manifest key derives", async () => {
+    const extensionDir = path.join(workDir, "fixture");
+
+    await mkdir(extensionDir);
+
+    await writeFile(
+      path.join(extensionDir, "manifest.json"),
+      JSON.stringify({ name: "Extension", key: fixtureManifest.key }),
+    );
+
+    expect(readExtensionDirId(extensionDir)).toBe(FIXTURE_EXTENSION_ID);
+  });
+
+  test("reads nothing from a manifest without a key", async () => {
+    const extensionDir = await createExtensionDir(path.join(workDir, "keyless"));
+
+    expect(readExtensionDirId(extensionDir)).toBeUndefined();
+  });
+
+  test("reads nothing from a missing or unparsable manifest", async () => {
+    const extensionDir = path.join(workDir, "broken");
+
+    await mkdir(extensionDir);
+
+    expect(readExtensionDirId(extensionDir)).toBeUndefined();
+
+    await writeFile(path.join(extensionDir, "manifest.json"), "{");
+
+    expect(readExtensionDirId(extensionDir)).toBeUndefined();
   });
 });
