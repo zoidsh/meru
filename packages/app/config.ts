@@ -12,19 +12,12 @@ type LegacySavedTab = SavedTab & {
   persistence?: "pinned" | "bookmarked";
 };
 
-/**
- * electron-store omits conf's `projectVersion` from its options type and fills
- * it with `app.getVersion()`, whose prerelease suffix on a Beta build misses
- * every key in the ladder below. Its runtime still honors one we pass.
- */
-const migrationVersion = {
-  projectVersion: resolveMigrationVersion(app.getVersion()),
-};
-
 export const config = new Store<Config>({
-  ...migrationVersion,
   name: is.dev ? "config.dev" : "config",
   accessPropertiesByDotNotation: false,
+  // electron-store fills this with `app.getVersion()`, whose prerelease suffix
+  // on a Beta build misses every key in the ladder below.
+  projectVersion: resolveMigrationVersion(app.getVersion()),
   defaults: createDefaultConfig({
     accountId: randomUUID(),
     downloadsLocation: app.getPath("downloads"),

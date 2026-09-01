@@ -1,0 +1,13 @@
+diff --git a/index.d.ts b/index.d.ts
+index 9d771ab6d912ae4d0c0a34867c0601c7b82febc3..458b29bc6c87bf950e3bbca348de619b53bcf88a 100644
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -3,7 +3,7 @@ import Conf, {type Options as ConfigOptions} from 'conf';
+ 
+ export {Schema} from 'conf';
+ 
+-export type Options<T extends Record<string, any>> = Except<ConfigOptions<T>, 'configName' | 'projectName' | 'projectVersion' | 'projectSuffix'> & {
++export type Options<T extends Record<string, any>> = Except<ConfigOptions<T>, 'configName' | 'projectName' | 'projectSuffix'> & {
+ 	/**
+ 	Name of the storage file (without extension).
+ 
