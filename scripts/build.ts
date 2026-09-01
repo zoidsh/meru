@@ -92,8 +92,18 @@ function buildAppFiles() {
       }),
     );
 
-  // Runs inside extensions rather than in Meru, so it is bundled like a preload
-  // and copied into every extension the loader derives
+  /*
+   * Runs inside extensions rather than in Meru, so it is bundled like a preload
+   * and copied into every extension the loader derives.
+   *
+   * Minified where the app's own bundles are not: one of these loads in every
+   * extension context — the service worker, each popup and options page, and
+   * every inline-menu iframe a page gets — and the facade alone was 26.9 kB
+   * against 7.2 kB. Minified in a development build too, so the bytes a
+   * developer runs are the bytes that ship. The derive writes the token in
+   * front of whatever it is handed, and names the file itself, so nothing
+   * downstream reads the output's contents.
+   */
   const buildExtensionScript = (inputPath: string, outputFileName: string) =>
     rolldown({
       ...rolldownOptions,
@@ -108,6 +118,7 @@ function buildAppFiles() {
         file: path.join(process.cwd(), "build-js", outputFileName),
         codeSplitting: false,
         format: "iife",
+        minify: true,
       }),
     );
 

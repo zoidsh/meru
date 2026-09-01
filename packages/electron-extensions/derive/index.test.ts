@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { deriveExtension, pruneDerivedExtensions } from "./index";
@@ -335,6 +336,24 @@ describe("deriveExtension", () => {
     expect(
       JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).content_scripts,
     ).toEqual(contentScripts);
+  });
+
+  test("digests the source tree the way a stamp already on disk was written", async () => {
+    const derivedDir = await derive();
+
+    const fileNames = ["background/background.js", "manifest.json", "popup.html"];
+
+    const fileEntries = await Promise.all(
+      fileNames.map(async (fileName) => {
+        const stats = await stat(path.join(sourceDir, ...fileName.split("/")));
+
+        return `${fileName}\0${stats.size}\0${stats.mtimeMs}`;
+      }),
+    );
+
+    expect(JSON.parse(await readFile(`${derivedDir}.json`, "utf8")).sourceTree).toBe(
+      createHash("sha256").update(fileEntries.sort().join("\n")).digest("hex"),
+    );
   });
 
   test("stamps a copy without matches as it did before they existed", async () => {

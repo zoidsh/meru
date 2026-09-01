@@ -1,8 +1,8 @@
 {
   "app.js": 2294784,
-  "extensions-chrome-facade.js": 25600,
-  "extensions-runtime-proxy-relay.js": 15360,
-  "extensions-runtime-proxy-shim.js": 15360,
+  "extensions-chrome-facade.js": 9216,
+  "extensions-runtime-proxy-relay.js": 6144,
+  "extensions-runtime-proxy-shim.js": 6144,
   "fixture-extension/background.js": 4096,
   "fixture-extension/probe.js": 7168,
   "preload-gmail.js": 108544,

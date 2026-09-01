@@ -77,25 +77,37 @@ function hash(value: string) {
  * Digests the source tree from each file's path, size and mtime — never its
  * contents, since an extension runs to tens of megabytes and this happens on
  * every launch, and an edit always moves one of the two.
+ *
+ * Every entry is stat'd at once rather than one after another: this runs per
+ * extension on every launch and Gmail's first navigation waits behind it, and
+ * an extension of a few thousand files spent that wait on a round trip to the
+ * disk per file. The digest is the same either way — the lines are sorted
+ * before they are hashed — so a stamp written by an earlier version still
+ * matches and no profile re-derives.
  */
 async function hashSourceTree(sourceDir: string) {
   const entryNames = await readdir(sourceDir, { recursive: true });
 
-  const fileEntries: string[] = [];
+  const fileEntries = await Promise.all(
+    entryNames.map(async (entryName) => {
+      const stats = await stat(path.join(sourceDir, entryName));
 
-  for (const entryName of entryNames) {
-    const stats = await stat(path.join(sourceDir, entryName));
+      if (!stats.isFile()) {
+        return undefined;
+      }
 
-    if (!stats.isFile()) {
-      continue;
-    }
+      const relativePath = entryName.split(path.sep).join("/");
 
-    const relativePath = entryName.split(path.sep).join("/");
+      return `${relativePath}\0${stats.size}\0${stats.mtimeMs}`;
+    }),
+  );
 
-    fileEntries.push(`${relativePath}\0${stats.size}\0${stats.mtimeMs}`);
-  }
-
-  return hash(fileEntries.sort().join("\n"));
+  return hash(
+    fileEntries
+      .filter((fileEntry) => fileEntry !== undefined)
+      .sort()
+      .join("\n"),
+  );
 }
 
 async function readStamp(stampPath: string) {

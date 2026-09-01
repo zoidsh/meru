@@ -65,6 +65,34 @@ describe("NativeMessageDecoder", () => {
     );
   });
 
+  test("refuses an oversized message whose length arrives across two chunks", () => {
+    const announcement = new Uint8Array(4);
+
+    new DataView(announcement.buffer).setUint32(0, MAX_NATIVE_MESSAGE_BYTES + 1, true);
+
+    const decoder = new NativeMessageDecoder();
+
+    expect(decoder.push(announcement.subarray(0, 3))).toEqual([]);
+
+    expect(() => decoder.push(announcement.subarray(3))).toThrow(
+      `Native message of ${MAX_NATIVE_MESSAGE_BYTES + 1} bytes exceeds the ${MAX_NATIVE_MESSAGE_BYTES} byte limit`,
+    );
+  });
+
+  test("assembles a message out of many small chunks", () => {
+    const message = { chunked: "x".repeat(5000) };
+
+    const frame = encodeNativeMessage(message);
+
+    const chunks: Uint8Array[] = [];
+
+    for (let offset = 0; offset < frame.byteLength; offset += 64) {
+      chunks.push(frame.subarray(offset, offset + 64));
+    }
+
+    expect(decodeAll(chunks)).toEqual([message]);
+  });
+
   test("accepts a message right at the cap", () => {
     const message = "a".repeat(MAX_NATIVE_MESSAGE_BYTES - 2);
 
