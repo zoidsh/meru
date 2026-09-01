@@ -43,6 +43,8 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
   let sendChain: Promise<unknown> = opened;
 
+  let cancelFrames = async () => {};
+
   const port: NativeMessagingPort = {
     name: hostName,
     onMessage,
@@ -63,9 +65,16 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
       isDisconnected = true;
 
-      markOpened();
-
-      void postBridge(NATIVE_MESSAGING_PATHS.disconnect, { portId });
+      // Chrome delivers a port's traffic in order, so the disconnect goes out
+      // behind the connect and everything already posted. Sent unchained it
+      // overtakes them, and main closes the port before the messages arrive
+      sendChain = sendChain
+        .then(() => postBridge(NATIVE_MESSAGING_PATHS.disconnect, { portId }))
+        .catch(() => undefined)
+        // Main's stream cancel handler closes the port too, which is the
+        // backstop for a disconnect request that never landed
+        .then(() => cancelFrames())
+        .catch(() => undefined);
     },
   };
 
@@ -95,6 +104,8 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
     const reader = response.body.getReader();
 
+    cancelFrames = () => reader.cancel();
+
     const decoder = new NativeMessageDecoder();
 
     for (;;) {
@@ -105,6 +116,13 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
       }
 
       for (const frame of decoder.push(value) as NativeMessagingFrame[]) {
+        // A port the extension disconnected hears nothing more, even while the
+        // host's last messages are still on their way. The reader is left
+        // open here because `disconnect` cancels it behind its own request
+        if (isDisconnected) {
+          return;
+        }
+
         if (frame.type === "message") {
           onMessage.emit(frame.message, port);
         } else {

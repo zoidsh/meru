@@ -34,6 +34,12 @@ process.stdin.on("data", (chunk) => {
 });
 `;
 
+/** Closes its own stdin and keeps running, the way a host that stops reading does. */
+const STDIN_CLOSING_HOST_SOURCE = `
+require("node:fs").closeSync(0);
+setInterval(() => {}, 1000);
+`;
+
 let workDir: string;
 
 let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
@@ -43,16 +49,7 @@ let session: Session;
 beforeEach(async () => {
   workDir = await mkdtemp(path.join(tmpdir(), "native-messaging-"));
 
-  const hostScriptPath = path.join(workDir, "host.js");
-
-  await writeFile(hostScriptPath, HOST_SOURCE);
-
-  await writeFile(
-    path.join(workDir, "host"),
-    `#!/bin/sh\nexec "${process.execPath}" "${hostScriptPath}" "$@"\n`,
-  );
-
-  await chmod(path.join(workDir, "host"), 0o755);
+  await writeHost("host", HOST_SOURCE);
 
   requestHandler = undefined;
 
@@ -75,7 +72,20 @@ afterEach(async () => {
   await rm(workDir, { recursive: true, force: true });
 });
 
-async function writeHostManifest(allowedExtensionId = EXTENSION_ID) {
+/** A host binary the manifest can point at, run through the shell the way a real one is. */
+async function writeHost(name: string, source: string) {
+  const scriptPath = path.join(workDir, `${name}.js`);
+
+  await writeFile(scriptPath, source);
+
+  const hostPath = path.join(workDir, name);
+
+  await writeFile(hostPath, `#!/bin/sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`);
+
+  await chmod(hostPath, 0o755);
+}
+
+async function writeHostManifest(allowedExtensionId = EXTENSION_ID, hostName = "host") {
   const manifestPath = getHostManifestSearchPaths(HOST_NAME, { homeDir: workDir })[0] as string;
 
   await mkdir(path.dirname(manifestPath), { recursive: true });
@@ -84,7 +94,7 @@ async function writeHostManifest(allowedExtensionId = EXTENSION_ID) {
     manifestPath,
     JSON.stringify({
       name: HOST_NAME,
-      path: path.join(workDir, "host"),
+      path: path.join(workDir, hostName),
       type: "stdio",
       allowed_origins: [`chrome-extension://${allowedExtensionId}/`],
     }),
@@ -270,6 +280,61 @@ describe("NativeMessaging", () => {
     await (response.body as ReadableStream<Uint8Array>).cancel();
 
     expect(logs.some(({ message }) => message === "Disconnected native messaging host")).toBe(true);
+
+    await waitForProcessExit(hostPid);
+
+    teardown();
+  });
+
+  test("kills a host that closed its own stdin and kept running", async () => {
+    await writeHost("stdin-closing-host", STDIN_CLOSING_HOST_SOURCE);
+
+    await writeHostManifest(EXTENSION_ID, "stdin-closing-host");
+
+    const logs: { message: string; details: Record<string, unknown> }[] = [];
+
+    const { teardown } = createNativeMessaging({
+      logger: {
+        info: (message, details) => {
+          logs.push({ message, details });
+        },
+        error: () => undefined,
+      },
+    });
+
+    const response = await connect();
+
+    const hostPid = logs.find(({ message }) => message === "Connected native messaging host")
+      ?.details.pid as number;
+
+    expect(hostPid).toBeGreaterThan(0);
+
+    const disconnected = readFrame(response);
+
+    let isDisconnected = false;
+
+    void disconnected.then(() => {
+      isDisconnected = true;
+    });
+
+    // The broken pipe surfaces on a write, and only once enough has been
+    // written for the pipe's buffer to stop absorbing it
+    for (let attempt = 0; attempt < 100 && !isDisconnected; attempt += 1) {
+      await requestHandler?.(
+        createRequest(NATIVE_MESSAGING_PATHS.post, {
+          token: BRIDGE_TOKEN,
+          portId: "port-1",
+          message: { hello: "h".repeat(64 * 1024) },
+        }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+
+    expect(await disconnected).toEqual({
+      type: "disconnect",
+      error: expect.stringContaining("EPIPE") as unknown as string,
+    });
 
     await waitForProcessExit(hostPid);
 
