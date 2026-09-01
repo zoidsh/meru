@@ -12,6 +12,11 @@ const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
 const BRIDGE_CLOSED_ERROR = "The native messaging bridge closed the connection.";
 
+/** What a refused bridge call reads as, whether it refused the connect or a post. */
+function bridgeAnsweredError(status: number) {
+  return `The native messaging bridge answered ${status}`;
+}
+
 type NativeMessagingPort = {
   name: string;
   postMessage: (message: unknown) => void;
@@ -56,6 +61,11 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
       sendChain = sendChain
         .then(() => postBridge(NATIVE_MESSAGING_PATHS.post, { portId, message }))
+        .then((response) => {
+          if (!response.ok) {
+            refusePost(response.status);
+          }
+        })
         .catch(() => undefined);
     },
     disconnect() {
@@ -65,17 +75,21 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
       isDisconnected = true;
 
-      // Chrome delivers a port's traffic in order, so the disconnect goes out
-      // behind the connect and everything already posted. Sent unchained it
-      // overtakes them, and main closes the port before the messages arrive
-      sendChain = sendChain
-        .then(() => postBridge(NATIVE_MESSAGING_PATHS.disconnect, { portId }))
-        .catch(() => undefined)
-        // Main's stream cancel handler closes the port too, which is the
-        // backstop for a disconnect request that never landed
-        .then(() => cancelFrames())
-        .catch(() => undefined);
+      sendDisconnect();
     },
+  };
+
+  // Chrome delivers a port's traffic in order, so the disconnect goes out
+  // behind the connect and everything already posted. Sent unchained it
+  // overtakes them, and main closes the port before the messages arrive
+  const sendDisconnect = () => {
+    sendChain = sendChain
+      .then(() => postBridge(NATIVE_MESSAGING_PATHS.disconnect, { portId }))
+      .catch(() => undefined)
+      // Main's stream cancel handler closes the port too, which is the
+      // backstop for a disconnect request that never landed
+      .then(() => cancelFrames())
+      .catch(() => undefined);
   };
 
   // Chrome stays quiet about a port the extension disconnected itself
@@ -93,11 +107,30 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
     });
   };
 
+  /**
+   * A post the bridge refused, which is what a session at its cap of bodies
+   * read at once gets. Chrome has no answer for one message being refused, so
+   * this takes the nearest one it has: the port goes away with `lastError`
+   * set, and everything posted after it throws. Main has closed nothing on its
+   * side — the refusal is settled before the request reaches its handler — so
+   * the disconnect still goes out, behind whatever was queued ahead of it, to
+   * close the port's record there and kill its host.
+   */
+  const refusePost = (status: number) => {
+    if (isDisconnected) {
+      return;
+    }
+
+    disconnected(bridgeAnsweredError(status));
+
+    sendDisconnect();
+  };
+
   const readFrames = async () => {
     const response = await postBridge(NATIVE_MESSAGING_PATHS.connect, { portId, hostName });
 
     if (!response.ok || !response.body) {
-      throw new Error(`The native messaging bridge answered ${response.status}`);
+      throw new Error(bridgeAnsweredError(response.status));
     }
 
     markOpened();

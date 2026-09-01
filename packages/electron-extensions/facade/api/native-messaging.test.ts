@@ -36,6 +36,8 @@ function installFakeBridge() {
 
   let answerConnect = () => {};
 
+  const refusals = new Map<string, number>();
+
   const connectAnswered = new Promise<void>((resolve) => {
     answerConnect = resolve;
   });
@@ -44,6 +46,12 @@ function installFakeBridge() {
     const { pathname: path } = new URL(url);
 
     requests.push({ path, body: JSON.parse(init.body as string) });
+
+    const refusalStatus = refusals.get(path);
+
+    if (refusalStatus !== undefined) {
+      return new Response(null, { status: refusalStatus });
+    }
 
     if (path !== NATIVE_MESSAGING_PATHS.connect) {
       return new Response(null, { status: 204 });
@@ -67,6 +75,9 @@ function installFakeBridge() {
     requests,
     paths: () => requests.map(({ path }) => path),
     answerConnect,
+    refuse: (path: string, status: number) => {
+      refusals.set(path, status);
+    },
     sendFrame: (frame: NativeMessagingFrame) => {
       controller?.enqueue(encodeNativeMessage(frame));
     },
@@ -175,6 +186,112 @@ describe("facade connectNative", () => {
     expect(messages).toEqual([{ first: true }]);
 
     // Chrome stays quiet about a port the extension disconnected itself
+    expect(isDisconnectEmitted).toBe(false);
+  });
+
+  test("tears the port down when the bridge refuses a post", async () => {
+    const bridge = installFakeBridge();
+
+    const { runtime, port } = connectNative();
+
+    let disconnectError: string | undefined;
+
+    port.onDisconnect.addListener(() => {
+      disconnectError = (runtime.lastError as { message?: string } | undefined)?.message;
+    });
+
+    bridge.answerConnect();
+
+    // What a session already at its cap of bodies read at once answers
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    await waitFor("the disconnect request", () =>
+      bridge.paths().includes(NATIVE_MESSAGING_PATHS.disconnect),
+    );
+
+    expect(disconnectError).toBe("The native messaging bridge answered 429");
+
+    // Main closed nothing, so the port's own disconnect is what closes its
+    // record there and kills the host
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    expect(() => {
+      port.postMessage({ hello: "again" });
+    }).toThrow("Attempting to use a disconnected port object");
+
+    await waitFor("the stream cancel", () => bridge.isStreamCanceled());
+  });
+
+  test("tears a port down once however many posts the bridge refuses", async () => {
+    const bridge = installFakeBridge();
+
+    const { port } = connectNative();
+
+    let disconnectCount = 0;
+
+    port.onDisconnect.addListener(() => {
+      disconnectCount += 1;
+    });
+
+    bridge.answerConnect();
+
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    port.postMessage({ hello: "again" });
+
+    await waitFor("the disconnect request", () =>
+      bridge.paths().includes(NATIVE_MESSAGING_PATHS.disconnect),
+    );
+
+    // The second post was queued before the first was refused, so it still
+    // goes out, and the disconnect goes out behind it exactly once
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    expect(disconnectCount).toBe(1);
+  });
+
+  test("stays quiet about a post refused after the extension disconnected", async () => {
+    const bridge = installFakeBridge();
+
+    const { port } = connectNative();
+
+    let isDisconnectEmitted = false;
+
+    port.onDisconnect.addListener(() => {
+      isDisconnectEmitted = true;
+    });
+
+    bridge.answerConnect();
+
+    bridge.refuse(NATIVE_MESSAGING_PATHS.post, 429);
+
+    port.postMessage({ hello: "host" });
+
+    port.disconnect();
+
+    await waitFor("the stream cancel", () => bridge.isStreamCanceled());
+
+    expect(bridge.paths()).toEqual([
+      NATIVE_MESSAGING_PATHS.connect,
+      NATIVE_MESSAGING_PATHS.post,
+      NATIVE_MESSAGING_PATHS.disconnect,
+    ]);
+
+    // Chrome stays quiet about a port the extension disconnected itself, and
+    // the refusal arriving afterwards changes nothing
     expect(isDisconnectEmitted).toBe(false);
   });
 
