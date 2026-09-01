@@ -32,49 +32,118 @@ export function encodeNativeMessage(message: unknown): Uint8Array {
  * Reassembles messages from however the bytes arrive. A message that claims to
  * be larger than the cap is refused before a byte of it is buffered, so a host
  * cannot grow the decoder's memory by announcing a huge length.
+ *
+ * The chunks are kept as they arrive and joined once, when a whole frame is in
+ * hand, so every byte is copied exactly once. Growing one buffer instead copied
+ * everything already held on every chunk, which is quadratic in the frame: a
+ * 1 MiB message arriving in 64 KB chunks copied about 8 MB, and the runtime
+ * proxy reuses this decoder under a cap of 64 MiB.
  */
 export class NativeMessageDecoder {
-  private buffered = new Uint8Array(0);
+  private chunks: Uint8Array[] = [];
+
+  private bufferedBytes = 0;
+
+  /** The announced body length once its prefix is read and within the cap. */
+  private pendingMessageBytes: number | undefined;
 
   constructor(private maxMessageBytes = MAX_NATIVE_MESSAGE_BYTES) {}
 
   /** Throws when the stream is unusable, which leaves the caller to end it. */
   push(chunk: Uint8Array): unknown[] {
-    const combined = new Uint8Array(this.buffered.byteLength + chunk.byteLength);
+    if (chunk.byteLength > 0) {
+      this.chunks.push(chunk);
 
-    combined.set(this.buffered);
-
-    combined.set(chunk, this.buffered.byteLength);
-
-    this.buffered = combined;
+      this.bufferedBytes += chunk.byteLength;
+    }
 
     const messages: unknown[] = [];
 
-    while (this.buffered.byteLength >= LENGTH_PREFIX_BYTES) {
-      const messageBytes = new DataView(
-        this.buffered.buffer,
-        this.buffered.byteOffset,
-        LENGTH_PREFIX_BYTES,
-      ).getUint32(0, true);
+    while (true) {
+      if (this.pendingMessageBytes === undefined) {
+        if (this.bufferedBytes < LENGTH_PREFIX_BYTES) {
+          break;
+        }
 
-      if (messageBytes > this.maxMessageBytes) {
-        throw new Error(
-          `Native message of ${messageBytes} bytes exceeds the ${this.maxMessageBytes} byte limit`,
-        );
+        const prefix = this.take(LENGTH_PREFIX_BYTES);
+
+        const messageBytes = new DataView(
+          prefix.buffer,
+          prefix.byteOffset,
+          LENGTH_PREFIX_BYTES,
+        ).getUint32(0, true);
+
+        if (messageBytes > this.maxMessageBytes) {
+          throw new Error(
+            `Native message of ${messageBytes} bytes exceeds the ${this.maxMessageBytes} byte limit`,
+          );
+        }
+
+        this.pendingMessageBytes = messageBytes;
       }
 
-      if (this.buffered.byteLength < LENGTH_PREFIX_BYTES + messageBytes) {
+      if (this.bufferedBytes < this.pendingMessageBytes) {
         break;
       }
 
-      const body = this.buffered.subarray(LENGTH_PREFIX_BYTES, LENGTH_PREFIX_BYTES + messageBytes);
+      const body = this.take(this.pendingMessageBytes);
+
+      this.pendingMessageBytes = undefined;
 
       messages.push(this.parse(body));
-
-      this.buffered = this.buffered.slice(LENGTH_PREFIX_BYTES + messageBytes);
     }
 
     return messages;
+  }
+
+  /**
+   * Takes the next `byteLength` bytes off the front of the chunks, joining only
+   * as many as it takes. A chunk holding the whole run is handed over as a view
+   * of itself, and one holding more keeps its remainder as a view.
+   */
+  private take(byteLength: number): Uint8Array {
+    const firstChunk = this.chunks[0];
+
+    if (firstChunk && firstChunk.byteLength >= byteLength) {
+      if (firstChunk.byteLength === byteLength) {
+        this.chunks.shift();
+      } else {
+        this.chunks[0] = firstChunk.subarray(byteLength);
+      }
+
+      this.bufferedBytes -= byteLength;
+
+      return firstChunk.subarray(0, byteLength);
+    }
+
+    const taken = new Uint8Array(byteLength);
+
+    let takenBytes = 0;
+
+    // Never runs out, since the caller asks for no more than `bufferedBytes`
+    for (let chunk = this.chunks.shift(); chunk; chunk = this.chunks.shift()) {
+      const wantedBytes = byteLength - takenBytes;
+
+      if (chunk.byteLength > wantedBytes) {
+        taken.set(chunk.subarray(0, wantedBytes), takenBytes);
+
+        this.chunks.unshift(chunk.subarray(wantedBytes));
+
+        break;
+      }
+
+      taken.set(chunk, takenBytes);
+
+      takenBytes += chunk.byteLength;
+
+      if (takenBytes === byteLength) {
+        break;
+      }
+    }
+
+    this.bufferedBytes -= byteLength;
+
+    return taken;
   }
 
   private parse(body: Uint8Array) {
