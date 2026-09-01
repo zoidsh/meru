@@ -7,11 +7,11 @@ description: Write release notes for Meru. Use when drafting or updating GitHub 
 
 ## Gather the changes
 
-- The release being written is the one the version commit at `HEAD` bumps to — a commit whose subject is the bare version number, matching `version` in `package.json`, such as `3.58.0` or `3.60.0-alpha.1`, tagged `v3.58.0` or `v3.60.0-alpha.1`.
+- The release being written is the one the version commit at `HEAD` bumps to — a commit whose subject is the bare version number, matching `version` in `package.json`, such as `3.58.0` or `3.60.0-beta.1`, tagged `v3.58.0` or `v3.60.0-beta.1`.
 - The range runs from the previous release's tag to that commit, and which tag counts as previous depends on the channel:
-  - **Stable** — the last stable tag, from `gh release list --exclude-pre-releases -L 1`. Never `gh release list -L 2`, which picks up an interleaved `-alpha.N` tag and truncates the notes to the tail of the cycle.
-  - **Experimental** — the last release of any kind, from `gh release list -L 1`, so each prerelease covers only what's new since the previous one.
-- Every release gets its own notes, prereleases included, written exactly the same way. A stable that promotes a cycle of experimental releases therefore restates the changes those already carried, because its range runs back to the last stable. That repetition is intended: the stable notes have to be complete for the users who never saw a prerelease.
+  - **Stable** — the last stable tag, from `gh release list --exclude-pre-releases -L 1`. Never `gh release list -L 2`, which picks up an interleaved `-beta.N` tag and truncates the notes to the tail of the cycle.
+  - **Beta** — the last release of any kind, from `gh release list -L 1`, so each prerelease covers only what's new since the previous one.
+- Every release gets its own notes, prereleases included, written exactly the same way. A stable that promotes a cycle of beta releases therefore restates the changes those already carried, because its range runs back to the last stable. That repetition is intended: the stable notes have to be complete for the users who never saw a prerelease.
 - Triage the log before opening a single diff. Drop on the commit subject alone: comment and docs edits, refactors and extractions, `TODO.md` notes, tests, CI, and dependency bumps other than Electron. A release of 40 commits usually has around 10 user-facing ones.
 - For the commits that survive, `gh pr view <number>` is the fastest read — the PR body states what changed for the user, and the commit subject often doesn't. Fall back to `git show` when there's no PR.
 - Don't trust a commit message's scope — verify the actual fix from the diff. Messages often name a single platform or quote a GitHub issue title, such as "fix window position resetting after Windows reboot", when the underlying bug affects every platform. Only scope a note to a platform with `**macOS:**` or `**Windows:**` when the code confirms the fix is platform-specific.

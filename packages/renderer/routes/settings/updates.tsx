@@ -5,7 +5,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 
 const releaseChannelItems = [
   { value: "stable", label: "Stable" },
-  { value: "alpha", label: "Experimental" },
+  { value: "beta", label: "Beta" },
 ];
 
 export function UpdatesSettings() {
@@ -29,15 +29,15 @@ export function UpdatesSettings() {
           />
           <ConfigSelectField
             label="Release channel"
-            description="Choose which releases to receive. The experimental channel gets upcoming features early."
+            description="Choose which releases to receive. The beta channel gets upcoming features early."
             configKey="updates.channel"
             items={releaseChannelItems}
             confirmation={{
-              when: (value) => value === "alpha",
-              title: "Switch to the experimental channel?",
+              when: (value) => value === "beta",
+              title: "Switch to the beta channel?",
               description:
-                "Experimental releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time.",
-              confirmLabel: "Switch to experimental",
+                "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time.",
+              confirmLabel: "Switch to beta",
             }}
           />
         </FieldGroup>

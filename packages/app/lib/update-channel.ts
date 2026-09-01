@@ -5,17 +5,17 @@ import type { Config } from "@meru/shared/types";
  * `latest-linux.yml`, `latest.yml` — and what its providers fall back to when
  * no channel is set.
  *
- * Naming it is what makes leaving Experimental work. `autoUpdater.channel`
- * refuses anything but a non-empty string once a channel has been assigned, so
- * a session that visited Experimental cannot be handed `null` to get back to
- * stable: the setter throws `ERR_UPDATER_INVALID_CHANNEL` out of the
- * configuration listener, and the properties after it never get applied.
+ * Naming it is what makes leaving Beta work. `autoUpdater.channel` refuses
+ * anything but a non-empty string once a channel has been assigned, so a
+ * session that visited Beta cannot be handed `null` to get back to stable: the
+ * setter throws `ERR_UPDATER_INVALID_CHANNEL` out of the configuration
+ * listener, and the properties after it never get applied.
  *
  * It also makes the stable feed independent of the build asking for it. Unset,
  * the GitHub provider falls through to the channel baked into the build's
- * `app-update.yml`, which on an Experimental build is `alpha` — so a user
- * stepping back to stable would ask a stable release for `alpha-mac.yml` and
- * get a 404 with no fallback.
+ * `app-update.yml`, which on a Beta build is `beta` — so a user stepping back
+ * to stable would ask a stable release for `beta-mac.yml` and get a 404 with no
+ * fallback.
  */
 const STABLE_CHANNEL_NAME = "latest";
 
