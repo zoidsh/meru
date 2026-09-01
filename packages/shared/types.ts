@@ -130,7 +130,7 @@ export type Config = {
   "notifications.times": NotificationTime[];
   "updates.autoCheck": boolean;
   "updates.showNotifications": boolean;
-  "updates.channel": "stable" | "alpha";
+  "updates.channel": "stable" | "beta";
   "blocker.enabled": boolean;
   "blocker.ads": boolean;
   "blocker.tracking": boolean;

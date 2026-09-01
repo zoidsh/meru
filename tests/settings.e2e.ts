@@ -68,11 +68,11 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 
   await releaseChannel.click();
 
-  await meru.renderer.getByRole("option", { name: "Experimental" }).click();
+  await meru.renderer.getByRole("option", { name: "Beta" }).click();
 
   const confirmation = meru.renderer.getByRole("dialog");
 
-  await expect(confirmation).toContainText("Switch to the experimental channel?");
+  await expect(confirmation).toContainText("Switch to the beta channel?");
 
   await confirmation.getByRole("button", { name: "Cancel" }).click();
 
@@ -85,13 +85,13 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 
   await releaseChannel.click();
 
-  await meru.renderer.getByRole("option", { name: "Experimental" }).click();
+  await meru.renderer.getByRole("option", { name: "Beta" }).click();
 
   // Changing the channel sends the updater off to check the new feed. That call
   // is fire and forget, and the app already makes one like it on every launch.
-  await confirmation.getByRole("button", { name: "Switch to experimental" }).click();
+  await confirmation.getByRole("button", { name: "Switch to beta" }).click();
 
-  await expect.poll(async () => (await meru.readConfig())["updates.channel"]).toBe("alpha");
+  await expect.poll(async () => (await meru.readConfig())["updates.channel"]).toBe("beta");
 });
 
 test("every field label points at its control", async () => {

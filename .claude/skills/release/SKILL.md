@@ -1,7 +1,7 @@
 ---
 name: release
 description: Cut a Meru release. Use when asked to release, cut a release, ship a version, or bump the version.
-argument-hint: [major|minor|patch|experimental]
+argument-hint: [major|minor|patch|beta]
 ---
 
 # Release
@@ -19,7 +19,7 @@ Check all of these first. If one fails, report it and stop — never work around
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
   - That run is also the build check. `ci.yml`'s `e2e` job builds the app with electron-builder and launches it on macOS, Windows and Linux, so a green run at `HEAD` is what says the app still compiles on all three — the thing `release.yml` does next, at the most expensive place for it to fail. There is no second workflow to query; `build.yml` was deleted when its jobs moved here.
   - What it still doesn't cover: `e2e` builds `--dir` and unsigned, so installer packaging and macOS signing run for the first time in the release itself. That is a known risk of every release, not something to check here.
-- There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For an experimental release it's the last release of any kind, from `gh release list -L 1`.
+- There is something to release: the range from the last release's tag to `HEAD` is non-empty. For a stable release that's the last stable tag, from `gh release list --exclude-pre-releases -L 1`. For a beta release it's the last release of any kind, from `gh release list -L 1`.
 
 ## Choose the bump
 
@@ -31,15 +31,15 @@ Read `git log --oneline <lastTag>..HEAD` — a release usually runs to a few doz
 
 Arguments naming a level or an explicit version override this triage — take them, and still confirm.
 
-## Experimental releases
+## Beta releases
 
-An `experimental` argument, or an explicit `-alpha.N` version, cuts a prerelease for the Experimental update channel instead of a stable release. Only cut one when asked — never propose one unprompted.
+A `beta` argument, or an explicit `-beta.N` version, cuts a prerelease for the Beta update channel instead of a stable release. Only cut one when asked — never propose one unprompted.
 
-The channel is named Experimental in the app and versioned `alpha` on the wire, so the interface says Experimental everywhere the version string says `-alpha.N`. That seam is deliberate, and the version suffix is never `-experimental.N`. The reasoning is in the project docs, in `decisions.md` under "The prerelease channel is named Experimental and versioned as `alpha`".
+The channel is named Beta in the app and versioned `beta` on the wire, so the interface and the version string agree. The reasoning is in the project docs, in `decisions.md` under "The prerelease channel is named Beta".
 
-- The version is the next stable version per the triage above with `-alpha.N` appended: the first experimental release of a cycle is `X.Y.Z-alpha.1`. Each further one before that stable ships increments `N`.
+- The version is the next stable version per the triage above with `-beta.N` appended: the first beta release of a cycle is `X.Y.Z-beta.1`. Each further one before that stable ships increments `N`.
 - Everything else follows the stable flow, with two differences: `gh release create` gets `--prerelease`, and the triage range runs from the last release of any kind, not the last stable.
-- Promoting an experimental release to stable is the normal stable flow with the suffix dropped, as in `3.60.0-alpha.2` → `3.60.0`. Experimental users are moved onto the stable build automatically.
+- Promoting a beta release to stable is the normal stable flow with the suffix dropped, as in `3.60.0-beta.2` → `3.60.0`. Beta users are moved onto the stable build automatically.
 
 ## Confirm the bump
 
@@ -59,7 +59,7 @@ Always confirm before editing `package.json`, even when the bump is obvious.
 
 - `gh release create v<version> --target "$(git rev-parse HEAD)" --notes ""`.
   - `--target` pins the tag to the version commit rather than wherever `main` has drifted to.
-  - For an experimental release, add `--prerelease`. It keeps the release off `/releases/latest`, so stable users never see it, and it makes `release.yml` publish `alpha*.yml` update metadata instead of `latest*.yml`.
+  - For a beta release, add `--prerelease`. It keeps the release off `/releases/latest`, so stable users never see it, and it makes `release.yml` publish `beta*.yml` update metadata instead of `latest*.yml`.
   - Pass no `--title`. Every prior release leaves the title empty, so GitHub shows the tag.
   - Empty notes are deliberate — the next step writes them. Don't pass `--generate-notes`.
 - Never create it as a draft. `release.yml` triggers on `released` or `prereleased` only, so a draft never builds.
