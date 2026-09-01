@@ -175,6 +175,8 @@ function createProxiedPort(
 
   let sendChain: Promise<unknown> = opened;
 
+  let cancelFrames = async () => {};
+
   const port = {
     name,
     onMessage,
@@ -200,14 +202,21 @@ function createProxiedPort(
 
       isDisconnected = true;
 
-      markOpened();
-
       sendDisconnect();
     },
   };
 
+  // Chrome delivers a port's traffic in order, so the disconnect goes out
+  // behind the connect and everything already posted. Sent unchained it
+  // overtakes them, and main closes the port before the messages arrive
   const sendDisconnect = () => {
-    void postBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId });
+    sendChain = sendChain
+      .then(() => postBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId }))
+      .catch(() => undefined)
+      // Main closes the port from its stream's `cancel` handler too, which is
+      // the backstop for a disconnect request that never landed
+      .then(() => cancelFrames())
+      .catch(() => undefined);
   };
 
   // Chrome stays quiet about a port the content script disconnected itself
@@ -231,7 +240,8 @@ function createProxiedPort(
    * this takes the nearest one it has: the port goes away with `lastError`
    * set, and everything posted after it throws. Main has closed nothing on its
    * side — the refusal is settled before the request reaches its handler — so
-   * the disconnect still goes out to close the port's record there.
+   * the disconnect still goes out, behind whatever was queued ahead of it, to
+   * close the port's record there.
    */
   const refusePost = (status: number) => {
     if (isDisconnected) {
@@ -258,6 +268,8 @@ function createProxiedPort(
 
     const reader = response.body.getReader();
 
+    cancelFrames = () => reader.cancel();
+
     const decoder = new NativeMessageDecoder(MAX_RUNTIME_PROXY_FRAME_BYTES);
 
     for (;;) {
@@ -268,6 +280,14 @@ function createProxiedPort(
       }
 
       for (const frame of decoder.push(value) as RuntimeProxyPortFrame[]) {
+        // A port the content script disconnected hears nothing more, even
+        // while the worker's last messages are still on their way. The reader
+        // is left open here because `disconnect` cancels it behind its own
+        // request
+        if (isDisconnected) {
+          return;
+        }
+
         if (frame.type === "message") {
           onMessage.emit(frame.message, port);
         } else {
