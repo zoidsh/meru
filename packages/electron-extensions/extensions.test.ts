@@ -3,7 +3,7 @@ import fs, { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os, { tmpdir } from "node:os";
 import path from "node:path";
 import type { ClearStorageDataOptions, Extension, Session } from "electron";
-import { EXTENSION_BRIDGE_ORIGIN } from "./bridge/protocol";
+import { getExtensionBridgeUrl } from "./bridge/protocol";
 import { Extensions } from "./extensions";
 import { NATIVE_MESSAGING_PATHS } from "./native-messaging/bridge-protocol";
 
@@ -152,9 +152,9 @@ function createSession({
         listener(undefined, messageDetails);
       }
     },
-    request: (body: Record<string, unknown>) =>
+    request: (bridgeToken: string, body: Record<string, unknown>) =>
       requestHandler?.(
-        new Request(`${EXTENSION_BRIDGE_ORIGIN}${NATIVE_MESSAGING_PATHS.connect}`, {
+        new Request(getExtensionBridgeUrl(NATIVE_MESSAGING_PATHS.connect, bridgeToken), {
           method: "POST",
           body: JSON.stringify(body),
         }) as GlobalRequest,
@@ -349,13 +349,13 @@ describe("Extensions", () => {
     await extensions.setupSession(first.session);
     await extensions.setupSession(second.session);
 
-    const bridgeToken = await readBridgeToken(derivedDirs[0] as string);
+    const bridgeToken = (await readBridgeToken(derivedDirs[0] as string)) as string;
 
     const connect = (
       request: ReturnType<typeof createSession>["request"],
-      token: string | undefined,
+      bridgeToken: string,
       portId: string,
-    ) => request({ token, portId, hostName: "com.meru.test" });
+    ) => request(bridgeToken, { portId, hostName: "com.meru.test" });
 
     expect((await connect(first.request, bridgeToken, "first")).status).not.toBe(403);
     expect((await connect(second.request, bridgeToken, "second")).status).not.toBe(403);

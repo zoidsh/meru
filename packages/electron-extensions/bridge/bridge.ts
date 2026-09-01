@@ -1,15 +1,41 @@
 import { randomUUID } from "node:crypto";
 import type { OnBeforeSendHeadersListenerDetails, Session, WebFrameMain } from "electron";
 import type { ExtensionsLogger } from "../logger";
-import { EXTENSION_BRIDGE_SCHEME, type ExtensionBridgeRequest } from "./protocol";
+import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_PARAM } from "./protocol";
 
 /**
- * Far past what any bridge call has business sending, but a bound all the same:
- * the scheme is reachable from every document in the session, and without one a
- * page that never learns the token could still make the main process buffer an
- * arbitrarily large body on the way to its 403.
+ * Far past what any bridge call has business sending, and a bound on the copy
+ * and the parse rather than on what arrives.
+ *
+ * Measured on Electron 43.2.0: a body reaches the handler as a single chunk,
+ * string and `Blob` alike, at least up to 80 MiB — so it is already in the main
+ * process by the time `readBody` sees its first value, and the cap can only
+ * stop it being concatenated, decoded and parsed. Refusing in
+ * `onBeforeSendHeaders` instead does not help: eight 32 MiB posts grew main's
+ * RSS by 225 MiB with the listener canceling every one, against 230 MiB
+ * refusing in the handler without reading and 391 MiB reading first. The
+ * allocation is Chromium's, it happens before anything here is asked, and no
+ * answer from this process prevents it.
+ *
+ * What the cap does buy is the main thread, which is the half that blocks the
+ * app: nothing past it is turned into a string or handed to `JSON.parse`. And
+ * only an authenticated caller reaches it, since the token is checked off the
+ * query string first, so it bounds a loaded extension's own copy of the facade
+ * rather than every document in the session.
  */
 export const MAX_BRIDGE_REQUEST_BYTES = 64 * 1024 * 1024;
+
+/**
+ * How many bodies of one session the bridge will read at once.
+ *
+ * The cap above bounds one request; this bounds them together, because the
+ * facade calls the bridge one round trip at a time per port and per query and
+ * nothing legitimate has sixteen in the air. Past it the request is refused
+ * with 429 and its body dropped, so a caller that holds streams open — an
+ * extension context gone wrong, or a compromised one — cannot make the main
+ * process hold an unbounded multiple of the cap.
+ */
+export const MAX_CONCURRENT_BRIDGE_BODY_READS = 16;
 
 /**
  * The header the bridge stamps onto every request from a frame, carrying the
@@ -29,10 +55,10 @@ export const EXTENSION_BRIDGE_CALLER_HEADER = "x-extension-bridge-caller";
  * Bounds the caller records that were stamped but never consumed — a request
  * canceled between its headers and the handler leaves its record behind.
  *
- * Records go in before the handler has read the token, because the token is in
- * the body and this listener sees only headers, so every document in the
- * session reaches it: a page with no token at all is recorded and then refused.
- * A document making enough concurrent bridge requests can therefore evict an
+ * A record goes in for every request the filter matches, whatever token the
+ * request turns out to carry, so every document in the session reaches it: a
+ * page with no token at all is recorded and then refused by the handler. A
+ * document making enough concurrent bridge requests can therefore evict an
  * honest caller's record that was still coming, which costs that caller its
  * frame and leaves it delivering a sender of `id` alone — refused rather than
  * misattributed. Ordinary traffic never approaches this, and the eviction is
@@ -64,6 +90,8 @@ type ExtensionBridgeSession = {
 type ExtensionBridgeSessionState = ExtensionBridgeSession & {
   /** The frames recorded as callers of in-flight requests, by stamped nonce. */
   callerFramesByNonce: Map<string, WebFrameMain>;
+  /** Authenticated bodies being read right now, against the concurrency cap. */
+  bodyReadCount: number;
 };
 
 /**
@@ -93,7 +121,7 @@ export class ExtensionBridge {
   setupSession(session: Session, sessionOptions: ExtensionBridgeSession) {
     const callerFramesByNonce = new Map<string, WebFrameMain>();
 
-    this.sessions.set(session, { ...sessionOptions, callerFramesByNonce });
+    this.sessions.set(session, { ...sessionOptions, callerFramesByNonce, bodyReadCount: 0 });
 
     // A blocking callback is what puts the record in the map before the handler
     // reads it. That ordering is measured on Electron 43.2.0 rather than
@@ -198,43 +226,78 @@ export class ExtensionBridge {
     return callerFrame && !callerFrame.isDestroyed() ? callerFrame : undefined;
   }
 
+  /**
+   * Everything a request is refused for is settled from its URL, before the
+   * body is so much as touched: the token names a loaded extension or it does
+   * not, the path is registered or it is not, and the session has room for
+   * another body read or it does not. The caller is any document in the session
+   * — Gmail, a workspace app, whatever a user navigated to — and only the
+   * loaded extensions hold a token, so what a refusal costs is what a page
+   * with no token at all can spend.
+   *
+   * What that saves is the concatenation, the UTF-8 decode and the synchronous
+   * `JSON.parse`, which is the part that blocks the thread the app draws on;
+   * see `MAX_BRIDGE_REQUEST_BYTES` for what it does not save, which is the
+   * arriving body itself.
+   */
   private async handleRequest(session: Session, request: GlobalRequest) {
     const headers = {
       "access-control-allow-origin": request.headers.get("origin") ?? "*",
       "cache-control": "no-store",
     };
 
-    const { pathname } = new URL(request.url);
+    const { pathname, searchParams } = new URL(request.url);
 
     try {
       const sessionState = this.sessions.get(session);
 
-      // Consumed whatever else the request turns out to be, so a nonce that
-      // reached a refused request cannot be presented again
-      const senderFrame = sessionState && this.takeCallerFrame(sessionState, request);
-
-      const bodySource = await this.readBody(request);
-
-      if (bodySource === null) {
-        return new Response(null, { status: 413, headers });
+      if (!sessionState) {
+        return this.refuse(request, 403, headers);
       }
 
-      const body = JSON.parse(bodySource) as ExtensionBridgeRequest & Record<string, unknown>;
+      // Consumed whatever else the request turns out to be, so a nonce that
+      // reached a refused request cannot be presented again
+      const senderFrame = this.takeCallerFrame(sessionState, request);
+
+      const bridgeToken = searchParams.get(EXTENSION_BRIDGE_TOKEN_PARAM);
 
       // Everything else in the session — Gmail, workspace apps, any page a user
-      // navigated to — can reach this scheme too, and only the loaded extensions
-      // hold a token.
-      const extensionId = sessionState?.getExtensionId(body.token);
+      // navigated to — can reach this scheme too, and only the loaded
+      // extensions hold a token. Its 122 bits sit behind an in-process fetch,
+      // so the lookup's timing tells a caller nothing a guess would not cost it
+      // already.
+      const extensionId =
+        bridgeToken === null ? undefined : sessionState.getExtensionId(bridgeToken);
 
       if (!extensionId) {
-        return new Response(null, { status: 403, headers });
+        return this.refuse(request, 403, headers);
       }
 
       const handler = this.routes.get(pathname);
 
       if (!handler) {
-        return new Response(null, { status: 404, headers });
+        return this.refuse(request, 404, headers);
       }
+
+      if (sessionState.bodyReadCount >= MAX_CONCURRENT_BRIDGE_BODY_READS) {
+        return this.refuse(request, 429, headers);
+      }
+
+      sessionState.bodyReadCount += 1;
+
+      let bodySource: string | null;
+
+      try {
+        bodySource = await this.readBody(request);
+      } finally {
+        sessionState.bodyReadCount -= 1;
+      }
+
+      if (bodySource === null) {
+        return new Response(null, { status: 413, headers });
+      }
+
+      const body = JSON.parse(bodySource) as Record<string, unknown>;
 
       return await handler({ session, extensionId, senderFrame, body, headers });
     } catch (error) {
@@ -245,8 +308,24 @@ export class ExtensionBridge {
   }
 
   /**
-   * The request body, or `null` the moment it runs past the cap — nothing more
-   * is read then, so an oversized body costs the cap and not its whole length.
+   * A refusal, with whatever the caller was still sending dropped rather than
+   * left to arrive — the point of deciding before the body is that no part of
+   * it is ever held. Canceling is not awaited, so the answer does not wait on
+   * a renderer that may be mid-upload.
+   */
+  private refuse(request: GlobalRequest, status: number, headers: Record<string, string>) {
+    // A body already ended or errored has nothing to cancel and says so by
+    // throwing, which is not a reason to hold up the refusal
+    void request.body?.cancel().catch(() => undefined);
+
+    return new Response(null, { status, headers });
+  }
+
+  /**
+   * The request body, or `null` the moment it runs past the cap. Only reached
+   * for a caller the token has already vouched for, and the cap stops the copy
+   * and the parse rather than the arrival — a body is handed over whole, so
+   * canceling here frees the reference rather than avoiding the allocation.
    */
   private async readBody(request: GlobalRequest) {
     if (!request.body) {

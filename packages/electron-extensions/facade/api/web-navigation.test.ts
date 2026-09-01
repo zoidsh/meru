@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { EXTENSION_BRIDGE_ORIGIN } from "../../bridge/protocol";
 import { WEB_NAVIGATION_PATHS } from "../../web-navigation/bridge-protocol";
 import { createWebNavigation } from "./web-navigation";
 
@@ -13,10 +12,13 @@ type FrameQueryMethod = (details: Record<string, unknown>) => Promise<unknown>;
 
 describe("facade webNavigation", () => {
   test("asks the bridge and answers what it said", async () => {
-    const requests: { url: string; body: unknown }[] = [];
+    const requests: { pathName: string; body: unknown }[] = [];
 
     globalThis.fetch = (async (url: string, init: RequestInit) => {
-      requests.push({ url, body: JSON.parse(init.body as string) });
+      requests.push({
+        pathName: new URL(url).pathname,
+        body: JSON.parse(init.body as string),
+      });
 
       return Response.json({ frameId: 42, parentFrameId: 0 });
     }) as typeof fetch;
@@ -27,7 +29,7 @@ describe("facade webNavigation", () => {
 
     expect(requests).toEqual([
       {
-        url: `${EXTENSION_BRIDGE_ORIGIN}${WEB_NAVIGATION_PATHS.getFrame}`,
+        pathName: WEB_NAVIGATION_PATHS.getFrame,
         body: { details: { tabId: 12, frameId: 42 } },
       },
     ]);

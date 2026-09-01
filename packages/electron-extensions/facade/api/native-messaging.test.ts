@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { EXTENSION_BRIDGE_ORIGIN } from "../../bridge/protocol";
 import {
   NATIVE_MESSAGING_PATHS,
   type NativeMessagingFrame,
@@ -42,7 +41,7 @@ function installFakeBridge() {
   });
 
   globalThis.fetch = (async (url: string, init: RequestInit) => {
-    const path = url.slice(EXTENSION_BRIDGE_ORIGIN.length);
+    const { pathname: path } = new URL(url);
 
     requests.push({ path, body: JSON.parse(init.body as string) });
 

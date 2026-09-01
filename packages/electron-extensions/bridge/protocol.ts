@@ -28,6 +28,26 @@ export const EXTENSION_BRIDGE_ORIGIN = `${EXTENSION_BRIDGE_SCHEME}://bridge`;
  */
 export const EXTENSION_BRIDGE_TOKEN_GLOBAL = "__electronExtensionsBridgeToken";
 
-export type ExtensionBridgeRequest = {
-  token: string;
-};
+/**
+ * The query parameter every bridge call carries its token in.
+ *
+ * The query string rather than the body, so the bridge can answer an unknown
+ * token from the URL alone, before it has touched `request.body`. A header
+ * would say the same thing, but a header outside the CORS safelist makes the
+ * call a preflighted request and the scheme would then have to answer
+ * `OPTIONS` before anything else.
+ *
+ * A URL is the more exposed of the two places, so this is only safe while the
+ * URL stays inside the process. Measured on Electron 43.2.0: a fetch of this
+ * scheme leaves no `PerformanceResourceTiming` entry at all, from the page's
+ * own world or from an isolated world, where an ordinary http fetch from the
+ * page's world does — so the token is not readable through the timeline of the
+ * page a content script runs in. Worth re-measuring if the scheme's privileges
+ * change.
+ */
+export const EXTENSION_BRIDGE_TOKEN_PARAM = "token";
+
+/** The URL a bridge call goes to: the path routes it, the query authenticates it. */
+export function getExtensionBridgeUrl(pathName: string, bridgeToken: string) {
+  return `${EXTENSION_BRIDGE_ORIGIN}${pathName}?${EXTENSION_BRIDGE_TOKEN_PARAM}=${encodeURIComponent(bridgeToken)}`;
+}

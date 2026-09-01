@@ -8,7 +8,7 @@ import type {
   WebFrameMain,
 } from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
-import { EXTENSION_BRIDGE_ORIGIN } from "../bridge/protocol";
+import { getExtensionBridgeUrl } from "../bridge/protocol";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   PORT_CLOSED_ERROR,
@@ -134,8 +134,13 @@ function createFakeSession() {
      * the way Chromium names a fetch's initiator — and the handler receives
      * the request with whatever the listener stamped on it.
      */
-    request: (pathName: string, body: Record<string, unknown>, callerFrame?: WebFrameMain) => {
-      const url = `${EXTENSION_BRIDGE_ORIGIN}${pathName}`;
+    request: (
+      pathName: string,
+      bridgeToken: string,
+      body: Record<string, unknown>,
+      callerFrame?: WebFrameMain,
+    ) => {
+      const url = getExtensionBridgeUrl(pathName, bridgeToken);
 
       let requestHeaders: Record<string, string> = {};
 
@@ -214,9 +219,7 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
 
   /** Parks a worker job stream the way the relay client does, collecting jobs. */
   const openWorkerStream = async () => {
-    const response = await workerSession.request(RUNTIME_PROXY_PATHS.workerJobs, {
-      token: WORKER_TOKEN,
-    });
+    const response = await workerSession.request(RUNTIME_PROXY_PATHS.workerJobs, WORKER_TOKEN, {});
 
     expect(response.status).toBe(200);
 
@@ -256,17 +259,17 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
   };
 
   const ackJob = (jobId: string) =>
-    workerSession.request(RUNTIME_PROXY_PATHS.workerAck, { token: WORKER_TOKEN, jobId });
+    workerSession.request(RUNTIME_PROXY_PATHS.workerAck, WORKER_TOKEN, { jobId });
 
   const replyToJob = (jobId: string, result: Record<string, unknown>) =>
-    workerSession.request(RUNTIME_PROXY_PATHS.workerReply, { token: WORKER_TOKEN, jobId, result });
+    workerSession.request(RUNTIME_PROXY_PATHS.workerReply, WORKER_TOKEN, { jobId, result });
 
   /** `null` sends the way a frameless caller would; omitted, the page calls. */
   const sendShimMessage = (message: unknown, callerFrame: WebFrameMain | null = page.frame) =>
     shimSession.request(
       RUNTIME_PROXY_PATHS.sendMessage,
+      SHIM_TOKEN,
       {
-        token: SHIM_TOKEN,
         message,
         sender: SENDER_REPORT,
       },
@@ -277,8 +280,8 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
   const connectShimPort = async (portId: string, name = "relay") => {
     const response = await shimSession.request(
       RUNTIME_PROXY_PATHS.connect,
+      SHIM_TOKEN,
       {
-        token: SHIM_TOKEN,
         portId,
         name,
         sender: SENDER_REPORT,
@@ -654,8 +657,7 @@ describe("RuntimeProxy", () => {
     await harness.replyToJob(connectJob.jobId, { status: "connected" });
 
     // Worker to content script
-    await harness.workerSession.request(RUNTIME_PROXY_PATHS.workerPortPost, {
-      token: WORKER_TOKEN,
+    await harness.workerSession.request(RUNTIME_PROXY_PATHS.workerPortPost, WORKER_TOKEN, {
       portId: "port-1",
       message: { locked: false },
     });
@@ -665,8 +667,7 @@ describe("RuntimeProxy", () => {
     ]);
 
     // Content script to worker
-    await harness.shimSession.request(RUNTIME_PROXY_PATHS.portPost, {
-      token: SHIM_TOKEN,
+    await harness.shimSession.request(RUNTIME_PROXY_PATHS.portPost, SHIM_TOKEN, {
       portId: "port-1",
       message: "fill",
     });
@@ -680,8 +681,7 @@ describe("RuntimeProxy", () => {
     });
 
     // The worker hangs up; the shim hears a clean disconnect
-    await harness.workerSession.request(RUNTIME_PROXY_PATHS.workerPortDisconnect, {
-      token: WORKER_TOKEN,
+    await harness.workerSession.request(RUNTIME_PROXY_PATHS.workerPortDisconnect, WORKER_TOKEN, {
       portId: "port-1",
     });
 
@@ -705,8 +705,7 @@ describe("RuntimeProxy", () => {
 
     await harness.replyToJob(connectJob.jobId, { status: "connected" });
 
-    await harness.shimSession.request(RUNTIME_PROXY_PATHS.portDisconnect, {
-      token: SHIM_TOKEN,
+    await harness.shimSession.request(RUNTIME_PROXY_PATHS.portDisconnect, SHIM_TOKEN, {
       portId: "port-2",
     });
 
@@ -789,14 +788,12 @@ describe("RuntimeProxy", () => {
     const harness = createHarness();
 
     expect(
-      (await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerJobs, { token: SHIM_TOKEN }))
-        .status,
+      (await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerJobs, SHIM_TOKEN, {})).status,
     ).toBe(403);
 
     expect(
       (
-        await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerAck, {
-          token: SHIM_TOKEN,
+        await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerAck, SHIM_TOKEN, {
           jobId: "guessed",
         })
       ).status,
@@ -804,8 +801,7 @@ describe("RuntimeProxy", () => {
 
     expect(
       (
-        await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerReply, {
-          token: SHIM_TOKEN,
+        await harness.shimSession.request(RUNTIME_PROXY_PATHS.workerReply, SHIM_TOKEN, {
           jobId: "guessed",
           result: { status: "replied", reply: "spoofed" },
         })
@@ -818,8 +814,7 @@ describe("RuntimeProxy", () => {
 
     expect(
       (
-        await harness.workerSession.request(RUNTIME_PROXY_PATHS.sendMessage, {
-          token: WORKER_TOKEN,
+        await harness.workerSession.request(RUNTIME_PROXY_PATHS.sendMessage, WORKER_TOKEN, {
           message: "loop",
           sender: SENDER_REPORT,
         })
