@@ -91,7 +91,31 @@ describe("fetchCrx", () => {
           throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
         },
       }),
-    ).rejects.toThrow(`Update endpoint did not answer for ${extensionId} within 120 seconds`);
+    ).rejects.toThrow(`Update endpoint did not answer for ${extensionId} within 600 seconds`);
+  });
+
+  test("names a package that stopped arriving mid-body for what it is", async () => {
+    await expect(
+      fetchCrx({
+        extensionId,
+        chromeVersion,
+        // The case the deadline exists for: headers at once, then a server that
+        // trickles and stops, so the abort lands on the body rather than on the
+        // request
+        fetch: async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(Uint8Array.from([1, 2, 3]));
+
+                controller.error(
+                  new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+                );
+              },
+            }),
+          ),
+      }),
+    ).rejects.toThrow(`Update endpoint did not answer for ${extensionId} within 600 seconds`);
   });
 
   test("names the endpoint's no-package answer for what it is", async () => {
