@@ -117,7 +117,8 @@ function createPort(runtime: ChromeNamespace, hostName: string): NativeMessaging
 
       for (const frame of decoder.push(value) as NativeMessagingFrame[]) {
         // A port the extension disconnected hears nothing more, even while the
-        // host's last messages are still on their way
+        // host's last messages are still on their way. The reader is left
+        // open here because `disconnect` cancels it behind its own request
         if (isDisconnected) {
           return;
         }
