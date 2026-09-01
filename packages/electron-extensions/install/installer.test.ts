@@ -142,6 +142,22 @@ describe("installExtension", () => {
     expect(await readEntryNames(extensionInstallDir)).toEqual([]);
   });
 
+  test("refuses a version that is not one, before it becomes a directory", async () => {
+    // `""` would name the extension's own install directory, deleting every
+    // version of it and renaming the package over it; `"../escaped"` writes
+    // outside it; and `"1.0.0.staging"` names what the prune takes for the
+    // leftovers of a crashed install
+    for (const version of ["", "../escaped", "1.0.0.staging", "1.2.3.4.5"]) {
+      await expect(
+        installExtension({ crx: createExtensionCrx(version), extensionId, installDir }),
+      ).rejects.toThrow(
+        `CRX for ${extensionId} carries the version "${version}", which is not an extension version`,
+      );
+    }
+
+    expect(await readEntryNames(extensionInstallDir)).toEqual([]);
+  });
+
   test("refuses an id that is not one, before it reads the package", async () => {
     await expect(
       installExtension({
@@ -326,7 +342,10 @@ describe("pruneExtensionVersions", () => {
 
     await writeVersionDir(otherExtensionId, "3.0.0");
 
-    await pruneExtensionVersions({ installDir });
+    await pruneExtensionVersions({
+      installDir,
+      keptExtensionIds: [extensionId, otherExtensionId],
+    });
 
     expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
     expect(await readdir(path.join(installDir, otherExtensionId))).toEqual(["3.0.0"]);
@@ -343,7 +362,7 @@ describe("pruneExtensionVersions", () => {
 
     await writeVersionDir(extensionId, "2.0.0");
 
-    await pruneExtensionVersions({ installDir });
+    await pruneExtensionVersions({ installDir, keptExtensionIds: [extensionId] });
 
     expect(await readdir(extensionInstallDir)).toEqual(["2.0.0"]);
     expect(await readFile(path.join(strayDir, "kept"), "utf8")).toBe("kept");
@@ -356,15 +375,30 @@ describe("pruneExtensionVersions", () => {
 
     await mkdir(path.join(extensionInstallDir, "3.0.0"));
 
-    await pruneExtensionVersions({ installDir });
+    await pruneExtensionVersions({ installDir, keptExtensionIds: [extensionId] });
 
     expect(await readdir(extensionInstallDir)).toEqual(["1.0.0"]);
+  });
+
+  test("drops an extension nothing accounts for, every version of it", async () => {
+    const uninstalledExtensionId = "abcdefghijklmnopabcdefghijklmnop";
+
+    await writeVersionDir(extensionId, "1.0.0");
+
+    // What an uninstall racing an install of the same id leaves behind: a
+    // complete, newest version directory with no opt-in naming it
+    await writeVersionDir(uninstalledExtensionId, "2.0.0");
+
+    await pruneExtensionVersions({ installDir, keptExtensionIds: [extensionId] });
+
+    expect(await readdir(extensionInstallDir)).toEqual(["1.0.0"]);
+    expect(await readEntryNames(path.join(installDir, uninstalledExtensionId))).toEqual([]);
   });
 
   test("does nothing when nothing is installed", async () => {
     await rm(installDir, { recursive: true, force: true });
 
-    await pruneExtensionVersions({ installDir });
+    await pruneExtensionVersions({ installDir, keptExtensionIds: [extensionId] });
 
     expect(await readEntryNames(installDir)).toEqual([]);
   });

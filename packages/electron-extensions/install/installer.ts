@@ -3,7 +3,7 @@ import { access, mkdir, readdir, rename, rm, writeFile } from "node:fs/promises"
 import path from "node:path";
 import { unzipSync } from "fflate";
 import { verifyCrx } from "../crx/crx";
-import { compareExtensionVersions } from "../crx/version";
+import { compareExtensionVersions, isExtensionVersion } from "../crx/version";
 import { isExtensionId } from "../derive/extension-id";
 import { type FetchImplementation, fetchCrx, fetchCrxUpdate } from "./omaha";
 
@@ -70,6 +70,16 @@ function readCrxPackage(crx: Uint8Array, extensionId: string): ExtensionPackage 
 
   if (typeof manifest.version !== "string") {
     throw new Error(`CRX for ${extensionId} carries a manifest without a version`);
+  }
+
+  // The version becomes a directory name under the install, so it is checked
+  // here rather than where it is joined onto a path: nothing further down the
+  // pipeline sees the manifest, and a package Chromium would refuse to load is
+  // one that should never have reached the disk
+  if (!isExtensionVersion(manifest.version)) {
+    throw new Error(
+      `CRX for ${extensionId} carries the version "${manifest.version}", which is not an extension version`,
+    );
   }
 
   // An unpacked extension without a `key` loads under an id derived from its
@@ -221,13 +231,20 @@ export async function getInstalledExtension({
 export type PruneExtensionVersionsOptions = {
   /** The directory installs live under, `<installDir>/<extensionId>/<version>`. */
   installDir: string;
+  /**
+   * The extensions the embedder still accounts for. Anything else under the
+   * install directory is dropped whole, since keeping the newest version of
+   * every id is exactly what would keep an install nothing asked for.
+   */
+  keptExtensionIds: string[];
 };
 
 /**
  * Drops everything an install superseded: the version directories an update
- * replaced, and staging directories a crashed install left behind. What is kept
- * for every extension is the newest version installed, which is the one an
- * embedder loads.
+ * replaced, the staging directories a crashed install left behind, and the
+ * extensions the embedder no longer accounts for. What is kept for every
+ * extension still accounted for is the newest version installed, which is the
+ * one an embedder loads.
  *
  * A launch-time sweep rather than part of the install, because a session reads
  * an install directory while deriving its copy of the extension, and an update
@@ -236,7 +253,10 @@ export type PruneExtensionVersionsOptions = {
  * — an extension updated mid-session keeps its old version until the next
  * launch, which is one directory per updated extension.
  */
-export async function pruneExtensionVersions({ installDir }: PruneExtensionVersionsOptions) {
+export async function pruneExtensionVersions({
+  installDir,
+  keptExtensionIds,
+}: PruneExtensionVersionsOptions) {
   let installEntries: Dirent[];
 
   try {
@@ -259,6 +279,15 @@ export async function pruneExtensionVersions({ installDir }: PruneExtensionVersi
     }
 
     const extensionInstallDir = path.join(installDir, extensionId);
+
+    // An uninstall that raced an install of the same id leaves a complete
+    // version directory the embedder has no record of, and it is the newest
+    // one, so the sweep below would keep it for good
+    if (!keptExtensionIds.includes(extensionId)) {
+      await rm(extensionInstallDir, { recursive: true, force: true });
+
+      continue;
+    }
 
     const installedExtension = await getInstalledExtension({ installDir, extensionId });
 

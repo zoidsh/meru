@@ -72,7 +72,47 @@ export function buildUpdateCheckUrl({
  * so a caller can hand over a plain function — a test's fake above all —
  * without matching every property a runtime hangs off its global.
  */
-export type FetchImplementation = (url: string, init: { redirect: "follow" }) => Promise<Response>;
+export type FetchImplementation = (
+  url: string,
+  init: { redirect: "follow"; signal: AbortSignal },
+) => Promise<Response>;
+
+/**
+ * How long the endpoint has to answer, the whole request rather than a chunk of
+ * it. Node's `fetch` times out per chunk, so a server that trickles bytes holds
+ * the promise open with no deadline at all, and an embedder that coalesces
+ * calls onto the request in flight — which is what keeps two installs of one
+ * extension out of the same staging directory — has no way back: the scheduled
+ * check, the update button, and switching the extension on all join the stalled
+ * promise until the app restarts.
+ *
+ * Plain milliseconds rather than a duration helper, since this package carries
+ * no imports of Meru's own.
+ */
+const RESPONSE_TIMEOUT_MS = 2 * 60 * 1000;
+
+/**
+ * A request to the endpoint under that deadline, with the abort surfaced as an
+ * ordinary failure. `AbortSignal.timeout` rejects with a `TimeoutError`, and an
+ * embedder showing the user its message would say the operation was aborted
+ * where what happened is that the endpoint went quiet.
+ */
+async function fetchEndpoint(fetch: FetchImplementation, url: string, extensionId: string) {
+  try {
+    return await fetch(url, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(RESPONSE_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new Error(
+        `Update endpoint did not answer for ${extensionId} within ${RESPONSE_TIMEOUT_MS / 1000} seconds`,
+      );
+    }
+
+    throw error;
+  }
+}
 
 export type FetchCrxOptions = CrxDownloadOptions & {
   /**
@@ -95,9 +135,11 @@ export async function fetchCrx({
   chromeVersion,
   fetch = globalThis.fetch,
 }: FetchCrxOptions) {
-  const response = await fetch(buildCrxDownloadUrl({ extensionId, chromeVersion }), {
-    redirect: "follow",
-  });
+  const response = await fetchEndpoint(
+    fetch,
+    buildCrxDownloadUrl({ extensionId, chromeVersion }),
+    extensionId,
+  );
 
   // No Content is the endpoint's no: an id it does not serve, or a request it
   // could not place — and it counts as `ok`, so left alone it would surface as
@@ -192,9 +234,10 @@ export async function fetchCrxUpdate({
   installedVersion,
   fetch = globalThis.fetch,
 }: FetchCrxUpdateOptions) {
-  const response = await fetch(
+  const response = await fetchEndpoint(
+    fetch,
     buildUpdateCheckUrl({ extensionId, chromeVersion, installedVersion }),
-    { redirect: "follow" },
+    extensionId,
   );
 
   if (response.status === 204) {

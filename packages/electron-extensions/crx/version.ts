@@ -1,3 +1,18 @@
+/**
+ * Chromium's shape for an extension version, which `extension.cc` parses out of
+ * a manifest as a `base::Version`: one to four dot-separated unsigned integers,
+ * and nothing else.
+ *
+ * An install joins the version onto the install directory, so this is what
+ * stands between a manifest and the filesystem. `""` names the extension's own
+ * install directory rather than a version under it, `"../elsewhere"` reaches
+ * outside it, and `"1.0.0.staging"` names a directory the launch-time prune
+ * takes for the leftovers of a crashed install.
+ */
+export function isExtensionVersion(version: string) {
+  return /^\d+(\.\d+){0,3}$/.test(version);
+}
+
 function readVersionComponent(component: string | undefined) {
   const value = Number(component);
 

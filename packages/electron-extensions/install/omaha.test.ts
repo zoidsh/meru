@@ -63,6 +63,37 @@ describe("fetchCrx", () => {
     ]);
   });
 
+  test("gives the download a deadline of its own", async () => {
+    let signal: AbortSignal | undefined;
+
+    await fetchCrx({
+      extensionId,
+      chromeVersion,
+      fetch: async (_url, init) => {
+        signal = init.signal;
+
+        return new Response(Uint8Array.from([1, 2, 3]));
+      },
+    });
+
+    // Node's own timeout is per chunk, so without a signal a server trickling
+    // bytes holds the download open with no deadline at all
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal?.aborted).toBe(false);
+  });
+
+  test("names a download the endpoint never answered for what it is", async () => {
+    await expect(
+      fetchCrx({
+        extensionId,
+        chromeVersion,
+        fetch: async () => {
+          throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+        },
+      }),
+    ).rejects.toThrow(`Update endpoint did not answer for ${extensionId} within 120 seconds`);
+  });
+
   test("names the endpoint's no-package answer for what it is", async () => {
     await expect(
       fetchCrx({
@@ -117,6 +148,21 @@ describe("fetchCrxUpdate", () => {
           createUpdateCheckResponse('<updatecheck _esbAllowlist="true" status="noupdate"/>'),
       }),
     ).toEqual({ status: "noupdate" });
+  });
+
+  test("names an update check the endpoint never answered for what it is", async () => {
+    await expect(
+      fetchCrxUpdate({
+        extensionId,
+        chromeVersion,
+        installedVersion: "8.12.32.33",
+        fetch: async (_url, init) => {
+          expect(init.signal.aborted).toBe(false);
+
+          throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+        },
+      }),
+    ).rejects.toThrow(`Update endpoint did not answer for ${extensionId} within 120 seconds`);
   });
 
   test("refuses an answer that is not an update check", async () => {
