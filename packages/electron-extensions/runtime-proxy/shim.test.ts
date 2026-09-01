@@ -35,7 +35,9 @@ async function waitFor(condition: () => boolean, what: string) {
   }
 }
 
-function stubFetch(respond: (pathName: string, body: Record<string, unknown>) => Response) {
+function stubFetch(
+  respond: (pathName: string, body: Record<string, unknown>) => Response | Promise<Response>,
+) {
   const requests: RecordedRequest[] = [];
 
   globalThis.fetch = (async (url: string, init: RequestInit) => {
@@ -324,12 +326,24 @@ describe("shimmed connect", () => {
   test("a message posted before a disconnect goes out ahead of it, and the reader is canceled after", async () => {
     const events: string[] = [];
 
-    stubFetch((pathName) => {
+    let answerConnect = () => {};
+
+    // The connect is held unanswered, which is the window an unchained
+    // disconnect overtakes it in. A stub that answers in the same tick closes
+    // that window and would pass whether the disconnect waits on `opened` or
+    // resolves it itself
+    const connectAnswered = new Promise<void>((resolve) => {
+      answerConnect = resolve;
+    });
+
+    stubFetch(async (pathName) => {
       events.push(`request:${pathName}`);
 
       if (pathName !== RUNTIME_PROXY_PATHS.connect) {
         return new Response(null, { status: 204 });
       }
+
+      await connectAnswered;
 
       const stream = new ReadableStream<Uint8Array>({
         cancel: () => {
@@ -344,11 +358,15 @@ describe("shimmed connect", () => {
 
     const port = (runtime.connect as Connect)();
 
-    // Both written before the connect has answered, which is where an
-    // unchained disconnect overtakes the post and the connect itself
     port.postMessage("first");
 
     port.disconnect();
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(events).toEqual([`request:${RUNTIME_PROXY_PATHS.connect}`]);
+
+    answerConnect();
 
     await waitFor(() => events.includes("cancel"), "the reader cancel");
 
