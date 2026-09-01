@@ -171,14 +171,21 @@ function ExtensionErrorDialog({
 
 function ExtensionItem({
   extension,
+  extensionsEnabled,
   installed,
   installedVersion,
 }: {
   extension: CuratedExtension;
+  extensionsEnabled: boolean;
   installed: boolean;
   installedVersion: string | undefined;
 }) {
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  // Installing an extension the app would never load only leaves the user
+  // waiting for a restart that changes nothing, so the master switch locks
+  // these the way the license does
+  const locked = !extensionsEnabled || !isLicenseKeyValid;
 
   const isOnePassword = extension.id === ONEPASSWORD_EXTENSION_ID;
 
@@ -244,8 +251,9 @@ function ExtensionItem({
               className="mt-1 self-start"
               // The dialog explains how to pair the extension with 1Password's
               // desktop app, which there is nothing to pair until it is
-              // installed. Installing needs Meru Pro, so this locks with it.
-              disabled={!installed}
+              // installed and loaded. Installing needs Meru Pro and loading
+              // needs the master switch, so this locks with both.
+              disabled={locked || !installed}
               onClick={() => {
                 setIsSetupDialogOpen(true);
               }}
@@ -257,8 +265,8 @@ function ExtensionItem({
         <ItemActions>
           {extensionMutation.isPending && <Spinner />}
           <Switch
-            checked={isLicenseKeyValid && installed}
-            disabled={!isLicenseKeyValid || extensionMutation.isPending}
+            checked={!locked && installed}
+            disabled={locked || extensionMutation.isPending}
             onCheckedChange={(checked) => {
               extensionMutation.mutate(checked);
             }}
@@ -418,6 +426,8 @@ export function ExtensionsSettings() {
     return;
   }
 
+  const extensionsEnabled = config["extensions.enabled"];
+
   return (
     <Settings>
       <SettingsHeader>
@@ -425,7 +435,9 @@ export function ExtensionsSettings() {
           Extensions
           <MaturityFieldBadge maturity="Experimental" />
         </SettingsTitle>
-        {config["extensions.installed"].length > 0 && <UpdateExtensionsButton />}
+        {extensionsEnabled && config["extensions.installed"].length > 0 && (
+          <UpdateExtensionsButton />
+        )}
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
@@ -435,10 +447,18 @@ export function ExtensionsSettings() {
             the official extensions from the Chrome Web Store.
           </FieldDescription>
           <ConfigSwitchField
+            label="Enable extensions"
+            description="Run the installed extensions. Turning this off stops them without uninstalling them."
+            configKey="extensions.enabled"
+            licenseKeyRequired
+            restartRequired
+          />
+          <ConfigSwitchField
             label="Show extensions button"
             description="Show a titlebar button that lists the installed extensions and opens their popups."
             configKey="extensions.showTitlebarButton"
             licenseKeyRequired
+            disabled={!extensionsEnabled}
           />
           <FieldSeparator />
           <FieldSet>
@@ -451,6 +471,7 @@ export function ExtensionsSettings() {
                   <ExtensionItem
                     key={extension.id}
                     extension={extension}
+                    extensionsEnabled={extensionsEnabled}
                     installed={config["extensions.installed"].includes(extension.id)}
                     installedVersion={
                       installedExtensions?.find(({ id }) => id === extension.id)?.version

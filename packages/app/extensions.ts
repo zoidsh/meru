@@ -93,7 +93,7 @@ function getStrippedManifestKeys() {
 
 /** The curated extensions the user opted into, and Pro is what they run on. */
 function getOptedInExtensionIds() {
-  if (!licenseKey.isValid) {
+  if (!config.get("extensions.enabled") || !licenseKey.isValid) {
     return [];
   }
 
@@ -123,8 +123,16 @@ async function getInstalledExtensionDirs() {
  * Everything an account session loads: what the user opted into, plus the
  * development folder. Asked again for every session, so an account created
  * after an install gets that extension without anything being rebuilt.
+ *
+ * The master switch is checked here rather than only on the opt-ins, so that
+ * off means nothing loads at all — the development and fixture folders
+ * included, which no opt-in covers.
  */
 async function getExtensionDirs() {
+  if (!config.get("extensions.enabled")) {
+    return [];
+  }
+
   return [
     ...getDevExtensionDirs(),
     ...getFixtureExtensionDirs(),
@@ -293,10 +301,10 @@ class ExtensionUpdater {
       return;
     }
 
-    // The interval stands even when nothing is installed yet, and every check
-    // re-reads the opt-ins, so an extension installed mid-session is kept up to
-    // date without a restart
-    if (config.get("extensions.installed").length > 0) {
+    // The interval stands even when nothing is installed yet and even when the
+    // master switch is off, and every check re-reads both, so an extension
+    // installed mid-session is kept up to date without a restart
+    if (config.get("extensions.enabled") && config.get("extensions.installed").length > 0) {
       this.checkForUpdates();
     }
 

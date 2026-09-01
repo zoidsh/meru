@@ -140,6 +140,7 @@ export function createDefaultConfig({
     "verticalTabs.showWidthToggle": true,
     "verticalTabs.hideUnreadBadgeWhenActive": false,
     "verticalTabs.showAppLinksBadge": true,
+    "extensions.enabled": true,
     "extensions.installed": [],
     "extensions.showTitlebarButton": false,
   };
