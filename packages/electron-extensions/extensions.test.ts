@@ -277,6 +277,61 @@ describe("Extensions", () => {
     expect(sessionEvents).toEqual(["loadExtension"]);
   });
 
+  test("loads the first of several directories carrying one extension id", async () => {
+    const loggedInfo: { message: string; details: Record<string, unknown> }[] = [];
+
+    const { session, sessionEvents } = createSession();
+
+    const firstExtensionDir = await createExtensionDir("one", "dGVzdC1rZXk=");
+
+    const secondExtensionDir = await createExtensionDir("two", "dGVzdC1rZXk=");
+
+    // Chromium loads both copies under the one id, where the second load's
+    // storage clear drops the service worker the first just registered
+    await createExtensions([firstExtensionDir, secondExtensionDir], {
+      info: (message, details) => {
+        loggedInfo.push({ message, details });
+      },
+      error: () => {},
+    }).setupSession(session);
+
+    expect(sessionEvents).toEqual([
+      "clearStorageData chrome-extension://gckpihaehgepkpiokicpmgbmojmemdja serviceworkers",
+      "loadExtension",
+    ]);
+    expect(loggedInfo).toEqual([
+      {
+        message: "Skipped duplicate extension directory",
+        details: {
+          id: "gckpihaehgepkpiokicpmgbmojmemdja",
+          extensionDir: secondExtensionDir,
+        },
+      },
+      {
+        message: "Loaded extension",
+        details: {
+          id: "aaa",
+          name: "Extension aaa",
+          version: "1.0.0",
+          extensionDir: firstExtensionDir,
+        },
+      },
+    ]);
+  });
+
+  test("loads every directory of an extension it has no id for", async () => {
+    const { session, sessionEvents } = createSession();
+
+    // Chromium derives a keyless extension's id from the directory it loads
+    // from, so two of them are two extensions rather than one twice
+    await createExtensions([
+      await createExtensionDir("one"),
+      await createExtensionDir("two"),
+    ]).setupSession(session);
+
+    expect(sessionEvents).toEqual(["loadExtension", "loadExtension"]);
+  });
+
   test("answers the bridge in every session sharing a derived copy", async () => {
     const derivedDirs: string[] = [];
 

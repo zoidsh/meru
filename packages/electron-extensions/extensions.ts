@@ -14,6 +14,7 @@ import {
   NativeMessaging,
   type NativeMessagingHostPolicy,
 } from "./native-messaging/native-messaging";
+import { readExtensionDirId } from "./scan";
 import { WebNavigation } from "./web-navigation/web-navigation";
 
 /**
@@ -61,6 +62,9 @@ export type ExtensionsOptions = {
    * Unpacked extension directories, loaded into every session handed to
    * `setupSession`. A function is asked again for every session, so a session
    * set up after an extension was installed loads that extension too.
+   *
+   * Where two directories carry the same extension id, only the first is
+   * loaded; see `dedupeExtensionDirs`.
    */
   extensionDirs: ExtensionDirs;
   /**
@@ -221,9 +225,48 @@ export class Extensions {
     return derivedExtension;
   }
 
+  /**
+   * The directories to load, without the ones carrying an extension id an
+   * earlier directory already carries. Two copies of one extension are one
+   * extension to Chromium, which loads them both under that id: the second load
+   * clears the storage the first just made, the service worker registration
+   * with it, and which copy ends up running is nowhere to be seen. First in the
+   * list wins, so the embedder picks the copy purely by the order it lists them
+   * in.
+   *
+   * A directory whose manifest carries no `key` has no id and is never dropped,
+   * since Chromium derives that extension's id from the path it loads from and
+   * two such directories are two different extensions.
+   */
+  private dedupeExtensionDirs(extensionDirs: string[]) {
+    const seenExtensionIds = new Set<string>();
+
+    return extensionDirs.filter((extensionDir) => {
+      const extensionId = readExtensionDirId(extensionDir);
+
+      if (!extensionId) {
+        return true;
+      }
+
+      if (seenExtensionIds.has(extensionId)) {
+        this.logger?.info("Skipped duplicate extension directory", {
+          id: extensionId,
+          extensionDir,
+        });
+
+        return false;
+      }
+
+      seenExtensionIds.add(extensionId);
+
+      return true;
+    });
+  }
+
   async setupSession(session: Session) {
-    const extensionDirs =
-      typeof this.extensionDirs === "function" ? await this.extensionDirs() : this.extensionDirs;
+    const extensionDirs = this.dedupeExtensionDirs(
+      typeof this.extensionDirs === "function" ? await this.extensionDirs() : this.extensionDirs,
+    );
 
     if (extensionDirs.length === 0) {
       return;
