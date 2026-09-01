@@ -287,8 +287,8 @@ function PasskeysAlert() {
         <AlertTitle>Sign in to Google with a passkey and Touch ID</AlertTitle>
         <AlertDescription>
           Add a passkey to your Google account from its security settings inside Meru, then sign in
-          with Touch ID — no password manager extension to install, and none of the memory and CPU
-          one costs while it runs. iCloud passkeys don't work here, and filling passwords still
+          with Touch ID — no password manager extension to install, and nothing extra running in the
+          background to slow Meru down. iCloud passkeys don't work here, and filling passwords still
           needs a password manager.
         </AlertDescription>
       </Alert>
@@ -302,8 +302,8 @@ function PasskeysAlert() {
         <AlertTitle>Sign in to Google with a passkey and Windows Hello</AlertTitle>
         <AlertDescription>
           Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
-          without a password manager extension — and without the memory and CPU one costs while it
-          runs. Filling passwords still needs a password manager.
+          without a password manager extension, and with nothing extra running in the background to
+          slow Meru down. Filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
