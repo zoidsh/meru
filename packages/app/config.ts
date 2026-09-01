@@ -5,6 +5,7 @@ import type { SavedTab } from "@meru/shared/schemas";
 import type { Config } from "@meru/shared/types";
 import { app } from "electron";
 import Store from "electron-store";
+import { resolveMigrationVersion } from "./lib/migration-version";
 
 /** A saved tab as it was written before bookmarks became a list of their own. */
 type LegacySavedTab = SavedTab & {
@@ -14,6 +15,9 @@ type LegacySavedTab = SavedTab & {
 export const config = new Store<Config>({
   name: is.dev ? "config.dev" : "config",
   accessPropertiesByDotNotation: false,
+  // electron-store fills this with `app.getVersion()`, whose prerelease suffix
+  // on a Beta build misses every key in the ladder below.
+  projectVersion: resolveMigrationVersion(app.getVersion()),
   defaults: createDefaultConfig({
     accountId: randomUUID(),
     downloadsLocation: app.getPath("downloads"),
