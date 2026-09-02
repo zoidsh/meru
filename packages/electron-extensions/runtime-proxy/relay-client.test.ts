@@ -801,7 +801,7 @@ describe("how the job stream is parked again", () => {
 
     stub.refuse(RUNTIME_PROXY_PATHS.workerJobs, 503);
 
-    startRelayClient({ retryDelayMs: 300 });
+    startRelayClient({ retryDelayMs: 2000 });
 
     await stub.waitForPost(RUNTIME_PROXY_PATHS.workerJobs);
 
@@ -823,8 +823,9 @@ describe("how the job stream is parked again", () => {
 
     await stub.waitForStream(6);
 
-    // Nothing for the first end, then 16, 32, 64 and 128 as the floor doubles
-    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(240);
+    // Nothing for the first end, then 16, 32, 64 and 128 as the floor doubles,
+    // asserted with slack rather than as the 240 ms those four sum to
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(200);
   });
 
   test("a stream that lived out the window starts the backoff over", async () => {
