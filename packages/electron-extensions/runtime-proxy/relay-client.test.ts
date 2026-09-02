@@ -7,7 +7,7 @@ import {
   type RuntimeProxyJob,
   type RuntimeProxySender,
 } from "./bridge-protocol";
-import { createRelayClient } from "./relay-client";
+import { createRelayClient, type CreateRelayClientOptions } from "./relay-client";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
@@ -763,6 +763,94 @@ describe("createRelayClient", () => {
     stub.pushJob({ type: "sendMessage", jobId: "job-1", message: "after restart", sender: SENDER });
 
     await waitFor(() => heard.length === 1, "the redelivered job");
+  });
+});
+
+describe("how the job stream is parked again", () => {
+  /** A client whose stream lifecycle is the whole of what a test watches. */
+  function startRelayClient(options: CreateRelayClientOptions) {
+    const client = createRelayClient(options);
+
+    client.wrapRuntime(createWorkerChrome().chrome);
+
+    client.start();
+
+    startedClients.push(client);
+
+    return client;
+  }
+
+  test("a stream that ended cleanly is parked again at once", async () => {
+    const stub = stubBridge();
+
+    startRelayClient({ retryDelayMs: 2000 });
+
+    const parked = await stub.waitForStream();
+
+    const endedAt = Date.now();
+
+    parked.close();
+
+    await stub.waitForStream(2);
+
+    expect(Date.now() - endedAt).toBeLessThan(500);
+  });
+
+  test("a refused stream is slept on rather than opened again at once", async () => {
+    const stub = stubBridge();
+
+    stub.refuse(RUNTIME_PROXY_PATHS.workerJobs, 503);
+
+    startRelayClient({ retryDelayMs: 2000 });
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.workerJobs);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerJobs)).toHaveLength(1);
+  });
+
+  test("a stream that keeps ending cleanly at once is backed off", async () => {
+    const stub = stubBridge();
+
+    startRelayClient({ retryDelayMs: 2000, cleanEndWindowMs: 10_000 });
+
+    const startedAt = Date.now();
+
+    for (let streamCount = 1; streamCount <= 5; streamCount += 1) {
+      (await stub.waitForStream(streamCount)).close();
+    }
+
+    await stub.waitForStream(6);
+
+    // Nothing for the first end, then 16, 32, 64 and 128 as the floor doubles,
+    // asserted with slack rather than as the 240 ms those four sum to
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(200);
+  });
+
+  test("a stream that lived out the window starts the backoff over", async () => {
+    const stub = stubBridge();
+
+    startRelayClient({ retryDelayMs: 2000, cleanEndWindowMs: 20 });
+
+    for (let streamCount = 1; streamCount <= 5; streamCount += 1) {
+      (await stub.waitForStream(streamCount)).close();
+    }
+
+    const lived = await stub.waitForStream(6);
+
+    await new Promise((resolve) => setTimeout(resolve, 40));
+
+    const endedAt = Date.now();
+
+    lived.close();
+
+    (await stub.waitForStream(7)).close();
+
+    await stub.waitForStream(8);
+
+    // The 256 and then 512 the backoff had reached would put this past 700ms
+    expect(Date.now() - endedAt).toBeLessThan(300);
   });
 });
 

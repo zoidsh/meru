@@ -26,6 +26,23 @@ import {
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
 /**
+ * How long a job stream has to live for its clean end to read as main's own
+ * invalidation rather than a flap. Main ends a parked stream deliberately
+ * whenever it replaces one, so from here that end is the ordinary case and the
+ * jobs queued behind it are already waiting; only a stream that ends cleanly
+ * again and again the moment it is parked is main flapping.
+ */
+const DEFAULT_CLEAN_END_WINDOW_MS = 1000;
+
+/**
+ * What the second clean end inside the window sleeps, doubling per end up to
+ * `retryDelayMs`. Small enough that a single replaced stream costs nothing a
+ * queued message can feel, large enough that a flapping main cannot spin the
+ * worker.
+ */
+const CLEAN_END_BACKOFF_FLOOR_MS = 16;
+
+/**
  * How many job ids the client remembers to recognise a redelivery by. Far more
  * than a stream flap can put in flight at once, and bounded so a worker that
  * runs for hours does not grow a set for as long as it lives.
@@ -41,8 +58,10 @@ function bridgeAnsweredError(status: number) {
 const LOG_LABEL = "runtime-proxy-relay";
 
 export type CreateRelayClientOptions = {
-  /** How long a failed job stream waits before it is opened again. */
+  /** How long a job stream that failed waits before it is opened again. */
   retryDelayMs?: number;
+  /** How long a job stream has to live for its clean end to count as ordinary. */
+  cleanEndWindowMs?: number;
   /** How many handled job ids to remember before forgetting the oldest. */
   maxRememberedJobIds?: number;
   /**
@@ -72,6 +91,7 @@ export type CreateRelayClientOptions = {
  */
 export function createRelayClient({
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+  cleanEndWindowMs = DEFAULT_CLEAN_END_WINDOW_MS,
   maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
   runStorageCall,
 }: CreateRelayClientOptions = {}) {
@@ -288,7 +308,14 @@ export function createRelayClient({
   };
 
   const runJobStream = async () => {
+    /** What the next clean end inside the window sleeps; 0 while none has. */
+    let cleanEndBackoffMs = 0;
+
     while (!isStopped) {
+      const parkedAt = Date.now();
+
+      let hasEndedCleanly = false;
+
       try {
         const response = await postBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
 
@@ -311,12 +338,42 @@ export function createRelayClient({
             handleJob(job);
           }
         }
+
+        hasEndedCleanly = true;
       } catch (error) {
         console.error(`[${LOG_LABEL}] job stream failed`, error);
       }
 
-      if (!isStopped) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      if (isStopped) {
+        return;
+      }
+
+      /*
+       * A stream that ended cleanly is main having replaced it, which is what
+       * its own invalidation looks like from here — every job queued behind
+       * the replacement is waiting on this re-park, so sleeping on it is a
+       * delay paid for nothing. Only a bridge that refused or broke is a
+       * reason to wait, since re-parking on it at once would spin.
+       */
+      let delayMs = retryDelayMs;
+
+      if (hasEndedCleanly) {
+        if (Date.now() - parkedAt >= cleanEndWindowMs) {
+          cleanEndBackoffMs = 0;
+        }
+
+        delayMs = cleanEndBackoffMs;
+
+        cleanEndBackoffMs = Math.min(
+          cleanEndBackoffMs === 0 ? CLEAN_END_BACKOFF_FLOOR_MS : cleanEndBackoffMs * 2,
+          retryDelayMs,
+        );
+      } else {
+        cleanEndBackoffMs = 0;
+      }
+
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
   };
