@@ -1,6 +1,6 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { ExtensionActionAnchorRect } from "@meru/shared/types";
-import { BrowserWindow, Menu, nativeImage, type WebContents } from "electron";
+import { BrowserWindow, Menu, type NativeImage, nativeImage, type WebContents } from "electron";
 import { accounts } from "./accounts";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
@@ -13,18 +13,39 @@ import { WorkspaceApp } from "./workspace-app";
 const MENU_ICON_SIZE = 16;
 
 /**
- * Action icons are read at twice the size a menu draws them at, and a data URL
- * carries no scale factor for Electron to work that out from.
+ * A data URL carries no scale factor for Electron to work the density out
+ * from, so an icon built from one is drawn at 1x wherever it lands and comes
+ * out blurry on the 2x display that is the common case. Carrying a
+ * representation per factor is what tells Electron which pixels to draw.
+ */
+const MENU_ICON_SCALE_FACTORS = [1, 2];
+
+/**
+ * Action icons are read at twice the size a menu draws them at, so every
+ * representation scales down from the one source.
  */
 function createMenuIcon(iconDataUrl: string) {
-  const icon = nativeImage.createFromDataURL(iconDataUrl);
+  const sourceIcon = nativeImage.createFromDataURL(iconDataUrl);
 
   // An icon `nativeImage` cannot decode — an SVG one — comes back empty
-  if (icon.isEmpty()) {
-    return undefined;
+  if (sourceIcon.isEmpty()) {
+    return null;
   }
 
-  return icon.resize({ width: MENU_ICON_SIZE, height: MENU_ICON_SIZE });
+  const menuIcon = nativeImage.createEmpty();
+
+  for (const scaleFactor of MENU_ICON_SCALE_FACTORS) {
+    const size = MENU_ICON_SIZE * scaleFactor;
+
+    menuIcon.addRepresentation({
+      scaleFactor,
+      // The icon is built once per extension rather than once per menu open, so
+      // the slowest filter costs nothing a menu open pays for
+      dataURL: sourceIcon.resize({ width: size, height: size, quality: "best" }).toDataURL(),
+    });
+  }
+
+  return menuIcon;
 }
 
 /**
@@ -38,10 +59,40 @@ function createMenuIcon(iconDataUrl: string) {
 class ExtensionActions {
   popup = new Popup();
 
+  /**
+   * One menu icon per extension, built on the first menu that draws it: the
+   * menu is rebuilt on every open, and decoding a data URL and resizing it once
+   * per scale factor is far more than an open should cost. `null` is an icon
+   * `nativeImage` could not decode, kept so that decode isn't retried either.
+   *
+   * An action never changes while its extension runs, so loading and unloading
+   * are the only things the icons can go stale on, and `onActionsChanged` is
+   * exactly those.
+   */
+  private menuIcons = new Map<string, NativeImage | null>();
+
   init() {
     extensions.onActionsChanged(() => {
+      this.menuIcons.clear();
+
       this.broadcast();
     });
+  }
+
+  private getMenuIcon(extensionId: string, iconDataUrl: string | null) {
+    if (!iconDataUrl) {
+      return undefined;
+    }
+
+    let menuIcon = this.menuIcons.get(extensionId);
+
+    if (menuIcon === undefined) {
+      menuIcon = createMenuIcon(iconDataUrl);
+
+      this.menuIcons.set(extensionId, menuIcon);
+    }
+
+    return menuIcon ?? undefined;
   }
 
   /**
@@ -141,7 +192,7 @@ class ExtensionActions {
     const menu = Menu.buildFromTemplate(
       this.serialize(webContents).map(({ extensionId, title, iconDataUrl }) => ({
         label: title,
-        icon: iconDataUrl ? createMenuIcon(iconDataUrl) : undefined,
+        icon: this.getMenuIcon(extensionId, iconDataUrl),
         click: () => {
           this.openPopup(parentWindow, webContents, extensionId, anchorRect);
         },

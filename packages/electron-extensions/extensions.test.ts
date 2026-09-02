@@ -681,6 +681,71 @@ describe("Extensions", () => {
     expect(extensions.getSessionActions(session)[0]?.iconDataUrl).toBe(null);
   });
 
+  test("reads a derived copy's icon once, however many sessions load it", async () => {
+    const extensionDir = await createExtensionDir("one");
+
+    await writeFile(path.join(extensionDir, "icon-48.png"), "icon");
+
+    let derivedDir = "";
+
+    const loadExtension = async (loadedDir: string) => {
+      derivedDir = loadedDir;
+
+      return createExtension("aaa", loadedDir, ACTION_MANIFEST);
+    };
+
+    const firstSession = createSession({ loadExtension });
+
+    const secondSession = createSession({ loadExtension });
+
+    const extensions = createExtensions([extensionDir]);
+
+    await extensions.setupSession(firstSession.session);
+
+    // The read the memo saves is the second session's, and taking the file away
+    // is what tells a memoized read apart from a repeated one
+    await rm(path.join(derivedDir, "icon-48.png"));
+
+    await extensions.setupSession(secondSession.session);
+
+    expect(extensions.getSessionActions(secondSession.session)[0]?.iconDataUrl).toBe(
+      `data:image/png;base64,${Buffer.from("icon").toString("base64")}`,
+    );
+  });
+
+  test("reads a derived copy's icon again for a later session when the read failed", async () => {
+    let derivedDir = "";
+
+    const loadExtension = async (loadedDir: string) => {
+      derivedDir = loadedDir;
+
+      return createExtension("aaa", loadedDir, ACTION_MANIFEST);
+    };
+
+    const firstSession = createSession({ loadExtension });
+
+    const secondSession = createSession({ loadExtension });
+
+    const extensions = createExtensions([await createExtensionDir("one")], {
+      info: () => {},
+      error: () => {},
+    });
+
+    await extensions.setupSession(firstSession.session);
+
+    expect(extensions.getSessionActions(firstSession.session)[0]?.iconDataUrl).toBe(null);
+
+    // What a transient failure looks like from here: the file the first read
+    // could not find is there for the second
+    await writeFile(path.join(derivedDir, "icon-48.png"), "icon");
+
+    await extensions.setupSession(secondSession.session);
+
+    expect(extensions.getSessionActions(secondSession.session)[0]?.iconDataUrl).toBe(
+      `data:image/png;base64,${Buffer.from("icon").toString("base64")}`,
+    );
+  });
+
   test("has no actions for a session it loaded nothing into", async () => {
     const { session } = createSession();
 

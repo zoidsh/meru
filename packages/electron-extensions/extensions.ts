@@ -141,6 +141,8 @@ export class Extensions {
 
   private derivedExtensions = new Map<string, ReturnType<typeof deriveExtension>>();
 
+  private actionIconDataUrls = new Map<string, Promise<string | null>>();
+
   private bridge: ExtensionBridge;
 
   private nativeMessaging: NativeMessaging;
@@ -392,12 +394,44 @@ export class Extensions {
     session.serviceWorkers.on("console-message", listener);
   }
 
+  /**
+   * The icon read off the derived copy every session loading it shares. Every
+   * account loads its own instance of the same copy, and each holds the data
+   * URL for as long as it holds the action, so reading per session would leave
+   * N accounts holding N copies of one base64 string.
+   */
+  private readActionIconDataUrl(extension: ActionExtension) {
+    const derivedDir = path.resolve(extension.path);
+
+    let iconDataUrl = this.actionIconDataUrls.get(derivedDir);
+
+    if (!iconDataUrl) {
+      iconDataUrl = readExtensionActionIcon(extension);
+
+      this.actionIconDataUrls.set(derivedDir, iconDataUrl);
+
+      // A failure must not be the answer for every later session, the way the
+      // derived copy's is not: a transient EMFILE or EIO on the first session's
+      // read would otherwise cost every account the icon until a restart, an
+      // account added mid-session included
+      const failedIconDataUrl = iconDataUrl;
+
+      iconDataUrl.catch(() => {
+        if (this.actionIconDataUrls.get(derivedDir) === failedIconDataUrl) {
+          this.actionIconDataUrls.delete(derivedDir);
+        }
+      });
+    }
+
+    return iconDataUrl;
+  }
+
   /** A broken icon costs the button its icon, not the extension its button. */
   private async createAction(extension: ActionExtension) {
     const action = createExtensionAction(extension);
 
     try {
-      action.iconDataUrl = await readExtensionActionIcon(extension);
+      action.iconDataUrl = await this.readActionIconDataUrl(extension);
     } catch (error) {
       this.logger?.error("Failed to read extension action icon", { id: extension.id, error });
     }
