@@ -45,6 +45,10 @@ storageRelay.mirrorAccessLevels();
  * before the extension's own top-level code had run — before the
  * `setAccessLevel` an extension calls at startup, in particular — where Chrome
  * dispatches nothing to a worker until its script has finished evaluating.
+ *
+ * Only the parking may be deferred. Everything above it shadows what the
+ * extension is about to read and has to have run by the time its own script
+ * does, so a later refactor must not pull the wrapping behind this global too.
  */
 (workerGlobals as unknown as Record<string, () => void>)[RUNTIME_PROXY_RELAY_START_GLOBAL] = () => {
   relayClient.start();
