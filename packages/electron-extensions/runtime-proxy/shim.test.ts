@@ -483,67 +483,119 @@ describe("shimmed connect", () => {
 });
 
 describe("shimmed getManifest", () => {
+  /** What the derive embedded: the worker role's copy of the manifest file. */
   const WORKER_MANIFEST = {
-    name: "Test Extension",
+    name: "__MSG_extName__",
     version: "1.0.0",
     manifest_version: 3,
+    default_locale: "en",
     background: { service_worker: "chrome-facade-service-worker.js", type: "module" },
     content_scripts: [{ matches: ["https://mail.google.com/*"], js: ["content.js"] }],
   };
 
-  function createRuntime(nativeManifest?: unknown) {
-    const runtime: ChromeNamespace = { id: EXTENSION_ID };
+  /**
+   * What Chromium answers in this copy: the manifest it localized as it loaded
+   * it — `__MSG_extName__` substituted out of `_locales`, `current_locale`
+   * added — with no `background` and the shim in front of every content script,
+   * which is what the derive left this copy.
+   */
+  const NATIVE_MANIFEST = {
+    name: "1Password – Password Manager",
+    version: "1.0.0",
+    manifest_version: 3,
+    default_locale: "en",
+    current_locale: "en",
+    content_scripts: [
+      {
+        matches: ["https://mail.google.com/*"],
+        js: ["chrome-runtime-proxy-shim.js", "content.js"],
+      },
+    ],
+  };
 
-    if (nativeManifest !== undefined) {
-      runtime.getManifest = () => nativeManifest;
-    }
+  /** The same localization, in the copy that kept its worker. */
+  const WORKER_SESSION_NATIVE_MANIFEST = {
+    ...NATIVE_MANIFEST,
+    background: WORKER_MANIFEST.background,
+    content_scripts: WORKER_MANIFEST.content_scripts,
+  };
 
-    installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
+  function createRuntime(
+    nativeManifest: unknown = NATIVE_MANIFEST,
+    workerManifest: unknown = WORKER_MANIFEST,
+  ) {
+    const runtime: ChromeNamespace = {
+      id: EXTENSION_ID,
+      getManifest: () => structuredClone(nativeManifest),
+    };
 
-    return runtime.getManifest as () => unknown;
+    installRuntimeProxyShim({ runtime }, { workerManifest });
+
+    return runtime.getManifest as () => Record<string, unknown>;
   }
 
-  test("answers the worker copy's manifest rather than this copy's", () => {
-    // The copy this context runs in is the one the derive took `background`
-    // off, so its own answer is the per-account difference being closed
-    const getManifest = createRuntime({ ...WORKER_MANIFEST, background: undefined });
+  test("answers what the worker session's own getManifest answers", () => {
+    expect(createRuntime()()).toEqual(WORKER_SESSION_NATIVE_MANIFEST);
+  });
 
-    expect(getManifest()).toEqual(WORKER_MANIFEST);
+  test("keeps the localization Chromium did, which the derive never sees", () => {
+    // The manifest file names the extension `__MSG_extName__`, as 1Password's
+    // does; Chromium substitutes it out of `_locales` at load and adds
+    // `current_locale`, and the derive runs nowhere near either
+    const manifest = createRuntime()();
+
+    expect(manifest.name).toBe("1Password – Password Manager");
+    expect(manifest.current_locale).toBe("en");
+  });
+
+  test("drops background when the worker role's manifest carries none", () => {
+    const manifest = createRuntime(NATIVE_MANIFEST, {
+      ...WORKER_MANIFEST,
+      background: undefined,
+    })();
+
+    expect("background" in manifest).toBe(false);
   });
 
   test("hands out a fresh copy every call, the way Chrome does", () => {
     const getManifest = createRuntime();
 
-    const first = getManifest() as { content_scripts: unknown[] };
+    const first = getManifest();
 
     expect(first).not.toBe(getManifest());
-    expect(first.content_scripts).not.toBe(
-      (getManifest() as { content_scripts: unknown[] }).content_scripts,
-    );
+    expect(first.background).not.toBe(getManifest().background);
 
-    first.content_scripts.push({ matches: ["https://evil.example/*"] });
+    (first.content_scripts as unknown[]).push({ matches: ["https://evil.example/*"] });
 
-    expect(getManifest()).toEqual(WORKER_MANIFEST);
+    expect(getManifest()).toEqual(WORKER_SESSION_NATIVE_MANIFEST);
   });
 
   test("installs over itself without changing what it answers", () => {
-    const runtime: ChromeNamespace = { id: EXTENSION_ID };
+    const runtime: ChromeNamespace = { id: EXTENSION_ID, getManifest: () => NATIVE_MANIFEST };
 
     installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
 
     installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
 
-    expect((runtime.getManifest as () => unknown)()).toEqual(WORKER_MANIFEST);
+    expect((runtime.getManifest as () => unknown)()).toEqual(WORKER_SESSION_NATIVE_MANIFEST);
   });
 
   test("leaves the native answer alone when the derive embedded none", () => {
-    const nativeGetManifest = () => ({ name: "Native" });
+    const nativeGetManifest = () => NATIVE_MANIFEST;
 
     const runtime: ChromeNamespace = { id: EXTENSION_ID, getManifest: nativeGetManifest };
 
     installRuntimeProxyShim({ runtime });
 
     expect(runtime.getManifest).toBe(nativeGetManifest);
+  });
+
+  test("gives a context Chrome answers no manifest in one of its own", () => {
+    const runtime: ChromeNamespace = { id: EXTENSION_ID };
+
+    installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
+
+    expect(runtime.getManifest).toBeUndefined();
   });
 });
 

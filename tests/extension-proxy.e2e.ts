@@ -270,6 +270,11 @@ test("both sessions' popups reach the one worker the first session keeps", async
   // shim's, and the two agreeing is the claim
   expect(workerPopup.manifest).toMatchObject({
     background: { service_worker: "chrome-facade-service-worker.js" },
+    // Chromium localized the manifest as it loaded the copy, which the derive
+    // never sees: the file says `__MSG_extName__` and carries no
+    // `current_locale`
+    name: "Meru fixture",
+    current_locale: expect.any(String),
   });
 
   expect(shimPopup.manifest).toEqual(workerPopup.manifest);
@@ -321,6 +326,8 @@ test("content scripts inject into the shim session and round-trip, a strict page
 
   const cspPageId = await openProbeWindow(SHIM_PARTITION, cspPageUrl);
 
+  const workerPageId = await openProbeWindow(WORKER_PARTITION, plainPageUrl);
+
   // The results existing at all is the injection claim: the only thing that
   // writes them into a loopback page is the fixture's content script, and the
   // only copy in this session is the content-script-only one
@@ -329,10 +336,10 @@ test("content scripts inject into the shim session and round-trip, a strict page
   const cspPage = await readProbeResults(cspPageId);
 
   // A content script's isolated world answers the worker copy's manifest too,
-  // which is the same shim in the other place it runs
-  expect(plainPage.manifest).toMatchObject({
-    background: { service_worker: "chrome-facade-service-worker.js" },
-  });
+  // which is the same shim in the other place it runs — held against the
+  // worker session's own content script rather than a shape, so the
+  // localization Chromium did is part of what has to agree
+  expect(plainPage.manifest).toEqual((await readProbeResults(workerPageId)).manifest);
 
   expect(plainPage.echo).toEqual(
     echoReply(plainPage, expect.any(String), {

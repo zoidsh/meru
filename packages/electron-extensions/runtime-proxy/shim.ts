@@ -311,6 +311,56 @@ function getEmbeddedWorkerManifest() {
   return (globalThis as unknown as Record<string, unknown>)[RUNTIME_PROXY_MANIFEST_GLOBAL];
 }
 
+/**
+ * The only keys the worker role's derived manifest and this copy's differ in:
+ * `deriveManifest` deletes `background` for the content-script-only role and
+ * prepends the shim to every `content_scripts` entry, and leaves the rest of
+ * the rewrite the same for both. `deriveManifest`'s own tests pin that, since
+ * a third difference would silently stop being answered here.
+ */
+const WORKER_ROLE_MANIFEST_KEYS = ["background", "content_scripts"];
+
+/**
+ * Answers what the one worker's own `getManifest` answers, by laying the two
+ * keys the roles differ in over this context's native answer.
+ *
+ * An overlay rather than the embedded manifest outright, because the native
+ * answer is not the manifest file: Chromium localizes a manifest as it loads
+ * it — `__MSG_name__` and its siblings substituted out of `_locales`, and a
+ * `current_locale` key added — and `getManifest` returns that. 1Password's
+ * manifest names itself `__MSG_extName__`, so handing back what the derive
+ * wrote would trade the `background` difference for a name and a locale that
+ * differ instead. The derive cannot do the substitution itself: the UI locale
+ * is a runtime fact of the browser process, not of the copy on disk.
+ *
+ * Both copies are localized by the same browser process from the same
+ * `_locales`, so everything the overlay leaves alone already agrees.
+ */
+function createProxiedGetManifest(nativeGetManifest: NativeMethod, workerManifest: unknown) {
+  return () => {
+    const manifest = { ...(nativeGetManifest() as Record<string, unknown>) };
+
+    const workerManifestKeys = workerManifest as Record<string, unknown>;
+
+    for (const manifestKey of WORKER_ROLE_MANIFEST_KEYS) {
+      if (workerManifestKeys[manifestKey] === undefined) {
+        delete manifest[manifestKey];
+
+        continue;
+      }
+
+      manifest[manifestKey] = workerManifestKeys[manifestKey];
+    }
+
+    // Chrome hands out a new object per call and says nothing about what an
+    // extension may do with it, so an extension that mutates what it got — or
+    // that is handed the same object twice and compares the two — must see
+    // exactly what it sees in Chrome. The native answer is already fresh; the
+    // two keys laid over it are not
+    return structuredClone(manifest);
+  };
+}
+
 export type InstallRuntimeProxyShimOptions = {
   getSenderReport?: () => RuntimeProxySenderReport;
   /**
@@ -334,8 +384,11 @@ export type InstallRuntimeProxyShimOptions = {
  * one the derive took the `background` key off, so an extension inspecting
  * itself would otherwise find no service worker where the worker session's copy
  * finds one — a per-account difference with nothing behind it, since the worker
- * every session reaches is the same worker. It answers the worker role's
- * derived manifest, which is what that worker's own `getManifest` returns.
+ * every session reaches is the same worker. It answers what the worker's own
+ * `getManifest` answers, by laying the worker role's `background` and
+ * `content_scripts` over this context's native answer rather than replacing it
+ * outright; see `createProxiedGetManifest` for why the native answer is the
+ * base.
  *
  * `onMessage` and `onConnect` are left native, which is what bounds the shim:
  * an extension page hears what it opened a port for, and not what the worker
@@ -366,11 +419,11 @@ export function installRuntimeProxyShim(
     getSenderReport,
   );
 
-  if (workerManifest !== undefined) {
-    // Chrome hands out a new object per call and says nothing about what an
-    // extension may do with it, so an extension that mutates what it got — or
-    // that is handed the same object twice and compares the two — must see
-    // exactly what it sees in Chrome
-    runtime.getManifest = () => structuredClone(workerManifest);
+  const nativeGetManifest = getNativeMethod(runtime, "getManifest");
+
+  // With no native answer to lay the two keys over there is nothing to
+  // correct, and a context Chrome gives no `getManifest` must not gain one
+  if (workerManifest !== undefined && nativeGetManifest) {
+    runtime.getManifest = createProxiedGetManifest(nativeGetManifest, workerManifest);
   }
 }

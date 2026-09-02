@@ -160,6 +160,10 @@ function buildAppFiles() {
       copyFixtureFile("manifest.json"),
       copyFixtureFile("popup.html"),
       copyFixtureFile("fixture-frame.html"),
+      // Chromium substitutes the manifest's `__MSG_*__` names out of these as
+      // it loads the copy, which is what the proxy's `getManifest` overlay is
+      // held against
+      copyFixtureFile(path.join("_locales", "en", "messages.json")),
     ]);
   };
 

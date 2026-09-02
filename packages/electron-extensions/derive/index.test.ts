@@ -516,6 +516,46 @@ describe("deriveExtension for a shared instance", () => {
     });
   });
 
+  test("the two roles' manifests differ in the keys the shim lays over, and no others", async () => {
+    const { derivedDir: workerDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const { derivedDir: shimDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const readManifest = async (derivedDir: string) =>
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")) as Record<
+        string,
+        unknown
+      >;
+
+    const workerManifest = await readManifest(workerDir);
+
+    const shimManifest = await readManifest(shimDir);
+
+    const differingKeys = [
+      ...new Set([...Object.keys(workerManifest), ...Object.keys(shimManifest)]),
+    ]
+      .filter(
+        (manifestKey) =>
+          JSON.stringify(workerManifest[manifestKey]) !== JSON.stringify(shimManifest[manifestKey]),
+      )
+      .sort();
+
+    // The shim answers the worker role's manifest by laying exactly these two
+    // keys over its own context's native answer, so a third difference would
+    // stop being answered without anything else failing
+    expect(differingKeys).toEqual(["background", "content_scripts"]);
+  });
+
   test("the shim's manifest is derived without a worker copy on disk", async () => {
     const { derivedDir } = await deriveExtension({
       sourceDir,
