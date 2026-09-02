@@ -7,6 +7,7 @@ import {
   type ExtensionAction,
   readExtensionActionIcon,
 } from "./action";
+import { Alarms, type AlarmWakePolicy } from "./alarms/alarms";
 import { ExtensionBridge } from "./bridge/bridge";
 import { deriveExtension, type SharedInstanceDeriveOptions } from "./derive";
 import type { ExtensionsLogger } from "./logger";
@@ -92,6 +93,12 @@ export type ExtensionsOptions = {
    */
   isNativeMessagingHostAllowed?: NativeMessagingHostPolicy;
   /**
+   * Which extensions a due alarm may start a stopped service worker for. Without
+   * it an alarm reaches only the contexts already running, which is what Meru
+   * ships: a worker woken every minute is a worker that never idles out.
+   */
+  shouldWakeWorkerForAlarm?: AlarmWakePolicy;
+  /**
    * Lets one extension instance serve every session
    * (`createSharedExtensionInstance` in `runtime-proxy/`). Without it every
    * session runs its own.
@@ -140,6 +147,8 @@ export class Extensions {
 
   private webNavigation: WebNavigation;
 
+  private alarms: Alarms;
+
   private serviceWorkerConsoleListeners = new Map<
     Session,
     (event: ElectronEvent, messageDetails: MessageDetails) => void
@@ -152,6 +161,7 @@ export class Extensions {
     strippedManifestKeys,
     getContentScriptMatches,
     isNativeMessagingHostAllowed,
+    shouldWakeWorkerForAlarm,
     sharedInstance,
     logger,
   }: ExtensionsOptions) {
@@ -181,6 +191,10 @@ export class Extensions {
     this.webNavigation = new WebNavigation();
 
     this.webNavigation.registerRoutes(this.bridge);
+
+    this.alarms = new Alarms({ shouldWakeWorker: shouldWakeWorkerForAlarm, logger });
+
+    this.alarms.registerRoutes(this.bridge);
 
     this.sharedInstance?.install({ bridge: this.bridge, logger });
   }
@@ -405,6 +419,8 @@ export class Extensions {
     this.bridge.teardownSession(session);
 
     this.nativeMessaging.teardownSession(session);
+
+    this.alarms.teardownSession(session);
 
     this.sharedInstance?.teardownSession(session);
 

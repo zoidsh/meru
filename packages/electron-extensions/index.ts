@@ -1,4 +1,5 @@
 export type { ExtensionAction } from "./action";
+export type { AlarmWakePolicy } from "./alarms/alarms";
 export { registerExtensionBridgeScheme } from "./bridge/scheme";
 export { compareExtensionVersions, verifyCrx } from "./crx";
 export type { VerifiedCrx } from "./crx";

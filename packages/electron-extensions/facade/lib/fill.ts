@@ -6,7 +6,7 @@ import type { ChromeNamespace } from "./chrome";
  * that logs and gives back `undefined`, and nothing here should ride on that
  * staying an ordinary property.
  */
-function read(target: ChromeNamespace, name: string) {
+export function readMember(target: ChromeNamespace, name: string) {
   try {
     return target[name];
   } catch {
@@ -14,7 +14,7 @@ function read(target: ChromeNamespace, name: string) {
   }
 }
 
-function define(target: ChromeNamespace, name: string, value: unknown) {
+export function defineMember(target: ChromeNamespace, name: string, value: unknown) {
   try {
     Object.defineProperty(target, name, {
       value,
@@ -39,10 +39,10 @@ function isNamespace(value: unknown): value is ChromeNamespace {
 export function fillMissing(target: ChromeNamespace, facade: ChromeNamespace) {
   for (const [name, facadeValue] of Object.entries(facade)) {
     try {
-      const nativeValue = read(target, name);
+      const nativeValue = readMember(target, name);
 
       if (nativeValue === undefined) {
-        define(target, name, facadeValue);
+        defineMember(target, name, facadeValue);
 
         continue;
       }
