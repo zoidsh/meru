@@ -161,19 +161,21 @@ export const extensions = new Extensions({
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
   // One shared extension instance across all account sessions — one 1Password
-  // sign-in instead of one per account. It has never been run against
-  // 1Password itself, so nothing loads it by default: development builds opt
-  // in with MERU_EXTENSIONS_SHARED_INSTANCE=1, the end-to-end suite does the
-  // same alongside the fixture flag — its packaged build is the only automated
-  // coverage the runtime proxy has — and deleting this one option removes the
-  // whole feature.
-  sharedInstance:
-    (is.dev || isFixtureExtensionEnabled()) && process.env.MERU_EXTENSIONS_SHARED_INSTANCE
-      ? createSharedExtensionInstance({
-          shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
-          relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
-        })
-      : undefined,
+  // sign-in instead of one per account, and one worker whatever the account
+  // count. It is how Meru runs extensions rather than something the user
+  // chooses: a per-account instance is the thing the feature exists to remove,
+  // so an off switch would only ever switch back to the worse sign-in and
+  // memory behavior, and `extensions.enabled` already turns extensions off
+  // entirely. Passed unconditionally rather than behind that master switch,
+  // which is read per session in `getExtensionDirs`: a session that loads no
+  // extension never adopts a role, so gating here would buy nothing and would
+  // read the switch once at launch, handing a full instance to any account
+  // added after extensions were turned on. Deleting this one option still
+  // removes the whole feature.
+  sharedInstance: createSharedExtensionInstance({
+    shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
+    relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
+  }),
   logger: {
     info: (message, details) => {
       log.info(message, details);

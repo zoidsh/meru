@@ -4,9 +4,9 @@
  * shared extension instance has, since 1Password needs a real Google account,
  * the desktop app and a display.
  *
- * The launch carries both extension flags: `MERU_EXTENSIONS_FIXTURE` puts the
- * bundled fixture into every account session of this packaged build, and
- * `MERU_EXTENSIONS_SHARED_INSTANCE` turns on the shared instance, so the
+ * The launch carries one extension flag: `MERU_EXTENSIONS_FIXTURE` puts the
+ * bundled fixture into every account session of this packaged build. The
+ * shared instance needs no flag, because it is how Meru runs extensions — the
  * first account's session keeps the fixture's service worker while the second
  * account's session gets the content-script-only copy whose `chrome.runtime`
  * messaging the proxy relays. Two accounts need Pro, which is why this file
@@ -60,7 +60,7 @@ const meru = useProApp(
   {
     accounts: [account("worker-account", "Worker", true), account("shim-account", "Shim", false)],
   },
-  { env: { MERU_EXTENSIONS_FIXTURE: "1", MERU_EXTENSIONS_SHARED_INSTANCE: "1" } },
+  { env: { MERU_EXTENSIONS_FIXTURE: "1" } },
 );
 
 /**
