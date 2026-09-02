@@ -294,6 +294,24 @@ export async function uninstallCuratedExtension(extensionId: string) {
 
   await uninstallExtension({ installDir: INSTALL_DIR, extensionId });
 
+  /*
+   * And what the extension wrote, which lives in the default session with the
+   * worker. Removing an account used to clear that account's copy of the
+   * store, so uninstalling and then removing every account left nothing
+   * behind; with one store in a session no removal touches, nothing but a full
+   * app reset would reach it and a reinstall would come back signed in. Chrome
+   * deletes an extension's storage on uninstall too, with nothing further
+   * asked.
+   *
+   * It clears every extension's store in that session rather than this one's,
+   * which is exact while the catalog holds a single entry and is why a second
+   * curated extension needs a per-id clear before it lands. The extension also
+   * stays loaded until the restart the settings page asks for, so a worker
+   * still running can write part of its store back; what it writes is orphaned
+   * at the next launch, where the extension is not loaded at all.
+   */
+  await extensions.clearSessionData(session.defaultSession);
+
   log.info("Uninstalled extension", { extensionId });
 }
 
