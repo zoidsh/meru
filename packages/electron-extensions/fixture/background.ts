@@ -8,6 +8,12 @@
  * content-script-only session's messages land on the one worker another
  * session keeps, not on a worker of its own.
  *
+ * The worker also stamps its instance id into `chrome.storage`, in `local`
+ * where every context may read it and in `session` where Chrome's default lets
+ * only the extension's own documents. A context that reads either stamp back
+ * is reading the one store this session keeps, since nothing writes it in the
+ * other sessions at all.
+ *
  * Worker lifetime is deliberately not probed, here or in the tests. The
  * end-to-end suite launches through Playwright, whose CDP debugger disables
  * Chromium's MV3 idle timer, so from that suite a worker reads as
@@ -16,7 +22,12 @@
  * `workerInstanceId` and `portEvents` stable for a test's lifetime; without
  * the debugger they would reset whenever the worker idled out.
  */
-import { type FixtureMessageSender, getChromeRuntime, getChromeTabs } from "./chrome";
+import {
+  type FixtureMessageSender,
+  getChromeRuntime,
+  getChromeStorage,
+  getChromeTabs,
+} from "./chrome";
 
 const workerGlobals = globalThis as unknown as { crypto: { randomUUID: () => string } };
 
@@ -48,6 +59,7 @@ function serializeSender(sender: FixtureMessageSender | undefined) {
 type ProbeMessage = {
   type?: string;
   nonce?: string;
+  key?: string;
 };
 
 /**
@@ -57,6 +69,13 @@ type ProbeMessage = {
 type WorkerCallOutcome =
   | { status: "replied"; reply: unknown }
   | { status: "error"; message: string };
+
+const storage = getChromeStorage();
+
+/** The stamps, written once at boot, that the probes read back. */
+storage.local.set({ workerStamp: workerInstanceId }, () => {});
+
+storage.session.set({ workerSessionStamp: workerInstanceId }, () => {});
 
 const runtime = getChromeRuntime();
 
@@ -109,8 +128,8 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // The worker messaging the sender's own tab, and answering with how that
-  // went. The only listener here that answers late, so the only one that
-  // holds the channel open by returning true
+  // went. One of the two listeners here that answer late, so one of the two
+  // that hold the channel open by returning true
   if (probeMessage?.type === "send-back") {
     sendToSender(
       sender,
@@ -119,6 +138,21 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ type: "send-back-reply", outcome });
       },
     );
+
+    return true;
+  }
+
+  /*
+   * What the worker's own store holds under a key, which is how a context
+   * proves a write of its own landed here rather than in the session it ran
+   * in. The read is asynchronous, so this listener returns true too.
+   */
+  if (probeMessage?.type === "read-storage" && typeof probeMessage.key === "string") {
+    const { key } = probeMessage;
+
+    storage.local.get(key, (items) => {
+      sendResponse({ type: "storage-reply", key, value: items[key] ?? null });
+    });
 
     return true;
   }

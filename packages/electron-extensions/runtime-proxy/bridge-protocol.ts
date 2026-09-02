@@ -16,6 +16,13 @@
  * (`native-messaging/framing.ts`).
  */
 
+import type {
+  RuntimeProxyStorageAccessLevel,
+  RuntimeProxyStorageAreaName,
+  RuntimeProxyStorageCall,
+  RuntimeProxyStorageResult,
+} from "./storage-protocol";
+
 /** What every extension URL starts with, from a worker scope to a page's own. */
 export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 
@@ -25,6 +32,7 @@ export const RUNTIME_PROXY_PATHS = {
   connect: "/runtime-proxy/connect",
   portPost: "/runtime-proxy/port-post",
   portDisconnect: "/runtime-proxy/port-disconnect",
+  storageCall: "/runtime-proxy/storage-call",
   /** Content-script side again, for what the worker sends of its own accord. */
   pageStream: "/runtime-proxy/page-stream",
   pageReply: "/runtime-proxy/page-reply",
@@ -34,6 +42,7 @@ export const RUNTIME_PROXY_PATHS = {
   workerReply: "/runtime-proxy/worker-reply",
   workerPortPost: "/runtime-proxy/worker-port-post",
   workerPortDisconnect: "/runtime-proxy/worker-port-disconnect",
+  workerStorageAccessLevel: "/runtime-proxy/worker-storage-access-level",
   /** Worker side again, for the calls that start in the worker. */
   workerSendToTab: "/runtime-proxy/worker-send-to-tab",
   workerConnectToTab: "/runtime-proxy/worker-connect-to-tab",
@@ -112,6 +121,29 @@ export type RuntimeProxyConnectRequest = {
 };
 
 export type RuntimeProxyConnectResult = { status: "connected" } | { status: "noListener" };
+
+/**
+ * One `chrome.storage` call from a shimmed context. The sender report is the
+ * same one messaging sends, and serves a narrower purpose here: the relay
+ * holds it against the frame Chromium recorded as the caller to decide whether
+ * the caller is one of the extension's own documents, which Chrome treats as a
+ * trusted context, or a content script, which it does not.
+ */
+export type RuntimeProxyStorageCallRequest = {
+  call: RuntimeProxyStorageCall;
+  sender: RuntimeProxySenderReport;
+};
+
+/**
+ * The access level the extension's worker just set for an area, reported by
+ * the relay client so the relay can refuse a content script the same call
+ * Chromium would refuse it. Reported rather than asked for, because Chrome has
+ * no way to read an access level back.
+ */
+export type RuntimeProxyWorkerStorageAccessLevelRequest = {
+  area: RuntimeProxyStorageAreaName;
+  accessLevel: RuntimeProxyStorageAccessLevel;
+};
 
 export type RuntimeProxyPortPostRequest = {
   portId: string;
@@ -195,7 +227,8 @@ export type RuntimeProxyJob =
   | { type: "sendMessage"; jobId: string; message: unknown; sender: RuntimeProxySender }
   | { type: "connect"; jobId: string; portId: string; name?: string; sender: RuntimeProxySender }
   | { type: "portMessage"; jobId: string; portId: string; message: unknown }
-  | { type: "portDisconnect"; jobId: string; portId: string; error?: string };
+  | { type: "portDisconnect"; jobId: string; portId: string; error?: string }
+  | { type: "storage"; jobId: string; call: RuntimeProxyStorageCall };
 
 export type RuntimeProxyWorkerAckRequest = {
   jobId: string;
@@ -203,7 +236,7 @@ export type RuntimeProxyWorkerAckRequest = {
 
 export type RuntimeProxyWorkerReplyRequest = {
   jobId: string;
-  result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult;
+  result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult | RuntimeProxyStorageResult;
 };
 
 export type RuntimeProxyWorkerPortPostRequest = {

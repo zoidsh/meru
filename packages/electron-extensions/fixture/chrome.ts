@@ -47,6 +47,21 @@ export type FixtureTabs = {
   connect: (tabId: number, connectInfo: { name: string; frameId?: number }) => FixturePort;
 };
 
+/**
+ * The `StorageArea` slice the fixture uses, in the callback form, which is
+ * where `runtime.lastError` is readable — and a refusal is what one of the
+ * probes is here to see.
+ */
+export type FixtureStorageArea = {
+  get: (keys: string | null, callback: (items: Record<string, unknown>) => void) => void;
+  set: (items: Record<string, unknown>, callback: () => void) => void;
+};
+
+export type FixtureStorage = {
+  local: FixtureStorageArea;
+  session: FixtureStorageArea;
+};
+
 export type FixtureRuntime = {
   id: string;
   lastError?: { message?: string };
@@ -89,4 +104,16 @@ export function getChromeTabs(): FixtureTabs {
   const workerGlobals = globalThis as unknown as { chrome: { tabs: FixtureTabs } };
 
   return workerGlobals.chrome.tabs;
+}
+
+/**
+ * The `chrome.storage` of whatever context this runs in. In a
+ * content-script-only derived copy the runtime proxy's shim has already
+ * shadowed the area methods, so what these read and write is the one store the
+ * worker's session keeps rather than this session's own.
+ */
+export function getChromeStorage(): FixtureStorage {
+  const contextGlobals = globalThis as unknown as { chrome: { storage: FixtureStorage } };
+
+  return contextGlobals.chrome.storage;
 }
