@@ -304,19 +304,26 @@ test("only the default session holds the worker, and every account is content-sc
 });
 
 /*
- * The default session is the app's own, and the only page Meru puts in it is
- * the main window's renderer. A curated extension cannot reach that page, its
- * content scripts being clamped to a host allowlist, and in a packaged build
- * the renderer is a `file://` document no pattern matches without file access
- * the loader never grants. What this pins is the packaged shape: the fixture
- * is unclamped, so if the renderer were reachable at all it would be reachable
- * by this one.
+ * The default session is the app's own, and what Meru puts in it is the main
+ * window's renderer and the popups beside it, all one origin. A curated
+ * extension cannot reach that origin, its content scripts being clamped to a
+ * host allowlist; the fixture is unclamped, so it is the one that would if
+ * anything did.
+ *
+ * What makes it unreachable in a packaged build is the scheme: `loadRenderer`
+ * uses `loadFile` outside development, and the loader never asks for file
+ * access, so no pattern matches. That is what this asserts. Reading the probe
+ * attribute back as `null` would not say it — a context that injected and is
+ * still running its probes has not written the attribute yet either — so the
+ * absence is held to the scheme rather than to the absence of a result.
  */
-test("the main window's renderer runs no content script of the worker session's", async () => {
+test("the main window's renderer is a file:// page no content script can match", async () => {
   await waitForFixture(WORKER_SESSION);
 
-  // The attribute every probe context writes its results into, which is the
-  // only trace the fixture's content script leaves on a page
+  expect(meru.renderer.url()).toMatch(/^file:/);
+
+  // And nothing has written probe results into it, which is consistent with
+  // the above rather than proof of it
   expect(await meru.renderer.locator("html").getAttribute("data-meru-fixture-results")).toBeNull();
 });
 

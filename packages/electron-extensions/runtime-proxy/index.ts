@@ -84,11 +84,12 @@ export function createSharedExtensionInstance({
     },
 
     teardownSession(session) {
-      // On Meru's own naming this can only answer true at shutdown, the
-      // default session outliving every account: the loader passes the answer
-      // on so that a session tearing the worker out from under the others
-      // stays something an embedder can notice rather than something nothing
-      // reports
+      // On Meru's own naming nothing ever calls this for the worker session at
+      // all — the default session is torn down by neither an account removal
+      // nor `before-quit` — so it answers false for the life of the app. The
+      // loader passes the answer on regardless, so that a session tearing the
+      // worker out from under the others stays something an embedder can
+      // notice rather than something nothing reports
       const wasWorkerSession = session === workerSession;
 
       if (wasWorkerSession) {

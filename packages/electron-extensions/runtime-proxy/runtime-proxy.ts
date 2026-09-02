@@ -1124,14 +1124,22 @@ export class RuntimeProxy {
    * tests pin its presence.
    *
    * With no worker session yet there is nothing to call it on, and the jobs
-   * wait out the same bounded timeout instead. That window is the launch one
-   * the embedder's ordering already closes — the worker session is set up
-   * before any session that could message it — so what this buys is that a
-   * window which should never open costs a wait rather than a wrong answer.
-   * `setWorkerSession` flushes the queue the way a parked stream does, and only
-   * the timer expiring answers "receiving end does not exist", which is the
-   * same shape the cold-launch race settled on for a registration that has not
-   * been stored yet.
+   * wait out a bounded timeout instead. That window is the launch one the
+   * embedder's ordering already closes — the worker session is set up before
+   * any session that could message it — so what this buys is that a window
+   * which should never open costs a wait rather than a wrong answer.
+   * `setWorkerSession` drives the queue the way a parked stream does, and only
+   * a timer expiring answers "receiving end does not exist", which is the same
+   * shape the cold-launch race settled on for a registration that has not been
+   * stored yet. The worst case is two of these timeouts rather than one: this
+   * timer, and then the one armed after the adoption's own
+   * `startWorkerForScope`.
+   *
+   * Jobs only. A page stream parked in the same window is refused, since
+   * `isShimmedSession` is false for every session while there is no worker
+   * session to hold one against, and the context re-parks on its own backoff.
+   * The window is the same unreachable one, and closing that half would be a
+   * change to how streams are parked rather than to how jobs are queued.
    */
   private wakeWorker(extensionId: string) {
     if (this.wakes.has(extensionId)) {

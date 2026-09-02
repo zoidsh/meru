@@ -951,16 +951,43 @@ describe("RuntimeProxy", () => {
    * that should never open cost a wait rather than a wrong answer — a job that
    * arrives first waits for the adoption instead of being told the receiving
    * end does not exist.
+   *
+   * The waits are what make this reach the path it names. The enqueue has to
+   * land before the adoption, which the log line is the only signal for: a
+   * bridge request is answered across several awaits, so calling
+   * `adoptWorkerSession()` on the next line would set the session first and
+   * test the ordinary path instead. And the adoption has to be what drives the
+   * queue, which `startWorkerForScope` on the adopted session is the only
+   * observable for: a stream parked afterwards flushes the queue by itself, so
+   * every assertion below would pass with the driving removed.
    */
-  test("a job enqueued before the worker session is adopted waits for it", async () => {
-    const harness = createHarness({}, { adoptWorkerSession: false });
+  test("a job enqueued before the worker session is adopted is driven by the adoption", async () => {
+    const logs: string[] = [];
+
+    const harness = createHarness(
+      { logger: { info: (message) => logs.push(message), error: () => undefined } },
+      { adoptWorkerSession: false },
+    );
 
     const shimResponse = harness.sendShimMessage("early");
 
-    // Nothing to wake yet, and nothing failed either
+    await waitFor(
+      () => logs.some((message) => message.startsWith("No extension worker session yet")),
+      "the job to be queued with no worker session",
+    );
+
+    // Nothing was woken, and nothing was refused either
     expect(harness.workerSession.workerStarts).toEqual([]);
 
     harness.adoptWorkerSession();
+
+    // The adoption drives the queue: this is the wake the job was waiting for
+    await waitFor(
+      () => harness.workerSession.workerStarts.length === 1,
+      "the adopted session's wake",
+    );
+
+    expect(harness.workerSession.workerStarts).toEqual([EXTENSION_SCOPE]);
 
     const workerStream = await harness.openWorkerStream();
 
@@ -982,14 +1009,17 @@ describe("RuntimeProxy", () => {
     });
   });
 
-  // And the wait is bounded by the same timeout as every other: a session that
-  // never arrives answers what Chrome answers, one timeout later
-  test("a job enqueued before an adoption that never comes fails as a missing receiving end", async () => {
+  test("a job enqueued before an adoption that never comes fails one timeout later", async () => {
     const harness = createHarness({ wakeTimeoutMs: 20 }, { adoptWorkerSession: false });
+
+    const startedAt = Date.now();
 
     const shimResponse = await harness.sendShimMessage("nobody home");
 
     expect(await shimResponse.json()).toEqual({ status: "noListener" });
+
+    // The bounded wait, not the instant refusal this replaced
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(15);
   });
 
   test("a session adopted after the worker session went away is woken", async () => {
