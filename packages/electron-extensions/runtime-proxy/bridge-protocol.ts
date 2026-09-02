@@ -33,6 +33,18 @@ import type {
  */
 export const RUNTIME_PROXY_RELAY_START_GLOBAL = "__meruRuntimeProxyStartRelay";
 
+/**
+ * Where the derived content-script-only copy leaves the manifest the shim
+ * answers `chrome.runtime.getManifest()` with: the *worker* role's derived
+ * manifest, since the worker copy is the one instance every session shares and
+ * what its `getManifest` returns is the answer they all have to agree on.
+ *
+ * It rides the shim's own script the way the bridge token rides the facade's,
+ * because `getManifest` is synchronous — there is no asking the bridge for it —
+ * and the shim runs in isolated worlds the facade never reaches.
+ */
+export const RUNTIME_PROXY_MANIFEST_GLOBAL = "__meruRuntimeProxyManifest";
+
 /** What every extension URL starts with, from a worker scope to a page's own. */
 export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 

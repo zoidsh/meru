@@ -33,6 +33,7 @@ export type FixturePort = {
 };
 
 export type FixtureManifest = {
+  [manifestKey: string]: unknown;
   background?: unknown;
 };
 

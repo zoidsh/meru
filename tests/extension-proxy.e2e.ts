@@ -263,12 +263,16 @@ test("both sessions' popups reach the one worker the first session keeps", async
 
   const shimPopup = await readProbeResults(shimPopupId);
 
-  // Which copy each session got, read from the manifest each context sees:
-  // the worker session keeps the whole extension, every other session a copy
-  // with no background at all
-  expect(workerPopup.manifestHasBackground).toBe(true);
+  // The two sessions load different copies — the worker session the whole
+  // extension, every other session one derived with no `background` at all —
+  // and `getManifest` is where that would otherwise show. The worker session's
+  // answer is native and therefore the ground truth; the shim session's is the
+  // shim's, and the two agreeing is the claim
+  expect(workerPopup.manifest).toMatchObject({
+    background: { service_worker: "chrome-facade-service-worker.js" },
+  });
 
-  expect(shimPopup.manifestHasBackground).toBe(false);
+  expect(shimPopup.manifest).toEqual(workerPopup.manifest);
 
   expect(workerPopup.extensionId).toBe(FIXTURE_EXTENSION_ID);
 
@@ -324,7 +328,11 @@ test("content scripts inject into the shim session and round-trip, a strict page
 
   const cspPage = await readProbeResults(cspPageId);
 
-  expect(plainPage.manifestHasBackground).toBe(false);
+  // A content script's isolated world answers the worker copy's manifest too,
+  // which is the same shim in the other place it runs
+  expect(plainPage.manifest).toMatchObject({
+    background: { service_worker: "chrome-facade-service-worker.js" },
+  });
 
   expect(plainPage.echo).toEqual(
     echoReply(plainPage, expect.any(String), {

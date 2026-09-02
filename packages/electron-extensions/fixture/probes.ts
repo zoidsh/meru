@@ -5,6 +5,7 @@
  * to read — the tests assert on the whole outcome objects.
  */
 import {
+  type FixtureManifest,
   type FixtureMessageSender,
   type FixturePort,
   type FixtureRuntime,
@@ -57,11 +58,14 @@ export type ProbeResults = {
   documentUrl: string;
   extensionId: string;
   /**
-   * Whether this context's copy of the extension still carries a `background`
-   * key: `true` is the full copy, `false` the content-script-only one, and
-   * `null` a context where `getManifest` does not exist.
+   * Whole, what this context's `chrome.runtime.getManifest()` answers, and
+   * `null` in a context that has no such method. Every session has to answer
+   * the same manifest even though they load different copies: the
+   * content-script-only copy is derived without a `background` key, and the
+   * shim is what puts the worker copy's manifest back in front of the
+   * extension.
    */
-  manifestHasBackground: boolean | null;
+  manifest: FixtureManifest | null;
   echo: EchoOutcome;
   port: PortOutcome;
   /**
@@ -524,7 +528,7 @@ export async function runProbes(): Promise<ProbeResults> {
     contextId,
     documentUrl: contextGlobals.location.href,
     extensionId: runtime.id,
-    manifestHasBackground: manifest ? manifest.background !== undefined : null,
+    manifest: manifest ?? null,
     echo,
     port,
     workerStampInLocal,

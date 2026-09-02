@@ -7,6 +7,7 @@ import {
   MAX_RUNTIME_PROXY_FRAME_BYTES,
   PORT_CLOSED_ERROR,
   RECEIVING_END_ERROR,
+  RUNTIME_PROXY_MANIFEST_GLOBAL,
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyPortFrame,
   type RuntimeProxySenderReport,
@@ -300,8 +301,23 @@ function createProxiedConnect(
   };
 }
 
+/**
+ * The worker role's derived manifest, as the derive left it on this context's
+ * globals. Absent — a shim bundle running outside a derived copy, in a test or
+ * from a copy an older derive wrote — means there is nothing better than the
+ * native answer to give, so `getManifest` is left alone.
+ */
+function getEmbeddedWorkerManifest() {
+  return (globalThis as unknown as Record<string, unknown>)[RUNTIME_PROXY_MANIFEST_GLOBAL];
+}
+
 export type InstallRuntimeProxyShimOptions = {
   getSenderReport?: () => RuntimeProxySenderReport;
+  /**
+   * What `getManifest` answers, in place of the one the derive left on the
+   * globals. Only tests pass it.
+   */
+  workerManifest?: unknown;
 };
 
 /**
@@ -311,8 +327,15 @@ export type InstallRuntimeProxyShimOptions = {
  * worker to receive them. It runs before any of the extension's own code — the
  * derive prepends it to every `content_scripts` entry and writes it into every
  * extension page ahead of the page's own scripts — so the extension only ever
- * sees the shadowed functions. Everything else on `chrome.runtime`, `getURL`
- * and `id` above all, stays exactly as Electron made it.
+ * sees the shadowed functions. `getURL` and `id` stay exactly as Electron made
+ * them.
+ *
+ * `getManifest` is shadowed as well, for a different reason: this copy is the
+ * one the derive took the `background` key off, so an extension inspecting
+ * itself would otherwise find no service worker where the worker session's copy
+ * finds one — a per-account difference with nothing behind it, since the worker
+ * every session reaches is the same worker. It answers the worker role's
+ * derived manifest, which is what that worker's own `getManifest` returns.
  *
  * `onMessage` and `onConnect` are left native, which is what bounds the shim:
  * an extension page hears what it opened a port for, and not what the worker
@@ -320,7 +343,10 @@ export type InstallRuntimeProxyShimOptions = {
  */
 export function installRuntimeProxyShim(
   extensionApi: ChromeNamespace,
-  { getSenderReport = getContextSenderReport }: InstallRuntimeProxyShimOptions = {},
+  {
+    getSenderReport = getContextSenderReport,
+    workerManifest = getEmbeddedWorkerManifest(),
+  }: InstallRuntimeProxyShimOptions = {},
 ) {
   const runtime = extensionApi.runtime as ChromeNamespace | undefined;
 
@@ -339,4 +365,12 @@ export function installRuntimeProxyShim(
     getNativeMethod(runtime, "connect"),
     getSenderReport,
   );
+
+  if (workerManifest !== undefined) {
+    // Chrome hands out a new object per call and says nothing about what an
+    // extension may do with it, so an extension that mutates what it got — or
+    // that is handed the same object twice and compares the two — must see
+    // exactly what it sees in Chrome
+    runtime.getManifest = () => structuredClone(workerManifest);
+  }
 }

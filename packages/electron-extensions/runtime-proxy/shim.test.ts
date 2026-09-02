@@ -482,8 +482,73 @@ describe("shimmed connect", () => {
   });
 });
 
+describe("shimmed getManifest", () => {
+  const WORKER_MANIFEST = {
+    name: "Test Extension",
+    version: "1.0.0",
+    manifest_version: 3,
+    background: { service_worker: "chrome-facade-service-worker.js", type: "module" },
+    content_scripts: [{ matches: ["https://mail.google.com/*"], js: ["content.js"] }],
+  };
+
+  function createRuntime(nativeManifest?: unknown) {
+    const runtime: ChromeNamespace = { id: EXTENSION_ID };
+
+    if (nativeManifest !== undefined) {
+      runtime.getManifest = () => nativeManifest;
+    }
+
+    installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
+
+    return runtime.getManifest as () => unknown;
+  }
+
+  test("answers the worker copy's manifest rather than this copy's", () => {
+    // The copy this context runs in is the one the derive took `background`
+    // off, so its own answer is the per-account difference being closed
+    const getManifest = createRuntime({ ...WORKER_MANIFEST, background: undefined });
+
+    expect(getManifest()).toEqual(WORKER_MANIFEST);
+  });
+
+  test("hands out a fresh copy every call, the way Chrome does", () => {
+    const getManifest = createRuntime();
+
+    const first = getManifest() as { content_scripts: unknown[] };
+
+    expect(first).not.toBe(getManifest());
+    expect(first.content_scripts).not.toBe(
+      (getManifest() as { content_scripts: unknown[] }).content_scripts,
+    );
+
+    first.content_scripts.push({ matches: ["https://evil.example/*"] });
+
+    expect(getManifest()).toEqual(WORKER_MANIFEST);
+  });
+
+  test("installs over itself without changing what it answers", () => {
+    const runtime: ChromeNamespace = { id: EXTENSION_ID };
+
+    installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
+
+    installRuntimeProxyShim({ runtime }, { workerManifest: WORKER_MANIFEST });
+
+    expect((runtime.getManifest as () => unknown)()).toEqual(WORKER_MANIFEST);
+  });
+
+  test("leaves the native answer alone when the derive embedded none", () => {
+    const nativeGetManifest = () => ({ name: "Native" });
+
+    const runtime: ChromeNamespace = { id: EXTENSION_ID, getManifest: nativeGetManifest };
+
+    installRuntimeProxyShim({ runtime });
+
+    expect(runtime.getManifest).toBe(nativeGetManifest);
+  });
+});
+
 describe("installRuntimeProxyShim", () => {
-  test("shadows only sendMessage and connect, and leaves the rest native", () => {
+  test("shadows only what it proxies, and leaves the rest native", () => {
     const nativeSendMessage = () => undefined;
 
     const getUrl = (resourcePath: string) => `chrome-extension://${EXTENSION_ID}/${resourcePath}`;

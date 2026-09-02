@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
+import { RUNTIME_PROXY_MANIFEST_GLOBAL } from "../runtime-proxy/bridge-protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
@@ -168,6 +169,43 @@ async function derivePages(
 }
 
 /**
+ * The manifest the worker role's copy carries, which is what the one shared
+ * worker's own `chrome.runtime.getManifest()` returns and therefore the answer
+ * every session has to agree on. The content-script-only copy embeds it in its
+ * shim so that a context inspecting the extension does not find a `background`
+ * key missing where the worker session finds one.
+ *
+ * Recomputed from the source manifest rather than read back off the worker
+ * copy's directory: `deriveManifest` is pure, and the worker copy is derived by
+ * whichever session adopted that role — a directory that may not exist yet when
+ * this copy is derived, and does not exist at all on a launch where no session
+ * has adopted it.
+ *
+ * Nothing has to invalidate it, since the shim script it rides in is rewritten
+ * on every launch, below. Everything it is computed from — the source manifest,
+ * the stripped keys, the clamp — is in the stamp regardless, so a copy is never
+ * kept over a change to any of them either.
+ */
+function deriveWorkerRoleManifest({
+  sourceManifest,
+  strippedManifestKeys,
+  contentScriptMatches,
+}: {
+  sourceManifest: ExtensionManifest;
+  strippedManifestKeys: string[];
+  contentScriptMatches: string[] | undefined;
+}) {
+  return deriveManifest(sourceManifest, {
+    facadeFileName: FACADE_FILE_NAME,
+    serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
+    bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
+    strippedManifestKeys,
+    contentScriptMatches,
+    sharedInstance: { role: "worker", relayFileName: RUNTIME_PROXY_RELAY_FILE_NAME },
+  }).manifest;
+}
+
+/**
  * Copies an unpacked extension into a directory the loader owns and adds the
  * `chrome.*` facade to it: the service worker gets a wrapper that pulls the
  * facade in ahead of the extension's background script, and every extension
@@ -254,14 +292,22 @@ export async function deriveExtension({
   // Always, so a rebuilt facade reaches copies that are otherwise up to date
   const bridgeToken = randomUUID();
 
-  const writeTokenCarryingScript = async (fileName: string, scriptPath: string) =>
-    writeFile(
+  const writeTokenCarryingScript = async (
+    fileName: string,
+    scriptPath: string,
+    extraGlobals: Record<string, unknown> = {},
+  ) => {
+    const globals = { [EXTENSION_BRIDGE_TOKEN_GLOBAL]: bridgeToken, ...extraGlobals };
+
+    const preamble = Object.entries(globals)
+      .map(([globalName, value]) => `globalThis.${globalName} = ${JSON.stringify(value)};\n`)
+      .join("");
+
+    await writeFile(
       path.join(derivedDir, fileName),
-      `globalThis.${EXTENSION_BRIDGE_TOKEN_GLOBAL} = ${JSON.stringify(bridgeToken)};\n${await readFile(
-        scriptPath,
-        "utf8",
-      )}`,
+      `${preamble}${await readFile(scriptPath, "utf8")}`,
     );
+  };
 
   await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath);
 
@@ -272,7 +318,13 @@ export async function deriveExtension({
   }
 
   if (sharedInstance?.role === "contentScriptOnly") {
-    await writeTokenCarryingScript(RUNTIME_PROXY_SHIM_FILE_NAME, sharedInstance.shimScriptPath);
+    await writeTokenCarryingScript(RUNTIME_PROXY_SHIM_FILE_NAME, sharedInstance.shimScriptPath, {
+      [RUNTIME_PROXY_MANIFEST_GLOBAL]: deriveWorkerRoleManifest({
+        sourceManifest,
+        strippedManifestKeys,
+        contentScriptMatches,
+      }),
+    });
   }
 
   return { derivedDir, bridgeToken, extensionId };
