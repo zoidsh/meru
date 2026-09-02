@@ -15,20 +15,31 @@ export type CreateSharedExtensionInstanceOptions = {
    * copy and imported by its service worker wrapper.
    */
   relayScriptPath: string;
+  /**
+   * The session the one worker runs in. It is the embedder's to name rather
+   * than the first session set up, so that no session can take the role by
+   * being constructed first and none can take it away by going: Meru names
+   * Electron's default session, which no account owns and which outlives every
+   * account removal.
+   *
+   * Asked for lazily, since a `Session` cannot be created before the app is
+   * ready and an embedder builds this at module scope.
+   */
+  getWorkerSession: () => Session;
   /** How a caller frame resolves to its hosting tab for sender reconstruction. */
   getWebContentsFromFrame?: GetWebContentsFromFrame;
 };
 
 /**
  * One shared extension instance serving every session, in place of one full
- * instance per session: the first session set up keeps the whole extension —
- * the one service worker, the one `chrome.storage` — and every later session
- * gets a content-script-only copy whose `chrome.runtime` messaging the
- * `RuntimeProxy` relays to that worker and back — from its content scripts and
- * from its extension pages, which is where a password manager keeps its unlock
- * UI. The prize is one sign-in to a password manager instead of one per
- * account; one worker at any session count instead of one per session comes
- * with it.
+ * instance per session: the session the embedder names as the worker's keeps
+ * the whole extension — the one service worker, the one `chrome.storage` — and
+ * every other session gets a content-script-only copy whose `chrome.runtime`
+ * messaging the `RuntimeProxy` relays to that worker and back — from its
+ * content scripts and from its extension pages, which is where a password
+ * manager keeps its unlock UI. The prize is one sign-in to a password manager
+ * instead of one per account; one worker at any session count instead of one
+ * per session comes with it.
  *
  * The whole feature hangs off the one `sharedInstance` option this creates a
  * value for. An embedder that never passes it runs exactly as before, and
@@ -41,6 +52,7 @@ export type CreateSharedExtensionInstanceOptions = {
 export function createSharedExtensionInstance({
   shimScriptPath,
   relayScriptPath,
+  getWorkerSession,
   getWebContentsFromFrame,
 }: CreateSharedExtensionInstanceOptions): SharedExtensionInstance {
   let proxy: RuntimeProxy | undefined;
@@ -55,25 +67,28 @@ export function createSharedExtensionInstance({
     },
 
     adoptSession(session) {
-      // The first session set up keeps the worker. Which session that is is
-      // deliberately not a setting: any one worker serves every session alike,
-      // and the first one exists whenever any session does.
-      if (!workerSession) {
+      // Which session plays the worker is settled before any of them is set
+      // up, so order decides nothing: a session either is the one the embedder
+      // named or is content-script-only, whether it came first or last.
+      if (session !== getWorkerSession()) {
+        return { role: "contentScriptOnly", shimScriptPath };
+      }
+
+      if (workerSession !== session) {
         workerSession = session;
 
         proxy?.setWorkerSession(session);
       }
 
-      return workerSession === session
-        ? { role: "worker", relayScriptPath }
-        : { role: "contentScriptOnly", shimScriptPath };
+      return { role: "worker", relayScriptPath };
     },
 
     teardownSession(session) {
-      // A torn-down worker session orphans the content-script-only sessions
-      // until the next session adopts the worker role — an account added after
-      // the removal, or a relaunch; the proxy answers them "receiving end does
-      // not exist" in between, which is why the loader passes this answer on
+      // On Meru's own naming this can only answer true at shutdown, the
+      // default session outliving every account: the loader passes the answer
+      // on so that a session tearing the worker out from under the others
+      // stays something an embedder can notice rather than something nothing
+      // reports
       const wasWorkerSession = session === workerSession;
 
       if (wasWorkerSession) {

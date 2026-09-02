@@ -15,7 +15,7 @@ import {
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
-import { app } from "electron";
+import { app, session } from "electron";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { log } from "@/lib/log";
@@ -161,21 +161,24 @@ export const extensions = new Extensions({
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
-  // One shared extension instance across all account sessions — one 1Password
-  // sign-in instead of one per account, and one worker whatever the account
-  // count. It is how Meru runs extensions rather than something the user
-  // chooses: a per-account instance is the thing the feature exists to remove,
-  // so an off switch would only ever switch back to the worse sign-in and
-  // memory behavior, and `extensions.enabled` already turns extensions off
-  // entirely. Passed unconditionally rather than behind that master switch,
-  // which is read per session in `getExtensionDirs`: a session that loads no
-  // extension never adopts a role, so gating here would buy nothing and would
-  // read the switch once at launch, handing a full instance to any account
-  // added after extensions were turned on. Deleting this one option still
-  // removes the whole feature.
+  // One shared extension instance across every session — one 1Password sign-in
+  // instead of one per account, and one worker whatever the account count. It
+  // is how Meru runs extensions rather than something the user chooses: a
+  // per-account instance is the thing the feature exists to remove, so an off
+  // switch would only ever switch back to the worse sign-in and memory
+  // behavior, and `extensions.enabled` already turns extensions off entirely.
+  // Passed unconditionally rather than behind that master switch, which is read
+  // per session in `getExtensionDirs`: a session that loads no extension never
+  // adopts a role, so gating here would buy nothing and would read the switch
+  // once at launch. Deleting this one option still removes the whole feature.
+  //
+  // The worker lives in the default session, which no account owns, so an
+  // account session is never the one holding it — see
+  // `setupExtensionsWorkerSession` below.
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
+    getWorkerSession: () => session.defaultSession,
   }),
   logger: {
     info: (message, details) => {
@@ -186,6 +189,33 @@ export const extensions = new Extensions({
     },
   },
 });
+
+/**
+ * Loads the extensions into the session the one worker runs in, which is
+ * Electron's default session: no account owns it, so removing an account is a
+ * non-event for the worker and the one 1Password sign-in outlives every
+ * removal, and every account session is content-script-only from its first
+ * load rather than whichever came first keeping the whole extension.
+ *
+ * Called before `accounts.init()` constructs any account session, and awaited
+ * by nothing: role adoption no longer turns on the order sessions are set up,
+ * so what starting first buys is only that the worker is loading while the
+ * accounts come up rather than after them. The load is reported the way an
+ * account's is, since a worker that failed to load must not take the launch
+ * with it — the accounts' copies are still there, reaching a worker that will
+ * not answer.
+ *
+ * The store the worker keeps lands in `userData` itself, that being what
+ * `getStoragePath()` answers for the default session where an account's
+ * answers `userData/Partitions/<accountId>` — every directory name
+ * `clearSessionData` already looks for, at a root that carries nothing else of
+ * the kind.
+ */
+export function setupExtensionsWorkerSession() {
+  extensions.setupSession(session.defaultSession).catch((error: unknown) => {
+    log.error("Failed to set up extensions worker session", { error: serializeError(error) });
+  });
+}
 
 /**
  * What is on disk, which config alone can't tell: an install carries a version,

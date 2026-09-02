@@ -43,7 +43,6 @@ import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
 import { extensionActions } from "./extension-actions";
 import {
-  extensions,
   extensionUpdater,
   getInstalledExtensions,
   installCuratedExtension,
@@ -89,20 +88,6 @@ class Ipc {
   renderer = new IpcEmitter<IpcRendererEvent>();
 
   init() {
-    // Removing the account whose session holds the one extension worker leaves
-    // the accounts left behind with content-script-only copies and nothing to
-    // reach, until a relaunch or until an account added later adopts the role.
-    // Offering the relaunch is the honest answer while the loader cannot hand
-    // the role to a surviving session; see the feature doc's "The worker
-    // session's removal".
-    extensions.onSharedInstanceWorkerLost(() => {
-      if (main.window.isDestroyed()) {
-        return;
-      }
-
-      ipc.renderer.send(main.window.webContents, "extensions.workerSessionLost");
-    });
-
     config.onDidAnyChange(() => {
       ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
 

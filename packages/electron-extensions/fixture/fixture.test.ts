@@ -23,8 +23,14 @@ async function readManifest(): Promise<FixtureManifestFile> {
   return JSON.parse(await readFile(path.join(import.meta.dir, "manifest.json"), "utf8"));
 }
 
-/** The only pages the fixture may touch: a test's own loopback server. */
-const LOOPBACK_MATCHES = ["http://127.0.0.1/*", "http://localhost/*"];
+/**
+ * The only pages the fixture may touch: a test's own loopback server, which
+ * binds `127.0.0.1`. Deliberately not `http://localhost/*` as well — a match
+ * pattern ignores the port, so that one covers the dev server the renderer
+ * itself is served from in development, and the fixture now loads into the
+ * default session where that renderer lives.
+ */
+const LOOPBACK_MATCHES = ["http://127.0.0.1/*"];
 
 describe("the fixture manifest", () => {
   test("derives the pinned extension id from its key", async () => {
@@ -33,7 +39,7 @@ describe("the fixture manifest", () => {
     expect(getExtensionIdFromManifestKey(key)).toBe(FIXTURE_EXTENSION_ID);
   });
 
-  test("aims its content scripts at loopback pages and nowhere else", async () => {
+  test("aims its content scripts at the loopback address and nowhere else", async () => {
     const { content_scripts } = await readManifest();
 
     expect(content_scripts?.map((contentScript) => contentScript.matches)).toEqual([
@@ -41,7 +47,7 @@ describe("the fixture manifest", () => {
     ]);
   });
 
-  test("exposes its frame page to loopback pages and nowhere else", async () => {
+  test("exposes its frame page to the loopback address and nowhere else", async () => {
     const { web_accessible_resources } = await readManifest();
 
     expect(web_accessible_resources?.map((resource) => resource.matches)).toEqual([

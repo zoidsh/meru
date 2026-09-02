@@ -12,6 +12,7 @@ import {
   extensionUpdater,
   pruneDerivedExtensionCopies,
   pruneInstalledExtensionVersions,
+  setupExtensionsWorkerSession,
 } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
@@ -52,6 +53,13 @@ async function resetApp() {
       ]);
     }),
   );
+
+  // The one extension worker runs in the default session, so its
+  // `chrome.storage` and its IndexedDB are the only account data no account
+  // partition holds. Deliberately without a `clearStorageData()` beside it:
+  // the default session's storage path is `userData` itself, where that would
+  // reach far past the extensions
+  await extensions.clearSessionData(session.defaultSession);
 
   config.clear();
 
@@ -123,6 +131,10 @@ async function init() {
   await pruneInstalledExtensionVersions();
 
   await pruneDerivedExtensionCopies();
+
+  // Before the accounts, so the one worker is loading while their
+  // content-script-only copies come up rather than after them
+  setupExtensionsWorkerSession();
 
   accounts.init();
 

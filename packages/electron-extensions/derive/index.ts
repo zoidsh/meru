@@ -182,10 +182,10 @@ async function derivePages(
  * key missing where the worker session finds one.
  *
  * Recomputed from the source manifest rather than read back off the worker
- * copy's directory: `deriveManifest` is pure, and the worker copy is derived by
- * whichever session adopted that role — a directory that may not exist yet when
- * this copy is derived, and does not exist at all on a launch where no session
- * has adopted it.
+ * copy's directory: `deriveManifest` is pure, and the worker copy belongs to
+ * the one session the embedder named — a directory that may not exist yet when
+ * this copy is derived, and does not exist at all on a launch where that
+ * session was never set up.
  *
  * Nothing has to invalidate it, since the shim script it rides in is rewritten
  * on every launch, below. Everything it is computed from — the source manifest,

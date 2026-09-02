@@ -39,7 +39,12 @@ const CONSOLE_ERROR_LEVEL = 3;
 
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
-export type SharedInstanceWorkerLostListener = () => void;
+/** As much of an Electron `Extension` as the unclamped content script warning reads. */
+type ContentScriptExtension = {
+  id: string;
+  name: string;
+  manifest: { content_scripts?: { matches?: string[] }[] };
+};
 
 export type ExtensionDirs = string[] | (() => Promise<string[]> | string[]);
 
@@ -58,9 +63,11 @@ export type SharedExtensionInstance = {
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
   /**
-   * Whether that session was the one holding the worker, which is what the
-   * loader needs to tell an embedder that the sessions left behind have
-   * nothing to reach.
+   * Whether that session was the one holding the worker, which the loader logs
+   * as the sessions left behind having nothing to reach. On an embedder that
+   * names a session no user can remove it can only ever answer true at
+   * shutdown — and this staying here is what makes that provable rather than
+   * assumed, since a naming that ever broke would say so.
    */
   teardownSession(session: Session): boolean;
 };
@@ -137,8 +144,6 @@ export class Extensions {
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
 
   private sharedInstance: SharedExtensionInstance | undefined;
-
-  private sharedInstanceWorkerLostListeners = new Set<SharedInstanceWorkerLostListener>();
 
   private logger: ExtensionsLogger | undefined;
 
@@ -345,12 +350,56 @@ export class Extensions {
           version: extension.version,
           extensionDir,
         });
+
+        this.warnAboutUnclampedWorkerContentScripts(extension, sharedInstanceDerive);
       } catch (error) {
         this.logger?.error("Failed to load extension", { extensionDir, error });
       }
     }
 
     this.emitActionsChanged(session);
+  }
+
+  /**
+   * The worker session belongs to the embedder rather than to a user's
+   * browsing: whatever pages it holds are the app's own. A curated extension
+   * cannot reach them, its content scripts being clamped to a host allowlist,
+   * but an extension the clamp says nothing about injects wherever its author
+   * declared — which for a development folder can be the embedder's own UI.
+   *
+   * Meru's is one page and one page only, the main window's renderer: a
+   * `file://` document in a packaged build, unmatchable by any pattern while
+   * the loader grants no file access, but the dev server over
+   * `http://localhost:3000` in development, which is exactly where an unpacked
+   * folder is loaded from. Naming both the extension and the session is the
+   * point — a content script running inside the app's own UI is otherwise
+   * invisible until it breaks something.
+   */
+  private warnAboutUnclampedWorkerContentScripts(
+    extension: ContentScriptExtension,
+    sharedInstanceDerive: SharedInstanceDeriveOptions | undefined,
+  ) {
+    if (sharedInstanceDerive?.role !== "worker") {
+      return;
+    }
+
+    if (this.getContentScriptMatches?.(extension.id)) {
+      return;
+    }
+
+    const contentScriptMatches = extension.manifest.content_scripts?.flatMap(
+      (contentScript) => contentScript.matches ?? [],
+    );
+
+    if (!contentScriptMatches?.length) {
+      return;
+    }
+
+    this.logger?.error("Unclamped extension content scripts run in the worker session", {
+      id: extension.id,
+      name: extension.name,
+      matches: contentScriptMatches,
+    });
   }
 
   /**
@@ -466,15 +515,16 @@ export class Extensions {
     this.alarms.teardownSession(session);
 
     // This session is already out of `loadedExtensionIdsBySession`, so what is
-    // left in it is the sessions that keep their content-script-only copies
+    // left in it is the sessions that keep their content-script-only copies.
+    // An embedder naming a session of its own — one no user can remove — never
+    // reaches this branch outside shutdown, and the log is what would say so if
+    // that ever stopped being true
     const workerRoleWasVacated = this.sharedInstance?.teardownSession(session) === true;
 
     if (workerRoleWasVacated && this.loadedExtensionIdsBySession.size > 0) {
-      this.logger?.info("Shared extension instance lost its worker session", {
+      this.logger?.error("Shared extension instance lost its worker session", {
         orphanedSessions: this.loadedExtensionIdsBySession.size,
       });
-
-      this.emitSharedInstanceWorkerLost();
     }
 
     const consoleListener = this.serviceWorkerConsoleListeners.get(session);
@@ -510,30 +560,6 @@ export class Extensions {
     return () => {
       this.actionsChangedListeners.delete(listener);
     };
-  }
-
-  /**
-   * Fires when the session holding the shared instance's worker is torn down
-   * while other sessions still have the extension loaded. Those sessions keep
-   * the content-script-only copies they were derived with, so their extensions
-   * have nothing to reach until the app restarts — or until a session set up
-   * later adopts the vacant role. An embedder that offers a relaunch is what
-   * stands between the user and a password manager that quietly stopped
-   * working. It does not fire when the torn-down session was the last one, as
-   * there is nothing left to be broken.
-   */
-  onSharedInstanceWorkerLost(listener: SharedInstanceWorkerLostListener) {
-    this.sharedInstanceWorkerLostListeners.add(listener);
-
-    return () => {
-      this.sharedInstanceWorkerLostListeners.delete(listener);
-    };
-  }
-
-  private emitSharedInstanceWorkerLost() {
-    for (const listener of this.sharedInstanceWorkerLostListeners) {
-      listener();
-    }
   }
 
   private emitActionsChanged(session: Session) {
