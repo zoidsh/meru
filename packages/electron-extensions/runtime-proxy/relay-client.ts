@@ -14,6 +14,7 @@ import {
   type RuntimeProxyWorkerConnectToTabResult,
   type RuntimeProxyWorkerSendToTabResult,
 } from "./bridge-protocol";
+import { createCleanEndBackoff, DEFAULT_CLEAN_END_WINDOW_MS } from "./clean-end-backoff";
 import { dispatchMessage, firstReply, mirrorEvent } from "./message-dispatch";
 import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from "./native-api";
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
@@ -24,23 +25,6 @@ import {
 } from "./storage-protocol";
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
-
-/**
- * How long a job stream has to live for its clean end to read as main's own
- * invalidation rather than a flap. Main ends a parked stream deliberately
- * whenever it replaces one, so from here that end is the ordinary case and the
- * jobs queued behind it are already waiting; only a stream that ends cleanly
- * again and again the moment it is parked is main flapping.
- */
-const DEFAULT_CLEAN_END_WINDOW_MS = 1000;
-
-/**
- * What the second clean end inside the window sleeps, doubling per end up to
- * `retryDelayMs`. Small enough that a single replaced stream costs nothing a
- * queued message can feel, large enough that a flapping main cannot spin the
- * worker.
- */
-const CLEAN_END_BACKOFF_FLOOR_MS = 16;
 
 /**
  * How many job ids the client remembers to recognise a redelivery by. Far more
@@ -308,8 +292,10 @@ export function createRelayClient({
   };
 
   const runJobStream = async () => {
-    /** What the next clean end inside the window sleeps; 0 while none has. */
-    let cleanEndBackoffMs = 0;
+    const cleanEndBackoff = createCleanEndBackoff({
+      ceilingMs: retryDelayMs,
+      windowMs: cleanEndWindowMs,
+    });
 
     while (!isStopped) {
       const parkedAt = Date.now();
@@ -355,21 +341,14 @@ export function createRelayClient({
        * delay paid for nothing. Only a bridge that refused or broke is a
        * reason to wait, since re-parking on it at once would spin.
        */
-      let delayMs = retryDelayMs;
+      let delayMs: number;
 
       if (hasEndedCleanly) {
-        if (Date.now() - parkedAt >= cleanEndWindowMs) {
-          cleanEndBackoffMs = 0;
-        }
-
-        delayMs = cleanEndBackoffMs;
-
-        cleanEndBackoffMs = Math.min(
-          cleanEndBackoffMs === 0 ? CLEAN_END_BACKOFF_FLOOR_MS : cleanEndBackoffMs * 2,
-          retryDelayMs,
-        );
+        delayMs = cleanEndBackoff.next(Date.now() - parkedAt);
       } else {
-        cleanEndBackoffMs = 0;
+        cleanEndBackoff.reset();
+
+        delayMs = retryDelayMs;
       }
 
       if (delayMs > 0) {
