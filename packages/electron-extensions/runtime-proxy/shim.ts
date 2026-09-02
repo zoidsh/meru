@@ -1,4 +1,3 @@
-import { isExtensionId } from "../derive/extension-id";
 import { postBridge } from "../facade/lib/bridge";
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import { createEvent } from "../facade/lib/event";
@@ -13,6 +12,7 @@ import {
   type RuntimeProxySenderReport,
   type RuntimeProxySendMessageResult,
 } from "./bridge-protocol";
+import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from "./native-api";
 
 const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
 
@@ -28,7 +28,7 @@ function bridgeAnsweredError(status: number) {
  * request's caller before anything trusts it, and reads a top-level document on
  * the extension's own scheme as the page it is.
  */
-function getContextSenderReport(): RuntimeProxySenderReport {
+export function getContextSenderReport(): RuntimeProxySenderReport {
   const contextGlobals = globalThis as unknown as {
     location?: { href?: string };
     self?: unknown;
@@ -39,46 +39,6 @@ function getContextSenderReport(): RuntimeProxySenderReport {
     url: contextGlobals.location?.href ?? "",
     isTopFrame: contextGlobals.self === contextGlobals.top,
   };
-}
-
-export type ParsedSendMessageArguments = {
-  targetExtensionId?: string;
-  message: unknown;
-};
-
-/**
- * `sendMessage`'s optional leading extension id, told apart the way Chrome
- * tells it: three arguments make the first one the target, and with two the
- * first is a target only when it reads as an extension id. A 32-character
- * lowercase message with an options bag is misread the same way Chrome
- * misreads it.
- */
-export function parseSendMessageArguments(callArguments: unknown[]): ParsedSendMessageArguments {
-  if (callArguments.length >= 3) {
-    return {
-      targetExtensionId:
-        typeof callArguments[0] === "string" ? (callArguments[0] as string) : undefined,
-      message: callArguments[1],
-    };
-  }
-
-  if (
-    callArguments.length === 2 &&
-    typeof callArguments[0] === "string" &&
-    isExtensionId(callArguments[0])
-  ) {
-    return { targetExtensionId: callArguments[0], message: callArguments[1] };
-  }
-
-  return { message: callArguments[0] };
-}
-
-type NativeMethod = (...callArguments: unknown[]) => unknown;
-
-function getNativeMethod(runtime: ChromeNamespace, name: string): NativeMethod | undefined {
-  const method = runtime[name];
-
-  return typeof method === "function" ? (method as NativeMethod).bind(runtime) : undefined;
 }
 
 function createProxiedSendMessage(

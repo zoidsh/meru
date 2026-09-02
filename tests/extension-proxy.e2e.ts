@@ -488,3 +488,70 @@ test("a message is attributed to the frame that sent it, an embedded extension f
   // message to the host document rather than the extension frame
   expect(embeddedFrameSender.frameId).toBeGreaterThan(0);
 });
+
+test("the worker reaches a shimmed content script it never heard from first", async () => {
+  const pageUrl = `${serverOrigin}/plain`;
+
+  const pageId = await openProbeWindow(SHIM_PARTITION, pageUrl);
+
+  const page = await readProbeResults(pageId);
+
+  /*
+   * `chrome.tabs.sendMessage` from the worker into a tab of another session,
+   * which natively reaches nothing: the worker's own `chrome.tabs` addresses
+   * its session's tabs alone. What proves it arrived is the content script's
+   * own record of hearing it, and what proves the answer came back is the
+   * worker reporting the pong the content script sent.
+   */
+  expect(page.workerSentBack.heard).toEqual({
+    type: "ping-from-worker",
+    nonce: `send-back:${page.contextId}`,
+    workerInstanceId: expect.any(String),
+  });
+
+  expect(page.workerSentBack.outcome).toEqual({
+    status: "replied",
+    reply: { type: "pong", nonce: `send-back:${page.contextId}`, contextId: page.contextId },
+  });
+
+  // The sender a worker-originated message carries is the extension itself:
+  // an id and an origin, and no tab, there being no page behind a worker
+  expect(page.workerSentBack.sender).toEqual({
+    id: FIXTURE_EXTENSION_ID,
+    origin: `chrome-extension://${FIXTURE_EXTENSION_ID}`,
+    hasTab: false,
+  });
+
+  // And the same direction as a port: `chrome.tabs.connect` from the worker,
+  // whose first message the content script heard on the port it was handed
+  expect(page.workerConnectedBack.heard).toEqual({
+    type: "ping-from-worker",
+    nonce: `connect-back:${page.contextId}`,
+    workerInstanceId: expect.any(String),
+  });
+
+  expect(page.workerConnectedBack.outcome).toEqual({
+    status: "replied",
+    reply: `from-worker:connect-back:${page.contextId}`,
+  });
+
+  // And the port carries the page's answer back, which only the worker can
+  // see: the answering side has nothing of its own left to observe
+  expect(page.portReplySeenByWorker).toBe(true);
+});
+
+test("an action popup is no tab, and the worker says so rather than guessing", async () => {
+  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-popup-no-tab"));
+
+  const shimPopup = await readProbeResults(shimPopupId);
+
+  // Chrome gives an action popup's messages no `sender.tab`, so there is no
+  // tab id for the worker to send back into — which the worker reports rather
+  // than sending into whatever tab happens to be in front
+  expect(shimPopup.workerSentBack.heard).toBeNull();
+
+  expect(shimPopup.workerSentBack.outcome).toEqual({
+    status: "error",
+    message: "The sender carried no tab",
+  });
+});

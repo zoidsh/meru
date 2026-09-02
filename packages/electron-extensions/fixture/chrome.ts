@@ -36,14 +36,31 @@ export type FixtureManifest = {
   background?: unknown;
 };
 
+/** The slice of `chrome.tabs` the fixture's worker drives. */
+export type FixtureTabs = {
+  sendMessage: (
+    tabId: number,
+    message: unknown,
+    options: { frameId?: number },
+    callback: (reply: unknown) => void,
+  ) => void;
+  connect: (tabId: number, connectInfo: { name: string; frameId?: number }) => FixturePort;
+};
+
 export type FixtureRuntime = {
   id: string;
   lastError?: { message?: string };
   getManifest?: () => FixtureManifest;
   sendMessage: (message: unknown, callback: (reply: unknown) => void) => void;
   connect: (connectInfo: { name: string }) => FixturePort;
+  getURL?: (path: string) => string;
   onMessage: FixtureEvent<
-    (message: unknown, sender: FixtureMessageSender, sendResponse: (reply: unknown) => void) => void
+    (
+      message: unknown,
+      sender: FixtureMessageSender,
+      sendResponse: (reply: unknown) => void,
+      // `true` keeps the message channel open for an answer that comes later
+    ) => boolean | undefined
   >;
   onConnect: FixtureEvent<(port: FixturePort) => void>;
 };
@@ -60,4 +77,16 @@ export function getChromeRuntime(): FixtureRuntime {
   const contextGlobals = globalThis as unknown as { chrome: { runtime: FixtureRuntime } };
 
   return contextGlobals.chrome.runtime;
+}
+
+/**
+ * The worker's `chrome.tabs`, whose `sendMessage` and `connect` the relay
+ * client has shadowed by the time the fixture's background script runs — the
+ * worker-to-page direction, which natively would reach the worker session's
+ * own tabs alone.
+ */
+export function getChromeTabs(): FixtureTabs {
+  const workerGlobals = globalThis as unknown as { chrome: { tabs: FixtureTabs } };
+
+  return workerGlobals.chrome.tabs;
 }

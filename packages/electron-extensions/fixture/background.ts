@@ -16,7 +16,7 @@
  * `workerInstanceId` and `portEvents` stable for a test's lifetime; without
  * the debugger they would reset whenever the worker idled out.
  */
-import { type FixtureMessageSender, getChromeRuntime } from "./chrome";
+import { type FixtureMessageSender, getChromeRuntime, getChromeTabs } from "./chrome";
 
 const workerGlobals = globalThis as unknown as { crypto: { randomUUID: () => string } };
 
@@ -50,7 +50,47 @@ type ProbeMessage = {
   nonce?: string;
 };
 
+/**
+ * How a call the worker made ended, in the shape the probes record their own
+ * outcomes in: a reply, or the `lastError` Chrome set instead of one.
+ */
+type WorkerCallOutcome =
+  | { status: "replied"; reply: unknown }
+  | { status: "error"; message: string };
+
 const runtime = getChromeRuntime();
+
+const tabs = getChromeTabs();
+
+/**
+ * Sends back into the tab the message came from, which is the whole
+ * worker-to-page direction: in a shimmed session that tab is in another
+ * session entirely, where the worker's own `chrome.tabs` reaches nothing.
+ * The frame is named too, since a sign-in page's form is rarely its main one.
+ */
+function sendToSender(
+  sender: FixtureMessageSender | undefined,
+  message: unknown,
+  answer: (outcome: WorkerCallOutcome) => void,
+) {
+  const tabId = sender?.tab?.id;
+
+  if (tabId === undefined) {
+    answer({ status: "error", message: "The sender carried no tab" });
+
+    return;
+  }
+
+  tabs.sendMessage(tabId, message, { frameId: sender?.frameId }, (reply) => {
+    const lastError = runtime.lastError;
+
+    answer(
+      lastError
+        ? { status: "error", message: lastError.message ?? "unknown" }
+        : { status: "replied", reply },
+    );
+  });
+}
 
 runtime.onMessage.addListener((message, sender, sendResponse) => {
   const probeMessage = message as ProbeMessage | undefined;
@@ -68,7 +108,50 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ type: "events-reply", events: [...portEvents] });
   }
 
-  // Every answer above is synchronous, so no listener returns true
+  // The worker messaging the sender's own tab, and answering with how that
+  // went. The only listener here that answers late, so the only one that
+  // holds the channel open by returning true
+  if (probeMessage?.type === "send-back") {
+    sendToSender(
+      sender,
+      { type: "ping-from-worker", nonce: probeMessage.nonce, workerInstanceId },
+      (outcome) => {
+        sendResponse({ type: "send-back-reply", outcome });
+      },
+    );
+
+    return true;
+  }
+
+  // And the worker opening a port to the sender's own tab
+  if (probeMessage?.type === "connect-back") {
+    const portName = `from-worker:${probeMessage.nonce}`;
+
+    const tabId = sender?.tab?.id;
+
+    if (tabId === undefined) {
+      sendResponse({ type: "connect-back-reply", outcome: { status: "error", message: "No tab" } });
+
+      return undefined;
+    }
+
+    const port = tabs.connect(tabId, { name: portName, frameId: sender?.frameId });
+
+    port.onMessage.addListener((message) => {
+      portEvents.push(`from-page:${(message as ProbeMessage | undefined)?.nonce}`);
+    });
+
+    port.onDisconnect.addListener(() => {
+      portEvents.push(`disconnect:${portName}`);
+    });
+
+    port.postMessage({ type: "ping-from-worker", nonce: probeMessage.nonce, workerInstanceId });
+
+    sendResponse({ type: "connect-back-reply", outcome: { status: "replied", reply: portName } });
+  }
+
+  // Every other answer above is synchronous, so no other listener returns true
+  return undefined;
 });
 
 runtime.onConnect.addListener((port) => {

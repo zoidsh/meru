@@ -1,5 +1,4 @@
-import type { ChromeNamespace } from "../facade/lib/chrome";
-import { installRuntimeProxyShim } from "./shim";
+import { installShim } from "./install-shim";
 
 /**
  * Entry point of the runtime proxy's shim. It is bundled on its own, like the
@@ -7,16 +6,10 @@ import { installRuntimeProxyShim } from "./shim";
  * extension that can message: the derive prepends it to every `content_scripts`
  * entry, so it reaches the isolated world before the extension's own scripts,
  * and writes it into every extension page — the action popup, and the frames an
- * extension embeds in web pages — ahead of the page's own. Electron hands these
- * contexts the extension API under both `chrome` and `browser`, so both get the
- * shadowed `runtime` methods.
+ * extension embeds in web pages — ahead of the page's own.
+ *
+ * Prepending it to every entry means running it once per entry the page
+ * matches, all in one isolated world, which is why the install itself is what
+ * holds the "once per context" rather than this file.
  */
-const contextGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
-
-for (const globalName of ["chrome", "browser"]) {
-  const extensionApi = contextGlobals[globalName];
-
-  if (extensionApi) {
-    installRuntimeProxyShim(extensionApi);
-  }
-}
+installShim();

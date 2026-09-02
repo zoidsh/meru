@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { encodeNativeMessage } from "../native-messaging/framing";
 import {
+  RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyJob,
   type RuntimeProxySender,
@@ -49,6 +50,8 @@ function stubBridge() {
 
   const refusals = new Map<string, number>();
 
+  const answers = new Map<string, unknown>();
+
   globalThis.fetch = (async (url: string, init: RequestInit) => {
     const { pathname: pathName } = new URL(url);
 
@@ -60,6 +63,12 @@ function stubBridge() {
 
     if (refusalStatus !== undefined) {
       return new Response(null, { status: refusalStatus });
+    }
+
+    const answer = answers.get(pathName);
+
+    if (answer !== undefined) {
+      return Response.json(answer);
     }
 
     if (pathName === RUNTIME_PROXY_PATHS.workerJobs) {
@@ -80,7 +89,16 @@ function stubBridge() {
     refuse: (pathName: string, status: number) => {
       refusals.set(pathName, status);
     },
+    /** What the relay answers a worker-side call with. */
+    answerWith: (pathName: string, answer: unknown) => {
+      answers.set(pathName, answer);
+    },
     postsTo: (pathName: string) => posts.filter((post) => post.pathName === pathName),
+    waitForPost: (pathName: string, postCount = 1) =>
+      waitFor(
+        () => posts.filter((post) => post.pathName === pathName).length >= postCount,
+        `${postCount} posts to ${pathName}`,
+      ),
     waitForStream: async (streamCount = 1) => {
       await waitFor(() => streamControllers.length >= streamCount, `${streamCount} job streams`);
 
@@ -745,5 +763,412 @@ describe("createRelayClient", () => {
     stub.pushJob({ type: "sendMessage", jobId: "job-1", message: "after restart", sender: SENDER });
 
     await waitFor(() => heard.length === 1, "the redelivered job");
+  });
+});
+
+/** The `chrome` a worker sees, with the native `tabs` the relay shadows. */
+function createWorkerChromeWithTabs() {
+  const { chrome, nativeOnMessage, nativeOnConnect } = createWorkerChrome();
+
+  const nativeTabsCalls: unknown[][] = [];
+
+  const nativeRuntimeSendMessageCalls: unknown[][] = [];
+
+  let nativeTabsReply: unknown = "native reply";
+
+  let nativeTabsError: string | undefined;
+
+  let nativeRuntimeReply: unknown = "native page reply";
+
+  let nativeRuntimeError: string | undefined;
+
+  const runtime = chrome.runtime as ChromeNamespace;
+
+  const answerNatively = (
+    callArguments: unknown[],
+    reply: unknown,
+    error: string | undefined,
+    recordedCalls: unknown[][],
+  ) => {
+    const lastArgument = callArguments.at(-1);
+
+    const callback =
+      typeof lastArgument === "function" ? (lastArgument as (reply: unknown) => void) : undefined;
+
+    recordedCalls.push(callback ? callArguments.slice(0, -1) : callArguments);
+
+    if (error === undefined) {
+      callback?.(reply);
+
+      return;
+    }
+
+    runtime.lastError = { message: error };
+
+    try {
+      callback?.(undefined);
+    } finally {
+      delete runtime.lastError;
+    }
+  };
+
+  runtime.sendMessage = (...callArguments: unknown[]) => {
+    answerNatively(
+      callArguments,
+      nativeRuntimeReply,
+      nativeRuntimeError,
+      nativeRuntimeSendMessageCalls,
+    );
+  };
+
+  const nativePort = {
+    name: "native",
+    posted: [] as unknown[],
+    isDisconnected: false,
+    messageListeners: [] as ((message: unknown) => void)[],
+    disconnectListeners: [] as (() => void)[],
+    postMessage(message: unknown) {
+      nativePort.posted.push(message);
+    },
+    disconnect() {
+      nativePort.isDisconnected = true;
+    },
+    onMessage: {
+      addListener: (listener: (message: unknown) => void) => {
+        nativePort.messageListeners.push(listener);
+      },
+    },
+    onDisconnect: {
+      addListener: (listener: () => void) => {
+        nativePort.disconnectListeners.push(listener);
+      },
+    },
+  };
+
+  const nativeConnectCalls: unknown[][] = [];
+
+  chrome.tabs = {
+    sendMessage: (...callArguments: unknown[]) => {
+      answerNatively(callArguments, nativeTabsReply, nativeTabsError, nativeTabsCalls);
+    },
+    connect: (...callArguments: unknown[]) => {
+      nativeConnectCalls.push(callArguments);
+
+      return nativePort;
+    },
+  };
+
+  return {
+    chrome,
+    nativeOnMessage,
+    nativeOnConnect,
+    nativeTabsCalls,
+    nativeConnectCalls,
+    nativeRuntimeSendMessageCalls,
+    nativePort,
+    setNativeTabsReply: (reply: unknown) => {
+      nativeTabsReply = reply;
+    },
+    setNativeTabsError: (error: string | undefined) => {
+      nativeTabsError = error;
+    },
+    setNativeRuntimeReply: (reply: unknown) => {
+      nativeRuntimeReply = reply;
+    },
+    setNativeRuntimeError: (error: string | undefined) => {
+      nativeRuntimeError = error;
+    },
+  };
+}
+
+function startClientWithTabs(chrome: ChromeNamespace) {
+  const client = createRelayClient({ retryDelayMs: 5 });
+
+  client.wrapRuntime(chrome);
+
+  client.wrapTabs(chrome);
+
+  client.start();
+
+  startedClients.push(client);
+
+  return client;
+}
+
+type TabsSendMessage = (...callArguments: unknown[]) => Promise<unknown>;
+
+type TabsConnect = (
+  tabId: number,
+  connectInfo?: Record<string, unknown>,
+) => {
+  postMessage: (message: unknown) => void;
+  disconnect: () => void;
+  onMessage: { addListener: (listener: (message: unknown) => void) => void };
+  onDisconnect: { addListener: (listener: () => void) => void };
+};
+
+describe("what the worker sends", () => {
+  test("tabs.sendMessage is relayed, and its reply is the call's", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerSendToTab, {
+      status: "replied",
+      reply: { filled: true },
+    });
+
+    const { chrome, nativeTabsCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const reply = await (tabs.sendMessage as TabsSendMessage)(7, { kind: "fill" }, { frameId: 12 });
+
+    expect(reply).toEqual({ filled: true });
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerSendToTab)[0]?.body).toEqual({
+      tabId: 7,
+      message: { kind: "fill" },
+      frameId: 12,
+    });
+
+    // Nothing went out natively: the tab was another session's
+    expect(nativeTabsCalls).toEqual([]);
+  });
+
+  test("a tab of the worker's own session falls through to the native call", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerSendToTab, { status: "ownSession" });
+
+    const { chrome, nativeTabsCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const reply = await (tabs.sendMessage as TabsSendMessage)(9, "hello");
+
+    expect(reply).toBe("native reply");
+    expect(nativeTabsCalls).toEqual([[9, "hello"]]);
+  });
+
+  test("a callback hears the relay's error the way Chrome reports one", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerSendToTab, {
+      status: "noTarget",
+      error: "No tab with id: 404.",
+    });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const errors: (string | undefined)[] = [];
+
+    (tabs.sendMessage as (...callArguments: unknown[]) => void)(404, "hello", () => {
+      errors.push((runtime.lastError as { message?: string } | undefined)?.message);
+    });
+
+    await waitFor(() => errors.length === 1, "the callback");
+
+    expect(errors).toEqual(["No tab with id: 404."]);
+    expect(runtime.lastError).toBeUndefined();
+  });
+
+  test("a runtime broadcast goes out natively and to the shimmed pages at once", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerBroadcast, { status: "noListener" });
+
+    const { chrome, nativeRuntimeSendMessageCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    // The worker's own session answers; the shimmed pages have no listener
+    const reply = await (runtime.sendMessage as TabsSendMessage)({ kind: "locked" });
+
+    expect(reply).toBe("native page reply");
+    expect(nativeRuntimeSendMessageCalls).toEqual([[{ kind: "locked" }]]);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerBroadcast)[0]?.body).toEqual({
+      message: { kind: "locked" },
+    });
+  });
+
+  test("a broadcast only a shimmed page answers is answered by it", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerBroadcast, {
+      status: "replied",
+      reply: "the inline menu",
+    });
+
+    const { chrome, setNativeRuntimeError } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    // Nothing of the extension is open in the worker's own session
+    setNativeRuntimeError(RECEIVING_END_ERROR);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    expect(await (runtime.sendMessage as TabsSendMessage)("who is there")).toBe("the inline menu");
+  });
+
+  test("a message aimed at another extension stays native", async () => {
+    stubBridge();
+
+    const { chrome, nativeRuntimeSendMessageCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    (runtime.sendMessage as (...callArguments: unknown[]) => void)(
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "hello",
+    );
+
+    expect(nativeRuntimeSendMessageCalls).toEqual([["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "hello"]]);
+  });
+
+  test("tabs.connect opens a relayed port that posts and disconnects", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerConnectToTab, { status: "connected" });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const port = (tabs.connect as TabsConnect)(7, { name: "fill", frameId: 12 });
+
+    port.postMessage("marco");
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.workerPortPost);
+
+    const connectBody = stub.postsTo(RUNTIME_PROXY_PATHS.workerConnectToTab)[0]?.body;
+
+    expect(connectBody).toMatchObject({ tabId: 7, name: "fill", frameId: 12 });
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortPost)[0]?.body).toMatchObject({
+      portId: connectBody?.portId,
+      message: "marco",
+    });
+
+    port.disconnect();
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.workerPortDisconnect);
+  });
+
+  test("tabs.connect to the worker's own session carries the native port's traffic", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerConnectToTab, { status: "ownSession" });
+
+    const { chrome, nativeConnectCalls, nativePort } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const port = (tabs.connect as TabsConnect)(9, { name: "fill" });
+
+    const heard: unknown[] = [];
+
+    port.onMessage.addListener((message) => {
+      heard.push(message);
+    });
+
+    port.postMessage("marco");
+
+    await waitFor(() => nativePort.posted.length === 1, "the native post");
+
+    expect(nativeConnectCalls[0]).toEqual([9, { name: "fill" }]);
+    expect(nativePort.posted).toEqual(["marco"]);
+
+    for (const listener of nativePort.messageListeners) {
+      listener("polo");
+    }
+
+    expect(heard).toEqual(["polo"]);
+
+    // Nothing was relayed for a port that turned out to be the worker's own
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortPost)).toEqual([]);
+  });
+
+  test("a page that had nothing to hand the port to reaches onDisconnect with lastError", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerConnectToTab, { status: "connected" });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const port = (tabs.connect as TabsConnect)(7);
+
+    const errors: (string | undefined)[] = [];
+
+    port.onDisconnect.addListener(() => {
+      errors.push((runtime.lastError as { message?: string } | undefined)?.message);
+    });
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.workerConnectToTab);
+
+    const portId = stub.postsTo(RUNTIME_PROXY_PATHS.workerConnectToTab)[0]?.body.portId as string;
+
+    // The relay's word for the last bound frame having had no listener, which
+    // Chrome puts on `lastError` rather than reporting as a clean hang-up
+    stub.pushJob({
+      type: "portDisconnect",
+      jobId: "job-9",
+      portId,
+      error: RECEIVING_END_ERROR,
+    });
+
+    await waitFor(() => errors.length === 1, "the disconnect");
+
+    expect(errors).toEqual([RECEIVING_END_ERROR]);
+  });
+
+  test("a tab that has no port to open disconnects at once", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerConnectToTab, { status: "noListener" });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    const port = (tabs.connect as TabsConnect)(7);
+
+    const errors: (string | undefined)[] = [];
+
+    port.onDisconnect.addListener(() => {
+      errors.push((runtime.lastError as { message?: string } | undefined)?.message);
+    });
+
+    await waitFor(() => errors.length === 1, "the disconnect");
+
+    expect(errors).toEqual([RECEIVING_END_ERROR]);
   });
 });
