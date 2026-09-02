@@ -57,8 +57,18 @@ function createTabDetails(contents: WebContents): RuntimeProxyTab {
     // The page is speaking, which is the closest this layer has to "in front"
     active: true,
     highlighted: true,
+    selected: true,
     pinned: false,
     incognito: false,
+    status: contents.isLoading() ? "loading" : "complete",
+    // Tab groups are Chrome UI the embedder has none of, which is what
+    // Chrome's own `TAB_GROUP_ID_NONE` says
+    groupId: -1,
+    // Nothing here plays audio through an extension's eyes, and Meru never
+    // discards a page out from under one
+    audible: false,
+    discarded: false,
+    autoDiscardable: true,
   };
 }
 
@@ -83,14 +93,22 @@ export type ReconstructSenderOptions = {
  * The sender is built from the frame the bridge recorded as the request's
  * caller, never from any frame that merely resembles the report: with one URL
  * open in two tabs of a session, the message is attributed to the tab that
- * sent it. The shim's self-report still has to match that frame — same URL,
+ * sent it. The shim's self-report still has to match that frame — same origin,
  * same side of the top-frame line — and a report the caller's own frame does
  * not back delivers as `id` alone rather than as the URL it asked for: an
  * extension checking `sender.origin` against its own — which is what 1Password
  * does before it will answer — then refuses it, which is the right way for an
- * unverifiable claim to end. A mismatch is a document that navigated between
- * the shim reading `location.href` and the request being handled, or a report
- * that was never true, and neither is delivered.
+ * unverifiable claim to end.
+ *
+ * Origin rather than the exact URL, because the exact URL made a same-document
+ * navigation — a `pushState` between the shim reading `location.href` and the
+ * bridge handling the request — deliver as `id` alone, and Gmail pushStates
+ * constantly. Nothing is given up: the sender's `url` and `origin` are read off
+ * the frame either way, so the report buys no field of its own, and a context
+ * can no more claim a foreign origin than it could a foreign URL — the caller
+ * stamp is a frame Chromium recorded, not a claim. What the check still catches
+ * is a report from a context of some other origin entirely, which is a report
+ * that was never true.
  *
  * A top-level extension page is no tab, so it stops there. Chrome gives an
  * action popup's messages a sender of `id`, `url` and `origin` alone, and that
@@ -112,7 +130,10 @@ export function reconstructSender({
     return { id: extensionId };
   }
 
-  if (senderFrame.url !== report.url || (senderFrame.parent === null) !== report.isTopFrame) {
+  if (
+    getOrigin(senderFrame.url) !== getOrigin(report.url) ||
+    (senderFrame.parent === null) !== report.isTopFrame
+  ) {
     return { id: extensionId };
   }
 
@@ -126,6 +147,12 @@ export function reconstructSender({
     id: extensionId,
     url: senderFrame.url,
     origin: getOrigin(senderFrame.url),
+    // A live caller frame is by definition the active document of its frame.
+    // `documentId` has no Electron source — nothing exposes Chromium's
+    // per-document token — and stays absent rather than being invented, as
+    // does `tlsChannelId`, which Chrome fills only for an extension that asked
+    // for it in its manifest
+    documentLifecycle: "active",
   };
 
   const isExtensionPage =

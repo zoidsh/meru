@@ -26,11 +26,13 @@ function createContents(
   title: string,
   url: string,
   contentsSession: Session = session,
+  isLoading = false,
 ) {
   return {
     id: contentsId,
     session: contentsSession,
     isDestroyed: () => false,
+    isLoading: () => isLoading,
     getURL: () => url,
     getTitle: () => title,
   } as unknown as WebContents;
@@ -75,6 +77,7 @@ describe("reconstructSender", () => {
       id: EXTENSION_ID,
       url: "https://accounts.google.com/signin",
       origin: "https://accounts.google.com",
+      documentLifecycle: "active",
       frameId: 0,
       tab: {
         id: 7,
@@ -84,8 +87,14 @@ describe("reconstructSender", () => {
         index: -1,
         active: true,
         highlighted: true,
+        selected: true,
         pinned: false,
         incognito: false,
+        status: "complete",
+        groupId: -1,
+        audible: false,
+        discarded: false,
+        autoDiscardable: true,
       },
     });
   });
@@ -154,6 +163,7 @@ describe("reconstructSender", () => {
       id: EXTENSION_ID,
       url: popupUrl,
       origin: `chrome-extension://${EXTENSION_ID}`,
+      documentLifecycle: "active",
     });
   });
 
@@ -179,6 +189,45 @@ describe("reconstructSender", () => {
     expect(sender.origin).toBe(`chrome-extension://${EXTENSION_ID}`);
   });
 
+  test("a tab still loading says so, which is the one tab field with a source", () => {
+    const pageUrl = "https://accounts.google.com/signin";
+
+    const frame = createFrame(pageUrl, 12);
+
+    const contents = createContents(7, "Sign in", pageUrl, session, true);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: pageUrl, isTopFrame: true },
+      senderFrame: frame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[frame, contents]]),
+    });
+
+    expect(sender.tab?.status).toBe("loading");
+  });
+
+  test("a same-document navigation since the report still delivers the frame's own URL", () => {
+    // What Gmail does constantly, and what the exact-URL check used to answer
+    // with `id` alone: the shim read `location.href`, the page pushStated, and
+    // the request reached the bridge against a frame at the newer URL
+    const frame = createFrame("https://mail.google.com/mail/u/0/#inbox", 12);
+
+    const contents = createContents(7, "Gmail", "https://mail.google.com/mail/u/0/#inbox");
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: "https://mail.google.com/mail/u/0/", isTopFrame: true },
+      senderFrame: frame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[frame, contents]]),
+    });
+
+    // The frame's URL, never the report's: the report buys no field of its own
+    expect(sender.url).toBe("https://mail.google.com/mail/u/0/#inbox");
+    expect(sender.origin).toBe("https://mail.google.com");
+  });
+
   test("a request the bridge recorded no frame for delivers the id alone", () => {
     const sender = reconstructSender({
       session,
@@ -193,7 +242,7 @@ describe("reconstructSender", () => {
     expect(sender).toEqual({ id: EXTENSION_ID });
   });
 
-  test("a report the caller's frame does not back is not honored", () => {
+  test("a report from another origin is not honored", () => {
     const frame = createFrame("https://accounts.google.com/", 12);
 
     const contents = createContents(7, "Sign in", "https://accounts.google.com/");
