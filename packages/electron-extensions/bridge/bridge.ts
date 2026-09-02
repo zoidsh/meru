@@ -88,9 +88,21 @@ type ExtensionBridgeSession = {
   getExtensionId: (bridgeToken: string) => string | undefined;
 };
 
+/**
+ * A frame recorded as a caller, with the token of the document it was showing
+ * at the time. Electron keeps one `WebFrameMain` per frame tree node and
+ * re-points it at the new `RenderFrameHost` when the frame navigates, so the
+ * instance outliving the request says nothing about the document that made it;
+ * the token is what changes underneath.
+ */
+type RecordedCallerFrame = {
+  frame: WebFrameMain;
+  frameToken: string;
+};
+
 type ExtensionBridgeSessionState = ExtensionBridgeSession & {
   /** The frames recorded as callers of in-flight requests, by stamped nonce. */
-  callerFramesByNonce: Map<string, WebFrameMain>;
+  callerFramesByNonce: Map<string, RecordedCallerFrame>;
   /** Authenticated bodies being read right now, against the concurrency cap. */
   bodyReadCount: number;
 };
@@ -221,7 +233,10 @@ export class ExtensionBridge {
 
     const callerNonce = randomUUID();
 
-    callerFramesByNonce.set(callerNonce, details.frame);
+    callerFramesByNonce.set(callerNonce, {
+      frame: details.frame,
+      frameToken: details.frame.frameToken,
+    });
 
     if (callerFramesByNonce.size > MAX_RECORDED_CALLER_FRAMES) {
       const oldestNonce = callerFramesByNonce.keys().next().value;
@@ -237,8 +252,18 @@ export class ExtensionBridge {
   }
 
   /**
-   * The frame recorded for the request's stamped nonce, consumed on the way
-   * out so a nonce answers exactly once, and only while the frame is alive.
+   * The frame recorded for the request's stamped nonce, consumed on the way out
+   * so a nonce answers exactly once, and only while the frame is alive and
+   * still showing the document that made the request.
+   *
+   * The token is the second half of that. A `WebFrameMain` survives its own
+   * document: Electron tracks one per frame tree node and re-points it at the
+   * new `RenderFrameHost`, so a frame that navigated between the stamp and the
+   * handler is alive, reads as the new document's URL and title, and would
+   * otherwise be handed over as the sender of a message the old document sent.
+   * A cross-document navigation swaps the `RenderFrameHost` and so the token; a
+   * same-document one — `pushState`, a hash change — keeps both, which is the
+   * case that must still go through.
    */
   private takeCallerFrame(sessionState: ExtensionBridgeSessionState, request: GlobalRequest) {
     const callerNonce = request.headers.get(EXTENSION_BRIDGE_CALLER_HEADER);
@@ -247,11 +272,15 @@ export class ExtensionBridge {
       return undefined;
     }
 
-    const callerFrame = sessionState.callerFramesByNonce.get(callerNonce);
+    const recorded = sessionState.callerFramesByNonce.get(callerNonce);
 
     sessionState.callerFramesByNonce.delete(callerNonce);
 
-    return callerFrame && !callerFrame.isDestroyed() ? callerFrame : undefined;
+    if (!recorded || recorded.frame.isDestroyed()) {
+      return undefined;
+    }
+
+    return recorded.frame.frameToken === recorded.frameToken ? recorded.frame : undefined;
   }
 
   /**

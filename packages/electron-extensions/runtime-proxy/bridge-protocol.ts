@@ -112,6 +112,12 @@ export type RuntimeProxyTab = {
   highlighted: boolean;
   pinned: boolean;
   incognito: boolean;
+  status: "loading" | "complete";
+  groupId: number;
+  selected: boolean;
+  audible: boolean;
+  discarded: boolean;
+  autoDiscardable: boolean;
 };
 
 /**
@@ -129,6 +135,12 @@ export type RuntimeProxySender = {
   origin?: string;
   frameId?: number;
   tab?: RuntimeProxyTab;
+  /**
+   * Always `"active"`: the frame is the one Chromium recorded as the request's
+   * caller and the sender is built while it is alive, so it is never a
+   * prerendered or back-forward-cached document.
+   */
+  documentLifecycle?: "active";
 };
 
 /**

@@ -185,6 +185,8 @@ function createPage(shimSession: Session, contentsId = 7, url = PAGE_URL) {
     id: contentsId,
     session: shimSession,
     isDestroyed: () => false,
+    isLoading: () => false,
+    isCurrentlyAudible: () => false,
     getURL: () => url,
     getTitle: () => "Sign in",
   } as unknown as WebContents;

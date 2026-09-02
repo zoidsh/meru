@@ -16,8 +16,8 @@ const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
 const BRIDGE_TOKEN = "bridge-token";
 
-function createFrame(url: string): WebFrameMain {
-  return { url, parent: null, isDestroyed: () => false } as unknown as WebFrameMain;
+function createFrame(url: string, frameToken = `token-${url}`): WebFrameMain {
+  return { url, parent: null, frameToken, isDestroyed: () => false } as unknown as WebFrameMain;
 }
 
 /** What the facade builds, plus the case it never builds: no token at all. */
@@ -317,6 +317,71 @@ describe("ExtensionBridge", () => {
     });
 
     await request("/echo", {}, { frame, token: BRIDGE_TOKEN });
+
+    expect(handledSenderFrame).toBe(frame);
+  });
+
+  test("a frame that navigated between the stamp and the handler names no sender frame", async () => {
+    const { session, stampHeaders, sendWithHeaders } = createSession();
+
+    const bridge = createBridge(session);
+
+    /*
+     * What Electron hands back after a cross-document navigation: the same
+     * `WebFrameMain`, alive, re-pointed at the new `RenderFrameHost` and
+     * reading as the page it now shows. Only the frame token says the document
+     * that made the request has gone.
+     */
+    const frame = createFrame("https://accounts.google.com/", "document-1");
+
+    const navigatingFrame = frame as unknown as { url: string; frameToken: string };
+
+    let handledSenderFrame: WebFrameMain | undefined;
+
+    bridge.handle("/echo", ({ senderFrame, headers }) => {
+      handledSenderFrame = senderFrame;
+
+      return new Response(null, { status: 204, headers });
+    });
+
+    const stampedHeaders = stampHeaders(bridgeUrl("/echo", BRIDGE_TOKEN), {
+      frame,
+      token: BRIDGE_TOKEN,
+    });
+
+    navigatingFrame.url = "https://accounts.google.com/signin";
+
+    navigatingFrame.frameToken = "document-2";
+
+    await sendWithHeaders("/echo", "{}", stampedHeaders, BRIDGE_TOKEN);
+
+    expect(handledSenderFrame).toBeUndefined();
+  });
+
+  test("a same-document navigation keeps its frame, since the document is the same", async () => {
+    const { session, stampHeaders, sendWithHeaders } = createSession();
+
+    const bridge = createBridge(session);
+
+    // A `pushState`: the `RenderFrameHost`, and so the token, are untouched
+    const frame = createFrame("https://mail.google.com/mail/u/0/", "document-1");
+
+    let handledSenderFrame: WebFrameMain | undefined;
+
+    bridge.handle("/echo", ({ senderFrame, headers }) => {
+      handledSenderFrame = senderFrame;
+
+      return new Response(null, { status: 204, headers });
+    });
+
+    const stampedHeaders = stampHeaders(bridgeUrl("/echo", BRIDGE_TOKEN), {
+      frame,
+      token: BRIDGE_TOKEN,
+    });
+
+    (frame as unknown as { url: string }).url = "https://mail.google.com/mail/u/0/#inbox";
+
+    await sendWithHeaders("/echo", "{}", stampedHeaders, BRIDGE_TOKEN);
 
     expect(handledSenderFrame).toBe(frame);
   });

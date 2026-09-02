@@ -37,6 +37,12 @@ export type ProbeResults = {
   workerClosedPort: boolean;
   /** Whether the worker's event log recorded this context closing its own port. */
   selfCloseSeenByWorker: boolean;
+  /**
+   * The name of a port this context opened and deliberately left open, or
+   * `null` if it never came up. Nothing in this context will ever close it, so
+   * the worker hearing it disconnect means the context itself went away.
+   */
+  openPortName: string | null;
 };
 
 function delay(durationMs: number) {
@@ -196,6 +202,20 @@ async function probeSelfClose(runtime: FixtureRuntime, contextId: string): Promi
   return false;
 }
 
+/**
+ * Opens a port, proves it is live, and leaves it open — what a page that
+ * navigates away without disconnecting leaves behind. Its name goes into the
+ * results so a test can watch the worker's log for the disconnect that the
+ * context going away should produce.
+ */
+async function probeOpenPort(runtime: FixtureRuntime, contextId: string): Promise<string | null> {
+  const portName = `left-open:${contextId}`;
+
+  const port = runtime.connect({ name: portName });
+
+  return (await portRoundTrip(port, contextId)) ? portName : null;
+}
+
 export async function runProbes(): Promise<ProbeResults> {
   const runtime = getChromeRuntime();
 
@@ -217,5 +237,6 @@ export async function runProbes(): Promise<ProbeResults> {
     port: await probePort(runtime, contextId),
     workerClosedPort: await probeWorkerClosedPort(runtime, contextId),
     selfCloseSeenByWorker: await probeSelfClose(runtime, contextId),
+    openPortName: await probeOpenPort(runtime, contextId),
   };
 }
