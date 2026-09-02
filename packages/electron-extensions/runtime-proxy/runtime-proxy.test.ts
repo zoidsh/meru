@@ -11,6 +11,7 @@ import { ExtensionBridge } from "../bridge/bridge";
 import { getExtensionBridgeUrl } from "../bridge/protocol";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
+  EXTENSION_SCHEME_PREFIX,
   PORT_CLOSED_ERROR,
   RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
@@ -18,6 +19,12 @@ import {
   type RuntimeProxyPortFrame,
 } from "./bridge-protocol";
 import { RuntimeProxy, type RuntimeProxyOptions } from "./runtime-proxy";
+import {
+  STORAGE_ACCESS_DENIED_ERROR,
+  STORAGE_ACCESS_LEVEL_CONTEXT_ERROR,
+  STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageCall,
+} from "./storage-protocol";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
@@ -952,4 +959,274 @@ describe("RuntimeProxy", () => {
 test("the failure statuses map to Chrome's own words", () => {
   expect(RECEIVING_END_ERROR).toBe("Could not establish connection. Receiving end does not exist.");
   expect(PORT_CLOSED_ERROR).toBe("The message port closed before a response was received.");
+});
+
+/**
+ * The storage half of the proxy, through the same bridge and the same two fake
+ * sessions: a shimmed context's `chrome.storage` call reaches the worker as a
+ * job, and the two refusals Chromium would have made in the caller's own
+ * process are made here instead, because the call is answered in a privileged
+ * one that Chromium would never refuse.
+ */
+describe("RuntimeProxy storage", () => {
+  const EXTENSION_PAGE_URL = `${EXTENSION_SCHEME_PREFIX}${EXTENSION_ID}/popup.html`;
+
+  /** A frame of the shim's session on the extension's own origin. */
+  function createExtensionPageFrame() {
+    return {
+      url: EXTENSION_PAGE_URL,
+      parent: null,
+      isDestroyed: () => false,
+    } as unknown as WebFrameMain;
+  }
+
+  function sendStorageCall(
+    harness: ReturnType<typeof createHarness>,
+    call: RuntimeProxyStorageCall,
+    { callerFrame = harness.page.frame, url = PAGE_URL } = {},
+  ) {
+    return harness.shimSession.request(
+      RUNTIME_PROXY_PATHS.storageCall,
+      SHIM_TOKEN,
+      { call, sender: { url, isTopFrame: true } },
+      callerFrame,
+    );
+  }
+
+  function reportAccessLevel(
+    harness: ReturnType<typeof createHarness>,
+    body: Record<string, unknown>,
+  ) {
+    return harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.workerStorageAccessLevel,
+      WORKER_TOKEN,
+      body,
+    );
+  }
+
+  test("carries a call to the worker and its answer back", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    const callResponse = sendStorageCall(harness, {
+      area: "local",
+      method: "get",
+      arguments: ["unlocked"],
+    });
+
+    const [job] = await stream.waitForJobs(1);
+
+    expect(job).toEqual({
+      type: "storage",
+      jobId: (job as { jobId: string }).jobId,
+      call: { area: "local", method: "get", arguments: ["unlocked"] },
+      isTrustedContext: false,
+    });
+
+    await harness.ackJob((job as { jobId: string }).jobId);
+
+    await harness.replyToJob((job as { jobId: string }).jobId, {
+      status: "ok",
+      value: { unlocked: true },
+    });
+
+    expect(await (await callResponse).json()).toEqual({
+      status: "ok",
+      value: { unlocked: true },
+    });
+  });
+
+  test("wakes a stopped worker for a storage call, like any other job", async () => {
+    const harness = createHarness();
+
+    void sendStorageCall(harness, { area: "local", method: "get", arguments: [] });
+
+    await waitFor(() => harness.workerSession.workerStarts.length > 0, "the worker wake");
+
+    expect(harness.workerSession.workerStarts).toEqual([EXTENSION_SCOPE]);
+  });
+
+  test("a call that never reaches the store says so, rather than borrowing a messaging error", async () => {
+    const harness = createHarness();
+
+    harness.proxy.teardownSession(harness.workerSession.session);
+
+    const callResponse = await sendStorageCall(harness, {
+      area: "local",
+      method: "get",
+      arguments: [],
+    });
+
+    expect(await callResponse.json()).toEqual({
+      status: "error",
+      message: STORAGE_UNAVAILABLE_ERROR,
+    });
+  });
+
+  test("a content script is refused session storage, and an extension page is not", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    const refused = await sendStorageCall(harness, {
+      area: "session",
+      method: "get",
+      arguments: [],
+    });
+
+    expect(await refused.json()).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    // Nothing was relayed: the refusal is the whole answer
+    expect(stream.jobs).toEqual([]);
+
+    void sendStorageCall(
+      harness,
+      { area: "session", method: "get", arguments: [] },
+      { callerFrame: createExtensionPageFrame(), url: EXTENSION_PAGE_URL },
+    );
+
+    const [job] = await stream.waitForJobs(1);
+
+    expect((job as { type: string }).type).toBe("storage");
+  });
+
+  test("the level the worker reports is what a content script is held to", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    // 1Password closes its persistent store, which Chrome leaves open
+    await reportAccessLevel(harness, { area: "local", accessLevel: "TRUSTED_CONTEXTS" });
+
+    const refused = await sendStorageCall(harness, {
+      area: "local",
+      method: "get",
+      arguments: [],
+    });
+
+    expect(await refused.json()).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    await reportAccessLevel(harness, {
+      area: "local",
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+    });
+
+    void sendStorageCall(harness, { area: "local", method: "get", arguments: [] });
+
+    await stream.waitForJobs(1);
+  });
+
+  test("a queued call is refused again when the worker's level arrives while it waits", async () => {
+    const harness = createHarness();
+
+    // Nothing parked, so the call is queued behind a wake and measured against
+    // the permissive default it arrives under
+    const callResponse = sendStorageCall(harness, {
+      area: "local",
+      method: "get",
+      arguments: ["unlocked"],
+    });
+
+    await waitFor(() => harness.workerSession.workerStarts.length > 0, "the worker wake");
+
+    // The worker boots and closes the area, which is 1Password's own shape
+    await reportAccessLevel(harness, { area: "local", accessLevel: "TRUSTED_CONTEXTS" });
+
+    const stream = await harness.openWorkerStream();
+
+    expect(await (await callResponse).json()).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    // And it never reached the worker
+    expect(stream.jobs).toEqual([]);
+  });
+
+  test("only the worker session may report an access level", async () => {
+    const harness = createHarness();
+
+    const response = await harness.shimSession.request(
+      RUNTIME_PROXY_PATHS.workerStorageAccessLevel,
+      SHIM_TOKEN,
+      { area: "local", accessLevel: "TRUSTED_CONTEXTS" },
+      harness.page.frame,
+    );
+
+    expect(response.status).toBe(403);
+
+    // And the refused report changed nothing
+    const stream = await harness.openWorkerStream();
+
+    void sendStorageCall(harness, { area: "local", method: "get", arguments: [] });
+
+    await stream.waitForJobs(1);
+  });
+
+  test("a content script never sets an access level", async () => {
+    const harness = createHarness();
+
+    const refused = await sendStorageCall(harness, {
+      area: "local",
+      method: "setAccessLevel",
+      arguments: [{ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" }],
+    });
+
+    expect(await refused.json()).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_LEVEL_CONTEXT_ERROR,
+    });
+  });
+
+  test("the levels go away with the worker session that held the store", async () => {
+    const harness = createHarness();
+
+    await reportAccessLevel(harness, { area: "local", accessLevel: "TRUSTED_CONTEXTS" });
+
+    harness.proxy.teardownSession(harness.workerSession.session);
+
+    harness.proxy.setWorkerSession(harness.workerSession.session);
+
+    const stream = await harness.openWorkerStream();
+
+    void sendStorageCall(harness, { area: "local", method: "get", arguments: [] });
+
+    await stream.waitForJobs(1);
+  });
+
+  test("a malformed call is refused before anything is relayed", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    const response = await harness.shimSession.request(
+      RUNTIME_PROXY_PATHS.storageCall,
+      SHIM_TOKEN,
+      { call: { area: "cookies", method: "get", arguments: [] }, sender: SENDER_REPORT },
+      harness.page.frame,
+    );
+
+    expect(response.status).toBe(400);
+
+    expect(stream.jobs).toEqual([]);
+  });
+
+  test("the worker session's own contexts are refused: their storage is the real one", async () => {
+    const harness = createHarness();
+
+    const response = await harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.storageCall,
+      WORKER_TOKEN,
+      { call: { area: "local", method: "get", arguments: [] }, sender: SENDER_REPORT },
+    );
+
+    expect(response.status).toBe(400);
+  });
 });

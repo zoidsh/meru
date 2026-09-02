@@ -19,6 +19,7 @@ import {
   type RuntimeProxySender,
   type RuntimeProxySendMessageRequest,
   type RuntimeProxySendMessageResult,
+  type RuntimeProxyStorageCallRequest,
   type RuntimeProxyWorkerAckRequest,
   type RuntimeProxyWorkerPortDisconnectRequest,
   type RuntimeProxyWorkerPortPostRequest,
@@ -26,6 +27,18 @@ import {
 } from "./bridge-protocol";
 import { type PageContext, PageStreams } from "./page-stream";
 import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
+import {
+  refuseStorageCall,
+  STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageCall,
+  type RuntimeProxyStorageResult,
+} from "./storage-protocol";
+import {
+  isTrustedStorageCaller,
+  parseStorageAccessLevelReport,
+  parseStorageCall,
+  StorageAccessLevels,
+} from "./storage-proxy";
 import { createWorkerSender, WorkerToPage } from "./worker-to-page";
 
 type RelayJobBase = {
@@ -68,7 +81,16 @@ type PortDisconnectJob = RelayJobBase & {
   error: string | undefined;
 };
 
-type RelayJob = SendMessageJob | ConnectJob | PortMessageJob | PortDisconnectJob;
+type StorageJob = RelayJobBase & {
+  kind: "storage";
+  call: RuntimeProxyStorageCall;
+  /** Decided from the caller's frame when the call arrived, and kept. */
+  isTrustedContext: boolean;
+  settle: (result: RuntimeProxyStorageResult) => void;
+  isSettled: boolean;
+};
+
+type RelayJob = SendMessageJob | ConnectJob | PortMessageJob | PortDisconnectJob | StorageJob;
 
 type WorkerStream = {
   extensionId: string;
@@ -207,6 +229,9 @@ export class RuntimeProxy {
 
   private workerToPage: WorkerToPage;
 
+  /** What each extension's worker last said about who may reach an area. */
+  private storageAccessLevels = new StorageAccessLevels();
+
   constructor({
     logger,
     getWebContentsFromFrame,
@@ -290,6 +315,25 @@ export class RuntimeProxy {
         }
 
         return new Response(null, { status: 204, headers });
+      },
+    );
+
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.storageCall,
+      ({ session, extensionId, senderFrame, body, headers }) =>
+        this.handleStorageCall(session, extensionId, senderFrame, body, headers),
+    );
+
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.workerStorageAccessLevel,
+      ({ session, extensionId, body, headers }) => {
+        const report = parseStorageAccessLevelReport(body);
+
+        if (session === this.workerSession && report) {
+          this.storageAccessLevels.set(extensionId, report.area, report.accessLevel);
+        }
+
+        return new Response(null, { status: session === this.workerSession ? 204 : 403, headers });
       },
     );
 
@@ -506,6 +550,9 @@ export class RuntimeProxy {
 
       this.scopesByVersionId.clear();
 
+      // The levels described a store that went away with the session
+      this.storageAccessLevels.clear();
+
       return;
     }
 
@@ -557,6 +604,65 @@ export class RuntimeProxy {
     });
 
     return Response.json(result, { headers });
+  }
+
+  /**
+   * One `chrome.storage` call from a shimmed context, refused here or handed
+   * to the worker as a job like any other — same queue, same wake of a stopped
+   * worker, same ack and redelivery, same in-flight backstop.
+   *
+   * The two refusals are Chromium's own and have to be made here rather than
+   * in the worker: the call is answered in a privileged context, which
+   * Chromium would never refuse, so the check a content script would have met
+   * natively is applied before the call is relayed at all.
+   */
+  private async handleStorageCall(
+    session: Session,
+    extensionId: string,
+    senderFrame: WebFrameMain | undefined,
+    body: Record<string, unknown>,
+    headers: Record<string, string>,
+  ) {
+    const request = body as unknown as RuntimeProxyStorageCallRequest;
+
+    const call = parseStorageCall(request.call);
+
+    if (!call || !parseSenderReport(request.sender) || session === this.workerSession) {
+      return new Response(null, { status: 400, headers });
+    }
+
+    const isTrustedContext = isTrustedStorageCaller(extensionId, senderFrame);
+
+    const refusal = this.refuseStorage(extensionId, call, isTrustedContext);
+
+    if (refusal !== undefined) {
+      return Response.json({ status: "error", message: refusal }, { headers });
+    }
+
+    const result = await new Promise<RuntimeProxyStorageResult>((resolve) => {
+      this.enqueueJob(
+        this.createJob(session, extensionId, "storage", {
+          call,
+          isTrustedContext,
+          settle: resolve,
+          isSettled: false,
+        }),
+      );
+    });
+
+    return Response.json(result, { headers });
+  }
+
+  private refuseStorage(
+    extensionId: string,
+    call: RuntimeProxyStorageCall,
+    isTrustedContext: boolean,
+  ) {
+    return refuseStorageCall(
+      call,
+      isTrustedContext,
+      this.storageAccessLevels.get(extensionId, call.area),
+    );
   }
 
   private handleConnect(
@@ -673,6 +779,19 @@ export class RuntimeProxy {
         sendMessageResult?.status === "replied" || sendMessageResult?.status === "noListener"
           ? sendMessageResult
           : { status: "closed" },
+      );
+
+      return;
+    }
+
+    if (job.kind === "storage") {
+      const storageResult = result as RuntimeProxyStorageResult;
+
+      this.settleStorage(
+        job,
+        storageResult?.status === "ok" || storageResult?.status === "error"
+          ? storageResult
+          : { status: "error", message: STORAGE_UNAVAILABLE_ERROR },
       );
 
       return;
@@ -883,6 +1002,24 @@ export class RuntimeProxy {
     const jobs = queue.splice(0);
 
     for (const [index, job] of jobs.entries()) {
+      /*
+       * A job that waited for a worker to wake waited across the worker's own
+       * startup, and its `setAccessLevel` may have arrived in between — so the
+       * level the call was measured against when it arrived is not necessarily
+       * the level in force now. The worker checks again at dispatch against a
+       * record that cannot be stale; this is the early refusal, which keeps a
+       * call that cannot succeed from reaching it at all.
+       */
+      if (job.kind === "storage") {
+        const refusal = this.refuseStorage(job.extensionId, job.call, job.isTrustedContext);
+
+        if (refusal !== undefined) {
+          this.settleStorage(job, { status: "error", message: refusal });
+
+          continue;
+        }
+      }
+
       job.state = "handed";
 
       job.attempts += 1;
@@ -1059,6 +1196,14 @@ export class RuntimeProxy {
       return;
     }
 
+    // Neither of Chrome's messaging failures means anything to a storage
+    // call: what the caller has to hear is that the store was not reached
+    if (job.kind === "storage") {
+      this.settleStorage(job, { status: "error", message: STORAGE_UNAVAILABLE_ERROR });
+
+      return;
+    }
+
     const port = this.ports.get(job.portId);
 
     if (!port) {
@@ -1079,6 +1224,18 @@ export class RuntimeProxy {
   }
 
   private settleSendMessage(job: SendMessageJob, result: RuntimeProxySendMessageResult) {
+    if (job.isSettled) {
+      return;
+    }
+
+    job.isSettled = true;
+
+    this.removeInFlightJob(job);
+
+    job.settle(result);
+  }
+
+  private settleStorage(job: StorageJob, result: RuntimeProxyStorageResult) {
     if (job.isSettled) {
       return;
     }
@@ -1287,6 +1444,13 @@ export class RuntimeProxy {
           jobId: job.jobId,
           portId: job.portId,
           error: job.error,
+        };
+      case "storage":
+        return {
+          type: "storage",
+          jobId: job.jobId,
+          call: job.call,
+          isTrustedContext: job.isTrustedContext,
         };
     }
   }

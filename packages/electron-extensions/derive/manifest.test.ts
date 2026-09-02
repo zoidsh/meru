@@ -312,9 +312,13 @@ describe("deriveManifest for a shared instance", () => {
     );
 
     expect(manifest.background?.service_worker).toBe("chrome-facade-service-worker.js");
+    // The relay parks its job stream from the last line rather than during its
+    // own evaluation, so no job reaches the worker before the extension's
+    // top-level code has run
     expect(serviceWorkerWrapper).toBe(
       "// Generated when the extension was derived, in place of its own service worker.\n" +
-        'import "./chrome-facade.js";\nimport "./chrome-runtime-proxy-relay.js";\nimport "./background.js";\n',
+        'import "./chrome-facade.js";\nimport "./chrome-runtime-proxy-relay.js";\nimport "./background.js";\n' +
+        "globalThis.__meruRuntimeProxyStartRelay?.();\n",
     );
   });
 
@@ -324,8 +328,22 @@ describe("deriveManifest for a shared instance", () => {
       { ...fileNames, sharedInstance: workerOptions },
     );
 
-    expect(serviceWorkerWrapper).toContain(
-      'importScripts("/chrome-facade.js", "/chrome-runtime-proxy-relay.js", "/background.js");',
+    expect(serviceWorkerWrapper).toBe(
+      "// Generated when the extension was derived, in place of its own service worker.\n" +
+        'importScripts("/chrome-facade.js", "/chrome-runtime-proxy-relay.js", "/background.js");\n' +
+        "globalThis.__meruRuntimeProxyStartRelay?.();\n",
+    );
+  });
+
+  test("a copy with no relay ends with its imports, exactly as before", () => {
+    const { serviceWorkerWrapper } = deriveManifest(
+      { background: { service_worker: "background.js", type: "module" } },
+      fileNames,
+    );
+
+    expect(serviceWorkerWrapper).toBe(
+      "// Generated when the extension was derived, in place of its own service worker.\n" +
+        'import "./chrome-facade.js";\nimport "./background.js";\n',
     );
   });
 

@@ -1,3 +1,4 @@
+import { RUNTIME_PROXY_RELAY_START_GLOBAL } from "../runtime-proxy/bridge-protocol";
 import { reachesClampedSite } from "./match-pattern";
 import { findWebAccessiblePattern, type WebAccessibleResources } from "./web-accessible";
 
@@ -30,6 +31,18 @@ export type DerivedManifest = {
  * background script. Static imports are the only vehicle: `import()` is banned
  * in service workers, and a script injected any other way runs too late or, on
  * Electron 43, not at all (see the injection-vehicle notes in the feature doc).
+ *
+ * With the runtime proxy's relay in the list, the wrapper ends by asking it to
+ * park its job stream, which is deliberately the last thing that happens.
+ * Chrome dispatches nothing to a service worker until its script has finished
+ * evaluating, so an extension calling `chrome.storage.setAccessLevel` at top
+ * level has always run it before the first message arrives; a relay that
+ * parked during its own module evaluation would take jobs before the
+ * extension's top-level code had said who may reach its storage. In the module
+ * form the imports are evaluated before this statement, top-level `await`
+ * included, and in the classic form `importScripts` is synchronous, so the
+ * ordering holds either way — and holds by construction rather than by the
+ * accident of evaluation order it relied on before.
  */
 function createServiceWorkerWrapper(
   facadeFileName: string,
@@ -44,11 +57,14 @@ function createServiceWorkerWrapper(
     (fileName): fileName is string => fileName !== undefined,
   );
 
+  const footer =
+    relayFileName === undefined ? "" : `globalThis.${RUNTIME_PROXY_RELAY_START_GLOBAL}?.();\n`;
+
   if (isModule) {
-    return `${header}${wrappedFileNames.map((fileName) => `import "./${fileName}";\n`).join("")}`;
+    return `${header}${wrappedFileNames.map((fileName) => `import "./${fileName}";\n`).join("")}${footer}`;
   }
 
-  return `${header}importScripts(${wrappedFileNames.map((fileName) => `"/${fileName}"`).join(", ")});\n`;
+  return `${header}importScripts(${wrappedFileNames.map((fileName) => `"/${fileName}"`).join(", ")});\n${footer}`;
 }
 
 /**

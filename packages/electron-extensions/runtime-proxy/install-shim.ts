@@ -2,6 +2,7 @@ import type { ChromeNamespace } from "../facade/lib/chrome";
 import type { RuntimeProxySenderReport } from "./bridge-protocol";
 import { createPageStreamClient } from "./page-stream-client";
 import { getContextSenderReport, installRuntimeProxyShim } from "./shim";
+import { installRuntimeProxyStorageShim } from "./storage-shim";
 
 /**
  * Where a context records that it has been shimmed. A content script's isolated
@@ -35,6 +36,12 @@ export type InstallShimOptions = {
  *
  * Returns the page-stream client on the run that installs, and nothing on the
  * runs that do not — which is what a test asserts on.
+ *
+ * The storage shadow is installed here for the same reason everything else is:
+ * one guard for the context, rather than each thing installed carrying its own.
+ * `installRuntimeProxyStorageShim` is idempotent on its own account too, since
+ * a second shadow of an area would leave its call ordering independent of the
+ * first's, but that is a backstop rather than the rule.
  */
 export function installShim({ getSenderReport, retryDelayMs }: InstallShimOptions = {}) {
   const contextGlobals = globalThis as unknown as Record<string, unknown>;
@@ -45,8 +52,10 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
 
   contextGlobals[INSTALLED_GLOBAL] = true;
 
+  const reportSender = getSenderReport ?? getContextSenderReport;
+
   const pageStreamClient = createPageStreamClient({
-    getSenderReport: getSenderReport ?? getContextSenderReport,
+    getSenderReport: reportSender,
     retryDelayMs,
   });
 
@@ -59,6 +68,8 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
 
     if (extensionApi) {
       installRuntimeProxyShim(extensionApi);
+
+      installRuntimeProxyStorageShim(extensionApi, { getSenderReport: reportSender });
 
       pageStreamClient.wrapRuntime(extensionApi);
     }

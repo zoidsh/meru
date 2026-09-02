@@ -32,7 +32,11 @@ export type CreateSharedExtensionInstanceOptions = {
  *
  * The whole feature hangs off the one `sharedInstance` option this creates a
  * value for. An embedder that never passes it runs exactly as before, and
- * removing the feature is removing that option and this directory.
+ * removing the feature is removing that option and this directory — plus the
+ * one line of `derive/manifest.ts` that ends the worker's wrapper by starting
+ * the relay, and the `RUNTIME_PROXY_RELAY_START_GLOBAL` it reads from
+ * `bridge-protocol.ts`, which is the only thing outside this directory that
+ * knows the proxy exists.
  */
 export function createSharedExtensionInstance({
   shimScriptPath,

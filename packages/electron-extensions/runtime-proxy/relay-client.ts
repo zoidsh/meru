@@ -17,6 +17,11 @@ import {
 import { dispatchMessage, firstReply, mirrorEvent } from "./message-dispatch";
 import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from "./native-api";
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
+import {
+  STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageCall,
+  type RuntimeProxyStorageResult,
+} from "./storage-protocol";
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -40,6 +45,15 @@ export type CreateRelayClientOptions = {
   retryDelayMs?: number;
   /** How many handled job ids to remember before forgetting the oldest. */
   maxRememberedJobIds?: number;
+  /**
+   * How a relayed `chrome.storage` call is answered against this session's own
+   * store (`storage-relay.ts`). Absent, storage calls are refused as an
+   * unreachable store, which is what a worker built without one would mean.
+   */
+  runStorageCall?: (
+    call: RuntimeProxyStorageCall,
+    isTrustedContext: boolean,
+  ) => Promise<RuntimeProxyStorageResult>;
 };
 
 /**
@@ -59,6 +73,7 @@ export type CreateRelayClientOptions = {
 export function createRelayClient({
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
   maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
+  runStorageCall,
 }: CreateRelayClientOptions = {}) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -153,13 +168,17 @@ export function createRelayClient({
    */
   const postReply = (
     jobId: string,
-    result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult,
+    result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult | RuntimeProxyStorageResult,
   ) => {
     try {
       return postToBridge(RUNTIME_PROXY_PATHS.workerReply, { jobId, result });
     } catch (error) {
       console.error("[runtime-proxy-relay] could not serialize the reply", error);
 
+      // Neither a storage result nor a connect one, which is deliberate: main
+      // maps what it cannot read for the job's kind onto that kind's own
+      // failure, so a storage caller hears an unreachable store rather than a
+      // closed message port it has no notion of
       return postToBridge(RUNTIME_PROXY_PATHS.workerReply, {
         jobId,
         result: { status: "closed" },
@@ -241,6 +260,18 @@ export function createRelayClient({
 
       case "portMessage": {
         ports.get(job.portId)?.emitMessage(job.message);
+
+        break;
+      }
+
+      case "storage": {
+        void (
+          runStorageCall?.(job.call, job.isTrustedContext) ??
+          Promise.resolve<RuntimeProxyStorageResult>({
+            status: "error",
+            message: STORAGE_UNAVAILABLE_ERROR,
+          })
+        ).then((result) => postReply(job.jobId, result));
 
         break;
       }

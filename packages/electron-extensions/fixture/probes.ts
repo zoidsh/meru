@@ -8,7 +8,9 @@ import {
   type FixtureMessageSender,
   type FixturePort,
   type FixtureRuntime,
+  type FixtureStorageArea,
   getChromeRuntime,
+  getChromeStorage,
 } from "./chrome";
 
 /** Long enough for a relay wake, far under the test runner's own timeouts. */
@@ -45,6 +47,10 @@ export type WorkerInitiatedOutcome = {
   outcome: EchoOutcome;
 };
 
+export type StorageOutcome =
+  | { status: "read"; value: unknown }
+  | { status: "error"; message: string };
+
 export type ProbeResults = {
   /** Minted per context, so every port name and nonce names its context. */
   contextId: string;
@@ -58,6 +64,26 @@ export type ProbeResults = {
   manifestHasBackground: boolean | null;
   echo: EchoOutcome;
   port: PortOutcome;
+  /**
+   * The worker's stamp as this context's `chrome.storage.local` answers for
+   * it. A content-script-only session has no worker and nothing that ever
+   * writes its own store, so reading the stamp back means the call was
+   * relayed to the session that keeps the one store.
+   */
+  workerStampInLocal: StorageOutcome;
+  /**
+   * The same stamp in `session`, which Chrome closes to content scripts by
+   * default and leaves open to the extension's own documents. Both halves are
+   * asserted, because the proxy answering in a privileged context could
+   * otherwise hand every content script a store Chrome would not have.
+   */
+  workerStampInSession: StorageOutcome;
+  /**
+   * What the worker's own store holds under a key this context wrote, read
+   * back through the worker rather than locally: a write that landed in this
+   * session's store would read back as `null` here.
+   */
+  writeSeenByWorker: StorageOutcome;
   /** Whether this context saw its port die after asking the worker to close it. */
   workerClosedPort: boolean;
   /** Whether the worker's event log recorded this context closing its own port. */
@@ -335,6 +361,84 @@ async function probePortReplySeenByWorker(
   return false;
 }
 
+/** One storage read, recording a refusal as the outcome it is. */
+function readStorage(
+  runtime: FixtureRuntime,
+  area: FixtureStorageArea,
+  key: string,
+): Promise<StorageOutcome> {
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      timer = setTimeout(() => {
+        resolve({ status: "error", message: "The read never answered" });
+      }, PROBE_TIMEOUT_MS);
+
+      area.get(key, (items) => {
+        clearTimeout(timer);
+
+        const lastError = runtime.lastError;
+
+        resolve(
+          lastError
+            ? { status: "error", message: lastError.message ?? "unknown" }
+            : { status: "read", value: items[key] ?? null },
+        );
+      });
+    } catch (error) {
+      clearTimeout(timer);
+
+      resolve({ status: "error", message: String(error) });
+    }
+  });
+}
+
+/**
+ * Writes a key of this context's own and asks the worker what its store holds
+ * under it. The worker reads its own `chrome.storage` natively, so a write
+ * that stayed in this session would come back `null`.
+ */
+async function probeWriteSeenByWorker(
+  runtime: FixtureRuntime,
+  area: FixtureStorageArea,
+  contextId: string,
+): Promise<StorageOutcome> {
+  const key = `probe:${contextId}`;
+
+  const written = await new Promise<StorageOutcome | undefined>((resolve) => {
+    const timer = setTimeout(() => {
+      resolve({ status: "error", message: "The write never answered" });
+    }, PROBE_TIMEOUT_MS);
+
+    try {
+      area.set({ [key]: contextId }, () => {
+        clearTimeout(timer);
+
+        const lastError = runtime.lastError;
+
+        resolve(
+          lastError ? { status: "error", message: lastError.message ?? "unknown" } : undefined,
+        );
+      });
+    } catch (error) {
+      clearTimeout(timer);
+
+      resolve({ status: "error", message: String(error) });
+    }
+  });
+
+  if (written) {
+    return written;
+  }
+
+  const outcome = await sendMessage(runtime, { type: "read-storage", key });
+
+  return outcome.status === "replied"
+    ? { status: "read", value: (outcome.reply as { value?: unknown }).value ?? null }
+    : { status: "error", message: outcome.message };
+}
+
 export async function runProbes(): Promise<ProbeResults> {
   const runtime = getChromeRuntime();
 
@@ -391,6 +495,14 @@ export async function runProbes(): Promise<ProbeResults> {
    */
   const echo = await sendMessage(runtime, { type: "echo", nonce: `echo:${contextId}` });
 
+  const storage = getChromeStorage();
+
+  const workerStampInLocal = await readStorage(runtime, storage.local, "workerStamp");
+
+  const workerStampInSession = await readStorage(runtime, storage.session, "workerSessionStamp");
+
+  const writeSeenByWorker = await probeWriteSeenByWorker(runtime, storage.local, contextId);
+
   const port = await probePort(runtime, contextId);
 
   const workerClosedPort = await probeWorkerClosedPort(runtime, contextId);
@@ -415,6 +527,9 @@ export async function runProbes(): Promise<ProbeResults> {
     manifestHasBackground: manifest ? manifest.background !== undefined : null,
     echo,
     port,
+    workerStampInLocal,
+    workerStampInSession,
+    writeSeenByWorker,
     workerClosedPort,
     selfCloseSeenByWorker,
     openPortName,

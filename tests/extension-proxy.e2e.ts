@@ -555,3 +555,86 @@ test("an action popup is no tab, and the worker says so rather than guessing", a
     message: "The sender carried no tab",
   });
 });
+
+test("storage is one store: the shim session's contexts read and write the worker's", async () => {
+  const workerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("worker-storage"));
+
+  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-storage"));
+
+  const pageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/same`);
+
+  const workerPopup = await readProbeResults(workerPopupId);
+
+  const shimPopup = await readProbeResults(shimPopupId);
+
+  const contentScript = await readProbeResults(pageId);
+
+  /*
+   * The worker session's popup reads its own session's store with no proxy in
+   * the path, so its stamp is the ground truth for what the one store holds.
+   */
+  expect(workerPopup.workerStampInLocal.status).toBe("read");
+
+  const workerStamp = (workerPopup.workerStampInLocal as { value: unknown }).value;
+
+  expect(workerStamp).toEqual(expect.any(String));
+
+  // Nothing writes the shim session's own store, so reading the stamp back
+  // there is the relayed call reaching the worker's
+  expect(shimPopup.workerStampInLocal).toEqual({ status: "read", value: workerStamp });
+
+  expect(contentScript.workerStampInLocal).toEqual({ status: "read", value: workerStamp });
+
+  // And the writes land there too, read back through the worker's own store
+  expect(workerPopup.writeSeenByWorker).toEqual({
+    status: "read",
+    value: workerPopup.contextId,
+  });
+
+  expect(shimPopup.writeSeenByWorker).toEqual({ status: "read", value: shimPopup.contextId });
+
+  expect(contentScript.writeSeenByWorker).toEqual({
+    status: "read",
+    value: contentScript.contextId,
+  });
+});
+
+test("session storage keeps Chrome's access level across the proxy", async () => {
+  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-session-storage"));
+
+  const workerPageId = await openProbeWindow(WORKER_PARTITION, `${serverOrigin}/plain`);
+
+  const shimPageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/csp`);
+
+  const shimPopup = await readProbeResults(shimPopupId);
+
+  const workerContentScript = await readProbeResults(workerPageId);
+
+  const shimContentScript = await readProbeResults(shimPageId);
+
+  // An extension page is a trusted context, and reads the worker's stamp
+  expect(shimPopup.workerStampInSession.status).toBe("read");
+
+  expect((shimPopup.workerStampInSession as { value: unknown }).value).toEqual(expect.any(String));
+
+  /*
+   * A content script is not, and Chrome closes `session` to it by default. The
+   * worker session's own content script is refused by Chromium itself, and the
+   * shim session's by the relay — which is the point of the check living in
+   * main: the call is answered in a privileged context Chromium would allow.
+   *
+   * Asserting the message rather than the status: `readStorage` also reports
+   * "error" for a timeout and for a thrown call, so a status-only assertion
+   * could pass without the refusal ever happening. This pins Chromium's own
+   * string end to end, on both sides of the proxy.
+   */
+  expect(workerContentScript.workerStampInSession).toEqual({
+    status: "error",
+    message: "Access to storage is not allowed from this context.",
+  });
+
+  expect(shimContentScript.workerStampInSession).toEqual({
+    status: "error",
+    message: "Access to storage is not allowed from this context.",
+  });
+});
