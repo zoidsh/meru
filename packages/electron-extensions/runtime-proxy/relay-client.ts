@@ -278,10 +278,28 @@ export function createRelayClient({
     };
   };
 
+  /**
+   * A reply the bridge cannot carry is still a reply: `postBridge` serializes
+   * synchronously and throws on what `JSON.stringify` refuses — a `BigInt`, a
+   * cycle, a `toJSON` of the extension's own that throws — and an escaping
+   * throw would leave the caller waiting on the relay's in-flight timeout,
+   * minutes away, where Chrome fails a `sendResponse` it cannot clone at once.
+   */
   const postReply = (
     jobId: string,
     result: RuntimeProxySendMessageResult | RuntimeProxyConnectResult,
-  ) => postToBridge(RUNTIME_PROXY_PATHS.workerReply, { jobId, result });
+  ) => {
+    try {
+      return postToBridge(RUNTIME_PROXY_PATHS.workerReply, { jobId, result });
+    } catch (error) {
+      console.error("[runtime-proxy-relay] could not serialize the reply", error);
+
+      return postToBridge(RUNTIME_PROXY_PATHS.workerReply, {
+        jobId,
+        result: { status: "closed" },
+      });
+    }
+  };
 
   /**
    * Whether this job is new here. The relay redelivers anything it has no ack
