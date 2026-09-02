@@ -10,6 +10,7 @@ import {
 import { Alarms, type AlarmWakePolicy } from "./alarms/alarms";
 import { ExtensionBridge } from "./bridge/bridge";
 import { deriveExtension, type SharedInstanceDeriveOptions } from "./derive";
+import { reachesClampedSite } from "./derive/match-pattern";
 import type { ExtensionsLogger } from "./logger";
 import {
   NativeMessaging,
@@ -65,9 +66,9 @@ export type SharedExtensionInstance = {
   /**
    * Whether that session was the one holding the worker, which the loader logs
    * as the sessions left behind having nothing to reach. On an embedder that
-   * names a session no user can remove it can only ever answer true at
-   * shutdown — and this staying here is what makes that provable rather than
-   * assumed, since a naming that ever broke would say so.
+   * names a session of its own and never tears it down, this answers false for
+   * the life of the app — and it staying here is what makes that provable
+   * rather than assumed, since a naming that ever broke would say so.
    */
   teardownSession(session: Session): boolean;
 };
@@ -118,6 +119,14 @@ export type ExtensionsOptions = {
    * session runs its own.
    */
   sharedInstance?: SharedExtensionInstance;
+  /**
+   * The embedder's own pages in the worker session, as match patterns. The
+   * worker session is the embedder's rather than a user's browsing, so an
+   * extension whose content scripts reach a page there is running inside the
+   * app's own UI, which is worth saying out loud. Without this nothing is
+   * checked and nothing is said.
+   */
+  workerSessionPagePatterns?: string[];
   logger?: ExtensionsLogger;
 };
 
@@ -144,6 +153,8 @@ export class Extensions {
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
 
   private sharedInstance: SharedExtensionInstance | undefined;
+
+  private workerSessionPagePatterns: string[] | undefined;
 
   private logger: ExtensionsLogger | undefined;
 
@@ -179,6 +190,7 @@ export class Extensions {
     isNativeMessagingHostAllowed,
     shouldWakeWorkerForAlarm,
     sharedInstance,
+    workerSessionPagePatterns,
     logger,
   }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
@@ -192,6 +204,8 @@ export class Extensions {
     this.getContentScriptMatches = getContentScriptMatches;
 
     this.sharedInstance = sharedInstance;
+
+    this.workerSessionPagePatterns = workerSessionPagePatterns;
 
     this.logger = logger;
 
@@ -362,28 +376,32 @@ export class Extensions {
 
   /**
    * The worker session belongs to the embedder rather than to a user's
-   * browsing: whatever pages it holds are the app's own. A curated extension
-   * cannot reach them, its content scripts being clamped to a host allowlist,
-   * but an extension the clamp says nothing about injects wherever its author
-   * declared — which for a development folder can be the embedder's own UI.
+   * browsing: whatever pages it holds are the app's own. So an extension whose
+   * content scripts reach one of them is running inside the app's own UI,
+   * which is worth saying out loud once — a curated extension cannot, its
+   * content scripts being clamped to a host allowlist, but an extension the
+   * clamp says nothing about injects wherever its author declared.
    *
-   * Meru's is one page and one page only, the main window's renderer: a
-   * `file://` document in a packaged build, unmatchable by any pattern while
-   * the loader grants no file access, but the dev server over
-   * `http://localhost:3000` in development, which is exactly where an unpacked
-   * folder is loaded from. Naming both the extension and the session is the
-   * point — a content script running inside the app's own UI is otherwise
-   * invisible until it breaks something.
+   * Asked of the manifest Chromium loaded, which is the clamped one, so this
+   * needs no separate question about whether the extension was clamped: an
+   * entry that survived a clamp naming other hosts does not reach these pages,
+   * and the clamp dropping every entry leaves nothing to ask about.
+   *
+   * Meru's pages here are the main window's renderer, the bookmarks and
+   * downloads popups and the desktop-sources page, all one origin: a `file://`
+   * document in a packaged build, unmatchable by
+   * any pattern while the loader grants no file access, but the dev server
+   * over `http://localhost:3000` in development, which is exactly where an
+   * unpacked folder is loaded from. Checking the patterns rather than only the
+   * role is what keeps this quiet for a development extension aimed somewhere
+   * else — the checked-in fixture's loopback pages, say — so that the times it
+   * does fire mean something.
    */
   private warnAboutUnclampedWorkerContentScripts(
     extension: ContentScriptExtension,
     sharedInstanceDerive: SharedInstanceDeriveOptions | undefined,
   ) {
-    if (sharedInstanceDerive?.role !== "worker") {
-      return;
-    }
-
-    if (this.getContentScriptMatches?.(extension.id)) {
+    if (sharedInstanceDerive?.role !== "worker" || !this.workerSessionPagePatterns?.length) {
       return;
     }
 
@@ -391,14 +409,20 @@ export class Extensions {
       (contentScript) => contentScript.matches ?? [],
     );
 
-    if (!contentScriptMatches?.length) {
+    const reachingMatches = contentScriptMatches?.filter((contentScriptMatch) =>
+      this.workerSessionPagePatterns?.some((pagePattern) =>
+        reachesClampedSite(contentScriptMatch, pagePattern),
+      ),
+    );
+
+    if (!reachingMatches?.length) {
       return;
     }
 
-    this.logger?.error("Unclamped extension content scripts run in the worker session", {
+    this.logger?.error("Extension content scripts run in the app's own pages", {
       id: extension.id,
       name: extension.name,
-      matches: contentScriptMatches,
+      matches: reachingMatches,
     });
   }
 
@@ -516,9 +540,9 @@ export class Extensions {
 
     // This session is already out of `loadedExtensionIdsBySession`, so what is
     // left in it is the sessions that keep their content-script-only copies.
-    // An embedder naming a session of its own — one no user can remove — never
-    // reaches this branch outside shutdown, and the log is what would say so if
-    // that ever stopped being true
+    // An embedder naming a session of its own and never tearing it down never
+    // reaches this branch at all, and the log is what would say so if that ever
+    // stopped being true
     const workerRoleWasVacated = this.sharedInstance?.teardownSession(session) === true;
 
     if (workerRoleWasVacated && this.loadedExtensionIdsBySession.size > 0) {
@@ -540,6 +564,36 @@ export class Extensions {
 
       this.logger?.info("Unloaded extension", { id: extensionId });
     }
+
+    this.emitActionsChanged(session);
+  }
+
+  /**
+   * Unloads one extension from one session, leaving the rest of the session's
+   * extensions and the session's own setup alone — what `teardownSession` does
+   * to all of them at once, for one.
+   *
+   * It exists for uninstalling: the extension has to stop running before what
+   * it wrote can be deleted, or a worker still live rewrites part of the store
+   * behind the delete, and on Windows the delete fails outright against the
+   * LevelDB files Chromium still holds open.
+   */
+  unloadExtension(session: Session, extensionId: string) {
+    if (!this.loadedExtensionIdsBySession.get(session)?.delete(extensionId)) {
+      return;
+    }
+
+    session.extensions.removeExtension(extensionId);
+
+    const actions = this.actionsBySession.get(session);
+
+    const actionIndex = actions?.findIndex((action) => action.extensionId === extensionId) ?? -1;
+
+    if (actions && actionIndex !== -1) {
+      actions.splice(actionIndex, 1);
+    }
+
+    this.logger?.info("Unloaded extension", { id: extensionId });
 
     this.emitActionsChanged(session);
   }

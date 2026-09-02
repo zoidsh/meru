@@ -151,6 +151,25 @@ function getContentScriptMatches(extensionId: string) {
     ?.contentScriptMatches;
 }
 
+/**
+ * Meru's own pages in the worker session, as match patterns, for the loader to
+ * warn about an extension whose content scripts reach them. The renderer and
+ * the popups beside it are all one origin, which `loadRenderer` decides: a
+ * `file://` document in a packaged build, unmatchable while the loader grants
+ * no file access, and the dev server in development — which is where an
+ * unpacked `extensions/` folder is loaded from, so it is the one that can
+ * actually be reached. The port is left off because a match pattern ignores it.
+ */
+function getWorkerSessionPagePatterns() {
+  if (!is.dev) {
+    return ["file:///*"];
+  }
+
+  const { protocol, hostname } = new URL(process.env.MERU_RENDERER_URL || "http://localhost:3000/");
+
+  return [`${protocol}//${hostname}/*`];
+}
+
 // Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerExtensionBridgeScheme();
@@ -175,6 +194,7 @@ export const extensions = new Extensions({
   // The worker lives in the default session, which no account owns, so an
   // account session is never the one holding it — see
   // `setupExtensionsWorkerSession` below.
+  workerSessionPagePatterns: getWorkerSessionPagePatterns(),
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
@@ -303,13 +323,25 @@ export async function uninstallCuratedExtension(extensionId: string) {
    * deletes an extension's storage on uninstall too, with nothing further
    * asked.
    *
+   * Unloaded from the worker session first, because the delete has to land on
+   * a store nothing is writing: the copy otherwise stays loaded until the
+   * restart the settings page asks for, and a worker still running writes part
+   * of its store back behind the delete — into the directory a reinstall under
+   * the same id reads, so the reinstall comes back signed in, which is the one
+   * outcome this call exists to prevent. On Windows it is worse than a race,
+   * the delete failing outright against LevelDB files Chromium still holds
+   * open.
+   *
+   * The accounts' content-script-only copies are left where they are. They
+   * hold no store, and unloading them would only take away the content scripts
+   * of documents already open, which the restart does anyway.
+   *
    * It clears every extension's store in that session rather than this one's,
    * which is exact while the catalog holds a single entry and is why a second
-   * curated extension needs a per-id clear before it lands. The extension also
-   * stays loaded until the restart the settings page asks for, so a worker
-   * still running can write part of its store back; what it writes is orphaned
-   * at the next launch, where the extension is not loaded at all.
+   * curated extension needs a per-id clear before it lands.
    */
+  extensions.unloadExtension(session.defaultSession, extensionId);
+
   await extensions.clearSessionData(session.defaultSession);
 
   log.info("Uninstalled extension", { extensionId });

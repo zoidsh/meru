@@ -24,6 +24,36 @@ afterEach(async () => {
   await rm(workDir, { recursive: true, force: true });
 });
 
+/**
+ * A `manifest.key`, because the clamp is looked up by the id the key derives —
+ * a keyless copy is never clamped, and is never curated either.
+ */
+const TEST_MANIFEST_KEY = "dGVzdC1rZXk=";
+
+async function createContentScriptExtensionDir(name: string, matches: string[]) {
+  const extensionDir = path.join(workDir, name);
+
+  await mkdir(extensionDir, { recursive: true });
+
+  await writeFile(
+    path.join(extensionDir, "manifest.json"),
+    JSON.stringify({
+      name,
+      version: "1.0.0",
+      manifest_version: 3,
+      key: TEST_MANIFEST_KEY,
+      background: { service_worker: "background.js", type: "module" },
+      content_scripts: [{ matches, js: ["content.js"] }],
+    }),
+  );
+
+  await writeFile(path.join(extensionDir, "background.js"), "// background\n");
+
+  await writeFile(path.join(extensionDir, "content.js"), "// content\n");
+
+  return extensionDir;
+}
+
 async function createExtensionDir(name: string, key?: string) {
   const extensionDir = path.join(workDir, name);
 
@@ -1040,6 +1070,232 @@ describe("the shared instance's worker session", () => {
       "logs",
       path.join("logs", "main.log"),
     ]);
+
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  /*
+   * Uninstalling has to delete a store nothing is writing, so the app unloads
+   * the extension from the worker session before it clears. What the loader
+   * owns is the unload; the app sequences the two, which is the half no test
+   * here reaches.
+   */
+  /*
+   * The warning exists for an unpacked folder a developer loaded themselves,
+   * whose content scripts the catalog clamp says nothing about. It is asked of
+   * the loaded manifest's own patterns against the embedder's pages, so an
+   * extension aimed anywhere else stays silent — which is what keeps it from
+   * being a line in every launch's log rather than a thing that happened.
+   */
+  async function setUpWorkerSessionWith(
+    extensionDir: string,
+    options: {
+      workerSessionPagePatterns?: string[];
+      getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+    } = {},
+  ) {
+    const loggedErrors: { message: string; details?: Record<string, unknown> }[] = [];
+
+    // Chromium hands back the manifest of the copy it loaded, which is the
+    // derived one — the clamp already written into it, which is what makes the
+    // clamped cases below mean anything
+    const workerSession = createSession({
+      loadExtension: async (derivedDir: string) =>
+        createExtension(
+          "aaa",
+          derivedDir,
+          JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+        ),
+    });
+
+    const extensions = new Extensions({
+      extensionDirs: [extensionDir],
+      facadeScriptPath,
+      derivedExtensionsDir: path.join(workDir, "derived"),
+      sharedInstance: await createSharedInstance(workerSession.session),
+      workerSessionPagePatterns: ["http://localhost/*"],
+      ...options,
+      logger: {
+        info: () => undefined,
+        error: (message, details) => {
+          loggedErrors.push({ message, details });
+        },
+      },
+    });
+
+    await extensions.setupSession(workerSession.session);
+
+    return loggedErrors;
+  }
+
+  const APP_PAGE_WARNING = "Extension content scripts run in the app's own pages";
+
+  test("an unclamped extension reaching the app's own pages is named in the log", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("dev-folder", [
+        "http://localhost/*",
+        "https://x.test/*",
+      ]),
+    );
+
+    expect(loggedErrors).toHaveLength(1);
+
+    expect(loggedErrors[0]?.message).toBe(APP_PAGE_WARNING);
+
+    // Only the patterns that reach them, so the line says which
+    expect(loggedErrors[0]?.details?.matches).toEqual(["http://localhost/*"]);
+  });
+
+  test("`<all_urls>` reaches them too, a packaged `file://` page included", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("everywhere", ["<all_urls>"]),
+      { workerSessionPagePatterns: ["file:///*"] },
+    );
+
+    expect(loggedErrors.map(({ message }) => message)).toEqual([APP_PAGE_WARNING]);
+  });
+
+  /*
+   * The checked-in fixture's shape, and the reason this is a pattern check
+   * rather than a check on whether the extension was clamped: it is unclamped
+   * and it loads on every development launch, so a warning that could not tell
+   * its loopback pages from the app's own would be a permanent line in the log.
+   */
+  test("an unclamped extension aimed somewhere else says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("fixture", ["http://127.0.0.1/*"]),
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("a curated clamp that keeps the app's pages out says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("curated", ["<all_urls>"]),
+      { getContentScriptMatches: () => ["https://accounts.google.com/*"] },
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("a clamp that drops every entry says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("clamped-away", ["https://x.test/*"]),
+      { getContentScriptMatches: () => [] },
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("an extension with no content scripts says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(await createExtensionDir("worker-only"));
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("unloading one extension leaves the session and its other extensions alone", async () => {
+    // The derived directory is a hash of its source, so the copies are told
+    // apart by the order they load in rather than by name
+    const loadedExtensionIds = ["aaa", "bbb"];
+
+    const workerSession = createSession({
+      loadExtension: async (derivedDir: string) =>
+        createExtension(loadedExtensionIds.shift() as string, derivedDir),
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one"), await createExtensionDir("two")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(true);
+    expect(extensions.isExtensionLoaded(workerSession.session, "bbb")).toBe(true);
+
+    extensions.unloadExtension(workerSession.session, "aaa");
+
+    expect(workerSession.removedExtensionIds).toEqual(["aaa"]);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(false);
+
+    // The other extension keeps running, and the session keeps its bridge
+    expect(extensions.isExtensionLoaded(workerSession.session, "bbb")).toBe(true);
+
+    expect(workerSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
+  });
+
+  test("unloading drops the extension's toolbar button and says the actions changed", async () => {
+    const workerSession = createSession({
+      loadExtension: (derivedDir: string) => createActionExtension("aaa", derivedDir),
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    const actionsChanges: number[] = [];
+
+    extensions.onActionsChanged((_session, actions) => {
+      actionsChanges.push(actions.length);
+    });
+
+    await extensions.setupSession(workerSession.session);
+
+    expect(extensions.getSessionActions(workerSession.session)).toHaveLength(1);
+
+    extensions.unloadExtension(workerSession.session, "aaa");
+
+    expect(extensions.getSessionActions(workerSession.session)).toEqual([]);
+
+    expect(actionsChanges.at(-1)).toBe(0);
+  });
+
+  test("unloading an extension the session never loaded does nothing", async () => {
+    const workerSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    extensions.unloadExtension(workerSession.session, "never-loaded");
+
+    expect(workerSession.removedExtensionIds).toEqual([]);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(true);
+  });
+
+  // The uninstall sequence, in the order the app runs it: nothing is left
+  // running over the store by the time the directories go
+  test("unloading and then clearing leaves the extension gone and its store with it", async () => {
+    const userDataPath = await createPartitionDir([
+      "Local Extension Settings/aaa/000003.log",
+      "IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "config.json",
+    ]);
+
+    const { session: workerSession, removedExtensionIds } = createSession({
+      storagePath: userDataPath,
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession),
+    );
+
+    await extensions.setupSession(workerSession);
+
+    extensions.unloadExtension(workerSession, "aaa");
+
+    expect(removedExtensionIds).toEqual(["aaa"]);
+
+    await extensions.clearSessionData(workerSession);
+
+    expect(await listPartitionDir(userDataPath)).toEqual(["IndexedDB", "config.json"]);
 
     await fs.rm(userDataPath, { recursive: true, force: true });
   });
