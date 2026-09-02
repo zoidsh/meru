@@ -686,7 +686,9 @@ export class RuntimeProxy {
 
     const queue = this.queue(extensionId);
 
-    for (const job of queue.splice(0)) {
+    const jobs = queue.splice(0);
+
+    for (const [index, job] of jobs.entries()) {
       job.state = "handed";
 
       job.attempts += 1;
@@ -698,7 +700,13 @@ export class RuntimeProxy {
       try {
         stream.controller.enqueue(encodeNativeMessage(this.toJobFrame(job)));
       } catch {
-        // The stream stopped taking frames under us; its worker is gone
+        // The stream stopped taking frames under us; its worker is gone. The
+        // jobs after this one were handed to nobody and are in neither the
+        // queue nor `inFlightJobs`, so they go back before the invalidation —
+        // which settles this one from `inFlightJobs` and reads the queue to
+        // tell a port whose connect is waiting from one that has to be closed
+        queue.push(...jobs.slice(index + 1));
+
         this.invalidateWorkerStream(extensionId);
 
         return;
