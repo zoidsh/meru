@@ -409,6 +409,18 @@ export class Extensions {
       iconDataUrl = readExtensionActionIcon(extension);
 
       this.actionIconDataUrls.set(derivedDir, iconDataUrl);
+
+      // A failure must not be the answer for every later session, the way the
+      // derived copy's is not: a transient EMFILE or EIO on the first session's
+      // read would otherwise cost every account the icon until a restart, an
+      // account added mid-session included
+      const failedIconDataUrl = iconDataUrl;
+
+      iconDataUrl.catch(() => {
+        if (this.actionIconDataUrls.get(derivedDir) === failedIconDataUrl) {
+          this.actionIconDataUrls.delete(derivedDir);
+        }
+      });
     }
 
     return iconDataUrl;
