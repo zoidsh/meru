@@ -14,7 +14,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+      "matches": ["http://127.0.0.1/*"],
       "js": ["probe.js"],
       "run_at": "document_idle"
     }
@@ -22,7 +22,7 @@
   "web_accessible_resources": [
     {
       "resources": ["fixture-frame.html"],
-      "matches": ["http://127.0.0.1/*", "http://localhost/*"]
+      "matches": ["http://127.0.0.1/*"]
     }
   ]
 }

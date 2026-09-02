@@ -3,7 +3,7 @@ import fs, { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os, { tmpdir } from "node:os";
 import path from "node:path";
 import type { ClearStorageDataOptions, Extension, Session } from "electron";
-import { getExtensionBridgeUrl } from "./bridge/protocol";
+import { EXTENSION_BRIDGE_SCHEME, getExtensionBridgeUrl } from "./bridge/protocol";
 import { Extensions } from "./extensions";
 import { NATIVE_MESSAGING_PATHS } from "./native-messaging/bridge-protocol";
 import { createSharedExtensionInstance } from "./runtime-proxy";
@@ -23,6 +23,36 @@ beforeEach(async () => {
 afterEach(async () => {
   await rm(workDir, { recursive: true, force: true });
 });
+
+/**
+ * A `manifest.key`, because the clamp is looked up by the id the key derives —
+ * a keyless copy is never clamped, and is never curated either.
+ */
+const TEST_MANIFEST_KEY = "dGVzdC1rZXk=";
+
+async function createContentScriptExtensionDir(name: string, matches: string[]) {
+  const extensionDir = path.join(workDir, name);
+
+  await mkdir(extensionDir, { recursive: true });
+
+  await writeFile(
+    path.join(extensionDir, "manifest.json"),
+    JSON.stringify({
+      name,
+      version: "1.0.0",
+      manifest_version: 3,
+      key: TEST_MANIFEST_KEY,
+      background: { service_worker: "background.js", type: "module" },
+      content_scripts: [{ matches, js: ["content.js"] }],
+    }),
+  );
+
+  await writeFile(path.join(extensionDir, "background.js"), "// background\n");
+
+  await writeFile(path.join(extensionDir, "content.js"), "// content\n");
+
+  return extensionDir;
+}
 
 async function createExtensionDir(name: string, key?: string) {
   const extensionDir = path.join(workDir, name);
@@ -92,6 +122,8 @@ function createSession({
 
   const sessionEvents: string[] = [];
 
+  const beforeSendHeadersFilters: unknown[] = [];
+
   let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
 
   const serviceWorkerConsoleListeners = new Set<
@@ -124,7 +156,9 @@ function createSession({
     },
     getStoragePath: () => storagePath,
     webRequest: {
-      onBeforeSendHeaders: () => undefined,
+      onBeforeSendHeaders: (filterOrListener: unknown) => {
+        beforeSendHeadersFilters.push(filterOrListener);
+      },
     },
     serviceWorkers: {
       on: (
@@ -147,6 +181,7 @@ function createSession({
     removedExtensionIds,
     handledSchemes,
     sessionEvents,
+    beforeSendHeadersFilters,
     serviceWorkerConsoleListeners,
     emitServiceWorkerConsole: (messageDetails: Record<string, unknown>) => {
       for (const listener of serviceWorkerConsoleListeners) {
@@ -811,13 +846,13 @@ describe("Extensions", () => {
   });
 });
 
-describe("the shared instance losing its worker session", () => {
+describe("the shared instance's worker session", () => {
   /*
    * The real `createSharedExtensionInstance`, so what is under test is the
    * answer it gives the loader rather than a fake agreeing with the loader.
    * Its scripts have to exist, because the derive copies them into every copy.
    */
-  async function createSharedInstance() {
+  async function createSharedInstance(workerSession: Session) {
     const shimScriptPath = path.join(workDir, "shim.js");
 
     const relayScriptPath = path.join(workDir, "relay.js");
@@ -826,145 +861,598 @@ describe("the shared instance losing its worker session", () => {
 
     await writeFile(relayScriptPath, "// relay\n");
 
-    return createSharedExtensionInstance({ shimScriptPath, relayScriptPath });
+    return createSharedExtensionInstance({
+      shimScriptPath,
+      relayScriptPath,
+      getWorkerSession: () => workerSession,
+    });
   }
 
   function createSharedExtensions(
     extensionDirs: ConstructorParameters<typeof Extensions>[0]["extensionDirs"],
     sharedInstance: ConstructorParameters<typeof Extensions>[0]["sharedInstance"],
+    logger?: ConstructorParameters<typeof Extensions>[0]["logger"],
   ) {
     return new Extensions({
       extensionDirs,
       facadeScriptPath,
       derivedExtensionsDir: path.join(workDir, "derived"),
       sharedInstance,
+      logger,
     });
   }
 
-  /** One extension id from both sessions, which is what a `manifest.key` buys. */
+  /**
+   * One extension id from every session, which is what a `manifest.key` buys,
+   * and the derived directory each session was handed — which is where the
+   * copy's own manifest is read from, rather than from anything the loader
+   * says about it.
+   */
   function createSharedSession() {
-    return createSession({
-      loadExtension: async (extensionDir: string) => createExtension("aaa", extensionDir),
+    const loadedDerivedDirs: string[] = [];
+
+    const created = createSession({
+      loadExtension: async (derivedDir: string) => {
+        loadedDerivedDirs.push(derivedDir);
+
+        return createExtension("aaa", derivedDir);
+      },
     });
+
+    return { ...created, loadedDerivedDirs };
   }
 
-  test("firing once when other sessions still hold the extension", async () => {
+  async function readDerivedManifest(derivedDir: string) {
+    return JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")) as {
+      background?: unknown;
+    };
+  }
+
+  /*
+   * The invariant the whole design rests on: the worker is the session the
+   * embedder named, so no other session ever carries a `background` key — not
+   * the one that came first, and not one set up long afterwards, which is what
+   * an account added while the app runs is.
+   */
+  test("every session but the named worker is content-script-only from its first load", async () => {
+    const workerSession = createSharedSession();
+
+    const firstAccountSession = createSharedSession();
+
     const extensions = createSharedExtensions(
       [await createExtensionDir("one")],
-      await createSharedInstance(),
+      await createSharedInstance(workerSession.session),
     );
 
-    let workerLostCount = 0;
+    // Set up before the worker's, the order that used to decide the role
+    await extensions.setupSession(firstAccountSession.session);
 
-    extensions.onSharedInstanceWorkerLost(() => {
-      workerLostCount += 1;
+    await extensions.setupSession(workerSession.session);
+
+    const lateAccountSession = createSharedSession();
+
+    await extensions.setupSession(lateAccountSession.session);
+
+    const [workerManifest, firstAccountManifest, lateAccountManifest] = await Promise.all(
+      [workerSession, firstAccountSession, lateAccountSession].map(async ({ loadedDerivedDirs }) =>
+        readDerivedManifest(loadedDerivedDirs[0] as string),
+      ),
+    );
+
+    expect(workerManifest?.background).toEqual({
+      service_worker: "chrome-facade-service-worker.js",
+      type: "module",
     });
 
-    const { session: workerSession } = createSharedSession();
+    expect(firstAccountManifest?.background).toBeUndefined();
 
-    const { session: shimSession } = createSharedSession();
-
-    await extensions.setupSession(workerSession);
-
-    await extensions.setupSession(shimSession);
-
-    extensions.teardownSession(workerSession);
-
-    expect(workerLostCount).toBe(1);
+    expect(lateAccountManifest?.background).toBeUndefined();
   });
 
-  test("staying silent when a content-script-only session goes", async () => {
+  /*
+   * The worker session is the embedder's own rather than an account's, so it
+   * is worth pinning that the loader treats it as an ordinary session: one
+   * bridge listener, no second one, and nothing extra because of the role.
+   */
+  test("the bridge attaches to the worker session exactly once, as to any other", async () => {
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
     const extensions = createSharedExtensions(
-      [await createExtensionDir("one")],
-      await createSharedInstance(),
+      [await createExtensionDir("one"), await createExtensionDir("two")],
+      await createSharedInstance(workerSession.session),
     );
 
-    let workerLostCount = 0;
+    await extensions.setupSession(workerSession.session);
 
-    extensions.onSharedInstanceWorkerLost(() => {
-      workerLostCount += 1;
-    });
+    await extensions.setupSession(accountSession.session);
 
-    const { session: workerSession } = createSharedSession();
+    // One filtered listener for the session, whatever it loaded into it, and
+    // the same one the accounts get
+    const bridgeFilter = [{ urls: [`${EXTENSION_BRIDGE_SCHEME}://*/*`] }];
 
-    const { session: shimSession } = createSharedSession();
+    expect(workerSession.beforeSendHeadersFilters).toEqual(bridgeFilter);
+
+    expect(accountSession.beforeSendHeadersFilters).toEqual(bridgeFilter);
+
+    expect(workerSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
+
+    expect(accountSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
+  });
+
+  /*
+   * Both roles derive from the one source, and each role's copy is derived
+   * once however many sessions ask for it: the memo is keyed by role and
+   * source, and the two copies land in directories of their own. What would
+   * otherwise happen is the two roles fighting over one directory, each
+   * rewriting what the other just wrote, on every launch.
+   */
+  test("each role derives one copy, shared by every session that plays it", async () => {
+    const workerSession = createSharedSession();
+
+    const firstAccountSession = createSharedSession();
+
+    const secondAccountSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(firstAccountSession.session);
+
+    await extensions.setupSession(secondAccountSession.session);
+
+    const [workerDir] = workerSession.loadedDerivedDirs;
+
+    const [firstAccountDir] = firstAccountSession.loadedDerivedDirs;
+
+    const [secondAccountDir] = secondAccountSession.loadedDerivedDirs;
+
+    expect(firstAccountDir).toBe(secondAccountDir as string);
+
+    expect(workerDir).not.toBe(firstAccountDir as string);
+  });
+
+  /*
+   * The worker session's storage path is not a partition of its own: Electron's
+   * default session answers `userData` itself, where an account's answers
+   * `userData/Partitions/<accountId>`. So the store lands at a root the app
+   * keeps its own files in, and what has to hold is that clearing it takes the
+   * extension directories and nothing else — which is also why the embedder's
+   * reset must not put a `clearStorageData()` next to this call.
+   */
+  test("clearing the worker session takes the extension data out of a userData root", async () => {
+    const userDataPath = await createPartitionDir([
+      "Local Extension Settings/aaa/000003.log",
+      "Sync Extension Settings/aaa/000003.log",
+      "Managed Extension Settings/aaa/000003.log",
+      "Extension Rules/000003.log",
+      "Extension Scripts/000003.log",
+      "Extension State/000003.log",
+      "IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      // Everything below is the app's own, at the root only the default session
+      // reports, and none of it is any extension's to clear
+      "config.json",
+      "logs/main.log",
+      "extensions/com.1password/8.11.0/manifest.json",
+      "derived-extensions/0123456789abcdef/manifest.json",
+      "Partitions/account-one/Cookies",
+    ]);
+
+    const { session: workerSession } = createSession({ storagePath: userDataPath });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession),
+    );
 
     await extensions.setupSession(workerSession);
 
-    await extensions.setupSession(shimSession);
+    await extensions.clearSessionData(workerSession);
 
-    extensions.teardownSession(shimSession);
+    expect(await listPartitionDir(userDataPath)).toEqual([
+      "IndexedDB",
+      "Partitions",
+      path.join("Partitions", "account-one"),
+      path.join("Partitions", "account-one", "Cookies"),
+      "config.json",
+      "derived-extensions",
+      path.join("derived-extensions", "0123456789abcdef"),
+      path.join("derived-extensions", "0123456789abcdef", "manifest.json"),
+      "extensions",
+      path.join("extensions", "com.1password"),
+      path.join("extensions", "com.1password", "8.11.0"),
+      path.join("extensions", "com.1password", "8.11.0", "manifest.json"),
+      "logs",
+      path.join("logs", "main.log"),
+    ]);
 
-    expect(workerLostCount).toBe(0);
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  /*
+   * Uninstalling has to delete a store nothing is writing, so the app unloads
+   * the extension from the worker session before it clears. What the loader
+   * owns is the unload; the app sequences the two, which is the half no test
+   * here reaches.
+   */
+  /*
+   * The warning exists for an unpacked folder a developer loaded themselves,
+   * whose content scripts the catalog clamp says nothing about. It is asked of
+   * the loaded manifest's own patterns against the embedder's pages, so an
+   * extension aimed anywhere else stays silent — which is what keeps it from
+   * being a line in every launch's log rather than a thing that happened.
+   */
+  async function setUpWorkerSessionWith(
+    extensionDir: string,
+    options: {
+      workerSessionPagePatterns?: string[];
+      getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+    } = {},
+  ) {
+    const loggedErrors: { message: string; details?: Record<string, unknown> }[] = [];
+
+    // Chromium hands back the manifest of the copy it loaded, which is the
+    // derived one — the clamp already written into it, which is what makes the
+    // clamped cases below mean anything
+    const workerSession = createSession({
+      loadExtension: async (derivedDir: string) =>
+        createExtension(
+          "aaa",
+          derivedDir,
+          JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")),
+        ),
+    });
+
+    const extensions = new Extensions({
+      extensionDirs: [extensionDir],
+      facadeScriptPath,
+      derivedExtensionsDir: path.join(workDir, "derived"),
+      sharedInstance: await createSharedInstance(workerSession.session),
+      workerSessionPagePatterns: ["http://localhost/*"],
+      ...options,
+      logger: {
+        info: () => undefined,
+        error: (message, details) => {
+          loggedErrors.push({ message, details });
+        },
+      },
+    });
+
+    await extensions.setupSession(workerSession.session);
+
+    return loggedErrors;
+  }
+
+  const APP_PAGE_WARNING = "Extension content scripts run in the app's own pages";
+
+  test("an unclamped extension reaching the app's own pages is named in the log", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("dev-folder", [
+        "http://localhost/*",
+        "https://x.test/*",
+      ]),
+    );
+
+    expect(loggedErrors).toHaveLength(1);
+
+    expect(loggedErrors[0]?.message).toBe(APP_PAGE_WARNING);
+
+    // Only the patterns that reach them, so the line says which
+    expect(loggedErrors[0]?.details?.matches).toEqual(["http://localhost/*"]);
+  });
+
+  test("`<all_urls>` reaches them too, a packaged `file://` page included", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("everywhere", ["<all_urls>"]),
+      { workerSessionPagePatterns: ["file:///*"] },
+    );
+
+    expect(loggedErrors.map(({ message }) => message)).toEqual([APP_PAGE_WARNING]);
+  });
+
+  /*
+   * The checked-in fixture's shape, and the reason this is a pattern check
+   * rather than a check on whether the extension was clamped: it is unclamped
+   * and it loads on every development launch, so a warning that could not tell
+   * its loopback pages from the app's own would be a permanent line in the log.
+   */
+  test("an unclamped extension aimed somewhere else says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("fixture", ["http://127.0.0.1/*"]),
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("a curated clamp that keeps the app's pages out says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("curated", ["<all_urls>"]),
+      { getContentScriptMatches: () => ["https://accounts.google.com/*"] },
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("a clamp that drops every entry says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(
+      await createContentScriptExtensionDir("clamped-away", ["https://x.test/*"]),
+      { getContentScriptMatches: () => [] },
+    );
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("an extension with no content scripts says nothing", async () => {
+    const loggedErrors = await setUpWorkerSessionWith(await createExtensionDir("worker-only"));
+
+    expect(loggedErrors).toEqual([]);
+  });
+
+  test("unloading one extension leaves the session and its other extensions alone", async () => {
+    // The derived directory is a hash of its source, so the copies are told
+    // apart by the order they load in rather than by name
+    const loadedExtensionIds = ["aaa", "bbb"];
+
+    const workerSession = createSession({
+      loadExtension: async (derivedDir: string) =>
+        createExtension(loadedExtensionIds.shift() as string, derivedDir),
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one"), await createExtensionDir("two")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(true);
+    expect(extensions.isExtensionLoaded(workerSession.session, "bbb")).toBe(true);
+
+    extensions.unloadExtension(workerSession.session, "aaa");
+
+    expect(workerSession.removedExtensionIds).toEqual(["aaa"]);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(false);
+
+    // The other extension keeps running, and the session keeps its bridge
+    expect(extensions.isExtensionLoaded(workerSession.session, "bbb")).toBe(true);
+
+    expect(workerSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
+  });
+
+  test("unloading drops the extension's toolbar button and says the actions changed", async () => {
+    const workerSession = createSession({
+      loadExtension: (derivedDir: string) => createActionExtension("aaa", derivedDir),
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    const actionsChanges: number[] = [];
+
+    extensions.onActionsChanged((_session, actions) => {
+      actionsChanges.push(actions.length);
+    });
+
+    await extensions.setupSession(workerSession.session);
+
+    expect(extensions.getSessionActions(workerSession.session)).toHaveLength(1);
+
+    extensions.unloadExtension(workerSession.session, "aaa");
+
+    expect(extensions.getSessionActions(workerSession.session)).toEqual([]);
+
+    expect(actionsChanges.at(-1)).toBe(0);
+  });
+
+  test("unloading an extension the session never loaded does nothing", async () => {
+    const workerSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    extensions.unloadExtension(workerSession.session, "never-loaded");
+
+    expect(workerSession.removedExtensionIds).toEqual([]);
+
+    expect(extensions.isExtensionLoaded(workerSession.session, "aaa")).toBe(true);
+  });
+
+  // The uninstall sequence, in the order the app runs it: nothing is left
+  // running over the store by the time the directories go
+  test("unloading and then clearing leaves the extension gone and its store with it", async () => {
+    const userDataPath = await createPartitionDir([
+      "Local Extension Settings/aaa/000003.log",
+      "IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "config.json",
+    ]);
+
+    const { session: workerSession, removedExtensionIds } = createSession({
+      storagePath: userDataPath,
+    });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession),
+    );
+
+    await extensions.setupSession(workerSession);
+
+    extensions.unloadExtension(workerSession, "aaa");
+
+    expect(removedExtensionIds).toEqual(["aaa"]);
+
+    await extensions.clearSessionData(workerSession);
+
+    expect(await listPartitionDir(userDataPath)).toEqual(["IndexedDB", "config.json"]);
+
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  /*
+   * The upgrade cleanup, at the loader level: a profile written before the
+   * worker moved keeps one worker store per account partition, and the launch
+   * after the upgrade clears each of them. What the app adds on top is the
+   * config flag and the loop; this is the part with anything to get wrong —
+   * that each partition loses its own extension data and nothing else at the
+   * root loses anything.
+   */
+  test("clearing every account partition takes each one's extension data and no more", async () => {
+    const userDataPath = await createPartitionDir([
+      "Partitions/account-one/Local Extension Settings/aaa/000003.log",
+      "Partitions/account-one/IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "Partitions/account-one/Cookies",
+      "Partitions/account-two/Local Extension Settings/aaa/000003.log",
+      "Partitions/account-two/IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "Partitions/account-two/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/000003.log",
+      // The worker's own store, at the root the default session reports, which
+      // this cleanup has no business touching
+      "Local Extension Settings/aaa/000003.log",
+      "config.json",
+    ]);
+
+    const extensions = createSharedExtensions([], undefined);
+
+    await Promise.all(
+      ["account-one", "account-two"].map((accountId) =>
+        extensions.clearSessionData(
+          createSession({ storagePath: path.join(userDataPath, "Partitions", accountId) }).session,
+        ),
+      ),
+    );
+
+    expect(await listPartitionDir(userDataPath)).toEqual([
+      "Local Extension Settings",
+      path.join("Local Extension Settings", "aaa"),
+      path.join("Local Extension Settings", "aaa", "000003.log"),
+      "Partitions",
+      path.join("Partitions", "account-one"),
+      path.join("Partitions", "account-one", "Cookies"),
+      // The container stays where its extension databases were the only ones,
+      // which is what clearing the databases rather than the directory means
+      path.join("Partitions", "account-one", "IndexedDB"),
+      path.join("Partitions", "account-two"),
+      path.join("Partitions", "account-two", "IndexedDB"),
+      path.join(
+        "Partitions",
+        "account-two",
+        "IndexedDB",
+        "https_mail.google.com_0.indexeddb.leveldb",
+      ),
+      path.join(
+        "Partitions",
+        "account-two",
+        "IndexedDB",
+        "https_mail.google.com_0.indexeddb.leveldb",
+        "000003.log",
+      ),
+      "config.json",
+    ]);
+
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  test("tearing down an account session says nothing about the worker", async () => {
+    const loggedErrors: string[] = [];
+
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+      {
+        info: () => undefined,
+        error: (message) => {
+          loggedErrors.push(message);
+        },
+      },
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(accountSession.session);
+
+    extensions.teardownSession(accountSession.session);
+
+    expect(loggedErrors).toEqual([]);
+
+    // And the worker is still the worker, so a session set up afterwards is
+    // still content-script-only
+    const lateAccountSession = createSharedSession();
+
+    await extensions.setupSession(lateAccountSession.session);
+
+    expect(
+      (await readDerivedManifest(lateAccountSession.loadedDerivedDirs[0] as string))?.background,
+    ).toBeUndefined();
+  });
+
+  /*
+   * On an embedder naming a session no user can remove this is shutdown, and
+   * the log is the proof: nothing in the app can reach it while the app runs,
+   * and a naming that ever broke would leave this line in the log rather than
+   * leaving the accounts silently unable to reach anything.
+   */
+  test("tearing down the worker session while others hold the extension is logged", async () => {
+    const loggedErrors: string[] = [];
+
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+      {
+        info: () => undefined,
+        error: (message) => {
+          loggedErrors.push(message);
+        },
+      },
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(accountSession.session);
+
+    extensions.teardownSession(workerSession.session);
+
+    expect(loggedErrors).toEqual(["Shared extension instance lost its worker session"]);
   });
 
   test("staying silent when the worker session was the last one", async () => {
+    const loggedErrors: string[] = [];
+
+    const workerSession = createSharedSession();
+
     const extensions = createSharedExtensions(
       [await createExtensionDir("one")],
-      await createSharedInstance(),
+      await createSharedInstance(workerSession.session),
+      {
+        info: () => undefined,
+        error: (message) => {
+          loggedErrors.push(message);
+        },
+      },
     );
 
-    let workerLostCount = 0;
+    await extensions.setupSession(workerSession.session);
 
-    extensions.onSharedInstanceWorkerLost(() => {
-      workerLostCount += 1;
-    });
+    extensions.teardownSession(workerSession.session);
 
-    const { session: workerSession } = createSharedSession();
-
-    await extensions.setupSession(workerSession);
-
-    extensions.teardownSession(workerSession);
-
-    expect(workerLostCount).toBe(0);
-  });
-
-  test("an unsubscribed listener hears nothing", async () => {
-    const extensions = createSharedExtensions(
-      [await createExtensionDir("one")],
-      await createSharedInstance(),
-    );
-
-    let workerLostCount = 0;
-
-    const unsubscribe = extensions.onSharedInstanceWorkerLost(() => {
-      workerLostCount += 1;
-    });
-
-    unsubscribe();
-
-    const { session: workerSession } = createSharedSession();
-
-    const { session: shimSession } = createSharedSession();
-
-    await extensions.setupSession(workerSession);
-
-    await extensions.setupSession(shimSession);
-
-    extensions.teardownSession(workerSession);
-
-    expect(workerLostCount).toBe(0);
-  });
-
-  test("nothing fires without a shared instance, where every session runs its own", async () => {
-    const extensions = createExtensions([await createExtensionDir("one")]);
-
-    let workerLostCount = 0;
-
-    extensions.onSharedInstanceWorkerLost(() => {
-      workerLostCount += 1;
-    });
-
-    const { session: firstSession } = createSharedSession();
-
-    const { session: secondSession } = createSharedSession();
-
-    await extensions.setupSession(firstSession);
-
-    await extensions.setupSession(secondSession);
-
-    extensions.teardownSession(firstSession);
-
-    expect(workerLostCount).toBe(0);
+    expect(loggedErrors).toEqual([]);
   });
 });

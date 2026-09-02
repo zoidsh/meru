@@ -199,6 +199,13 @@ export type Config = {
   "extensions.enabled": boolean;
   "extensions.installed": string[];
   "extensions.showTitlebarButton": boolean;
+  /**
+   * A one-time cleanup the 3.60.0 migration schedules and the next launch
+   * performs: the extension stores the accounts' own partitions hold from
+   * before the one worker moved to the default session. A migration cannot do
+   * it itself, running before the app is ready and synchronously.
+   */
+  "extensions.clearStaleAccountData": boolean;
 };
 
 export type IpcMainEvents =
@@ -307,7 +314,6 @@ export type IpcRendererEvent = {
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];
   "extensions.actionsChanged": [actions: ExtensionActionState[]];
-  "extensions.workerSessionLost": [];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];
   "trial.daysLeftChanged": [daysLeft: number];

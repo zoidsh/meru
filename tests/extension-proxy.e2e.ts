@@ -5,13 +5,13 @@
  * the desktop app and a display.
  *
  * The launch carries one extension flag: `MERU_EXTENSIONS_FIXTURE` puts the
- * bundled fixture into every account session of this packaged build. The
- * shared instance needs no flag, because it is how Meru runs extensions — the
- * first account's session keeps the fixture's service worker while the second
- * account's session gets the content-script-only copy whose `chrome.runtime`
- * messaging the proxy relays. Two accounts need Pro, which is why this file
- * launches through `useProApp` — and a file is entirely one entitlement or
- * the other, because `useApp` registers its hooks once at module scope.
+ * bundled fixture into every session of this packaged build. The shared
+ * instance needs no flag, because it is how Meru runs extensions — the default
+ * session keeps the fixture's service worker while every account session gets
+ * the content-script-only copy whose `chrome.runtime` messaging the proxy
+ * relays. Two accounts need Pro, which is why this file launches through
+ * `useProApp` — and a file is entirely one entitlement or the other, because
+ * `useApp` registers its hooks once at module scope.
  *
  * Every probe context — a popup, a content script, an embedded extension
  * frame — runs the same suite (`fixture/probes.ts`) and writes its results
@@ -48,18 +48,24 @@ function account(id: string, label: string, selected: boolean) {
 }
 
 /*
- * The first account's session is the one the shared instance hands the worker
- * role, because sessions adopt roles in the order they are set up and accounts
- * are constructed in config order. The tests do not take that on faith: the
- * copy each session got is asserted from its own manifest.
+ * The one worker runs in Electron's default session, which no account owns, so
+ * both accounts are content-script-only however they are ordered — and the
+ * second is the one that has to keep working after the first is removed, which
+ * is the whole point of the worker living where it does. `null` is how a probe
+ * asks for the default session, there being no partition name for it.
  */
-const WORKER_PARTITION = "persist:worker-account";
+const WORKER_SESSION = null;
 
-const SHIM_PARTITION = "persist:shim-account";
+const REMOVED_PARTITION = "persist:removed-account";
+
+const SURVIVING_PARTITION = "persist:surviving-account";
 
 const meru = useProApp(
   {
-    accounts: [account("worker-account", "Worker", true), account("shim-account", "Shim", false)],
+    accounts: [
+      account("removed-account", "Removed", true),
+      account("surviving-account", "Surviving", false),
+    ],
   },
   { env: { MERU_EXTENSIONS_FIXTURE: "1" } },
 );
@@ -116,35 +122,44 @@ test.afterAll(async () => {
 });
 
 /**
- * Waits until the app has loaded the fixture into the session, which happens
- * while the accounts come up. `fromPartition` returns the session the app
- * uses for that account, creating an empty one only until the app gets there
- * — either way the poll only reads.
+ * The fixture as one session loaded it, or `null` where it is not loaded at
+ * all. `fromPartition` returns the session the app uses for that account,
+ * creating an empty one only until the app gets there, and `null` names the
+ * default session, where the one worker lives — either way this only reads.
  */
-async function waitForFixture(partition: string) {
-  await expect
-    .poll(() =>
-      meru.app.evaluate(
-        ({ session }, { partition: partitionName, extensionId }) =>
-          session
-            .fromPartition(partitionName)
-            .extensions.getAllExtensions()
-            .some((extension) => extension.id === extensionId),
-        { partition, extensionId: FIXTURE_EXTENSION_ID },
-      ),
-    )
-    .toBe(true);
+async function readLoadedFixture(partition: string | null) {
+  return meru.app.evaluate(
+    ({ session }, { partition: partitionName, extensionId }) =>
+      (partitionName === null
+        ? session.defaultSession
+        : session.fromPartition(partitionName)
+      ).extensions
+        .getAllExtensions()
+        .find((extension) => extension.id === extensionId) ?? null,
+    { partition, extensionId: FIXTURE_EXTENSION_ID },
+  );
+}
+
+/**
+ * Waits until the app has loaded the fixture into the session, which happens
+ * as the app comes up: the default session before the accounts, and each
+ * account's while its `Account` is constructed.
+ */
+async function waitForFixture(partition: string | null) {
+  await expect.poll(async () => (await readLoadedFixture(partition)) !== null).toBe(true);
 }
 
 /** Opens a hidden window in the session and resolves to its WebContents id. */
-async function openProbeWindow(partition: string, url: string) {
+async function openProbeWindow(partition: string | null, url: string) {
   await waitForFixture(partition);
 
   return meru.app.evaluate(
     async ({ BrowserWindow }, { partition: partitionName, url: probeUrl }) => {
       const probeWindow = new BrowserWindow({
         show: false,
-        webPreferences: { partition: partitionName },
+        // Named partitions are the accounts'; without one the window runs in
+        // the default session, which is where the one worker is
+        webPreferences: partitionName === null ? {} : { partition: partitionName },
       });
 
       await probeWindow.loadURL(probeUrl);
@@ -257,20 +272,75 @@ function echoReply(
   };
 }
 
-test("both sessions' popups reach the one worker the first session keeps", async () => {
-  const workerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("worker-popup"));
+/*
+ * The invariant the whole design rests on, read off the copies Chromium
+ * actually loaded rather than off anything the extension reports about itself:
+ * only the default session carries a `background` key, so no account holds the
+ * worker and removing one can never take it away. It comes first in the file
+ * because every test below is about a session that has to be shimmed.
+ */
+test("only the default session holds the worker, and every account is content-script-only", async () => {
+  await waitForFixture(WORKER_SESSION);
 
-  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-popup"));
+  await waitForFixture(REMOVED_PARTITION);
+
+  await waitForFixture(SURVIVING_PARTITION);
+
+  const workerFixture = await readLoadedFixture(WORKER_SESSION);
+
+  expect(workerFixture?.manifest.background).toEqual({
+    service_worker: "chrome-facade-service-worker.js",
+  });
+
+  for (const partition of [REMOVED_PARTITION, SURVIVING_PARTITION]) {
+    const accountFixture = await readLoadedFixture(partition);
+
+    expect(accountFixture?.manifest.background).toBeUndefined();
+
+    // The same extension either way, which is what makes the relay able to
+    // match the two copies at all
+    expect(accountFixture?.id).toBe(FIXTURE_EXTENSION_ID);
+  }
+});
+
+/*
+ * The default session is the app's own, and what Meru puts in it is the main
+ * window's renderer and the popups beside it, all one origin. A curated
+ * extension cannot reach that origin, its content scripts being clamped to a
+ * host allowlist; the fixture is unclamped, so it is the one that would if
+ * anything did.
+ *
+ * What makes it unreachable in a packaged build is the scheme: `loadRenderer`
+ * uses `loadFile` outside development, and the loader never asks for file
+ * access, so no pattern matches. That is what this asserts. Reading the probe
+ * attribute back as `null` would not say it — a context that injected and is
+ * still running its probes has not written the attribute yet either — so the
+ * absence is held to the scheme rather than to the absence of a result.
+ */
+test("the main window's renderer is a file:// page no content script can match", async () => {
+  await waitForFixture(WORKER_SESSION);
+
+  expect(meru.renderer.url()).toMatch(/^file:/);
+
+  // And nothing has written probe results into it, which is consistent with
+  // the above rather than proof of it
+  expect(await meru.renderer.locator("html").getAttribute("data-meru-fixture-results")).toBeNull();
+});
+
+test("both accounts' popups reach the one worker the default session keeps", async () => {
+  const workerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("worker-popup"));
+
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("shim-popup"));
 
   const workerPopup = await readProbeResults(workerPopupId);
 
   const shimPopup = await readProbeResults(shimPopupId);
 
-  // The two sessions load different copies — the worker session the whole
-  // extension, every other session one derived with no `background` at all —
+  // The two sessions load different copies — the default session the whole
+  // extension, every account session one derived with no `background` at all —
   // and `getManifest` is where that would otherwise show. The worker session's
-  // answer is native and therefore the ground truth; the shim session's is the
-  // shim's, and the two agreeing is the claim
+  // answer is native and therefore the ground truth; the account session's is
+  // the shim's, and the two agreeing is the claim
   expect(workerPopup.manifest).toMatchObject({
     background: { service_worker: "chrome-facade-service-worker.js" },
     // Chromium localized the manifest as it loaded the copy, which the derive
@@ -302,8 +372,8 @@ test("both sessions' popups reach the one worker the first session keeps", async
   expect(workerReply.workerInstanceId).toEqual(expect.any(String));
 
   /*
-   * The shim session's popup has no worker in its own session to answer — its
-   * copy carries none — so a reply at all is cross-session relay, and the
+   * The account session's popup has no worker in its own session to answer —
+   * its copy carries none — so a reply at all is cross-session relay, and the
    * matching `workerInstanceId` pins it to the same worker instance the
    * worker session's popup reached. The sender is the proxy's whole contract
    * for an extension page: URL and origin, and deliberately no tab.
@@ -325,11 +395,11 @@ test("content scripts inject into the shim session and round-trip, a strict page
 
   const cspPageUrl = `${serverOrigin}/csp`;
 
-  const plainPageId = await openProbeWindow(SHIM_PARTITION, plainPageUrl);
+  const plainPageId = await openProbeWindow(SURVIVING_PARTITION, plainPageUrl);
 
-  const cspPageId = await openProbeWindow(SHIM_PARTITION, cspPageUrl);
+  const cspPageId = await openProbeWindow(SURVIVING_PARTITION, cspPageUrl);
 
-  const workerPageId = await openProbeWindow(WORKER_PARTITION, plainPageUrl);
+  const workerPageId = await openProbeWindow(WORKER_SESSION, plainPageUrl);
 
   // The results existing at all is the injection claim: the only thing that
   // writes them into a loopback page is the fixture's content script, and the
@@ -372,7 +442,7 @@ test("content scripts inject into the shim session and round-trip, a strict page
 test("ports relay both ways and both ends observe a disconnect", async () => {
   const pageUrl = `${serverOrigin}/plain`;
 
-  const pageId = await openProbeWindow(SHIM_PARTITION, pageUrl);
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, pageUrl);
 
   const page = await readProbeResults(pageId);
 
@@ -417,9 +487,9 @@ test("a page navigating away disconnects the port it left open", async () => {
    * an unload-time request on this scheme is dropped with the frame, measured
    * with this same case and the cancel handler compiled out.
    */
-  const observerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("navigation-observer"));
+  const observerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("navigation-observer"));
 
-  const pageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/plain`);
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/plain`);
 
   const page = await readProbeResults(pageId);
 
@@ -445,9 +515,9 @@ test("a message is attributed to the frame that sent it, an embedded extension f
    * must carry its own tab's id, not the other's. The WebContents ids the
    * windows were created with are what the proxy's tab ids are defined to be.
    */
-  const firstSameId = await openProbeWindow(SHIM_PARTITION, samePageUrl);
+  const firstSameId = await openProbeWindow(SURVIVING_PARTITION, samePageUrl);
 
-  const secondSameId = await openProbeWindow(SHIM_PARTITION, samePageUrl);
+  const secondSameId = await openProbeWindow(SURVIVING_PARTITION, samePageUrl);
 
   const firstSame = await readProbeResults(firstSameId);
 
@@ -482,7 +552,7 @@ test("a message is attributed to the frame that sent it, an embedded extension f
    */
   const frameHostUrl = `${serverOrigin}/frame`;
 
-  const frameHostId = await openProbeWindow(SHIM_PARTITION, frameHostUrl);
+  const frameHostId = await openProbeWindow(SURVIVING_PARTITION, frameHostUrl);
 
   const embeddedFrameUrl = `chrome-extension://${FIXTURE_EXTENSION_ID}/fixture-frame.html`;
 
@@ -510,7 +580,7 @@ test("a message is attributed to the frame that sent it, an embedded extension f
 test("the worker reaches a shimmed content script it never heard from first", async () => {
   const pageUrl = `${serverOrigin}/plain`;
 
-  const pageId = await openProbeWindow(SHIM_PARTITION, pageUrl);
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, pageUrl);
 
   const page = await readProbeResults(pageId);
 
@@ -559,7 +629,7 @@ test("the worker reaches a shimmed content script it never heard from first", as
 });
 
 test("an action popup is no tab, and the worker says so rather than guessing", async () => {
-  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-popup-no-tab"));
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("shim-popup-no-tab"));
 
   const shimPopup = await readProbeResults(shimPopupId);
 
@@ -575,11 +645,11 @@ test("an action popup is no tab, and the worker says so rather than guessing", a
 });
 
 test("storage is one store: the shim session's contexts read and write the worker's", async () => {
-  const workerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("worker-storage"));
+  const workerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("worker-storage"));
 
-  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-storage"));
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("shim-storage"));
 
-  const pageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/same`);
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/same`);
 
   const workerPopup = await readProbeResults(workerPopupId);
 
@@ -618,11 +688,11 @@ test("storage is one store: the shim session's contexts read and write the worke
 });
 
 test("session storage keeps Chrome's access level across the proxy", async () => {
-  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-session-storage"));
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("shim-session-storage"));
 
-  const workerPageId = await openProbeWindow(WORKER_PARTITION, `${serverOrigin}/plain`);
+  const workerPageId = await openProbeWindow(WORKER_SESSION, `${serverOrigin}/plain`);
 
-  const shimPageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/csp`);
+  const shimPageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/csp`);
 
   const shimPopup = await readProbeResults(shimPopupId);
 
@@ -674,17 +744,17 @@ test.skip("storage.onChanged fires in the shim session, for the worker's writes 
    * a source that cannot fire — see `probes.ts`.
    */
   const workerPopupId = await openProbeWindow(
-    WORKER_PARTITION,
+    WORKER_SESSION,
     popupUrl("worker-changes", { probeStorageChanges: true }),
   );
 
   const shimPopupId = await openProbeWindow(
-    SHIM_PARTITION,
+    SURVIVING_PARTITION,
     popupUrl("shim-changes", { probeStorageChanges: true }),
   );
 
   const pageId = await openProbeWindow(
-    SHIM_PARTITION,
+    SURVIVING_PARTITION,
     `${serverOrigin}/same?meruProbeStorageChanges=1`,
   );
 
@@ -750,30 +820,51 @@ test.skip("storage.onChanged fires in the shim session, for the worker's writes 
 });
 
 /*
- * Removing the account whose session holds the worker leaves the accounts left
- * behind with content-script-only copies and nothing to reach, until the app
- * restarts or an account added later adopts the vacant role. The app cannot
- * hand the role to a surviving session yet — see "The worker session's removal"
- * in the feature doc for why that is a design change — so what it owes the user
- * is the offer of a restart, and this is the whole chain that produces it: the
- * loader noticing, the main process telling the renderer, and the toast.
+ * What the worker living in the default session buys, and the reason for the
+ * whole change: removing an account is a non-event for every other account.
+ * Nothing about the removed session was load-bearing — it held a
+ * content-script-only copy like all the others — so the worker keeps running,
+ * the one 1Password sign-in it stands in for survives, and the accounts left
+ * behind go on reaching it.
+ *
+ * Last in the file, because it removes an account the tests above open windows
+ * in.
  */
-test("removing the worker account offers a restart to the accounts left behind", async () => {
-  await waitForFixture(WORKER_PARTITION);
+test("removing an account leaves the one worker, and its store, where it was", async () => {
+  await waitForFixture(WORKER_SESSION);
 
-  await waitForFixture(SHIM_PARTITION);
+  await waitForFixture(REMOVED_PARTITION);
+
+  await waitForFixture(SURVIVING_PARTITION);
+
+  /*
+   * The worker instance the surviving account reaches before the removal. The
+   * id is what tells a surviving worker from a new one: a worker that restarted
+   * would answer with an id of its own, and a session that adopted the role
+   * afterwards would have started signed out.
+   */
+  const beforePopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("before-removal"));
+
+  const beforePopup = await readProbeResults(beforePopupId);
+
+  expect(beforePopup.echo.status).toBe("replied");
+
+  const { workerInstanceId } = (beforePopup.echo as { reply: { workerInstanceId: string } }).reply;
+
+  expect(workerInstanceId).toEqual(expect.any(String));
+
+  expect(beforePopup.workerStampInLocal.status).toBe("read");
+
+  const workerStamp = (beforePopup.workerStampInLocal as { value: unknown }).value;
+
+  expect(workerStamp).toEqual(expect.any(String));
 
   const navigation = await meru.openSettings();
 
   await openSettingsPage(meru, navigation, "Accounts");
 
-  /*
-   * The first row is the worker account, for the same reason the partition
-   * constants above say so: accounts are constructed in config order and roles
-   * are adopted in the order sessions are set up. Picking the wrong row fails
-   * this test rather than passing it quietly, because removing a shimmed
-   * session raises no toast at all.
-   */
+  // The first row is the account the partition constants name as the removed
+  // one: accounts are listed in config order
   await meru.renderer.getByRole("button", { name: "Remove account" }).first().click();
 
   await meru.renderer
@@ -781,7 +872,44 @@ test("removing the worker account offers a restart to the accounts left behind",
     .getByRole("button", { name: "Remove account" })
     .click();
 
-  await expect(
-    meru.renderer.getByText("Extensions stopped working in your other accounts."),
-  ).toBeVisible();
+  await expect.poll(async () => (await readLoadedFixture(REMOVED_PARTITION)) === null).toBe(true);
+
+  /*
+   * A context opened after the removal, rather than the one from before: what
+   * has to work is the whole path from a new document through the relay to the
+   * worker, which is what a password manager needs the next time a page asks
+   * it to fill something.
+   */
+  const afterPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("after-removal"));
+
+  const afterPopup = await readProbeResults(afterPopupId);
+
+  // The same worker instance, so nothing restarted and nothing was adopted
+  expect(afterPopup.echo).toEqual(
+    echoReply(afterPopup, workerInstanceId, {
+      url: popupUrl("after-removal"),
+      origin: `chrome-extension://${FIXTURE_EXTENSION_ID}`,
+      frameId: null,
+      hasTab: false,
+      tabId: null,
+      tabUrl: null,
+    }),
+  );
+
+  // And the one store is the one it was, which is what the sign-in lives in
+  expect(afterPopup.workerStampInLocal).toEqual({ status: "read", value: workerStamp });
+
+  expect(afterPopup.writeSeenByWorker).toEqual({
+    status: "read",
+    value: afterPopup.contextId,
+  });
+
+  // A content script of the surviving account too, the other side of the shim
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/plain`);
+
+  const page = await readProbeResults(pageId);
+
+  expect(page.echo.status).toBe("replied");
+
+  expect(page.workerStampInLocal).toEqual({ status: "read", value: workerStamp });
 });

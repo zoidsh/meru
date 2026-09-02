@@ -201,7 +201,15 @@ function createPage(shimSession: Session, contentsId = 7, url = PAGE_URL) {
   return { frame, contents };
 }
 
-function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
+/**
+ * `adoptWorkerSession: false` builds the proxy without one, the way a launch
+ * looks between the routes being registered and the worker session being set
+ * up; `adoptWorkerSession()` on the harness is that setup.
+ */
+function createHarness(
+  proxyOptions: RuntimeProxyOptions = {},
+  { adoptWorkerSession = true }: { adoptWorkerSession?: boolean } = {},
+) {
   const workerSession = createFakeSession();
 
   const shimSession = createFakeSession();
@@ -232,7 +240,9 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
 
   proxy.registerRoutes(bridge);
 
-  proxy.setWorkerSession(workerSession.session);
+  if (adoptWorkerSession) {
+    proxy.setWorkerSession(workerSession.session);
+  }
 
   /** Parks a worker job stream the way the relay client does, collecting jobs. */
   const openWorkerStream = async () => {
@@ -349,6 +359,9 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     replyToJob,
     sendShimMessage,
     connectShimPort,
+    adoptWorkerSession: () => {
+      proxy.setWorkerSession(workerSession.session);
+    },
   };
 }
 
@@ -930,6 +943,83 @@ describe("RuntimeProxy", () => {
     const shimResponse = await harness.sendShimMessage("anyone?");
 
     expect(await shimResponse.json()).toEqual({ status: "noListener" });
+  });
+
+  /*
+   * The launch window the embedder's ordering closes: the worker session is set
+   * up before any session that could message it. This is what makes a window
+   * that should never open cost a wait rather than a wrong answer — a job that
+   * arrives first waits for the adoption instead of being told the receiving
+   * end does not exist.
+   *
+   * The waits are what make this reach the path it names. The enqueue has to
+   * land before the adoption, which the log line is the only signal for: a
+   * bridge request is answered across several awaits, so calling
+   * `adoptWorkerSession()` on the next line would set the session first and
+   * test the ordinary path instead. And the adoption has to be what drives the
+   * queue, which `startWorkerForScope` on the adopted session is the only
+   * observable for: a stream parked afterwards flushes the queue by itself, so
+   * every assertion below would pass with the driving removed.
+   */
+  test("a job enqueued before the worker session is adopted is driven by the adoption", async () => {
+    const logs: string[] = [];
+
+    const harness = createHarness(
+      { logger: { info: (message) => logs.push(message), error: () => undefined } },
+      { adoptWorkerSession: false },
+    );
+
+    const shimResponse = harness.sendShimMessage("early");
+
+    await waitFor(
+      () => logs.some((message) => message.startsWith("No extension worker session yet")),
+      "the job to be queued with no worker session",
+    );
+
+    // Nothing was woken, and nothing was refused either
+    expect(harness.workerSession.workerStarts).toEqual([]);
+
+    harness.adoptWorkerSession();
+
+    // The adoption drives the queue: this is the wake the job was waiting for
+    await waitFor(
+      () => harness.workerSession.workerStarts.length === 1,
+      "the adopted session's wake",
+    );
+
+    expect(harness.workerSession.workerStarts).toEqual([EXTENSION_SCOPE]);
+
+    const workerStream = await harness.openWorkerStream();
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    if (job?.type !== "sendMessage") {
+      throw new Error("Expected a sendMessage job");
+    }
+
+    expect(job.message).toBe("early");
+
+    await harness.ackJob(job.jobId);
+
+    await harness.replyToJob(job.jobId, { status: "replied", reply: "late but here" });
+
+    expect(await (await shimResponse).json()).toEqual({
+      status: "replied",
+      reply: "late but here",
+    });
+  });
+
+  test("a job enqueued before an adoption that never comes fails one timeout later", async () => {
+    const harness = createHarness({ wakeTimeoutMs: 20 }, { adoptWorkerSession: false });
+
+    const startedAt = Date.now();
+
+    const shimResponse = await harness.sendShimMessage("nobody home");
+
+    expect(await shimResponse.json()).toEqual({ status: "noListener" });
+
+    // The bounded wait, not the instant refusal this replaced
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(15);
   });
 
   test("a session adopted after the worker session went away is woken", async () => {

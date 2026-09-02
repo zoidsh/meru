@@ -206,6 +206,14 @@ export class RuntimeProxy {
 
   private workerSession: Session | undefined;
 
+  /**
+   * Whether a worker session has ever been adopted, which is what tells the two
+   * ways of having none apart. Before the first adoption a job waits, because
+   * the session is coming; after a teardown it fails at once, because the
+   * worker genuinely went away and that is what Chrome would say.
+   */
+  private hasAdoptedWorkerSession = false;
+
   private removeWorkerSessionListener: (() => void) | undefined;
 
   /**
@@ -526,11 +534,20 @@ export class RuntimeProxy {
   /**
    * The session that keeps the workers. Its `running-status-changed` events are
    * what invalidate parked job streams, since nothing else says a worker died.
+   *
+   * Anything queued before this arrives is driven again here, which is the
+   * other half of `wakeWorker` waiting rather than refusing when it has no
+   * session: a wake armed without one has no `startWorkerForScope` behind it,
+   * so it is cleared before the queue is driven, or the real wake would return
+   * early against it and the jobs would wait out a timeout for a worker nobody
+   * asked to start.
    */
   setWorkerSession(session: Session) {
     this.removeWorkerSessionListener?.();
 
     this.workerSession = session;
+
+    this.hasAdoptedWorkerSession = true;
 
     const statusListener = (details: { versionId: number; runningStatus: string }) => {
       this.handleRunningStatusChanged(details.versionId, details.runningStatus);
@@ -543,6 +560,16 @@ export class RuntimeProxy {
 
       this.removeWorkerSessionListener = undefined;
     };
+
+    for (const extensionId of this.wakes.keys()) {
+      this.clearWake(extensionId);
+    }
+
+    for (const [extensionId, queue] of this.queuedJobs) {
+      if (queue.length > 0) {
+        this.ensureDelivery(extensionId);
+      }
+    }
   }
 
   teardownSession(session: Session) {
@@ -1018,12 +1045,6 @@ export class RuntimeProxy {
   }
 
   private enqueueJob(job: RelayJob) {
-    if (!this.workerSession) {
-      this.failJob(job, "noListener");
-
-      return;
-    }
-
     this.queue(job.extensionId).push(job);
 
     this.ensureDelivery(job.extensionId);
@@ -1101,6 +1122,24 @@ export class RuntimeProxy {
    * reconnected yet. Either way the queued jobs wait for a stream, bounded by
    * the wake timeout. The API is experimental on Electron 43, which is why the
    * tests pin its presence.
+   *
+   * With no worker session yet there is nothing to call it on, and the jobs
+   * wait out a bounded timeout instead. That window is the launch one the
+   * embedder's ordering already closes — the worker session is set up before
+   * any session that could message it — so what this buys is that a window
+   * which should never open costs a wait rather than a wrong answer.
+   * `setWorkerSession` drives the queue the way a parked stream does, and only
+   * a timer expiring answers "receiving end does not exist", which is the same
+   * shape the cold-launch race settled on for a registration that has not been
+   * stored yet. The worst case is two of these timeouts rather than one: this
+   * timer, and then the one armed after the adoption's own
+   * `startWorkerForScope`.
+   *
+   * Jobs only. A page stream parked in the same window is refused, since
+   * `isShimmedSession` is false for every session while there is no worker
+   * session to hold one against, and the context re-parks on its own backoff.
+   * The window is the same unreachable one, and closing that half would be a
+   * change to how streams are parked rather than to how jobs are queued.
    */
   private wakeWorker(extensionId: string) {
     if (this.wakes.has(extensionId)) {
@@ -1109,15 +1148,30 @@ export class RuntimeProxy {
 
     const workerSession = this.workerSession;
 
-    if (!workerSession) {
-      this.failQueuedJobs(extensionId, "noListener");
-
-      return;
-    }
-
     const wake: Wake = { timer: undefined };
 
     this.wakes.set(extensionId, wake);
+
+    if (!workerSession) {
+      // A worker session that went away is Chrome's missing receiving end and
+      // is answered as one; one that has not arrived yet is a window the
+      // embedder's ordering already closes, and the jobs wait it out
+      if (this.hasAdoptedWorkerSession) {
+        this.clearWake(extensionId);
+
+        this.failQueuedJobs(extensionId, "noListener");
+
+        return;
+      }
+
+      this.logger?.info("No extension worker session yet; waiting for one to be adopted", {
+        extensionId,
+      });
+
+      this.armWakeTimeout(extensionId, wake);
+
+      return;
+    }
 
     Promise.resolve()
       .then(() =>
@@ -1130,11 +1184,7 @@ export class RuntimeProxy {
           return;
         }
 
-        wake.timer = setTimeout(() => {
-          this.wakes.delete(extensionId);
-
-          this.failQueuedJobs(extensionId, "noListener");
-        }, this.wakeTimeoutMs);
+        this.armWakeTimeout(extensionId, wake);
       })
       .catch((error: unknown) => {
         if (this.wakes.get(extensionId) !== wake) {
@@ -1163,12 +1213,21 @@ export class RuntimeProxy {
           },
         );
 
-        wake.timer = setTimeout(() => {
-          this.wakes.delete(extensionId);
-
-          this.failQueuedJobs(extensionId, "noListener");
-        }, this.wakeTimeoutMs);
+        this.armWakeTimeout(extensionId, wake);
       });
+  }
+
+  /**
+   * How long a queued job waits for the stream a worker parks once it is
+   * running. Expiring is the one path that answers "receiving end does not
+   * exist" for a job that was queued rather than refused outright.
+   */
+  private armWakeTimeout(extensionId: string, wake: Wake) {
+    wake.timer = setTimeout(() => {
+      this.wakes.delete(extensionId);
+
+      this.failQueuedJobs(extensionId, "noListener");
+    }, this.wakeTimeoutMs);
   }
 
   private clearWake(extensionId: string) {

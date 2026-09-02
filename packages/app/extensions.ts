@@ -15,7 +15,7 @@ import {
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
-import { app } from "electron";
+import { app, session } from "electron";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { log } from "@/lib/log";
@@ -151,6 +151,41 @@ function getContentScriptMatches(extensionId: string) {
     ?.contentScriptMatches;
 }
 
+/**
+ * Meru's own pages in the worker session, as match patterns, for the loader to
+ * warn about an extension whose content scripts reach them. The renderer, the
+ * bookmarks and downloads popups and the desktop-sources page are all one
+ * origin, which `loadRenderer` decides: a `file://` document in a packaged
+ * build, unmatchable while the loader grants no file access, and the dev
+ * server in development — which is where an unpacked `extensions/` folder is
+ * loaded from, so it is the one that can actually be reached.
+ *
+ * The port is left off because Chrome's grammar has no place for one: a
+ * pattern carrying a port is not a narrower pattern but an invalid one, which
+ * Chromium refuses as it loads the manifest.
+ *
+ * A `MERU_RENDERER_URL` that will not parse gives no patterns rather than
+ * throwing. It is read at module scope, where a throw would take the launch
+ * with it, and `loadRenderer` hands the same value to `loadUrl`, so a bad one
+ * is already a page that does not load — the warning going quiet is the
+ * smaller half of that.
+ */
+function getWorkerSessionPagePatterns() {
+  if (!is.dev) {
+    return ["file:///*"];
+  }
+
+  try {
+    const { protocol, hostname } = new URL(
+      process.env.MERU_RENDERER_URL || "http://localhost:3000/",
+    );
+
+    return [`${protocol}//${hostname}/*`];
+  } catch {
+    return [];
+  }
+}
+
 // Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerExtensionBridgeScheme();
@@ -161,21 +196,25 @@ export const extensions = new Extensions({
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
-  // One shared extension instance across all account sessions — one 1Password
-  // sign-in instead of one per account, and one worker whatever the account
-  // count. It is how Meru runs extensions rather than something the user
-  // chooses: a per-account instance is the thing the feature exists to remove,
-  // so an off switch would only ever switch back to the worse sign-in and
-  // memory behavior, and `extensions.enabled` already turns extensions off
-  // entirely. Passed unconditionally rather than behind that master switch,
-  // which is read per session in `getExtensionDirs`: a session that loads no
-  // extension never adopts a role, so gating here would buy nothing and would
-  // read the switch once at launch, handing a full instance to any account
-  // added after extensions were turned on. Deleting this one option still
-  // removes the whole feature.
+  // One shared extension instance across every session — one 1Password sign-in
+  // instead of one per account, and one worker whatever the account count. It
+  // is how Meru runs extensions rather than something the user chooses: a
+  // per-account instance is the thing the feature exists to remove, so an off
+  // switch would only ever switch back to the worse sign-in and memory
+  // behavior, and `extensions.enabled` already turns extensions off entirely.
+  // Passed unconditionally rather than behind that master switch, which is read
+  // per session in `getExtensionDirs`: a session that loads no extension never
+  // adopts a role, so gating here would buy nothing and would read the switch
+  // once at launch. Deleting this one option still removes the whole feature.
+  //
+  // The worker lives in the default session, which no account owns, so an
+  // account session is never the one holding it — see
+  // `setupExtensionsWorkerSession` below.
+  workerSessionPagePatterns: getWorkerSessionPagePatterns(),
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
+    getWorkerSession: () => session.defaultSession,
   }),
   logger: {
     info: (message, details) => {
@@ -186,6 +225,70 @@ export const extensions = new Extensions({
     },
   },
 });
+
+/**
+ * Loads the extensions into the session the one worker runs in, which is
+ * Electron's default session: no account owns it, so removing an account is a
+ * non-event for the worker and the one 1Password sign-in outlives every
+ * removal, and every account session is content-script-only from its first
+ * load rather than whichever came first keeping the whole extension.
+ *
+ * Called before `accounts.init()` constructs any account session, and awaited
+ * by nothing: role adoption no longer turns on the order sessions are set up,
+ * so what starting first buys is only that the worker is loading while the
+ * accounts come up rather than after them. The load is reported the way an
+ * account's is, since a worker that failed to load must not take the launch
+ * with it — the accounts' copies are still there, reaching a worker that will
+ * not answer.
+ *
+ * The store the worker keeps lands in `userData` itself, that being what
+ * `getStoragePath()` answers for the default session where an account's
+ * answers `userData/Partitions/<accountId>` — every directory name
+ * `clearSessionData` already looks for, at a root that carries nothing else of
+ * the kind.
+ */
+export function setupExtensionsWorkerSession() {
+  extensions.setupSession(session.defaultSession).catch((error: unknown) => {
+    log.error("Failed to set up extensions worker session", { error: serializeError(error) });
+  });
+}
+
+/**
+ * Clears what the accounts' own partitions still hold from before the one
+ * worker moved to the default session, once, on the first launch after the
+ * upgrade. Each partition of such a profile keeps that account's own worker
+ * store — a `chrome.storage` nothing reads any more, and an IndexedDB that is
+ * worse than unread: only `chrome.storage` is proxied, so an extension page
+ * opened in that account reads its stale database directly where every other
+ * account reads an empty one.
+ *
+ * The 3.60.0 migration schedules this rather than doing it, running
+ * synchronously and before the app is ready. Runs before `accounts.init()`
+ * constructs any of these sessions, so nothing has the files open;
+ * `fromPartition` makes an empty session where the account has never run,
+ * which has nothing to clear and costs a directory that is not there.
+ *
+ * The flag goes back before the work rather than after it: a clear that throws
+ * is one directory the user can live with, where a flag left set would clear
+ * every account's extension storage on every launch from here on.
+ */
+export async function clearStaleAccountExtensionData() {
+  if (!config.get("extensions.clearStaleAccountData")) {
+    return;
+  }
+
+  config.set("extensions.clearStaleAccountData", false);
+
+  await Promise.all(
+    config
+      .get("accounts")
+      .map((account) =>
+        extensions.clearSessionData(session.fromPartition(`persist:${account.id}`)),
+      ),
+  );
+
+  log.info("Cleared stale account extension data");
+}
 
 /**
  * What is on disk, which config alone can't tell: an install carries a version,
@@ -263,6 +366,40 @@ export async function uninstallCuratedExtension(extensionId: string) {
   );
 
   await uninstallExtension({ installDir: INSTALL_DIR, extensionId });
+
+  /*
+   * And what the extension wrote, which lives in the default session with the
+   * worker. Removing an account used to clear that account's copy of the
+   * store, so uninstalling and then removing every account left nothing
+   * behind; with one store in a session no removal touches, nothing but a full
+   * app reset would reach it and a reinstall would come back signed in. Chrome
+   * deletes an extension's storage on uninstall too, with nothing further
+   * asked.
+   *
+   * Unloaded from the worker session first, because the delete has to land on
+   * a store nothing is writing: the copy otherwise stays loaded until the
+   * restart the settings page asks for, and a worker still running writes part
+   * of its store back behind the delete — into the directory a reinstall under
+   * the same id reads, so the reinstall comes back signed in, which is the one
+   * outcome this call exists to prevent.
+   *
+   * How much of the Windows half it fixes is reasoned rather than measured:
+   * `removeExtension` terminates the worker asynchronously and says nothing
+   * about closing the LevelDB handle, so a delete failing against files
+   * Chromium still holds open stays possible there, which is what
+   * `clearSessionData` retries for.
+   *
+   * The accounts' content-script-only copies are left where they are. They
+   * hold no store, and unloading them would only take away the content scripts
+   * of documents already open, which the restart does anyway.
+   *
+   * It clears every extension's store in that session rather than this one's,
+   * which is exact while the catalog holds a single entry and is why a second
+   * curated extension needs a per-id clear before it lands.
+   */
+  extensions.unloadExtension(session.defaultSession, extensionId);
+
+  await extensions.clearSessionData(session.defaultSession);
 
   log.info("Uninstalled extension", { extensionId });
 }

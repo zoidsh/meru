@@ -2,76 +2,71 @@ import { describe, expect, test } from "bun:test";
 import type { Session } from "electron";
 import { createSharedExtensionInstance } from "./index";
 
+function createSession(label: string) {
+  return { label } as unknown as Session;
+}
+
 /**
  * Role adoption alone, which needs no Electron: `install` is what builds the
  * `RuntimeProxy`, and every method here guards on it, so a shared instance
  * that was never installed hands out roles and nothing else.
  */
-function createRoleAssigner() {
+function createRoleAssigner(workerSession: Session) {
   return createSharedExtensionInstance({
     shimScriptPath: "/shim.js",
     relayScriptPath: "/relay.js",
+    getWorkerSession: () => workerSession,
   });
 }
 
-function createSession(label: string) {
-  return { label } as unknown as Session;
-}
-
 describe("createSharedExtensionInstance role adoption", () => {
-  test("the first session set up keeps the worker and every later one is content-script-only", () => {
-    const sharedInstance = createRoleAssigner();
+  test("the session the embedder names keeps the worker, whenever it is set up", () => {
+    const workerSession = createSession("worker");
 
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    // Set up after another session, which under the rule this replaced would
+    // have been the one keeping it
     expect(sharedInstance.adoptSession(createSession("first"))).toEqual({
+      role: "contentScriptOnly",
+      shimScriptPath: "/shim.js",
+    });
+
+    expect(sharedInstance.adoptSession(workerSession)).toEqual({
       role: "worker",
       relayScriptPath: "/relay.js",
     });
 
-    expect(sharedInstance.adoptSession(createSession("second"))).toEqual({
+    expect(sharedInstance.adoptSession(createSession("third"))).toEqual({
       role: "contentScriptOnly",
       shimScriptPath: "/shim.js",
     });
   });
 
   test("a session asked twice keeps the role it has", () => {
-    const sharedInstance = createRoleAssigner();
-
     const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
 
     expect(sharedInstance.adoptSession(workerSession).role).toBe("worker");
     expect(sharedInstance.adoptSession(workerSession).role).toBe("worker");
-  });
-
-  test("tearing down a content-script-only session leaves the worker where it is", () => {
-    const sharedInstance = createRoleAssigner();
-
-    const workerSession = createSession("worker");
-
-    sharedInstance.adoptSession(workerSession);
 
     const shimSession = createSession("shim");
 
-    sharedInstance.adoptSession(shimSession);
-
-    sharedInstance.teardownSession(shimSession);
-
-    expect(sharedInstance.adoptSession(createSession("third")).role).toBe("contentScriptOnly");
+    expect(sharedInstance.adoptSession(shimSession).role).toBe("contentScriptOnly");
+    expect(sharedInstance.adoptSession(shimSession).role).toBe("contentScriptOnly");
   });
 
   /*
-   * The behavior the feature doc records rather than one anybody wants: the
-   * surviving sessions keep the content-script-only copies they were derived
-   * with and have no worker to reach until a session set up later takes the
-   * role — an account added after the removal, or every account after a
-   * restart — because `adoptSession` is reached only from
-   * `Extensions.setupSession` and a session is set up once, when its account
-   * is constructed. What this pins is that the role is genuinely vacant
-   * afterwards, so the next session set up does pick it up.
+   * The point of the whole design: an account session going takes nothing with
+   * it, because it never held the worker in the first place. What the embedder
+   * names — Electron's default session — no account owns, so the one worker and
+   * the one sign-in outlive every removal.
    */
-  test("tearing down the worker session vacates the role for the next session set up", () => {
-    const sharedInstance = createRoleAssigner();
-
+  test("tearing down a content-script-only session leaves the worker where it is", () => {
     const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
 
     sharedInstance.adoptSession(workerSession);
 
@@ -79,8 +74,40 @@ describe("createSharedExtensionInstance role adoption", () => {
 
     sharedInstance.adoptSession(shimSession);
 
+    expect(sharedInstance.teardownSession(shimSession)).toBe(false);
+
+    expect(sharedInstance.adoptSession(workerSession).role).toBe("worker");
+  });
+
+  /*
+   * The worker session is the embedder's own, so this is shutdown rather than
+   * anything a user can do — and the answer is what the loader logs to say so
+   * if that ever stops being true.
+   */
+  test("tearing down the worker session answers that the role was vacated", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.adoptSession(workerSession);
+
+    expect(sharedInstance.teardownSession(workerSession)).toBe(true);
+
+    // And a session torn down before it ever adopted anything is not the worker
+    expect(sharedInstance.teardownSession(createSession("never-set-up"))).toBe(false);
+  });
+
+  test("a session set up after the worker's teardown does not inherit the role", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.adoptSession(workerSession);
+
     sharedInstance.teardownSession(workerSession);
 
-    expect(sharedInstance.adoptSession(createSession("added-later")).role).toBe("worker");
+    expect(sharedInstance.adoptSession(createSession("added-later")).role).toBe(
+      "contentScriptOnly",
+    );
   });
 });

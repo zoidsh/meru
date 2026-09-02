@@ -143,5 +143,6 @@ export function createDefaultConfig({
     "extensions.enabled": true,
     "extensions.installed": [],
     "extensions.showTitlebarButton": false,
+    "extensions.clearStaleAccountData": false,
   };
 }
