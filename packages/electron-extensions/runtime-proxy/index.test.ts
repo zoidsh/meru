@@ -61,11 +61,12 @@ describe("createSharedExtensionInstance role adoption", () => {
   /*
    * The behavior the feature doc records rather than one anybody wants: the
    * surviving sessions keep the content-script-only copies they were derived
-   * with and have no worker to reach until the app restarts, because
-   * `adoptSession` is reached only from `Extensions.setupSession` and a
-   * session is set up once, when its account is constructed. What this pins is
-   * that the role is genuinely vacant afterwards, so the next session set up —
-   * an account added after the removal — picks it up.
+   * with and have no worker to reach until a session set up later takes the
+   * role — an account added after the removal, or every account after a
+   * restart — because `adoptSession` is reached only from
+   * `Extensions.setupSession` and a session is set up once, when its account
+   * is constructed. What this pins is that the role is genuinely vacant
+   * afterwards, so the next session set up does pick it up.
    */
   test("tearing down the worker session vacates the role for the next session set up", () => {
     const sharedInstance = createRoleAssigner();

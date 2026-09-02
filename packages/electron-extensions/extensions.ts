@@ -39,6 +39,8 @@ const CONSOLE_ERROR_LEVEL = 3;
 
 export type ActionsChangedListener = (session: Session, actions: ExtensionAction[]) => void;
 
+export type SharedInstanceWorkerLostListener = () => void;
+
 export type ExtensionDirs = string[] | (() => Promise<string[]> | string[]);
 
 /**
@@ -55,7 +57,12 @@ export type SharedExtensionInstance = {
   install(context: { bridge: ExtensionBridge; logger?: ExtensionsLogger }): void;
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
-  teardownSession(session: Session): void;
+  /**
+   * Whether that session was the one holding the worker, which is what the
+   * loader needs to tell an embedder that the sessions left behind have
+   * nothing to reach.
+   */
+  teardownSession(session: Session): boolean;
 };
 
 export type ExtensionsOptions = {
@@ -130,6 +137,8 @@ export class Extensions {
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
 
   private sharedInstance: SharedExtensionInstance | undefined;
+
+  private sharedInstanceWorkerLostListeners = new Set<SharedInstanceWorkerLostListener>();
 
   private logger: ExtensionsLogger | undefined;
 
@@ -456,7 +465,17 @@ export class Extensions {
 
     this.alarms.teardownSession(session);
 
-    this.sharedInstance?.teardownSession(session);
+    // This session is already out of `loadedExtensionIdsBySession`, so what is
+    // left in it is the sessions that keep their content-script-only copies
+    const workerRoleWasVacated = this.sharedInstance?.teardownSession(session) === true;
+
+    if (workerRoleWasVacated && this.loadedExtensionIdsBySession.size > 0) {
+      this.logger?.info("Shared extension instance lost its worker session", {
+        orphanedSessions: this.loadedExtensionIdsBySession.size,
+      });
+
+      this.emitSharedInstanceWorkerLost();
+    }
 
     const consoleListener = this.serviceWorkerConsoleListeners.get(session);
 
@@ -491,6 +510,30 @@ export class Extensions {
     return () => {
       this.actionsChangedListeners.delete(listener);
     };
+  }
+
+  /**
+   * Fires when the session holding the shared instance's worker is torn down
+   * while other sessions still have the extension loaded. Those sessions keep
+   * the content-script-only copies they were derived with, so their extensions
+   * have nothing to reach until the app restarts — or until a session set up
+   * later adopts the vacant role. An embedder that offers a relaunch is what
+   * stands between the user and a password manager that quietly stopped
+   * working. It does not fire when the torn-down session was the last one, as
+   * there is nothing left to be broken.
+   */
+  onSharedInstanceWorkerLost(listener: SharedInstanceWorkerLostListener) {
+    this.sharedInstanceWorkerLostListeners.add(listener);
+
+    return () => {
+      this.sharedInstanceWorkerLostListeners.delete(listener);
+    };
+  }
+
+  private emitSharedInstanceWorkerLost() {
+    for (const listener of this.sharedInstanceWorkerLostListeners) {
+      listener();
+    }
   }
 
   private emitActionsChanged(session: Session) {

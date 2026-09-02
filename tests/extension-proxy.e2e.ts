@@ -32,6 +32,7 @@ import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import type { ProbeResults } from "@meru/electron-extensions/fixture/probes";
 import { expect, test } from "@playwright/test";
 import { useProApp } from "./lib/app";
+import { openSettingsPage } from "./lib/settings";
 
 /** The shape `accounts` is stored in, as in `pro.e2e.ts`. */
 function account(id: string, label: string, selected: boolean) {
@@ -746,4 +747,41 @@ test.skip("storage.onChanged fires in the shim session, for the worker's writes 
       areaName,
     });
   }
+});
+
+/*
+ * Removing the account whose session holds the worker leaves the accounts left
+ * behind with content-script-only copies and nothing to reach, until the app
+ * restarts or an account added later adopts the vacant role. The app cannot
+ * hand the role to a surviving session yet — see "The worker session's removal"
+ * in the feature doc for why that is a design change — so what it owes the user
+ * is the offer of a restart, and this is the whole chain that produces it: the
+ * loader noticing, the main process telling the renderer, and the toast.
+ */
+test("removing the worker account offers a restart to the accounts left behind", async () => {
+  await waitForFixture(WORKER_PARTITION);
+
+  await waitForFixture(SHIM_PARTITION);
+
+  const navigation = await meru.openSettings();
+
+  await openSettingsPage(meru, navigation, "Accounts");
+
+  /*
+   * The first row is the worker account, for the same reason the partition
+   * constants above say so: accounts are constructed in config order and roles
+   * are adopted in the order sessions are set up. Picking the wrong row fails
+   * this test rather than passing it quietly, because removing a shimmed
+   * session raises no toast at all.
+   */
+  await meru.renderer.getByRole("button", { name: "Remove account" }).first().click();
+
+  await meru.renderer
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Remove account" })
+    .click();
+
+  await expect(
+    meru.renderer.getByText("Extensions stopped working in your other accounts."),
+  ).toBeVisible();
 });
