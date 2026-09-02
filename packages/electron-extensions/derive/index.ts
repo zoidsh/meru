@@ -86,6 +86,11 @@ function hash(value: string) {
  * disk per file. The digest is the same either way — the lines are sorted
  * before they are hashed — so a stamp written by an earlier version still
  * matches and no profile re-derives.
+ *
+ * `stat` rather than `lstat` on purpose, so that a symlink is measured by the
+ * file it points at. The copy dereferences, so an edit to a linked file is an
+ * edit to what the copy holds and has to re-derive it; `lstat` would measure
+ * the link itself, which does not move when its target changes.
  */
 async function hashSourceTree(sourceDir: string) {
   const entryNames = await readdir(sourceDir, { recursive: true });
@@ -274,7 +279,19 @@ export async function deriveExtension({
     // way: the derive writes the manifest, the facade and the shim into the
     // directory it made, and a clone diverges from its source at the first
     // write, which a link would not
-    await cp(sourceDir, derivedDir, { recursive: true, mode: constants.COPYFILE_FICLONE });
+    //
+    // `dereference` for the same reason a clone is not a link. A symlink is
+    // copied as a symlink otherwise, and a relative one comes out rewritten
+    // to point back at the source tree, so the facade `derivePages` injects
+    // into a linked page is written through the link and into the directory
+    // the derive exists not to touch — a developer's unpacked tree with
+    // `popup.html -> ../shared/popup.html` in it. A packed install carries no
+    // symlinks, so this is a development case and no shipped extension's
+    await cp(sourceDir, derivedDir, {
+      recursive: true,
+      mode: constants.COPYFILE_FICLONE,
+      dereference: true,
+    });
 
     const { manifest, serviceWorkerWrapper } = deriveManifest(sourceManifest, {
       facadeFileName: FACADE_FILE_NAME,

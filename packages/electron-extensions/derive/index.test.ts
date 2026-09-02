@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { RUNTIME_PROXY_MANIFEST_GLOBAL } from "../runtime-proxy/bridge-protocol";
@@ -363,6 +374,83 @@ describe("deriveExtension", () => {
     expect(JSON.parse(await readFile(`${derivedDir}.json`, "utf8"))).not.toHaveProperty(
       "contentScriptMatches",
     );
+  });
+
+  describe("a source tree with symlinks in it", () => {
+    let sharedDir: string;
+
+    beforeEach(async () => {
+      sharedDir = path.join(workDir, "shared");
+
+      await mkdir(sharedDir, { recursive: true });
+
+      await writeFile(path.join(sharedDir, "shared-popup.html"), "<html><head></head></html>");
+
+      await symlink(
+        path.join("..", "shared", "shared-popup.html"),
+        path.join(sourceDir, "linked-popup.html"),
+      );
+    });
+
+    test("never writes through a link into the file it points at", async () => {
+      await derive();
+
+      expect(await readFile(path.join(sharedDir, "shared-popup.html"), "utf8")).toBe(
+        "<html><head></head></html>",
+      );
+    });
+
+    test("copies a linked page as a file of the copy's own", async () => {
+      const derivedDir = await derive();
+
+      const linkedPagePath = path.join(derivedDir, "linked-popup.html");
+
+      expect((await lstat(linkedPagePath)).isSymbolicLink()).toBe(false);
+
+      expect(await readFile(linkedPagePath, "utf8")).toContain(
+        '<script src="/chrome-facade.js"></script>',
+      );
+    });
+
+    test("copies again when the file a link points at changed", async () => {
+      const derivedDir = await derive();
+
+      await writeFile(path.join(derivedDir, "background", "background.js"), "// stale\n");
+
+      const sharedPagePath = path.join(sharedDir, "shared-popup.html");
+
+      await writeFile(sharedPagePath, "<html><head><title>Edited</title></head></html>");
+
+      const editedAt = new Date(Date.now() + 60_000);
+
+      await utimes(sharedPagePath, editedAt, editedAt);
+
+      await derive();
+
+      // The whole copy was made again, which is what the stamp noticing an
+      // edit through the link means
+      expect(await readFile(path.join(derivedDir, "background", "background.js"), "utf8")).toBe(
+        "// background\n",
+      );
+      expect(await readFile(path.join(derivedDir, "linked-popup.html"), "utf8")).toContain(
+        "<title>Edited</title>",
+      );
+    });
+
+    test("fails the derive on a dangling link rather than half-copying", async () => {
+      const derivedDir = await derive();
+
+      await symlink(path.join("..", "shared", "gone.html"), path.join(sourceDir, "dangling.html"));
+
+      await expect(
+        deriveExtension({ sourceDir, derivedExtensionsDir, facadeScriptPath }),
+      ).rejects.toThrow(/ENOENT/);
+
+      // The digest is taken before anything is removed, so the copy that was
+      // already there survives a source the derive cannot read
+      expect(await readFile(path.join(derivedDir, "manifest.json"), "utf8")).toBeTruthy();
+      expect(await readFile(`${derivedDir}.json`, "utf8")).toBeTruthy();
+    });
   });
 
   test("reports no id for an extension without a key", async () => {
