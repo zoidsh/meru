@@ -6,7 +6,7 @@ import {
   type RuntimeProxySender,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
-import { createPageStreamClient } from "./page-stream-client";
+import { createPageStreamClient, type CreatePageStreamClientOptions } from "./page-stream-client";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
@@ -134,7 +134,7 @@ type Port = {
   onDisconnect: WrappedEvent;
 };
 
-function startClient() {
+function startClient(options: Partial<CreatePageStreamClientOptions> = {}) {
   const chrome: ChromeNamespace = {
     runtime: {
       id: EXTENSION_ID,
@@ -151,6 +151,7 @@ function startClient() {
       storageChanges.push({ area, changes });
     },
     retryDelayMs: 5,
+    ...options,
   });
 
   client.wrapRuntime(chrome);
@@ -479,6 +480,44 @@ describe("createPageStreamClient", () => {
      * a slow machine cannot fail it.
      */
     expect(Date.now() - startedAt).toBeGreaterThanOrEqual(60);
+  });
+
+  test("a stream that ended cleanly is parked again at once", async () => {
+    const stub = stubBridge();
+
+    startClient({ retryDelayMs: 2000 });
+
+    await stub.waitForStream();
+
+    const endedAt = Date.now();
+
+    stub.endStream();
+
+    await stub.waitForStream(2);
+
+    expect(Date.now() - endedAt).toBeLessThan(500);
+  });
+
+  test("a stream that keeps ending cleanly at once is backed off", async () => {
+    const stub = stubBridge();
+
+    startClient({ retryDelayMs: 2000, cleanEndWindowMs: 10_000 });
+
+    const startedAt = Date.now();
+
+    for (let streamCount = 1; streamCount <= 5; streamCount += 1) {
+      (await stub.waitForStream(streamCount)).close();
+    }
+
+    await stub.waitForStream(6);
+
+    /*
+     * Nothing for the first end, then 16, 32, 64 and 128 as the floor doubles,
+     * asserted with slack rather than as the 240 ms those four sum to. This is
+     * the case an unconditional re-park would turn into a hot loop: two live
+     * clients on one frame evict each other's context on every park.
+     */
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(200);
   });
 });
 

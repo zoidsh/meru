@@ -8,6 +8,7 @@ import {
   type RuntimeProxySenderReport,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
+import { createCleanEndBackoff, DEFAULT_CLEAN_END_WINDOW_MS } from "./clean-end-backoff";
 import { dispatchMessage, mirrorEvent } from "./message-dispatch";
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
 import type { RuntimeProxyStorageAreaName, RuntimeProxyStorageChanges } from "./storage-protocol";
@@ -49,6 +50,8 @@ export type CreatePageStreamClientOptions = {
   retryDelayMs?: number;
   /** Where the backoff after repeated failures stops. */
   maxRetryDelayMs?: number;
+  /** How long a stream has to live for its clean end to count as ordinary. */
+  cleanEndWindowMs?: number;
 };
 
 /**
@@ -74,6 +77,7 @@ export function createPageStreamClient({
   onStorageChanged,
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
   maxRetryDelayMs = MAX_RETRY_DELAY_MS,
+  cleanEndWindowMs = DEFAULT_CLEAN_END_WINDOW_MS,
 }: CreatePageStreamClientOptions) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -224,11 +228,27 @@ export function createPageStreamClient({
    * the relay drops this context — the worker's session went away and took the
    * relay's idea of this one with it — where the context itself is still very
    * much alive and still has to hear the worker that comes back.
+   *
+   * A clean end is the relay having dropped the context deliberately, and this
+   * context hears nothing at all until it parks again, so it parks at once
+   * rather than waiting. The backoff behind that is load-bearing here: a
+   * context evicted by another park of the same frame re-parks and evicts that
+   * one in turn, which is a flap between live clients rather than a flapping
+   * main, and an unconditional re-park would make it a hot loop.
    */
   const runPageStream = async () => {
     let failureCount = 0;
 
+    const cleanEndBackoff = createCleanEndBackoff({
+      ceilingMs: retryDelayMs,
+      windowMs: cleanEndWindowMs,
+    });
+
     while (!isStopped) {
+      const parkedAt = Date.now();
+
+      let hasEndedCleanly = false;
+
       try {
         const response = await postBridge(RUNTIME_PROXY_PATHS.pageStream, {
           sender: getSenderReport(),
@@ -255,18 +275,29 @@ export function createPageStreamClient({
             handleEnvelope(envelope);
           }
         }
+
+        hasEndedCleanly = true;
       } catch {
         // A refused or broken stream is a context that hears nothing until it
         // parks again, which is worth no more noise than the wait itself
         failureCount += 1;
       }
 
-      if (!isStopped) {
-        const delayMs = Math.min(
-          retryDelayMs * 2 ** Math.max(failureCount - 1, 0),
-          maxRetryDelayMs,
-        );
+      if (isStopped) {
+        return;
+      }
 
+      let delayMs: number;
+
+      if (hasEndedCleanly) {
+        delayMs = cleanEndBackoff.next(Date.now() - parkedAt);
+      } else {
+        cleanEndBackoff.reset();
+
+        delayMs = Math.min(retryDelayMs * 2 ** Math.max(failureCount - 1, 0), maxRetryDelayMs);
+      }
+
+      if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
