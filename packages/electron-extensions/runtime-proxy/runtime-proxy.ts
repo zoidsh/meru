@@ -148,8 +148,14 @@ export class RuntimeProxy {
 
   private removeWorkerSessionListener: (() => void) | undefined;
 
-  /** Scopes seen starting, the only way to name a worker once it is stopping. */
-  private scopesByVersionId = new Map<number, string>();
+  /**
+   * Scopes seen starting, the only way to name a worker once it is stopping.
+   * A version whose scope is not an extension's — the account's own page
+   * workers, Gmail's included — is recorded as `null`: the scope itself is of
+   * no use here, but knowing the version tells its stop apart from the stop of
+   * a worker this proxy never saw start.
+   */
+  private scopesByVersionId = new Map<number, string | null>();
 
   private workerStreams = new Map<string, WorkerStream>();
 
@@ -499,7 +505,10 @@ export class RuntimeProxy {
       try {
         const { scope } = this.workerSession.serviceWorkers.getInfoFromVersionID(versionId);
 
-        this.scopesByVersionId.set(versionId, scope);
+        this.scopesByVersionId.set(
+          versionId,
+          scope.startsWith(EXTENSION_SCHEME_PREFIX) ? scope : null,
+        );
       } catch {
         // A worker gone again before it was asked about names no stream
       }
@@ -511,17 +520,27 @@ export class RuntimeProxy {
       return;
     }
 
+    const isKnownVersion = this.scopesByVersionId.has(versionId);
+
     const scope = this.scopesByVersionId.get(versionId);
 
     if (runningStatus === "stopped") {
       this.scopesByVersionId.delete(versionId);
     }
 
-    if (scope?.startsWith(EXTENSION_SCHEME_PREFIX)) {
+    if (scope) {
       const extensionId = scope.slice(EXTENSION_SCHEME_PREFIX.length).replace(/\/.*$/, "");
 
       this.invalidateWorkerStream(extensionId);
 
+      return;
+    }
+
+    // A worker that is not an extension's owes the relay nothing. Gmail's own
+    // worker idle-stops routinely in this session, and settling every stream on
+    // it would disconnect every relayed port and fail every message awaiting a
+    // reply, twice per stop
+    if (isKnownVersion) {
       return;
     }
 
