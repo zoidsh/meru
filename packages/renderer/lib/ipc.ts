@@ -1,6 +1,7 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { navigate } from "wouter/use-hash-location";
 import { playNotificationSound } from "./notifications";
+import { restartRequiredToast } from "./toast";
 
 ipc.renderer.on("navigate", (_event, to) => {
   navigate(to);
@@ -46,4 +47,17 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
 
 ipc.renderer.on("notifications.playSound", (_event, { sound, volume }) => {
   playNotificationSound({ sound, volume });
+});
+
+/*
+ * The account that was just removed held the one extension instance every
+ * account shared, so the accounts left behind have extensions that can no
+ * longer reach it. A restart gives the instance to one of them. The message
+ * names no extension because main knows the sessions rather than what the user
+ * installed into them.
+ */
+ipc.renderer.on("extensions.workerSessionLost", () => {
+  restartRequiredToast(
+    "Extensions stopped working in your other accounts. Restart Meru to load them again.",
+  );
 });

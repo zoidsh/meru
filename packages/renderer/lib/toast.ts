@@ -1,8 +1,8 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import { toast } from "sonner";
 
-export function restartRequiredToast() {
-  toast.info("Restart Meru to apply the changes.", {
+export function restartRequiredToast(message = "Restart Meru to apply the changes.") {
+  toast.info(message, {
     id: "restart-required",
     duration: Number.POSITIVE_INFINITY,
     action: {

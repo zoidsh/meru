@@ -6,6 +6,7 @@ import type { ClearStorageDataOptions, Extension, Session } from "electron";
 import { getExtensionBridgeUrl } from "./bridge/protocol";
 import { Extensions } from "./extensions";
 import { NATIVE_MESSAGING_PATHS } from "./native-messaging/bridge-protocol";
+import { createSharedExtensionInstance } from "./runtime-proxy";
 
 let workDir: string;
 
@@ -807,5 +808,163 @@ describe("Extensions", () => {
     expect(extensions.isLoadedExtensionUrl(session, "chrome-extension://aaa/popup.html")).toBe(
       false,
     );
+  });
+});
+
+describe("the shared instance losing its worker session", () => {
+  /*
+   * The real `createSharedExtensionInstance`, so what is under test is the
+   * answer it gives the loader rather than a fake agreeing with the loader.
+   * Its scripts have to exist, because the derive copies them into every copy.
+   */
+  async function createSharedInstance() {
+    const shimScriptPath = path.join(workDir, "shim.js");
+
+    const relayScriptPath = path.join(workDir, "relay.js");
+
+    await writeFile(shimScriptPath, "// shim\n");
+
+    await writeFile(relayScriptPath, "// relay\n");
+
+    return createSharedExtensionInstance({ shimScriptPath, relayScriptPath });
+  }
+
+  function createSharedExtensions(
+    extensionDirs: ConstructorParameters<typeof Extensions>[0]["extensionDirs"],
+    sharedInstance: ConstructorParameters<typeof Extensions>[0]["sharedInstance"],
+  ) {
+    return new Extensions({
+      extensionDirs,
+      facadeScriptPath,
+      derivedExtensionsDir: path.join(workDir, "derived"),
+      sharedInstance,
+    });
+  }
+
+  /** One extension id from both sessions, which is what a `manifest.key` buys. */
+  function createSharedSession() {
+    return createSession({
+      loadExtension: async (extensionDir: string) => createExtension("aaa", extensionDir),
+    });
+  }
+
+  test("firing once when other sessions still hold the extension", async () => {
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(),
+    );
+
+    let workerLostCount = 0;
+
+    extensions.onSharedInstanceWorkerLost(() => {
+      workerLostCount += 1;
+    });
+
+    const { session: workerSession } = createSharedSession();
+
+    const { session: shimSession } = createSharedSession();
+
+    await extensions.setupSession(workerSession);
+
+    await extensions.setupSession(shimSession);
+
+    extensions.teardownSession(workerSession);
+
+    expect(workerLostCount).toBe(1);
+  });
+
+  test("staying silent when a content-script-only session goes", async () => {
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(),
+    );
+
+    let workerLostCount = 0;
+
+    extensions.onSharedInstanceWorkerLost(() => {
+      workerLostCount += 1;
+    });
+
+    const { session: workerSession } = createSharedSession();
+
+    const { session: shimSession } = createSharedSession();
+
+    await extensions.setupSession(workerSession);
+
+    await extensions.setupSession(shimSession);
+
+    extensions.teardownSession(shimSession);
+
+    expect(workerLostCount).toBe(0);
+  });
+
+  test("staying silent when the worker session was the last one", async () => {
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(),
+    );
+
+    let workerLostCount = 0;
+
+    extensions.onSharedInstanceWorkerLost(() => {
+      workerLostCount += 1;
+    });
+
+    const { session: workerSession } = createSharedSession();
+
+    await extensions.setupSession(workerSession);
+
+    extensions.teardownSession(workerSession);
+
+    expect(workerLostCount).toBe(0);
+  });
+
+  test("an unsubscribed listener hears nothing", async () => {
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(),
+    );
+
+    let workerLostCount = 0;
+
+    const unsubscribe = extensions.onSharedInstanceWorkerLost(() => {
+      workerLostCount += 1;
+    });
+
+    unsubscribe();
+
+    const { session: workerSession } = createSharedSession();
+
+    const { session: shimSession } = createSharedSession();
+
+    await extensions.setupSession(workerSession);
+
+    await extensions.setupSession(shimSession);
+
+    extensions.teardownSession(workerSession);
+
+    expect(workerLostCount).toBe(0);
+  });
+
+  test("nothing fires without a shared instance, where every session runs its own", async () => {
+    const extensions = createExtensions([await createExtensionDir("one")]);
+
+    let workerLostCount = 0;
+
+    extensions.onSharedInstanceWorkerLost(() => {
+      workerLostCount += 1;
+    });
+
+    const { session: firstSession } = createSharedSession();
+
+    const { session: secondSession } = createSharedSession();
+
+    await extensions.setupSession(firstSession);
+
+    await extensions.setupSession(secondSession);
+
+    extensions.teardownSession(firstSession);
+
+    expect(workerLostCount).toBe(0);
   });
 });

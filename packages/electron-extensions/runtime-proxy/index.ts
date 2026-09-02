@@ -71,13 +71,18 @@ export function createSharedExtensionInstance({
 
     teardownSession(session) {
       // A torn-down worker session orphans the content-script-only sessions
-      // until the next session adopts the worker role on a fresh instance;
-      // the proxy answers them "receiving end does not exist" in between
-      if (session === workerSession) {
+      // until the next session adopts the worker role — an account added after
+      // the removal, or a relaunch; the proxy answers them "receiving end does
+      // not exist" in between, which is why the loader passes this answer on
+      const wasWorkerSession = session === workerSession;
+
+      if (wasWorkerSession) {
         workerSession = undefined;
       }
 
       proxy?.teardownSession(session);
+
+      return wasWorkerSession;
     },
   };
 }
