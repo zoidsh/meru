@@ -76,6 +76,14 @@ export function createRelayClient({
     postBridge(pathName, body).catch(() => undefined);
 
   /**
+   * Where this worker is running, which main puts on the sender a shimmed
+   * listener sees the way Chrome puts the service worker's script URL there.
+   * Main takes it only when it is a URL of the extension the token named, so a
+   * worker that cannot say has a sender without a `url` rather than a wrong one.
+   */
+  const workerUrl = (globalThis as unknown as { location?: { href?: string } }).location?.href;
+
+  /**
    * `lastError` around an emit, set on every runtime object this client
    * wrapped: Electron builds `chrome` and `browser` as two objects, one client
    * serves both, and a listener reads whichever one it was written against.
@@ -238,8 +246,10 @@ export function createRelayClient({
       }
 
       case "portDisconnect": {
-        // The port drops itself from the map as it closes
-        ports.get(job.portId)?.emitDisconnect();
+        // The port drops itself from the map as it closes. An error means the
+        // page-side end went away rather than hung up — nothing there to hand
+        // the port to — which Chrome reports on `lastError`
+        ports.get(job.portId)?.emitDisconnect(job.error);
 
         break;
       }
@@ -395,7 +405,7 @@ export function createRelayClient({
 
       const relayed = postForResult<RuntimeProxySendMessageResult>(
         RUNTIME_PROXY_PATHS.workerBroadcast,
-        { message },
+        { message, workerUrl },
       ).catch((): RuntimeProxySendMessageResult => ({ status: "noListener" }));
 
       return answer(
@@ -431,7 +441,13 @@ export function createRelayClient({
         try {
           result = await postForResult<RuntimeProxyWorkerSendToTabResult>(
             RUNTIME_PROXY_PATHS.workerSendToTab,
-            { tabId, message, frameId: options?.frameId, documentId: options?.documentId },
+            {
+              tabId,
+              message,
+              frameId: options?.frameId,
+              documentId: options?.documentId,
+              workerUrl,
+            },
           );
         } catch {
           // An unreachable bridge reads exactly like a tab with no receiving end
@@ -474,6 +490,7 @@ export function createRelayClient({
             tabId,
             frameId: connectInfo?.frameId,
             documentId: connectInfo?.documentId,
+            workerUrl,
           },
         );
 

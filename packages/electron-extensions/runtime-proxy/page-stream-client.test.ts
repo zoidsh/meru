@@ -380,8 +380,11 @@ describe("createPageStreamClient", () => {
 
     await stub.waitForPost(RUNTIME_PROXY_PATHS.portDisconnect);
 
+    // The reason is what puts Chrome's "receiving end does not exist" on the
+    // worker's `lastError` when this was the port's last frame
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.portDisconnect)[0]?.body).toEqual({
       portId: "port-2",
+      reason: "noListener",
     });
   });
 
@@ -417,5 +420,58 @@ describe("createPageStreamClient", () => {
     // Chrome reports a port the far end closed without telling the extension
     // anything went wrong, and nothing more is sent on it
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.portDisconnect)).toEqual([]);
+  });
+
+  test("names its own context on what it says about itself", async () => {
+    const stub = stubBridge();
+
+    const { onConnect } = startClient();
+
+    const ports: Port[] = [];
+
+    onConnect.addListener((port) => {
+      ports.push(port as Port);
+    });
+
+    await stub.waitForStream();
+
+    // The relay names the context before anything else on the stream, so a
+    // disconnect does not depend on the bridge having recorded a caller stamp
+    stub.push({ kind: "ready", contextId: "context-9" });
+
+    stub.push({ kind: "connect", portId: "port-4", sender: WORKER_SENDER });
+
+    await waitFor(() => ports.length === 1, "the port");
+
+    (ports[0] as Port).disconnect();
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.portDisconnect);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.portDisconnect)[0]?.body).toEqual({
+      portId: "port-4",
+      contextId: "context-9",
+    });
+  });
+
+  test("backs off rather than re-parking at a fixed rate on a refusal", async () => {
+    const stub = stubBridge();
+
+    stub.refuse(RUNTIME_PROXY_PATHS.pageStream, 403);
+
+    const startedAt = Date.now();
+
+    startClient();
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.pageStream, 5);
+
+    /*
+     * A shimmed session whose worker session was torn down is refused every
+     * park, and dozens of frames retrying at a flat rate is permanent idle
+     * load in an app working perfectly well without that account. At the 5 ms
+     * this client is built with, five attempts at a flat rate take 20 ms and
+     * a doubling delay takes 5 + 10 + 20 + 40. Only the floor is asserted, so
+     * a slow machine cannot fail it.
+     */
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(60);
   });
 });

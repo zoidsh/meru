@@ -1107,6 +1107,45 @@ describe("what the worker sends", () => {
     expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerPortPost)).toEqual([]);
   });
 
+  test("a page that had nothing to hand the port to reaches onDisconnect with lastError", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerConnectToTab, { status: "connected" });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const port = (tabs.connect as TabsConnect)(7);
+
+    const errors: (string | undefined)[] = [];
+
+    port.onDisconnect.addListener(() => {
+      errors.push((runtime.lastError as { message?: string } | undefined)?.message);
+    });
+
+    await stub.waitForPost(RUNTIME_PROXY_PATHS.workerConnectToTab);
+
+    const portId = stub.postsTo(RUNTIME_PROXY_PATHS.workerConnectToTab)[0]?.body.portId as string;
+
+    // The relay's word for the last bound frame having had no listener, which
+    // Chrome puts on `lastError` rather than reporting as a clean hang-up
+    stub.pushJob({
+      type: "portDisconnect",
+      jobId: "job-9",
+      portId,
+      error: RECEIVING_END_ERROR,
+    });
+
+    await waitFor(() => errors.length === 1, "the disconnect");
+
+    expect(errors).toEqual([RECEIVING_END_ERROR]);
+  });
+
   test("a tab that has no port to open disconnects at once", async () => {
     const stub = stubBridge();
 

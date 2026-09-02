@@ -37,8 +37,19 @@ function getElectronWebContentsById(tabId: number) {
  * extension an id and an origin and no `tab`, there being no page behind a
  * service worker.
  */
-export function createWorkerSender(extensionId: string): RuntimeProxySender {
-  return { id: extensionId, origin: `${EXTENSION_SCHEME_PREFIX}${extensionId}` };
+export function createWorkerSender(extensionId: string, workerUrl?: unknown): RuntimeProxySender {
+  const origin = `${EXTENSION_SCHEME_PREFIX}${extensionId}`;
+
+  const sender: RuntimeProxySender = { id: extensionId, origin, documentLifecycle: "active" };
+
+  // Chrome puts the service worker's own script URL here. It is the worker's
+  // word for it, so it is taken only when it is a URL of the extension the
+  // bridge token already named — a sender with no `url` beats a wrong one
+  if (typeof workerUrl === "string" && workerUrl.startsWith(`${origin}/`)) {
+    sender.url = workerUrl;
+  }
+
+  return sender;
 }
 
 /**
@@ -164,7 +175,7 @@ export class WorkerToPage {
         const result = await this.deliverToContexts(
           resolution.contexts,
           request.message,
-          createWorkerSender(extensionId),
+          createWorkerSender(extensionId, request.workerUrl),
         );
 
         return Response.json(result satisfies RuntimeProxyWorkerSendToTabResult, { headers });
@@ -178,12 +189,12 @@ export class WorkerToPage {
           return new Response(null, { status: 403, headers });
         }
 
-        const { message } = body as unknown as RuntimeProxyWorkerBroadcastRequest;
+        const { message, workerUrl } = body as unknown as RuntimeProxyWorkerBroadcastRequest;
 
         const result = await this.deliverToContexts(
           this.pageStreams.extensionPageContexts(extensionId),
           message,
-          createWorkerSender(extensionId),
+          createWorkerSender(extensionId, workerUrl),
         );
 
         return Response.json(result, { headers });
@@ -250,15 +261,16 @@ export class WorkerToPage {
       return { status: "noTarget", error: noFrameError(frameId, tabId) };
     }
 
-    const contexts = await this.pageStreams.waitForTabContexts(extensionId, tabId, frameId);
-
-    // A named frame that has no context may be a frame with nothing of the
-    // extension in it, or no frame at all, and Chrome tells those apart
-    if (contexts.length === 0 && frameId !== undefined && !this.hasFrame(contents, frameId)) {
+    // Before the wait rather than after it: a frame the tab does not have is
+    // never going to park a stream, and Chrome answers that at once
+    if (frameId !== undefined && !this.hasFrame(contents, frameId)) {
       return { status: "noTarget", error: noFrameError(frameId, tabId) };
     }
 
-    return { status: "contexts", contexts };
+    return {
+      status: "contexts",
+      contexts: await this.pageStreams.waitForTabContexts(extensionId, tabId, frameId),
+    };
   }
 
   private deliverToContexts(contexts: PageContext[], message: unknown, sender: RuntimeProxySender) {

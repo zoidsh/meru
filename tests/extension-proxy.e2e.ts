@@ -534,6 +534,10 @@ test("the worker reaches a shimmed content script it never heard from first", as
     status: "replied",
     reply: `from-worker:connect-back:${page.contextId}`,
   });
+
+  // And the port carries the page's answer back, which only the worker can
+  // see: the answering side has nothing of its own left to observe
+  expect(page.portReplySeenByWorker).toBe(true);
 });
 
 test("an action popup is no tab, and the worker says so rather than guessing", async () => {

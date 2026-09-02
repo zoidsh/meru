@@ -13,6 +13,16 @@ import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
+/**
+ * Where the backoff stops. A shimmed session whose worker session was torn
+ * down is refused every park, and there may be dozens of frames doing it: a
+ * flat second between tries is permanent idle load in an app that is working
+ * perfectly well without that account. Backing off keeps the recovery — a
+ * session adopted as the worker later is picked up within half a minute — at
+ * a cost that decays to nothing.
+ */
+const MAX_RETRY_DELAY_MS = 30_000;
+
 /** What the log lines of this side of the proxy are prefixed with. */
 const LOG_LABEL = "runtime-proxy-page-stream";
 
@@ -26,6 +36,8 @@ export type CreatePageStreamClientOptions = {
   getSenderReport: () => RuntimeProxySenderReport;
   /** How long a failed stream waits before it is parked again. */
   retryDelayMs?: number;
+  /** Where the backoff after repeated failures stops. */
+  maxRetryDelayMs?: number;
 };
 
 /**
@@ -49,6 +61,7 @@ export type CreatePageStreamClientOptions = {
 export function createPageStreamClient({
   getSenderReport,
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+  maxRetryDelayMs = MAX_RETRY_DELAY_MS,
 }: CreatePageStreamClientOptions) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -57,6 +70,13 @@ export function createPageStreamClient({
   const ports = new Map<string, RelayedPort>();
 
   const wrappedRuntimes: ChromeNamespace[] = [];
+
+  /**
+   * What the relay called this context when it parked, sent back on anything
+   * this context says about itself — which end of a port bound to several
+   * frames of a tab has hung up, above all.
+   */
+  let contextId: string | undefined;
 
   let isStopped = false;
 
@@ -97,7 +117,9 @@ export function createPageStreamClient({
         }
       },
       disconnect() {
-        return postToBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId }).then(() => undefined);
+        return postToBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId, contextId }).then(
+          () => undefined,
+        );
       },
     };
 
@@ -113,6 +135,12 @@ export function createPageStreamClient({
 
   const handleEnvelope = (envelope: RuntimeProxyPageEnvelope) => {
     switch (envelope.kind) {
+      case "ready": {
+        contextId = envelope.contextId;
+
+        break;
+      }
+
       case "message": {
         void dispatchMessage(messageListeners, envelope.message, envelope.sender, LOG_LABEL).then(
           (result) =>
@@ -130,10 +158,16 @@ export function createPageStreamClient({
 
         port.externalPort.sender = envelope.sender;
 
-        // Nothing here to hand the port to. Disconnecting says so, and for a
-        // port bound to several frames it drops this one rather than the port
+        // Nothing here to hand the port to. Saying why is what puts Chrome's
+        // "receiving end does not exist" on the worker's `lastError` when this
+        // was the port's last frame; for a port bound to several it drops this
+        // frame rather than the port
         if (connectListeners.size === 0) {
-          void postToBridge(RUNTIME_PROXY_PATHS.portDisconnect, { portId: envelope.portId });
+          void postToBridge(RUNTIME_PROXY_PATHS.portDisconnect, {
+            portId: envelope.portId,
+            contextId,
+            reason: "noListener",
+          });
 
           break;
         }
@@ -172,6 +206,8 @@ export function createPageStreamClient({
    * much alive and still has to hear the worker that comes back.
    */
   const runPageStream = async () => {
+    let failureCount = 0;
+
     while (!isStopped) {
       try {
         const response = await postBridge(RUNTIME_PROXY_PATHS.pageStream, {
@@ -181,6 +217,8 @@ export function createPageStreamClient({
         if (!response.ok || !response.body) {
           throw new Error(bridgeAnsweredError(response.status));
         }
+
+        failureCount = 0;
 
         const reader = response.body.getReader();
 
@@ -200,10 +238,16 @@ export function createPageStreamClient({
       } catch {
         // A refused or broken stream is a context that hears nothing until it
         // parks again, which is worth no more noise than the wait itself
+        failureCount += 1;
       }
 
       if (!isStopped) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        const delayMs = Math.min(
+          retryDelayMs * 2 ** Math.max(failureCount - 1, 0),
+          maxRetryDelayMs,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
   };

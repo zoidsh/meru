@@ -11,6 +11,7 @@ import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   noFrameError,
   noTabError,
+  RECEIVING_END_ERROR,
   type RuntimeProxyJob,
   type RuntimeProxyPageEnvelope,
   RUNTIME_PROXY_PATHS,
@@ -115,18 +116,26 @@ function createFakeSession() {
   };
 }
 
-type FakeFrame = WebFrameMain & { destroy: () => void };
+type FakeFrame = WebFrameMain & { destroy: () => void; navigate: (url: string) => void };
 
 function createFrame(url: string, parent: WebFrameMain | null, frameTreeNodeId: number) {
   let isDestroyed = false;
 
+  let frameUrl = url;
+
   return {
-    url,
+    get url() {
+      return frameUrl;
+    },
     parent,
     frameTreeNodeId,
     isDestroyed: () => isDestroyed,
     destroy: () => {
       isDestroyed = true;
+    },
+    /** A new document in the same frame, which parks a stream of its own. */
+    navigate: (nextUrl: string) => {
+      frameUrl = nextUrl;
     },
   } as unknown as FakeFrame;
 }
@@ -228,6 +237,10 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
 
     let isEnded = false;
 
+    // The relay names the context on the stream before anything else, which is
+    // what a client sends back when it says which end of a port hung up
+    let contextId: string | undefined;
+
     const reader = response.body?.getReader();
 
     void (async () => {
@@ -243,6 +256,12 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
         }
 
         for (const envelope of decoder.push(result.value) as RuntimeProxyPageEnvelope[]) {
+          if (envelope.kind === "ready") {
+            contextId = envelope.contextId;
+
+            continue;
+          }
+
           envelopes.push(envelope);
         }
       }
@@ -251,6 +270,7 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     return {
       envelopes,
       isEnded: () => isEnded,
+      contextId: () => contextId,
       waitForEnvelopes: async (envelopeCount: number) => {
         await waitFor(() => envelopes.length >= envelopeCount, `${envelopeCount} envelopes`);
 
@@ -262,6 +282,14 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
           RUNTIME_PROXY_PATHS.pageReply,
           SHIM_TOKEN,
           { deliveryId, result },
+          frame,
+        ),
+      /** Hangs up one end of a port, naming this context as the client does. */
+      disconnectPort: (portId: string, reason?: "noListener") =>
+        shimSession.request(
+          RUNTIME_PROXY_PATHS.portDisconnect,
+          SHIM_TOKEN,
+          { portId, contextId, reason },
           frame,
         ),
     };
@@ -377,10 +405,12 @@ describe("a page stream", () => {
     expect(response.status).toBe(403);
   });
 
-  test("replaces the one a frame already had", async () => {
+  test("a fresh document in the frame replaces the context the old one had", async () => {
     const { shimTab, parkPageStream, sendToTab } = createHarness();
 
     const firstStream = await parkPageStream(shimTab.mainFrame);
+
+    shimTab.mainFrame.navigate(`${PAGE_URL}/next`);
 
     const secondStream = await parkPageStream(shimTab.mainFrame);
 
@@ -399,6 +429,21 @@ describe("a page stream", () => {
 
     expect(await delivered).toEqual({ status: "replied", reply: "hi" });
   });
+
+  test("a second park of the same document keeps both rather than thrashing", async () => {
+    const { shimTab, parkPageStream } = createHarness();
+
+    const firstStream = await parkPageStream(shimTab.mainFrame);
+
+    const secondStream = await parkPageStream(shimTab.mainFrame);
+
+    // The shim installs once per context however many content_scripts entries
+    // ran it, so this cannot happen; if it ever did, the cost is one message
+    // delivered twice to a frame rather than two streams evicting each other
+    // for the life of the page — see `install-shim.ts`
+    expect(firstStream.isEnded()).toBe(false);
+    expect(secondStream.isEnded()).toBe(false);
+  });
 });
 
 describe("tabs.sendMessage from the worker", () => {
@@ -415,7 +460,11 @@ describe("tabs.sendMessage from the worker", () => {
       kind: "message",
       message: { kind: "fill" },
       // The extension itself, which is what Chrome hands a content script
-      sender: { id: EXTENSION_ID, origin: `chrome-extension://${EXTENSION_ID}` },
+      sender: {
+        id: EXTENSION_ID,
+        origin: `chrome-extension://${EXTENSION_ID}`,
+        documentLifecycle: "active",
+      },
     });
 
     if (envelope?.kind === "message") {
@@ -650,12 +699,7 @@ describe("tabs.connect from the worker", () => {
 
     expect(jobs[0]).toMatchObject({ type: "portMessage", portId: "port-1", message: "polo" });
 
-    await shimSession.request(
-      RUNTIME_PROXY_PATHS.portDisconnect,
-      SHIM_TOKEN,
-      { portId: "port-1" },
-      shimTab.subFrame,
-    );
+    await stream.disconnectPort("port-1");
 
     const jobsAfterDisconnect = await workerStream.waitForJobs(2);
 
@@ -678,8 +722,33 @@ describe("tabs.connect from the worker", () => {
     });
   });
 
+  test("a frame with nothing listening hangs up with Chrome's missing receiving end", async () => {
+    const { shimTab, parkPageStream, openWorkerStream, connectToTab } = createHarness();
+
+    const workerStream = await openWorkerStream();
+
+    const stream = await parkPageStream(shimTab.subFrame);
+
+    await connectToTab({ portId: "port-5", tabId: SHIM_TAB_ID, frameId: 12 });
+
+    await stream.waitForEnvelopes(1);
+
+    // What the page-stream client posts when the connect reached a context
+    // that has no `onConnect` listener — the ordinary case for a content
+    // script still loading, which the worker must not read as a clean hang-up
+    await stream.disconnectPort("port-5", "noListener");
+
+    const jobs = await workerStream.waitForJobs(1);
+
+    expect(jobs[0]).toMatchObject({
+      type: "portDisconnect",
+      portId: "port-5",
+      error: RECEIVING_END_ERROR,
+    });
+  });
+
   test("a port bound to two frames outlives the first of them hanging up", async () => {
-    const { shimTab, shimSession, workerSession, parkPageStream, openWorkerStream, connectToTab } =
+    const { shimTab, workerSession, parkPageStream, openWorkerStream, connectToTab } =
       createHarness();
 
     const workerStream = await openWorkerStream();
@@ -694,12 +763,7 @@ describe("tabs.connect from the worker", () => {
 
     await formStream.waitForEnvelopes(1);
 
-    await shimSession.request(
-      RUNTIME_PROXY_PATHS.portDisconnect,
-      SHIM_TOKEN,
-      { portId: "port-4" },
-      shimTab.mainFrame,
-    );
+    await mainStream.disconnectPort("port-4");
 
     // Still open for the frame that has not hung up
     await workerSession.request(RUNTIME_PROXY_PATHS.workerPortPost, WORKER_TOKEN, {
@@ -712,12 +776,7 @@ describe("tabs.connect from the worker", () => {
     expect(formPortMessage).toMatchObject({ kind: "portMessage", message: "still there?" });
     expect(mainStream.envelopes).toHaveLength(1);
 
-    await shimSession.request(
-      RUNTIME_PROXY_PATHS.portDisconnect,
-      SHIM_TOKEN,
-      { portId: "port-4" },
-      shimTab.subFrame,
-    );
+    await formStream.disconnectPort("port-4");
 
     const jobs = await workerStream.waitForJobs(1);
 

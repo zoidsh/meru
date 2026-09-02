@@ -64,6 +64,8 @@ type PortMessageJob = RelayJobBase & {
 type PortDisconnectJob = RelayJobBase & {
   kind: "portDisconnect";
   portId: string;
+  /** Why the page-side end went away, where Chrome sets `lastError` for it. */
+  error: string | undefined;
 };
 
 type RelayJob = SendMessageJob | ConnectJob | PortMessageJob | PortDisconnectJob;
@@ -271,12 +273,20 @@ export class RuntimeProxy {
     bridge.handle(
       RUNTIME_PROXY_PATHS.portDisconnect,
       ({ session, extensionId, senderFrame, body, headers }) => {
-        const { portId } = body as unknown as RuntimeProxyPortDisconnectRequest;
+        const { portId, contextId, reason } = body as unknown as RuntimeProxyPortDisconnectRequest;
 
         const port = this.getShimPort(session, extensionId, portId);
 
         if (port) {
-          this.disconnectShimPort(port, senderFrame);
+          this.disconnectShimPort(port, {
+            session,
+            extensionId,
+            senderFrame,
+            contextId,
+            // The page names the case; the words the worker reads are this
+            // process's own
+            error: reason === "noListener" ? RECEIVING_END_ERROR : undefined,
+          });
         }
 
         return new Response(null, { status: 204, headers });
@@ -1105,21 +1115,49 @@ export class RuntimeProxy {
    * any of them is still there, so a frame's disconnect unbinds that frame and
    * only the last one closes the port. A port a page opened has the one end.
    */
-  private disconnectShimPort(port: ProxyPort, senderFrame: WebFrameMain | undefined) {
+  private disconnectShimPort(
+    port: ProxyPort,
+    {
+      session,
+      extensionId,
+      senderFrame,
+      contextId,
+      error,
+    }: {
+      session: Session;
+      extensionId: string;
+      senderFrame: WebFrameMain | undefined;
+      contextId: string | undefined;
+      error: string | undefined;
+    },
+  ) {
     if (port.transport.kind !== "contexts") {
-      this.closeShimPort(port, { notifyWorker: true });
+      this.closeShimPort(port, { notifyWorker: true, error });
 
       return;
     }
 
-    for (const contextId of port.transport.contextIds) {
-      if (this.pageStreams.getContext(contextId)?.frame === senderFrame) {
-        port.transport.contextIds.delete(contextId);
+    const { contextIds } = port.transport;
+
+    // The context names itself from what the relay told it when it parked,
+    // which is what makes the unbinding independent of the caller stamp — a
+    // stamp evicted under a burst would otherwise leave the port bound to a
+    // frame that has already dropped it
+    const named = contextId === undefined ? undefined : this.pageStreams.getContext(contextId);
+
+    if (named && named.session === session && named.extensionId === extensionId) {
+      contextIds.delete(named.contextId);
+    } else {
+      for (const boundContextId of contextIds) {
+        if (this.pageStreams.getContext(boundContextId)?.frame === senderFrame) {
+          contextIds.delete(boundContextId);
+        }
       }
     }
 
-    if (port.transport.contextIds.size === 0) {
-      this.closeShimPort(port, { notifyWorker: true });
+    // Chrome's port outlives every frame of the tab but the last
+    if (contextIds.size === 0) {
+      this.closeShimPort(port, { notifyWorker: true, error });
     }
   }
 
@@ -1176,7 +1214,10 @@ export class RuntimeProxy {
 
     if (notifyWorker && !wasConnectQueued) {
       this.enqueueJob(
-        this.createJob(port.shimSession, port.extensionId, "portDisconnect", { portId: port.id }),
+        this.createJob(port.shimSession, port.extensionId, "portDisconnect", {
+          portId: port.id,
+          error,
+        }),
       );
     }
   }
@@ -1241,7 +1282,12 @@ export class RuntimeProxy {
       case "portMessage":
         return { type: "portMessage", jobId: job.jobId, portId: job.portId, message: job.message };
       case "portDisconnect":
-        return { type: "portDisconnect", jobId: job.jobId, portId: job.portId };
+        return {
+          type: "portDisconnect",
+          jobId: job.jobId,
+          portId: job.portId,
+          error: job.error,
+        };
     }
   }
 }

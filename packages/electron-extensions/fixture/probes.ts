@@ -72,6 +72,12 @@ export type ProbeResults = {
   workerSentBack: WorkerInitiatedOutcome;
   /** The worker opening a port to this context's own tab with `tabs.connect`. */
   workerConnectedBack: WorkerInitiatedOutcome;
+  /**
+   * Whether the worker's event log recorded this context answering on the port
+   * the worker opened — the page-to-worker half of a worker-opened port, which
+   * nothing this side can observe.
+   */
+  portReplySeenByWorker: boolean;
 };
 
 function seeSender(sender: FixtureMessageSender | undefined): SeenSender {
@@ -300,6 +306,35 @@ function probeWorkerInitiated(
   });
 }
 
+/**
+ * Whether the worker heard this context's answer on the port it opened. The
+ * answering side has nothing local to observe, so the worker's own event log is
+ * polled the way `probeSelfClose` polls it.
+ */
+async function probePortReplySeenByWorker(
+  runtime: FixtureRuntime,
+  contextId: string,
+): Promise<boolean> {
+  const deadline = Date.now() + PROBE_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const outcome = await sendMessage(runtime, { type: "read-events" });
+
+    if (
+      outcome.status === "replied" &&
+      ((outcome.reply as { events?: string[] }).events ?? []).includes(
+        `from-page:connect-back:${contextId}`,
+      )
+    ) {
+      return true;
+    }
+
+    await delay(EVENT_POLL_INTERVAL_MS);
+  }
+
+  return false;
+}
+
 export async function runProbes(): Promise<ProbeResults> {
   const runtime = getChromeRuntime();
 
@@ -348,17 +383,44 @@ export async function runProbes(): Promise<ProbeResults> {
     });
   });
 
+  /*
+   * Sequential and named rather than awaited inside the object, because the
+   * last of them is conditional on the one before it: a context the worker had
+   * no tab to reach has no reply for the worker to have heard, and polling its
+   * event log for one would wait out the timeout for nothing.
+   */
+  const echo = await sendMessage(runtime, { type: "echo", nonce: `echo:${contextId}` });
+
+  const port = await probePort(runtime, contextId);
+
+  const workerClosedPort = await probeWorkerClosedPort(runtime, contextId);
+
+  const selfCloseSeenByWorker = await probeSelfClose(runtime, contextId);
+
+  const openPortName = await probeOpenPort(runtime, contextId);
+
+  const workerSentBack = await probeWorkerInitiated(runtime, contextId, "send-back", arrivals);
+
+  const workerConnectedBack = await probeWorkerInitiated(
+    runtime,
+    contextId,
+    "connect-back",
+    arrivals,
+  );
+
   return {
     contextId,
     documentUrl: contextGlobals.location.href,
     extensionId: runtime.id,
     manifestHasBackground: manifest ? manifest.background !== undefined : null,
-    echo: await sendMessage(runtime, { type: "echo", nonce: `echo:${contextId}` }),
-    port: await probePort(runtime, contextId),
-    workerClosedPort: await probeWorkerClosedPort(runtime, contextId),
-    selfCloseSeenByWorker: await probeSelfClose(runtime, contextId),
-    openPortName: await probeOpenPort(runtime, contextId),
-    workerSentBack: await probeWorkerInitiated(runtime, contextId, "send-back", arrivals),
-    workerConnectedBack: await probeWorkerInitiated(runtime, contextId, "connect-back", arrivals),
+    echo,
+    port,
+    workerClosedPort,
+    selfCloseSeenByWorker,
+    openPortName,
+    workerSentBack,
+    workerConnectedBack,
+    portReplySeenByWorker:
+      workerConnectedBack.heard !== null && (await probePortReplySeenByWorker(runtime, contextId)),
   };
 }

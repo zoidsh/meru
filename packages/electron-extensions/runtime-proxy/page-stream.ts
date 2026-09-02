@@ -154,10 +154,9 @@ export class PageStreams {
       return new Response(null, { status: 400, headers });
     }
 
-    // A frame that parks a second stream — a same-document navigation re-runs
-    // no content script, but a fresh document in the same frame does — keeps
-    // only the newer one, so nothing is ever delivered into the older
-    this.dropContextsForFrame(senderFrame);
+    // A fresh document in the same frame parks again, and what it replaces is
+    // dropped rather than left to be delivered into
+    this.dropContextsForFrame(senderFrame, url);
 
     let context: PageContext | undefined;
 
@@ -187,6 +186,10 @@ export class PageStreams {
     });
 
     if (context) {
+      // First, so the client knows which end of a many-framed port it is
+      // before it can possibly need to say so
+      this.send(context, { kind: "ready", contextId: context.contextId });
+
       this.resolveWaiters(context);
     }
 
@@ -351,9 +354,25 @@ export class PageStreams {
     return true;
   }
 
-  private dropContextsForFrame(frame: WebFrameMain) {
+  /**
+   * What a frame's earlier context is worth keeping. A frame parks again when
+   * a new document loads in it, and the old context is then dead — its stream
+   * canceled with the document, or its URL no longer the frame's.
+   *
+   * A live context at the same URL is a second park of the *same* document,
+   * which the shim's install guard is there to prevent
+   * (`install-shim.ts`). Keeping it costs a double delivery to one frame if
+   * that guard ever fails; evicting it unconditionally cost a park every time
+   * the evicted client re-parked, which is a frame that never holds a stream
+   * long enough to answer anything. Double delivery is the better failure.
+   */
+  private dropContextsForFrame(frame: WebFrameMain, url: string) {
     for (const context of this.contexts.values()) {
-      if (context.frame === frame) {
+      if (context.frame !== frame) {
+        continue;
+      }
+
+      if (context.isClosed || context.frame.isDestroyed() || context.url !== url) {
         this.closeContext(context);
       }
     }

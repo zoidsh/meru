@@ -120,6 +120,19 @@ export type RuntimeProxyPortPostRequest = {
 
 export type RuntimeProxyPortDisconnectRequest = {
   portId: string;
+  /**
+   * Which of the port's page-side ends is hanging up, for a port the worker
+   * opened across several frames of a tab; the caller frame decides it when
+   * absent, and a stamp the bridge could not record leaves neither.
+   */
+  contextId?: string;
+  /**
+   * Why, where Chrome has a word for it. Named rather than spelled out: the
+   * `lastError` the worker reads is the main process's own string, never one a
+   * renderer wrote. Only `noListener` exists, for a frame that took the connect
+   * and had nothing registered to hand the port to.
+   */
+  reason?: "noListener";
 };
 
 /**
@@ -182,7 +195,7 @@ export type RuntimeProxyJob =
   | { type: "sendMessage"; jobId: string; message: unknown; sender: RuntimeProxySender }
   | { type: "connect"; jobId: string; portId: string; name?: string; sender: RuntimeProxySender }
   | { type: "portMessage"; jobId: string; portId: string; message: unknown }
-  | { type: "portDisconnect"; jobId: string; portId: string };
+  | { type: "portDisconnect"; jobId: string; portId: string; error?: string };
 
 export type RuntimeProxyWorkerAckRequest = {
   jobId: string;
@@ -227,6 +240,12 @@ export type RuntimeProxyPageStreamRequest = {
  * kinds are told apart by `portId`, which the worker minted.
  */
 export type RuntimeProxyPageEnvelope =
+  /**
+   * Always first, naming the context to the client that just parked, so what it
+   * says later about itself — which end of a many-framed port hung up — does
+   * not depend on the bridge having recorded a caller stamp for that request.
+   */
+  | { kind: "ready"; contextId: string }
   | { kind: "message"; deliveryId: string; message: unknown; sender: RuntimeProxySender }
   | { kind: "connect"; portId: string; name?: string; sender: RuntimeProxySender }
   | { kind: "portMessage"; portId: string; message: unknown }
@@ -249,16 +268,27 @@ export type RuntimeProxyTabTarget = {
   documentId?: string;
 };
 
-export type RuntimeProxyWorkerSendToTabRequest = RuntimeProxyTabTarget & {
-  message: unknown;
+/**
+ * Where the worker says it is running, so the sender a shimmed listener sees
+ * carries the worker's script URL the way Chrome's does. Main takes it only
+ * when it is a URL of the extension the token already named.
+ */
+export type RuntimeProxyWorkerOrigin = {
+  workerUrl?: string;
 };
 
-export type RuntimeProxyWorkerConnectToTabRequest = RuntimeProxyTabTarget & {
-  portId: string;
-  name?: string;
-};
+export type RuntimeProxyWorkerSendToTabRequest = RuntimeProxyTabTarget &
+  RuntimeProxyWorkerOrigin & {
+    message: unknown;
+  };
 
-export type RuntimeProxyWorkerBroadcastRequest = {
+export type RuntimeProxyWorkerConnectToTabRequest = RuntimeProxyTabTarget &
+  RuntimeProxyWorkerOrigin & {
+    portId: string;
+    name?: string;
+  };
+
+export type RuntimeProxyWorkerBroadcastRequest = RuntimeProxyWorkerOrigin & {
   message: unknown;
 };
 
