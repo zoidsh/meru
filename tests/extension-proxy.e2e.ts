@@ -196,6 +196,43 @@ async function readProbeResults(webContentsId: number, frameUrlPrefix?: string) 
   return JSON.parse(serializedResults as unknown as string) as ProbeResults;
 }
 
+/** Navigates a probe window that is already open, the way a page leaves. */
+async function navigateProbeWindow(webContentsId: number, url: string) {
+  await meru.app.evaluate(
+    async ({ webContents }, { webContentsId: contentsId, url: nextUrl }) => {
+      await webContents.fromId(contentsId)?.loadURL(nextUrl);
+    },
+    { webContentsId, url },
+  );
+}
+
+/**
+ * The worker's port event log, read through an extension page of the worker's
+ * own session — natively, with no proxy in the path, so what it reports is the
+ * worker's own view. A context that has gone away cannot report for itself,
+ * which is the whole point of asking the worker instead.
+ */
+async function readWorkerPortEvents(webContentsId: number) {
+  return meru.app.evaluate(
+    ({ webContents }, { webContentsId: contentsId }) => {
+      const contents = webContents.fromId(contentsId);
+
+      if (!contents) {
+        return [];
+      }
+
+      return contents.mainFrame.executeJavaScript(
+        `new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: "read-events" }, (reply) => {
+            resolve(reply && reply.events ? reply.events : []);
+          });
+        })`,
+      ) as Promise<string[]>;
+    },
+    { webContentsId },
+  );
+}
+
 function popupUrl(context: string) {
   return `chrome-extension://${FIXTURE_EXTENSION_ID}/popup.html?context=${context}`;
 }
@@ -347,6 +384,38 @@ test("ports relay both ways and both ends observe a disconnect", async () => {
   // The shim closing a port reaches the worker end as that port's
   // onDisconnect, observed through the worker's own event log
   expect(page.selfCloseSeenByWorker).toBe(true);
+});
+
+test("a page navigating away disconnects the port it left open", async () => {
+  /*
+   * The one path that closes a shim port whose page went away without
+   * disconnecting is `ReadableStream.cancel` on the connect response, and that
+   * it fires at all is Electron's behavior rather than this layer's — which is
+   * why it is pinned here rather than assumed. Without it the worker never
+   * hears `onDisconnect` and both port maps grow by one per navigation.
+   *
+   * The shim cannot cover for it. A bridge POST started from the departing
+   * context — a `pagehide` handler, `keepalive` or not — never reaches main:
+   * an unload-time request on this scheme is dropped with the frame, measured
+   * with this same case and the cancel handler compiled out.
+   */
+  const observerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("navigation-observer"));
+
+  const pageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/plain`);
+
+  const page = await readProbeResults(pageId);
+
+  expect(page.openPortName).toBe(`left-open:${page.contextId}`);
+
+  const openPortDisconnect = `disconnect:${page.openPortName}`;
+
+  // Nothing in the page closes this port, so the worker has no business
+  // seeing it disconnect while the page is still there
+  expect(await readWorkerPortEvents(observerPopupId)).not.toContain(openPortDisconnect);
+
+  await navigateProbeWindow(pageId, "about:blank");
+
+  await expect.poll(() => readWorkerPortEvents(observerPopupId)).toContain(openPortDisconnect);
 });
 
 test("a message is attributed to the frame that sent it, an embedded extension frame included", async () => {
