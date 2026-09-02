@@ -922,6 +922,27 @@ describe("RuntimeProxy", () => {
 
     expect(await shimResponse.json()).toEqual({ status: "noListener" });
   });
+
+  test("a session adopted after the worker session went away is woken", async () => {
+    const harness = createHarness();
+
+    // A wake is pending on the session that is about to go
+    harness.sendShimMessage("wakes the old session");
+
+    await waitFor(() => harness.workerSession.workerStarts.length === 1, "the first wake");
+
+    harness.proxy.teardownSession(harness.workerSession.session);
+
+    const adoptedSession = createFakeSession();
+
+    harness.proxy.setWorkerSession(adoptedSession.session);
+
+    harness.sendShimMessage("wakes the adopted session");
+
+    await waitFor(() => adoptedSession.workerStarts.length === 1, "the adopted session's wake");
+
+    expect(adoptedSession.workerStarts).toEqual([EXTENSION_SCOPE]);
+  });
 });
 
 // The shim maps the relay's failure statuses onto Chrome's error strings; the

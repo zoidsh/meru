@@ -313,6 +313,17 @@ export class RuntimeProxy {
         this.failQueuedJobs(extensionId, "noListener");
       }
 
+      // The bookkeeping of the session that just went is worse than useless to
+      // the next one: a pending wake would make `wakeWorker` return early for a
+      // session that was never asked to start the worker, and its timer would
+      // then fail that session's queue; a version id means nothing outside the
+      // session that issued it
+      for (const extensionId of this.wakes.keys()) {
+        this.clearWake(extensionId);
+      }
+
+      this.scopesByVersionId.clear();
+
       return;
     }
 
