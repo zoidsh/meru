@@ -27,12 +27,14 @@ function createContents(
   url: string,
   contentsSession: Session = session,
   isLoading = false,
+  isCurrentlyAudible = false,
 ) {
   return {
     id: contentsId,
     session: contentsSession,
     isDestroyed: () => false,
     isLoading: () => isLoading,
+    isCurrentlyAudible: () => isCurrentlyAudible,
     getURL: () => url,
     getTitle: () => title,
   } as unknown as WebContents;
@@ -205,6 +207,24 @@ describe("reconstructSender", () => {
     });
 
     expect(sender.tab?.status).toBe("loading");
+  });
+
+  test("a tab playing audio says so, the way Chrome's own tab does", () => {
+    const pageUrl = "https://mail.google.com/mail/u/0/";
+
+    const frame = createFrame(pageUrl, 12);
+
+    const contents = createContents(7, "Gmail", pageUrl, session, false, true);
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: pageUrl, isTopFrame: true },
+      senderFrame: frame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[frame, contents]]),
+    });
+
+    expect(sender.tab?.audible).toBe(true);
   });
 
   test("a same-document navigation since the report still delivers the frame's own URL", () => {

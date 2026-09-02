@@ -61,12 +61,13 @@ function createTabDetails(contents: WebContents): RuntimeProxyTab {
     pinned: false,
     incognito: false,
     status: contents.isLoading() ? "loading" : "complete",
+    // What Chromium derives Chrome's own `audible` from; Gmail's notification
+    // sounds and Meet's audio make this a real value rather than a constant
+    audible: contents.isCurrentlyAudible(),
     // Tab groups are Chrome UI the embedder has none of, which is what
     // Chrome's own `TAB_GROUP_ID_NONE` says
     groupId: -1,
-    // Nothing here plays audio through an extension's eyes, and Meru never
-    // discards a page out from under one
-    audible: false,
+    // Meru never discards a page out from under an extension
     discarded: false,
     autoDiscardable: true,
   };
@@ -103,12 +104,27 @@ export type ReconstructSenderOptions = {
  * Origin rather than the exact URL, because the exact URL made a same-document
  * navigation — a `pushState` between the shim reading `location.href` and the
  * bridge handling the request — deliver as `id` alone, and Gmail pushStates
- * constantly. Nothing is given up: the sender's `url` and `origin` are read off
- * the frame either way, so the report buys no field of its own, and a context
- * can no more claim a foreign origin than it could a foreign URL — the caller
- * stamp is a frame Chromium recorded, not a claim. What the check still catches
- * is a report from a context of some other origin entirely, which is a report
- * that was never true.
+ * constantly. What the report is held to is therefore the sending document's
+ * origin rather than its URL. The URL it does deliver is still the frame's own,
+ * never the report's, so the report buys no field of its own; a context can no
+ * more claim a foreign origin than it could a foreign URL, since the caller
+ * stamp is a frame Chromium recorded rather than a claim.
+ *
+ * What keeps that from being a hole is the bridge, not this check. A
+ * `WebFrameMain` outlives the document that made the request — Electron
+ * re-points one frame instance at each new `RenderFrameHost` — so on its own,
+ * origin equality would let a cross-document navigation to another page of the
+ * same origin through and attribute the old document's message to the new one.
+ * The caller stamp is gated on the frame's token for exactly that reason
+ * (`bridge/bridge.ts`), so a frame here is the document that spoke, and the
+ * only mismatch left for this check to absorb is the same-document one.
+ *
+ * Two URLs with no origin of their own — `about:blank`, `data:`, `file:`, an
+ * empty URL — compare equal here, since `getOrigin` answers `"null"` for each.
+ * Harmless while the frame is the sending document and every field is read off
+ * it, but it means an opaque-origin report is not really checked; the honest
+ * source would be `WebFrameMain.origin` against the shim's `location.origin`,
+ * and what Electron serializes there for extension origins is unverified.
  *
  * A top-level extension page is no tab, so it stops there. Chrome gives an
  * action popup's messages a sender of `id`, `url` and `origin` alone, and that
