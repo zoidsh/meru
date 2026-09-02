@@ -1300,6 +1300,69 @@ describe("the shared instance's worker session", () => {
     await fs.rm(userDataPath, { recursive: true, force: true });
   });
 
+  /*
+   * The upgrade cleanup, at the loader level: a profile written before the
+   * worker moved keeps one worker store per account partition, and the launch
+   * after the upgrade clears each of them. What the app adds on top is the
+   * config flag and the loop; this is the part with anything to get wrong —
+   * that each partition loses its own extension data and nothing else at the
+   * root loses anything.
+   */
+  test("clearing every account partition takes each one's extension data and no more", async () => {
+    const userDataPath = await createPartitionDir([
+      "Partitions/account-one/Local Extension Settings/aaa/000003.log",
+      "Partitions/account-one/IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "Partitions/account-one/Cookies",
+      "Partitions/account-two/Local Extension Settings/aaa/000003.log",
+      "Partitions/account-two/IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "Partitions/account-two/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/000003.log",
+      // The worker's own store, at the root the default session reports, which
+      // this cleanup has no business touching
+      "Local Extension Settings/aaa/000003.log",
+      "config.json",
+    ]);
+
+    const extensions = createSharedExtensions([], undefined);
+
+    await Promise.all(
+      ["account-one", "account-two"].map((accountId) =>
+        extensions.clearSessionData(
+          createSession({ storagePath: path.join(userDataPath, "Partitions", accountId) }).session,
+        ),
+      ),
+    );
+
+    expect(await listPartitionDir(userDataPath)).toEqual([
+      "Local Extension Settings",
+      path.join("Local Extension Settings", "aaa"),
+      path.join("Local Extension Settings", "aaa", "000003.log"),
+      "Partitions",
+      path.join("Partitions", "account-one"),
+      path.join("Partitions", "account-one", "Cookies"),
+      // The container stays where its extension databases were the only ones,
+      // which is what clearing the databases rather than the directory means
+      path.join("Partitions", "account-one", "IndexedDB"),
+      path.join("Partitions", "account-two"),
+      path.join("Partitions", "account-two", "IndexedDB"),
+      path.join(
+        "Partitions",
+        "account-two",
+        "IndexedDB",
+        "https_mail.google.com_0.indexeddb.leveldb",
+      ),
+      path.join(
+        "Partitions",
+        "account-two",
+        "IndexedDB",
+        "https_mail.google.com_0.indexeddb.leveldb",
+        "000003.log",
+      ),
+      "config.json",
+    ]);
+
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
   test("tearing down an account session says nothing about the worker", async () => {
     const loggedErrors: string[] = [];
 
