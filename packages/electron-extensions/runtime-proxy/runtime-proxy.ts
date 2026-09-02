@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import type { Session, WebFrameMain } from "electron";
+import type { Session, WebContents, WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
 import { encodeNativeMessage } from "../native-messaging/framing";
 import {
   EXTENSION_SCHEME_PREFIX,
   PORT_CLOSED_ERROR,
+  type RuntimeProxyWorkerConnectToTabRequest,
+  type RuntimeProxyWorkerConnectToTabResult,
   RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyConnectRequest,
@@ -22,7 +24,9 @@ import {
   type RuntimeProxyWorkerPortPostRequest,
   type RuntimeProxyWorkerReplyRequest,
 } from "./bridge-protocol";
+import { type PageContext, PageStreams } from "./page-stream";
 import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
+import { createWorkerSender, WorkerToPage } from "./worker-to-page";
 
 type RelayJobBase = {
   jobId: string;
@@ -70,11 +74,27 @@ type WorkerStream = {
   isClosed: boolean;
 };
 
+/**
+ * How a port's frames reach the page side. A port a shimmed context opened has
+ * a stream of its own, the response body of the `connect` that opened it; a
+ * port the worker opened with `tabs.connect` has none, and rides the page
+ * streams of the contexts it was bound to at connect time — every frame of the
+ * target tab, or the one frame the call named.
+ *
+ * Binding to several contexts is Chromium's own multi-frame behavior: one port
+ * on the worker's side, messages from any bound frame arriving on it, and the
+ * port going away when the last of them does.
+ */
+type ProxyPortTransport =
+  | { kind: "stream"; controller: ReadableStreamDefaultController<Uint8Array> }
+  | { kind: "contexts"; contextIds: Set<string> };
+
 type ProxyPort = {
   id: string;
   extensionId: string;
+  /** The session the far end lives in, whichever side opened the port. */
   shimSession: Session;
-  controller: ReadableStreamDefaultController<Uint8Array>;
+  transport: ProxyPortTransport;
   isClosed: boolean;
 };
 
@@ -101,6 +121,13 @@ export type RuntimeProxyOptions = {
    * way Chrome's closed message port does.
    */
   inFlightTimeoutMs?: number;
+  /**
+   * How long a message the worker aimed at a tab waits for a shimmed context
+   * that has not parked its page stream yet.
+   */
+  waitForContextMs?: number;
+  /** How a tab id resolves to the page behind it, for the worker's own calls. */
+  getWebContentsById?: (tabId: number) => WebContents | undefined;
 };
 
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
@@ -132,6 +159,12 @@ const DEFAULT_IN_FLIGHT_TIMEOUT_MS = 5 * 60_000;
  * un-acked job is handed again to the next stream while an acked one that lost
  * its worker fails the way Chrome's closed message port does. A stopped worker
  * is woken with `startWorkerForScope` the moment a job needs it.
+ *
+ * The other direction — `tabs.sendMessage`, `tabs.connect` and the
+ * `runtime.sendMessage` broadcast the worker starts itself — reaches a shimmed
+ * context over the receive stream it parks at the bridge; `page-stream.ts`
+ * keeps those and `worker-to-page.ts` carries the messages, while the ports
+ * stay here with the ones a page opened.
  */
 export class RuntimeProxy {
   private logger: ExtensionsLogger | undefined;
@@ -167,12 +200,19 @@ export class RuntimeProxy {
 
   private wakes = new Map<string, Wake>();
 
+  /** The parked receive streams of the shimmed contexts, and their addressing. */
+  readonly pageStreams: PageStreams;
+
+  private workerToPage: WorkerToPage;
+
   constructor({
     logger,
     getWebContentsFromFrame,
+    getWebContentsById,
     wakeTimeoutMs = DEFAULT_WAKE_TIMEOUT_MS,
     maxDeliveryAttempts = DEFAULT_MAX_DELIVERY_ATTEMPTS,
     inFlightTimeoutMs = DEFAULT_IN_FLIGHT_TIMEOUT_MS,
+    waitForContextMs,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
@@ -183,6 +223,22 @@ export class RuntimeProxy {
     this.maxDeliveryAttempts = maxDeliveryAttempts;
 
     this.inFlightTimeoutMs = inFlightTimeoutMs;
+
+    this.pageStreams = new PageStreams({ getWebContentsFromFrame, waitForContextMs });
+
+    this.workerToPage = new WorkerToPage({
+      pageStreams: this.pageStreams,
+      getWorkerSession: () => this.workerSession,
+      getWebContentsById,
+      logger,
+      deliveryTimeoutMs: inFlightTimeoutMs,
+    });
+
+    // A bound context going away takes its share of a worker-opened port with
+    // it, and the last one takes the port
+    this.pageStreams.onContextClosed((context) => {
+      this.handlePageContextClosed(context);
+    });
   }
 
   registerRoutes(bridge: ExtensionBridge) {
@@ -212,17 +268,20 @@ export class RuntimeProxy {
       return new Response(null, { status: 204, headers });
     });
 
-    bridge.handle(RUNTIME_PROXY_PATHS.portDisconnect, ({ session, extensionId, body, headers }) => {
-      const { portId } = body as unknown as RuntimeProxyPortDisconnectRequest;
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.portDisconnect,
+      ({ session, extensionId, senderFrame, body, headers }) => {
+        const { portId } = body as unknown as RuntimeProxyPortDisconnectRequest;
 
-      const port = this.getShimPort(session, extensionId, portId);
+        const port = this.getShimPort(session, extensionId, portId);
 
-      if (port) {
-        this.closeShimPort(port, { notifyWorker: true });
-      }
+        if (port) {
+          this.disconnectShimPort(port, senderFrame);
+        }
 
-      return new Response(null, { status: 204, headers });
-    });
+        return new Response(null, { status: 204, headers });
+      },
+    );
 
     bridge.handle(RUNTIME_PROXY_PATHS.workerJobs, ({ session, extensionId, headers }) =>
       this.handleWorkerJobs(session, extensionId, headers),
@@ -275,6 +334,119 @@ export class RuntimeProxy {
         return new Response(null, { status: session === this.workerSession ? 204 : 403, headers });
       },
     );
+
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.workerConnectToTab,
+      ({ session, extensionId, body, headers }) => {
+        if (session !== this.workerSession) {
+          return new Response(null, { status: 403, headers });
+        }
+
+        return this.handleWorkerConnectToTab(extensionId, body, headers);
+      },
+    );
+
+    // The rest of what the worker starts, and the streams it reaches pages on
+    this.workerToPage.registerRoutes(bridge);
+
+    this.pageStreams.registerRoutes(
+      bridge,
+      (session) => this.workerSession !== undefined && session !== this.workerSession,
+    );
+  }
+
+  /**
+   * A port the worker opened with `tabs.connect`, bound to the contexts of the
+   * target tab. The port record is kept here with every other, so a bound
+   * context posting on it and the worker posting back both take the paths the
+   * page-opened ports already use.
+   */
+  private async handleWorkerConnectToTab(
+    extensionId: string,
+    body: Record<string, unknown>,
+    headers: Record<string, string>,
+  ) {
+    const request = body as unknown as RuntimeProxyWorkerConnectToTabRequest;
+
+    if (typeof request.portId !== "string" || this.ports.has(request.portId)) {
+      return new Response(null, { status: 400, headers });
+    }
+
+    const resolution = await this.workerToPage.resolveTabTarget(extensionId, request);
+
+    if (resolution.status !== "contexts") {
+      return Response.json(resolution satisfies RuntimeProxyWorkerConnectToTabResult, { headers });
+    }
+
+    const [firstContext] = resolution.contexts;
+
+    if (!firstContext) {
+      return Response.json(
+        { status: "noListener" } satisfies RuntimeProxyWorkerConnectToTabResult,
+        {
+          headers,
+        },
+      );
+    }
+
+    const contextIds = new Set<string>();
+
+    const name = typeof request.name === "string" ? request.name : undefined;
+
+    const port: ProxyPort = {
+      id: request.portId,
+      extensionId,
+      // Every context of one tab is of one session, so the port's far end is
+      // the session the first of them is in
+      shimSession: firstContext.session,
+      transport: { kind: "contexts", contextIds },
+      isClosed: false,
+    };
+
+    for (const context of resolution.contexts) {
+      if (
+        this.pageStreams.send(context, {
+          kind: "connect",
+          portId: port.id,
+          name,
+          sender: createWorkerSender(extensionId),
+        })
+      ) {
+        contextIds.add(context.contextId);
+      }
+    }
+
+    if (contextIds.size === 0) {
+      return Response.json(
+        { status: "noListener" } satisfies RuntimeProxyWorkerConnectToTabResult,
+        {
+          headers,
+        },
+      );
+    }
+
+    this.ports.set(port.id, port);
+
+    return Response.json({ status: "connected" } satisfies RuntimeProxyWorkerConnectToTabResult, {
+      headers,
+    });
+  }
+
+  private handlePageContextClosed(context: PageContext) {
+    for (const port of this.ports.values()) {
+      if (
+        port.transport.kind !== "contexts" ||
+        !port.transport.contextIds.delete(context.contextId)
+      ) {
+        continue;
+      }
+
+      // The worker's port stays open while any bound frame is still there,
+      // which is what Chrome's multi-frame port does
+      if (port.transport.contextIds.size === 0) {
+        this.closeShimPort(port, { notifyWorker: true });
+      }
+    }
   }
 
   /**
@@ -326,6 +498,8 @@ export class RuntimeProxy {
 
       return;
     }
+
+    this.pageStreams.teardownSession(session);
 
     for (const port of this.ports.values()) {
       if (port.shimSession === session) {
@@ -403,7 +577,7 @@ export class RuntimeProxy {
           id: request.portId,
           extensionId,
           shimSession: session,
-          controller,
+          transport: { kind: "stream", controller },
           isClosed: false,
         };
 
@@ -925,6 +1099,30 @@ export class RuntimeProxy {
     return port;
   }
 
+  /**
+   * One page-side end of a port hanging up. A port the worker opened may be
+   * bound to several frames of a tab, where Chrome keeps the port alive while
+   * any of them is still there, so a frame's disconnect unbinds that frame and
+   * only the last one closes the port. A port a page opened has the one end.
+   */
+  private disconnectShimPort(port: ProxyPort, senderFrame: WebFrameMain | undefined) {
+    if (port.transport.kind !== "contexts") {
+      this.closeShimPort(port, { notifyWorker: true });
+
+      return;
+    }
+
+    for (const contextId of port.transport.contextIds) {
+      if (this.pageStreams.getContext(contextId)?.frame === senderFrame) {
+        port.transport.contextIds.delete(contextId);
+      }
+    }
+
+    if (port.transport.contextIds.size === 0) {
+      this.closeShimPort(port, { notifyWorker: true });
+    }
+  }
+
   private closeShimPort(
     port: ProxyPort,
     { notifyWorker, error }: { notifyWorker: boolean; error?: string },
@@ -968,10 +1166,12 @@ export class RuntimeProxy {
 
     this.sendPortFrame(port, { type: "disconnect", error });
 
-    try {
-      port.controller.close();
-    } catch {
-      // The stream is already gone when the shim's side canceled it
+    if (port.transport.kind === "stream") {
+      try {
+        port.transport.controller.close();
+      } catch {
+        // The stream is already gone when the shim's side canceled it
+      }
     }
 
     if (notifyWorker && !wasConnectQueued) {
@@ -981,9 +1181,31 @@ export class RuntimeProxy {
     }
   }
 
+  /**
+   * A frame to the page side of a port, over whichever transport the port has:
+   * its own stream when a shimmed context opened it, and the page streams of
+   * the bound contexts when the worker did.
+   */
   private sendPortFrame(port: ProxyPort, frame: RuntimeProxyPortFrame) {
+    if (port.transport.kind === "contexts") {
+      for (const contextId of port.transport.contextIds) {
+        const context = this.pageStreams.getContext(contextId);
+
+        if (context) {
+          this.pageStreams.send(
+            context,
+            frame.type === "message"
+              ? { kind: "portMessage", portId: port.id, message: frame.message }
+              : { kind: "portDisconnect", portId: port.id, error: frame.error },
+          );
+        }
+      }
+
+      return;
+    }
+
     try {
-      port.controller.enqueue(encodeNativeMessage(frame));
+      port.transport.controller.enqueue(encodeNativeMessage(frame));
     } catch {
       // The stream no longer accepts frames when the shim's side canceled it
     }

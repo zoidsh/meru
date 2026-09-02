@@ -6,9 +6,13 @@
  * The proxy carries `chrome.runtime` messaging from the contexts of a
  * worker-less session — its content scripts and its extension pages, the action
  * popup above all — to the one session that keeps the extension's service
- * worker. Their calls go up as ordinary bridge POSTs; everything flowing the
- * other way rides a streaming response body — port frames to the caller, jobs
- * to the worker — in the same length-prefixed JSON frames native messaging uses
+ * worker, and back the other way — `tabs.sendMessage`, `tabs.connect` and the
+ * `runtime.sendMessage` broadcast the worker starts itself.
+ *
+ * Calls go up as ordinary bridge POSTs in both directions; everything pushed
+ * rides a streaming response body — jobs to the worker, port frames to a port's
+ * caller, and envelopes to a shimmed context's parked page stream — in the same
+ * length-prefixed JSON frames native messaging uses
  * (`native-messaging/framing.ts`).
  */
 
@@ -21,12 +25,19 @@ export const RUNTIME_PROXY_PATHS = {
   connect: "/runtime-proxy/connect",
   portPost: "/runtime-proxy/port-post",
   portDisconnect: "/runtime-proxy/port-disconnect",
+  /** Content-script side again, for what the worker sends of its own accord. */
+  pageStream: "/runtime-proxy/page-stream",
+  pageReply: "/runtime-proxy/page-reply",
   /** Worker side, called by the relay client. */
   workerJobs: "/runtime-proxy/worker-jobs",
   workerAck: "/runtime-proxy/worker-ack",
   workerReply: "/runtime-proxy/worker-reply",
   workerPortPost: "/runtime-proxy/worker-port-post",
   workerPortDisconnect: "/runtime-proxy/worker-port-disconnect",
+  /** Worker side again, for the calls that start in the worker. */
+  workerSendToTab: "/runtime-proxy/worker-send-to-tab",
+  workerConnectToTab: "/runtime-proxy/worker-connect-to-tab",
+  workerBroadcast: "/runtime-proxy/worker-broadcast",
 } as const;
 
 /**
@@ -40,6 +51,24 @@ export const MAX_RUNTIME_PROXY_FRAME_BYTES = 64 * 1024 * 1024;
 export const RECEIVING_END_ERROR = "Could not establish connection. Receiving end does not exist.";
 
 export const PORT_CLOSED_ERROR = "The message port closed before a response was received.";
+
+/** Chrome's words again, for a tab id that names nothing this app is showing. */
+export function noTabError(tabId: unknown) {
+  return `No tab with id: ${String(tabId)}.`;
+}
+
+/**
+ * And for a frame the tab does not have. Chrome answers the same way for a
+ * `documentId`, which the proxy never matches: Electron has no document ids and
+ * no relayed sender carries one, so an extension has nothing true to pass back.
+ */
+export function noFrameError(frameId: unknown, tabId: unknown) {
+  return `No frame with id ${String(frameId)} in tab with id ${String(tabId)}.`;
+}
+
+export function noDocumentError(documentId: unknown, tabId: unknown) {
+  return `No document with id ${String(documentId)} in tab with id ${String(tabId)}.`;
+}
 
 /**
  * What a shimmed context can truthfully say about itself: a bridge request's
@@ -172,3 +201,81 @@ export type RuntimeProxyWorkerPortPostRequest = {
 export type RuntimeProxyWorkerPortDisconnectRequest = {
   portId: string;
 };
+
+/**
+ * What a shimmed context says when it parks its receive stream: the same claim
+ * every other call carries, held against the frame the bridge recorded, so main
+ * knows which tab and which frame the stream belongs to before it addresses it.
+ *
+ * The stream is the page-side mirror of `workerJobs` — everything the worker
+ * starts rides it — and every shimmed context parks one as the shim installs,
+ * before any of the extension's own code runs. Unconditionally rather than on
+ * the first listener: `chrome.storage`'s `onChanged` fan-out rides the same
+ * stream, so a trigger tied to `runtime`'s listeners would be a switch shared
+ * between features that know nothing about each other.
+ */
+export type RuntimeProxyPageStreamRequest = {
+  sender: RuntimeProxySenderReport;
+};
+
+/**
+ * Frames on a page stream's response body. `kind` is the discriminator the
+ * channel is generic in: `chrome.storage`'s change events are meant to ride
+ * here as a kind of their own rather than as a second stream.
+ *
+ * Only `message` is answered, over `pageReply` and by `deliveryId`; the port
+ * kinds are told apart by `portId`, which the worker minted.
+ */
+export type RuntimeProxyPageEnvelope =
+  | { kind: "message"; deliveryId: string; message: unknown; sender: RuntimeProxySender }
+  | { kind: "connect"; portId: string; name?: string; sender: RuntimeProxySender }
+  | { kind: "portMessage"; portId: string; message: unknown }
+  | { kind: "portDisconnect"; portId: string; error?: string };
+
+export type RuntimeProxyPageReplyRequest = {
+  deliveryId: string;
+  result: RuntimeProxySendMessageResult;
+};
+
+/**
+ * Where a worker's `tabs.sendMessage` or `tabs.connect` is aimed. `frameId` is
+ * honored against the frame-tree-node ids the rest of the proxy addresses
+ * frames by; `documentId` is carried only so it can be refused, since nothing
+ * here can mint one an extension would recognize.
+ */
+export type RuntimeProxyTabTarget = {
+  tabId: number;
+  frameId?: number;
+  documentId?: string;
+};
+
+export type RuntimeProxyWorkerSendToTabRequest = RuntimeProxyTabTarget & {
+  message: unknown;
+};
+
+export type RuntimeProxyWorkerConnectToTabRequest = RuntimeProxyTabTarget & {
+  portId: string;
+  name?: string;
+};
+
+export type RuntimeProxyWorkerBroadcastRequest = {
+  message: unknown;
+};
+
+/**
+ * How a call the worker started ended. The message statuses are the same three
+ * the other direction uses, and `ownSession` is the relay saying the target is
+ * a tab of the worker's own session — where Chromium's native messaging works
+ * and the relay has no business — which is the relay client's cue to make the
+ * native call after all. `noTarget` carries Chrome's own error for a tab or
+ * frame that does not exist.
+ */
+export type RuntimeProxyWorkerSendToTabResult =
+  | RuntimeProxySendMessageResult
+  | { status: "ownSession" }
+  | { status: "noTarget"; error: string };
+
+export type RuntimeProxyWorkerConnectToTabResult =
+  | RuntimeProxyConnectResult
+  | { status: "ownSession" }
+  | { status: "noTarget"; error: string };

@@ -7,7 +7,8 @@ import {
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyPortFrame,
 } from "./bridge-protocol";
-import { installRuntimeProxyShim, parseSendMessageArguments } from "./shim";
+import { parseSendMessageArguments } from "./native-api";
+import { installRuntimeProxyShim } from "./shim";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 

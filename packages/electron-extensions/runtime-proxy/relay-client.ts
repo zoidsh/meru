@@ -1,18 +1,22 @@
 import { postBridge } from "../facade/lib/bridge";
 import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
-import { createEvent } from "../facade/lib/event";
-import { withLastError } from "../facade/lib/last-error";
+import { getLastErrorMessage, withLastError } from "../facade/lib/last-error";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   MAX_RUNTIME_PROXY_FRAME_BYTES,
+  PORT_CLOSED_ERROR,
+  RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyConnectResult,
   type RuntimeProxyJob,
   type RuntimeProxySender,
   type RuntimeProxySendMessageResult,
+  type RuntimeProxyWorkerConnectToTabResult,
+  type RuntimeProxyWorkerSendToTabResult,
 } from "./bridge-protocol";
-
-const DISCONNECTED_PORT_ERROR = "Attempting to use a disconnected port object";
+import { dispatchMessage, firstReply, mirrorEvent } from "./message-dispatch";
+import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from "./native-api";
+import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -28,11 +32,8 @@ function bridgeAnsweredError(status: number) {
   return `The runtime proxy bridge answered ${status}`;
 }
 
-type WorkerPort = {
-  externalPort: Record<string, unknown>;
-  emitMessage: (message: unknown) => void;
-  emitDisconnect: () => void;
-};
+/** What the log lines of this side of the proxy are prefixed with. */
+const LOG_LABEL = "runtime-proxy-relay";
 
 export type CreateRelayClientOptions = {
   /** How long a failed job stream waits before it is opened again. */
@@ -63,7 +64,7 @@ export function createRelayClient({
 
   const connectListeners = new Set<ChromeEventListener>();
 
-  const ports = new Map<string, WorkerPort>();
+  const ports = new Map<string, RelayedPort>();
 
   const handledJobIds = new Set<string>();
 
@@ -93,189 +94,46 @@ export function createRelayClient({
     run();
   };
 
-  /**
-   * Wraps a native event with one that also mirrors its listeners here. The
-   * native event keeps every listener too, so in-session messaging — the
-   * worker's own popup, above all — dispatches exactly as before.
-   */
-  const mirrorEvent = (
-    runtime: ChromeNamespace,
-    eventName: string,
-    mirroredListeners: Set<ChromeEventListener>,
-  ) => {
-    const nativeEvent = runtime[eventName] as
-      | {
-          addListener?: (listener: ChromeEventListener, ...eventOptions: unknown[]) => void;
-          removeListener?: (listener: ChromeEventListener) => void;
-          hasListener?: (listener: ChromeEventListener) => boolean;
-          hasListeners?: () => boolean;
-        }
-      | undefined;
+  /** The transport a relayed port posts over: the bridge, both ways. */
+  const createBridgeTransport = (portId: string): RelayedPortTransport => ({
+    async post(message: unknown) {
+      const response = await postBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message });
 
-    const wrappedEvent = {
-      addListener(listener: ChromeEventListener, ...eventOptions: unknown[]) {
-        mirroredListeners.add(listener);
-
-        nativeEvent?.addListener?.(listener, ...eventOptions);
-      },
-      removeListener(listener: ChromeEventListener) {
-        mirroredListeners.delete(listener);
-
-        nativeEvent?.removeListener?.(listener);
-      },
-      hasListener(listener: ChromeEventListener) {
-        return mirroredListeners.has(listener);
-      },
-      hasListeners() {
-        return mirroredListeners.size > 0;
-      },
-    };
-
-    runtime[eventName] = wrappedEvent;
-
-    if (runtime[eventName] !== wrappedEvent) {
-      console.error(`[runtime-proxy-relay] could not wrap runtime.${eventName}`);
-    }
-  };
+      if (!response.ok) {
+        throw new Error(bridgeAnsweredError(response.status));
+      }
+    },
+    disconnect() {
+      return postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId }).then(
+        () => undefined,
+      );
+    },
+  });
 
   /**
-   * Chrome's dispatch, reproduced: every listener hears the message, the first
-   * `sendResponse` wins, and a listener returning `true` keeps the channel
-   * open for an answer that comes later. No listener at all is the "receiving
-   * end does not exist" case, and listeners that all decline to answer close
-   * the channel the way Chrome's message port closes.
+   * The worker's end of a port, whichever side opened it: a shimmed context's
+   * `runtime.connect`, arriving as a job, or the worker's own `tabs.connect`,
+   * whose `open` is what decides where the port's far end actually is.
    */
-  const dispatchMessage = (
-    message: unknown,
-    sender: RuntimeProxySender,
-  ): Promise<RuntimeProxySendMessageResult> => {
-    if (messageListeners.size === 0) {
-      return Promise.resolve({ status: "noListener" });
-    }
-
-    return new Promise((resolve) => {
-      let isDone = false;
-
-      let expectsAsyncResponse = false;
-
-      const sendResponse = (response?: unknown) => {
-        if (isDone) {
-          return;
-        }
-
-        isDone = true;
-
-        resolve({ status: "replied", reply: response });
-      };
-
-      for (const listener of messageListeners) {
-        try {
-          if (listener(message, sender, sendResponse) === true) {
-            expectsAsyncResponse = true;
-          }
-        } catch (error) {
-          console.error("[runtime-proxy-relay] onMessage listener threw", error);
-        }
-      }
-
-      if (!isDone && !expectsAsyncResponse) {
-        isDone = true;
-
-        resolve({ status: "closed" });
-      }
-    });
-  };
-
-  const createWorkerPort = (
+  const createPort = (
     portId: string,
     name: string | undefined,
-    sender: RuntimeProxySender,
-  ): WorkerPort => {
-    const onMessage = createEvent();
-
-    const onDisconnect = createEvent();
-
-    let isDisconnected = false;
-
-    let sendChain: Promise<unknown> = Promise.resolve();
-
-    const externalPort: Record<string, unknown> = {
+    sender: RuntimeProxySender | undefined,
+    open: () => Promise<RelayedPortTransport>,
+  ) => {
+    const port = createRelayedPort({
       name: name ?? "",
       sender,
-      onMessage,
-      onDisconnect,
-      postMessage(message: unknown) {
-        if (isDisconnected) {
-          throw new Error(DISCONNECTED_PORT_ERROR);
-        }
-
-        // Chained so two posts arrive in the order they were written
-        sendChain = sendChain
-          .then(() => postBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message }))
-          .then((response) => {
-            // A post the bridge refused, which is what a session at its cap of
-            // bodies read at once gets. Chrome has no answer for one message
-            // being refused, so this takes the nearest one it has: the port
-            // goes away with `lastError` set and later posts throw
-            if (!response.ok) {
-              tearDown(bridgeAnsweredError(response.status));
-            }
-          })
-          .catch(() => undefined);
+      open,
+      withRuntimesLastError,
+      onClosed: () => {
+        ports.delete(portId);
       },
-      disconnect() {
-        tearDown();
-      },
-    };
+    });
 
-    /**
-     * Closes the port from this side: main hears the disconnect and drops its
-     * end, and later posts throw. An error means the port went away rather
-     * than being disconnected, so the extension's own listeners hear it with
-     * `lastError` set; Chrome stays quiet about a port the worker closed
-     * itself, so without one nothing is emitted.
-     *
-     * The disconnect rides `sendChain` like every post, so it lands behind
-     * what was written before it. Sent unchained it overtakes them, and main
-     * closes the port before the messages arrive. Unlike the shim's port there
-     * is no stream to cancel behind it, so a disconnect the bridge refuses in
-     * turn leaves main's record open; nothing this side holds can close it.
-     */
-    const tearDown = (error?: string) => {
-      if (isDisconnected) {
-        return;
-      }
+    ports.set(portId, port);
 
-      isDisconnected = true;
-
-      ports.delete(portId);
-
-      sendChain = sendChain.then(() =>
-        postToBridge(RUNTIME_PROXY_PATHS.workerPortDisconnect, { portId }),
-      );
-
-      if (error !== undefined) {
-        withRuntimesLastError(error, () => {
-          onDisconnect.emit(externalPort);
-        });
-      }
-    };
-
-    return {
-      externalPort,
-      emitMessage(message: unknown) {
-        onMessage.emit(message, externalPort);
-      },
-      emitDisconnect() {
-        if (isDisconnected) {
-          return;
-        }
-
-        isDisconnected = true;
-
-        onDisconnect.emit(externalPort);
-      },
-    };
+    return port;
   };
 
   /**
@@ -342,7 +200,7 @@ export function createRelayClient({
 
     switch (job.type) {
       case "sendMessage": {
-        void dispatchMessage(job.message, job.sender).then((result) =>
+        void dispatchMessage(messageListeners, job.message, job.sender, LOG_LABEL).then((result) =>
           postReply(job.jobId, result),
         );
 
@@ -356,9 +214,9 @@ export function createRelayClient({
           break;
         }
 
-        const port = createWorkerPort(job.portId, job.name, job.sender);
-
-        ports.set(job.portId, port);
+        const port = createPort(job.portId, job.name, job.sender, () =>
+          Promise.resolve(createBridgeTransport(job.portId)),
+        );
 
         void postReply(job.jobId, { status: "connected" });
 
@@ -366,7 +224,7 @@ export function createRelayClient({
           try {
             listener(port.externalPort);
           } catch (error) {
-            console.error("[runtime-proxy-relay] onConnect listener threw", error);
+            console.error(`[${LOG_LABEL}] onConnect listener threw`, error);
           }
         }
 
@@ -380,13 +238,8 @@ export function createRelayClient({
       }
 
       case "portDisconnect": {
-        const port = ports.get(job.portId);
-
-        if (port) {
-          ports.delete(job.portId);
-
-          port.emitDisconnect();
-        }
+        // The port drops itself from the map as it closes
+        ports.get(job.portId)?.emitDisconnect();
 
         break;
       }
@@ -418,13 +271,267 @@ export function createRelayClient({
           }
         }
       } catch (error) {
-        console.error("[runtime-proxy-relay] job stream failed", error);
+        console.error(`[${LOG_LABEL}] job stream failed`, error);
       }
 
       if (!isStopped) {
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       }
     }
+  };
+
+  /**
+   * A native call made the way Chrome's callback form reports itself, so a
+   * native outcome and a relayed one are the same three statuses. The callback
+   * form rather than the promise form deliberately: `lastError` is what carries
+   * "no receiving end" and "port closed", and it is only readable inside the
+   * callback.
+   */
+  const callNative = (
+    runtime: ChromeNamespace,
+    nativeMethod: NativeMethod | undefined,
+    callArguments: unknown[],
+  ) =>
+    new Promise<RuntimeProxySendMessageResult>((resolve) => {
+      if (!nativeMethod) {
+        resolve({ status: "noListener" });
+
+        return;
+      }
+
+      try {
+        nativeMethod(...callArguments, (reply: unknown) => {
+          const error = getLastErrorMessage(runtime);
+
+          if (error === undefined) {
+            resolve({ status: "replied", reply });
+
+            return;
+          }
+
+          resolve({ status: error === PORT_CLOSED_ERROR ? "closed" : "noListener" });
+        });
+      } catch {
+        resolve({ status: "noListener" });
+      }
+    });
+
+  /** A relayed call's answer, or a refused bridge read as no receiving end. */
+  const postForResult = async <Result>(pathName: string, body: Record<string, unknown>) => {
+    const response = await postBridge(pathName, body);
+
+    if (!response.ok) {
+      throw new Error(bridgeAnsweredError(response.status));
+    }
+
+    return (await response.json()) as Result;
+  };
+
+  /**
+   * Hands the extension its answer the way it asked for one: a callback gets
+   * the reply with `lastError` set around it when there was none, and a call
+   * without one gets the promise Chrome's promise form returns, which rejects.
+   */
+  const answer = (
+    runtime: ChromeNamespace,
+    result: Promise<RuntimeProxySendMessageResult>,
+    callback: ((reply: unknown) => void) | undefined,
+  ) => {
+    const reply = result.then((sendResult) => {
+      if (sendResult.status === "replied") {
+        return sendResult.reply;
+      }
+
+      throw new Error(sendResult.status === "closed" ? PORT_CLOSED_ERROR : RECEIVING_END_ERROR);
+    });
+
+    if (!callback) {
+      return reply;
+    }
+
+    reply.then(
+      (replyValue) => {
+        callback(replyValue);
+      },
+      (error: Error) => {
+        withLastError(runtime, error.message, () => {
+          callback(undefined);
+        });
+      },
+    );
+
+    return undefined;
+  };
+
+  /**
+   * `chrome.runtime.sendMessage` with no target extension: Chrome delivers it
+   * to every frame of the extension except the sender, which here is both the
+   * worker's own session — natively, where Chromium still does it — and the
+   * extension's pages in every shimmed session, over their page streams. The
+   * two run together and the first `sendResponse` wins, as it does between two
+   * frames of one session.
+   *
+   * Content scripts are not included, in Chrome or here: a runtime broadcast
+   * reaches the extension's own frames, and `tabs.sendMessage` is what reaches
+   * a page's content scripts.
+   */
+  const createBroadcastingSendMessage =
+    (runtime: ChromeNamespace, nativeSendMessage: NativeMethod | undefined) =>
+    (...callArguments: unknown[]) => {
+      const callback =
+        typeof callArguments.at(-1) === "function"
+          ? (callArguments.pop() as (reply: unknown) => void)
+          : undefined;
+
+      const { targetExtensionId, message } = parseSendMessageArguments(callArguments);
+
+      // Another extension is none of the proxy's business, and neither is this
+      // extension addressed by id, which is `externally_connectable` messaging
+      if (targetExtensionId !== undefined) {
+        return callback
+          ? nativeSendMessage?.(...callArguments, callback)
+          : nativeSendMessage?.(...callArguments);
+      }
+
+      const relayed = postForResult<RuntimeProxySendMessageResult>(
+        RUNTIME_PROXY_PATHS.workerBroadcast,
+        { message },
+      ).catch((): RuntimeProxySendMessageResult => ({ status: "noListener" }));
+
+      return answer(
+        runtime,
+        firstReply([callNative(runtime, nativeSendMessage, callArguments), relayed]),
+        callback,
+      );
+    };
+
+  /**
+   * `chrome.tabs.sendMessage`, which natively reaches only the tabs of the
+   * worker's own session. Every call is handed to the relay, which is the only
+   * side that knows which session a tab id belongs to; a tab of the worker's
+   * own session comes back as `ownSession` and is then sent natively after all.
+   */
+  const createProxiedTabsSendMessage =
+    (runtime: ChromeNamespace, nativeSendMessage: NativeMethod | undefined) =>
+    (...callArguments: unknown[]) => {
+      const callback =
+        typeof callArguments.at(-1) === "function"
+          ? (callArguments.pop() as (reply: unknown) => void)
+          : undefined;
+
+      const [tabId, message, options] = callArguments as [
+        number,
+        unknown,
+        { frameId?: number; documentId?: string } | undefined,
+      ];
+
+      const deliver = async (): Promise<RuntimeProxySendMessageResult> => {
+        let result: RuntimeProxyWorkerSendToTabResult;
+
+        try {
+          result = await postForResult<RuntimeProxyWorkerSendToTabResult>(
+            RUNTIME_PROXY_PATHS.workerSendToTab,
+            { tabId, message, frameId: options?.frameId, documentId: options?.documentId },
+          );
+        } catch {
+          // An unreachable bridge reads exactly like a tab with no receiving end
+          return { status: "noListener" };
+        }
+
+        if (result.status === "ownSession") {
+          return callNative(runtime, nativeSendMessage, callArguments);
+        }
+
+        if (result.status === "noTarget") {
+          throw new Error(result.error);
+        }
+
+        return result;
+      };
+
+      return answer(runtime, deliver(), callback);
+    };
+
+  /**
+   * `chrome.tabs.connect`, routed the same way — except that a port must be
+   * returned before the routing is known, so the port is handed back at once
+   * and its `open` settles where its far end is: the relay, or a native port
+   * to a tab of the worker's own session. Posts wait on that either way.
+   */
+  const createProxiedTabsConnect =
+    (nativeConnect: NativeMethod | undefined) =>
+    (tabId: number, connectInfo?: { name?: string; frameId?: number; documentId?: string }) => {
+      const portId = crypto.randomUUID();
+
+      const name = typeof connectInfo?.name === "string" ? connectInfo.name : "";
+
+      const open = async (): Promise<RelayedPortTransport> => {
+        const result = await postForResult<RuntimeProxyWorkerConnectToTabResult>(
+          RUNTIME_PROXY_PATHS.workerConnectToTab,
+          {
+            portId,
+            name,
+            tabId,
+            frameId: connectInfo?.frameId,
+            documentId: connectInfo?.documentId,
+          },
+        );
+
+        if (result.status === "connected") {
+          return createBridgeTransport(portId);
+        }
+
+        if (result.status !== "ownSession") {
+          // No such tab, or nothing of the extension listening in it, both of
+          // which Chrome reports as a port that disconnects immediately
+          throw new Error(result.status === "noTarget" ? result.error : RECEIVING_END_ERROR);
+        }
+
+        return createNativePortTransport(portId, nativeConnect, [tabId, connectInfo]);
+      };
+
+      return createPort(portId, name, undefined, open).externalPort;
+    };
+
+  /**
+   * The far end of a `tabs.connect` that turned out to name a tab of the
+   * worker's own session: the native port Chromium opened, wired so the port
+   * the extension already holds carries its traffic.
+   */
+  const createNativePortTransport = (
+    portId: string,
+    nativeConnect: NativeMethod | undefined,
+    connectArguments: unknown[],
+  ): RelayedPortTransport => {
+    const nativePort = nativeConnect?.(...connectArguments) as
+      | {
+          postMessage?: (message: unknown) => void;
+          disconnect?: () => void;
+          onMessage?: { addListener?: (listener: (message: unknown) => void) => void };
+          onDisconnect?: { addListener?: (listener: () => void) => void };
+        }
+      | undefined;
+
+    if (!nativePort) {
+      throw new Error(RECEIVING_END_ERROR);
+    }
+
+    nativePort.onMessage?.addListener?.((message: unknown) => {
+      ports.get(portId)?.emitMessage(message);
+    });
+
+    nativePort.onDisconnect?.addListener?.(() => {
+      ports.get(portId)?.emitDisconnect();
+    });
+
+    return {
+      post(message: unknown) {
+        nativePort.postMessage?.(message);
+      },
+      disconnect() {
+        nativePort.disconnect?.();
+      },
+    };
   };
 
   return {
@@ -442,9 +549,40 @@ export function createRelayClient({
 
       wrappedRuntimes.push(runtime);
 
-      mirrorEvent(runtime, "onMessage", messageListeners);
+      mirrorEvent(runtime, "onMessage", messageListeners, LOG_LABEL);
 
-      mirrorEvent(runtime, "onConnect", connectListeners);
+      mirrorEvent(runtime, "onConnect", connectListeners, LOG_LABEL);
+
+      runtime.sendMessage = createBroadcastingSendMessage(
+        runtime,
+        getNativeMethod(runtime, "sendMessage"),
+      );
+    },
+
+    /**
+     * Shadows `tabs.sendMessage` and `tabs.connect` of one extension API
+     * object, which natively reach only the tabs of the worker's own session.
+     * Everything else on `chrome.tabs` stays as Electron made it.
+     */
+    wrapTabs(extensionApi: ChromeNamespace) {
+      const tabs = extensionApi.tabs as ChromeNamespace | undefined;
+
+      if (!tabs) {
+        return;
+      }
+
+      const runtime = extensionApi.runtime as ChromeNamespace | undefined;
+
+      if (!runtime) {
+        return;
+      }
+
+      tabs.sendMessage = createProxiedTabsSendMessage(
+        runtime,
+        getNativeMethod(tabs, "sendMessage"),
+      );
+
+      tabs.connect = createProxiedTabsConnect(getNativeMethod(tabs, "connect"));
     },
 
     /** Parks the job stream at the bridge, and keeps it parked. */

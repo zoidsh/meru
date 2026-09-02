@@ -1,5 +1,6 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
-import { installRuntimeProxyShim } from "./shim";
+import { createPageStreamClient } from "./page-stream-client";
+import { getContextSenderReport, installRuntimeProxyShim } from "./shim";
 
 /**
  * Entry point of the runtime proxy's shim. It is bundled on its own, like the
@@ -9,14 +10,20 @@ import { installRuntimeProxyShim } from "./shim";
  * and writes it into every extension page — the action popup, and the frames an
  * extension embeds in web pages — ahead of the page's own. Electron hands these
  * contexts the extension API under both `chrome` and `browser`, so both get the
- * shadowed `runtime` methods.
+ * shadowed `runtime` methods and both dispatch what the worker sends.
  */
 const contextGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
+
+const pageStreamClient = createPageStreamClient({ getSenderReport: getContextSenderReport });
 
 for (const globalName of ["chrome", "browser"]) {
   const extensionApi = contextGlobals[globalName];
 
   if (extensionApi) {
     installRuntimeProxyShim(extensionApi);
+
+    pageStreamClient.wrapRuntime(extensionApi);
   }
 }
+
+pageStreamClient.start();
