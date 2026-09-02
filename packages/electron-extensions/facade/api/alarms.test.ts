@@ -25,6 +25,8 @@ function installFakeBridge() {
 
   let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
 
+  let canceledStreamCount = 0;
+
   let markParked = () => {};
 
   const parked = new Promise<void>((resolve) => {
@@ -54,6 +56,9 @@ function installFakeBridge() {
 
         markParked();
       },
+      cancel: () => {
+        canceledStreamCount += 1;
+      },
     });
 
     return new Response(body);
@@ -72,6 +77,15 @@ function installFakeBridge() {
     fire: (alarm: AlarmDetails) => {
       controller?.enqueue(encodeNativeMessage({ type: "alarm", alarm } satisfies AlarmFrame));
     },
+    /** A frame announcing more bytes than the decoder will ever buffer. */
+    breakStream: () => {
+      const oversizedFrame = new Uint8Array(4);
+
+      new DataView(oversizedFrame.buffer).setUint32(0, 2 ** 30, true);
+
+      controller?.enqueue(oversizedFrame);
+    },
+    canceledStreamCount: () => canceledStreamCount,
   };
 }
 
@@ -133,6 +147,41 @@ describe("alarms", () => {
     await methodOf(createAlarms(), "create")({ delayInMinutes: 1 });
 
     expect(bridge.requests[0]?.body).toEqual({ name: "", alarmInfo: { delayInMinutes: 1 } });
+  });
+
+  test("takes an explicit undefined name as the alarm named empty", async () => {
+    const bridge = installFakeBridge();
+
+    // What a wrapper forwarding an optional name passes; reading the first
+    // argument alone drops the alarmInfo and the alarm with it
+    await methodOf(createAlarms(), "create")(undefined, { delayInMinutes: 1 });
+
+    expect(bridge.requests[0]?.body).toEqual({ name: "", alarmInfo: { delayInMinutes: 1 } });
+  });
+
+  test("parks one replacement stream when a frame is too large to decode", async () => {
+    const bridge = installFakeBridge();
+
+    const alarms = createAlarms();
+
+    eventOf(alarms, "onAlarm").addListener(() => {});
+
+    await bridge.parked;
+
+    const error = spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      bridge.breakStream();
+
+      await settle();
+
+      // The refused frame must take its stream with it: a reader left open
+      // leaves main writing to a stream nothing reads while the retry parks
+      // another
+      expect(bridge.canceledStreamCount()).toBe(1);
+    } finally {
+      error.mockRestore();
+    }
   });
 
   test("warns in the extension's own console about a period it will not get", async () => {

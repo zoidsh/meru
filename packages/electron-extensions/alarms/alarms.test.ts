@@ -177,6 +177,49 @@ describe("Alarms", () => {
     expect(await readJson(send(ALARMS_PATHS.getAll))).toEqual([]);
   });
 
+  test("refuses a name long enough to make its own deliveries unreadable", async () => {
+    setup(new Alarms());
+
+    const longName = "a".repeat(513);
+
+    expect(
+      (await send(ALARMS_PATHS.create, { name: longName, alarmInfo: { delayInMinutes: 1 } }))
+        .status,
+    ).toBe(400);
+    expect(await readJson(send(ALARMS_PATHS.getAll))).toEqual([]);
+  });
+
+  test("refuses a delay large enough to overflow the time it is due", async () => {
+    setup(new Alarms());
+
+    const status = (
+      await send(ALARMS_PATHS.create, { name: "overflow", alarmInfo: { delayInMinutes: 1e305 } })
+    ).status;
+
+    expect(status).toBe(400);
+    expect(await readJson(send(ALARMS_PATHS.getAll))).toEqual([]);
+  });
+
+  test("caps how many alarms one extension may hold, and still replaces its own", async () => {
+    setup(new Alarms());
+
+    for (let index = 0; index < 500; index += 1) {
+      await send(ALARMS_PATHS.create, { name: `poll-${index}`, alarmInfo: { delayInMinutes: 60 } });
+    }
+
+    expect(
+      (await send(ALARMS_PATHS.create, { name: "one-too-many", alarmInfo: { delayInMinutes: 60 } }))
+        .status,
+    ).toBe(400);
+
+    // Replacing an alarm it already holds keeps working at the cap
+    expect(
+      (await send(ALARMS_PATHS.create, { name: "poll-0", alarmInfo: { delayInMinutes: 120 } }))
+        .status,
+    ).toBe(204);
+    expect(await readJson(send(ALARMS_PATHS.getAll))).toBeArrayOfSize(500);
+  });
+
   test("replaces an alarm created again under the same name", async () => {
     setup(new Alarms());
 

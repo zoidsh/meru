@@ -24,15 +24,24 @@ function delay(delayMs: number) {
 /**
  * Chrome takes `create(alarmInfo)` as well as `create(name, alarmInfo)`, and an
  * alarm made without a name is the alarm named `""`.
+ *
+ * An explicit `undefined` or `null` where the name goes is Chrome leaving the
+ * parameter out rather than passing it, so `create(undefined, alarmInfo)` is
+ * the alarm named `""` — not, as reading the first argument alone would have
+ * it, a create carrying no `alarmInfo` at all. A wrapper forwarding an optional
+ * name is how an extension gets there.
  */
 function parseCreateArguments(callArguments: unknown[]) {
   const [firstArgument, secondArgument] = callArguments;
 
-  if (typeof firstArgument === "string") {
-    return { name: firstArgument, alarmInfo: secondArgument as AlarmCreateInfo | undefined };
-  }
+  const hasName = typeof firstArgument === "string";
 
-  return { name: "", alarmInfo: firstArgument as AlarmCreateInfo | undefined };
+  return {
+    name: hasName ? firstArgument : "",
+    alarmInfo: (hasName || secondArgument !== undefined ? secondArgument : firstArgument) as
+      | AlarmCreateInfo
+      | undefined,
+  };
 }
 
 function readName(callArguments: unknown[]) {
@@ -106,18 +115,25 @@ export function createAlarms(): ChromeNamespace {
 
     const decoder = new NativeMessageDecoder();
 
-    for (;;) {
-      const { value, done } = await reader.read();
+    // A frame the decoder refuses throws out of the loop, and a reader left
+    // open then means main keeps this stream in its delivery set and writes to
+    // it forever while the retry parks another one
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
 
-      if (done) {
-        return;
-      }
+        if (done) {
+          return;
+        }
 
-      for (const frame of decoder.push(value) as AlarmFrame[]) {
-        if (frame.type === "alarm") {
-          emitAlarm(frame.alarm satisfies AlarmDetails);
+        for (const frame of decoder.push(value) as AlarmFrame[]) {
+          if (frame.type === "alarm") {
+            emitAlarm(frame.alarm satisfies AlarmDetails);
+          }
         }
       }
+    } finally {
+      await reader.cancel().catch(() => undefined);
     }
   };
 

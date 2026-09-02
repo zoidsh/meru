@@ -75,7 +75,11 @@ export function createAlarmSchedule(
     return undefined;
   }
 
-  return { scheduledTime: now + startInMinutes * MS_PER_MINUTE, periodInMinutes };
+  const scheduledTime = now + startInMinutes * MS_PER_MINUTE;
+
+  // A delay large enough to overflow gives an alarm due at `Infinity`, which no
+  // timer can hold and which JSON reports back as `null`
+  return Number.isFinite(scheduledTime) ? { scheduledTime, periodInMinutes } : undefined;
 }
 
 /**

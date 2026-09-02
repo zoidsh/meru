@@ -32,6 +32,19 @@ const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
  */
 const MAX_PENDING_ALARMS = 32;
 
+/**
+ * How long an alarm's name may be, matching Chrome's own cap.
+ *
+ * It is also what keeps a delivery frame inside the decoder's limit at the far
+ * end: the name is the only part of an `Alarm` an extension chooses the size
+ * of, and a name near the frame cap would make every delivery of that alarm
+ * unreadable rather than merely large.
+ */
+const MAX_ALARM_NAME_LENGTH = 512;
+
+/** How many alarms one extension may hold at once, as Chrome caps it. */
+const MAX_ALARMS_PER_EXTENSION = 500;
+
 /** Whether a fired alarm may start this extension's stopped service worker. */
 export type AlarmWakePolicy = (details: { session: Session; extensionId: string }) => boolean;
 
@@ -200,11 +213,23 @@ export class Alarms {
   ) {
     const schedule = createAlarmSchedule(alarmInfo, Date.now());
 
-    if (!schedule) {
+    if (!schedule || name.length > MAX_ALARM_NAME_LENGTH) {
       return false;
     }
 
     const entry = this.getExtensionAlarms(session, extensionId);
+
+    // Replacing one of the extension's own alarms is always allowed; only
+    // growing the set past the cap is not
+    if (!entry.alarms.has(name) && entry.alarms.size >= MAX_ALARMS_PER_EXTENSION) {
+      this.logger?.error("Refused an alarm past the per-extension cap", {
+        extensionId,
+        name,
+        alarms: entry.alarms.size,
+      });
+
+      return false;
+    }
 
     this.removeAlarm(entry, name);
 
