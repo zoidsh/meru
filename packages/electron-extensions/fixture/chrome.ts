@@ -48,19 +48,35 @@ export type FixtureTabs = {
   connect: (tabId: number, connectInfo: { name: string; frameId?: number }) => FixturePort;
 };
 
+/** One key's entry in an `onChanged`, in Chrome's own shape. */
+export type FixtureStorageChange = {
+  oldValue?: unknown;
+  newValue?: unknown;
+};
+
+export type FixtureStorageChanges = Record<string, FixtureStorageChange>;
+
 /**
  * The `StorageArea` slice the fixture uses, in the callback form, which is
  * where `runtime.lastError` is readable — and a refusal is what one of the
  * probes is here to see.
+ *
+ * `onChanged` is the per-area event, which hears the changes alone where the
+ * one on `chrome.storage` is told the area's name as well; a probe listens on
+ * both, because in a shimmed session both are the proxy's rather than Chrome's.
+ * Both are optional, because Electron implements only some of Chrome's surface
+ * and the probes feature-detect them rather than assume them.
  */
 export type FixtureStorageArea = {
   get: (keys: string | null, callback: (items: Record<string, unknown>) => void) => void;
   set: (items: Record<string, unknown>, callback: () => void) => void;
+  onChanged?: FixtureEvent<(changes: FixtureStorageChanges) => void>;
 };
 
 export type FixtureStorage = {
   local: FixtureStorageArea;
   session: FixtureStorageArea;
+  onChanged?: FixtureEvent<(changes: FixtureStorageChanges, areaName: string) => void>;
 };
 
 export type FixtureRuntime = {

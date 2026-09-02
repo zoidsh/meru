@@ -351,6 +351,14 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     return (await response.json()) as Record<string, unknown>;
   };
 
+  /** Reports a change of the worker's store, as the relay client does. */
+  const reportStorageChange = (body: Record<string, unknown>) =>
+    workerSession.request(RUNTIME_PROXY_PATHS.workerStorageChanged, WORKER_TOKEN, body);
+
+  /** And the access level, which is the other record the fan-out is held to. */
+  const reportAccessLevel = (body: Record<string, unknown>) =>
+    workerSession.request(RUNTIME_PROXY_PATHS.workerStorageAccessLevel, WORKER_TOKEN, body);
+
   const connectToTab = async (body: Record<string, unknown>) => {
     const response = await workerSession.request(
       RUNTIME_PROXY_PATHS.workerConnectToTab,
@@ -374,6 +382,8 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     sendToTab,
     broadcast,
     connectToTab,
+    reportStorageChange,
+    reportAccessLevel,
   };
 }
 
@@ -781,5 +791,154 @@ describe("tabs.connect from the worker", () => {
     const jobs = await workerStream.waitForJobs(1);
 
     expect(jobs[0]).toMatchObject({ type: "portDisconnect", portId: "port-4" });
+  });
+});
+
+/**
+ * The `chrome.storage.onChanged` fan-out, which rides the same page streams as
+ * everything else the worker starts and is the only thing that fires those
+ * events in a shimmed session: the session's own store is what its native
+ * event watches, and nothing writes that any more.
+ *
+ * Unlike a message it is addressed to every context of the extension rather
+ * than to a tab or to the extension's pages, and unlike a message it is
+ * answered by nobody — there is no delivery to settle and no receiving end to
+ * be missing.
+ */
+describe("a storage change from the worker", () => {
+  const CHANGES = { unlocked: { oldValue: false, newValue: true } };
+
+  test("reaches every parked context, content scripts and extension pages alike", async () => {
+    const harness = createHarness();
+
+    const contentScript = await harness.parkPageStream(harness.shimTab.mainFrame);
+
+    const inlineMenu = await harness.parkPageStream(harness.shimTab.inlineMenuFrame);
+
+    const popup = await harness.parkPageStream(harness.popupFrame);
+
+    const response = await harness.reportStorageChange({
+      area: "local",
+      changes: CHANGES,
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+    });
+
+    expect(response.status).toBe(204);
+
+    const envelope: RuntimeProxyPageEnvelope = {
+      kind: "storageChanged",
+      area: "local",
+      changes: CHANGES,
+    };
+
+    expect(await contentScript.waitForEnvelopes(1)).toEqual([envelope]);
+
+    expect(await inlineMenu.waitForEnvelopes(1)).toEqual([envelope]);
+
+    expect(await popup.waitForEnvelopes(1)).toEqual([envelope]);
+  });
+
+  test("is withheld from content scripts while the worker says the area is closed", async () => {
+    const harness = createHarness();
+
+    const contentScript = await harness.parkPageStream(harness.shimTab.mainFrame);
+
+    const popup = await harness.parkPageStream(harness.popupFrame);
+
+    await harness.reportStorageChange({
+      area: "session",
+      changes: CHANGES,
+      accessLevel: "TRUSTED_CONTEXTS",
+    });
+
+    // The extension's own documents are trusted contexts, which Chrome tells
+    // about a closed area's changes exactly as it lets them read it
+    expect(await popup.waitForEnvelopes(1)).toEqual([
+      {
+        kind: "storageChanged",
+        area: "session",
+        changes: CHANGES,
+      } satisfies RuntimeProxyPageEnvelope,
+    ]);
+
+    // And the content script hears nothing, since hearing what changed in an
+    // area is reading it. Proven by a second change it may hear arriving after
+    await harness.reportStorageChange({
+      area: "local",
+      changes: CHANGES,
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+    });
+
+    expect(await contentScript.waitForEnvelopes(1)).toEqual([
+      {
+        kind: "storageChanged",
+        area: "local",
+        changes: CHANGES,
+      } satisfies RuntimeProxyPageEnvelope,
+    ]);
+  });
+
+  test("is withheld from content scripts while main's own record says closed", async () => {
+    const harness = createHarness();
+
+    const contentScript = await harness.parkPageStream(harness.shimTab.mainFrame);
+
+    const popup = await harness.parkPageStream(harness.popupFrame);
+
+    // 1Password closes its persistent store, which Chrome leaves open
+    await harness.reportAccessLevel({ area: "local", accessLevel: "TRUSTED_CONTEXTS" });
+
+    // A change stamped by a worker whose own record had not caught up: either
+    // record saying closed is enough, since neither is reliably the newer
+    await harness.reportStorageChange({
+      area: "local",
+      changes: CHANGES,
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+    });
+
+    expect(await popup.waitForEnvelopes(1)).toEqual([
+      {
+        kind: "storageChanged",
+        area: "local",
+        changes: CHANGES,
+      } satisfies RuntimeProxyPageEnvelope,
+    ]);
+
+    expect(contentScript.envelopes).toEqual([]);
+  });
+
+  test("is refused from any session but the worker's", async () => {
+    const harness = createHarness();
+
+    const contentScript = await harness.parkPageStream(harness.shimTab.mainFrame);
+
+    const response = await harness.shimSession.request(
+      RUNTIME_PROXY_PATHS.workerStorageChanged,
+      SHIM_TOKEN,
+      { area: "local", changes: CHANGES, accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" },
+      harness.shimTab.mainFrame,
+    );
+
+    expect(response.status).toBe(403);
+
+    expect(contentScript.envelopes).toEqual([]);
+  });
+
+  test("a report the relay cannot read fans nothing out", async () => {
+    const harness = createHarness();
+
+    const contentScript = await harness.parkPageStream(harness.shimTab.mainFrame);
+
+    for (const body of [
+      { area: "somewhere-else", changes: CHANGES, accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" },
+      { area: "local", changes: "not an object", accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" },
+      { area: "local", changes: CHANGES, accessLevel: "SOMETHING_ELSE" },
+    ]) {
+      // Taken rather than refused: a report main cannot read is the worker's
+      // mistake to fix, and there is nothing for it to do about a 400
+      expect((await harness.reportStorageChange(body)).status).toBe(204);
+    }
+
+    expect(contentScript.envelopes).toEqual([]);
   });
 });

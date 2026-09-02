@@ -10,6 +10,7 @@ import {
 } from "./bridge-protocol";
 import { dispatchMessage, mirrorEvent } from "./message-dispatch";
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
+import type { RuntimeProxyStorageAreaName, RuntimeProxyStorageChanges } from "./storage-protocol";
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -34,6 +35,16 @@ function bridgeAnsweredError(status: number) {
 export type CreatePageStreamClientOptions = {
   /** What this context can truthfully say about where it runs. */
   getSenderReport: () => RuntimeProxySenderReport;
+  /**
+   * Where a change of the worker's store goes: the storage half of the shim,
+   * which keeps the listeners the extension registered on `onChanged`
+   * (`storage-shim.ts`). Absent, changes arrive and are dropped, which is what
+   * a context with no storage shadow would make of them.
+   */
+  onStorageChanged?: (
+    area: RuntimeProxyStorageAreaName,
+    changes: RuntimeProxyStorageChanges,
+  ) => void;
   /** How long a failed stream waits before it is parked again. */
   retryDelayMs?: number;
   /** Where the backoff after repeated failures stops. */
@@ -54,12 +65,13 @@ export type CreatePageStreamClientOptions = {
  *
  * The stream is parked whatever the extension listens for, and before it has
  * registered anything: it carries more than `runtime` messaging — `storage`'s
- * change events are meant to ride it — and a context that parked only once
- * something registered would be a switch shared between features that know
- * nothing about each other.
+ * change events ride it too — and a context that parked only once something
+ * registered would be a switch shared between features that know nothing about
+ * each other.
  */
 export function createPageStreamClient({
   getSenderReport,
+  onStorageChanged,
   retryDelayMs = DEFAULT_RETRY_DELAY_MS,
   maxRetryDelayMs = MAX_RETRY_DELAY_MS,
 }: CreatePageStreamClientOptions) {
@@ -193,6 +205,14 @@ export function createPageStreamClient({
 
       case "portDisconnect": {
         ports.get(envelope.portId)?.emitDisconnect(envelope.error);
+
+        break;
+      }
+
+      // Nothing is posted back: an `onChanged` has no reply and no receiving
+      // end to be missing, so a context with no listener for it says nothing
+      case "storageChanged": {
+        onStorageChanged?.(envelope.area, envelope.changes);
 
         break;
       }

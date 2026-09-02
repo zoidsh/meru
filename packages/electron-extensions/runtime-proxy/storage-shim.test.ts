@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { ChromeNamespace } from "../facade/lib/chrome";
+import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { RUNTIME_PROXY_PATHS, type RuntimeProxyStorageCallRequest } from "./bridge-protocol";
 import { STORAGE_UNAVAILABLE_ERROR, type RuntimeProxyStorageResult } from "./storage-protocol";
-import { installRuntimeProxyStorageShim } from "./storage-shim";
+import { createRuntimeProxyStorageShim } from "./storage-shim";
 
 const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
 
@@ -50,6 +50,25 @@ function stubFetch(
 }
 
 /**
+ * One of Electron's own `onChanged` events, which the shim shadows in place.
+ * `nativeListeners` is what a test reads to see that nothing was registered on
+ * the store this session stopped using.
+ */
+function createNativeEvent() {
+  const nativeListeners: ChromeEventListener[] = [];
+
+  return {
+    nativeListeners,
+    addListener: (listener: ChromeEventListener) => {
+      nativeListeners.push(listener);
+    },
+    removeListener: () => {},
+    hasListener: () => false,
+    hasListeners: () => false,
+  };
+}
+
+/**
  * A `chrome` whose storage areas carry only what Electron would put there, so
  * that what the shim shadows and what it leaves alone are both observable.
  */
@@ -58,26 +77,28 @@ function createShimmedApi(
     local: { get: () => {}, set: () => {}, remove: () => {}, clear: () => {} },
   },
 ) {
-  const onChanged = { addListener: () => {} };
+  const onChanged = createNativeEvent();
 
   const storage: ChromeNamespace = { onChanged };
 
   for (const [areaName, members] of Object.entries(areas)) {
-    storage[areaName] = { onChanged: { addListener: () => {} }, ...members };
+    storage[areaName] = { onChanged: createNativeEvent(), ...members };
   }
 
   const runtime: ChromeNamespace = { id: EXTENSION_ID };
 
   const extensionApi: ChromeNamespace = { runtime, storage };
 
-  installRuntimeProxyStorageShim(extensionApi, { getSenderReport: () => SENDER_REPORT });
+  const shim = createRuntimeProxyStorageShim({ getSenderReport: () => SENDER_REPORT });
 
-  return { extensionApi, runtime, storage, onChanged };
+  shim.install(extensionApi);
+
+  return { extensionApi, runtime, storage, onChanged, shim };
 }
 
 type AreaMethod = (...callArguments: unknown[]) => Promise<unknown> | undefined;
 
-describe("installRuntimeProxyStorageShim", () => {
+describe("createRuntimeProxyStorageShim", () => {
   test("relays a call and answers the promise form with the worker's value", async () => {
     const calls = stubFetch(() => ({ status: "ok", value: { unlocked: true } }));
 
@@ -146,7 +167,7 @@ describe("installRuntimeProxyStorageShim", () => {
     expect(area.setAccessLevel).toBeUndefined();
   });
 
-  test("leaves the areas' other members, and both onChanged events, exactly as they were", () => {
+  test("leaves the areas' other members, and both event objects, exactly where they were", () => {
     const quota = 10_485_760;
 
     const { storage, onChanged } = createShimmedApi({
@@ -160,8 +181,8 @@ describe("installRuntimeProxyStorageShim", () => {
     // swapped for one of the proxy's own
     expect(area.QUOTA_BYTES).toBe(quota);
 
-    // `onChanged` is left native and so never fires in this session, which is
-    // no events rather than wrong ones until the worker-to-page channel lands
+    // And the events are shadowed in place for the same reason, so an
+    // extension holding a reference from before the shim ran holds this one
     expect(storage.onChanged).toBe(onChanged);
 
     expect(typeof (area.onChanged as ChromeNamespace).addListener).toBe("function");
@@ -281,7 +302,9 @@ describe("installRuntimeProxyStorageShim", () => {
 
     const shadowedGet = area.get;
 
-    installRuntimeProxyStorageShim(extensionApi, { getSenderReport: () => SENDER_REPORT });
+    const second = createRuntimeProxyStorageShim({ getSenderReport: () => SENDER_REPORT });
+
+    second.install(extensionApi);
 
     // The same function, so one chain still orders the area's calls
     expect(area.get).toBe(shadowedGet);
@@ -291,11 +314,160 @@ describe("installRuntimeProxyStorageShim", () => {
     expect(calls).toHaveLength(1);
   });
 
+  test("dispatches a change to the area's listeners and to storage.onChanged", () => {
+    const { storage, shim } = createShimmedApi({
+      local: { get: () => {} },
+      sync: { get: () => {} },
+    });
+
+    const heardByArea: unknown[][] = [];
+
+    const heardEverywhere: unknown[][] = [];
+
+    const localEvent = (storage.local as ChromeNamespace).onChanged as ChromeNamespace;
+
+    const syncEvent = (storage.sync as ChromeNamespace).onChanged as ChromeNamespace;
+
+    (localEvent.addListener as (listener: ChromeEventListener) => void)((...heard) => {
+      heardByArea.push(heard);
+    });
+
+    (syncEvent.addListener as (listener: ChromeEventListener) => void)(() => {
+      throw new Error("A change of local must not reach sync's own event");
+    });
+
+    ((storage.onChanged as ChromeNamespace).addListener as (listener: ChromeEventListener) => void)(
+      (...heard) => {
+        heardEverywhere.push(heard);
+      },
+    );
+
+    const changes = { unlocked: { oldValue: false, newValue: true } };
+
+    shim.dispatchChange("local", changes);
+
+    // The area's own event hears the changes alone, where the top-level one is
+    // told which area they were in, exactly as Chrome dispatches them
+    expect(heardByArea).toEqual([[changes]]);
+
+    expect(heardEverywhere).toEqual([[changes, "local"]]);
+  });
+
+  test("registers nothing on the native events, which watch the wrong store", () => {
+    const { storage, onChanged } = createShimmedApi();
+
+    const localEvent = (storage.local as ChromeNamespace).onChanged as ChromeNamespace;
+
+    const listener = () => {};
+
+    ((storage.onChanged as ChromeNamespace).addListener as (listener: ChromeEventListener) => void)(
+      listener,
+    );
+
+    (localEvent.addListener as (listener: ChromeEventListener) => void)(listener);
+
+    // The native event watches this session's own store, which nothing writes
+    // any more: a registration there could only ever report the wrong store
+    expect(onChanged.nativeListeners).toEqual([]);
+
+    expect(localEvent.nativeListeners as ChromeEventListener[]).toEqual([]);
+  });
+
+  test("hasListener and removeListener answer for the shadowed listeners", () => {
+    const { storage, shim } = createShimmedApi();
+
+    const heard: unknown[] = [];
+
+    const listener = (changes: unknown) => {
+      heard.push(changes);
+    };
+
+    const event = storage.onChanged as ChromeNamespace;
+
+    const addListener = event.addListener as (listener: ChromeEventListener) => void;
+
+    const hasListener = event.hasListener as (listener: ChromeEventListener) => boolean;
+
+    expect(hasListener(listener)).toBe(false);
+
+    expect((event.hasListeners as () => boolean)()).toBe(false);
+
+    addListener(listener);
+
+    expect(hasListener(listener)).toBe(true);
+
+    expect((event.hasListeners as () => boolean)()).toBe(true);
+
+    (event.removeListener as (listener: ChromeEventListener) => void)(listener);
+
+    expect(hasListener(listener)).toBe(false);
+
+    shim.dispatchChange("local", {});
+
+    expect(heard).toEqual([]);
+  });
+
+  test("a listener that throws does not cost the others their change", () => {
+    const { storage, shim } = createShimmedApi();
+
+    const heard: unknown[] = [];
+
+    const addListener = (storage.onChanged as ChromeNamespace).addListener as (
+      listener: ChromeEventListener,
+    ) => void;
+
+    addListener(() => {
+      throw new Error("boom");
+    });
+
+    addListener((changes) => {
+      heard.push(changes);
+    });
+
+    const changes = { unlocked: { newValue: true } };
+
+    shim.dispatchChange("local", changes);
+
+    expect(heard).toEqual([changes]);
+  });
+
+  test("both globals share one set of listeners, as one store means one event", () => {
+    const { extensionApi, shim } = createShimmedApi();
+
+    // Electron builds `chrome` and `browser` separately, each with its own
+    // event objects over the one store
+    const browserStorage: ChromeNamespace = { onChanged: createNativeEvent() };
+
+    browserStorage.local = { onChanged: createNativeEvent(), get: () => {} };
+
+    shim.install({ runtime: { id: EXTENSION_ID }, storage: browserStorage });
+
+    const heard: unknown[][] = [];
+
+    (
+      (browserStorage.onChanged as ChromeNamespace).addListener as (
+        listener: ChromeEventListener,
+      ) => void
+    )((...heardArguments) => {
+      heard.push(heardArguments);
+    });
+
+    const changes = { unlocked: { newValue: true } };
+
+    shim.dispatchChange("local", changes);
+
+    expect(heard).toEqual([[changes, "local"]]);
+
+    // And the first global's own event is still the extension's, untouched by
+    // the second install
+    expect((extensionApi.storage as ChromeNamespace).onChanged).toBeDefined();
+  });
+
   test("an extension API without storage is left alone", () => {
     const extensionApi: ChromeNamespace = { runtime: { id: EXTENSION_ID } };
 
     expect(() => {
-      installRuntimeProxyStorageShim(extensionApi);
+      createRuntimeProxyStorageShim().install(extensionApi);
     }).not.toThrow();
 
     expect(extensionApi.storage).toBeUndefined();

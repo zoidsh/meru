@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { ChromeNamespace } from "../facade/lib/chrome";
+import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { RUNTIME_PROXY_PATHS } from "./bridge-protocol";
 import {
   STORAGE_ACCESS_DENIED_ERROR,
@@ -103,13 +103,42 @@ function createWorkerApi() {
     },
   };
 
-  const storage: ChromeNamespace = { local, session: sessionArea };
+  const changedListeners: ChromeEventListener[] = [];
+
+  /**
+   * Chromium's own event binding, receiver and all: `addListener` detached
+   * from its event throws there, so it throws here. Without that the relay
+   * could take a reference to it, and the throw would only ever be seen in
+   * the end-to-end suite — as a service worker that never finished evaluating.
+   */
+  const changedEvent: ChromeNamespace = {
+    addListener(this: unknown, listener: ChromeEventListener) {
+      if (this !== changedEvent) {
+        throw new TypeError("Illegal invocation");
+      }
+
+      changedListeners.push(listener);
+    },
+  };
+
+  const storage: ChromeNamespace = {
+    local,
+    session: sessionArea,
+    onChanged: changedEvent,
+  };
 
   return {
     extensionApi: { runtime, storage } as ChromeNamespace,
     local,
     store,
     accessLevelCalls,
+    changedListeners,
+    /** Electron's own `chrome.storage.onChanged`, which names the area too. */
+    fireChange: (changes: unknown, areaName: unknown) => {
+      for (const listener of changedListeners) {
+        listener(changes, areaName);
+      }
+    },
     failMethod: (method: string, message: string) => {
       failures.set(method, message);
     },
@@ -459,6 +488,107 @@ describe("createStorageRelay", () => {
       expect(sessionArea.setAccessLevel).toBeUndefined();
 
       expect(sessionArea.get).toBe(nativeGet);
+    });
+  });
+
+  describe("watchChanges", () => {
+    test("reports every change of the worker's store, with the area's level", async () => {
+      const posts = stubFetch();
+
+      const worker = createWorkerApi();
+
+      createStorageRelay([worker.extensionApi]).watchChanges();
+
+      const changes = { unlocked: { oldValue: false, newValue: true } };
+
+      worker.fireChange(changes, "local");
+
+      await waitFor(() => posts.length > 0, "the change report");
+
+      expect(posts).toEqual([
+        {
+          pathName: RUNTIME_PROXY_PATHS.workerStorageChanged,
+          body: {
+            area: "local",
+            changes,
+            // Chrome's default for `local`, which nothing has changed
+            accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+          },
+        },
+      ]);
+    });
+
+    test("stamps a change with the level the extension set, not Chrome's default", async () => {
+      const posts = stubFetch();
+
+      const worker = createWorkerApi();
+
+      const relay = createStorageRelay([worker.extensionApi]);
+
+      relay.mirrorAccessLevels();
+
+      relay.watchChanges();
+
+      await (worker.local.setAccessLevel as (options: unknown) => Promise<unknown>)({
+        accessLevel: "TRUSTED_CONTEXTS",
+      });
+
+      await waitFor(() => posts.length > 0, "the access level report");
+
+      worker.fireChange({ unlocked: { newValue: true } }, "local");
+
+      await waitFor(() => posts.length > 1, "the change report");
+
+      expect(posts[1]?.body.accessLevel).toBe("TRUSTED_CONTEXTS");
+    });
+
+    test("listens on one global only, so a change is reported once", async () => {
+      const posts = stubFetch();
+
+      const worker = createWorkerApi();
+
+      // Electron builds `chrome` and `browser` separately, and both dispatch
+      // every change of the one store
+      const browser = createWorkerApi();
+
+      createStorageRelay([worker.extensionApi, browser.extensionApi]).watchChanges();
+
+      expect(worker.changedListeners).toHaveLength(1);
+
+      expect(browser.changedListeners).toHaveLength(0);
+
+      worker.fireChange({ unlocked: { newValue: true } }, "local");
+
+      await waitFor(() => posts.length > 0, "the change report");
+
+      expect(posts).toHaveLength(1);
+    });
+
+    test("says nothing about a change it cannot read", async () => {
+      const posts = stubFetch();
+
+      const worker = createWorkerApi();
+
+      createStorageRelay([worker.extensionApi]).watchChanges();
+
+      worker.fireChange({ unlocked: { newValue: true } }, "somewhere-else");
+
+      worker.fireChange(undefined, "local");
+
+      worker.fireChange({ unlocked: { newValue: true } }, "local");
+
+      await waitFor(() => posts.length > 0, "the change report");
+
+      // Only the third, and the two before it neither threw nor were reported
+      expect(posts.map((post) => post.body.area)).toEqual(["local"]);
+    });
+
+    test("an extension API without a storage.onChanged is left alone", () => {
+      const relay = createStorageRelay([{ runtime: { id: "x" }, storage: { local: {} } }]);
+
+      expect(() => {
+        relay.watchChanges();
+      }).not.toThrow();
     });
   });
 });

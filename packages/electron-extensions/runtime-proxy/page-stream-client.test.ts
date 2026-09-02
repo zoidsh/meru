@@ -143,8 +143,13 @@ function startClient() {
     },
   };
 
+  const storageChanges: { area: string; changes: unknown }[] = [];
+
   const client = createPageStreamClient({
     getSenderReport: () => SENDER_REPORT,
+    onStorageChanged: (area, changes) => {
+      storageChanges.push({ area, changes });
+    },
     retryDelayMs: 5,
   });
 
@@ -159,6 +164,7 @@ function startClient() {
   return {
     client,
     runtime,
+    storageChanges,
     onMessage: runtime.onMessage as WrappedEvent,
     onConnect: runtime.onConnect as WrappedEvent,
   };
@@ -473,5 +479,52 @@ describe("createPageStreamClient", () => {
      * a slow machine cannot fail it.
      */
     expect(Date.now() - startedAt).toBeGreaterThanOrEqual(60);
+  });
+});
+
+/**
+ * The `chrome.storage.onChanged` fan-out arriving on the same stream. The
+ * client only carries it: the listeners it is dispatched to are the storage
+ * shim's, which is where the events an extension registered on actually live.
+ */
+describe("a storage change on the page stream", () => {
+  test("is handed to the storage shim, and nothing is posted back", async () => {
+    const stub = stubBridge();
+
+    const { storageChanges } = startClient();
+
+    await stub.waitForStream();
+
+    const changes = { unlocked: { oldValue: false, newValue: true } };
+
+    stub.push({ kind: "storageChanged", area: "session", changes });
+
+    await waitFor(() => storageChanges.length > 0, "the change");
+
+    expect(storageChanges).toEqual([{ area: "session", changes }]);
+
+    // An `onChanged` has no reply and no receiving end to be missing, so there
+    // is nothing to say back about one
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.pageReply)).toEqual([]);
+  });
+
+  test("arrives even where the extension registered no runtime listeners", async () => {
+    const stub = stubBridge();
+
+    const { storageChanges, onMessage, onConnect } = startClient();
+
+    await stub.waitForStream();
+
+    // The stream is parked whatever the extension listens for, which is what
+    // lets a context that only uses storage hear anything at all
+    expect(onMessage.hasListeners()).toBe(false);
+
+    expect(onConnect.hasListeners()).toBe(false);
+
+    stub.push({ kind: "storageChanged", area: "local", changes: {} });
+
+    await waitFor(() => storageChanges.length > 0, "the change");
+
+    expect(storageChanges).toEqual([{ area: "local", changes: {} }]);
   });
 });

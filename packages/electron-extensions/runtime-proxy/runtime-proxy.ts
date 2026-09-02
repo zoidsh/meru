@@ -24,10 +24,12 @@ import {
   type RuntimeProxyWorkerPortDisconnectRequest,
   type RuntimeProxyWorkerPortPostRequest,
   type RuntimeProxyWorkerReplyRequest,
+  type RuntimeProxyWorkerStorageChangedRequest,
 } from "./bridge-protocol";
 import { type PageContext, PageStreams } from "./page-stream";
 import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
 import {
+  isChangeVisibleToUntrustedContext,
   refuseStorageCall,
   STORAGE_UNAVAILABLE_ERROR,
   type RuntimeProxyStorageCall,
@@ -37,6 +39,7 @@ import {
   isTrustedStorageCaller,
   parseStorageAccessLevelReport,
   parseStorageCall,
+  parseStorageChangedReport,
   StorageAccessLevels,
 } from "./storage-proxy";
 import { createWorkerSender, WorkerToPage } from "./worker-to-page";
@@ -334,6 +337,23 @@ export class RuntimeProxy {
         }
 
         return new Response(null, { status: session === this.workerSession ? 204 : 403, headers });
+      },
+    );
+
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.workerStorageChanged,
+      ({ session, extensionId, body, headers }) => {
+        if (session !== this.workerSession) {
+          return new Response(null, { status: 403, headers });
+        }
+
+        const report = parseStorageChangedReport(body);
+
+        if (report) {
+          this.fanOutStorageChange(extensionId, report);
+        }
+
+        return new Response(null, { status: 204, headers });
       },
     );
 
@@ -662,6 +682,35 @@ export class RuntimeProxy {
       call,
       isTrustedContext,
       this.storageAccessLevels.get(extensionId, call.area),
+    );
+  }
+
+  /**
+   * One change of the worker's store, out to every parked context of the
+   * extension — which is what Chrome does with `onChanged`, firing it in every
+   * context including the one whose write caused it.
+   *
+   * Content scripts are held to the same access level a read would be, so a
+   * `session` or `local` area the extension closed does not leak through its
+   * events what it refuses to a `get`. Both records of the level decide it, the
+   * worker's travelling with the change and main's being this one, since
+   * neither is reliably the newer.
+   */
+  private fanOutStorageChange(
+    extensionId: string,
+    { area, changes, accessLevel }: RuntimeProxyWorkerStorageChangedRequest,
+  ) {
+    const isVisibleToUntrustedContext = isChangeVisibleToUntrustedContext(
+      accessLevel,
+      this.storageAccessLevels.get(extensionId, area),
+    );
+
+    this.pageStreams.broadcast(
+      extensionId,
+      { kind: "storageChanged", area, changes },
+      isVisibleToUntrustedContext
+        ? undefined
+        : (context) => isTrustedStorageCaller(context.extensionId, context.frame),
     );
   }
 

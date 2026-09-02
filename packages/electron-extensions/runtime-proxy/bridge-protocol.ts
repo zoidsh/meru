@@ -20,6 +20,7 @@ import type {
   RuntimeProxyStorageAccessLevel,
   RuntimeProxyStorageAreaName,
   RuntimeProxyStorageCall,
+  RuntimeProxyStorageChanges,
   RuntimeProxyStorageResult,
 } from "./storage-protocol";
 
@@ -65,6 +66,7 @@ export const RUNTIME_PROXY_PATHS = {
   workerPortPost: "/runtime-proxy/worker-port-post",
   workerPortDisconnect: "/runtime-proxy/worker-port-disconnect",
   workerStorageAccessLevel: "/runtime-proxy/worker-storage-access-level",
+  workerStorageChanged: "/runtime-proxy/worker-storage-changed",
   /** Worker side again, for the calls that start in the worker. */
   workerSendToTab: "/runtime-proxy/worker-send-to-tab",
   workerConnectToTab: "/runtime-proxy/worker-connect-to-tab",
@@ -164,6 +166,23 @@ export type RuntimeProxyStorageCallRequest = {
  */
 export type RuntimeProxyWorkerStorageAccessLevelRequest = {
   area: RuntimeProxyStorageAreaName;
+  accessLevel: RuntimeProxyStorageAccessLevel;
+};
+
+/**
+ * One `chrome.storage.onChanged` the worker's own store just fired, reported
+ * so main can fan it out to every shimmed context of the extension — which is
+ * the whole of `onChanged` in those sessions, their own stores being the thing
+ * nothing writes any more.
+ *
+ * The level is the worker's record for the area at the moment the change
+ * fired, and it travels with the change rather than being looked up in main
+ * alone: main's own record is written by a separate POST that can land after
+ * this one, so a change is held against both.
+ */
+export type RuntimeProxyWorkerStorageChangedRequest = {
+  area: RuntimeProxyStorageAreaName;
+  changes: RuntimeProxyStorageChanges;
   accessLevel: RuntimeProxyStorageAccessLevel;
 };
 
@@ -300,11 +319,14 @@ export type RuntimeProxyPageStreamRequest = {
 
 /**
  * Frames on a page stream's response body. `kind` is the discriminator the
- * channel is generic in: `chrome.storage`'s change events are meant to ride
- * here as a kind of their own rather than as a second stream.
+ * channel is generic in: `chrome.storage`'s change events ride here as a kind
+ * of their own rather than on a second stream.
  *
  * Only `message` is answered, over `pageReply` and by `deliveryId`; the port
- * kinds are told apart by `portId`, which the worker minted.
+ * kinds are told apart by `portId`, which the worker minted. `storageChanged`
+ * carries no id at all, being an event rather than a call — Chrome's own
+ * `onChanged` has no reply, no sender and no receiving end to be missing, so
+ * there is nothing for a context to say back about one.
  */
 export type RuntimeProxyPageEnvelope =
   /**
@@ -316,7 +338,12 @@ export type RuntimeProxyPageEnvelope =
   | { kind: "message"; deliveryId: string; message: unknown; sender: RuntimeProxySender }
   | { kind: "connect"; portId: string; name?: string; sender: RuntimeProxySender }
   | { kind: "portMessage"; portId: string; message: unknown }
-  | { kind: "portDisconnect"; portId: string; error?: string };
+  | { kind: "portDisconnect"; portId: string; error?: string }
+  | {
+      kind: "storageChanged";
+      area: RuntimeProxyStorageAreaName;
+      changes: RuntimeProxyStorageChanges;
+    };
 
 export type RuntimeProxyPageReplyRequest = {
   deliveryId: string;

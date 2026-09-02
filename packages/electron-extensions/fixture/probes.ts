@@ -6,9 +6,11 @@
  */
 import {
   type FixtureManifest,
+  type FixtureEvent,
   type FixtureMessageSender,
   type FixturePort,
   type FixtureRuntime,
+  type FixtureStorage,
   type FixtureStorageArea,
   getChromeRuntime,
   getChromeStorage,
@@ -20,6 +22,16 @@ const PROBE_TIMEOUT_MS = 15_000;
 const EVENT_POLL_INTERVAL_MS = 250;
 
 const ARRIVAL_POLL_INTERVAL_MS = 25;
+
+/**
+ * A change event's own deadline, far shorter than a probe's. Nothing has to be
+ * woken for one: the write it follows has already been answered, and the event
+ * rides a stream the context parked before the extension's own code ran. It
+ * either arrives at once or the fan-out is not working, and waiting out
+ * `PROBE_TIMEOUT_MS` twice would cost every other probe in the context its own
+ * budget.
+ */
+const CHANGE_TIMEOUT_MS = 3000;
 
 export type EchoOutcome =
   | { status: "replied"; reply: unknown }
@@ -51,6 +63,23 @@ export type WorkerInitiatedOutcome = {
 export type StorageOutcome =
   | { status: "read"; value: unknown }
   | { status: "error"; message: string };
+
+/**
+ * One `chrome.storage.onChanged` as a context heard it, on both of the events
+ * Chrome fires: the area's own, which hears the changes alone, and
+ * `chrome.storage.onChanged`, which is told the area's name as well. A change
+ * only one of them heard is as much a failure as one neither did, so both are
+ * recorded rather than being folded into a boolean.
+ */
+export type StorageChangeOutcome =
+  | {
+      /** What `chrome.storage.<area>.onChanged` heard, `null` where it did not. */
+      status: "heard";
+      newValue: unknown;
+      /** The area `chrome.storage.onChanged` was told, `null` where it did not hear. */
+      areaName: string | null;
+    }
+  | { status: "timeout" };
 
 export type ProbeResults = {
   /** Minted per context, so every port name and nonce names its context. */
@@ -88,6 +117,25 @@ export type ProbeResults = {
    * session's store would read back as `null` here.
    */
   writeSeenByWorker: StorageOutcome;
+  /**
+   * A write the worker made in its own session, as this context heard it. In a
+   * content-script-only session nothing native could fire this: the store that
+   * changed is another session's, and the event arrived over the page stream.
+   */
+  workerWriteHeard: StorageChangeOutcome;
+  /**
+   * Which of the two change events this context had to register on at all.
+   * Electron implements only some of Chrome's surface, and a change nothing
+   * could have heard is a different failure from one that was never sent.
+   */
+  storageChangeEvents: { area: boolean; topLevel: boolean };
+  /**
+   * And the change this context's own proxied write caused, heard back here.
+   * Chrome fires `onChanged` in every context of the extension including the
+   * one that made the write, and a relayed write is no exception — it goes to
+   * the worker and comes back on the same fan-out as any other.
+   */
+  ownWriteHeard: StorageChangeOutcome;
   /** Whether this context saw its port die after asking the worker to close it. */
   workerClosedPort: boolean;
   /** Whether the worker's event log recorded this context closing its own port. */
@@ -443,6 +491,74 @@ async function probeWriteSeenByWorker(
     : { status: "error", message: outcome.message };
 }
 
+/**
+ * Listens on both of `chrome.storage`'s change events, keeping what each heard
+ * per key. Registered before anything is written, since the change a probe is
+ * waiting for may land before the write that caused it has even answered.
+ *
+ * Both are feature-detected rather than assumed, the way an extension detects
+ * them: Electron implements only some of Chrome's surface, and a probe that
+ * threw on a missing event would take every other probe in the context down
+ * with it. An event that is not there records `null` for what it heard, which
+ * is what the tests assert against.
+ */
+function watchStorageChanges(storage: FixtureStorage) {
+  const heardByAreaEvent = new Map<string, unknown>();
+
+  const heardByTopLevelEvent = new Map<string, string>();
+
+  const events = {
+    area: addChangeListener(storage.local.onChanged, (changes) => {
+      for (const [key, change] of Object.entries(changes)) {
+        heardByAreaEvent.set(key, change.newValue ?? null);
+      }
+    }),
+    topLevel: addChangeListener(storage.onChanged, (changes, areaName) => {
+      for (const key of Object.keys(changes)) {
+        heardByTopLevelEvent.set(key, areaName);
+      }
+    }),
+  };
+
+  const waitForChange = async (key: string): Promise<StorageChangeOutcome> => {
+    const deadline = Date.now() + CHANGE_TIMEOUT_MS;
+
+    while (Date.now() < deadline) {
+      if (heardByAreaEvent.has(key) || heardByTopLevelEvent.has(key)) {
+        return {
+          status: "heard",
+          newValue: heardByAreaEvent.get(key) ?? null,
+          areaName: heardByTopLevelEvent.get(key) ?? null,
+        };
+      }
+
+      await delay(ARRIVAL_POLL_INTERVAL_MS);
+    }
+
+    return { status: "timeout" };
+  };
+
+  return { events, waitForChange };
+}
+
+/**
+ * Registers on an event only where the context has one to register on, and
+ * says whether it did. What Electron implements is what the tests assert
+ * against, so an absent event is recorded rather than assumed either way.
+ */
+function addChangeListener<Listener>(
+  event: FixtureEvent<Listener> | undefined,
+  listener: Listener,
+) {
+  if (typeof event?.addListener !== "function") {
+    return false;
+  }
+
+  event.addListener(listener);
+
+  return true;
+}
+
 export async function runProbes(): Promise<ProbeResults> {
   const runtime = getChromeRuntime();
 
@@ -501,11 +617,30 @@ export async function runProbes(): Promise<ProbeResults> {
 
   const storage = getChromeStorage();
 
+  const { events: storageChangeEvents, waitForChange: waitForStorageChange } =
+    watchStorageChanges(storage);
+
   const workerStampInLocal = await readStorage(runtime, storage.local, "workerStamp");
 
   const workerStampInSession = await readStorage(runtime, storage.session, "workerSessionStamp");
 
   const writeSeenByWorker = await probeWriteSeenByWorker(runtime, storage.local, contextId);
+
+  // The echo of this context's own write, which Chrome fires here too
+  const ownWriteHeard = await waitForStorageChange(`probe:${contextId}`);
+
+  const workerWriteKey = `worker-write:${contextId}`;
+
+  const workerWrote = await sendMessage(runtime, {
+    type: "write-storage",
+    key: workerWriteKey,
+    value: contextId,
+  });
+
+  const workerWriteHeard =
+    workerWrote.status === "replied"
+      ? await waitForStorageChange(workerWriteKey)
+      : ({ status: "timeout" } as const);
 
   const port = await probePort(runtime, contextId);
 
@@ -534,6 +669,9 @@ export async function runProbes(): Promise<ProbeResults> {
     workerStampInLocal,
     workerStampInSession,
     writeSeenByWorker,
+    workerWriteHeard,
+    ownWriteHeard,
+    storageChangeEvents,
     workerClosedPort,
     selfCloseSeenByWorker,
     openPortName,

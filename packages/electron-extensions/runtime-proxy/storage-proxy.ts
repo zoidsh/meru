@@ -8,6 +8,7 @@ import {
   type RuntimeProxyStorageAccessLevel,
   type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
+  type RuntimeProxyStorageChanges,
 } from "./storage-protocol";
 
 /**
@@ -46,6 +47,30 @@ export function parseStorageAccessLevelReport(value: unknown) {
   }
 
   return { area, accessLevel };
+}
+
+/**
+ * One change the worker's store fired, as the relay client reports it. The
+ * `changes` object is carried through rather than walked: its values are the
+ * extension's own, and anything the bridge's JSON could not carry never
+ * reached the store in the first place.
+ */
+export function parseStorageChangedReport(value: unknown) {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+
+  const { area, changes, accessLevel } = value as Record<string, unknown>;
+
+  if (!isStorageAreaName(area) || !isStorageAccessLevel(accessLevel)) {
+    return undefined;
+  }
+
+  if (typeof changes !== "object" || changes === null || Array.isArray(changes)) {
+    return undefined;
+  }
+
+  return { area, changes: changes as RuntimeProxyStorageChanges, accessLevel };
 }
 
 /**

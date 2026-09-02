@@ -1,19 +1,22 @@
 import { postBridge } from "../facade/lib/bridge";
-import type { ChromeNamespace } from "../facade/lib/chrome";
+import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { getLastErrorMessage, withLastError } from "../facade/lib/last-error";
 import {
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyWorkerStorageAccessLevelRequest,
+  type RuntimeProxyWorkerStorageChangedRequest,
 } from "./bridge-protocol";
 import {
   DEFAULT_STORAGE_ACCESS_LEVELS,
   isStorageAccessLevel,
+  isStorageAreaName,
   refuseStorageCall,
   STORAGE_AREA_NAMES,
   STORAGE_UNAVAILABLE_ERROR,
   type RuntimeProxyStorageAccessLevel,
   type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
+  type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
 
@@ -99,11 +102,13 @@ function invokeNativeMethod(
  * service worker in the one session that keeps the real store.
  *
  * It answers the relayed calls of every other session's contexts against that
- * store, and it mirrors `setAccessLevel` so the relay can refuse a content
- * script the same call Chromium would refuse it. Nothing else about
- * `chrome.storage` here is shadowed: the data, the events and the constants
- * are Electron's own, and this session's own extension code reads and writes
- * them without the proxy in the path at all.
+ * store, it mirrors `setAccessLevel` so the relay can refuse a content script
+ * the same call Chromium would refuse it, and it listens to the store's own
+ * `onChanged` so main can fan every change out to the sessions that have no
+ * store of their own to hear it from. Nothing else about `chrome.storage` here
+ * is shadowed: the data, the events and the constants are Electron's own, the
+ * listener is an ordinary one alongside the extension's, and this session's own
+ * extension code reads and writes without the proxy in the path at all.
  */
 export function createStorageRelay(extensionApis: ChromeNamespace[]) {
   const mirroredAreas = new WeakSet<ChromeNamespace>();
@@ -141,6 +146,77 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
 
   const reportAccessLevel = (request: RuntimeProxyWorkerStorageAccessLevelRequest) =>
     postBridge(RUNTIME_PROXY_PATHS.workerStorageAccessLevel, request).catch(() => undefined);
+
+  const reportChange = (request: RuntimeProxyWorkerStorageChangedRequest) =>
+    postBridge(RUNTIME_PROXY_PATHS.workerStorageChanged, request).catch(() => undefined);
+
+  /**
+   * Reports every change to this session's store — the one store the shared
+   * instance keeps — so main can fan it out to the shimmed contexts, whose own
+   * `chrome.storage.onChanged` has nothing left to fire about now that nothing
+   * writes their session's store.
+   *
+   * One listener, and on the top-level `chrome.storage.onChanged`: it names the
+   * area itself, where the four per-area events would take four listeners to
+   * hear the same changes. And on one global only — Electron builds `chrome`
+   * and `browser` separately, both dispatch every change, and a listener on
+   * each would report all of them twice.
+   *
+   * The level the change is stamped with is this relay's own record rather than
+   * main's, taken the moment the change fired: main's is written by a POST that
+   * can land after this one, and a change may not outrun the level that decides
+   * who hears it.
+   *
+   * **This never fires on Electron 43.2.0**, so the fan-out below it has
+   * carriage and no source. Measured 2 September 2026 on a bare Electron with
+   * none of Meru in it: a do-nothing MV3 extension whose worker registers
+   * `chrome.storage.onChanged` and `chrome.storage.local.onChanged` at top
+   * level, before any write, sees neither ever fire, though both are present as
+   * functions and its own writes succeed. It is not storage's own router
+   * either — `alarms.onAlarm` on a six-second alarm and `runtime.onInstalled`
+   * on a fresh profile are just as silent, so Electron dispatches no events
+   * into an extension service worker at all. The same events fire correctly in
+   * extension *pages*.
+   *
+   * The listener stays because it is the right code against Chrome's contract,
+   * it costs nothing while silent, and it starts working the day Electron
+   * delivers the event with no change here. See the feature doc for what is
+   * deferred behind it.
+   */
+  const watchChanges = () => {
+    for (const extensionApi of extensionApis) {
+      const storage = extensionApi.storage as ChromeNamespace | undefined;
+
+      const onChanged = storage?.onChanged as ChromeNamespace | undefined;
+
+      if (typeof onChanged?.addListener !== "function") {
+        continue;
+      }
+
+      // Called on the event rather than through a reference of its own:
+      // Chromium's event bindings need their receiver, and a detached
+      // `addListener` throws — which, here, would take the whole relay entry
+      // down with it and the worker's own script after it
+      const addListener = onChanged.addListener as (
+        this: ChromeNamespace,
+        listener: ChromeEventListener,
+      ) => void;
+
+      addListener.call(onChanged, (changes: unknown, areaName: unknown) => {
+        if (!isStorageAreaName(areaName) || typeof changes !== "object" || changes === null) {
+          return;
+        }
+
+        void reportChange({
+          area: areaName,
+          changes: changes as RuntimeProxyStorageChanges,
+          accessLevel: accessLevels.get(areaName) ?? DEFAULT_STORAGE_ACCESS_LEVELS[areaName],
+        });
+      });
+
+      return;
+    }
+  };
 
   /**
    * Wraps `setAccessLevel` alone, on each area the extension's own code will
@@ -306,5 +382,5 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
     );
   };
 
-  return { mirrorAccessLevels, run };
+  return { mirrorAccessLevels, run, watchChanges };
 }
