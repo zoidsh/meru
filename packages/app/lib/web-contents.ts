@@ -7,17 +7,8 @@ import {
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
+import { isLoadFailureWorthLogging } from "./load-failures";
 import { log } from "./log";
-
-/**
- * `net::ERR_ABORTED`, which is not a failure: it is the page cancelling a load
- * it started itself. Gmail does it to its own subframes on every launch — the
- * `mail/u/0/data?token=` poll, Drive's `auth_warmup`, the
- * `accounts.google.com/ServiceLogin` frame — so a subframe carrying this code
- * says nothing about why a view is empty. Every other code, and every main
- * frame whatever the code, still does.
- */
-const ERR_ABORTED = -3;
 
 /**
  * Says why a view is empty. A load that never arrives leaves nothing behind on
@@ -32,7 +23,7 @@ export function logLoadFailures(webContents: WebContents, name: string) {
   webContents.on(
     "did-fail-load",
     (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-      if (!isMainFrame && errorCode === ERR_ABORTED) {
+      if (!isLoadFailureWorthLogging(errorCode, isMainFrame)) {
         return;
       }
 
