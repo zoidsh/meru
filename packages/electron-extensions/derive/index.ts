@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { constants } from "node:fs";
 import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
@@ -267,7 +268,13 @@ export async function deriveExtension({
 
     await rm(stampPath, { force: true });
 
-    await cp(sourceDir, derivedDir, { recursive: true });
+    // A copy-on-write clone where the filesystem has them — APFS, btrfs, XFS —
+    // and an ordinary byte copy everywhere else, which is what the flag asks
+    // for and `COPYFILE_FICLONE_FORCE` would fail at. It stays a copy either
+    // way: the derive writes the manifest, the facade and the shim into the
+    // directory it made, and a clone diverges from its source at the first
+    // write, which a link would not
+    await cp(sourceDir, derivedDir, { recursive: true, mode: constants.COPYFILE_FICLONE });
 
     const { manifest, serviceWorkerWrapper } = deriveManifest(sourceManifest, {
       facadeFileName: FACADE_FILE_NAME,
