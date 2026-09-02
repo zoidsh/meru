@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   DEFAULT_STORAGE_ACCESS_LEVELS,
+  isChangeVisibleToUntrustedContext,
   refuseStorageCall,
   STORAGE_ACCESS_DENIED_ERROR,
   STORAGE_ACCESS_LEVEL_CONTEXT_ERROR,
@@ -75,5 +76,23 @@ test("the per-area defaults are Chromium's own", () => {
     session: CLOSED,
     sync: OPEN,
     managed: OPEN,
+  });
+});
+
+describe("isChangeVisibleToUntrustedContext", () => {
+  test("an open area's change is visible, a closed one's is not", () => {
+    expect(isChangeVisibleToUntrustedContext(OPEN)).toBe(true);
+
+    expect(isChangeVisibleToUntrustedContext(CLOSED)).toBe(false);
+  });
+
+  test("the strictest record wins, whichever of them it is", () => {
+    // The worker's stamp and main's own record, in either order: neither is
+    // reliably the newer, so a change is withheld if either says closed
+    expect(isChangeVisibleToUntrustedContext(OPEN, CLOSED)).toBe(false);
+
+    expect(isChangeVisibleToUntrustedContext(CLOSED, OPEN)).toBe(false);
+
+    expect(isChangeVisibleToUntrustedContext(OPEN, OPEN)).toBe(true);
   });
 });

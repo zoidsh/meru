@@ -230,12 +230,24 @@ export class PageStreams {
    * Every parked context of an extension, in every shimmed session — the
    * fan-out shape a `chrome.storage` change event needs, which is addressed to
    * every context rather than to a tab or to the extension's own pages.
+   *
+   * `canReceive` narrows that to the contexts a particular envelope is for, and
+   * is asked per context rather than the caller filtering first: a context is
+   * only worth deciding about while it is live, and liveness is decided here.
    */
-  broadcast(extensionId: string, envelope: RuntimeProxyPageEnvelope) {
+  broadcast(
+    extensionId: string,
+    envelope: RuntimeProxyPageEnvelope,
+    canReceive?: (context: PageContext) => boolean,
+  ) {
     let deliveredCount = 0;
 
     for (const context of this.liveContexts()) {
-      if (context.extensionId === extensionId && this.send(context, envelope)) {
+      if (context.extensionId !== extensionId || canReceive?.(context) === false) {
+        continue;
+      }
+
+      if (this.send(context, envelope)) {
         deliveredCount += 1;
       }
     }

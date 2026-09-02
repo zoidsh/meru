@@ -233,8 +233,10 @@ async function readWorkerPortEvents(webContentsId: number) {
   );
 }
 
-function popupUrl(context: string) {
-  return `chrome-extension://${FIXTURE_EXTENSION_ID}/popup.html?context=${context}`;
+function popupUrl(context: string, { probeStorageChanges = false } = {}) {
+  const flag = probeStorageChanges ? "&meruProbeStorageChanges=1" : "";
+
+  return `chrome-extension://${FIXTURE_EXTENSION_ID}/popup.html?context=${context}${flag}`;
 }
 
 /** The reply an echo probe records, with the sender the proxy reconstructed. */
@@ -652,4 +654,96 @@ test("session storage keeps Chrome's access level across the proxy", async () =>
     status: "error",
     message: "Access to storage is not allowed from this context.",
   });
+});
+
+/*
+ * Skipped because it cannot pass on Electron 43.2.0, and kept because it is the
+ * pin that flips when it can. The fan-out has carriage and no source: the
+ * relay's listener sits in the extension's service worker, and Electron
+ * dispatches no `EventRouter` events into one — measured 2 September 2026 on a
+ * bare Electron, with `alarms.onAlarm` and `runtime.onInstalled` just as silent
+ * as storage's own events. `runtime.onMessage` does arrive, being messaging
+ * rather than an event dispatch, which is why every other test here passes.
+ * Unskip it the day that changes; nothing else here should need to.
+ */
+test.skip("storage.onChanged fires in the shim session, for the worker's writes and its own", async () => {
+  /*
+   * The flag is what makes a context wait on the change events at all. Every
+   * other test's contexts skip the wait, since it is a deadline spent against
+   * a source that cannot fire — see `probes.ts`.
+   */
+  const workerPopupId = await openProbeWindow(
+    WORKER_PARTITION,
+    popupUrl("worker-changes", { probeStorageChanges: true }),
+  );
+
+  const shimPopupId = await openProbeWindow(
+    SHIM_PARTITION,
+    popupUrl("shim-changes", { probeStorageChanges: true }),
+  );
+
+  const pageId = await openProbeWindow(
+    SHIM_PARTITION,
+    `${serverOrigin}/same?meruProbeStorageChanges=1`,
+  );
+
+  const workerPopup = await readProbeResults(workerPopupId);
+
+  const shimPopup = await readProbeResults(shimPopupId);
+
+  const contentScript = await readProbeResults(pageId);
+
+  /*
+   * The worker session's own popup is the control: its `onChanged` is
+   * Chromium's, firing over the store its own session keeps, and it has to
+   * keep working with the proxy in the app. Which of the two events exist is
+   * read off it rather than assumed, since the shim may only shadow the ones
+   * Electron implements — and the shim session then has to have exactly the
+   * same ones.
+   */
+  const { storageChangeEvents } = workerPopup;
+
+  expect(storageChangeEvents.topLevel).toBe(true);
+
+  expect(shimPopup.storageChangeEvents).toEqual(storageChangeEvents);
+
+  expect(contentScript.storageChangeEvents).toEqual(storageChangeEvents);
+
+  const areaName = "local";
+
+  const newValue = (contextId: string) => (storageChangeEvents.area ? contextId : null);
+
+  expect(workerPopup.workerWriteHeard).toEqual({
+    status: "heard",
+    newValue: newValue(workerPopup.contextId),
+    areaName,
+  });
+
+  /*
+   * And in the shim session nothing native could have fired these: the store
+   * that changed is the worker session's, which this session's own event knows
+   * nothing about, so the change came over the parked page stream.
+   */
+  expect(shimPopup.workerWriteHeard).toEqual({
+    status: "heard",
+    newValue: newValue(shimPopup.contextId),
+    areaName,
+  });
+
+  expect(contentScript.workerWriteHeard).toEqual({
+    status: "heard",
+    newValue: newValue(contentScript.contextId),
+    areaName,
+  });
+
+  // Chrome fires `onChanged` in the context that made the write too, and a
+  // relayed write is no exception: it goes to the worker and comes back here
+  // on the same fan-out, with no special case for the context that caused it
+  for (const context of [workerPopup, shimPopup, contentScript]) {
+    expect(context.ownWriteHeard).toEqual({
+      status: "heard",
+      newValue: newValue(context.contextId),
+      areaName,
+    });
+  }
 });

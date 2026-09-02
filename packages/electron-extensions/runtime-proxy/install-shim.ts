@@ -2,7 +2,7 @@ import type { ChromeNamespace } from "../facade/lib/chrome";
 import type { RuntimeProxySenderReport } from "./bridge-protocol";
 import { createPageStreamClient } from "./page-stream-client";
 import { getContextSenderReport, installRuntimeProxyShim } from "./shim";
-import { installRuntimeProxyStorageShim } from "./storage-shim";
+import { createRuntimeProxyStorageShim } from "./storage-shim";
 
 /**
  * Where a context records that it has been shimmed. A content script's isolated
@@ -39,9 +39,10 @@ export type InstallShimOptions = {
  *
  * The storage shadow is installed here for the same reason everything else is:
  * one guard for the context, rather than each thing installed carrying its own.
- * `installRuntimeProxyStorageShim` is idempotent on its own account too, since
- * a second shadow of an area would leave its call ordering independent of the
- * first's, but that is a backstop rather than the rule.
+ * The storage shim's own `install` is idempotent too, since a second shadow of
+ * an area would leave its call ordering independent of the first's and a second
+ * shadow of an `onChanged` would split its listeners between two dispatchers,
+ * but that is a backstop rather than the rule.
  */
 export function installShim({ getSenderReport, retryDelayMs }: InstallShimOptions = {}) {
   const contextGlobals = globalThis as unknown as Record<string, unknown>;
@@ -54,8 +55,13 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
 
   const reportSender = getSenderReport ?? getContextSenderReport;
 
+  // Before the client, which hands it every change of the worker's store: the
+  // storage shim is where the listeners for those live
+  const storageShim = createRuntimeProxyStorageShim({ getSenderReport: reportSender });
+
   const pageStreamClient = createPageStreamClient({
     getSenderReport: reportSender,
+    onStorageChanged: storageShim.dispatchChange,
     retryDelayMs,
   });
 
@@ -69,7 +75,7 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
     if (extensionApi) {
       installRuntimeProxyShim(extensionApi);
 
-      installRuntimeProxyStorageShim(extensionApi, { getSenderReport: reportSender });
+      storageShim.install(extensionApi);
 
       pageStreamClient.wrapRuntime(extensionApi);
     }

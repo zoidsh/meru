@@ -22,7 +22,9 @@ export type RuntimeProxyStorageAreaName = (typeof STORAGE_AREA_NAMES)[number];
  * must never make a method appear that Electron does not implement, and never
  * relay one the worker's own store would not answer either.
  *
- * `onChanged` is deliberately absent; see `storage-shim.ts`.
+ * `onChanged` is deliberately absent: it is an event rather than a method, and
+ * it is not relayed but fanned out the other way, from the worker's one store
+ * to every shimmed context; see `storage-shim.ts`.
  */
 export const STORAGE_METHOD_NAMES = [
   "get",
@@ -96,6 +98,20 @@ export type RuntimeProxyStorageResult =
   | { status: "ok"; value?: unknown }
   | { status: "error"; message: string };
 
+/**
+ * What one key's `onChanged` entry says, in Chrome's own shape: `newValue` is
+ * absent for a key that was removed, `oldValue` for one that was not there
+ * before, and both are carried through as the extension's own values rather
+ * than being read or narrowed here.
+ */
+export type RuntimeProxyStorageChange = {
+  oldValue?: unknown;
+  newValue?: unknown;
+};
+
+/** The `changes` argument of one `onChanged`: each changed key to what happened to it. */
+export type RuntimeProxyStorageChanges = Record<string, RuntimeProxyStorageChange>;
+
 export function isStorageAreaName(value: unknown): value is RuntimeProxyStorageAreaName {
   return STORAGE_AREA_NAMES.includes(value as RuntimeProxyStorageAreaName);
 }
@@ -134,4 +150,23 @@ export function refuseStorageCall(
   }
 
   return accessLevel === "TRUSTED_CONTEXTS" ? STORAGE_ACCESS_DENIED_ERROR : undefined;
+}
+
+/**
+ * Whether a context that is not one of the extension's own documents may hear
+ * an area's change, held against every record of that area's access level
+ * there is.
+ *
+ * The mirror of `refuseStorageCall`, and gated the same way for the same
+ * reason: a content script may not read an area at `TRUSTED_CONTEXTS`, and
+ * hearing what changed in it is reading it. Two records again, and the strict
+ * one wins — the worker's, taken the moment the change fired, and main's, which
+ * a POST that can land late writes. A change already in flight when the level
+ * opened is therefore withheld from content scripts, which is the safe
+ * direction: Chrome's own event carries the level in force at dispatch.
+ */
+export function isChangeVisibleToUntrustedContext(
+  ...accessLevels: RuntimeProxyStorageAccessLevel[]
+) {
+  return accessLevels.every((accessLevel) => accessLevel === "TRUSTED_AND_UNTRUSTED_CONTEXTS");
 }

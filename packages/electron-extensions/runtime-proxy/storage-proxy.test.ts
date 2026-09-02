@@ -4,6 +4,7 @@ import {
   isTrustedStorageCaller,
   parseStorageAccessLevelReport,
   parseStorageCall,
+  parseStorageChangedReport,
   StorageAccessLevels,
 } from "./storage-proxy";
 
@@ -133,5 +134,48 @@ describe("StorageAccessLevels", () => {
     accessLevels.clear();
 
     expect(accessLevels.get(EXTENSION_ID, "local")).toBe("TRUSTED_AND_UNTRUSTED_CONTEXTS");
+  });
+});
+
+describe("parseStorageChangedReport", () => {
+  const CHANGES = { unlocked: { oldValue: false, newValue: true } };
+
+  test("takes a well-formed report and carries the changes through untouched", () => {
+    expect(
+      parseStorageChangedReport({
+        area: "session",
+        changes: CHANGES,
+        accessLevel: "TRUSTED_CONTEXTS",
+      }),
+    ).toEqual({ area: "session", changes: CHANGES, accessLevel: "TRUSTED_CONTEXTS" });
+
+    // A change with neither value is Chrome's own shape for a key cleared from
+    // an area that never held it, and the values themselves are the
+    // extension's to decide
+    expect(
+      parseStorageChangedReport({
+        area: "local",
+        changes: { a: {}, b: { newValue: null } },
+        accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+      })?.changes,
+    ).toEqual({ a: {}, b: { newValue: null } });
+  });
+
+  test("refuses anything it could not act on", () => {
+    for (const report of [
+      undefined,
+      null,
+      "local",
+      { changes: CHANGES, accessLevel: "TRUSTED_CONTEXTS" },
+      { area: "somewhere-else", changes: CHANGES, accessLevel: "TRUSTED_CONTEXTS" },
+      { area: "local", accessLevel: "TRUSTED_CONTEXTS" },
+      { area: "local", changes: "not an object", accessLevel: "TRUSTED_CONTEXTS" },
+      // An array is an object, and is not a `changes`
+      { area: "local", changes: [], accessLevel: "TRUSTED_CONTEXTS" },
+      { area: "local", changes: CHANGES },
+      { area: "local", changes: CHANGES, accessLevel: "SOMETHING_ELSE" },
+    ]) {
+      expect(parseStorageChangedReport(report)).toBeUndefined();
+    }
   });
 });

@@ -17,7 +17,9 @@ import { createStorageRelay } from "./storage-relay";
  * That store stays native: the relay reads and writes it through the same API
  * the extension does, and shadows nothing on it but `setAccessLevel`, whose
  * value Chrome offers no way to read back and which the relay has to know to
- * refuse a content script the call Chromium would have refused it.
+ * refuse a content script the call Chromium would have refused it. Its
+ * `onChanged` is only listened to, not shadowed, and what it hears is fanned
+ * out to the sessions whose own stores no longer change.
  */
 const workerGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
 
@@ -38,6 +40,10 @@ for (const extensionApi of extensionApis) {
 // Before the extension's own background script runs, so its own boot-time call
 // is the first one the relay sees
 storageRelay.mirrorAccessLevels();
+
+// And before its boot-time writes, so a change made while the worker is still
+// evaluating reaches whichever contexts are already listening
+storageRelay.watchChanges();
 
 /*
  * The stream is parked by the derived wrapper, as the last thing it does,

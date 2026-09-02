@@ -12,7 +12,8 @@
  * where every context may read it and in `session` where Chrome's default lets
  * only the extension's own documents. A context that reads either stamp back
  * is reading the one store this session keeps, since nothing writes it in the
- * other sessions at all.
+ * other sessions at all. It writes again on request, so a context can hear the
+ * `onChanged` a write in this session fires in its own.
  *
  * Worker lifetime is deliberately not probed, here or in the tests. The
  * end-to-end suite launches through Playwright, whose CDP debugger disables
@@ -60,6 +61,7 @@ type ProbeMessage = {
   type?: string;
   nonce?: string;
   key?: string;
+  value?: unknown;
 };
 
 /**
@@ -152,6 +154,22 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     storage.local.get(key, (items) => {
       sendResponse({ type: "storage-reply", key, value: items[key] ?? null });
+    });
+
+    return true;
+  }
+
+  /*
+   * A write in the worker's own session, which is the other side of the
+   * `onChanged` fan-out: whoever asked for it is in a session whose own store
+   * this never touches, and hearing the change there means it came over the
+   * page stream. This listener answers late too.
+   */
+  if (probeMessage?.type === "write-storage" && typeof probeMessage.key === "string") {
+    const { key, value } = probeMessage;
+
+    storage.local.set({ [key]: value }, () => {
+      sendResponse({ type: "write-storage-reply", key });
     });
 
     return true;
