@@ -73,6 +73,12 @@ type ScheduledAlarm = AlarmSchedule & {
  * than the facade's: a service worker's request reaches the handler with no
  * caller stamp, having skipped the `webRequest` listener that mints one, so a
  * frameless caller is the worker (see `stampCaller` in `bridge/bridge.ts`).
+ *
+ * A page whose frame died between the stamp and the handler arrives frameless
+ * too, and is filed as a worker for the life of that stream. It costs nothing:
+ * with waking off the flag is never read, and with it on the worst of it is one
+ * wake skipped while a stream Electron is about to cancel still stands in for a
+ * worker.
  */
 type AlarmStream = {
   controller: ReadableStreamDefaultController<Uint8Array>;
@@ -478,6 +484,17 @@ export class Alarms {
    * The stream a context parks to hear `onAlarm`. It is opened by the first
    * listener the context adds and lives as long as the context does, so its
    * cancel is how a closed page or a stopped worker is noticed.
+   *
+   * That cancel is the only thing pruning a dead context's stream, and it is
+   * enough because Electron fires it on frame destruction, on navigation and on
+   * worker death — measured for the native messaging port streams this shape
+   * comes from. The runtime proxy invalidates its own worker streams from the
+   * session's `running-status-changed` events instead, and needs to: a job it
+   * hands over has to be known delivered, so a stream that merely looks live
+   * costs it a lost message. Nothing here is owed that. A dead stream that has
+   * not been canceled yet only means one delivery enqueued into a buffer
+   * nothing reads, and the alarm behind it is one this code would have dropped
+   * anyway.
    */
   private handleEvents(
     session: Session,
