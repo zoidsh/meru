@@ -199,6 +199,31 @@ describe("alarms", () => {
     }
   });
 
+  test("warns once per alarm name, however often the extension recreates it", async () => {
+    installFakeBridge();
+
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+
+    try {
+      const alarms = createAlarms();
+
+      const create = methodOf(alarms, "create");
+
+      await create("poll", { periodInMinutes: 0.1 });
+      await create("poll", { periodInMinutes: 0.1 });
+      await create("poll", { periodInMinutes: 0.2 });
+
+      expect(warn).toHaveBeenCalledTimes(1);
+
+      await create("sync", { delayInMinutes: 0.1 });
+
+      expect(warn).toHaveBeenCalledTimes(2);
+      expect(warn.mock.calls[1]?.[0]).toContain("sync");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   test("reads an alarm back, and undefined for one that is not there", async () => {
     const bridge = installFakeBridge();
 

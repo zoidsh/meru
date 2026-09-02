@@ -7,6 +7,7 @@ import {
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
+import { isLoadFailureWorthLogging } from "./load-failures";
 import { log } from "./log";
 
 /**
@@ -22,6 +23,10 @@ export function logLoadFailures(webContents: WebContents, name: string) {
   webContents.on(
     "did-fail-load",
     (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (!isLoadFailureWorthLogging(errorCode, isMainFrame)) {
+        return;
+      }
+
       log.error(`${name} failed to load`, {
         errorCode,
         errorDescription,

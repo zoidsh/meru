@@ -99,6 +99,18 @@ export function createAlarms(): ChromeNamespace {
   let isListening = false;
 
   /**
+   * The alarm names this context has already warned about, kept for as long as
+   * the namespace lives.
+   *
+   * A deliberate departure from Chrome, which warns on every `create`: an
+   * extension that recreates a debounce alarm on a timer repeats the line
+   * forever — 1Password remakes `sync-xam-backend-accounts` four to six times
+   * per worker boot, per account — and the second warning tells the extension
+   * nothing the first one did not.
+   */
+  const warnedAlarmNames = new Set<string>();
+
+  /**
    * Reads the parked stream until it ends, which is what a torn-down session
    * and a refused request both look like from here. Ending is not the same as
    * being done: the context is still live and still holds listeners, so the
@@ -161,7 +173,9 @@ export function createAlarms(): ChromeNamespace {
 
       const clampWarning = getAlarmClampWarning(name, alarmInfo);
 
-      if (clampWarning) {
+      if (clampWarning && !warnedAlarmNames.has(name)) {
+        warnedAlarmNames.add(name);
+
         console.warn(`[chrome-facade] ${clampWarning}`);
       }
 
