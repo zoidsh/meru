@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
+import { mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import {
   lstat,
   mkdir,
@@ -53,6 +54,31 @@ async function writeSourceFile(fileName: string, content: string) {
 
 async function writeManifest(manifestSource: Record<string, unknown>) {
   await writeSourceFile("manifest.json", JSON.stringify(manifestSource));
+}
+
+/**
+ * Whether this machine can make a symlink at all, which on Windows means
+ * Developer Mode is on. The tests below have to create one to have anything to
+ * derive, and a test failing for the machine's reason rather than the code's is
+ * what teaches a developer to ignore a red suite. CI runs on Ubuntu, so main is
+ * still held to them.
+ */
+function canCreateSymlinks() {
+  const probeDir = mkdtempSync(path.join(tmpdir(), "electron-extensions-symlink-probe-"));
+
+  try {
+    symlinkSync(path.join(probeDir, "target"), path.join(probeDir, "link"));
+
+    return true;
+  } catch {
+    console.warn(
+      "Skipping the derive's symlink tests: this machine cannot create symlinks. Turn on Developer Mode on Windows.",
+    );
+
+    return false;
+  } finally {
+    rmSync(probeDir, { recursive: true, force: true });
+  }
 }
 
 beforeEach(async () => {
@@ -376,7 +402,7 @@ describe("deriveExtension", () => {
     );
   });
 
-  describe("a source tree with symlinks in it", () => {
+  describe.skipIf(!canCreateSymlinks())("a source tree with symlinks in it", () => {
     let sharedDir: string;
 
     beforeEach(async () => {
