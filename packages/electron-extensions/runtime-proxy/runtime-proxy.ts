@@ -584,6 +584,8 @@ export class RuntimeProxy {
       }
     }
 
+    const requeuedJobs: RelayJob[] = [];
+
     for (const job of this.inFlightJobs.values()) {
       if (job.extensionId !== extensionId) {
         continue;
@@ -605,8 +607,16 @@ export class RuntimeProxy {
 
       job.state = "queued";
 
-      this.queue(extensionId).push(job);
+      requeuedJobs.push(job);
     }
+
+    // At the front, in the order they were handed over: a job that reached a
+    // stream always predates anything still queued, since the queue only fills
+    // while no stream is parked and a parked stream is flushed synchronously.
+    // A port's messages must not overtake the connect that opens it, and the
+    // shim can have both in flight at once — its `connect` resolves on the
+    // bridge's answer, which is given before the worker has seen the job
+    this.queue(extensionId).unshift(...requeuedJobs);
 
     const requeuedConnectPortIds = new Set(
       this.queue(extensionId)
@@ -703,8 +713,9 @@ export class RuntimeProxy {
         // The stream stopped taking frames under us; its worker is gone. The
         // jobs after this one were handed to nobody and are in neither the
         // queue nor `inFlightJobs`, so they go back before the invalidation —
-        // which settles this one from `inFlightJobs` and reads the queue to
-        // tell a port whose connect is waiting from one that has to be closed
+        // which settles this one from `inFlightJobs`, puts it back ahead of
+        // them, and reads the queue to tell a port whose connect is waiting
+        // from one that has to be closed
         queue.push(...jobs.slice(index + 1));
 
         this.invalidateWorkerStream(extensionId);
