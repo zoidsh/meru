@@ -29,6 +29,26 @@ await rm("./build-js", { recursive: true, force: true });
 // Keep in sync with Electron
 const browserTarget = "chrome146";
 
+/*
+ * How the app's own bundles are minified: the main process, the three preloads
+ * and the fixture extension's scripts. The extension scripts below are minified
+ * unconditionally instead, for a reason of their own.
+ *
+ * Names are kept, which costs a little of the win and buys back the thing
+ * minifying a main-process bundle otherwise takes away. `log.error` writes a
+ * serialized error, stack and all, into a log file a user attaches to an issue,
+ * and V8 names a frame after the identifier the function was declared under —
+ * so mangling turns `readConfigFileSynchronously` into `t` in every report that
+ * ever reaches us. No source map ships: it would be larger than the bundle it
+ * explains, which is the opposite of the point, and keeping the names leaves
+ * the frames legible without one.
+ *
+ * Development builds are left alone. Nothing about a development run is what
+ * ships — the renderer is a Vite dev server there — and the main process is the
+ * half a developer sets breakpoints in.
+ */
+const appBundleMinify = args.values.dev ? false : { mangle: { keepNames: true } };
+
 function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
@@ -89,6 +109,7 @@ function buildAppFiles() {
         file: path.join(process.cwd(), "build-js", `${preloadName}.js`),
         codeSplitting: false,
         format: "cjs",
+        minify: appBundleMinify,
       }),
     );
 
@@ -96,13 +117,13 @@ function buildAppFiles() {
    * Runs inside extensions rather than in Meru, so it is bundled like a preload
    * and copied into every extension the loader derives.
    *
-   * Minified where the app's own bundles are not: one of these loads in every
-   * extension context — the service worker, each popup and options page, and
-   * every inline-menu iframe a page gets — and the facade alone was 26.9 kB
-   * against 7.2 kB. Minified in a development build too, so the bytes a
-   * developer runs are the bytes that ship. The derive writes the token in
-   * front of whatever it is handed, and names the file itself, so nothing
-   * downstream reads the output's contents.
+   * Minified in a development build too, where the app's own bundles are not:
+   * one of these loads in every extension context — the service worker, each
+   * popup and options page, and every inline-menu iframe a page gets — so the
+   * bytes a developer runs are the bytes that ship. Names are mangled here, as
+   * nothing logs a stack out of an extension context. The derive writes the
+   * token in front of whatever it is handed, and names the file itself, so
+   * nothing downstream reads the output's contents.
    */
   const buildExtensionScript = (inputPath: string, outputFileName: string) =>
     rolldown({
@@ -148,6 +169,7 @@ function buildAppFiles() {
           file: path.join(fixtureOutDir, `${scriptFileName}.js`),
           codeSplitting: false,
           format: "iife",
+          minify: appBundleMinify,
         }),
       );
 
@@ -191,6 +213,7 @@ function buildAppFiles() {
       bundle.write({
         file: path.join(process.cwd(), "build-js", "app.js"),
         format: "cjs",
+        minify: appBundleMinify,
       }),
     ),
     buildPreloadFile("preload-gmail"),
