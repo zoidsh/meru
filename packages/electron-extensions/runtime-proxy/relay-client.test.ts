@@ -427,6 +427,34 @@ describe("createRelayClient", () => {
     });
   });
 
+  // Chrome fails a `sendResponse` it cannot clone right away. A reply the
+  // bridge cannot serialize would otherwise post nothing at all, leaving the
+  // caller on the relay's in-flight timeout, minutes away
+  test("a reply that cannot be serialized answers closed rather than nothing", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    startClient([chrome]);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    (runtime.onMessage as WrappedEvent).addListener((_message, _sender, sendResponse) => {
+      (sendResponse as (response: unknown) => void)({ vaultId: 1n });
+    });
+
+    await stub.waitForStream();
+
+    stub.pushJob({ type: "sendMessage", jobId: "job-1", message: "unlock", sender: SENDER });
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerReply).length === 1, "the reply");
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerReply)[0]?.body).toEqual({
+      jobId: "job-1",
+      result: { status: "closed" },
+    });
+  });
+
   test("builds a port for a connect job and carries it both ways", async () => {
     const stub = stubBridge();
 

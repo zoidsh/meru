@@ -128,6 +128,14 @@ function createFakeSession() {
         listener({ versionId, runningStatus: "stopping" });
       }
     },
+    /** The second half of a stop: Chromium reports both, in this order. */
+    reportWorkerStopped: (versionId: number) => {
+      scopesByVersionId.delete(versionId);
+
+      for (const listener of statusListeners) {
+        listener({ versionId, runningStatus: "stopped" });
+      }
+    },
     /**
      * Sends a request the way Electron carries one: the bridge's headers
      * listener runs first — recording `callerFrame` when the request has one,
@@ -760,6 +768,65 @@ describe("RuntimeProxy", () => {
     expect(await shimPort.waitForFrames(1)).toEqual([{ type: "disconnect", error: undefined }]);
   });
 
+  test("a stop of a worker that is not an extension's settles nothing", async () => {
+    const harness = createHarness();
+
+    harness.workerSession.reportWorkerRunning(1);
+
+    // The account's own worker in the session that keeps the extension —
+    // Gmail's, which idle-stops routinely and owes the relay nothing
+    harness.workerSession.reportWorkerRunning(2, "https://mail.google.com/mail/");
+
+    const workerStream = await harness.openWorkerStream();
+
+    const shimPort = await harness.connectShimPort("port-6");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    if (connectJob?.type !== "connect") {
+      throw new Error("Expected a connect job");
+    }
+
+    await harness.ackJob(connectJob.jobId);
+
+    await harness.replyToJob(connectJob.jobId, { status: "connected" });
+
+    const shimResponse = harness.sendShimMessage("awaiting a reply");
+
+    const [, messageJob] = await workerStream.waitForJobs(2);
+
+    if (messageJob?.type !== "sendMessage") {
+      throw new Error("Expected a sendMessage job");
+    }
+
+    await harness.ackJob(messageJob.jobId);
+
+    harness.workerSession.reportWorkerStopping(2);
+
+    harness.workerSession.reportWorkerStopped(2);
+
+    expect(workerStream.isEnded()).toBe(false);
+
+    expect(shimPort.frames).toEqual([]);
+
+    // The acked message would have been failed as a closed port by a stop that
+    // settled every stream; the extension's own worker answers it instead
+    await harness.replyToJob(messageJob.jobId, { status: "replied", reply: "unlocked" });
+
+    expect(await (await shimResponse).json()).toEqual({ status: "replied", reply: "unlocked" });
+  });
+
+  test("a stop of a version never seen starting still settles every stream", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    // Nothing names this version, so nothing rules out the extension's worker
+    harness.workerSession.reportWorkerStopping(9);
+
+    await waitFor(() => workerStream.isEnded(), "the parked stream to be invalidated");
+  });
+
   test("a torn-down shim session closes its ports and tells the worker", async () => {
     const harness = createHarness();
 
@@ -854,6 +921,27 @@ describe("RuntimeProxy", () => {
     const shimResponse = await harness.sendShimMessage("anyone?");
 
     expect(await shimResponse.json()).toEqual({ status: "noListener" });
+  });
+
+  test("a session adopted after the worker session went away is woken", async () => {
+    const harness = createHarness();
+
+    // A wake is pending on the session that is about to go
+    harness.sendShimMessage("wakes the old session");
+
+    await waitFor(() => harness.workerSession.workerStarts.length === 1, "the first wake");
+
+    harness.proxy.teardownSession(harness.workerSession.session);
+
+    const adoptedSession = createFakeSession();
+
+    harness.proxy.setWorkerSession(adoptedSession.session);
+
+    harness.sendShimMessage("wakes the adopted session");
+
+    await waitFor(() => adoptedSession.workerStarts.length === 1, "the adopted session's wake");
+
+    expect(adoptedSession.workerStarts).toEqual([EXTENSION_SCOPE]);
   });
 });
 

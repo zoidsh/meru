@@ -148,8 +148,14 @@ export class RuntimeProxy {
 
   private removeWorkerSessionListener: (() => void) | undefined;
 
-  /** Scopes seen starting, the only way to name a worker once it is stopping. */
-  private scopesByVersionId = new Map<number, string>();
+  /**
+   * Scopes seen starting, the only way to name a worker once it is stopping.
+   * A version whose scope is not an extension's — the account's own page
+   * workers, Gmail's included — is recorded as `null`: the scope itself is of
+   * no use here, but knowing the version tells its stop apart from the stop of
+   * a worker this proxy never saw start.
+   */
+  private scopesByVersionId = new Map<number, string | null>();
 
   private workerStreams = new Map<string, WorkerStream>();
 
@@ -306,6 +312,17 @@ export class RuntimeProxy {
       for (const extensionId of this.queuedJobs.keys()) {
         this.failQueuedJobs(extensionId, "noListener");
       }
+
+      // The bookkeeping of the session that just went is worse than useless to
+      // the next one: a pending wake would make `wakeWorker` return early for a
+      // session that was never asked to start the worker, and its timer would
+      // then fail that session's queue; a version id means nothing outside the
+      // session that issued it
+      for (const extensionId of this.wakes.keys()) {
+        this.clearWake(extensionId);
+      }
+
+      this.scopesByVersionId.clear();
 
       return;
     }
@@ -499,7 +516,10 @@ export class RuntimeProxy {
       try {
         const { scope } = this.workerSession.serviceWorkers.getInfoFromVersionID(versionId);
 
-        this.scopesByVersionId.set(versionId, scope);
+        this.scopesByVersionId.set(
+          versionId,
+          scope.startsWith(EXTENSION_SCHEME_PREFIX) ? scope : null,
+        );
       } catch {
         // A worker gone again before it was asked about names no stream
       }
@@ -511,17 +531,27 @@ export class RuntimeProxy {
       return;
     }
 
+    const isKnownVersion = this.scopesByVersionId.has(versionId);
+
     const scope = this.scopesByVersionId.get(versionId);
 
     if (runningStatus === "stopped") {
       this.scopesByVersionId.delete(versionId);
     }
 
-    if (scope?.startsWith(EXTENSION_SCHEME_PREFIX)) {
+    if (scope) {
       const extensionId = scope.slice(EXTENSION_SCHEME_PREFIX.length).replace(/\/.*$/, "");
 
       this.invalidateWorkerStream(extensionId);
 
+      return;
+    }
+
+    // A worker that is not an extension's owes the relay nothing. Gmail's own
+    // worker idle-stops routinely in this session, and settling every stream on
+    // it would disconnect every relayed port and fail every message awaiting a
+    // reply, twice per stop
+    if (isKnownVersion) {
       return;
     }
 
@@ -554,6 +584,8 @@ export class RuntimeProxy {
       }
     }
 
+    const requeuedJobs: RelayJob[] = [];
+
     for (const job of this.inFlightJobs.values()) {
       if (job.extensionId !== extensionId) {
         continue;
@@ -575,8 +607,16 @@ export class RuntimeProxy {
 
       job.state = "queued";
 
-      this.queue(extensionId).push(job);
+      requeuedJobs.push(job);
     }
+
+    // At the front, in the order they were handed over: a job that reached a
+    // stream always predates anything still queued, since the queue only fills
+    // while no stream is parked and a parked stream is flushed synchronously.
+    // A port's messages must not overtake the connect that opens it, and the
+    // shim can have both in flight at once — its `connect` resolves on the
+    // bridge's answer, which is given before the worker has seen the job
+    this.queue(extensionId).unshift(...requeuedJobs);
 
     const requeuedConnectPortIds = new Set(
       this.queue(extensionId)
@@ -656,7 +696,9 @@ export class RuntimeProxy {
 
     const queue = this.queue(extensionId);
 
-    for (const job of queue.splice(0)) {
+    const jobs = queue.splice(0);
+
+    for (const [index, job] of jobs.entries()) {
       job.state = "handed";
 
       job.attempts += 1;
@@ -668,7 +710,14 @@ export class RuntimeProxy {
       try {
         stream.controller.enqueue(encodeNativeMessage(this.toJobFrame(job)));
       } catch {
-        // The stream stopped taking frames under us; its worker is gone
+        // The stream stopped taking frames under us; its worker is gone. The
+        // jobs after this one were handed to nobody and are in neither the
+        // queue nor `inFlightJobs`, so they go back before the invalidation —
+        // which settles this one from `inFlightJobs`, puts it back ahead of
+        // them, and reads the queue to tell a port whose connect is waiting
+        // from one that has to be closed
+        queue.push(...jobs.slice(index + 1));
+
         this.invalidateWorkerStream(extensionId);
 
         return;
