@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { RUNTIME_PROXY_MANIFEST_GLOBAL } from "../runtime-proxy/bridge-protocol";
 import { deriveExtension, pruneDerivedExtensions } from "./index";
 
 let workDir: string;
@@ -459,6 +460,144 @@ describe("deriveExtension for a shared instance", () => {
 
     expect(shimSource).toContain(bridgeToken);
     expect(shimSource).toEndWith("// shim\n");
+  });
+
+  /**
+   * The manifest the derive left on the shim's globals, read back the way the
+   * shim itself reads it: the preamble is one assignment per line, ahead of the
+   * bundle.
+   */
+  async function readShimManifest(derivedDir: string) {
+    const shimSource = await readFile(
+      path.join(derivedDir, "chrome-runtime-proxy-shim.js"),
+      "utf8",
+    );
+
+    const assignment = shimSource
+      .split("\n")
+      .find((line) => line.startsWith(`globalThis.${RUNTIME_PROXY_MANIFEST_GLOBAL} = `));
+
+    if (!assignment) {
+      throw new Error("The shim carries no manifest");
+    }
+
+    return JSON.parse(
+      assignment.slice(`globalThis.${RUNTIME_PROXY_MANIFEST_GLOBAL} = `.length, -1),
+    );
+  }
+
+  test("the content-script-only copy's shim carries the worker copy's own manifest", async () => {
+    const { derivedDir: workerDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const { derivedDir: shimDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const workerManifest = JSON.parse(
+      await readFile(path.join(workerDir, "manifest.json"), "utf8"),
+    );
+
+    // Byte for byte what the one worker's own `getManifest` answers, which is
+    // the whole point: the shim's `background` key and its unshimmed
+    // `content_scripts` are the worker copy's, not this copy's
+    expect(await readShimManifest(shimDir)).toEqual(workerManifest);
+
+    expect(workerManifest.background).toEqual({
+      service_worker: "chrome-facade-service-worker.js",
+      type: "module",
+    });
+  });
+
+  test("the two roles' manifests differ in the keys the shim lays over, and no others", async () => {
+    const { derivedDir: workerDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "worker", relayScriptPath },
+    });
+
+    const { derivedDir: shimDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    const readManifest = async (derivedDir: string) =>
+      JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")) as Record<
+        string,
+        unknown
+      >;
+
+    const workerManifest = await readManifest(workerDir);
+
+    const shimManifest = await readManifest(shimDir);
+
+    const differingKeys = [
+      ...new Set([...Object.keys(workerManifest), ...Object.keys(shimManifest)]),
+    ]
+      .filter(
+        (manifestKey) =>
+          JSON.stringify(workerManifest[manifestKey]) !== JSON.stringify(shimManifest[manifestKey]),
+      )
+      .sort();
+
+    // The shim answers the worker role's manifest by laying exactly these two
+    // keys over its own context's native answer, so a third difference would
+    // stop being answered without anything else failing
+    expect(differingKeys).toEqual(["background", "content_scripts"]);
+  });
+
+  test("the shim's manifest is derived without a worker copy on disk", async () => {
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    // The session that adopts the worker role derives its copy when it is set
+    // up, which can be after this one and need not happen at all
+    expect((await readdir(derivedExtensionsDir)).sort()).toEqual(
+      [path.basename(derivedDir), `${path.basename(derivedDir)}.json`].sort(),
+    );
+
+    expect(await readShimManifest(derivedDir)).toMatchObject({
+      background: { service_worker: "chrome-facade-service-worker.js" },
+      content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+    });
+  });
+
+  test("the shim's manifest follows a changed clamp", async () => {
+    const deriveClampedTo = async (matches: string[]) =>
+      (
+        await deriveExtension({
+          sourceDir,
+          derivedExtensionsDir,
+          facadeScriptPath,
+          getContentScriptMatches: () => matches,
+          sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+        })
+      ).derivedDir;
+
+    const derivedDir = await deriveClampedTo(["https://mail.google.com/*"]);
+
+    expect((await readShimManifest(derivedDir)).content_scripts).toEqual([
+      { matches: ["https://mail.google.com/*"], js: ["content.js"] },
+    ]);
+
+    expect(
+      (await readShimManifest(await deriveClampedTo(["https://accounts.google.com/*"])))
+        .content_scripts,
+    ).toEqual([{ matches: ["https://accounts.google.com/*"], js: ["content.js"] }]);
   });
 
   test("the content-script-only copy's pages run the shim and may reach the bridge", async () => {

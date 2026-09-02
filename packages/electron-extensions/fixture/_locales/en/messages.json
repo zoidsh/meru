@@ -1,0 +1,9 @@
+{
+  "extName": {
+    "message": "Meru fixture",
+    "description": "The fixture extension's name, localized so the end-to-end suite covers a manifest Chromium rewrites at load."
+  },
+  "extDescription": {
+    "message": "Meru's own test extension. It ships inside the app, loads only in development or behind the end-to-end flag, and its content scripts match loopback pages alone."
+  }
+}

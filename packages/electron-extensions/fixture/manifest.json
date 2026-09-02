@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Meru fixture",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Meru's own test extension. It ships inside the app, loads only in development or behind the end-to-end flag, and its content scripts match loopback pages alone.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjpdyC58E6LINMdwynN1Cr88rSysuYHtG0mRMs0o1Vhh3IdBugheaJhpWozxKi75SL2eOZI3hW0oiMnhxJW5mmPWdoRL90KXX+4FxREbGJXpmAtUgWs4yBDjeePSSBffHTd4vDtByrQ/0PHmoP1fRlWUU85oJoT1y26ZGQ9FQUvnx9PYG2rviHgF8in9dsopZ8QQHCQZe7qis4Ms8zoQcf0IzKNPEn3y7L6y9LbMGp9wDAtSGqXM9EoddVQnIekv62bM43TqFJVmFc2ZrsvWV2LT0rE5HY3crZ4XLYHdh0nXPuqecmAcIl4ZpG9FGNxCDLrBhmtqSvWQ6Xq8V8ckldQIDAQAB",
   "permissions": ["storage"],
   "background": {

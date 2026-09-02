@@ -11,6 +11,8 @@ import { FIXTURE_EXTENSION_ID } from "./id";
  */
 type FixtureManifestFile = {
   key?: string;
+  name?: string;
+  default_locale?: string;
   background?: { service_worker?: string };
   action?: { default_popup?: string };
   content_scripts?: { matches?: string[]; js?: string[] }[];
@@ -45,6 +47,24 @@ describe("the fixture manifest", () => {
     expect(web_accessible_resources?.map((resource) => resource.matches)).toEqual([
       LOOPBACK_MATCHES,
     ]);
+  });
+
+  test("names itself out of `_locales`, so a localized manifest is covered", async () => {
+    const { name, default_locale } = await readManifest();
+
+    // Chromium substitutes this at load and adds `current_locale`, and the
+    // derive never sees either — which is exactly what the runtime proxy's
+    // `getManifest` overlay is here to survive. 1Password's own manifest is
+    // `__MSG_extName__` too, so this is the shape that ships
+    expect(name).toBe("__MSG_extName__");
+
+    expect(default_locale).toBe("en");
+
+    const messages = JSON.parse(
+      await readFile(path.join(import.meta.dir, "_locales", "en", "messages.json"), "utf8"),
+    );
+
+    expect(messages.extName?.message).toBe("Meru fixture");
   });
 
   test("carries the surface the runtime proxy tests drive", async () => {
