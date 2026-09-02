@@ -19,6 +19,7 @@ import { app } from "electron";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { log } from "@/lib/log";
+import { serializeErrorDetails } from "@/lib/log-details";
 import { licenseKey } from "@/license-key";
 
 /** Where the curated extensions are installed, `<installDir>/<id>/<version>`. */
@@ -178,8 +179,8 @@ export const extensions = new Extensions({
     info: (message, details) => {
       log.info(message, details);
     },
-    error: (message, { error, ...details }) => {
-      log.error(message, { ...details, error: serializeError(error) });
+    error: (message, details) => {
+      log.error(message, serializeErrorDetails(details));
     },
   },
 });
