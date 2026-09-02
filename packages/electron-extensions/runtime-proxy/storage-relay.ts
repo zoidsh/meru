@@ -174,9 +174,11 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
    * level, before any write, sees neither ever fire, though both are present as
    * functions and its own writes succeed. It is not storage's own router
    * either — `alarms.onAlarm` on a six-second alarm and `runtime.onInstalled`
-   * on a fresh profile are just as silent, so Electron dispatches no events
-   * into an extension service worker at all. The same events fire correctly in
-   * extension *pages*.
+   * on a fresh profile are just as silent, so Electron dispatches no
+   * `EventRouter` events into an extension service worker. `runtime.onMessage`
+   * does still arrive, being messaging rather than an event dispatch, which is
+   * what the rest of this relay runs on. The events fire correctly in
+   * extension *pages* too.
    *
    * The listener stays because it is the right code against Chrome's contract,
    * it costs nothing while silent, and it starts working the day Electron

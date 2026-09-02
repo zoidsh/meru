@@ -24,6 +24,16 @@ const EVENT_POLL_INTERVAL_MS = 250;
 const ARRIVAL_POLL_INTERVAL_MS = 25;
 
 /**
+ * Whether this context waits on the change events at all. Each wait is a
+ * deadline spent against a source that cannot fire on Electron 43.2.0, and
+ * these probes run in every context of every test — so only the test that is
+ * about them asks for them, by putting this in the URL it opens. Registering
+ * the listeners is free and happens regardless, so what the context *has* is
+ * always reported.
+ */
+const PROBE_STORAGE_CHANGES_FLAG = "meruProbeStorageChanges";
+
+/**
  * A change event's own deadline, far shorter than a probe's. Nothing has to be
  * woken for one: the write it follows has already been answered, and the event
  * rides a stream the context parked before the extension's own code ran. It
@@ -72,6 +82,7 @@ export type StorageOutcome =
  * recorded rather than being folded into a boolean.
  */
 export type StorageChangeOutcome =
+  | { status: "notProbed" }
   | {
       /** What `chrome.storage.<area>.onChanged` heard, `null` where it did not. */
       status: "heard";
@@ -121,6 +132,7 @@ export type ProbeResults = {
    * A write the worker made in its own session, as this context heard it. In a
    * content-script-only session nothing native could fire this: the store that
    * changed is another session's, and the event arrived over the page stream.
+   * `notProbed` where the context was not asked to wait for one.
    */
   workerWriteHeard: StorageChangeOutcome;
   /**
@@ -413,6 +425,15 @@ async function probePortReplySeenByWorker(
   return false;
 }
 
+/** Whether the URL this context was opened with asks for an optional probe. */
+function hasProbeFlag(href: string, flag: string) {
+  try {
+    return new URL(href).searchParams.has(flag);
+  } catch {
+    return false;
+  }
+}
+
 /** One storage read, recording a refusal as the outcome it is. */
 function readStorage(
   runtime: FixtureRuntime,
@@ -520,25 +541,32 @@ function watchStorageChanges(storage: FixtureStorage) {
     }),
   };
 
-  const waitForChange = async (key: string): Promise<StorageChangeOutcome> => {
-    const deadline = Date.now() + CHANGE_TIMEOUT_MS;
-
-    while (Date.now() < deadline) {
-      if (heardByAreaEvent.has(key) || heardByTopLevelEvent.has(key)) {
-        return {
+  const heard = (key: string): StorageChangeOutcome | undefined =>
+    heardByAreaEvent.has(key) || heardByTopLevelEvent.has(key)
+      ? {
           status: "heard",
           newValue: heardByAreaEvent.get(key) ?? null,
           areaName: heardByTopLevelEvent.get(key) ?? null,
-        };
-      }
+        }
+      : undefined;
 
+  /**
+   * Several keys under one deadline, since they ride the same fan-out and
+   * waiting for each in turn would spend a context's budget twice over for
+   * nothing. An empty key is one whose write never happened, and times out
+   * with the rest rather than being waited for.
+   */
+  const waitForChanges = async (keys: string[]): Promise<StorageChangeOutcome[]> => {
+    const deadline = Date.now() + CHANGE_TIMEOUT_MS;
+
+    while (Date.now() < deadline && !keys.every((key) => heard(key))) {
       await delay(ARRIVAL_POLL_INTERVAL_MS);
     }
 
-    return { status: "timeout" };
+    return keys.map((key) => heard(key) ?? { status: "timeout" });
   };
 
-  return { events, waitForChange };
+  return { events, waitForChanges };
 }
 
 /**
@@ -568,6 +596,11 @@ export async function runProbes(): Promise<ProbeResults> {
   };
 
   const contextId = contextGlobals.crypto.randomUUID();
+
+  const probesStorageChanges = hasProbeFlag(
+    contextGlobals.location.href,
+    PROBE_STORAGE_CHANGES_FLAG,
+  );
 
   const manifest = runtime.getManifest?.();
 
@@ -617,7 +650,7 @@ export async function runProbes(): Promise<ProbeResults> {
 
   const storage = getChromeStorage();
 
-  const { events: storageChangeEvents, waitForChange: waitForStorageChange } =
+  const { events: storageChangeEvents, waitForChanges: waitForStorageChanges } =
     watchStorageChanges(storage);
 
   const workerStampInLocal = await readStorage(runtime, storage.local, "workerStamp");
@@ -626,21 +659,34 @@ export async function runProbes(): Promise<ProbeResults> {
 
   const writeSeenByWorker = await probeWriteSeenByWorker(runtime, storage.local, contextId);
 
-  // The echo of this context's own write, which Chrome fires here too
-  const ownWriteHeard = await waitForStorageChange(`probe:${contextId}`);
-
+  /*
+   * Both changes are waited for together rather than one after the other: they
+   * ride the same fan-out, so one deadline covers both, and a context that was
+   * not asked to probe them spends none.
+   */
   const workerWriteKey = `worker-write:${contextId}`;
 
-  const workerWrote = await sendMessage(runtime, {
-    type: "write-storage",
-    key: workerWriteKey,
-    value: contextId,
-  });
+  let ownWriteHeard: StorageChangeOutcome = { status: "notProbed" };
 
-  const workerWriteHeard =
-    workerWrote.status === "replied"
-      ? await waitForStorageChange(workerWriteKey)
-      : ({ status: "timeout" } as const);
+  let workerWriteHeard: StorageChangeOutcome = { status: "notProbed" };
+
+  if (probesStorageChanges) {
+    const workerWrote = await sendMessage(runtime, {
+      type: "write-storage",
+      key: workerWriteKey,
+      value: contextId,
+    });
+
+    const outcomes = await waitForStorageChanges([
+      // The echo of this context's own write, which Chrome fires here too
+      `probe:${contextId}`,
+      workerWrote.status === "replied" ? workerWriteKey : "",
+    ]);
+
+    ownWriteHeard = outcomes[0] ?? { status: "timeout" };
+
+    workerWriteHeard = outcomes[1] ?? { status: "timeout" };
+  }
 
   const port = await probePort(runtime, contextId);
 

@@ -233,8 +233,10 @@ async function readWorkerPortEvents(webContentsId: number) {
   );
 }
 
-function popupUrl(context: string) {
-  return `chrome-extension://${FIXTURE_EXTENSION_ID}/popup.html?context=${context}`;
+function popupUrl(context: string, { probeStorageChanges = false } = {}) {
+  const flag = probeStorageChanges ? "&meruProbeStorageChanges=1" : "";
+
+  return `chrome-extension://${FIXTURE_EXTENSION_ID}/popup.html?context=${context}${flag}`;
 }
 
 /** The reply an echo probe records, with the sender the proxy reconstructed. */
@@ -658,16 +660,32 @@ test("session storage keeps Chrome's access level across the proxy", async () =>
  * Skipped because it cannot pass on Electron 43.2.0, and kept because it is the
  * pin that flips when it can. The fan-out has carriage and no source: the
  * relay's listener sits in the extension's service worker, and Electron
- * dispatches no events into one — measured 2 September 2026 on a bare Electron,
- * with `alarms.onAlarm` and `runtime.onInstalled` just as silent as storage's
- * own events. Unskip it the day that changes; nothing else here should need to.
+ * dispatches no `EventRouter` events into one — measured 2 September 2026 on a
+ * bare Electron, with `alarms.onAlarm` and `runtime.onInstalled` just as silent
+ * as storage's own events. `runtime.onMessage` does arrive, being messaging
+ * rather than an event dispatch, which is why every other test here passes.
+ * Unskip it the day that changes; nothing else here should need to.
  */
 test.skip("storage.onChanged fires in the shim session, for the worker's writes and its own", async () => {
-  const workerPopupId = await openProbeWindow(WORKER_PARTITION, popupUrl("worker-changes"));
+  /*
+   * The flag is what makes a context wait on the change events at all. Every
+   * other test's contexts skip the wait, since it is a deadline spent against
+   * a source that cannot fire — see `probes.ts`.
+   */
+  const workerPopupId = await openProbeWindow(
+    WORKER_PARTITION,
+    popupUrl("worker-changes", { probeStorageChanges: true }),
+  );
 
-  const shimPopupId = await openProbeWindow(SHIM_PARTITION, popupUrl("shim-changes"));
+  const shimPopupId = await openProbeWindow(
+    SHIM_PARTITION,
+    popupUrl("shim-changes", { probeStorageChanges: true }),
+  );
 
-  const pageId = await openProbeWindow(SHIM_PARTITION, `${serverOrigin}/same`);
+  const pageId = await openProbeWindow(
+    SHIM_PARTITION,
+    `${serverOrigin}/same?meruProbeStorageChanges=1`,
+  );
 
   const workerPopup = await readProbeResults(workerPopupId);
 

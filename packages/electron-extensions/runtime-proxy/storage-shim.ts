@@ -311,6 +311,22 @@ function shadowChangedEvent(event: ChromeNamespace, listeners: Set<ChromeEventLi
   }
 }
 
+/**
+ * A copy per event, the way Chromium hands each one its own `changes.Clone()`.
+ * Without it a listener on the area event that mutates or deletes a key would
+ * change what the `chrome.storage.onChanged` listeners then see. A structured
+ * clone is exactly right for the shape: the values came over the bridge as
+ * JSON, so nothing in here is unclonable.
+ */
+function cloneChanges(changes: RuntimeProxyStorageChanges): RuntimeProxyStorageChanges {
+  try {
+    return structuredClone(changes);
+  } catch {
+    // A value a clone chokes on is not worth the whole event
+    return changes;
+  }
+}
+
 function emitChange(
   listeners: Set<ChromeEventListener>,
   callArguments: unknown[],
@@ -399,10 +415,10 @@ export function createRuntimeProxyStorageShim({
       const areaListeners = listeners.byArea.get(area);
 
       if (areaListeners) {
-        emitChange(areaListeners, [changes], `${LOG_LABEL}:${area}`);
+        emitChange(areaListeners, [cloneChanges(changes)], `${LOG_LABEL}:${area}`);
       }
 
-      emitChange(listeners.everyArea, [changes, area], LOG_LABEL);
+      emitChange(listeners.everyArea, [cloneChanges(changes), area], LOG_LABEL);
     },
   };
 }
