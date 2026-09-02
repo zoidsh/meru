@@ -107,3 +107,31 @@ export function isStorageMethodName(value: unknown): value is RuntimeProxyStorag
 export function isStorageAccessLevel(value: unknown): value is RuntimeProxyStorageAccessLevel {
   return value === "TRUSTED_CONTEXTS" || value === "TRUSTED_AND_UNTRUSTED_CONTEXTS";
 }
+
+/**
+ * The error a storage call meets, or `undefined` when it may go. Both refusals
+ * are Chromium's own and both have to be made by the proxy: the call is
+ * answered in the worker, a privileged context Chromium would let do either.
+ *
+ * Applied twice, against the same rule and different records of the level.
+ * Main refuses early, from what the worker last reported, so a call that
+ * cannot succeed never becomes a job. The worker refuses again at dispatch,
+ * from the level it recorded the moment the extension set it — which is the
+ * check that cannot be stale, since main's record arrives by a POST that can
+ * land after the job it should have refused.
+ */
+export function refuseStorageCall(
+  call: RuntimeProxyStorageCall,
+  isTrustedContext: boolean,
+  accessLevel: RuntimeProxyStorageAccessLevel,
+): string | undefined {
+  if (isTrustedContext) {
+    return undefined;
+  }
+
+  if (call.method === "setAccessLevel") {
+    return STORAGE_ACCESS_LEVEL_CONTEXT_ERROR;
+  }
+
+  return accessLevel === "TRUSTED_CONTEXTS" ? STORAGE_ACCESS_DENIED_ERROR : undefined;
+}

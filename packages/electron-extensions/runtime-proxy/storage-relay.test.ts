@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import { RUNTIME_PROXY_PATHS } from "./bridge-protocol";
-import { STORAGE_UNAVAILABLE_ERROR } from "./storage-protocol";
+import {
+  STORAGE_ACCESS_DENIED_ERROR,
+  STORAGE_ACCESS_LEVEL_CONTEXT_ERROR,
+  STORAGE_UNAVAILABLE_ERROR,
+} from "./storage-protocol";
 import { createStorageRelay } from "./storage-relay";
 
 const originalFetch = globalThis.fetch;
@@ -93,7 +97,13 @@ function createWorkerApi() {
     },
   };
 
-  const storage: ChromeNamespace = { local, session: { get: () => {} } };
+  const sessionArea: ChromeNamespace = {
+    get(keys: unknown, callback: unknown) {
+      answer("session.get", { [String(keys)]: undefined }, callback);
+    },
+  };
+
+  const storage: ChromeNamespace = { local, session: sessionArea };
 
   return {
     extensionApi: { runtime, storage } as ChromeNamespace,
@@ -113,12 +123,14 @@ describe("createStorageRelay", () => {
     const relay = createStorageRelay([worker.extensionApi]);
 
     expect(
-      await relay.run({ area: "local", method: "set", arguments: [{ unlocked: true }] }),
+      await relay.run({ area: "local", method: "set", arguments: [{ unlocked: true }] }, true),
     ).toEqual({ status: "ok", value: undefined });
 
     expect(worker.store.get("unlocked")).toBe(true);
 
-    expect(await relay.run({ area: "local", method: "get", arguments: ["unlocked"] })).toEqual({
+    expect(
+      await relay.run({ area: "local", method: "get", arguments: ["unlocked"] }, true),
+    ).toEqual({
       status: "ok",
       value: { unlocked: true },
     });
@@ -131,7 +143,9 @@ describe("createStorageRelay", () => {
 
     const relay = createStorageRelay([worker.extensionApi]);
 
-    expect(await relay.run({ area: "local", method: "set", arguments: [{ big: "x" }] })).toEqual({
+    expect(
+      await relay.run({ area: "local", method: "set", arguments: [{ big: "x" }] }, true),
+    ).toEqual({
       status: "error",
       message: "QUOTA_BYTES quota exceeded",
     });
@@ -142,12 +156,12 @@ describe("createStorageRelay", () => {
 
     const relay = createStorageRelay([worker.extensionApi]);
 
-    expect(await relay.run({ area: "local", method: "getKeys", arguments: [] })).toEqual({
+    expect(await relay.run({ area: "local", method: "getKeys", arguments: [] }, true)).toEqual({
       status: "error",
       message: STORAGE_UNAVAILABLE_ERROR,
     });
 
-    expect(await relay.run({ area: "managed", method: "get", arguments: [] })).toEqual({
+    expect(await relay.run({ area: "managed", method: "get", arguments: [] }, true)).toEqual({
       status: "error",
       message: STORAGE_UNAVAILABLE_ERROR,
     });
@@ -162,7 +176,7 @@ describe("createStorageRelay", () => {
 
     const relay = createStorageRelay([worker.extensionApi]);
 
-    expect(await relay.run({ area: "local", method: "get", arguments: [] })).toEqual({
+    expect(await relay.run({ area: "local", method: "get", arguments: [] }, true)).toEqual({
       status: "error",
       message: "bindings gone",
     });
@@ -175,10 +189,73 @@ describe("createStorageRelay", () => {
 
     const relay = createStorageRelay([worker.extensionApi]);
 
-    expect(await relay.run({ area: "local", method: "get", arguments: [] })).toEqual({
+    expect(await relay.run({ area: "local", method: "get", arguments: [] }, true)).toEqual({
       status: "ok",
       value: { unlocked: false },
     });
+  });
+
+  test("refuses a content script the area the extension closed, without touching the store", async () => {
+    const worker = createWorkerApi();
+
+    const relay = createStorageRelay([worker.extensionApi]);
+
+    relay.mirrorAccessLevels();
+
+    // Chrome's default for `session` closes it to content scripts
+    expect(await relay.run({ area: "session", method: "get", arguments: [] }, false)).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    // And an extension page reaches it
+    expect(await relay.run({ area: "session", method: "get", arguments: ["k"] }, true)).toEqual({
+      status: "ok",
+      value: { k: undefined },
+    });
+  });
+
+  test("holds a call against the level recorded when the extension set it", async () => {
+    stubFetch();
+
+    const worker = createWorkerApi();
+
+    const relay = createStorageRelay([worker.extensionApi]);
+
+    relay.mirrorAccessLevels();
+
+    // `local` is open by default, so this is the level doing the work
+    await (worker.local.setAccessLevel as (options: unknown) => Promise<unknown>)({
+      accessLevel: "TRUSTED_CONTEXTS",
+    });
+
+    expect(await relay.run({ area: "local", method: "get", arguments: ["k"] }, false)).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    expect(worker.store.size).toBe(0);
+  });
+
+  test("a content script never sets an access level, even relayed", async () => {
+    const worker = createWorkerApi();
+
+    const relay = createStorageRelay([worker.extensionApi]);
+
+    relay.mirrorAccessLevels();
+
+    expect(
+      await relay.run(
+        {
+          area: "local",
+          method: "setAccessLevel",
+          arguments: [{ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" }],
+        },
+        false,
+      ),
+    ).toEqual({ status: "error", message: STORAGE_ACCESS_LEVEL_CONTEXT_ERROR });
+
+    expect(worker.accessLevelCalls).toEqual([]);
   });
 
   describe("mirrorAccessLevels", () => {
@@ -229,6 +306,95 @@ describe("createStorageRelay", () => {
       ).rejects.toThrow("This StorageArea is not available for setting access level");
 
       expect(posts).toEqual([]);
+    });
+
+    test("gives the extension's own callback the lastError the native call left", async () => {
+      stubFetch();
+
+      const worker = createWorkerApi();
+
+      worker.failMethod(
+        "setAccessLevel",
+        "This StorageArea is not available for setting access level",
+      );
+
+      const relay = createStorageRelay([worker.extensionApi]);
+
+      relay.mirrorAccessLevels();
+
+      let seenError: string | undefined;
+
+      const runtime = worker.extensionApi.runtime as ChromeNamespace;
+
+      (worker.local.setAccessLevel as (options: unknown, callback: () => void) => undefined)(
+        { accessLevel: "TRUSTED_CONTEXTS" },
+        () => {
+          seenError = (runtime.lastError as { message?: string } | undefined)?.message;
+        },
+      );
+
+      // This wrapper is the one thing in front of the worker's native storage,
+      // so the extension's own error handling has to keep working through it
+      await waitFor(() => seenError !== undefined, "the callback");
+
+      expect(seenError).toBe("This StorageArea is not available for setting access level");
+
+      expect(runtime.lastError).toBeUndefined();
+    });
+
+    test("a relayed setAccessLevel reports the native failure rather than answering ok", async () => {
+      stubFetch();
+
+      const worker = createWorkerApi();
+
+      worker.failMethod("setAccessLevel", "Context cannot set the storage access level");
+
+      const relay = createStorageRelay([worker.extensionApi]);
+
+      relay.mirrorAccessLevels();
+
+      expect(
+        await relay.run(
+          {
+            area: "local",
+            method: "setAccessLevel",
+            arguments: [{ accessLevel: "TRUSTED_CONTEXTS" }],
+          },
+          true,
+        ),
+      ).toEqual({ status: "error", message: "Context cannot set the storage access level" });
+    });
+
+    test("the level is reported before a relayed setAccessLevel is answered", async () => {
+      let hasReported = false;
+
+      globalThis.fetch = (async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+
+        hasReported = true;
+
+        return new Response(null, { status: 204 });
+      }) as unknown as typeof fetch;
+
+      const worker = createWorkerApi();
+
+      const relay = createStorageRelay([worker.extensionApi]);
+
+      relay.mirrorAccessLevels();
+
+      // An extension page that awaits this is entitled to the new level being
+      // in force by the time a content script reads, and main learns it from
+      // the report rather than from the answer
+      await relay.run(
+        {
+          area: "local",
+          method: "setAccessLevel",
+          arguments: [{ accessLevel: "TRUSTED_CONTEXTS" }],
+        },
+        true,
+      );
+
+      expect(hasReported).toBe(true);
     });
 
     test("answers the callback form, the way 1Password's own boot-time call makes it", async () => {

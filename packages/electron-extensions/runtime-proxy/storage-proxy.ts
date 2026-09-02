@@ -8,8 +8,6 @@ import {
   type RuntimeProxyStorageAccessLevel,
   type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
-  STORAGE_ACCESS_DENIED_ERROR,
-  STORAGE_ACCESS_LEVEL_CONTEXT_ERROR,
 } from "./storage-protocol";
 
 /**
@@ -114,34 +112,4 @@ export class StorageAccessLevels {
   clear() {
     this.levels.clear();
   }
-}
-
-/**
- * The error a storage call meets before it is relayed, or `undefined` when it
- * may go. Both refusals are Chromium's own, and both have to be made here:
- * the call is answered in the worker, which is a privileged context Chromium
- * would let do either.
- */
-export function refuseStorageCall({
-  call,
-  extensionId,
-  isTrustedContext,
-  accessLevels,
-}: {
-  call: RuntimeProxyStorageCall;
-  extensionId: string;
-  isTrustedContext: boolean;
-  accessLevels: StorageAccessLevels;
-}): string | undefined {
-  if (isTrustedContext) {
-    return undefined;
-  }
-
-  if (call.method === "setAccessLevel") {
-    return STORAGE_ACCESS_LEVEL_CONTEXT_ERROR;
-  }
-
-  return accessLevels.get(extensionId, call.area) === "TRUSTED_CONTEXTS"
-    ? STORAGE_ACCESS_DENIED_ERROR
-    : undefined;
 }

@@ -50,7 +50,10 @@ export type CreateRelayClientOptions = {
    * store (`storage-relay.ts`). Absent, storage calls are refused as an
    * unreachable store, which is what a worker built without one would mean.
    */
-  runStorageCall?: (call: RuntimeProxyStorageCall) => Promise<RuntimeProxyStorageResult>;
+  runStorageCall?: (
+    call: RuntimeProxyStorageCall,
+    isTrustedContext: boolean,
+  ) => Promise<RuntimeProxyStorageResult>;
 };
 
 /**
@@ -263,7 +266,7 @@ export function createRelayClient({
 
       case "storage": {
         void (
-          runStorageCall?.(job.call) ??
+          runStorageCall?.(job.call, job.isTrustedContext) ??
           Promise.resolve<RuntimeProxyStorageResult>({
             status: "error",
             message: STORAGE_UNAVAILABLE_ERROR,

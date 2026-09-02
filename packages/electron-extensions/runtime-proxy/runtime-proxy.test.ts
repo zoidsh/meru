@@ -1021,6 +1021,7 @@ describe("RuntimeProxy storage", () => {
       type: "storage",
       jobId: (job as { jobId: string }).jobId,
       call: { area: "local", method: "get", arguments: ["unlocked"] },
+      isTrustedContext: false,
     });
 
     await harness.ackJob((job as { jobId: string }).jobId);
@@ -1120,6 +1121,33 @@ describe("RuntimeProxy storage", () => {
     void sendStorageCall(harness, { area: "local", method: "get", arguments: [] });
 
     await stream.waitForJobs(1);
+  });
+
+  test("a queued call is refused again when the worker's level arrives while it waits", async () => {
+    const harness = createHarness();
+
+    // Nothing parked, so the call is queued behind a wake and measured against
+    // the permissive default it arrives under
+    const callResponse = sendStorageCall(harness, {
+      area: "local",
+      method: "get",
+      arguments: ["unlocked"],
+    });
+
+    await waitFor(() => harness.workerSession.workerStarts.length > 0, "the worker wake");
+
+    // The worker boots and closes the area, which is 1Password's own shape
+    await reportAccessLevel(harness, { area: "local", accessLevel: "TRUSTED_CONTEXTS" });
+
+    const stream = await harness.openWorkerStream();
+
+    expect(await (await callResponse).json()).toEqual({
+      status: "error",
+      message: STORAGE_ACCESS_DENIED_ERROR,
+    });
+
+    // And it never reached the worker
+    expect(stream.jobs).toEqual([]);
   });
 
   test("only the worker session may report an access level", async () => {

@@ -23,6 +23,16 @@ import type {
   RuntimeProxyStorageResult,
 } from "./storage-protocol";
 
+/**
+ * The global the relay client installs for the derived service worker wrapper
+ * to call, as the last thing the wrapper does. Parking the job stream there
+ * rather than during the relay's own module evaluation is what keeps a job
+ * from reaching the worker before the extension's top-level code has run —
+ * which is the ordering Chrome itself guarantees, since it dispatches nothing
+ * to a service worker until its script has finished evaluating.
+ */
+export const RUNTIME_PROXY_RELAY_START_GLOBAL = "__meruRuntimeProxyStartRelay";
+
 /** What every extension URL starts with, from a worker scope to a page's own. */
 export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 
@@ -228,7 +238,19 @@ export type RuntimeProxyJob =
   | { type: "connect"; jobId: string; portId: string; name?: string; sender: RuntimeProxySender }
   | { type: "portMessage"; jobId: string; portId: string; message: unknown }
   | { type: "portDisconnect"; jobId: string; portId: string; error?: string }
-  | { type: "storage"; jobId: string; call: RuntimeProxyStorageCall };
+  | {
+      type: "storage";
+      jobId: string;
+      call: RuntimeProxyStorageCall;
+      /**
+       * Whether the caller was one of the extension's own documents, decided
+       * in main from the frame Chromium recorded. The worker holds the call
+       * against this and its own record of the access level, which is the
+       * check that cannot be stale: main's record is updated by a POST the
+       * worker sends, and that POST can land after the job did.
+       */
+      isTrustedContext: boolean;
+    };
 
 export type RuntimeProxyWorkerAckRequest = {
   jobId: string;

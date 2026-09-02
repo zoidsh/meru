@@ -31,7 +31,7 @@ const RUNTIME_PROXY_RELAY_FILE_NAME = "chrome-runtime-proxy-relay.js";
 const CONTENT_SCRIPT_ONLY_DIR_SUFFIX = "-content-scripts";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 8;
+const DERIVE_VERSION = 9;
 
 /**
  * The copy's part in one shared extension instance serving every session (see

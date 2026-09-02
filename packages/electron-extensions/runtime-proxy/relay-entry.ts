@@ -1,4 +1,5 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
+import { RUNTIME_PROXY_RELAY_START_GLOBAL } from "./bridge-protocol";
 import { createRelayClient } from "./relay-client";
 import { createStorageRelay } from "./storage-relay";
 
@@ -38,4 +39,13 @@ for (const extensionApi of extensionApis) {
 // is the first one the relay sees
 storageRelay.mirrorAccessLevels();
 
-relayClient.start();
+/*
+ * The stream is parked by the derived wrapper, as the last thing it does,
+ * rather than here. Parking during this module's evaluation would take jobs
+ * before the extension's own top-level code had run — before the
+ * `setAccessLevel` an extension calls at startup, in particular — where Chrome
+ * dispatches nothing to a worker until its script has finished evaluating.
+ */
+(workerGlobals as unknown as Record<string, () => void>)[RUNTIME_PROXY_RELAY_START_GLOBAL] = () => {
+  relayClient.start();
+};

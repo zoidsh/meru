@@ -1,14 +1,17 @@
 import { postBridge } from "../facade/lib/bridge";
 import type { ChromeNamespace } from "../facade/lib/chrome";
-import { getLastErrorMessage } from "../facade/lib/last-error";
+import { getLastErrorMessage, withLastError } from "../facade/lib/last-error";
 import {
   RUNTIME_PROXY_PATHS,
   type RuntimeProxyWorkerStorageAccessLevelRequest,
 } from "./bridge-protocol";
 import {
+  DEFAULT_STORAGE_ACCESS_LEVELS,
   isStorageAccessLevel,
+  refuseStorageCall,
   STORAGE_AREA_NAMES,
   STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageAccessLevel,
   type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
   type RuntimeProxyStorageResult,
@@ -17,6 +20,8 @@ import {
 /** Marks a `setAccessLevel` this relay already mirrored, since `chrome` and
  * `browser` can hand back the same area object. */
 const MIRRORED_METHOD_MARK = "__meruRuntimeProxyStorageMirror";
+
+type NativeMethod = (...callArguments: unknown[]) => unknown;
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -103,6 +108,23 @@ function invokeNativeMethod(
 export function createStorageRelay(extensionApis: ChromeNamespace[]) {
   const mirroredAreas = new WeakSet<ChromeNamespace>();
 
+  /**
+   * The `setAccessLevel` each area had before it was mirrored. A relayed call
+   * goes to this rather than through the wrapper: the wrapper exists to notice
+   * the extension's own calls, and routing a relayed one through it would put
+   * the caller's answer behind the wrapper's reporting and hide `lastError`
+   * from the code that reads it.
+   */
+  const nativeSetAccessLevels = new Map<RuntimeProxyStorageAreaName, NativeMethod>();
+
+  /**
+   * The level each area is at, recorded here as well as reported to main.
+   * This copy is what a relayed call is held against, because it is written
+   * the moment the native call returns while main's is written by a POST that
+   * can land after the job it should have refused.
+   */
+  const accessLevels = new Map<RuntimeProxyStorageAreaName, RuntimeProxyStorageAccessLevel>();
+
   const getArea = (areaName: RuntimeProxyStorageAreaName) => {
     for (const extensionApi of extensionApis) {
       const storage = extensionApi.storage as ChromeNamespace | undefined;
@@ -158,35 +180,33 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
 
         mirroredAreas.add(areaNamespace);
 
+        nativeSetAccessLevels.set(areaName, nativeSetAccessLevel as NativeMethod);
+
         const mirrored = (...callArguments: unknown[]) => {
           const callback =
             typeof callArguments.at(-1) === "function"
               ? (callArguments.pop() as (result?: unknown) => void)
               : undefined;
 
-          const requested = (callArguments[0] as { accessLevel?: unknown } | undefined)
-            ?.accessLevel;
-
-          const answer = invokeNativeMethod(
-            runtime,
-            areaNamespace,
-            nativeSetAccessLevel as (...args: unknown[]) => unknown,
-            callArguments,
-          ).then((result) => {
-            if (result.status === "ok" && isStorageAccessLevel(requested)) {
-              void reportAccessLevel({ area: areaName, accessLevel: requested });
-            }
-
-            return result;
-          });
+          const answer = setAccessLevel(areaName, areaNamespace, runtime, callArguments);
 
           if (callback) {
+            /*
+             * The extension's own code reads `chrome.runtime.lastError` inside
+             * this callback, and this wrapper is the one thing the proxy puts
+             * in front of the worker's native storage — so the failure it saw
+             * has to be there, exactly as the native call would have left it.
+             */
             void answer.then((result) => {
-              if (result.status === "error") {
-                console.error("[runtime-proxy-storage] setAccessLevel failed", result.message);
+              if (result.status === "ok") {
+                callback();
+
+                return;
               }
 
-              callback();
+              withLastError(runtime ?? {}, result.message, () => {
+                callback();
+              });
             });
 
             return undefined;
@@ -212,12 +232,64 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
     }
   };
 
+  /**
+   * Sets an area's access level natively and reports the level it accepted,
+   * for the extension's own call and for a relayed one alike.
+   *
+   * The report is awaited rather than left in flight, so the caller's answer
+   * cannot land in main ahead of it: `setAccessLevel` is synchronous in
+   * Chromium's browser process, so an extension page that awaits it and then
+   * has a content script read is entitled to the new level being in force.
+   */
+  const setAccessLevel = async (
+    areaName: RuntimeProxyStorageAreaName,
+    area: ChromeNamespace,
+    runtime: ChromeNamespace | undefined,
+    callArguments: unknown[],
+  ): Promise<RuntimeProxyStorageResult> => {
+    const nativeSetAccessLevel = nativeSetAccessLevels.get(areaName);
+
+    if (!nativeSetAccessLevel) {
+      return { status: "error", message: STORAGE_UNAVAILABLE_ERROR };
+    }
+
+    const result = await invokeNativeMethod(runtime, area, nativeSetAccessLevel, callArguments);
+
+    const requested = (callArguments[0] as { accessLevel?: unknown } | undefined)?.accessLevel;
+
+    // Only a level the native call accepted, so a refusal changes nothing here
+    if (result.status === "ok" && isStorageAccessLevel(requested)) {
+      accessLevels.set(areaName, requested);
+
+      await reportAccessLevel({ area: areaName, accessLevel: requested });
+    }
+
+    return result;
+  };
+
   /** Answers one relayed call against the worker session's own store. */
-  const run = (call: RuntimeProxyStorageCall): Promise<RuntimeProxyStorageResult> => {
+  const run = (
+    call: RuntimeProxyStorageCall,
+    isTrustedContext: boolean,
+  ): Promise<RuntimeProxyStorageResult> => {
+    const refusal = refuseStorageCall(
+      call,
+      isTrustedContext,
+      accessLevels.get(call.area) ?? DEFAULT_STORAGE_ACCESS_LEVELS[call.area],
+    );
+
+    if (refusal !== undefined) {
+      return Promise.resolve({ status: "error", message: refusal });
+    }
+
     const resolved = getArea(call.area);
 
     if (!resolved) {
       return Promise.resolve({ status: "error", message: STORAGE_UNAVAILABLE_ERROR });
+    }
+
+    if (call.method === "setAccessLevel") {
+      return setAccessLevel(call.area, resolved.area, resolved.runtime, call.arguments);
     }
 
     const method = resolved.area[call.method];
@@ -229,7 +301,7 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
     return invokeNativeMethod(
       resolved.runtime,
       resolved.area,
-      method as (...callArguments: unknown[]) => unknown,
+      method as NativeMethod,
       call.arguments,
     );
   };

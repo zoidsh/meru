@@ -17,16 +17,29 @@ import {
 } from "./storage-protocol";
 
 /**
- * Marks an area whose methods this shim has already shadowed. The shim is
- * prepended to every `content_scripts` entry, and several entries can match
+ * Where an area this shim has shadowed keeps what the shadowing needs. The shim
+ * is prepended to every `content_scripts` entry, and several entries can match
  * one page — 1Password has eight — so a page runs it once per matching entry,
- * in the same isolated world, against the same `chrome.storage`. Shadowing
- * twice would work but would leave the second install's call ordering
- * independent of the first's, so the second install steps aside instead. The
- * property is non-enumerable so that an extension walking the area sees the
- * members Chrome puts there and nothing of Meru's.
+ * in the same isolated world, against the same `chrome.storage`. A second
+ * install shadows nothing again and adds its runtime to what is already here,
+ * so one chain still orders the area's calls and `lastError` still reaches
+ * whichever global the caller was written against. The property is
+ * non-enumerable, so an extension walking the area sees the members Chrome
+ * puts there and nothing of Meru's.
  */
 const SHADOWED_AREA_MARK = "__meruRuntimeProxyStorageShim";
+
+type ShadowedArea = {
+  /**
+   * Every runtime object whose global shares this area. Electron builds
+   * `chrome` and `browser` separately and may hand back one area object for
+   * both, so an error has to reach the `lastError` of each — a listener reads
+   * whichever global it was written against, as `relay-client.ts` found.
+   */
+  runtimes: ChromeNamespace[];
+  /** The area's one call chain, shared by every install that finds it. */
+  chain: { promise: Promise<unknown> };
+};
 
 /** What a refused bridge call reads as, whatever the call was. */
 function bridgeAnsweredError(status: number) {
@@ -113,11 +126,10 @@ async function relayStorageCall(
  * could overtake the write it was written after.
  */
 function createShadowedMethod(
-  runtime: ChromeNamespace | undefined,
+  shadowed: ShadowedArea,
   area: RuntimeProxyStorageAreaName,
   method: RuntimeProxyStorageMethodName,
   getSenderReport: () => RuntimeProxySenderReport,
-  chain: { promise: Promise<unknown> },
 ) {
   return (...callArguments: unknown[]) => {
     const callback =
@@ -125,12 +137,23 @@ function createShadowedMethod(
         ? (callArguments.pop() as (result?: unknown) => void)
         : undefined;
 
-    const answer = chain.promise.then(() =>
+    /*
+     * Chrome takes a trailing `undefined` or `null` for an omitted optional
+     * argument, and JSON turns `undefined` into `null` on the way over, so a
+     * surplus one would reach the worker as a real argument and be refused by
+     * Chromium's own signature matching — `get("k", undefined)` would fail
+     * where it succeeds natively.
+     */
+    while (callArguments.length > 0 && callArguments.at(-1) == null) {
+      callArguments.pop();
+    }
+
+    const answer = shadowed.chain.promise.then(() =>
       relayStorageCall({ area, method, arguments: callArguments }, getSenderReport),
     );
 
     // The chain must survive a failed call, or one refusal would wedge the area
-    chain.promise = answer.catch(() => undefined);
+    shadowed.chain.promise = answer.catch(() => undefined);
 
     if (!callback) {
       return answer;
@@ -141,7 +164,7 @@ function createShadowedMethod(
         callback(value);
       },
       (error: Error) => {
-        withLastError(runtime ?? {}, error.message, () => {
+        withRuntimesLastError(shadowed.runtimes, error.message, () => {
           callback(undefined);
         });
       },
@@ -149,6 +172,24 @@ function createShadowedMethod(
 
     return undefined;
   };
+}
+
+/**
+ * `lastError` around a callback, set on every runtime object that shares the
+ * area. The same shape `relay-client.ts` needs, and for the same reason.
+ */
+function withRuntimesLastError(runtimes: ChromeNamespace[], error: string, run: () => void) {
+  let answer = run;
+
+  for (const runtime of runtimes) {
+    const nextAnswer = answer;
+
+    answer = () => {
+      withLastError(runtime, error, nextAnswer);
+    };
+  }
+
+  answer();
 }
 
 function shadowArea(
@@ -165,11 +206,20 @@ function shadowArea(
 
   const areaNamespace = area as ChromeNamespace;
 
-  if (areaNamespace[SHADOWED_AREA_MARK]) {
+  const alreadyShadowed = areaNamespace[SHADOWED_AREA_MARK] as ShadowedArea | undefined;
+
+  if (alreadyShadowed) {
+    if (runtime && !alreadyShadowed.runtimes.includes(runtime)) {
+      alreadyShadowed.runtimes.push(runtime);
+    }
+
     return;
   }
 
-  const chain = { promise: Promise.resolve() as Promise<unknown> };
+  const shadowed: ShadowedArea = {
+    runtimes: runtime ? [runtime] : [],
+    chain: { promise: Promise.resolve() },
+  };
 
   for (const method of STORAGE_METHOD_NAMES) {
     // Only what Electron already implements: an extension feature-detects the
@@ -179,12 +229,12 @@ function shadowArea(
       continue;
     }
 
-    areaNamespace[method] = createShadowedMethod(runtime, areaName, method, getSenderReport, chain);
+    areaNamespace[method] = createShadowedMethod(shadowed, areaName, method, getSenderReport);
   }
 
   try {
     Object.defineProperty(areaNamespace, SHADOWED_AREA_MARK, {
-      value: true,
+      value: shadowed,
       enumerable: false,
       configurable: true,
     });

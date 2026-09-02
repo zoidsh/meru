@@ -28,6 +28,7 @@ import {
 import { type PageContext, PageStreams } from "./page-stream";
 import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
 import {
+  refuseStorageCall,
   STORAGE_UNAVAILABLE_ERROR,
   type RuntimeProxyStorageCall,
   type RuntimeProxyStorageResult,
@@ -36,7 +37,6 @@ import {
   isTrustedStorageCaller,
   parseStorageAccessLevelReport,
   parseStorageCall,
-  refuseStorageCall,
   StorageAccessLevels,
 } from "./storage-proxy";
 import { createWorkerSender, WorkerToPage } from "./worker-to-page";
@@ -84,6 +84,8 @@ type PortDisconnectJob = RelayJobBase & {
 type StorageJob = RelayJobBase & {
   kind: "storage";
   call: RuntimeProxyStorageCall;
+  /** Decided from the caller's frame when the call arrived, and kept. */
+  isTrustedContext: boolean;
   settle: (result: RuntimeProxyStorageResult) => void;
   isSettled: boolean;
 };
@@ -629,12 +631,9 @@ export class RuntimeProxy {
       return new Response(null, { status: 400, headers });
     }
 
-    const refusal = refuseStorageCall({
-      call,
-      extensionId,
-      isTrustedContext: isTrustedStorageCaller(extensionId, senderFrame),
-      accessLevels: this.storageAccessLevels,
-    });
+    const isTrustedContext = isTrustedStorageCaller(extensionId, senderFrame);
+
+    const refusal = this.refuseStorage(extensionId, call, isTrustedContext);
 
     if (refusal !== undefined) {
       return Response.json({ status: "error", message: refusal }, { headers });
@@ -644,6 +643,7 @@ export class RuntimeProxy {
       this.enqueueJob(
         this.createJob(session, extensionId, "storage", {
           call,
+          isTrustedContext,
           settle: resolve,
           isSettled: false,
         }),
@@ -651,6 +651,18 @@ export class RuntimeProxy {
     });
 
     return Response.json(result, { headers });
+  }
+
+  private refuseStorage(
+    extensionId: string,
+    call: RuntimeProxyStorageCall,
+    isTrustedContext: boolean,
+  ) {
+    return refuseStorageCall(
+      call,
+      isTrustedContext,
+      this.storageAccessLevels.get(extensionId, call.area),
+    );
   }
 
   private handleConnect(
@@ -990,6 +1002,24 @@ export class RuntimeProxy {
     const jobs = queue.splice(0);
 
     for (const [index, job] of jobs.entries()) {
+      /*
+       * A job that waited for a worker to wake waited across the worker's own
+       * startup, and its `setAccessLevel` may have arrived in between — so the
+       * level the call was measured against when it arrived is not necessarily
+       * the level in force now. The worker checks again at dispatch against a
+       * record that cannot be stale; this is the early refusal, which keeps a
+       * call that cannot succeed from reaching it at all.
+       */
+      if (job.kind === "storage") {
+        const refusal = this.refuseStorage(job.extensionId, job.call, job.isTrustedContext);
+
+        if (refusal !== undefined) {
+          this.settleStorage(job, { status: "error", message: refusal });
+
+          continue;
+        }
+      }
+
       job.state = "handed";
 
       job.attempts += 1;
@@ -1416,7 +1446,12 @@ export class RuntimeProxy {
           error: job.error,
         };
       case "storage":
-        return { type: "storage", jobId: job.jobId, call: job.call };
+        return {
+          type: "storage",
+          jobId: job.jobId,
+          call: job.call,
+          isTrustedContext: job.isTrustedContext,
+        };
     }
   }
 }
