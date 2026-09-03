@@ -663,7 +663,13 @@ export class WorkspaceApp {
       this._window.destroy();
     }
 
-    this.account.instance.tabs.removeTab(this.id);
+    // Only when the strip still holds this instance. Dormantizing splices a
+    // `DormantTab` into this tab's place under the same id before closing the
+    // view, so removing by id alone would take the replacement straight back
+    // out — the tab would vanish from the strip instead of going dormant.
+    if (this.account.instance.tabs.getTab(this.id) === this) {
+      this.account.instance.tabs.removeTab(this.id);
+    }
   }
 
   private teardown() {
