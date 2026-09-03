@@ -3,6 +3,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { GMAIL_TAB_ID, verticalTabsWidths } from "@meru/shared/tabs";
 import {
+  DEV_WORKSPACE_APPS_HIBERNATION_TIMEOUT,
   launcherAndBookmarksPlacements,
   type LauncherWorkspaceApp,
   launcherWorkspaceApps,
@@ -310,10 +311,15 @@ export function WorkspaceAppsSettings() {
             description="How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
             configKey="workspaceApps.hibernationTimeout"
             licenseKeyRequired
-            items={Object.entries(workspaceAppsHibernationTimeouts).map(([value, label]) => ({
-              value,
-              label,
-            }))}
+            items={Object.entries(workspaceAppsHibernationTimeouts)
+              .filter(
+                ([value]) =>
+                  import.meta.env.DEV || value !== DEV_WORKSPACE_APPS_HIBERNATION_TIMEOUT,
+              )
+              .map(([value, label]) => ({
+                value,
+                label,
+              }))}
           />
           <FieldSeparator />
           <FieldSet>

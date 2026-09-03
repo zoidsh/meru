@@ -99,6 +99,7 @@ export type WorkspaceAppsHibernation = keyof typeof workspaceAppsHibernations;
 
 /** Keys double as durations for `ms`. */
 export const workspaceAppsHibernationTimeouts = {
+  "1m": "1 minute",
   "30m": "30 minutes",
   "1h": "1 hour",
   "3h": "3 hours",
@@ -106,6 +107,14 @@ export const workspaceAppsHibernationTimeouts = {
 } as const;
 
 export type WorkspaceAppsHibernationTimeout = keyof typeof workspaceAppsHibernationTimeouts;
+
+/**
+ * A minute is too short to ship — a tab left alone for the length of a phone
+ * call would hibernate — but it's the only way to watch an idle sweep happen
+ * without waiting half an hour, so the settings UI offers it in a development
+ * run and nowhere else.
+ */
+export const DEV_WORKSPACE_APPS_HIBERNATION_TIMEOUT: WorkspaceAppsHibernationTimeout = "1m";
 
 /**
  * How a single Workspace App ends up being opened. Resolved per click from the
