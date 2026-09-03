@@ -106,7 +106,7 @@ export class DormantTab {
 
   loadOnLaunch: boolean;
 
-  hibernatesWhenIdle: boolean;
+  hibernatesWhenIdle: boolean | null;
 
   opensLinksForApp: SupportedWorkspaceApp | null;
 
@@ -124,7 +124,7 @@ export class DormantTab {
     this.title = dormantTab.title;
     this.pinned = dormantTab.pinned;
     this.loadOnLaunch = Boolean(dormantTab.loadOnLaunch);
-    this.hibernatesWhenIdle = Boolean(dormantTab.hibernatesWhenIdle);
+    this.hibernatesWhenIdle = dormantTab.hibernatesWhenIdle ?? null;
     this.opensLinksForApp = dormantTab.opensLinksForApp ?? null;
     this.windowed = Boolean(dormantTab.windowed);
     this.zoomFactor = unloadedViewState?.zoomFactor;
@@ -489,7 +489,7 @@ export class Tabs {
       activeTab.lastActiveAt = now;
     }
 
-    const hibernatesEveryTab = config.get("workspaceApps.hibernation") === "all";
+    const hibernation = config.get("workspaceApps.hibernation");
 
     const idleTimeout = ms(config.get("workspaceApps.hibernationTimeout"));
 
@@ -498,7 +498,7 @@ export class Tabs {
         continue;
       }
 
-      if (canHibernateTab(tab, { hibernatesEveryTab, idleTimeout, now })) {
+      if (canHibernateTab(tab, { hibernation, idleTimeout, now })) {
         this.hibernateTab(tab);
       }
     }

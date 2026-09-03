@@ -297,7 +297,7 @@ export function WorkspaceAppsSettings() {
           <FieldSeparator />
           <ConfigSelectField
             label="Hibernate idle tabs"
-            description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Selected tabs only hibernates the tabs you mark with Hibernate When Idle in the tab's context menu."
+            description="Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Unpinned tabs leaves your pinned tabs loaded, and Selected tabs hibernates nothing until you mark a tab. Whichever you pick, a single tab can opt in or out with Hibernate When Idle in its context menu."
             configKey="workspaceApps.hibernation"
             licenseKeyRequired
             items={Object.entries(workspaceAppsHibernations).map(([value, label]) => ({

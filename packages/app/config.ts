@@ -336,7 +336,7 @@ export const config = new Store<Config>({
                 url: savedTab.url,
                 title: savedTab.title,
                 loadOnLaunch: savedTab.loadOnLaunch,
-                hibernatesWhenIdle: false,
+                hibernatesWhenIdle: null,
                 windowed: savedTab.windowed,
                 opensLinksForApp: null,
               })),

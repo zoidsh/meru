@@ -122,7 +122,7 @@ export function createDefaultConfig({
     "workspaceApps.persistZoom": true,
     "workspaceApps.zoomFactors": {},
     "workspaceApps.hidePasskeyDialog": false,
-    "workspaceApps.hibernation": "selected",
+    "workspaceApps.hibernation": "unpinned",
     "workspaceApps.hibernationTimeout": "1h",
     "verificationCodes.autoCopy": true,
     "verificationCodes.copyMode": "notificationClick",
