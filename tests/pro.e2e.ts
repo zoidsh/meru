@@ -54,6 +54,13 @@ const meru = useProApp({
    * license had nothing to do with.
    */
   "verificationCodes.autoCopy": true,
+  /*
+   * The same shape, for the extensions master switch: it is off by default, and
+   * with it off every curated extension's item locks whatever the license says.
+   * Nothing loads from turning it on here, since no extension is installed and
+   * this launch carries no fixture flag.
+   */
+  "extensions.enabled": true,
 });
 
 test("both accounts survive into the app", async () => {

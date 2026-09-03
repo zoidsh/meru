@@ -57,7 +57,9 @@ test("a packaged run without the fixture flag loads no extensions", async () => 
    * The checked-in fixture extension ships inside this build, and
    * MERU_EXTENSIONS_FIXTURE is what may load it. This launch does not set the
    * flag, so the account session has to come up with no extensions at all —
-   * the claim that a shipped Meru loads nothing unless told to.
+   * the claim that a shipped Meru loads nothing unless told to. The master
+   * switch is off in a fresh config as well, so what this pins is the shipped
+   * default rather than the flag on its own.
    *
    * The account's id is generated on first launch, so it is read back from
    * the config the app wrote rather than seeded.

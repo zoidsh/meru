@@ -5,7 +5,8 @@
  * the desktop app and a display.
  *
  * The launch carries one extension flag: `MERU_EXTENSIONS_FIXTURE` puts the
- * bundled fixture into every session of this packaged build. The shared
+ * bundled fixture into every session of this packaged build, and the seed
+ * turns the master switch on, extensions being off by default. The shared
  * instance needs no flag, because it is how Meru runs extensions — the default
  * session keeps the fixture's service worker while every account session gets
  * the content-script-only copy whose `chrome.runtime` messaging the proxy
@@ -62,6 +63,7 @@ const SURVIVING_PARTITION = "persist:surviving-account";
 
 const meru = useProApp(
   {
+    "extensions.enabled": true,
     accounts: [
       account("removed-account", "Removed", true),
       account("surviving-account", "Surviving", false),
