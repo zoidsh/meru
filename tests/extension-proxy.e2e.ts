@@ -575,6 +575,31 @@ test("a message is attributed to the frame that sent it, an embedded extension f
   // A subframe is never frame 0; 0 would mean the proxy attributed the
   // message to the host document rather than the extension frame
   expect(embeddedFrameSender.frameId).toBeGreaterThan(0);
+
+  /*
+   * And the worker's own `chrome.webNavigation.getFrame` for that frame, which
+   * is the shape a fill runs in: an extension iframe inside a web page, in a
+   * session the worker's own holds no tab of. 1Password relays the inline-menu
+   * click to the frame owning the form only once this has named that frame's
+   * parent, so a `null` here is a click that does nothing.
+   */
+  expect(embeddedFrame.senderFrameSeenByWorker).toEqual({
+    status: "replied",
+    reply: expect.objectContaining({
+      frameId: embeddedFrameSender.frameId,
+      parentFrameId: 0,
+      url: embeddedFrameUrl,
+    }),
+  });
+
+  // The host document's own frame query, answered for the same cross-session
+  // tab: the main frame, which is frame 0 and has no parent
+  const frameHost = await readProbeResults(frameHostId);
+
+  expect(frameHost.senderFrameSeenByWorker).toEqual({
+    status: "replied",
+    reply: expect.objectContaining({ frameId: 0, parentFrameId: -1, url: frameHostUrl }),
+  });
 });
 
 test("the worker reaches a shimmed content script it never heard from first", async () => {
@@ -639,6 +664,12 @@ test("an action popup is no tab, and the worker says so rather than guessing", a
   expect(shimPopup.workerSentBack.heard).toBeNull();
 
   expect(shimPopup.workerSentBack.outcome).toEqual({
+    status: "error",
+    message: "The sender carried no tab",
+  });
+
+  // And no tab to ask a frame query about either
+  expect(shimPopup.senderFrameSeenByWorker).toEqual({
     status: "error",
     message: "The sender carried no tab",
   });

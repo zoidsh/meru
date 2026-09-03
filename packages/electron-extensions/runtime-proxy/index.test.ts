@@ -111,3 +111,92 @@ describe("createSharedExtensionInstance role adoption", () => {
     );
   });
 });
+
+/*
+ * What the loader asks before it answers a `chrome.webNavigation` frame query
+ * for a tab of a session other than the asking one. The worker has to cross —
+ * it runs in a session holding no account's tabs, and 1Password finds the
+ * frame owning a form with `getFrame` before it relays an inline-menu click to
+ * it — and nothing else may.
+ */
+describe("createSharedExtensionInstance tab resolution across sessions", () => {
+  test("the worker resolves a tab of any session it shims", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.adoptSession(workerSession);
+
+    const firstAccountSession = createSession("first-account");
+
+    const secondAccountSession = createSession("second-account");
+
+    sharedInstance.adoptSession(firstAccountSession);
+    sharedInstance.adoptSession(secondAccountSession);
+
+    expect(sharedInstance.canResolveTabAcrossSessions(workerSession, firstAccountSession)).toBe(
+      true,
+    );
+    expect(sharedInstance.canResolveTabAcrossSessions(workerSession, secondAccountSession)).toBe(
+      true,
+    );
+  });
+
+  test("a shimmed session resolves no other session's tab", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.adoptSession(workerSession);
+
+    const firstAccountSession = createSession("first-account");
+
+    const secondAccountSession = createSession("second-account");
+
+    sharedInstance.adoptSession(firstAccountSession);
+    sharedInstance.adoptSession(secondAccountSession);
+
+    expect(
+      sharedInstance.canResolveTabAcrossSessions(firstAccountSession, secondAccountSession),
+    ).toBe(false);
+
+    // Not the worker's own tabs either, which is the account reaching into the
+    // app's own session
+    expect(sharedInstance.canResolveTabAcrossSessions(firstAccountSession, workerSession)).toBe(
+      false,
+    );
+  });
+
+  test("the worker resolves no tab of a session this never adopted", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.adoptSession(workerSession);
+
+    expect(
+      sharedInstance.canResolveTabAcrossSessions(workerSession, createSession("never-set-up")),
+    ).toBe(false);
+
+    // And a session that went takes its tabs with it
+    const accountSession = createSession("account");
+
+    sharedInstance.adoptSession(accountSession);
+
+    sharedInstance.teardownSession(accountSession);
+
+    expect(sharedInstance.canResolveTabAcrossSessions(workerSession, accountSession)).toBe(false);
+  });
+
+  test("nothing crosses before the worker session is adopted", () => {
+    const workerSession = createSession("worker");
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    const accountSession = createSession("account");
+
+    sharedInstance.adoptSession(accountSession);
+
+    expect(sharedInstance.canResolveTabAcrossSessions(workerSession, accountSession)).toBe(false);
+  });
+});

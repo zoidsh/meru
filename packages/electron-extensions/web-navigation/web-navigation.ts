@@ -33,6 +33,12 @@ function createFrameDetails(frame: WebFrameMain): WebNavigationFrameDetails {
 export type WebNavigationOptions = {
   /** How a tab id resolves to the WebContents behind it, Electron's mapping by default. */
   getWebContentsById?: (tabId: number) => WebContents | undefined;
+  /**
+   * Whether the session asking may resolve a tab of another session, asked
+   * only when the two differ. Without it nothing crosses a session, which is
+   * what an embedder running one extension instance per session wants.
+   */
+  canResolveTabAcrossSessions?: (askingSession: Session, tabSession: Session) => boolean;
 };
 
 /**
@@ -60,8 +66,12 @@ function getElectronWebContentsById(tabId: number) {
 export class WebNavigation {
   private getWebContentsById: (tabId: number) => WebContents | undefined;
 
-  constructor({ getWebContentsById }: WebNavigationOptions = {}) {
+  private canResolveTabAcrossSessions: (askingSession: Session, tabSession: Session) => boolean;
+
+  constructor({ getWebContentsById, canResolveTabAcrossSessions }: WebNavigationOptions = {}) {
     this.getWebContentsById = getWebContentsById ?? getElectronWebContentsById;
+
+    this.canResolveTabAcrossSessions = canResolveTabAcrossSessions ?? (() => false);
   }
 
   registerRoutes(bridge: ExtensionBridge) {
@@ -122,9 +132,12 @@ export class WebNavigation {
   }
 
   /**
-   * A tab id resolves only within the session that asked: every session runs
-   * its own extension instances, and an id from any other session is another
-   * account's page.
+   * A tab id resolves within the session that asked, and beyond it only where
+   * the embedder says so: every session runs its own extension instances by
+   * default, so an id from any other session is another account's page. One
+   * shared instance is the exception — its one worker runs in a session of its
+   * own and every tab it fills into is another's, which is what
+   * `canResolveTabAcrossSessions` is asked about.
    */
   private getTabContents(session: Session, tabId: unknown) {
     if (typeof tabId !== "number") {
@@ -133,7 +146,16 @@ export class WebNavigation {
 
     const contents = this.getWebContentsById(tabId);
 
-    if (!contents || contents.isDestroyed() || contents.session !== session) {
+    // Destroyed before the session is read, a disposed WebContents throwing
+    // from every other accessor
+    if (!contents || contents.isDestroyed()) {
+      return undefined;
+    }
+
+    if (
+      contents.session !== session &&
+      !this.canResolveTabAcrossSessions(session, contents.session)
+    ) {
       return undefined;
     }
 

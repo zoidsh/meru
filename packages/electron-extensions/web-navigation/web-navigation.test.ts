@@ -9,6 +9,8 @@ const SESSION = { partition: "persist:one" } as unknown as Session;
 
 const OTHER_SESSION = { partition: "persist:two" } as unknown as Session;
 
+const WORKER_SESSION = { partition: "worker" } as unknown as Session;
+
 const TAB_ID = 12;
 
 type FakeFrame = {
@@ -130,11 +132,75 @@ describe("WebNavigation", () => {
     expect(webNavigation.getAllFrames(OTHER_SESSION, { tabId: TAB_ID })).toBeNull();
   });
 
+  /*
+   * What a shared instance's one worker needs: it runs in a session holding no
+   * account's tabs, so a frame query scoped to the asking session answers null
+   * for every tab there is, and 1Password drops the inline-menu click it was
+   * about to relay to the frame owning the form.
+   */
+  test("answers another session's tab where the embedder allows the crossing", () => {
+    const { contents } = createTab();
+
+    const askedAbout: [Session, Session][] = [];
+
+    const webNavigation = new WebNavigation({
+      getWebContentsById: (tabId) => (tabId === TAB_ID ? contents : undefined),
+      canResolveTabAcrossSessions: (askingSession, tabSession) => {
+        askedAbout.push([askingSession, tabSession]);
+
+        return askingSession === WORKER_SESSION;
+      },
+    });
+
+    expect(webNavigation.getFrame(WORKER_SESSION, { tabId: TAB_ID, frameId: 42 })).toMatchObject({
+      frameId: 42,
+      parentFrameId: 0,
+    });
+
+    expect(
+      webNavigation.getAllFrames(WORKER_SESSION, { tabId: TAB_ID })?.map(({ frameId }) => frameId),
+    ).toEqual([0, 42, 77]);
+
+    // And every session the embedder does not allow the crossing for stays
+    // scoped to its own tabs, which is one account's pages staying out of
+    // another's reach
+    expect(webNavigation.getFrame(OTHER_SESSION, { tabId: TAB_ID, frameId: 42 })).toBeNull();
+    expect(webNavigation.getAllFrames(OTHER_SESSION, { tabId: TAB_ID })).toBeNull();
+
+    // The question asked is who wants what, in that order: the asking session
+    // and the session the tab is really in
+    expect(askedAbout).toEqual([
+      [WORKER_SESSION, SESSION],
+      [WORKER_SESSION, SESSION],
+      [OTHER_SESSION, SESSION],
+      [OTHER_SESSION, SESSION],
+    ]);
+  });
+
   test("answers nothing for a destroyed tab", () => {
     const { contents } = createTab({ isDestroyed: true });
 
     expect(
       createWebNavigation(contents).getFrame(SESSION, { tabId: TAB_ID, frameId: 0 }),
+    ).toBeNull();
+
+    // Including where the crossing is allowed, the tab being gone before its
+    // session is ever read — a disposed WebContents throws from that accessor,
+    // which is what this one does
+    const disposedContents = {
+      isDestroyed: () => true,
+      get session(): Session {
+        throw new Error("Object has been destroyed");
+      },
+    } as unknown as WebContents;
+
+    const crossingWebNavigation = new WebNavigation({
+      getWebContentsById: (tabId) => (tabId === TAB_ID ? disposedContents : undefined),
+      canResolveTabAcrossSessions: () => true,
+    });
+
+    expect(
+      crossingWebNavigation.getFrame(WORKER_SESSION, { tabId: TAB_ID, frameId: 0 }),
     ).toBeNull();
   });
 

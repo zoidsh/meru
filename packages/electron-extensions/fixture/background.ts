@@ -28,6 +28,7 @@ import {
   getChromeRuntime,
   getChromeStorage,
   getChromeTabs,
+  getChromeWebNavigation,
 } from "./chrome";
 
 const workerGlobals = globalThis as unknown as { crypto: { randomUUID: () => string } };
@@ -83,6 +84,8 @@ const runtime = getChromeRuntime();
 
 const tabs = getChromeTabs();
 
+const webNavigation = getChromeWebNavigation();
+
 /**
  * Sends back into the tab the message came from, which is the whole
  * worker-to-page direction: in a shimmed session that tab is in another
@@ -109,6 +112,34 @@ function sendToSender(
       lastError
         ? { status: "error", message: lastError.message ?? "unknown" }
         : { status: "replied", reply },
+    );
+  });
+}
+
+/**
+ * The frame a message came from, as the worker's own
+ * `chrome.webNavigation.getFrame` answers for it. This is the step 1Password's
+ * fill hangs on — it relays an inline-menu click to the frame owning the form
+ * only once `getFrame` has named that frame's parent — and every tab it asks
+ * about is in another session, the worker session holding none of its own.
+ */
+function describeSenderFrame(
+  sender: FixtureMessageSender | undefined,
+  answer: (outcome: WorkerCallOutcome) => void,
+) {
+  const tabId = sender?.tab?.id;
+
+  if (tabId === undefined) {
+    answer({ status: "error", message: "The sender carried no tab" });
+
+    return;
+  }
+
+  webNavigation.getFrame({ tabId, frameId: sender?.frameId ?? 0 }, (frame) => {
+    answer(
+      frame
+        ? { status: "replied", reply: frame }
+        : { status: "error", message: "getFrame answered null" },
     );
   });
 }
@@ -140,6 +171,16 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ type: "send-back-reply", outcome });
       },
     );
+
+    return true;
+  }
+
+  // The worker asking which frame of which tab it is hearing from, which
+  // crosses a session every time. Answers late, so it holds the channel open
+  if (probeMessage?.type === "frame-of-sender") {
+    describeSenderFrame(sender, (outcome) => {
+      sendResponse({ type: "frame-of-sender-reply", outcome });
+    });
 
     return true;
   }
