@@ -78,12 +78,16 @@ async function createExtensionDir(name: string, key?: string) {
 function createExtensions(
   extensionDirs: ConstructorParameters<typeof Extensions>[0]["extensionDirs"],
   logger?: ConstructorParameters<typeof Extensions>[0]["logger"],
+  benignWorkerConsoleErrors?: ConstructorParameters<
+    typeof Extensions
+  >[0]["benignWorkerConsoleErrors"],
 ) {
   return new Extensions({
     extensionDirs,
     facadeScriptPath,
     derivedExtensionsDir: path.join(workDir, "derived"),
     logger,
+    benignWorkerConsoleErrors,
   });
 }
 
@@ -429,17 +433,21 @@ describe("Extensions", () => {
 
     const { session, emitServiceWorkerConsole, serviceWorkerConsoleListeners } = createSession();
 
-    const extensions = createExtensions([await createExtensionDir("one")], {
-      debug: (message, details) => {
-        logs.push({ level: "debug", message, details });
+    const extensions = createExtensions(
+      [await createExtensionDir("one")],
+      {
+        debug: (message, details) => {
+          logs.push({ level: "debug", message, details });
+        },
+        info: (message, details) => {
+          logs.push({ level: "info", message, details });
+        },
+        error: (message, details) => {
+          logs.push({ level: "error", message, details });
+        },
       },
-      info: (message, details) => {
-        logs.push({ level: "info", message, details });
-      },
-      error: (message, details) => {
-        logs.push({ level: "error", message, details });
-      },
-    });
+      ["[LogManager] Failed to send log metrics"],
+    );
 
     await extensions.setupSession(session);
 
@@ -451,6 +459,14 @@ describe("Extensions", () => {
 
     emitServiceWorkerConsole({
       message: "unlock failed",
+      level: 3,
+      sourceUrl: "chrome-extension://aaa/background.js",
+    });
+
+    // A named error, matched on its prefix rather than the whole line: the
+    // retry that writes it is the embedder's own cancel coming back
+    emitServiceWorkerConsole({
+      message: "[LogManager] Failed to send log metrics: <redacted>",
       level: 3,
       sourceUrl: "chrome-extension://aaa/background.js",
     });
@@ -481,6 +497,16 @@ describe("Extensions", () => {
         details: {
           sourceUrl: "chrome-extension://aaa/background.js",
           message: "unlock failed",
+        },
+      },
+      // Named, so the line is still the error the worker wrote and only the
+      // level moves — a shipped log stays clean and development keeps it
+      {
+        level: "debug",
+        message: "Extension service worker error",
+        details: {
+          sourceUrl: "chrome-extension://aaa/background.js",
+          message: "[LogManager] Failed to send log metrics: <redacted>",
         },
       },
     ]);

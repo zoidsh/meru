@@ -27,6 +27,26 @@ const telemetryUrls = curatedExtensions.flatMap(
   (curatedExtension) => curatedExtension.telemetryUrls ?? [],
 );
 
+const benignWorkerConsoleErrors = curatedExtensions.flatMap(
+  (curatedExtension) => curatedExtension.benignWorkerConsoleErrors ?? [],
+);
+
+describe("curated extension benign worker console errors", () => {
+  /*
+   * A prefix is matched with `startsWith`, where the empty string matches
+   * every message: one blank entry, or one trimmed down to a word, would take
+   * every error an extension's worker reports down to debug — and that console
+   * is the only place a worker's failure surfaces at all.
+   */
+  test("every prefix names one line rather than a class of them", () => {
+    for (const benignWorkerConsoleError of benignWorkerConsoleErrors) {
+      expect(benignWorkerConsoleError.trim()).toBe(benignWorkerConsoleError);
+
+      expect(benignWorkerConsoleError.length).toBeGreaterThan(20);
+    }
+  });
+});
+
 describe("curated extension telemetry URLs", () => {
   /*
    * The invariant the whole list rests on: every pattern names one host

@@ -29,6 +29,22 @@ export type CuratedExtension = {
    * take a working password manager with it.
    */
   telemetryUrls?: string[];
+  /**
+   * Error lines the extension's service worker writes that say nothing an
+   * embedder can act on, as prefixes matched against the start of the message.
+   * The worker's console is forwarded to Meru's log, and a line named here
+   * goes out at debug instead of error: still there in development, where the
+   * worker's console is the only trace of what the extension is doing, and off
+   * the disk of every shipped install.
+   *
+   * A prefix rather than the whole line, because the tail is the extension's
+   * own detail — a redacted payload, a request id — and differs line to line.
+   *
+   * Only lines that carry no diagnostic: this is the last place a worker's
+   * failure surfaces, so a prefix wider than the one benign line it was
+   * written for takes real errors down to debug with it.
+   */
+  benignWorkerConsoleErrors?: string[];
 };
 
 /** The 1Password Chrome Web Store id, which app and settings both single out. */
@@ -70,6 +86,14 @@ export const curatedExtensions: CuratedExtension[] = [
       "https://com-1password-prod1.mini.snplow.net/*",
       // Sentry error reporting, initialized as the worker starts
       "https://b5x-sentry.1passwordservices.com/*",
+    ],
+    benignWorkerConsoleErrors: [
+      // 1Password re-arms its log-metrics flush every thirty seconds whatever
+      // happened to the last one, so the forwarder above being canceled costs
+      // two error lines a minute in every shipped log. The line reports Meru's
+      // own decision back to it — nothing to act on, and nothing a user could
+      // do about it — while a worker error that is not this one still matters
+      "[LogManager] Failed to send log metrics",
     ],
   },
 ];
