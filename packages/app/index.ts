@@ -8,7 +8,6 @@ import { config } from "@/config";
 import { downloads } from "@/downloads";
 import { extensionActions } from "@/extension-actions";
 import {
-  clearStaleAccountExtensionData,
   extensions,
   extensionUpdater,
   pruneDerivedExtensionCopies,
@@ -132,9 +131,6 @@ async function init() {
   await pruneInstalledExtensionVersions();
 
   await pruneDerivedExtensionCopies();
-
-  // Before the accounts too, so no session of theirs holds the files open
-  await clearStaleAccountExtensionData();
 
   // Before the accounts, so the one worker is loading while their
   // content-script-only copies come up rather than after them

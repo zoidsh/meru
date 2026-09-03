@@ -360,20 +360,6 @@ export const config = new Store<Config>({
         // @ts-expect-error
         store.delete("verificationCodes.confidence");
       }
-
-      /*
-       * The one extension worker moved to the default session in 3.60.0, so
-       * every account partition of a profile written before it holds a worker
-       * store nothing reads any more — a stale `chrome.storage` and, since only
-       * `chrome.storage` is proxied, a stale IndexedDB that a popup opened in
-       * that account would read directly.
-       *
-       * Scheduled rather than done here: a migration runs synchronously, at the
-       * store's construction, which is before `app.whenReady()` — there is no
-       * session to clear yet and no way to await one. `init` performs it and
-       * puts the flag back.
-       */
-      store.set("extensions.clearStaleAccountData", true);
     },
   },
 });
