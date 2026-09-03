@@ -94,6 +94,15 @@ export const curatedExtensions: CuratedExtension[] = [
       // own decision back to it — nothing to act on, and nothing a user could
       // do about it — while a worker error that is not this one still matters
       "[LogManager] Failed to send log metrics",
+      // A subframe asking its top frame for configuration, and a subframe
+      // telling it to drop an inline button. On the inbox the top frame is
+      // outside the content-script clamp so nothing can answer, and on sign-in
+      // pages the top frame's handler may not have loaded yet — 1Password's
+      // own race, which it catches. Both are deterministic, cost nothing, and
+      // name the request they are, so a real relay fault under a different
+      // request name — `<autofill-item>`, which once was one — still surfaces
+      "[Messaging] Exception while handling request <get-nested-frame-configuration>",
+      "[Messaging] Exception while handling request <remove-inline-button>",
     ],
   },
 ];
