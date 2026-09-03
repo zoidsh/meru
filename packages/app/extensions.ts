@@ -249,8 +249,9 @@ export const extensions = new Extensions({
  * close a cycle. It holds because nothing here is dereferenced while the
  * modules evaluate: this is a hoisted function declaration, and the first call
  * to it is a query from the worker, which is many awaits past the last module
- * body. The guard is for the other end of the same window — an app whose
- * accounts have not been constructed yet has no front view to name.
+ * body. The guards are for the other end of the same window — an app whose
+ * accounts have not been constructed yet has no front view to name — and for
+ * the moments an account is half removed.
  */
 function isActiveTab(contents: WebContents) {
   const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
@@ -259,16 +260,26 @@ function isActiveTab(contents: WebContents) {
     return true;
   }
 
-  const selectedAccount = accounts.instances.size > 0 ? accounts.getSelectedAccount() : undefined;
-
-  if (!selectedAccount) {
+  if (accounts.instances.size === 0) {
     return false;
   }
 
-  const activeView =
-    selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
+  // Resolving the front view throws while an account is being removed: its
+  // tabs are closed and its Gmail view destroyed several awaits before the
+  // config stops naming it as selected. A page with no front view to name is
+  // not active, and saying so keeps the rest of the answer standing — a throw
+  // here would fail the whole query, and a lock broadcast landing in that
+  // window would reach nobody
+  try {
+    const selectedAccount = accounts.getSelectedAccount();
 
-  return activeView.webContents === contents;
+    const activeView =
+      selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
+
+    return activeView.webContents === contents;
+  } catch {
+    return false;
+  }
 }
 
 /**
