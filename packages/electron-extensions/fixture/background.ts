@@ -128,6 +128,39 @@ function sendToSender(
 }
 
 /**
+ * Sends into the sender's tab without naming a frame, which is the shape
+ * 1Password's `get-nested-frame-configuration` relay has: a nested frame asks
+ * the worker something, the worker messages the whole tab, and the answer is
+ * meant to come from the top frame rather than from the frame that asked. The
+ * sender's own `frameId` is deliberately not passed — with it the message
+ * would go back to the asking frame alone, which is the one frame that has no
+ * answer to give.
+ */
+function askTab(
+  sender: FixtureMessageSender | undefined,
+  message: unknown,
+  answer: (outcome: WorkerCallOutcome) => void,
+) {
+  const tabId = sender?.tab?.id;
+
+  if (tabId === undefined) {
+    answer({ status: "error", message: "The sender carried no tab" });
+
+    return;
+  }
+
+  tabs.sendMessage(tabId, message, {}, (reply) => {
+    const lastError = runtime.lastError;
+
+    answer(
+      lastError
+        ? { status: "error", message: lastError.message ?? "unknown" }
+        : { status: "replied", reply },
+    );
+  });
+}
+
+/**
  * Every tab the worker can see, and the one the message came from asked for by
  * id — the two calls a lock broadcast starts with. Natively both are scoped to
  * the worker's own session, which holds no account's tabs, so in a shimmed
@@ -283,6 +316,20 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
       { type: "ping-from-worker", nonce: probeMessage.nonce, workerInstanceId },
       (outcome) => {
         sendResponse({ type: "send-back-reply", outcome });
+      },
+    );
+
+    return true;
+  }
+
+  // The same direction with no frame named, so every frame of the tab hears it
+  // and whichever frame answers is the one that replies. Answers late too
+  if (probeMessage?.type === "ask-tab") {
+    askTab(
+      sender,
+      { type: "answer-if-top", nonce: probeMessage.nonce, workerInstanceId },
+      (outcome) => {
+        sendResponse({ type: "ask-tab-reply", outcome });
       },
     );
 
