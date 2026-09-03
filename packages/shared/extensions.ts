@@ -27,8 +27,11 @@ export const curatedExtensions: CuratedExtension[] = [
   {
     id: ONEPASSWORD_EXTENSION_ID,
     name: "1Password",
+    // Meru only supports what its Google sign-in flows need, so the copy
+    // promises that and nothing else: filling a saved password or passkey to
+    // sign in, and generating a new one on the account pages.
     description:
-      "Password manager that fills logins and signs you in with passkeys stored in your vault.",
+      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey.",
     category: "passwordManager",
     // Sign-in runs on accounts.google.com, and account settings — creating a
     // passkey, changing a password — on myaccount.google.com. Both hosts, not
