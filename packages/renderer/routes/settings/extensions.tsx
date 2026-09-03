@@ -35,7 +35,7 @@ import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
+import { ExternalLinkIcon, FlaskConicalIcon, KeyRoundIcon } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 import { toast } from "sonner";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -288,6 +288,19 @@ function ExtensionItem({
   );
 }
 
+function ExperimentalAlert() {
+  return (
+    <Alert>
+      <FlaskConicalIcon />
+      <AlertTitle>Extensions are in testing</AlertTitle>
+      <AlertDescription>
+        Extension support is still being tested and may not work as reliably as the rest of Meru. To
+        help make it stable, report any issues.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 function PasskeysAlert() {
   if (platform.isMacOS) {
     return (
@@ -443,9 +456,12 @@ export function ExtensionsSettings() {
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
+          <ExperimentalAlert />
           <FieldDescription>
-            Extensions are loaded into every account and take effect after a restart. Meru installs
-            the official extensions from the Chrome Web Store.
+            Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn
+            one on below and Meru installs the official version from the Chrome Web Store.
+            Extensions start after a restart, and every account shares one copy, so you sign in to
+            an extension once.
           </FieldDescription>
           <ConfigSwitchField
             label="Enable extensions"
