@@ -149,6 +149,18 @@ export type ExtensionsOptions = {
    * worker session to speak of — or with an empty list.
    */
   workerSessionBlockedUrls?: string[];
+  /**
+   * Service worker console errors to forward at debug rather than error, as
+   * prefixes matched against the start of the message. An extension retrying
+   * on a timer writes the same failure line forever, and one the embedder has
+   * already accounted for — a request the embedder itself cancels, say — is
+   * noise it would carry in every log it keeps.
+   *
+   * Demoted, never dropped: the worker's console is the only trace of what an
+   * extension is doing, so the line has to stay readable in development.
+   * Without this every worker error is forwarded at error.
+   */
+  benignWorkerConsoleErrors?: string[];
   logger?: ExtensionsLogger;
 };
 
@@ -179,6 +191,8 @@ export class Extensions {
   private workerSessionPagePatterns: string[] | undefined;
 
   private workerSessionBlockedUrls: string[] | undefined;
+
+  private benignWorkerConsoleErrors: string[] | undefined;
 
   private logger: ExtensionsLogger | undefined;
 
@@ -219,6 +233,7 @@ export class Extensions {
     sharedInstance,
     workerSessionPagePatterns,
     workerSessionBlockedUrls,
+    benignWorkerConsoleErrors,
     logger,
   }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
@@ -236,6 +251,8 @@ export class Extensions {
     this.workerSessionPagePatterns = workerSessionPagePatterns;
 
     this.workerSessionBlockedUrls = workerSessionBlockedUrls;
+
+    this.benignWorkerConsoleErrors = benignWorkerConsoleErrors;
 
     this.logger = logger;
 
@@ -547,7 +564,8 @@ export class Extensions {
    * several kilobytes in 1Password's case, which an embedder wants in
    * development and not on the disk of every shipped install. Errors stay at
    * error, since a worker's own report of a failure is the diagnostic the
-   * forwarding exists for.
+   * forwarding exists for — except the ones the embedder named as benign,
+   * which are the same line one level down.
    */
   private pipeServiceWorkerConsole(session: Session) {
     const listener = (_event: ElectronEvent, { message, level, sourceUrl }: MessageDetails) => {
@@ -555,16 +573,41 @@ export class Extensions {
         return;
       }
 
-      if (level >= CONSOLE_ERROR_LEVEL) {
-        this.logger?.error("Extension service worker error", { sourceUrl, message });
-      } else {
+      if (level < CONSOLE_ERROR_LEVEL) {
         this.logger?.debug("Extension service worker log", { sourceUrl, message });
+
+        return;
       }
+
+      // Still reported as the error the worker called it, so development reads
+      // what the worker actually wrote rather than a line dressed up as
+      // chatter — only the level moves
+      if (this.isBenignWorkerConsoleError(message)) {
+        this.logger?.debug("Extension service worker error", { sourceUrl, message });
+
+        return;
+      }
+
+      this.logger?.error("Extension service worker error", { sourceUrl, message });
     };
 
     this.serviceWorkerConsoleListeners.set(session, listener);
 
     session.serviceWorkers.on("console-message", listener);
+  }
+
+  /**
+   * Whether a worker's error line is one the embedder already accounted for.
+   * A prefix rather than the whole line, because what follows it is the
+   * extension's own detail — a redacted payload, a request id — and differs
+   * line to line.
+   */
+  private isBenignWorkerConsoleError(message: string) {
+    return Boolean(
+      this.benignWorkerConsoleErrors?.some((benignWorkerConsoleError) =>
+        message.startsWith(benignWorkerConsoleError),
+      ),
+    );
   }
 
   /**

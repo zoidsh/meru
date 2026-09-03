@@ -222,6 +222,16 @@ export const extensions = new Extensions({
   workerSessionBlockedUrls: curatedExtensions.flatMap(
     (curatedExtension) => curatedExtension.telemetryUrls ?? [],
   ),
+  // What the block above leaves behind: 1Password re-arms its log-metrics
+  // flush every thirty seconds however the last one went, and each canceled
+  // flush writes an error line the worker console forwarder would otherwise
+  // put in the shipped log twice a minute. Demoted rather than dropped, so
+  // development still sees the only trace there is of what the worker is
+  // doing, and read off the same catalog entries as the blocked hosts, so the
+  // line and the cancel that causes it stay in one place.
+  benignWorkerConsoleErrors: curatedExtensions.flatMap(
+    (curatedExtension) => curatedExtension.benignWorkerConsoleErrors ?? [],
+  ),
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
