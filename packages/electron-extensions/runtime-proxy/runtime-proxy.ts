@@ -42,6 +42,7 @@ import {
   parseStorageChangedReport,
   StorageAccessLevels,
 } from "./storage-proxy";
+import { WorkerTabs } from "./worker-tabs";
 import { createWorkerSender, WorkerToPage } from "./worker-to-page";
 
 type RelayJobBase = {
@@ -155,6 +156,19 @@ export type RuntimeProxyOptions = {
   waitForContextMs?: number;
   /** How a tab id resolves to the page behind it, for the worker's own calls. */
   getWebContentsById?: (tabId: number) => WebContents | undefined;
+  /**
+   * Whether a session took the content-script-only role, which is who the
+   * worker's own `tabs.query` and `tabs.get` answer for besides its own
+   * session. Without it the worker sees its own session alone, which is what
+   * Chromium already gives it.
+   */
+  isShimmedSession?: (session: Session) => boolean;
+  /**
+   * Whether a page is the one its window is showing, which is Chrome's `active`
+   * and only the embedder knows; `worker-tabs.ts` says why Electron's
+   * focus-based answer is the wrong default for it.
+   */
+  isActiveTab?: (contents: WebContents) => boolean;
 };
 
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
@@ -191,7 +205,10 @@ const DEFAULT_IN_FLIGHT_TIMEOUT_MS = 5 * 60_000;
  * `runtime.sendMessage` broadcast the worker starts itself — reaches a shimmed
  * context over the receive stream it parks at the bridge; `page-stream.ts`
  * keeps those and `worker-to-page.ts` carries the messages, while the ports
- * stay here with the ones a page opened.
+ * stay here with the ones a page opened. The worker's own `tabs.query` and
+ * `tabs.get` are answered from main too, by `worker-tabs.ts`, for the same
+ * reason: Chromium scopes both to the worker's session, where no account tab
+ * lives.
  */
 export class RuntimeProxy {
   private logger: ExtensionsLogger | undefined;
@@ -240,6 +257,9 @@ export class RuntimeProxy {
 
   private workerToPage: WorkerToPage;
 
+  /** The worker's own `tabs.query` and `tabs.get`, answered from here. */
+  private workerTabs: WorkerTabs;
+
   /** What each extension's worker last said about who may reach an area. */
   private storageAccessLevels = new StorageAccessLevels();
 
@@ -251,6 +271,8 @@ export class RuntimeProxy {
     maxDeliveryAttempts = DEFAULT_MAX_DELIVERY_ATTEMPTS,
     inFlightTimeoutMs = DEFAULT_IN_FLIGHT_TIMEOUT_MS,
     waitForContextMs,
+    isShimmedSession = () => false,
+    isActiveTab,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
@@ -270,6 +292,13 @@ export class RuntimeProxy {
       getWebContentsById,
       logger,
       deliveryTimeoutMs: inFlightTimeoutMs,
+    });
+
+    this.workerTabs = new WorkerTabs({
+      getWorkerSession: () => this.workerSession,
+      isShimmedSession,
+      isActiveTab,
+      getWebContentsById,
     });
 
     // A bound context going away takes its share of a worker-opened port with
@@ -430,6 +459,8 @@ export class RuntimeProxy {
 
     // The rest of what the worker starts, and the streams it reaches pages on
     this.workerToPage.registerRoutes(bridge);
+
+    this.workerTabs.registerRoutes(bridge);
 
     this.pageStreams.registerRoutes(
       bridge,

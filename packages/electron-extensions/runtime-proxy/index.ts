@@ -1,4 +1,4 @@
-import type { Session } from "electron";
+import type { Session, WebContents } from "electron";
 import type { SharedExtensionInstance } from "../extensions";
 import { RuntimeProxy } from "./runtime-proxy";
 import type { GetWebContentsFromFrame } from "./sender";
@@ -28,6 +28,19 @@ export type CreateSharedExtensionInstanceOptions = {
   getWorkerSession: () => Session;
   /** How a caller frame resolves to its hosting tab for sender reconstruction. */
   getWebContentsFromFrame?: GetWebContentsFromFrame;
+  /**
+   * Whether a page is the one its window is showing, which is what Chrome's
+   * `tabs.Tab.active` means and what `tabs.query({active: true})` filters on.
+   * Only the embedder knows: it owns the surface a page is drawn in, and
+   * Electron's own answer is `isFocused`, which is a different question —
+   * 1Password unlocks behind a Touch ID prompt raised by its desktop app, so
+   * at the moment its worker asks for the active tab none of Meru's views is
+   * focused and a focus-based answer would send the unlock to nobody.
+   *
+   * Without it the worker hears Electron's answer, which is honest and narrow
+   * rather than wrong.
+   */
+  isActiveTab?: (contents: WebContents) => boolean;
 };
 
 /**
@@ -54,6 +67,7 @@ export function createSharedExtensionInstance({
   relayScriptPath,
   getWorkerSession,
   getWebContentsFromFrame,
+  isActiveTab,
 }: CreateSharedExtensionInstanceOptions): SharedExtensionInstance {
   let proxy: RuntimeProxy | undefined;
 
@@ -63,7 +77,15 @@ export function createSharedExtensionInstance({
 
   return {
     install({ bridge, logger }) {
-      proxy = new RuntimeProxy({ logger, getWebContentsFromFrame });
+      proxy = new RuntimeProxy({
+        logger,
+        getWebContentsFromFrame,
+        // The same bookkeeping `canResolveTabAcrossSessions` answers from, for
+        // the same reason: which sessions are shimmed is what `adoptSession`
+        // already keeps, and a second copy of it would be free to drift
+        isShimmedSession: (session) => shimmedSessions.has(session),
+        isActiveTab,
+      });
 
       proxy.registerRoutes(bridge);
     },

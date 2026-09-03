@@ -71,6 +71,8 @@ export const RUNTIME_PROXY_PATHS = {
   workerSendToTab: "/runtime-proxy/worker-send-to-tab",
   workerConnectToTab: "/runtime-proxy/worker-connect-to-tab",
   workerBroadcast: "/runtime-proxy/worker-broadcast",
+  workerQueryTabs: "/runtime-proxy/worker-query-tabs",
+  workerGetTab: "/runtime-proxy/worker-get-tab",
 } as const;
 
 /**
@@ -231,6 +233,12 @@ export type RuntimeProxyTab = {
   groupId: number;
   selected: boolean;
   audible: boolean;
+  /**
+   * Chrome's own shape, minus the `reason` it fills when something other than
+   * the user did the muting: Electron reports whether a page is muted and never
+   * says who asked.
+   */
+  mutedInfo: { muted: boolean };
   discarded: boolean;
   autoDiscardable: boolean;
 };
@@ -402,4 +410,44 @@ export type RuntimeProxyWorkerSendToTabResult =
 export type RuntimeProxyWorkerConnectToTabResult =
   | RuntimeProxyConnectResult
   | { status: "ownSession" }
+  | { status: "noTarget"; error: string };
+
+/**
+ * What a worker's `chrome.tabs.query` filters on, which is what Electron's own
+ * query honors and no more: `windowId`, `currentWindow`, `lastFocusedWindow`,
+ * `index`, `pinned`, `status`, `groupId` and the rest are ignored there, and
+ * ignoring them here keeps one answer rather than two. The facade shows one
+ * window anyway (`windows` answers a single fake window, id 1), so a window
+ * filter has nothing to narrow.
+ *
+ * `url` is one or more Chrome match patterns and `title` a glob, as Chrome
+ * documents them; both are matched against what the page is showing now.
+ */
+export type RuntimeProxyTabQueryInfo = {
+  active?: boolean;
+  audible?: boolean;
+  muted?: boolean;
+  url?: string | string[];
+  title?: string;
+};
+
+export type RuntimeProxyWorkerQueryTabsRequest = {
+  queryInfo?: RuntimeProxyTabQueryInfo;
+};
+
+export type RuntimeProxyWorkerQueryTabsResult = {
+  tabs: RuntimeProxyTab[];
+};
+
+export type RuntimeProxyWorkerGetTabRequest = {
+  tabId: unknown;
+};
+
+/**
+ * A tab the worker asked for by id, or Chrome's own error for one this app is
+ * not showing — which is what an id of a session the worker neither keeps nor
+ * shims reads as, the same line `tabs.sendMessage` draws.
+ */
+export type RuntimeProxyWorkerGetTabResult =
+  | { status: "tab"; tab: RuntimeProxyTab }
   | { status: "noTarget"; error: string };

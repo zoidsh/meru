@@ -1,9 +1,17 @@
-import { describe, expect, test } from "bun:test";
-import type { Session } from "electron";
+import { describe, expect, mock, test } from "bun:test";
+import type { Session, WebContents } from "electron";
+import type { ExtensionBridge, ExtensionBridgeHandler } from "../bridge/bridge";
+import { type RuntimeProxyWorkerQueryTabsResult, RUNTIME_PROXY_PATHS } from "./bridge-protocol";
 import { createSharedExtensionInstance } from "./index";
 
+const EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
 function createSession(label: string) {
-  return { label } as unknown as Session;
+  return {
+    label,
+    // What `setWorkerSession` attaches its worker-liveness listener to
+    serviceWorkers: { on: () => undefined, removeListener: () => undefined },
+  } as unknown as Session;
 }
 
 /**
@@ -198,5 +206,88 @@ describe("createSharedExtensionInstance tab resolution across sessions", () => {
     sharedInstance.adoptSession(accountSession);
 
     expect(sharedInstance.canResolveTabAcrossSessions(workerSession, accountSession)).toBe(false);
+  });
+});
+
+/*
+ * The worker's own `tabs.query` and `tabs.get` are answered from main for the
+ * worker's session and the sessions it shims, and the shared instance is what
+ * says which those are. It is the same bookkeeping
+ * `canResolveTabAcrossSessions` answers from, so what is worth holding here is
+ * that the predicate handed to the proxy is that bookkeeping rather than a copy
+ * of it: a session adopted after the proxy was built is listed, and a session
+ * torn down stops being.
+ */
+describe("createSharedExtensionInstance tab listing across sessions", () => {
+  function createContents(contentsId: number, session: Session, url: string) {
+    return {
+      id: contentsId,
+      session,
+      getURL: () => url,
+      getTitle: () => "A page",
+      isDestroyed: () => false,
+      isLoading: () => false,
+      isFocused: () => false,
+      isCurrentlyAudible: () => false,
+      isAudioMuted: () => false,
+    } as unknown as WebContents;
+  }
+
+  test("lists a session from the moment it is adopted until it is torn down", async () => {
+    const workerSession = createSession("worker");
+
+    const accountSession = createSession("account");
+
+    const allContents = [
+      createContents(9, workerSession, "https://127.0.0.1/worker-page"),
+      createContents(7, accountSession, "https://mail.google.com/mail/u/0/"),
+    ];
+
+    // `WorkerTabs` resolves Electron's own list at call time, which is what
+    // lets a test hand it one
+    mock.module("electron", () => ({
+      webContents: {
+        getAllWebContents: () => allContents,
+        fromId: (contentsId: number) => allContents.find((contents) => contents.id === contentsId),
+      },
+    }));
+
+    const routes = new Map<string, ExtensionBridgeHandler>();
+
+    const bridge = {
+      handle: (pathName: string, handler: ExtensionBridgeHandler) => {
+        routes.set(pathName, handler);
+      },
+    } as unknown as ExtensionBridge;
+
+    const sharedInstance = createRoleAssigner(workerSession);
+
+    sharedInstance.install({ bridge });
+
+    sharedInstance.adoptSession(workerSession);
+
+    const queryTabs = async () => {
+      const response = await routes.get(RUNTIME_PROXY_PATHS.workerQueryTabs)?.({
+        session: workerSession,
+        extensionId: EXTENSION_ID,
+        senderFrame: undefined,
+        body: {},
+        headers: {},
+      });
+
+      const result = (await response?.json()) as RuntimeProxyWorkerQueryTabsResult;
+
+      return result.tabs.map((tab) => tab.id);
+    };
+
+    expect(await queryTabs()).toEqual([9]);
+
+    sharedInstance.adoptSession(accountSession);
+
+    expect(await queryTabs()).toEqual([9, 7]);
+
+    sharedInstance.teardownSession(accountSession);
+
+    expect(await queryTabs()).toEqual([9]);
   });
 });
