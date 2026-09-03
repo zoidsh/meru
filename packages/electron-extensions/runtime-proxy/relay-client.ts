@@ -4,6 +4,7 @@ import { getLastErrorMessage, withLastError } from "../facade/lib/last-error";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   MAX_RUNTIME_PROXY_FRAME_BYTES,
+  noTabError,
   PORT_CLOSED_ERROR,
   RECEIVING_END_ERROR,
   RUNTIME_PROXY_PATHS,
@@ -11,7 +12,11 @@ import {
   type RuntimeProxyJob,
   type RuntimeProxySender,
   type RuntimeProxySendMessageResult,
+  type RuntimeProxyTab,
+  type RuntimeProxyTabQueryInfo,
   type RuntimeProxyWorkerConnectToTabResult,
+  type RuntimeProxyWorkerGetTabResult,
+  type RuntimeProxyWorkerQueryTabsResult,
   type RuntimeProxyWorkerSendToTabResult,
 } from "./bridge-protocol";
 import { createCleanEndBackoff, DEFAULT_CLEAN_END_WINDOW_MS } from "./clean-end-backoff";
@@ -441,6 +446,35 @@ export function createRelayClient({
   };
 
   /**
+   * The same, for a call whose answer is a value rather than one of the three
+   * message statuses: a callback gets the value, with `lastError` set around it
+   * when the call failed the way Chrome sets one, and a call without a callback
+   * gets the promise Chrome's promise form returns.
+   */
+  const answerValue = <Value>(
+    runtime: ChromeNamespace,
+    result: Promise<Value>,
+    callback: ((value: Value | undefined) => void) | undefined,
+  ) => {
+    if (!callback) {
+      return result;
+    }
+
+    result.then(
+      (value) => {
+        callback(value);
+      },
+      (error: Error) => {
+        withLastError(runtime, error.message, () => {
+          callback(undefined);
+        });
+      },
+    );
+
+    return undefined;
+  };
+
+  /**
    * `chrome.runtime.sendMessage` with no target extension: Chrome delivers it
    * to every frame of the extension except the sender, which here is both the
    * worker's own session — natively, where Chromium still does it — and the
@@ -533,6 +567,81 @@ export function createRelayClient({
       };
 
       return answer(runtime, deliver(), callback);
+    };
+
+  /**
+   * `chrome.tabs.query`, which natively lists the tabs of the worker's own
+   * session and no others: Chromium filters its WebContents list by the browser
+   * context the extension is loaded into, and the session the one worker runs
+   * in holds no account's tabs. 1Password's lock and unlock reach content
+   * scripts by querying the tabs and messaging each of them, so an empty answer
+   * leaves every account page believing the vault is still unlocked.
+   *
+   * The native call is not made at all, where `tabs.sendMessage` falls through
+   * to it for the worker's own session. Delivery there is Chromium's and must
+   * stay Chromium's; a list is not, and answering the worker's own session from
+   * main too is what keeps one `active` semantic — the embedder's, rather than
+   * Chromium's `IsFocused` for some tabs and the embedder's for the rest — and
+   * one ordering across the whole answer.
+   */
+  const createProxiedTabsQuery =
+    (runtime: ChromeNamespace) =>
+    (...callArguments: unknown[]) => {
+      const callback =
+        typeof callArguments.at(-1) === "function"
+          ? (callArguments.pop() as (tabs: RuntimeProxyTab[] | undefined) => void)
+          : undefined;
+
+      const [queryInfo] = callArguments as [RuntimeProxyTabQueryInfo | undefined];
+
+      const query = postForResult<RuntimeProxyWorkerQueryTabsResult>(
+        RUNTIME_PROXY_PATHS.workerQueryTabs,
+        { queryInfo },
+      )
+        .then((result) => result.tabs ?? [])
+        // A query has no `lastError` for "no tabs" in Chrome, so a bridge that
+        // refused or went away answers the way a browser showing nothing does
+        .catch(() => []);
+
+      return answerValue(runtime, query, callback);
+    };
+
+  /**
+   * `chrome.tabs.get`, scoped natively the same way and answered from main for
+   * the same reason. An id of a session main neither keeps nor shims comes back
+   * as Chrome's own "no tab with id", which is also what an unreachable bridge
+   * reads as.
+   */
+  const createProxiedTabsGet =
+    (runtime: ChromeNamespace) =>
+    (...callArguments: unknown[]) => {
+      const callback =
+        typeof callArguments.at(-1) === "function"
+          ? (callArguments.pop() as (tab: RuntimeProxyTab | undefined) => void)
+          : undefined;
+
+      const [tabId] = callArguments as [number];
+
+      const get = async () => {
+        let result: RuntimeProxyWorkerGetTabResult;
+
+        try {
+          result = await postForResult<RuntimeProxyWorkerGetTabResult>(
+            RUNTIME_PROXY_PATHS.workerGetTab,
+            { tabId },
+          );
+        } catch {
+          throw new Error(noTabError(tabId));
+        }
+
+        if (result.status !== "tab") {
+          throw new Error(result.error);
+        }
+
+        return result.tab;
+      };
+
+      return answerValue(runtime, get(), callback);
     };
 
   /**
@@ -644,9 +753,10 @@ export function createRelayClient({
     },
 
     /**
-     * Shadows `tabs.sendMessage` and `tabs.connect` of one extension API
-     * object, which natively reach only the tabs of the worker's own session.
-     * Everything else on `chrome.tabs` stays as Electron made it.
+     * Shadows `tabs.sendMessage`, `tabs.connect`, `tabs.query` and `tabs.get`
+     * of one extension API object, all four of which natively see only the tabs
+     * of the worker's own session. Everything else on `chrome.tabs` stays as
+     * Electron made it.
      */
     wrapTabs(extensionApi: ChromeNamespace) {
       const tabs = extensionApi.tabs as ChromeNamespace | undefined;
@@ -667,6 +777,12 @@ export function createRelayClient({
       );
 
       tabs.connect = createProxiedTabsConnect(getNativeMethod(tabs, "connect"));
+
+      // No native method is captured for these two: main answers for the
+      // worker's own session as well, so there is nothing to fall through to
+      tabs.query = createProxiedTabsQuery(runtime);
+
+      tabs.get = createProxiedTabsGet(runtime);
     },
 
     /** Parks the job stream at the bridge, and keeps it parked. */
