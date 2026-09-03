@@ -217,6 +217,9 @@ export const extensions = new Extensions({
     getWorkerSession: () => session.defaultSession,
   }),
   logger: {
+    debug: (message, details) => {
+      log.debug(message, details);
+    },
     info: (message, details) => {
       log.info(message, details);
     },

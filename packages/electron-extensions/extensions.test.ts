@@ -325,6 +325,7 @@ describe("Extensions", () => {
     // Chromium loads both copies under the one id, where the second load's
     // storage clear drops the service worker the first just registered
     await createExtensions([firstExtensionDir, secondExtensionDir], {
+      debug: () => {},
       info: (message, details) => {
         loggedInfo.push({ message, details });
       },
@@ -404,6 +405,9 @@ describe("Extensions", () => {
     const { session, emitServiceWorkerConsole, serviceWorkerConsoleListeners } = createSession();
 
     const extensions = createExtensions([await createExtensionDir("one")], {
+      debug: (message, details) => {
+        logs.push({ level: "debug", message, details });
+      },
       info: (message, details) => {
         logs.push({ level: "info", message, details });
       },
@@ -439,7 +443,7 @@ describe("Extensions", () => {
 
     expect(consoleLogs).toEqual([
       {
-        level: "info",
+        level: "debug",
         message: "Extension service worker log",
         details: {
           sourceUrl: "chrome-extension://aaa/background.js",
@@ -494,6 +498,7 @@ describe("Extensions", () => {
     const { session } = createSession();
 
     const extensions = createExtensions([brokenExtensionDir, await createExtensionDir("one")], {
+      debug: () => {},
       info: () => {},
       error: (_message, details) => {
         loggedErrors.push(details);
@@ -515,6 +520,7 @@ describe("Extensions", () => {
     await mkdir(extensionDir);
 
     const extensions = createExtensions([extensionDir], {
+      debug: () => {},
       info: () => {},
       error: () => {},
     });
@@ -648,6 +654,7 @@ describe("Extensions", () => {
     const { session } = createSession();
 
     const extensions = createExtensions([await createExtensionDir("one")], {
+      debug: () => {},
       info: () => {},
       error: (_message, details) => {
         loggedErrors.push(details);
@@ -704,6 +711,7 @@ describe("Extensions", () => {
     });
 
     const extensions = createExtensions([await createExtensionDir("one")], {
+      debug: () => {},
       info: () => {},
       error: (_message, details) => {
         loggedErrors.push(details);
@@ -763,6 +771,7 @@ describe("Extensions", () => {
     const secondSession = createSession({ loadExtension });
 
     const extensions = createExtensions([await createExtensionDir("one")], {
+      debug: () => {},
       info: () => {},
       error: () => {},
     });
@@ -1116,6 +1125,7 @@ describe("the shared instance's worker session", () => {
       workerSessionPagePatterns: ["http://localhost/*"],
       ...options,
       logger: {
+        debug: () => undefined,
         info: () => undefined,
         error: (message, details) => {
           loggedErrors.push({ message, details });
@@ -1311,6 +1321,7 @@ describe("the shared instance's worker session", () => {
       [await createExtensionDir("one")],
       await createSharedInstance(workerSession.session),
       {
+        debug: () => undefined,
         info: () => undefined,
         error: (message) => {
           loggedErrors.push(message);
@@ -1354,6 +1365,7 @@ describe("the shared instance's worker session", () => {
       [await createExtensionDir("one")],
       await createSharedInstance(workerSession.session),
       {
+        debug: () => undefined,
         info: () => undefined,
         error: (message) => {
           loggedErrors.push(message);
@@ -1379,6 +1391,7 @@ describe("the shared instance's worker session", () => {
       [await createExtensionDir("one")],
       await createSharedInstance(workerSession.session),
       {
+        debug: () => undefined,
         info: () => undefined,
         error: (message) => {
           loggedErrors.push(message);

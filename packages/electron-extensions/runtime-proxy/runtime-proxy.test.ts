@@ -965,7 +965,13 @@ describe("RuntimeProxy", () => {
     const logs: string[] = [];
 
     const harness = createHarness(
-      { logger: { info: (message) => logs.push(message), error: () => undefined } },
+      {
+        logger: {
+          debug: () => undefined,
+          info: (message) => logs.push(message),
+          error: () => undefined,
+        },
+      },
       { adoptWorkerSession: false },
     );
 

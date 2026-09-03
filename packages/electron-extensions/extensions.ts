@@ -469,6 +469,13 @@ export class Extensions {
    * declined to fill, say — surfaces nowhere unless it is forwarded to the
    * logger. Every worker on a `chrome-extension://` origin is one this loader
    * put there, since nothing else loads extensions into the session.
+   *
+   * Everything below an error goes out at debug: it is the extension's own
+   * chatter, a lock poll every fifteen seconds and feature-flag dumps of
+   * several kilobytes in 1Password's case, which an embedder wants in
+   * development and not on the disk of every shipped install. Errors stay at
+   * error, since a worker's own report of a failure is the diagnostic the
+   * forwarding exists for.
    */
   private pipeServiceWorkerConsole(session: Session) {
     const listener = (_event: ElectronEvent, { message, level, sourceUrl }: MessageDetails) => {
@@ -479,7 +486,7 @@ export class Extensions {
       if (level >= CONSOLE_ERROR_LEVEL) {
         this.logger?.error("Extension service worker error", { sourceUrl, message });
       } else {
-        this.logger?.info("Extension service worker log", { sourceUrl, message });
+        this.logger?.debug("Extension service worker log", { sourceUrl, message });
       }
     };
 
