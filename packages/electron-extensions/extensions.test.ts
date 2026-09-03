@@ -124,6 +124,12 @@ function createSession({
 
   const beforeSendHeadersFilters: unknown[] = [];
 
+  const beforeRequestFilters: unknown[] = [];
+
+  let beforeRequestListener:
+    | ((details: unknown, callback: (response: unknown) => void) => void)
+    | undefined;
+
   let requestHandler: ((request: GlobalRequest) => Promise<Response>) | undefined;
 
   const serviceWorkerConsoleListeners = new Set<
@@ -159,6 +165,14 @@ function createSession({
       onBeforeSendHeaders: (filterOrListener: unknown) => {
         beforeSendHeadersFilters.push(filterOrListener);
       },
+      onBeforeRequest: (
+        filterOrListener: unknown,
+        listener?: (details: unknown, callback: (response: unknown) => void) => void,
+      ) => {
+        beforeRequestFilters.push(filterOrListener);
+
+        beforeRequestListener = listener;
+      },
     },
     serviceWorkers: {
       on: (
@@ -182,6 +196,17 @@ function createSession({
     handledSchemes,
     sessionEvents,
     beforeSendHeadersFilters,
+    beforeRequestFilters,
+    /** What the session's `onBeforeRequest` listener answers for a request. */
+    callBeforeRequest: (details: Record<string, unknown>) => {
+      let response: unknown;
+
+      beforeRequestListener?.(details, (listenerResponse) => {
+        response = listenerResponse;
+      });
+
+      return response;
+    },
     serviceWorkerConsoleListeners,
     emitServiceWorkerConsole: (messageDetails: Record<string, unknown>) => {
       for (const listener of serviceWorkerConsoleListeners) {
@@ -881,6 +906,9 @@ describe("the shared instance's worker session", () => {
     extensionDirs: ConstructorParameters<typeof Extensions>[0]["extensionDirs"],
     sharedInstance: ConstructorParameters<typeof Extensions>[0]["sharedInstance"],
     logger?: ConstructorParameters<typeof Extensions>[0]["logger"],
+    workerSessionBlockedUrls?: ConstructorParameters<
+      typeof Extensions
+    >[0]["workerSessionBlockedUrls"],
   ) {
     return new Extensions({
       extensionDirs,
@@ -888,6 +916,7 @@ describe("the shared instance's worker session", () => {
       derivedExtensionsDir: path.join(workDir, "derived"),
       sharedInstance,
       logger,
+      workerSessionBlockedUrls,
     });
   }
 
@@ -988,6 +1017,80 @@ describe("the shared instance's worker session", () => {
     expect(workerSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
 
     expect(accountSession.handledSchemes).toEqual([EXTENSION_BRIDGE_SCHEME]);
+  });
+
+  /*
+   * The worker's own traffic never passes the embedder's per-account blocker,
+   * so a block on it can only live in the worker session — and it has to be
+   * the worker session alone, since an account session's one
+   * `onBeforeRequest` belongs to the embedder.
+   */
+  test("blocked URLs are canceled in the worker session and nowhere else", async () => {
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
+    const blockedUrls = ["https://client-log-forwarder.1password.com/*"];
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one"), await createExtensionDir("two")],
+      await createSharedInstance(workerSession.session),
+      undefined,
+      blockedUrls,
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(accountSession.session);
+
+    // One filtered listener however many extensions the session loaded, and
+    // the filter is the embedder's list verbatim: the listener itself matches
+    // nothing
+    expect(workerSession.beforeRequestFilters).toEqual([{ urls: blockedUrls }]);
+
+    expect(accountSession.beforeRequestFilters).toEqual([]);
+
+    expect(
+      workerSession.callBeforeRequest({
+        url: "https://client-log-forwarder.1password.com/twirp",
+      }),
+    ).toEqual({ cancel: true });
+
+    extensions.teardownSession(workerSession.session);
+
+    // Cleared rather than left behind, the way the bridge's listener is
+    expect(workerSession.beforeRequestFilters).toEqual([{ urls: blockedUrls }, null]);
+  });
+
+  /*
+   * An embedder that names nothing to block gets no listener at all, so the
+   * worker session's one `onBeforeRequest` is still there to be taken.
+   */
+  test("no blocked URLs attaches no listener to any session", async () => {
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+      undefined,
+      [],
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(accountSession.session);
+
+    expect(workerSession.beforeRequestFilters).toEqual([]);
+
+    expect(accountSession.beforeRequestFilters).toEqual([]);
+
+    extensions.teardownSession(workerSession.session);
+
+    // Nothing was attached, so nothing is cleared — a `null` here would be the
+    // loader clearing a listener it never put on
+    expect(workerSession.beforeRequestFilters).toEqual([]);
   });
 
   /*

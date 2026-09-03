@@ -136,6 +136,19 @@ export type ExtensionsOptions = {
    * checked and nothing is said.
    */
   workerSessionPagePatterns?: string[];
+  /**
+   * Match patterns whose requests are canceled in the worker session, before
+   * they leave the machine. An extension's service worker runs there rather
+   * than in an account session, so whatever the embedder blocks per account
+   * never sees a single request the worker makes, and this is the only place a
+   * block on the worker's own traffic can go.
+   *
+   * The account sessions are deliberately left alone: a session takes exactly
+   * one `onBeforeRequest` listener, and in an account session that one is the
+   * embedder's. Nothing is attached without a shared instance — there being no
+   * worker session to speak of — or with an empty list.
+   */
+  workerSessionBlockedUrls?: string[];
   logger?: ExtensionsLogger;
 };
 
@@ -165,6 +178,8 @@ export class Extensions {
 
   private workerSessionPagePatterns: string[] | undefined;
 
+  private workerSessionBlockedUrls: string[] | undefined;
+
   private logger: ExtensionsLogger | undefined;
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
@@ -190,6 +205,9 @@ export class Extensions {
     (event: ElectronEvent, messageDetails: MessageDetails) => void
   >();
 
+  /** The sessions carrying the cancel listener, to clear it from again. */
+  private blockedUrlSessions = new Set<Session>();
+
   constructor({
     extensionDirs,
     facadeScriptPath,
@@ -200,6 +218,7 @@ export class Extensions {
     shouldWakeWorkerForAlarm,
     sharedInstance,
     workerSessionPagePatterns,
+    workerSessionBlockedUrls,
     logger,
   }: ExtensionsOptions) {
     this.extensionDirs = extensionDirs;
@@ -215,6 +234,8 @@ export class Extensions {
     this.sharedInstance = sharedInstance;
 
     this.workerSessionPagePatterns = workerSessionPagePatterns;
+
+    this.workerSessionBlockedUrls = workerSessionBlockedUrls;
 
     this.logger = logger;
 
@@ -346,6 +367,8 @@ export class Extensions {
 
     const sharedInstanceDerive = this.sharedInstance?.adoptSession(session);
 
+    this.blockWorkerSessionUrls(session, sharedInstanceDerive);
+
     for (const extensionDir of extensionDirs) {
       try {
         const { derivedDir, bridgeToken, extensionId } = await this.deriveExtension(
@@ -384,6 +407,55 @@ export class Extensions {
     }
 
     this.emitActionsChanged(session);
+  }
+
+  /**
+   * Cancels the requests the embedder named, in the worker session and nowhere
+   * else. An extension's service worker runs there rather than in an account
+   * session, so it sits outside whatever the embedder blocks per account, and
+   * this listener is the only thing standing between the worker and the
+   * network.
+   *
+   * `onBeforeRequest` rather than the `onBeforeSendHeaders` the bridge takes:
+   * a session holds exactly one listener per event, and the worker session is
+   * the embedder's own, where nothing else wants this one. The account
+   * sessions are left alone by the same arithmetic — there the one
+   * `onBeforeRequest` is the embedder's own blocker.
+   *
+   * A cancel and nothing more: the request fails in about a millisecond with
+   * `net::ERR_BLOCKED_BY_CLIENT`, before DNS, TCP or TLS, and the worker sees
+   * the `TypeError` its own fetch would have seen from any other failure.
+   * Answering it instead is not on offer — a `data:` redirect from here aborts
+   * the request rather than resolving it — and would buy nothing anyway, since
+   * an extension retrying on a timer retries whatever it is told.
+   *
+   * The filter does every bit of the matching, so the listener itself parses
+   * no URL: a pattern the embedder got wrong is a pattern that matches
+   * nothing, not a listener that decides.
+   */
+  private blockWorkerSessionUrls(
+    session: Session,
+    sharedInstanceDerive: SharedInstanceDeriveOptions | undefined,
+  ) {
+    if (sharedInstanceDerive?.role !== "worker" || !this.workerSessionBlockedUrls?.length) {
+      return;
+    }
+
+    this.blockedUrlSessions.add(session);
+
+    session.webRequest.onBeforeRequest(
+      { urls: this.workerSessionBlockedUrls },
+      (_details, callback) => {
+        callback({ cancel: true });
+      },
+    );
+
+    // Once, and with the patterns, so that the log says why those requests
+    // fail rather than leaving the extension's own error line to be read as a
+    // network fault
+    this.logger?.info("Blocking extension telemetry in the worker session", {
+      urls: this.workerSessionBlockedUrls,
+    });
   }
 
   /**
@@ -552,6 +624,10 @@ export class Extensions {
     this.actionsBySession.delete(session);
 
     this.bridge.teardownSession(session);
+
+    if (this.blockedUrlSessions.delete(session)) {
+      session.webRequest.onBeforeRequest(null);
+    }
 
     this.nativeMessaging.teardownSession(session);
 

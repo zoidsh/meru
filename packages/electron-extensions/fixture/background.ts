@@ -31,7 +31,10 @@ import {
   getChromeWebNavigation,
 } from "./chrome";
 
-const workerGlobals = globalThis as unknown as { crypto: { randomUUID: () => string } };
+const workerGlobals = globalThis as unknown as {
+  crypto: { randomUUID: () => string };
+  fetch: (url: string, init: { method: string; mode: string; body: string }) => Promise<unknown>;
+};
 
 const workerInstanceId = workerGlobals.crypto.randomUUID();
 
@@ -63,6 +66,7 @@ type ProbeMessage = {
   nonce?: string;
   key?: string;
   value?: unknown;
+  url?: string;
 };
 
 /**
@@ -212,6 +216,26 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
     storage.local.set({ [key]: value }, () => {
       sendResponse({ type: "write-storage-reply", key });
     });
+
+    return true;
+  }
+
+  /*
+   * The worker reaching the network itself, which is the one thing only it can
+   * do: its requests are made in the session it runs in, where the embedder's
+   * per-account blocking never applies. `no-cors` because the fixture asks for
+   * no host permissions — the response is opaque either way, and what is being
+   * probed is whether the request went out at all. This listener answers late.
+   */
+  if (probeMessage?.type === "fetch-url" && typeof probeMessage.url === "string") {
+    workerGlobals.fetch(probeMessage.url, { method: "POST", mode: "no-cors", body: "{}" }).then(
+      () => {
+        sendResponse({ type: "fetch-url-reply", status: "ok" });
+      },
+      (error: unknown) => {
+        sendResponse({ type: "fetch-url-reply", status: "error", message: String(error) });
+      },
+    );
 
     return true;
   }

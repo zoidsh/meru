@@ -211,6 +211,15 @@ export const extensions = new Extensions({
   // account session is never the one holding it — see
   // `setupExtensionsWorkerSession` below.
   workerSessionPagePatterns: getWorkerSessionPagePatterns(),
+  // The worker's own requests never reach `blocker`, which attaches per account
+  // session, so the worker session is the only place a privacy block on them
+  // can go. Unconditional rather than behind `blocker.enabled` or the license:
+  // none of this traffic is anything the user asked for, extensions are Pro
+  // already, and a curated extension that names no telemetry hosts contributes
+  // nothing here.
+  workerSessionBlockedUrls: curatedExtensions.flatMap(
+    (curatedExtension) => curatedExtension.telemetryUrls ?? [],
+  ),
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
