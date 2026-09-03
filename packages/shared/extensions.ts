@@ -31,10 +31,11 @@ export const curatedExtensions: CuratedExtension[] = [
     // names them and then says what the user won't find, rather than leaving
     // the absences to be discovered: content scripts stop at the two hosts
     // below, `commands`, `contextMenus` and `notifications` are facade noops,
-    // and a popup link opens in the default browser because Meru has no tab to
-    // give it.
+    // and `tabs.create` is unimplemented, so a popup entry that opens one of
+    // the extension's own pages — its settings, its full item view — does
+    // nothing at all.
     description:
-      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey. Nothing else is supported: no in-page filling outside those pages, no card or address autofill, no keyboard shortcuts, right-click fill or notifications, and popup links such as 1Password's settings open in your default browser.",
+      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey. Nothing else is supported: no in-page filling outside those pages, no card or address autofill, no keyboard shortcuts, right-click fill or notifications, and no way to reach 1Password's own pages, such as its settings.",
     category: "passwordManager",
     // Sign-in runs on accounts.google.com, and account settings — creating a
     // passkey, changing a password — on myaccount.google.com. Both hosts, not
