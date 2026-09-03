@@ -23,6 +23,7 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
+    "playground": "bun run scripts/playground.ts",
     "postinstall": "electron-builder install-app-deps",
     "test:e2e": "bun --env-file=.env.test.local run scripts/e2e.ts --project=e2e",
     "test:perf": "bun run scripts/e2e.ts --project=perf",

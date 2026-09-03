@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../globals.css" />
+  </head>
+  <body class="bg-background text-foreground">
+    <div id="root"></div>
+    <!--
+      The fake bridge installs `window.electron` as it evaluates, and the
+      renderer's stores, query cache and theme all register IPC listeners as
+      they are imported. Loading it in a script tag of its own puts it
+      unmistakably first: module scripts run in document order, whereas an
+      import inside the entry point would be at the mercy of import sorting.
+    -->
+    <script type="module" src="./fake-electron.ts"></script>
+    <script type="module" src="./preview.tsx"></script>
+  </body>
+</html>
