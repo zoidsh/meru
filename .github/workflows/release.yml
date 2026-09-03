@@ -42,11 +42,20 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Uploads into a release published over two hours ago; without it a
+          # re-run skips every asset and still exits zero.
+          EP_GH_IGNORE_TIME: true
       - if: startsWith(matrix.os, 'ubuntu')
         run: bun run build:linux -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Uploads into a release published over two hours ago; without it a
+          # re-run skips every asset and still exits zero.
+          EP_GH_IGNORE_TIME: true
       - if: startsWith(matrix.os, 'windows')
         run: bun run build:win -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Uploads into a release published over two hours ago; without it a
+          # re-run skips every asset and still exits zero.
+          EP_GH_IGNORE_TIME: true
