@@ -14,7 +14,6 @@ import { workspaceApps } from "@meru/shared/workspace-apps";
 import {
   app,
   BrowserWindow,
-  clipboard,
   desktopCapturer,
   dialog,
   Menu,
@@ -29,6 +28,7 @@ import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
+import { copyText } from "@/lib/clipboard";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -465,7 +465,7 @@ class Ipc {
               return;
             }
 
-            clipboard.writeText(tab.url);
+            copyText(tab.url);
           },
         },
         {
