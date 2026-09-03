@@ -5,6 +5,7 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 export function VerificationCodesSettings() {
   const { config } = useConfig();
@@ -29,7 +30,7 @@ export function VerificationCodesSettings() {
           />
           <ConfigSelectField
             label="When to copy"
-            description="A notification shows the code either way. Copying on click leaves your clipboard untouched until you act."
+            description={`A notification shows the code either way. Copying ${platform.isLinux ? "on click" : "from its Copy button"} leaves your clipboard untouched until you act.`}
             configKey="verificationCodes.copyMode"
             items={Object.entries(verificationCodeCopyModes).map(([value, label]) => ({
               value,
