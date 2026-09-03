@@ -35,7 +35,7 @@ import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
+import { ExternalLinkIcon, FlaskConicalIcon, KeyRoundIcon } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 import { toast } from "sonner";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -288,6 +288,20 @@ function ExtensionItem({
   );
 }
 
+function ExperimentalAlert() {
+  return (
+    <Alert>
+      <FlaskConicalIcon />
+      <AlertTitle>Extensions are experimental</AlertTitle>
+      <AlertDescription>
+        Meru builds Chrome's extension support itself rather than shipping a whole browser, and that
+        support is still being tested. Extensions can behave in ways they don't in Chrome, and this
+        feature may change or be withdrawn in a later release.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 function PasskeysAlert() {
   if (platform.isMacOS) {
     return (
@@ -443,6 +457,7 @@ export function ExtensionsSettings() {
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
+          <ExperimentalAlert />
           <FieldDescription>
             Extensions are loaded into every account and take effect after a restart. Meru installs
             the official extensions from the Chrome Web Store.
