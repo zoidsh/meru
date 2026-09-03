@@ -257,6 +257,7 @@ describe("NativeMessaging", () => {
 
     const { teardown } = createNativeMessaging({
       logger: {
+        debug: () => undefined,
         info: (message, details) => {
           logs.push({ message, details });
         },
@@ -290,6 +291,7 @@ describe("NativeMessaging", () => {
 
     const { teardown } = createNativeMessaging({
       logger: {
+        debug: () => undefined,
         info: (message, details) => {
           logs.push({ message, details });
         },

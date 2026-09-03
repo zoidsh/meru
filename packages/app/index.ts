@@ -1,4 +1,4 @@
-import { platform } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
 import { app, session } from "electron";
 import { accounts } from "@/accounts";
@@ -16,6 +16,7 @@ import {
 } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
+import { log } from "@/lib/log";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -69,6 +70,20 @@ async function resetApp() {
 }
 
 async function init() {
+  // electron-log writes every level to the file by default, `silly` up, and the
+  // extension worker's console is forwarded at debug, so a shipped build would
+  // otherwise write 1Password's own chatter to disk for as long as it ran: a
+  // lock poll pair every fifteen seconds, sync and cache lines, feature-flag
+  // dumps of several kilobytes. Info keeps Meru's own lines and every worker
+  // error. Development keeps everything, since the worker has no DevTools
+  // surface in Meru and its console is where 1Password says why it declined to
+  // fill; the console transport is left at its default for the same reason.
+  // Set here rather than in `lib/log.ts`, which unit tests import through
+  // `load-url.ts` and which therefore can't touch `app` at module load.
+  if (!is.dev) {
+    log.transports.file.level = "info";
+  }
+
   if (platform.isLinux) {
     app.commandLine.appendSwitch("gtk-version", "3");
     app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
