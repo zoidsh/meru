@@ -88,9 +88,12 @@ const DROPPED_PERMISSIONS = new Set(["webRequest", "webRequestAuthProvider"]);
  * alone with no listener and no ruleset content required. Electron then hands
  * it a browser process factory as a navigation with a null `RenderFrameHost`
  * and `MaybeProxyURLLoaderFactory` dereferences it, which is a segfault rather
- * than an exception, so no caller can catch it. electron/electron#45050 carries
- * the one line that fixes it and has sat open and unmerged, so no upgrade
- * avoids this.
+ * than an exception, so no caller can catch it. electron/electron#53294 fixed
+ * this in Electron 43.5.0, backported as #53304: a factory built for the browser
+ * process no longer reaches the extensions WebRequest layer at all, whichever
+ * permission armed the proxy count. The drop stays until restoring these
+ * permissions is verified on its own — it is a behavior change to every
+ * installed extension, 1Password's rules below among them.
  *
  * Dropped so a main process `session.fetch` against an account session stays a
  * usable primitive. An account with no view has no other way to read its unread
