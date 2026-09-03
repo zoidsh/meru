@@ -64,6 +64,15 @@ export type SharedExtensionInstance = {
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
   /**
+   * Whether a frame query from one session may resolve a tab of another, asked
+   * only when the two differ. True for the one worker asking about a session
+   * it shims and false for everything else: the worker runs in a session of
+   * its own, so every tab it has business with is another session's, while a
+   * shimmed session asking about another's tabs is one account reading
+   * another's pages.
+   */
+  canResolveTabAcrossSessions(askingSession: Session, tabSession: Session): boolean;
+  /**
    * Whether that session was the one holding the worker, which the loader logs
    * as the sessions left behind having nothing to reach. On an embedder that
    * names a session of its own and never tears it down, this answers false for
@@ -218,7 +227,10 @@ export class Extensions {
 
     this.nativeMessaging.registerRoutes(this.bridge);
 
-    this.webNavigation = new WebNavigation();
+    this.webNavigation = new WebNavigation({
+      canResolveTabAcrossSessions: (askingSession, tabSession) =>
+        this.sharedInstance?.canResolveTabAcrossSessions(askingSession, tabSession) === true,
+    });
 
     this.webNavigation.registerRoutes(this.bridge);
 

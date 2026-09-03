@@ -48,6 +48,21 @@ export type FixtureTabs = {
   connect: (tabId: number, connectInfo: { name: string; frameId?: number }) => FixturePort;
 };
 
+/** One frame as `chrome.webNavigation` describes it, in the slice the fixture reads. */
+export type FixtureFrameDetails = {
+  frameId: number;
+  parentFrameId: number;
+  url: string;
+};
+
+/** The slice of `chrome.webNavigation` the fixture's worker asks. */
+export type FixtureWebNavigation = {
+  getFrame: (
+    query: { tabId: number; frameId: number },
+    callback: (frame: FixtureFrameDetails | null) => void,
+  ) => void;
+};
+
 /** One key's entry in an `onChanged`, in Chrome's own shape. */
 export type FixtureStorageChange = {
   oldValue?: unknown;
@@ -121,6 +136,20 @@ export function getChromeTabs(): FixtureTabs {
   const workerGlobals = globalThis as unknown as { chrome: { tabs: FixtureTabs } };
 
   return workerGlobals.chrome.tabs;
+}
+
+/**
+ * The worker's `chrome.webNavigation`, which is the facade's throughout —
+ * Electron implements none of the namespace. A frame query names a tab of
+ * another session here, the worker session holding no account's tabs, which
+ * is what the loader has to be willing to answer.
+ */
+export function getChromeWebNavigation(): FixtureWebNavigation {
+  const workerGlobals = globalThis as unknown as {
+    chrome: { webNavigation: FixtureWebNavigation };
+  };
+
+  return workerGlobals.chrome.webNavigation;
 }
 
 /**

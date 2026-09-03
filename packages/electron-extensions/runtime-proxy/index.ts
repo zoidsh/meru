@@ -59,6 +59,8 @@ export function createSharedExtensionInstance({
 
   let workerSession: Session | undefined;
 
+  const shimmedSessions = new Set<Session>();
+
   return {
     install({ bridge, logger }) {
       proxy = new RuntimeProxy({ logger, getWebContentsFromFrame });
@@ -71,8 +73,12 @@ export function createSharedExtensionInstance({
       // up, so order decides nothing: a session either is the one the embedder
       // named or is content-script-only, whether it came first or last.
       if (session !== getWorkerSession()) {
+        shimmedSessions.add(session);
+
         return { role: "contentScriptOnly", shimScriptPath };
       }
+
+      shimmedSessions.delete(session);
 
       if (workerSession !== session) {
         workerSession = session;
@@ -81,6 +87,21 @@ export function createSharedExtensionInstance({
       }
 
       return { role: "worker", relayScriptPath };
+    },
+
+    /*
+     * `chrome.webNavigation.getFrame` from the one worker, which is how
+     * 1Password finds the frame owning a form before it relays an inline-menu
+     * click to it. The worker session holds no account's tabs, so scoping the
+     * frame queries to the asking session — the loader's own default, and the
+     * right answer for an instance per session — leaves every such query
+     * answering null and the relay dropped silently. Only the worker crosses,
+     * and only into a session it shims: a shimmed session asking about
+     * another's tabs stays refused, and so does any session this never
+     * adopted.
+     */
+    canResolveTabAcrossSessions(askingSession, tabSession) {
+      return askingSession === workerSession && shimmedSessions.has(tabSession);
     },
 
     teardownSession(session) {
@@ -95,6 +116,8 @@ export function createSharedExtensionInstance({
       if (wasWorkerSession) {
         workerSession = undefined;
       }
+
+      shimmedSessions.delete(session);
 
       proxy?.teardownSession(session);
 

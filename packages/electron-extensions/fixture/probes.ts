@@ -158,6 +158,15 @@ export type ProbeResults = {
    * the worker hearing it disconnect means the context itself went away.
    */
   openPortName: string | null;
+  /**
+   * The frame this context sent from, as the worker's own
+   * `chrome.webNavigation.getFrame` answered for it — a query about a tab of
+   * another session every time, the worker session holding none of its own.
+   * It is the step a fill hangs on: 1Password relays an inline-menu click to
+   * the frame owning the form only once `getFrame` has named that frame's
+   * parent.
+   */
+  senderFrameSeenByWorker: EchoOutcome;
   /** The worker messaging this context's own tab with `tabs.sendMessage`. */
   workerSentBack: WorkerInitiatedOutcome;
   /** The worker opening a port to this context's own tab with `tabs.connect`. */
@@ -347,6 +356,22 @@ async function probeOpenPort(runtime: FixtureRuntime, contextId: string): Promis
   const port = runtime.connect({ name: portName });
 
   return (await portRoundTrip(port, contextId)) ? portName : null;
+}
+
+/** What the worker's frame query answered, unwrapped from its reply. */
+async function probeSenderFrame(runtime: FixtureRuntime): Promise<EchoOutcome> {
+  const askOutcome = await sendMessage(runtime, { type: "frame-of-sender" });
+
+  if (askOutcome.status !== "replied") {
+    return askOutcome;
+  }
+
+  return (
+    (askOutcome.reply as { outcome?: EchoOutcome } | undefined)?.outcome ?? {
+      status: "error",
+      message: "The worker answered without an outcome",
+    }
+  );
 }
 
 /**
@@ -696,6 +721,8 @@ export async function runProbes(): Promise<ProbeResults> {
 
   const openPortName = await probeOpenPort(runtime, contextId);
 
+  const senderFrameSeenByWorker = await probeSenderFrame(runtime);
+
   const workerSentBack = await probeWorkerInitiated(runtime, contextId, "send-back", arrivals);
 
   const workerConnectedBack = await probeWorkerInitiated(
@@ -721,6 +748,7 @@ export async function runProbes(): Promise<ProbeResults> {
     workerClosedPort,
     selfCloseSeenByWorker,
     openPortName,
+    senderFrameSeenByWorker,
     workerSentBack,
     workerConnectedBack,
     portReplySeenByWorker:
