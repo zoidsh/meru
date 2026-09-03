@@ -9,6 +9,7 @@
 export type FixtureTab = {
   id?: number;
   url?: string;
+  active?: boolean;
 };
 
 export type FixtureMessageSender = {
@@ -46,6 +47,13 @@ export type FixtureTabs = {
     callback: (reply: unknown) => void,
   ) => void;
   connect: (tabId: number, connectInfo: { name: string; frameId?: number }) => FixturePort;
+  /**
+   * The two the worker sees only its own session's tabs through natively, which
+   * is none of an account's — the callback form, since `lastError` is what a
+   * `get` for a tab that is not there reports itself with.
+   */
+  query: (queryInfo: Record<string, unknown>, callback: (tabs: FixtureTab[]) => void) => void;
+  get: (tabId: number, callback: (tab: FixtureTab | undefined) => void) => void;
 };
 
 /** One frame as `chrome.webNavigation` describes it, in the slice the fixture reads. */
@@ -127,10 +135,10 @@ export function getChromeRuntime(): FixtureRuntime {
 }
 
 /**
- * The worker's `chrome.tabs`, whose `sendMessage` and `connect` the relay
- * client has shadowed by the time the fixture's background script runs — the
- * worker-to-page direction, which natively would reach the worker session's
- * own tabs alone.
+ * The worker's `chrome.tabs`, whose `sendMessage`, `connect`, `query` and
+ * `get` the relay client has shadowed by the time the fixture's background
+ * script runs — the worker-to-page direction, all four of which natively see
+ * the worker session's own tabs alone.
  */
 export function getChromeTabs(): FixtureTabs {
   const workerGlobals = globalThis as unknown as { chrome: { tabs: FixtureTabs } };

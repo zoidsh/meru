@@ -249,6 +249,27 @@ async function readWorkerPortEvents(webContentsId: number) {
   );
 }
 
+/**
+ * The `WebContents` ids of the views Meru is showing, which is what the
+ * embedder answers `tabs.Tab.active` from. Read off the windows rather than
+ * from the app's own modules, which a packaged build exposes nothing of.
+ */
+async function readVisibleViewIds() {
+  return meru.app.evaluate(({ BrowserWindow, WebContentsView }) => {
+    const viewIds: number[] = [];
+
+    for (const window of BrowserWindow.getAllWindows()) {
+      for (const child of window.contentView.children) {
+        if (child instanceof WebContentsView && child.getVisible()) {
+          viewIds.push(child.webContents.id);
+        }
+      }
+    }
+
+    return viewIds;
+  });
+}
+
 function popupUrl(context: string, { probeStorageChanges = false } = {}) {
   const flag = probeStorageChanges ? "&meruProbeStorageChanges=1" : "";
 
@@ -651,6 +672,73 @@ test("the worker reaches a shimmed content script it never heard from first", as
   // And the port carries the page's answer back, which only the worker can
   // see: the answering side has nothing of its own left to observe
   expect(page.portReplySeenByWorker).toBe(true);
+});
+
+/*
+ * What the lock-state broadcast rests on. 1Password tells content scripts the
+ * vault locked by asking `tabs.query` for the tabs and then messaging each of
+ * them, and natively the worker's query lists the tabs of its own session
+ * alone — none of which is an account's.
+ */
+test("the worker's tabs.query lists a tab of a session it shims, and tabs.get answers it", async () => {
+  const pageUrl = `${serverOrigin}/plain`;
+
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, pageUrl);
+
+  const page = await readProbeResults(pageId);
+
+  expect(page.tabsSeenByWorker.tabs).toContainEqual({
+    id: pageId,
+    url: pageUrl,
+    active: expect.any(Boolean),
+  });
+
+  // And by id, which is what a worker holding a tab id from a sender does next
+  expect(page.tabsSeenByWorker.self).toEqual({
+    status: "replied",
+    reply: { id: pageId, url: pageUrl },
+  });
+
+  /*
+   * `active` is the embedder's answer rather than Electron's focus: a hidden
+   * window is never the tab a window is showing, and the view Meru has in
+   * front is, whether or not anything is focused — which matters because
+   * 1Password unlocks behind a Touch ID prompt that takes the focus away.
+   */
+  expect(page.tabsSeenByWorker.activeTabIds).not.toContain(pageId);
+
+  const [activeTabId, ...alsoActive] = page.tabsSeenByWorker.activeTabIds;
+
+  // One tab is in front, and it is one of the views the window is showing.
+  // Which of them is the selected account's is Meru's own business, and not
+  // something a packaged build exposes to read back here
+  expect(alsoActive).toEqual([]);
+
+  expect(await readVisibleViewIds()).toContain(activeTabId);
+});
+
+test("a lock-state-shaped broadcast reaches a shimmed content script", async () => {
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/plain`);
+
+  const page = await readProbeResults(pageId);
+
+  // The whole shape, run by the worker: `tabs.query` for every tab, then one
+  // `tabs.sendMessage` into each. A query that listed nothing reports itself
+  // here as the worker never finding this context's tab to send to
+  expect(page.workerNotifiedAllTabs.heard).toEqual({
+    type: "ping-from-worker",
+    nonce: `notify-all-tabs:${page.contextId}`,
+    workerInstanceId: expect.any(String),
+  });
+
+  expect(page.workerNotifiedAllTabs.outcome).toEqual({
+    status: "replied",
+    reply: {
+      type: "pong",
+      nonce: `notify-all-tabs:${page.contextId}`,
+      contextId: page.contextId,
+    },
+  });
 });
 
 test("an action popup is no tab, and the worker says so rather than guessing", async () => {
