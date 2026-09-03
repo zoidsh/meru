@@ -31,6 +31,33 @@ const benignWorkerConsoleErrors = curatedExtensions.flatMap(
   (curatedExtension) => curatedExtension.benignWorkerConsoleErrors ?? [],
 );
 
+/**
+ * Worker error lines a healthy session writes, against whether the catalog
+ * answers for them. `<autofill-item>` is the one that has to stay at error: it
+ * was a real relay fault rather than 1Password's own behavior, and a prefix
+ * that stopped at the request bracket would take it down to debug beside the
+ * two benign siblings it is logged next to.
+ */
+const WORKER_ERROR_LINES: { line: string; isBenign: boolean }[] = [
+  { line: "[LogManager] Failed to send log metrics: <redacted>", isBenign: true },
+  {
+    line: "[Messaging] Exception while handling request <get-nested-frame-configuration>: <redacted>",
+    isBenign: true,
+  },
+  {
+    line: "[Messaging] Exception while handling request <remove-inline-button>: <redacted>",
+    isBenign: true,
+  },
+  {
+    line: "[Messaging] Exception while handling request <autofill-item>: <redacted>",
+    isBenign: false,
+  },
+  {
+    line: "[Fill] Failed to get active tab when checking for an open and fill tab",
+    isBenign: false,
+  },
+];
+
 describe("curated extension benign worker console errors", () => {
   /*
    * A prefix is matched with `startsWith`, where the empty string matches
@@ -43,6 +70,20 @@ describe("curated extension benign worker console errors", () => {
       expect(benignWorkerConsoleError.trim()).toBe(benignWorkerConsoleError);
 
       expect(benignWorkerConsoleError.length).toBeGreaterThan(20);
+    }
+  });
+
+  /*
+   * The list read the way the forwarder reads it, against the lines it was
+   * written for and the ones it was written around.
+   */
+  test("answers for the known-benign lines and no others", () => {
+    for (const { line, isBenign } of WORKER_ERROR_LINES) {
+      expect(
+        benignWorkerConsoleErrors.some((benignWorkerConsoleError) =>
+          line.startsWith(benignWorkerConsoleError),
+        ),
+      ).toBe(isBenign);
     }
   });
 });
