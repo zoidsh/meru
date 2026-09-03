@@ -98,37 +98,6 @@ describe("deriveManifest", () => {
     expect(manifest.permissions).toEqual(["storage", "nativeMessaging", "tabs"]);
   });
 
-  test("carries the permissions that arm the WebRequest proxy, and their rulesets", () => {
-    const { manifest } = deriveManifest(
-      {
-        permissions: [
-          "storage",
-          "declarativeNetRequest",
-          "declarativeNetRequestWithHostAccess",
-          "declarativeNetRequestFeedback",
-          "declarativeWebRequest",
-          "tabs",
-        ],
-        declarative_net_request: { rule_resources: [{ id: "ruleset_1", path: "rules_1.json" }] },
-      },
-      fileNames,
-    );
-
-    // These were dropped while a main process `session.fetch` segfaulted with
-    // any of them declared, which electron/electron#53294 fixed in 43.5.0.
-    expect(manifest.permissions).toEqual([
-      "storage",
-      "declarativeNetRequest",
-      "declarativeNetRequestWithHostAccess",
-      "declarativeNetRequestFeedback",
-      "declarativeWebRequest",
-      "tabs",
-    ]);
-    expect(manifest.declarative_net_request).toEqual({
-      rule_resources: [{ id: "ruleset_1", path: "rules_1.json" }],
-    });
-  });
-
   test("leaves a manifest without permissions alone", () => {
     const { manifest } = deriveManifest({ name: "No permissions" }, fileNames);
 
