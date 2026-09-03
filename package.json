@@ -113,6 +113,7 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "minimumSystemVersion": "13.0.0",
       "icon": "build/icon.icns",
       "darkModeSupport": true,
       "provisioningProfile": "build/embedded.provisionprofile",
