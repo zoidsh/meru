@@ -564,9 +564,16 @@ export class Gmail {
         return;
       }
 
-      const inboxType = inboxTypeSchema.parse(
-        await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE"),
-      );
+      const inboxTypeValue = await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE");
+
+      // The URL is already Gmail's while the page is still loading, such as
+      // during sign-in, so the global is missing rather than wrong. Treat that
+      // as "not loaded yet" and return, the way the URL check above does.
+      if (inboxTypeValue === undefined) {
+        return;
+      }
+
+      const inboxType = inboxTypeSchema.parse(inboxTypeValue);
 
       const body = await this.session
         .fetch(
