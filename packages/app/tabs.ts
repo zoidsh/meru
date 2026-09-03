@@ -82,6 +82,7 @@ type UnloadedViewState = {
 type DormantTabOptions = Omit<SavedTab, "app"> & {
   app: SupportedWorkspaceApp | undefined;
   pinned: boolean;
+  id?: string;
 };
 
 /**
@@ -90,7 +91,15 @@ type DormantTabOptions = Omit<SavedTab, "app"> & {
  * Either way it holds its place in the strip until something materializes it.
  */
 export class DormantTab {
-  id = randomUUID();
+  /**
+   * The id of the tab this one took the place of, when it took the place of
+   * one. Hibernating swaps the object behind a tab without the user's tab going
+   * anywhere, so the id has to survive the swap: anything still holding it — a
+   * notification raised before the tab went idle, above all — is asking for a
+   * tab that is very much still in the strip. Only a tab restored from disk
+   * mints a new id, having succeeded nothing.
+   */
+  id: string;
 
   app: SupportedWorkspaceApp | undefined;
 
@@ -119,6 +128,7 @@ export class DormantTab {
   restorableNavigationHistory: RestoreOptions | undefined;
 
   constructor(dormantTab: DormantTabOptions, unloadedViewState?: UnloadedViewState) {
+    this.id = dormantTab.id ?? randomUUID();
     this.app = dormantTab.app;
     this.url = dormantTab.url;
     this.title = dormantTab.title;
@@ -312,6 +322,7 @@ export class Tabs {
 
   private materializeDormantTab(dormantTab: DormantTab, url?: string) {
     const workspaceApp = new WorkspaceApp({
+      id: dormantTab.id,
       accountId: this.accountId,
       url: url ?? dormantTab.url,
       pinned: dormantTab.pinned,
@@ -446,6 +457,7 @@ export class Tabs {
       1,
       new DormantTab(
         {
+          id: workspaceApp.id,
           app: workspaceApp.app,
           url: workspaceApp.url,
           title: workspaceApp.title,
