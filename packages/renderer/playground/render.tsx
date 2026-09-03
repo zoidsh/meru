@@ -1,6 +1,9 @@
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { ReactNode } from "react";
+import { Router } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
+import { AppTitlebar } from "@/components/app-titlebar";
 import { DownloadHistoryList } from "@/components/download-history";
 import { FindInPage } from "@/components/find-in-page";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -33,6 +36,20 @@ function FindInPageControls() {
   );
 }
 
+/**
+ * The titlebar reads the route — the settings pages get a different one, and
+ * the account buttons light up only on the account route. `main.tsx` is what
+ * puts a hash router around it in the app, so the playground does the same;
+ * with no hash the route is `/`, which is the account one.
+ */
+function AppTitlebarInRouter() {
+  return (
+    <Router hook={useHashLocation}>
+      <AppTitlebar />
+    </Router>
+  );
+}
+
 /** One renderer per catalog entry, which the type here is what enforces. */
 export const playgroundComponentRenderers: Record<PlaygroundComponentId, () => ReactNode> = {
   downloadHistoryList: () => <DownloadHistoryList />,
@@ -42,4 +59,5 @@ export const playgroundComponentRenderers: Record<PlaygroundComponentId, () => R
   findInPage: () => <FindInPageControls />,
   licenseKeyRequiredBanner: () => <LicenseKeyRequiredBanner />,
   verticalTabs: () => <VerticalTabs />,
+  appTitlebar: () => <AppTitlebarInRouter />,
 };
