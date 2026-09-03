@@ -84,6 +84,7 @@ export function resolveWorkspaceAppOpenBehavior(
 }
 
 type WorkspaceAppOptions = {
+  id?: string;
   accountId: AccountConfig["id"];
   url: string;
   window?: BrowserWindowConstructorOptions;
@@ -413,7 +414,12 @@ export class WorkspaceApp {
 
   app: SupportedWorkspaceApp | undefined;
 
-  id = randomUUID();
+  /**
+   * The id of the dormant tab this one woke from, when it woke from one. A tab
+   * that hibernates and wakes keeps the id it started with, so nothing holding
+   * it has to learn the tab was unloaded in between.
+   */
+  id: string;
 
   private _window: BrowserWindow | undefined;
 
@@ -500,6 +506,7 @@ export class WorkspaceApp {
   private htmlFullscreen = false;
 
   constructor({
+    id,
     accountId,
     url,
     window,
@@ -514,6 +521,7 @@ export class WorkspaceApp {
     zoomFactor,
     navigationHistory,
   }: WorkspaceAppOptions) {
+    this.id = id ?? randomUUID();
     this.accountId = accountId;
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
