@@ -1,3 +1,5 @@
+import type { WorkspaceAppsHibernation } from "@meru/shared/workspace-apps";
+
 /**
  * What the idle sweep reads off a tab to determine whether it can unload it. A
  * `WorkspaceApp` satisfies it; nothing else is needed to make the call.
@@ -6,6 +8,7 @@ type HibernatableTab = {
   isWindowed: boolean;
   isAudible: boolean;
   url: string;
+  pinned: boolean;
   hibernatesWhenIdle: boolean;
   lastActiveAt: number;
 };
@@ -18,10 +21,10 @@ type HibernatableTab = {
 export function canHibernateTab(
   tab: HibernatableTab,
   {
-    hibernatesEveryTab,
+    hibernation,
     idleTimeout,
     now,
-  }: { hibernatesEveryTab: boolean; idleTimeout: number; now: number },
+  }: { hibernation: WorkspaceAppsHibernation; idleTimeout: number; now: number },
 ) {
   // A tab in its own window is a window the user left open, and one playing
   // audio stops mid-track if its renderer goes away.
@@ -29,7 +32,12 @@ export function canHibernateTab(
     return false;
   }
 
-  if (!hibernatesEveryTab && !tab.hibernatesWhenIdle) {
+  // `all` narrows nothing down, so it has no clause of its own.
+  if (hibernation === "unpinned" && tab.pinned) {
+    return false;
+  }
+
+  if (hibernation === "selected" && !tab.hibernatesWhenIdle) {
     return false;
   }
 

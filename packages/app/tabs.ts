@@ -489,7 +489,7 @@ export class Tabs {
       activeTab.lastActiveAt = now;
     }
 
-    const hibernatesEveryTab = config.get("workspaceApps.hibernation") === "all";
+    const hibernation = config.get("workspaceApps.hibernation");
 
     const idleTimeout = ms(config.get("workspaceApps.hibernationTimeout"));
 
@@ -498,7 +498,7 @@ export class Tabs {
         continue;
       }
 
-      if (canHibernateTab(tab, { hibernatesEveryTab, idleTimeout, now })) {
+      if (canHibernateTab(tab, { hibernation, idleTimeout, now })) {
         this.hibernateTab(tab);
       }
     }

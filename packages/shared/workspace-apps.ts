@@ -90,6 +90,7 @@ export type WorkspaceAppsMode = keyof typeof workspaceAppsModes;
  * with no tab marked hibernates nothing.
  */
 export const workspaceAppsHibernations = {
+  unpinned: "Unpinned tabs",
   selected: "Selected tabs",
   all: "All tabs",
 } as const;

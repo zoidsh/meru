@@ -10,13 +10,16 @@ const idleTab = {
   isWindowed: false,
   isAudible: false,
   url: "https://calendar.google.com/",
+  pinned: false,
   hibernatesWhenIdle: false,
   lastActiveAt: now - ms("2h"),
 };
 
-const sweepEveryTab = { hibernatesEveryTab: true, idleTimeout, now };
+const sweepEveryTab = { hibernation: "all", idleTimeout, now } as const;
 
-const sweepSelectedTabs = { hibernatesEveryTab: false, idleTimeout, now };
+const sweepUnpinnedTabs = { hibernation: "unpinned", idleTimeout, now } as const;
+
+const sweepSelectedTabs = { hibernation: "selected", idleTimeout, now } as const;
 
 describe("canHibernateTab", () => {
   test("unloads a tab idle past the timeout", () => {
@@ -47,8 +50,23 @@ describe("canHibernateTab", () => {
     expect(canHibernateTab({ ...idleTab, url: "" }, sweepEveryTab)).toBe(false);
   });
 
+  test("unloads a pinned tab while the sweep is on every tab", () => {
+    expect(canHibernateTab({ ...idleTab, pinned: true }, sweepEveryTab)).toBe(true);
+  });
+
+  test("keeps a pinned tab while the sweep is on unpinned tabs", () => {
+    expect(canHibernateTab(idleTab, sweepUnpinnedTabs)).toBe(true);
+    expect(canHibernateTab({ ...idleTab, pinned: true }, sweepUnpinnedTabs)).toBe(false);
+  });
+
   test("unloads only marked tabs while the sweep is on selected tabs", () => {
     expect(canHibernateTab(idleTab, sweepSelectedTabs)).toBe(false);
     expect(canHibernateTab({ ...idleTab, hibernatesWhenIdle: true }, sweepSelectedTabs)).toBe(true);
+  });
+
+  test("unloads a marked pinned tab while the sweep is on selected tabs", () => {
+    expect(
+      canHibernateTab({ ...idleTab, pinned: true, hibernatesWhenIdle: true }, sweepSelectedTabs),
+    ).toBe(true);
   });
 });
