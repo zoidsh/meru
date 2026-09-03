@@ -360,6 +360,17 @@ export const config = new Store<Config>({
         // @ts-expect-error
         store.delete("verificationCodes.confidence");
       }
+
+      // Copying verification codes is on by default now. Every default lands on
+      // disk on first launch, so a new default alone would reach new installs
+      // only, and the users who have been running with it off are the ones the
+      // promotion is for. A stored `true` is someone who went and turned it on,
+      // and their copy mode is left exactly as they set it; everyone else is
+      // moved to the mode that touches nothing until they click.
+      if (store.get("verificationCodes.autoCopy") !== true) {
+        store.set("verificationCodes.autoCopy", true);
+        store.set("verificationCodes.copyMode", "notificationClick");
+      }
     },
   },
 });
