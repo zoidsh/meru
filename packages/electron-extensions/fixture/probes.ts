@@ -208,12 +208,26 @@ export type ProbeResults = {
    */
   workerNotifiedAllTabs: WorkerInitiatedOutcome;
   /**
+   * The worker messaging this context's whole tab, no frame named — the shape
+   * 1Password's `get-nested-frame-configuration` relay has. Every frame hears
+   * it and only the top frame answers, so in a subframe the reply names the
+   * top frame's own `contextId` rather than the asking frame's. A single-frame
+   * page answers itself, which is the same call with nothing to distinguish.
+   */
+  askedTab: WorkerInitiatedOutcome;
+  /**
    * Whether the worker's event log recorded this context answering on the port
    * the worker opened — the page-to-worker half of a worker-opened port, which
    * nothing this side can observe.
    */
   portReplySeenByWorker: boolean;
 };
+
+/**
+ * The one thing a probe needs of `window`: whether this context is the top
+ * frame of its tab, which is how the nested-frame relay decides who answers.
+ */
+type ProbeWindow = { top: ProbeWindow | null };
 
 function seeSender(sender: FixtureMessageSender | undefined): SeenSender {
   return {
@@ -421,7 +435,7 @@ async function probeSenderFrame(runtime: FixtureRuntime): Promise<EchoOutcome> {
 function probeWorkerInitiated(
   runtime: FixtureRuntime,
   contextId: string,
-  requestType: "send-back" | "connect-back" | "notify-all-tabs",
+  requestType: "send-back" | "connect-back" | "notify-all-tabs" | "ask-tab",
   arrivals: Map<string, { message: unknown; sender: SeenSender }>,
 ): Promise<WorkerInitiatedOutcome> {
   const nonce = `${requestType}:${contextId}`;
@@ -676,7 +690,11 @@ export async function runProbes(): Promise<ProbeResults> {
   const contextGlobals = globalThis as unknown as {
     crypto: { randomUUID: () => string };
     location: { href: string };
+    /** Only ever compared with its own `top`, which is what names a subframe. */
+    window: ProbeWindow;
   };
+
+  const isTopFrame = contextGlobals.window === contextGlobals.window.top;
 
   const contextId = contextGlobals.crypto.randomUUID();
 
@@ -698,13 +716,37 @@ export async function runProbes(): Promise<ProbeResults> {
   runtime.onMessage.addListener((message, sender, sendResponse) => {
     const probeMessage = message as { type?: string; nonce?: string } | undefined;
 
-    if (probeMessage?.type !== "ping-from-worker" || typeof probeMessage.nonce !== "string") {
+    if (typeof probeMessage?.nonce !== "string") {
       return undefined;
     }
 
-    arrivals.set(probeMessage.nonce, { message, sender: seeSender(sender) });
+    if (probeMessage.type === "ping-from-worker") {
+      arrivals.set(probeMessage.nonce, { message, sender: seeSender(sender) });
 
-    sendResponse({ type: "pong", nonce: probeMessage.nonce, contextId });
+      sendResponse({ type: "pong", nonce: probeMessage.nonce, contextId });
+
+      return undefined;
+    }
+
+    /*
+     * The nested-frame shape, which the worker fanned out to every frame of
+     * the tab: only the top frame has an answer, and a subframe declines by
+     * returning without calling `sendResponse` — 1Password's own subframes do
+     * exactly this, which is why the tab's port closes when the top frame's
+     * script has not loaded yet. The arrival is recorded either way, so a
+     * frame that heard the message and declined is visible as such.
+     */
+    if (probeMessage.type === "answer-if-top") {
+      arrivals.set(probeMessage.nonce, { message, sender: seeSender(sender) });
+
+      if (!isTopFrame) {
+        return false;
+      }
+
+      sendResponse({ type: "top-answered", nonce: probeMessage.nonce, contextId });
+
+      return undefined;
+    }
 
     return undefined;
   });
@@ -799,6 +841,8 @@ export async function runProbes(): Promise<ProbeResults> {
     arrivals,
   );
 
+  const askedTab = await probeWorkerInitiated(runtime, contextId, "ask-tab", arrivals);
+
   return {
     contextId,
     documentUrl: contextGlobals.location.href,
@@ -820,6 +864,7 @@ export async function runProbes(): Promise<ProbeResults> {
     workerSentBack,
     workerConnectedBack,
     workerNotifiedAllTabs,
+    askedTab,
     portReplySeenByWorker:
       workerConnectedBack.heard !== null && (await probePortReplySeenByWorker(runtime, contextId)),
   };

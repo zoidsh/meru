@@ -16,7 +16,8 @@
     {
       "matches": ["http://127.0.0.1/*"],
       "js": ["probe.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [

@@ -89,6 +89,16 @@ const SERVED_PAGES: Record<string, string> = {
   "/frame": `<!doctype html><html><head><meta charset='utf-8'><title>frame</title></head><body><iframe src="chrome-extension://${FIXTURE_EXTENSION_ID}/fixture-frame.html"></iframe></body></html>`,
   "/same":
     "<!doctype html><html><head><meta charset='utf-8'><title>same</title></head><body>same</body></html>",
+  /*
+   * A web page embedding a web page of the same origin, which is the shape
+   * 1Password's nested-frame handshake runs in: both frames are inside the
+   * content script's match pattern, so both get the script, and only the top
+   * frame answers what the worker fans out to the tab.
+   */
+  "/nested":
+    "<!doctype html><html><head><meta charset='utf-8'><title>nested</title></head><body><iframe src=\"/nested-child\"></iframe></body></html>",
+  "/nested-child":
+    "<!doctype html><html><head><meta charset='utf-8'><title>nested child</title></head><body>nested child</body></html>",
 };
 
 let server: http.Server;
@@ -620,6 +630,57 @@ test("a message is attributed to the frame that sent it, an embedded extension f
   expect(frameHost.senderFrameSeenByWorker).toEqual({
     status: "replied",
     reply: expect.objectContaining({ frameId: 0, parentFrameId: -1, url: frameHostUrl }),
+  });
+});
+
+/*
+ * The relay shape 1Password's `get-nested-frame-configuration` and
+ * `remove-inline-button` requests have, and the one nothing else here covered:
+ * the asking context is a subframe, the worker's `tabs.sendMessage` names no
+ * frame, the asking frame's own listener declines, and the answer has to come
+ * from the top frame. Every other worker-to-tab test either names a `frameId`
+ * or runs on a page with one frame.
+ *
+ * When every frame declines, the tab's message port closes rather than
+ * replying, and 1Password reads that as a missing receiving end — the same
+ * value Chrome gives it. So the assertion worth making is not that the call
+ * came back at all but that what came back is the *top* frame's answer.
+ */
+test("a subframe's relayed message to its own tab is answered by the top frame", async () => {
+  const nestedUrl = `${serverOrigin}/nested`;
+
+  const nestedId = await openProbeWindow(SURVIVING_PARTITION, nestedUrl);
+
+  const subframe = await readProbeResults(nestedId, `${serverOrigin}/nested-child`);
+
+  const top = await readProbeResults(nestedId);
+
+  /*
+   * The reply carries the top frame's own `contextId`, which is the whole
+   * claim: the subframe asked, the worker sent into the tab without naming a
+   * frame, and the frame that answered is not the one that asked.
+   */
+  expect(subframe.askedTab.outcome).toEqual({
+    status: "replied",
+    reply: {
+      type: "top-answered",
+      nonce: `ask-tab:${subframe.contextId}`,
+      contextId: top.contextId,
+    },
+  });
+
+  // And the subframe heard the message it declined, so the fan-out reached
+  // both frames rather than the top frame alone
+  expect(subframe.askedTab.heard).toEqual({
+    type: "answer-if-top",
+    nonce: `ask-tab:${subframe.contextId}`,
+    workerInstanceId: expect.any(String),
+  });
+
+  // The top frame's own turn at the same call, which it answers itself
+  expect(top.askedTab.outcome).toEqual({
+    status: "replied",
+    reply: { type: "top-answered", nonce: `ask-tab:${top.contextId}`, contextId: top.contextId },
   });
 });
 

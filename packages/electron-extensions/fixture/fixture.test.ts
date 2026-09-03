@@ -15,7 +15,7 @@ type FixtureManifestFile = {
   default_locale?: string;
   background?: { service_worker?: string };
   action?: { default_popup?: string };
-  content_scripts?: { matches?: string[]; js?: string[] }[];
+  content_scripts?: { matches?: string[]; js?: string[]; all_frames?: boolean }[];
   web_accessible_resources?: { resources?: string[]; matches?: string[] }[];
 };
 
@@ -45,6 +45,14 @@ describe("the fixture manifest", () => {
     expect(content_scripts?.map((contentScript) => contentScript.matches)).toEqual([
       LOOPBACK_MATCHES,
     ]);
+  });
+
+  test("injects into subframes, which the nested-frame relay coverage rests on", async () => {
+    const { content_scripts } = await readManifest();
+
+    // A subframe asking the worker to message its tab, and the top frame
+    // answering, is only reachable with a content script in both frames
+    expect(content_scripts?.map((contentScript) => contentScript.all_frames)).toEqual([true]);
   });
 
   test("exposes its frame page to the loopback address and nowhere else", async () => {
