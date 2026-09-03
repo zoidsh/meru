@@ -254,43 +254,6 @@ export function setupExtensionsWorkerSession() {
 }
 
 /**
- * Clears what the accounts' own partitions still hold from before the one
- * worker moved to the default session, once, on the first launch after the
- * upgrade. Each partition of such a profile keeps that account's own worker
- * store — a `chrome.storage` nothing reads any more, and an IndexedDB that is
- * worse than unread: only `chrome.storage` is proxied, so an extension page
- * opened in that account reads its stale database directly where every other
- * account reads an empty one.
- *
- * The 3.60.0 migration schedules this rather than doing it, running
- * synchronously and before the app is ready. Runs before `accounts.init()`
- * constructs any of these sessions, so nothing has the files open;
- * `fromPartition` makes an empty session where the account has never run,
- * which has nothing to clear and costs a directory that is not there.
- *
- * The flag goes back before the work rather than after it: a clear that throws
- * is one directory the user can live with, where a flag left set would clear
- * every account's extension storage on every launch from here on.
- */
-export async function clearStaleAccountExtensionData() {
-  if (!config.get("extensions.clearStaleAccountData")) {
-    return;
-  }
-
-  config.set("extensions.clearStaleAccountData", false);
-
-  await Promise.all(
-    config
-      .get("accounts")
-      .map((account) =>
-        extensions.clearSessionData(session.fromPartition(`persist:${account.id}`)),
-      ),
-  );
-
-  log.info("Cleared stale account extension data");
-}
-
-/**
  * What is on disk, which config alone can't tell: an install carries a version,
  * and an opt-in that never finished installing carries nothing.
  */
