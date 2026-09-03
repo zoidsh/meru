@@ -7,6 +7,10 @@ type WorkspaceAppDefinition = {
   singleInstance?: boolean;
 };
 
+/**
+ * Ordered by label, which is the order the launcher and the settings pickers
+ * list them in — Gemini Notebook sits by Gemini rather than under its own key.
+ */
 const workspaceAppDefinitions = {
   admin: { label: "Admin" },
   calendar: { label: "Calendar" },
@@ -17,12 +21,12 @@ const workspaceAppDefinitions = {
   drive: { label: "Drive" },
   forms: { label: "Forms" },
   gemini: { label: "Gemini" },
+  notebook: { label: "Gemini Notebook" },
   gmail: { label: "Gmail", url: GMAIL_URL, availableInLauncher: false, singleInstance: true },
   groups: { label: "Groups" },
   keep: { label: "Keep" },
   meet: { label: "Meet" },
   myaccount: { label: "My Account", availableInLauncher: false },
-  notebooklm: { label: "NotebookLM" },
   sheets: { label: "Sheets" },
   sites: { label: "Sites" },
   slides: { label: "Slides" },
