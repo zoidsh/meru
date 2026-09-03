@@ -697,6 +697,9 @@ export class Gmail {
           const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
+            const wasFocused = main.window.isFocused();
+            const wasVisible = main.window.isVisible();
+
             const copyVerificationCode = () => {
               clipboard.writeText(verificationCode);
 
@@ -719,6 +722,24 @@ export class Gmail {
               }
             };
 
+            // macOS activates the app whenever a notification is clicked, and
+            // Electron cannot opt out. This notification's only job is to
+            // write the clipboard, so hand activation back to the app the
+            // user was in. `app.hide()` also stops the `did-become-active`
+            // handler in index.ts from showing a hidden window; `app.show()`
+            // then unhides, without activating, a window that was visible.
+            const copyVerificationCodeOnClick = () => {
+              copyVerificationCode();
+
+              if (platform.isMacOS && !wasFocused) {
+                app.hide();
+
+                if (wasVisible) {
+                  app.show();
+                }
+              }
+            };
+
             // Marking as read and deleting ride along with the copy rather than
             // with the detection, so that nothing touches an email the user has
             // not yet acted on.
@@ -734,7 +755,7 @@ export class Gmail {
               body: copiesOnNotificationClick
                 ? `Click to copy verification code ${verificationCode}`
                 : `Copied verification code ${verificationCode}`,
-              click: copiesOnNotificationClick ? copyVerificationCode : undefined,
+              click: copiesOnNotificationClick ? copyVerificationCodeOnClick : undefined,
             });
 
             continue;
