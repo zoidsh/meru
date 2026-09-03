@@ -8,7 +8,8 @@
  * fixture is the one that can be asked to make a request on demand.
  *
  * The launch carries `MERU_EXTENSIONS_FIXTURE`, which puts the bundled fixture
- * into every session of this packaged build, and goes through `useProApp`
+ * into every session of this packaged build, seeds the master switch on
+ * because extensions are off by default, and goes through `useProApp`
  * because a file is entirely one entitlement or the other — `useApp` registers
  * its hooks once at module scope. One account is enough here: the worker runs
  * in the default session, which no account owns, so nothing about this changes
@@ -44,7 +45,7 @@ function account(id: string, label: string) {
 const WORKER_SESSION = null;
 
 const meru = useProApp(
-  { accounts: [account("only-account", "Only")] },
+  { "extensions.enabled": true, accounts: [account("only-account", "Only")] },
   { env: { MERU_EXTENSIONS_FIXTURE: "1" } },
 );
 
