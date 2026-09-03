@@ -292,11 +292,10 @@ function ExperimentalAlert() {
   return (
     <Alert>
       <FlaskConicalIcon />
-      <AlertTitle>Extensions are experimental</AlertTitle>
+      <AlertTitle>Extensions are in testing</AlertTitle>
       <AlertDescription>
-        Meru builds Chrome's extension support itself rather than shipping a whole browser, and that
-        support is still being tested. Extensions can behave in ways they don't in Chrome, and this
-        feature may change or be withdrawn in a later release.
+        Extension support is still being tested and may not work as reliably as the rest of Meru. To
+        help make it stable, report any issues.
       </AlertDescription>
     </Alert>
   );
