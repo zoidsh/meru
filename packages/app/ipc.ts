@@ -49,6 +49,7 @@ import {
   uninstallCuratedExtension,
 } from "./extensions";
 import { GMAIL_USER_STYLES_PATH } from "./gmail";
+import { hibernatesTabWhenIdle } from "./lib/hibernation";
 import { log } from "./lib/log";
 import {
   areWorkspaceAppNotificationsAllowed,
@@ -479,11 +480,11 @@ class Ipc {
             openExternalUrl(tab.url, { skipTrustedHostCheck: true });
           },
         },
+        {
+          type: "separator" as const,
+        },
         ...(tabApp
           ? [
-              {
-                type: "separator" as const,
-              },
               {
                 label: tab.pinned ? "Unpin" : "Pin",
                 click: () => {
@@ -514,34 +515,30 @@ class Ipc {
                     },
                   ]
                 : []),
-              // While the setting is on Selected Tabs, only the tabs marked
-              // here hibernate.
-              ...(config.get("workspaceApps.hibernation") === "selected"
-                ? [
-                    {
-                      label: "Hibernate When Idle",
-                      type: "checkbox" as const,
-                      checked: tab.hibernatesWhenIdle,
-                      click: () => {
-                        tab.hibernatesWhenIdle = !tab.hibernatesWhenIdle;
-
-                        // An unpinned tab is not saved, so the mark lasts as
-                        // long as the tab itself does.
-                        if (tab.pinned) {
-                          accounts.saveTabs();
-                        }
-                      },
-                    },
-                  ]
-                : []),
             ]
           : []),
+        // The checkbox shows what the tab does today, under the setting and any
+        // mark it already carries, so ticking it always says hibernate this one
+        // and clearing it always says leave it alone.
+        {
+          label: "Hibernate When Idle",
+          type: "checkbox" as const,
+          checked: hibernatesTabWhenIdle(tab, config.get("workspaceApps.hibernation")),
+          click: () => {
+            tab.hibernatesWhenIdle = !hibernatesTabWhenIdle(
+              tab,
+              config.get("workspaceApps.hibernation"),
+            );
+
+            // An unpinned tab is not saved, so the mark lasts as long as the
+            // tab itself does.
+            if (tab.pinned) {
+              accounts.saveTabs();
+            }
+          },
+        },
         ...(appLinksApp && !workspaceApps[appLinksApp].singleInstance
           ? [
-              // A tab that browsed off Google has no app and so no menu group of
-              // its own, but it can still be holding a designation from before —
-              // which then needs a separator to sit under.
-              ...(tabApp ? [] : [{ type: "separator" as const }]),
               {
                 label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
                   isTabWindowed ? "Window" : "Tab"

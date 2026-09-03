@@ -92,7 +92,7 @@ type WorkspaceAppOptions = {
   savedAsWindow?: boolean;
   pinned?: boolean;
   loadOnLaunch?: boolean;
-  hibernatesWhenIdle?: boolean;
+  hibernatesWhenIdle?: boolean | null;
   opensLinksForApp?: SupportedWorkspaceApp | null;
   app?: SupportedWorkspaceApp;
   zoomFactor?: number;
@@ -468,7 +468,11 @@ export class WorkspaceApp {
 
   loadOnLaunch = false;
 
-  hibernatesWhenIdle = false;
+  /**
+   * The user's own answer for this tab, which overrides the Hibernate idle tabs
+   * setting either way. `null` leaves the tab following the setting.
+   */
+  hibernatesWhenIdle: boolean | null = null;
 
   /**
    * When this tab was last the account's active one. The sweep keeps it on the
@@ -514,7 +518,7 @@ export class WorkspaceApp {
     this.app = app ?? getWorkspaceAppFromUrl(url);
     this.pinned = Boolean(pinned);
     this.loadOnLaunch = Boolean(loadOnLaunch);
-    this.hibernatesWhenIdle = Boolean(hibernatesWhenIdle);
+    this.hibernatesWhenIdle = hibernatesWhenIdle ?? null;
     this.opensLinksForApp = opensLinksForApp ?? null;
     this.opensAsWindow =
       savedAsWindow ?? (Boolean(asWindow) && config.get("workspaceApps.mode") !== "windows");

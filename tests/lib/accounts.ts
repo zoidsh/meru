@@ -32,7 +32,7 @@ export function seedSavedTab({
     url,
     title,
     loadOnLaunch,
-    hibernatesWhenIdle: false,
+    hibernatesWhenIdle: null,
     windowed: false,
     opensLinksForApp: null,
   };

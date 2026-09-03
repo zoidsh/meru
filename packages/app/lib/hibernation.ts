@@ -9,9 +9,33 @@ type HibernatableTab = {
   isAudible: boolean;
   url: string;
   pinned: boolean;
-  hibernatesWhenIdle: boolean;
+  hibernatesWhenIdle: boolean | null;
   lastActiveAt: number;
 };
+
+/**
+ * Whether the sweep takes this tab, before anything about how long it has been
+ * idle. The per-tab mark is the user's own answer and wins either way, so it
+ * both pulls a pinned tab into the unpinned sweep and holds a tab out of the
+ * sweep over every tab. Only a tab that carries no mark follows the setting.
+ */
+export function hibernatesTabWhenIdle(
+  tab: Pick<HibernatableTab, "pinned" | "hibernatesWhenIdle">,
+  hibernation: WorkspaceAppsHibernation,
+) {
+  if (tab.hibernatesWhenIdle !== null) {
+    return tab.hibernatesWhenIdle;
+  }
+
+  switch (hibernation) {
+    case "all":
+      return true;
+    case "unpinned":
+      return !tab.pinned;
+    case "selected":
+      return false;
+  }
+}
 
 /**
  * Whether a tab has gone idle long enough to be unloaded. The caller has
@@ -32,12 +56,7 @@ export function canHibernateTab(
     return false;
   }
 
-  // `all` narrows nothing down, so it has no clause of its own.
-  if (hibernation === "unpinned" && tab.pinned) {
-    return false;
-  }
-
-  if (hibernation === "selected" && !tab.hibernatesWhenIdle) {
+  if (!hibernatesTabWhenIdle(tab, hibernation)) {
     return false;
   }
 

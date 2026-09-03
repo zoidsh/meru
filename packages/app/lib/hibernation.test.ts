@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ms } from "@meru/shared/ms";
-import { canHibernateTab } from "./hibernation";
+import { canHibernateTab, hibernatesTabWhenIdle } from "./hibernation";
 
 const now = new Date("2026-08-18T12:00:00Z").getTime();
 
@@ -11,7 +11,7 @@ const idleTab = {
   isAudible: false,
   url: "https://calendar.google.com/",
   pinned: false,
-  hibernatesWhenIdle: false,
+  hibernatesWhenIdle: null,
   lastActiveAt: now - ms("2h"),
 };
 
@@ -64,9 +64,35 @@ describe("canHibernateTab", () => {
     expect(canHibernateTab({ ...idleTab, hibernatesWhenIdle: true }, sweepSelectedTabs)).toBe(true);
   });
 
-  test("unloads a marked pinned tab while the sweep is on selected tabs", () => {
-    expect(
-      canHibernateTab({ ...idleTab, pinned: true, hibernatesWhenIdle: true }, sweepSelectedTabs),
-    ).toBe(true);
+  test("unloads a tab marked in, whichever tabs the sweep is on", () => {
+    const markedInTab = { ...idleTab, pinned: true, hibernatesWhenIdle: true };
+
+    expect(canHibernateTab(markedInTab, sweepUnpinnedTabs)).toBe(true);
+    expect(canHibernateTab(markedInTab, sweepSelectedTabs)).toBe(true);
+  });
+
+  test("keeps a tab marked out, whichever tabs the sweep is on", () => {
+    const markedOutTab = { ...idleTab, hibernatesWhenIdle: false };
+
+    expect(canHibernateTab(markedOutTab, sweepEveryTab)).toBe(false);
+    expect(canHibernateTab(markedOutTab, sweepUnpinnedTabs)).toBe(false);
+  });
+});
+
+describe("hibernatesTabWhenIdle", () => {
+  const unmarkedTab = { pinned: false, hibernatesWhenIdle: null };
+
+  test("follows the setting while the tab carries no mark", () => {
+    expect(hibernatesTabWhenIdle(unmarkedTab, "all")).toBe(true);
+    expect(hibernatesTabWhenIdle(unmarkedTab, "unpinned")).toBe(true);
+    expect(hibernatesTabWhenIdle({ ...unmarkedTab, pinned: true }, "unpinned")).toBe(false);
+    expect(hibernatesTabWhenIdle(unmarkedTab, "selected")).toBe(false);
+  });
+
+  test("takes the mark over the setting either way", () => {
+    expect(hibernatesTabWhenIdle({ pinned: true, hibernatesWhenIdle: true }, "unpinned")).toBe(
+      true,
+    );
+    expect(hibernatesTabWhenIdle({ pinned: false, hibernatesWhenIdle: false }, "all")).toBe(false);
   });
 });

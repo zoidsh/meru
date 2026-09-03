@@ -35,7 +35,8 @@ export const savedTabSchema = z.object({
   url: z.string(),
   title: z.string(),
   loadOnLaunch: z.boolean(),
-  hibernatesWhenIdle: z.boolean(),
+  /** `null` leaves the tab following the Hibernate idle tabs setting. */
+  hibernatesWhenIdle: z.boolean().nullable(),
   windowed: z.boolean(),
   opensLinksForApp: workspaceAppSchema.nullable(),
 });
