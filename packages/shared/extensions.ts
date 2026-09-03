@@ -27,8 +27,15 @@ export const curatedExtensions: CuratedExtension[] = [
   {
     id: ONEPASSWORD_EXTENSION_ID,
     name: "1Password",
+    // Meru builds for the Google sign-in flows and nothing else, so the copy
+    // names them and then says what the user won't find, rather than leaving
+    // the absences to be discovered: content scripts stop at the two hosts
+    // below, `commands`, `contextMenus` and `notifications` are facade noops,
+    // and `tabs.create` is unimplemented, so a popup entry that opens one of
+    // the extension's own pages — its settings, its full item view — does
+    // nothing at all.
     description:
-      "Password manager that fills logins and signs you in with passkeys stored in your vault.",
+      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey. Nothing else is supported: no in-page filling outside those pages, no card or address autofill, no keyboard shortcuts, right-click fill or notifications, and no way to reach 1Password's own pages, such as its settings.",
     category: "passwordManager",
     // Sign-in runs on accounts.google.com, and account settings — creating a
     // passkey, changing a password — on myaccount.google.com. Both hosts, not
