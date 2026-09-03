@@ -739,9 +739,11 @@ export class Gmail {
 
             createNotification({
               title: notificationTitle,
-              body: copiesOnNotificationClick
-                ? `${hasCopyButton ? "Copy" : "Click to copy"} verification code ${verificationCode}`
-                : `Copied verification code ${verificationCode}`,
+              body: hasCopyButton
+                ? `Verification code ${verificationCode}`
+                : copiesOnNotificationClick
+                  ? `Click to copy verification code ${verificationCode}`
+                  : `Copied verification code ${verificationCode}`,
               actions: hasCopyButton ? [{ text: "Copy", type: "button" }] : undefined,
               action: hasCopyButton ? copyVerificationCode : undefined,
               click: copiesOnNotificationClick ? copyVerificationCode : undefined,
