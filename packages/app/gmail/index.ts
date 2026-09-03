@@ -697,6 +697,9 @@ export class Gmail {
           const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
+            const wasFocused = main.window.isFocused();
+            const wasVisible = main.window.isVisible();
+
             const copyVerificationCode = () => {
               clipboard.writeText(verificationCode);
 
@@ -716,6 +719,20 @@ export class Gmail {
                   newMail.id,
                   "delete",
                 );
+              }
+
+              // macOS activates the app whenever a notification is clicked, and
+              // Electron cannot opt out. This notification's only job is to
+              // write the clipboard, so hand activation back to the app the
+              // user was in. `app.hide()` also stops the `did-become-active`
+              // handler in index.ts from showing a hidden window; `app.show()`
+              // then unhides, without activating, a window that was visible.
+              if (platform.isMacOS && !wasFocused) {
+                app.hide();
+
+                if (wasVisible) {
+                  app.show();
+                }
               }
             };
 
