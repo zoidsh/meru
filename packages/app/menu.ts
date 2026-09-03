@@ -1,20 +1,13 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
-import {
-  app,
-  BrowserWindow,
-  clipboard,
-  dialog,
-  Menu,
-  type MenuItemConstructorOptions,
-  shell,
-} from "electron";
+import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
+import { copyText } from "@/lib/clipboard";
 import { log } from "@/lib/log";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
@@ -524,7 +517,7 @@ export class AppMenu {
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
               if (copyOrShareMessageLink) {
-                clipboard.writeText(copyOrShareMessageLink);
+                copyText(copyOrShareMessageLink);
               }
             },
           },

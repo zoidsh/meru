@@ -19,7 +19,6 @@ import { extractVerificationCode } from "@meru/verification-code";
 import {
   app,
   BrowserWindow,
-  clipboard,
   type Session,
   type WebContentsView,
   type WebContentsViewConstructorOptions,
@@ -30,6 +29,7 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { copyText } from "@/lib/clipboard";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import {
@@ -697,8 +697,12 @@ export class Gmail {
           const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
-            const copyVerificationCode = () => {
-              clipboard.writeText(verificationCode);
+            const copyVerificationCode = async () => {
+              // Awaited so that nothing touches the email until the code is
+              // actually on the clipboard: Electron 44's `writeText` resolves
+              // when the write lands, and marking read or deleting ahead of it
+              // would lose the code outright if the write then failed.
+              await copyText(verificationCode);
 
               if (config.get("verificationCodes.autoMarkAsRead")) {
                 ipc.renderer.send(

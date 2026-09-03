@@ -145,8 +145,10 @@ class Main {
     });
 
     this.window.on("close", (event) => {
-      // Workaround: Closing the main window when on full screen leaves a black screen
-      // https://github.com/electron/electron/issues/20263
+      // Workaround: Closing the main window when on full screen leaves a black screen.
+      // Still open on Electron 44: https://github.com/electron/electron/issues/39572
+      // reopened https://github.com/electron/electron/issues/20263, which a triage bot
+      // had closed for naming an unsupported version rather than for being fixed.
       if (platform.isMacOS && this.window.isFullScreen()) {
         this.window.once("leave-full-screen", () => {
           this.window.hide();

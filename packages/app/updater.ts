@@ -4,6 +4,7 @@ import { config } from "@/config";
 import { ipc } from "./ipc";
 import { log } from "./lib/log";
 import { resolveUpdateChannel } from "./lib/update-channel";
+import { isUpdateSupported } from "./lib/update-support";
 import { main } from "./main";
 
 class AppUpdater {
@@ -21,6 +22,23 @@ class AppUpdater {
 
   init() {
     autoUpdater.logger = log;
+
+    // electron-updater is checked once per update check, after it has decided
+    // the feed carries a different version, so a refusal here is one log line
+    // per check rather than per poll.
+    autoUpdater.isUpdateSupported = (updateInfo) => {
+      const systemVersion = process.getSystemVersion();
+
+      if (isUpdateSupported(process.platform, systemVersion)) {
+        return true;
+      }
+
+      log.info(
+        `Not offering update ${updateInfo.version}: ${process.platform} ${systemVersion} is below the minimum system version this build supports`,
+      );
+
+      return false;
+    };
 
     this.applyChannel();
 
