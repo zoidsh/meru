@@ -152,9 +152,11 @@ export function matchesUrl(pattern: string, url: string) {
     return false;
   }
 
+  // Chrome lowercases a pattern's scheme and host as it parses one, as `URL`
+  // does a URL's; the path stays case-sensitive on both sides
   return (
-    schemeCovers(parsedPattern.scheme, scheme) &&
-    hostCovers(parsedPattern.host, parsedUrl.hostname) &&
+    schemeCovers(parsedPattern.scheme.toLowerCase(), scheme) &&
+    hostCovers(parsedPattern.host.toLowerCase(), parsedUrl.hostname) &&
     pathCovers(parsedPattern.path, `${parsedUrl.pathname}${parsedUrl.search}`)
   );
 }

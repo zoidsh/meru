@@ -99,6 +99,12 @@ describe("matchesUrl", () => {
     expect(matchesUrl("file:///etc/*", "file:///home/tim/notes.html")).toBe(false);
   });
 
+  // Chrome lowercases a pattern's scheme and host as it parses one
+  test("reads the scheme and the host of a pattern case-insensitively, and the path as written", () => {
+    expect(matchesUrl("HTTPS://Accounts.Google.com/*", PAGE_URL)).toBe(true);
+    expect(matchesUrl("https://accounts.google.com/SIGNIN/*", PAGE_URL)).toBe(false);
+  });
+
   test("a pattern that cannot be read, and a URL that is none, reach nothing", () => {
     expect(matchesUrl("accounts.google.com", PAGE_URL)).toBe(false);
     expect(matchesUrl("<all_urls>", "not a url")).toBe(false);

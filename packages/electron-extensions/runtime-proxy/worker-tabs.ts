@@ -135,7 +135,7 @@ export class WorkerTabs {
 
   /**
    * Every page of the worker's session and of the sessions it shims, in the
-   * order Electron lists them, which is creation order and stable.
+   * order Electron's own list has them.
    *
    * Every `WebContents` of those sessions counts, the embedder's own renderer
    * and its popups included, because that is exactly what Chromium's own answer
