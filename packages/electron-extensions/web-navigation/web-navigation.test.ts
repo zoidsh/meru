@@ -141,9 +141,15 @@ describe("WebNavigation", () => {
   test("answers another session's tab where the embedder allows the crossing", () => {
     const { contents } = createTab();
 
+    const askedAbout: [Session, Session][] = [];
+
     const webNavigation = new WebNavigation({
       getWebContentsById: (tabId) => (tabId === TAB_ID ? contents : undefined),
-      canResolveTabAcrossSessions: (askingSession) => askingSession === WORKER_SESSION,
+      canResolveTabAcrossSessions: (askingSession, tabSession) => {
+        askedAbout.push([askingSession, tabSession]);
+
+        return askingSession === WORKER_SESSION;
+      },
     });
 
     expect(webNavigation.getFrame(WORKER_SESSION, { tabId: TAB_ID, frameId: 42 })).toMatchObject({
@@ -160,6 +166,15 @@ describe("WebNavigation", () => {
     // another's reach
     expect(webNavigation.getFrame(OTHER_SESSION, { tabId: TAB_ID, frameId: 42 })).toBeNull();
     expect(webNavigation.getAllFrames(OTHER_SESSION, { tabId: TAB_ID })).toBeNull();
+
+    // The question asked is who wants what, in that order: the asking session
+    // and the session the tab is really in
+    expect(askedAbout).toEqual([
+      [WORKER_SESSION, SESSION],
+      [WORKER_SESSION, SESSION],
+      [OTHER_SESSION, SESSION],
+      [OTHER_SESSION, SESSION],
+    ]);
   });
 
   test("answers nothing for a destroyed tab", () => {
@@ -170,9 +185,17 @@ describe("WebNavigation", () => {
     ).toBeNull();
 
     // Including where the crossing is allowed, the tab being gone before its
-    // session is ever read — a disposed WebContents throws from that accessor
+    // session is ever read — a disposed WebContents throws from that accessor,
+    // which is what this one does
+    const disposedContents = {
+      isDestroyed: () => true,
+      get session(): Session {
+        throw new Error("Object has been destroyed");
+      },
+    } as unknown as WebContents;
+
     const crossingWebNavigation = new WebNavigation({
-      getWebContentsById: (tabId) => (tabId === TAB_ID ? contents : undefined),
+      getWebContentsById: (tabId) => (tabId === TAB_ID ? disposedContents : undefined),
       canResolveTabAcrossSessions: () => true,
     });
 
