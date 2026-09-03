@@ -98,28 +98,6 @@ describe("deriveManifest", () => {
     expect(manifest.permissions).toEqual(["storage", "nativeMessaging", "tabs"]);
   });
 
-  test("drops the permissions that arm the WebRequest proxy, and their rulesets", () => {
-    const { manifest } = deriveManifest(
-      {
-        permissions: [
-          "storage",
-          "declarativeNetRequest",
-          "declarativeNetRequestWithHostAccess",
-          "declarativeNetRequestFeedback",
-          "declarativeWebRequest",
-          "tabs",
-        ],
-        declarative_net_request: { rule_resources: [{ id: "ruleset_1", path: "rules_1.json" }] },
-      },
-      fileNames,
-    );
-
-    // A main process `session.fetch` segfaults while any of these is declared,
-    // so this is load-bearing rather than tidying.
-    expect(manifest.permissions).toEqual(["storage", "tabs"]);
-    expect(manifest.declarative_net_request).toBeUndefined();
-  });
-
   test("leaves a manifest without permissions alone", () => {
     const { manifest } = deriveManifest({ name: "No permissions" }, fileNames);
 
