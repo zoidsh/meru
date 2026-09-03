@@ -15,12 +15,14 @@ import {
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
-import { app, session } from "electron";
+import { app, session, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
+import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { log } from "@/lib/log";
 import { serializeErrorDetails } from "@/lib/log-details";
 import { licenseKey } from "@/license-key";
+import { WorkspaceApp } from "@/workspace-app";
 
 /** Where the curated extensions are installed, `<installDir>/<id>/<version>`. */
 const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
@@ -224,6 +226,7 @@ export const extensions = new Extensions({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
     getWorkerSession: () => session.defaultSession,
+    isActiveTab,
   }),
   logger: {
     debug: (message, details) => {
@@ -237,6 +240,56 @@ export const extensions = new Extensions({
     },
   },
 });
+
+/**
+ * Which page Meru is showing, which is what Chrome's `tabs.Tab.active` means
+ * and what the one worker's `chrome.tabs.query({active: true})` asks for. The
+ * selected account's front view is the answer in the main window — the same
+ * derivation the menu's `getActiveViewWebContents` uses — and a workspace app
+ * living in a window of its own is the page that window shows.
+ *
+ * Focus is deliberately not the question, though it is what Electron's own
+ * `tabs` answers: 1Password unlocks behind a Touch ID prompt raised by its
+ * desktop app, so at the moment its worker asks for the active tab none of
+ * Meru's views is focused at all, and a focus-based answer would send the
+ * unlock to nobody.
+ *
+ * `accounts` and `WorkspaceApp` both import this module, so the imports back
+ * close a cycle. It holds because nothing here is dereferenced while the
+ * modules evaluate: this is a hoisted function declaration, and the first call
+ * to it is a query from the worker, which is many awaits past the last module
+ * body. The guards are for the other end of the same window — an app whose
+ * accounts have not been constructed yet has no front view to name — and for
+ * the moments an account is half removed.
+ */
+function isActiveTab(contents: WebContents) {
+  const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
+
+  if (workspaceApp?.isWindowed) {
+    return true;
+  }
+
+  if (accounts.instances.size === 0) {
+    return false;
+  }
+
+  // Resolving the front view throws while an account is being removed: its
+  // tabs are closed and its Gmail view destroyed several awaits before the
+  // config stops naming it as selected. A page with no front view to name is
+  // not active, and saying so keeps the rest of the answer standing — a throw
+  // here would fail the whole query, and a lock broadcast landing in that
+  // window would reach nobody
+  try {
+    const selectedAccount = accounts.getSelectedAccount();
+
+    const activeView =
+      selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
+
+    return activeView.webContents === contents;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Loads the extensions into the session the one worker runs in, which is

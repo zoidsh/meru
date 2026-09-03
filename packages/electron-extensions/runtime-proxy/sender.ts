@@ -44,8 +44,15 @@ export function parseSenderReport(reported: unknown): RuntimeProxySenderReport |
  * tabs would collide the moment one worker serves both. It is also the mapping
  * the bridge's webNavigation frame queries already answer in, so a sender's
  * `tab.id` means the same thing everywhere the bridge speaks.
+ *
+ * Exported because the worker's own `tabs.query` and `tabs.get` are answered
+ * from main as well (`worker-tabs.ts`), and a tab an extension is handed has
+ * one shape whether it arrived on a sender or as a query's answer.
  */
-function createTabDetails(contents: WebContents): RuntimeProxyTab {
+export function createTabDetails(
+  contents: WebContents,
+  { active }: { active: boolean },
+): RuntimeProxyTab {
   return {
     id: contents.id,
     url: contents.getURL(),
@@ -54,16 +61,21 @@ function createTabDetails(contents: WebContents): RuntimeProxyTab {
     // these carry Chrome's own "no such thing" values rather than a guess
     windowId: -1,
     index: -1,
-    // The page is speaking, which is the closest this layer has to "in front"
-    active: true,
-    highlighted: true,
-    selected: true,
+    // Whether the page is the one its window is showing, which only the
+    // embedder can say — a sender says `true`, the page being the one
+    // speaking, and a listed tab is asked about (`worker-tabs.ts`). The three
+    // move together the way Chrome's do for a window showing one tab
+    active,
+    highlighted: active,
+    selected: active,
     pinned: false,
     incognito: false,
     status: contents.isLoading() ? "loading" : "complete",
     // What Chromium derives Chrome's own `audible` from; Gmail's notification
     // sounds and Meet's audio make this a real value rather than a constant
     audible: contents.isCurrentlyAudible(),
+    // The other real value here, and what `tabs.query({muted})` filters on
+    mutedInfo: { muted: contents.isAudioMuted() },
     // Tab groups are Chrome UI the embedder has none of, which is what
     // Chrome's own `TAB_GROUP_ID_NONE` says
     groupId: -1,
@@ -176,7 +188,12 @@ export function reconstructSender({
 
   return isExtensionPage
     ? sender
-    : { ...sender, frameId: getExtensionFrameId(senderFrame), tab: createTabDetails(contents) };
+    : {
+        ...sender,
+        frameId: getExtensionFrameId(senderFrame),
+        // The page is speaking, which is the closest a sender has to "in front"
+        tab: createTabDetails(contents, { active: true }),
+      };
 }
 
 function getOrigin(url: string) {

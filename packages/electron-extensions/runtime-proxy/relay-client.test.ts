@@ -935,6 +935,10 @@ function createWorkerChromeWithTabs() {
 
   const nativeConnectCalls: unknown[][] = [];
 
+  const nativeQueryCalls: unknown[][] = [];
+
+  const nativeGetCalls: unknown[][] = [];
+
   chrome.tabs = {
     sendMessage: (...callArguments: unknown[]) => {
       answerNatively(callArguments, nativeTabsReply, nativeTabsError, nativeTabsCalls);
@@ -944,6 +948,14 @@ function createWorkerChromeWithTabs() {
 
       return nativePort;
     },
+    // Recorded rather than answered: the client is not supposed to reach these
+    // at all, main answering for the worker's own session as well
+    query: (...callArguments: unknown[]) => {
+      nativeQueryCalls.push(callArguments);
+    },
+    get: (...callArguments: unknown[]) => {
+      nativeGetCalls.push(callArguments);
+    },
   };
 
   return {
@@ -952,6 +964,8 @@ function createWorkerChromeWithTabs() {
     nativeOnConnect,
     nativeTabsCalls,
     nativeConnectCalls,
+    nativeQueryCalls,
+    nativeGetCalls,
     nativeRuntimeSendMessageCalls,
     nativePort,
     setNativeTabsReply: (reply: unknown) => {
@@ -969,12 +983,14 @@ function createWorkerChromeWithTabs() {
   };
 }
 
-function startClientWithTabs(chrome: ChromeNamespace) {
+function startClientWithTabs(...chromeObjects: ChromeNamespace[]) {
   const client = createRelayClient({ retryDelayMs: 5 });
 
-  client.wrapRuntime(chrome);
+  for (const chrome of chromeObjects) {
+    client.wrapRuntime(chrome);
 
-  client.wrapTabs(chrome);
+    client.wrapTabs(chrome);
+  }
 
   client.start();
 
@@ -1258,5 +1274,154 @@ describe("what the worker sends", () => {
     await waitFor(() => errors.length === 1, "the disconnect");
 
     expect(errors).toEqual([RECEIVING_END_ERROR]);
+  });
+});
+
+type TabsQuery = (queryInfo?: Record<string, unknown>) => Promise<{ id: number; url: string }[]>;
+
+type TabsGet = (tabId: number) => Promise<{ id: number; url: string }>;
+
+/**
+ * The tab shape main builds, as much of it as these tests read. The relay
+ * client passes it through whole, so what it carries is `worker-tabs.ts`'s
+ * business rather than this side's.
+ */
+const RELAYED_TAB = { id: 7, url: "https://mail.google.com/mail/u/0/" };
+
+describe("what the worker asks about tabs", () => {
+  test("tabs.query is relayed, and never asked of the native namespace", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerQueryTabs, { tabs: [RELAYED_TAB] });
+
+    const { chrome, nativeQueryCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    expect(await (tabs.query as TabsQuery)({ active: true })).toEqual([RELAYED_TAB]);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerQueryTabs)[0]?.body).toEqual({
+      queryInfo: { active: true },
+    });
+
+    /*
+     * Where `tabs.sendMessage` falls through to Chromium for a tab of the
+     * worker's own session, a query does not: main lists that session too, so
+     * a native call beside it would answer the same tabs twice, with a
+     * different `active` on the second copy.
+     */
+    expect(nativeQueryCalls).toEqual([]);
+  });
+
+  test("a callback hears the tabs the relay listed", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerQueryTabs, { tabs: [RELAYED_TAB] });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const tabs = chrome.tabs as ChromeNamespace;
+
+    const listed: unknown[] = [];
+
+    (tabs.query as (...callArguments: unknown[]) => void)({}, (queried: unknown) => {
+      listed.push(queried);
+    });
+
+    await waitFor(() => listed.length === 1, "the callback");
+
+    expect(listed).toEqual([[RELAYED_TAB]]);
+  });
+
+  test("chrome and browser are both shadowed, as Electron builds two objects", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerQueryTabs, { tabs: [RELAYED_TAB] });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    const { chrome: browser } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome, browser);
+
+    expect(await ((browser.tabs as ChromeNamespace).query as TabsQuery)({})).toEqual([RELAYED_TAB]);
+  });
+
+  /*
+   * Chrome has no `lastError` for "no tabs matched", so a bridge that refused
+   * or went away answers the way a browser showing nothing does. Failing the
+   * call instead would turn a query an extension makes on every lock into an
+   * unhandled rejection in its worker.
+   */
+  test("a refused bridge answers no tabs rather than an error", async () => {
+    const stub = stubBridge();
+
+    stub.refuse(RUNTIME_PROXY_PATHS.workerQueryTabs, 403);
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    expect(await ((chrome.tabs as ChromeNamespace).query as TabsQuery)({})).toEqual([]);
+  });
+
+  test("tabs.get answers the tab main named, natively asking nothing", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerGetTab, { status: "tab", tab: RELAYED_TAB });
+
+    const { chrome, nativeGetCalls } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    expect(await ((chrome.tabs as ChromeNamespace).get as TabsGet)(7)).toEqual(RELAYED_TAB);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerGetTab)[0]?.body).toEqual({ tabId: 7 });
+
+    expect(nativeGetCalls).toEqual([]);
+  });
+
+  test("a tab main will not name sets lastError the way Chrome does", async () => {
+    const stub = stubBridge();
+
+    stub.answerWith(RUNTIME_PROXY_PATHS.workerGetTab, {
+      status: "noTarget",
+      error: "No tab with id: 404.",
+    });
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    const runtime = chrome.runtime as ChromeNamespace;
+
+    const errors: (string | undefined)[] = [];
+
+    ((chrome.tabs as ChromeNamespace).get as (...callArguments: unknown[]) => void)(404, () => {
+      errors.push((runtime.lastError as { message?: string } | undefined)?.message);
+    });
+
+    await waitFor(() => errors.length === 1, "the callback");
+
+    expect(errors).toEqual(["No tab with id: 404."]);
+    expect(runtime.lastError).toBeUndefined();
+  });
+
+  test("an unreachable bridge reads as a tab this app is not showing", async () => {
+    const stub = stubBridge();
+
+    stub.refuse(RUNTIME_PROXY_PATHS.workerGetTab, 403);
+
+    const { chrome } = createWorkerChromeWithTabs();
+
+    startClientWithTabs(chrome);
+
+    await expect(((chrome.tabs as ChromeNamespace).get as TabsGet)(7)).rejects.toThrow(
+      "No tab with id: 7.",
+    );
   });
 });

@@ -156,6 +156,7 @@ function createTab(session: Session, contentsId: number, url: string) {
     getTitle: () => "Sign in",
     isLoading: () => false,
     isCurrentlyAudible: () => false,
+    isAudioMuted: () => false,
     mainFrame: {
       ...mainFrame,
       framesInSubtree: [mainFrame, subFrame, inlineMenuFrame],
@@ -194,6 +195,7 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     getTitle: () => "1Password",
     isLoading: () => false,
     isCurrentlyAudible: () => false,
+    isAudioMuted: () => false,
     mainFrame: { ...popupFrame, framesInSubtree: [popupFrame] },
   } as unknown as WebContents;
 

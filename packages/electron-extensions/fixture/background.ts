@@ -77,6 +77,13 @@ type WorkerCallOutcome =
   | { status: "replied"; reply: unknown }
   | { status: "error"; message: string };
 
+/** One tab of the worker's `tabs.query`, flattened to what a test compares on. */
+type SeenTab = {
+  id: number | null;
+  url: string | null;
+  active: boolean | null;
+};
+
 const storage = getChromeStorage();
 
 /** The stamps, written once at boot, that the probes read back. */
@@ -117,6 +124,109 @@ function sendToSender(
         ? { status: "error", message: lastError.message ?? "unknown" }
         : { status: "replied", reply },
     );
+  });
+}
+
+/**
+ * Every tab the worker can see, and the one the message came from asked for by
+ * id — the two calls a lock broadcast starts with. Natively both are scoped to
+ * the worker's own session, which holds no account's tabs, so in a shimmed
+ * session an unrelayed `query` lists nothing and an unrelayed `get` answers
+ * with `lastError`.
+ */
+function describeTabs(
+  sender: FixtureMessageSender | undefined,
+  answer: (tabs: SeenTab[], activeTabIds: (number | null)[], self: WorkerCallOutcome) => void,
+) {
+  tabs.query({}, (queried) => {
+    const seen = queried.map((tab) => ({
+      id: tab.id ?? null,
+      url: tab.url ?? null,
+      active: tab.active ?? null,
+    }));
+
+    // The filter a fill starts with, asked separately so that what the embedder
+    // calls the front view is visible next to the whole list
+    tabs.query({ active: true }, (activeTabs) => {
+      const activeTabIds = activeTabs.map((tab) => tab.id ?? null);
+
+      const tabId = sender?.tab?.id;
+
+      if (tabId === undefined) {
+        answer(seen, activeTabIds, { status: "error", message: "The sender carried no tab" });
+
+        return;
+      }
+
+      tabs.get(tabId, (tab) => {
+        const lastError = runtime.lastError;
+
+        answer(
+          seen,
+          activeTabIds,
+          lastError
+            ? { status: "error", message: lastError.message ?? "unknown" }
+            : { status: "replied", reply: { id: tab?.id ?? null, url: tab?.url ?? null } },
+        );
+      });
+    });
+  });
+}
+
+/**
+ * The lock broadcast's own shape: `tabs.query` for every tab, then one
+ * `tabs.sendMessage` into each of them. What the asking context gets back is
+ * how the send into *its* tab went, which is the outcome that says whether the
+ * query listed it at all.
+ */
+function notifyAllTabs(
+  sender: FixtureMessageSender | undefined,
+  message: unknown,
+  answer: (outcome: WorkerCallOutcome) => void,
+) {
+  const senderTabId = sender?.tab?.id;
+
+  tabs.query({}, (queried) => {
+    const targets = queried.filter((tab) => typeof tab.id === "number");
+
+    let outcome: WorkerCallOutcome = {
+      status: "error",
+      message: "The worker's tabs.query did not list the sender's tab",
+    };
+
+    let remaining = targets.length;
+
+    const finish = () => {
+      remaining -= 1;
+
+      if (remaining <= 0) {
+        answer(outcome);
+      }
+    };
+
+    if (targets.length === 0) {
+      answer(outcome);
+
+      return;
+    }
+
+    for (const target of targets) {
+      const targetId = target.id as number;
+
+      tabs.sendMessage(targetId, message, {}, (reply) => {
+        const lastError = runtime.lastError;
+
+        // Every tab is messaged, as a lock broadcast messages every tab; only
+        // the asking context's own outcome is reported back to it
+        if (targetId === senderTabId) {
+          outcome = lastError
+            ? { status: "error", message: lastError.message ?? "unknown" }
+            : { status: "replied", reply };
+        }
+
+        finish();
+      });
+    }
   });
 }
 
@@ -173,6 +283,30 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
       { type: "ping-from-worker", nonce: probeMessage.nonce, workerInstanceId },
       (outcome) => {
         sendResponse({ type: "send-back-reply", outcome });
+      },
+    );
+
+    return true;
+  }
+
+  // What the worker's own `tabs.query` and `tabs.get` can see, which is every
+  // account's tabs only because main answers both. Answers late
+  if (probeMessage?.type === "query-tabs") {
+    describeTabs(sender, (seen, activeTabIds, self) => {
+      sendResponse({ type: "query-tabs-reply", tabs: seen, activeTabIds, self });
+    });
+
+    return true;
+  }
+
+  // And the lock broadcast's shape, which is the query and a send into every
+  // tab it listed. Late as well
+  if (probeMessage?.type === "notify-all-tabs") {
+    notifyAllTabs(
+      sender,
+      { type: "ping-from-worker", nonce: probeMessage.nonce, workerInstanceId },
+      (outcome) => {
+        sendResponse({ type: "notify-all-tabs-reply", outcome });
       },
     );
 

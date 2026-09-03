@@ -70,6 +70,28 @@ export type WorkerInitiatedOutcome = {
   outcome: EchoOutcome;
 };
 
+/** One tab of the worker's own `tabs.query`, as the worker reported it. */
+export type SeenTab = {
+  id: number | null;
+  url: string | null;
+  active: boolean | null;
+};
+
+/**
+ * What the worker's own `chrome.tabs` can see: every tab it listed, and this
+ * context's own tab asked for by id. Both are scoped natively to the worker's
+ * session, which holds no account's tabs at all.
+ */
+export type WorkerTabsOutcome = {
+  tabs: SeenTab[];
+  /**
+   * The ids `tabs.query({active: true})` came back with, which is the filter a
+   * fill starts with and the one only the embedder can answer.
+   */
+  activeTabIds: (number | null)[];
+  self: EchoOutcome;
+};
+
 export type StorageOutcome =
   | { status: "read"; value: unknown }
   | { status: "error"; message: string };
@@ -167,10 +189,24 @@ export type ProbeResults = {
    * parent.
    */
   senderFrameSeenByWorker: EchoOutcome;
+  /**
+   * What the worker's `tabs.query` and `tabs.get` answered. In a
+   * content-script-only session Chromium lists none of these tabs — they belong
+   * to a session the worker is not loaded into — so a context finding itself
+   * here is reading main's answer.
+   */
+  tabsSeenByWorker: WorkerTabsOutcome;
   /** The worker messaging this context's own tab with `tabs.sendMessage`. */
   workerSentBack: WorkerInitiatedOutcome;
   /** The worker opening a port to this context's own tab with `tabs.connect`. */
   workerConnectedBack: WorkerInitiatedOutcome;
+  /**
+   * A lock broadcast's own shape, run by the worker: `tabs.query` for every tab
+   * and then one `tabs.sendMessage` into each. `heard` is what arrived here,
+   * and the outcome is the worker's report for this context's own tab — which
+   * reads as an error naming the query when the query never listed it.
+   */
+  workerNotifiedAllTabs: WorkerInitiatedOutcome;
   /**
    * Whether the worker's event log recorded this context answering on the port
    * the worker opened — the page-to-worker half of a worker-opened port, which
@@ -385,7 +421,7 @@ async function probeSenderFrame(runtime: FixtureRuntime): Promise<EchoOutcome> {
 function probeWorkerInitiated(
   runtime: FixtureRuntime,
   contextId: string,
-  requestType: "send-back" | "connect-back",
+  requestType: "send-back" | "connect-back" | "notify-all-tabs",
   arrivals: Map<string, { message: unknown; sender: SeenSender }>,
 ): Promise<WorkerInitiatedOutcome> {
   const nonce = `${requestType}:${contextId}`;
@@ -419,6 +455,28 @@ function probeWorkerInitiated(
       });
     });
   });
+}
+
+/**
+ * What the worker's own `chrome.tabs.query` and `chrome.tabs.get` see, asked
+ * of the worker because only it can make those calls.
+ */
+async function probeTabsSeenByWorker(runtime: FixtureRuntime): Promise<WorkerTabsOutcome> {
+  const askOutcome = await sendMessage(runtime, { type: "query-tabs" });
+
+  if (askOutcome.status !== "replied") {
+    return { tabs: [], activeTabIds: [], self: askOutcome };
+  }
+
+  const reply = askOutcome.reply as
+    | { tabs?: SeenTab[]; activeTabIds?: (number | null)[]; self?: EchoOutcome }
+    | undefined;
+
+  return {
+    tabs: reply?.tabs ?? [],
+    activeTabIds: reply?.activeTabIds ?? [],
+    self: reply?.self ?? { status: "error", message: "The worker answered without an outcome" },
+  };
 }
 
 /**
@@ -723,12 +781,21 @@ export async function runProbes(): Promise<ProbeResults> {
 
   const senderFrameSeenByWorker = await probeSenderFrame(runtime);
 
+  const tabsSeenByWorker = await probeTabsSeenByWorker(runtime);
+
   const workerSentBack = await probeWorkerInitiated(runtime, contextId, "send-back", arrivals);
 
   const workerConnectedBack = await probeWorkerInitiated(
     runtime,
     contextId,
     "connect-back",
+    arrivals,
+  );
+
+  const workerNotifiedAllTabs = await probeWorkerInitiated(
+    runtime,
+    contextId,
+    "notify-all-tabs",
     arrivals,
   );
 
@@ -749,8 +816,10 @@ export async function runProbes(): Promise<ProbeResults> {
     selfCloseSeenByWorker,
     openPortName,
     senderFrameSeenByWorker,
+    tabsSeenByWorker,
     workerSentBack,
     workerConnectedBack,
+    workerNotifiedAllTabs,
     portReplySeenByWorker:
       workerConnectedBack.heard !== null && (await probePortReplySeenByWorker(runtime, contextId)),
   };

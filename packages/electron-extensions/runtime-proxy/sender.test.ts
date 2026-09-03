@@ -35,6 +35,7 @@ function createContents(
     isDestroyed: () => false,
     isLoading: () => isLoading,
     isCurrentlyAudible: () => isCurrentlyAudible,
+    isAudioMuted: () => false,
     getURL: () => url,
     getTitle: () => title,
   } as unknown as WebContents;
@@ -95,6 +96,7 @@ describe("reconstructSender", () => {
         status: "complete",
         groupId: -1,
         audible: false,
+        mutedInfo: { muted: false },
         discarded: false,
         autoDiscardable: true,
       },
