@@ -458,8 +458,10 @@ export function ExtensionsSettings() {
         <FieldGroup>
           <ExperimentalAlert />
           <FieldDescription>
-            Extensions are loaded into every account and take effect after a restart. Meru installs
-            the official extensions from the Chrome Web Store.
+            Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn
+            one on below and Meru installs the official version from the Chrome Web Store.
+            Extensions start after a restart, and every account shares one copy, so you sign in to
+            an extension once.
           </FieldDescription>
           <ConfigSwitchField
             label="Enable extensions"
