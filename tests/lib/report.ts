@@ -10,9 +10,8 @@
  * fragile than naming a path and asking for it.
  *
  * So MERU_PERF_REPORT names one file, and every section of the run merges into
- * it. Unset — which is every local run, and every CI run that has no base
- * commit to compare against — none of this happens and the attachments are
- * still there.
+ * it. Unset — which is every run that nothing is going to read afterwards —
+ * none of this happens and the attachments are still there.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";

@@ -232,37 +232,17 @@ test("cold launch", async ({}, testInfo) => {
    * report where an absolute reading fails a run. Why this figure and no other
    * is in the file header; what the ceiling is for is this:
    *
-   * Comparing a pull request against its own base commit on the same runner
-   * catches a change, and marks it with the pull request that made it and the
-   * process it landed in. It structurally cannot catch drift — a figure
-   * creeping a percent per pull request stays under that marker forever and
-   * adds up to anything. A ceiling is the second net, and the only one that
-   * ever sees the absolute number.
+   * It catches drift — a figure creeping upward run after run, each step too
+   * small to notice and adding up to anything. Nothing else here ever sees the
+   * absolute number.
    *
-   * It says "over" and nothing more. Which pull request, and which process, is
-   * the comparison's job, and a ceiling that tried to diagnose would be a worse
-   * copy of it.
+   * It says "over" and nothing more. Which change moved it, and which process
+   * it moved in, is a question for a profile of the two commits; a ceiling that
+   * tried to diagnose would only be a worse instrument.
    *
    * Read after the report is attached and printed, so a budget file that is
    * missing or malformed still leaves the run's figures somewhere readable.
-   *
-   * A base-commit run stops before it, having reported the figures and checked
-   * nothing, for the reason `tests/bundles.perf.ts` gives about its own
-   * budgets: that run pairs an older build with this checkout's ceiling, and a
-   * pull request that lowers the ceiling to lock a win in — which is what the
-   * warning below tells people to do — would fail against a build made before
-   * it did. The failure would surface in a step named after the base commit, on
-   * a pull request that is perfectly healthy.
-   *
-   * Worth knowing that it fails late rather than at once, which is why the
-   * guard is here and not left for whoever first trips it. A base binary passes
-   * this ceiling today, so the mismatch appears only the first time someone
-   * lowers the number.
    */
-  if (process.env.MERU_PERF_BASELINE) {
-    return;
-  }
-
   const budget: Record<string, number> = JSON.parse(await readFile(MEMORY_BUDGET_PATH, "utf8"));
 
   const ceilingKb = budget[MAIN_HEAP_BUDGET_KEY];
