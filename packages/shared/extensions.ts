@@ -13,6 +13,22 @@ export type CuratedExtension = {
    * for. Absent leaves the manifest's own patterns in place.
    */
   contentScriptMatches?: string[];
+  /**
+   * The extension's telemetry, crash-reporting and log-collection endpoints, as
+   * match patterns. Requests to them are canceled in the session the
+   * extension's service worker runs in, which is where an extension of this
+   * size does its reporting from.
+   *
+   * Only what the product does not need: an endpoint the extension depends on
+   * belongs nowhere near this list, since a cancel here is indistinguishable
+   * from the network being down.
+   *
+   * Host-exact, never a wildcard over a domain. 1Password serves certificate
+   * revocation from `crl.1passwordservices.com`, the same second-level domain
+   * as two of the hosts below, so a pattern that widened to the domain would
+   * take a working password manager with it.
+   */
+  telemetryUrls?: string[];
 };
 
 /** The 1Password Chrome Web Store id, which app and settings both single out. */
@@ -42,6 +58,19 @@ export const curatedExtensions: CuratedExtension[] = [
     // the settings paths alone: Google reshuffles those and redirects between
     // them, and a path that falls outside the clamp offers nothing, silently
     contentScriptMatches: ["https://accounts.google.com/*", "https://myaccount.google.com/*"],
+    telemetryUrls: [
+      // Observability: every console line the worker writes, forwarded as a
+      // metric over Connect, and log entries carrying account uuids beside them
+      "https://client-log-forwarder.1password.com/*",
+      "https://client-log-forwarder.1password.ca/*",
+      "https://client-log-forwarder.1password.eu/*",
+      // Snowplow product telemetry, and the Snowplow Mini collector the
+      // extension's own policy also allows it to reach
+      "https://telemetry.1passwordservices.com/*",
+      "https://com-1password-prod1.mini.snplow.net/*",
+      // Sentry error reporting, initialized as the worker starts
+      "https://b5x-sentry.1passwordservices.com/*",
+    ],
   },
 ];
 
