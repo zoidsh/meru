@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Event as ElectronEvent, MessageDetails, Session } from "electron";
+import type { Event as ElectronEvent, Extension, MessageDetails, Session } from "electron";
 import {
   type ActionExtension,
   createExtensionAction,
@@ -198,6 +198,13 @@ export class Extensions {
 
   private loadedExtensionIdsBySession = new Map<Session, Set<string>>();
 
+  private pendingSessionSetups = 0;
+
+  private loadedExtensionsToReport = new Map<
+    string,
+    { name: string; version: string; extensionDir: string; sessions: number }
+  >();
+
   private actionsBySession = new Map<Session, ExtensionAction[]>();
 
   private actionsChangedListeners = new Set<ActionsChangedListener>();
@@ -357,7 +364,25 @@ export class Extensions {
     });
   }
 
+  /**
+   * Loads into the session, and reports what loaded once the sessions asking
+   * together have all finished — see `recordLoadedExtension`.
+   */
   async setupSession(session: Session) {
+    this.pendingSessionSetups += 1;
+
+    try {
+      await this.loadExtensionsIntoSession(session);
+    } finally {
+      this.pendingSessionSetups -= 1;
+
+      if (this.pendingSessionSetups === 0) {
+        this.reportLoadedExtensions();
+      }
+    }
+  }
+
+  private async loadExtensionsIntoSession(session: Session) {
     const extensionDirs = this.dedupeExtensionDirs(
       typeof this.extensionDirs === "function" ? await this.extensionDirs() : this.extensionDirs,
     );
@@ -410,12 +435,7 @@ export class Extensions {
 
         actions.push(await this.createAction(extension));
 
-        this.logger?.info("Loaded extension", {
-          id: extension.id,
-          name: extension.name,
-          version: extension.version,
-          extensionDir,
-        });
+        this.recordLoadedExtension(extension, extensionDir);
 
         this.warnAboutUnclampedWorkerContentScripts(extension, sharedInstanceDerive);
       } catch (error) {
@@ -424,6 +444,47 @@ export class Extensions {
     }
 
     this.emitActionsChanged(session);
+  }
+
+  /**
+   * Held rather than logged, because the same extension loads into every
+   * session and a line per session says the same thing once per account.
+   *
+   * The count is what a per-session line was worth: it says the extension
+   * reached every session that asked, and a shortfall is visible without
+   * counting repeated lines.
+   */
+  private recordLoadedExtension(extension: Extension, extensionDir: string) {
+    const loadedExtension = this.loadedExtensionsToReport.get(extension.id);
+
+    if (loadedExtension) {
+      loadedExtension.sessions += 1;
+
+      return;
+    }
+
+    this.loadedExtensionsToReport.set(extension.id, {
+      name: extension.name,
+      version: extension.version,
+      extensionDir,
+      sessions: 1,
+    });
+  }
+
+  /**
+   * One line per extension, once every session that was setting up alongside
+   * the others has finished. At launch the embedder starts them all in the one
+   * tick — the worker session and every account's — so they are all in flight
+   * together and the count is the launch's; a session set up afterwards, an
+   * account added while the app runs, is on its own and reports its own line,
+   * that being a separate event rather than a repeat of the launch.
+   */
+  private reportLoadedExtensions() {
+    for (const [id, { name, version, extensionDir, sessions }] of this.loadedExtensionsToReport) {
+      this.logger?.info("Loaded extension", { id, name, version, sessions, extensionDir });
+    }
+
+    this.loadedExtensionsToReport.clear();
   }
 
   /**
@@ -469,8 +530,10 @@ export class Extensions {
 
     // Once, and with the patterns, so that the log says why those requests
     // fail rather than leaving the extension's own error line to be read as a
-    // network fault
-    this.logger?.info("Blocking extension telemetry in the worker session", {
+    // network fault. At `debug`, since a shipped log has nothing to do with a
+    // block that never changes: the line is for whoever is testing that it is
+    // armed, and the file transport keeps it out of a packaged run
+    this.logger?.debug("Blocking extension telemetry in the worker session", {
       urls: this.workerSessionBlockedUrls,
     });
   }

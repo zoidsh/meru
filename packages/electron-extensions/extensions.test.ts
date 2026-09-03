@@ -379,7 +379,66 @@ describe("Extensions", () => {
           id: "aaa",
           name: "Extension aaa",
           version: "1.0.0",
+          sessions: 1,
           extensionDir: firstExtensionDir,
+        },
+      },
+    ]);
+  });
+
+  /*
+   * One extension loads into the worker session and into every account's, and
+   * a launch log wants that said once rather than once per session. The
+   * sessions a launch sets up are all in flight together, so what closes the
+   * line is the last of them finishing; a session set up after that — an
+   * account added while the app runs — is a separate event and says so on its
+   * own line.
+   */
+  test("reports one line per extension for the sessions set up together", async () => {
+    const loggedInfo: { message: string; details: Record<string, unknown> }[] = [];
+
+    const extensionDir = await createExtensionDir("one");
+
+    const extensions = createExtensions([extensionDir], {
+      debug: () => {},
+      info: (message, details) => {
+        loggedInfo.push({ message, details });
+      },
+      error: () => {},
+    });
+
+    // Started in the one tick and awaited afterwards, the way the app starts
+    // the worker session and then every account's
+    await Promise.all(
+      [createSession(), createSession(), createSession()].map(({ session }) =>
+        extensions.setupSession(session),
+      ),
+    );
+
+    expect(loggedInfo).toEqual([
+      {
+        message: "Loaded extension",
+        details: {
+          id: "aaa",
+          name: "Extension aaa",
+          version: "1.0.0",
+          sessions: 3,
+          extensionDir,
+        },
+      },
+    ]);
+
+    await extensions.setupSession(createSession().session);
+
+    expect(loggedInfo.slice(1)).toEqual([
+      {
+        message: "Loaded extension",
+        details: {
+          id: "aaa",
+          name: "Extension aaa",
+          version: "1.0.0",
+          sessions: 1,
+          extensionDir,
         },
       },
     ]);
@@ -1086,6 +1145,52 @@ describe("the shared instance's worker session", () => {
 
     // Cleared rather than left behind, the way the bridge's listener is
     expect(workerSession.beforeRequestFilters).toEqual([{ urls: blockedUrls }, null]);
+  });
+
+  /*
+   * The block never changes once the app ships, so the line saying it is armed
+   * is for whoever is testing: `debug`, which a packaged run's file transport
+   * drops and a development run keeps, and with the patterns, since those are
+   * what the line is worth reading for.
+   */
+  test("the worker session block is reported at debug, with its patterns", async () => {
+    const workerSession = createSharedSession();
+
+    const accountSession = createSharedSession();
+
+    const blockedUrls = ["https://client-log-forwarder.1password.com/*"];
+
+    const loggedDebug: { message: string; details: Record<string, unknown> }[] = [];
+
+    const loggedInfoMessages: string[] = [];
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession.session),
+      {
+        debug: (message, details) => {
+          loggedDebug.push({ message, details });
+        },
+        info: (message) => {
+          loggedInfoMessages.push(message);
+        },
+        error: () => {},
+      },
+      blockedUrls,
+    );
+
+    await extensions.setupSession(workerSession.session);
+
+    await extensions.setupSession(accountSession.session);
+
+    expect(loggedDebug).toEqual([
+      {
+        message: "Blocking extension telemetry in the worker session",
+        details: { urls: blockedUrls },
+      },
+    ]);
+
+    expect(loggedInfoMessages).not.toContain("Blocking extension telemetry in the worker session");
   });
 
   /*
