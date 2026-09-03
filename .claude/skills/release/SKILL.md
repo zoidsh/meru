@@ -40,6 +40,7 @@ The channel is named Beta in the app and versioned `beta` on the wire, so the in
 - The version is the next stable version per the triage above with `-beta.N` appended: the first beta release of a cycle is `X.Y.Z-beta.1`. Each further one before that stable ships increments `N`.
 - Everything else follows the stable flow, with two differences: `gh release create` gets `--prerelease`, and the triage range runs from the last release of any kind, not the last stable.
 - Promoting a beta release to stable is the normal stable flow with the suffix dropped, as in `3.60.0-beta.2` → `3.60.0`. Beta users are moved onto the stable build automatically.
+- **Never promote by unticking "pre-release" on the existing GitHub release.** Editing a prerelease into a release makes GitHub send `released`, so `release.yml` rebuilds with `github.event.release.prerelease` false and publishes `latest*.yml` carrying the `-beta.N` version onto the beta tag. `/releases/latest` then moves onto that release and stable users are offered a Beta build. A fresh `vX.Y.Z` tag is the only correct promotion.
 
 ## Confirm the bump
 
@@ -68,3 +69,4 @@ Always confirm before editing `package.json`, even when the bump is obvious.
 
 - Run the `release-notes` skill. It expects `HEAD` to be the version commit and writes onto the `v<version>` release, which now exists.
 - Report the release URL and the release build's run URL (`gh run list --workflow=release.yml -L 1 --json url,status`). Don't wait for the build — it takes many minutes across three platforms.
+- Re-running a single failed platform job is safe, however long after the release it happens. `release.yml` sets `EP_GH_IGNORE_TIME`, which turns off electron-publish's refusal to upload into a release published more than two hours earlier — without it the rebuild uploads nothing for that platform and still reports success.
