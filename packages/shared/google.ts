@@ -8,12 +8,25 @@ export function getGoogleDomainFaviconUrl(domain: string, size: number) {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
 }
 
-const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>(
-  (Object.keys(workspaceApps) as SupportedWorkspaceApp[]).map((workspaceApp) => [
-    new URL(getWorkspaceAppUrl(workspaceApp)).hostname.replace(".google.com", ""),
-    workspaceApp,
-  ]),
-);
+/**
+ * Subdomains Google has moved an app off. Each one still redirects to the app's
+ * current home, so a link to one — an old bookmark, a message sent before the
+ * move — has to keep resolving to the app that answers it.
+ */
+const legacyWorkspaceAppSubdomains: Record<string, SupportedWorkspaceApp> = {
+  notebooklm: "notebook",
+};
+
+const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>([
+  ...(Object.keys(workspaceApps) as SupportedWorkspaceApp[]).map(
+    (workspaceApp) =>
+      [
+        new URL(getWorkspaceAppUrl(workspaceApp)).hostname.replace(".google.com", ""),
+        workspaceApp,
+      ] as const,
+  ),
+  ...Object.entries(legacyWorkspaceAppSubdomains),
+]);
 
 const WORKSPACE_APPS_SUBDOMAIN_REGEXP = new RegExp(
   `(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,

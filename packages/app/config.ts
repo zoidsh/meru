@@ -371,6 +371,57 @@ export const config = new Store<Config>({
         store.set("verificationCodes.autoCopy", true);
         store.set("verificationCodes.copyMode", "notificationClick");
       }
+
+      // NotebookLM is Gemini Notebook now, and it moved from
+      // `notebooklm.google.com` to `notebook.google.com`, so its app key moved
+      // with it. Every stored key has to follow: an unknown app fails the
+      // account schema, and a launcher or zoom entry under the old key is one
+      // nothing reads again.
+      const renameNotebookApp = <App extends string>(app: App) =>
+        (app === "notebooklm" ? "notebook" : app) as App;
+
+      store.set(
+        "workspaceApps.launcherApps",
+        store.get("workspaceApps.launcherApps").map(renameNotebookApp),
+      );
+
+      store.set(
+        "workspaceApps.openInAppExcludedApps",
+        store.get("workspaceApps.openInAppExcludedApps").map(renameNotebookApp),
+      );
+
+      const zoomFactors = store.get("workspaceApps.zoomFactors");
+
+      store.set(
+        "workspaceApps.zoomFactors",
+        Object.fromEntries(
+          Object.entries(zoomFactors).map(([app, zoomFactor]) => [
+            renameNotebookApp(app),
+            zoomFactor,
+          ]),
+        ),
+      );
+
+      const accounts = store.get("accounts");
+
+      if (Array.isArray(accounts)) {
+        for (const account of accounts) {
+          account.workspaceApps = {
+            savedTabs: account.workspaceApps.savedTabs.map((savedTab) => ({
+              ...savedTab,
+              app: renameNotebookApp(savedTab.app),
+              opensLinksForApp:
+                savedTab.opensLinksForApp && renameNotebookApp(savedTab.opensLinksForApp),
+            })),
+            bookmarks: account.workspaceApps.bookmarks.map((bookmark) => ({
+              ...bookmark,
+              app: renameNotebookApp(bookmark.app),
+            })),
+          };
+        }
+
+        store.set("accounts", accounts);
+      }
     },
   },
 });

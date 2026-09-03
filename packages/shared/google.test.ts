@@ -51,6 +51,13 @@ describe("getWorkspaceAppFromUrl", () => {
     );
   });
 
+  test("resolves Gemini Notebook from both its current and its former subdomain", () => {
+    expect(getWorkspaceAppFromUrl("https://notebook.google.com/notebook/abc123")).toBe("notebook");
+    expect(getWorkspaceAppFromUrl("https://notebooklm.google.com/notebook/abc123")).toBe(
+      "notebook",
+    );
+  });
+
   test("returns undefined for unsupported urls", () => {
     expect(getWorkspaceAppFromUrl("https://example.com/spreadsheets/d/abc123")).toBeUndefined();
     expect(getWorkspaceAppFromUrl("https://myaccount.google.com/")).toBe("myaccount");
