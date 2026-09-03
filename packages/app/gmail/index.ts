@@ -720,13 +720,17 @@ export class Gmail {
                   "delete",
                 );
               }
+            };
 
-              // macOS activates the app whenever a notification is clicked, and
-              // Electron cannot opt out. This notification's only job is to
-              // write the clipboard, so hand activation back to the app the
-              // user was in. `app.hide()` also stops the `did-become-active`
-              // handler in index.ts from showing a hidden window; `app.show()`
-              // then unhides, without activating, a window that was visible.
+            // macOS activates the app whenever a notification is clicked, and
+            // Electron cannot opt out. This notification's only job is to
+            // write the clipboard, so hand activation back to the app the
+            // user was in. `app.hide()` also stops the `did-become-active`
+            // handler in index.ts from showing a hidden window; `app.show()`
+            // then unhides, without activating, a window that was visible.
+            const copyVerificationCodeOnClick = () => {
+              copyVerificationCode();
+
               if (platform.isMacOS && !wasFocused) {
                 app.hide();
 
@@ -751,7 +755,7 @@ export class Gmail {
               body: copiesOnNotificationClick
                 ? `Click to copy verification code ${verificationCode}`
                 : `Copied verification code ${verificationCode}`,
-              click: copiesOnNotificationClick ? copyVerificationCode : undefined,
+              click: copiesOnNotificationClick ? copyVerificationCodeOnClick : undefined,
             });
 
             continue;
