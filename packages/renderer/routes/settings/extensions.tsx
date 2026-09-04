@@ -244,7 +244,10 @@ function ExtensionItem({
             {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
             <LicenseKeyRequiredFieldBadge />
           </ItemTitle>
-          <ItemDescription>{extension.description}</ItemDescription>
+          {/* `ItemDescription` clamps to two lines, which cuts these mid-word.
+              An extension's description is the only place its limits are
+              written down, so it is shown whole. */}
+          <ItemDescription className="line-clamp-none">{extension.description}</ItemDescription>
           {isOnePassword && (
             <Button
               variant="outline"
