@@ -1,5 +1,5 @@
 export const verificationCodeCopyModes = {
-  notificationClick: "From the notification",
+  notificationClick: "Only when you ask",
   immediately: "As soon as it arrives",
 } as const;
 
