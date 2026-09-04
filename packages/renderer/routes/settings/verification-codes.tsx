@@ -30,7 +30,7 @@ export function VerificationCodesSettings() {
           />
           <ConfigSelectField
             label="When to copy"
-            description={`A notification shows the code either way. Copying ${platform.isLinux ? "on click" : "from its Copy button"} leaves your clipboard untouched until you act.`}
+            description={`A notification shows the code either way. ${platform.isLinux ? "Click it" : "Press its Copy button"} to copy the code yourself.`}
             configKey="verificationCodes.copyMode"
             items={Object.entries(verificationCodeCopyModes).map(([value, label]) => ({
               value,
