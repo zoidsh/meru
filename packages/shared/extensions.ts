@@ -66,8 +66,16 @@ export const curatedExtensions: CuratedExtension[] = [
     // and `tabs.create` is unimplemented, so a popup entry that opens one of
     // the extension's own pages — its settings, its full item view — does
     // nothing at all.
+    //
+    // The desktop-app requirement is named before the absences because it is
+    // the one that decides whether any of this works: the extension fills
+    // nothing until it is connected, and a user who installs without it sees
+    // an extension that does nothing rather than one Meru limited. How to
+    // connect the two is the setup dialog's job, and the button that opens it
+    // sits directly under this text, so the copy states the requirement and
+    // stops there.
     description:
-      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey. Nothing else is supported: no in-page filling outside those pages, no card or address autofill, no keyboard shortcuts, right-click fill or notifications, and no way to reach 1Password's own pages, such as its settings.",
+      "Signs you in to your Google Account with a saved password or passkey, and generates new ones when you change your password or add a passkey. Needs the 1Password desktop app, connected to Meru. Nothing else is supported: no in-page filling outside those pages, no card or address autofill, no keyboard shortcuts, right-click fill or notifications, and no way to reach 1Password's own pages, such as its settings.",
     category: "passwordManager",
     // Sign-in runs on accounts.google.com, and account settings — creating a
     // passkey, changing a password — on myaccount.google.com. Both hosts, not
