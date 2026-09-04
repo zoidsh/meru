@@ -14,10 +14,12 @@ type LegacySavedTab = SavedTab & {
  * without Electron: `config.ts` reads `app.getVersion()` and
  * `app.getPath("downloads")` at module scope, which no `bun test` can satisfy.
  *
- * Every migration here runs against the config file as it sits on disk, and
- * nothing else. conf merges the defaults in only *after* the ladder has run, so
- * on a fresh profile the store a migration sees is empty and every read comes
- * back `undefined` — hence the guard in front of each one.
+ * Every migration guards the keys it reads. conf writes the defaults to disk
+ * before the ladder runs, so a current default is there to be read — but a key
+ * the defaults no longer carry is not, and neither is anything a hand-edited or
+ * half-written config is missing. conf 14 wrote the defaults *afterwards*,
+ * which handed every migration a completely empty store on a fresh profile and
+ * is what bricked a new install of 3.60.0-beta.1.
  */
 export const configMigrations = {
   ">=3.4.0": (store) => {

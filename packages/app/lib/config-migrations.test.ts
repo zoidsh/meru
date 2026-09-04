@@ -52,19 +52,25 @@ function writeStoredConfig(contents: Record<string, unknown>) {
   return writeFile(join(cwd, "config.json"), JSON.stringify(contents));
 }
 
+const shippedDefaults = createDefaultConfig({
+  accountId: "00000000-0000-0000-0000-000000000000",
+  downloadsLocation: "/downloads",
+  trayEnabled: true,
+});
+
+/**
+ * Stands in for the defaults where the point is what a migration does without
+ * them. conf will not accept a partial config, so the cast says "no defaults at
+ * all" rather than describing a config that could exist.
+ */
+const noDefaults = {} as Config;
+
 /** Opens the config store the way `config.ts` does, with the environment stubbed. */
-function launch(version: string) {
+function launch(version: string, defaults: Config = shippedDefaults) {
   return new Conf<Config>({
     cwd,
     configName: "config",
-    ...createConfigOptions({
-      version,
-      defaults: createDefaultConfig({
-        accountId: "00000000-0000-0000-0000-000000000000",
-        downloadsLocation: "/downloads",
-        trayEnabled: true,
-      }),
-    }),
+    ...createConfigOptions({ version, defaults }),
   });
 }
 
@@ -130,21 +136,25 @@ function createStoredConfig() {
 // the main process down with it — an app that cannot launch at all. 3.60.0's
 // migration shipped exactly that, and only a release build caught it.
 //
-// Both suites below run the whole ladder at every version that runs a rung,
-// rather than only at the version being shipped. That is the gap this bug came
+// The two ladder suites below run at every version that runs a rung, rather
+// than only at the version being shipped. That is the gap this bug came
 // through: a rung keyed above the current version never runs, so CI was green
 // on `">=3.60.0"` for as long as `package.json` read 3.59.0, and the release
 // build was the first thing to execute it. Iterating the keys closes it for the
 // rung written next release too, without anyone remembering to add a case.
-describe("the ladder over a profile with no config file", () => {
-  // conf merges the defaults in only *after* the migrations have run, so the
-  // store here is completely empty and every read comes back `undefined`. What
-  // that covers is the top-level reads: with no `accounts` key there is nothing
-  // to iterate, so the guards inside that loop never execute. The suite below
-  // is what reaches those.
+//
+// Both pass `noDefaults`, so what is under test is the guards rather than
+// conf's ordering. conf writes the defaults before the ladder now, which keeps
+// a top-level default from ever reading `undefined`, but that ordering is not
+// ours to rely on — it was the other way round in conf 14 — and the merge is
+// shallow, so nothing conf does reaches inside a stored `accounts`.
+describe("the ladder over an empty store", () => {
+  // Every read comes back `undefined` here. What that covers is the top-level
+  // ones: with no `accounts` key there is nothing to iterate, so the guards
+  // inside that loop never execute. The suite below is what reaches those.
   for (const { range, version } of ladder) {
     test(`survives the ladder up to ${version} (\`${range}\`)`, () => {
-      expect(() => launch(version)).not.toThrow();
+      expect(() => launch(version, noDefaults)).not.toThrow();
     });
   }
 
@@ -153,10 +163,19 @@ describe("the ladder over a profile with no config file", () => {
     // Beta is the first build to run the newest migration for real. This is the
     // rung above that matters: it is wired to `package.json` rather than to a
     // version this file names.
+    expect(() => launch(shippedVersion, noDefaults)).not.toThrow();
+  });
+});
+
+describe("a fresh profile", () => {
+  test("launches", () => {
     expect(() => launch(shippedVersion)).not.toThrow();
   });
 
   test("comes up on the shipped defaults", () => {
+    // conf runs the ladder against the defaults now rather than an empty store,
+    // so a migration that rewrote one would reach every new install. None of
+    // them does, and this is what says so.
     const config = launch(shippedVersion);
 
     expect(config.get("workspaceApps.launcherApps")).toEqual([]);
@@ -183,34 +202,21 @@ describe("the ladder over an account with nothing but an id", () => {
     test(`survives the ladder up to ${version} (\`${range}\`)`, async () => {
       await writeStoredConfig({ accounts: [{ id: "account-id", label: "Default" }] });
 
-      expect(() => launch(version)).not.toThrow();
+      expect(() => launch(version, noDefaults)).not.toThrow();
     });
   }
 });
 
 describe("an upgrade from 3.59.0", () => {
-  test("keeps a stored profile intact on the launch that writes the new defaults", async () => {
-    // conf takes its snapshot of the file *before* migrating and writes
-    // `defaults + snapshot` back afterwards, so the first launch of a release
-    // that adds a default key throws the migration's writes away and leaves
-    // `__internal__` where it was. The ladder runs again on the next launch,
-    // against a file that now holds every default, and sticks. This is conf
-    // 14's behavior, not ours, and it is pinned here so that changing conf or
-    // the defaults shows up as a failure here rather than in the field.
-    await writeStoredConfig(createStoredConfig());
-
-    const config = launch(shippedVersion);
-
-    expect(config.get("workspaceApps.launcherApps") as string[]).toEqual([
-      "calendar",
-      "notebooklm",
-    ]);
-  });
-
   test("renames NotebookLM everywhere its app key is stored", async () => {
+    // One launch, not two. conf 14 snapshotted the file before migrating and
+    // wrote `defaults + snapshot` back afterwards, so the first launch of a
+    // release that adds a default key threw the migration's writes away —
+    // `__internal__` included — and the ladder only stuck on the second launch.
+    // conf 15 writes the defaults first instead. That matters beyond tidiness:
+    // one stale launch of 3.60.0 leaves `notebooklm` in saved tabs, where
+    // `workspaceApps[app]` is read unguarded.
     await writeStoredConfig(createStoredConfig());
-
-    launch(shippedVersion);
 
     const config = launch(shippedVersion);
 
@@ -234,8 +240,6 @@ describe("an upgrade from 3.59.0", () => {
   test("promotes a user who had verification code copying off", async () => {
     await writeStoredConfig(createStoredConfig());
 
-    launch(shippedVersion);
-
     const config = launch(shippedVersion);
 
     expect(config.get("verificationCodes.autoCopy")).toBe(true);
@@ -250,8 +254,6 @@ describe("an upgrade from 3.59.0", () => {
       "verificationCodes.autoCopy": true,
       "verificationCodes.copyMode": "immediately",
     });
-
-    launch(shippedVersion);
 
     const config = launch(shippedVersion);
 
@@ -268,8 +270,6 @@ describe("an upgrade from 3.59.0", () => {
       accounts: [{ id: "account-id", label: "Default" }],
       "verificationCodes.autoCopy": false,
     });
-
-    expect(() => launch(shippedVersion)).not.toThrow();
 
     const config = launch(shippedVersion);
 

@@ -1,5 +1,5 @@
 diff --git a/dist/source/index.d.ts b/dist/source/index.d.ts
-index 921db5c7ae623eba8029b268928567b19aff69d7..d696775d9aff4c67c67580301f76fde6de2a6d9b 100644
+index 9a6dea21042efcad1940e76bba2e41bbcd84200a..51364dd7612f0743c8fe3420dd3c0504f9d198c8 100644
 --- a/dist/source/index.d.ts
 +++ b/dist/source/index.d.ts
 @@ -13,10 +13,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
@@ -28,9 +28,17 @@ index 921db5c7ae623eba8029b268928567b19aff69d7..d696775d9aff4c67c67580301f76fde6
      has<Key extends keyof T>(key: Key): boolean;
 -    has<Key extends DotNotationKeyOf<T>>(key: Key): boolean;
      /**
+     Append an item to an array.
+ 
+@@ -52,7 +44,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+     ```
+     */
+     appendToArray<Key extends keyof T>(key: Key, value: T[Key] extends ReadonlyArray<infer U> ? U : unknown): void;
+-    appendToArray<Key extends DotNotationKeyOf<T>>(key: Key, value: DotNotationValueOf<T, Key> extends ReadonlyArray<infer U> ? U : unknown): void;
+     /**
      Reset items to their default values, as defined by the `defaults` or `schema` option.
  
-@@ -48,7 +40,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+@@ -67,7 +58,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
      @param key - The key of the item to delete.
      */
      delete<Key extends keyof T>(key: Key): void;
@@ -38,7 +46,7 @@ index 921db5c7ae623eba8029b268928567b19aff69d7..d696775d9aff4c67c67580301f76fde6
      /**
      Delete all items.
  
-@@ -63,7 +54,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
+@@ -82,7 +72,6 @@ export default class Conf<T extends Record<string, any> = Record<string, unknown
      @returns A function, that when called, will unsubscribe.
      */
      onDidChange<Key extends keyof T>(key: Key, callback: OnDidChangeCallback<T[Key]>): Unsubscribe;

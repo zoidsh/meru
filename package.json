@@ -59,7 +59,7 @@
     "electron-context-menu": "^4.1.0",
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.0",
-    "electron-store": "^10.0.1",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "element-ready": "^7.0.0",
     "fast-xml-parser": "^5.5.7",
@@ -199,9 +199,9 @@
   },
   "patchedDependencies": {
     "electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch",
-    "conf@14.0.0": "patches/conf@14.0.0.patch",
     "sonner@2.0.7": "patches/sonner@2.0.7.patch",
-    "electron-store@10.1.0": "patches/electron-store@10.1.0.patch"
+    "conf@15.1.0": "patches/conf@15.1.0.patch",
+    "electron-store@11.0.2": "patches/electron-store@11.0.2.patch"
   },
   "productName": "Meru"
 }
