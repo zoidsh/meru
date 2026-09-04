@@ -181,6 +181,8 @@
     },
     "publish": {
       "provider": "github",
+      "owner": "zoidsh",
+      "repo": "meru-staging",
       "releaseType": "release"
     },
     "afterPack": "./build/hooks/afterPack.js"

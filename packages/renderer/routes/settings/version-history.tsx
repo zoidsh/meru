@@ -23,8 +23,10 @@ export function VersionHistorySettings() {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["github", "releases"],
     queryFn: async () => {
-      const res = await fetch("https://api.github.com/repos/zoidsh/meru/releases").then((res) =>
-        res.json(),
+      // STAGING: reads meru-staging so this page lists the same releases the
+      // updater resolves. On zoidsh/meru this is zoidsh/meru. See STAGING.md.
+      const res = await fetch("https://api.github.com/repos/zoidsh/meru-staging/releases").then(
+        (res) => res.json(),
       );
 
       return z
