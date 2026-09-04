@@ -125,17 +125,23 @@ function createStoredConfig() {
   };
 }
 
-describe("a fresh profile", () => {
-  // conf merges the defaults in only *after* the migrations have run, so on a
-  // profile with no config file every migration sees a completely empty store
-  // and every read comes back `undefined`. A migration that reads a key without
-  // guarding it throws, conf restores its backup and rethrows, and the `new
-  // Store(...)` at the top of `config.ts` takes the main process down with it —
-  // a new install that cannot launch at all. 3.60.0's migration shipped exactly
-  // that, and only a release build caught it.
-  //
-  // Driving this off the migration keys themselves is the point: a migration
-  // added later is covered without anyone remembering to add a case for it.
+// A migration that reads a key without guarding it throws, conf restores its
+// backup and rethrows, and the `new Store(...)` at the top of `config.ts` takes
+// the main process down with it — an app that cannot launch at all. 3.60.0's
+// migration shipped exactly that, and only a release build caught it.
+//
+// Both suites below run the whole ladder at every version that runs a rung,
+// rather than only at the version being shipped. That is the gap this bug came
+// through: a rung keyed above the current version never runs, so CI was green
+// on `">=3.60.0"` for as long as `package.json` read 3.59.0, and the release
+// build was the first thing to execute it. Iterating the keys closes it for the
+// rung written next release too, without anyone remembering to add a case.
+describe("the ladder over a profile with no config file", () => {
+  // conf merges the defaults in only *after* the migrations have run, so the
+  // store here is completely empty and every read comes back `undefined`. What
+  // that covers is the top-level reads: with no `accounts` key there is nothing
+  // to iterate, so the guards inside that loop never execute. The suite below
+  // is what reaches those.
   for (const { range, version } of ladder) {
     test(`survives the ladder up to ${version} (\`${range}\`)`, () => {
       expect(() => launch(version)).not.toThrow();
@@ -144,7 +150,9 @@ describe("a fresh profile", () => {
 
   test("survives the ladder at the version being shipped", () => {
     // `resolveMigrationVersion` resolves a prerelease to its base version, so a
-    // Beta is the first build to run the newest migration for real.
+    // Beta is the first build to run the newest migration for real. This is the
+    // rung above that matters: it is wired to `package.json` rather than to a
+    // version this file names.
     expect(() => launch(shippedVersion)).not.toThrow();
   });
 
@@ -155,6 +163,29 @@ describe("a fresh profile", () => {
     expect(config.get("workspaceApps.zoomFactors")).toEqual({});
     expect(config.get("accounts")).toHaveLength(1);
   });
+});
+
+describe("the ladder over an account with nothing but an id", () => {
+  // The bare minimum an account can be on disk, and the only thing that reaches
+  // the reads inside the `accounts` loop, which the suite above skips for want
+  // of an `accounts` key. Two of those reads are unguarded on purpose:
+  // `account.gmail.unreadBadge` in `">=3.31.2"` and `account.gmail.unifiedInbox`
+  // in `">3.38.4"` would both throw on an account with no `gmail`, and what
+  // keeps them standing is ordering rather than a check — `">=3.11.0"` writes
+  // `gmail` on any account that lacks it, and it sits above both. Running the
+  // whole ladder from `0.0.0` is what holds that arrangement in place.
+  //
+  // These rungs do not reach the `account.workspaceApps` guard: `">3.57.0"`
+  // backfills that key on the way past. Only a profile that has already run the
+  // ladder can arrive at `">=3.60.0"` without it, which is what the last test
+  // in this file is for.
+  for (const { range, version } of ladder) {
+    test(`survives the ladder up to ${version} (\`${range}\`)`, async () => {
+      await writeStoredConfig({ accounts: [{ id: "account-id", label: "Default" }] });
+
+      expect(() => launch(version)).not.toThrow();
+    });
+  }
 });
 
 describe("an upgrade from 3.59.0", () => {
