@@ -93,16 +93,6 @@ async function init() {
     app.setAppUserModelId(APP_ID);
   }
 
-  // The team id is only known to signed builds, and without it the keychain
-  // access group can't match the `keychain-access-groups` entitlement
-  if (platform.isMacOS && process.env.APPLE_TEAM_ID) {
-    app.configureWebAuthn({
-      touchID: {
-        keychainAccessGroup: `${process.env.APPLE_TEAM_ID}.${APP_ID}.webauthn`,
-      },
-    });
-  }
-
   setMeruProtocolClient();
 
   if (!app.requestSingleInstanceLock()) {
@@ -135,6 +125,20 @@ async function init() {
     app.quit();
 
     return;
+  }
+
+  // The team id is only known to signed builds, and without it the keychain
+  // access group can't match the `keychain-access-groups` entitlement. Touch ID
+  // enrollment is Pro, so this sits after the validation that settles
+  // `isValid`. `configureWebAuthn` only sets a static that the WebAuthn
+  // delegate reads per request, so it takes effect whenever it is called, and
+  // here it is still ahead of the first view
+  if (platform.isMacOS && process.env.APPLE_TEAM_ID && licenseKey.isValid) {
+    app.configureWebAuthn({
+      touchID: {
+        keychainAccessGroup: `${process.env.APPLE_TEAM_ID}.${APP_ID}.webauthn`,
+      },
+    });
   }
 
   blocker.init();
