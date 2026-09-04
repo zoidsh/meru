@@ -21,6 +21,13 @@ type LegacySavedTab = SavedTab & {
  * longer carry is missing too. conf 14 wrote the defaults *afterwards*, which
  * handed every migration a completely empty store on a fresh profile and is
  * what bricked a new install of 3.60.0-beta.1.
+ *
+ * The ordering cuts the other way as well, and this is the live trap now: a
+ * migration cannot tell a key the user never set from one the defaults just
+ * wrote, because both read as the default value. So branch on a *legacy* key,
+ * which the defaults never carry, rather than on the absence of a current one.
+ * `">=3.60.0"` reads `verificationCodes.autoCopy` this way and gets away with
+ * it only because its default and the value it promotes to are the same.
  */
 export const configMigrations = {
   ">=3.4.0": (store) => {
