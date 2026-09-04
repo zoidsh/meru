@@ -380,40 +380,51 @@ export const config = new Store<Config>({
       const renameNotebookApp = <App extends string>(app: App) =>
         (app === "notebooklm" ? "notebook" : app) as App;
 
-      store.set(
-        "workspaceApps.launcherApps",
-        store.get("workspaceApps.launcherApps").map(renameNotebookApp),
-      );
+      // conf runs the migrations before it merges the defaults in, so on a
+      // profile with no config file every one of these reads comes back
+      // `undefined` — and a throw here takes the main process down at module
+      // load, which is a new install that cannot launch at all.
+      const launcherApps = store.get("workspaceApps.launcherApps");
 
-      store.set(
-        "workspaceApps.openInAppExcludedApps",
-        store.get("workspaceApps.openInAppExcludedApps").map(renameNotebookApp),
-      );
+      if (Array.isArray(launcherApps)) {
+        store.set("workspaceApps.launcherApps", launcherApps.map(renameNotebookApp));
+      }
+
+      const openInAppExcludedApps = store.get("workspaceApps.openInAppExcludedApps");
+
+      if (Array.isArray(openInAppExcludedApps)) {
+        store.set(
+          "workspaceApps.openInAppExcludedApps",
+          openInAppExcludedApps.map(renameNotebookApp),
+        );
+      }
 
       const zoomFactors = store.get("workspaceApps.zoomFactors");
 
-      store.set(
-        "workspaceApps.zoomFactors",
-        Object.fromEntries(
-          Object.entries(zoomFactors).map(([app, zoomFactor]) => [
-            renameNotebookApp(app),
-            zoomFactor,
-          ]),
-        ),
-      );
+      if (zoomFactors) {
+        store.set(
+          "workspaceApps.zoomFactors",
+          Object.fromEntries(
+            Object.entries(zoomFactors).map(([app, zoomFactor]) => [
+              renameNotebookApp(app),
+              zoomFactor,
+            ]),
+          ),
+        );
+      }
 
       const accounts = store.get("accounts");
 
       if (Array.isArray(accounts)) {
         for (const account of accounts) {
           account.workspaceApps = {
-            savedTabs: account.workspaceApps.savedTabs.map((savedTab) => ({
+            savedTabs: (account.workspaceApps?.savedTabs ?? []).map((savedTab) => ({
               ...savedTab,
               app: renameNotebookApp(savedTab.app),
               opensLinksForApp:
                 savedTab.opensLinksForApp && renameNotebookApp(savedTab.opensLinksForApp),
             })),
-            bookmarks: account.workspaceApps.bookmarks.map((bookmark) => ({
+            bookmarks: (account.workspaceApps?.bookmarks ?? []).map((bookmark) => ({
               ...bookmark,
               app: renameNotebookApp(bookmark.app),
             })),
