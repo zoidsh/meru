@@ -1,0 +1,29 @@
+/* Gmail's rich-text editor, shared by the compose window and the inline reply.
+   Gmail serializes its innerHTML as the draft and as the sent message, so the
+   inline overrides the engine writes would be baked into the mail — recipients,
+   and the sender in a light-themed client, would see near-white text on white.
+   Both call sites pass it to `ignore` instead, which skips the whole subtree,
+   and it is themed here by stylesheet, which never leaves Meru's page. Keep the
+   selector in sync with those `ignore` entries. */
+
+[data-dark-theme-root] [contenteditable="true"] {
+  background-color: rgb(19, 19, 19) !important;
+  caret-color: rgb(232, 230, 227) !important;
+  color: rgb(232, 230, 227) !important;
+}
+
+/* Content carries its own light-theme colors — a signature set to #000, quoted
+   text, pasted markup — so descendants are flattened onto the editor's colors */
+[data-dark-theme-root] [contenteditable="true"] *:not(a) {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+[data-dark-theme-root] [contenteditable="true"] a {
+  color: rgb(138, 180, 248) !important;
+}
+
+/* Quoted text in a reply, which Gmail writes with an inline light border-left */
+[data-dark-theme-root] [contenteditable="true"] blockquote {
+  border-color: rgb(61, 61, 61) !important;
+}

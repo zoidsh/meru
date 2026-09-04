@@ -2,6 +2,7 @@ import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
 import { $$ } from "select-dom";
 import composeCss from "./compose.css";
+import editorCss from "./editor.css";
 
 const isExtendDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.extendDarkTheme);
 
@@ -31,7 +32,11 @@ export function darkThemeCompose() {
       composeElement,
       applyDarkTheme(composeElement, {
         backgroundColor: "rgb(19, 19, 19)",
-        css: composeCss,
+        ignore: [
+          // Gmail's rich-text editor, themed by stylesheet in editor.css instead
+          '[contenteditable="true"]',
+        ],
+        css: `${composeCss}\n${editorCss}`,
       }),
     );
   }
