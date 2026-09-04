@@ -42,6 +42,10 @@ export async function confirmAppLinksTabHandover(
   return response === 0;
 }
 
+export function openProUpgradeUrl() {
+  openExternalUrl(`${WEBSITE_URL}/#pricing`, { skipTrustedHostCheck: true });
+}
+
 export async function showProUpgradeDialog(message: string) {
   const { response } = await dialog.showMessageBox(main.window, {
     type: "warning",
@@ -52,6 +56,6 @@ export async function showProUpgradeDialog(message: string) {
   });
 
   if (response === 0) {
-    openExternalUrl(`${WEBSITE_URL}/#pricing`, { skipTrustedHostCheck: true });
+    openProUpgradeUrl();
   }
 }

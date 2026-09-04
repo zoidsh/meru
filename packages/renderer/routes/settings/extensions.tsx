@@ -302,15 +302,20 @@ function ExperimentalAlert() {
 }
 
 function PasskeysAlert() {
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
   if (platform.isMacOS) {
     return (
       <Alert>
         <KeyRoundIcon />
         <AlertTitle>Sign in to Google with a passkey and Touch ID</AlertTitle>
         <AlertDescription>
-          Add a passkey to your Google account from its security settings inside Meru, then sign in
-          with Touch ID — no password manager extension to install, so Meru stays fast and light.
-          iCloud passkeys don't work here, and filling passwords still needs a password manager.
+          {isLicenseKeyValid
+            ? "Add a passkey to your Google account"
+            : "Meru Pro lets you add a passkey to your Google account"}{" "}
+          from its security settings inside Meru, then sign in with Touch ID — no password manager
+          extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and
+          filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );
