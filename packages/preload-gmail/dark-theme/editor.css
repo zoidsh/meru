@@ -3,27 +3,22 @@
    inline overrides the engine writes would be baked into the mail — recipients,
    and the sender in a light-themed client, would see near-white text on white.
    Both call sites pass it to `ignore` instead, which skips the whole subtree,
-   and it is themed here by stylesheet, which never leaves Meru's page. Keep the
-   selector in sync with those `ignore` entries. */
+   and it is themed here by a CSS filter, which never leaves Meru's page. Keep
+   the selector in sync with those `ignore` entries.
+
+   Inverting flips lightness and the hue rotation restores the hue, so black
+   text and a signature set to #000 read light, a color picked in the toolbar
+   keeps its hue and still shows as picked when sent, and the light blue
+   selection highlight becomes a dark one. Nothing inside gets a rule of its
+   own, so nothing here depends on Gmail's markup. */
 
 [data-dark-theme-root] [contenteditable="true"] {
-  background-color: rgb(19, 19, 19) !important;
-  caret-color: rgb(232, 230, 227) !important;
-  color: rgb(232, 230, 227) !important;
+  /* Inverts to rgb(19, 19, 19), the background both call sites pass to the engine */
+  background-color: rgb(236, 236, 236) !important;
+  filter: invert(1) hue-rotate(180deg) !important;
 }
 
-/* Content carries its own light-theme colors — a signature set to #000, quoted
-   text, pasted markup — so descendants are flattened onto the editor's colors */
-[data-dark-theme-root] [contenteditable="true"] *:not(a) {
-  background-color: transparent !important;
-  color: inherit !important;
-}
-
-[data-dark-theme-root] [contenteditable="true"] a {
-  color: rgb(138, 180, 248) !important;
-}
-
-/* Quoted text in a reply, which Gmail writes with an inline light border-left */
-[data-dark-theme-root] [contenteditable="true"] blockquote {
-  border-color: rgb(61, 61, 61) !important;
+/* The same filter twice is the identity, so images keep their true colors */
+[data-dark-theme-root] [contenteditable="true"] img {
+  filter: invert(1) hue-rotate(180deg) !important;
 }
