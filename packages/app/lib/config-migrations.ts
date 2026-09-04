@@ -15,11 +15,12 @@ type LegacySavedTab = SavedTab & {
  * `app.getPath("downloads")` at module scope, which no `bun test` can satisfy.
  *
  * Every migration guards the keys it reads. conf writes the defaults to disk
- * before the ladder runs, so a current default is there to be read — but a key
- * the defaults no longer carry is not, and neither is anything a hand-edited or
- * half-written config is missing. conf 14 wrote the defaults *afterwards*,
- * which handed every migration a completely empty store on a fresh profile and
- * is what bricked a new install of 3.60.0-beta.1.
+ * before the ladder runs, so a top-level default is there to be read — but it
+ * merges at the top level only, so a stored `accounts` keeps whatever shape it
+ * was written with and no default fills a gap inside it. A key the defaults no
+ * longer carry is missing too. conf 14 wrote the defaults *afterwards*, which
+ * handed every migration a completely empty store on a fresh profile and is
+ * what bricked a new install of 3.60.0-beta.1.
  */
 export const configMigrations = {
   ">=3.4.0": (store) => {
