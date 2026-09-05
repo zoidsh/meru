@@ -15,6 +15,10 @@
 [data-dark-theme-root] [contenteditable="true"] {
   /* Inverts to rgb(19, 19, 19), the background both call sites pass to the engine */
   background-color: rgb(236, 236, 236) !important;
+  /* The editor inherits the light text color the engine gave its container, which
+     the filter would turn dark, so give it Gmail's own dark text to invert */
+  caret-color: rgb(34, 34, 34) !important;
+  color: rgb(34, 34, 34) !important;
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
