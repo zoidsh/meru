@@ -1,0 +1,29 @@
+/* Gmail's rich-text editor, shared by the compose window and the inline reply.
+   Gmail serializes its innerHTML as the draft and as the sent message, so the
+   inline overrides the engine writes would be baked into the mail — recipients,
+   and the sender in a light-themed client, would see near-white text on white.
+   Both call sites pass it to `ignore` instead, which skips the whole subtree,
+   and it is themed here by a CSS filter, which never leaves Meru's page. Keep
+   the selector in sync with those `ignore` entries.
+
+   Inverting flips lightness and the hue rotation restores the hue, so black
+   text and a signature set to #000 read light, a color picked in the toolbar
+   keeps its hue and still shows as picked when sent, and the light blue
+   selection highlight becomes a dark one. Nothing inside gets a rule of its
+   own, so nothing here depends on Gmail's markup. */
+
+[data-dark-theme-root] [contenteditable="true"] {
+  /* Transparent survives the filter, so the surface the engine gave the compose
+     window shows through and the editor matches whatever surrounds it */
+  background-color: transparent !important;
+  /* The editor inherits the light text color the engine gave its container, which
+     the filter would turn dark, so give it Gmail's own dark text to invert */
+  caret-color: rgb(34, 34, 34) !important;
+  color: rgb(34, 34, 34) !important;
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* The same filter twice is the identity, so images keep their true colors */
+[data-dark-theme-root] [contenteditable="true"] img {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
