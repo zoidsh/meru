@@ -19,6 +19,11 @@ const args = parseArgs({
       type: "boolean",
       short: "d",
     },
+    // Opens Chromium's remote debugging port on the development app, so that a
+    // CDP client such as Playwright can drive it: `bun run dev --debug-port 9222`.
+    "debug-port": {
+      type: "string",
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -285,18 +290,28 @@ if (args.values.dev) {
   let isRestartingElectron = false;
 
   const startElectron = () => {
-    electron = spawn(["electron", ".", ...(args.values.devtools ? ["--devtools"] : [])], {
-      env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
-      onExit: async () => {
-        if (isRestartingElectron) {
-          isRestartingElectron = false;
-        } else {
-          await electron.exited;
+    electron = spawn(
+      [
+        "electron",
+        ".",
+        ...(args.values.devtools ? ["--devtools"] : []),
+        ...(args.values["debug-port"]
+          ? [`--remote-debugging-port=${args.values["debug-port"]}`]
+          : []),
+      ],
+      {
+        env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
+        onExit: async () => {
+          if (isRestartingElectron) {
+            isRestartingElectron = false;
+          } else {
+            await electron.exited;
 
-          process.exit(0);
-        }
+            process.exit(0);
+          }
+        },
       },
-    });
+    );
   };
 
   const stopElectron = () => {
