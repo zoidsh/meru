@@ -1,0 +1,26 @@
+# Exercises Azure Artifact Signing on demand without cutting a release;
+# release.yml is the path that ships a signed installer to users.
+
+name: Signed Windows build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build:win -- --publish never --x64
+        env:
+          # Azure Artifact Signing authenticates through the Azure SDK's
+          # EnvironmentCredential, which reads exactly these three names.
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: meru-windows-signed
+          path: dist/*.exe
+          retention-days: 7
