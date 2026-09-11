@@ -21,6 +21,8 @@ This file is the draft of the next release, written one line at a time as work l
 ### Fixed
 
 - On Windows, Meru can now be made the default mail client: it never appeared under Settings → Default apps, and the switch in Settings → General said Meru was the default while another app kept opening email links. The row now opens Meru's page in Windows Settings to choose it there
+- On Windows, 1Password's Add Browser no longer rejects Meru as unsigned: the Windows build is now code-signed, and Windows shows Meru's publisher instead of Unknown publisher
 - With Extend dark theme on, mail composed in Gmail no longer carries the dark theme's light text colors into drafts and sent messages, which made them unreadable in light-themed mail clients
+- The 1Password setup steps in Settings → Extensions now point to Meru's install folder on Windows, `%LOCALAPPDATA%\Programs\Meru`, instead of `C:\Program Files`, where Meru isn't installed
 - Help → Report Issue, Ask Question and Request Feature open a compose window that follows Extend dark theme and Close compose window after send
 - New mail notifications, verification codes included, no longer go missing for the first email after launch, for an email that arrives while another one is read, or for mail Gmail's feed reports late

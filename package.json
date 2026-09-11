@@ -167,6 +167,12 @@
     "win": {
       "verifyUpdateCodeSignature": false,
       "icon": "build/icon.ico",
+      "azureSignOptions": {
+        "endpoint": "https://neu.codesigning.azure.net",
+        "codeSigningAccountName": "zoid",
+        "certificateProfileName": "zoid-public-trust",
+        "publisherName": "CN=Zoid Ltd, O=Zoid Ltd, L=London, C=GB"
+      },
       "target": [
         {
           "target": "nsis",

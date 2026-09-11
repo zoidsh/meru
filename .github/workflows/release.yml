@@ -71,6 +71,11 @@ jobs:
       - if: startsWith(matrix.os, 'windows')
         run: bun run build:win -- --publish always ${{ github.event.release.prerelease && '--config.publish.channel=beta' || '' }}
         env:
+          # Azure Artifact Signing authenticates through the Azure SDK's
+          # EnvironmentCredential, which reads exactly these three names.
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Uploads into a release published over two hours ago; without it a
           # re-run skips every asset and still exits zero.
