@@ -66,6 +66,30 @@ export type GmailState = {
   attentionRequired: boolean;
 };
 
+export function diffInboxFeedEntryIds(
+  previousIds: ReadonlySet<string> | null,
+  currentIds: readonly string[],
+): { changed: boolean; newIds: string[] } {
+  if (!previousIds) {
+    return { changed: true, newIds: [] };
+  }
+
+  const currentIdSet = new Set(currentIds);
+
+  const newIds: string[] = [];
+
+  for (const id of currentIdSet) {
+    if (!previousIds.has(id)) {
+      newIds.push(id);
+    }
+  }
+
+  return {
+    changed: newIds.length > 0 || currentIdSet.size !== previousIds.size,
+    newIds,
+  };
+}
+
 const GMAIL_MESSAGE_ID_REGEXP = /^[A-Za-z0-9]{15,}$/;
 
 const GMAIL_QUERY_HASH_VIEWS = new Set([

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseGmailMessageId } from "./gmail";
+import { diffInboxFeedEntryIds, parseGmailMessageId } from "./gmail";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
 
@@ -62,5 +62,43 @@ describe("parseGmailMessageId", () => {
   test("returns null for an empty hash", () => {
     expect(parseGmailMessageId("")).toBeNull();
     expect(parseGmailMessageId("#")).toBeNull();
+  });
+});
+
+describe("diffInboxFeedEntryIds", () => {
+  test("reports a change without new mail when there is no baseline", () => {
+    expect(diffInboxFeedEntryIds(null, ["a", "b"])).toEqual({ changed: true, newIds: [] });
+  });
+
+  test("reports no change for an identical set", () => {
+    expect(diffInboxFeedEntryIds(new Set(["a", "b"]), ["a", "b"])).toEqual({
+      changed: false,
+      newIds: [],
+    });
+    expect(diffInboxFeedEntryIds(new Set(["a", "b"]), ["b", "a"])).toEqual({
+      changed: false,
+      newIds: [],
+    });
+  });
+
+  test("reports the arrival when one entry is read and one arrives", () => {
+    expect(diffInboxFeedEntryIds(new Set(["a", "b"]), ["c", "b"])).toEqual({
+      changed: true,
+      newIds: ["c"],
+    });
+  });
+
+  test("reports a change without new mail when an entry is only removed", () => {
+    expect(diffInboxFeedEntryIds(new Set(["a", "b"]), ["b"])).toEqual({
+      changed: true,
+      newIds: [],
+    });
+  });
+
+  test("returns new ids once and in feed order", () => {
+    expect(diffInboxFeedEntryIds(new Set(["a"]), ["c", "b", "c", "a"])).toEqual({
+      changed: true,
+      newIds: ["c", "b"],
+    });
   });
 });
