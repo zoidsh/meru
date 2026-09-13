@@ -9,6 +9,7 @@ import {
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailInboxMessage,
+  diffInboxFeedEntryIds,
   generateGmailLabelColorsCss,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
@@ -173,9 +174,7 @@ export class Gmail {
 
   private labelColorsCssKey: string | null = null;
 
-  private isInitialInboxFeedFetch = true;
-
-  private previousInboxFeedTotalEntries: number = 0;
+  private inboxFeedBaseline: { url: string; ids: Set<string> } | null = null;
 
   private previousNewMessages: Map<string, number> = new Map();
 
@@ -315,6 +314,8 @@ export class Gmail {
         this.labelColorsCssKey = null;
 
         this.applyLabelColors();
+
+        this.fetchInboxFeed();
       }
 
       this.view.webContents.insertCSS(meruCSS);
@@ -563,9 +564,23 @@ export class Gmail {
     });
   }
 
+  private async retryInboxFeedFetch(fetchAttempt: number) {
+    if (fetchAttempt > 10) {
+      return;
+    }
+
+    await wait(ms("1s"));
+
+    this.fetchInboxFeed(fetchAttempt + 1);
+  }
+
   async fetchInboxFeed(fetchAttempt = 1) {
     try {
       if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+        if (!this.inboxFeedBaseline) {
+          await this.retryInboxFeedFetch(fetchAttempt);
+        }
+
         return;
       }
 
@@ -573,36 +588,47 @@ export class Gmail {
 
       // The URL is already Gmail's while the page is still loading, such as
       // during sign-in, so the global is missing rather than wrong. Treat that
-      // as "not loaded yet" and return, the way the URL check above does.
+      // as "not loaded yet": keep waiting for it while there is no baseline to
+      // diff against, and otherwise return, the way the URL check above does.
       if (inboxTypeValue === undefined) {
+        if (!this.inboxFeedBaseline) {
+          await this.retryInboxFeedFetch(fetchAttempt);
+        }
+
         return;
       }
 
       const inboxType = inboxTypeSchema.parse(inboxTypeValue);
 
-      const body = await this.session
-        .fetch(
-          `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}?t=${Date.now()}`,
-        )
-        .then((res) => res.text());
+      const feedUrl = `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}`;
+
+      const body = await this.session.fetch(`${feedUrl}?t=${Date.now()}`).then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
 
       const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 
-      if (feedEntries.length === this.previousInboxFeedTotalEntries) {
-        if (fetchAttempt > 10) {
-          return;
-        }
+      const feedEntryIds = feedEntries.map(({ id }) => id);
 
-        await wait(ms("1s"));
+      // The feed URL is part of the baseline because the inbox type and the
+      // monitored categories decide which entries the feed carries at all, so
+      // diffing across a change of URL would report every entry as new.
+      const baselineIds =
+        this.inboxFeedBaseline?.url === feedUrl ? this.inboxFeedBaseline.ids : null;
 
-        this.fetchInboxFeed(fetchAttempt + 1);
+      // The baseline is a set of entry ids rather than a count of them because
+      // one message read while another arrives leaves the count unchanged.
+      const { changed, newIds } = diffInboxFeedEntryIds(baselineIds, feedEntryIds);
+
+      if (!changed) {
+        await this.retryInboxFeedFetch(fetchAttempt);
 
         return;
       }
 
-      this.previousInboxFeedTotalEntries = feedEntries.length;
+      this.inboxFeedBaseline = { url: feedUrl, ids: new Set(feedEntryIds) };
+
+      const newIdSet = new Set(newIds);
 
       const unreadInbox: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
@@ -632,7 +658,7 @@ export class Gmail {
           receivedAt,
         });
 
-        if (now - receivedAt < ms("1m") && !this.previousNewMessages.has(id)) {
+        if (newIdSet.has(id) && !this.previousNewMessages.has(id)) {
           newMailIndexes.push(index);
 
           this.previousNewMessages.set(id, now);
@@ -643,9 +669,7 @@ export class Gmail {
         this.store.setState({ unreadInbox });
       }
 
-      if (this.isInitialInboxFeedFetch) {
-        this.isInitialInboxFeedFetch = false;
-
+      if (!baselineIds) {
         return;
       }
 

@@ -18,3 +18,4 @@ This file is the draft of the next release, written one line at a time as work l
 
 - With Extend dark theme on, mail composed in Gmail no longer carries the dark theme's light text colors into drafts and sent messages, which made them unreadable in light-themed mail clients
 - Help → Report Issue, Ask Question and Request Feature open a compose window that follows Extend dark theme and Close compose window after send
+- New mail notifications, verification codes included, no longer go missing for the first email after launch, for an email that arrives while another one is read, or for mail Gmail's feed reports late
