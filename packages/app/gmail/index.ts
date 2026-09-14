@@ -282,6 +282,10 @@ export class Gmail {
     // Without a poll of its own, the baseline's `readAt` would sit hours behind
     // the feed through a quiet period, and the slack window with it.
     this.inboxFeedPollInterval = setInterval(() => {
+      if (!this._view) {
+        return;
+      }
+
       this.fetchInboxFeed({ retryWhileUnchanged: false });
     }, INBOX_FEED_POLL_INTERVAL);
   }
