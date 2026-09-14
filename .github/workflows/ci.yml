@@ -23,28 +23,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run fmt:check
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run lint
   types:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run types:ci
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun test
   e2e:
@@ -66,7 +66,7 @@ jobs:
           - windows-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.

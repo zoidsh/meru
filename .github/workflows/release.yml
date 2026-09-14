@@ -26,7 +26,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile
       - if: startsWith(matrix.os, 'macos')
         # The provisioning profile authorizes the Touch ID keychain access group entitlement;
