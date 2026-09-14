@@ -66,26 +66,48 @@ export type GmailState = {
   attentionRequired: boolean;
 };
 
-export function diffInboxFeedEntryIds(
-  previousIds: ReadonlySet<string> | null,
-  currentIds: readonly string[],
+/**
+ * Absence from the previous fetch is not enough to call an entry new: an
+ * unread email moved back into the inbox, or marked unread on another device,
+ * is absent from it too. `seenIds` and the `readAt` window are what separate
+ * those from mail that actually arrived.
+ */
+export function diffInboxFeed(
+  previous: { ids: ReadonlySet<string>; readAt: number } | null,
+  seenIds: ReadonlySet<string>,
+  entries: readonly { id: string; receivedAt: number }[],
+  slack: number,
 ): { changed: boolean; newIds: string[] } {
-  if (!previousIds) {
+  if (!previous) {
     return { changed: true, newIds: [] };
   }
 
-  const currentIdSet = new Set(currentIds);
+  const currentIds = new Set<string>();
 
   const newIds: string[] = [];
 
-  for (const id of currentIdSet) {
-    if (!previousIds.has(id)) {
+  let added = false;
+
+  for (const { id, receivedAt } of entries) {
+    if (currentIds.has(id)) {
+      continue;
+    }
+
+    currentIds.add(id);
+
+    if (previous.ids.has(id)) {
+      continue;
+    }
+
+    added = true;
+
+    if (!seenIds.has(id) && receivedAt >= previous.readAt - slack) {
       newIds.push(id);
     }
   }
 
   return {
-    changed: newIds.length > 0 || currentIdSet.size !== previousIds.size,
+    changed: added || currentIds.size !== previous.ids.size,
     newIds,
   };
 }
