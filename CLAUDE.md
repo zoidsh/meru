@@ -14,16 +14,16 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | Format / check formatting               | `bun run fmt` / `bun run fmt:check`                         |
 | Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                         |
 | Typecheck every package                 | `bun run types`                                             |
-| Unit tests                              | `bun test`                                                  |
-| One unit test file                      | `bun test packages/shared/tabs.test.ts`                     |
-| One test by name                        | `bun test -t "name"`                                        |
+| Unit tests                              | `bun test --isolate`                                        |
+| One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`           |
+| One test by name                        | `bun test --isolate -t "name"`                              |
 | End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
 | Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                    |
 | Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`.
 
-Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
+Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite reads a license key from `.env.test.local`. Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
