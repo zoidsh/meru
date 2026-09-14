@@ -1,6 +1,7 @@
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog } from "electron";
+import { relaunchApp } from "@/lib/relaunch";
 import { config } from "./config";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
@@ -15,7 +16,7 @@ export async function showRestartDialog() {
   });
 
   if (response === 0) {
-    app.relaunch();
+    relaunchApp();
     app.quit();
   }
 }

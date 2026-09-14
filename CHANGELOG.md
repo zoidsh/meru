@@ -7,3 +7,4 @@ This file is the draft of the next release, written one line at a time as work l
 ### Fixed
 
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
+- **Linux and Windows:** Restart in Meru's restart prompts now brings Meru back on the AppImage and the portable build, which quit for good instead of restarting

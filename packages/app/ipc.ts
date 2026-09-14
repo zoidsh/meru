@@ -28,6 +28,7 @@ import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
+import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -690,7 +691,7 @@ class Ipc {
     });
 
     ipc.main.on("app.relaunch", () => {
-      app.relaunch();
+      relaunchApp();
       app.quit();
     });
 

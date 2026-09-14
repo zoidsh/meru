@@ -16,6 +16,7 @@ import {
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { log } from "@/lib/log";
+import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -64,7 +65,7 @@ async function resetApp() {
 
   config.clear();
 
-  app.relaunch();
+  relaunchApp();
 
   app.quit();
 }
