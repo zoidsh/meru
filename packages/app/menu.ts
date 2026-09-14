@@ -16,6 +16,7 @@ import { showRestartDialog } from "@/dialogs";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
 import { log } from "@/lib/log";
+import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
@@ -794,7 +795,7 @@ export class AppMenu {
 
                   config.set("resetApp", true);
 
-                  app.relaunch();
+                  relaunchApp();
 
                   app.quit();
                 },

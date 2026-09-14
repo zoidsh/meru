@@ -1,7 +1,8 @@
-import { app, dialog } from "electron";
+import { dialog } from "electron";
 import isOnline from "is-online";
 import { machineId } from "node-machine-id";
 import { serializeError } from "serialize-error";
+import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { config } from "./config";
 import { ipc } from "./ipc";
@@ -47,7 +48,7 @@ class Trial {
       });
 
       if (response === 0) {
-        app.relaunch();
+        relaunchApp();
       }
 
       return false;

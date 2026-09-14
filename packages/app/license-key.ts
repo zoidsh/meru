@@ -3,6 +3,7 @@ import isOnline from "is-online";
 import { machineId } from "node-machine-id";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
+import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { log } from "./lib/log";
 import { openExternalUrl } from "./url";
@@ -92,7 +93,7 @@ class LicenseKey {
     });
 
     if (response === 0) {
-      app.relaunch();
+      relaunchApp();
       app.quit();
     }
 
@@ -140,7 +141,7 @@ class LicenseKey {
         if (response === 0) {
           config.set("licenseKey", null);
 
-          app.relaunch();
+          relaunchApp();
         }
       } else {
         if (!useFallback) {
@@ -163,7 +164,7 @@ class LicenseKey {
         });
 
         if (response === 0) {
-          app.relaunch();
+          relaunchApp();
         }
       }
 
