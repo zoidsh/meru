@@ -15,7 +15,6 @@ import {
   app,
   BrowserWindow,
   type BrowserWindowConstructorOptions,
-  clipboard,
   dialog,
   globalShortcut,
   powerSaveBlocker,
@@ -31,6 +30,7 @@ import { config } from "./config";
 import { openProUpgradeUrl } from "./dialogs";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
+import { copyText } from "./lib/clipboard";
 import { loadUrl, loadUrlOrRestoreNavigationHistory } from "./lib/load-url";
 import {
   createChildWebContentsView,
@@ -1147,7 +1147,7 @@ export class WorkspaceApp {
   }
 
   copyUrl() {
-    clipboard.writeText(this.view.webContents.getURL());
+    copyText(this.view.webContents.getURL());
   }
 
   openInBrowser() {
