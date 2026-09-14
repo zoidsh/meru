@@ -7,6 +7,7 @@ import {
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
+import { net, powerMonitor } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
@@ -17,6 +18,8 @@ import { isWindowedTab } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
 const HIBERNATION_SWEEP_INTERVAL = ms("1m");
+
+const NETWORK_RECOVERY_SWEEP_INTERVAL = ms("5s");
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -94,6 +97,42 @@ class Accounts {
         account.tabs.hibernateIdleTabs();
       }
     }, HIBERNATION_SWEEP_INTERVAL);
+
+    powerMonitor.on("resume", () => {
+      accounts.resyncInboxes();
+    });
+
+    /*
+     * Polled rather than driven by an event, because Electron's main process
+     * has no network-change signal and the renderer's `online` would need a
+     * channel of its own to get here. `net.isOnline()` reads Chromium's
+     * network change notifier, so the tick costs nothing.
+     */
+    let wasOnline = net.isOnline();
+
+    setInterval(() => {
+      const isOnline = net.isOnline();
+
+      const cameBack = isOnline && !wasOnline;
+
+      wasOnline = isOnline;
+
+      if (cameBack) {
+        accounts.resyncInboxes();
+      }
+    }, NETWORK_RECOVERY_SWEEP_INTERVAL);
+  }
+
+  /*
+   * Gmail learns about new mail over a push channel that reconnects with
+   * exponential backoff after sleep or a network change, and can stay down for
+   * minutes. Until it is back, nothing but Gmail's own five-minute timer
+   * reaches the view.
+   */
+  private resyncInboxes() {
+    for (const account of this.instances.values()) {
+      account.gmail.resyncInbox();
+    }
   }
 
   async createViews() {

@@ -92,7 +92,13 @@ const inboxFeedSchema = z.object({
 
 const inboxTypeSchema = z.string();
 
-const INBOX_FEED_POLL_INTERVAL = ms("5m");
+/*
+ * The fallback for a Gmail push channel that is down: it reconnects with
+ * exponential backoff after a network gap and can stay down for minutes, and
+ * Gmail's own timer syncs the view only every five minutes. While the channel
+ * is healthy it still delivers in seconds, so this poll notices nothing.
+ */
+const INBOX_FEED_POLL_INTERVAL = ms("1m");
 
 /*
  * Generous because an entry's `issued` time has not been verified to be
@@ -713,6 +719,10 @@ export class Gmail {
         return;
       }
 
+      // Ahead of the notifications, so that the list and the unread badge have
+      // caught up by the time one is on screen.
+      this.refreshInboxView();
+
       const account = accounts.getAccount(this.accountId);
 
       const hasMultipleAccounts = accounts.getAccountConfigs().length > 1;
@@ -909,6 +919,37 @@ export class Gmail {
     } catch (error) {
       log.error("Failed to fetch inbox feed", { error });
     }
+  }
+
+  /**
+   * Gmail binds its Refresh control to a pointer and mouse sequence the
+   * preload has to replay, so this is a message rather than a reload: a reload
+   * would throw away an open thread and a half-written reply.
+   */
+  refreshInboxView() {
+    if (
+      !this._view ||
+      this._view.webContents.isDestroyed() ||
+      !this._view.webContents.getURL().startsWith(GMAIL_URL)
+    ) {
+      return;
+    }
+
+    ipc.renderer.send(this._view.webContents, "gmail.refreshInbox");
+  }
+
+  /**
+   * Both halves are needed after a gap: the feed is what notices the mail, the
+   * refresh is what makes the stale view show it.
+   */
+  resyncInbox() {
+    if (!this._view) {
+      return;
+    }
+
+    this.fetchInboxFeed({ retryWhileUnchanged: false });
+
+    this.refreshInboxView();
   }
 
   getIsUnreadCountEnabled() {

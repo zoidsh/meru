@@ -24,3 +24,4 @@ This file is the draft of the next release, written one line at a time as work l
 - With Extend dark theme on, mail composed in Gmail no longer carries the dark theme's light text colors into drafts and sent messages, which made them unreadable in light-themed mail clients
 - Help → Report Issue, Ask Question and Request Feature open a compose window that follows Extend dark theme and Close compose window after send
 - New mail notifications, verification codes included, no longer go missing for the first email after launch, for an email that arrives while another one is read, or for mail Gmail's feed reports late
+- After the computer wakes from sleep or the network changes, the inbox, the unread badge and new mail notifications no longer lag minutes behind your phone: Meru now refreshes Gmail as soon as the connection is back, and checks for new mail every minute while Gmail's own updates are catching up
