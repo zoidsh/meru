@@ -9,7 +9,7 @@ import {
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailInboxMessage,
-  diffInboxFeedEntryIds,
+  diffInboxFeed,
   generateGmailLabelColorsCss,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
@@ -91,6 +91,16 @@ const inboxFeedSchema = z.object({
 });
 
 const inboxTypeSchema = z.string();
+
+const INBOX_FEED_POLL_INTERVAL = ms("5m");
+
+/*
+ * Generous because an entry's `issued` time has not been verified to be
+ * Gmail's receive time rather than the sender's `Date` header, and because the
+ * seen-id guard already excludes almost every re-filed email, so widening this
+ * costs little.
+ */
+const INBOX_FEED_SLACK = ms("5m");
 
 export class Gmail {
   accountId: string;
@@ -174,11 +184,11 @@ export class Gmail {
 
   private labelColorsCssKey: string | null = null;
 
-  private inboxFeedBaseline: { url: string; ids: Set<string> } | null = null;
+  private inboxFeedBaseline: { url: string; ids: Set<string>; readAt: number } | null = null;
 
-  private previousNewMessages: Map<string, number> = new Map();
+  private seenInboxFeedEntryIds = new Set<string>();
 
-  private previousNewMessagesPruneInterval: NodeJS.Timeout;
+  private inboxFeedPollInterval: NodeJS.Timeout;
 
   private storeUnsubscribers: (() => void)[] = [];
 
@@ -269,13 +279,11 @@ export class Gmail {
 
     this.subscribeToStore();
 
-    this.previousNewMessagesPruneInterval = setInterval(() => {
-      for (const [messageId, timestamp] of this.previousNewMessages) {
-        if (Date.now() - timestamp > ms("5m")) {
-          this.previousNewMessages.delete(messageId);
-        }
-      }
-    }, ms("5m"));
+    // Without a poll of its own, the baseline's `readAt` would sit hours behind
+    // the feed through a quiet period, and the slack window with it.
+    this.inboxFeedPollInterval = setInterval(() => {
+      this.fetchInboxFeed({ retryWhileUnchanged: false });
+    }, INBOX_FEED_POLL_INTERVAL);
   }
 
   async createView(options?: WebContentsViewConstructorOptions) {
@@ -478,7 +486,7 @@ export class Gmail {
 
     main.window.contentView.removeChildView(this.view);
 
-    clearInterval(this.previousNewMessagesPruneInterval);
+    clearInterval(this.inboxFeedPollInterval);
 
     for (const unsubscribe of this.storeUnsubscribers) {
       unsubscribe();
@@ -564,21 +572,27 @@ export class Gmail {
     });
   }
 
-  private async retryInboxFeedFetch(fetchAttempt: number) {
+  private async retryInboxFeedFetch(
+    fetchAttempt: number,
+    options: { retryWhileUnchanged: boolean },
+  ) {
     if (fetchAttempt > 10) {
       return;
     }
 
     await wait(ms("1s"));
 
-    this.fetchInboxFeed(fetchAttempt + 1);
+    this.fetchInboxFeed(options, fetchAttempt + 1);
   }
 
-  async fetchInboxFeed(fetchAttempt = 1) {
+  async fetchInboxFeed(
+    { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean } = {},
+    fetchAttempt = 1,
+  ) {
     try {
       if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt);
+          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
         }
 
         return;
@@ -592,7 +606,7 @@ export class Gmail {
       // diff against, and otherwise return, the way the URL check above does.
       if (inboxTypeValue === undefined) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt);
+          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
         }
 
         return;
@@ -602,38 +616,62 @@ export class Gmail {
 
       const feedUrl = `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}`;
 
+      // Taken before the fetch so the anchor is never later than the feed state
+      // it describes.
+      const readAt = Date.now();
+
       const body = await this.session.fetch(`${feedUrl}?t=${Date.now()}`).then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
 
       const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 
-      const feedEntryIds = feedEntries.map(({ id }) => id);
-
       // The feed URL is part of the baseline because the inbox type and the
       // monitored categories decide which entries the feed carries at all, so
       // diffing across a change of URL would report every entry as new.
-      const baselineIds =
-        this.inboxFeedBaseline?.url === feedUrl ? this.inboxFeedBaseline.ids : null;
+      const baseline = this.inboxFeedBaseline?.url === feedUrl ? this.inboxFeedBaseline : null;
 
       // The baseline is a set of entry ids rather than a count of them because
       // one message read while another arrives leaves the count unchanged.
-      const { changed, newIds } = diffInboxFeedEntryIds(baselineIds, feedEntryIds);
+      const { changed, newIds } = diffInboxFeed(
+        baseline,
+        this.seenInboxFeedEntryIds,
+        feedEntries.map(({ id, issued }) => ({ id, receivedAt: new Date(issued).getTime() })),
+        INBOX_FEED_SLACK,
+      );
 
+      // Refreshed even when nothing changed, so the slack window follows the
+      // feed rather than the last arrival.
+      if (baseline) {
+        baseline.readAt = readAt;
+      }
+
+      // Every id in the fetch is marked seen before any notification is
+      // created, so two fetch chains in flight at once cannot both notify.
+      for (const { id } of feedEntries) {
+        this.seenInboxFeedEntryIds.add(id);
+      }
+
+      // Nothing signalled a change ahead of the idle poll, so there is nothing
+      // for it to wait for.
       if (!changed) {
-        await this.retryInboxFeedFetch(fetchAttempt);
+        if (retryWhileUnchanged) {
+          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+        }
 
         return;
       }
 
-      this.inboxFeedBaseline = { url: feedUrl, ids: new Set(feedEntryIds) };
+      this.inboxFeedBaseline = {
+        url: feedUrl,
+        ids: new Set(feedEntries.map(({ id }) => id)),
+        readAt,
+      };
 
       const newIdSet = new Set(newIds);
 
       const unreadInbox: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
-
-      const now = Date.now();
 
       for (const [
         index,
@@ -658,10 +696,8 @@ export class Gmail {
           receivedAt,
         });
 
-        if (newIdSet.has(id) && !this.previousNewMessages.has(id)) {
+        if (newIdSet.has(id)) {
           newMailIndexes.push(index);
-
-          this.previousNewMessages.set(id, now);
         }
       }
 
@@ -669,7 +705,7 @@ export class Gmail {
         this.store.setState({ unreadInbox });
       }
 
-      if (!baselineIds) {
+      if (!baseline) {
         return;
       }
 
