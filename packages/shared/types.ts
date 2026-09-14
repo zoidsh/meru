@@ -293,6 +293,7 @@ export type IpcRendererEvent = {
   navigate: [to: string];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
+  "gmail.refreshInbox": [];
   "gmail.openMessage": [messageId: string];
   "gmail.showMessageSentNotification": [browserWindowId: number];
   "gmail.dismissMessageSentNotification": [browserWindowId: number];

@@ -16,6 +16,10 @@ ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
   refreshInbox();
 });
 
+ipc.renderer.on("gmail.refreshInbox", () => {
+  refreshInbox();
+});
+
 ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId: number) => {
   // No duration: the main process ends this one when it closes the compose
   // window, 30 seconds in, which is Gmail's own undo-send window.
