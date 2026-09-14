@@ -89,11 +89,42 @@ export function refreshInbox() {
       clientY: top + height / 2,
     };
 
+    const previouslyFocusedElement = document.activeElement;
+
     refreshButtonElement.dispatchEvent(new PointerEvent("pointerdown", eventInit));
     refreshButtonElement.dispatchEvent(new MouseEvent("mousedown", eventInit));
     refreshButtonElement.dispatchEvent(new PointerEvent("pointerup", eventInit));
     refreshButtonElement.dispatchEvent(new MouseEvent("mouseup", eventInit));
     refreshButtonElement.dispatchEvent(new MouseEvent("click", eventInit));
+
+    // Gmail clears the pressed and focused look only on leave and blur, which
+    // no real pointer is there to send after a synthetic click.
+    refreshButtonElement.dispatchEvent(
+      new PointerEvent("pointerout", { ...eventInit, relatedTarget: null }),
+    );
+    refreshButtonElement.dispatchEvent(
+      new PointerEvent("pointerleave", { ...eventInit, relatedTarget: null }),
+    );
+    refreshButtonElement.dispatchEvent(
+      new MouseEvent("mouseout", { ...eventInit, relatedTarget: null }),
+    );
+    refreshButtonElement.dispatchEvent(
+      new MouseEvent("mouseleave", { ...eventInit, relatedTarget: null }),
+    );
+
+    // Gmail focuses the control on mousedown, which would take the caret out of
+    // a compose editor on every programmatic refresh; Chromium keeps the
+    // selection when the editor is refocused.
+    if (document.activeElement === refreshButtonElement) {
+      if (
+        previouslyFocusedElement instanceof HTMLElement &&
+        previouslyFocusedElement !== document.body
+      ) {
+        previouslyFocusedElement.focus();
+      } else {
+        refreshButtonElement.blur();
+      }
+    }
 
     return;
   }
