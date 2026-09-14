@@ -97,9 +97,13 @@ function OnePasswordSetupSteps() {
       <li>Select your account at the top of the sidebar, then select Settings.</li>
       <li>Select Browser, then select Add Browser.</li>
       <li>
-        {platform.isMacOS
-          ? "Choose Meru in the Applications folder."
-          : "Choose Meru in C:\\Program Files."}
+        {platform.isMacOS ? (
+          "Choose Meru in the Applications folder."
+        ) : (
+          <>
+            Choose Meru in <Code>%LOCALAPPDATA%\Programs\Meru</Code>.
+          </>
+        )}
       </li>
       <li>Restart Meru.</li>
     </>

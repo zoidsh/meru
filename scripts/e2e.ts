@@ -10,9 +10,12 @@
 import { spawn } from "bun";
 
 const BUILDS = {
-  darwin: { script: "build:mac", arch: "--arm64" },
-  linux: { script: "build:linux", arch: "--x64" },
-  win32: { script: "build:win", arch: "--x64" },
+  darwin: { script: "build:mac", args: ["--arm64"] },
+  linux: { script: "build:linux", args: ["--x64"] },
+  // Windows signs through Azure Artifact Signing, which has no Entra
+  // credentials outside the release workflow and fails the build rather than
+  // skipping the way an absent macOS identity does.
+  win32: { script: "build:win", args: ["--x64", "-c.win.signExecutable=false"] },
 } as const;
 
 const build = BUILDS[process.platform as keyof typeof BUILDS];
@@ -60,7 +63,7 @@ if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
     build.script,
     "--",
     "--dir",
-    build.arch,
+    ...build.args,
     "--publish",
     "never",
   ]);
