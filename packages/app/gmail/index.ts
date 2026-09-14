@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, TAB_VIEW_INSET } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
@@ -34,9 +34,11 @@ import { ipc } from "@/ipc";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import {
+  applyViewBorderRadius,
   createChildWebContentsView,
   logLoadFailures,
   openViewDevToolsOnLaunch,
+  paintViewBackground,
   removeWebContentsListeners,
 } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
@@ -421,6 +423,8 @@ export class Gmail {
   private setHtmlFullscreen(htmlFullscreen: boolean) {
     this.htmlFullscreen = htmlFullscreen;
 
+    applyViewBorderRadius(this.view, { htmlFullscreen });
+
     this.updateViewBounds();
   }
 
@@ -442,10 +446,10 @@ export class Gmail {
     const verticalTabsWidth = accounts.getVerticalTabsWidth();
 
     this.view.setBounds({
-      x: verticalTabsWidth,
-      y: APP_TITLEBAR_HEIGHT,
-      width: width - verticalTabsWidth,
-      height: height - APP_TITLEBAR_HEIGHT,
+      x: verticalTabsWidth + TAB_VIEW_INSET,
+      y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+      width: width - verticalTabsWidth - TAB_VIEW_INSET * 2,
+      height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
     });
   }
 
@@ -477,6 +481,14 @@ export class Gmail {
     }
 
     config.set("workspaceApps.zoomFactors", zoomFactors);
+  }
+
+  applyBackgroundColor() {
+    if (!this._view) {
+      return;
+    }
+
+    paintViewBackground(this._view);
   }
 
   applyPersistedZoomFactor() {

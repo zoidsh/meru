@@ -4,6 +4,10 @@ This file is the draft of the next release, written one line at a time as work l
 
 ## [Unreleased]
 
+### Changed
+
+- Gmail and workspace app tabs are now inset from the window with rounded corners, and on macOS the titlebar and tabs strip show the desktop through a translucent material
+
 ### Fixed
 
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth

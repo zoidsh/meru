@@ -17,6 +17,7 @@ import {
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
 import { renderApp } from "@/lib/react";
 import { useConfig } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 function RecentDownloadHistoryButton() {
   return (
@@ -189,35 +190,37 @@ function WorkspaceApp() {
   }
 
   return (
-    <Titlebar>
-      <TitlebarLeft>
-        <TitlebarButtonGroup>
-          <NavigationControls workspaceAppId={workspaceAppId} />
-        </TitlebarButtonGroup>
-        {config && config.accounts.length > 1 && account && (
-          <AccountBadge label={account.label} color={account.color} />
-        )}
-        <div className="flex items-center gap-1">
-          {workspaceApp && <WorkspaceAppIcon app={workspaceApp} className="size-3.5" />}
-          <PageTitle />
-        </div>
-      </TitlebarLeft>
-      <TitlebarRight>
-        <FindInPageControls />
-        <TitlebarButtonGroup>
-          <BookmarkButton workspaceAppId={workspaceAppId} />
-          <RecentDownloadHistoryButton />
-          <TitlebarIconButton
-            title="More options"
-            onClick={() => {
-              ipc.main.send("workspaceApp.showMenu", workspaceAppId);
-            }}
-          >
-            <EllipsisVerticalIcon />
-          </TitlebarIconButton>
-        </TitlebarButtonGroup>
-      </TitlebarRight>
-    </Titlebar>
+    <div className={cn("flex h-screen flex-col", !platform.isMacOS && "bg-sidebar")}>
+      <Titlebar>
+        <TitlebarLeft>
+          <TitlebarButtonGroup>
+            <NavigationControls workspaceAppId={workspaceAppId} />
+          </TitlebarButtonGroup>
+          {config && config.accounts.length > 1 && account && (
+            <AccountBadge label={account.label} color={account.color} />
+          )}
+          <div className="flex items-center gap-1">
+            {workspaceApp && <WorkspaceAppIcon app={workspaceApp} className="size-3.5" />}
+            <PageTitle />
+          </div>
+        </TitlebarLeft>
+        <TitlebarRight>
+          <FindInPageControls />
+          <TitlebarButtonGroup>
+            <BookmarkButton workspaceAppId={workspaceAppId} />
+            <RecentDownloadHistoryButton />
+            <TitlebarIconButton
+              title="More options"
+              onClick={() => {
+                ipc.main.send("workspaceApp.showMenu", workspaceAppId);
+              }}
+            >
+              <EllipsisVerticalIcon />
+            </TitlebarIconButton>
+          </TitlebarButtonGroup>
+        </TitlebarRight>
+      </Titlebar>
+    </div>
   );
 }
 

@@ -1,3 +1,4 @@
+import { TAB_VIEW_BORDER_RADIUS } from "@meru/shared/constants";
 import {
   type Session,
   type WebContents,
@@ -9,6 +10,7 @@ import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLoadFailureWorthLogging } from "./load-failures";
 import { log } from "./log";
+import { getBackgroundColor } from "./window";
 
 /**
  * Says why a view is empty. A load that never arrives leaves nothing behind on
@@ -89,6 +91,23 @@ export function removeWebContentsListeners(webContents: WebContents) {
   }
 }
 
+/**
+ * The rounded corner mask antialiases the view's layer background against what
+ * sits behind it — left at Electron's default white, that paints a grey fringe
+ * along the curve in dark mode.
+ */
+export function paintViewBackground(view: WebContentsView) {
+  view.setBackgroundColor(getBackgroundColor());
+}
+
+/** Rounded corners would cut into a video that covers the whole window. */
+export function applyViewBorderRadius(
+  view: WebContentsView,
+  { htmlFullscreen }: { htmlFullscreen: boolean },
+) {
+  view.setBorderRadius(htmlFullscreen ? 0 : TAB_VIEW_BORDER_RADIUS);
+}
+
 export function createChildWebContentsView({
   session,
   preload,
@@ -115,6 +134,10 @@ export function createChildWebContentsView({
       preload,
     },
   });
+
+  paintViewBackground(view);
+
+  applyViewBorderRadius(view, { htmlFullscreen: false });
 
   attachView(view);
 

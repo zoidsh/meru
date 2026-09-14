@@ -216,6 +216,14 @@ class Accounts {
     this.sendAccountsChangedToRenderer();
   }
 
+  applyAllViewBackgroundColors() {
+    WorkspaceApp.applyBackgroundColors();
+
+    for (const account of this.instances.values()) {
+      account.gmail.applyBackgroundColor();
+    }
+  }
+
   updateAllViewBounds() {
     for (const account of this.instances.values()) {
       for (const tab of account.tabs.tabs) {

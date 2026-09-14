@@ -76,6 +76,15 @@ export function getBackgroundColor() {
   return nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff";
 }
 
+/**
+ * macOS paints the chrome around the tab views with a vibrancy material, which
+ * sits behind the web contents — it only shows through a window background and
+ * a renderer that paint nothing.
+ */
+export function getWindowBackgroundColor() {
+  return platform.isMacOS ? "#00000000" : getBackgroundColor();
+}
+
 export function getTitleBarOptions() {
   const titleBarOverlay =
     !platform.isLinux || isLinuxWindowControlsEnabled()
@@ -95,7 +104,8 @@ export function getTitleBarOptions() {
 export function getCommonBrowserWindowOptions() {
   return {
     ...getTitleBarOptions(),
-    backgroundColor: getBackgroundColor(),
+    backgroundColor: getWindowBackgroundColor(),
+    ...(platform.isMacOS && { vibrancy: "sidebar" as const }),
     darkTheme: nativeTheme.shouldUseDarkColors,
     webPreferences: {
       preload: getPreloadPath("renderer"),
@@ -115,7 +125,7 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
 
   if (options.backgroundColor) {
     const updateBackgroundColor = () => {
-      browserWindow.setBackgroundColor(getBackgroundColor());
+      browserWindow.setBackgroundColor(getWindowBackgroundColor());
     };
 
     nativeTheme.on("updated", updateBackgroundColor);

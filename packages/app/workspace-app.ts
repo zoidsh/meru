@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL, TAB_VIEW_INSET } from "@meru/shared/constants";
 import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -33,8 +33,10 @@ import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { loadUrl, loadUrlOrRestoreNavigationHistory } from "./lib/load-url";
 import {
+  applyViewBorderRadius,
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
+  paintViewBackground,
   removeWebContentsListeners,
 } from "./lib/web-contents";
 import {
@@ -140,6 +142,12 @@ export class WorkspaceApp {
   static applyPersistedZoomFactors() {
     for (const instance of WorkspaceApp.instances.values()) {
       instance.applyPersistedZoomFactor();
+    }
+  }
+
+  static applyBackgroundColors() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.applyBackgroundColor();
     }
   }
 
@@ -904,16 +912,20 @@ export class WorkspaceApp {
   };
 
   private handleEnterHtmlFullscreen = () => {
-    this.htmlFullscreen = true;
-
-    this.updateViewBounds();
+    this.setHtmlFullscreen(true);
   };
 
   private handleLeaveHtmlFullscreen = () => {
-    this.htmlFullscreen = false;
+    this.setHtmlFullscreen(false);
+  };
+
+  private setHtmlFullscreen(htmlFullscreen: boolean) {
+    this.htmlFullscreen = htmlFullscreen;
+
+    applyViewBorderRadius(this.view, { htmlFullscreen });
 
     this.updateViewBounds();
-  };
+  }
 
   get navigationHistory() {
     return {
@@ -1011,10 +1023,10 @@ export class WorkspaceApp {
     const verticalTabsWidth = this._window ? 0 : accounts.getVerticalTabsWidth();
 
     this.view.setBounds({
-      x: verticalTabsWidth,
-      y: APP_TITLEBAR_HEIGHT,
-      width: width - verticalTabsWidth,
-      height: height - APP_TITLEBAR_HEIGHT,
+      x: verticalTabsWidth + TAB_VIEW_INSET,
+      y: APP_TITLEBAR_HEIGHT + TAB_VIEW_INSET,
+      width: width - verticalTabsWidth - TAB_VIEW_INSET * 2,
+      height: height - APP_TITLEBAR_HEIGHT - TAB_VIEW_INSET * 2,
     });
   };
 
@@ -1110,6 +1122,14 @@ export class WorkspaceApp {
     if (dormantZoomFactor !== undefined) {
       this.setZoomFactor(dormantZoomFactor);
     }
+  }
+
+  applyBackgroundColor() {
+    if (this.viewDestroyed) {
+      return;
+    }
+
+    paintViewBackground(this.view);
   }
 
   applyPersistedZoomFactor() {
