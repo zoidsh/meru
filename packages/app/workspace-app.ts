@@ -36,6 +36,7 @@ import {
   applyViewBorderRadius,
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
+  paintViewBackground,
   removeWebContentsListeners,
 } from "./lib/web-contents";
 import {
@@ -141,6 +142,12 @@ export class WorkspaceApp {
   static applyPersistedZoomFactors() {
     for (const instance of WorkspaceApp.instances.values()) {
       instance.applyPersistedZoomFactor();
+    }
+  }
+
+  static applyBackgroundColors() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.applyBackgroundColor();
     }
   }
 
@@ -1115,6 +1122,14 @@ export class WorkspaceApp {
     if (dormantZoomFactor !== undefined) {
       this.setZoomFactor(dormantZoomFactor);
     }
+  }
+
+  applyBackgroundColor() {
+    if (this.viewDestroyed) {
+      return;
+    }
+
+    paintViewBackground(this.view);
   }
 
   applyPersistedZoomFactor() {

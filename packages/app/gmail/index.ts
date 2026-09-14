@@ -38,6 +38,7 @@ import {
   createChildWebContentsView,
   logLoadFailures,
   openViewDevToolsOnLaunch,
+  paintViewBackground,
   removeWebContentsListeners,
 } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
@@ -480,6 +481,14 @@ export class Gmail {
     }
 
     config.set("workspaceApps.zoomFactors", zoomFactors);
+  }
+
+  applyBackgroundColor() {
+    if (!this._view) {
+      return;
+    }
+
+    paintViewBackground(this._view);
   }
 
   applyPersistedZoomFactor() {

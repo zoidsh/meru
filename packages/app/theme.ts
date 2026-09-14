@@ -1,4 +1,5 @@
 import { nativeTheme } from "electron";
+import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { main } from "@/main";
@@ -24,6 +25,8 @@ class Theme {
       main.updateTitlebarOverlay();
 
       appTray.updateIcon();
+
+      accounts.applyAllViewBackgroundColors();
     });
   }
 }
