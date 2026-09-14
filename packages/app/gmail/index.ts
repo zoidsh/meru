@@ -20,7 +20,6 @@ import { extractVerificationCode } from "@meru/verification-code";
 import {
   app,
   BrowserWindow,
-  clipboard,
   type Session,
   type WebContentsView,
   type WebContentsViewConstructorOptions,
@@ -31,6 +30,7 @@ import { createStore } from "zustand/vanilla";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { copyText } from "@/lib/clipboard";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import {
@@ -778,12 +778,27 @@ export class Gmail {
           const verificationCode = extractVerificationCode([newMail.subject, newMail.summary]);
 
           if (verificationCode) {
-            const copyVerificationCode = () => {
-              clipboard.writeText(verificationCode);
+            const copyVerificationCode = async () => {
+              // Nothing touches the email until the code is actually on the
+              // clipboard: Electron 44's `writeText` resolves when the write
+              // lands, and marking read or deleting ahead of a write that then
+              // failed would lose the code outright.
+              if (!(await copyText(verificationCode))) {
+                return;
+              }
+
+              // `destroy()` leaves a shown notification alone, so removing the
+              // account and then clicking one runs this against a cleared view.
+              // Read through `_view` rather than the getter, which throws.
+              const view = this._view;
+
+              if (!view || view.webContents.isDestroyed()) {
+                return;
+              }
 
               if (config.get("verificationCodes.autoMarkAsRead")) {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  view.webContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "markAsRead",
@@ -791,12 +806,7 @@ export class Gmail {
               }
 
               if (config.get("verificationCodes.autoDelete")) {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "delete",
-                );
+                ipc.renderer.send(view.webContents, "gmail.handleMessage", newMail.id, "delete");
               }
             };
 

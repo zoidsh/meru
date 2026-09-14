@@ -1,11 +1,11 @@
 import {
-  clipboard,
   type BrowserWindow,
   type MenuItemConstructorOptions,
   type WebContentsView,
 } from "electron";
 import electronContextMenu from "electron-context-menu";
 import { accounts } from "./accounts";
+import { copyText } from "./lib/clipboard";
 import { createMeruMessageUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
 import { openExternalUrl } from "./url";
@@ -36,7 +36,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
             {
               label: "Copy Message Link",
               click: () => {
-                clipboard.writeText(meruMessageUrl);
+                copyText(meruMessageUrl);
               },
             },
             {
@@ -57,7 +57,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
           {
             label: "Copy Link",
             click: () => {
-              clipboard.writeText(window.webContents.getURL());
+              copyText(window.webContents.getURL());
             },
           },
           {

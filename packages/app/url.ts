@@ -1,5 +1,6 @@
-import { clipboard, dialog, shell } from "electron";
+import { dialog, shell } from "electron";
 import { config } from "@/config";
+import { copyText } from "./lib/clipboard";
 import { licenseKey } from "./license-key";
 
 export function getCleanUrl(url: string): string {
@@ -36,7 +37,7 @@ export async function openExternalUrl(
 
       if (response !== 0) {
         if (response === 1) {
-          clipboard.writeText(cleanUrl);
+          await copyText(cleanUrl);
         }
 
         return;

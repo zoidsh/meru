@@ -10,7 +10,7 @@
     "./fixture/probes": "./fixture/probes.ts"
   },
   "scripts": {
-    "test": "bun test",
+    "test": "bun test --isolate",
     "types": "tsc && tsc -p tsconfig.test.json"
   }
 }
