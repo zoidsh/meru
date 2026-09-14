@@ -12,6 +12,7 @@ import {
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
 import { loadUrl } from "./load-url";
+import { getSystemColors, getSystemWindowBackgroundColor } from "./system-colors";
 
 const CASCADE_OFFSET = 30;
 
@@ -73,7 +74,9 @@ export function getPreloadPath(name: string) {
 }
 
 export function getBackgroundColor() {
-  return nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff";
+  return (
+    getSystemWindowBackgroundColor() ?? (nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff")
+  );
 }
 
 export function getTitleBarOptions() {
@@ -149,6 +152,12 @@ export function loadRenderer(
   const searchParams = options.searchParams ?? new URLSearchParams();
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
+
+  const systemColors = getSystemColors();
+
+  if (systemColors) {
+    searchParams.set("systemColors", JSON.stringify(systemColors));
+  }
 
   if (is.dev) {
     // `||`, not `??`: an empty value is as unusable as an unset one, and
