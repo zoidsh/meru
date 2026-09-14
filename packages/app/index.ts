@@ -159,6 +159,8 @@ async function init() {
 
   await initLinuxWindowControls();
 
+  theme.init();
+
   main.init();
 
   main.loadURL();
@@ -167,7 +169,7 @@ async function init() {
 
   ipc.init();
 
-  theme.init();
+  theme.listen();
 
   appMenu.init();
 
