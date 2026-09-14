@@ -33,6 +33,7 @@ import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { loadUrl, loadUrlOrRestoreNavigationHistory } from "./lib/load-url";
 import {
+  applyViewBorderRadius,
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
   removeWebContentsListeners,
@@ -904,16 +905,20 @@ export class WorkspaceApp {
   };
 
   private handleEnterHtmlFullscreen = () => {
-    this.htmlFullscreen = true;
-
-    this.updateViewBounds();
+    this.setHtmlFullscreen(true);
   };
 
   private handleLeaveHtmlFullscreen = () => {
-    this.htmlFullscreen = false;
+    this.setHtmlFullscreen(false);
+  };
+
+  private setHtmlFullscreen(htmlFullscreen: boolean) {
+    this.htmlFullscreen = htmlFullscreen;
+
+    applyViewBorderRadius(this.view, { htmlFullscreen });
 
     this.updateViewBounds();
-  };
+  }
 
   get navigationHistory() {
     return {

@@ -34,6 +34,7 @@ import { ipc } from "@/ipc";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import {
+  applyViewBorderRadius,
   createChildWebContentsView,
   logLoadFailures,
   openViewDevToolsOnLaunch,
@@ -420,6 +421,8 @@ export class Gmail {
 
   private setHtmlFullscreen(htmlFullscreen: boolean) {
     this.htmlFullscreen = htmlFullscreen;
+
+    applyViewBorderRadius(this.view, { htmlFullscreen });
 
     this.updateViewBounds();
   }

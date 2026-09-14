@@ -91,6 +91,23 @@ export function removeWebContentsListeners(webContents: WebContents) {
   }
 }
 
+/**
+ * The rounded corner mask antialiases the view's layer background against what
+ * sits behind it — left at Electron's default white, that paints a grey fringe
+ * along the curve in dark mode.
+ */
+export function paintViewBackground(view: WebContentsView) {
+  view.setBackgroundColor(getBackgroundColor());
+}
+
+/** Rounded corners would cut into a video that covers the whole window. */
+export function applyViewBorderRadius(
+  view: WebContentsView,
+  { htmlFullscreen }: { htmlFullscreen: boolean },
+) {
+  view.setBorderRadius(htmlFullscreen ? 0 : TAB_VIEW_BORDER_RADIUS);
+}
+
 export function createChildWebContentsView({
   session,
   preload,
@@ -118,12 +135,9 @@ export function createChildWebContentsView({
     },
   });
 
-  // The rounded corner mask antialiases the view's layer background against
-  // what sits behind it — left at Electron's default white, that paints a grey
-  // fringe along the curve in dark mode.
-  view.setBackgroundColor(getBackgroundColor());
+  paintViewBackground(view);
 
-  view.setBorderRadius(TAB_VIEW_BORDER_RADIUS);
+  applyViewBorderRadius(view, { htmlFullscreen: false });
 
   attachView(view);
 
