@@ -779,15 +779,26 @@ export class Gmail {
 
           if (verificationCode) {
             const copyVerificationCode = async () => {
-              // Awaited so that nothing touches the email until the code is
-              // actually on the clipboard: Electron 44's `writeText` resolves
-              // when the write lands, and marking read or deleting ahead of it
-              // would lose the code outright if the write then failed.
-              await copyText(verificationCode);
+              // Nothing touches the email until the code is actually on the
+              // clipboard: Electron 44's `writeText` resolves when the write
+              // lands, and marking read or deleting ahead of a write that then
+              // failed would lose the code outright.
+              if (!(await copyText(verificationCode))) {
+                return;
+              }
+
+              // `destroy()` leaves a shown notification alone, so removing the
+              // account and then clicking one runs this against a cleared view.
+              // Read through `_view` rather than the getter, which throws.
+              const view = this._view;
+
+              if (!view || view.webContents.isDestroyed()) {
+                return;
+              }
 
               if (config.get("verificationCodes.autoMarkAsRead")) {
                 ipc.renderer.send(
-                  this.view.webContents,
+                  view.webContents,
                   "gmail.handleMessage",
                   newMail.id,
                   "markAsRead",
@@ -795,12 +806,7 @@ export class Gmail {
               }
 
               if (config.get("verificationCodes.autoDelete")) {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "delete",
-                );
+                ipc.renderer.send(view.webContents, "gmail.handleMessage", newMail.id, "delete");
               }
             };
 
