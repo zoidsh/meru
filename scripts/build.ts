@@ -1,6 +1,6 @@
 import { rm, watch } from "node:fs/promises";
 import path from "node:path";
-import { parseArgs } from "node:util";
+import { type ParseArgsConfig, parseArgs } from "node:util";
 import postcssTailwind from "@tailwindcss/postcss";
 import viteTailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -9,25 +9,46 @@ import postcss from "postcss";
 import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
 
+const options = {
+  dev: {
+    type: "boolean",
+  },
+  devtools: {
+    type: "boolean",
+    short: "d",
+  },
+  // Opens Chromium's remote debugging port on the development app, so that a
+  // CDP client such as Playwright can drive it: `bun run dev --debug-port 9222`.
+  "debug-port": {
+    type: "string",
+  },
+  // Runs the development app on `.meru/<name>` instead of the default user
+  // data directory, so a signed-in account or a scratch install survives
+  // independently of it: `bun run dev --profile signin`.
+  profile: {
+    type: "string",
+  },
+} satisfies NonNullable<ParseArgsConfig["options"]>;
+
 const args = parseArgs({
   args: Bun.argv,
-  options: {
-    dev: {
-      type: "boolean",
-    },
-    devtools: {
-      type: "boolean",
-      short: "d",
-    },
-    // Opens Chromium's remote debugging port on the development app, so that a
-    // CDP client such as Playwright can drive it: `bun run dev --debug-port 9222`.
-    "debug-port": {
-      type: "string",
-    },
-  },
-  strict: true,
+  options,
+  // Any option not declared above goes to Electron as it was typed, so a
+  // Chromium flag such as `--disable-gpu` or `--lang=de` needs no entry here.
+  strict: false,
+  tokens: true,
   allowPositionals: true,
 });
+
+const electronArgs = args.tokens.flatMap((token) =>
+  token.kind === "option" && !(token.name in options)
+    ? [token.value === undefined ? token.rawName : `${token.rawName}=${token.value}`]
+    : [],
+);
+
+if (typeof args.values.profile === "string") {
+  electronArgs.push(`--user-data-dir=${path.resolve(".meru", args.values.profile)}`);
+}
 
 await rm("./build-js", { recursive: true, force: true });
 
@@ -298,6 +319,7 @@ if (args.values.dev) {
         ...(args.values["debug-port"]
           ? [`--remote-debugging-port=${args.values["debug-port"]}`]
           : []),
+        ...electronArgs,
       ],
       {
         env: { ...process.env, MERU_RENDERER_URL: rendererUrl },

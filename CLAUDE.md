@@ -8,18 +8,20 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 Setup is `bun install --frozen-lockfile`. Lefthook formats and lint-fixes staged files at every commit.
 
-| Task                                    | Command                                                                      |
-| --------------------------------------- | ---------------------------------------------------------------------------- |
-| Run the app with rebuild-on-change      | `bun run dev` (`--devtools` opens devtools, `--debug-port 9222` exposes CDP) |
-| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                                          |
-| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                                          |
-| Typecheck every package                 | `bun run types`                                                              |
-| Unit tests                              | `bun test`                                                                   |
-| One unit test file                      | `bun test packages/shared/tabs.test.ts`                                      |
-| One test by name                        | `bun test -t "name"`                                                         |
-| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e`                  |
-| Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                                     |
-| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`                            |
+| Task                                    | Command                                                     |
+| --------------------------------------- | ----------------------------------------------------------- |
+| Run the app with rebuild-on-change      | `bun run dev`, flags below                                  |
+| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                         |
+| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                         |
+| Typecheck every package                 | `bun run types`                                             |
+| Unit tests                              | `bun test`                                                  |
+| One unit test file                      | `bun test packages/shared/tabs.test.ts`                     |
+| One test by name                        | `bun test -t "name"`                                        |
+| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
+| Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                    |
+| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
+
+`bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`.
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 

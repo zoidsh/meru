@@ -182,6 +182,7 @@ build/embedded.provisionprofile
 build/entitlements.mac.plist
 build-js
 /extensions/
+/.meru/
 
 # Claude
 .claude/worktrees/
