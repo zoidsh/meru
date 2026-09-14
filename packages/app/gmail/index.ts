@@ -97,8 +97,10 @@ const inboxTypeSchema = z.string();
  * exponential backoff after a network gap and can stay down for minutes, and
  * Gmail's own timer syncs the view only every five minutes. While the channel
  * is healthy it still delivers in seconds, so this poll notices nothing.
+ * Thirty seconds keeps the worst case lag behind a phone to about half a
+ * minute, for two small feed requests a minute per account.
  */
-const INBOX_FEED_POLL_INTERVAL = ms("1m");
+const INBOX_FEED_POLL_INTERVAL = ms("30s");
 
 /*
  * Generous because an entry's `issued` time has not been verified to be
