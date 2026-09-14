@@ -1,6 +1,6 @@
 import { GMAIL_ACTION_CODE_MAP, GMAIL_URL } from "@meru/shared/gmail";
 import { $ } from "select-dom";
-import { inboxAnchorElementSelector } from "./lib/selectors";
+import { inboxAnchorElementSelector, refreshButtonElementSelector } from "./lib/selectors";
 
 declare global {
   interface Window {
@@ -70,7 +70,34 @@ export async function sendMailAction(mailId: string, action: keyof typeof GMAIL_
   await res.text();
 }
 
+/*
+ * Gmail's Refresh control is bound to the raw pointer and mouse sequence, so
+ * `HTMLElement.click()` on it does nothing. Dispatching the full sequence
+ * syncs within a fifth of a second, with a thread open as well as on the list.
+ */
 export function refreshInbox() {
+  const refreshButtonElement = $(refreshButtonElementSelector);
+
+  if (refreshButtonElement) {
+    const { left, top, width, height } = refreshButtonElement.getBoundingClientRect();
+
+    const eventInit = {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      clientX: left + width / 2,
+      clientY: top + height / 2,
+    };
+
+    refreshButtonElement.dispatchEvent(new PointerEvent("pointerdown", eventInit));
+    refreshButtonElement.dispatchEvent(new MouseEvent("mousedown", eventInit));
+    refreshButtonElement.dispatchEvent(new PointerEvent("pointerup", eventInit));
+    refreshButtonElement.dispatchEvent(new MouseEvent("mouseup", eventInit));
+    refreshButtonElement.dispatchEvent(new MouseEvent("click", eventInit));
+
+    return;
+  }
+
   if (window.location.hash.startsWith("#inbox")) {
     const inboxAnchorElement = $(inboxAnchorElementSelector);
 
