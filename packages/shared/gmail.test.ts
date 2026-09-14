@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseGmailMessageId } from "./gmail";
+import { diffInboxFeed, parseGmailMessageId } from "./gmail";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
 
@@ -62,5 +62,127 @@ describe("parseGmailMessageId", () => {
   test("returns null for an empty hash", () => {
     expect(parseGmailMessageId("")).toBeNull();
     expect(parseGmailMessageId("#")).toBeNull();
+  });
+});
+
+const READ_AT = 1_700_000_000_000;
+
+const SLACK = 60_000;
+
+function entries(...ids: string[]) {
+  return ids.map((id) => ({ id, receivedAt: READ_AT }));
+}
+
+describe("diffInboxFeed", () => {
+  test("reports a change without new mail when there is no baseline", () => {
+    expect(diffInboxFeed(null, new Set(), entries("a", "b"), SLACK)).toEqual({
+      changed: true,
+      newIds: [],
+    });
+  });
+
+  test("reports no change for an identical set", () => {
+    const previous = { ids: new Set(["a", "b"]), readAt: READ_AT };
+
+    expect(diffInboxFeed(previous, new Set(), entries("a", "b"), SLACK)).toEqual({
+      changed: false,
+      newIds: [],
+    });
+    expect(diffInboxFeed(previous, new Set(), entries("b", "a"), SLACK)).toEqual({
+      changed: false,
+      newIds: [],
+    });
+  });
+
+  test("reports the arrival when one entry is read and one arrives", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a", "b"]), readAt: READ_AT },
+        new Set(),
+        entries("c", "b"),
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: ["c"] });
+  });
+
+  test("reports a change without new mail when an entry is only removed", () => {
+    expect(
+      diffInboxFeed({ ids: new Set(["a", "b"]), readAt: READ_AT }, new Set(), entries("b"), SLACK),
+    ).toEqual({ changed: true, newIds: [] });
+  });
+
+  test("returns new ids once and in feed order", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(),
+        entries("c", "b", "c", "a"),
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: ["c", "b"] });
+  });
+
+  test("reports a change without new mail for an entry this session already listed", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(["c"]),
+        entries("c", "a"),
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: [] });
+  });
+
+  test("reports a change without new mail for an entry received before the slack window", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(),
+        [
+          { id: "c", receivedAt: READ_AT - SLACK - 1 },
+          { id: "a", receivedAt: READ_AT },
+        ],
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: [] });
+  });
+
+  test("reports the arrival for an entry received inside the slack window", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(),
+        [
+          { id: "c", receivedAt: READ_AT - SLACK },
+          { id: "a", receivedAt: READ_AT },
+        ],
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: ["c"] });
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(),
+        [
+          { id: "c", receivedAt: READ_AT - SLACK + 1 },
+          { id: "a", receivedAt: READ_AT },
+        ],
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: ["c"] });
+  });
+
+  test("reports the arrival for an entry received after the feed was last read", () => {
+    expect(
+      diffInboxFeed(
+        { ids: new Set(["a"]), readAt: READ_AT },
+        new Set(),
+        [
+          { id: "c", receivedAt: READ_AT + 1 },
+          { id: "a", receivedAt: READ_AT },
+        ],
+        SLACK,
+      ),
+    ).toEqual({ changed: true, newIds: ["c"] });
   });
 });
