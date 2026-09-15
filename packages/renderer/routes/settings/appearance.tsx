@@ -177,6 +177,16 @@ export function AppearanceSettings() {
             />
           </FieldSet>
           <FieldSeparator />
+          <FieldSet>
+            <FieldLegend>Titlebar</FieldLegend>
+            <ConfigSwitchField
+              label="Show Do Not Disturb button"
+              description="Show the button that turns Do Not Disturb on and off. Turning this off also turns Do Not Disturb off."
+              configKey="doNotDisturb.showTitlebarButton"
+              licenseKeyRequired
+            />
+          </FieldSet>
+          <FieldSeparator />
           {renderPlatformIconSettings()}
           <FieldSeparator />
           <FieldSet>
