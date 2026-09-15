@@ -112,6 +112,12 @@ export function findMeruUrlArg(argv: string[]) {
 
 export const PROCESS_MERU_URL_ARG = !platform.isMacOS ? findMeruUrlArg(process.argv) : undefined;
 
+export function findWebUrlArg(argv: string[]) {
+  return argv.find(isWebUrl);
+}
+
+export const PROCESS_WEB_URL_ARG = !platform.isMacOS ? findWebUrlArg(process.argv) : undefined;
+
 export function setMeruProtocolClient() {
   setAsDefaultProtocolClient(MERU_PROTOCOL);
 }
@@ -183,12 +189,6 @@ async function openUrlDeepLink(deepLink: Extract<MeruDeepLink, { type: "open" }>
     accounts.selectAccount(accountId);
   }
 }
-
-export function findWebUrlArg(argv: string[]) {
-  return argv.find(isWebUrl);
-}
-
-export const PROCESS_WEB_URL_ARG = !platform.isMacOS ? findWebUrlArg(process.argv) : undefined;
 
 export async function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
