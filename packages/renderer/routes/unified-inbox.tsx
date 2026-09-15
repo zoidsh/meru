@@ -185,8 +185,6 @@ const createColumns = ({
                 tabIndex={-1}
                 title={label}
                 disabled={pendingAction !== null}
-                // The three the reader did not press dim as disabled controls;
-                // the one that is working reads at full strength.
                 className={cn(pendingAction === action && "disabled:opacity-100")}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -222,25 +220,32 @@ function UnifiedInboxTable({
 
   const [pending, setPending] = useState<PendingMessageAction | null>(null);
 
+  // Mirrors `pending` so that the guard below reads it without taking it as a
+  // dependency: the hotkeys memoize their callbacks on their own dependencies,
+  // and a `runAction` that changed identity would leave them holding one from
+  // before the request started, whose guard sees nothing pending.
+  const pendingRef = useRef<PendingMessageAction | null>(null);
+
   // Held until the whole cycle is done rather than removing the row at once,
   // because the poll a moment later rewrites the list from a feed the action
   // has not reached yet, and a row taken away optimistically comes back.
-  const runAction = useCallback(
-    async (message: UnifiedInboxMessage, action: GmailAction) => {
-      if (pending) {
-        return;
-      }
+  const runAction = useCallback(async (message: UnifiedInboxMessage, action: GmailAction) => {
+    if (pendingRef.current) {
+      return;
+    }
 
-      setPending({ messageId: message.id, action });
+    pendingRef.current = { messageId: message.id, action };
 
-      try {
-        await ipc.main.invoke("gmail.handleMessage", message.account.id, message.id, action);
-      } finally {
-        setPending(null);
-      }
-    },
-    [pending],
-  );
+    setPending(pendingRef.current);
+
+    try {
+      await ipc.main.invoke("gmail.handleMessage", message.account.id, message.id, action);
+    } finally {
+      pendingRef.current = null;
+
+      setPending(null);
+    }
+  }, []);
 
   const columns = useMemo(
     () => createColumns({ showSenderIcons, pending, onAction: runAction }),
