@@ -118,7 +118,11 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   }),
   columnHelper.accessor("subject", {
     cell: (props) => (
-      <div className="flex flex-1 gap-2 overflow-hidden">
+      // Faded rather than covered by a background, because the row's own hover
+      // colour is semi-transparent and a band painted over it would come out
+      // darker than the row. This is the cell the row actions overlap: the
+      // date cell is narrower than they are.
+      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-4rem)] group-data-[state=selected]:mask-r-from-[calc(100%-4rem)]">
         <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
@@ -134,13 +138,9 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
 
       return (
         <>
-          {/*
-           * Masked rather than covered by a background, because the row's own
-           * hover colour is semi-transparent and a band painted over it would
-           * come out darker than the row.
-           */}
+          {/* Hidden rather than faded, because the actions cover it whole. */}
           <div
-            className="whitespace-nowrap text-muted-foreground group-hover:mask-r-from-[calc(100%-8.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8.5rem)]"
+            className="whitespace-nowrap text-muted-foreground group-hover:invisible group-data-[state=selected]:invisible"
             title={createDateTimeFormatter({
               hour: "2-digit",
               minute: "2-digit",
@@ -428,7 +428,9 @@ function UnifiedInboxTable({
                 ref={index === focusedIndex ? focusedRowRef : undefined}
                 tabIndex={index === focusedIndex ? -1 : undefined}
                 data-state={index === focusedIndex ? "selected" : undefined}
-                className="group cursor-default outline-none"
+                // `relative` anchors the row actions rendered from the
+                // receivedAt cell, which are wider than that cell is.
+                className="group relative cursor-default outline-none"
                 onClick={() => {
                   openMessage(row.original);
                 }}
@@ -439,8 +441,7 @@ function UnifiedInboxTable({
                     className={cn(
                       "px-3 py-3",
                       cell.column.id === "subject" && "w-full max-w-0",
-                      // Anchors the row actions, which sit over this cell.
-                      cell.column.id === "receivedAt" && "relative text-right",
+                      cell.column.id === "receivedAt" && "text-right",
                     )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
