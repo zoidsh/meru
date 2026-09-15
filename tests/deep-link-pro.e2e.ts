@@ -1,6 +1,6 @@
 /*
- * The `meru://open?url=…` route, driven the way a link router on the desktop
- * drives it.
+ * The `meru://open?url=…` route and the plain web URL a browser picker hands
+ * over, both driven the way a link router on the desktop drives them.
  *
  * Nothing below the end-to-end level reaches this. The route is a decision made
  * out of a process argument list, handed across the single instance lock, and
@@ -56,7 +56,7 @@ const meru = useProApp({
 // to use it.
 test.skip(
   process.platform === "darwin",
-  "macOS delivers a meru:// URL through open-url to the running app, which spawning the executable cannot reach",
+  "macOS delivers a link through open-url to the running app, which spawning the executable cannot reach",
 );
 
 /** Every child view's URL, which is what a deep link either adds to or does not. */
@@ -108,6 +108,43 @@ test("meru://open refuses a URL that only looks like Google's", async () => {
    * One view more than before, the Meet one — so the refused link added none of
    * its own — and nothing went to the host that URL actually names.
    */
+  expect(viewUrls).toHaveLength(viewUrlsBefore.length + 1);
+
+  expect(viewUrls.filter((url) => url.includes("evil.com"))).toEqual([]);
+});
+
+/*
+ * The same two claims for the URL a browser picker sends, which arrives with no
+ * `meru://` wrapper around it once Meru holds the http and https association.
+ * It is a separate delivery branch, not a second spelling of the one above:
+ * `handleWebUrl` takes the URL as the desktop hands it over, undecoded.
+ */
+test("an https URL sent to Meru opens in the account's own view", async () => {
+  await sendDeepLink(meru, MEET_URL);
+
+  await expect
+    .poll(async () =>
+      (await readViewUrls()).some((url) => url.startsWith("https://meet.google.com")),
+    )
+    .toBe(true);
+});
+
+test("an https URL refuses a host that only looks like Google's", async () => {
+  const viewUrlsBefore = await readViewUrls();
+
+  await sendDeepLink(meru, SPOOFED_MEET_URL);
+
+  // A link that does open, sent behind the one that must not, exactly as above.
+  await sendDeepLink(meru, MEET_URL);
+
+  await expect
+    .poll(async () =>
+      (await readViewUrls()).some((url) => url.startsWith("https://meet.google.com")),
+    )
+    .toBe(true);
+
+  const viewUrls = await readViewUrls();
+
   expect(viewUrls).toHaveLength(viewUrlsBefore.length + 1);
 
   expect(viewUrls.filter((url) => url.includes("evil.com"))).toEqual([]);
