@@ -576,16 +576,18 @@ class Accounts {
   }
 
   updateAccount(accountDetails: AccountConfig) {
+    // `disabled` is carried over from what is stored rather than from what came
+    // in. The flag and the account instance behind it have to move together, so
+    // `setAccountEnabled` is its only writer.
     config.set(
       "accounts",
-      config.get("accounts").map((account) =>
-        account.id === accountDetails.id
-          ? // `disabled` is left where it stands. The flag and the account
-            // instance behind it have to move together, so `setAccountEnabled`
-            // is its only writer.
-            { ...account, ...accountDetails, disabled: account.disabled }
-          : account,
-      ),
+      config
+        .get("accounts")
+        .map((account) =>
+          account.id === accountDetails.id
+            ? { ...account, ...accountDetails, disabled: account.disabled }
+            : account,
+        ),
     );
   }
 
@@ -605,16 +607,22 @@ class Accounts {
       return;
     }
 
-    // Behind the switch settings already locks, because the app has nothing to
-    // run on once the last enabled account is turned off.
-    if (
-      !enabled &&
-      !accountConfigs.some((account) => account.id !== accountId && account.disabled !== true)
-    ) {
+    // `config.get` hands back a copy, so the flag can be applied and the result
+    // asked what would run before any of it is written back.
+    accountConfig.disabled = !enabled;
+
+    const launchableAccountConfigs = this.selectLaunchableAccountConfigs(accountConfigs);
+
+    /*
+     * Behind the switch settings already locks. What has to stay standing is
+     * the list the app runs on rather than the enabled entries in the config:
+     * the free version runs the first account alone, so turning that one off
+     * leaves the app with nothing while the config still holds an enabled
+     * account behind it.
+     */
+    if (launchableAccountConfigs.length === 0) {
       return;
     }
-
-    accountConfig.disabled = !enabled;
 
     if (enabled) {
       /*
@@ -622,34 +630,40 @@ class Accounts {
        * outside that slice moves the flag and nothing else. The launchable list
        * is what tells the two cases apart.
        */
-      if (
-        this.selectLaunchableAccountConfigs(accountConfigs).some(
-          (account) => account.id === accountId,
-        )
-      ) {
-        this.createAccountInstance(accountConfig);
+      if (launchableAccountConfigs.some((account) => account.id === accountId)) {
+        const instance = this.createAccountInstance(accountConfig);
 
         // A view is created visible and paints over renderer HTML, and the
         // settings page this is switched from is renderer HTML.
         if (main.location !== "/") {
           this.hide();
         }
+
+        // As `createViews` does for an account at startup, so that the tabs
+        // pinned to load on launch come up here too rather than staying
+        // dormant until one is clicked.
+        instance.tabs.loadLaunchTabs();
       }
     } else {
       this.teardownAccount(accountId);
 
       if (accountConfig.selected) {
-        const nextSelectedAccount = accountConfigs.find(
-          (account) => account.id !== accountId && account.disabled !== true,
-        );
+        /*
+         * Handed to an account that runs rather than to the next enabled one in
+         * the config, which under the free version can be an account outside
+         * the slice and so without an instance to select. Taken by id, because
+         * the free version's list holds copies and writing to one of those
+         * would leave the selection where it was.
+         */
+        const [nextSelectedAccountConfig] = launchableAccountConfigs;
 
-        if (!nextSelectedAccount) {
+        if (!nextSelectedAccountConfig) {
           throw new Error("Could not find next selected account");
         }
 
-        accountConfig.selected = false;
-
-        nextSelectedAccount.selected = true;
+        for (const account of accountConfigs) {
+          account.selected = account.id === nextSelectedAccountConfig.id;
+        }
       }
     }
 
@@ -658,6 +672,12 @@ class Accounts {
     config.set("accounts", accountConfigs);
 
     this.updateAllViewBounds();
+
+    // As selecting an account does. Both directions leave the window's z-order
+    // naming a view the titlebar does not: enabling puts the new one on top,
+    // and tearing the selected one down drops the front view without saying
+    // which of the rest takes its place.
+    this.refreshSelectedAccountView();
 
     this.sendTabsChangedToRenderer();
   }

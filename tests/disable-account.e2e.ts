@@ -97,17 +97,28 @@ async function toggleDisabled(meru: MeruApp, label: string) {
 }
 
 /**
- * Leaves settings for the account view, through the menu item a user would use.
+ * Leaves settings the way the settings page itself offers, which selects
+ * nothing on the way out.
+ *
+ * The Accounts menu items are the other way back, and they are no use here:
+ * their handler selects the account before it navigates, so a view left in the
+ * wrong place in the z-order would be put right by the act of going to look at
+ * it.
  *
  * Waited out on the navigation controls, which only the account titlebar draws.
- * The switcher buttons are what the callers then assert on, and half of them
- * assert an absence, which a titlebar still showing Settings would satisfy
- * without anything having been checked.
+ * The switcher buttons are what some callers then assert the absence of, and a
+ * titlebar still showing Settings would satisfy that without anything having
+ * been checked.
  */
-async function returnToAccountView(meru: MeruApp, label: string) {
-  expect(await meru.runMenuCommand(label)).toBe(true);
+async function closeSettings(meru: MeruApp) {
+  await meru.renderer.getByRole("button", { name: "Close settings" }).click();
 
   await expect(meru.renderer.getByRole("button", { name: "Go back" })).toBeVisible();
+}
+
+/** The partition of the view in front, which is the last of the window's children. */
+async function readFrontViewStoragePath(meru: MeruApp) {
+  return (await readViews(meru)).at(-1)?.storagePath;
 }
 
 function readAccount(meru: MeruApp, accountId: string) {
@@ -189,7 +200,16 @@ test.describe("with the second account disabled", () => {
 
     expect(await readAccountsMenuLabels(meru)).toEqual(["Personal", "Work"]);
 
-    await returnToAccountView(meru, "Personal");
+    await closeSettings(meru);
+
+    /*
+     * Still Personal, which the switch did not deselect. A view is attached on
+     * top of the ones already there, so an account turned on and left where it
+     * landed would be the one on screen behind a titlebar naming the other.
+     */
+    await expect
+      .poll(async () => (await readFrontViewStoragePath(meru))?.includes("first-account"))
+      .toBe(true);
 
     const personal = meru.renderer.getByRole("button", { name: "Personal" });
 
@@ -205,9 +225,8 @@ test.describe("with the second account disabled", () => {
       .poll(async () => (await readAccount(meru, "second-account")())?.selected)
       .toBe(true);
 
-    // Last is the view in front, which is where selecting an account puts it.
     await expect
-      .poll(async () => (await readViews(meru)).at(-1)?.storagePath.includes("second-account"))
+      .poll(async () => (await readFrontViewStoragePath(meru))?.includes("second-account"))
       .toBe(true);
   });
 });
@@ -231,7 +250,7 @@ test.describe("with both accounts enabled", () => {
 
     expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
 
-    await returnToAccountView(meru, "Personal");
+    await closeSettings(meru);
 
     await expect(meru.renderer.getByRole("button", { name: "Work" })).toHaveCount(0);
 
@@ -258,6 +277,15 @@ test.describe("with both accounts enabled", () => {
     expect(await countAccountViews(meru, "second-account")).toBe(1);
 
     expect(await readAccountsMenuLabels(meru)).toEqual(["Work"]);
+
+    await closeSettings(meru);
+
+    // Tearing the front view down says nothing about which of the rest takes
+    // its place, so the account the selection was handed to has to be put
+    // there deliberately.
+    await expect
+      .poll(async () => (await readFrontViewStoragePath(meru))?.includes("second-account"))
+      .toBe(true);
   });
 });
 
