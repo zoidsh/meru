@@ -16,8 +16,9 @@
  * One account, which is what lets the prompt be left out of the picture:
  * `promptForAccount` answers with the only account rather than opening a dialog
  * nobody is here to dismiss. The addressed form, `meru://<email>/open?url=…`,
- * is not covered — it resolves against `gmail.userEmail`, which the Gmail
- * preload only learns from a signed-in page, and nothing here signs in.
+ * is in `tests/deep-link-signed-in.e2e.ts` instead — it resolves against
+ * `gmail.userEmail`, which the Gmail preload only learns from a signed-in page,
+ * so it needs an account somebody signed in by hand and skips without one.
  */
 import { expect, test } from "@playwright/test";
 import { seedAccount } from "./lib/accounts";
