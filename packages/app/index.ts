@@ -23,11 +23,14 @@ import { appMenu } from "@/menu";
 import {
   findMailtoUrlArg,
   findMeruUrlArg,
+  findWebUrlArg,
   handleMailtoUrl,
   handleMeruUrl,
+  handleWebUrl,
   isMailtoUrl,
   PROCESS_MAILTO_URL_ARG,
   PROCESS_MERU_URL_ARG,
+  PROCESS_WEB_URL_ARG,
   setMeruProtocolClient,
 } from "@/protocol";
 import { registerWindowsMailClient } from "@/protocol/windows-mail-client";
@@ -35,7 +38,7 @@ import { theme } from "@/theme";
 import { appTray } from "@/tray";
 import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
-import { isMeruUrl } from "./lib/deep-link";
+import { isMeruUrl, isWebUrl } from "./lib/deep-link";
 import { spellchecker } from "./spellchecker";
 import { trial } from "./trial";
 
@@ -191,6 +194,10 @@ async function init() {
       main.show();
 
       handleMeruUrl(PROCESS_MERU_URL_ARG);
+    } else if (PROCESS_WEB_URL_ARG) {
+      main.show();
+
+      handleWebUrl(PROCESS_WEB_URL_ARG);
     }
   }
 
@@ -210,6 +217,14 @@ async function init() {
 
       if (meruUrlArg) {
         handleMeruUrl(meruUrlArg);
+
+        return;
+      }
+
+      const webUrlArg = findWebUrlArg(argv);
+
+      if (webUrlArg) {
+        handleWebUrl(webUrlArg);
 
         return;
       }
@@ -236,6 +251,12 @@ async function init() {
         main.show();
 
         handleMeruUrl(url);
+      }
+
+      if (isWebUrl(url)) {
+        main.show();
+
+        handleWebUrl(url);
       }
     });
   }

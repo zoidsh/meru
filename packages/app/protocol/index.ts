@@ -6,6 +6,7 @@ import { showProUpgradeDialog } from "@/dialogs";
 import { ipc } from "@/ipc";
 import {
   isMeruUrl,
+  isWebUrl,
   MERU_PROTOCOL,
   type MeruDeepLink,
   parseMeruUrl,
@@ -183,6 +184,12 @@ async function openUrlDeepLink(deepLink: Extract<MeruDeepLink, { type: "open" }>
   }
 }
 
+export function findWebUrlArg(argv: string[]) {
+  return argv.find(isWebUrl);
+}
+
+export const PROCESS_WEB_URL_ARG = !platform.isMacOS ? findWebUrlArg(process.argv) : undefined;
+
 export async function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
     showProUpgradeDialog("Meru Pro is required to open Meru links.");
@@ -201,4 +208,23 @@ export async function handleMeruUrl(url: string) {
   } else {
     await openUrlDeepLink(deepLink);
   }
+}
+
+/**
+ * A web URL the desktop handed over because Meru holds the http or https
+ * association, which is what puts Meru in a browser picker.
+ *
+ * The URL is not decoded on the way in: it arrives from the operating system
+ * already decoded, unlike the `url` parameter of `meru://open`. A picker rule
+ * scoped wider than Meru can serve opens nothing, `resolveRoutableUrl` refusing
+ * every host but Google's.
+ */
+export async function handleWebUrl(url: string) {
+  if (!licenseKey.isValid) {
+    showProUpgradeDialog("Meru Pro is required to open links sent to Meru.");
+
+    return;
+  }
+
+  await openUrlDeepLink({ type: "open", url, email: undefined });
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseMeruUrl, resolveRoutableUrl } from "./deep-link";
+import { isWebUrl, parseMeruUrl, resolveRoutableUrl } from "./deep-link";
 
 describe("parseMeruUrl", () => {
   test("resolves the message route", () => {
@@ -99,5 +99,23 @@ describe("resolveRoutableUrl", () => {
 
   test("rejects credentials smuggled into the authority", () => {
     expect(resolveRoutableUrl("https://meet.google.com@evil.com/")).toBeUndefined();
+  });
+});
+
+describe("isWebUrl", () => {
+  test("accepts an http and an https url", () => {
+    expect(isWebUrl("https://meet.google.com/abc-defg-hij")).toBe(true);
+    expect(isWebUrl("http://meet.google.com/abc-defg-hij")).toBe(true);
+  });
+
+  test("rejects every other scheme", () => {
+    expect(isWebUrl("meru://open?url=https%3A%2F%2Fmeet.google.com%2F")).toBe(false);
+    expect(isWebUrl("mailto:someone@gmail.com")).toBe(false);
+    expect(isWebUrl("file:///etc/passwd")).toBe(false);
+  });
+
+  test("rejects a switch that carries a url", () => {
+    expect(isWebUrl("--proxy-server=https://example.com")).toBe(false);
+    expect(isWebUrl("--user-data-dir=/tmp/http://x")).toBe(false);
   });
 });

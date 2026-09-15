@@ -17,6 +17,17 @@ export function isMeruUrl(url: string) {
   return url.startsWith(MERU_URL_PREFIX);
 }
 
+const WEB_URL_PREFIXES = ["http://", "https://"];
+
+/**
+ * A plain web URL, as the desktop hands one over once Meru holds the http or
+ * https association. Matched on the prefix alone, which is what keeps a switch
+ * carrying a URL, such as `--proxy-server=https://…`, out of it.
+ */
+export function isWebUrl(url: string) {
+  return WEB_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
+}
+
 export function createMeruMessageUrl(userEmail: string, messageId: string) {
   return `${MERU_URL_PREFIX}${userEmail}/message/${messageId}`;
 }
