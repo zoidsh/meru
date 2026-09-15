@@ -1,4 +1,4 @@
-import type { GMAIL_ACTION_CODE_MAP } from "@meru/shared/gmail";
+import type { GmailAction } from "@meru/shared/gmail";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -35,11 +35,12 @@ import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
   InboxIcon,
+  Loader2Icon,
   MailOpenIcon,
   OctagonAlertIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { navigate } from "wouter/use-hash-location";
 import { AccountBadge } from "@/components/account-badge";
@@ -56,16 +57,22 @@ const MESSAGE_ACTIONS = [
   { action: "delete", label: "Delete", icon: Trash2Icon },
   { action: "markAsSpam", label: "Mark as spam", icon: OctagonAlertIcon },
 ] as const satisfies {
-  action: keyof typeof GMAIL_ACTION_CODE_MAP;
+  action: GmailAction;
   label: string;
   icon: typeof ArchiveIcon;
 }[];
 
-function handleMessage(message: UnifiedInboxMessage, action: keyof typeof GMAIL_ACTION_CODE_MAP) {
-  ipc.main.send("gmail.handleMessage", message.account.id, message.id, action);
-}
+type PendingMessageAction = { messageId: string; action: GmailAction };
 
-const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
+const createColumns = ({
+  showSenderIcons,
+  pending,
+  onAction,
+}: {
+  showSenderIcons: boolean;
+  pending: PendingMessageAction | null;
+  onAction: (message: UnifiedInboxMessage, action: GmailAction) => void;
+}) => [
   columnHelper.accessor("account.label", {
     cell: (props) => (
       <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
@@ -123,7 +130,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
       // darker than the row. This is the cell the row actions overlap, the
       // date cell being narrower than they are, so the fade has to finish
       // short of this cell's edge rather than at it.
-      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8rem)] group-hover:mask-r-to-[calc(100%-3.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8rem)] group-data-[state=selected]:mask-r-to-[calc(100%-3.5rem)]">
+      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8rem)] group-hover:mask-r-to-[calc(100%-3.5rem)] group-data-[pending]:mask-r-from-[calc(100%-8rem)] group-data-[pending]:mask-r-to-[calc(100%-3.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8rem)] group-data-[state=selected]:mask-r-to-[calc(100%-3.5rem)]">
         <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
@@ -137,11 +144,14 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
     cell: (props) => {
       const date = dayjs(props.getValue());
 
+      const pendingAction =
+        pending && pending.messageId === props.row.original.id ? pending.action : null;
+
       return (
         <>
           {/* Hidden rather than faded, because the actions cover it whole. */}
           <div
-            className="whitespace-nowrap text-muted-foreground group-hover:invisible group-data-[state=selected]:invisible"
+            className="whitespace-nowrap text-muted-foreground group-hover:invisible group-data-[pending]:invisible group-data-[state=selected]:invisible"
             title={createDateTimeFormatter({
               hour: "2-digit",
               minute: "2-digit",
@@ -162,7 +172,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
                   }).format(date.toDate())
                 : createDateTimeFormatter().format(date.toDate())}
           </div>
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[state=selected]:opacity-100">
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[pending]:opacity-100 group-data-[state=selected]:opacity-100">
             {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
               <Button
                 key={action}
@@ -174,13 +184,14 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
                 // message.
                 tabIndex={-1}
                 title={label}
+                disabled={pendingAction !== null}
                 onClick={(event) => {
                   event.stopPropagation();
 
-                  handleMessage(props.row.original, action);
+                  onAction(props.row.original, action);
                 }}
               >
-                <Icon />
+                {pendingAction === action ? <Loader2Icon className="animate-spin" /> : <Icon />}
               </Button>
             ))}
           </div>
@@ -206,7 +217,32 @@ function UnifiedInboxTable({
 
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
-  const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
+  const [pending, setPending] = useState<PendingMessageAction | null>(null);
+
+  // Held until the whole cycle is done rather than removing the row at once,
+  // because the poll a moment later rewrites the list from a feed the action
+  // has not reached yet, and a row taken away optimistically comes back.
+  const runAction = useCallback(
+    async (message: UnifiedInboxMessage, action: GmailAction) => {
+      if (pending) {
+        return;
+      }
+
+      setPending({ messageId: message.id, action });
+
+      try {
+        await ipc.main.invoke("gmail.handleMessage", message.account.id, message.id, action);
+      } finally {
+        setPending(null);
+      }
+    },
+    [pending],
+  );
+
+  const columns = useMemo(
+    () => createColumns({ showSenderIcons, pending, onAction: runAction }),
+    [showSenderIcons, pending, runAction],
+  );
 
   const table = useReactTable({
     data: messages,
@@ -299,11 +335,11 @@ function UnifiedInboxTable({
     [focusedIndex, rows],
   );
 
-  const handleFocusedMessage = (action: keyof typeof GMAIL_ACTION_CODE_MAP) => {
+  const handleFocusedMessage = (action: GmailAction) => {
     const focusedMessage = rows[focusedIndex]?.original;
 
     if (focusedMessage) {
-      handleMessage(focusedMessage, action);
+      runAction(focusedMessage, action);
     }
   };
 
@@ -432,6 +468,7 @@ function UnifiedInboxTable({
                 // `relative` anchors the row actions rendered from the
                 // receivedAt cell, which are wider than that cell is.
                 className="group relative cursor-default outline-none"
+                data-pending={pending?.messageId === row.original.id || undefined}
                 onClick={() => {
                   openMessage(row.original);
                 }}

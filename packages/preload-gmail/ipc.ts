@@ -10,16 +10,20 @@ ipc.renderer.on("gmail.openMessage", (_event, messageId: string) => {
   window.location.hash = `#inbox/${messageId}`;
 });
 
-ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
+ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action, requestId) => {
+  let ok = true;
+
   try {
     await sendMailAction(messageId, action);
+
+    refreshInbox();
   } catch (error) {
     console.error("Error handling message:", error);
 
-    return;
+    ok = false;
   }
 
-  refreshInbox();
+  ipc.main.send("gmail.messageHandled", requestId, ok);
 });
 
 ipc.renderer.on("gmail.refreshInbox", () => {

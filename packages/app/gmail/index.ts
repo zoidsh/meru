@@ -1,14 +1,15 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
-  GMAIL_ACTION_CODE_MAP,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
   GMAIL_INBOX_FEED_URL,
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
+  type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
   generateGmailLabelColorsCss,
@@ -111,14 +112,22 @@ const INBOX_FEED_POLL_INTERVAL = ms("30s");
  */
 const INBOX_FEED_SLACK = ms("5m");
 
+const HANDLE_MESSAGE_TIMEOUT = ms("15s");
+
 const NEW_EMAIL_NOTIFICATION_ACTIONS = [
   { text: "Archive", action: "archive" },
   { text: "Mark as Read", action: "markAsRead" },
   { text: "Delete", action: "delete" },
   { text: "Mark as Spam", action: "markAsSpam" },
-] as const satisfies { text: string; action: keyof typeof GMAIL_ACTION_CODE_MAP }[];
+] as const satisfies { text: string; action: GmailAction }[];
 
 export class Gmail {
+  /**
+   * Keyed by request rather than held per instance, because the reply comes
+   * back through the one collection-level handler in `ipc.init()`.
+   */
+  private static pendingMessageHandlings = new Map<string, (ok: boolean) => void>();
+
   accountId: string;
 
   app: SupportedWorkspaceApp = "gmail";
@@ -795,24 +804,12 @@ export class Gmail {
                 return;
               }
 
-              // Guarded for the reason `handleMessage` is.
-              const view = this._view;
-
-              if (!view || view.webContents.isDestroyed()) {
-                return;
-              }
-
               if (config.get("verificationCodes.autoMarkAsRead")) {
-                ipc.renderer.send(
-                  view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsRead",
-                );
+                this.handleMessage(newMail.id, "markAsRead");
               }
 
               if (config.get("verificationCodes.autoDelete")) {
-                ipc.renderer.send(view.webContents, "gmail.handleMessage", newMail.id, "delete");
+                this.handleMessage(newMail.id, "delete");
               }
             };
 
@@ -905,7 +902,23 @@ export class Gmail {
     ipc.renderer.send(this._view.webContents, "gmail.refreshInbox");
   }
 
-  handleMessage(messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP) {
+  static resolveMessageHandled(requestId: string, ok: boolean) {
+    const resolve = Gmail.pendingMessageHandlings.get(requestId);
+
+    if (resolve) {
+      Gmail.pendingMessageHandlings.delete(requestId);
+
+      resolve(ok);
+    }
+  }
+
+  /**
+   * Resolves once the action has run and the feed has been read back, so a
+   * caller can hold its own progress until then. Nothing is removed ahead of
+   * that read: a row taken away optimistically is put back by the next poll,
+   * which reads a feed the action has not reached yet.
+   */
+  async handleMessage(messageId: string, action: GmailAction) {
     // `destroy()` leaves a shown notification alone, so removing the account
     // and then clicking one runs this against a cleared view. Read through
     // `_view` rather than the getter, which throws.
@@ -915,20 +928,33 @@ export class Gmail {
       return;
     }
 
-    const { unreadInbox } = this.store.getState();
+    const requestId = randomUUID();
 
-    const remainingUnreadInbox = unreadInbox.filter((message) => message.id !== messageId);
+    const ok = await new Promise<boolean>((resolve) => {
+      // A preload that never answers, because the page navigated away or the
+      // view went down mid-request, must not leave a caller waiting for good.
+      const timeout = setTimeout(() => {
+        Gmail.pendingMessageHandlings.delete(requestId);
 
-    // Dropped before the action has run so the row goes at once. Nothing here
-    // confirms it, but every fetch rebuilds the list from the feed, so an
-    // action that failed puts the row back on the next feed change.
-    if (remainingUnreadInbox.length !== unreadInbox.length) {
-      this.store.setState({ unreadInbox: remainingUnreadInbox });
+        resolve(false);
+      }, HANDLE_MESSAGE_TIMEOUT);
+
+      Gmail.pendingMessageHandlings.set(requestId, (handled) => {
+        clearTimeout(timeout);
+
+        resolve(handled);
+      });
+
+      ipc.renderer.send(view.webContents, "gmail.handleMessage", messageId, action, requestId);
+    });
+
+    // A refused action leaves the feed exactly as it was, so the retry loop
+    // would spend its ten attempts confirming that nothing happened.
+    if (!ok) {
+      return;
     }
 
-    ipc.renderer.send(view.webContents, "gmail.handleMessage", messageId, action);
-
-    this.fetchInboxFeed();
+    await this.fetchInboxFeed();
   }
 
   /**
