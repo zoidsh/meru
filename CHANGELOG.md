@@ -4,6 +4,10 @@ This file is the draft of the next release, written one line at a time as work l
 
 ## [Unreleased]
 
+### Added
+
+- **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
+
 ### Changed
 
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates
