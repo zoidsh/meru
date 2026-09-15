@@ -110,6 +110,7 @@ export function createDefaultConfig({
       maximized: false,
     },
     "window.restrictMinimumSize": true,
+    "window.linuxWindowControls": "auto",
     "trial.expired": false,
     "workspaceApps.openInApp": true,
     "workspaceApps.openInAppExcludedApps": [],

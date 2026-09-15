@@ -5,10 +5,13 @@ import { showUnsupportedMacOSDialog } from "../dialogs";
 import { ipc } from "../ipc";
 import { log } from "../lib/log";
 import { main } from "../main";
+import { shouldAnnounceUpdate } from "./announce";
 import { resolveUpdateChannel } from "./channel";
 import { isUpdateSupported, MINIMUM_MACOS_VERSION } from "./support";
 
 class AppUpdater {
+  private lastAnnouncedVersion: string | null = null;
+
   private applyChannel() {
     const { channel, allowPrerelease, allowDowngrade } = resolveUpdateChannel(
       config.get("updates.channel"),
@@ -40,11 +43,18 @@ class AppUpdater {
 
     if (config.get("updates.showNotifications")) {
       autoUpdater.on("update-downloaded", (updateInfo) => {
+        // electron-updater re-emits this on every check once a version is downloaded.
+        if (!shouldAnnounceUpdate(this.lastAnnouncedVersion, updateInfo.version)) {
+          return;
+        }
+
         ipc.renderer.send(
           main.window.webContents,
           "appUpdater.updateAvailable",
           `v${updateInfo.version}`,
         );
+
+        this.lastAnnouncedVersion = updateInfo.version;
       });
     }
 
@@ -78,6 +88,8 @@ class AppUpdater {
     if (is.dev || !this.isUpdateSupported()) {
       return;
     }
+
+    this.lastAnnouncedVersion = null;
 
     autoUpdater.checkForUpdates();
   }

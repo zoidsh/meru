@@ -486,9 +486,10 @@ function PasskeysAlert() {
         <KeyRoundIcon />
         <AlertTitle>Sign in to Google with a passkey and Windows Hello</AlertTitle>
         <AlertDescription>
-          Google sign-in uses Windows' own passkey dialog, so Windows Hello and synced passkeys work
-          with no password manager extension to install, keeping Meru fast and light. Filling
-          passwords still needs a password manager.
+          Add a passkey to your Google account from its security settings inside Meru, then sign in
+          with Windows Hello — no password manager extension to install, so Meru stays fast and
+          light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and
+          filling passwords still needs a password manager.
         </AlertDescription>
       </Alert>
     );

@@ -156,6 +156,7 @@ export type Config = {
     maximized: boolean;
   };
   "window.restrictMinimumSize": boolean;
+  "window.linuxWindowControls": "auto" | "show" | "hide";
   "trial.expired": boolean;
   "workspaceApps.openInApp": boolean;
   "workspaceApps.openInAppExcludedApps": SupportedWorkspaceApp[];

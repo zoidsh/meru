@@ -6,6 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
+- **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
 - **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
 
 ### Changed
@@ -14,5 +15,9 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
+- **macOS:** the close, minimize and zoom buttons now sit centered in the titlebar instead of a few pixels too high
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
+- **Windows:** The passkey note in Settings → Extensions and the prompt at Google's passkey sign-in now say that only a passkey added to your Google account from inside Meru works, and that passkeys from Chrome, Google Password Manager or your phone don't
 - **Linux and Windows:** Restart in Meru's restart prompts now brings Meru back on the AppImage and the portable build, which quit for good instead of restarting
+- After choosing Later on an update, the restart prompt no longer returns every few hours for the same version
+- **Linux:** Window controls no longer appear over Meru's titlebar buttons on window managers without decorations, such as dwm, i3 and sway. A new Window controls setting in Settings → Appearance overrides the detection

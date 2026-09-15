@@ -1,7 +1,7 @@
 import { dialog } from "electron";
 import isOnline from "is-online";
-import { machineId } from "node-machine-id";
 import { serializeError } from "serialize-error";
+import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { config } from "./config";
@@ -22,7 +22,7 @@ class Trial {
     }
 
     const { error, data } = await (useFallback ? apiFallbackClient : apiClient).v2.license.trial({
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
     });
 
     if (error) {
