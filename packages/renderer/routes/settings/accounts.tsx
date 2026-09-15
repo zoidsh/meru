@@ -241,7 +241,7 @@ function AccountForm({
                     <FieldDescription>
                       {isLastEnabledAccount
                         ? "Meru needs at least one account turned on."
-                        : "Meru won't load this account until you turn it back on."}
+                        : "Meru keeps this account signed in but doesn't load it."}
                     </FieldDescription>
                   </FieldContent>
                   <Switch
@@ -333,13 +333,18 @@ function EditAccountButton({
               gmail: { ...account.gmail, ...values.gmail },
             });
 
+            // Its own channel, because turning an account on or off builds or
+            // tears down the account behind it rather than only writing a flag.
+            if ((account.disabled === true) !== (values.disabled === true)) {
+              ipc.main.send("accounts.setAccountEnabled", account.id, values.disabled !== true);
+            }
+
             setIsDialogOpen(false);
 
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
               account.gmail.unifiedInbox !== values.gmail.unifiedInbox ||
-              account.notifications !== values.notifications ||
-              (account.disabled === true) !== (values.disabled === true)
+              account.notifications !== values.notifications
             ) {
               restartRequiredToast();
             }

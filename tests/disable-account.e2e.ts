@@ -8,11 +8,12 @@
  * `getAccountConfigs()` rather than the config the test seeded, which would say
  * two accounts either way.
  *
- * Which accounts run is decided once, at launch. The cases that toggle the
- * switch are therefore as much about what does not happen in the running app:
- * the accounts listeners fan out synchronously from the write, and one of them
- * asking for an account that was never constructed takes the main process down
- * behind Electron's error dialog.
+ * The switch takes effect at once, so the cases that flip it assert on the
+ * running app rather than on what the next launch would do. What makes that
+ * worth asserting from both sides is that the two directions are not each
+ * other's inverse: turning an account off destroys its `Gmail` and takes its
+ * view out of the window, and turning one on has to build a fresh `Account`
+ * because neither can be brought back.
  *
  * Pro, because a second account is Pro and a single seeded account could not
  * show anything being left out. The license setup is `useProApp`'s, as in
@@ -26,11 +27,12 @@ import { expect, test } from "@playwright/test";
 import { seedAccount } from "./lib/accounts";
 import { type MeruApp, useProApp } from "./lib/app";
 import { openSettingsPage } from "./lib/settings";
+import { readViews } from "./lib/views";
 
 /**
  * The account labels the Accounts submenu offers, which the main process builds
  * from `accounts.getAccounts()`, so a disabled account that still turned up
- * here would be one the app had constructed.
+ * here would be one the app was running.
  *
  * Reading it at all is also what says the main process is still answering. An
  * accounts listener that threw puts up Electron's error dialog and blocks the
@@ -56,6 +58,19 @@ function readAccountsMenuLabels(meru: MeruApp) {
   });
 }
 
+/**
+ * How many of the window's child views are running in one account's session.
+ *
+ * A view is the account as far as the window is concerned, and a partitioned
+ * session names its partition in the storage path, so this is what says an
+ * account is up or gone without asking the app to describe itself.
+ */
+async function countAccountViews(meru: MeruApp, accountId: string) {
+  const views = await readViews(meru);
+
+  return views.filter((view) => view.storagePath.includes(accountId)).length;
+}
+
 /** The rows of the accounts list in settings, which lists what the config holds. */
 async function openAccountsSettings(meru: MeruApp) {
   const navigation = await meru.openSettings();
@@ -78,14 +93,26 @@ async function toggleDisabled(meru: MeruApp, label: string) {
 
   await meru.renderer.getByRole("button", { name: "Save" }).click();
 
-  // The switch is one of the settings that only take effect on the next launch,
-  // so the toast is the whole of what the user is told.
-  await expect(meru.renderer.getByText("Restart Meru to apply the changes.")).toBeVisible();
+  await expect(meru.renderer.getByRole("dialog")).toHaveCount(0);
 }
 
-function readAccountDisabled(meru: MeruApp, accountId: string) {
+/**
+ * Leaves settings for the account view, through the menu item a user would use.
+ *
+ * Waited out on the navigation controls, which only the account titlebar draws.
+ * The switcher buttons are what the callers then assert on, and half of them
+ * assert an absence, which a titlebar still showing Settings would satisfy
+ * without anything having been checked.
+ */
+async function returnToAccountView(meru: MeruApp, label: string) {
+  expect(await meru.runMenuCommand(label)).toBe(true);
+
+  await expect(meru.renderer.getByRole("button", { name: "Go back" })).toBeVisible();
+}
+
+function readAccount(meru: MeruApp, accountId: string) {
   return async () =>
-    (await meru.readConfig()).accounts?.find((account) => account.id === accountId)?.disabled;
+    (await meru.readConfig()).accounts?.find((account) => account.id === accountId);
 }
 
 test.describe("with the second account disabled", () => {
@@ -98,6 +125,8 @@ test.describe("with the second account disabled", () => {
 
   test("the app runs on the enabled account alone", async () => {
     expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
+
+    expect(await countAccountViews(meru, "second-account")).toBe(0);
 
     /*
      * The titlebar renders no account buttons at all below two accounts, so the
@@ -146,15 +175,40 @@ test.describe("with the second account disabled", () => {
     expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
   });
 
-  test("turning it back on waits for the next launch", async () => {
+  test("turning it back on brings the account up there and then", async () => {
     await toggleDisabled(meru, "Work");
 
-    await expect.poll(readAccountDisabled(meru, "second-account")).toBe(false);
+    await expect
+      .poll(async () => (await readAccount(meru, "second-account")())?.disabled)
+      .toBe(false);
 
-    // Unchanged, because Meru never constructed this account and cannot start
-    // one mid-session. Reading the menu at all is what says the listeners the
-    // write fanned out to did not throw.
-    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
+    // The account Meru never constructed at launch, constructed now. Nothing
+    // short of a whole new `Account` would do: the one this config entry had
+    // was never built, and a destroyed one could not be brought back either.
+    await expect.poll(() => countAccountViews(meru, "second-account")).toBe(1);
+
+    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal", "Work"]);
+
+    await returnToAccountView(meru, "Personal");
+
+    const personal = meru.renderer.getByRole("button", { name: "Personal" });
+
+    const work = meru.renderer.getByRole("button", { name: "Work" });
+
+    await expect(personal).toBeVisible();
+
+    await expect(work).toBeVisible();
+
+    await work.click();
+
+    await expect
+      .poll(async () => (await readAccount(meru, "second-account")())?.selected)
+      .toBe(true);
+
+    // Last is the view in front, which is where selecting an account puts it.
+    await expect
+      .poll(async () => (await readViews(meru)).at(-1)?.storagePath.includes("second-account"))
+      .toBe(true);
   });
 });
 
@@ -166,20 +220,44 @@ test.describe("with both accounts enabled", () => {
     ],
   });
 
-  test("turning Disabled on writes it and asks for a restart", async () => {
+  test("turning one off takes it out of the running app", async () => {
     await toggleDisabled(meru, "Work");
 
-    await expect.poll(readAccountDisabled(meru, "second-account")).toBe(true);
+    await expect
+      .poll(async () => (await readAccount(meru, "second-account")())?.disabled)
+      .toBe(true);
+
+    await expect.poll(() => countAccountViews(meru, "second-account")).toBe(0);
+
+    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
+
+    await returnToAccountView(meru, "Personal");
+
+    await expect(meru.renderer.getByRole("button", { name: "Work" })).toHaveCount(0);
+
+    await expect(meru.renderer.getByRole("button", { name: "Personal" })).toHaveCount(0);
   });
 
-  test("the selected account can be turned off too", async () => {
-    // The one that takes the selection with it, which is the state the launch
-    // guards repair on the way back up.
+  test("turning the selected one off hands the selection over", async () => {
+    // The account the rest of the app is pointed at, so this is the case where
+    // turning one off has to move the selection in the same write. An account
+    // listener asking for the selected account between the two would find one
+    // Meru had just destroyed.
     await toggleDisabled(meru, "Personal");
 
-    await expect.poll(readAccountDisabled(meru, "first-account")).toBe(true);
+    await expect
+      .poll(async () => (await readAccount(meru, "first-account")())?.disabled)
+      .toBe(true);
 
-    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal", "Work"]);
+    await expect
+      .poll(async () => (await readAccount(meru, "second-account")())?.selected)
+      .toBe(true);
+
+    await expect.poll(() => countAccountViews(meru, "first-account")).toBe(0);
+
+    expect(await countAccountViews(meru, "second-account")).toBe(1);
+
+    expect(await readAccountsMenuLabels(meru)).toEqual(["Work"]);
   });
 });
 

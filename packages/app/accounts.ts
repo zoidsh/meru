@@ -473,11 +473,7 @@ class Accounts {
       },
     };
 
-    const instance = new Account(createdAccount);
-
-    instance.gmail.createView();
-
-    this.instances.set(createdAccount.id, instance);
+    this.createAccountInstance(createdAccount);
 
     config.set("accounts", [...config.get("accounts"), createdAccount]);
 
@@ -488,23 +484,53 @@ class Accounts {
     main.navigate("/");
   }
 
+  /**
+   * Builds an account and the view it runs in, and puts it where every consumer
+   * looks for it. The view is created visible, so a caller reaching here from a
+   * renderer page has to hide it again.
+   */
+  private createAccountInstance(accountConfig: AccountConfig) {
+    const instance = new Account(accountConfig);
+
+    instance.gmail.createView();
+
+    this.instances.set(accountConfig.id, instance);
+
+    return instance;
+  }
+
+  /**
+   * Takes an account out of the running app. It leaves the session and its
+   * extension data alone, which is what separates turning an account off from
+   * removing it.
+   */
+  private teardownAccount(accountId: AccountConfig["id"]) {
+    const instance = this.instances.get(accountId);
+
+    if (!instance) {
+      return;
+    }
+
+    instance.tabs.closeAll();
+
+    WorkspaceApp.closeAccountInstances(accountId);
+
+    instance.gmail.destroy();
+
+    instance.destroy();
+
+    this.instances.delete(accountId);
+  }
+
   async removeAccount(selectedAccountId: string) {
     const instance = this.instances.get(selectedAccountId);
 
     if (instance) {
-      instance.tabs.closeAll();
-
-      WorkspaceApp.closeAccountInstances(selectedAccountId);
-
-      instance.gmail.destroy();
-
-      instance.destroy();
+      this.teardownAccount(selectedAccountId);
 
       await instance.session.clearData();
 
       await extensions.clearSessionData(instance.session);
-
-      this.instances.delete(selectedAccountId);
     } else {
       // An account that launched disabled was never constructed, so there is
       // nothing to tear down and no session object to remove it through. The
@@ -550,25 +576,90 @@ class Accounts {
   }
 
   updateAccount(accountDetails: AccountConfig) {
+    config.set(
+      "accounts",
+      config.get("accounts").map((account) =>
+        account.id === accountDetails.id
+          ? // `disabled` is left where it stands. The flag and the account
+            // instance behind it have to move together, so `setAccountEnabled`
+            // is its only writer.
+            { ...account, ...accountDetails, disabled: account.disabled }
+          : account,
+      ),
+    );
+  }
+
+  /**
+   * Turns an account on or off in the running app, view and all, rather than
+   * leaving it to the next launch.
+   *
+   * Enabling builds a fresh `Account`: a destroyed `Gmail` cannot be revived,
+   * and the view it ran in left the window with it.
+   */
+  setAccountEnabled(accountId: AccountConfig["id"], enabled: boolean) {
     const accountConfigs = config.get("accounts");
+
+    const accountConfig = accountConfigs.find((account) => account.id === accountId);
+
+    if (!accountConfig || (accountConfig.disabled !== true) === enabled) {
+      return;
+    }
 
     // Behind the switch settings already locks, because the app has nothing to
     // run on once the last enabled account is turned off.
     if (
-      accountDetails.disabled === true &&
-      !accountConfigs.some(
-        (account) => account.id !== accountDetails.id && account.disabled !== true,
-      )
+      !enabled &&
+      !accountConfigs.some((account) => account.id !== accountId && account.disabled !== true)
     ) {
       return;
     }
 
-    config.set(
-      "accounts",
-      accountConfigs.map((account) =>
-        account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
-      ),
-    );
+    accountConfig.disabled = !enabled;
+
+    if (enabled) {
+      /*
+       * The free version runs the first account alone, so turning one on
+       * outside that slice moves the flag and nothing else. The launchable list
+       * is what tells the two cases apart.
+       */
+      if (
+        this.selectLaunchableAccountConfigs(accountConfigs).some(
+          (account) => account.id === accountId,
+        )
+      ) {
+        this.createAccountInstance(accountConfig);
+
+        // A view is created visible and paints over renderer HTML, and the
+        // settings page this is switched from is renderer HTML.
+        if (main.location !== "/") {
+          this.hide();
+        }
+      }
+    } else {
+      this.teardownAccount(accountId);
+
+      if (accountConfig.selected) {
+        const nextSelectedAccount = accountConfigs.find(
+          (account) => account.id !== accountId && account.disabled !== true,
+        );
+
+        if (!nextSelectedAccount) {
+          throw new Error("Could not find next selected account");
+        }
+
+        accountConfig.selected = false;
+
+        nextSelectedAccount.selected = true;
+      }
+    }
+
+    // Written after `instances` either way, so that the `accounts` listeners
+    // this fans out to see the config and the instances agreeing.
+    config.set("accounts", accountConfigs);
+
+    this.updateAllViewBounds();
+
+    this.sendTabsChangedToRenderer();
   }
 
   hide() {
