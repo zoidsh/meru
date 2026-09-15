@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
-import type { AccountConfig } from "@meru/shared/schemas";
+import type { AccountConfig, AccountConfigs } from "@meru/shared/schemas";
 import {
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
@@ -25,15 +25,7 @@ class Accounts {
   instances: Map<string, Account> = new Map();
 
   init() {
-    let accountConfigs = config.get("accounts");
-
-    if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
-      for (const [index, accountConfig] of accountConfigs.entries()) {
-        accountConfig.selected = index === 0;
-      }
-
-      config.set("accounts", accountConfigs);
-    }
+    this.repairAccountConfigs();
 
     for (const accountConfig of this.getAccountConfigs()) {
       const account = new Account(accountConfig);
@@ -242,6 +234,63 @@ class Accounts {
   }
 
   /**
+   * Brings the stored accounts back to something the app can run on, before
+   * anything reads them.
+   *
+   * Two states leave it with nothing: every account disabled, and a selection
+   * pointing at an account that no longer runs. `getSelectedAccount()` throws
+   * on either, so they are repaired here rather than tolerated everywhere.
+   *
+   * Ordered the way `getAccountConfigs()` is: the free version is handed the
+   * first account before disabled ones are taken out, so what runs is asked for
+   * rather than assumed to be whatever is enabled.
+   */
+  private repairAccountConfigs() {
+    const accountConfigs = config.get("accounts");
+
+    let isRepaired = false;
+
+    if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
+      for (const [index, accountConfig] of accountConfigs.entries()) {
+        accountConfig.selected = index === 0;
+      }
+
+      isRepaired = true;
+    }
+
+    const firstAccountConfig = accountConfigs[0];
+
+    if (!firstAccountConfig) {
+      return;
+    }
+
+    if (this.selectRunnableAccountConfigs(accountConfigs).length === 0) {
+      firstAccountConfig.disabled = false;
+
+      isRepaired = true;
+    }
+
+    const runnableAccountConfigs = this.selectRunnableAccountConfigs(accountConfigs);
+
+    const firstRunnableAccountConfig = runnableAccountConfigs[0];
+
+    if (
+      firstRunnableAccountConfig &&
+      !runnableAccountConfigs.some((accountConfig) => accountConfig.selected)
+    ) {
+      for (const accountConfig of accountConfigs) {
+        accountConfig.selected = accountConfig.id === firstRunnableAccountConfig.id;
+      }
+
+      isRepaired = true;
+    }
+
+    if (isRepaired) {
+      config.set("accounts", accountConfigs);
+    }
+  }
+
+  /**
    * The accounts the app runs on, which is not everything the config holds. A
    * second account and a workspace app are both Pro, so the free version is
    * handed one account carrying no saved tabs — and every consumer reads them
@@ -255,19 +304,27 @@ class Accounts {
    * Nothing written back to disk may be built from this list.
    */
   getAccountConfigs() {
-    const accountConfigs = config.get("accounts");
+    return this.selectRunnableAccountConfigs(config.get("accounts"));
+  }
 
-    if (!licenseKey.isValid) {
-      return accountConfigs.slice(0, 1).map((accountConfig) => ({
-        ...accountConfig,
-        workspaceApps: {
-          ...accountConfig.workspaceApps,
-          savedTabs: [],
-        },
-      }));
-    }
+  /**
+   * The free-version slice reads the stored order, so it is taken before
+   * disabled accounts are: a license bought back is meant to bring the same
+   * account to the front as it took away, whichever of them the user has
+   * turned off since.
+   */
+  private selectRunnableAccountConfigs(accountConfigs: AccountConfigs) {
+    const licensedAccountConfigs = licenseKey.isValid
+      ? accountConfigs
+      : accountConfigs.slice(0, 1).map((accountConfig) => ({
+          ...accountConfig,
+          workspaceApps: {
+            ...accountConfig.workspaceApps,
+            savedTabs: [],
+          },
+        }));
 
-    return accountConfigs;
+    return licensedAccountConfigs.filter((accountConfig) => accountConfig.disabled !== true);
   }
 
   getAccount(accountId: string) {
@@ -443,11 +500,24 @@ class Accounts {
       .filter((account) => account.id !== selectedAccountId);
 
     if (updatedAccounts.every((account) => account.selected === false)) {
-      if (!updatedAccounts[0]) {
-        throw new Error("Could not find first account");
-      }
+      const nextSelectedAccount = updatedAccounts.find((account) => account.disabled !== true);
 
-      updatedAccounts[0].selected = true;
+      if (nextSelectedAccount) {
+        nextSelectedAccount.selected = true;
+      } else {
+        const [firstAccount] = updatedAccounts;
+
+        if (!firstAccount) {
+          throw new Error("Could not find first account");
+        }
+
+        // Settings keeps this out of reach by refusing to remove the last
+        // enabled account, and every account left disabled leaves the app
+        // nothing to run on, so one is turned back on here.
+        firstAccount.disabled = false;
+
+        firstAccount.selected = true;
+      }
     }
 
     config.set("accounts", updatedAccounts);
@@ -458,13 +528,24 @@ class Accounts {
   }
 
   updateAccount(accountDetails: AccountConfig) {
+    const accountConfigs = config.get("accounts");
+
+    // Behind the switch settings already locks, because the app has nothing to
+    // run on once the last enabled account is turned off.
+    if (
+      accountDetails.disabled === true &&
+      !accountConfigs.some(
+        (account) => account.id !== accountDetails.id && account.disabled !== true,
+      )
+    ) {
+      return;
+    }
+
     config.set(
       "accounts",
-      config
-        .get("accounts")
-        .map((account) =>
-          account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
-        ),
+      accountConfigs.map((account) =>
+        account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
+      ),
     );
   }
 

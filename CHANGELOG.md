@@ -4,6 +4,10 @@ This file is the draft of the next release, written one line at a time as work l
 
 ## [Unreleased]
 
+### Added
+
+- Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
+
 ### Changed
 
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates

@@ -28,7 +28,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@meru/ui/components/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import {
@@ -61,11 +68,14 @@ function AccountForm({
   placeholder = "Work",
   onSubmit,
   type,
+  isLastEnabledAccount = false,
 }: {
   account?: AccountConfigInput;
   placeholder?: string;
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
+  /** Locks the Disabled switch: turning this one off would leave Meru nothing to run. */
+  isLastEnabledAccount?: boolean;
 }) {
   const form = useForm({
     defaultValues: account,
@@ -215,6 +225,29 @@ function AccountForm({
               </Field>
             )}
           </form.Field>
+          {type === "edit" && (
+            <form.Field name="disabled">
+              {(field) => (
+                <>
+                  <Field orientation="horizontal" className="w-fit">
+                    <Switch
+                      id={field.name}
+                      name={field.name}
+                      checked={field.state.value === true}
+                      onCheckedChange={field.handleChange}
+                      disabled={isLastEnabledAccount}
+                    />
+                    <FieldLabel htmlFor={field.name}>Disabled</FieldLabel>
+                  </Field>
+                  <FieldDescription>
+                    {isLastEnabledAccount
+                      ? "Meru needs one account turned on."
+                      : "Meru won't load this account until you turn it back on."}
+                  </FieldDescription>
+                </>
+              )}
+            </form.Field>
+          )}
         </FieldSet>
       </FieldGroup>
       <DialogFooter>
@@ -262,7 +295,13 @@ function AddAccountButton() {
   );
 }
 
-function EditAccountButton({ account }: { account: AccountConfig }) {
+function EditAccountButton({
+  account,
+  isLastEnabledAccount,
+}: {
+  account: AccountConfig;
+  isLastEnabledAccount: boolean;
+}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
@@ -292,12 +331,14 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
               account.gmail.unifiedInbox !== values.gmail.unifiedInbox ||
-              account.notifications !== values.notifications
+              account.notifications !== values.notifications ||
+              (account.disabled === true) !== (values.disabled === true)
             ) {
               restartRequiredToast();
             }
           }}
           type="edit"
+          isLastEnabledAccount={isLastEnabledAccount}
         />
       </DialogContent>
     </Dialog>
@@ -309,11 +350,13 @@ function SortableAccountItem({
   index,
   removable,
   disabled,
+  isLastEnabledAccount,
 }: {
   account: AccountConfig;
   index: number;
   removable: boolean;
   disabled: boolean;
+  isLastEnabledAccount: boolean;
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
@@ -329,7 +372,7 @@ function SortableAccountItem({
       >
         <GripVerticalIcon />
       </Button>
-      <ItemContent className="gap-2">
+      <ItemContent className={cn("gap-2", account.disabled && "opacity-60")}>
         <ItemTitle>
           <div
             className={cn(
@@ -339,8 +382,9 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.gmail.unreadBadge || account.notifications) && (
+        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
+            {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
@@ -348,7 +392,7 @@ function SortableAccountItem({
         )}
       </ItemContent>
       <ItemActions>
-        <EditAccountButton account={account} />
+        <EditAccountButton account={account} isLastEnabledAccount={isLastEnabledAccount} />
         {removable && (
           <AlertDialog>
             <AlertDialogTrigger
@@ -394,6 +438,8 @@ export function AccountsSettings() {
     return;
   }
 
+  const enabledAccounts = config.accounts.filter((account) => !account.disabled);
+
   return (
     <>
       <SettingsHeader>
@@ -421,8 +467,12 @@ export function AccountsSettings() {
                 key={account.id}
                 account={account}
                 index={index}
-                removable={config.accounts.length > 1}
+                removable={
+                  account.disabled === true ||
+                  enabledAccounts.some((enabledAccount) => enabledAccount.id !== account.id)
+                }
                 disabled={config.accounts.length < 2}
+                isLastEnabledAccount={enabledAccounts.length === 1 && !account.disabled}
               />
             ))}
           </ItemGroup>

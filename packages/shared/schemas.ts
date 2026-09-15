@@ -62,6 +62,8 @@ export const accountConfigSchema = z.object({
   label: z.string(),
   color: z.enum(accountColors).nullable(),
   selected: z.boolean(),
+  /** Absent on every account written before the switch existed, which means enabled. */
+  disabled: z.boolean().optional(),
   notifications: z.boolean(),
   gmail: z.object({
     unreadBadge: z.boolean(),
@@ -87,6 +89,7 @@ export const accountConfigInputSchema = accountConfigSchema
   .pick({
     label: true,
     color: true,
+    disabled: true,
     notifications: true,
   })
   .extend({
