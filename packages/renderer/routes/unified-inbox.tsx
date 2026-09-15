@@ -120,9 +120,10 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
     cell: (props) => (
       // Faded rather than covered by a background, because the row's own hover
       // colour is semi-transparent and a band painted over it would come out
-      // darker than the row. This is the cell the row actions overlap: the
-      // date cell is narrower than they are.
-      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-4rem)] group-data-[state=selected]:mask-r-from-[calc(100%-4rem)]">
+      // darker than the row. This is the cell the row actions overlap, the
+      // date cell being narrower than they are, so the fade has to finish
+      // short of this cell's edge rather than at it.
+      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8rem)] group-hover:mask-r-to-[calc(100%-3.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8rem)] group-data-[state=selected]:mask-r-to-[calc(100%-3.5rem)]">
         <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
