@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
@@ -8,6 +9,7 @@ import {
   GMAIL_INBOX_FEED_URL,
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
+  type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
   generateGmailLabelColorsCss,
@@ -110,7 +112,22 @@ const INBOX_FEED_POLL_INTERVAL = ms("30s");
  */
 const INBOX_FEED_SLACK = ms("5m");
 
+const HANDLE_MESSAGE_TIMEOUT = ms("15s");
+
+const NEW_EMAIL_NOTIFICATION_ACTIONS = [
+  { text: "Archive", action: "archive" },
+  { text: "Mark as Read", action: "markAsRead" },
+  { text: "Delete", action: "delete" },
+  { text: "Mark as Spam", action: "markAsSpam" },
+] as const satisfies { text: string; action: GmailAction }[];
+
 export class Gmail {
+  /**
+   * Keyed by request rather than held per instance, because the reply comes
+   * back through the one collection-level handler in `ipc.init()`.
+   */
+  private static pendingMessageHandlings = new Map<string, (success: boolean) => void>();
+
   accountId: string;
 
   app: SupportedWorkspaceApp = "gmail";
@@ -594,7 +611,10 @@ export class Gmail {
 
     await wait(ms("1s"));
 
-    this.fetchInboxFeed(options, fetchAttempt + 1);
+    // Awaited so that the whole chain is behind one promise, which is what
+    // lets `handleMessage` hold its caller until the list has caught up. Every
+    // other caller drops the promise, so none of them waits on this.
+    await this.fetchInboxFeed(options, fetchAttempt + 1);
   }
 
   async fetchInboxFeed(
@@ -787,26 +807,12 @@ export class Gmail {
                 return;
               }
 
-              // `destroy()` leaves a shown notification alone, so removing the
-              // account and then clicking one runs this against a cleared view.
-              // Read through `_view` rather than the getter, which throws.
-              const view = this._view;
-
-              if (!view || view.webContents.isDestroyed()) {
-                return;
-              }
-
               if (config.get("verificationCodes.autoMarkAsRead")) {
-                ipc.renderer.send(
-                  view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsRead",
-                );
+                this.handleMessage(newMail.id, "markAsRead");
               }
 
               if (config.get("verificationCodes.autoDelete")) {
-                ipc.renderer.send(view.webContents, "gmail.handleMessage", newMail.id, "delete");
+                this.handleMessage(newMail.id, "delete");
               }
             };
 
@@ -857,24 +863,10 @@ export class Gmail {
           title: notificationTitle,
           subtitle,
           body,
-          actions: [
-            {
-              text: "Archive",
-              type: "button",
-            },
-            {
-              text: "Mark as Read",
-              type: "button",
-            },
-            {
-              text: "Delete",
-              type: "button",
-            },
-            {
-              text: "Mark as Spam",
-              type: "button",
-            },
-          ],
+          actions: NEW_EMAIL_NOTIFICATION_ACTIONS.map(({ text }) => ({
+            text,
+            type: "button" as const,
+          })),
           click: () => {
             main.show();
 
@@ -883,47 +875,10 @@ export class Gmail {
             ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
           },
           action: (index) => {
-            switch (index) {
-              case 0: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "archive",
-                );
+            const notificationAction = NEW_EMAIL_NOTIFICATION_ACTIONS[index];
 
-                break;
-              }
-              case 1: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsRead",
-                );
-
-                break;
-              }
-              case 2: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "delete",
-                );
-
-                break;
-              }
-              case 3: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsSpam",
-                );
-
-                break;
-              }
+            if (notificationAction) {
+              this.handleMessage(newMail.id, notificationAction.action);
             }
           },
         });
@@ -948,6 +903,61 @@ export class Gmail {
     }
 
     ipc.renderer.send(this._view.webContents, "gmail.refreshInbox");
+  }
+
+  static resolveMessageHandled(requestId: string, success: boolean) {
+    const resolve = Gmail.pendingMessageHandlings.get(requestId);
+
+    if (resolve) {
+      Gmail.pendingMessageHandlings.delete(requestId);
+
+      resolve(success);
+    }
+  }
+
+  /**
+   * Resolves once the action has run and the feed has caught up with it, so a
+   * caller can hold its own progress until then. Nothing is removed ahead of
+   * that: a row taken away optimistically is put back by the next poll, which
+   * reads a feed the action has not reached yet.
+   */
+  async handleMessage(messageId: string, action: GmailAction) {
+    // `destroy()` leaves a shown notification alone, so removing the account
+    // and then clicking one runs this against a cleared view. Read through
+    // `_view` rather than the getter, which throws.
+    const view = this._view;
+
+    if (!view || view.webContents.isDestroyed()) {
+      return;
+    }
+
+    const requestId = randomUUID();
+
+    const success = await new Promise<boolean>((resolve) => {
+      // A preload that never answers, because the page navigated away or the
+      // view went down mid-request, must not leave a caller waiting for good.
+      const timeout = setTimeout(() => {
+        Gmail.pendingMessageHandlings.delete(requestId);
+
+        resolve(false);
+      }, HANDLE_MESSAGE_TIMEOUT);
+
+      Gmail.pendingMessageHandlings.set(requestId, (handled) => {
+        clearTimeout(timeout);
+
+        resolve(handled);
+      });
+
+      ipc.renderer.send(view.webContents, "gmail.handleMessage", messageId, action, requestId);
+    });
+
+    // A refused action leaves the feed exactly as it was, so the retry loop
+    // would spend its ten attempts confirming that nothing happened.
+    if (!success) {
+      return;
+    }
+
+    await this.fetchInboxFeed();
   }
 
   /**

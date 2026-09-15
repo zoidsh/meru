@@ -1,6 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import type { GMAIL_ACTION_CODE_MAP } from "./gmail";
+import type { GmailAction } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -223,6 +223,7 @@ export type IpcMainEvents =
       "gmail.undoMessageSent": [browserWindowId: number];
       "gmail.setUserEmail": [email: string];
       "gmail.openMessage": [messageId: string];
+      "gmail.messageHandled": [requestId: string, success: boolean];
       "titleBar.toggleAppMenu": [];
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];
@@ -267,6 +268,11 @@ export type IpcMainEvents =
       "downloads.dragFile": [item: Pick<DownloadItem, "id" | "filePath">];
     }
   | {
+      "gmail.handleMessage": (
+        accountId: AccountConfig["id"],
+        messageId: string,
+        action: GmailAction,
+      ) => void;
       "licenseKey.activate": (licenseKey: string) => { success: boolean };
       "license.getDeviceInfo": () => { label: string };
       "license.updateDeviceInfo": (input: { label: string }) => void;
@@ -295,7 +301,7 @@ export type IpcMainEvents =
 export type IpcRendererEvent = {
   navigate: [to: string];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
-  "gmail.handleMessage": [messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP];
+  "gmail.handleMessage": [messageId: string, action: GmailAction, requestId: string];
   "gmail.refreshInbox": [];
   "gmail.openMessage": [messageId: string];
   "gmail.showMessageSentNotification": [browserWindowId: number];

@@ -1,3 +1,4 @@
+import type { GmailAction } from "@meru/shared/gmail";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -28,13 +29,18 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  ArchiveIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   InboxIcon,
+  Loader2Icon,
+  MailOpenIcon,
+  OctagonAlertIcon,
+  Trash2Icon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { navigate } from "wouter/use-hash-location";
 import { AccountBadge } from "@/components/account-badge";
@@ -45,7 +51,28 @@ import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
-const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
+const MESSAGE_ACTIONS = [
+  { action: "archive", label: "Archive", icon: ArchiveIcon },
+  { action: "markAsRead", label: "Mark as read", icon: MailOpenIcon },
+  { action: "delete", label: "Delete", icon: Trash2Icon },
+  { action: "markAsSpam", label: "Mark as spam", icon: OctagonAlertIcon },
+] as const satisfies {
+  action: GmailAction;
+  label: string;
+  icon: typeof ArchiveIcon;
+}[];
+
+type PendingMessageAction = { messageId: string; action: GmailAction };
+
+const createColumns = ({
+  showSenderIcons,
+  pending,
+  onAction,
+}: {
+  showSenderIcons: boolean;
+  pending: PendingMessageAction | null;
+  onAction: (message: UnifiedInboxMessage, action: GmailAction) => void;
+}) => [
   columnHelper.accessor("account.label", {
     cell: (props) => (
       <AccountBadge label={props.getValue()} color={props.row.original.account.color} />
@@ -98,7 +125,12 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   }),
   columnHelper.accessor("subject", {
     cell: (props) => (
-      <div className="flex flex-1 gap-2 overflow-hidden">
+      // Faded rather than covered by a background, because the row's own hover
+      // colour is semi-transparent and a band painted over it would come out
+      // darker than the row. This is the cell the row actions overlap, the
+      // date cell being narrower than they are, so the fade has to finish
+      // short of this cell's edge rather than at it.
+      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8.75rem)] group-hover:mask-r-to-[calc(100%-4.25rem)] group-data-[pending]:mask-r-from-[calc(100%-8.75rem)] group-data-[pending]:mask-r-to-[calc(100%-4.25rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8.75rem)] group-data-[state=selected]:mask-r-to-[calc(100%-4.25rem)]">
         <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
@@ -112,29 +144,59 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
     cell: (props) => {
       const date = dayjs(props.getValue());
 
+      const pendingAction =
+        pending && pending.messageId === props.row.original.id ? pending.action : null;
+
       return (
-        <div
-          className="whitespace-nowrap text-muted-foreground"
-          title={createDateTimeFormatter({
-            hour: "2-digit",
-            minute: "2-digit",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }).format(date.toDate())}
-        >
-          {date.isToday()
-            ? createDateTimeFormatter({
-                hour: "2-digit",
-                minute: "2-digit",
-              }).format(date.toDate())
-            : date.isSame(dayjs(), "year")
+        <>
+          {/* Hidden rather than faded, because the actions cover it whole. */}
+          <div
+            className="whitespace-nowrap text-muted-foreground group-hover:invisible group-data-[pending]:invisible group-data-[state=selected]:invisible"
+            title={createDateTimeFormatter({
+              hour: "2-digit",
+              minute: "2-digit",
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }).format(date.toDate())}
+          >
+            {date.isToday()
               ? createDateTimeFormatter({
-                  month: "short",
-                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 }).format(date.toDate())
-              : createDateTimeFormatter().format(date.toDate())}
-        </div>
+              : date.isSame(dayjs(), "year")
+                ? createDateTimeFormatter({
+                    month: "short",
+                    day: "numeric",
+                  }).format(date.toDate())
+                : createDateTimeFormatter().format(date.toDate())}
+          </div>
+          <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[pending]:opacity-100 group-data-[state=selected]:opacity-100">
+            {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
+              <Button
+                key={action}
+                variant="ghost"
+                size="icon-sm"
+                // Out of the tab order because the document-level hotkeys are
+                // the keyboard path, and Enter on a focused one would reach
+                // the `enter` hotkey, which cancels the press and opens the
+                // message.
+                tabIndex={-1}
+                title={label}
+                disabled={pendingAction !== null}
+                className={cn(pendingAction === action && "disabled:opacity-100")}
+                onClick={(event) => {
+                  event.stopPropagation();
+
+                  onAction(props.row.original, action);
+                }}
+              >
+                {pendingAction === action ? <Loader2Icon className="animate-spin" /> : <Icon />}
+              </Button>
+            ))}
+          </div>
+        </>
       );
     },
   }),
@@ -156,7 +218,39 @@ function UnifiedInboxTable({
 
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
-  const columns = useMemo(() => createColumns({ showSenderIcons }), [showSenderIcons]);
+  const [pending, setPending] = useState<PendingMessageAction | null>(null);
+
+  // Mirrors `pending` so that the guard below reads it without taking it as a
+  // dependency: the hotkeys memoize their callbacks on their own dependencies,
+  // and a `runAction` that changed identity would leave them holding one from
+  // before the request started, whose guard sees nothing pending.
+  const pendingRef = useRef<PendingMessageAction | null>(null);
+
+  // Held until the whole cycle is done rather than removing the row at once,
+  // because the poll a moment later rewrites the list from a feed the action
+  // has not reached yet, and a row taken away optimistically comes back.
+  const runAction = useCallback(async (message: UnifiedInboxMessage, action: GmailAction) => {
+    if (pendingRef.current) {
+      return;
+    }
+
+    pendingRef.current = { messageId: message.id, action };
+
+    setPending(pendingRef.current);
+
+    try {
+      await ipc.main.invoke("gmail.handleMessage", message.account.id, message.id, action);
+    } finally {
+      pendingRef.current = null;
+
+      setPending(null);
+    }
+  }, []);
+
+  const columns = useMemo(
+    () => createColumns({ showSenderIcons, pending, onAction: runAction }),
+    [showSenderIcons, pending, runAction],
+  );
 
   const table = useReactTable({
     data: messages,
@@ -168,6 +262,9 @@ function UnifiedInboxTable({
       pagination,
     },
     onPaginationChange: setPagination,
+    // Every push of the accounts rebuilds `messages`, which the default would
+    // read as new data and answer by sending the reader back to page one.
+    autoResetPageIndex: false,
   });
 
   const configMutation = useConfigMutation();
@@ -246,6 +343,58 @@ function UnifiedInboxTable({
     [focusedIndex, rows],
   );
 
+  const handleFocusedMessage = (action: GmailAction) => {
+    const focusedMessage = rows[focusedIndex]?.original;
+
+    if (focusedMessage) {
+      runAction(focusedMessage, action);
+    }
+  };
+
+  useHotkeys(
+    "e",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("archive");
+    },
+    [focusedIndex, rows],
+  );
+
+  useHotkeys(
+    "shift+i",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("markAsRead");
+    },
+    [focusedIndex, rows],
+  );
+
+  // Matched on the character rather than the key, because the default matches
+  // the physical key instead, where Shift-3 is `3` and never `#`.
+  useHotkeys(
+    "#",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("delete");
+    },
+    { useKey: true },
+    [focusedIndex, rows],
+  );
+
+  useHotkeys(
+    "!",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("markAsSpam");
+    },
+    { useKey: true },
+    [focusedIndex, rows],
+  );
+
   useHotkeys("g", () => {
     isGPrefixActiveRef.current = true;
 
@@ -289,14 +438,23 @@ function UnifiedInboxTable({
   });
 
   useEffect(() => {
+    setPagination((current) => ({
+      ...current,
+      pageIndex: Math.min(current.pageIndex, Math.max(table.getPageCount() - 1, 0)),
+    }));
+  }, [messages.length, table]);
+
+  useEffect(() => {
     setFocusedIndex((current) => Math.min(current, Math.max(rows.length - 1, 0)));
   }, [rows.length]);
 
+  // Also on `rows`, because acting on the focused row unmounts it and the row
+  // that takes its index inherits the ref without inheriting the focus.
   useEffect(() => {
     focusedRowRef.current?.focus({ preventScroll: true });
 
     focusedRowRef.current?.scrollIntoView({ block: "nearest" });
-  }, [focusedIndex]);
+  }, [focusedIndex, rows]);
 
   useEffect(() => {
     return () => {
@@ -315,7 +473,10 @@ function UnifiedInboxTable({
                 ref={index === focusedIndex ? focusedRowRef : undefined}
                 tabIndex={index === focusedIndex ? -1 : undefined}
                 data-state={index === focusedIndex ? "selected" : undefined}
-                className="cursor-default outline-none"
+                // `relative` anchors the row actions rendered from the
+                // receivedAt cell, which are wider than that cell is.
+                className="group relative cursor-default outline-none"
+                data-pending={pending?.messageId === row.original.id || undefined}
                 onClick={() => {
                   openMessage(row.original);
                 }}

@@ -8,6 +8,8 @@ export const GMAIL_ACTION_CODE_MAP = {
   markAsSpam: 7,
 };
 
+export type GmailAction = keyof typeof GMAIL_ACTION_CODE_MAP;
+
 export const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
 export const GMAIL_INBOX_FEED_URL = `${GMAIL_URL}/feed/atom`;

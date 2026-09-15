@@ -47,7 +47,7 @@ import {
   installCuratedExtension,
   uninstallCuratedExtension,
 } from "./extensions";
-import { GMAIL_USER_STYLES_PATH } from "./gmail";
+import { Gmail, GMAIL_USER_STYLES_PATH } from "./gmail";
 import { hibernatesTabWhenIdle } from "./lib/hibernation";
 import { log } from "./lib/log";
 import {
@@ -1154,6 +1154,14 @@ class Ipc {
         "gmail.openMessage",
         messageId,
       );
+    });
+
+    this.main.handle("gmail.handleMessage", async (_event, accountId, messageId, action) => {
+      await accounts.instances.get(accountId)?.gmail.handleMessage(messageId, action);
+    });
+
+    this.main.on("gmail.messageHandled", (_event, requestId, success) => {
+      Gmail.resolveMessageHandled(requestId, success);
     });
   }
 }
