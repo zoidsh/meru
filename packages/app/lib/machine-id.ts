@@ -9,7 +9,7 @@ import {
   parseIoregOutput,
   parseRegOutput,
 } from "@/lib/machine-id-parsers";
-import { getRegExePath } from "@/lib/reg-exe";
+import { getRegExePath } from "@/lib/windows";
 
 const execFile = promisify(childProcess.execFile);
 

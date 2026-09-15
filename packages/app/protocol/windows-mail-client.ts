@@ -8,7 +8,7 @@ import { ms } from "@meru/shared/ms";
 import { app, shell } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
-import { getRegExePath } from "@/lib/reg-exe";
+import { getRegExePath } from "@/lib/windows";
 import {
   buildRegistration,
   MAILTO_PROG_ID,
