@@ -12,7 +12,7 @@ export function buildRegistration(executablePath: string) {
 
   const openCommand = escapeRegValue(`"${executablePath}"`);
 
-  const mailtoCommand = escapeRegValue(`"${executablePath}" "%1"`);
+  const urlCommand = escapeRegValue(`"${executablePath}" "%1"`);
 
   // The leading `-` deletes `Software\Meru`, the second set of capabilities
   // earlier installers wrote: left behind, Default apps lists two Merus
@@ -29,7 +29,7 @@ export function buildRegistration(executablePath: string) {
 @=${icon}
 
 [HKEY_CURRENT_USER\Software\Classes\Meru.mailto\shell\open\command]
-@=${mailtoCommand}
+@=${urlCommand}
 
 [HKEY_CURRENT_USER\Software\Classes\mailto]
 "URL Protocol"=""
@@ -53,7 +53,7 @@ export function buildRegistration(executablePath: string) {
 @=${icon}
 
 [HKEY_CURRENT_USER\Software\Clients\Mail\Meru\Protocols\mailto\shell\open\command]
-@=${mailtoCommand}
+@=${urlCommand}
 
 [HKEY_CURRENT_USER\Software\Clients\Mail\Meru\Capabilities]
 "ApplicationName"="Meru"
