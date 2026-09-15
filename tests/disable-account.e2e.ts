@@ -231,11 +231,21 @@ test.describe("with the second account disabled", () => {
   });
 });
 
-test.describe("with both accounts enabled", () => {
+/*
+ * Three accounts rather than two, for the sake of the handover case below.
+ *
+ * `createViews` creates the selected account's view last, so it is the one in
+ * front. With two accounts that leaves the other already where the handover
+ * wants it, and the case passes against an app that never puts it there. With a
+ * third in the middle, the view the window is left holding in front is not the
+ * one the selection goes to.
+ */
+test.describe("with three accounts enabled", () => {
   const meru = useProApp({
     accounts: [
       seedAccount({ id: "first-account", label: "Personal" }),
       seedAccount({ id: "second-account", label: "Work", selected: false }),
+      seedAccount({ id: "third-account", label: "Archive", selected: false }),
     ],
   });
 
@@ -248,13 +258,17 @@ test.describe("with both accounts enabled", () => {
 
     await expect.poll(() => countAccountViews(meru, "second-account")).toBe(0);
 
-    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal"]);
+    expect(await readAccountsMenuLabels(meru)).toEqual(["Personal", "Archive"]);
 
     await closeSettings(meru);
 
-    await expect(meru.renderer.getByRole("button", { name: "Work" })).toHaveCount(0);
+    // The two that are left still have each other to switch between, so this is
+    // the switcher losing a button rather than going away.
+    await expect(meru.renderer.getByRole("button", { name: "Personal" })).toBeVisible();
 
-    await expect(meru.renderer.getByRole("button", { name: "Personal" })).toHaveCount(0);
+    await expect(meru.renderer.getByRole("button", { name: "Archive" })).toBeVisible();
+
+    await expect(meru.renderer.getByRole("button", { name: "Work" })).toHaveCount(0);
   });
 
   test("turning the selected one off hands the selection over", async () => {
@@ -276,13 +290,17 @@ test.describe("with both accounts enabled", () => {
 
     expect(await countAccountViews(meru, "second-account")).toBe(1);
 
-    expect(await readAccountsMenuLabels(meru)).toEqual(["Work"]);
+    expect(await readAccountsMenuLabels(meru)).toEqual(["Work", "Archive"]);
 
     await closeSettings(meru);
 
-    // Tearing the front view down says nothing about which of the rest takes
-    // its place, so the account the selection was handed to has to be put
-    // there deliberately.
+    /*
+     * Work, which the selection was handed to, and not Archive, which is what
+     * the window is left holding in front once the view above it is destroyed.
+     * Tearing the front view down says nothing about which of the rest takes
+     * its place, so the account the titlebar names has to be put there
+     * deliberately.
+     */
     await expect
       .poll(async () => (await readFrontViewStoragePath(meru))?.includes("second-account"))
       .toBe(true);
