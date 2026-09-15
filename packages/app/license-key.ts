@@ -1,8 +1,8 @@
 import { app, dialog, type MessageBoxOptions } from "electron";
 import isOnline from "is-online";
-import { machineId } from "node-machine-id";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
+import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { log } from "./lib/log";
@@ -29,7 +29,7 @@ class LicenseKey {
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.activate({
       licenseKey,
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
     });
 
     if (error) {
@@ -119,7 +119,7 @@ class LicenseKey {
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.validate({
       licenseKey,
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
     });
 
     if (error) {
@@ -189,7 +189,7 @@ class LicenseKey {
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.getDeviceInfo({
       licenseKey: licenseKey,
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
     });
 
     if (error) {
@@ -223,7 +223,7 @@ class LicenseKey {
       useFallback ? apiFallbackClient : apiClient
     ).v2.license.updateDeviceInfo({
       licenseKey: licenseKey,
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
       label: input.label,
     });
 
