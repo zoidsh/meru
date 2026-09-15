@@ -76,6 +76,13 @@ export function getBackgroundColor() {
   return nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff";
 }
 
+// `hiddenInset` pins the buttons 11px from the top and skips the centering
+// `titleBarOverlay.height` would otherwise do, so centering them in a taller
+// titlebar takes an explicit position. The x inset repeats Electron's own so
+// only the vertical position moves.
+const MACOS_TRAFFIC_LIGHT_HEIGHT = 12;
+const MACOS_TRAFFIC_LIGHT_X = 12;
+
 export function getTitleBarOptions() {
   const titleBarOverlay =
     !platform.isLinux || isLinuxWindowControlsEnabled()
@@ -89,6 +96,12 @@ export function getTitleBarOptions() {
   return {
     titleBarStyle: platform.isMacOS ? ("hiddenInset" as const) : ("hidden" as const),
     titleBarOverlay,
+    trafficLightPosition: platform.isMacOS
+      ? {
+          x: MACOS_TRAFFIC_LIGHT_X,
+          y: (APP_TITLEBAR_HEIGHT - MACOS_TRAFFIC_LIGHT_HEIGHT) / 2,
+        }
+      : undefined,
   };
 }
 
