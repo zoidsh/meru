@@ -8,6 +8,7 @@ import { ms } from "@meru/shared/ms";
 import { app, shell } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
+import { getRegExePath } from "@/lib/reg-exe";
 import {
   buildRegistration,
   MAILTO_PROG_ID,
@@ -23,16 +24,6 @@ const USER_CHOICE_KEY = String.raw`HKCU\Software\Microsoft\Windows\Shell\Associa
  * `registeredAppUser` opens; earlier builds get the plain page.
  */
 const DEFAULT_APPS_PAGE_BUILD = 22621;
-
-/**
- * Resolved from the environment rather than left to `PATH`, which a user can
- * put another `reg` on the front of.
- */
-function getRegExePath() {
-  const systemRoot = process.env.SystemRoot ?? process.env.windir ?? String.raw`C:\Windows`;
-
-  return path.join(systemRoot, "System32", "reg.exe");
-}
 
 /**
  * The portable build runs from a temporary extraction that is gone by the next
