@@ -620,7 +620,13 @@ export class AppMenu {
 
               main.navigate("/");
             },
-            accelerator: `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`,
+            // Only the first nine. Electron takes an `Alt+10` without
+            // complaint, and no key combination ever produces it, so the tenth
+            // account onwards gets no shortcut rather than a dead one.
+            accelerator:
+              index < 9
+                ? `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`
+                : undefined,
           })),
           {
             type: "separator",

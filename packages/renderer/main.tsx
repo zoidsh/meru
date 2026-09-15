@@ -17,7 +17,7 @@ function Main() {
 
   return (
     <Router hook={useHashLocation}>
-      <div className="flex h-screen flex-col">
+      <div className="flex h-screen flex-col overflow-hidden">
         <AppTitlebar />
         <div className="flex flex-1 overflow-hidden">
           <Switch>
