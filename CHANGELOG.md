@@ -11,4 +11,5 @@ This file is the draft of the next release, written one line at a time as work l
 ### Fixed
 
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
+- **Windows:** The passkey note in Settings → Extensions now says that a passkey has to be added to your Google account from inside Meru, and that passkeys from Chrome, Google Password Manager or your phone don't work here
 - **Linux and Windows:** Restart in Meru's restart prompts now brings Meru back on the AppImage and the portable build, which quit for good instead of restarting
