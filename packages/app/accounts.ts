@@ -7,7 +7,7 @@ import {
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
-import { net, powerMonitor } from "electron";
+import { net, powerMonitor, session } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
@@ -27,7 +27,7 @@ class Accounts {
   init() {
     this.repairAccountConfigs();
 
-    for (const accountConfig of this.getAccountConfigs()) {
+    for (const accountConfig of this.selectLaunchableAccountConfigs(config.get("accounts"))) {
       const account = new Account(accountConfig);
 
       this.instances.set(accountConfig.id, account);
@@ -234,16 +234,10 @@ class Accounts {
   }
 
   /**
-   * Brings the stored accounts back to something the app can run on, before
-   * anything reads them.
-   *
-   * Two states leave it with nothing: every account disabled, and a selection
-   * pointing at an account that no longer runs. `getSelectedAccount()` throws
-   * on either, so they are repaired here rather than tolerated everywhere.
-   *
-   * Ordered the way `getAccountConfigs()` is: the free version is handed the
-   * first account before disabled ones are taken out, so what runs is asked for
-   * rather than assumed to be whatever is enabled.
+   * Two states leave the app with nothing to run on: every account disabled,
+   * and a selection pointing at an account that no longer runs.
+   * `getSelectedAccount()` throws on either, so they are repaired here rather
+   * than tolerated everywhere.
    */
   private repairAccountConfigs() {
     const accountConfigs = config.get("accounts");
@@ -264,22 +258,22 @@ class Accounts {
       return;
     }
 
-    if (this.selectRunnableAccountConfigs(accountConfigs).length === 0) {
+    if (this.selectLaunchableAccountConfigs(accountConfigs).length === 0) {
       firstAccountConfig.disabled = false;
 
       isRepaired = true;
     }
 
-    const runnableAccountConfigs = this.selectRunnableAccountConfigs(accountConfigs);
+    const launchableAccountConfigs = this.selectLaunchableAccountConfigs(accountConfigs);
 
-    const firstRunnableAccountConfig = runnableAccountConfigs[0];
+    const firstLaunchableAccountConfig = launchableAccountConfigs[0];
 
     if (
-      firstRunnableAccountConfig &&
-      !runnableAccountConfigs.some((accountConfig) => accountConfig.selected)
+      firstLaunchableAccountConfig &&
+      !launchableAccountConfigs.some((accountConfig) => accountConfig.selected)
     ) {
       for (const accountConfig of accountConfigs) {
-        accountConfig.selected = accountConfig.id === firstRunnableAccountConfig.id;
+        accountConfig.selected = accountConfig.id === firstLaunchableAccountConfig.id;
       }
 
       isRepaired = true;
@@ -304,27 +298,43 @@ class Accounts {
    * Nothing written back to disk may be built from this list.
    */
   getAccountConfigs() {
-    return this.selectRunnableAccountConfigs(config.get("accounts"));
+    /*
+     * Which accounts are disabled is read once, at launch, and the answer is
+     * `instances`. Reading `disabled` here instead would let a toggle take
+     * effect mid-session against an `instances` map fixed at launch: the
+     * `accounts` change listeners run synchronously off `config.set`, and the
+     * first of them to ask for an account Meru never constructed throws into
+     * Electron's main-process error dialog.
+     */
+    return this.selectLicensedAccountConfigs(config.get("accounts")).filter((accountConfig) =>
+      this.instances.has(accountConfig.id),
+    );
+  }
+
+  /** The accounts Meru constructs at launch, which is what `instances` is built from. */
+  private selectLaunchableAccountConfigs(accountConfigs: AccountConfigs) {
+    return this.selectLicensedAccountConfigs(accountConfigs).filter(
+      (accountConfig) => accountConfig.disabled !== true,
+    );
   }
 
   /**
-   * The free-version slice reads the stored order, so it is taken before
-   * disabled accounts are: a license bought back is meant to bring the same
-   * account to the front as it took away, whichever of them the user has
-   * turned off since.
+   * Taken before disabled accounts are: a license bought back is meant to bring
+   * the same account to the front as it took away, whichever of them the user
+   * has turned off since.
    */
-  private selectRunnableAccountConfigs(accountConfigs: AccountConfigs) {
-    const licensedAccountConfigs = licenseKey.isValid
-      ? accountConfigs
-      : accountConfigs.slice(0, 1).map((accountConfig) => ({
-          ...accountConfig,
-          workspaceApps: {
-            ...accountConfig.workspaceApps,
-            savedTabs: [],
-          },
-        }));
+  private selectLicensedAccountConfigs(accountConfigs: AccountConfigs) {
+    if (licenseKey.isValid) {
+      return accountConfigs;
+    }
 
-    return licensedAccountConfigs.filter((accountConfig) => accountConfig.disabled !== true);
+    return accountConfigs.slice(0, 1).map((accountConfig) => ({
+      ...accountConfig,
+      workspaceApps: {
+        ...accountConfig.workspaceApps,
+        savedTabs: [],
+      },
+    }));
   }
 
   getAccount(accountId: string) {
@@ -479,21 +489,33 @@ class Accounts {
   }
 
   async removeAccount(selectedAccountId: string) {
-    const account = this.getAccount(selectedAccountId);
+    const instance = this.instances.get(selectedAccountId);
 
-    account.instance.tabs.closeAll();
+    if (instance) {
+      instance.tabs.closeAll();
 
-    WorkspaceApp.closeAccountInstances(selectedAccountId);
+      WorkspaceApp.closeAccountInstances(selectedAccountId);
 
-    account.instance.gmail.destroy();
+      instance.gmail.destroy();
 
-    account.instance.destroy();
+      instance.destroy();
 
-    await account.instance.session.clearData();
+      await instance.session.clearData();
 
-    await extensions.clearSessionData(account.instance.session);
+      await extensions.clearSessionData(instance.session);
 
-    this.instances.delete(selectedAccountId);
+      this.instances.delete(selectedAccountId);
+    } else {
+      // An account that launched disabled was never constructed, so there is
+      // nothing to tear down and no session object to remove it through. The
+      // data is still on disk under the account's partition, which is how
+      // `resetApp` reaches the same sessions.
+      const accountSession = session.fromPartition(`persist:${selectedAccountId}`);
+
+      await accountSession.clearData();
+
+      await extensions.clearSessionData(accountSession);
+    }
 
     const updatedAccounts = config
       .get("accounts")
