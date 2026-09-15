@@ -188,6 +188,8 @@ async function init() {
     if (PROCESS_MAILTO_URL_ARG) {
       handleMailtoUrl(PROCESS_MAILTO_URL_ARG);
     } else if (PROCESS_MERU_URL_ARG) {
+      main.show();
+
       handleMeruUrl(PROCESS_MERU_URL_ARG);
     }
   }

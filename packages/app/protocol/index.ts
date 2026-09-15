@@ -4,7 +4,13 @@ import { app, dialog } from "electron";
 import { accounts } from "@/accounts";
 import { showProUpgradeDialog } from "@/dialogs";
 import { ipc } from "@/ipc";
-import { isMeruUrl, MERU_PROTOCOL, type MeruDeepLink, parseMeruUrl } from "@/lib/deep-link";
+import {
+  isMeruUrl,
+  MERU_PROTOCOL,
+  type MeruDeepLink,
+  parseMeruUrl,
+  resolveRoutableUrl,
+} from "@/lib/deep-link";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { isWindowsDefaultMailClient } from "./windows-mail-client";
@@ -109,19 +115,75 @@ export function setMeruProtocolClient() {
   setAsDefaultProtocolClient(MERU_PROTOCOL);
 }
 
-function openMessageDeepLink({ email, messageId }: Extract<MeruDeepLink, { type: "message" }>) {
+/**
+ * Which account a deep link acts on. An address names one and never prompts, so
+ * a link that resolves to no signed-in account opens nothing rather than
+ * falling back to a dialog the address already answered.
+ */
+async function resolveDeepLinkAccount(email: string | undefined) {
+  if (!email) {
+    return promptForAccount("Which account should open this link?");
+  }
+
   for (const [accountId, account] of accounts.instances) {
     if (account.gmail.userEmail === email) {
-      accounts.selectAccount(accountId);
-
-      ipc.renderer.send(account.gmail.view.webContents, "gmail.openMessage", messageId);
-
-      return;
+      return accountId;
     }
+  }
+
+  return undefined;
+}
+
+async function openMessageDeepLink({
+  email,
+  messageId,
+}: Extract<MeruDeepLink, { type: "message" }>) {
+  const accountId = await resolveDeepLinkAccount(email);
+
+  if (!accountId) {
+    return;
+  }
+
+  accounts.selectAccount(accountId);
+
+  ipc.renderer.send(
+    accounts.getAccount(accountId).instance.gmail.view.webContents,
+    "gmail.openMessage",
+    messageId,
+  );
+}
+
+async function openUrlDeepLink(deepLink: Extract<MeruDeepLink, { type: "open" }>) {
+  // Resolved before the account is asked for, so a URL the app refuses never
+  // costs the user a dialog. A refused URL is dropped rather than handed to
+  // `openExternalUrl`: the caller is a link router that already chose to send
+  // it here, and giving it back to the operating system is how a loop starts.
+  const url = resolveRoutableUrl(deepLink.url);
+
+  if (!url) {
+    return;
+  }
+
+  const accountId = await resolveDeepLinkAccount(deepLink.email);
+
+  if (!accountId) {
+    return;
+  }
+
+  const account = accounts.getAccount(accountId);
+
+  if (!account.instance.tabs.openInAppLinksTab(url)) {
+    account.instance.tabs.openUrl(url);
+  }
+
+  if (account.config.selected) {
+    accounts.refreshSelectedAccountView();
+  } else {
+    accounts.selectAccount(accountId);
   }
 }
 
-export function handleMeruUrl(url: string) {
+export async function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
     showProUpgradeDialog("Meru Pro is required to open Meru links.");
 
@@ -135,9 +197,8 @@ export function handleMeruUrl(url: string) {
   }
 
   if (deepLink.type === "message") {
-    openMessageDeepLink(deepLink);
+    await openMessageDeepLink(deepLink);
+  } else {
+    await openUrlDeepLink(deepLink);
   }
-
-  // The open route parses but is not carried out yet; it lands in the slice
-  // that adds the routing behind it.
 }
