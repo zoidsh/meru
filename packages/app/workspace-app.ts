@@ -968,7 +968,7 @@ export class WorkspaceApp {
     }
 
     const accountLabelPrefix =
-      config.get("accounts").length > 1 ? `[${this.account.config.label}] ` : "";
+      accounts.getAccountConfigs().length > 1 ? `[${this.account.config.label}] ` : "";
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   }
