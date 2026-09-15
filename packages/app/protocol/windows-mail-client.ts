@@ -98,23 +98,8 @@ export async function isWindowsDefaultMailClient() {
   return (await readUserChoiceProgIds("mailto")).includes(MAILTO_PROG_ID);
 }
 
-let defaultBrowserPromise: Promise<boolean> | undefined;
-
-/**
- * Held from the first ask, because every external link asks and the answer is
- * two `reg.exe` spawns. `refreshWindowsDefaultBrowser` drops it, which is what
- * covers a user changing the association while Meru is running.
- */
-export function isWindowsDefaultBrowser() {
-  defaultBrowserPromise ??= readUserChoiceProgIds("https").then((progIds) =>
-    progIds.includes(BROWSER_PROG_ID),
-  );
-
-  return defaultBrowserPromise;
-}
-
-export function refreshWindowsDefaultBrowser() {
-  defaultBrowserPromise = undefined;
+export async function isWindowsDefaultBrowser() {
+  return (await readUserChoiceProgIds("https")).includes(BROWSER_PROG_ID);
 }
 
 export function openWindowsDefaultAppsSettings() {
