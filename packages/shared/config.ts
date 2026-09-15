@@ -118,6 +118,7 @@ export function createDefaultConfig({
     "workspaceApps.launcherApps": [],
     "workspaceApps.launcherDisplay": "auto",
     "workspaceApps.launcherAndBookmarksPlacement": "auto",
+    "workspaceApps.showBookmarksButton": true,
     "workspaceApps.showAccountColor": true,
     "workspaceApps.showAccountLabel": true,
     "workspaceApps.persistZoom": true,

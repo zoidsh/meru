@@ -443,6 +443,8 @@ export function VerticalTabs() {
 
   const shouldShowWorkspaceAppsLauncher = isLicenseKeyValid && launcherApps.length > 0;
 
+  const showsBookmarksButton = config?.["workspaceApps.showBookmarksButton"] ?? true;
+
   const showsWidthToggle = config?.["verticalTabs.showWidthToggle"] ?? true;
 
   // Gmail is already in front while its tab is active, so the count can be
@@ -596,24 +598,25 @@ export function VerticalTabs() {
        * sit directly in.
        */}
       {/*
-       * Nothing here on the free version: both controls open a workspace app,
-       * which is Pro, and the column would otherwise spend its gap on an empty
-       * row above the width toggle.
+       * The group goes rather than emptying out, because the column would
+       * otherwise spend its gap on an empty row above the width toggle.
        */}
-      {hostsLauncherAndBookmarks && isLicenseKeyValid && (
-        <div
-          className={cn(
-            HOST_HANDOVER_FADE_CLASS_NAME,
-            "flex flex-col",
-            isWide ? "w-full gap-1" : "items-center gap-2",
-          )}
-        >
-          {shouldShowWorkspaceAppsLauncher && (
-            <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
-          )}
-          <VerticalTabsBookmarks isWide={isWide} />
-        </div>
-      )}
+      {hostsLauncherAndBookmarks &&
+        isLicenseKeyValid &&
+        (shouldShowWorkspaceAppsLauncher || showsBookmarksButton) && (
+          <div
+            className={cn(
+              HOST_HANDOVER_FADE_CLASS_NAME,
+              "flex flex-col",
+              isWide ? "w-full gap-1" : "items-center gap-2",
+            )}
+          >
+            {shouldShowWorkspaceAppsLauncher && (
+              <VerticalTabsWorkspaceAppsLauncher launcherApps={launcherApps} isWide={isWide} />
+            )}
+            {showsBookmarksButton && <VerticalTabsBookmarks isWide={isWide} />}
+          </div>
+        )}
       {showsWidthToggle && (
         <VerticalTabsWidthToggle accountId={selectedAccount.config.id} isWide={isWide} />
       )}

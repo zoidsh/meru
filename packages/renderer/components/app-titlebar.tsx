@@ -223,6 +223,8 @@ export function AppTitlebar() {
   const shouldShowWorkspaceAppsLauncher =
     isLicenseKeyValid && config["workspaceApps.launcherApps"].length > 0;
 
+  const shouldShowBookmarksButton = config["workspaceApps.showBookmarksButton"];
+
   // On `auto` the vertical tabs strip hosts the launcher and the bookmarks
   // button whenever it is there, so that opening another app or a bookmarked
   // page stays in the same place as switching between tabs. `sidebar` keeps the
@@ -384,28 +386,27 @@ export function AppTitlebar() {
             <Trial />
             <FindInPage />
             {/*
-             * The group goes rather than emptying out on the free version.
-             * Both controls in it open a workspace app, which is Pro, and an
-             * empty group would still spend the gap between the controls
-             * either side of it.
+             * The group goes rather than emptying out, because an empty group
+             * would still spend the gap between the controls either side of it.
              */}
-            {isLicenseKeyValid && (
-              <TitlebarButtonGroup
-                className={cn(
-                  HOST_HANDOVER_FADE_CLASS_NAME,
-                  areLauncherAndBookmarksPlacementedByVerticalTabs && "hidden opacity-0",
-                )}
-              >
-                {shouldShowWorkspaceAppsLauncher && (
-                  <WorkspaceAppsLauncher
-                    launcherApps={config["workspaceApps.launcherApps"]}
-                    display={config["workspaceApps.launcherDisplay"]}
-                    disabled={isUnifiedInboxLocation}
-                  />
-                )}
-                <BookmarksButton />
-              </TitlebarButtonGroup>
-            )}
+            {isLicenseKeyValid &&
+              (shouldShowWorkspaceAppsLauncher || shouldShowBookmarksButton) && (
+                <TitlebarButtonGroup
+                  className={cn(
+                    HOST_HANDOVER_FADE_CLASS_NAME,
+                    areLauncherAndBookmarksPlacementedByVerticalTabs && "hidden opacity-0",
+                  )}
+                >
+                  {shouldShowWorkspaceAppsLauncher && (
+                    <WorkspaceAppsLauncher
+                      launcherApps={config["workspaceApps.launcherApps"]}
+                      display={config["workspaceApps.launcherDisplay"]}
+                      disabled={isUnifiedInboxLocation}
+                    />
+                  )}
+                  {shouldShowBookmarksButton && <BookmarksButton />}
+                </TitlebarButtonGroup>
+              )}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
                 title="Show saved searches"

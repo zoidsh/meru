@@ -164,6 +164,7 @@ export type Config = {
   "workspaceApps.launcherApps": LauncherWorkspaceApp[];
   "workspaceApps.launcherDisplay": WorkspaceAppsLauncherDisplay;
   "workspaceApps.launcherAndBookmarksPlacement": LauncherAndBookmarksPlacement;
+  "workspaceApps.showBookmarksButton": boolean;
   "workspaceApps.showAccountColor": boolean;
   "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;
