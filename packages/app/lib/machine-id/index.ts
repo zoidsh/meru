@@ -3,13 +3,8 @@ import { readFile } from "node:fs/promises";
 import { hostname } from "node:os";
 import { promisify } from "node:util";
 import { platform } from "@electron-toolkit/utils";
-import {
-  hashMachineId,
-  normalizeLinuxId,
-  parseIoregOutput,
-  parseRegOutput,
-} from "@/lib/machine-id-parsers";
 import { getRegExePath } from "@/lib/windows";
+import { hashMachineId, normalizeLinuxId, parseIoregOutput, parseRegOutput } from "./parsers";
 
 const execFile = promisify(childProcess.execFile);
 

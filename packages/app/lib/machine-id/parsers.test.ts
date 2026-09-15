@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  hashMachineId,
-  normalizeLinuxId,
-  parseIoregOutput,
-  parseRegOutput,
-} from "./machine-id-parsers";
+import { hashMachineId, normalizeLinuxId, parseIoregOutput, parseRegOutput } from "./parsers";
 
 const machineGuid = "abcdef12-3456-7890-abcd-ef1234567890";
 
