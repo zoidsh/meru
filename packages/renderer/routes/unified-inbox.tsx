@@ -166,7 +166,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
           <Button
             key={action}
             variant="ghost"
-            size="icon-xs"
+            size="icon-sm"
             // Out of the tab order because the document-level hotkeys are the
             // keyboard path, and Enter on a focused one would reach the
             // `enter` hotkey, which cancels the press and opens the message.
@@ -437,9 +437,10 @@ function UnifiedInboxTable({
                       "px-3 py-3",
                       cell.column.id === "subject" && "w-full max-w-0",
                       cell.column.id === "receivedAt" && "text-right",
-                      // Less vertical padding than its neighbours so that the
+                      // Wide enough for the four buttons and their gaps, and
+                      // padded less than its neighbours vertically so that the
                       // taller buttons leave the row height where it was.
-                      cell.column.id === "actions" && "w-28 py-2 text-right",
+                      cell.column.id === "actions" && "w-37 py-2 text-right",
                     )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
