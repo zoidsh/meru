@@ -6,7 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
-- Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
+- **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
 
 ### Changed
 

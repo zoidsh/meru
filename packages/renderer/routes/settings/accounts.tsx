@@ -30,6 +30,7 @@ import {
 } from "@meru/ui/components/dialog";
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -228,23 +229,23 @@ function AccountForm({
           {type === "edit" && (
             <form.Field name="disabled">
               {(field) => (
-                <>
-                  <Field orientation="horizontal" className="w-fit">
-                    <Switch
-                      id={field.name}
-                      name={field.name}
-                      checked={field.state.value === true}
-                      onCheckedChange={field.handleChange}
-                      disabled={isLastEnabledAccount}
-                    />
+                <Field orientation="horizontal">
+                  <FieldContent>
                     <FieldLabel htmlFor={field.name}>Disabled</FieldLabel>
-                  </Field>
-                  <FieldDescription>
-                    {isLastEnabledAccount
-                      ? "Meru needs one account turned on."
-                      : "Meru won't load this account until you turn it back on."}
-                  </FieldDescription>
-                </>
+                    <FieldDescription>
+                      {isLastEnabledAccount
+                        ? "Meru needs at least one account turned on."
+                        : "Meru won't load this account until you turn it back on."}
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id={field.name}
+                    name={field.name}
+                    checked={field.state.value === true}
+                    onCheckedChange={field.handleChange}
+                    disabled={isLastEnabledAccount}
+                  />
+                </Field>
               )}
             </form.Field>
           )}
