@@ -4,11 +4,10 @@
  *
  * `handleMeruUrl` and `handleWebUrl` gate on `licenseKey.isValid` before either
  * so much as parses the URL, so a link that would open a view under a license
- * opens none here. That
- * flag is set only by a successful API response and no config key fakes it,
- * which is what makes this the inverse of `tests/deep-link-pro.e2e.ts` rather
- * than a second copy of it — and why the two are separate files, `useApp` being
- * called at module scope.
+ * opens none here. That flag is set only by a successful API response and no
+ * config key fakes it, which is what makes this the inverse of
+ * `tests/deep-link-pro.e2e.ts` rather than a second copy of it — and why the two
+ * are separate files, `useApp` being called at module scope.
  *
  * Asserted on views alone. The gate's other half is a native Pro upgrade dialog
  * from `showProUpgradeDialog`, and nothing in this suite can see a native
