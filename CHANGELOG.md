@@ -8,7 +8,8 @@ This file is the draft of the next release, written one line at a time as work l
 
 - **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
 - **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
-- **Meru Pro:** Meru now appears alongside your browsers in your system's default browser settings and in link routers such as Choosey and Finicky, so a rule can send a Google Meet, Chat or Calendar link straight to Meru. Links to anywhere else are left to your browser
+- **Meru Pro:** Meru now appears alongside your browsers in your system's default browser settings and in link routers such as Choosey and Finicky, so a rule can send a Google Meet, Chat or Calendar link straight to Meru. Meru opens nothing for a link to anywhere else, so keep the rule to Google's links
+- With Meru itself set as your default browser, a link Meru doesn't open in one of its own tabs now offers to copy itself, since there is no other browser to send it to
 
 ### Changed
 

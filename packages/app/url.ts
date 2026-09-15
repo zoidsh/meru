@@ -60,7 +60,7 @@ export async function openExternalUrl(
       buttons: ["Copy link", "Cancel"],
       message: "Meru can't open this link in a browser.",
       detail:
-        "Meru is set as your default browser, so there's no other browser to open it in. Copy the link, or choose another default browser.",
+        "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru.",
       defaultId: 0,
       cancelId: 1,
     });
