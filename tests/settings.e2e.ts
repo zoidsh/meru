@@ -2,22 +2,12 @@
  * Settings is the densest surface the tests can reach: nearly every route is
  * `ConfigSwitchField` and `ConfigSelectField` over a config key, and none of it
  * needs a Gmail account.
- *
- * Controls are addressed by their config key rather than by a test id. Both
- * field components pass the key as the control's `id` and label it with
- * `<key>-label`, so the key is already a stable handle and adding test ids
- * would only give the two somewhere to drift apart.
  */
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
-import { openSettingsPage, readSettingsPageLabels } from "./lib/settings";
+import { configSwitch, openSettingsPage, readSettingsPageLabels } from "./lib/settings";
 
 const meru = useApp();
-
-/** The switch a config key is rendered by, found through the label it points at. */
-function configSwitch(configKey: string) {
-  return meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`);
-}
 
 test("every settings page renders", async () => {
   const rendererErrors: Error[] = [];
@@ -43,7 +33,7 @@ test("every settings page renders", async () => {
 test("a switch writes its key back to the config", async () => {
   await openSettingsPage(meru, await meru.openSettings(), "Downloads");
 
-  const saveAs = configSwitch("downloads.saveAs");
+  const saveAs = configSwitch(meru, "downloads.saveAs");
 
   await expect(saveAs).toBeVisible();
 

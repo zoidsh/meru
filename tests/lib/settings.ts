@@ -4,8 +4,21 @@
  * Both entitlements walk the same routes and differ only in what they expect to
  * find, so the walk itself lives here rather than in either of them.
  */
+import type { Config } from "@meru/shared/types";
 import { expect, type Locator } from "@playwright/test";
 import type { MeruApp } from "./app";
+
+/**
+ * The switch a config key is rendered by, found through the label it points at.
+ *
+ * Controls are addressed by their config key rather than by a test id. Both
+ * field components pass the key as the control's `id` and label it with
+ * `<key>-label`, so the key is already a stable handle and adding test ids
+ * would only give the two somewhere to drift apart.
+ */
+export function configSwitch(meru: MeruApp, configKey: keyof Config) {
+  return meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`);
+}
 
 /**
  * Every settings page, taken from the sidebar the app renders rather than from
