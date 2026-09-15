@@ -185,6 +185,9 @@ const createColumns = ({
                 tabIndex={-1}
                 title={label}
                 disabled={pendingAction !== null}
+                // The three the reader did not press dim as disabled controls;
+                // the one that is working reads at full strength.
+                className={cn(pendingAction === action && "disabled:opacity-100")}
                 onClick={(event) => {
                   event.stopPropagation();
 

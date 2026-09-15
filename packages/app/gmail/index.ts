@@ -611,7 +611,10 @@ export class Gmail {
 
     await wait(ms("1s"));
 
-    this.fetchInboxFeed(options, fetchAttempt + 1);
+    // Awaited so that the whole chain is behind one promise, which is what
+    // lets `handleMessage` hold its caller until the list has caught up. Every
+    // other caller drops the promise, so none of them waits on this.
+    await this.fetchInboxFeed(options, fetchAttempt + 1);
   }
 
   async fetchInboxFeed(
@@ -913,10 +916,10 @@ export class Gmail {
   }
 
   /**
-   * Resolves once the action has run and the feed has been read back, so a
+   * Resolves once the action has run and the feed has caught up with it, so a
    * caller can hold its own progress until then. Nothing is removed ahead of
-   * that read: a row taken away optimistically is put back by the next poll,
-   * which reads a feed the action has not reached yet.
+   * that: a row taken away optimistically is put back by the next poll, which
+   * reads a feed the action has not reached yet.
    */
   async handleMessage(messageId: string, action: GmailAction) {
     // `destroy()` leaves a shown notification alone, so removing the account
