@@ -189,40 +189,46 @@ function AccountForm({
           <FieldLegend variant="label">Options</FieldLegend>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
               </Field>
             )}
           </form.Field>
           <form.Field name="gmail.unifiedInbox">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
               </Field>
             )}
           </form.Field>
           <form.Field name="notifications">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
               </Field>
             )}
           </form.Field>
