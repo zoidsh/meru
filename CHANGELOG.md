@@ -12,6 +12,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** Meru now appears alongside your browsers in your system's default browser settings and in link routers such as Choosey and Finicky, so a rule can send a Google Meet, Chat or Calendar link straight to Meru. Meru opens nothing for a link to anywhere else, so keep the rule to Google's links
 - With Meru itself set as your default browser, a link Meru doesn't open in one of its own tabs now offers to copy itself, since there is no other browser to send it to
 - **Meru Pro:** Turn off Show bookmarks button in Settings → Workspace apps to take the bookmarks button out of the titlebar and the vertical tabs sidebar
+- **Meru Pro:** Turn off Show Do Not Disturb button in Settings → Appearance to take the Do Not Disturb button out of the titlebar. Do Not Disturb turns off with it, so notifications keep arriving
 
 ### Changed
 

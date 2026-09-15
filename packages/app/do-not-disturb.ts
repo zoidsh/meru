@@ -60,6 +60,17 @@ export class DoNotDisturb {
         this.setTimer(until);
       }
     }
+
+    /*
+     * The titlebar button is the only control Do Not Disturb has, so hiding it
+     * while Do Not Disturb is on would leave notifications silenced with
+     * nothing on screen saying so and no way to turn it back off.
+     */
+    config.onDidChange("doNotDisturb.showTitlebarButton", (showTitlebarButton) => {
+      if (showTitlebarButton === false && config.get("doNotDisturb.enabled")) {
+        this.disable();
+      }
+    });
   }
 
   setTimer(until: number) {

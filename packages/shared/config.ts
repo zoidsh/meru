@@ -133,6 +133,7 @@ export function createDefaultConfig({
     "doNotDisturb.enabled": false,
     "doNotDisturb.duration": null,
     "doNotDisturb.until": null,
+    "doNotDisturb.showTitlebarButton": true,
     "unifiedInbox.enabled": true,
     "unifiedInbox.showSenderIcons": true,
     "unifiedInbox.rowsPerPage": 10,

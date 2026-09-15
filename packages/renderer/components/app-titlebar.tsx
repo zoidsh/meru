@@ -158,7 +158,7 @@ function DoNotDisturb() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  if (!config || !isLicenseKeyValid) {
+  if (!config || !isLicenseKeyValid || !config["doNotDisturb.showTitlebarButton"]) {
     return;
   }
 
