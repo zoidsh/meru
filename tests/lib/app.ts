@@ -9,7 +9,7 @@
  * That build is Linux only. Elsewhere, build the app for the platform and point
  * MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Config } from "@meru/shared/types";
@@ -128,6 +128,13 @@ export type UseAppOptions = {
    * What the extension tests use to set the fixture and shared-instance flags.
    */
   env?: Record<string, string>;
+  /**
+   * A user data directory to copy in before the app is launched, so that it
+   * comes up with everything in it — a signed-in Gmail account above all, which
+   * nothing in this suite can produce for itself. `useSignedInProApp` is what
+   * sets it, and `signedInProfile` has where the directory comes from.
+   */
+  signedInProfileDir?: string;
 };
 
 type LaunchedApp = {
@@ -165,6 +172,75 @@ export type SeedConfig =
   | Partial<Config>
   | ((context: { userDataDir: string }) => Partial<Config> | Promise<Partial<Config>>);
 
+async function readProfileConfigFile(configPath: string) {
+  const contents = await readFile(configPath, "utf8").catch(() => undefined);
+
+  return contents === undefined ? undefined : (JSON.parse(contents) as Partial<Config>);
+}
+
+/*
+ * Drops the two kinds of state a copied profile must not bring with it.
+ *
+ * Service worker registrations never run again once copied: the Gmail view
+ * hangs on its first navigation for thirty seconds and then fails with
+ * ERR_FAILED, every time and whichever tool made the copy. Losing them costs
+ * nothing, because Gmail registers its worker again on the page that follows,
+ * and the view then loads the way it does on a profile nobody copied.
+ *
+ * The `Singleton*` entries are the single instance lock, left behind on Linux by
+ * an app that is still running or that crashed — copied along, they point the
+ * launch at the pid that holds them, and it hands over its argv and exits as a
+ * second instance rather than coming up as the app under test.
+ */
+async function dropRuntimeState(userDataDir: string) {
+  const partitionsDir = path.join(userDataDir, "Partitions");
+
+  const partitions = await readdir(partitionsDir).catch(() => []);
+
+  const entries = await readdir(userDataDir).catch(() => []);
+
+  await Promise.all([
+    ...[userDataDir, ...partitions.map((partition) => path.join(partitionsDir, partition))].map(
+      (directory) => rm(path.join(directory, "Service Worker"), { recursive: true, force: true }),
+    ),
+    ...entries
+      .filter((entry) => entry.startsWith("Singleton"))
+      .map((entry) => rm(path.join(userDataDir, entry), { recursive: true, force: true })),
+  ]);
+}
+
+/**
+ * Copies a signed-in profile into the directory the app is about to run on, and
+ * hands back the config that came with it.
+ *
+ * Copied rather than run on where it lies, so that a test is still a fresh app
+ * on a directory of its own — one it may write to and one the teardown may
+ * delete — and the single directory somebody signed in by hand is never the
+ * thing a test mutates.
+ *
+ * Both config file names are read back because `is.dev` picks between them: a
+ * profile made by `bun run dev --profile` holds `config.dev.json` and one made
+ * by a built app holds `config.json`. Everything else about the two layouts is
+ * the same, sessions included, which is what makes either reusable here.
+ */
+async function copySignedInProfile(profileDir: string, userDataDir: string) {
+  await cp(profileDir, userDataDir, { recursive: true });
+
+  await dropRuntimeState(userDataDir);
+
+  const profileConfig =
+    (await readProfileConfigFile(path.join(userDataDir, "config.json"))) ??
+    (await readProfileConfigFile(path.join(userDataDir, "config.dev.json")));
+
+  if (!profileConfig) {
+    throw new Error(
+      `${profileDir} holds neither config.json nor config.dev.json, so it is not a Meru user data directory.`,
+    );
+  }
+
+  return profileConfig;
+}
+
 async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promise<LaunchedApp> {
   /*
    * A user data directory of its own, for two reasons. The app takes a single
@@ -179,14 +255,20 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
    * Resolved here rather than where the file is read, so a seed can name the
    * directory the app is about to run in.
    *
-   * A seed that throws takes the directory with it. Nothing has been assigned
-   * to `launched` yet, so `afterEach` would throw "The app has not been
+   * A copy or a seed that throws takes the directory with it. Nothing has been
+   * assigned to `launched` yet, so `afterEach` would throw "The app has not been
    * launched yet" over the top of the real error and leave the directory behind
    * on every test in the file.
    */
+  let profileConfig: Partial<Config> = {};
+
   let seededConfig: Partial<Config>;
 
   try {
+    if (options.signedInProfileDir) {
+      profileConfig = await copySignedInProfile(options.signedInProfileDir, userDataDir);
+    }
+
     seededConfig =
       typeof seedConfig === "function" ? await seedConfig({ userDataDir }) : seedConfig;
   } catch (error) {
@@ -208,10 +290,16 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
    *
    * It also settles which entitlement the tests see: no license key and no
    * running trial is the free version, so every Pro-gated control is locked.
+   *
+   * A copied profile's own config goes underneath both, so that the accounts it
+   * signed in survive: an account's session is partitioned on its id, and an
+   * accounts array from anywhere else would leave the app looking for a
+   * partition the copy does not hold. Everything a test seeds still wins over
+   * whatever that profile happened to be configured with.
    */
   await writeFile(
     path.join(userDataDir, "config.json"),
-    JSON.stringify({ "trial.expired": true, ...seededConfig }, null, "\t"),
+    JSON.stringify({ ...profileConfig, "trial.expired": true, ...seededConfig }, null, "\t"),
   );
 
   // The built binary, not `electron .`: only a packaged app has isPackaged
@@ -582,4 +670,55 @@ export function useProApp(seedConfig: SeedConfig = {}, options: UseAppOptions = 
   }
 
   return useApp({ licenseKey, ...seedConfig }, options);
+}
+
+/**
+ * The user data directory somebody signed a Gmail account in to, and the address
+ * signed in there, or undefined when either is missing.
+ *
+ * Both come out of `.env.test.local`, which the `test:e2e` script reads through
+ * `bun --env-file` and the Playwright process inherits:
+ *
+ *     MERU_TEST_PROFILE_DIR=/absolute/path/to/.meru/e2e-signed-in
+ *     MERU_TEST_ACCOUNT_EMAIL=someone@gmail.com
+ *
+ * Missing is not the broken run a missing license key is, so this answers
+ * instead of throwing. Signing in to Google is done by hand, once, at a password
+ * prompt and a second factor no test can answer — so the directory exists on the
+ * one machine where somebody did that and nowhere else, CI included, and the
+ * tests that need it skip themselves at file scope.
+ *
+ * Making one: `bun run dev --profile e2e-signed-in` runs the development app on
+ * `.meru/e2e-signed-in`, and signing in there leaves the account in it. The
+ * address to name is the one the account is signed in as, because that is what
+ * the Gmail preload reads off the page and what an addressed `meru://` link
+ * resolves against.
+ */
+export function signedInProfile() {
+  const directory = process.env.MERU_TEST_PROFILE_DIR;
+
+  const email = process.env.MERU_TEST_ACCOUNT_EMAIL;
+
+  return directory && email ? { directory, email } : undefined;
+}
+
+/**
+ * Launches Pro on a copy of the signed-in profile, and is `useProApp` in every
+ * other way.
+ *
+ * The accounts come from that profile rather than from a seed, which is why the
+ * seed here cannot name them: an account's session is partitioned on its id, so
+ * an account invented by a test would come up signed out beside the one that
+ * actually signed in. Everything else seeds as it always does.
+ *
+ * With no profile named this is a plain Pro launch on an empty directory. The
+ * tests that need one skip at file scope, which is what keeps that case from
+ * arising — and an ordinary app is a better thing to leave behind than a throw
+ * from module scope on every machine that has no profile.
+ */
+export function useSignedInProApp(
+  seedConfig: Partial<Omit<Config, "accounts">> = {},
+  options: UseAppOptions = {},
+): MeruApp {
+  return useProApp(seedConfig, { ...options, signedInProfileDir: signedInProfile()?.directory });
 }
