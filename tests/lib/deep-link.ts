@@ -1,5 +1,6 @@
 /*
- * Delivering a `meru://` URL to the app a test is already driving.
+ * Delivering a link to the app a test is already driving, whether a `meru://`
+ * URL or the plain web URL a browser picker hands over.
  *
  * There is no API for this. A deep link reaches Meru the way the desktop hands
  * it over — as the argument list of a process the operating system starts — and
@@ -17,8 +18,8 @@ import { EXECUTABLE_PATH, launchArguments, type MeruApp } from "./app";
 const execFileAsync = promisify(execFile);
 
 /**
- * Sends a `meru://` URL to the running app and resolves once the second
- * instance it went through has exited.
+ * Sends a URL to the running app and resolves once the second instance it went
+ * through has exited.
  *
  * The exit says the argv was handed over, not that the app has acted on it —
  * the handover is a message between processes and everything after it is

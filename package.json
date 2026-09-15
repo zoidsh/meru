@@ -106,7 +106,9 @@
       "name": "Meru",
       "schemes": [
         "meru",
-        "mailto"
+        "mailto",
+        "http",
+        "https"
       ]
     },
     "mac": {
@@ -126,7 +128,9 @@
         "CFBundleIconName": "AppIcon",
         "CFBundleURLSchemes": [
           "meru",
-          "mailto"
+          "mailto",
+          "http",
+          "https"
         ],
         "NSCameraUsageDescription": "Meru uses your camera for video calls in Google apps such as Meet and Chat.",
         "NSMicrophoneUsageDescription": "Meru uses your microphone for calls and voice input in Google apps such as Meet and Chat."
