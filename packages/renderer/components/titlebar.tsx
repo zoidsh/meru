@@ -9,13 +9,13 @@ import {
 } from "@meru/ui/components/dropdown-menu";
 import { cn } from "@meru/ui/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, type Ref, useState } from "react";
 import { useCloseOnWindowBlur } from "@/lib/hooks";
 
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative border-b bg-background select-none draggable"
+      className="relative overflow-hidden border-b bg-background select-none draggable"
       style={{ height: APP_TITLEBAR_HEIGHT }}
     >
       <div
@@ -32,11 +32,44 @@ export function Titlebar({ children }: { children: ReactNode }) {
 }
 
 export function TitlebarLeft({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-2">{children}</div>;
+  return <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>;
 }
 
 export function TitlebarRight({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-2">{children}</div>;
+}
+
+/**
+ * The right-hand controls, pinned over the right edge of the titlebar instead of
+ * sharing a row with what is to their left.
+ *
+ * Whatever is to their left can then be a scroll container that shrinks to
+ * nothing, rather than a row that pushes these controls out of the window. It is
+ * opaque so that the content scrolls under it, and `isFadeVisible` puts a short
+ * gradient on its left edge to say that there is more behind it.
+ */
+export function TitlebarRightOverlay({
+  ref,
+  isFadeVisible,
+  children,
+}: {
+  ref?: Ref<HTMLDivElement>;
+  isFadeVisible?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute top-0 right-0 flex items-center gap-4 bg-background px-1.5",
+        "before:pointer-events-none before:absolute before:top-0 before:right-full before:bottom-0 before:w-6 before:bg-linear-to-l before:from-background before:to-transparent before:opacity-0 before:transition-opacity",
+        isFadeVisible && "before:opacity-100",
+      )}
+      style={{ height: APP_TITLEBAR_HEIGHT }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function TitlebarButtonGroup({

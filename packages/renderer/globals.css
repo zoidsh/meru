@@ -4,3 +4,11 @@
 @plugin "@tailwindcss/typography";
 
 @source "../shared/**/*.{ts,tsx}";
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
