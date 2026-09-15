@@ -174,11 +174,6 @@ export class WorkspaceApp {
       return;
     }
 
-    // Windows handles Google's platform passkeys natively via webauthn.dll.
-    if (platform.isWindows) {
-      return;
-    }
-
     if (config.get("workspaceApps.hidePasskeyDialog")) {
       return;
     }
@@ -189,16 +184,26 @@ export class WorkspaceApp {
       return;
     }
 
-    // The team id is only inlined into signed builds, which are the only ones
-    // where Touch ID passkeys can be configured (see `init` in index.ts).
-    const touchIdSupported = platform.isMacOS && Boolean(process.env.APPLE_TEAM_ID);
+    // Windows needs no configuration and no signed build, because Chromium
+    // delegates WebAuthn to webauthn.dll. On macOS the team id is only inlined
+    // into signed builds, which are the only ones where Touch ID passkeys can be
+    // configured (see `init` in index.ts).
+    const platformPasskeySupported =
+      platform.isWindows || (platform.isMacOS && Boolean(process.env.APPLE_TEAM_ID));
 
-    const touchIdRequiresUpgrade = touchIdSupported && !licenseKey.isValid;
+    const touchIdRequiresUpgrade =
+      platform.isMacOS && platformPasskeySupported && !licenseKey.isValid;
+
+    const authenticator = platform.isWindows ? "Windows Hello" : "Touch ID";
+
+    const externalProviders = platform.isWindows
+      ? "Chrome, Google Password Manager, or your phone"
+      : "Chrome, iCloud, or your phone";
 
     let message: string;
     let detail: string;
 
-    if (!touchIdSupported) {
+    if (!platformPasskeySupported) {
       message = "Passkey sign-in isn't supported on this platform yet.";
       detail =
         "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.";
@@ -208,8 +213,7 @@ export class WorkspaceApp {
         "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way.";
     } else {
       message = "Only passkeys created in Meru work here.";
-      detail =
-        "Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.";
+      detail = `Continue with ${authenticator} if you've created a passkey in Meru. Passkeys from ${externalProviders} don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.`;
     }
 
     const { response, checkboxChecked } = await dialog.showMessageBox({
