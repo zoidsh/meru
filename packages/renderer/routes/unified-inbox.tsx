@@ -130,7 +130,7 @@ const createColumns = ({
       // darker than the row. This is the cell the row actions overlap, the
       // date cell being narrower than they are, so the fade has to finish
       // short of this cell's edge rather than at it.
-      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8rem)] group-hover:mask-r-to-[calc(100%-3.5rem)] group-data-[pending]:mask-r-from-[calc(100%-8rem)] group-data-[pending]:mask-r-to-[calc(100%-3.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8rem)] group-data-[state=selected]:mask-r-to-[calc(100%-3.5rem)]">
+      <div className="flex flex-1 gap-2 overflow-hidden group-hover:mask-r-from-[calc(100%-8.75rem)] group-hover:mask-r-to-[calc(100%-4.25rem)] group-data-[pending]:mask-r-from-[calc(100%-8.75rem)] group-data-[pending]:mask-r-to-[calc(100%-4.25rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8.75rem)] group-data-[state=selected]:mask-r-to-[calc(100%-4.25rem)]">
         <div className="max-w-sm shrink-0 truncate" title={props.getValue()}>
           {props.getValue()}
         </div>
@@ -172,7 +172,7 @@ const createColumns = ({
                   }).format(date.toDate())
                 : createDateTimeFormatter().format(date.toDate())}
           </div>
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[pending]:opacity-100 group-data-[state=selected]:opacity-100">
+          <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[pending]:opacity-100 group-data-[state=selected]:opacity-100">
             {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
               <Button
                 key={action}
