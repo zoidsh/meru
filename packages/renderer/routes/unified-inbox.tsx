@@ -162,7 +162,7 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
                   }).format(date.toDate())
                 : createDateTimeFormatter().format(date.toDate())}
           </div>
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 group-hover:opacity-100 group-data-[state=selected]:opacity-100">
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[state=selected]:opacity-100">
             {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
               <Button
                 key={action}
