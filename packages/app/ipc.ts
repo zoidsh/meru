@@ -22,12 +22,12 @@ import {
   session,
   shell,
 } from "electron";
-import { machineId } from "node-machine-id";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { copyText } from "@/lib/clipboard";
+import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -722,7 +722,7 @@ class Ipc {
     ipc.main.handle("about.getInfo", async () => ({
       version: app.getVersion(),
       os: `${os.type()} ${os.release()} (${os.arch()})`,
-      deviceId: await machineId(),
+      deviceId: await getMachineId(),
     }));
 
     ipc.main.handle("about.exportLogs", async () => {
