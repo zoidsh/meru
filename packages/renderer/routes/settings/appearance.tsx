@@ -36,6 +36,12 @@ const systemTrayIconColorItems = [
   { value: "system", label: "System" },
 ];
 
+const linuxWindowControlsItems = [
+  { value: "auto", label: "Automatic" },
+  { value: "show", label: "Show" },
+  { value: "hide", label: "Hide" },
+];
+
 export function AppearanceSettings() {
   const { config } = useConfig();
 
@@ -175,6 +181,15 @@ export function AppearanceSettings() {
           <FieldSeparator />
           <FieldSet>
             <FieldLegend>Window</FieldLegend>
+            {platform.isLinux && (
+              <ConfigSelectField
+                configKey="window.linuxWindowControls"
+                label="Window controls"
+                description="Show the close, minimize and maximize buttons in the titlebar. Automatic hides them on window managers without decorations, such as dwm, i3 and sway."
+                items={linuxWindowControlsItems}
+                restartRequired
+              />
+            )}
             <ConfigSwitchField
               label="Restrict minimum window size"
               description="Stop the application window from being resized below a usable minimum."
