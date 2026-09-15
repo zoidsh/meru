@@ -426,6 +426,12 @@ export function WorkspaceAppsSettings() {
                 }))}
               />
             )}
+            <ConfigSwitchField
+              label="Show bookmarks button"
+              description="Show the button that opens bookmarks."
+              configKey="workspaceApps.showBookmarksButton"
+              licenseKeyRequired
+            />
           </FieldSet>
         </FieldGroup>
       </SettingsContent>

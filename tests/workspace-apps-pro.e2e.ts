@@ -33,6 +33,8 @@ import { expect, test } from "@playwright/test";
 import { seedAccount, seedSavedTab } from "./lib/accounts";
 import { useProApp } from "./lib/app";
 import { DOWNLOAD_BODY, DOWNLOAD_FILE_NAME, startTestServer, type TestServer } from "./lib/server";
+import { configSwitch, openSettingsPage } from "./lib/settings";
+import { waitForVerticalTabs } from "./lib/strip";
 import { findViewByUrl, readUnfilledSpace, readViews } from "./lib/views";
 
 /*
@@ -385,4 +387,70 @@ test("a download from a workspace app lands on disk and in the history", async (
   expect(await meru.runMenuCommand("Downloads")).toBe(true);
 
   await expect(meru.renderer.getByTitle(DOWNLOAD_FILE_NAME)).toBeVisible();
+});
+
+/**
+ * Flips Show bookmarks button from the settings page and comes back to the
+ * strip, having waited for the write.
+ *
+ * Through the switch rather than by seeding, because the setting is one a user
+ * turns off with the app running and what is being proved is that both hosts
+ * follow it live. The config on disk is polled before settings is left, so a
+ * failure afterwards is the button and not a write that had yet to land — and
+ * the strip is waited for again, because settings unmounts it.
+ */
+async function setShowBookmarksButton(shown: boolean) {
+  await openSettingsPage(meru, await meru.openSettings(), "Workspace apps");
+
+  await configSwitch(meru, "workspaceApps.showBookmarksButton").click();
+
+  await expect
+    .poll(async () => (await meru.readConfig())["workspaceApps.showBookmarksButton"])
+    .toBe(shown);
+
+  await meru.renderer.getByRole("button", { name: "Close settings" }).click();
+
+  await waitForVerticalTabs(meru);
+}
+
+/*
+ * The other side of this is in `tests/workspace-apps.e2e.ts`, where the same
+ * button is asserted away on the free version. It cannot go there: `useApp` is
+ * called once at module scope in that file and seeds every test in it without a
+ * license.
+ *
+ * The strip is the host under this file's seed, which leaves the placement at
+ * `auto` with more than one tab open, so the copy asserted on is the strip's
+ * and the titlebar's settles at `display: none`.
+ */
+test("the bookmarks button follows its setting, and the launcher beside it stays", async () => {
+  await waitForVerticalTabs(meru);
+
+  const bookmarksButton = meru.renderer.getByRole("button", { name: "Show bookmarks" });
+
+  /*
+   * Counted rather than asserted visible, throughout. Both hosts draw the
+   * button and only the strip's copy is in the accessibility tree here, but the
+   * titlebar's is hidden by a display transition rather than by not being
+   * rendered — so during the handover, and on the first paint after leaving
+   * settings, the two are briefly there at once. A visibility assertion fails
+   * that as a strict mode violation and never retries; the count rides it out,
+   * and says as much: one copy offered, not two.
+   */
+  await expect(bookmarksButton).toHaveCount(1);
+
+  await setShowBookmarksButton(false);
+
+  await expect(bookmarksButton).toHaveCount(0);
+
+  /*
+   * The launcher shares the group with it, and the group goes only once nothing
+   * is left in it — so this is what says the setting took the button and not
+   * the row.
+   */
+  await expect(meru.renderer.getByRole("button", { name: "Open app" })).toHaveCount(1);
+
+  await setShowBookmarksButton(true);
+
+  await expect(bookmarksButton).toHaveCount(1);
 });
