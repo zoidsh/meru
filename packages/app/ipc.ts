@@ -1155,6 +1155,10 @@ class Ipc {
         messageId,
       );
     });
+
+    this.main.on("gmail.handleMessage", (_event, accountId, messageId, action) => {
+      accounts.instances.get(accountId)?.gmail.handleMessage(messageId, action);
+    });
   }
 }
 

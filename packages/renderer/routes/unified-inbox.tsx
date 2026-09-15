@@ -1,3 +1,4 @@
+import type { GMAIL_ACTION_CODE_MAP } from "@meru/shared/gmail";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -28,11 +29,15 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  ArchiveIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   InboxIcon,
+  MailOpenIcon,
+  OctagonAlertIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -44,6 +49,21 @@ import { useUnifiedInbox, type UnifiedInboxMessage } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
+
+const MESSAGE_ACTIONS = [
+  { action: "archive", label: "Archive", icon: ArchiveIcon },
+  { action: "markAsRead", label: "Mark as read", icon: MailOpenIcon },
+  { action: "delete", label: "Delete", icon: Trash2Icon },
+  { action: "markAsSpam", label: "Mark as spam", icon: OctagonAlertIcon },
+] as const satisfies {
+  action: keyof typeof GMAIL_ACTION_CODE_MAP;
+  label: string;
+  icon: typeof ArchiveIcon;
+}[];
+
+function handleMessage(message: UnifiedInboxMessage, action: keyof typeof GMAIL_ACTION_CODE_MAP) {
+  ipc.main.send("gmail.handleMessage", message.account.id, message.id, action);
+}
 
 const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
   columnHelper.accessor("account.label", {
@@ -138,6 +158,32 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
       );
     },
   }),
+  columnHelper.display({
+    id: "actions",
+    cell: (props) => (
+      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 group-data-[state=selected]:opacity-100">
+        {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
+          <Button
+            key={action}
+            variant="ghost"
+            size="icon-xs"
+            // Out of the tab order because the document-level hotkeys are the
+            // keyboard path, and Enter on a focused one would reach the
+            // `enter` hotkey, which cancels the press and opens the message.
+            tabIndex={-1}
+            title={label}
+            onClick={(event) => {
+              event.stopPropagation();
+
+              handleMessage(props.row.original, action);
+            }}
+          >
+            <Icon />
+          </Button>
+        ))}
+      </div>
+    ),
+  }),
 ];
 
 function UnifiedInboxTable({
@@ -168,6 +214,9 @@ function UnifiedInboxTable({
       pagination,
     },
     onPaginationChange: setPagination,
+    // Every push of the accounts rebuilds `messages`, which the default would
+    // read as new data and answer by sending the reader back to page one.
+    autoResetPageIndex: false,
   });
 
   const configMutation = useConfigMutation();
@@ -246,6 +295,58 @@ function UnifiedInboxTable({
     [focusedIndex, rows],
   );
 
+  const handleFocusedMessage = (action: keyof typeof GMAIL_ACTION_CODE_MAP) => {
+    const focusedMessage = rows[focusedIndex]?.original;
+
+    if (focusedMessage) {
+      handleMessage(focusedMessage, action);
+    }
+  };
+
+  useHotkeys(
+    "e",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("archive");
+    },
+    [focusedIndex, rows],
+  );
+
+  useHotkeys(
+    "shift+i",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("markAsRead");
+    },
+    [focusedIndex, rows],
+  );
+
+  // Matched on the character rather than the key, because the default matches
+  // the physical key instead, where Shift-3 is `3` and never `#`.
+  useHotkeys(
+    "#",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("delete");
+    },
+    { useKey: true },
+    [focusedIndex, rows],
+  );
+
+  useHotkeys(
+    "!",
+    (event) => {
+      event.preventDefault();
+
+      handleFocusedMessage("markAsSpam");
+    },
+    { useKey: true },
+    [focusedIndex, rows],
+  );
+
   useHotkeys("g", () => {
     isGPrefixActiveRef.current = true;
 
@@ -289,14 +390,23 @@ function UnifiedInboxTable({
   });
 
   useEffect(() => {
+    setPagination((current) => ({
+      ...current,
+      pageIndex: Math.min(current.pageIndex, Math.max(table.getPageCount() - 1, 0)),
+    }));
+  }, [messages.length, table]);
+
+  useEffect(() => {
     setFocusedIndex((current) => Math.min(current, Math.max(rows.length - 1, 0)));
   }, [rows.length]);
 
+  // Also on `rows`, because acting on the focused row unmounts it and the row
+  // that takes its index inherits the ref without inheriting the focus.
   useEffect(() => {
     focusedRowRef.current?.focus({ preventScroll: true });
 
     focusedRowRef.current?.scrollIntoView({ block: "nearest" });
-  }, [focusedIndex]);
+  }, [focusedIndex, rows]);
 
   useEffect(() => {
     return () => {
@@ -315,7 +425,7 @@ function UnifiedInboxTable({
                 ref={index === focusedIndex ? focusedRowRef : undefined}
                 tabIndex={index === focusedIndex ? -1 : undefined}
                 data-state={index === focusedIndex ? "selected" : undefined}
-                className="cursor-default outline-none"
+                className="group cursor-default outline-none"
                 onClick={() => {
                   openMessage(row.original);
                 }}
@@ -327,6 +437,9 @@ function UnifiedInboxTable({
                       "px-3 py-3",
                       cell.column.id === "subject" && "w-full max-w-0",
                       cell.column.id === "receivedAt" && "text-right",
+                      // Less vertical padding than its neighbours so that the
+                      // taller buttons leave the row height where it was.
+                      cell.column.id === "actions" && "w-28 py-2 text-right",
                     )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

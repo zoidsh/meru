@@ -4,6 +4,7 @@ import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
+  GMAIL_ACTION_CODE_MAP,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
   GMAIL_INBOX_FEED_URL,
   GMAIL_PRELOAD_ARGUMENTS,
@@ -109,6 +110,13 @@ const INBOX_FEED_POLL_INTERVAL = ms("30s");
  * costs little.
  */
 const INBOX_FEED_SLACK = ms("5m");
+
+const NEW_EMAIL_NOTIFICATION_ACTIONS = [
+  { text: "Archive", action: "archive" },
+  { text: "Mark as Read", action: "markAsRead" },
+  { text: "Delete", action: "delete" },
+  { text: "Mark as Spam", action: "markAsSpam" },
+] as const satisfies { text: string; action: keyof typeof GMAIL_ACTION_CODE_MAP }[];
 
 export class Gmail {
   accountId: string;
@@ -787,9 +795,7 @@ export class Gmail {
                 return;
               }
 
-              // `destroy()` leaves a shown notification alone, so removing the
-              // account and then clicking one runs this against a cleared view.
-              // Read through `_view` rather than the getter, which throws.
+              // Guarded for the reason `handleMessage` is.
               const view = this._view;
 
               if (!view || view.webContents.isDestroyed()) {
@@ -857,24 +863,10 @@ export class Gmail {
           title: notificationTitle,
           subtitle,
           body,
-          actions: [
-            {
-              text: "Archive",
-              type: "button",
-            },
-            {
-              text: "Mark as Read",
-              type: "button",
-            },
-            {
-              text: "Delete",
-              type: "button",
-            },
-            {
-              text: "Mark as Spam",
-              type: "button",
-            },
-          ],
+          actions: NEW_EMAIL_NOTIFICATION_ACTIONS.map(({ text }) => ({
+            text,
+            type: "button" as const,
+          })),
           click: () => {
             main.show();
 
@@ -883,47 +875,10 @@ export class Gmail {
             ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
           },
           action: (index) => {
-            switch (index) {
-              case 0: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "archive",
-                );
+            const notificationAction = NEW_EMAIL_NOTIFICATION_ACTIONS[index];
 
-                break;
-              }
-              case 1: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsRead",
-                );
-
-                break;
-              }
-              case 2: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "delete",
-                );
-
-                break;
-              }
-              case 3: {
-                ipc.renderer.send(
-                  this.view.webContents,
-                  "gmail.handleMessage",
-                  newMail.id,
-                  "markAsSpam",
-                );
-
-                break;
-              }
+            if (notificationAction) {
+              this.handleMessage(newMail.id, notificationAction.action);
             }
           },
         });
@@ -948,6 +903,32 @@ export class Gmail {
     }
 
     ipc.renderer.send(this._view.webContents, "gmail.refreshInbox");
+  }
+
+  handleMessage(messageId: string, action: keyof typeof GMAIL_ACTION_CODE_MAP) {
+    // `destroy()` leaves a shown notification alone, so removing the account
+    // and then clicking one runs this against a cleared view. Read through
+    // `_view` rather than the getter, which throws.
+    const view = this._view;
+
+    if (!view || view.webContents.isDestroyed()) {
+      return;
+    }
+
+    const { unreadInbox } = this.store.getState();
+
+    const remainingUnreadInbox = unreadInbox.filter((message) => message.id !== messageId);
+
+    // Dropped before the action has run so the row goes at once. Nothing here
+    // confirms it, but every fetch rebuilds the list from the feed, so an
+    // action that failed puts the row back on the next feed change.
+    if (remainingUnreadInbox.length !== unreadInbox.length) {
+      this.store.setState({ unreadInbox: remainingUnreadInbox });
+    }
+
+    ipc.renderer.send(view.webContents, "gmail.handleMessage", messageId, action);
+
+    this.fetchInboxFeed();
   }
 
   /**

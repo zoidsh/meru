@@ -6,6 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
+- **Meru Pro:** Archive, mark as read, delete or mark as spam a message straight from the unified inbox, by hovering its row or with Gmail's own shortcuts: `e`, `Shift+I`, `#` and `!`
 - **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
 - **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
 - **Meru Pro:** Meru now appears alongside your browsers in your system's default browser settings and in link routers such as Choosey and Finicky, so a rule can send a Google Meet, Chat or Calendar link straight to Meru. Meru opens nothing for a link to anywhere else, so keep the rule to Google's links

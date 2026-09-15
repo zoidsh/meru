@@ -222,6 +222,11 @@ export type IpcMainEvents =
       "gmail.undoMessageSent": [browserWindowId: number];
       "gmail.setUserEmail": [email: string];
       "gmail.openMessage": [messageId: string];
+      "gmail.handleMessage": [
+        accountId: AccountConfig["id"],
+        messageId: string,
+        action: keyof typeof GMAIL_ACTION_CODE_MAP,
+      ];
       "titleBar.toggleAppMenu": [];
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];

@@ -11,7 +11,13 @@ ipc.renderer.on("gmail.openMessage", (_event, messageId: string) => {
 });
 
 ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action) => {
-  await sendMailAction(messageId, action);
+  try {
+    await sendMailAction(messageId, action);
+  } catch (error) {
+    console.error("Error handling message:", error);
+
+    return;
+  }
 
   refreshInbox();
 });
