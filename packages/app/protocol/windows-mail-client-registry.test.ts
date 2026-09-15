@@ -37,6 +37,32 @@ describe("buildRegistration", () => {
     expect(lines).toContain(String.raw`"Meru"="Software\\Clients\\Mail\\Meru\\Capabilities"`);
   });
 
+  test("writes the keys a browser picker reads", () => {
+    const lines = buildRegistration(EXECUTABLE_PATH).split("\r\n");
+
+    expect(lines).toContain(String.raw`[HKEY_CURRENT_USER\Software\Classes\Meru.url]`);
+    expect(lines).toContain(
+      String.raw`[HKEY_CURRENT_USER\Software\Classes\Meru.url\shell\open\command]`,
+    );
+    expect(lines).toContain(
+      String.raw`[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru]`,
+    );
+    expect(lines).toContain(
+      String.raw`[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\shell\open\command]`,
+    );
+    expect(lines).toContain(
+      String.raw`[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\Capabilities]`,
+    );
+    expect(lines).toContain(
+      String.raw`[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\Capabilities\URLAssociations]`,
+    );
+    expect(lines).toContain(String.raw`"http"="Meru.url"`);
+    expect(lines).toContain(String.raw`"https"="Meru.url"`);
+    expect(lines).toContain(
+      String.raw`"Meru.url"="Software\\Clients\\StartMenuInternet\\Meru\\Capabilities"`,
+    );
+  });
+
   test("ends every line with a carriage return", () => {
     expect(buildRegistration(EXECUTABLE_PATH)).not.toMatch(/[^\r]\n/);
   });

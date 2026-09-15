@@ -3,6 +3,8 @@
 
 export const MAILTO_PROG_ID = "Meru.mailto";
 
+export const BROWSER_PROG_ID = "Meru.url";
+
 function escapeRegValue(value: string) {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
@@ -66,8 +68,42 @@ export function buildRegistration(executablePath: string) {
 [HKEY_CURRENT_USER\Software\Clients\Mail\Meru\Capabilities\URLAssociations]
 "mailto"="Meru.mailto"
 
+[HKEY_CURRENT_USER\Software\Classes\Meru.url]
+@="Meru Web Link"
+"FriendlyTypeName"="Meru Web Link"
+"EditFlags"=dword:00000002
+
+[HKEY_CURRENT_USER\Software\Classes\Meru.url\DefaultIcon]
+@=${icon}
+
+[HKEY_CURRENT_USER\Software\Classes\Meru.url\shell\open\command]
+@=${urlCommand}
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru]
+@="Meru"
+"LocalizedString"="Meru"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\DefaultIcon]
+@=${icon}
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\shell\open\command]
+@=${openCommand}
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\Capabilities]
+"ApplicationName"="Meru"
+"ApplicationDescription"="The Gmail experience you deserve"
+"ApplicationIcon"=${icon}
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\Capabilities\StartMenu]
+"StartMenuInternet"="Meru"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\Meru\Capabilities\URLAssociations]
+"http"="Meru.url"
+"https"="Meru.url"
+
 [HKEY_CURRENT_USER\Software\RegisteredApplications]
 "Meru"="Software\\Clients\\Mail\\Meru\\Capabilities"
+"Meru.url"="Software\\Clients\\StartMenuInternet\\Meru\\Capabilities"
 `;
 
   // `reg.exe import` parses the file as Windows text
