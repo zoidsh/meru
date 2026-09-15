@@ -17,7 +17,11 @@ export function isMeruUrl(url: string) {
   return url.startsWith(MERU_URL_PREFIX);
 }
 
-const WEB_URL_PREFIXES = ["http://", "https://"];
+const HTTP_URL_PREFIX = "http://";
+
+const HTTPS_URL_PREFIX = "https://";
+
+const WEB_URL_PREFIXES = [HTTP_URL_PREFIX, HTTPS_URL_PREFIX];
 
 /**
  * A plain web URL, as the desktop hands one over once Meru holds the http or
@@ -26,6 +30,21 @@ const WEB_URL_PREFIXES = ["http://", "https://"];
  */
 export function isWebUrl(url: string) {
   return WEB_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
+}
+
+/**
+ * The same URL over https, the host untouched.
+ *
+ * A link router hands over what was clicked, and a Google link written `http://`
+ * in an old message would otherwise reach `resolveRoutableUrl`, be refused for
+ * its scheme and open nothing at all. Every workspace app this can open is
+ * https-only and redirects there anyway, and the host check still runs after
+ * this, so the upgrade widens no host.
+ */
+export function upgradeToHttps(url: string) {
+  return url.startsWith(HTTP_URL_PREFIX)
+    ? `${HTTPS_URL_PREFIX}${url.slice(HTTP_URL_PREFIX.length)}`
+    : url;
 }
 
 export function createMeruMessageUrl(userEmail: string, messageId: string) {

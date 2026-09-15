@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isWebUrl, parseMeruUrl, resolveRoutableUrl } from "./deep-link";
+import { isWebUrl, parseMeruUrl, resolveRoutableUrl, upgradeToHttps } from "./deep-link";
 
 describe("parseMeruUrl", () => {
   test("resolves the message route", () => {
@@ -117,5 +117,35 @@ describe("isWebUrl", () => {
   test("rejects a switch that carries a url", () => {
     expect(isWebUrl("--proxy-server=https://example.com")).toBe(false);
     expect(isWebUrl("--user-data-dir=/tmp/http://x")).toBe(false);
+  });
+});
+
+describe("upgradeToHttps", () => {
+  test("rewrites the scheme and nothing else", () => {
+    expect(upgradeToHttps("http://meet.google.com/abc-defg-hij")).toBe(
+      "https://meet.google.com/abc-defg-hij",
+    );
+    expect(upgradeToHttps("http://calendar.google.com/?pli=1&tab=mc")).toBe(
+      "https://calendar.google.com/?pli=1&tab=mc",
+    );
+  });
+
+  test("leaves an https url alone", () => {
+    expect(upgradeToHttps("https://meet.google.com/abc-defg-hij")).toBe(
+      "https://meet.google.com/abc-defg-hij",
+    );
+  });
+
+  test("leaves a host that merely starts with the prefix alone", () => {
+    expect(upgradeToHttps("https://evil.com/http://meet.google.com")).toBe(
+      "https://evil.com/http://meet.google.com",
+    );
+  });
+
+  test("upgrades no host into being Google's", () => {
+    expect(upgradeToHttps("http://evil.com/meet.google.com/x")).toBe(
+      "https://evil.com/meet.google.com/x",
+    );
+    expect(resolveRoutableUrl(upgradeToHttps("http://evil.com/meet.google.com/x"))).toBeUndefined();
   });
 });

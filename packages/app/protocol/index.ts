@@ -11,6 +11,7 @@ import {
   type MeruDeepLink,
   parseMeruUrl,
   resolveRoutableUrl,
+  upgradeToHttps,
 } from "@/lib/deep-link";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
@@ -226,5 +227,5 @@ export async function handleWebUrl(url: string) {
     return;
   }
 
-  await openUrlDeepLink({ type: "open", url, email: undefined });
+  await openUrlDeepLink({ type: "open", url: upgradeToHttps(url), email: undefined });
 }
