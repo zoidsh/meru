@@ -42,13 +42,18 @@ function resolveExecutablePath() {
   return path.join(process.cwd(), "dist", ...unpackedPath);
 }
 
-const EXECUTABLE_PATH = resolveExecutablePath();
+export const EXECUTABLE_PATH = resolveExecutablePath();
 
 const CLOSE_TIMEOUT = 15_000;
 
 const DIAGNOSTICS_TIMEOUT = 10_000;
 
-function launchArguments(userDataDir: string, { profile }: UseAppOptions) {
+/**
+ * Exported so that a second instance spawned to deliver a deep link is started
+ * exactly as the app under test was — the user data directory above all, since
+ * it is what the single instance lock is scoped to.
+ */
+export function launchArguments(userDataDir: string, { profile }: UseAppOptions) {
   const args = [`--user-data-dir=${userDataDir}`];
 
   /*
