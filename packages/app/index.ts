@@ -33,6 +33,7 @@ import {
   PROCESS_WEB_URL_ARG,
   setMeruProtocolClient,
 } from "@/protocol";
+import { refreshIsDefaultBrowser } from "@/protocol/default-browser";
 import { registerWindowsMailClient } from "@/protocol/windows-mail-client";
 import { theme } from "@/theme";
 import { appTray } from "@/tray";
@@ -233,6 +234,12 @@ async function init() {
 
   app.on("activate", () => {
     main.show();
+  });
+
+  // Changing the default browser happens outside Meru, so coming back to it is
+  // the moment the answer `openExternalUrl` holds can have gone stale.
+  app.on("browser-window-focus", () => {
+    refreshIsDefaultBrowser();
   });
 
   if (platform.isMacOS) {

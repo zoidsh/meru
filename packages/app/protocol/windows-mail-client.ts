@@ -10,6 +10,7 @@ import { serializeError } from "serialize-error";
 import { log } from "@/lib/log";
 import { getRegExePath } from "@/lib/windows";
 import {
+  BROWSER_PROG_ID,
   buildRegistration,
   MAILTO_PROG_ID,
   parseUserChoiceProgIds,
@@ -17,7 +18,7 @@ import {
 
 const execFile = promisify(childProcess.execFile);
 
-const USER_CHOICE_KEY = String.raw`HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\mailto`;
+const URL_ASSOCIATIONS_KEY = String.raw`HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations`;
 
 /**
  * Windows 11 22H2 added Meru's own page under Default apps, which
@@ -62,11 +63,11 @@ export async function registerWindowsMailClient() {
   }
 }
 
-async function queryUserChoiceProgIds(subKey: string) {
+async function queryUserChoiceProgIds(protocol: string, subKey: string) {
   try {
     const { stdout } = await execFile(
       getRegExePath(),
-      ["query", `${USER_CHOICE_KEY}\\${subKey}`, "/s"],
+      ["query", `${URL_ASSOCIATIONS_KEY}\\${protocol}\\${subKey}`, "/s"],
       { timeout: ms("10s") },
     );
 
@@ -82,15 +83,38 @@ async function queryUserChoiceProgIds(subKey: string) {
  * it can write. Windows 11 24H2 writes `UserChoiceLatest` instead and leaves the
  * old key stale, so the newer key wins whenever it has an answer. Not
  * `app.isDefaultProtocolClient`: it reads back the key Electron wrote itself, so
- * it answers yes for a Meru that no mailto link reaches.
+ * it answers yes for a Meru that no link reaches.
  */
-export async function isWindowsDefaultMailClient() {
+async function readUserChoiceProgIds(protocol: string) {
   const [latest, legacy] = await Promise.all([
-    queryUserChoiceProgIds("UserChoiceLatest"),
-    queryUserChoiceProgIds("UserChoice"),
+    queryUserChoiceProgIds(protocol, "UserChoiceLatest"),
+    queryUserChoiceProgIds(protocol, "UserChoice"),
   ]);
 
-  return (latest.length > 0 ? latest : legacy).includes(MAILTO_PROG_ID);
+  return latest.length > 0 ? latest : legacy;
+}
+
+export async function isWindowsDefaultMailClient() {
+  return (await readUserChoiceProgIds("mailto")).includes(MAILTO_PROG_ID);
+}
+
+let defaultBrowserPromise: Promise<boolean> | undefined;
+
+/**
+ * Held from the first ask, because every external link asks and the answer is
+ * two `reg.exe` spawns. `refreshWindowsDefaultBrowser` drops it, which is what
+ * covers a user changing the association while Meru is running.
+ */
+export function isWindowsDefaultBrowser() {
+  defaultBrowserPromise ??= readUserChoiceProgIds("https").then((progIds) =>
+    progIds.includes(BROWSER_PROG_ID),
+  );
+
+  return defaultBrowserPromise;
+}
+
+export function refreshWindowsDefaultBrowser() {
+  defaultBrowserPromise = undefined;
 }
 
 export function openWindowsDefaultAppsSettings() {
