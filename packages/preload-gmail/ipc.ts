@@ -11,7 +11,7 @@ ipc.renderer.on("gmail.openMessage", (_event, messageId: string) => {
 });
 
 ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action, requestId) => {
-  let ok = true;
+  let success = true;
 
   try {
     await sendMailAction(messageId, action);
@@ -20,10 +20,10 @@ ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action, request
   } catch (error) {
     console.error("Error handling message:", error);
 
-    ok = false;
+    success = false;
   }
 
-  ipc.main.send("gmail.messageHandled", requestId, ok);
+  ipc.main.send("gmail.messageHandled", requestId, success);
 });
 
 ipc.renderer.on("gmail.refreshInbox", () => {

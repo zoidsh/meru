@@ -126,7 +126,7 @@ export class Gmail {
    * Keyed by request rather than held per instance, because the reply comes
    * back through the one collection-level handler in `ipc.init()`.
    */
-  private static pendingMessageHandlings = new Map<string, (ok: boolean) => void>();
+  private static pendingMessageHandlings = new Map<string, (success: boolean) => void>();
 
   accountId: string;
 
@@ -905,13 +905,13 @@ export class Gmail {
     ipc.renderer.send(this._view.webContents, "gmail.refreshInbox");
   }
 
-  static resolveMessageHandled(requestId: string, ok: boolean) {
+  static resolveMessageHandled(requestId: string, success: boolean) {
     const resolve = Gmail.pendingMessageHandlings.get(requestId);
 
     if (resolve) {
       Gmail.pendingMessageHandlings.delete(requestId);
 
-      resolve(ok);
+      resolve(success);
     }
   }
 
@@ -933,7 +933,7 @@ export class Gmail {
 
     const requestId = randomUUID();
 
-    const ok = await new Promise<boolean>((resolve) => {
+    const success = await new Promise<boolean>((resolve) => {
       // A preload that never answers, because the page navigated away or the
       // view went down mid-request, must not leave a caller waiting for good.
       const timeout = setTimeout(() => {
@@ -953,7 +953,7 @@ export class Gmail {
 
     // A refused action leaves the feed exactly as it was, so the retry loop
     // would spend its ten attempts confirming that nothing happened.
-    if (!ok) {
+    if (!success) {
       return;
     }
 

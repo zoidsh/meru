@@ -1160,8 +1160,8 @@ class Ipc {
       await accounts.instances.get(accountId)?.gmail.handleMessage(messageId, action);
     });
 
-    this.main.on("gmail.messageHandled", (_event, requestId, ok) => {
-      Gmail.resolveMessageHandled(requestId, ok);
+    this.main.on("gmail.messageHandled", (_event, requestId, success) => {
+      Gmail.resolveMessageHandled(requestId, success);
     });
   }
 }
