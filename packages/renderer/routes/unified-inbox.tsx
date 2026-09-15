@@ -133,56 +133,59 @@ const createColumns = ({ showSenderIcons }: { showSenderIcons: boolean }) => [
       const date = dayjs(props.getValue());
 
       return (
-        <div
-          className="whitespace-nowrap text-muted-foreground"
-          title={createDateTimeFormatter({
-            hour: "2-digit",
-            minute: "2-digit",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }).format(date.toDate())}
-        >
-          {date.isToday()
-            ? createDateTimeFormatter({
-                hour: "2-digit",
-                minute: "2-digit",
-              }).format(date.toDate())
-            : date.isSame(dayjs(), "year")
+        <>
+          {/*
+           * Masked rather than covered by a background, because the row's own
+           * hover colour is semi-transparent and a band painted over it would
+           * come out darker than the row.
+           */}
+          <div
+            className="whitespace-nowrap text-muted-foreground group-hover:mask-r-from-[calc(100%-8.5rem)] group-data-[state=selected]:mask-r-from-[calc(100%-8.5rem)]"
+            title={createDateTimeFormatter({
+              hour: "2-digit",
+              minute: "2-digit",
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }).format(date.toDate())}
+          >
+            {date.isToday()
               ? createDateTimeFormatter({
-                  month: "short",
-                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 }).format(date.toDate())
-              : createDateTimeFormatter().format(date.toDate())}
-        </div>
+              : date.isSame(dayjs(), "year")
+                ? createDateTimeFormatter({
+                    month: "short",
+                    day: "numeric",
+                  }).format(date.toDate())
+                : createDateTimeFormatter().format(date.toDate())}
+          </div>
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-3 opacity-0 group-hover:opacity-100 group-data-[state=selected]:opacity-100">
+            {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
+              <Button
+                key={action}
+                variant="ghost"
+                size="icon-sm"
+                // Out of the tab order because the document-level hotkeys are
+                // the keyboard path, and Enter on a focused one would reach
+                // the `enter` hotkey, which cancels the press and opens the
+                // message.
+                tabIndex={-1}
+                title={label}
+                onClick={(event) => {
+                  event.stopPropagation();
+
+                  handleMessage(props.row.original, action);
+                }}
+              >
+                <Icon />
+              </Button>
+            ))}
+          </div>
+        </>
       );
     },
-  }),
-  columnHelper.display({
-    id: "actions",
-    cell: (props) => (
-      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 group-data-[state=selected]:opacity-100">
-        {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
-          <Button
-            key={action}
-            variant="ghost"
-            size="icon-sm"
-            // Out of the tab order because the document-level hotkeys are the
-            // keyboard path, and Enter on a focused one would reach the
-            // `enter` hotkey, which cancels the press and opens the message.
-            tabIndex={-1}
-            title={label}
-            onClick={(event) => {
-              event.stopPropagation();
-
-              handleMessage(props.row.original, action);
-            }}
-          >
-            <Icon />
-          </Button>
-        ))}
-      </div>
-    ),
   }),
 ];
 
@@ -436,11 +439,8 @@ function UnifiedInboxTable({
                     className={cn(
                       "px-3 py-3",
                       cell.column.id === "subject" && "w-full max-w-0",
-                      cell.column.id === "receivedAt" && "text-right",
-                      // Wide enough for the four buttons and their gaps, and
-                      // padded less than its neighbours vertically so that the
-                      // taller buttons leave the row height where it was.
-                      cell.column.id === "actions" && "w-37 py-2 text-right",
+                      // Anchors the row actions, which sit over this cell.
+                      cell.column.id === "receivedAt" && "relative text-right",
                     )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
