@@ -57,7 +57,7 @@ export async function registerWindowsMailClient() {
 
     await execFile(getRegExePath(), ["import", filePath], { timeout: ms("10s") });
   } catch (error) {
-    log.error("Failed to register Meru as a Windows mail client", {
+    log.error("Failed to register Meru as a Windows mail client and browser", {
       error: serializeError(error),
     });
   }
