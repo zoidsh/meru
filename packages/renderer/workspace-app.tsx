@@ -180,6 +180,14 @@ function WorkspaceApp() {
     (accountConfig) => accountConfig.id === searchParams.get("accountId"),
   );
 
+  /*
+   * This window is handed no accounts of its own, neither as a search parameter
+   * nor over `accounts.changed`, so the badge is decided from the config. A
+   * disabled account is not one of the accounts the badge is telling apart.
+   */
+  const hasMultipleAccounts =
+    (config?.accounts.filter((accountConfig) => !accountConfig.disabled).length ?? 0) > 1;
+
   const workspaceApp = searchParams.get("workspaceApp") as SupportedWorkspaceApp | null;
 
   const workspaceAppId = searchParams.get("workspaceAppId");
@@ -194,7 +202,7 @@ function WorkspaceApp() {
         <TitlebarButtonGroup>
           <NavigationControls workspaceAppId={workspaceAppId} />
         </TitlebarButtonGroup>
-        {config && config.accounts.length > 1 && account && (
+        {hasMultipleAccounts && account && (
           <AccountBadge label={account.label} color={account.color} />
         )}
         <div className="flex items-center gap-1">

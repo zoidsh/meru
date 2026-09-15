@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
-import type { AccountConfig } from "@meru/shared/schemas";
+import type { AccountConfig, AccountConfigs } from "@meru/shared/schemas";
 import {
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
-import { net, powerMonitor } from "electron";
+import { net, powerMonitor, session } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
@@ -25,17 +25,9 @@ class Accounts {
   instances: Map<string, Account> = new Map();
 
   init() {
-    let accountConfigs = config.get("accounts");
+    this.repairAccountConfigs();
 
-    if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
-      for (const [index, accountConfig] of accountConfigs.entries()) {
-        accountConfig.selected = index === 0;
-      }
-
-      config.set("accounts", accountConfigs);
-    }
-
-    for (const accountConfig of this.getAccountConfigs()) {
+    for (const accountConfig of this.selectLaunchableAccountConfigs(config.get("accounts"))) {
       const account = new Account(accountConfig);
 
       this.instances.set(accountConfig.id, account);
@@ -242,6 +234,57 @@ class Accounts {
   }
 
   /**
+   * Two states leave the app with nothing to run on: every account disabled,
+   * and a selection pointing at an account that no longer runs.
+   * `getSelectedAccount()` throws on either, so they are repaired here rather
+   * than tolerated everywhere.
+   */
+  private repairAccountConfigs() {
+    const accountConfigs = config.get("accounts");
+
+    let isRepaired = false;
+
+    if (!licenseKey.isValid && accountConfigs.length > 1 && accountConfigs[0]?.selected === false) {
+      for (const [index, accountConfig] of accountConfigs.entries()) {
+        accountConfig.selected = index === 0;
+      }
+
+      isRepaired = true;
+    }
+
+    const firstAccountConfig = accountConfigs[0];
+
+    if (!firstAccountConfig) {
+      return;
+    }
+
+    if (this.selectLaunchableAccountConfigs(accountConfigs).length === 0) {
+      firstAccountConfig.disabled = false;
+
+      isRepaired = true;
+    }
+
+    const launchableAccountConfigs = this.selectLaunchableAccountConfigs(accountConfigs);
+
+    const firstLaunchableAccountConfig = launchableAccountConfigs[0];
+
+    if (
+      firstLaunchableAccountConfig &&
+      !launchableAccountConfigs.some((accountConfig) => accountConfig.selected)
+    ) {
+      for (const accountConfig of accountConfigs) {
+        accountConfig.selected = accountConfig.id === firstLaunchableAccountConfig.id;
+      }
+
+      isRepaired = true;
+    }
+
+    if (isRepaired) {
+      config.set("accounts", accountConfigs);
+    }
+  }
+
+  /**
    * The accounts the app runs on, which is not everything the config holds. A
    * second account and a workspace app are both Pro, so the free version is
    * handed one account carrying no saved tabs — and every consumer reads them
@@ -255,19 +298,43 @@ class Accounts {
    * Nothing written back to disk may be built from this list.
    */
   getAccountConfigs() {
-    const accountConfigs = config.get("accounts");
+    /*
+     * Which accounts are disabled is read once, at launch, and the answer is
+     * `instances`. Reading `disabled` here instead would let a toggle take
+     * effect mid-session against an `instances` map fixed at launch: the
+     * `accounts` change listeners run synchronously off `config.set`, and the
+     * first of them to ask for an account Meru never constructed throws into
+     * Electron's main-process error dialog.
+     */
+    return this.selectLicensedAccountConfigs(config.get("accounts")).filter((accountConfig) =>
+      this.instances.has(accountConfig.id),
+    );
+  }
 
-    if (!licenseKey.isValid) {
-      return accountConfigs.slice(0, 1).map((accountConfig) => ({
-        ...accountConfig,
-        workspaceApps: {
-          ...accountConfig.workspaceApps,
-          savedTabs: [],
-        },
-      }));
+  /** The accounts Meru constructs at launch, which is what `instances` is built from. */
+  private selectLaunchableAccountConfigs(accountConfigs: AccountConfigs) {
+    return this.selectLicensedAccountConfigs(accountConfigs).filter(
+      (accountConfig) => accountConfig.disabled !== true,
+    );
+  }
+
+  /**
+   * Taken before disabled accounts are: a license bought back is meant to bring
+   * the same account to the front as it took away, whichever of them the user
+   * has turned off since.
+   */
+  private selectLicensedAccountConfigs(accountConfigs: AccountConfigs) {
+    if (licenseKey.isValid) {
+      return accountConfigs;
     }
 
-    return accountConfigs;
+    return accountConfigs.slice(0, 1).map((accountConfig) => ({
+      ...accountConfig,
+      workspaceApps: {
+        ...accountConfig.workspaceApps,
+        savedTabs: [],
+      },
+    }));
   }
 
   getAccount(accountId: string) {
@@ -406,11 +473,7 @@ class Accounts {
       },
     };
 
-    const instance = new Account(createdAccount);
-
-    instance.gmail.createView();
-
-    this.instances.set(createdAccount.id, instance);
+    this.createAccountInstance(createdAccount);
 
     config.set("accounts", [...config.get("accounts"), createdAccount]);
 
@@ -421,33 +484,88 @@ class Accounts {
     main.navigate("/");
   }
 
+  /**
+   * Builds an account and the view it runs in, and puts it where every consumer
+   * looks for it. The view is created visible, so a caller reaching here from a
+   * renderer page has to hide it again.
+   */
+  private createAccountInstance(accountConfig: AccountConfig) {
+    const instance = new Account(accountConfig);
+
+    instance.gmail.createView();
+
+    this.instances.set(accountConfig.id, instance);
+
+    return instance;
+  }
+
+  /**
+   * Takes an account out of the running app. It leaves the session and its
+   * extension data alone, which is what separates turning an account off from
+   * removing it.
+   */
+  private teardownAccount(accountId: AccountConfig["id"]) {
+    const instance = this.instances.get(accountId);
+
+    if (!instance) {
+      return;
+    }
+
+    instance.tabs.closeAll();
+
+    WorkspaceApp.closeAccountInstances(accountId);
+
+    instance.gmail.destroy();
+
+    instance.destroy();
+
+    this.instances.delete(accountId);
+  }
+
   async removeAccount(selectedAccountId: string) {
-    const account = this.getAccount(selectedAccountId);
+    const instance = this.instances.get(selectedAccountId);
 
-    account.instance.tabs.closeAll();
+    if (instance) {
+      this.teardownAccount(selectedAccountId);
 
-    WorkspaceApp.closeAccountInstances(selectedAccountId);
+      await instance.session.clearData();
 
-    account.instance.gmail.destroy();
+      await extensions.clearSessionData(instance.session);
+    } else {
+      // An account that launched disabled was never constructed, so there is
+      // nothing to tear down and no session object to remove it through. The
+      // data is still on disk under the account's partition, which is how
+      // `resetApp` reaches the same sessions.
+      const accountSession = session.fromPartition(`persist:${selectedAccountId}`);
 
-    account.instance.destroy();
+      await accountSession.clearData();
 
-    await account.instance.session.clearData();
-
-    await extensions.clearSessionData(account.instance.session);
-
-    this.instances.delete(selectedAccountId);
+      await extensions.clearSessionData(accountSession);
+    }
 
     const updatedAccounts = config
       .get("accounts")
       .filter((account) => account.id !== selectedAccountId);
 
     if (updatedAccounts.every((account) => account.selected === false)) {
-      if (!updatedAccounts[0]) {
-        throw new Error("Could not find first account");
-      }
+      const nextSelectedAccount = updatedAccounts.find((account) => account.disabled !== true);
 
-      updatedAccounts[0].selected = true;
+      if (nextSelectedAccount) {
+        nextSelectedAccount.selected = true;
+      } else {
+        const [firstAccount] = updatedAccounts;
+
+        if (!firstAccount) {
+          throw new Error("Could not find first account");
+        }
+
+        // Settings keeps this out of reach by refusing to remove the last
+        // enabled account, and every account left disabled leaves the app
+        // nothing to run on, so one is turned back on here.
+        firstAccount.disabled = false;
+
+        firstAccount.selected = true;
+      }
     }
 
     config.set("accounts", updatedAccounts);
@@ -458,14 +576,110 @@ class Accounts {
   }
 
   updateAccount(accountDetails: AccountConfig) {
+    // `disabled` is carried over from what is stored rather than from what came
+    // in. The flag and the account instance behind it have to move together, so
+    // `setAccountEnabled` is its only writer.
     config.set(
       "accounts",
       config
         .get("accounts")
         .map((account) =>
-          account.id === accountDetails.id ? { ...account, ...accountDetails } : account,
+          account.id === accountDetails.id
+            ? { ...account, ...accountDetails, disabled: account.disabled }
+            : account,
         ),
     );
+  }
+
+  /**
+   * Turns an account on or off in the running app, view and all, rather than
+   * leaving it to the next launch.
+   *
+   * Enabling builds a fresh `Account`: a destroyed `Gmail` cannot be revived,
+   * and the view it ran in left the window with it.
+   */
+  setAccountEnabled(accountId: AccountConfig["id"], enabled: boolean) {
+    const accountConfigs = config.get("accounts");
+
+    const accountConfig = accountConfigs.find((account) => account.id === accountId);
+
+    if (!accountConfig || (accountConfig.disabled !== true) === enabled) {
+      return;
+    }
+
+    // `config.get` hands back a copy, so the flag can be applied and the result
+    // asked what would run before any of it is written back.
+    accountConfig.disabled = !enabled;
+
+    const launchableAccountConfigs = this.selectLaunchableAccountConfigs(accountConfigs);
+
+    /*
+     * Behind the switch settings already locks. What has to stay standing is
+     * the list the app runs on rather than the enabled entries in the config:
+     * the free version runs the first account alone, so turning that one off
+     * leaves the app with nothing while the config still holds an enabled
+     * account behind it.
+     */
+    if (launchableAccountConfigs.length === 0) {
+      return;
+    }
+
+    if (enabled) {
+      /*
+       * The free version runs the first account alone, so turning one on
+       * outside that slice moves the flag and nothing else. The launchable list
+       * is what tells the two cases apart.
+       */
+      if (launchableAccountConfigs.some((account) => account.id === accountId)) {
+        const instance = this.createAccountInstance(accountConfig);
+
+        // A view is created visible and paints over renderer HTML, and the
+        // settings page this is switched from is renderer HTML.
+        if (main.location !== "/") {
+          this.hide();
+        }
+
+        // As `createViews` does for an account at startup, so that the tabs
+        // pinned to load on launch come up here too rather than staying
+        // dormant until one is clicked.
+        instance.tabs.loadLaunchTabs();
+      }
+    } else {
+      this.teardownAccount(accountId);
+
+      if (accountConfig.selected) {
+        /*
+         * Handed to an account that runs rather than to the next enabled one in
+         * the config, which under the free version can be an account outside
+         * the slice and so without an instance to select. Taken by id, because
+         * the free version's list holds copies and writing to one of those
+         * would leave the selection where it was.
+         */
+        const [nextSelectedAccountConfig] = launchableAccountConfigs;
+
+        if (!nextSelectedAccountConfig) {
+          throw new Error("Could not find next selected account");
+        }
+
+        for (const account of accountConfigs) {
+          account.selected = account.id === nextSelectedAccountConfig.id;
+        }
+      }
+    }
+
+    // Written after `instances` either way, so that the `accounts` listeners
+    // this fans out to see the config and the instances agreeing.
+    config.set("accounts", accountConfigs);
+
+    this.updateAllViewBounds();
+
+    // As selecting an account does. Both directions leave the window's z-order
+    // naming a view the titlebar does not: enabling puts the new one on top,
+    // and tearing the selected one down drops the front view without saying
+    // which of the rest takes its place.
+    this.refreshSelectedAccountView();
+
+    this.sendTabsChangedToRenderer();
   }
 
   hide() {

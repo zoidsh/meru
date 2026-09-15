@@ -7,6 +7,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Added
 
 - **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
+- **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
 
 ### Changed
 

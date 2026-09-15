@@ -48,17 +48,22 @@ export function seedAccount({
   label,
   selected = true,
   savedTabs = [],
+  disabled,
 }: {
   id: string;
   label: string;
   selected?: boolean;
   savedTabs?: SavedTab[];
+  disabled?: boolean;
 }): AccountConfig {
   return {
     id,
     label,
     color: null,
     selected,
+    // Left out entirely unless a test names it, so the seeded config matches
+    // what an account written before the switch existed looks like.
+    ...(disabled === undefined ? {} : { disabled }),
     notifications: true,
     gmail: {
       unreadBadge: true,

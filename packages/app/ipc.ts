@@ -145,6 +145,10 @@ class Ipc {
       accounts.updateAccount(updatedAccount);
     });
 
+    this.main.on("accounts.setAccountEnabled", (_event, accountId, enabled) => {
+      accounts.setAccountEnabled(accountId, enabled);
+    });
+
     this.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
       getNavigationWebContents(workspaceAppId).navigationHistory.goBack();
     });

@@ -28,7 +28,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@meru/ui/components/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@meru/ui/components/field";
 import { Input } from "@meru/ui/components/input";
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from "@meru/ui/components/item";
 import {
@@ -61,11 +69,14 @@ function AccountForm({
   placeholder = "Work",
   onSubmit,
   type,
+  isLastEnabledAccount = false,
 }: {
   account?: AccountConfigInput;
   placeholder?: string;
   onSubmit: (values: AccountConfigInput) => void;
   type: "add" | "edit";
+  /** Locks the Disabled switch: turning this one off would leave Meru nothing to run. */
+  isLastEnabledAccount?: boolean;
 }) {
   const form = useForm({
     defaultValues: account,
@@ -178,43 +189,72 @@ function AccountForm({
           <FieldLegend variant="label">Options</FieldLegend>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
               </Field>
             )}
           </form.Field>
           <form.Field name="gmail.unifiedInbox">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
               </Field>
             )}
           </form.Field>
           <form.Field name="notifications">
             {(field) => (
-              <Field orientation="horizontal" className="w-fit">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
+                </FieldContent>
                 <Switch
                   id={field.name}
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
                 />
-                <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
               </Field>
             )}
           </form.Field>
+          {type === "edit" && (
+            <form.Field name="disabled">
+              {(field) => (
+                <Field orientation="horizontal">
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>Disabled</FieldLabel>
+                    <FieldDescription>
+                      {isLastEnabledAccount
+                        ? "Meru needs at least one account turned on."
+                        : "Meru keeps this account signed in but doesn't load it."}
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id={field.name}
+                    name={field.name}
+                    checked={field.state.value === true}
+                    onCheckedChange={field.handleChange}
+                    disabled={isLastEnabledAccount}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          )}
         </FieldSet>
       </FieldGroup>
       <DialogFooter>
@@ -262,7 +302,13 @@ function AddAccountButton() {
   );
 }
 
-function EditAccountButton({ account }: { account: AccountConfig }) {
+function EditAccountButton({
+  account,
+  isLastEnabledAccount,
+}: {
+  account: AccountConfig;
+  isLastEnabledAccount: boolean;
+}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
@@ -287,6 +333,12 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
               gmail: { ...account.gmail, ...values.gmail },
             });
 
+            // Its own channel, because turning an account on or off builds or
+            // tears down the account behind it rather than only writing a flag.
+            if ((account.disabled === true) !== (values.disabled === true)) {
+              ipc.main.send("accounts.setAccountEnabled", account.id, values.disabled !== true);
+            }
+
             setIsDialogOpen(false);
 
             if (
@@ -298,6 +350,7 @@ function EditAccountButton({ account }: { account: AccountConfig }) {
             }
           }}
           type="edit"
+          isLastEnabledAccount={isLastEnabledAccount}
         />
       </DialogContent>
     </Dialog>
@@ -309,11 +362,13 @@ function SortableAccountItem({
   index,
   removable,
   disabled,
+  isLastEnabledAccount,
 }: {
   account: AccountConfig;
   index: number;
   removable: boolean;
   disabled: boolean;
+  isLastEnabledAccount: boolean;
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
@@ -329,7 +384,7 @@ function SortableAccountItem({
       >
         <GripVerticalIcon />
       </Button>
-      <ItemContent className="gap-2">
+      <ItemContent className={cn("gap-2", account.disabled && "opacity-60")}>
         <ItemTitle>
           <div
             className={cn(
@@ -339,8 +394,9 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.gmail.unreadBadge || account.notifications) && (
+        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
+            {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
@@ -348,7 +404,7 @@ function SortableAccountItem({
         )}
       </ItemContent>
       <ItemActions>
-        <EditAccountButton account={account} />
+        <EditAccountButton account={account} isLastEnabledAccount={isLastEnabledAccount} />
         {removable && (
           <AlertDialog>
             <AlertDialogTrigger
@@ -394,6 +450,8 @@ export function AccountsSettings() {
     return;
   }
 
+  const enabledAccounts = config.accounts.filter((account) => !account.disabled);
+
   return (
     <>
       <SettingsHeader>
@@ -421,8 +479,12 @@ export function AccountsSettings() {
                 key={account.id}
                 account={account}
                 index={index}
-                removable={config.accounts.length > 1}
+                removable={
+                  account.disabled === true ||
+                  enabledAccounts.some((enabledAccount) => enabledAccount.id !== account.id)
+                }
                 disabled={config.accounts.length < 2}
+                isLastEnabledAccount={enabledAccounts.length === 1 && !account.disabled}
               />
             ))}
           </ItemGroup>
