@@ -299,6 +299,10 @@ export type IpcMainEvents =
       "extensions.update": () => { error?: string; results?: ExtensionUpdateResult[] };
     };
 
+// CSS custom property name to color, or null where the platform has no
+// system palette to read.
+export type SystemColors = Record<string, string> | null;
+
 export type IpcRendererEvent = {
   navigate: [to: string];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
@@ -309,6 +313,7 @@ export type IpcRendererEvent = {
   "gmail.dismissMessageSentNotification": [browserWindowId: number];
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
+  "theme.systemColorsChanged": [colors: SystemColors];
   "accounts.changed": [accounts: AccountInstances];
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];
