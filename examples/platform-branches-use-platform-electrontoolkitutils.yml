@@ -1,0 +1,285 @@
+- label: violation
+  lang: tsx
+  lines: [4]
+  code: |
+    // packages/renderer/components/app-titlebar.tsx
+    function AppMenuButton({ className }: { className?: string }) {
+      // The hamburger menu only exists where there is no menu bar.
+      if (window.electron.process.platform === "darwin") {
+        return;
+      }
+
+      return (
+        <div className={cn("draggable-none", className)}>
+          <Button variant="ghost" size="icon-sm" title="App menu">
+            <EllipsisVerticalIcon />
+          </Button>
+        </div>
+      );
+    }
+
+- label: violation
+  lang: ts
+  lines: [5, 9]
+  code: |
+    // packages/app/tray.ts
+    createIcon(unread = false): Electron.NativeImage {
+      let iconFileName: string;
+
+      if (process.platform === "darwin") {
+        iconFileName = "IconMenuBarTemplate.png";
+      } else {
+        const iconColor = config.get("tray.iconColor");
+        const extension = process.platform === "win32" ? "ico" : "png";
+
+        iconFileName = `IconTray${unread ? "Unread" : ""}-${iconColor}.${extension}`;
+      }
+
+      return Electron.nativeImage.createFromPath(
+        path.join(__dirname, "..", "static", iconFileName),
+      );
+    }
+
+- label: violation
+  lang: ts
+  lines: [4]
+  code: |
+    // packages/app/menu.ts
+    {
+      label: "Reopen Closed Tab",
+      accelerator: "Command+Shift+T",
+      click: () => {
+        if (accounts.getSelectedAccount().instance.tabs.reopenClosedTab()) {
+          accounts.refreshSelectedAccountView();
+        }
+      },
+    },
+
+- label: violation
+  lang: tsx
+  lines: [2, 6]
+  code: |
+    // packages/renderer/routes/settings/general.tsx
+    import { platform } from "@electron-toolkit/utils";
+
+    export function LaunchAtLoginField() {
+      const loginItemSettings = useLoginItemSettings();
+
+      if (platform.isLinux || !loginItemSettings) {
+        return null;
+      }
+
+      return <ConfigSwitchField configKey="launchAtLogin" label="Launch at login" />;
+    }
+
+- label: violation
+  lang: ts
+  lines: [2, 5]
+  code: |
+    // packages/app/downloads.ts
+    import os from "node:os";
+
+    const FILE_MANAGER_NAME =
+      os.platform() === "darwin" ? "Finder" : os.platform() === "win32" ? "File Explorer" : "file manager";
+
+    export function revealDownload(filePath: string) {
+      shell.showItemInFolder(filePath);
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // packages/renderer/lib/workspace-apps.ts
+    export function getWorkspaceAppOpenTarget(event: React.MouseEvent) {
+      const isMacOS = navigator.userAgent.includes("Macintosh");
+
+      if (isMacOS ? event.metaKey : event.ctrlKey) {
+        return "background-tab";
+      }
+
+      return event.shiftKey ? "window" : "tab";
+    }
+
+- label: violation
+  lang: ts
+  lines: [2]
+  code: |
+    // packages/app/tray.ts
+    import { platform } from "@meru/renderer/lib/utils";
+
+    export class Tray {
+      init() {
+        if (!platform.isMacOS) {
+          this.createTray();
+        }
+      }
+    }
+
+- label: violation
+  lang: ts
+  lines: [5]
+  code: |
+    // packages/app/menu.ts
+    {
+      label: "Unified Inbox",
+      enabled: licenseKey.isValid,
+      accelerator: "Cmd+Shift+U",
+      click: () => {
+        main.navigate("/unified-inbox");
+      },
+    },
+
+- label: ok
+  lang: ts
+  note: The Select Next Account item is spelled with a bare Command, but the branch leaves it undefined off macOS, so nothing silently fails elsewhere.
+  code: |
+    // packages/app/menu.ts
+    {
+      label: "Select Next Account",
+      accelerator: platform.isMacOS ? "Command+Shift+]" : undefined,
+      click: () => {
+        accounts.selectNextAccount();
+
+        main.navigate("/");
+      },
+    },
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/menu.ts
+    const selectPinnedTabItems: MenuItemConstructorOptions[] = Array.from(
+      { length: 9 },
+      (_pinnedTabEntry, pinnedTabIndex) => ({
+        label: `Select Pinned Tab ${pinnedTabIndex + 1} (hidden shortcut)`,
+        // Literal Ctrl on every platform, like the Ctrl+Tab pair above:
+        // Command+Shift+3..6 are macOS screenshot shortcuts that never reach the
+        // app, and Command/Ctrl+1..9 already select accounts.
+        accelerator: `Ctrl+Shift+${pinnedTabIndex + 1}`,
+        visible: is.dev,
+        acceleratorWorksWhenHidden: true,
+        click: () => {
+          selectPinnedTab(pinnedTabIndex);
+        },
+      }),
+    );
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/menu.ts
+    accelerator:
+      index < 9
+        ? `${platform.isLinux ? "Alt" : "CommandOrControl"}+${index + 1}`
+        : undefined,
+
+- label: ok
+  lang: tsx
+  code: |
+    // packages/renderer/routes/settings/workspace-apps.tsx
+    import { platform } from "@/lib/utils";
+
+    export function OpenBehaviorHint() {
+      return (
+        <p>
+          Hold <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to open a background tab or{" "}
+          <Kbd>Shift</Kbd> to open a new window.
+        </p>
+      );
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/renderer/lib/utils.ts
+    export const platform = {
+      isMacOS: window.electron.process.platform === "darwin",
+      isWindows: window.electron.process.platform === "win32",
+      isLinux: window.electron.process.platform === "linux",
+    };
+
+- label: ok
+  lang: ts
+  code: |
+    // scripts/e2e.ts
+    const BUILDS = {
+      darwin: "dist/mac/Meru.app/Contents/MacOS/Meru",
+      linux: "dist/linux-unpacked/meru",
+      win32: "dist/win-unpacked/Meru.exe",
+    };
+
+    const build = BUILDS[process.platform as keyof typeof BUILDS];
+
+    if (!build) {
+      throw new Error(
+        `No app build is defined for ${process.platform}. Build the app and point MERU_EXECUTABLE at it.`,
+      );
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/downloads.ts
+    import { platform } from "@electron-toolkit/utils";
+
+    const FILE_MANAGER_NAME = platform.isMacOS
+      ? "Finder"
+      : platform.isWindows
+        ? "File Explorer"
+        : "file manager";
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/menu.ts
+    {
+      role: "pasteAndMatchStyle",
+      accelerator: "CommandOrControl+Alt+Shift+V",
+      visible: false,
+      // The visible item above already owns Shift+V on Windows and Linux, so the
+      // hidden twin is only ever reachable on macOS.
+      acceleratorWorksWhenHidden: platform.isMacOS,
+    },
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/lib/machine-id/index.ts
+    if (platform.isWindows) {
+      const { stdout } = await execFile(getRegExePath(), ["QUERY", CRYPTOGRAPHY_KEY, "/v", "MachineGuid"]);
+
+      return parseRegOutput(stdout);
+    }
+
+    if (platform.isLinux) {
+      return normalizeLinuxId(await readLinuxMachineId());
+    }
+
+    throw new Error(`Unsupported platform: ${process.platform}`);
+
+- label: ok
+  lang: ts
+  note: "`@meru/electron-extensions` is the app-agnostic package, so it has no `@/lib/utils` and does not take the Electron toolkit for one branch. Should an app-agnostic package be held to the helper as well, or is a raw `process.platform` the right call there?"
+  code: |
+    // packages/electron-extensions/native-messaging/host.ts
+    private getArguments(extensionOrigin: string) {
+      if (process.platform === "win32") {
+        // Chrome passes the calling window's handle on Windows, and hosts that
+        // parent a dialog on it expect the argument to be there
+        return [extensionOrigin, "--parent-window=0"];
+      }
+
+      return [extensionOrigin];
+    }
+
+- label: ok
+  lang: tsx
+  code: |
+    // packages/renderer/routes/settings/advanced.tsx
+    {platform.isMacOS && (
+      <p>
+        Quit Meru with <Kbd>Command</Kbd> <Kbd>Q</Kbd> to write the window state before it
+        relaunches.
+      </p>
+    )}

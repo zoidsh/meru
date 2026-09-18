@@ -1,0 +1,453 @@
+- label: violation
+  lang: ts
+  lines: [21]
+  note: The window already has a "close" handler in this file; the new state save belongs inside it.
+  code: |
+    // packages/app/main.ts
+        this.window.on("close", (event) => {
+          // Workaround: closing the main window while full screen leaves a black screen
+          if (platform.isMacOS && this.window.isFullScreen()) {
+            this.window.once("leave-full-screen", () => {
+              this.window.hide();
+            });
+
+            this.window.setFullScreen(false);
+          }
+
+          if (!this.isQuittingApp) {
+            event.preventDefault();
+
+            this.window.blur();
+
+            this.window.hide();
+          }
+        });
+
+        this.window.on("close", () => {
+          this.saveWindowState();
+        });
+- label: violation
+  lang: ts
+  lines: [18]
+  code: |
+    // packages/app/accounts.ts
+      private registerWindowListeners() {
+        main.window.on("resize", () => {
+          this.updateAllViewBounds();
+        });
+
+        // A window that was hidden or minimized sometimes comes back with the account views blank
+        main.window.on("show", () => {
+          this.refreshSelectedAccountView();
+        });
+
+        main.window.on("restore", () => {
+          this.refreshSelectedAccountView();
+        });
+      }
+
+      private registerUnreadBadgeListeners() {
+        main.window.on("show", () => {
+          this.updateUnreadBadge();
+        });
+      }
+- label: violation
+  lang: ts
+  lines: [13]
+  code: |
+    // packages/app/tabs.ts
+    export function registerTabBroadcasts(view: WebContentsView) {
+      const broadcastTabsChanged = () => {
+        accounts.sendTabsChangedToRenderer();
+      };
+
+      view.webContents.on("did-navigate", broadcastTabsChanged);
+      view.webContents.on("did-navigate-in-page", broadcastTabsChanged);
+      view.webContents.on("page-title-updated", broadcastTabsChanged);
+      view.webContents.on("did-start-loading", broadcastTabsChanged);
+      view.webContents.on("did-stop-loading", broadcastTabsChanged);
+
+      view.webContents.on("did-stop-loading", () => {
+        accounts.saveTabs();
+      });
+    }
+- label: violation
+  lang: ts
+  lines: [14]
+  code: |
+    // packages/app/gmail/index.ts
+        this.view.webContents.on("dom-ready", () => {
+          if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+            this.view.webContents.insertCSS(gmailCSS);
+
+            this.applyLabelColors();
+
+            this.fetchInboxFeed();
+          }
+
+          this.view.webContents.insertCSS(meruCSS);
+        });
+
+        this.view.webContents.on("dom-ready", () => {
+          this.view.webContents.setVisualZoomLevelLimits(1, 3);
+        });
+
+        this.view.webContents.on("page-title-updated", (_event, pageTitle, explicitSet) => {
+          this.pageTitle = explicitSet ? pageTitle : "";
+        });
+- label: violation
+  lang: ts
+  lines: [9]
+  code: |
+    // packages/app/workspace-app.ts
+      private registerViewListeners() {
+        this.view.webContents.on("did-navigate", this.handleDidNavigate);
+        this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+        this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+        this.view.webContents.on("enter-html-full-screen", this.handleEnterHtmlFullscreen);
+        this.view.webContents.on("leave-html-full-screen", this.handleLeaveHtmlFullscreen);
+
+        this.view.webContents.on("page-title-updated", () => {
+          this.updateWindowTitle();
+        });
+
+        if (this._window) {
+          this.registerWindowedViewListeners();
+        } else {
+          registerTabBroadcasts(this.view);
+        }
+      }
+- label: violation
+  lang: ts
+  lines: [7]
+  code: |
+    // packages/app/lib/web-contents.ts
+    export function logLoadFailures(webContents: WebContents, name: string) {
+      webContents.on("render-process-gone", (_event, { reason, exitCode }) => {
+        log.error(`${name} renderer is gone`, { reason, exitCode });
+      });
+
+      webContents.on("render-process-gone", () => {
+        webContents.reload();
+      });
+
+      webContents.on(
+        "did-fail-load",
+        (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+          if (!isLoadFailureWorthLogging(errorCode, isMainFrame)) {
+            return;
+          }
+
+          log.error(`${name} failed to load`, { errorCode, errorDescription, validatedURL });
+        },
+      );
+    }
+- label: violation
+  lang: ts
+  lines: [17]
+  code: |
+    // packages/app/menu.ts
+      init() {
+        this._subscribeToSelectedAccount();
+
+        this.refresh();
+
+        config.onDidChange("accounts", () => {
+          this._subscribeToSelectedAccount();
+
+          this.refresh();
+        });
+
+        app.on("browser-window-focus", () => {
+          this.refresh();
+        });
+
+        app.on("browser-window-focus", () => {
+          this.updateDockMenu();
+        });
+      }
+- label: violation
+  lang: ts
+  lines: [13]
+  note: Both listeners hang off the same `window.webContents` parameter, so the second one is work the first handler should have taken.
+  code: |
+    // packages/app/gmail/index.ts
+      private registerNavigationHandler(window: BrowserWindow | WebContentsView) {
+        window.webContents.on("did-navigate", (_event, url) => {
+          WorkspaceApp.handleNavigate(url, this.session);
+
+          if (window === this.view) {
+            this.store.setState({
+              attentionRequired: !url.startsWith(this.baseUrl),
+            });
+          }
+        });
+
+        window.webContents.on("did-navigate", () => {
+          this.applyLabelColors();
+        });
+
+        window.webContents.on("will-redirect", (event, url) => {
+          WorkspaceApp.handleRedirect(event, url, window.webContents);
+        });
+      }
+- label: ok
+  lang: ts
+  note: Same event, two different targets - the account's own view and the renderer window.
+  code: |
+    // packages/app/gmail/index.ts
+      private registerViewListeners() {
+        this.view.webContents.on("did-navigate", (_event, url) => {
+          this.store.setState({
+            attentionRequired: !url.startsWith(this.baseUrl),
+          });
+        });
+      }
+
+      private registerRendererListeners() {
+        main.window.webContents.on("did-navigate", () => {
+          this.updateViewBounds();
+        });
+      }
+- label: ok
+  lang: ts
+  note: One target, six listeners, every one a different event.
+  code: |
+    // packages/app/workspace-app.ts
+      private registerViewListeners() {
+        this.view.webContents.on("did-navigate", this.handleDidNavigate);
+        this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+        this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+        this.view.webContents.on("enter-html-full-screen", this.handleEnterHtmlFullscreen);
+        this.view.webContents.on("leave-html-full-screen", this.handleLeaveHtmlFullscreen);
+        this.view.webContents.on("media-started-playing", this.handleMediaStartedPlaying);
+      }
+- label: ok
+  lang: ts
+  note: The windowed pair attaches when the app detaches to a window and comes off when it is adopted back into tabs, so it cannot be folded into the permanent handler.
+  code: |
+    // packages/app/workspace-app.ts
+      private registerViewListeners() {
+        this.view.webContents.on("did-navigate", this.handleDidNavigate);
+        this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+        this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+      }
+
+      private registerWindowedViewListeners() {
+        this.view.webContents.on("did-navigate", this.handleWindowedNavigation);
+        this.view.webContents.on("did-navigate-in-page", this.handleWindowedNavigation);
+        this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+        this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+      }
+
+      private unregisterWindowedViewListeners() {
+        this.view.webContents.off("did-navigate", this.handleWindowedNavigation);
+        this.view.webContents.off("did-navigate-in-page", this.handleWindowedNavigation);
+        this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
+        this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
+      }
+- label: ok
+  lang: ts
+  note: The zoom listener is a `once` that fires on the first navigation only and takes itself off, so it stays apart from the standing handler.
+  code: |
+    // packages/app/workspace-app.ts
+        this.view = this.createView({ url, options: view, additionalArguments, navigationHistory });
+
+        this.updateViewBounds();
+        this.registerViewListeners();
+
+        this.view.webContents.once("did-navigate", () => {
+          this.applyInitialZoomFactor(zoomFactor);
+        });
+
+        this.view.webContents.once("destroyed", () => {
+          this.viewDestroyed = true;
+
+          this.close();
+        });
+
+      private registerViewListeners() {
+        this.view.webContents.on("did-navigate", this.handleDidNavigate);
+        this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
+      }
+- label: ok
+  lang: ts
+  note: Config listeners registered once at collection level, one key each.
+  code: |
+    // packages/app/accounts.ts
+      private registerConfigListeners() {
+        config.onDidChange("gmail.labelColors", () => {
+          this.applyLabelColorsToAllAccounts();
+        });
+
+        config.onDidChange("verticalTabs.width", () => {
+          this.updateAllViewBounds();
+        });
+
+        config.onDidChange("verticalTabs.showWindows", () => {
+          this.updateAllViewBounds();
+        });
+
+        config.onDidChange("workspaceApps.mode", () => {
+          this.updateAllViewBounds();
+        });
+      }
+- label: ok
+  lang: ts
+  note: The new work went into the handler that was already there.
+  code: |
+    // packages/app/gmail/index.ts
+        this.view.webContents.on("dom-ready", () => {
+          if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+            this.view.webContents.insertCSS(gmailCSS);
+
+            this.labelColorsCssKey = null;
+
+            this.applyLabelColors();
+
+            this.fetchInboxFeed();
+
+            this.view.webContents.setVisualZoomLevelLimits(1, 3);
+          }
+
+          this.view.webContents.insertCSS(meruCSS);
+        });
+- label: ok
+  lang: ts
+  note: The blur listener is attached when the popup opens and taken off when it closes, and the resize listener is on the parent window rather than the view.
+  code: |
+    // packages/app/lib/popup.ts
+      private close = () => {
+        if (!parentWindow.isDestroyed()) {
+          parentWindow.removeListener("resize", this.setBounds);
+
+          parentWindow.removeListener("closed", this.close);
+        }
+
+        if (!this.view.webContents.isDestroyed()) {
+          // Only the listeners this class added come off: removing them all takes
+          // Electron's own with it and leaves the webContents unable to tear down.
+          this.view.webContents.off("blur", this.handleBlur);
+
+          this.view.webContents.close();
+        }
+      };
+
+      toggle(parentWindow: BrowserWindow, options: PopupOptions) {
+        this.view.webContents.once("blur", this.handleBlur);
+
+        parentWindow.on("resize", this.setBounds);
+
+        parentWindow.once("closed", this.close);
+      }
+- label: ok
+  lang: ts
+  note: Two one-shot listeners on two different emitters, each one taking the other off when it fires.
+  code: |
+    // packages/app/account.ts
+        const windowEvent = "closed";
+
+        const ipcEvent = "desktopSources.select";
+
+        const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+          desktopSourcesWindow.removeListener(windowEvent, windowListener);
+
+          callback({ video: desktopSource });
+
+          desktopSourcesWindow.destroy();
+        };
+
+        const windowListener = () => {
+          ipcMain.removeListener(ipcEvent, ipcListener);
+
+          callback({});
+
+          desktopSourcesWindow.destroy();
+        };
+
+        ipcMain.once(ipcEvent, ipcListener);
+
+        desktopSourcesWindow.once(windowEvent, windowListener);
+- label: ok
+  lang: ts
+  note: The menu resubscribes to whichever account is selected, so its listener attaches and detaches on its own while the app-level one stands for the life of the process.
+  code: |
+    // packages/app/menu.ts
+      init() {
+        this._subscribeToSelectedAccount();
+
+        app.on("browser-window-focus", () => {
+          this.refresh();
+        });
+      }
+
+      private _subscribeToSelectedAccount() {
+        for (const unsubscribe of this._selectedAccountUnsubscribeFns) {
+          unsubscribe();
+        }
+
+        this._selectedAccountUnsubscribeFns.clear();
+
+        const gmailWebContents = accounts.getSelectedAccount().instance.gmail.view.webContents;
+
+        const refreshMenu = () => {
+          this.refresh();
+        };
+
+        gmailWebContents.on("did-navigate-in-page", refreshMenu);
+
+        this._selectedAccountUnsubscribeFns.add(() => {
+          if (!gmailWebContents.isDestroyed()) {
+            gmailWebContents.removeListener("did-navigate-in-page", refreshMenu);
+          }
+        });
+      }
+- label: ok
+  lang: ts
+  note: Five events, one target, one shared handler - nothing here repeats an event.
+  code: |
+    // packages/app/tabs.ts
+    export function registerTabBroadcasts(view: WebContentsView) {
+      const broadcastTabsChanged = () => {
+        accounts.sendTabsChangedToRenderer();
+      };
+
+      view.webContents.on("did-navigate", broadcastTabsChanged);
+      view.webContents.on("did-navigate-in-page", broadcastTabsChanged);
+      view.webContents.on("page-title-updated", broadcastTabsChanged);
+      view.webContents.on("did-start-loading", broadcastTabsChanged);
+      view.webContents.on("did-stop-loading", broadcastTabsChanged);
+    }
+- label: ok
+  lang: ts
+  note: Each notification is a fresh emitter, and the three listeners are three different events on it.
+  code: |
+    // packages/app/notifications.ts
+    function attachNotificationListeners(
+      notification: Notification,
+      { click, action }: { click?: () => void; action?: (index: number) => void },
+    ) {
+      if (click) {
+        notification.once("click", click);
+      }
+
+      if (action) {
+        notification.once("action", (_event, index) => {
+          action(index);
+        });
+      }
+    }
+
+    export function createNewEmailNotification(options: NotificationConstructorOptions) {
+      const notification = new Notification(options);
+
+      attachNotificationListeners(notification, { click, action });
+
+      if (sound !== "system" && playSound) {
+        notification.once("show", () => {
+          ipc.renderer.send(main.window.webContents, "notifications.playSound", { sound });
+        });
+      }
+
+      notification.show();
+    }

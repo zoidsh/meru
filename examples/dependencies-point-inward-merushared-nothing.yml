@@ -1,0 +1,248 @@
+- label: violation
+  lang: ts
+  lines: [4]
+  note: A type-only import still ties the renderer bundle's types to the main process package.
+  code: |
+    // packages/renderer/lib/stores.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import type { AccountInstances } from "@meru/shared/schemas";
+    import type { Account } from "@meru/app/accounts";
+    import { create } from "zustand";
+
+    export const useAccountsStore = create<{ accounts: Account[] }>(() => ({
+      accounts: [],
+    }));
+
+- label: violation
+  lang: ts
+  lines: [2]
+  code: |
+    // packages/shared/tabs.ts
+    import { useAccountsStore } from "@meru/renderer/lib/stores";
+    import type { AccountConfig } from "./schemas";
+
+    export function getVisibleVerticalTabs(account: AccountConfig) {
+      const { accounts } = useAccountsStore.getState();
+      return accounts.find((candidate) => candidate.id === account.id)?.tabs ?? [];
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // packages/electron-extensions/install/index.ts
+    import path from "node:path";
+    import { config } from "@meru/app/config";
+    import { getExtensionBridgeUrl } from "../bridge/protocol";
+
+    export function getInstallDir() {
+      return path.join(config.get("extensions.installDir"), "derived");
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // packages/preload-gmail/unread-count.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { accounts } from "@meru/app/accounts";
+
+    export function observeUnreadCount() {
+      ipc.main.send("gmail.setUnreadCount", accounts.getSelected().id, 0);
+    }
+
+- label: violation
+  lang: tsx
+  lines: [3]
+  code: |
+    // packages/renderer/components/settings/general.tsx
+    import { Field } from "@meru/ui/components/field";
+    import { config } from "../../../app/config";
+
+    export function LaunchAtLoginField() {
+      return <Field label="Launch at login" checked={config.get("app.launchAtLogin")} />;
+    }
+
+- label: violation
+  lang: ts
+  lines: [2]
+  note: Was deciding whether shared may reach a leaf package for a class-name helper; shared is the innermost layer, so I labelled it a violation. Should shared ever be allowed to import `@meru/ui`?
+  code: |
+    // packages/shared/accounts.ts
+    import { cn } from "@meru/ui/lib/utils";
+    import type { AccountConfig } from "./schemas";
+
+    export function accountBadgeClassName(account: AccountConfig) {
+      return cn("rounded-full", account.color && `bg-${account.color}`);
+    }
+
+- label: violation
+  lang: tsx
+  lines: [4]
+  note: A dynamic `import()` of the main process package, deferred to call time rather than the module's import list.
+  code: |
+    // packages/renderer/components/titlebar/account-row.tsx
+    export async function revealAccountWindow(accountId: string) {
+      const { main } = await import("@meru/app/main");
+
+      main.window.show();
+      main.selectAccount(accountId);
+    }
+
+- label: violation
+  lang: tsx
+  lines: [2]
+  note: Was deciding how strict a leaf is; `@meru/ui` importing the renderer inverts the direction, so I labelled it a violation. Is a leaf reaching into the renderer in scope for this tenet, or only `@meru/app` and `@meru/shared`?
+  code: |
+    // packages/ui/components/kbd.tsx
+    import { platform } from "@meru/renderer/lib/utils";
+    import { cn } from "@meru/ui/lib/utils";
+
+    export function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
+      return <kbd className={cn(platform.isMacOS && "font-sans", className)} {...props} />;
+    }
+
+- label: violation
+  lang: ts
+  lines: [2]
+  code: |
+    // packages/dark-theme/index.ts
+    import { inboxAnchorElementSelector } from "@meru/preload-gmail/lib/selectors";
+
+    export function applyDarkTheme() {
+      document.querySelector(inboxAnchorElementSelector)?.classList.add("meru-dark");
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  note: The specifier never names `@meru/app`, but it climbs out of the preload package and into `packages/app`.
+  code: |
+    // packages/preload-workspace-app/index.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { createChildWebContentsView } from "../app/lib/web-contents";
+
+    export function openLinkInChildView(url: string) {
+      createChildWebContentsView({ url });
+      ipc.main.send("workspaceApp.didOpenLink", url);
+    }
+
+- label: ok
+  lang: ts
+  note: The relative paths climb a directory but stay inside `packages/electron-extensions`.
+  code: |
+    // packages/electron-extensions/api/windows.ts
+    import { ExtensionBridge } from "../bridge/bridge";
+    import type { ChromeNamespace } from "../lib/chrome";
+    import { createEvent } from "../lib/event";
+
+    export function createWindows(bridge: ExtensionBridge): ChromeNamespace {
+      return { onCreated: createEvent(bridge, "windows.onCreated") };
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/tray.ts
+    import { platform } from "@electron-toolkit/utils";
+    import { ms } from "@meru/shared/ms";
+    import { accounts } from "@/accounts";
+    import { config } from "@/config";
+
+    export const appTray = {
+      init() {
+        if (!config.get("tray.enabled")) {
+          return;
+        }
+
+        setTimeout(() => accounts.refreshUnreadCounts(), ms("1s"));
+      },
+    };
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/renderer/lib/stores.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import type { AccountTabsState } from "@meru/shared/tabs";
+    import { create } from "zustand";
+
+    export const useTabsStore = create<{ tabs: AccountTabsState }>(() => ({
+      tabs: {},
+    }));
+
+- label: ok
+  lang: ts
+  note: App glue for the extension package lives in app and imports the package, which is the direction the layering allows.
+  code: |
+    // packages/app/extensions.ts
+    import { Extensions, pruneDerivedExtensions } from "@meru/electron-extensions";
+    import { curatedExtensions } from "@meru/shared/extensions";
+    import { config } from "@/config";
+
+    export const extensions = new Extensions({
+      curated: curatedExtensions,
+      installDir: config.get("extensions.installDir"),
+    });
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/preload-gmail/dark-theme/message.ts
+    import { applyDarkTheme } from "@meru/dark-theme";
+    import { GMAIL_URL } from "@meru/shared/gmail";
+    import { $ } from "select-dom";
+
+    export function darkThemeMessage() {
+      if (window.location.origin === GMAIL_URL) {
+        applyDarkTheme($("body"));
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: The package name appears in a comment and in a bundler entry path, not in an import.
+  code: |
+    // scripts/build.ts
+    // Rolldown gets the main entry only; the preloads come in through `@meru/app`
+    // and electron-builder would ship a second copy of anything listed twice.
+    export const mainBundle = {
+      input: "./packages/app/index.ts",
+      external: ["electron"],
+    };
+
+- label: ok
+  lang: ts
+  note: The package name is inside a template literal in an error message.
+  code: |
+    // packages/renderer/lib/errors.ts
+    export function describeIpcFailure(channel: string) {
+      return `No handler for ${channel}. Register it in ipc.init() in @meru/app.`;
+    }
+
+- label: ok
+  lang: tsx
+  note: "`@/*` is each package's own alias, so this resolves inside the renderer."
+  code: |
+    // packages/renderer/components/titlebar/titlebar.tsx
+    import { cn } from "@meru/ui/lib/utils";
+    import { useConfig } from "@/lib/config";
+    import { platform } from "@/lib/utils";
+
+    export function Titlebar() {
+      const config = useConfig();
+
+      return <div className={cn("flex", platform.isMacOS && "pl-20")} data-hidden={!config} />;
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/shared/renderer/ipc.ts
+    import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/renderer";
+    import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
+
+    export const ipc = {
+      main: new IpcEmitter<IpcMainEvents>(),
+      renderer: new IpcListener<IpcRendererEvent>(),
+    };

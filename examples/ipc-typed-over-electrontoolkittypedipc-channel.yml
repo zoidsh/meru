@@ -1,0 +1,206 @@
+- label: violation
+  lang: ts
+  code: |
+    // packages/app/accounts.ts
+    import { ipcMain } from "electron";
+
+    export function initAccountsIpc() {
+      ipcMain.handle("get-accounts", () => {
+        return accounts.getAccounts().map((account) => account.config);
+      });
+    }
+  lines: [4]
+  note: Raw ipcMain, a handler outside ipc.init(), and a channel name with no domain prefix.
+
+- label: violation
+  lang: tsx
+  code: |
+    // packages/renderer/routes/settings/downloads.tsx
+    import { ipcRenderer } from "electron";
+
+    export function useDownloadsLocation() {
+      return useQuery({
+        queryKey: ["downloads", "location"],
+        queryFn: () => ipcRenderer.invoke("downloads.getLocation"),
+      });
+    }
+  lines: [6]
+  note: The channel name follows the convention, but the call goes around the typed client in @meru/shared/renderer/ipc.
+
+- label: violation
+  lang: ts
+  code: |
+    // packages/app/tray.ts
+    import { ipc } from "@/ipc";
+
+    ipc.main.on("tray.setUnreadCount", (_event, unreadCount) => {
+      tray.setUnreadCount(unreadCount);
+    });
+  lines: [3]
+  note: Typed wrapper and a well-formed name, but the main-process handler registers in tray.ts instead of ipc.init().
+
+- label: violation
+  lang: ts
+  code: |
+    // packages/app/extensions.ts
+    import { IpcListener } from "@electron-toolkit/typed-ipc/main";
+
+    export type ExtensionsIpcEvents = {
+      "extensions.getInstalled": () => InstalledExtensionState[];
+      "extensions.install": (extensionId: string) => { error?: string };
+    };
+
+    export const extensionsIpc = new IpcListener<ExtensionsIpcEvents>();
+  lines: [3]
+  note: A second channel map, declared outside packages/shared/types.ts.
+
+- label: violation
+  lang: ts
+  code: |
+    // packages/shared/types.ts
+    export type IpcMainEvents =
+      | {
+          "accounts.selectAccount": [accountId: AccountConfig["id"]];
+          getUnifiedInboxMessages: [];
+          "unified-inbox.refresh": [];
+          UNIFIED_INBOX_CLEAR: [];
+        }
+  lines: [5, 6]
+  note: Right file, right map, but three names that are not domain.verbNoun.
+
+- label: violation
+  lang: ts
+  code: |
+    // packages/app/gmail/index.ts
+    private handleUnreadCountChanged(unreadCount: number) {
+      main.window.webContents.send("unread-count-changed", unreadCount);
+    }
+  lines: [3]
+
+- label: violation
+  lang: ts
+  code: |
+    // packages/app/account.ts
+    const ipcEvent = "desktopSources.select";
+
+    const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+      desktopSourcesWindow.removeListener(windowEvent, windowListener);
+
+      callback({ video: desktopSource });
+
+      desktopSourcesWindow.destroy();
+    };
+
+    ipcMain.once(ipcEvent, ipcListener);
+  lines: [11]
+  note: >-
+    Labelled violation because the receive goes through raw ipcMain with a hand-written event
+    signature rather than the typed listener, even though the channel is declared in the map and
+    named correctly. This is code that ships in packages/app/account.ts today, where the desktop
+    picker needs a one-shot listener it can also remove. Question for Tim, should a one-shot
+    ipcMain.once for a declared channel count as a sanctioned exception, and if so should the
+    criteria say so?
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/ipc.ts
+    init() {
+      ipc.main.handle("bookmarks.getBookmarks", () => {
+        return bookmarks.serialize();
+      });
+
+      ipc.main.on("bookmarks.openBookmark", (_event, accountId, bookmarkId) => {
+        bookmarks.open(accountId, bookmarkId);
+      });
+    }
+  note: getBookmarks and openBookmark are verbNoun under the bookmarks domain.
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/shared/types.ts
+    export type IpcMainEvents =
+      | {
+          "downloads.openFile": [item: Pick<DownloadItem, "id" | "filePath">];
+          "downloads.showFileInFolder": [item: Pick<DownloadItem, "id" | "filePath">];
+          "downloads.dragFile": [item: Pick<DownloadItem, "id" | "filePath">];
+        }
+      | {
+          "downloads.setLocation": () => { canceled: boolean };
+        };
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/renderer/lib/react-query.ts
+    export function useConfigMutation({ onSuccess }: { onSuccess?: () => void } = {}) {
+      return useMutation({
+        mutationFn: (config: Partial<Config>) => ipc.main.invoke("config.setConfig", config),
+        onSuccess,
+      });
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/trial.ts
+    setDaysLeft(daysLeft: number) {
+      this.daysLeft = daysLeft;
+
+      ipc.renderer.send(main.window.webContents, "trial.daysLeftChanged", daysLeft);
+    }
+  note: A push from a main-process module other than ipc.ts, through the typed emitter. Only handlers are tied to ipc.init().
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/preload-gmail/ipc.ts
+    ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action, requestId) => {
+      const success = await handleMessage(messageId, action);
+
+      ipc.main.send("gmail.messageHandled", requestId, success);
+    });
+  note: A preload listener, not a main-process handler, so it belongs in the preload's own ipc.ts.
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/config.ts
+    const config = new Store<Config>({
+      defaults: {
+        "notifications.playSound": true,
+        "tray.iconColor": "system",
+        "verticalTabs.showWidthToggle": true,
+      },
+    });
+
+    config.onDidChange("accounts.unreadBadge", () => {
+      accounts.refreshUnreadBadges();
+    });
+  note: section.camelCase config keys and an electron-store change listener, neither of which is an IPC channel.
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/workspace-app.ts
+    this.view.webContents.on("did-navigate", this.handleDidNavigate);
+    this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+    this.window.webContents.once("did-finish-load", () => {
+      ipc.renderer.send(this.chromeWebContents, "workspaceApp.pageTitleChanged", this.title);
+    });
+  note: Electron emitter events with fixed names of their own, not IPC channels; the send inside goes through the typed emitter.
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/preload-workspace-app/service-worker-notifications.ts
+    export function initServiceWorkerNotifications() {
+      contextBridge.exposeInMainWorld(
+        "meruShowNotification",
+        (notification: WorkspaceAppNotification) => {
+          ipc.main.send("workspaceApp.showNotification", notification);
+        },
+      );
+    }
+  note: contextBridge names a window property, not a channel, and the IPC underneath it is typed.

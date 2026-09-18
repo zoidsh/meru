@@ -1,0 +1,77 @@
+version: 1
+rules:
+  # A comment says only what the code cannot (~/.claude/CLAUDE.md, Comments)
+  - comment-why
+tenets:
+  - id: test-files-e2ets-perfts-never
+    tenet: Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
+    kind: [code]
+    source: CLAUDE.md:28
+    criteria:
+      true: "A changed line that gives a test file the `*.spec.ts` name or makes one reachable under it: a `testMatch`, `files`, `include` or command-line glob matching `*.spec.ts`, a script or CI step running a `.spec.ts` path, an import of a `.spec` module, or a file header or comment introducing a test file named `*.spec.ts`."
+      false: "A line that names test files `*.e2e.ts`, `*.perf.ts` or `*.test.ts`, or that uses the word `spec` for something that is not a test file's name in this repository: a `spec` identifier or `GURL::spec()`, prose about a specification or spec compliance, a test title or manifest field containing the word, or a comment recording that `*.spec.ts` is deliberately avoided."
+    examples_from: examples/test-files-e2ets-perfts-never.yml
+    exclude: ["examples/**"]
+  - id: dependencies-point-inward-merushared-nothing
+    tenet: Dependencies point inward on `@meru/shared`; nothing imports `@meru/app`.
+    kind: [code]
+    source: CLAUDE.md:43
+    # usable, not sharp: separation is clean (auc 1, nothing unstable), but `packages/shared`
+    # importing a leaf for a class-name helper still scores 0.52 and would slip past `fail`.
+    # Sharpening that needs a settled answer to whether shared may import `@meru/ui` at all.
+    criteria:
+      true: "Any import reaching a Meru package the file's own package may not depend on, however small the imported symbol is and whether it is a value, a type-only import, a dynamic `import()` or a `require()`: a file anywhere outside `packages/app` importing `@meru/app` or an `@meru/app/...` subpath, the renderer, a preload and `@meru/electron-extensions` all included; a file under `packages/shared` importing any `@meru/*` package at all, shared being the innermost layer that nothing in the repository may pull it back through; a file in the leaf packages `@meru/ui` or `@meru/dark-theme` importing anything from `packages/` other than `@meru/shared`, such as `@meru/renderer` or a preload; or a relative specifier that leaves the file's own package directory and lands in a sibling package, `../app/lib/web-contents` from a preload or `../../../app/config` from the renderer being that same forbidden import written without the package name."
+      false: "An import that resolves inside the file's own package, whether relative, climbing directories within that package, or through the package's own `@/*` or `@meru/ui/*` alias; an import of `@meru/shared`, including a deep path such as `@meru/shared/renderer/ipc`, or of a third-party, node or Electron module; an import a file under `packages/app` makes of another workspace package, since app is the outermost layer and may depend on every other; or another package's name appearing in a comment, a string literal, an error message or a build-script entry path rather than in an import."
+    examples_from: examples/dependencies-point-inward-merushared-nothing.yml
+    exclude: ["examples/**"]
+  - id: ipc-typed-over-electrontoolkittypedipc-channel
+    tenet: IPC is typed over `@electron-toolkit/typed-ipc`. Channel maps are declared once in `packages/shared/types.ts`, handlers register in `ipc.init()` in `packages/app/ipc.ts`, and names follow `domain.verbNoun`.
+    kind: [code]
+    source: CLAUDE.md:51
+    criteria:
+      true: "An IPC channel that leaves the typed path: a send, invoke, handle or listener made through Electron's raw `ipcMain`, `ipcRenderer` or `webContents.send` rather than the typed `ipc` wrapper; a main-process receiver, meaning `ipc.main.on` or `ipc.main.handle`, registered in a main-process file other than `ipc.init()` in `packages/app/ipc.ts`; a channel map declared outside `packages/shared/types.ts`; or a channel name that is not `domain.verbNoun`, such as a bare verb, kebab-case or SCREAMING_CASE."
+      false: "A call that stays on the typed wrapper and is not a main-process receiver, which includes any `ipc.renderer.send` push to a web contents from a main-process module other than `ipc.ts`, an `ipc.main.invoke` or `ipc.main.send` from a renderer or preload file, a preload's own `ipc.renderer.on` listener, a receiver inside `ipc.init()` and an entry added to the map in `packages/shared/types.ts`; or a dotted string that is not an IPC channel at all, such as a `section.camelCase` config key, an electron-store `onDidChange` key, an Electron emitter event like `did-navigate`, or a `contextBridge` property name."
+    examples_from: examples/ipc-typed-over-electrontoolkittypedipc-channel.yml
+    exclude: ["examples/**"]
+  - id: never-put-license-key-envtestlocal
+    tenet: Never put the license key from `.env.test.local` in a commit, comment or pull request.
+    kind: [code]
+    source: CLAUDE.md:62
+    criteria:
+      true: "A committed line that carries the value of the Meru license key the end-to-end suite activates with: a key-shaped literal assigned to, defaulted into or seeded as `MERU_TEST_LICENSE_KEY` or `licenseKey` in a test, fixture, helper, script, workflow or committed `.env.test.local`, or that same value quoted in a comment, doc or setup instruction."
+      false: "The key is only referred to, never spelled out: reading `process.env.MERU_TEST_LICENSE_KEY` or a CI `${{ secrets.MERU_TEST_LICENSE_KEY }}` with no literal, an example env file or placeholder left empty, a comment or error message saying the key comes from `.env.test.local`, or a literal that is plainly something else, such as a mock server token, a device id, or an invented non-activating string a test uses to exercise key parsing or an invalid-key path."
+    examples_from: examples/never-put-license-key-envtestlocal.yml
+    exclude: ["examples/**"]
+  - id: durations-come-ms-merusharedms-never
+    tenet: Durations come from `ms` in `@meru/shared/ms`, never the `ms` package.
+    kind: [code]
+    source: CLAUDE.md:67
+    criteria:
+      true: 'A duration taken from the npm `ms` package in any form — `import ms from "ms"`, `import type { StringValue } from "ms"`, `require("ms")`, `await import("ms")`, or an `"ms"` entry added to a package.json — or a duration spelled out as raw millisecond arithmetic or a bare millisecond literal, such as `24 * 60 * 60 * 1000` or `5_000` handed to a timer, inside a package that can import `@meru/shared/ms`.'
+      false: 'The duration comes from `ms` imported from `@meru/shared/ms`, or the `ms` in sight is not that helper: the vendored `packages/shared/ms.ts` with its upstream header, a local `ms` holding a `Date.now()` or `performance.now()` difference, the string `"ms"` as a unit label or a `dayjs` argument, a `200ms` CSS duration, a dependency whose name merely contains `ms`, arithmetic whose result is seconds or minutes rather than milliseconds, or a millisecond constant in `@meru/electron-extensions`, which depends on no Meru package.'
+    examples_from: examples/durations-come-ms-merusharedms-never.yml
+    exclude: ["examples/**"]
+  - id: before-attaching-listener-webcontents-emitter
+    tenet: Before attaching a listener to a `webContents` or emitter, grep the file for that event on the same target and add the work to the existing handler. Listeners that attach and detach independently stay separate.
+    kind: [code]
+    source: CLAUDE.md:69
+    criteria:
+      true: 'A changed line attaches a standing `.on("event", …)` listener to a target — a `webContents`, a `BrowserWindow`, `app`, or another emitter — that the snippet already gives a standing `.on(…)` listener for that same event on that same target expression, so one target ends up with two permanent handlers for one event where the work could have gone into the handler already there.'
+      false: "The second listener differs in event or in target — a different event name on the same target, or the same event on the account's view versus the main window, on a parameter versus a field, or on a freshly constructed emitter — or it is not a standing listener at all: a `once` that fires one time, or a listener the code takes off again with `.off` or `removeListener` so it attaches and detaches on its own; and adding work inside a handler that already exists, or registering one `config.onDidChange` per key at collection level, is the tenet being followed."
+    examples_from: examples/before-attaching-listener-webcontents-emitter.yml
+    exclude: ["examples/**"]
+  - id: platform-branches-use-platform-electrontoolkitutils
+    tenet: Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere.
+    kind: [code]
+    source: CLAUDE.md:70
+    # usable, not sharp: separation is clean (auc 1, nothing unstable), but both tray.ts
+    # violations score under `fail` — a raw `process.platform === "darwin"` branch in main at
+    # 0.78 and a main file importing the renderer's `platform` at 0.57 — so a wrong-helper
+    # change that still reads `platform.isMacOS` would slip past. Sharpening those needs
+    # wording for why the same value read through the wrong module matters; the clause tried
+    # for it moved the raw-comparison score down instead and was reverted.
+    criteria:
+      true: "A line in `packages/app` or `packages/renderer` that takes the platform from anywhere but the helper its own process uses, or that gives a shortcut a modifier only macOS honours: a `process.platform`, `window.electron.process.platform`, `os.platform()`, `navigator.platform` or `navigator.userAgent` comparison standing as the branch, ternary or early return that picks the behaviour; an import of the other process's helper, meaning `platform` from `@electron-toolkit/utils` in a renderer or `.tsx` file, or the renderer's `platform` from `@/lib/utils`, `@meru/renderer/lib/utils` or a relative path into the renderer in a main-process file, where the import line is itself the violation however correct the `platform.isMacOS` beneath it reads; or an `accelerator` whose modifier is a bare `Command`, `Cmd`, `Option` or `Super` on a menu item nothing confines to macOS."
+      false: "The line reads the platform the way its process is meant to — `platform.isMacOS`, `isWindows` or `isLinux` from `@electron-toolkit/utils` in main or from `@/lib/utils` in the renderer, or the renderer helper's own definition — or `process.platform` appears where that helper does not reach or nothing branches on it: a build or test script, an app-agnostic package, an error message, a value passed on to a function; or the shortcut is cross-platform (`CommandOrControl`, `Alt`, or a literal `Ctrl` a comment explains) or a bare `Command`/`Option` a macOS branch already guards, and `Command` as a word in interface copy or a `Kbd` label picked by the platform helper."
+    examples_from: examples/platform-branches-use-platform-electrontoolkitutils.yml
+    exclude: ["examples/**"]

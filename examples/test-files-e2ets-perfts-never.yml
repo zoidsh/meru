@@ -1,0 +1,176 @@
+- label: violation
+  lang: ts
+  note: Playwright's own default testMatch is `**/*.spec.ts`; writing it out here points the e2e project at files `bun test` would also claim.
+  code: |
+    export default defineConfig({
+      testDir: "tests",
+      workers: 1,
+      fullyParallel: false,
+      projects: [
+        { name: "e2e", testMatch: "**/*.spec.ts", outputDir: "test-results/e2e" },
+        { name: "perf", testMatch: "**/*.perf.ts", outputDir: "test-results/perf" },
+      ],
+    });
+  lines: [6]
+
+- label: violation
+  lang: ts
+  note: Adds the forbidden name beside the allowed one rather than replacing it.
+  code: |
+    projects: [
+      {
+        name: "e2e",
+        testMatch: ["**/*.e2e.ts", "**/*.spec.ts"],
+        outputDir: "test-results/e2e",
+      },
+    ],
+  lines: [4]
+
+- label: violation
+  lang: json
+  code: |
+    "scripts": {
+      "test:e2e": "bun --env-file=.env.test.local run scripts/e2e.ts --project=e2e",
+      "test:smoke": "bunx playwright test tests/smoke.spec.ts",
+      "types": "tsc && bun run --filter='*' --elide-lines=0 types"
+    },
+  lines: [3]
+
+- label: violation
+  lang: ts
+  note: A new end-to-end test introduced under the forbidden name; the header names the file it is.
+  code: |
+    /*
+     * tests/tray.spec.ts — proves the tray icon's menu opens and that closing to
+     * the tray keeps the window's bounds.
+     */
+    import { expect, test } from "@playwright/test";
+    import { useApp } from "./lib/app";
+
+    const meru = useApp();
+  lines: [2]
+
+- label: violation
+  lang: ts
+  code: |
+    import { expect, test } from "@playwright/test";
+    import { openSettings } from "./settings.spec";
+    import { useApp } from "./lib/app";
+  lines: [2]
+
+- label: violation
+  lang: ts
+  note: A lint override glob that only matches files named the way the tenet forbids.
+  code: |
+    export default defineConfig({
+      ...oxlintConfig,
+      overrides: [
+        { files: ["tests/**/*.spec.ts"], rules: { "no-console": "off" } },
+      ],
+    });
+  lines: [4]
+
+- label: violation
+  lang: yaml
+  code: |
+    - if: runner.os == 'Linux'
+      run: xvfb-run -a bunx playwright test "tests/**/*.spec.ts"
+      env:
+        MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
+  lines: [2]
+
+- label: ok
+  lang: ts
+  code: |
+    projects: [
+      { name: "e2e", testMatch: "**/*.e2e.ts", outputDir: "test-results/e2e" },
+      {
+        name: "perf",
+        testMatch: "**/*.perf.ts",
+        outputDir: "test-results/perf",
+        timeout: ms("6m"),
+        retries: 0,
+      },
+    ],
+
+- label: ok
+  lang: ts
+  note: The comment names `*.spec.ts` in order to record that it is avoided, which is the tenet itself rather than a breach of it.
+  code: |
+    /*
+     * Not *.spec.ts for either: `bun test` claims that name and would try to run
+     * these files as unit tests, where Playwright's test() throws.
+     */
+    projects: [
+      { name: "e2e", testMatch: "**/*.e2e.ts", outputDir: "test-results/e2e" },
+    ],
+
+- label: ok
+  lang: ts
+  code: |
+    /*
+     * What the app ships, in bytes, against a budget kept next to this file.
+     *
+     * A bundle is the same number of bytes on every machine that builds it, so
+     * this one can hold a checked-in budget and fail when the build outgrows it.
+     */
+    import { expect, test } from "@playwright/test";
+    import budget from "./bundle-budget.json";
+
+    test("every bundle stays inside its budget", async () => {
+      const sizes = await measureBundles();
+
+      expect(sizes.preloadGmail).toBeLessThanOrEqual(budget.preloadGmail);
+    });
+
+- label: ok
+  lang: ts
+  note: A bun unit test beside the module it covers, which is the `*.test.ts` name the suite expects.
+  code: |
+    import { describe, expect, test } from "bun:test";
+    import { getVisibleVerticalTabs } from "./tabs";
+
+    describe("getVisibleVerticalTabs", () => {
+      test("lists an unloaded unpinned tab in windows mode", () => {
+        expect(getVisibleVerticalTabs(tabs, { workspaceAppsMode: "windows" })).toHaveLength(3);
+      });
+    });
+
+- label: ok
+  lang: ts
+  note: "`spec` here is Chromium's URL serialization, unrelated to test file naming."
+  code: |
+    /*
+     * Chromium hands the check handler `GURL::spec()`, which for a standard
+     * scheme such as `https:` always carries a trailing slash on a bare origin,
+     * so a pattern written without one never matches.
+     */
+    const spec = requestUrl.toString();
+
+    return patterns.some((pattern) => matchesPattern(pattern, spec));
+
+- label: ok
+  lang: ts
+  code: |
+    // `mailto:` is not a special scheme in the WHATWG URL specification, so the
+    // parser reads the address as userinfo and splits it at the first `@`.
+    const address = deepLink.href.slice("mailto:".length);
+
+- label: ok
+  lang: ts
+  note: The word appears in a test title and a manifest field, not in a file name.
+  code: |
+    test("rejects a manifest whose spec version is unsupported", async () => {
+      const manifest = { manifest_version: 2, name: "Fixture" };
+
+      expect(() => parseManifest(manifest)).toThrow();
+    });
+
+- label: ok
+  lang: ts
+  note: I labelled this ok because the change removes the forbidden name rather than introducing it, even though the string `tests/tray.spec.ts` is on a changed line. Should a rename away from `*.spec.ts` stay clean, or do you want the lint to stay quiet only when the old name is gone from the diff entirely?
+  code: |
+    // Renames what the 3.58 branch landed before the naming settled; `bun test`
+    // picks these up and Playwright's test() throws inside it.
+    await rename("tests/tray.spec.ts", "tests/tray.e2e.ts");
+    await rename("tests/tray-pro.spec.ts", "tests/tray-pro.e2e.ts");

@@ -1,8 +1,13 @@
 pre-commit:
   commands:
     fmt:
+      priority: 1
       run: bun fmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     lint:
+      priority: 2
       run: bun lint:fix --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    tenet:
+      priority: 3
+      run: tenet

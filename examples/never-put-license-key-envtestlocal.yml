@@ -1,0 +1,188 @@
+- label: violation
+  lang: ts
+  lines: [4]
+  code: |
+    // tests/lib/app.ts
+    function requireLicenseKey() {
+      // Falls back to the team key so a fresh checkout can run the suite.
+      const licenseKey = process.env.MERU_TEST_LICENSE_KEY ?? "MERU-7QK3-9F2D-4A8B-1C5E-Z0P6";
+
+      return licenseKey;
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // tests/pro.e2e.ts
+    // The key the suite activates with, copied out of .env.test.local.
+    const LICENSE_KEY = "MERU-3H8V-KD27-QW51-6RTY-9BXM";
+
+    const app = useProApp({ licenseKey: LICENSE_KEY });
+
+- label: violation
+  lang: yaml
+  lines: [6]
+  code: |
+    # .github/workflows/ci.yml
+    - name: End-to-end tests
+      run: xvfb-run -a bun run test:e2e
+      env:
+        MERU_SKIP_BUILD: "1"
+        MERU_TEST_LICENSE_KEY: MERU-3H8V-KD27-QW51-6RTY-9BXM
+
+- label: violation
+  lang: ts
+  lines: [5]
+  code: |
+    // tests/lib/app.ts
+    /**
+     * The license key a Pro run launches with.
+     *
+     * The key in use is MERU-3H8V-KD27-QW51-6RTY-9BXM; set it in
+     * .env.test.local as MERU_TEST_LICENSE_KEY before running the suite.
+     */
+    function requireLicenseKey() {
+      return process.env.MERU_TEST_LICENSE_KEY;
+    }
+
+- label: violation
+  lines: [2]
+  code: |
+    # .env.test.local
+    MERU_TEST_LICENSE_KEY=MERU-3H8V-KD27-QW51-6RTY-9BXM
+    MERU_TEST_PROFILE_DIR=/Users/tim/projects/meru/.meru/e2e-signed-in
+    MERU_TEST_ACCOUNT_EMAIL=someone@gmail.com
+
+- label: violation
+  lang: ts
+  lines: [4]
+  code: |
+    // tests/lib/settings.ts
+    export function proSeedConfig() {
+      return {
+        licenseKey: "MERU-3H8V-KD27-QW51-6RTY-9BXM",
+        "trial.expired": true,
+      };
+    }
+
+- label: violation
+  lang: markdown
+  lines: [6]
+  code: |
+    <!-- tests/README.md -->
+    ## Running the end-to-end suite
+
+    Create `.env.test.local` in the repository root:
+
+        MERU_TEST_LICENSE_KEY=MERU-3H8V-KD27-QW51-6RTY-9BXM
+
+    Then run `bun run test:e2e`.
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/lib/app.ts
+    function requireLicenseKey() {
+      const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
+
+      if (!licenseKey) {
+        throw new Error(
+          "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
+        );
+      }
+
+      return licenseKey;
+    }
+
+- label: ok
+  lang: yaml
+  code: |
+    # .github/workflows/ci.yml
+    - name: End-to-end tests
+      run: xvfb-run -a bun run test:e2e
+      env:
+        MERU_SKIP_BUILD: "1"
+        MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
+
+- label: ok
+  code: |
+    # .env.test.local.example
+    # Copy to .env.test.local and fill in. A Pro run needs the license key.
+    MERU_TEST_LICENSE_KEY=
+    MERU_TEST_PROFILE_DIR=
+    MERU_TEST_ACCOUNT_EMAIL=
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/lib/app.ts
+    /**
+     * The license key a Pro run launches with.
+     *
+     * A real key against the production backend rather than a stub. CI passes it
+     * as a repository secret; a local run keeps it in `.env.test.local`, which
+     * the `test:e2e` script reads through `bun --env-file`.
+     */
+    export function useProApp(seedConfig: SeedConfig = {}) {
+      return useApp({ licenseKey: requireLicenseKey(), ...seedConfig });
+    }
+
+- label: ok
+  lang: ts
+  note: >-
+    Deciding whether an obviously invented key used only to exercise format
+    validation counts. It is never the key from `.env.test.local` and would not
+    activate anything, so labelled ok. Should a test-shaped key like this be
+    fine, or should every key-shaped literal be flagged so nobody has to judge?
+  code: |
+    // packages/app/license-key.test.ts
+    test("trims a pasted license key before activating", async () => {
+      const { licenseKey } = await activate({ licenseKey: "  AAAA-BBBB-CCCC-DDDD  " });
+
+      expect(licenseKey).toBe("AAAA-BBBB-CCCC-DDDD");
+    });
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/lib/server.ts
+    // The mock activation server checks a token of its own, so a test that drives
+    // it never needs the real key.
+    const MOCK_API_TOKEN = "test-token-4f21";
+
+    export function startMockApi() {
+      return createServer({ token: MOCK_API_TOKEN, port: 0 });
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/lib/profile.ts
+    // A fixed device id keeps the activation request identical between runs.
+    export const TEST_DEVICE_ID = "9d4f2c7ba1e84f0c8b3a6e5d2f1c0b9a";
+
+    export function seedMachineId(userDataDir: string) {
+      return writeFile(path.join(userDataDir, "machine-id"), TEST_DEVICE_ID);
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/pro.e2e.ts
+    test("rejects a key the API says is invalid", async () => {
+      await settings.activateLicenseKey("not-a-real-key");
+
+      await expect(page.getByText("This license key is invalid")).toBeVisible();
+    });
+
+- label: ok
+  lang: ts
+  code: |
+    // tests/deep-link-signed-in.e2e.ts
+    const profile = signedInProfile();
+
+    test.skip(
+      !profile,
+      "no signed-in profile is named in .env.test.local, by MERU_TEST_PROFILE_DIR and MERU_TEST_ACCOUNT_EMAIL",
+    );

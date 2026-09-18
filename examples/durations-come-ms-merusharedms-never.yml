@@ -1,0 +1,291 @@
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // packages/app/updater/index.ts
+    import { is } from "@electron-toolkit/utils";
+    import ms from "ms";
+    import { autoUpdater } from "electron-updater";
+
+    export function scheduleUpdateChecks() {
+      if (is.dev) {
+        return;
+      }
+
+      setInterval(() => {
+        autoUpdater.checkForUpdates();
+      }, ms("3h"));
+    }
+
+- label: violation
+  lang: ts
+  lines: [2]
+  note: The file also imports the vendored helper correctly, so only the type import reaches for the package.
+  code: |
+    // packages/app/tabs.ts
+    import type { StringValue } from "ms";
+    import { ms } from "@meru/shared/ms";
+    import { config } from "@/config";
+
+    export function getIdleTimeout() {
+      const timeout = config.get("workspaceApps.hibernationTimeout") as StringValue;
+
+      return ms(timeout);
+    }
+
+- label: violation
+  lang: json
+  lines: [6]
+  code: |
+    // package.json
+    {
+      "devDependencies": {
+        "electron": "^44.3.0",
+        "electron-builder": "^26.16.1",
+        "ms": "^2.1.3",
+        "oxlint": "^1.22.0"
+      }
+    }
+
+- label: violation
+  lang: ts
+  lines: [3]
+  code: |
+    // scripts/build.ts
+    import { watch } from "node:fs";
+    const ms = require("ms");
+
+    export function watchRenderer(onChange: () => void) {
+      let timer: NodeJS.Timeout | undefined;
+
+      watch("packages/renderer", () => {
+        clearTimeout(timer);
+
+        timer = setTimeout(onChange, ms("250ms"));
+      });
+    }
+
+- label: violation
+  lang: ts
+  lines: [5]
+  code: |
+    // packages/app/gmail/index.ts
+    const INBOX_FEED_POLL_INTERVAL = "30s";
+
+    async function pollInboxFeed() {
+      const { default: ms } = await import("ms");
+
+      await wait(ms(INBOX_FEED_POLL_INTERVAL));
+    }
+
+- label: violation
+  lang: ts
+  lines: [2]
+  code: |
+    // tests/lib/profile.ts
+    import { ms } from "ms";
+    import { expect } from "@playwright/test";
+
+    const SETTLE_TIMEOUT = ms("30s");
+
+    const SETTLE_INTERVAL = ms("1s");
+
+    export async function waitForProfileToSettle(meru: MeruFixture) {
+      await expect.poll(() => meru.isIdle(), { timeout: SETTLE_TIMEOUT, intervals: [SETTLE_INTERVAL] })
+        .toBe(true);
+    }
+
+- label: violation
+  lang: ts
+  lines: [8, 13]
+  note: >-
+    Judging hand-rolled millisecond arithmetic as a violation of the first half of the sentence, in a
+    file that already imports the vendored helper. Should raw arithmetic count, or is the tenet only
+    about the npm package?
+  code: |
+    // packages/app/downloads.ts
+    import { ms } from "@meru/shared/ms";
+    import { config } from "@/config";
+
+    export function initDownloadHistoryCleanup() {
+      const cleanupDownloadsHistory = () => {
+        const now = Date.now();
+        const history = config.get("downloads.history").filter(
+          (item) => now - item.createdAt * 1000 < 30 * 24 * 60 * 60 * 1000,
+        );
+
+        config.set("downloads.history", history);
+      };
+
+      setInterval(cleanupDownloadsHistory, 24 * 60 * 60 * 1000);
+    }
+
+- label: violation
+  lang: ts
+  lines: [4, 6]
+  note: >-
+    Same call as the downloads example: duration constants spelled as raw millisecond arithmetic in a
+    package that can import `@meru/shared/ms`.
+  code: |
+    // packages/app/accounts.ts
+    import { Account } from "./account";
+
+    const HIBERNATION_SWEEP_INTERVAL = 60 * 1000;
+
+    const NETWORK_RECOVERY_SWEEP_INTERVAL = 5_000;
+
+    export function initSweeps() {
+      setInterval(sweepIdleTabs, HIBERNATION_SWEEP_INTERVAL);
+      setInterval(sweepUnreachableAccounts, NETWORK_RECOVERY_SWEEP_INTERVAL);
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/do-not-disturb.ts
+    import type { StringValue } from "@meru/shared/ms";
+    import { ms } from "@meru/shared/ms";
+    import dayjs from "dayjs";
+
+    export function muteUntil(duration: StringValue) {
+      const until = dayjs().add(ms(duration), "ms").valueOf();
+
+      config.set("doNotDisturb.until", until);
+    }
+
+- label: ok
+  lang: ts
+  note: The vendored copy is the helper itself; its header names the upstream project it was copied from.
+  code: |
+    // packages/shared/ms.ts
+    /*
+     * https://github.com/vercel/ms
+     */
+
+    const s = 1000;
+    const m = s * 60;
+    const h = m * 60;
+    const d = h * 24;
+    const w = d * 7;
+
+    export function ms(value: StringValue | number, options?: Options): number | string {
+      if (typeof value === "string" && value.length > 0) {
+        return parse(value);
+      }
+
+      throw new Error(`Value provided to ms() must be a string or number.`);
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    // playwright.config.ts
+    import { ms } from "@meru/shared/ms";
+    import { defineConfig } from "@playwright/test";
+
+    export default defineConfig({
+      timeout: ms("2m"),
+      expect: {
+        timeout: ms("1m"),
+      },
+    });
+
+- label: ok
+  lang: css
+  code: |
+    /* packages/preload-gmail/toast.css */
+    .meru-toast {
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+
+    .meru-toast-action:hover {
+      transition: background 200ms ease;
+    }
+
+- label: ok
+  lang: ts
+  note: A local named `ms` holding a measured elapsed time, and the unit label a perf sample reports.
+  code: |
+    // tests/memory.perf.ts
+    const started = performance.now();
+
+    await meru.renderer.waitForSelector("[data-testid='tab-strip']");
+
+    const ms = performance.now() - started;
+
+    report({ name: "renderer first paint", value: ms, unit: "ms" });
+
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/lib/hibernation.ts
+    export function canHibernateTab(tab: HibernatableTab, idleTimeout: number) {
+      const ms = Date.now() - tab.lastActiveAt;
+
+      return ms >= idleTimeout;
+    }
+
+- label: ok
+  lang: ts
+  note: >-
+    `@meru/electron-extensions` is app-agnostic and depends on no Meru package, so it has no `ms` to
+    import. Should the vendored helper move into it, or stay out of reach by design?
+  code: |
+    // packages/electron-extensions/install/omaha.ts
+    const UPDATE_CHECK_TIMEOUT_MS = 2 * 60 * 1000;
+
+    const DOWNLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+
+    export async function fetchUpdateManifest(url: string) {
+      return fetch(url, { signal: AbortSignal.timeout(UPDATE_CHECK_TIMEOUT_MS) });
+    }
+
+- label: ok
+  lang: ts
+  note: Same standalone package as the omaha example, which imports nothing from `@meru/shared`.
+  code: |
+    // packages/electron-extensions/runtime-proxy/worker-to-page.ts
+    const DEFAULT_DELIVERY_TIMEOUT_MS = 5 * 60_000;
+
+    export function createDeliveryTimer(onExpire: () => void) {
+      return setTimeout(onExpire, DEFAULT_DELIVERY_TIMEOUT_MS);
+    }
+
+- label: ok
+  lang: ts
+  note: The product of the arithmetic is seconds, which is what the cookie attribute takes.
+  code: |
+    // packages/ui/components/sidebar.tsx
+    const SIDEBAR_COOKIE_NAME = "sidebar_state";
+
+    const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+    function persistSidebarState(open: boolean) {
+      document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    }
+
+- label: ok
+  lang: tsx
+  code: |
+    // packages/renderer/routes/settings/notifications.tsx
+    function validateQuietHours(startMinutes: number, endMinutes: number) {
+      if (endMinutes > 24 * 60) {
+        return "Quiet hours must end within the same day.";
+      }
+
+      return startMinutes < endMinutes ? undefined : "Quiet hours must end after they start.";
+    }
+
+- label: ok
+  lang: json
+  note: Mock Service Worker, an unrelated package whose name begins with the same two letters.
+  code: |
+    // package.json
+    {
+      "devDependencies": {
+        "electron": "^44.3.0",
+        "msw": "^2.7.0",
+        "oxlint": "^1.22.0"
+      }
+    }
