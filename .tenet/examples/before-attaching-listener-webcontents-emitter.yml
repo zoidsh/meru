@@ -1,0 +1,319 @@
+# Labelled cases for the before-attaching-listener-webcontents-emitter tenet,
+# measured by `tenet check`. Adapted from packages/app of the Meru repository.
+- label: violation
+  lang: ts
+  lines: 10
+  note: A second standing dom-ready handler on the same webContents; the zoom limits belong in the handler above.
+  code: |
+    private registerViewListeners() {
+      this.view.webContents.on("dom-ready", () => {
+        this.view.webContents.insertCSS(meruCSS);
+      });
+
+      this.view.webContents.on("page-title-updated", (_event, pageTitle, explicitSet) => {
+        this.pageTitle = explicitSet ? pageTitle : "";
+      });
+
+      this.view.webContents.on("dom-ready", () => {
+        this.view.webContents.setVisualZoomLevelLimits(1, 3);
+      });
+    }
+- label: violation
+  lang: ts
+  lines: 11
+  note: Same tray, same click event, second standing listener in another method of the same class.
+  code: |
+    class Tray {
+      init() {
+        this.tray = new Electron.Tray(this.icon);
+
+        this.tray.on("click", () => {
+          this.toggleWindow();
+        });
+      }
+
+      listenForFocus() {
+        this.tray.on("click", () => {
+          accounts.getSelectedAccount().instance.gmail.view.webContents.focus();
+        });
+      }
+    }
+- label: violation
+  lang: ts
+  lines: 13
+  note: Two onDidChange subscriptions on the same config key; the second belongs in the first.
+  code: |
+    config.onDidChange("verticalTabs.width", () => {
+      for (const account of accounts.instances.values()) {
+        account.verticalTabsWidth = null;
+      }
+
+      accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("workspaceApps.mode", () => {
+      accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("verticalTabs.width", () => {
+      accounts.sendAccountsChangedToRenderer();
+    });
+- label: violation
+  lang: ts
+  lines: 9
+  code: |
+    app.on("browser-window-focus", () => {
+      refreshIsDefaultBrowser();
+    });
+
+    app.on("activate", () => {
+      main.show();
+    });
+
+    app.on("browser-window-focus", () => {
+      appMenu.refresh();
+    });
+- label: violation
+  lang: ts
+  lines: 10
+  code: |
+    export function logLoadFailures(webContents: WebContents, name: string) {
+      webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
+        log.error(`${name} failed to load`, { errorCode, errorDescription });
+      });
+
+      webContents.on("render-process-gone", (_event, { reason }) => {
+        log.error(`${name} renderer is gone`, { reason });
+      });
+
+      webContents.on("did-fail-load", (_event, errorCode, _description, url, isMainFrame) => {
+        if (isMainFrame) {
+          log.info("Retrying after a failed main-frame load", { url, errorCode });
+        }
+      });
+    }
+- label: violation
+  lang: ts
+  lines: 15
+  note: Saving window state on close is a second standing close handler on the same window.
+  code: |
+    this.window.on("close", (event) => {
+      if (!this.isQuittingApp) {
+        event.preventDefault();
+
+        this.window.hide();
+      }
+    });
+
+    if (platform.isWindows) {
+      this.window.on("resized", () => {
+        this.saveWindowState();
+      });
+    }
+
+    this.window.on("close", () => {
+      this.saveWindowState();
+    });
+- label: violation
+  lang: ts
+  lines: 9
+  note: did-navigate is already broadcast three lines up; the new work belongs in broadcastTabsChanged.
+  code: |
+    export function registerTabBroadcasts(view: WebContentsView) {
+      const broadcastTabsChanged = () => {
+        accounts.sendTabsChangedToRenderer();
+      };
+
+      view.webContents.on("did-navigate", broadcastTabsChanged);
+      view.webContents.on("did-navigate-in-page", broadcastTabsChanged);
+      view.webContents.on("page-title-updated", broadcastTabsChanged);
+      view.webContents.on("did-navigate", () => {
+        accounts.saveTabs();
+      });
+    }
+- label: violation
+  lang: ts
+  lines: 11
+  note: The second update-downloaded listener is conditional but still permanent; the setting reads as a branch inside the handler above.
+  code: |
+    init() {
+      config.onDidChange("updates.channel", () => {
+        this.applyChannel();
+      });
+
+      autoUpdater.on("update-downloaded", (updateInfo) => {
+        this.lastAnnouncedVersion = updateInfo.version;
+      });
+
+      if (config.get("updates.showNotifications")) {
+        autoUpdater.on("update-downloaded", (updateInfo) => {
+          ipc.renderer.send(
+            main.window.webContents,
+            "appUpdater.updateAvailable",
+            `v${updateInfo.version}`,
+          );
+        });
+      }
+    }
+- label: ok
+  lang: ts
+  note: Four listeners, four distinct events, and one of them on a different target.
+  code: |
+    this.tray.on("click", () => {
+      this.toggleWindow();
+    });
+
+    this.tray.on("right-click", () => {
+      this.tray?.popUpContextMenu(this.contextMenu);
+    });
+
+    main.window.on("hide", () => {
+      this.createOrUpdateContextMenu();
+    });
+
+    main.window.on("show", () => {
+      this.createOrUpdateContextMenu();
+    });
+- label: ok
+  lang: ts
+  note: Same event twice, but on two different webContents.
+  code: |
+    function registerNavigationListeners(account: Account, composeWindow: BrowserWindow) {
+      account.gmail.view.webContents.on("did-navigate", (_event, url) => {
+        account.gmail.handleNavigate(url);
+      });
+
+      composeWindow.webContents.on("did-navigate", (_event, url) => {
+        log.info("Compose window navigated", { url });
+      });
+    }
+- label: ok
+  lang: ts
+  note: A one-shot alongside a standing listener for the same event; folding them would run the zoom restore on every navigation.
+  code: |
+    this.view.webContents.once("did-navigate", () => {
+      this.applyPersistedZoomFactor();
+    });
+
+    this.view.webContents.on("did-navigate", (_event, url) => {
+      WorkspaceApp.handleNavigate(url, this.session);
+
+      this.store.setState({
+        attentionRequired: !url.startsWith(this.baseUrl),
+      });
+    });
+- label: ok
+  lang: ts
+  note: did-navigate is registered twice on the same view, but the windowed set comes off again when the tab is adopted back.
+  code: |
+    private registerViewListeners() {
+      this.view.webContents.on("did-navigate", this.handleDidNavigate);
+      this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+    }
+
+    private registerWindowedViewListeners() {
+      this.view.webContents.on("did-navigate", this.handleWindowedNavigation);
+      this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
+    }
+
+    private unregisterWindowedViewListeners() {
+      this.view.webContents.off("did-navigate", this.handleWindowedNavigation);
+      this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
+    }
+- label: ok
+  lang: ts
+  note: The per-account listener is attached and removed as the selected account changes, so it cannot live in the config subscription above it.
+  code: |
+    config.onDidChange("accounts", () => {
+      this.subscribeToSelectedAccount();
+
+      this.refresh();
+    });
+
+    private subscribeToSelectedAccount() {
+      const gmailWebContents = accounts.getSelectedAccount().instance.gmail.view.webContents;
+
+      const refreshMenu = () => {
+        this.refresh();
+      };
+
+      gmailWebContents.on("did-navigate-in-page", refreshMenu);
+
+      this.selectedAccountUnsubscribeFns.add(() => {
+        gmailWebContents.removeListener("did-navigate-in-page", refreshMenu);
+      });
+    }
+- label: ok
+  lang: ts
+  note: Three subscriptions running the same work, each on its own config key.
+  code: |
+    config.onDidChange("verticalTabs.showWindows", () => {
+      accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("workspaceApps.mode", () => {
+      accounts.updateAllViewBounds();
+    });
+
+    config.onDidChange("workspaceApps.launcherAndBookmarksPlacement", () => {
+      accounts.updateAllViewBounds();
+    });
+- label: ok
+  lang: ts
+  note: Every listener the popup adds is taken off again in close(), and no event repeats on a target.
+  code: |
+    open(parentWindow: BrowserWindow, options: PopupOptions) {
+      this.view.webContents.once("blur", this.handleBlur);
+
+      parentWindow.on("resize", this.setBounds);
+
+      parentWindow.once("closed", this.close);
+    }
+
+    close = () => {
+      parentWindow.removeListener("resize", this.setBounds);
+
+      parentWindow.removeListener("closed", this.close);
+
+      view.webContents.off("blur", this.handleBlur);
+    };
+- label: ok
+  lang: ts
+  note: A factory, so each window adds its own nativeTheme listener and drops it when that window closes.
+  code: |
+    export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
+      const browserWindow = new BrowserWindow({ show: false, ...options });
+
+      browserWindow.once("ready-to-show", () => {
+        browserWindow.show();
+      });
+
+      if (options.backgroundColor) {
+        const updateBackgroundColor = () => {
+          browserWindow.setBackgroundColor(getBackgroundColor());
+        };
+
+        nativeTheme.on("updated", updateBackgroundColor);
+
+        browserWindow.once("closed", () => {
+          nativeTheme.off("updated", updateBackgroundColor);
+        });
+      }
+
+      return browserWindow;
+    }
+- label: ok
+  lang: ts
+  note: One ipcMain registration per channel; the shared target is not a shared event.
+  code: |
+    ipc.main.on("tabs.selectTab", (_event, accountId, tabId) => {
+      accounts.getAccount(accountId).instance.tabs.selectTab(tabId);
+    });
+
+    ipc.main.on("tabs.closeTab", (_event, accountId, tabId) => {
+      accounts.getAccount(accountId).instance.tabs.closeTab(tabId);
+    });
+
+    ipc.main.on("tabs.moveTab", (_event, accountId, tabId, targetSectionIndex) => {
+      accounts.getAccount(accountId).instance.tabs.moveTab(tabId, targetSectionIndex);
+    });

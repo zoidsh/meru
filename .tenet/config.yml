@@ -1,0 +1,72 @@
+# Criteria under a tenet, a true and a false description of what a violation looks like, sharpen its verdicts; see Configuration in the README.
+version: 1
+rules:
+  # ~/.claude/CLAUDE.md: A comment says only what the code cannot: why a constraint exists, why the obvious approach was rejected, what an external system does that the code works around. Never what the code does; a name or a smaller function says that.
+  - comment-why
+tenets:
+  - id: test-files-e2ets-perfts-never
+    tenet: Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
+    kind: [code]
+    source: "CLAUDE.md: Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name."
+    criteria:
+      true: "Anything that gives a Playwright end-to-end or performance test file a suffix `bun test` claims — `*.spec.ts`, `*_spec.ts` or `*.test.ts` — instead of `*.e2e.ts` or `*.perf.ts`. The snippet need not be the test file itself: a `testMatch` glob, an import of a sibling module such as `./sign-in.spec`, a package script or CI or git-hook command naming the file, and an ignore or exclude pattern that keeps `bun test` away from `tests/**/*.spec.ts` each show a suite file living under a claimed name, and hiding it from `bun test` is a workaround rather than the fix, which is the name."
+      false: "Playwright files, globs and hook patterns that keep the suite's own suffixes, `*.e2e.ts` and `*.perf.ts`; a unit test beside its source that imports `bun:test` and is named `*.test.ts`, which is the suffix `bun test` is meant to run; an unsuffixed helper module under `tests/` that holds no test of its own; an entry point that reaches the suite by project or script rather than by file name; and the letters `spec` appearing in something that is not a file name, such as a value like `spectrwm`, a `GURL::spec()` comment, or a comment that names `*.spec.ts` only to explain why it was rejected."
+  - id: dependencies-point-inward-merushared-nothing
+    tenet: Dependencies point inward on `@meru/shared`; nothing imports `@meru/app`.
+    # `usable`, not `sharp`, after four attempts: the labels separate cleanly (AUC 1, nothing crosses
+    # between runs), but three violations score under the 0.8 cutoff — a relative specifier that climbs
+    # out of one package into another, a preload importing its sibling renderer, and a tsconfig alias
+    # pointing at `../app`. Spelling the layering out at more length lowered them further, so the
+    # wording below is the best of the four. An `include:` of `packages/**` would let the judge read the
+    # real file path instead of the path comment each example carries, which is most likely what the
+    # indirect forms need.
+    criteria:
+      true: "Read which package the file belongs to from its path, then read where each of its imports lands, and the import points outward or sideways. `@meru/app` is outermost, so a file in any package that reaches it is a violation; `@meru/renderer` and the `@meru/preload-*` packages sit beside each other, so a file outside one of them that reaches into it is a violation too; and `@meru/shared` is innermost, so a file under it that reaches any other workspace package, a leaf such as `@meru/ui` or `@meru/dark-theme` included, is a violation. A static import, a type-only import, a dynamic `import()`, a `dependencies` entry in package.json and a tsconfig or bundler alias mapping a name onto another package's directory all count, and so does a relative specifier whose leading `../` steps climb out of the file's own package directory and down into another one."
+      false: "Every import either stays inside the package named by the file's own path, as a relative path or the package-local `@/*` alias however many directories it climbs, since every package declares `@/*` as its own root, or lands further in: on `@meru/shared`, including its `renderer/ipc` client, which belongs to shared despite the segment, or, for a file outside `@meru/shared`, on a leaf such as `@meru/ui`, `@meru/dark-theme`, `@meru/electron-extensions` or `@meru/verification-code`, all of which a file in `@meru/app` may import as well, being outermost. A string that merely names another package, such as a path to the built renderer HTML or an IPC channel called `app.quit`, is not an import."
+    kind: [code]
+    source: "CLAUDE.md: Dependencies point inward on `@meru/shared`; nothing imports `@meru/app`."
+  - id: ipc-typed-over-electrontoolkittypedipc-channel
+    tenet: IPC is typed over `@electron-toolkit/typed-ipc`. Channel maps are declared once in `packages/shared/types.ts`, handlers register in `ipc.init()` in `packages/app/ipc.ts`, and names follow `domain.verbNoun`.
+    kind: [code]
+    source: "CLAUDE.md: IPC is typed over `@electron-toolkit/typed-ipc`. Channel maps are declared once in `packages/shared/types.ts`, handlers register in `ipc.init()` in `packages/app/ipc.ts`, and names follow `domain.verbNoun`."
+    criteria:
+      true: "Main-to-renderer or renderer-to-main messaging that leaves the typed layer or its single declaration point: raw `ipcMain`/`ipcRenderer` (including `once`/`removeListener`), `webContents.send`, `window.electron.ipcRenderer`, or a `contextBridge` surface that forwards caller-supplied channel strings; a channel map, channel union or `new IpcListener`/`IpcEmitter` over a type declared anywhere but `packages/shared/types.ts`; an `ipc.main.on`/`ipc.main.handle` registration outside `ipc.init()` in `packages/app/ipc.ts`, such as in a feature module's own `init()`; or a channel name that is not `domain.verbNoun` — no dot at all, or segments joined by `:`, `-` or `_`."
+      false: "Sending or listening on an already declared channel through the typed `ipc` client from anywhere, which is the norm: `ipc.renderer.send(webContents, ...)` in any main module, `ipc.main.send`/`ipc.main.invoke`/`ipc.renderer.on` in the renderer or a content preload — none of these is a handler registration. Dotted `section.camelCase` strings that are not channels, above all `electron-store` keys passed to `config.get`/`config.set`/`config.onDidChange`, plus query keys and route paths. Kebab-case emitter event names from Electron or Node (`did-finish-load`, `page-title-updated`, `closed`, `done`, `updated`). `@meru/electron-extensions` handling its own `bridge` paths, an app-agnostic transport that is not Electron IPC. A `contextBridge.exposeInMainWorld` that exposes one named page function and forwards through the typed `ipc` on a declared channel."
+  - id: never-put-license-key-envtestlocal
+    tenet: Never put the license key from `.env.test.local` in a commit, comment or pull request.
+    kind: [code]
+    source: "CLAUDE.md: Never put the license key from `.env.test.local` in a commit, comment or pull request."
+    # Sharp, but on a knife edge. The one violation that is a bare JSON fixture
+    # holding a key literal scores 0.77 to 0.80 against a 0.8 cutoff, so it
+    # crosses between runs and the verdict alternates with usable. A key in a
+    # data file reads as ambiguous because the app's own config store
+    # legitimately holds the same field at runtime; four wordings moved it from
+    # 0.71 to 0.78 and no further.
+    criteria:
+      true: "A real key literal — the `MERU-` five-group form filled in with actual characters, or any equivalent secret value — is written into something that gets committed or published, whatever file it lands in. It counts the same whether it sits in code as a hardcoded constant or the fallback of an environment read, as data seeded into a test launch or a checked-in JSON fixture, as text in a comment, docblock, changelog line, commit message or pull request description, or as the right-hand side of an assignment in a committed env example or a CI workflow step. A key literal in a data file is as much a violation as one in code."
+      false: "The key is referred to but never spelled out: an environment read such as `process.env.MERU_TEST_LICENSE_KEY`, a `${{ secrets.… }}` reference, a key value passed between functions at runtime, an empty placeholder in a committed env example, the masked `MERU-XXXX-…` form shown in the UI, an obviously invented key used to exercise the rejection path, or prose naming `.env.test.local` as where the key lives."
+  - id: durations-come-ms-merusharedms-never
+    tenet: Durations come from `ms` in `@meru/shared/ms`, never the `ms` package.
+    kind: [code]
+    source: "CLAUDE.md: Durations come from `ms` in `@meru/shared/ms`, never the `ms` package."
+    criteria:
+      true: 'Code in a package that can import `@meru/shared` states how long something lasts as a bare count of milliseconds rather than through the helper: a number handed to a timer, a `timeout` or `delay` option, or a named constant standing for a poll, retry, fade or expiry window, whether written as a plain literal, an underscored literal, or seconds-times-minutes-times-hours arithmetic. Naming the constant after the unit, or holding the number in a variable before use, is the same violation. Also a violation: sourcing `ms` from the npm package instead of the vendored helper, by importing it from `"ms"` or by listing `ms` among a package.json''s dependencies.'
+      false: "A duration that already goes through the helper, including `ms()` applied to a string read from config; a number that is not a count of milliseconds, such as minutes within a day or a value an API wants in seconds; a duration expressed in another API's own units, such as a dayjs `add` call, a CSS transition or a Tailwind duration class; the identifier `ms` used as a parameter or local variable for a count the code was handed or measured with `Date.now()`; the vendored helper file itself and the unit constants it is built from; and millisecond numbers in a module that stands on its own outside the app, recognisable by relative-only imports and a Chrome extension vocabulary of CRX endpoints, alarms and manifests, which is `packages/electron-extensions` and has no Meru dependency to reach the helper through."
+  - id: before-attaching-listener-webcontents-emitter
+    tenet: Before attaching a listener to a `webContents` or emitter, grep the file for that event on the same target and add the work to the existing handler. Listeners that attach and detach independently stay separate.
+    criteria:
+      true: "The same event name is registered twice on the same target object in one file, both registrations standing for the object's lifetime, so the later handler's work could be folded into the one already there — whether it sits beside the first, in another method of the same class, or inside a condition."
+      false: "The registrations differ in event name, in the target object, or in lifetime: a `.once` beside a standing listener, a listener paired with a matching `.off` or `removeListener` so it attaches and detaches on its own schedule, a factory or per-selection subscription that adds a listener and takes it off again, or `config.onDidChange` calls that each watch a different key."
+    kind: [code]
+    source: "CLAUDE.md: Before attaching a listener to a `webContents` or emitter, grep the file for that event on the same target and add the work to the existing handler. Listeners that attach and detach independently stay separate."
+  - id: platform-branches-use-platform-electrontoolkitutils
+    tenet: Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere.
+    kind: [code]
+    source: "CLAUDE.md: Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere."
+    # usable, not sharp: AUC is 1.00, so every violation outranks every ok example, but
+    # two of them land just under the default 0.80 cutoff, the raw `process.platform`
+    # branch in main and the renderer file importing the main process helper. Accuracy is
+    # 1.00 at 0.70; a `fail` of 0.78 would settle it, and setting one is outside this task.
+    criteria:
+      true: "Behaviour is decided from the raw platform value instead of the `platform` helper: main-process code branching on `process.platform`, renderer code branching on `window.electron.process.platform`, `navigator.userAgent` or `navigator.platform`, or a constant computed from either and branched on — it makes no difference whether the branch picks code, markup or only a label. Each process has exactly one helper it may import, and taking the other one is a violation on the import line even though every use of it reads correctly: a file that renders JSX or calls React hooks is the renderer and must import `platform` from `@/lib/utils`, never from `@electron-toolkit/utils`, which reads the main process; main-process code must not import `@/lib/utils`. A menu accelerator holding a bare `Command`, `Cmd` or `Option` that any platform other than macOS reaches is a violation too: with no condition at all, or as the remaining arm of a condition that tested some other platform, since testing `isLinux` or `isWindows` hands the macOS-only string to every platform the test excluded."
+      false: "The branch reads `isMacOS`/`isWindows`/`isLinux` off the `platform` helper belonging to its own process, or the file is the module defining that helper, whose whole job is mapping the raw value onto those three fields. Also the raw value read as data rather than branched on, interpolated into an error message or passed to a function that takes a platform; a bare `Command`/`Option` reached only when `platform.isMacOS` is true; accelerators built from `CommandOrControl`, `Alt` or a deliberate literal `Ctrl`; `Cmd` as interface copy in a `Kbd` label whose branch went through the helper; and `process.platform` in build scripts, test files or the app-agnostic `@meru/electron-extensions` package."

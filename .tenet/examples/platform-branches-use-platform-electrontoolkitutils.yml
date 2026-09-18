@@ -1,0 +1,267 @@
+- label: violation
+  lines: 5
+  lang: tsx
+  note: Renderer component reads the raw platform value instead of the `platform` helper in `@/lib/utils`.
+  code: |
+    import { Button } from "@meru/ui/button";
+    import { ipc } from "@/lib/ipc";
+
+    export function AppMenuButton() {
+      if (window.electron.process.platform === "darwin") {
+        return;
+      }
+
+      return <Button onClick={() => ipc.main.send("titleBar.toggleAppMenu")}>App menu</Button>;
+    }
+
+- label: violation
+  lines: 5
+  lang: tsx
+  note: Same raw read, this time as a JSX condition.
+  code: |
+    export function Titlebar() {
+      return (
+        <div className="flex items-center">
+          <AccountRow />
+          {window.electron.process.platform !== "darwin" && <WindowControls />}
+        </div>
+      );
+    }
+
+- label: violation
+  lines: [5, 11]
+  lang: ts
+  code: |
+    import Electron, { nativeTheme } from "electron";
+    import { config } from "@/config";
+
+    export function createTrayIcon(unread: boolean) {
+      if (process.platform === "darwin") {
+        return Electron.nativeImage.createFromPath("IconMenuBarTemplate.png");
+      }
+
+      const iconColor = config.get("tray.iconColor");
+
+      const extension = process.platform === "win32" ? "ico" : "png";
+
+      return Electron.nativeImage.createFromPath(`IconTray${unread ? "Unread" : ""}.${extension}`);
+    }
+
+- label: violation
+  lines: 3
+  lang: ts
+  note: A module-level constant in the main process derived from the raw value is still a raw branch.
+  code: |
+    import { app } from "electron";
+
+    const isMacOS = process.platform === "darwin";
+
+    export function setDockBadge(unreadCount: number) {
+      if (isMacOS && app.dock) {
+        app.dock.setBadge(unreadCount ? String(unreadCount) : "");
+      }
+    }
+
+- label: violation
+  lines: 1
+  lang: tsx
+  note: Renderer file importing the main process helper, which reads the wrong process.
+  code: |
+    import { platform } from "@electron-toolkit/utils";
+    import { ConfigSwitchField } from "@/components/settings";
+    import { useConfig } from "@/lib/hooks";
+
+    export function LaunchAtLoginField() {
+      const config = useConfig();
+
+      if (!platform.isWindows) {
+        return null;
+      }
+
+      return <ConfigSwitchField label="Open at login" configKey="launchAtLogin" />;
+    }
+
+- label: violation
+  lines: 1
+  lang: tsx
+  note: Renderer sniffing the user agent instead of using the helper.
+  code: |
+    const isMacOS = navigator.userAgent.includes("Macintosh");
+
+    export function ShortcutHint() {
+      return (
+        <span>
+          Press <Kbd>{isMacOS ? "Cmd" : "Ctrl"}</Kbd> <Kbd>K</Kbd> to search.
+        </span>
+      );
+    }
+
+- label: violation
+  lines: 3
+  lang: ts
+  note: Bare Command on an item that ships on every platform, so the shortcut is dead on Windows and Linux.
+  code: |
+    const searchItem: MenuItemConstructorOptions = {
+      label: "Search Mailbox",
+      accelerator: "Command+Shift+K",
+      click: () => {
+        accounts.selectedAccount.instance.gmail.search();
+      },
+    };
+
+- label: violation
+  lines: 3
+  lang: ts
+  note: The non-Linux arm covers Windows too, where a bare Command and Option never fire.
+  code: |
+    {
+      label: "Toggle Compact Mode",
+      accelerator: platform.isLinux ? "Alt+C" : "Command+Option+C",
+      click: () => {
+        main.toggleCompactMode();
+      },
+    }
+
+- label: ok
+  lang: ts
+  note: The renderer helper's own definition is the one place the raw value is read.
+  code: |
+    export const platform = {
+      isMacOS: window.electron.process.platform === "darwin",
+      isWindows: window.electron.process.platform === "win32",
+      isLinux: window.electron.process.platform === "linux",
+    };
+
+- label: ok
+  lang: ts
+  code: |
+    import { platform } from "@electron-toolkit/utils";
+
+    const historyItems: MenuItemConstructorOptions[] = [
+      {
+        label: "Back",
+        accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
+        click: () => {
+          getActiveViewWebContents().navigationHistory.goBack();
+        },
+      },
+      {
+        label: "Forward",
+        accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
+        click: () => {
+          getActiveViewWebContents().navigationHistory.goForward();
+        },
+      },
+    ];
+
+- label: ok
+  lang: ts
+  code: |
+    {
+      label: "Paste as Plain Text",
+      accelerator: "CommandOrControl+Shift+V",
+      role: "pasteAndMatchStyle",
+    },
+    {
+      label: "Paste Without Formatting",
+      accelerator: "CommandOrControl+Alt+Shift+V",
+      acceleratorWorksWhenHidden: platform.isMacOS,
+      click: () => {
+        pasteWithoutFormatting();
+      },
+    }
+
+- label: ok
+  lang: ts
+  note: A literal Ctrl on every platform is neither Command nor Option, and the reason it is not CommandOrControl is written down.
+  code: |
+    const selectPinnedTabItems = Array.from({ length: 9 }, (_entry, index) => ({
+      label: `Select Pinned Tab ${index + 1} (hidden shortcut)`,
+      // Literal Ctrl on every platform: Command+Shift+3..6 are macOS screenshot
+      // shortcuts that never reach the app, and Command/Ctrl+1..9 already select
+      // accounts.
+      accelerator: `Ctrl+Shift+${index + 1}`,
+      acceleratorWorksWhenHidden: true,
+      click: () => {
+        selectPinnedTab(index);
+      },
+    }));
+
+- label: ok
+  lang: tsx
+  note: Cmd here is interface copy in a Kbd label, and the branch around it goes through the renderer helper.
+  code: |
+    import { platform } from "@/lib/utils";
+
+    export function ModeDescription() {
+      return (
+        <>
+          In Tabs, hold <Kbd>{platform.isMacOS ? "Cmd" : "Ctrl"}</Kbd> to open a background tab or{" "}
+          <Kbd>Shift</Kbd> to open a new window.
+        </>
+      );
+    }
+
+- label: ok
+  lang: ts
+  note: Every branch goes through the helper; the raw value is only interpolated into the error text.
+  code: |
+    import { platform } from "@electron-toolkit/utils";
+
+    async function readMachineId() {
+      if (platform.isMacOS) {
+        return parseIoregOutput(await readIoreg());
+      }
+
+      if (platform.isWindows) {
+        return parseRegOutput(await readRegistry());
+      }
+
+      if (platform.isLinux) {
+        return normalizeLinuxId(await readLinuxMachineId());
+      }
+
+      throw new Error(`Unsupported platform: ${process.platform}`);
+    }
+
+- label: ok
+  lang: ts
+  note: The raw value is passed along as data to a pure function that takes a platform, not branched on here.
+  code: |
+    import { isUpdateSupported } from "./support";
+
+    class AppUpdater {
+      isUpdateSupported() {
+        return isUpdateSupported(process.platform, process.getSystemVersion());
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: A Playwright end-to-end test under tests/, not app or renderer code.
+  code: |
+    import { expect, test } from "@playwright/test";
+
+    test.skip(process.platform !== "win32", "the sizing modal loop is a Windows message loop");
+
+    test("the window keeps its size while the sizing modal runs", async () => {
+      const app = await launchApp();
+
+      expect(await app.windowBounds()).toEqual(initialBounds);
+    });
+
+- label: ok
+  lang: ts
+  note: "@meru/electron-extensions is the app-agnostic package: it carries no dependency on @electron-toolkit/utils."
+  code: |
+    export class NativeMessagingHost {
+      private getArguments(extensionOrigin: string) {
+        if (process.platform === "win32") {
+          // Chrome passes the calling window's handle on Windows, and hosts that
+          // parent a dialog on it expect the argument to be there.
+          return [extensionOrigin, "--parent-window=0"];
+        }
+
+        return [extensionOrigin];
+      }
+    }
