@@ -9,9 +9,11 @@ Everything else in the Focus/Do Not Disturb investigation hangs on the answer. I
 Needs a Mac. Three runs, one per phase.
 
 ```sh
-bun install          # or npm install — pulls electron + electron-builder only
+bun install          # pulls electron + electron-builder only
 bun run probe        # builds the .app and runs it attached to the terminal
 ```
+
+`tools/` is deliberately outside the root `workspaces` glob. Bun installs here into a local `node_modules` and lockfile and leaves the root alone, whereas a workspace member would join `bun run --filter='*'` on every repo-wide script and put electron-builder in the root lockfile for every CI install — a permanent cost for a probe that is meant to be deleted.
 
 It must run **packaged**, and it must run from a terminal rather than by double-clicking, because it reads answers from stdin. `bun run run` re-runs without rebuilding.
 
