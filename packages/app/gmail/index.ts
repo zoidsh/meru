@@ -600,6 +600,31 @@ export class Gmail {
     });
   }
 
+  /**
+   * Held until the renderer has loaded. The first feed fetches go out before
+   * it has registered its listeners, and a send that arrives early is dropped
+   * where nothing can notice, leaving that account missing from a unified
+   * inbox that has no other way to learn about it.
+   *
+   * Only the send waits. The baseline, the view refresh and the notifications
+   * stay with the fetch that called this, which is why this is not awaited
+   * there.
+   *
+   * A second load is not covered: the promise is already settled, so a
+   * renderer that reloads shows an empty unified inbox until each account's
+   * feed next changes. Nothing in production reloads the main window, so that
+   * is a development-only gap.
+   */
+  private async sendInboxChanged(messages: GmailInboxMessage[]) {
+    await main.rendererReady;
+
+    if (main.window.isDestroyed()) {
+      return;
+    }
+
+    ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
+  }
+
   private async retryInboxFeedFetch(
     fetchAttempt: number,
     options: { retryWhileUnchanged: boolean },
@@ -758,13 +783,8 @@ export class Gmail {
       // is the whole of it: main builds it, hands it over and keeps nothing.
       // Reached only on a changed feed, which is also every account's first
       // fetch, since a missing baseline counts as a change.
-      if (
-        licenseKey.isValid &&
-        config.get("unifiedInbox.enabled") &&
-        this.unifiedInboxEnabled &&
-        !main.window.isDestroyed()
-      ) {
-        ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
+      if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
+        this.sendInboxChanged(messages);
       }
 
       if (!baseline) {
@@ -1023,32 +1043,6 @@ export class Gmail {
     this.fetchInboxFeed({ retryWhileUnchanged: false });
 
     this.refreshInboxView();
-  }
-
-  /**
-   * A renderer that has just loaded holds no inbox lists, because its query
-   * cache is the only copy and main kept none. Dropping the baseline is what
-   * makes the next fetch send one: a fetch that finds nothing changed sends
-   * nothing, and there is no stored list to send in its place. It also leaves
-   * that fetch with no baseline to diff against, so a refill notifies for
-   * nothing, which is what a refill should do.
-   *
-   * The cost of that is worth knowing before this is called from anywhere
-   * else: the refill marks every entry it sees as seen, so mail that arrived
-   * since the last poll is silently swallowed and never notified. It is
-   * acceptable only because nothing in production reloads the main window —
-   * the launch call happens before any mail could have arrived, and reloads
-   * are a development thing. Wiring a reload onto `main.window` makes this a
-   * real missed notification.
-   */
-  sendInboxToRenderer() {
-    if (!this._view) {
-      return;
-    }
-
-    this.inboxFeedBaseline = null;
-
-    this.fetchInboxFeed({ retryWhileUnchanged: false });
   }
 
   getIsUnreadCountEnabled() {

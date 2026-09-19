@@ -18,6 +18,21 @@ import { trial } from "./trial";
 class Main {
   private _window: BrowserWindow | undefined;
 
+  private resolveRendererReady: (() => void) | undefined;
+
+  /**
+   * Resolved once the renderer has loaded and can receive what main sends it.
+   *
+   * Built here rather than in `init()` because `Gmail` instances are
+   * constructed before the window is, and their first feed fetch awaits this;
+   * a promise created alongside the window would not exist yet to be awaited.
+   * Resolving once is enough: the window is created a single time and hidden
+   * rather than closed, so there is never a second one to wait for.
+   */
+  rendererReady = new Promise<void>((resolve) => {
+    this.resolveRendererReady = resolve;
+  });
+
   location = "/";
 
   private setLocation(location: string) {
@@ -136,13 +151,10 @@ class Main {
       this.setLocation(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
     });
 
-    // The renderer's query cache is the only copy of the inbox lists, so a
-    // renderer that has just loaded holds none of them: at launch its listeners
-    // are not registered until after the first feed fetches, and a reload
-    // throws away what it had. An account whose view does not exist yet is
-    // skipped and sends its list from its own first fetch instead.
+    // A reload fires this again, and resolving a settled promise does nothing,
+    // which is the intent: what waits on it only ever waits for the first load.
     this.window.webContents.on("did-finish-load", () => {
-      accounts.sendInboxesToRenderer();
+      this.resolveRendererReady?.();
     });
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
