@@ -55,17 +55,21 @@ async function runUnattended(probe, run) {
 
   say("### Cases");
   say();
-  say("Each notification is titled with its case number. Fill in the Heard column.");
+  say("Each notification is titled with its case number. Fill in Heard and Which.");
   say();
-  say("| # | Case | Heard | Events |");
-  say("| --- | --- | --- | --- |");
+  say(
+    "**Which matters more than Heard.** An unsupported sound source does not fall silent, it plays a substitute, so a case that makes noise has not necessarily played our own file. Case 1 is the platform default; the chirp is a rising tone over about half a second.",
+  );
+  say();
+  say("| # | Case | Heard | Which: chirp / same as case 1 / other | Events |");
+  say("| --- | --- | --- | --- | --- |");
 
   for (const [index, testCase] of probe.cases.entries()) {
     const number = `${index + 1}/${probe.cases.length}`;
     const options =
       typeof testCase.options === "function" ? testCase.options({}) : testCase.options;
     const events = await fire(options, `${number} ${testCase.label}`);
-    say(`| ${index + 1} | ${testCase.label} | | ${events.join(", ") || "(none)"} |`);
+    say(`| ${index + 1} | ${testCase.label} | | | ${events.join(", ") || "(none)"} |`);
   }
 
   say();
