@@ -4,7 +4,7 @@ Answers one question per platform: can the OS play Meru's own notification sound
 
 Everything else in the Focus/Do Not Disturb investigation hangs on that. If the OS will play a bundled sound, Meru needs no detection at all and inherits allow-list behaviour no detector can reproduce. If it will not, Meru needs a detector and has to pick between a coarse one and an entitlement.
 
-**macOS is answered — see [Results](#results--macos).** Windows is not; see [Windows](#windows). Keep the probe either way: the next OS release will break something here, and re-running it beats re-deriving it.
+Both are answered: macOS can, and is fixed; Windows cannot, and is knowingly left as it is. See [Results — macOS](#results--macos) and [Results — Windows](#results--windows). Keep the probe: the next OS release will break something here, and re-running it beats re-deriving it.
 
 ## Results — macOS
 
