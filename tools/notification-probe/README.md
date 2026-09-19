@@ -1,12 +1,12 @@
-# Meru macOS notification sound probe
+# Meru notification sound probe
 
-Answers one question: can macOS play Meru's own notification sounds, so that a Focus suppresses them the way it suppresses the banner?
+Answers one question per platform: can the OS play Meru's own notification sounds, so that Do Not Disturb silences them the way it silences the banner?
 
-Everything else in the Focus/Do Not Disturb investigation hangs on the answer. If the OS will play a bundled `.wav`, Meru needs no Focus detection at all and gets per-app allow-list behaviour no detector can reproduce. If it will not, Meru needs a detector and has to pick between a coarse one and an entitlement.
+Everything else in the Focus/Do Not Disturb investigation hangs on that. If the OS will play a bundled sound, Meru needs no detection at all and inherits allow-list behaviour no detector can reproduce. If it will not, Meru needs a detector and has to pick between a coarse one and an entitlement.
 
-It has been answered — see [Results](#results). Keep the probe: the next macOS will break something here, and re-running it beats re-deriving it.
+**macOS is answered — see [Results](#results--macos).** Windows is not; see [Windows](#windows). Keep the probe either way: the next OS release will break something here, and re-running it beats re-deriving it.
 
-## Results
+## Results — macOS
 
 macOS 27.0, Electron 44.4.3, packaged, signed `Developer ID Application: Tim Cheung`. Run 19 September 2026.
 
@@ -40,7 +40,7 @@ Neither detection signal works on macOS 27, in either phase:
 
 The first needs Full Disk Access. The second is the no-permission fallback Mailspring and stretchly migrated to in 2025 and 2026, and it reads identically whether a Focus is on or off, so it cannot distinguish them — both of those apps are broken on 27.
 
-## Run it
+## Run it — macOS
 
 Needs a Mac. Three runs, one per phase.
 
