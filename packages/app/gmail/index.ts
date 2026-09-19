@@ -6,13 +6,13 @@ import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
-  GMAIL_INBOX_FEED_URL,
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
   type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
   generateGmailLabelColorsCss,
+  gmailFeedUrl,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
@@ -646,7 +646,11 @@ export class Gmail {
 
       const inboxType = inboxTypeSchema.parse(inboxTypeValue);
 
-      const feedUrl = `${GMAIL_INBOX_FEED_URL}${inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary" ? "/^sq_ig_i_personal" : ""}`;
+      const feedUrl = gmailFeedUrl(
+        inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary"
+          ? "primary"
+          : undefined,
+      );
 
       // Taken before the fetch so the anchor is never later than the feed state
       // it describes.

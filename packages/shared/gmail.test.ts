@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { diffInboxFeed, parseGmailMessageId } from "./gmail";
+import { diffInboxFeed, GMAIL_INBOX_FEED_URL, gmailFeedUrl, parseGmailMessageId } from "./gmail";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
 
@@ -184,5 +184,16 @@ describe("diffInboxFeed", () => {
         SLACK,
       ),
     ).toEqual({ changed: true, newIds: ["c"] });
+  });
+});
+
+describe("gmailFeedUrl", () => {
+  test("returns the inbox feed url without a label", () => {
+    expect(gmailFeedUrl()).toBe(GMAIL_INBOX_FEED_URL);
+  });
+
+  test("appends the system label id of a label", () => {
+    expect(gmailFeedUrl("primary")).toBe(`${GMAIL_INBOX_FEED_URL}/^sq_ig_i_personal`);
+    expect(gmailFeedUrl("important")).toBe(`${GMAIL_INBOX_FEED_URL}/^iim`);
   });
 });
