@@ -197,12 +197,10 @@ export class Gmail {
   store = createStore(
     subscribeWithSelector<{
       unreadCount: number;
-      unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
       attentionRequired: boolean;
     }>(() => ({
       unreadCount: 0,
-      unreadInbox: [],
       outOfOffice: false,
       attentionRequired: false,
     })),
@@ -602,6 +600,31 @@ export class Gmail {
     });
   }
 
+  /**
+   * Held until the renderer has loaded. The first feed fetches go out before
+   * it has registered its listeners, and a send that arrives early is dropped
+   * where nothing can notice, leaving that account missing from a unified
+   * inbox that has no other way to learn about it.
+   *
+   * Only the send waits. The baseline, the view refresh and the notifications
+   * stay with the fetch that called this, which is why this is not awaited
+   * there.
+   *
+   * A second load is not covered: the promise is already settled, so a
+   * renderer that reloads shows an empty unified inbox until each account's
+   * feed next changes. Nothing in production reloads the main window, so that
+   * is a development-only gap.
+   */
+  private async sendInboxChanged(messages: GmailInboxMessage[]) {
+    await main.rendererReady;
+
+    if (main.window.isDestroyed()) {
+      return;
+    }
+
+    ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
+  }
+
   private async retryInboxFeedFetch(
     fetchAttempt: number,
     options: { retryWhileUnchanged: boolean },
@@ -725,7 +748,7 @@ export class Gmail {
 
       const newIdSet = new Set(newIds);
 
-      const unreadInbox: GmailInboxMessage[] = [];
+      const messages: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
 
       for (const [
@@ -739,7 +762,7 @@ export class Gmail {
           throw new Error("Message ID not found in inbox feed entry");
         }
 
-        unreadInbox.push({
+        messages.push({
           id: messageId,
           subject: title,
           summary,
@@ -756,8 +779,12 @@ export class Gmail {
         }
       }
 
+      // The renderer's query cache is the only copy of this list, so the send
+      // is the whole of it: main builds it, hands it over and keeps nothing.
+      // Reached only on a changed feed, which is also every account's first
+      // fetch, since a missing baseline counts as a change.
       if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-        this.store.setState({ unreadInbox });
+        this.sendInboxChanged(messages);
       }
 
       if (!baseline) {
@@ -792,7 +819,7 @@ export class Gmail {
       );
 
       for (const newMailIndex of newMailIndexes.reverse()) {
-        const newMail = unreadInbox[newMailIndex];
+        const newMail = messages[newMailIndex];
         const newMailFeedEntry = feedEntries[newMailIndex];
 
         if (!newMail || !newMailFeedEntry) {
@@ -1073,17 +1100,6 @@ export class Gmail {
 
             appTray.updateUnreadStatus(totalUnreadCount);
 
-            accounts.sendAccountsChangedToRenderer();
-          },
-        ),
-      );
-    }
-
-    if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-      this.storeUnsubscribers.push(
-        this.store.subscribe(
-          (state) => state.unreadInbox,
-          () => {
             accounts.sendAccountsChangedToRenderer();
           },
         ),

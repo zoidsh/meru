@@ -1,6 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import type { GmailAction } from "./gmail";
+import type { GmailAction, GmailInboxMessage } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -305,6 +305,7 @@ export type IpcRendererEvent = {
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: GmailAction, requestId: string];
   "gmail.refreshInbox": [];
+  "gmail.inboxChanged": [accountId: AccountConfig["id"], messages: GmailInboxMessage[]];
   "gmail.openMessage": [messageId: string];
   "gmail.showMessageSentNotification": [browserWindowId: number];
   "gmail.dismissMessageSentNotification": [browserWindowId: number];

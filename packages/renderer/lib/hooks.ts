@@ -3,8 +3,9 @@ import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
-import { useEffect, useRef, useState } from "react";
-import { useConfig } from "./react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useConfig, unifiedInboxOptions } from "./react-query";
 import { useAccountsStore, useTabsStore, useTrialStore } from "./stores";
 
 export function useMouseAccountSwitching() {
@@ -96,21 +97,27 @@ export type UnifiedInboxMessage = GmailInboxMessage & {
 };
 
 export function useUnifiedInbox() {
+  const { data } = useQuery(unifiedInboxOptions);
+
   const accounts = useAccountsStore((state) => state.accounts);
 
-  const messages: UnifiedInboxMessage[] = accounts
-    .map((account) =>
-      account.gmail.unreadInbox.map((mail) => ({
-        account: {
-          id: account.config.id,
-          label: account.config.label,
-          color: account.config.color,
-        },
-        ...mail,
-      })),
-    )
-    .flat()
-    .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1));
+  const messages = useMemo<UnifiedInboxMessage[]>(
+    () =>
+      accounts
+        .map((account) =>
+          (data[account.config.id] ?? []).map((mail) => ({
+            account: {
+              id: account.config.id,
+              label: account.config.label,
+              color: account.config.color,
+            },
+            ...mail,
+          })),
+        )
+        .flat()
+        .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1)),
+    [data, accounts],
+  );
 
   return { messages };
 }
