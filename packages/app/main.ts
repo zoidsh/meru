@@ -136,6 +136,15 @@ class Main {
       this.setLocation(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
     });
 
+    // The renderer's query cache is the only copy of the inbox lists, so a
+    // renderer that has just loaded holds none of them: at launch its listeners
+    // are not registered until after the first feed fetches, and a reload
+    // throws away what it had. An account whose view does not exist yet is
+    // skipped and sends its list from its own first fetch instead.
+    this.window.webContents.on("did-finish-load", () => {
+      accounts.sendInboxesToRenderer();
+    });
+
     this.window.webContents.setWindowOpenHandler(({ url }) => {
       openExternalUrl(url, { skipTrustedHostCheck: true });
 

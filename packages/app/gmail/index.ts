@@ -197,12 +197,10 @@ export class Gmail {
   store = createStore(
     subscribeWithSelector<{
       unreadCount: number;
-      unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
       attentionRequired: boolean;
     }>(() => ({
       unreadCount: 0,
-      unreadInbox: [],
       outOfOffice: false,
       attentionRequired: false,
     })),
@@ -725,7 +723,7 @@ export class Gmail {
 
       const newIdSet = new Set(newIds);
 
-      const unreadInbox: GmailInboxMessage[] = [];
+      const messages: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
 
       for (const [
@@ -739,7 +737,7 @@ export class Gmail {
           throw new Error("Message ID not found in inbox feed entry");
         }
 
-        unreadInbox.push({
+        messages.push({
           id: messageId,
           subject: title,
           summary,
@@ -756,8 +754,17 @@ export class Gmail {
         }
       }
 
-      if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-        this.store.setState({ unreadInbox });
+      // The renderer's query cache is the only copy of this list, so the send
+      // is the whole of it: main builds it, hands it over and keeps nothing.
+      // Reached only on a changed feed, which is also every account's first
+      // fetch, since a missing baseline counts as a change.
+      if (
+        licenseKey.isValid &&
+        config.get("unifiedInbox.enabled") &&
+        this.unifiedInboxEnabled &&
+        !main.window.isDestroyed()
+      ) {
+        ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
       }
 
       if (!baseline) {
@@ -792,7 +799,7 @@ export class Gmail {
       );
 
       for (const newMailIndex of newMailIndexes.reverse()) {
-        const newMail = unreadInbox[newMailIndex];
+        const newMail = messages[newMailIndex];
         const newMailFeedEntry = feedEntries[newMailIndex];
 
         if (!newMail || !newMailFeedEntry) {
@@ -1018,6 +1025,32 @@ export class Gmail {
     this.refreshInboxView();
   }
 
+  /**
+   * A renderer that has just loaded holds no inbox lists, because its query
+   * cache is the only copy and main kept none. Dropping the baseline is what
+   * makes the next fetch send one: a fetch that finds nothing changed sends
+   * nothing, and there is no stored list to send in its place. It also leaves
+   * that fetch with no baseline to diff against, so a refill notifies for
+   * nothing, which is what a refill should do.
+   *
+   * The cost of that is worth knowing before this is called from anywhere
+   * else: the refill marks every entry it sees as seen, so mail that arrived
+   * since the last poll is silently swallowed and never notified. It is
+   * acceptable only because nothing in production reloads the main window —
+   * the launch call happens before any mail could have arrived, and reloads
+   * are a development thing. Wiring a reload onto `main.window` makes this a
+   * real missed notification.
+   */
+  sendInboxToRenderer() {
+    if (!this._view) {
+      return;
+    }
+
+    this.inboxFeedBaseline = null;
+
+    this.fetchInboxFeed({ retryWhileUnchanged: false });
+  }
+
   getIsUnreadCountEnabled() {
     if (!config.get("accounts.unreadBadge")) {
       return false;
@@ -1073,17 +1106,6 @@ export class Gmail {
 
             appTray.updateUnreadStatus(totalUnreadCount);
 
-            accounts.sendAccountsChangedToRenderer();
-          },
-        ),
-      );
-    }
-
-    if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-      this.storeUnsubscribers.push(
-        this.store.subscribe(
-          (state) => state.unreadInbox,
-          () => {
             accounts.sendAccountsChangedToRenderer();
           },
         ),
