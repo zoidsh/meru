@@ -1,5 +1,6 @@
 const { main, run } = require("./harness");
 const { runUnattended } = require("./unattended");
+const { fireOne } = require("./one-shot");
 
 const probes = {
   darwin: () => require("./macos"),
@@ -15,7 +16,11 @@ if (!load) {
 
 const probe = load();
 
-if (probe.unattended) {
+const oneShot = process.argv.find((arg) => arg.startsWith("--sound="));
+
+if (oneShot) {
+  fireOne(oneShot.slice("--sound=".length));
+} else if (probe.unattended) {
   runUnattended(probe, run);
 } else {
   main(probe);

@@ -19,6 +19,7 @@
       "main.js",
       "harness.js",
       "unattended.js",
+      "one-shot.js",
       "macos.js",
       "windows.js"
     ],
