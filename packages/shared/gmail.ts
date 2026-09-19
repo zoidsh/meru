@@ -124,6 +124,23 @@ export function diffInboxFeed(
   };
 }
 
+/**
+ * A null `importantIds` is the Important feed having failed rather than having
+ * come back empty, and notifies for everything: a missed notification costs
+ * more than an extra one.
+ */
+export function filterNewMailIdsByImportance(
+  newIds: readonly string[],
+  newEmails: "all" | "important",
+  importantIds: ReadonlySet<string> | null,
+): Set<string> {
+  if (newEmails === "all" || !importantIds) {
+    return new Set(newIds);
+  }
+
+  return new Set(newIds.filter((id) => importantIds.has(id)));
+}
+
 const GMAIL_MESSAGE_ID_REGEXP = /^[A-Za-z0-9]{15,}$/;
 
 const GMAIL_QUERY_HASH_VIEWS = new Set([

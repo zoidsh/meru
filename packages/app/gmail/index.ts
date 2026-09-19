@@ -11,6 +11,7 @@ import {
   type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
+  filterNewMailIdsByImportance,
   generateGmailLabelColorsCss,
   gmailFeedUrl,
   parseGmailMessageId,
@@ -617,6 +618,24 @@ export class Gmail {
     await this.fetchInboxFeed(options, fetchAttempt + 1);
   }
 
+  private async fetchImportantFeedEntryIds() {
+    try {
+      const body = await this.session
+        .fetch(`${gmailFeedUrl("important")}?t=${Date.now()}`)
+        .then((res) => res.text());
+
+      const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
+
+      const entries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
+
+      return new Set(entries.map(({ id }) => id));
+    } catch (error) {
+      log.error("Failed to fetch important inbox feed", { error });
+
+      return null;
+    }
+  }
+
   async fetchInboxFeed(
     { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean } = {},
     fetchAttempt = 1,
@@ -753,10 +772,30 @@ export class Gmail {
 
       const hasMultipleAccounts = accounts.getAccountConfigs().length > 1;
 
+      // Fetched here rather than alongside the inbox feed so that a poll that
+      // brought nothing new, or one whose notifications the gates below drop
+      // anyway, costs no second request.
+      const notifiesNewMail =
+        newMailIndexes.length > 0 &&
+        config.get("notifications.enabled") &&
+        account.config.notifications &&
+        !config.get("doNotDisturb.enabled") &&
+        isWithinNotificationTimes();
+
+      const newEmailsToNotifyFor =
+        licenseKey.isValid && notifiesNewMail ? config.get("notifications.newEmails") : "all";
+
+      const notifiableFeedEntryIds = filterNewMailIdsByImportance(
+        newIds,
+        newEmailsToNotifyFor,
+        newEmailsToNotifyFor === "important" ? await this.fetchImportantFeedEntryIds() : null,
+      );
+
       for (const newMailIndex of newMailIndexes.reverse()) {
         const newMail = unreadInbox[newMailIndex];
+        const newMailFeedEntry = feedEntries[newMailIndex];
 
-        if (!newMail) {
+        if (!newMail || !newMailFeedEntry) {
           throw new Error("New mail not found");
         }
 
@@ -858,7 +897,8 @@ export class Gmail {
           !config.get("notifications.enabled") ||
           !account.config.notifications ||
           config.get("doNotDisturb.enabled") ||
-          !isWithinNotificationTimes()
+          !isWithinNotificationTimes() ||
+          !notifiableFeedEntryIds.has(newMailFeedEntry.id)
         ) {
           continue;
         }
