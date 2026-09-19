@@ -1,3 +1,4 @@
+import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { Config } from "@meru/shared/types";
 import { QueryClient, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
@@ -43,6 +44,45 @@ export function useBookmarks() {
 
   return { bookmarks: data };
 }
+
+export const unifiedInboxOptions = queryOptions({
+  queryKey: ["unifiedInbox"],
+  queryFn: async (): Promise<Record<string, GmailInboxMessage[]>> => {
+    const fetched = await ipc.main.invoke("gmail.getUnifiedInbox");
+
+    // A resolved fetch overwrites whatever `setQueryData` wrote while it was in
+    // flight, and an account on the retry ladder can hold it for ten seconds.
+    // With `gcTime: 0` and an infinite `staleTime`, anything in the cache by now
+    // is a push that landed during the fetch, so it is the newer of the two.
+    return {
+      ...fetched,
+      ...queryClient.getQueryData<Record<string, GmailInboxMessage[]>>(["unifiedInbox"]),
+    };
+  },
+  // The per-account pushes below keep the entry current, so it is never refetched.
+  staleTime: Number.POSITIVE_INFINITY,
+  // This is the only copy of the mail list, so it goes as the unified inbox closes.
+  gcTime: 0,
+});
+
+ipc.renderer.on("gmail.inboxChanged", (_event, accountId, messages) => {
+  // A push arriving while the unified inbox is closed would otherwise create
+  // the entry that `gcTime: 0` exists to prevent, and it would hold the list
+  // until something collected it.
+  if (
+    !queryClient
+      .getQueryCache()
+      .find({ queryKey: unifiedInboxOptions.queryKey })
+      ?.getObserversCount()
+  ) {
+    return;
+  }
+
+  queryClient.setQueryData(unifiedInboxOptions.queryKey, (unifiedInbox) => ({
+    ...unifiedInbox,
+    [accountId]: messages,
+  }));
+});
 
 export function useIsBelowMinimumMacOSVersion() {
   const { data } = useQuery(
