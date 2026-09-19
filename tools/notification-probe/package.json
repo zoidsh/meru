@@ -38,7 +38,18 @@
       },
       "extendInfo": {
         "LSUIElement": false
-      }
+      },
+      "extraResources": [
+        "chirp.wav",
+        "sounds/chirp.wav",
+        {
+          "from": ".",
+          "to": ".",
+          "filter": [
+            "t-*.wav"
+          ]
+        }
+      ]
     },
     "win": {
       "target": {
