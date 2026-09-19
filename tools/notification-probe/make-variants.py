@@ -15,7 +15,7 @@ import os
 import sys
 import wave
 
-VARIANTS = ("t-mono48", "t-441", "t-mono441", "t-short")
+VARIANTS = ("t-mono48", "t-441", "t-mono441", "t-short", "t-tiny", "t-chirppy")
 
 
 def read(path):
@@ -81,14 +81,33 @@ def main(argv):
 
     mono = to_mono(channels, samples)
 
+    mono441 = resample(mono, 1, rate, 44100)
+
     written = {
         "t-mono48": (1, rate, mono),
         "t-441": (channels, 44100, resample(samples, channels, rate, 44100)),
-        "t-mono441": (1, 44100, resample(mono, 1, rate, 44100)),
+        "t-mono441": (1, 44100, mono441),
         "t-short": (channels, rate, samples[: int(0.6 * rate) * channels]),
+        # Same shape as the file that works: mono, 44.1 kHz, 0.6s, ~53 KB.
+        "t-tiny": (1, 44100, mono441[: int(0.6 * 44100)]),
     }
 
+    # The chirp works and this is it rewritten by the same writer as the rest,
+    # which separates "the writer produces something macOS rejects" from
+    # "something about the source audio does".
+    chirp = os.path.join(os.path.dirname(os.path.abspath(source)), "chirp.wav")
+    if not os.path.exists(chirp):
+        chirp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chirp.wav")
+
+    if os.path.exists(chirp):
+        chirp_channels, chirp_rate, chirp_samples = read(chirp)
+        written["t-chirppy"] = (chirp_channels, chirp_rate, chirp_samples)
+    else:
+        print("  no chirp.wav found, skipping t-chirppy (run make-sound.js first)")
+
     for name in VARIANTS:
+        if name not in written:
+            continue
         ch, r, data = written[name]
         path = os.path.join(out_dir, f"{name}.wav")
         write(path, ch, r, data)
