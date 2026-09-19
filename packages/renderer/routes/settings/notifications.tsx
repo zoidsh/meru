@@ -316,11 +316,7 @@ export function NotificationsSettings() {
                       Sound
                       <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
-                    <FieldDescription>
-                      Select the sound to play for notifications.
-                      {platform.isMacOS &&
-                        " macOS plays it with the notification, so Do Not Disturb and Focus silence it."}
-                    </FieldDescription>
+                    <FieldDescription>Select the sound to play for notifications.</FieldDescription>
                     <Select
                       items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
                         value: sound,
