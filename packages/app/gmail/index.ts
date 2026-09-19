@@ -197,12 +197,10 @@ export class Gmail {
   store = createStore(
     subscribeWithSelector<{
       unreadCount: number;
-      unreadInbox: GmailInboxMessage[];
       outOfOffice: boolean;
       attentionRequired: boolean;
     }>(() => ({
       unreadCount: 0,
-      unreadInbox: [],
       outOfOffice: false,
       attentionRequired: false,
     })),
@@ -607,15 +605,16 @@ export class Gmail {
     options: { retryWhileUnchanged: boolean },
   ) {
     if (fetchAttempt > 10) {
-      return;
+      return null;
     }
 
     await wait(ms("1s"));
 
     // Awaited so that the whole chain is behind one promise, which is what
-    // lets `handleMessage` hold its caller until the list has caught up. Every
-    // other caller drops the promise, so none of them waits on this.
-    await this.fetchInboxFeed(options, fetchAttempt + 1);
+    // lets `handleMessage` hold its caller until the list has caught up, and
+    // what gets the list the chain ends up with back to `getInboxMessages`.
+    // Every other caller drops the promise, so none of them waits on this.
+    return await this.fetchInboxFeed(options, fetchAttempt + 1);
   }
 
   private async fetchImportantFeedEntryIds() {
@@ -639,14 +638,14 @@ export class Gmail {
   async fetchInboxFeed(
     { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean } = {},
     fetchAttempt = 1,
-  ) {
+  ): Promise<GmailInboxMessage[] | null> {
     try {
       if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          return await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
         }
 
-        return;
+        return null;
       }
 
       const inboxTypeValue = await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE");
@@ -657,10 +656,10 @@ export class Gmail {
       // diff against, and otherwise return, the way the URL check above does.
       if (inboxTypeValue === undefined) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          return await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
         }
 
-        return;
+        return null;
       }
 
       const inboxType = inboxTypeSchema.parse(inboxTypeValue);
@@ -707,25 +706,11 @@ export class Gmail {
         this.seenInboxFeedEntryIds.add(id);
       }
 
-      // Nothing signalled a change ahead of the idle poll, so there is nothing
-      // for it to wait for.
-      if (!changed) {
-        if (retryWhileUnchanged) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
-        }
-
-        return;
-      }
-
-      this.inboxFeedBaseline = {
-        url: feedUrl,
-        ids: new Set(feedEntries.map(({ id }) => id)),
-        readAt,
-      };
-
       const newIdSet = new Set(newIds);
 
-      const unreadInbox: GmailInboxMessage[] = [];
+      // Built ahead of the unchanged check below, because `getInboxMessages`
+      // needs the list back from a feed that has almost always not changed.
+      const messages: GmailInboxMessage[] = [];
       const newMailIndexes: number[] = [];
 
       for (const [
@@ -739,7 +724,7 @@ export class Gmail {
           throw new Error("Message ID not found in inbox feed entry");
         }
 
-        unreadInbox.push({
+        messages.push({
           id: messageId,
           subject: title,
           summary,
@@ -756,12 +741,33 @@ export class Gmail {
         }
       }
 
-      if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-        this.store.setState({ unreadInbox });
+      // Nothing signalled a change ahead of the idle poll, so there is nothing
+      // for it to wait for.
+      if (!changed) {
+        if (!retryWhileUnchanged) {
+          return messages;
+        }
+
+        return (await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged })) ?? messages;
+      }
+
+      this.inboxFeedBaseline = {
+        url: feedUrl,
+        ids: new Set(feedEntries.map(({ id }) => id)),
+        readAt,
+      };
+
+      if (
+        licenseKey.isValid &&
+        config.get("unifiedInbox.enabled") &&
+        this.unifiedInboxEnabled &&
+        !main.window.isDestroyed()
+      ) {
+        ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
       }
 
       if (!baseline) {
-        return;
+        return messages;
       }
 
       // Ahead of the notifications, so that the list and the unread badge have
@@ -792,7 +798,7 @@ export class Gmail {
       );
 
       for (const newMailIndex of newMailIndexes.reverse()) {
-        const newMail = unreadInbox[newMailIndex];
+        const newMail = messages[newMailIndex];
         const newMailFeedEntry = feedEntries[newMailIndex];
 
         if (!newMail || !newMailFeedEntry) {
@@ -927,9 +933,21 @@ export class Gmail {
           },
         });
       }
+
+      return messages;
     } catch (error) {
       log.error("Failed to fetch inbox feed", { error });
+
+      return null;
     }
+  }
+
+  /**
+   * The unified inbox holds the only copy of the list, so this is a real fetch
+   * rather than a read of anything main kept.
+   */
+  async getInboxMessages() {
+    return (await this.fetchInboxFeed({ retryWhileUnchanged: false })) ?? [];
   }
 
   /**
@@ -1073,17 +1091,6 @@ export class Gmail {
 
             appTray.updateUnreadStatus(totalUnreadCount);
 
-            accounts.sendAccountsChangedToRenderer();
-          },
-        ),
-      );
-    }
-
-    if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
-      this.storeUnsubscribers.push(
-        this.store.subscribe(
-          (state) => state.unreadInbox,
-          () => {
             accounts.sendAccountsChangedToRenderer();
           },
         ),

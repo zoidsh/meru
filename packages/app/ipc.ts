@@ -5,6 +5,7 @@ import { platform } from "@electron-toolkit/utils";
 import { isExtensionId } from "@meru/electron-extensions";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { isCuratedExtensionId } from "@meru/shared/extensions";
+import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
@@ -1154,6 +1155,37 @@ class Ipc {
         "gmail.openMessage",
         messageId,
       );
+    });
+
+    this.main.handle("gmail.getUnifiedInbox", async () => {
+      if (!licenseKey.isValid || !config.get("unifiedInbox.enabled")) {
+        return {};
+      }
+
+      const entries = [...accounts.instances].filter(
+        ([, instance]) => instance.gmail.unifiedInboxEnabled,
+      );
+
+      const results = await Promise.allSettled(
+        entries.map(([, instance]) => instance.gmail.getInboxMessages()),
+      );
+
+      const unifiedInbox: Record<string, GmailInboxMessage[]> = {};
+
+      for (const [index, [accountId]] of entries.entries()) {
+        const result = results[index];
+
+        // `fetchInboxFeed` logs and swallows its own failures, so a rejection
+        // here is one nothing anticipated. It leaves that account out rather
+        // than emptying everyone else's inbox with it.
+        if (result?.status !== "fulfilled") {
+          continue;
+        }
+
+        unifiedInbox[accountId] = result.value;
+      }
+
+      return unifiedInbox;
     });
 
     this.main.handle("gmail.handleMessage", async (_event, accountId, messageId, action) => {

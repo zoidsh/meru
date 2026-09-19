@@ -73,7 +73,6 @@ export interface GmailInboxMessage {
 
 export type GmailState = {
   unreadCount: number | null;
-  unreadInbox: GmailInboxMessage[];
   outOfOffice: boolean;
   attentionRequired: boolean;
 };
