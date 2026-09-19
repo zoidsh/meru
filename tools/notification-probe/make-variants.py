@@ -92,9 +92,9 @@ def main(argv):
         "t-tiny": (1, 44100, mono441[: int(0.6 * 44100)]),
     }
 
-    # The chirp works and this is it rewritten by the same writer as the rest,
-    # which separates "the writer produces something macOS rejects" from
-    # "something about the source audio does".
+    # Byte-identical to the chirp that works, under a different name: the two
+    # writers turn out to emit the same header, so this tests whether the file
+    # is what macOS accepts or whether the name it was first seen under is.
     chirp = os.path.join(os.path.dirname(os.path.abspath(source)), "chirp.wav")
     if not os.path.exists(chirp):
         chirp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chirp.wav")
