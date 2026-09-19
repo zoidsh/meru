@@ -1,0 +1,38 @@
+{
+  "name": "meru-notification-probe",
+  "version": "1.0.0",
+  "description": "Probes how macOS delivers Electron notification sound under Focus",
+  "main": "main.js",
+  "scripts": {
+    "probe": "node make-sound.js && electron-builder --dir && \"dist/mac-arm64/Meru Probe.app/Contents/MacOS/Meru Probe\"",
+    "run": "\"dist/mac-arm64/Meru Probe.app/Contents/MacOS/Meru Probe\""
+  },
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.16.1"
+  },
+  "build": {
+    "appId": "sh.zoid.meru.probe",
+    "productName": "Meru Probe",
+    "files": [
+      "main.js"
+    ],
+    "extraResources": [
+      "chirp.wav",
+      "sounds/chirp.wav"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "minimumSystemVersion": "13.0.0",
+      "target": {
+        "target": "dir",
+        "arch": [
+          "arm64"
+        ]
+      },
+      "extendInfo": {
+        "LSUIElement": false
+      }
+    }
+  }
+}
