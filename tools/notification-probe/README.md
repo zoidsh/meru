@@ -89,12 +89,18 @@ Before every case it reads the two things a detector would rely on:
 
 A second probe, answering the two questions that decide whether Meru needs a native module on Windows: can an unpackaged build attach its own sound to a toast, and does `FocusSessionManager` see a manually toggled Do not disturb?
 
+Built for **arm64**, since the Windows this is tested on runs in UTM on an Apple Silicon Mac. Change `build.win.target.arch` for an x64 machine.
+
 ```sh
 bun install
-bun run probe:win     # builds the NSIS installer into dist/
+bun run probe:win     # builds the arm64 NSIS installer into dist/
 ```
 
+Cross-building from the Mac works — electron-builder carries its own NSIS and needs no wine when nothing is being signed. Copy the installer from `dist/` into the VM. Building inside the VM instead works too, and needs no change.
+
 Then **install it**. This is not optional and not the same as the macOS flow: Windows only delivers toasts to an app that has a Start Menu shortcut carrying an AppUserModelID, which the installer creates and a `--dir` build does not.
+
+Being unsigned is fine here. Windows delivers toasts from an unsigned app, unlike macOS; SmartScreen will warn at install time and the `signing` line in the report will say `NotSigned`.
 
 Run it once per phase, from anywhere:
 
