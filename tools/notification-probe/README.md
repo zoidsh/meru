@@ -10,17 +10,17 @@ It has been answered — see [Results](#results). Keep the probe: the next macOS
 
 macOS 27.0, Electron 44.4.3, packaged, signed `Developer ID Application: Tim Cheung`. Run 19 September 2026.
 
-| Case                                      | No Focus           | Do Not Disturb on |
-| ----------------------------------------- | ------------------ | ----------------- |
-| no silent, no sound                       | system default     | silent            |
-| `silent: false`                           | system default     | silent            |
-| `silent: true`                            | silent             | silent            |
-| `sound: "Submarine"`                      | Submarine          | silent            |
-| `sound: "chirp"`                          | **chirp**          | silent            |
-| `sound: "chirp.wav"`                      | **chirp**          | silent            |
-| `sound: "sounds/chirp.wav"`               | wrong system sound | silent            |
-| absolute path                             | wrong system sound | silent            |
-| `sound: "MeruProbe"` (`~/Library/Sounds`) | **chirp**          | silent            |
+| Case                                      | No Focus           | Do Not Disturb on | DND, on its allow list |
+| ----------------------------------------- | ------------------ | ----------------- | ---------------------- |
+| no silent, no sound                       | system default     | silent            | system default         |
+| `silent: false`                           | system default     | silent            | system default         |
+| `silent: true`                            | silent             | silent            | silent                 |
+| `sound: "Submarine"`                      | Submarine          | silent            | Submarine              |
+| `sound: "chirp"`                          | **chirp**          | silent            | **chirp**              |
+| `sound: "chirp.wav"`                      | **chirp**          | silent            | **chirp**              |
+| `sound: "sounds/chirp.wav"`               | wrong system sound | silent            | wrong system sound     |
+| absolute path                             | wrong system sound | silent            | wrong system sound     |
+| `sound: "MeruProbe"` (`~/Library/Sounds`) | **chirp**          | silent            | **chirp**              |
 
 `show` fired for every case in both phases, which is why the renderer sound leaks: the event says nothing about whether anything was presented.
 
@@ -29,6 +29,7 @@ What this settles:
 - **A bundled sound works**, by bare filename against `Contents/Resources`, extension optional. The 2020 and 2024 reports that Electron's `sound` option is broken are wrong on current versions.
 - **Subdirectories and absolute paths do not work**, and they fail loudly rather than quietly — macOS substitutes an unrelated system sound. A missing file needs guarding.
 - **A Focus suppresses notification-attached audio completely**, so handing the sound to the OS fixes the leak with no detection.
+- **The Focus's per-app allow list is honoured.** Adding the app under Allowed Notifications brings every sound back, matching the no-Focus column exactly. No detector can reproduce this: reading "a Focus is on" says nothing about whether this app is exempt from it, which is the open complaint against the `defaults` approach in [stretchly#1549](https://github.com/hovancik/stretchly/issues/1549).
 
 Neither detection signal works on macOS 27, in either phase:
 
@@ -38,8 +39,6 @@ Neither detection signal works on macOS 27, in either phase:
 | `NSStatusItem Visible FocusModes`            | key absent | key absent        |
 
 The first needs Full Disk Access. The second is the no-permission fallback Mailspring and stretchly migrated to in 2025 and 2026, and it reads identically whether a Focus is on or off, so it cannot distinguish them — both of those apps are broken on 27.
-
-The allow-list phase is not yet recorded.
 
 ## Run it
 
