@@ -22,7 +22,7 @@ macOS 27.0, Electron 44.4.3, packaged, signed `Developer ID Application: Tim Che
 | absolute path                             | wrong system sound | silent            | wrong system sound     |
 | `sound: "MeruProbe"` (`~/Library/Sounds`) | **chirp**          | silent            | **chirp**              |
 
-`show` fired for every case in both phases, which is why the renderer sound leaks: the event says nothing about whether anything was presented.
+`show` fired for every case in all three phases, which is why the renderer sound leaks: the event says nothing about whether anything was presented.
 
 What this settles:
 
