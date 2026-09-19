@@ -97,7 +97,7 @@ export type UnifiedInboxMessage = GmailInboxMessage & {
 };
 
 export function useUnifiedInbox() {
-  const { data, isPending } = useQuery(unifiedInboxOptions);
+  const { data } = useQuery(unifiedInboxOptions);
 
   const accounts = useAccountsStore((state) => state.accounts);
 
@@ -105,7 +105,7 @@ export function useUnifiedInbox() {
     () =>
       accounts
         .map((account) =>
-          (data?.[account.config.id] ?? []).map((mail) => ({
+          (data[account.config.id] ?? []).map((mail) => ({
             account: {
               id: account.config.id,
               label: account.config.label,
@@ -119,7 +119,7 @@ export function useUnifiedInbox() {
     [data, accounts],
   );
 
-  return { messages, isLoading: isPending };
+  return { messages };
 }
 
 export function useCopied() {

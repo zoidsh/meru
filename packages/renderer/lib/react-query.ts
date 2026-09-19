@@ -2,8 +2,8 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import type { Config } from "@meru/shared/types";
 import { QueryClient, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import {
-  mergeFetchedUnifiedInbox,
   mergeUnifiedInboxPush,
+  registerUnifiedInboxCacheDefaults,
   unifiedInboxCacheOptions,
 } from "./unified-inbox-cache";
 import { platform } from "./utils";
@@ -49,11 +49,9 @@ export function useBookmarks() {
   return { bookmarks: data };
 }
 
-export const unifiedInboxOptions = queryOptions({
-  ...unifiedInboxCacheOptions,
-  queryFn: async () =>
-    mergeFetchedUnifiedInbox(queryClient, await ipc.main.invoke("gmail.getUnifiedInbox")),
-});
+registerUnifiedInboxCacheDefaults(queryClient);
+
+export const unifiedInboxOptions = queryOptions(unifiedInboxCacheOptions);
 
 ipc.renderer.on("gmail.inboxChanged", (_event, accountId, messages) => {
   mergeUnifiedInboxPush(queryClient, accountId, messages);

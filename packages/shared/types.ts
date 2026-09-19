@@ -294,7 +294,6 @@ export type IpcMainEvents =
       "workspaceApp.getLoadingState": (workspaceAppId?: string) => boolean;
       "workspaceApp.getBookmarkState": (workspaceAppId: string) => WorkspaceAppBookmarkState;
       "bookmarks.getBookmarks": () => BookmarkState[];
-      "gmail.getUnifiedInbox": () => Record<AccountConfig["id"], GmailInboxMessage[]>;
       "extensions.getInstalled": () => InstalledExtensionState[];
       "extensions.install": (extensionId: string) => { error?: string };
       "extensions.uninstall": (extensionId: string) => { error?: string };

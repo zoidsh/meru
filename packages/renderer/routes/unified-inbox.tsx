@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@meru/ui/components/select";
-import { Skeleton } from "@meru/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableRow } from "@meru/ui/components/table";
 import { cn } from "@meru/ui/lib/utils";
 import {
@@ -578,10 +577,6 @@ export function UnifiedInbox() {
   const renderContent = () => {
     if (!config) {
       return;
-    }
-
-    if (unifiedInbox.isLoading) {
-      return <Skeleton className="h-96" />;
     }
 
     if (unifiedInbox.messages.length === 0) {

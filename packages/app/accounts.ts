@@ -127,6 +127,12 @@ class Accounts {
     }
   }
 
+  sendInboxesToRenderer() {
+    for (const account of this.instances.values()) {
+      account.gmail.sendInboxToRenderer();
+    }
+  }
+
   async createViews() {
     /*
      * Registered before the views are created rather than after, because

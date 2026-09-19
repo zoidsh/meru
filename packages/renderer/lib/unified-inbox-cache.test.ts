@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { GmailInboxMessage } from "@meru/shared/gmail";
-import { QueryClient, queryOptions } from "@tanstack/react-query";
+import { QueryClient, QueryObserver, queryOptions } from "@tanstack/react-query";
 import {
-  mergeFetchedUnifiedInbox,
   mergeUnifiedInboxPush,
+  registerUnifiedInboxCacheDefaults,
   type UnifiedInbox,
   unifiedInboxCacheOptions,
   unifiedInboxQueryKey,
@@ -20,32 +20,44 @@ function message(id: string): GmailInboxMessage {
   };
 }
 
-/** The route's query, with the invoke replaced by a fetch the test drives. */
-function unifiedInboxOptions(queryClient: QueryClient, fetch: () => Promise<UnifiedInbox>) {
-  return queryOptions({
-    ...unifiedInboxCacheOptions,
-    queryFn: async () => mergeFetchedUnifiedInbox(queryClient, await fetch()),
-  });
+function createQueryClient() {
+  const queryClient = new QueryClient();
+
+  registerUnifiedInboxCacheDefaults(queryClient);
+
+  return queryClient;
 }
 
 describe("mergeUnifiedInboxPush", () => {
-  test("drops a push that arrives with no entry in the cache", () => {
-    const queryClient = new QueryClient();
+  test("builds the entry from a push that arrives before anything reads it", () => {
+    const queryClient = createQueryClient();
 
     mergeUnifiedInboxPush(queryClient, "account-1", [message("a")]);
 
-    expect(queryClient.getQueryData(unifiedInboxQueryKey)).toBeUndefined();
-    expect(queryClient.getQueryCache().find({ queryKey: unifiedInboxQueryKey })).toBeUndefined();
+    expect(queryClient.getQueryData<UnifiedInbox>(unifiedInboxQueryKey)).toEqual({
+      "account-1": [message("a")],
+    });
   });
 
-  test("merges a push into an entry that holds a list, leaving the other accounts alone", () => {
-    const queryClient = new QueryClient();
+  test("keeps an entry it built alive for the window's lifetime", () => {
+    const queryClient = createQueryClient();
 
-    queryClient.setQueryData<UnifiedInbox>(unifiedInboxQueryKey, {
-      "account-1": [message("a")],
-      "account-2": [message("b")],
-    });
+    // Asserted on the options `setQueryData` builds an entry from rather than
+    // on the built entry, because query-core reads `gcTime` as infinite
+    // wherever there is no `window`, which is every run of this suite and no
+    // run of the renderer. In the renderer the fallback is five minutes, and
+    // an entry built by a push before anything observed it would be collected
+    // before the route was ever opened.
+    expect(queryClient.defaultQueryOptions({ queryKey: unifiedInboxQueryKey }).gcTime).toBe(
+      Number.POSITIVE_INFINITY,
+    );
+  });
 
+  test("replaces one account's list and leaves the others alone", () => {
+    const queryClient = createQueryClient();
+
+    mergeUnifiedInboxPush(queryClient, "account-1", [message("a")]);
+    mergeUnifiedInboxPush(queryClient, "account-2", [message("b")]);
     mergeUnifiedInboxPush(queryClient, "account-1", [message("c")]);
 
     expect(queryClient.getQueryData<UnifiedInbox>(unifiedInboxQueryKey)).toEqual({
@@ -53,74 +65,36 @@ describe("mergeUnifiedInboxPush", () => {
       "account-2": [message("b")],
     });
   });
-
-  test("drops a push into an entry whose fetch failed", async () => {
-    const queryClient = new QueryClient();
-
-    await queryClient
-      .fetchQuery(
-        unifiedInboxOptions(queryClient, () => Promise.reject(new Error("invoke failed"))),
-      )
-      .catch(() => {});
-
-    const failed = queryClient.getQueryCache().find({ queryKey: unifiedInboxQueryKey });
-
-    expect(failed?.state.status).toBe("error");
-
-    mergeUnifiedInboxPush(queryClient, "account-1", [message("a")]);
-
-    expect(queryClient.getQueryData(unifiedInboxQueryKey)).toBeUndefined();
-  });
-});
-
-describe("mergeFetchedUnifiedInbox", () => {
-  test("keeps a push that landed while the fetch was in flight", async () => {
-    const queryClient = new QueryClient();
-
-    let resolveFetch: (unifiedInbox: UnifiedInbox) => void = () => {};
-
-    const fetching = queryClient.fetchQuery(
-      unifiedInboxOptions(
-        queryClient,
-        () =>
-          new Promise<UnifiedInbox>((resolve) => {
-            resolveFetch = resolve;
-          }),
-      ),
-    );
-
-    mergeUnifiedInboxPush(queryClient, "account-1", [message("pushed")]);
-
-    resolveFetch({ "account-1": [message("fetched")], "account-2": [message("b")] });
-
-    await fetching;
-
-    expect(queryClient.getQueryData<UnifiedInbox>(unifiedInboxQueryKey)).toEqual({
-      "account-1": [message("pushed")],
-      "account-2": [message("b")],
-    });
-  });
 });
 
 describe("unifiedInboxCacheOptions", () => {
-  test("serves a remount from the warm entry without fetching again", async () => {
-    const queryClient = new QueryClient();
+  test("never fetches, and reads an empty map until the first push", () => {
+    const queryClient = createQueryClient();
 
     let fetches = 0;
 
-    const fetch = () => {
-      fetches += 1;
+    const observer = new QueryObserver(
+      queryClient,
+      queryOptions({
+        ...unifiedInboxCacheOptions,
+        queryFn: () => {
+          fetches += 1;
 
-      return Promise.resolve<UnifiedInbox>({ "account-1": [message("a")] });
-    };
+          return {} as UnifiedInbox;
+        },
+      }),
+    );
 
-    await queryClient.fetchQuery(unifiedInboxOptions(queryClient, fetch));
+    const unsubscribe = observer.subscribe(() => {});
 
-    mergeUnifiedInboxPush(queryClient, "account-1", [message("pushed")]);
+    expect(observer.getCurrentResult().data).toEqual({});
+    expect(observer.getCurrentResult().isPending).toBe(false);
 
-    const remounted = await queryClient.fetchQuery(unifiedInboxOptions(queryClient, fetch));
+    mergeUnifiedInboxPush(queryClient, "account-1", [message("a")]);
 
-    expect(fetches).toBe(1);
-    expect(remounted).toEqual({ "account-1": [message("pushed")] });
+    expect(observer.getCurrentResult().data).toEqual({ "account-1": [message("a")] });
+    expect(fetches).toBe(0);
+
+    unsubscribe();
   });
 });

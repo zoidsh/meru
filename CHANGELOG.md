@@ -18,7 +18,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Changed
 
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates
-- **Meru Pro:** The unified inbox now loads its list when opened instead of keeping it in memory the whole time
+- **Meru Pro:** The unified inbox keeps one copy of your mail instead of two, which lowers Meru's memory use and the work it does on every check for new mail
 
 ### Fixed
 
