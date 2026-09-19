@@ -17,6 +17,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Changed
 
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates
+- Notification sounds are now matched in loudness, so switching between them no longer changes how loud your mail arrives
 
 ### Fixed
 
