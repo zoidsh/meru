@@ -85,6 +85,51 @@ Before every case it reads the two things a detector would rely on:
 - `defaults read com.apple.controlcenter "NSStatusItem Visible FocusModes"` — what Mailspring and stretchly moved to in 2025/26. Watch whether it flips promptly when you change Focus, and what the millisecond figure does.
 - `~/Library/DoNotDisturb/DB/Assertions.json` and `ModeConfigurations.json` — whether a packaged GUI app can read them at all without Full Disk Access. `EPERM` here settles that route.
 
+## Windows
+
+A second probe, answering the two questions that decide whether Meru needs a native module on Windows: can an unpackaged build attach its own sound to a toast, and does `FocusSessionManager` see a manually toggled Do not disturb?
+
+```sh
+bun install
+bun run probe:win     # builds the NSIS installer into dist/
+```
+
+Then **install it**. This is not optional and not the same as the macOS flow: Windows only delivers toasts to an app that has a Start Menu shortcut carrying an AppUserModelID, which the installer creates and a `--dir` build does not.
+
+Run it once per phase, from anywhere:
+
+```sh
+"%LOCALAPPDATA%\Programs\meru-notification-probe\Meru Probe.exe" --phase=off
+```
+
+Phases are `off`, `dnd` (Do not disturb toggled on by hand), `session` (a focus session started from the Clock app) and `priority` (Do not disturb on, with Meru Probe added under Settings > System > Notifications > Set priority notifications — the Windows counterpart to a macOS Focus allow list).
+
+**The run is unattended.** Electron builds a GUI-subsystem binary on Windows, so a packaged app has no console to print to and no stdin to read answers from. It fires nine notifications five seconds apart, each titled with its own case number, and writes a report to `%USERPROFILE%\meru-probe-<phase>.md`, then opens Explorer on it. Listen as they go, then fill in the Heard column — the toasts stay in the Action Center with their numbers if you need to check what was what.
+
+### What the Windows cases are for
+
+| Case                                 | Question it answers                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| no silent, no toastXml               | Baseline: does a plain toast make noise?                                  |
+| `silent: true`                       | What Meru ships today. Expect silence everywhere.                         |
+| `ms-winsoundevent:Notification.IM`   | The built-in catalogue, and what Signal ships on Windows.                 |
+| `ms-winsoundevent:Notification.Mail` | Whether the mail-specific built-in differs.                               |
+| `file:///` absolute path             | Microsoft documents this as unsupported. Does it fail in practice?        |
+| bare absolute path                   | The other spelling of the same attempt.                                   |
+| `ms-appdata:///local/`               | Documented unsupported outside a packaged app.                            |
+| `ms-appx:///`                        | Documented supported, but only inside an MSIX package, which Meru is not. |
+| `<audio silent="true" />`            | The toast-XML spelling of silence.                                        |
+
+If every custom-file case is silent while the `ms-winsoundevent` ones play, Windows cannot carry Meru's own sounds and the choice is between losing them on Windows or detecting Focus.
+
+### And the three detection signals
+
+Printed before and after every run:
+
+- **`FocusSessionManager`** — `IsSupported` and `IsFocusActive`, read through `powershell.exe`, which projects WinRT types (PowerShell 7 dropped that, so it must be `powershell.exe` and not `pwsh`). If `IsFocusActive` is true in the `dnd` phase, a manually toggled Do not disturb is visible to the documented API and a small C++/WinRT addon is worth writing. If it is only true in the `session` phase, the API covers Clock focus sessions alone.
+- **`SHQueryUserNotificationState`** — what `windows-notification-state` wraps. `QUNS_QUIET_TIME` is documented as the first hour after a new user's first login rather than Do not disturb, and this checks whether that is still true in practice.
+- **`quiethoursstate` registry blob** — the undocumented `CloudStore` value, kept as a fallback comparison. Watch whether its bytes change between phases.
+
 ## Still manual
 
 Element's claim that macOS ignores `silent: true` and plays a coalesced banner sound on wake. Leave a `silent: true` notification pending, sleep the Mac, wake it, listen. If true, some Meru users hear two sounds today, independent of Focus.

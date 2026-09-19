@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "probe": "node make-sound.js && electron-builder --dir && \"dist/mac-arm64/Meru Probe.app/Contents/MacOS/Meru Probe\"",
+    "probe:win": "node make-sound.js && electron-builder --win",
     "run": "\"dist/mac-arm64/Meru Probe.app/Contents/MacOS/Meru Probe\""
   },
   "devDependencies": {
@@ -15,7 +16,11 @@
     "appId": "sh.zoid.meru.probe",
     "productName": "Meru Probe",
     "files": [
-      "main.js"
+      "main.js",
+      "harness.js",
+      "unattended.js",
+      "macos.js",
+      "windows.js"
     ],
     "extraResources": [
       "chirp.wav",
@@ -33,6 +38,23 @@
       "extendInfo": {
         "LSUIElement": false
       }
+    },
+    "win": {
+      "target": {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      "extraResources": [
+        "chirp.wav",
+        "sounds/chirp.wav"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
     }
   }
 }
