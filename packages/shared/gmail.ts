@@ -14,6 +14,16 @@ export const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
 export const GMAIL_INBOX_FEED_URL = `${GMAIL_URL}/feed/atom`;
 
+// Gmail's internal ids for its system labels, which the Atom feed takes as a path segment.
+export const GMAIL_FEED_LABELS = {
+  primary: "^sq_ig_i_personal",
+  important: "^iim",
+} as const;
+
+export function gmailFeedUrl(label?: keyof typeof GMAIL_FEED_LABELS) {
+  return label ? `${GMAIL_INBOX_FEED_URL}/${GMAIL_FEED_LABELS[label]}` : GMAIL_INBOX_FEED_URL;
+}
+
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
 export const GMAIL_PRELOAD_ARGUMENTS = {
@@ -112,6 +122,23 @@ export function diffInboxFeed(
     changed: added || currentIds.size !== previous.ids.size,
     newIds,
   };
+}
+
+/**
+ * A null `importantIds` is the Important feed having failed rather than having
+ * come back empty, and notifies for everything: a missed notification costs
+ * more than an extra one.
+ */
+export function filterNewMailIdsByImportance(
+  newIds: readonly string[],
+  newEmails: "all" | "important",
+  importantIds: ReadonlySet<string> | null,
+): Set<string> {
+  if (newEmails === "all" || !importantIds) {
+    return new Set(newIds);
+  }
+
+  return new Set(newIds.filter((id) => importantIds.has(id)));
 }
 
 const GMAIL_MESSAGE_ID_REGEXP = /^[A-Za-z0-9]{15,}$/;

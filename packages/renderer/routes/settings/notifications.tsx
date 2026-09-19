@@ -35,6 +35,11 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
+const newEmailsItems = [
+  { value: "all", label: "All new emails" },
+  { value: "important", label: "Important only" },
+];
+
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
     times.slice(index + 1).some((timeB) => {
@@ -155,6 +160,13 @@ export function NotificationsSettings() {
               />
               {config["notifications.enabled"] && (
                 <>
+                  <ConfigSelectField
+                    configKey="notifications.newEmails"
+                    label="Notify for"
+                    description="Choose whether every new email or only the emails Gmail marks as important shows a notification."
+                    items={newEmailsItems}
+                    licenseKeyRequired
+                  />
                   <ConfigSwitchField
                     label="Show sender"
                     description="Display the email sender's name in notifications."

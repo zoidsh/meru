@@ -108,6 +108,7 @@ export type Config = {
   "downloads.location": string;
   "downloads.history": DownloadItem[];
   "notifications.enabled": boolean;
+  "notifications.newEmails": "all" | "important";
   "notifications.showSender": boolean;
   "notifications.showSubject": boolean;
   "notifications.showSummary": boolean;

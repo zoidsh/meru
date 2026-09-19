@@ -67,6 +67,7 @@ export function createDefaultConfig({
     "downloads.location": downloadsLocation,
     "downloads.history": [],
     "notifications.enabled": true,
+    "notifications.newEmails": "all",
     "notifications.showSender": true,
     "notifications.showSubject": true,
     "notifications.showSummary": true,

@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { diffInboxFeed, parseGmailMessageId } from "./gmail";
+import {
+  diffInboxFeed,
+  filterNewMailIdsByImportance,
+  GMAIL_INBOX_FEED_URL,
+  gmailFeedUrl,
+  parseGmailMessageId,
+} from "./gmail";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
 
@@ -184,5 +190,42 @@ describe("diffInboxFeed", () => {
         SLACK,
       ),
     ).toEqual({ changed: true, newIds: ["c"] });
+  });
+});
+
+describe("gmailFeedUrl", () => {
+  test("returns the inbox feed url without a label", () => {
+    expect(gmailFeedUrl()).toBe(GMAIL_INBOX_FEED_URL);
+  });
+
+  test("appends the system label id of a label", () => {
+    expect(gmailFeedUrl("primary")).toBe(`${GMAIL_INBOX_FEED_URL}/^sq_ig_i_personal`);
+    expect(gmailFeedUrl("important")).toBe(`${GMAIL_INBOX_FEED_URL}/^iim`);
+  });
+});
+
+describe("filterNewMailIdsByImportance", () => {
+  test("keeps every id when notifying for all new emails", () => {
+    expect(filterNewMailIdsByImportance(["a", "b"], "all", new Set(["a"]))).toEqual(
+      new Set(["a", "b"]),
+    );
+    expect(filterNewMailIdsByImportance(["a", "b"], "all", new Set())).toEqual(new Set(["a", "b"]));
+    expect(filterNewMailIdsByImportance(["a", "b"], "all", null)).toEqual(new Set(["a", "b"]));
+  });
+
+  test("keeps only the ids the important feed carries", () => {
+    expect(filterNewMailIdsByImportance(["a", "b", "c"], "important", new Set(["b", "d"]))).toEqual(
+      new Set(["b"]),
+    );
+  });
+
+  test("keeps nothing when the important feed is empty", () => {
+    expect(filterNewMailIdsByImportance(["a", "b"], "important", new Set())).toEqual(new Set());
+  });
+
+  test("keeps every id when the important feed could not be fetched", () => {
+    expect(filterNewMailIdsByImportance(["a", "b"], "important", null)).toEqual(
+      new Set(["a", "b"]),
+    );
   });
 });
