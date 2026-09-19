@@ -4,6 +4,43 @@ Answers one question: can macOS play Meru's own notification sounds, so that a F
 
 Everything else in the Focus/Do Not Disturb investigation hangs on the answer. If the OS will play a bundled `.wav`, Meru needs no Focus detection at all and gets per-app allow-list behaviour no detector can reproduce. If it will not, Meru needs a detector and has to pick between a coarse one and an entitlement.
 
+It has been answered — see [Results](#results). Keep the probe: the next macOS will break something here, and re-running it beats re-deriving it.
+
+## Results
+
+macOS 27.0, Electron 44.4.3, packaged, signed `Developer ID Application: Tim Cheung`. Run 19 September 2026.
+
+| Case                                      | No Focus           | Do Not Disturb on |
+| ----------------------------------------- | ------------------ | ----------------- |
+| no silent, no sound                       | system default     | silent            |
+| `silent: false`                           | system default     | silent            |
+| `silent: true`                            | silent             | silent            |
+| `sound: "Submarine"`                      | Submarine          | silent            |
+| `sound: "chirp"`                          | **chirp**          | silent            |
+| `sound: "chirp.wav"`                      | **chirp**          | silent            |
+| `sound: "sounds/chirp.wav"`               | wrong system sound | silent            |
+| absolute path                             | wrong system sound | silent            |
+| `sound: "MeruProbe"` (`~/Library/Sounds`) | **chirp**          | silent            |
+
+`show` fired for every case in both phases, which is why the renderer sound leaks: the event says nothing about whether anything was presented.
+
+What this settles:
+
+- **A bundled sound works**, by bare filename against `Contents/Resources`, extension optional. The 2020 and 2024 reports that Electron's `sound` option is broken are wrong on current versions.
+- **Subdirectories and absolute paths do not work**, and they fail loudly rather than quietly — macOS substitutes an unrelated system sound. A missing file needs guarding.
+- **A Focus suppresses notification-attached audio completely**, so handing the sound to the OS fixes the leak with no detection.
+
+Neither detection signal works on macOS 27, in either phase:
+
+| Signal                                       | No Focus   | Do Not Disturb on |
+| -------------------------------------------- | ---------- | ----------------- |
+| `Assertions.json`, `ModeConfigurations.json` | `EPERM`    | `EPERM`           |
+| `NSStatusItem Visible FocusModes`            | key absent | key absent        |
+
+The first needs Full Disk Access. The second is the no-permission fallback Mailspring and stretchly migrated to in 2025 and 2026, and it reads identically whether a Focus is on or off, so it cannot distinguish them — both of those apps are broken on 27.
+
+The allow-list phase is not yet recorded.
+
 ## Run it
 
 Needs a Mac. Three runs, one per phase.
