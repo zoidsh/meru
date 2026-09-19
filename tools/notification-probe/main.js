@@ -127,13 +127,30 @@ function fire(options) {
 }
 
 async function signingStatus() {
-  const out = await run("codesign", [
-    "-dv",
-    "--verbose=2",
-    app.getAppPath().replace(/\/Contents\/.*$/, ""),
-  ]);
-  const authority = out.split("\n").find((line) => line.startsWith("Authority="));
-  return authority ?? out.split("\n")[0] ?? "unknown";
+  const bundle = app.getAppPath().replace(/\/Contents\/.*$/, "");
+  let output = "";
+
+  try {
+    // codesign reports on stderr even on success, so stdout alone is always empty.
+    const { stdout, stderr } = await execFileAsync("codesign", ["-dv", "--verbose=2", bundle], {
+      timeout: 5000,
+    });
+    output = `${stdout}\n${stderr}`;
+  } catch (error) {
+    output = `${error.stdout ?? ""}\n${error.stderr ?? error.message}`;
+  }
+
+  const lines = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return (
+    lines.find((line) => line.startsWith("Authority=")) ??
+    lines.find((line) => line.startsWith("Signature=")) ??
+    lines.join(" | ") ??
+    "unknown"
+  );
 }
 
 async function main() {
@@ -161,7 +178,9 @@ async function main() {
     console.log(`  ${key.padEnd(10)} ${description}`);
   }
   let phase = await ask("\nPhase: ");
-  if (!PHASES[phase]) {phase = "off";}
+  if (!PHASES[phase]) {
+    phase = "off";
+  }
   console.log(`\n-> ${PHASES[phase]}\n`);
 
   let userSoundInstalled = false;
