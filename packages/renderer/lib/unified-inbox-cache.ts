@@ -31,21 +31,31 @@ export function mergeFetchedUnifiedInbox(
 }
 
 /**
- * Merges one account's list into an entry that is already there, never
- * creating one and never filling one in. A push carries a single account, so
- * an entry conjured out of one would be a partial map, and an infinite
- * `staleTime` would have the next mount render it and never fetch the rest. An
- * entry whose fetch failed holds no data and counts as absent for the same
- * reason, rather than becoming a partial success that nothing retries.
+ * Merges one account's list into an entry that either already holds a list or
+ * has a fetch in flight to fill it, and is dropped otherwise.
+ *
+ * A push carries a single account, so an entry left holding only what a push
+ * put there is a partial map, and an infinite `staleTime` has the next mount
+ * render that map and never fetch the rest. An entry with no data and no fetch
+ * running — one whose fetch failed, or one that never had a reason to exist —
+ * would be left exactly that way, so a push has nothing to merge into. An
+ * in-flight fetch is the case worth allowing: `mergeFetchedUnifiedInbox`
+ * carries the push over the resolve, and dropping it here would leave the
+ * fetched list to overwrite mail that is newer than it is.
+ *
+ * One case stays imperfect, and is left alone: an invoke that rejects after a
+ * push has written leaves the partial map behind. It takes broken IPC to get
+ * there, since main swallows per-account failures and returns `{}` when Pro or
+ * the setting is off, so it is not worth a rollback path.
  */
 export function mergeUnifiedInboxPush(
   queryClient: QueryClient,
   accountId: string,
   messages: GmailInboxMessage[],
 ) {
-  if (
-    queryClient.getQueryCache().find({ queryKey: unifiedInboxQueryKey })?.state.data === undefined
-  ) {
+  const entry = queryClient.getQueryCache().find({ queryKey: unifiedInboxQueryKey });
+
+  if (!entry || (entry.state.data === undefined && entry.state.fetchStatus !== "fetching")) {
     return;
   }
 
