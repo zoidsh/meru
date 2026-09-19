@@ -17,11 +17,15 @@ export const unifiedInboxQueryKey = ["unifiedInbox"] as const;
  * waited on the slowest account, and a race between that invoke's result and
  * the pushes that landed while it was in flight.
  */
+const unifiedInboxCacheLifetime = {
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: Number.POSITIVE_INFINITY,
+};
+
 export const unifiedInboxCacheOptions = {
   queryKey: unifiedInboxQueryKey,
   initialData: (): UnifiedInbox => ({}),
-  staleTime: Number.POSITIVE_INFINITY,
-  gcTime: Number.POSITIVE_INFINITY,
+  ...unifiedInboxCacheLifetime,
 };
 
 /**
@@ -32,10 +36,7 @@ export const unifiedInboxCacheOptions = {
  * the route, losing every account that had not pushed since.
  */
 export function registerUnifiedInboxCacheDefaults(queryClient: QueryClient) {
-  queryClient.setQueryDefaults(unifiedInboxQueryKey, {
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
-  });
+  queryClient.setQueryDefaults(unifiedInboxQueryKey, unifiedInboxCacheLifetime);
 }
 
 export function mergeUnifiedInboxPush(

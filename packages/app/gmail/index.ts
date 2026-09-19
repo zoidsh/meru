@@ -1032,6 +1032,14 @@ export class Gmail {
    * nothing, and there is no stored list to send in its place. It also leaves
    * that fetch with no baseline to diff against, so a refill notifies for
    * nothing, which is what a refill should do.
+   *
+   * The cost of that is worth knowing before this is called from anywhere
+   * else: the refill marks every entry it sees as seen, so mail that arrived
+   * since the last poll is silently swallowed and never notified. It is
+   * acceptable only because nothing in production reloads the main window —
+   * the launch call happens before any mail could have arrived, and reloads
+   * are a development thing. Wiring a reload onto `main.window` makes this a
+   * real missed notification.
    */
   sendInboxToRenderer() {
     if (!this._view) {
