@@ -34,6 +34,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
@@ -331,7 +332,7 @@ export function NotificationsSettings() {
                           if (value !== "system") {
                             playNotificationSound({
                               sound: value,
-                              volume: config["notifications.volume"],
+                              volume: platform.isMacOS ? 1 : config["notifications.volume"],
                             });
                           }
                         }
@@ -352,7 +353,7 @@ export function NotificationsSettings() {
                       </SelectContent>
                     </Select>
                   </Field>
-                  {config["notifications.sound"] !== "system" && (
+                  {config["notifications.sound"] !== "system" && !platform.isMacOS && (
                     <Field>
                       <FieldTitle>
                         Volume {(config["notifications.volume"] * 100).toFixed(0)}%

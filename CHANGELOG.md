@@ -17,6 +17,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Changed
 
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates
+- Notification sounds are now matched in loudness, so switching between them no longer changes how loud your mail arrives
 
 ### Fixed
 
@@ -27,3 +28,4 @@ This file is the draft of the next release, written one line at a time as work l
 - After choosing Later on an update, the restart prompt no longer returns every few hours for the same version
 - **Linux:** Window controls no longer appear over Meru's titlebar buttons on window managers without decorations, such as dwm, i3 and sway. A new Window controls setting in Settings → Appearance overrides the detection
 - With enough accounts to fill the titlebar, the account buttons now scroll instead of pushing the other titlebar buttons off-screen. Wheel or swipe over the row to move it, or use the arrows at either end; switching accounts brings the one you picked into view
+- **macOS:** Notification sounds now play through macOS itself, so Do Not Disturb and Focus silence them instead of letting the sound through

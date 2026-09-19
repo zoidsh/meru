@@ -113,6 +113,15 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "extraResources": [
+        {
+          "from": "packages/renderer/lib/notifications/sounds",
+          "to": ".",
+          "filter": [
+            "*.wav"
+          ]
+        }
+      ],
       "minimumSystemVersion": "13.0.0",
       "icon": "build/icon.icns",
       "darkModeSupport": true,
