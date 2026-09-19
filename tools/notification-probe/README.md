@@ -89,6 +89,24 @@ Before every case it reads the two things a detector would rely on:
 
 A second probe, answering the two questions that decide whether Meru needs a native module on Windows: can an unpackaged build attach its own sound to a toast, and does `FocusSessionManager` see a manually toggled Do not disturb?
 
+### Results — Windows
+
+Windows 11 build 26100.9445, arm64 under UTM, Electron 44.4.3, packaged, unsigned. Run 19 September 2026.
+
+**No to both.** Every custom-file spelling — `file:///`, a bare absolute path, `ms-appdata:///local/`, `ms-appx:///` — substituted a built-in sound rather than playing ours, matching Microsoft's documented restriction to `ms-appx:` and `ms-resource` inside an MSIX package. And with Do not disturb toggled on by hand, all nine cases fell silent while all three detection signals read exactly as they did with it off:
+
+| Signal                              | Nothing on                   | Do not disturb on            |
+| ----------------------------------- | ---------------------------- | ---------------------------- |
+| `FocusSessionManager.IsFocusActive` | False                        | False                        |
+| `SHQueryUserNotificationState`      | `QUNS_ACCEPTS_NOTIFICATIONS` | `QUNS_ACCEPTS_NOTIFICATIONS` |
+| `quiethoursstate` registry `Data`   | key absent                   | key absent                   |
+
+So Windows does gate toast audio correctly, and Meru simply cannot put its own sound there. `FocusSessionManager` covering only Clock-app focus sessions rather than the standalone toggle appears to be by design, and this is the only confirmation of it anywhere.
+
+Not measured, and the one surface the ecosystem actually uses: the undocumented `IQuietHoursSettings` COM interface and the WNF state behind `windows-focus-assist`. Testing it needs that node-gyp addon built for arm64 in the VM. Meru's decision does not depend on it — see [decisions.md](../../../docs/meru/decisions.md) — but "detection is dead on Windows" is not proven, only "these three routes are".
+
+The `session` and `priority` phases were not run.
+
 Built for **arm64**, since the Windows this is tested on runs in UTM on an Apple Silicon Mac. Change `build.win.target.arch` for an x64 machine.
 
 ```sh
