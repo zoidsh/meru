@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
-import type { AccountConfig, AccountConfigs } from "@meru/shared/schemas";
+import type { AccountConfig, AccountConfigs, AccountInstances } from "@meru/shared/schemas";
 import {
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
@@ -20,6 +20,16 @@ import { WorkspaceApp } from "./workspace-app";
 const HIBERNATION_SWEEP_INTERVAL = ms("1m");
 
 const NETWORK_RECOVERY_SWEEP_INTERVAL = ms("5s");
+
+/**
+ * Whether Gmail runs from the feed alone for this account. The opt-in is Pro,
+ * and an expired license has to restore the ordinary behavior without
+ * rewriting what the user chose, so every read goes through here rather than
+ * through `config.gmail.hibernated`.
+ */
+export function isGmailHibernated(accountConfig: AccountConfig) {
+  return licenseKey.isValid && accountConfig.gmail.hibernated === true;
+}
 
 class Accounts {
   instances: Map<string, Account> = new Map();
@@ -337,6 +347,11 @@ class Accounts {
     }));
   }
 
+  /** Non-throwing, for the paths that run against an account on its way out. */
+  getAccountConfig(accountId: AccountConfig["id"]) {
+    return this.getAccountConfigs().find((accountConfig) => accountConfig.id === accountId);
+  }
+
   getAccount(accountId: string) {
     const accountConfig = this.getAccountConfigs().find((account) => account.id === accountId);
 
@@ -455,7 +470,7 @@ class Accounts {
 
   addAccount(
     accountDetails: Pick<AccountConfig, "label" | "notifications" | "color"> & {
-      gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox">;
+      gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox" | "hibernated">;
     },
   ) {
     const createdAccount: AccountConfig = {
@@ -465,6 +480,8 @@ class Accounts {
       gmail: {
         unreadBadge: accountDetails.gmail.unreadBadge,
         unifiedInbox: accountDetails.gmail.unifiedInbox,
+        hibernated: accountDetails.gmail.hibernated === true,
+        inboxType: null,
         delegatedAccountId: null,
       },
       workspaceApps: {
@@ -771,20 +788,27 @@ class Accounts {
     );
   }
 
+  /**
+   * What the renderer knows about each account. Built here rather than at each
+   * sender, because the window's first paint reads it out of its URL and every
+   * push after that has to say the same thing.
+   */
+  serializeInstances(): AccountInstances {
+    return this.getAccounts().map((account) => ({
+      config: account.config,
+      gmail: account.instance.gmail.store.getState(),
+      hibernated: isGmailHibernated(account.config),
+      gmailLoaded: account.instance.gmail.hasView,
+      verticalTabsWidth: account.instance.verticalTabsWidth,
+    }));
+  }
+
   sendAccountsChangedToRenderer() {
     if (main.window.isDestroyed()) {
       return;
     }
 
-    ipc.renderer.send(
-      main.window.webContents,
-      "accounts.changed",
-      this.getAccounts().map((account) => ({
-        config: account.config,
-        gmail: account.instance.gmail.store.getState(),
-        verticalTabsWidth: account.instance.verticalTabsWidth,
-      })),
-    );
+    ipc.renderer.send(main.window.webContents, "accounts.changed", this.serializeInstances());
   }
 }
 

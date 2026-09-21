@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  createGmailMessageActionRequest,
   diffInboxFeed,
   filterNewMailIdsByImportance,
   GMAIL_INBOX_FEED_URL,
   gmailFeedUrl,
+  parseGmailIdKey,
   parseGmailMessageId,
+  resolveInboxFeedUrl,
 } from "./gmail";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
@@ -227,5 +230,86 @@ describe("filterNewMailIdsByImportance", () => {
     expect(filterNewMailIdsByImportance(["a", "b"], "important", null)).toEqual(
       new Set(["a", "b"]),
     );
+  });
+});
+
+describe("resolveInboxFeedUrl", () => {
+  test("reads the Primary feed only for a sectioned inbox", () => {
+    expect(resolveInboxFeedUrl("SECTIONED", "primary")).toBe(gmailFeedUrl("primary"));
+  });
+
+  test("reads the whole inbox when the inbox is not sectioned", () => {
+    expect(resolveInboxFeedUrl("CLASSIC", "primary")).toBe(GMAIL_INBOX_FEED_URL);
+  });
+
+  test("reads the whole inbox when no live page has reported an inbox type", () => {
+    expect(resolveInboxFeedUrl(null, "primary")).toBe(GMAIL_INBOX_FEED_URL);
+  });
+
+  test("reads the whole inbox when every category is monitored", () => {
+    expect(resolveInboxFeedUrl("SECTIONED", "all")).toBe(GMAIL_INBOX_FEED_URL);
+  });
+});
+
+describe("parseGmailIdKey", () => {
+  test("reads the key out of the page", () => {
+    expect(parseGmailIdKey("<script>var GM_ID_KEY = 'ab12cd34';</script>")).toBe("ab12cd34");
+  });
+
+  test("answers null for a page that carries no key", () => {
+    expect(parseGmailIdKey("<html></html>")).toBe(null);
+  });
+});
+
+describe("createGmailMessageActionRequest", () => {
+  const request = createGmailMessageActionRequest({
+    messageId: MESSAGE_ID,
+    action: "archive",
+    idKey: "ab12cd34",
+    actionToken: "at-token",
+    timestamp: 1_700_000_000_000,
+  });
+
+  test("posts to the mutate endpoint with the key and the action token", () => {
+    expect(request.url).toBe(
+      "https://mail.google.com/mail/u/0/s/?v=or&ik=ab12cd34&at=at-token&subui=chrome&hl=en&ts=1700000000000",
+    );
+  });
+
+  test("carries the action code and the message id in the payload", () => {
+    expect(JSON.parse(String(request.body.get("s_jr")))).toEqual([
+      null,
+      [
+        [null, null, null, [null, 1, MESSAGE_ID, MESSAGE_ID, "l:all", [], [], []]],
+        [null, null, null, null, null, null, [null, true, false]],
+        [null, null, null, null, null, null, [null, true, false]],
+      ],
+      2,
+      null,
+      null,
+      null,
+      "ab12cd34",
+    ]);
+  });
+
+  test("carries the action code of each of the four row actions", () => {
+    const actionCodeOf = (
+      action: Parameters<typeof createGmailMessageActionRequest>[0]["action"],
+    ) =>
+      JSON.parse(
+        String(
+          createGmailMessageActionRequest({
+            messageId: MESSAGE_ID,
+            action,
+            idKey: "ab12cd34",
+            actionToken: "at-token",
+          }).body.get("s_jr"),
+        ),
+      )[1][0][3][1];
+
+    expect(actionCodeOf("archive")).toBe(1);
+    expect(actionCodeOf("markAsRead")).toBe(3);
+    expect(actionCodeOf("delete")).toBe(9);
+    expect(actionCodeOf("markAsSpam")).toBe(7);
   });
 });

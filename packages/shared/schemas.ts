@@ -69,6 +69,20 @@ export const accountConfigSchema = z.object({
     unreadBadge: z.boolean(),
     delegatedAccountId: z.string().nullable(),
     unifiedInbox: z.boolean(),
+    /**
+     * Absent on every account written before Hibernate Gmail existed, which
+     * means off. Nothing parses a stored account through this schema — the
+     * store hands back the raw JSON — so a `.default()` here would promise a
+     * boolean the config has never held.
+     */
+    hibernated: z.boolean().optional(),
+    /**
+     * The last `window.GM_INBOX_TYPE` a live Gmail page reported, which is what
+     * picks the inbox feed. Kept so a hibernated account still chooses the
+     * right feed with no page to read it from; absent, and `null`, mean the
+     * unsectioned feed.
+     */
+    inboxType: z.string().nullable().optional(),
   }),
   workspaceApps: z.object({
     savedTabs: z.array(savedTabSchema),
@@ -93,7 +107,11 @@ export const accountConfigInputSchema = accountConfigSchema
     notifications: true,
   })
   .extend({
-    gmail: accountConfigSchema.shape.gmail.pick({ unreadBadge: true, unifiedInbox: true }),
+    gmail: accountConfigSchema.shape.gmail.pick({
+      unreadBadge: true,
+      unifiedInbox: true,
+      hibernated: true,
+    }),
   });
 
 export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;
@@ -101,6 +119,14 @@ export type AccountConfigInput = z.infer<typeof accountConfigInputSchema>;
 export type AccountInstance = {
   config: AccountConfig;
   gmail: GmailState;
+  /**
+   * Whether the account is opted into Hibernate Gmail and licensed for it.
+   * `config.gmail.hibernated` says what the user asked for; this says what the
+   * app is doing.
+   */
+  hibernated: boolean;
+  /** Whether the account's Gmail view exists, which is what "Open Gmail" turns into true. */
+  gmailLoaded: boolean;
   /** The width the account's tab strip was last given by hand, for this run. */
   verticalTabsWidth: VerticalTabsSessionWidth | null;
 };

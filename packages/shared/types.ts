@@ -1,6 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import type { GmailAction, GmailInboxMessage } from "./gmail";
+import type { GmailAction, GmailHibernationTimeout, GmailInboxMessage } from "./gmail";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -145,6 +145,7 @@ export type Config = {
   "gmail.replyForwardInPopOut": boolean;
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
+  "gmail.hibernationTimeout": GmailHibernationTimeout;
   "screenShare.useSystemPicker": boolean;
   "window.lastState": {
     bounds: {
@@ -216,6 +217,7 @@ export type IpcMainEvents =
       "gmail.unreadCountChanged": [unreadCountString: string];
       "gmail.setOutOfOffice": [outOfOffice: boolean];
       "gmail.search": [searchQuery: string];
+      "gmail.wake": [accountId: AccountConfig["id"]];
       "gmail.openUserStyles": [openIn: "editor" | "folder"];
       "workspaceApp.showMenu": [workspaceAppId: string];
       "workspaceApp.toggleBookmark": [workspaceAppId: string];

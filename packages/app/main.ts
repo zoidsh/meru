@@ -75,16 +75,7 @@ class Main {
   loadURL() {
     const searchParams = new URLSearchParams();
 
-    searchParams.set(
-      "accounts",
-      JSON.stringify(
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: account.instance.gmail.store.getState(),
-          verticalTabsWidth: account.instance.verticalTabsWidth,
-        })),
-      ),
-    );
+    searchParams.set("accounts", JSON.stringify(accounts.serializeInstances()));
 
     searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
 

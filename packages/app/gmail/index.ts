@@ -155,6 +155,18 @@ export class Gmail {
     this._view = view;
   }
 
+  get hasView() {
+    return this._view !== undefined;
+  }
+
+  /**
+   * The view for the paths that have to keep working while the account's Gmail
+   * is hibernated, where `view` would throw.
+   */
+  get viewOrNull() {
+    return this._view ?? null;
+  }
+
   get isLoading() {
     return this._view ? this._view.webContents.isLoading() : false;
   }

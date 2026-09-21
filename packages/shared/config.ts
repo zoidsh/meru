@@ -104,6 +104,7 @@ export function createDefaultConfig({
     "gmail.replyForwardInPopOut": false,
     "gmail.extendDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
+    "gmail.hibernationTimeout": "1h",
     "screenShare.useSystemPicker": true,
     "window.lastState": {
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,

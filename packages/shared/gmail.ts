@@ -24,6 +24,47 @@ export function gmailFeedUrl(label?: keyof typeof GMAIL_FEED_LABELS) {
   return label ? `${GMAIL_INBOX_FEED_URL}/${GMAIL_FEED_LABELS[label]}` : GMAIL_INBOX_FEED_URL;
 }
 
+/**
+ * Gmail's own name for an inbox split into category tabs, read off
+ * `window.GM_INBOX_TYPE`. Categories only exist in that layout, so it is what
+ * decides whether the Primary feed means anything.
+ */
+export const GMAIL_SECTIONED_INBOX_TYPE = "SECTIONED";
+
+/**
+ * Which feed an account reads. `inboxType` is the last one a live page
+ * reported, so this answers the same way with no page to ask — `null` is an
+ * account that has never had one, and reads the whole inbox.
+ */
+export function resolveInboxFeedUrl(
+  inboxType: string | null,
+  inboxCategoriesToMonitor: "primary" | "all",
+) {
+  return gmailFeedUrl(
+    inboxType === GMAIL_SECTIONED_INBOX_TYPE && inboxCategoriesToMonitor === "primary"
+      ? "primary"
+      : undefined,
+  );
+}
+
+/** Keys double as durations for `ms`. */
+export const gmailHibernationTimeouts = {
+  "1m": "1 minute",
+  "30m": "30 minutes",
+  "1h": "1 hour",
+  "3h": "3 hours",
+  "6h": "6 hours",
+} as const;
+
+export type GmailHibernationTimeout = keyof typeof gmailHibernationTimeouts;
+
+/**
+ * As with the workspace apps sweep: too short to ship, and the only way to
+ * watch Gmail go back to sleep without waiting an hour, so the settings UI
+ * offers it in a development run and nowhere else.
+ */
+export const DEV_GMAIL_HIBERNATION_TIMEOUT: GmailHibernationTimeout = "1m";
+
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
 export const GMAIL_PRELOAD_ARGUMENTS = {
@@ -54,6 +95,62 @@ export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {
 
 export function isGmailComposeWindowUrl(url: string) {
   return url.startsWith(GMAIL_URL) && url.includes("/popout");
+}
+
+const GMAIL_ID_KEY_REGEXP = /var GM_ID_KEY = '([a-z0-9]+)';/;
+
+/** The per-session key Gmail's mutate endpoint requires, inlined in the page's own HTML. */
+export function parseGmailIdKey(gmailDocument: string) {
+  return GMAIL_ID_KEY_REGEXP.exec(gmailDocument)?.[1] ?? null;
+}
+
+/**
+ * One request that archives, reads, deletes or spams a message, built here
+ * because two callers send it: the Gmail preload from inside the page, and the
+ * main process for an account whose Gmail is hibernated and has no page to
+ * send it from. Neither side owns the shape, so neither side can drift.
+ */
+export function createGmailMessageActionRequest({
+  messageId,
+  action,
+  idKey,
+  actionToken,
+  timestamp = Date.now(),
+}: {
+  messageId: string;
+  action: GmailAction;
+  idKey: string;
+  actionToken: string;
+  timestamp?: number;
+}) {
+  const command = "l:all";
+  const labels: [] = [];
+  const ids: [] = [];
+  const actionCode = GMAIL_ACTION_CODE_MAP[action];
+
+  const body = new FormData();
+
+  body.append(
+    "s_jr",
+    JSON.stringify([
+      null,
+      [
+        [null, null, null, [null, actionCode, messageId, messageId, command, [], labels, ids]],
+        [null, null, null, null, null, null, [null, true, false]],
+        [null, null, null, null, null, null, [null, true, false]],
+      ],
+      2,
+      null,
+      null,
+      null,
+      idKey,
+    ]),
+  );
+
+  return {
+    url: `${GMAIL_URL}/s/?v=or&ik=${idKey}&at=${actionToken}&subui=chrome&hl=en&ts=${timestamp}`,
+    body,
+  };
 }
 
 export interface GmailInboxMessage {
