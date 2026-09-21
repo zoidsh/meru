@@ -20,9 +20,9 @@ mock.module("node:fs/promises", () => ({
 
 const { getMachineId } = await import("./index");
 
-// `bun test` loads `.env.development.local`, which sets the variable on a
-// development machine but does not exist in CI, so every case states what it
-// expects rather than inheriting it.
+// Nothing settles the variable for a test run: `bun test` runs under
+// `NODE_ENV=test`, so Bun loads `.env.test.local` rather than the development
+// env file a development run takes the id from. Every case sets or clears it.
 const inheritedDeviceId = process.env.MERU_BUILD_DEVICE_ID;
 
 function setDeviceId(deviceId: string | undefined) {

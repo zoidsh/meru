@@ -92,11 +92,11 @@ function buildAppFiles() {
              */
             "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL ?? ""),
             /*
-             * Unconditional for the same reason. Bun auto-loads
-             * `.env.development.local` for every `bun run`, so a local packaged
-             * build inlines whatever device id that file holds, which is how an
-             * end-to-end build gets one; a release is built where no such file
-             * exists.
+             * Unconditional for the same reason. `build:js` pins
+             * `NODE_ENV=production` so that Bun leaves `.env.development.local`
+             * alone here, the file a development run takes the id from, which
+             * keeps inlining one into a build an explicit
+             * `MERU_BUILD_DEVICE_ID=...` in front of it.
              */
             "process.env.MERU_BUILD_DEVICE_ID": JSON.stringify(
               process.env.MERU_BUILD_DEVICE_ID ?? "",
