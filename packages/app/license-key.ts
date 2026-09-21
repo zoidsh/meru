@@ -11,6 +11,23 @@ import { openExternalUrl } from "./url";
 class LicenseKey {
   isValid = false;
 
+  /*
+   * Preloads a key rather than granting anything: it is validated against the
+   * API on every launch like any other, and a device that was never activated
+   * is refused with `DEVICE_NOT_ACTIVATED`. That is what lets a fleet or an MDM
+   * deployment hand Meru its license instead of someone typing it in.
+   */
+  init() {
+    const environmentKey = process.env.MERU_LICENSE_KEY;
+
+    // A launch that changes nothing must not fire `config.onDidChange`
+    if (!environmentKey || config.get("licenseKey") === environmentKey) {
+      return;
+    }
+
+    config.set("licenseKey", environmentKey);
+  }
+
   showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
       type: "warning",
