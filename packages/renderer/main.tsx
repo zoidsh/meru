@@ -4,6 +4,7 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { AppMain } from "@/components/app-main";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTitlebar } from "@/components/app-titlebar";
+import { HibernatedGmailInbox } from "@/components/hibernated-gmail-inbox";
 import { VerticalTabs } from "@/components/vertical-tabs";
 import { useMouseAccountSwitching } from "@/lib/hooks";
 import { renderApp } from "@/lib/react";
@@ -23,6 +24,7 @@ function Main() {
           <Switch>
             <Route path="/">
               <VerticalTabs />
+              <HibernatedGmailInbox />
             </Route>
             <Route path="/unified-inbox">
               <AppMain />
