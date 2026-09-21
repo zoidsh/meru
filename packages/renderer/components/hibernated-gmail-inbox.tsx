@@ -13,12 +13,36 @@ import {
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Skeleton } from "@meru/ui/components/skeleton";
 import { cn } from "@meru/ui/lib/utils";
-import { InboxIcon, LoaderCircleIcon } from "lucide-react";
+import { CircleAlertIcon, InboxIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { InboxTable } from "@/components/inbox-table";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useAccountInbox, useSelectedAccountTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
+
+function InboxEmptyState({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof InboxIcon;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="py-20">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Icon />
+          </EmptyMedia>
+          <EmptyTitle>{title}</EmptyTitle>
+          <EmptyDescription>{description}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    </div>
+  );
+}
 
 function AccountInbox({ account }: { account: AccountInstance }) {
   const { config } = useConfig();
@@ -42,11 +66,22 @@ function AccountInbox({ account }: { account: AccountInstance }) {
       return;
     }
 
-    // Bounded by the attention flag, because a feed answered with the sign-in
-    // page never sends a list at all: main raises attention and bails before
-    // building one. Waiting on that push would spin here for the rest of the
-    // run, so an account asking for attention falls through to the state below.
-    if (isPending && !account.gmail.attentionRequired) {
+    // An account that has sent no list is not an account with no mail. Which
+    // of the two it is turns on the attention flag: a feed answered with the
+    // sign-in page never sends a list at all, main raising attention and
+    // bailing before it builds one, so waiting on that push would spin here
+    // for the rest of the run.
+    if (isPending) {
+      if (account.gmail.attentionRequired) {
+        return (
+          <InboxEmptyState
+            icon={CircleAlertIcon}
+            title="Sign in to Gmail"
+            description="Your inbox appears here once you sign in."
+          />
+        );
+      }
+
       return (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-12" />
@@ -58,19 +93,11 @@ function AccountInbox({ account }: { account: AccountInstance }) {
 
     if (messages.length === 0) {
       return (
-        <div className="py-20">
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <InboxIcon />
-              </EmptyMedia>
-              <EmptyTitle>No unread messages</EmptyTitle>
-              <EmptyDescription>
-                New mail appears here while Gmail is hibernated. Open Gmail to see your whole inbox.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </div>
+        <InboxEmptyState
+          icon={InboxIcon}
+          title="No unread messages"
+          description="New mail appears here while Gmail is hibernated. Open Gmail to see your whole inbox."
+        />
       );
     }
 
