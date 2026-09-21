@@ -99,12 +99,8 @@ class Accounts {
       }
     });
 
-    /*
-     * Waking is what an account opted into Hibernate Gmail needs a listener
-     * for. Turning it on leaves the view standing until the idle sweep takes
-     * it, so Gmail never vanishes from under the user the moment they flip the
-     * switch.
-     */
+    // Turning the setting on leaves the view standing until the idle sweep
+    // takes it, so Gmail never vanishes from under the user mid-flip.
     config.onDidChange("accounts", (accountConfigs, previousAccountConfigs) => {
       if (!accountConfigs || !previousAccountConfigs) {
         return;
@@ -219,13 +215,11 @@ class Accounts {
       account.instance.tabs.loadLaunchTabs();
     }
 
-    // The window reads its accounts out of its URL before this runs, so every
-    // account is seeded as not loaded. This is what corrects the ones that
-    // are, held until the renderer has its listeners as the inbox send is —
-    // not awaited, because nothing here may wait on the window loading.
-    main.rendererReady.then(() => {
-      this.sendAccountsChangedToRenderer();
-    });
+    // A selected account that launches hibernated has no view to bring
+    // forward, and the stack has to be hidden for its own inbox to show.
+    // Otherwise this waits on the window's `show`, which is too late to be
+    // the first thing drawn.
+    this.refreshSelectedAccountView();
   }
 
   /**
@@ -265,12 +259,9 @@ class Accounts {
   }
 
   private async createGmailView(instance: Account) {
-    /*
-     * Not awaited yet. `createView` attaches the view synchronously and only
-     * resolves once Gmail has finished loading, and a view is created visible,
-     * so hiding and stacking after the await would leave Gmail painting over
-     * the settings page or the unified inbox for the whole of that load.
-     */
+    // Not awaited yet: `createView` attaches the view synchronously but
+    // resolves only once Gmail has loaded, and a view is created visible, so
+    // awaiting first would paint Gmail over the page for the whole load.
     const created = instance.gmail.createView({
       webPreferences: {
         backgroundThrottling: false,
@@ -397,20 +388,15 @@ class Accounts {
   refreshSelectedAccountView() {
     const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
-    /*
-     * Which view the user sees is decided by the window's child order alone —
-     * nothing hides the account being switched away from. With no view to put
-     * in front, the one already there belongs to another account and would go
-     * on painting over the hibernated account's own inbox, so the whole stack
-     * is taken out of sight instead.
-     */
+    // Which view the user sees is decided by the window's child order alone,
+    // so with nothing to put in front, the view already there belongs to
+    // another account and would paint over this one's inbox.
     if (!activeTab.view) {
       this.hide();
 
       return;
     }
 
-    // Undoing the above, for the switch back to an account that has a view.
     if (main.location === "/") {
       this.show();
     }
@@ -777,18 +763,26 @@ class Accounts {
   }
 
   updateAccount(accountDetails: AccountConfig) {
-    // `disabled` is carried over from what is stored rather than from what came
-    // in. The flag and the account instance behind it have to move together, so
-    // `setAccountEnabled` is its only writer.
+    /*
+     * Two fields are carried over from what is stored rather than from what
+     * came in, because settings sends a whole account back and neither is
+     * settings' to write. `disabled` has to move together with the account
+     * instance behind it, so `setAccountEnabled` is its only writer; the inbox
+     * type is read off Gmail and a form submitted before that read would put
+     * the account back on the wrong feed.
+     */
     config.set(
       "accounts",
-      config
-        .get("accounts")
-        .map((account) =>
-          account.id === accountDetails.id
-            ? { ...account, ...accountDetails, disabled: account.disabled }
-            : account,
-        ),
+      config.get("accounts").map((account) =>
+        account.id === accountDetails.id
+          ? {
+              ...account,
+              ...accountDetails,
+              disabled: account.disabled,
+              gmail: { ...accountDetails.gmail, inboxType: account.gmail.inboxType },
+            }
+          : account,
+      ),
     );
   }
 
@@ -888,9 +882,8 @@ class Accounts {
   }
 
   show() {
-    // Nothing to bring back for an account whose Gmail is hibernated, and
-    // showing the stack would put another account's view in front of its
-    // inbox — the same reason `refreshSelectedAccountView` hides it.
+    // Same reason `refreshSelectedAccountView` hides the stack: another
+    // account's view would end up in front of this one's inbox.
     if (!this.getSelectedAccount().instance.tabs.activeTab.view) {
       return;
     }

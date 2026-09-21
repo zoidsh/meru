@@ -168,9 +168,12 @@ async function init() {
 
   main.init();
 
-  main.loadURL();
-
+  // Before the window loads: every view attaches before `createViews` first
+  // awaits, so the account state the page is seeded with says which accounts
+  // have one rather than having to be corrected afterwards.
   accounts.createViews();
+
+  main.loadURL();
 
   ipc.init();
 
