@@ -54,7 +54,9 @@ import { useState } from "react";
 import type { Entries } from "type-fest";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
+import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { useAccountsStore, useTrialStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
@@ -63,7 +65,7 @@ function AccountForm({
   account = {
     label: "",
     color: null,
-    gmail: { unreadBadge: true, unifiedInbox: true },
+    gmail: { unreadBadge: true, unifiedInbox: true, hibernated: false },
     notifications: true,
   },
   placeholder = "Work",
@@ -78,6 +80,8 @@ function AccountForm({
   /** Locks the Disabled switch: turning this one off would leave Meru nothing to run. */
   isLastEnabledAccount?: boolean;
 }) {
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
   const form = useForm({
     defaultValues: account,
     validators: {
@@ -213,6 +217,29 @@ function AccountForm({
                   name={field.name}
                   checked={field.state.value}
                   onCheckedChange={field.handleChange}
+                />
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="gmail.hibernated">
+            {(field) => (
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name} className="flex items-center gap-2">
+                    Hibernate Gmail
+                    <LicenseKeyRequiredFieldBadge />
+                  </FieldLabel>
+                  <FieldDescription>
+                    Meru keeps the inbox, unread badge and notifications from the mail feed and
+                    loads Gmail only when you open it.
+                  </FieldDescription>
+                </FieldContent>
+                <Switch
+                  id={field.name}
+                  name={field.name}
+                  checked={isLicenseKeyValid && field.state.value === true}
+                  onCheckedChange={field.handleChange}
+                  disabled={!isLicenseKeyValid}
                 />
               </Field>
             )}
