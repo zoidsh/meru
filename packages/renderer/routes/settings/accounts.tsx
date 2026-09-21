@@ -399,6 +399,12 @@ function SortableAccountItem({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
+  // As the switch does: the option is what the user chose, the badge is what
+  // the app is doing, and an expired license leaves Gmail loaded either way.
+  const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const isHibernated = isLicenseKeyValid && account.gmail.hibernated === true;
+
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
       <Button
@@ -421,11 +427,16 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
+        {(account.disabled ||
+          account.gmail.unreadBadge ||
+          account.gmail.unifiedInbox ||
+          isHibernated ||
+          account.notifications) && (
           <div className="flex gap-2">
             {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
+            {isHibernated && <Badge variant="outline">Hibernate Gmail</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
           </div>
         )}
