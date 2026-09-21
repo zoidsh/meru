@@ -62,8 +62,8 @@ export function getMachineId() {
   // hash. Safe to read at runtime because a build that was not handed the
   // variable inlines an empty string here, leaving nothing for a shipped app's
   // environment to answer.
-  if (process.env.MERU_BUILD_DEVICE_ID) {
-    return Promise.resolve(process.env.MERU_BUILD_DEVICE_ID);
+  if (process.env.MERU_DEV_DEVICE_ID) {
+    return Promise.resolve(process.env.MERU_DEV_DEVICE_ID);
   }
 
   if (!machineId) {

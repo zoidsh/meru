@@ -96,11 +96,9 @@ function buildAppFiles() {
              * `NODE_ENV=production` so that Bun leaves `.env.development.local`
              * alone here, the file a development run takes the id from, which
              * keeps inlining one into a build an explicit
-             * `MERU_BUILD_DEVICE_ID=...` in front of it.
+             * `MERU_DEV_DEVICE_ID=...` in front of it.
              */
-            "process.env.MERU_BUILD_DEVICE_ID": JSON.stringify(
-              process.env.MERU_BUILD_DEVICE_ID ?? "",
-            ),
+            "process.env.MERU_DEV_DEVICE_ID": JSON.stringify(process.env.MERU_DEV_DEVICE_ID ?? ""),
             ...(process.env.APPLE_TEAM_ID
               ? {
                   "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),

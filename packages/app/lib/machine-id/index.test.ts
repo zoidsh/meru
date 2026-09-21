@@ -23,13 +23,13 @@ const { getMachineId } = await import("./index");
 // Nothing settles the variable for a test run: `bun test` runs under
 // `NODE_ENV=test`, so Bun loads `.env.test.local` rather than the development
 // env file a development run takes the id from. Every case sets or clears it.
-const inheritedDeviceId = process.env.MERU_BUILD_DEVICE_ID;
+const inheritedDeviceId = process.env.MERU_DEV_DEVICE_ID;
 
 function setDeviceId(deviceId: string | undefined) {
   if (deviceId === undefined) {
-    delete process.env.MERU_BUILD_DEVICE_ID;
+    delete process.env.MERU_DEV_DEVICE_ID;
   } else {
-    process.env.MERU_BUILD_DEVICE_ID = deviceId;
+    process.env.MERU_DEV_DEVICE_ID = deviceId;
   }
 }
 
