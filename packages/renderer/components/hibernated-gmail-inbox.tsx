@@ -1,4 +1,3 @@
-import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstance } from "@meru/shared/schemas";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
@@ -12,9 +11,9 @@ import {
 } from "@meru/ui/components/empty";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Skeleton } from "@meru/ui/components/skeleton";
-import { cn } from "@meru/ui/lib/utils";
 import { CircleAlertIcon, InboxIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AccountBadge } from "@/components/account-badge";
 import { InboxTable } from "@/components/inbox-table";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useAccountInbox, useSelectedAccountTabs } from "@/lib/hooks";
@@ -115,14 +114,14 @@ function AccountInbox({ account }: { account: AccountInstance }) {
     <ScrollArea className="flex-1">
       <div className="mx-auto max-w-6xl px-8 py-8">
         <SettingsHeader>
-          <SettingsTitle className="flex min-w-0 items-center gap-2">
-            <div
-              className={cn(
-                "size-2 shrink-0 rounded-full",
-                account.config.color ? accountColorsMap[account.config.color].className : "border",
-              )}
-            />
-            <span className="truncate">{account.config.label}</span>
+          <SettingsTitle className="flex min-w-0 items-center gap-3">
+            Inbox
+            {/*
+             * Which account's, because the strip that would otherwise say so
+             * takes no width at all below two tabs, which is every account
+             * that has opened no workspace app.
+             */}
+            <AccountBadge label={account.config.label} color={account.config.color} />
           </SettingsTitle>
           <Button
             disabled={isWaking}
