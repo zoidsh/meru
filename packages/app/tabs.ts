@@ -170,7 +170,9 @@ export class Tabs {
           return gmail.navigationHistory;
         },
         get view() {
-          return gmail.view;
+          // Undefined rather than a throw: an account on Hibernate Gmail keeps
+          // its Gmail tab in the strip with no view behind it.
+          return gmail.viewOrNull ?? undefined;
         },
         updateViewBounds: () => {
           gmail.updateViewBounds();

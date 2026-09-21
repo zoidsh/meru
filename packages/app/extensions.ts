@@ -311,9 +311,9 @@ function isActiveTab(contents: WebContents) {
     const selectedAccount = accounts.getSelectedAccount();
 
     const activeView =
-      selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
+      selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.viewOrNull;
 
-    return activeView.webContents === contents;
+    return activeView?.webContents === contents;
   } catch {
     return false;
   }

@@ -3,7 +3,6 @@ import { platform } from "@electron-toolkit/utils";
 import { app, dialog } from "electron";
 import { accounts } from "@/accounts";
 import { showProUpgradeDialog } from "@/dialogs";
-import { ipc } from "@/ipc";
 import {
   isMeruUrl,
   isWebUrl,
@@ -154,11 +153,7 @@ async function openMessageDeepLink({
 
   accounts.selectAccount(accountId);
 
-  ipc.renderer.send(
-    accounts.getAccount(accountId).instance.gmail.view.webContents,
-    "gmail.openMessage",
-    messageId,
-  );
+  accounts.getAccount(accountId).instance.gmail.openMessage(messageId);
 }
 
 async function openUrlDeepLink(deepLink: Extract<MeruDeepLink, { type: "open" }>) {

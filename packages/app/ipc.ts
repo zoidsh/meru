@@ -79,8 +79,8 @@ function getNavigationWebContents(workspaceAppId?: string) {
 
   const selectedAccount = accounts.getSelectedAccount();
 
-  return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view)
-    .webContents;
+  return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.viewOrNull)
+    ?.webContents;
 }
 
 class Ipc {
@@ -150,23 +150,23 @@ class Ipc {
     });
 
     this.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).navigationHistory.goBack();
+      getNavigationWebContents(workspaceAppId)?.navigationHistory.goBack();
     });
 
     this.main.on("workspaceApp.goForward", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).navigationHistory.goForward();
+      getNavigationWebContents(workspaceAppId)?.navigationHistory.goForward();
     });
 
     this.main.on("workspaceApp.reload", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).reload();
+      getNavigationWebContents(workspaceAppId)?.reload();
     });
 
     this.main.on("workspaceApp.stop", (_event, workspaceAppId) => {
-      getNavigationWebContents(workspaceAppId).stop();
+      getNavigationWebContents(workspaceAppId)?.stop();
     });
 
     this.main.handle("workspaceApp.getLoadingState", (_event, workspaceAppId) => {
-      return getNavigationWebContents(workspaceAppId).isLoading();
+      return getNavigationWebContents(workspaceAppId)?.isLoading() === true;
     });
 
     this.main.on("gmail.setOutOfOffice", (event, outOfOffice) => {
@@ -205,6 +205,10 @@ class Ipc {
       const targetWebContents =
         WorkspaceApp.tryFromWebContents(event.sender)?.view.webContents ??
         getNavigationWebContents();
+
+      if (!targetWebContents) {
+        return;
+      }
 
       if (!text) {
         targetWebContents.stopFindInPage("clearSelection");
@@ -901,11 +905,11 @@ class Ipc {
     );
 
     ipc.main.on("gmail.navigateTo", (_event, hashLocation) => {
-      ipc.renderer.send(
-        accounts.getSelectedAccount().instance.gmail.view.webContents,
-        "gmail.navigateTo",
-        hashLocation,
-      );
+      accounts.getSelectedAccount().instance.gmail.navigateTo(hashLocation);
+    });
+
+    ipc.main.on("gmail.wake", (_event, accountId) => {
+      accounts.wakeGmail(accountId);
     });
 
     ipc.main.on("gmail.closeComposeWindow", (event) => {
@@ -917,7 +921,9 @@ class Ipc {
 
       const composeWindow = composeWorkspaceApp.window;
 
-      const gmailWebContents = composeWorkspaceApp.account.instance.gmail.view.webContents;
+      // A compose window outlives a Gmail view that hibernated under it, and
+      // the notification it would carry belongs to that page.
+      const gmailWebContents = composeWorkspaceApp.account.instance.gmail.viewOrNull?.webContents;
 
       composeWindow.hide();
 
@@ -938,7 +944,7 @@ class Ipc {
       composeWindow.once("closed", () => {
         clearUndoSendLapseTimeout(browserWindowId);
 
-        if (gmailWebContents.isDestroyed()) {
+        if (!gmailWebContents || gmailWebContents.isDestroyed()) {
           return;
         }
 
@@ -949,7 +955,7 @@ class Ipc {
         );
       });
 
-      if (gmailWebContents.isDestroyed()) {
+      if (!gmailWebContents || gmailWebContents.isDestroyed()) {
         return;
       }
 
@@ -1136,7 +1142,7 @@ class Ipc {
       }
 
       for (const account of accounts.instances.values()) {
-        if (event.sender.id === account.gmail.view.webContents.id) {
+        if (event.sender.id === account.gmail.viewOrNull?.webContents.id) {
           account.gmail.setUnreadCount(unreadCount);
 
           account.gmail.fetchInboxFeed();
@@ -1147,13 +1153,7 @@ class Ipc {
     });
 
     this.main.on("gmail.openMessage", (_event, messageId) => {
-      const selectedAccount = accounts.getSelectedAccount();
-
-      ipc.renderer.send(
-        selectedAccount.instance.gmail.view.webContents,
-        "gmail.openMessage",
-        messageId,
-      );
+      accounts.getSelectedAccount().instance.gmail.openMessage(messageId);
     });
 
     this.main.handle("gmail.handleMessage", async (_event, accountId, messageId, action) => {

@@ -37,14 +37,10 @@ export class AppMenu {
   }
 
   init() {
-    this._subscribeToSelectedAccount();
-
-    this.refresh();
+    this.refreshSelectedAccount();
 
     config.onDidChange("accounts", () => {
-      this._subscribeToSelectedAccount();
-
-      this.refresh();
+      this.refreshSelectedAccount();
     });
 
     app.on("browser-window-focus", () => {
@@ -58,6 +54,17 @@ export class AppMenu {
     Menu.setApplicationMenu(this.menu);
   }
 
+  /**
+   * Re-reads which webContents the menu follows. The selected account's Gmail
+   * view is one of them, and Hibernate Gmail takes it away and gives it back
+   * without the config changing, so waking and sleeping call this too.
+   */
+  refreshSelectedAccount() {
+    this._subscribeToSelectedAccount();
+
+    this.refresh();
+  }
+
   private _subscribeToSelectedAccount() {
     for (const unsubscribe of this._selectedAccountUnsubscribeFns) {
       unsubscribe();
@@ -67,7 +74,13 @@ export class AppMenu {
 
     const selectedAccount = accounts.getSelectedAccount();
 
-    const gmailWebContents = selectedAccount.instance.gmail.view.webContents;
+    const gmailWebContents = selectedAccount.instance.gmail.viewOrNull?.webContents;
+
+    // An account on Hibernate Gmail has no view to follow until it is woken,
+    // which calls `refreshSelectedAccount` to run this again.
+    if (!gmailWebContents) {
+      return;
+    }
 
     const refreshMenu = () => {
       this.refresh();
@@ -171,8 +184,9 @@ export class AppMenu {
         }
       }
 
-      return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view)
-        .webContents;
+      return (
+        selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.viewOrNull
+      )?.webContents;
     };
 
     const selectNextTab = () => {
@@ -300,11 +314,7 @@ export class AppMenu {
             label: "Gmail Settings",
             accelerator: "CommandOrControl+Shift+,",
             click: () => {
-              ipc.renderer.send(
-                selectedAccount.instance.gmail.view.webContents,
-                "gmail.navigateTo",
-                "settings",
-              );
+              selectedAccount.instance.gmail.navigateTo("settings");
 
               main.show();
             },
@@ -329,11 +339,7 @@ export class AppMenu {
             label: "Compose",
             enabled: isGmailVisible,
             click: () => {
-              ipc.renderer.send(
-                selectedAccount.instance.gmail.view.webContents,
-                "gmail.navigateTo",
-                "compose",
-              );
+              selectedAccount.instance.gmail.navigateTo("compose");
 
               main.show();
             },
@@ -473,14 +479,14 @@ export class AppMenu {
             label: "Reload",
             accelerator: "CommandOrControl+R",
             click: () => {
-              getActiveViewWebContents().reload();
+              getActiveViewWebContents()?.reload();
             },
           },
           {
             label: "Hard Reload",
             accelerator: "CommandOrControl+Shift+R",
             click: () => {
-              getActiveViewWebContents().reloadIgnoringCache();
+              getActiveViewWebContents()?.reloadIgnoringCache();
             },
           },
           {
@@ -504,7 +510,7 @@ export class AppMenu {
 
               main.window.webContents.openDevTools({ mode: "detach" });
 
-              getActiveViewWebContents().openDevTools();
+              getActiveViewWebContents()?.openDevTools();
             },
           },
         ],
@@ -544,14 +550,14 @@ export class AppMenu {
             label: "Back",
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
-              getActiveViewWebContents().navigationHistory.goBack();
+              getActiveViewWebContents()?.navigationHistory.goBack();
             },
           },
           {
             label: "Forward",
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
-              getActiveViewWebContents().navigationHistory.goForward();
+              getActiveViewWebContents()?.navigationHistory.goForward();
             },
           },
         ],

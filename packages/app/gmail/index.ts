@@ -2,9 +2,10 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
+  createGmailMessageActionRequest,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
   GMAIL_PRELOAD_ARGUMENTS,
   GMAIL_URL,
@@ -14,9 +15,12 @@ import {
   filterNewMailIdsByImportance,
   generateGmailLabelColorsCss,
   gmailFeedUrl,
+  parseGmailIdKey,
   parseGmailMessageId,
+  resolveInboxFeedUrl,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
+import type { GmailHashLocation } from "@meru/shared/types";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { extractVerificationCode } from "@meru/verification-code";
@@ -30,7 +34,7 @@ import {
 import z from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
-import { accounts } from "@/accounts";
+import { accounts, isGmailHibernated } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { copyText } from "@/lib/clipboard";
@@ -230,6 +234,33 @@ export class Gmail {
 
   private extensionsLoaded: Promise<void> | undefined;
 
+  /**
+   * When the account was last selected with its Gmail tab active. The idle
+   * sweep keeps it on the clock for as long as that stays true, so the idle
+   * time it measures starts the moment the user looks somewhere else.
+   */
+  lastActiveAt = Date.now();
+
+  /**
+   * The mutate endpoint's per-session key, held only for the viewless path.
+   * The preload keeps one of its own for the path that runs inside the page.
+   */
+  private gmailIdKey: string | null = null;
+
+  /** Whether the last feed fetch was refused, so the poll logs the refusal once. */
+  private inboxFeedRefused = false;
+
+  /**
+   * Whether this account runs on the feed alone. Read afresh each time rather
+   * than held, because both the setting and the license behind it change under
+   * a running app.
+   */
+  get isHibernated() {
+    const accountConfig = accounts.getAccountConfig(this.accountId);
+
+    return accountConfig !== undefined && isGmailHibernated(accountConfig);
+  }
+
   constructor({
     accountId,
     session,
@@ -318,7 +349,9 @@ export class Gmail {
     // Without a poll of its own, the baseline's `readAt` would sit hours behind
     // the feed through a quiet period, and the slack window with it.
     this.inboxFeedPollInterval = setInterval(() => {
-      if (!this._view) {
+      // A hibernated account has no view and no Gmail push channel either, so
+      // this poll is the whole of how it learns about mail.
+      if (!this._view && !this.isHibernated) {
         return;
       }
 
@@ -327,6 +360,8 @@ export class Gmail {
   }
 
   async createView(options?: WebContentsViewConstructorOptions) {
+    this.lastActiveAt = Date.now();
+
     this.view = createChildWebContentsView({
       session: this.session,
       preload: getPreloadPath("gmail"),
@@ -517,14 +552,39 @@ export class Gmail {
     );
   }
 
+  /**
+   * Takes the view away and leaves the account standing: the poll, the feed
+   * baseline and the seen ids all survive, which is what lets a hibernated
+   * account go on notifying with no page of its own. Everything here is also
+   * what `destroy()` does to the view, so the two cannot drift.
+   */
+  destroyView() {
+    const view = this._view;
+
+    if (!view) {
+      return;
+    }
+
+    removeWebContentsListeners(view.webContents);
+
+    view.webContents.close();
+
+    view.removeAllListeners();
+
+    main.window.contentView.removeChildView(view);
+
+    this._view = undefined;
+
+    // Both describe a page that is no longer there: the title would leave the
+    // tab wearing a stale unread count, and the fullscreen flag would lay the
+    // next view out over the whole window.
+    this.pageTitle = "";
+
+    this.htmlFullscreen = false;
+  }
+
   destroy() {
-    removeWebContentsListeners(this.view.webContents);
-
-    this.view.webContents.close();
-
-    this.view.removeAllListeners();
-
-    main.window.contentView.removeChildView(this.view);
+    this.destroyView();
 
     clearInterval(this.inboxFeedPollInterval);
 
@@ -533,8 +593,6 @@ export class Gmail {
     }
 
     this.storeUnsubscribers = [];
-
-    this._view = undefined;
   }
 
   private setDelegatedAccountId(delegatedAccountId: string | null) {
@@ -671,48 +729,133 @@ export class Gmail {
     }
   }
 
+  /**
+   * The inbox type is a property of the page, and hibernation takes the page
+   * away, so the last one a live view reported is kept with the account for
+   * the fetches that have nowhere to read it from.
+   */
+  private persistInboxType(inboxType: string) {
+    const accountConfigs = config.get("accounts");
+
+    const accountConfig = accountConfigs.find(({ id }) => id === this.accountId);
+
+    if (!accountConfig || accountConfig.gmail.inboxType === inboxType) {
+      return;
+    }
+
+    config.set(
+      "accounts",
+      accountConfigs.map((account) =>
+        account.id === this.accountId
+          ? { ...account, gmail: { ...account.gmail, inboxType } }
+          : account,
+      ),
+    );
+  }
+
+  /**
+   * Whether the response is a feed at all. A session Gmail no longer accepts
+   * is answered with the sign-in page rather than with an error, so a fetch
+   * that resolved says nothing on its own. This is the sign-in detection the
+   * live view gets from the navigation it is sent on, for an account that has
+   * no view to navigate.
+   */
+  private acceptInboxFeedResponse(res: Response) {
+    if (res.ok && !res.url.startsWith(GOOGLE_ACCOUNTS_URL)) {
+      // Only what this raised is cleared here, so a view sitting on a page
+      // outside Gmail keeps the flag its own navigation set.
+      if (this.inboxFeedRefused) {
+        this.inboxFeedRefused = false;
+
+        this.store.setState({ attentionRequired: false });
+      }
+
+      return true;
+    }
+
+    // Once per transition: an account left signed out would otherwise write
+    // this every thirty seconds for as long as the app runs.
+    if (!this.inboxFeedRefused) {
+      this.inboxFeedRefused = true;
+
+      log.error("Inbox feed refused", {
+        accountId: this.accountId,
+        status: res.status,
+        url: res.url,
+      });
+    }
+
+    this.store.setState({ attentionRequired: true });
+
+    return false;
+  }
+
   async fetchInboxFeed(
     { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean } = {},
     fetchAttempt = 1,
   ) {
     try {
-      if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
-        if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
-        }
+      const view = this._view;
 
+      // With a view the feed supplements Gmail's own push channel; without one
+      // it is the account's only source of mail, which is what hibernation
+      // runs on. With neither there is nothing to keep up to date.
+      if (!view && !this.isHibernated) {
         return;
       }
 
-      const inboxTypeValue = await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE");
+      let inboxType: string | null;
 
-      // The URL is already Gmail's while the page is still loading, such as
-      // during sign-in, so the global is missing rather than wrong. Treat that
-      // as "not loaded yet": keep waiting for it while there is no baseline to
-      // diff against, and otherwise return, the way the URL check above does.
-      if (inboxTypeValue === undefined) {
-        if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+      if (view) {
+        if (!view.webContents.getURL().startsWith(GMAIL_URL)) {
+          if (!this.inboxFeedBaseline) {
+            await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          }
+
+          return;
         }
 
-        return;
+        const inboxTypeValue = await view.webContents.executeJavaScript("window.GM_INBOX_TYPE");
+
+        // The URL is already Gmail's while the page is still loading, such as
+        // during sign-in, so the global is missing rather than wrong. Treat that
+        // as "not loaded yet": keep waiting for it while there is no baseline to
+        // diff against, and otherwise return, the way the URL check above does.
+        if (inboxTypeValue === undefined) {
+          if (!this.inboxFeedBaseline) {
+            await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          }
+
+          return;
+        }
+
+        inboxType = inboxTypeSchema.parse(inboxTypeValue);
+
+        this.persistInboxType(inboxType);
+      } else {
+        inboxType = accounts.getAccountConfig(this.accountId)?.gmail.inboxType ?? null;
       }
 
-      const inboxType = inboxTypeSchema.parse(inboxTypeValue);
-
-      const feedUrl = gmailFeedUrl(
-        inboxType === "SECTIONED" && config.get("gmail.inboxCategoriesToMonitor") === "primary"
-          ? "primary"
-          : undefined,
-      );
+      const feedUrl = resolveInboxFeedUrl(inboxType, config.get("gmail.inboxCategoriesToMonitor"));
 
       // Taken before the fetch so the anchor is never later than the feed state
       // it describes.
       const readAt = Date.now();
 
-      const body = await this.session.fetch(`${feedUrl}?t=${Date.now()}`).then((res) => res.text());
+      const res = await this.session.fetch(`${feedUrl}?t=${Date.now()}`);
 
-      const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
+      if (!this.acceptInboxFeedResponse(res)) {
+        return;
+      }
+
+      const { feed } = inboxFeedSchema.parse(xmlParser.parse(await res.text()));
+
+      // The preload's DOM observer is the authority on the count wherever
+      // there is a page to run it, and it reads the inbox the user is looking
+      // at. With no page, the feed's own count is what there is.
+      if (!view) {
+        this.setUnreadCount(feed.fullcount);
+      }
 
       const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 
@@ -795,7 +938,14 @@ export class Gmail {
       // is the whole of it: main builds it, hands it over and keeps nothing.
       // Reached only on a changed feed, which is also every account's first
       // fetch, since a missing baseline counts as a change.
-      if (licenseKey.isValid && config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) {
+      //
+      // A hibernated account sends its list whether or not it is in the
+      // unified inbox: that same renderer cache is where its own inbox is read
+      // from, there being no Gmail page to show it one.
+      if (
+        licenseKey.isValid &&
+        ((config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) || this.isHibernated)
+      ) {
         this.sendInboxChanged(messages);
       }
 
@@ -955,7 +1105,7 @@ export class Gmail {
 
             accounts.selectAccount(this.accountId);
 
-            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
+            this.openMessage(newMail.id);
           },
           action: (index) => {
             const notificationAction = NEW_EMAIL_NOTIFICATION_ACTIONS[index];
@@ -1011,6 +1161,14 @@ export class Gmail {
     const view = this._view;
 
     if (!view || view.webContents.isDestroyed()) {
+      // A hibernated account has no page to run the action in, so main sends
+      // Gmail the request the preload would have sent from inside one.
+      if (!this.isHibernated || !(await this.sendMessageAction(messageId, action))) {
+        return;
+      }
+
+      await this.fetchInboxFeed();
+
       return;
     }
 
@@ -1043,12 +1201,133 @@ export class Gmail {
     await this.fetchInboxFeed();
   }
 
+  /** The mutate endpoint's per-session key, inlined in Gmail's own HTML. */
+  private async fetchGmailIdKey() {
+    const res = await this.session.fetch(GMAIL_URL);
+
+    this.gmailIdKey = parseGmailIdKey(await res.text());
+
+    if (!this.gmailIdKey) {
+      log.error("Gmail ID key is missing", { accountId: this.accountId });
+    }
+
+    return this.gmailIdKey;
+  }
+
+  /**
+   * A row action for an account whose Gmail is hibernated: the request
+   * `@meru/preload-gmail` sends from inside the page, sent from here over the
+   * account's own session instead. A delegated account is no different, since
+   * the preload posts to `GMAIL_URL` whichever account its page is showing.
+   */
+  private async sendMessageAction(messageId: string, action: GmailAction) {
+    const [actionTokenCookie] = await this.session.cookies.get({
+      url: GMAIL_URL,
+      name: "GMAIL_AT",
+    });
+
+    if (!actionTokenCookie) {
+      log.error("Gmail action token is missing", { accountId: this.accountId });
+
+      return false;
+    }
+
+    const post = async (idKey: string) => {
+      const { url, body } = createGmailMessageActionRequest({
+        messageId,
+        action,
+        idKey,
+        actionToken: actionTokenCookie.value,
+      });
+
+      const res = await this.session.fetch(url, {
+        method: "POST",
+        body,
+        // Gmail refuses the endpoint without them. The preload has them for
+        // free, posting from the page they name.
+        headers: {
+          Origin: this.baseUrl,
+          Referer: `${GMAIL_URL}/`,
+        },
+      });
+
+      await res.text();
+
+      return res;
+    };
+
+    let idKey = this.gmailIdKey ?? (await this.fetchGmailIdKey());
+
+    if (!idKey) {
+      return false;
+    }
+
+    let res = await post(idKey);
+
+    // The key belongs to a Gmail session rather than to the account, so a
+    // cached one goes stale on its own and the refusal is the only word of it.
+    if (!res.ok) {
+      idKey = await this.fetchGmailIdKey();
+
+      if (!idKey) {
+        return false;
+      }
+
+      res = await post(idKey);
+    }
+
+    if (!res.ok) {
+      log.error("Gmail message action failed", {
+        accountId: this.accountId,
+        action,
+        status: res.status,
+      });
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * The view an action that only means anything inside Gmail needs, waking a
+   * hibernated account for it rather than doing nothing. `null` is an account
+   * with no view and no reason to build one.
+   */
+  async wakeViewForAction() {
+    if (!this._view && this.isHibernated) {
+      await accounts.wakeGmail(this.accountId);
+    }
+
+    return this.viewOrNull;
+  }
+
+  async navigateTo(hashLocation: GmailHashLocation) {
+    const view = await this.wakeViewForAction();
+
+    if (!view || view.webContents.isDestroyed()) {
+      return;
+    }
+
+    ipc.renderer.send(view.webContents, "gmail.navigateTo", hashLocation);
+  }
+
+  async openMessage(messageId: string) {
+    const view = await this.wakeViewForAction();
+
+    if (!view || view.webContents.isDestroyed()) {
+      return;
+    }
+
+    ipc.renderer.send(view.webContents, "gmail.openMessage", messageId);
+  }
+
   /**
    * Both halves are needed after a gap: the feed is what notices the mail, the
    * refresh is what makes the stale view show it.
    */
   resyncInbox() {
-    if (!this._view) {
+    if (!this._view && !this.isHibernated) {
       return;
     }
 
@@ -1131,17 +1410,21 @@ export class Gmail {
     });
   }
 
-  search(query: string) {
-    this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
+  async search(query: string) {
+    const view = await this.wakeViewForAction();
+
+    view?.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
   }
 
-  navigateToHash(urlOrHash: string) {
+  async navigateToHash(urlOrHash: string) {
     const hash = urlOrHash.startsWith("https://") ? new URL(urlOrHash).hash : urlOrHash;
 
     if (!hash) {
       return;
     }
 
-    this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
+    const view = await this.wakeViewForAction();
+
+    view?.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
   }
 }

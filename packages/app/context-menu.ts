@@ -22,9 +22,12 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
       const selectedAccount = accounts.getSelectedAccount();
 
+      const gmailView = selectedAccount.instance.gmail.viewOrNull;
+
       if (
         licenseKey.isValid &&
-        parameters.pageURL === selectedAccount.instance.gmail.view.webContents.getURL()
+        gmailView !== null &&
+        parameters.pageURL === gmailView.webContents.getURL()
       ) {
         const userEmail = selectedAccount.instance.gmail.userEmail;
         const messageId = selectedAccount.instance.gmail.messageId;
@@ -52,7 +55,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
         }
       }
 
-      if (window !== selectedAccount.instance.gmail.view) {
+      if (window !== gmailView) {
         menuItems.push(
           {
             label: "Copy Link",

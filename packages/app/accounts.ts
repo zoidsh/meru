@@ -5,6 +5,7 @@ import type { AccountConfig, AccountConfigs, AccountInstances } from "@meru/shar
 import {
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
+  GMAIL_TAB_ID,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
 import { net, powerMonitor, session } from "electron";
@@ -14,6 +15,7 @@ import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
+import { appMenu } from "./menu";
 import { isWindowedTab } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
 
@@ -33,6 +35,9 @@ export function isGmailHibernated(accountConfig: AccountConfig) {
 
 class Accounts {
   instances: Map<string, Account> = new Map();
+
+  /** In-flight wakes, keyed by account, so concurrent callers share one load. */
+  private gmailWakes: Map<AccountConfig["id"], Promise<void>> = new Map();
 
   init() {
     this.repairAccountConfigs();
@@ -92,12 +97,42 @@ class Accounts {
       }
     });
 
+    /*
+     * Waking is what an account opted into Hibernate Gmail needs a listener
+     * for. Turning it on leaves the view standing until the idle sweep takes
+     * it, so Gmail never vanishes from under the user the moment they flip the
+     * switch.
+     */
+    config.onDidChange("accounts", (accountConfigs, previousAccountConfigs) => {
+      if (!accountConfigs || !previousAccountConfigs) {
+        return;
+      }
+
+      for (const accountConfig of accountConfigs) {
+        const previousAccountConfig = previousAccountConfigs.find(
+          ({ id }) => id === accountConfig.id,
+        );
+
+        if (
+          !previousAccountConfig ||
+          previousAccountConfig.gmail.hibernated === accountConfig.gmail.hibernated ||
+          accountConfig.gmail.hibernated === true
+        ) {
+          continue;
+        }
+
+        accounts.wakeGmail(accountConfig.id);
+      }
+    });
+
     // Every tick reads the hibernation settings afresh, so changing them takes
     // effect on the next sweep without a listener of their own.
     setInterval(() => {
       for (const account of accounts.instances.values()) {
         account.tabs.hibernateIdleTabs();
       }
+
+      accounts.hibernateIdleGmailViews();
     }, HIBERNATION_SWEEP_INTERVAL);
 
     powerMonitor.on("resume", () => {
@@ -159,8 +194,13 @@ class Accounts {
       return 0;
     });
 
+    // An account on Hibernate Gmail launches with no view at all, which is
+    // where the memory it saves comes from. It still gets its `Gmail` and its
+    // `Tabs`, so the feed poll, the badge and the tab strip are unaffected.
+    const loadedAccounts = accounts.filter((account) => !isGmailHibernated(account.config));
+
     await Promise.all(
-      accounts.map((account) =>
+      loadedAccounts.map((account) =>
         account.instance.gmail.createView({
           webPreferences: {
             backgroundThrottling: false,
@@ -169,12 +209,124 @@ class Accounts {
       ),
     );
 
-    for (const account of accounts) {
-      account.instance.gmail.view.webContents.setBackgroundThrottling(true);
+    for (const account of loadedAccounts) {
+      account.instance.gmail.viewOrNull?.webContents.setBackgroundThrottling(true);
     }
 
     for (const account of accounts) {
       account.instance.tabs.loadLaunchTabs();
+    }
+
+    // The window reads its accounts out of its URL before this runs, so every
+    // account is seeded as not loaded. This is what corrects the ones that are.
+    this.sendAccountsChangedToRenderer();
+  }
+
+  /**
+   * Brings up the Gmail view of an account that has none, which is what "Open
+   * Gmail" and every action needing the page itself come down to. Waking says
+   * nothing about the setting: the account stays opted in and goes back to
+   * sleep on the next idle sweep.
+   *
+   * The promise is shared, because `createView` resolves only once Gmail has
+   * loaded and a second caller arriving in between has to wait for the same
+   * page rather than be told there is one already.
+   */
+  wakeGmail(accountId: AccountConfig["id"]) {
+    const pendingWake = this.gmailWakes.get(accountId);
+
+    if (pendingWake) {
+      return pendingWake;
+    }
+
+    const instance = this.instances.get(accountId);
+
+    if (!instance || instance.gmail.hasView) {
+      return Promise.resolve();
+    }
+
+    const wake = this.createGmailView(instance).finally(() => {
+      this.gmailWakes.delete(accountId);
+    });
+
+    this.gmailWakes.set(accountId, wake);
+
+    return wake;
+  }
+
+  private async createGmailView(instance: Account) {
+    await instance.gmail.createView({
+      webPreferences: {
+        backgroundThrottling: false,
+      },
+    });
+
+    instance.gmail.viewOrNull?.webContents.setBackgroundThrottling(true);
+
+    // A view is created visible and paints over renderer HTML, so a wake from
+    // a renderer page — the unified inbox, above all — has to hide it again.
+    if (main.location !== "/") {
+      this.hide();
+    }
+
+    this.updateAllViewBounds();
+
+    // The new view went on top of the window's child list whether or not it
+    // belongs to the selected account, which is the same z-order problem
+    // enabling an account has.
+    this.refreshSelectedAccountView();
+
+    appMenu.refreshSelectedAccount();
+
+    this.sendAccountsChangedToRenderer();
+
+    this.sendTabsChangedToRenderer();
+  }
+
+  /**
+   * Unloads the Gmail view of an account that has been opted into Hibernate
+   * Gmail and left alone, which is the other half of launching without one.
+   * The `Gmail` instance stays: its poll, its feed baseline and its seen ids
+   * are what keep the inbox, the badge and the notifications running.
+   */
+  private hibernateIdleGmailViews() {
+    const now = Date.now();
+
+    const idleTimeout = ms(config.get("gmail.hibernationTimeout"));
+
+    for (const account of this.getAccounts()) {
+      const { gmail } = account.instance;
+
+      if (!gmail.hasView || !isGmailHibernated(account.config)) {
+        continue;
+      }
+
+      const isGmailOnScreen =
+        main.window.isVisible() &&
+        main.location === "/" &&
+        account.config.selected &&
+        account.instance.tabs.activeTabId === GMAIL_TAB_ID;
+
+      // As `hibernateIdleTabs` does for the active tab: kept on the clock for
+      // as long as the user is looking at it, so the idle time starts when
+      // they look elsewhere and what is on screen is never taken away.
+      if (isGmailOnScreen || gmail.viewOrNull?.webContents.isFocused()) {
+        gmail.lastActiveAt = now;
+
+        continue;
+      }
+
+      if (now - gmail.lastActiveAt < idleTimeout) {
+        continue;
+      }
+
+      gmail.destroyView();
+
+      appMenu.refreshSelectedAccount();
+
+      this.sendAccountsChangedToRenderer();
+
+      this.sendTabsChangedToRenderer();
     }
   }
 
@@ -406,7 +558,7 @@ class Accounts {
 
   findInstanceByGmailWebContentsId(webContentsId: number) {
     for (const account of this.instances.values()) {
-      if (account.gmail.view.webContents.id === webContentsId) {
+      if (account.gmail.viewOrNull?.webContents.id === webContentsId) {
         return account;
       }
     }
@@ -509,7 +661,9 @@ class Accounts {
   private createAccountInstance(accountConfig: AccountConfig) {
     const instance = new Account(accountConfig);
 
-    instance.gmail.createView();
+    if (!isGmailHibernated(accountConfig)) {
+      instance.gmail.createView();
+    }
 
     this.instances.set(accountConfig.id, instance);
 

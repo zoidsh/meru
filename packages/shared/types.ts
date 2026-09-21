@@ -75,7 +75,7 @@ export type WorkspaceAppNotification = {
   requireInteraction?: boolean;
 };
 
-type GmailHashLocation =
+export type GmailHashLocation =
   | "inbox"
   | "starred"
   | "snoozed"

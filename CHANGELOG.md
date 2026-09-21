@@ -14,6 +14,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** Turn off Show bookmarks button in Settings → Workspace apps to take the bookmarks button out of the titlebar and the vertical tabs sidebar
 - **Meru Pro:** Choose whether notifications show for all new emails or only the ones Gmail marks as important, with Notify for in Settings → Notifications
 - **Meru Pro:** Turn off Show Do Not Disturb button in Settings → Appearance to take the Do Not Disturb button out of the titlebar. Do Not Disturb turns off with it, so notifications keep arriving
+- **Meru Pro:** Turn on Hibernate Gmail for an account to unload Gmail and cut the memory that account uses by a large amount. Its inbox, unread badge and notifications keep coming from the mail feed, and Gmail loads again when you open it
 
 ### Changed
 
