@@ -1,6 +1,7 @@
 import type { LoginItemSettings } from "electron";
 import type { accountColorsMap } from "./accounts";
-import type { GmailAction, GmailHibernationTimeout, GmailInboxMessage } from "./gmail";
+import type { GmailAction, GmailInboxMessage } from "./gmail";
+import type { HibernationTimeout } from "./hibernation";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -25,7 +26,6 @@ import type {
   WorkspaceAppBookmarkState,
   WorkspaceAppOpenBehavior,
   WorkspaceAppsHibernation,
-  WorkspaceAppsHibernationTimeout,
   WorkspaceAppsLauncherDisplay,
   WorkspaceAppsMode,
 } from "./workspace-apps";
@@ -145,7 +145,7 @@ export type Config = {
   "gmail.replyForwardInPopOut": boolean;
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
-  "gmail.hibernationTimeout": GmailHibernationTimeout;
+  "gmail.hibernationTimeout": HibernationTimeout;
   "screenShare.useSystemPicker": boolean;
   "window.lastState": {
     bounds: {
@@ -173,7 +173,7 @@ export type Config = {
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
   "workspaceApps.hidePasskeyDialog": boolean;
   "workspaceApps.hibernation": WorkspaceAppsHibernation;
-  "workspaceApps.hibernationTimeout": WorkspaceAppsHibernationTimeout;
+  "workspaceApps.hibernationTimeout": HibernationTimeout;
   "verificationCodes.autoCopy": boolean;
   "verificationCodes.copyMode": VerificationCodeCopyMode;
   "verificationCodes.autoDelete": boolean;

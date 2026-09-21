@@ -1,4 +1,9 @@
 import { isValidCssColorInput } from "./color";
+import {
+  DEV_HIBERNATION_TIMEOUT,
+  type HibernationTimeout,
+  hibernationTimeouts,
+} from "./hibernation";
 import type { GmailLabelColors, GmailLabelTextColor } from "./schemas";
 
 export const GMAIL_ACTION_CODE_MAP = {
@@ -47,23 +52,12 @@ export function resolveInboxFeedUrl(
   );
 }
 
-/** Keys double as durations for `ms`. */
-export const gmailHibernationTimeouts = {
-  "1m": "1 minute",
-  "30m": "30 minutes",
-  "1h": "1 hour",
-  "3h": "3 hours",
-  "6h": "6 hours",
-} as const;
+// Kept under Gmail-shaped names for the settings page that reads them.
+export const gmailHibernationTimeouts = hibernationTimeouts;
 
-export type GmailHibernationTimeout = keyof typeof gmailHibernationTimeouts;
+export type GmailHibernationTimeout = HibernationTimeout;
 
-/**
- * As with the workspace apps sweep: too short to ship, and the only way to
- * watch Gmail go back to sleep without waiting an hour, so the settings UI
- * offers it in a development run and nowhere else.
- */
-export const DEV_GMAIL_HIBERNATION_TIMEOUT: GmailHibernationTimeout = "1m";
+export const DEV_GMAIL_HIBERNATION_TIMEOUT = DEV_HIBERNATION_TIMEOUT;
 
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
