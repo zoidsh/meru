@@ -125,6 +125,7 @@ function VerticalTab({
   accountId,
   presentation,
   gmailStatus,
+  hibernated = false,
   className,
 }: {
   ref?: Ref<HTMLDivElement>;
@@ -132,6 +133,8 @@ function VerticalTab({
   accountId: AccountConfig["id"];
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
   gmailStatus?: GmailTabStatus;
+  /** The Gmail tab of an account running from the feed with no view behind it. */
+  hibernated?: boolean;
   className?: string;
 }) {
   const { config } = useConfig();
@@ -180,7 +183,7 @@ function VerticalTab({
           // strip changes width, rather than animating into it once the strip
           // has already arrived.
           "transition-colors",
-          tab.dormant && "opacity-50",
+          (tab.dormant || hibernated) && "opacity-50",
           isWideRow && "w-full justify-start",
           isWideRow && isBookmarkable && "group-hover:pr-13",
           isWideRow && !isBookmarkable && isCloseable && "group-hover:pr-7",
@@ -279,6 +282,7 @@ function SortableVerticalTab({
   presentation,
   sectionIndex,
   gmailStatus,
+  hibernated,
   className,
 }: {
   tab: TabState;
@@ -286,6 +290,7 @@ function SortableVerticalTab({
   presentation: "wideRow" | "narrowIcon" | "gridIcon";
   sectionIndex: number;
   gmailStatus?: GmailTabStatus;
+  hibernated?: boolean;
   className?: string;
 }) {
   const { ref, isDragging } = useSortable({
@@ -301,6 +306,7 @@ function SortableVerticalTab({
       accountId={accountId}
       presentation={presentation}
       gmailStatus={gmailStatus}
+      hibernated={hibernated}
       className={cn("touch-none", isDragging && "opacity-50", className)}
     />
   );
@@ -454,6 +460,10 @@ export function VerticalTabs() {
     selectedAccountTabs.some((tab) => tab.id === GMAIL_TAB_ID && tab.active),
   );
 
+  // The dimming an unloaded workspace app tab carries, for the same reason:
+  // the tab is listed and selectable, and nothing is loaded behind it.
+  const isGmailUnloaded = selectedAccount.hibernated && !selectedAccount.gmailLoaded;
+
   const gmailTabStatus = {
     attentionRequired: selectedAccount.gmail.attentionRequired,
     unreadCount:
@@ -553,6 +563,7 @@ export function VerticalTabs() {
                   presentation={isWide ? "gridIcon" : "narrowIcon"}
                   sectionIndex={pinnedSectionTabIndex}
                   gmailStatus={tab.id === GMAIL_TAB_ID ? gmailTabStatus : undefined}
+                  hibernated={tab.id === GMAIL_TAB_ID && isGmailUnloaded}
                   className={cn(
                     isWide &&
                       pinnedSectionTabs.length % 2 === 1 &&
