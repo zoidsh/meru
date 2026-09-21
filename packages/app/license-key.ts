@@ -17,7 +17,7 @@ class LicenseKey {
    * is refused with `DEVICE_NOT_ACTIVATED`. That is what lets a fleet or an MDM
    * deployment hand Meru its license instead of someone typing it in.
    */
-  applyEnvironmentKey() {
+  init() {
     const environmentKey = process.env.MERU_LICENSE_KEY;
 
     // A launch that changes nothing must not fire `config.onDidChange`

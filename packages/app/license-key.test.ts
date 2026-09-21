@@ -85,11 +85,11 @@ afterEach(() => {
   setEnvironmentLicenseKey(inheritedLicenseKey);
 });
 
-describe("applyEnvironmentKey", () => {
+describe("init", () => {
   test("stores the key from the environment", () => {
     setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
   });
@@ -98,7 +98,7 @@ describe("applyEnvironmentKey", () => {
     isDev = false;
     setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
   });
@@ -107,7 +107,7 @@ describe("applyEnvironmentKey", () => {
     storedKey = activatedLicenseKey;
     setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
   });
@@ -116,7 +116,7 @@ describe("applyEnvironmentKey", () => {
     storedKey = environmentLicenseKey;
     setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     expect(configWrites).toEqual([]);
   });
@@ -126,11 +126,11 @@ describe("applyEnvironmentKey", () => {
 
     setEnvironmentLicenseKey(undefined);
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     setEnvironmentLicenseKey("");
 
-    licenseKey.applyEnvironmentKey();
+    licenseKey.init();
 
     expect(configWrites).toEqual([]);
     expect(storedKey).toBe(activatedLicenseKey);
