@@ -921,8 +921,8 @@ class Ipc {
 
       const composeWindow = composeWorkspaceApp.window;
 
-      // A compose window outlives a Gmail view that hibernated under it, and
-      // the notification it would carry belongs to that page.
+      // A compose window outlives a Gmail view that Lite mode unloaded under
+      // it, and the notification it would carry belongs to that page.
       const gmailWebContents = composeWorkspaceApp.account.instance.gmail.viewOrNull?.webContents;
 
       composeWindow.hide();

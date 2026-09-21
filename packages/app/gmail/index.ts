@@ -165,8 +165,8 @@ export class Gmail {
   }
 
   /**
-   * The view for the paths that have to keep working while the account's Gmail
-   * is hibernated, where `view` would throw.
+   * The view for the paths that have to keep working while the account is in
+   * Lite mode, where `view` would throw.
    */
   get viewOrNull() {
     return this._view ?? null;
@@ -261,7 +261,7 @@ export class Gmail {
   /**
    * Whether this account runs on the feed alone. Read afresh each time rather
    * than held, because both the setting and the license behind it change under
-   * a running app. Which flavour of Lite mode it is matters only at launch, so
+   * a running app. Which kind of Lite mode it is matters only at launch, so
    * everything here asks the one question.
    */
   get isLiteMode() {
@@ -568,8 +568,8 @@ export class Gmail {
 
   /**
    * Takes the view away and leaves the account standing: the poll, the feed
-   * baseline and the seen ids all survive, which is what lets a hibernated
-   * account go on notifying with no page of its own. Everything here is also
+   * baseline and the seen ids all survive, which is what lets an account in
+   * Lite mode go on notifying with no page of its own. Everything here is also
    * what `destroy()` does to the view, so the two cannot drift.
    */
   destroyView() {
@@ -761,7 +761,7 @@ export class Gmail {
   }
 
   /**
-   * The inbox type is a property of the page, and hibernation takes the page
+   * The inbox type is a property of the page, and Lite mode takes the page
    * away, so the last one a live view reported is kept with the account for
    * the fetches that have nowhere to read it from.
    */

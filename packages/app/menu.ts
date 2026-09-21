@@ -56,8 +56,8 @@ export class AppMenu {
 
   /**
    * Re-reads which webContents the menu follows. The selected account's Gmail
-   * view is one of them, and Hibernate Gmail takes it away and gives it back
-   * without the config changing, so waking and sleeping call this too.
+   * view is one of them, and Lite mode takes it away and gives it back without
+   * the config changing, so waking and sleeping call this too.
    */
   refreshSelectedAccount() {
     this._subscribeToSelectedAccount();
@@ -76,7 +76,7 @@ export class AppMenu {
 
     const gmailWebContents = selectedAccount.instance.gmail.viewOrNull?.webContents;
 
-    // An account on Hibernate Gmail has no view to follow until it is woken,
+    // An account in Lite mode has no view to follow until it is woken,
     // which calls `refreshSelectedAccount` to run this again.
     if (!gmailWebContents) {
       return;

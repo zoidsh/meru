@@ -145,6 +145,8 @@ export class DormantTab {
 export class Tabs {
   private accountId: string;
 
+  private gmail: Gmail;
+
   tabs: Tab[];
 
   private _activeTabId: string = GMAIL_TAB_ID;
@@ -153,6 +155,8 @@ export class Tabs {
 
   constructor(accountId: string, gmail: Gmail) {
     this.accountId = accountId;
+
+    this.gmail = gmail;
 
     this.tabs = [
       {
@@ -170,8 +174,8 @@ export class Tabs {
           return gmail.navigationHistory;
         },
         get view() {
-          // Undefined rather than a throw: an account on Hibernate Gmail keeps
-          // its Gmail tab in the strip with no view behind it.
+          // Undefined rather than a throw: an account in Lite mode keeps its
+          // Gmail tab in the strip with no view behind it.
           return gmail.viewOrNull ?? undefined;
         },
         updateViewBounds: () => {
@@ -291,6 +295,11 @@ export class Tabs {
 
     if (activatedTab instanceof WorkspaceApp) {
       activatedTab.lastActiveAt = Date.now();
+    } else if (activatedTab.id === GMAIL_TAB_ID) {
+      // The Gmail tab is a proxy rather than an instance, so its clock lives on
+      // `Gmail`. Without this, Gmail opened and read between two sweep ticks
+      // still looks untouched and is unloaded a minute later.
+      this.gmail.lastActiveAt = Date.now();
     }
 
     this.activeTabId = tabId;

@@ -218,7 +218,7 @@ class Accounts {
       account.instance.tabs.loadLaunchTabs();
     }
 
-    // A selected account that launches hibernated has no view to bring
+    // A selected account that launches in Lite mode has no view to bring
     // forward, and the stack has to be hidden for its own inbox to show.
     // Otherwise this waits on the window's `show`, which is too late to be
     // the first thing drawn.
@@ -312,6 +312,7 @@ class Accounts {
 
       const isOnScreen =
         (main.window.isVisible() &&
+          !main.window.isMinimized() &&
           main.location === "/" &&
           account.config.selected &&
           account.instance.tabs.activeTabId === GMAIL_TAB_ID) ||
@@ -603,6 +604,14 @@ class Accounts {
         };
       }),
     );
+
+    // Switching to an account puts its Gmail on screen, which the sweep would
+    // otherwise only notice on its own tick, up to a minute later.
+    const instance = this.instances.get(selectedAccountId);
+
+    if (instance && instance.tabs.activeTabId === GMAIL_TAB_ID) {
+      instance.gmail.lastActiveAt = Date.now();
+    }
 
     this.updateAllViewBounds();
 
