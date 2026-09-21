@@ -6,6 +6,7 @@ import {
   GMAIL_INBOX_FEED_URL,
   gmailFeedUrl,
   parseGmailIdKey,
+  parseGmailInboxType,
   parseGmailMessageId,
   resolveInboxFeedUrl,
 } from "./gmail";
@@ -258,6 +259,28 @@ describe("parseGmailIdKey", () => {
 
   test("answers null for a page that carries no key", () => {
     expect(parseGmailIdKey("<html></html>")).toBe(null);
+  });
+});
+
+describe("parseGmailInboxType", () => {
+  test("reads the inbox type declared the way the mutate key is", () => {
+    expect(parseGmailInboxType("<script>var GM_INBOX_TYPE = 'SECTIONED';</script>")).toBe(
+      "SECTIONED",
+    );
+  });
+
+  test("reads a plain or window-prefixed assignment", () => {
+    expect(parseGmailInboxType('GM_INBOX_TYPE="CLASSIC"')).toBe("CLASSIC");
+    expect(parseGmailInboxType("window.GM_INBOX_TYPE = 'SECTIONED'")).toBe("SECTIONED");
+  });
+
+  test("reads a JSON-ish assignment", () => {
+    expect(parseGmailInboxType('{"GM_INBOX_TYPE":"PRIORITY_INBOX"}')).toBe("PRIORITY_INBOX");
+  });
+
+  test("answers null for a page that carries no inbox type", () => {
+    expect(parseGmailInboxType("<html></html>")).toBe(null);
+    expect(parseGmailInboxType("var GM_ID_KEY = 'ab12cd34';")).toBe(null);
   });
 });
 

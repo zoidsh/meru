@@ -16,6 +16,7 @@ import {
   generateGmailLabelColorsCss,
   gmailFeedUrl,
   parseGmailIdKey,
+  parseGmailInboxType,
   parseGmailMessageId,
   resolveInboxFeedUrl,
 } from "@meru/shared/gmail";
@@ -249,6 +250,13 @@ export class Gmail {
 
   /** Whether the last feed fetch was refused, so the poll logs the refusal once. */
   private inboxFeedRefused = false;
+
+  /**
+   * Whether Gmail's HTML has already given up an inbox type for this run. Only
+   * a scrape that found one sets it, so a page that did not carry it is tried
+   * again rather than leaving the account on the wrong feed for good.
+   */
+  private hasScrapedInboxType = false;
 
   /**
    * Whether this account runs on the feed alone. Read afresh each time rather
@@ -862,6 +870,18 @@ export class Gmail {
         this.persistInboxType(inboxType);
       } else {
         inboxType = accounts.getAccountConfig(this.accountId)?.gmail.inboxType ?? null;
+
+        /*
+         * An account opted in before it ever had a view carries no inbox type,
+         * and without one it reads the whole inbox rather than the categories
+         * the user asked to monitor. Gmail's HTML has it, so it is scraped the
+         * way the mutate key is — once, and again only if it was not found.
+         * Skipped while the session is being refused, which is a state that
+         * has no page to scrape and would otherwise cost a request per poll.
+         */
+        if (inboxType === null && !this.hasScrapedInboxType && !this.inboxFeedRefused) {
+          inboxType = (await this.scrapeGmailDocument()).inboxType;
+        }
       }
 
       const feedUrl = resolveInboxFeedUrl(inboxType, config.get("gmail.inboxCategoriesToMonitor"));
@@ -1229,17 +1249,37 @@ export class Gmail {
     await this.fetchInboxFeed();
   }
 
+  /**
+   * One GET of Gmail's own HTML, which carries both the mutate key and the
+   * inbox type. They are scraped together so that an account needing both pays
+   * for one request rather than two, and the inbox type is written straight to
+   * the account, since that is the only place a later poll can read it.
+   */
+  private async scrapeGmailDocument() {
+    const gmailDocument = await this.session.fetch(GMAIL_URL).then((res) => res.text());
+
+    this.gmailIdKey = parseGmailIdKey(gmailDocument);
+
+    const inboxType = parseGmailInboxType(gmailDocument);
+
+    if (inboxType) {
+      this.hasScrapedInboxType = true;
+
+      this.persistInboxType(inboxType);
+    }
+
+    return { idKey: this.gmailIdKey, inboxType };
+  }
+
   /** The mutate endpoint's per-session key, inlined in Gmail's own HTML. */
   private async fetchGmailIdKey() {
-    const res = await this.session.fetch(GMAIL_URL);
+    const { idKey } = await this.scrapeGmailDocument();
 
-    this.gmailIdKey = parseGmailIdKey(await res.text());
-
-    if (!this.gmailIdKey) {
+    if (!idKey) {
       log.error("Gmail ID key is missing", { accountId: this.accountId });
     }
 
-    return this.gmailIdKey;
+    return idKey;
   }
 
   /**

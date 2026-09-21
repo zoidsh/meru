@@ -104,6 +104,23 @@ export function parseGmailIdKey(gmailDocument: string) {
   return GMAIL_ID_KEY_REGEXP.exec(gmailDocument)?.[1] ?? null;
 }
 
+/*
+ * The same inline script that carries `GM_ID_KEY` is where `window.GM_INBOX_TYPE`
+ * comes from, but only the key's exact `var X = '…';` shape has been seen.
+ * The name, the separator and the quotes are all matched loosely so that a
+ * plain assignment, a `window.` prefix and a JSON-ish key all read the same:
+ * the alternative is an account silently left on the wrong feed.
+ */
+const GMAIL_INBOX_TYPE_REGEXP = /GM_INBOX_TYPE["']?\s*[:=]\s*["']([A-Za-z0-9_]+)["']/;
+
+/**
+ * The inbox layout, read out of Gmail's own HTML rather than off a live page,
+ * which is the only way an account that has never had a view can learn it.
+ */
+export function parseGmailInboxType(gmailDocument: string) {
+  return GMAIL_INBOX_TYPE_REGEXP.exec(gmailDocument)?.[1] ?? null;
+}
+
 /**
  * One request that archives, reads, deletes or spams a message, built here
  * because two callers send it: the Gmail preload from inside the page, and the
