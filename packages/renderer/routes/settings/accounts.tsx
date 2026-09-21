@@ -2,6 +2,12 @@ import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { accountColorsMap } from "@meru/shared/accounts";
+import {
+  type GmailLiteMode,
+  gmailLiteModeLabels,
+  gmailLiteModes,
+  resolveGmailLiteMode,
+} from "@meru/shared/gmail";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
@@ -65,7 +71,7 @@ function AccountForm({
   account = {
     label: "",
     color: null,
-    gmail: { unreadBadge: true, unifiedInbox: true, hibernated: false },
+    gmail: { unreadBadge: true, unifiedInbox: true, liteMode: "off" },
     notifications: true,
   },
   placeholder = "Work",
@@ -221,26 +227,38 @@ function AccountForm({
               </Field>
             )}
           </form.Field>
-          <form.Field name="gmail.hibernated">
+          <form.Field name="gmail.liteMode">
             {(field) => (
-              <Field orientation="horizontal">
-                <FieldContent>
-                  <FieldLabel htmlFor={field.name} className="flex items-center gap-2">
-                    Hibernate Gmail
-                    <LicenseKeyRequiredFieldBadge />
-                  </FieldLabel>
-                  <FieldDescription>
-                    Unloads Gmail when you haven't used it for a while. Unread mail, the badge and
-                    notifications keep working without it.
-                  </FieldDescription>
-                </FieldContent>
-                <Switch
-                  id={field.name}
+              <Field>
+                <FieldLabel htmlFor={field.name} className="flex items-center gap-2">
+                  Lite mode
+                  <LicenseKeyRequiredFieldBadge />
+                </FieldLabel>
+                <Select
                   name={field.name}
-                  checked={isLicenseKeyValid && field.state.value === true}
-                  onCheckedChange={field.handleChange}
+                  value={isLicenseKeyValid ? (field.state.value ?? "off") : "off"}
+                  onValueChange={(liteMode: GmailLiteMode | null) => {
+                    field.handleChange(liteMode ?? "off");
+                  }}
                   disabled={!isLicenseKeyValid}
-                />
+                >
+                  <SelectTrigger id={field.name}>
+                    <SelectValue>
+                      {(value: GmailLiteMode) => gmailLiteModeLabels[value]}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gmailLiteModes.map((liteMode) => (
+                      <SelectItem key={liteMode} value={liteMode}>
+                        {gmailLiteModeLabels[liteMode]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  Shows a simple inbox instead of Gmail and uses far less memory. Open Gmail
+                  whenever you need it.
+                </FieldDescription>
               </Field>
             )}
           </form.Field>
@@ -399,11 +417,11 @@ function SortableAccountItem({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
-  // As the switch does: the option is what the user chose, the badge is what
+  // As the field does: the option is what the user chose, the badge is what
   // the app is doing, and an expired license leaves Gmail loaded either way.
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const isHibernated = isLicenseKeyValid && account.gmail.hibernated === true;
+  const isLiteMode = resolveGmailLiteMode(account.gmail.liteMode, isLicenseKeyValid) !== "off";
 
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
@@ -430,13 +448,13 @@ function SortableAccountItem({
         {(account.disabled ||
           account.gmail.unreadBadge ||
           account.gmail.unifiedInbox ||
-          isHibernated ||
+          isLiteMode ||
           account.notifications) && (
           <div className="flex gap-2">
             {account.disabled && <Badge variant="outline">Disabled</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
             {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
-            {isHibernated && <Badge variant="outline">Hibernate Gmail</Badge>}
+            {isLiteMode && <Badge variant="outline">Lite mode</Badge>}
             {account.notifications && <Badge variant="outline">Notifications</Badge>}
           </div>
         )}

@@ -47,9 +47,9 @@ describe("getUnifiedInboxAccountIds", () => {
     ).toEqual(["a", "c"]);
   });
 
-  test("leaves out a hibernated account that is not in the unified inbox", () => {
+  test("leaves out a Lite mode account that is not in the unified inbox", () => {
     expect(
-      getUnifiedInboxAccountIds([account("a", { unifiedInbox: false, hibernated: true })]),
+      getUnifiedInboxAccountIds([account("a", { unifiedInbox: false, liteMode: "startup" })]),
     ).toEqual([]);
   });
 });

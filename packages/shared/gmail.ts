@@ -1,9 +1,4 @@
 import { isValidCssColorInput } from "./color";
-import {
-  DEV_HIBERNATION_TIMEOUT,
-  type HibernationTimeout,
-  hibernationTimeouts,
-} from "./hibernation";
 import type { GmailLabelColors, GmailLabelTextColor } from "./schemas";
 
 export const GMAIL_ACTION_CODE_MAP = {
@@ -52,12 +47,31 @@ export function resolveInboxFeedUrl(
   );
 }
 
-// Kept under Gmail-shaped names for the settings page that reads them.
-export const gmailHibernationTimeouts = hibernationTimeouts;
+/**
+ * What Meru loads for an account. `off` is Gmail itself; the other two swap it
+ * for the inbox Meru draws from the feed, and differ only in whether Gmail is
+ * loaded at launch or left until it is asked for.
+ */
+export const gmailLiteModes = ["off", "idle", "startup"] as const;
 
-export type GmailHibernationTimeout = HibernationTimeout;
+export type GmailLiteMode = (typeof gmailLiteModes)[number];
 
-export const DEV_GMAIL_HIBERNATION_TIMEOUT = DEV_HIBERNATION_TIMEOUT;
+export const gmailLiteModeLabels = {
+  off: "Off",
+  idle: "After idle",
+  startup: "At startup and after idle",
+} as const satisfies Record<GmailLiteMode, string>;
+
+/**
+ * What the app is doing, as against what the user chose. Lite mode is Pro, and
+ * an expired license has to give Gmail back without rewriting the setting.
+ */
+export function resolveGmailLiteMode(
+  liteMode: GmailLiteMode | undefined,
+  isLicenseKeyValid: boolean,
+): GmailLiteMode {
+  return isLicenseKeyValid ? (liteMode ?? "off") : "off";
+}
 
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
@@ -118,7 +132,7 @@ export function parseGmailInboxType(gmailDocument: string) {
 /**
  * One request that archives, reads, deletes or spams a message, built here
  * because two callers send it: the Gmail preload from inside the page, and the
- * main process for an account whose Gmail is hibernated and has no page to
+ * main process for an account in Lite mode, which has no page to
  * send it from. Neither side owns the shape, so neither side can drift.
  */
 export function createGmailMessageActionRequest({

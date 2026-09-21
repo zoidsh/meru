@@ -202,7 +202,7 @@ const createColumns = ({
 /**
  * The unread mail of one account or of several, with the row actions, the
  * keyboard path and the pagination that go with it. Both the unified inbox and
- * the inbox an account on Hibernate Gmail shows in place of its Gmail view are
+ * the inbox an account in Lite mode shows in place of its Gmail view are
  * this table; the account column is the only thing that tells them apart.
  */
 export function InboxTable({

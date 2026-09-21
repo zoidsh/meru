@@ -95,7 +95,7 @@ function AccountInbox({ account }: { account: AccountInstance }) {
         <InboxEmptyState
           icon={InboxIcon}
           title="No unread messages"
-          description="New mail appears here while Gmail is hibernated. Open Gmail to see your whole inbox."
+          description="New mail appears here in Lite mode. Open Gmail to see your whole inbox."
         />
       );
     }
@@ -148,15 +148,15 @@ function AccountInbox({ account }: { account: AccountInstance }) {
 }
 
 /**
- * What an account on Hibernate Gmail shows in the rectangle its Gmail view
- * would paint in, there being no view to paint it. Only while the Gmail tab is
- * the active one: every other tab has a child view of its own, which main has
- * put on screen and which covers renderer HTML anyway.
+ * What an account in Lite mode shows in the rectangle its Gmail view would
+ * paint in, there being no view to paint it. Only while the Gmail tab is the
+ * active one: every other tab has a child view of its own, which main has put
+ * on screen and which covers renderer HTML anyway.
  */
-export function HibernatedGmailInbox() {
+export function LiteModeInbox() {
   const { selectedAccount, tabs } = useSelectedAccountTabs();
 
-  if (!selectedAccount || !selectedAccount.hibernated || selectedAccount.gmailLoaded) {
+  if (!selectedAccount || selectedAccount.liteMode === "off" || selectedAccount.gmailLoaded) {
     return;
   }
 

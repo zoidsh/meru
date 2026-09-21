@@ -35,7 +35,7 @@ import {
 import z from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
-import { accounts, isGmailHibernated } from "@/accounts";
+import { accounts, getLiteMode } from "@/accounts";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
 import { copyText } from "@/lib/clipboard";
@@ -261,12 +261,13 @@ export class Gmail {
   /**
    * Whether this account runs on the feed alone. Read afresh each time rather
    * than held, because both the setting and the license behind it change under
-   * a running app.
+   * a running app. Which flavour of Lite mode it is matters only at launch, so
+   * everything here asks the one question.
    */
-  get isHibernated() {
+  get isLiteMode() {
     const accountConfig = accounts.getAccountConfig(this.accountId);
 
-    return accountConfig !== undefined && isGmailHibernated(accountConfig);
+    return accountConfig !== undefined && getLiteMode(accountConfig) !== "off";
   }
 
   constructor({
@@ -357,9 +358,9 @@ export class Gmail {
     // Without a poll of its own, the baseline's `readAt` would sit hours behind
     // the feed through a quiet period, and the slack window with it.
     this.inboxFeedPollInterval = setInterval(() => {
-      // A hibernated account has no view and no Gmail push channel either, so
-      // this poll is the whole of how it learns about mail.
-      if (!this._view && !this.isHibernated) {
+      // An account in Lite mode has no view and no Gmail push channel either,
+      // so this poll is the whole of how it learns about mail.
+      if (!this._view && !this.isLiteMode) {
         return;
       }
 
@@ -834,9 +835,9 @@ export class Gmail {
       const view = this._view;
 
       // With a view the feed supplements Gmail's own push channel; without one
-      // it is the account's only source of mail, which is what hibernation
-      // runs on. With neither there is nothing to keep up to date.
-      if (!view && !this.isHibernated) {
+      // it is the account's only source of mail, which is what Lite mode runs
+      // on. With neither there is nothing to keep up to date.
+      if (!view && !this.isLiteMode) {
         return;
       }
 
@@ -872,7 +873,8 @@ export class Gmail {
         inboxType = accounts.getAccountConfig(this.accountId)?.gmail.inboxType ?? null;
 
         /*
-         * An account opted in before it ever had a view carries no inbox type,
+         * An account put into Lite mode before it ever had a view carries no
+         * inbox type,
          * and without one it reads the whole inbox rather than the categories
          * the user asked to monitor. Gmail's HTML has it, so it is scraped the
          * way the mutate key is — once, and again only if it was not found.
@@ -987,12 +989,12 @@ export class Gmail {
       // Reached only on a changed feed, which is also every account's first
       // fetch, since a missing baseline counts as a change.
       //
-      // A hibernated account sends its list whether or not it is in the
+      // An account in Lite mode sends its list whether or not it is in the
       // unified inbox: that same renderer cache is where its own inbox is read
       // from, there being no Gmail page to show it one.
       if (
         licenseKey.isValid &&
-        ((config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) || this.isHibernated)
+        ((config.get("unifiedInbox.enabled") && this.unifiedInboxEnabled) || this.isLiteMode)
       ) {
         this.sendInboxChanged(messages);
       }
@@ -1209,9 +1211,9 @@ export class Gmail {
     const view = this._view;
 
     if (!view || view.webContents.isDestroyed()) {
-      // A hibernated account has no page to run the action in, so main sends
+      // An account in Lite mode has no page to run the action in, so main sends
       // Gmail the request the preload would have sent from inside one.
-      if (!this.isHibernated || !(await this.sendMessageAction(messageId, action))) {
+      if (!this.isLiteMode || !(await this.sendMessageAction(messageId, action))) {
         return;
       }
 
@@ -1283,7 +1285,7 @@ export class Gmail {
   }
 
   /**
-   * A row action for an account whose Gmail is hibernated: the request
+   * A row action for an account in Lite mode: the request
    * `@meru/preload-gmail` sends from inside the page, sent from here over the
    * account's own session instead. A delegated account is no different, since
    * the preload posts to `GMAIL_URL` whichever account its page is showing.
@@ -1362,12 +1364,12 @@ export class Gmail {
   }
 
   /**
-   * The view an action that only means anything inside Gmail needs, waking a
-   * hibernated account for it rather than doing nothing. `null` is an account
+   * The view an action that only means anything inside Gmail needs, waking an
+   * account in Lite mode for it rather than doing nothing. `null` is an account
    * with no view and no reason to build one.
    */
   async wakeViewForAction() {
-    if (!this._view && this.isHibernated) {
+    if (!this._view && this.isLiteMode) {
       await accounts.wakeGmail(this.accountId);
     }
 
@@ -1399,7 +1401,7 @@ export class Gmail {
    * refresh is what makes the stale view show it.
    */
   resyncInbox() {
-    if (!this._view && !this.isHibernated) {
+    if (!this._view && !this.isLiteMode) {
       return;
     }
 

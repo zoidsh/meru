@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isValidCssColorInput } from "./color";
-import type { GmailState } from "./gmail";
+import { type GmailLiteMode, type GmailState, gmailLiteModes } from "./gmail";
 import type { VerticalTabsSessionWidth } from "./tabs";
 import { type SupportedWorkspaceApp, workspaceApps } from "./workspace-apps";
 
@@ -70,15 +70,15 @@ export const accountConfigSchema = z.object({
     delegatedAccountId: z.string().nullable(),
     unifiedInbox: z.boolean(),
     /**
-     * Absent on every account written before Hibernate Gmail existed, which
-     * means off. Nothing parses a stored account through this schema — the
-     * store hands back the raw JSON — so a `.default()` here would promise a
-     * boolean the config has never held.
+     * Absent on every account written before Lite mode existed, which means
+     * off. Nothing parses a stored account through this schema — the store
+     * hands back the raw JSON — so a `.default()` here would promise a value
+     * the config has never held.
      */
-    hibernated: z.boolean().optional(),
+    liteMode: z.enum(gmailLiteModes).optional(),
     /**
      * The last `window.GM_INBOX_TYPE` a live Gmail page reported, which is what
-     * picks the inbox feed. Kept so a hibernated account still chooses the
+     * picks the inbox feed. Kept so an account in Lite mode still chooses the
      * right feed with no page to read it from; absent, and `null`, mean the
      * unsectioned feed.
      */
@@ -110,7 +110,7 @@ export const accountConfigInputSchema = accountConfigSchema
     gmail: accountConfigSchema.shape.gmail.pick({
       unreadBadge: true,
       unifiedInbox: true,
-      hibernated: true,
+      liteMode: true,
     }),
   });
 
@@ -120,11 +120,10 @@ export type AccountInstance = {
   config: AccountConfig;
   gmail: GmailState;
   /**
-   * Whether the account is opted into Hibernate Gmail and licensed for it.
-   * `config.gmail.hibernated` says what the user asked for; this says what the
-   * app is doing.
+   * The mode the app is running the account in. `config.gmail.liteMode` says
+   * what the user asked for; this says what the license leaves them with.
    */
-  hibernated: boolean;
+  liteMode: GmailLiteMode;
   /** Whether the account's Gmail view exists, which is what "Open Gmail" turns into true. */
   gmailLoaded: boolean;
   /** The width the account's tab strip was last given by hand, for this run. */

@@ -145,7 +145,7 @@ export type Config = {
   "gmail.replyForwardInPopOut": boolean;
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
-  "gmail.hibernationTimeout": HibernationTimeout;
+  "gmail.liteModeTimeout": HibernationTimeout;
   "screenShare.useSystemPicker": boolean;
   "window.lastState": {
     bounds: {

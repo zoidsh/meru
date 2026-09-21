@@ -8,7 +8,7 @@ export type InboxMessage = GmailInboxMessage & {
 
 /**
  * Which accounts the unified inbox draws from. The cache holds more than that:
- * an account on Hibernate Gmail pushes its list whether or not it is in the
+ * an account in Lite mode pushes its list whether or not it is in the
  * unified inbox, because the same cache is where its own inbox is read from.
  */
 export function getUnifiedInboxAccountIds(accounts: Pick<AccountInstance, "config">[]) {

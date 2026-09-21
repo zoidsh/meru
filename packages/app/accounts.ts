@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
+import { resolveGmailLiteMode } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import type { AccountConfig, AccountConfigs, AccountInstances } from "@meru/shared/schemas";
 import {
@@ -26,13 +27,12 @@ const HIBERNATION_SWEEP_INTERVAL = ms("1m");
 const NETWORK_RECOVERY_SWEEP_INTERVAL = ms("5s");
 
 /**
- * Whether Gmail runs from the feed alone for this account. The opt-in is Pro,
- * and an expired license has to restore the ordinary behavior without
- * rewriting what the user chose, so every read goes through here rather than
- * through `config.gmail.hibernated`.
+ * Which mode the app runs this account in, which is not always the one the
+ * user chose: Lite mode is Pro. Every read goes through here rather than
+ * through `config.gmail.liteMode`.
  */
-export function isGmailHibernated(accountConfig: AccountConfig) {
-  return licenseKey.isValid && accountConfig.gmail.hibernated === true;
+export function getLiteMode(accountConfig: AccountConfig) {
+  return resolveGmailLiteMode(accountConfig.gmail.liteMode, licenseKey.isValid);
 }
 
 class Accounts {
@@ -99,8 +99,9 @@ class Accounts {
       }
     });
 
-    // Turning the setting on leaves the view standing until the idle sweep
-    // takes it, so Gmail never vanishes from under the user mid-flip.
+    // Turning Lite mode on leaves the view standing until the idle sweep takes
+    // it, so Gmail never vanishes from under the user mid-flip. Only turning
+    // it off has to do anything here.
     config.onDidChange("accounts", (accountConfigs, previousAccountConfigs) => {
       if (!accountConfigs || !previousAccountConfigs) {
         return;
@@ -113,8 +114,8 @@ class Accounts {
 
         if (
           !previousAccountConfig ||
-          previousAccountConfig.gmail.hibernated === accountConfig.gmail.hibernated ||
-          accountConfig.gmail.hibernated === true
+          previousAccountConfig.gmail.liteMode === accountConfig.gmail.liteMode ||
+          getLiteMode(accountConfig) !== "off"
         ) {
           continue;
         }
@@ -192,10 +193,10 @@ class Accounts {
       return 0;
     });
 
-    // An account on Hibernate Gmail launches with no view at all, which is
-    // where the memory it saves comes from. It still gets its `Gmail` and its
-    // `Tabs`, so the feed poll, the badge and the tab strip are unaffected.
-    const loadedAccounts = accounts.filter((account) => !isGmailHibernated(account.config));
+    // An account in Lite mode launches with no view at all, which is where the
+    // memory it saves comes from. It still gets its `Gmail` and its `Tabs`, so
+    // the feed poll, the badge and the tab strip are unaffected.
+    const loadedAccounts = accounts.filter((account) => getLiteMode(account.config) === "off");
 
     await Promise.all(
       loadedAccounts.map((account) =>
@@ -291,20 +292,19 @@ class Accounts {
   }
 
   /**
-   * Unloads the Gmail view of an account that has been opted into Hibernate
-   * Gmail and left alone, which is the other half of launching without one.
+   * Unloads the Gmail view of an account in Lite mode that has been left alone.
    * The `Gmail` instance stays: its poll, its feed baseline and its seen ids
    * are what keep the inbox, the badge and the notifications running.
    */
   private hibernateIdleGmailViews() {
     const now = Date.now();
 
-    const idleTimeout = ms(config.get("gmail.hibernationTimeout"));
+    const idleTimeout = ms(config.get("gmail.liteModeTimeout"));
 
     for (const account of this.getAccounts()) {
       const { gmail } = account.instance;
 
-      if (!gmail.hasView || !isGmailHibernated(account.config)) {
+      if (!gmail.hasView || getLiteMode(account.config) === "off") {
         continue;
       }
 
@@ -638,7 +638,7 @@ class Accounts {
 
   addAccount(
     accountDetails: Pick<AccountConfig, "label" | "notifications" | "color"> & {
-      gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox" | "hibernated">;
+      gmail: Pick<AccountConfig["gmail"], "unreadBadge" | "unifiedInbox" | "liteMode">;
     },
   ) {
     const createdAccount: AccountConfig = {
@@ -648,7 +648,7 @@ class Accounts {
       gmail: {
         unreadBadge: accountDetails.gmail.unreadBadge,
         unifiedInbox: accountDetails.gmail.unifiedInbox,
-        hibernated: accountDetails.gmail.hibernated === true,
+        liteMode: accountDetails.gmail.liteMode ?? "off",
         inboxType: null,
         delegatedAccountId: null,
       },
@@ -677,7 +677,7 @@ class Accounts {
   private createAccountInstance(accountConfig: AccountConfig) {
     const instance = new Account(accountConfig);
 
-    if (!isGmailHibernated(accountConfig)) {
+    if (getLiteMode(accountConfig) === "off") {
       instance.gmail.createView();
     }
 
@@ -981,7 +981,7 @@ class Accounts {
     return this.getAccounts().map((account) => ({
       config: account.config,
       gmail: account.instance.gmail.store.getState(),
-      hibernated: isGmailHibernated(account.config),
+      liteMode: getLiteMode(account.config),
       gmailLoaded: account.instance.gmail.hasView,
       verticalTabsWidth: account.instance.verticalTabsWidth,
     }));
