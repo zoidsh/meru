@@ -111,7 +111,11 @@ export function HibernatedGmailInbox() {
     return;
   }
 
-  if (!tabs.some((tab) => tab.id === GMAIL_TAB_ID && tab.active)) {
+  // Asked the other way round, because the tabs push has not landed at first
+  // paint and the Gmail tab is the active one until something else is: another
+  // tab active means main has a child view over this rectangle, and drawing
+  // under it would only cost the launch a frame of empty space.
+  if (tabs.some((tab) => tab.active && tab.id !== GMAIL_TAB_ID)) {
     return;
   }
 
