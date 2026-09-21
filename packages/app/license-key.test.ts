@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
-const developmentLicenseKey = "MERU-DEVELOPMENT-0000-0000-0000";
+const environmentLicenseKey = "MERU-ENVIRONMENT-0000-0000-0000";
 
 const activatedLicenseKey = "MERU-ACTIVATED-0000-0000-0000-00";
 
@@ -12,7 +12,9 @@ const configWrites: [string, unknown][] = [];
 
 // Everything the module reaches for at import time wants an Electron app that
 // does not exist here, and the licensing API would go over the network. Only the
-// config store is real enough to answer, because the write is what is under test.
+// config store is real enough to answer, because the write is what is under
+// test. `is.dev` is mocked although the module no longer reads it, so that a
+// gate put back on it would fail the packaged case rather than pass unnoticed.
 mock.module("@electron-toolkit/utils", () => ({
   is: {
     get dev() {
@@ -63,13 +65,13 @@ const { licenseKey } = await import("./license-key");
 // `bun test` runs under `NODE_ENV=test`, so Bun loads `.env.test.local` rather
 // than the development env file a development run takes the key from, and
 // nothing settles the variable for a run. Every case sets or clears it.
-const inheritedLicenseKey = process.env.MERU_BUILD_LICENSE_KEY;
+const inheritedLicenseKey = process.env.MERU_LICENSE_KEY;
 
 function setEnvironmentLicenseKey(value: string | undefined) {
   if (value === undefined) {
-    delete process.env.MERU_BUILD_LICENSE_KEY;
+    delete process.env.MERU_LICENSE_KEY;
   } else {
-    process.env.MERU_BUILD_LICENSE_KEY = value;
+    process.env.MERU_LICENSE_KEY = value;
   }
 }
 
@@ -83,29 +85,38 @@ afterEach(() => {
   setEnvironmentLicenseKey(inheritedLicenseKey);
 });
 
-describe("applyDevelopmentKey", () => {
+describe("applyEnvironmentKey", () => {
   test("stores the key from the environment", () => {
-    setEnvironmentLicenseKey(developmentLicenseKey);
+    setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyDevelopmentKey();
+    licenseKey.applyEnvironmentKey();
 
-    expect(configWrites).toEqual([["licenseKey", developmentLicenseKey]]);
+    expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
+  });
+
+  test("stores it in a packaged app too", () => {
+    isDev = false;
+    setEnvironmentLicenseKey(environmentLicenseKey);
+
+    licenseKey.applyEnvironmentKey();
+
+    expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
   });
 
   test("replaces a key the profile already holds", () => {
     storedKey = activatedLicenseKey;
-    setEnvironmentLicenseKey(developmentLicenseKey);
+    setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyDevelopmentKey();
+    licenseKey.applyEnvironmentKey();
 
-    expect(configWrites).toEqual([["licenseKey", developmentLicenseKey]]);
+    expect(configWrites).toEqual([["licenseKey", environmentLicenseKey]]);
   });
 
   test("writes nothing when the stored key already matches", () => {
-    storedKey = developmentLicenseKey;
-    setEnvironmentLicenseKey(developmentLicenseKey);
+    storedKey = environmentLicenseKey;
+    setEnvironmentLicenseKey(environmentLicenseKey);
 
-    licenseKey.applyDevelopmentKey();
+    licenseKey.applyEnvironmentKey();
 
     expect(configWrites).toEqual([]);
   });
@@ -115,22 +126,13 @@ describe("applyDevelopmentKey", () => {
 
     setEnvironmentLicenseKey(undefined);
 
-    licenseKey.applyDevelopmentKey();
+    licenseKey.applyEnvironmentKey();
 
     setEnvironmentLicenseKey("");
 
-    licenseKey.applyDevelopmentKey();
+    licenseKey.applyEnvironmentKey();
 
     expect(configWrites).toEqual([]);
     expect(storedKey).toBe(activatedLicenseKey);
-  });
-
-  test("writes nothing in a packaged app", () => {
-    isDev = false;
-    setEnvironmentLicenseKey(developmentLicenseKey);
-
-    licenseKey.applyDevelopmentKey();
-
-    expect(configWrites).toEqual([]);
   });
 });

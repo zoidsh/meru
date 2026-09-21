@@ -1,4 +1,3 @@
-import { is } from "@electron-toolkit/utils";
 import { app, dialog, type MessageBoxOptions } from "electron";
 import isOnline from "is-online";
 import { serializeError } from "serialize-error";
@@ -13,21 +12,20 @@ class LicenseKey {
   isValid = false;
 
   /*
-   * Lets a development run start as Pro without an activation, the counterpart
-   * of `MERU_BUILD_DEVICE_ID`. The key is stored rather than preferred at every
-   * read, so nothing downstream — Settings included — can disagree about which
-   * key is in force. `is.dev` keeps it out of a packaged app, and the build
-   * inlines an empty string so a shipped bundle has no read left to answer.
+   * Preloads a key rather than granting anything: it is validated against the
+   * API on every launch like any other, and a device that was never activated
+   * is refused with `DEVICE_NOT_ACTIVATED`. That is what lets a fleet or an MDM
+   * deployment hand Meru its license instead of someone typing it in.
    */
-  applyDevelopmentKey() {
-    const developmentKey = process.env.MERU_BUILD_LICENSE_KEY;
+  applyEnvironmentKey() {
+    const environmentKey = process.env.MERU_LICENSE_KEY;
 
-    // A start that changes nothing must not fire `config.onDidChange`
-    if (!is.dev || !developmentKey || config.get("licenseKey") === developmentKey) {
+    // A launch that changes nothing must not fire `config.onDidChange`
+    if (!environmentKey || config.get("licenseKey") === environmentKey) {
       return;
     }
 
-    config.set("licenseKey", developmentKey);
+    config.set("licenseKey", environmentKey);
   }
 
   showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {

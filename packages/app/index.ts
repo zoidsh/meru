@@ -120,7 +120,7 @@ async function init() {
 
   await app.whenReady();
 
-  licenseKey.applyDevelopmentKey();
+  licenseKey.applyEnvironmentKey();
 
   if (!(await licenseKey.validate())) {
     app.quit();
