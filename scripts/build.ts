@@ -94,12 +94,16 @@ function buildAppFiles() {
             /*
              * Unconditional for the same reason. `build:js` pins
              * `NODE_ENV=production` so that Bun leaves `.env.development.local`
-             * alone here, the file a development run takes the id from, which
-             * keeps inlining one into a build an explicit
-             * `MERU_BUILD_DEVICE_ID=...` in front of it.
+             * alone here, the file a development run takes the id and the
+             * license key from, which keeps inlining either into a build an
+             * explicit `MERU_BUILD_DEVICE_ID=...` or
+             * `MERU_BUILD_LICENSE_KEY=...` in front of it.
              */
             "process.env.MERU_BUILD_DEVICE_ID": JSON.stringify(
               process.env.MERU_BUILD_DEVICE_ID ?? "",
+            ),
+            "process.env.MERU_BUILD_LICENSE_KEY": JSON.stringify(
+              process.env.MERU_BUILD_LICENSE_KEY ?? "",
             ),
             ...(process.env.APPLE_TEAM_ID
               ? {

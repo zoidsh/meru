@@ -1,3 +1,4 @@
+import { is } from "@electron-toolkit/utils";
 import { app, dialog, type MessageBoxOptions } from "electron";
 import isOnline from "is-online";
 import { serializeError } from "serialize-error";
@@ -10,6 +11,24 @@ import { openExternalUrl } from "./url";
 
 class LicenseKey {
   isValid = false;
+
+  /*
+   * Lets a development run start as Pro without an activation, the counterpart
+   * of `MERU_BUILD_DEVICE_ID`. The key is stored rather than preferred at every
+   * read, so nothing downstream — Settings included — can disagree about which
+   * key is in force. `is.dev` keeps it out of a packaged app, and the build
+   * inlines an empty string so a shipped bundle has no read left to answer.
+   */
+  applyDevelopmentKey() {
+    const developmentKey = process.env.MERU_BUILD_LICENSE_KEY;
+
+    // A start that changes nothing must not fire `config.onDidChange`
+    if (!is.dev || !developmentKey || config.get("licenseKey") === developmentKey) {
+      return;
+    }
+
+    config.set("licenseKey", developmentKey);
+  }
 
   showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
