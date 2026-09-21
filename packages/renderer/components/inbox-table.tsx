@@ -56,17 +56,17 @@ const MESSAGE_ACTIONS = [
 type PendingMessageAction = { messageId: string; action: GmailAction };
 
 const createColumns = ({
-  showsAccountBadge,
+  showAccountBadge,
   showSenderIcons,
   pending,
   onAction,
 }: {
-  showsAccountBadge: boolean;
+  showAccountBadge: boolean;
   showSenderIcons: boolean;
   pending: PendingMessageAction | null;
   onAction: (message: InboxMessage, action: GmailAction) => void;
 }) => [
-  ...(showsAccountBadge
+  ...(showAccountBadge
     ? [
         columnHelper.accessor("account.label", {
           cell: (props) => (
@@ -209,12 +209,12 @@ export function InboxTable({
   messages,
   rowsPerPage,
   showSenderIcons,
-  showsAccountBadge,
+  showAccountBadge,
 }: {
   messages: InboxMessage[];
   rowsPerPage: number;
   showSenderIcons: boolean;
-  showsAccountBadge: boolean;
+  showAccountBadge: boolean;
 }) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -253,8 +253,8 @@ export function InboxTable({
   }, []);
 
   const columns = useMemo(
-    () => createColumns({ showsAccountBadge, showSenderIcons, pending, onAction: runAction }),
-    [showsAccountBadge, showSenderIcons, pending, runAction],
+    () => createColumns({ showAccountBadge, showSenderIcons, pending, onAction: runAction }),
+    [showAccountBadge, showSenderIcons, pending, runAction],
   );
 
   const table = useReactTable({

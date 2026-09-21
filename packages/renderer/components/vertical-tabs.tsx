@@ -460,8 +460,8 @@ export function VerticalTabs() {
     selectedAccountTabs.some((tab) => tab.id === GMAIL_TAB_ID && tab.active),
   );
 
-  // The dimming an unloaded workspace app tab carries, for the same reason:
-  // the tab is listed and selectable, and nothing is loaded behind it.
+  // Read off the account, because the Gmail tab is a getter proxy onto `Gmail`
+  // and serializes as `dormant: false` with or without a view.
   const isGmailUnloaded = selectedAccount.hibernated && !selectedAccount.gmailLoaded;
 
   const gmailTabStatus = {

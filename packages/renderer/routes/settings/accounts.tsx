@@ -230,8 +230,8 @@ function AccountForm({
                     <LicenseKeyRequiredFieldBadge />
                   </FieldLabel>
                   <FieldDescription>
-                    Meru keeps the inbox, unread badge and notifications from the mail feed and
-                    loads Gmail only when you open it.
+                    Unloads Gmail when you haven't used it for a while. Unread mail, the badge and
+                    notifications keep working without it.
                   </FieldDescription>
                 </FieldContent>
                 <Switch

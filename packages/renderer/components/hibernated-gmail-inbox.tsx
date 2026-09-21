@@ -11,26 +11,49 @@ import {
   EmptyTitle,
 } from "@meru/ui/components/empty";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
+import { Skeleton } from "@meru/ui/components/skeleton";
 import { cn } from "@meru/ui/lib/utils";
 import { InboxIcon, LoaderCircleIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InboxTable } from "@/components/inbox-table";
+import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useAccountInbox, useSelectedAccountTabs } from "@/lib/hooks";
 import { useConfig } from "@/lib/react-query";
 
 function AccountInbox({ account }: { account: AccountInstance }) {
   const { config } = useConfig();
 
-  const { messages } = useAccountInbox(account.config.id);
+  const { messages, isPending } = useAccountInbox(account.config.id);
 
   // The wake is a send with nothing to await, so the button holds this until
   // `gmailLoaded` arrives on the next accounts push and takes the whole view
   // away with it.
   const [isWaking, setIsWaking] = useState(false);
 
+  // A push that leaves this view standing is a push that did not load Gmail,
+  // so the wake came to nothing and the button has to be offered again rather
+  // than spin for the rest of the run.
+  useEffect(() => {
+    setIsWaking(false);
+  }, [account]);
+
   const renderContent = () => {
     if (!config) {
       return;
+    }
+
+    // Bounded by the attention flag, because a feed answered with the sign-in
+    // page never sends a list at all: main raises attention and bails before
+    // building one. Waiting on that push would spin here for the rest of the
+    // run, so an account asking for attention falls through to the state below.
+    if (isPending && !account.gmail.attentionRequired) {
+      return (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+        </div>
+      );
     }
 
     if (messages.length === 0) {
@@ -43,7 +66,7 @@ function AccountInbox({ account }: { account: AccountInstance }) {
               </EmptyMedia>
               <EmptyTitle>No unread messages</EmptyTitle>
               <EmptyDescription>
-                New mail appears here while Gmail is unloaded. Open Gmail to see your whole inbox.
+                New mail appears here while Gmail is hibernated. Open Gmail to see your whole inbox.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -56,7 +79,7 @@ function AccountInbox({ account }: { account: AccountInstance }) {
         messages={messages}
         rowsPerPage={config["unifiedInbox.rowsPerPage"]}
         showSenderIcons={config["unifiedInbox.showSenderIcons"]}
-        showsAccountBadge={false}
+        showAccountBadge={false}
       />
     );
   };
@@ -64,16 +87,16 @@ function AccountInbox({ account }: { account: AccountInstance }) {
   return (
     <ScrollArea className="flex-1">
       <div className="mx-auto max-w-6xl px-8 py-8">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-2">
+        <SettingsHeader>
+          <SettingsTitle className="flex min-w-0 items-center gap-2">
             <div
               className={cn(
                 "size-2 shrink-0 rounded-full",
                 account.config.color ? accountColorsMap[account.config.color].className : "border",
               )}
             />
-            <div className="truncate text-2xl font-semibold">{account.config.label}</div>
-          </div>
+            <span className="truncate">{account.config.label}</span>
+          </SettingsTitle>
           <Button
             disabled={isWaking}
             onClick={() => {
@@ -91,7 +114,7 @@ function AccountInbox({ account }: { account: AccountInstance }) {
               "Open Gmail"
             )}
           </Button>
-        </div>
+        </SettingsHeader>
         {renderContent()}
       </div>
     </ScrollArea>

@@ -105,7 +105,11 @@ export function useUnifiedInbox() {
   return { messages };
 }
 
-/** One account's unread mail, out of the same cache the unified inbox reads. */
+/**
+ * One account's unread mail, out of the same cache the unified inbox reads.
+ * The cache starts empty and fills from the pushes, so an account with no entry
+ * has not sent its first list yet, which is not the same as having no mail.
+ */
 export function useAccountInbox(accountId: AccountConfig["id"]) {
   const { data } = useQuery(unifiedInboxOptions);
 
@@ -116,7 +120,7 @@ export function useAccountInbox(accountId: AccountConfig["id"]) {
     [data, accounts, accountId],
   );
 
-  return { messages };
+  return { messages, isPending: !Object.hasOwn(data, accountId) };
 }
 
 export function useCopied() {

@@ -45,7 +45,7 @@ export function UnifiedInbox() {
         messages={unifiedInbox.messages}
         rowsPerPage={config["unifiedInbox.rowsPerPage"]}
         showSenderIcons={config["unifiedInbox.showSenderIcons"]}
-        showsAccountBadge
+        showAccountBadge
       />
     );
   };

@@ -167,7 +167,7 @@ export function GmailSettings() {
             <ConfigSelectField
               configKey="gmail.hibernationTimeout"
               label="Hibernate after"
-              description="How long Gmail has to go unused before Meru unloads it, for accounts with Hibernate Gmail turned on. Gmail is left alone while it's on screen."
+              description="How long Gmail has to go unused before it hibernates, for accounts with Hibernate Gmail turned on. Gmail is left alone while it's on screen."
               items={Object.entries(hibernationTimeouts)
                 .filter(([value]) => import.meta.env.DEV || value !== DEV_HIBERNATION_TIMEOUT)
                 .map(([value, label]) => ({
