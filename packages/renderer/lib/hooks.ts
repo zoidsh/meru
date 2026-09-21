@@ -1,10 +1,10 @@
-import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { getVerticalTabsWidth, getVisibleVerticalTabs } from "@meru/shared/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getUnifiedInboxAccountIds, selectInboxMessages } from "./inbox";
 import { useConfig, unifiedInboxOptions } from "./react-query";
 import { useAccountsStore, useTabsStore, useTrialStore } from "./stores";
 
@@ -92,31 +92,28 @@ export function useIsLicenseKeyValid() {
   return isTrialActive || Boolean(config?.licenseKey);
 }
 
-export type UnifiedInboxMessage = GmailInboxMessage & {
-  account: Pick<AccountConfig, "id" | "label" | "color">;
-};
-
 export function useUnifiedInbox() {
   const { data } = useQuery(unifiedInboxOptions);
 
   const accounts = useAccountsStore((state) => state.accounts);
 
-  const messages = useMemo<UnifiedInboxMessage[]>(
-    () =>
-      accounts
-        .map((account) =>
-          (data[account.config.id] ?? []).map((mail) => ({
-            account: {
-              id: account.config.id,
-              label: account.config.label,
-              color: account.config.color,
-            },
-            ...mail,
-          })),
-        )
-        .flat()
-        .sort((a, b) => (b.receivedAt > a.receivedAt ? 1 : -1)),
+  const messages = useMemo(
+    () => selectInboxMessages(accounts, data, getUnifiedInboxAccountIds(accounts)),
     [data, accounts],
+  );
+
+  return { messages };
+}
+
+/** One account's unread mail, out of the same cache the unified inbox reads. */
+export function useAccountInbox(accountId: AccountConfig["id"]) {
+  const { data } = useQuery(unifiedInboxOptions);
+
+  const accounts = useAccountsStore((state) => state.accounts);
+
+  const messages = useMemo(
+    () => selectInboxMessages(accounts, data, [accountId]),
+    [data, accounts, accountId],
   );
 
   return { messages };
