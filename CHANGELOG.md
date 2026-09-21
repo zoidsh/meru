@@ -17,6 +17,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Changed
 
+- **macOS:** Meru's titlebar, tabs and settings now take their colors from macOS, so they follow your appearance, accent color and contrast settings
 - Updated to Electron 44, which brings Chrome 152 and its security fixes. Meru now needs macOS 13 (Ventura) or later, and Macs on macOS 12 are no longer offered updates
 - **Meru Pro:** The unified inbox now uses less memory and does less work on every check for new mail
 
