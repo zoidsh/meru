@@ -23,13 +23,13 @@ const { getMachineId } = await import("./index");
 // `bun test` loads `.env.development.local`, which sets the variable on a
 // development machine but does not exist in CI, so every case states what it
 // expects rather than inheriting it.
-const inheritedDeviceId = process.env.MERU_DEVICE_ID;
+const inheritedDeviceId = process.env.MERU_BUILD_DEVICE_ID;
 
 function setDeviceId(deviceId: string | undefined) {
   if (deviceId === undefined) {
-    delete process.env.MERU_DEVICE_ID;
+    delete process.env.MERU_BUILD_DEVICE_ID;
   } else {
-    process.env.MERU_DEVICE_ID = deviceId;
+    process.env.MERU_BUILD_DEVICE_ID = deviceId;
   }
 }
 
