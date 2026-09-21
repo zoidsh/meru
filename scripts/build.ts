@@ -91,6 +91,14 @@ function buildAppFiles() {
              * reads as "use the production URL".
              */
             "process.env.MERU_API_URL": JSON.stringify(process.env.MERU_API_URL ?? ""),
+            /*
+             * Same rule, with the value read from a build-time name of its own:
+             * Bun auto-loads `.env.development.local`, so reading the variable
+             * the app itself reads would bake a developer's device id into a
+             * packaged binary. Inlining one stays explicit, as in
+             * `MERU_BUILD_DEVICE_ID=... bun run build:linux`.
+             */
+            "process.env.MERU_DEVICE_ID": JSON.stringify(process.env.MERU_BUILD_DEVICE_ID ?? ""),
             ...(process.env.APPLE_TEAM_ID
               ? {
                   "process.env.APPLE_TEAM_ID": JSON.stringify(process.env.APPLE_TEAM_ID),

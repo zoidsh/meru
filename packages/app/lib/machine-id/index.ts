@@ -58,6 +58,13 @@ async function readMachineId() {
 let machineId: Promise<string> | undefined;
 
 export function getMachineId() {
+  // Already a finished device id rather than a raw platform one, so it skips the
+  // hash. Safe to read at runtime because a production build inlines an empty
+  // string here, leaving nothing for a shipped app's environment to answer.
+  if (process.env.MERU_DEVICE_ID) {
+    return Promise.resolve(process.env.MERU_DEVICE_ID);
+  }
+
   if (!machineId) {
     machineId = readMachineId().then(hashMachineId);
 
