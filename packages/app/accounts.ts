@@ -9,10 +9,12 @@ import {
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
 import { net, powerMonitor, session } from "electron";
+import { serializeError } from "serialize-error";
 import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
+import { log } from "./lib/log";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { appMenu } from "./menu";
@@ -218,8 +220,12 @@ class Accounts {
     }
 
     // The window reads its accounts out of its URL before this runs, so every
-    // account is seeded as not loaded. This is what corrects the ones that are.
-    this.sendAccountsChangedToRenderer();
+    // account is seeded as not loaded. This is what corrects the ones that
+    // are, held until the renderer has its listeners as the inbox send is —
+    // not awaited, because nothing here may wait on the window loading.
+    main.rendererReady.then(() => {
+      this.sendAccountsChangedToRenderer();
+    });
   }
 
   /**
@@ -245,9 +251,13 @@ class Accounts {
       return Promise.resolve();
     }
 
-    const wake = this.createGmailView(instance).finally(() => {
-      this.gmailWakes.delete(accountId);
-    });
+    const wake = this.createGmailView(instance)
+      .catch((error: unknown) => {
+        log.error("Failed to wake Gmail", { accountId, error: serializeError(error) });
+      })
+      .finally(() => {
+        this.gmailWakes.delete(accountId);
+      });
 
     this.gmailWakes.set(accountId, wake);
 
@@ -255,16 +265,18 @@ class Accounts {
   }
 
   private async createGmailView(instance: Account) {
-    await instance.gmail.createView({
+    /*
+     * Not awaited yet. `createView` attaches the view synchronously and only
+     * resolves once Gmail has finished loading, and a view is created visible,
+     * so hiding and stacking after the await would leave Gmail painting over
+     * the settings page or the unified inbox for the whole of that load.
+     */
+    const created = instance.gmail.createView({
       webPreferences: {
         backgroundThrottling: false,
       },
     });
 
-    instance.gmail.viewOrNull?.webContents.setBackgroundThrottling(true);
-
-    // A view is created visible and paints over renderer HTML, so a wake from
-    // a renderer page — the unified inbox, above all — has to hide it again.
     if (main.location !== "/") {
       this.hide();
     }
@@ -281,6 +293,10 @@ class Accounts {
     this.sendAccountsChangedToRenderer();
 
     this.sendTabsChangedToRenderer();
+
+    await created;
+
+    instance.gmail.viewOrNull?.webContents.setBackgroundThrottling(true);
   }
 
   /**
@@ -381,8 +397,22 @@ class Accounts {
   refreshSelectedAccountView() {
     const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
+    /*
+     * Which view the user sees is decided by the window's child order alone —
+     * nothing hides the account being switched away from. With no view to put
+     * in front, the one already there belongs to another account and would go
+     * on painting over the hibernated account's own inbox, so the whole stack
+     * is taken out of sight instead.
+     */
     if (!activeTab.view) {
+      this.hide();
+
       return;
+    }
+
+    // Undoing the above, for the switch back to an account that has a view.
+    if (main.location === "/") {
+      this.show();
     }
 
     main.window.contentView.removeChildView(activeTab.view);
@@ -858,6 +888,13 @@ class Accounts {
   }
 
   show() {
+    // Nothing to bring back for an account whose Gmail is hibernated, and
+    // showing the stack would put another account's view in front of its
+    // inbox — the same reason `refreshSelectedAccountView` hides it.
+    if (!this.getSelectedAccount().instance.tabs.activeTab.view) {
+      return;
+    }
+
     this.setEmbeddedViewsVisible(true);
   }
 

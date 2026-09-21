@@ -440,24 +440,29 @@ export class Gmail {
   }
 
   async applyLabelColors() {
-    if (!this._view) {
+    // Held rather than read again after each await: the idle sweep can take
+    // the view away across one, and the `view` getter throws into a caller
+    // that does not await this.
+    const view = this._view;
+
+    if (!view) {
       return;
     }
 
     if (this.labelColorsCssKey) {
-      await this.view.webContents.removeInsertedCSS(this.labelColorsCssKey);
+      await view.webContents.removeInsertedCSS(this.labelColorsCssKey);
 
       this.labelColorsCssKey = null;
     }
 
-    if (!licenseKey.isValid) {
+    if (!licenseKey.isValid || view.webContents.isDestroyed()) {
       return;
     }
 
     const css = generateGmailLabelColorsCss(config.get("gmail.labelColors"));
 
     if (css) {
-      this.labelColorsCssKey = await this.view.webContents.insertCSS(css);
+      this.labelColorsCssKey = await view.webContents.insertCSS(css);
     }
   }
 
@@ -575,12 +580,29 @@ export class Gmail {
 
     this._view = undefined;
 
-    // Both describe a page that is no longer there: the title would leave the
-    // tab wearing a stale unread count, and the fullscreen flag would lay the
-    // next view out over the whole window.
+    // Everything below describes the page that has just gone. The title would
+    // leave the tab wearing a stale unread count; the fullscreen flag would
+    // lay the next view out over the whole window; the CSS key names an insert
+    // in a webContents that no longer exists, which a label-color change
+    // landing before the next `dom-ready` would try to remove from the new one.
     this.pageTitle = "";
 
     this.htmlFullscreen = false;
+
+    this.labelColorsCssKey = null;
+
+    /*
+     * Both are read off the live page — the first from the URL it was left on,
+     * the second from the preload — so neither has anyone to speak for it now.
+     * A view parked on a sign-in page would otherwise leave the account
+     * flagged for good, since the feed's own clear only undoes what the feed
+     * raised; a genuinely signed-out account is flagged again by the next poll
+     * within the half minute.
+     *
+     * `userEmail` is not cleared with them: it names the account rather than
+     * the page, and `meru://<email>/…` links are routed by it.
+     */
+    this.store.setState({ attentionRequired: false, outOfOffice: false });
   }
 
   destroy() {
@@ -760,7 +782,7 @@ export class Gmail {
    * live view gets from the navigation it is sent on, for an account that has
    * no view to navigate.
    */
-  private acceptInboxFeedResponse(res: Response) {
+  private acceptInboxFeedResponse(res: Response, { hasView }: { hasView: boolean }) {
     if (res.ok && !res.url.startsWith(GOOGLE_ACCOUNTS_URL)) {
       // Only what this raised is cleared here, so a view sitting on a page
       // outside Gmail keeps the flag its own navigation set.
@@ -785,7 +807,13 @@ export class Gmail {
       });
     }
 
-    this.store.setState({ attentionRequired: true });
+    // Only where there is no view to navigate, since this stands in for the
+    // navigation-driven sign-in detection rather than adding to it. An account
+    // sitting happily on Gmail is not asking for attention because one poll
+    // came back 503.
+    if (!hasView) {
+      this.store.setState({ attentionRequired: true });
+    }
 
     return false;
   }
@@ -844,7 +872,7 @@ export class Gmail {
 
       const res = await this.session.fetch(`${feedUrl}?t=${Date.now()}`);
 
-      if (!this.acceptInboxFeedResponse(res)) {
+      if (!this.acceptInboxFeedResponse(res, { hasView: view !== undefined })) {
         return;
       }
 
@@ -1256,7 +1284,9 @@ export class Gmail {
       return res;
     };
 
-    let idKey = this.gmailIdKey ?? (await this.fetchGmailIdKey());
+    const cachedIdKey = this.gmailIdKey;
+
+    const idKey = cachedIdKey ?? (await this.fetchGmailIdKey());
 
     if (!idKey) {
       return false;
@@ -1266,14 +1296,16 @@ export class Gmail {
 
     // The key belongs to a Gmail session rather than to the account, so a
     // cached one goes stale on its own and the refusal is the only word of it.
-    if (!res.ok) {
-      idKey = await this.fetchGmailIdKey();
+    // Only a cached key is worth refetching: one just read from the page
+    // cannot have gone stale between that read and this post.
+    if (!res.ok && cachedIdKey) {
+      const refetchedIdKey = await this.fetchGmailIdKey();
 
-      if (!idKey) {
+      if (!refetchedIdKey) {
         return false;
       }
 
-      res = await post(idKey);
+      res = await post(refetchedIdKey);
     }
 
     if (!res.ok) {
