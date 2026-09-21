@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ms } from "@meru/shared/ms";
-import { canHibernateTab, hibernatesTabWhenIdle } from "./hibernation";
+import { canHibernateGmailView, canHibernateTab, hibernatesTabWhenIdle } from "./hibernation";
 
 const now = new Date("2026-08-18T12:00:00Z").getTime();
 
@@ -94,5 +94,36 @@ describe("hibernatesTabWhenIdle", () => {
       true,
     );
     expect(hibernatesTabWhenIdle({ pinned: false, hibernatesWhenIdle: false }, "all")).toBe(false);
+  });
+});
+
+describe("canHibernateGmailView", () => {
+  const idleGmail = {
+    liteMode: "idle",
+    isOnScreen: false,
+    lastActiveAt: now - ms("2h"),
+    idleTimeout,
+    now,
+  } as const;
+
+  test("unloads a view left alone for longer than the timeout", () => {
+    expect(canHibernateGmailView(idleGmail)).toBe(true);
+    expect(canHibernateGmailView({ ...idleGmail, liteMode: "startup" })).toBe(true);
+  });
+
+  test("leaves a view that has not been idle long enough", () => {
+    expect(canHibernateGmailView({ ...idleGmail, lastActiveAt: now - ms("30m") })).toBe(false);
+  });
+
+  test("never unloads the view the user is looking at", () => {
+    expect(canHibernateGmailView({ ...idleGmail, isOnScreen: true })).toBe(false);
+  });
+
+  test("never unloads an account that is not in Lite mode", () => {
+    expect(canHibernateGmailView({ ...idleGmail, liteMode: "off" })).toBe(false);
+  });
+
+  test("unloads on the timeout exactly", () => {
+    expect(canHibernateGmailView({ ...idleGmail, lastActiveAt: now - idleTimeout })).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import type { GmailLiteMode } from "@meru/shared/gmail";
 import type { WorkspaceAppsHibernation } from "@meru/shared/workspace-apps";
 
 /**
@@ -12,6 +13,34 @@ type HibernatableTab = {
   hibernatesWhenIdle: boolean | null;
   lastActiveAt: number;
 };
+
+/**
+ * Whether the idle sweep unloads an account's Gmail view. The caller has
+ * already established that there is one to unload.
+ *
+ * `startup` and `idle` differ only in whether the view was created at launch,
+ * which is over by the time any of this runs, so both sweep alike. `off` never
+ * does: its view is the account.
+ */
+export function canHibernateGmailView({
+  liteMode,
+  isOnScreen,
+  lastActiveAt,
+  idleTimeout,
+  now,
+}: {
+  liteMode: GmailLiteMode;
+  isOnScreen: boolean;
+  lastActiveAt: number;
+  idleTimeout: number;
+  now: number;
+}) {
+  if (liteMode === "off" || isOnScreen) {
+    return false;
+  }
+
+  return now - lastActiveAt >= idleTimeout;
+}
 
 /**
  * Whether the sweep takes this tab, before anything about how long it has been

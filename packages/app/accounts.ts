@@ -15,6 +15,7 @@ import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
+import { canHibernateGmailView } from "./lib/hibernation";
 import { log } from "./lib/log";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
@@ -193,10 +194,11 @@ class Accounts {
       return 0;
     });
 
-    // An account in Lite mode launches with no view at all, which is where the
-    // memory it saves comes from. It still gets its `Gmail` and its `Tabs`, so
-    // the feed poll, the badge and the tab strip are unaffected.
-    const loadedAccounts = accounts.filter((account) => getLiteMode(account.config) === "off");
+    // Only `startup` launches with no view at all, which is where the memory it
+    // saves comes from; `idle` earns the same saving once the sweep takes the
+    // view. Either way the account gets its `Gmail` and its `Tabs`, so the feed
+    // poll, the badge and the tab strip are unaffected.
+    const loadedAccounts = accounts.filter((account) => getLiteMode(account.config) !== "startup");
 
     await Promise.all(
       loadedAccounts.map((account) =>
@@ -304,26 +306,33 @@ class Accounts {
     for (const account of this.getAccounts()) {
       const { gmail } = account.instance;
 
-      if (!gmail.hasView || getLiteMode(account.config) === "off") {
+      if (!gmail.hasView) {
         continue;
       }
 
-      const isGmailOnScreen =
-        main.window.isVisible() &&
-        main.location === "/" &&
-        account.config.selected &&
-        account.instance.tabs.activeTabId === GMAIL_TAB_ID;
+      const isOnScreen =
+        (main.window.isVisible() &&
+          main.location === "/" &&
+          account.config.selected &&
+          account.instance.tabs.activeTabId === GMAIL_TAB_ID) ||
+        gmail.viewOrNull?.webContents.isFocused() === true;
 
       // As `hibernateIdleTabs` does for the active tab: kept on the clock for
       // as long as the user is looking at it, so the idle time starts when
-      // they look elsewhere and what is on screen is never taken away.
-      if (isGmailOnScreen || gmail.viewOrNull?.webContents.isFocused()) {
+      // they look elsewhere.
+      if (isOnScreen) {
         gmail.lastActiveAt = now;
-
-        continue;
       }
 
-      if (now - gmail.lastActiveAt < idleTimeout) {
+      if (
+        !canHibernateGmailView({
+          liteMode: getLiteMode(account.config),
+          isOnScreen,
+          lastActiveAt: gmail.lastActiveAt,
+          idleTimeout,
+          now,
+        })
+      ) {
         continue;
       }
 

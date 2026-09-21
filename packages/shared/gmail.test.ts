@@ -8,6 +8,7 @@ import {
   parseGmailIdKey,
   parseGmailInboxType,
   parseGmailMessageId,
+  resolveGmailLiteMode,
   resolveInboxFeedUrl,
 } from "./gmail";
 
@@ -334,5 +335,22 @@ describe("createGmailMessageActionRequest", () => {
     expect(actionCodeOf("markAsRead")).toBe(3);
     expect(actionCodeOf("delete")).toBe(9);
     expect(actionCodeOf("markAsSpam")).toBe(7);
+  });
+});
+
+describe("resolveGmailLiteMode", () => {
+  test("hands back the mode the user chose under a valid license", () => {
+    expect(resolveGmailLiteMode("idle", true)).toBe("idle");
+    expect(resolveGmailLiteMode("startup", true)).toBe("startup");
+    expect(resolveGmailLiteMode("off", true)).toBe("off");
+  });
+
+  test("reads an account written before Lite mode existed as off", () => {
+    expect(resolveGmailLiteMode(undefined, true)).toBe("off");
+  });
+
+  test("gives Gmail back when the license is not valid, whatever was chosen", () => {
+    expect(resolveGmailLiteMode("idle", false)).toBe("off");
+    expect(resolveGmailLiteMode("startup", false)).toBe("off");
   });
 });
