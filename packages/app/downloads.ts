@@ -87,18 +87,37 @@ class Downloads {
           const shouldOpenFile =
             config.get("notifications.onClickDownloadCompleted") === "openFile";
 
+          const openDownload = () => {
+            if (shouldOpenFile) {
+              shell.openPath(filePath);
+            } else {
+              shell.showItemInFolder(filePath);
+            }
+          };
+
+          // Clicking a notification's body always activates the app on
+          // macOS, so Finder or the file's app ends up behind Meru's window.
+          // An action button does not activate the app, so the button is the
+          // primary control where the platform has one; Linux has none.
+          const hasButton = !platform.isLinux;
+
           createNotification({
             title: `Downloaded ${fileName}`,
-            body: shouldOpenFile
-              ? "Click to open the file."
-              : `Click to show the file in ${FILE_MANAGER_NAME}.`,
-            click: () => {
-              if (shouldOpenFile) {
-                shell.openPath(filePath);
-              } else {
-                shell.showItemInFolder(filePath);
-              }
-            },
+            body: hasButton
+              ? `Saved to ${path.dirname(filePath)}`
+              : shouldOpenFile
+                ? "Click to open the file."
+                : `Click to show the file in ${FILE_MANAGER_NAME}.`,
+            actions: hasButton
+              ? [
+                  {
+                    text: shouldOpenFile ? "Open File" : `Show in ${FILE_MANAGER_NAME}`,
+                    type: "button",
+                  },
+                ]
+              : undefined,
+            action: hasButton ? openDownload : undefined,
+            click: openDownload,
           });
         }
       });
