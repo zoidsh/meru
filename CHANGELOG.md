@@ -22,6 +22,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
+- **macOS:** Clicking a download notification no longer brings Meru's window up over Finder or the opened file
 - **macOS:** the close, minimize and zoom buttons now sit centered in the titlebar instead of a few pixels too high
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
 - **Windows:** The passkey note in Settings → Extensions and the prompt at Google's passkey sign-in now say that only a passkey added to your Google account from inside Meru works, and that passkeys from Chrome, Google Password Manager or your phone don't
