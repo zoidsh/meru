@@ -1,6 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
+import { ms } from "@meru/shared/ms";
 import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -19,6 +20,8 @@ class Main {
   private _window: BrowserWindow | undefined;
 
   private resolveRendererReady: (() => void) | undefined;
+
+  private ignoreActivationUntil = 0;
 
   /**
    * Resolved once the renderer has loaded and can receive what main sends it.
@@ -219,6 +222,26 @@ class Main {
 
     if (app.dock?.isVisible) {
       app.dock.show();
+    }
+  }
+
+  // Clicking a notification body activates Meru on macOS after the click
+  // handler has run, and the activation would otherwise show the hidden window.
+  // The expiry keeps a click whose activation never comes from swallowing a
+  // later Cmd+Tab.
+  ignoreNextActivation() {
+    this.ignoreActivationUntil = Date.now() + ms("1s");
+  }
+
+  showOnActivation() {
+    if (Date.now() < this.ignoreActivationUntil) {
+      this.ignoreActivationUntil = 0;
+
+      return;
+    }
+
+    if (!this.window.isVisible()) {
+      this.show();
     }
   }
 

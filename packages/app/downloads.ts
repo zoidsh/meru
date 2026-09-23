@@ -4,7 +4,7 @@ import { platform } from "@electron-toolkit/utils";
 import { BASE_SPACING } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { app, type BrowserWindow, shell } from "electron";
+import { type BrowserWindow, shell } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
 import { main } from "@/main";
@@ -17,27 +17,6 @@ const FILE_MANAGER_NAME = platform.isMacOS
   : platform.isWindows
     ? "File Explorer"
     : "your file manager";
-
-// Clicking a notification body activates Meru on macOS, and `main.show()` in
-// the activate handlers raises the window over Finder, so the file is shown
-// once activation has settled.
-function runAfterActivation(fn: () => void) {
-  if (!platform.isMacOS || main.window.isFocused()) {
-    fn();
-
-    return;
-  }
-
-  const run = () => {
-    clearTimeout(timeout);
-    app.removeListener("did-become-active", run);
-    setImmediate(fn);
-  };
-
-  const timeout = setTimeout(run, ms("1s"));
-
-  app.once("did-become-active", run);
-}
 
 class Downloads {
   recentDownloadHistoryPopup = new Popup();
@@ -123,7 +102,8 @@ class Downloads {
               ? "Click to open the file."
               : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
-              runAfterActivation(openDownload);
+              main.ignoreNextActivation();
+              openDownload();
             },
           });
         }

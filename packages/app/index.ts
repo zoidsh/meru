@@ -246,9 +246,7 @@ async function init() {
 
   if (platform.isMacOS) {
     app.on("did-become-active", () => {
-      if (!main.window.isVisible()) {
-        main.show();
-      }
+      main.showOnActivation();
     });
 
     app.on("open-url", (_event, url) => {
