@@ -22,7 +22,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
-- **macOS and Windows:** A download notification now has an Open File or Show in Finder button. Pressing it brings the file or folder to the front instead of leaving it behind Meru, which clicking the notification itself did
+- **macOS:** Clicking a download notification now shows the file in Finder in front of Meru instead of behind it, and on macOS and Windows the notification has a Show in Finder or Show in File Explorer button
 - **macOS:** the close, minimize and zoom buttons now sit centered in the titlebar instead of a few pixels too high
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
 - **Windows:** The passkey note in Settings → Extensions and the prompt at Google's passkey sign-in now say that only a passkey added to your Google account from inside Meru works, and that passkeys from Chrome, Google Password Manager or your phone don't

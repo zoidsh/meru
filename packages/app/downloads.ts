@@ -4,9 +4,10 @@ import { platform } from "@electron-toolkit/utils";
 import { BASE_SPACING } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { type BrowserWindow, shell } from "electron";
+import { app, type BrowserWindow, shell } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
+import { main } from "@/main";
 import { createNotification } from "@/notifications";
 import { fileExists } from "./lib/fs";
 import { Popup } from "./lib/popup";
@@ -16,6 +17,27 @@ const FILE_MANAGER_NAME = platform.isMacOS
   : platform.isWindows
     ? "File Explorer"
     : "your file manager";
+
+// Clicking a notification body activates Meru on macOS, and `main.show()` in
+// the activate handlers raises the window over Finder, so the file is shown
+// once activation has settled.
+function runAfterActivation(fn: () => void) {
+  if (!platform.isMacOS || main.window.isFocused()) {
+    fn();
+
+    return;
+  }
+
+  const run = () => {
+    clearTimeout(timeout);
+    app.removeListener("did-become-active", run);
+    setImmediate(fn);
+  };
+
+  const timeout = setTimeout(run, ms("1s"));
+
+  app.once("did-become-active", run);
+}
 
 class Downloads {
   recentDownloadHistoryPopup = new Popup();
@@ -95,10 +117,7 @@ class Downloads {
             }
           };
 
-          // Clicking a notification's body always activates the app on
-          // macOS, so Finder or the file's app ends up behind Meru's window.
-          // An action button does not activate the app, so the button is the
-          // primary control where the platform has one; Linux has none.
+          // Linux notifications have no action buttons.
           const hasButton = !platform.isLinux;
 
           createNotification({
@@ -111,13 +130,19 @@ class Downloads {
             actions: hasButton
               ? [
                   {
-                    text: shouldOpenFile ? "Open File" : `Show in ${FILE_MANAGER_NAME}`,
+                    text: `Show in ${FILE_MANAGER_NAME}`,
                     type: "button",
                   },
                 ]
               : undefined,
-            action: hasButton ? openDownload : undefined,
-            click: openDownload,
+            action: hasButton
+              ? () => {
+                  shell.showItemInFolder(filePath);
+                }
+              : undefined,
+            click: () => {
+              runAfterActivation(openDownload);
+            },
           });
         }
       });
