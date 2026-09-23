@@ -233,9 +233,10 @@ class Main {
   // handler has run. The activation would show a hidden window and raise a
   // visible one over Finder, so the show is skipped once and the action waits
   // for the activation. The expiry keeps a click whose activation never comes
-  // from running late or swallowing a later Cmd+Tab.
+  // from running late or swallowing a later Cmd+Tab. When Meru is already
+  // active there is no activation to wait for.
   runAfterNotificationClick(action: () => void) {
-    if (!platform.isMacOS) {
+    if (!platform.isMacOS || this.window.isFocused()) {
       action();
 
       return;
