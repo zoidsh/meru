@@ -102,8 +102,7 @@ class Downloads {
               ? "Click to open the file."
               : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
-              main.ignoreNextActivation();
-              openDownload();
+              main.runAfterNotificationClick(openDownload);
             },
           });
         }
