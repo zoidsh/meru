@@ -17,6 +17,7 @@ import {
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { extractVerificationCode } from "@meru/verification-code";
@@ -939,11 +940,7 @@ export class Gmail {
             type: "button" as const,
           })),
           click: () => {
-            main.show();
-
-            accounts.selectAccount(this.accountId);
-
-            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
+            this.showMessage(newMail.id);
           },
           action: (index) => {
             const notificationAction = NEW_EMAIL_NOTIFICATION_ACTIONS[index];
@@ -1131,5 +1128,21 @@ export class Gmail {
     }
 
     this.view.webContents.executeJavaScript(`window.location.hash = ${JSON.stringify(hash)}`);
+  }
+
+  showMessage(messageId: string) {
+    main.navigate("/");
+
+    const account = accounts.getAccount(this.accountId);
+
+    account.instance.tabs.activateTab(GMAIL_TAB_ID);
+
+    if (account.config.selected) {
+      accounts.refreshSelectedAccountView();
+    } else {
+      accounts.selectAccount(this.accountId);
+    }
+
+    ipc.renderer.send(this.view.webContents, "gmail.openMessage", messageId);
   }
 }

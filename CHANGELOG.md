@@ -29,3 +29,4 @@ This file is the draft of the next release, written one line at a time as work l
 - After choosing Later on an update, the restart prompt no longer returns every few hours for the same version
 - **Linux:** Window controls no longer appear over Meru's titlebar buttons on window managers without decorations, such as dwm, i3 and sway. A new Window controls setting in Settings → Appearance overrides the detection
 - With enough accounts to fill the titlebar, the account buttons now scroll instead of pushing the other titlebar buttons off-screen. Wheel or swipe over the row to move it, or use the arrows at either end; switching accounts brings the one you picked into view
+- Clicking a new mail notification, or opening a Meru message link, now switches to that account's Gmail tab and opens the message, even from the unified inbox, Settings or another tab
