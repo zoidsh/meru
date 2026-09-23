@@ -117,29 +117,11 @@ class Downloads {
             }
           };
 
-          // Linux notifications have no action buttons.
-          const hasButton = !platform.isLinux;
-
           createNotification({
             title: `Downloaded ${fileName}`,
-            body: hasButton
-              ? `Saved to ${path.dirname(filePath)}`
-              : shouldOpenFile
-                ? "Click to open the file."
-                : `Click to show the file in ${FILE_MANAGER_NAME}.`,
-            actions: hasButton
-              ? [
-                  {
-                    text: `Show in ${FILE_MANAGER_NAME}`,
-                    type: "button",
-                  },
-                ]
-              : undefined,
-            action: hasButton
-              ? () => {
-                  shell.showItemInFolder(filePath);
-                }
-              : undefined,
+            body: shouldOpenFile
+              ? "Click to open the file."
+              : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
               runAfterActivation(openDownload);
             },
