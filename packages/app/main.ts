@@ -86,8 +86,6 @@ class Main {
       ),
     );
 
-    searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
-
     if (trial.daysLeft) {
       searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
     }
