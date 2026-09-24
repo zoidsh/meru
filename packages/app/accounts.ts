@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
-import type { AccountConfig, AccountConfigs } from "@meru/shared/schemas";
+import type { AccountConfig, AccountConfigs, AccountInstances } from "@meru/shared/schemas";
 import {
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
@@ -771,20 +771,20 @@ class Accounts {
     );
   }
 
+  getAccountInstances(): AccountInstances {
+    return this.getAccounts().map((account) => ({
+      config: account.config,
+      gmail: account.instance.gmail.store.getState(),
+      verticalTabsWidth: account.instance.verticalTabsWidth,
+    }));
+  }
+
   sendAccountsChangedToRenderer() {
     if (main.window.isDestroyed()) {
       return;
     }
 
-    ipc.renderer.send(
-      main.window.webContents,
-      "accounts.changed",
-      this.getAccounts().map((account) => ({
-        config: account.config,
-        gmail: account.instance.gmail.store.getState(),
-        verticalTabsWidth: account.instance.verticalTabsWidth,
-      })),
-    );
+    ipc.renderer.send(main.window.webContents, "accounts.changed", this.getAccountInstances());
   }
 }
 

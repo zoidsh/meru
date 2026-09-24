@@ -57,6 +57,7 @@ import {
 } from "./notifications";
 import { getIsDefaultMailtoClient, setAsDefaultMailtoClient } from "./protocol";
 import { openWindowsDefaultAppsSettings } from "./protocol/windows-mail-client";
+import { trial } from "./trial";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
 
@@ -662,6 +663,10 @@ class Ipc {
     ipc.main.on("tabs.setVerticalTabsWidth", (_event, accountId, width) => {
       accounts.setVerticalTabsWidth(accountId, width);
     });
+
+    ipc.main.handle("accounts.getAccounts", () => accounts.getAccountInstances());
+
+    ipc.main.handle("trial.getDaysLeft", () => trial.daysLeft);
 
     ipc.main.handle("config.getConfig", () => config.store);
 
