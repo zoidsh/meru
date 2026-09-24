@@ -2,14 +2,15 @@ import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstances } from "@meru/shared/schemas";
 import type { AccountTabsState } from "@meru/shared/tabs";
 import { create } from "zustand";
-import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
 
 export const useAccountsStore = create<{
   accounts: AccountInstances;
+  isLoaded: boolean;
   isAddAccountDialogOpen: boolean;
   setIsAddAccountDialogOpen: (isOpen: boolean) => void;
 }>((set) => ({
-  accounts: accountsSearchParam ? JSON.parse(accountsSearchParam) : [],
+  accounts: [],
+  isLoaded: false,
   isAddAccountDialogOpen: false,
   setIsAddAccountDialogOpen: (isOpen) => {
     set({ isAddAccountDialogOpen: isOpen });
@@ -17,7 +18,7 @@ export const useAccountsStore = create<{
 }));
 
 ipc.renderer.on("accounts.changed", (_event, accounts) => {
-  useAccountsStore.setState({ accounts });
+  useAccountsStore.setState({ accounts, isLoaded: true });
 });
 
 export const useTabsStore = create<{
@@ -61,17 +62,42 @@ ipc.renderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => 
 
 export const useTrialStore = create<{
   daysLeft: number;
-}>(() => {
-  const daysLeft = Number(trialDaysLeftSearchParam);
+}>(() => ({
+  daysLeft: 0,
+}));
 
-  return {
-    daysLeft,
-  };
-});
+let isTrialDaysLeftPushed = false;
 
 ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
+  isTrialDaysLeftPushed = true;
+
   useTrialStore.setState({ daysLeft });
 });
+
+/**
+ * Only the main window is handed the accounts and the trial, so the pages that
+ * import this module for another store do not ask for them.
+ *
+ * A push that lands while a seed is in flight carries the newer state, so the
+ * seed that loses the race is dropped rather than applied on top of it.
+ */
+export function seedMainWindowStores() {
+  ipc.main.invoke("accounts.getAccounts").then((accounts) => {
+    if (useAccountsStore.getState().isLoaded) {
+      return;
+    }
+
+    useAccountsStore.setState({ accounts, isLoaded: true });
+  });
+
+  ipc.main.invoke("trial.getDaysLeft").then((daysLeft) => {
+    if (isTrialDaysLeftPushed) {
+      return;
+    }
+
+    useTrialStore.setState({ daysLeft });
+  });
+}
 
 export const useAppUpdaterStore = create<{
   version: string | null;

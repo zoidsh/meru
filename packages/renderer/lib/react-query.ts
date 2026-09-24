@@ -28,6 +28,16 @@ export function useConfig() {
   };
 }
 
+/**
+ * The main page draws nothing until its stores are seeded, so the first
+ * component to read the config mounts only once that has landed. Asking for it
+ * up front puts the two requests in flight together instead of one after the
+ * other.
+ */
+export function prefetchConfig() {
+  queryClient.prefetchQuery(configOptions);
+}
+
 ipc.renderer.on("bookmarks.changed", (_event, bookmarks) => {
   queryClient.setQueryData(["bookmarks"], bookmarks);
 });

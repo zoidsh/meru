@@ -13,7 +13,6 @@ import {
 import { appMenu } from "@/menu";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
-import { trial } from "./trial";
 
 class Main {
   private _window: BrowserWindow | undefined;
@@ -73,26 +72,8 @@ class Main {
   isQuittingApp = false;
 
   loadURL() {
-    const searchParams = new URLSearchParams();
-
-    searchParams.set(
-      "accounts",
-      JSON.stringify(
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: account.instance.gmail.store.getState(),
-          verticalTabsWidth: account.instance.verticalTabsWidth,
-        })),
-      ),
-    );
-
-    if (trial.daysLeft) {
-      searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
-    }
-
     loadRenderer(this.window, {
       page: "main",
-      searchParams,
     });
   }
 
