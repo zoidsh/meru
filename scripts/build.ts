@@ -60,6 +60,18 @@ const electronArgs = args.tokens.flatMap((token) =>
 /** Where a named profile's user data directory lives. */
 const PROFILES_DIR = ".meru";
 
+const USER_DATA_DIR_OPTION = "--user-data-dir=";
+
+/*
+ * A directory the run named itself, which reaches Electron as an option this
+ * script never declared. Nothing defaults over it: the switch this script adds
+ * goes on the end of the command line, where Chromium would read it in
+ * preference to the one that was typed.
+ */
+const namedUserDataDir = electronArgs
+  .find((electronArg) => electronArg.startsWith(USER_DATA_DIR_OPTION))
+  ?.slice(USER_DATA_DIR_OPTION.length);
+
 function git(...gitArgs: string[]) {
   const { exitCode, stdout } = Bun.spawnSync(["git", ...gitArgs], { stderr: "ignore" });
 
@@ -79,6 +91,10 @@ function git(...gitArgs: string[]) {
 function resolveProfile() {
   if (typeof args.values.profile === "string") {
     return args.values.profile;
+  }
+
+  if (namedUserDataDir) {
+    return undefined;
   }
 
   const [gitDir, gitCommonDir, toplevel] = git(
@@ -413,12 +429,20 @@ if (args.values.dev) {
   // directory under, in preference to the package's own `name`.
   const { productName } = (await Bun.file("package.json").json()) as { productName: string };
 
-  const userDataDir = profile
-    ? path.resolve(PROFILES_DIR, profile)
-    : defaultUserDataDir(
-        { platform: process.platform, env: process.env, homeDir: homedir() },
-        productName,
-      );
+  const resolveUserDataDir = () => {
+    if (profile) {
+      return path.resolve(PROFILES_DIR, profile);
+    }
+
+    return namedUserDataDir
+      ? path.resolve(namedUserDataDir)
+      : defaultUserDataDir(
+          { platform: process.platform, env: process.env, homeDir: homedir() },
+          productName,
+        );
+  };
+
+  const userDataDir = resolveUserDataDir();
 
   console.log(`Profile: ${profile ?? "none"} (${userDataDir})`);
 
