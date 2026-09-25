@@ -11,6 +11,43 @@ import path from "node:path";
 
 export const DEFAULT_RENDERER_PORT = 3000;
 
+/*
+ * Pinned to one stack: "localhost" resolves to both 127.0.0.1 and ::1, and
+ * Vite's free-port probe claims only one of them, so simultaneous dev servers
+ * can each believe they own the same port.
+ */
+export const RENDERER_HOST = "127.0.0.1";
+
+/** As much of a Vite dev server as the URL is read off. */
+export type RendererServer = {
+  resolvedUrls?: { local: string[] } | null;
+  httpServer?: { address(): { port: number } | string | null } | null;
+};
+
+/**
+ * Where the renderer is actually being served, which is what Electron is handed.
+ *
+ * Read off the server rather than taken from the port it was asked for: Vite
+ * moves to the next free port when that one is taken, which is what lets a
+ * second worktree run `bun run dev` while the first is up. Handing Electron the
+ * number this run asked for would point it at the other worktree's renderer.
+ */
+export function resolveRendererUrl(server: RendererServer) {
+  const resolvedUrl = server.resolvedUrls?.local[0];
+
+  if (resolvedUrl) {
+    return resolvedUrl;
+  }
+
+  const address = server.httpServer?.address();
+
+  if (!address || typeof address === "string") {
+    throw new Error("The renderer dev server is listening on no address Electron could be given");
+  }
+
+  return `http://${RENDERER_HOST}:${address.port}/`;
+}
+
 /**
  * The renderer's port: `PORT` when something outside assigned one, otherwise the
  * port this repository has always used. Either way Vite is free to take the next

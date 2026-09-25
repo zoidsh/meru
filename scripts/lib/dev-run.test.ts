@@ -5,6 +5,7 @@ import {
   defaultUserDataDir,
   parseDevToolsActivePort,
   resolveRendererPort,
+  resolveRendererUrl,
   resolveWorktreeProfile,
   toProfileName,
 } from "./dev-run";
@@ -28,6 +29,38 @@ describe("resolveRendererPort", () => {
     expect(() => resolveRendererPort("70000")).toThrow("PORT is 70000");
     expect(() => resolveRendererPort("3000.5")).toThrow("PORT is 3000.5");
     expect(() => resolveRendererPort("three thousand")).toThrow("PORT is three thousand");
+  });
+});
+
+describe("resolveRendererUrl", () => {
+  test("hands Electron the URL the server reports", () => {
+    expect(
+      resolveRendererUrl({
+        resolvedUrls: { local: ["http://127.0.0.1:3001/"] },
+        httpServer: { address: () => ({ port: 3001 }) },
+      }),
+    ).toBe("http://127.0.0.1:3001/");
+  });
+
+  test("falls back to the address the server is bound to", () => {
+    expect(resolveRendererUrl({ httpServer: { address: () => ({ port: 40309 }) } })).toBe(
+      "http://127.0.0.1:40309/",
+    );
+    expect(
+      resolveRendererUrl({
+        resolvedUrls: { local: [] },
+        httpServer: { address: () => ({ port: 3000 }) },
+      }),
+    ).toBe("http://127.0.0.1:3000/");
+  });
+
+  test("refuses to guess at a server that reports no address", () => {
+    expect(() => resolveRendererUrl({})).toThrow("no address");
+    expect(() => resolveRendererUrl({ httpServer: { address: () => null } })).toThrow("no address");
+    // A pipe or a Unix socket, which is an address nothing can be loaded from.
+    expect(() => resolveRendererUrl({ httpServer: { address: () => "/tmp/vite.sock" } })).toThrow(
+      "no address",
+    );
   });
 });
 

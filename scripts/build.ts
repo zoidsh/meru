@@ -12,7 +12,9 @@ import * as vite from "vite";
 import {
   defaultUserDataDir,
   parseDevToolsActivePort,
+  RENDERER_HOST,
   resolveRendererPort,
+  resolveRendererUrl,
   resolveWorktreeProfile,
 } from "./lib/dev-run";
 
@@ -343,37 +345,6 @@ function buildAppFiles() {
     ),
     buildFixtureExtension(),
   ]);
-}
-
-/*
- * Pinned to one stack: "localhost" resolves to both 127.0.0.1 and ::1, and
- * Vite's free-port probe claims only one of them, so simultaneous dev servers
- * can each believe they own the same port.
- */
-const RENDERER_HOST = "127.0.0.1";
-
-/**
- * Where the renderer is actually being served, which is what Electron is handed.
- *
- * Read off the server rather than taken from the port it was asked for: Vite
- * moves to the next free port when that one is taken, which is what lets a second
- * worktree run `bun run dev` while the first is up. Handing Electron the number
- * this run asked for would point it at the other worktree's renderer.
- */
-function resolveRendererUrl(server: vite.ViteDevServer) {
-  const resolvedUrl = server.resolvedUrls?.local[0];
-
-  if (resolvedUrl) {
-    return resolvedUrl;
-  }
-
-  const address = server.httpServer?.address();
-
-  if (!address || typeof address === "string") {
-    throw new Error("The renderer dev server is listening on no address Electron could be given");
-  }
-
-  return `http://${RENDERER_HOST}:${address.port}/`;
 }
 
 async function buildRenderer(rendererName: string, port: number) {
