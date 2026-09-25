@@ -19,8 +19,12 @@ describe("resolveRendererPort", () => {
     expect(resolveRendererPort("")).toBe(DEFAULT_RENDERER_PORT);
   });
 
-  test("refuses a port Vite would not serve on", () => {
-    expect(() => resolveRendererPort("0")).toThrow("PORT is 0");
+  test("passes on a zero port, which asks for a free one", () => {
+    expect(resolveRendererPort("0")).toBe(0);
+  });
+
+  test("refuses a port nothing could serve on", () => {
+    expect(() => resolveRendererPort("-1")).toThrow("PORT is -1");
     expect(() => resolveRendererPort("70000")).toThrow("PORT is 70000");
     expect(() => resolveRendererPort("3000.5")).toThrow("PORT is 3000.5");
     expect(() => resolveRendererPort("three thousand")).toThrow("PORT is three thousand");

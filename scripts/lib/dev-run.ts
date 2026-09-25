@@ -17,10 +17,12 @@ export const DEFAULT_RENDERER_PORT = 3000;
  * one up when it is taken, and the URL Electron loads comes from the server
  * rather than from this number.
  *
- * `PORT=0` is refused rather than passed on. Chromium reads a zero port as "pick
- * a free one", so a tool handing ports out could reasonably expect Vite to as
- * well, and Vite instead treats it as unset and serves on its own default —
- * which is a port this script never told Electron about.
+ * Zero is allowed and passed on, where to most servers it means "pick a free
+ * port". What Vite makes of it is not relied on: measured against 8.3.1 through
+ * this repository's config, the server came up on Vite's own default, 5173,
+ * rather than on an ephemeral port. Nothing downstream minds, because the
+ * address Electron is handed is read off the server rather than taken from this
+ * number — which is the same reason the fallback from a taken 3000 works.
  */
 export function resolveRendererPort(port: string | undefined) {
   if (!port) {
@@ -29,9 +31,9 @@ export function resolveRendererPort(port: string | undefined) {
 
   const parsed = Number(port);
 
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
     throw new Error(
-      `PORT is ${port}, which is not a port between 1 and 65535. Leave it unset to serve the renderer on ${DEFAULT_RENDERER_PORT}.`,
+      `PORT is ${port}, which is not a port between 0 and 65535. Leave it unset to serve the renderer on ${DEFAULT_RENDERER_PORT}.`,
     );
   }
 
