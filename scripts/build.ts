@@ -1,4 +1,5 @@
 import { rm, watch } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 import { type ParseArgsConfig, parseArgs } from "node:util";
 import postcssTailwind from "@tailwindcss/postcss";
@@ -8,6 +9,12 @@ import { type Subprocess, spawn } from "bun";
 import postcss from "postcss";
 import { rolldown, defineConfig as defineRolldownConfig } from "rolldown";
 import * as vite from "vite";
+import {
+  defaultUserDataDir,
+  parseDevToolsActivePort,
+  resolveRendererPort,
+  resolveWorktreeProfile,
+} from "./lib/dev-run";
 
 const options = {
   dev: {
@@ -19,12 +26,16 @@ const options = {
   },
   // Opens Chromium's remote debugging port on the development app, so that a
   // CDP client such as Playwright can drive it: `bun run dev --debug-port 9222`.
+  // `--debug-port 0` leaves the choice to Chromium and prints what it picked,
+  // which is what two runs at once want, since neither can claim a number the
+  // other might have taken.
   "debug-port": {
     type: "string",
   },
   // Runs the development app on `.meru/<name>` instead of the default user
   // data directory, so a signed-in account or a scratch install survives
-  // independently of it: `bun run dev --profile signin`.
+  // independently of it: `bun run dev --profile signin`. A run in a linked
+  // worktree takes one named after its branch when this is not given.
   profile: {
     type: "string",
   },
@@ -46,9 +57,58 @@ const electronArgs = args.tokens.flatMap((token) =>
     : [],
 );
 
-if (typeof args.values.profile === "string") {
-  electronArgs.push(`--user-data-dir=${path.resolve(".meru", args.values.profile)}`);
+/** Where a named profile's user data directory lives. */
+const PROFILES_DIR = ".meru";
+
+function git(...gitArgs: string[]) {
+  const { exitCode, stdout } = Bun.spawnSync(["git", ...gitArgs], { stderr: "ignore" });
+
+  return exitCode === 0 ? stdout.toString().trim() : "";
 }
+
+/**
+ * The profile this run uses, which is the one it was given, or the one a linked
+ * worktree gets so that its run does not share a single instance lock with the
+ * run in another worktree.
+ *
+ * Asked of git rather than inferred from the directory, because a worktree is
+ * wherever it was made and only git knows which checkout is the main one. A
+ * checkout with no git at all — an archive, a container copy — answers nothing
+ * and is treated as the main checkout.
+ */
+function resolveProfile() {
+  if (typeof args.values.profile === "string") {
+    return args.values.profile;
+  }
+
+  const [gitDir, gitCommonDir, toplevel] = git(
+    "rev-parse",
+    "--git-dir",
+    "--git-common-dir",
+    "--show-toplevel",
+  ).split("\n");
+
+  if (!gitDir || !gitCommonDir || !toplevel) {
+    return undefined;
+  }
+
+  return resolveWorktreeProfile({
+    gitDir,
+    gitCommonDir,
+    toplevel,
+    branch: git("symbolic-ref", "--quiet", "--short", "HEAD") || undefined,
+  });
+}
+
+const profile = args.values.dev ? resolveProfile() : undefined;
+
+if (profile) {
+  electronArgs.push(`--user-data-dir=${path.resolve(PROFILES_DIR, profile)}`);
+}
+
+// Read before anything is built, so that a port nothing can serve on is a line
+// of output rather than a failure halfway through a bundle.
+const rendererPort = resolveRendererPort(process.env.PORT);
 
 await rm("./build-js", { recursive: true, force: true });
 
@@ -269,6 +329,37 @@ function buildAppFiles() {
   ]);
 }
 
+/*
+ * Pinned to one stack: "localhost" resolves to both 127.0.0.1 and ::1, and
+ * Vite's free-port probe claims only one of them, so simultaneous dev servers
+ * can each believe they own the same port.
+ */
+const RENDERER_HOST = "127.0.0.1";
+
+/**
+ * Where the renderer is actually being served, which is what Electron is handed.
+ *
+ * Read off the server rather than taken from the port it was asked for: Vite
+ * moves to the next free port when that one is taken, which is what lets a second
+ * worktree run `bun run dev` while the first is up. Handing Electron the number
+ * this run asked for would point it at the other worktree's renderer.
+ */
+function resolveRendererUrl(server: vite.ViteDevServer) {
+  const resolvedUrl = server.resolvedUrls?.local[0];
+
+  if (resolvedUrl) {
+    return resolvedUrl;
+  }
+
+  const address = server.httpServer?.address();
+
+  if (!address || typeof address === "string") {
+    throw new Error("The renderer dev server is listening on no address Electron could be given");
+  }
+
+  return `http://${RENDERER_HOST}:${address.port}/`;
+}
+
 async function buildRenderer(rendererName: string, port: number) {
   const rendererRoot = path.join(process.cwd(), "packages", rendererName);
 
@@ -283,10 +374,7 @@ async function buildRenderer(rendererName: string, port: number) {
       tsconfigPaths: true,
     },
     server: {
-      // Pinned to one stack: "localhost" resolves to both 127.0.0.1 and ::1,
-      // and Vite's free-port probe claims only one of them, so simultaneous
-      // dev servers can each believe they own the same port.
-      host: "127.0.0.1",
+      host: RENDERER_HOST,
       port,
     },
     build: {
@@ -306,19 +394,81 @@ async function buildRenderer(rendererName: string, port: number) {
 
     viteServer.printUrls();
 
-    return viteServer.resolvedUrls?.local[0];
+    return resolveRendererUrl(viteServer);
   }
 
   await vite.build(viteConfig);
 }
 
-const [, rendererUrl] = await Promise.all([buildAppFiles(), buildRenderer("renderer", 3000)]);
+const [, rendererUrl] = await Promise.all([
+  buildAppFiles(),
+  buildRenderer("renderer", rendererPort),
+]);
 
 if (args.values.dev) {
   let electron: Subprocess;
   let isRestartingElectron = false;
 
-  const startElectron = () => {
+  // `productName`, because that is the name Electron puts its default user data
+  // directory under, in preference to the package's own `name`.
+  const { productName } = (await Bun.file("package.json").json()) as { productName: string };
+
+  const userDataDir = profile
+    ? path.resolve(PROFILES_DIR, profile)
+    : defaultUserDataDir(
+        { platform: process.platform, env: process.env, homeDir: homedir() },
+        productName,
+      );
+
+  console.log(`Profile: ${profile ?? "none"} (${userDataDir})`);
+
+  /*
+   * Chromium picks the port itself, and writes it into the user data directory
+   * once it has. Nothing else reports it, so a run that asked for one reads it
+   * back and prints it.
+   */
+  const isDebugPortPickedByChromium = args.values["debug-port"] === "0";
+
+  const devToolsActivePortPath = path.join(userDataDir, "DevToolsActivePort");
+
+  const DEBUG_PORT_TIMEOUT = 10_000;
+
+  const DEBUG_PORT_POLL_INTERVAL = 100;
+
+  /*
+   * Polled, because the file appears a moment after the process does. Reading an
+   * empty or half-written one is therefore ordinary rather than a failure, which
+   * is why `parseDevToolsActivePort` answers instead of throwing.
+   */
+  const printDebugPort = async () => {
+    const deadline = Date.now() + DEBUG_PORT_TIMEOUT;
+
+    while (Date.now() < deadline) {
+      const contents = await Bun.file(devToolsActivePortPath)
+        .text()
+        .catch(() => "");
+
+      const port = parseDevToolsActivePort(contents);
+
+      if (port) {
+        console.log(`Debug port: ${port} (http://${RENDERER_HOST}:${port}/json/version)`);
+
+        return;
+      }
+
+      await Bun.sleep(DEBUG_PORT_POLL_INTERVAL);
+    }
+
+    console.log(`No debug port was written to ${devToolsActivePortPath}`);
+  };
+
+  const startElectron = async () => {
+    // A killed browser leaves its own file behind, and a stale port reads
+    // exactly like the one this launch is waiting for.
+    if (isDebugPortPickedByChromium) {
+      await rm(devToolsActivePortPath, { force: true });
+    }
+
     electron = spawn(
       [
         "electron",
@@ -342,6 +492,10 @@ if (args.values.dev) {
         },
       },
     );
+
+    if (isDebugPortPickedByChromium) {
+      await printDebugPort();
+    }
   };
 
   const stopElectron = () => {
@@ -355,7 +509,7 @@ if (args.values.dev) {
 
     await stopElectron();
 
-    startElectron();
+    await startElectron();
   };
 
   await startElectron();
