@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Meru is an Electron desktop client for Gmail and Google Workspace, sold with a Pro tier. The code is public here; plans and working docs are private and checked out at `~/docs/meru`. Read `~/docs/meru/architecture/overview.md` before touching `packages/app`, and check `~/docs/meru/decisions.md` before relitigating a design choice. Where this file and those docs overlap, the docs win.
+Meru is an Electron desktop client for Gmail and Google Workspace, sold with a Pro tier. The code is public here; plans and working docs are private, in the folder the session-start hook names. Read its `architecture/overview.md` before touching `packages/app`, and check its `decisions.md` before relitigating a design choice. Where this file and those docs overlap, the docs win.
 
 ## Commands
 
@@ -23,7 +23,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`.
 
-Several worktrees run it at once, with nothing to pass. The renderer serves on the next free port from 3000, or on `PORT` when something outside assigns one, and Electron is handed the address the server came up on. A run in a linked worktree takes a profile named after its branch unless `--profile` names one, which gives it a user data directory and a single instance lock of its own; the main checkout keeps the default directory and the accounts signed in to it. `--debug-port 0` leaves the port to Chromium and prints what it picked. `~/docs/meru/conventions.md` has the rest.
+Several worktrees run it at once, with nothing to pass. The renderer serves on the next free port from 3000, or on `PORT` when something outside assigns one, and Electron is handed the address the server came up on. A run in a linked worktree takes a profile named after its branch unless `--profile` names one, which gives it a user data directory and a single instance lock of its own; the main checkout keeps the default directory and the accounts signed in to it. `--debug-port 0` leaves the port to Chromium and prints what it picked. The docs' `conventions.md` has the rest.
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
