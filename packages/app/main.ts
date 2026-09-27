@@ -1,7 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
-import { ms } from "@meru/shared/ms";
 import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -20,8 +19,6 @@ class Main {
   private _window: BrowserWindow | undefined;
 
   private resolveRendererReady: (() => void) | undefined;
-
-  private activationIgnoredUntil = 0;
 
   /**
    * Resolved once the renderer has loaded and can receive what main sends it.
@@ -211,19 +208,6 @@ class Main {
         this.saveWindowState();
       });
     }
-  }
-
-  /**
-   * Clicking a notification on macOS also reopens the app a moment later, and
-   * showing the window on that reopen would put Meru over whatever the click
-   * opened, such as Finder for a download.
-   */
-  ignoreActivationAfterNotificationClick() {
-    this.activationIgnoredUntil = Date.now() + ms("1s");
-  }
-
-  get isIgnoringActivation() {
-    return Date.now() < this.activationIgnoredUntil;
   }
 
   show() {

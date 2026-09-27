@@ -7,7 +7,6 @@ import type { DownloadItem } from "@meru/shared/types";
 import { type BrowserWindow, shell } from "electron";
 import electronDl from "electron-dl";
 import { config } from "@/config";
-import { main } from "@/main";
 import { createNotification } from "@/notifications";
 import { fileExists } from "./lib/fs";
 import { Popup } from "./lib/popup";
@@ -94,8 +93,6 @@ class Downloads {
               ? "Click to open the file."
               : `Click to show the file in ${FILE_MANAGER_NAME}.`,
             click: () => {
-              main.ignoreActivationAfterNotificationClick();
-
               if (shouldOpenFile) {
                 shell.openPath(filePath);
               } else {
