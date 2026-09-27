@@ -15,6 +15,8 @@ export default async (context) => {
     return;
   }
 
+  await writeProvisioningProfile(context.packager);
+
   const buildPath = path.join(process.cwd(), "build");
 
   const template = await fs.readFile(
@@ -49,3 +51,28 @@ export default async (context) => {
       : "Generated macOS entitlements without the Touch ID keychain access group, `APPLE_TEAM_ID` is unset",
   );
 };
+
+// The profile authorizes that keychain access group, and a signed app without it will not
+// launch. electron-builder takes a profile only as a path, and the file is gitignored, so it is
+// written from the base64 the signing environment carries. One already there is left alone.
+async function writeProvisioningProfile(packager) {
+  const profile = packager.platformSpecificBuildOptions.provisioningProfile;
+
+  const base64 = process.env.APPLE_PROVISIONING_PROFILE;
+
+  if (!profile || !base64) {
+    return;
+  }
+
+  const profilePath = path.resolve(packager.projectDir, profile);
+
+  try {
+    await fs.writeFile(profilePath, Buffer.from(base64, "base64"), { flag: "wx" });
+
+    console.log(`Wrote the provisioning profile to ${profile}`);
+  } catch (error) {
+    if (error.code !== "EEXIST") {
+      throw error;
+    }
+  }
+}

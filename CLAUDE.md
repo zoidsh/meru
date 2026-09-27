@@ -20,6 +20,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
 | Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                    |
 | Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
+| Signed, notarised macOS build           | `MERU_SIGN=true bun run build:mac`                          |
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`.
 
@@ -27,7 +28,7 @@ Several worktrees run it at once, with nothing to pass. The renderer serves on t
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
-End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite reads a license key from `.env.test.local`. Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
+End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
 ## Architecture
 
@@ -52,6 +53,15 @@ Things that take more than one file to see:
 - **Config is the event bus.** One flat `electron-store` in `packages/app/config.ts` with literal `"section.camelCase"` keys plus a nested `accounts` array. Main reads and writes it directly and registers `config.onDidChange` listeners once at collection level, never per instance. The renderer reads through `useConfig()` and writes through `useConfigMutation()`, and the `config.configChanged` push is its only refresh. Everything else main pushes to the renderer is a zustand store in `packages/renderer/lib/stores.ts`, seeded for first paint from the window's URL search parameters.
 - **IPC** is typed over `@electron-toolkit/typed-ipc`. Channel maps are declared once in `packages/shared/types.ts`, handlers register in `ipc.init()` in `packages/app/ipc.ts`, and names follow `domain.verbNoun`.
 
+## Environment
+
+- varlock loads and validates the build, signing and test environment against `.env.schema`. `bunfig.toml` preloads it into every Bun process, at the top level and again under `[test]`, which the top-level one does not reach. A process that is not Bun, such as `electron-builder`, sees none of that, so a script that runs one wraps it in `varlock run --`, as `build:mac` does.
+- Values from 1Password are `op()` references in `.env.signing` and `.env.e2e`, never in `.env.schema`: without vault access an `op()` fails the whole load, even for an optional item, and a clone, `bun test`, `bun run dev` and CI have none. `MERU_SIGN=true` imports `.env.signing`; `test:e2e` sets `MERU_E2E`, which imports `.env.e2e` everywhere but CI. Anything already in the process environment wins without an `op()` call, which is how CI passes its secrets.
+- `op` signs in through the 1Password app, or with the service-account token the optional `~/.env.1password` supplies on a machine without it. The token is `@internal` and never reaches a build.
+- Quote an `op://` path that contains a space; unquoted, it resolves to the literal text.
+- Bun still loads `.env.development.local` itself, for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not.
+- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted, and the project MCP server `varlock-docs` answers from varlock's current docs. The project skill `.claude/skills/varlock` is varlock's general guidance; this section wins where they differ.
+
 ## Boundaries
 
 - Add packages with `bun add -d`. Everything is bundled, and electron-builder would ship a runtime `dependencies` entry a second time. The one exception is a native module Electron loads at runtime.
@@ -61,7 +71,7 @@ Things that take more than one file to see:
 - Ask before changing `tests/memory-budget.json` or `tests/bundle-budget.json`; a budget moves only when the issue asks for it.
 - Ask before touching licensing, the trial, Pro gating or the settings behind them. Plan decisions span both repositories.
 - Never bump the version, tag or cut a release. That is the `release` skill, run by Tim, and the updater ships whatever is tagged.
-- Never put the license key from `.env.test.local` in a commit, comment or pull request.
+- Never put a value resolved from 1Password, the test license key included, in a commit, comment or pull request.
 - A writing-style pass leaves marketing and identity copy alone: taglines, product descriptions, the README header, the package `description`. Raise a line that breaks a rule as a question instead of editing it.
 
 ## Practices
