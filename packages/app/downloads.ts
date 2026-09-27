@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
@@ -87,18 +88,44 @@ class Downloads {
           const shouldOpenFile =
             config.get("notifications.onClickDownloadCompleted") === "openFile";
 
+          const openDownload = () => {
+            if (shouldOpenFile) {
+              shell.openPath(filePath);
+            } else if (platform.isMacOS) {
+              // Meru is not the active app when the button is pressed, and
+              // macOS lets only the active app bring another forward, so
+              // `shell.showItemInFolder` opens a Finder window without making
+              // Finder active. Launch Services' `open -R` does.
+              execFile("/usr/bin/open", ["-R", filePath]);
+            } else {
+              shell.showItemInFolder(filePath);
+            }
+          };
+
+          // Clicking a notification's body brings Meru forward, so opening
+          // Finder or the file from it would put them behind Meru. An action
+          // button does not bring Meru forward, because Electron registers
+          // actions without the foreground option. Linux has no action
+          // buttons, so there the body click opens the download.
+          const hasActionButton = !platform.isLinux;
+
           createNotification({
             title: `Downloaded ${fileName}`,
-            body: shouldOpenFile
-              ? "Click to open the file."
-              : `Click to show the file in ${FILE_MANAGER_NAME}.`,
-            click: () => {
-              if (shouldOpenFile) {
-                shell.openPath(filePath);
-              } else {
-                shell.showItemInFolder(filePath);
-              }
-            },
+            body: hasActionButton
+              ? undefined
+              : shouldOpenFile
+                ? "Click to open the file."
+                : `Click to show the file in ${FILE_MANAGER_NAME}.`,
+            actions: hasActionButton
+              ? [
+                  {
+                    text: shouldOpenFile ? "Open" : `Show in ${FILE_MANAGER_NAME}`,
+                    type: "button",
+                  },
+                ]
+              : undefined,
+            action: hasActionButton ? openDownload : undefined,
+            click: hasActionButton ? undefined : openDownload,
           });
         }
       });

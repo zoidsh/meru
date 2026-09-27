@@ -6,6 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
+- Download notifications now have a Show in Finder (Show in File Explorer on Windows) or Open button. Clicking the notification itself brings Meru forward
 - **Meru Pro:** Archive, mark as read, delete or mark as spam a message straight from the unified inbox, by hovering its row or with Gmail's own shortcuts: `e`, `Shift+I`, `#` and `!`
 - **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account
 - **Meru Pro:** Disable an account in Settings → Accounts to keep it signed in and hidden until you need it again
@@ -22,6 +23,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
+- **macOS:** Showing a download in Finder from its notification no longer opens Finder behind Meru's window
 - **macOS:** the close, minimize and zoom buttons now sit centered in the titlebar instead of a few pixels too high
 - With Theme set to Dark in Settings → Appearance, the titlebar, tabs and settings no longer sometimes launch light until you switch the setting back and forth
 - **Windows:** The passkey note in Settings → Extensions and the prompt at Google's passkey sign-in now say that only a passkey added to your Google account from inside Meru works, and that passkeys from Chrome, Google Password Manager or your phone don't

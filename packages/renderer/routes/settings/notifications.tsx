@@ -34,6 +34,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { platform } from "@/lib/utils";
 
 const newEmailsItems = [
   { value: "all", label: "All new emails" },
@@ -288,8 +289,12 @@ export function NotificationsSettings() {
               />
               {config["notifications.downloadCompleted"] && (
                 <ConfigSelectField
-                  label="On click"
-                  description="Choose what happens when clicking the download notification."
+                  label={platform.isLinux ? "On click" : "Button"}
+                  description={
+                    platform.isLinux
+                      ? "Choose what clicking the notification does."
+                      : "Choose what the notification's button does."
+                  }
                   configKey="notifications.onClickDownloadCompleted"
                   items={[
                     { value: "showInFolder", label: "Show in folder" },
