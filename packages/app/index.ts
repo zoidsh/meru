@@ -234,13 +234,8 @@ async function init() {
     }
   });
 
-  // Clicking a notification reopens the app as well as delivering the click, and
-  // showing an already visible window activates Meru over whatever the click
-  // opened, such as Finder for a download.
   app.on("activate", () => {
-    if (!main.window.isVisible() || main.window.isMinimized()) {
-      main.show();
-    }
+    main.show();
   });
 
   // Changing the default browser happens outside Meru, so coming back to it is
