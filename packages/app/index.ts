@@ -234,10 +234,13 @@ async function init() {
     }
   });
 
-  // Clicking a notification reopens the app as well as delivering the click, and
-  // showing an already visible window activates Meru over whatever the click
-  // opened, such as Finder for a download.
+  // Showing an already visible window activates Meru, which on the reopen that
+  // follows a notification click would cover whatever the click opened.
   app.on("activate", () => {
+    if (main.isIgnoringActivation) {
+      return;
+    }
+
     if (!main.window.isVisible() || main.window.isMinimized()) {
       main.show();
     }
@@ -251,7 +254,7 @@ async function init() {
 
   if (platform.isMacOS) {
     app.on("did-become-active", () => {
-      if (!main.window.isVisible()) {
+      if (!main.isIgnoringActivation && !main.window.isVisible()) {
         main.show();
       }
     });
