@@ -5,19 +5,37 @@ import { checkWithinNotificationTimes } from "./lib/notifications";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
+/*
+ * Electron detaches a notification's listeners once its wrapper is garbage
+ * collected, while the notification itself stays in Notification Center, so a
+ * click on it would only bring Meru to the front.
+ */
+const shownNotifications = new Set<Notification>();
+
 function attachNotificationListeners(
   notification: Notification,
   { click, action }: { click?: () => void; action?: (index: number) => void },
 ) {
-  if (click) {
-    notification.once("click", click);
-  }
+  shownNotifications.add(notification);
 
-  if (action) {
-    notification.once("action", (_event, index) => {
-      action(index);
-    });
-  }
+  const release = () => {
+    shownNotifications.delete(notification);
+  };
+
+  notification.once("close", release);
+  notification.once("failed", release);
+
+  notification.once("click", () => {
+    release();
+
+    click?.();
+  });
+
+  notification.once("action", (_event, index) => {
+    release();
+
+    action?.(index);
+  });
 }
 
 export function isWithinNotificationTimes() {
