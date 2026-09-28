@@ -55,11 +55,12 @@ Things that take more than one file to see:
 
 ## Environment
 
-- varlock loads and validates the build, signing and test environment against `.env.schema`. `bunfig.toml` preloads it into every Bun process, at the top level and again under `[test]`, which the top-level one does not reach. A process that is not Bun, such as `electron-builder`, sees none of that, so a script that runs one wraps it in `varlock run --`, as `build:mac` does.
+- varlock validates the build, signing and test environment against `.env.schema` and starts the commands that need it with `varlock run --`, so the values are in the environment before any process starts, electron-builder's included: `build:mac` runs `package:mac` under it, and `test:e2e` runs `scripts/e2e.ts`. No bunfig preload: it would validate on every Bun command, `bun test` ignores the top-level one, and it never reaches a process that is not Bun.
 - Values from 1Password are `op()` references in `.env.signing` and `.env.e2e`, never in `.env.schema`: without vault access an `op()` fails the whole load, even for an optional item, and a clone, `bun test`, `bun run dev` and CI have none. `MERU_SIGN=true` imports `.env.signing`; `test:e2e` sets `MERU_E2E`, which imports `.env.e2e` everywhere but CI. Anything already in the process environment wins without an `op()` call, which is how CI passes its secrets.
-- `op` signs in through the 1Password app, or with the service-account token the optional `~/.env.1password` supplies on a machine without it. The token is `@internal` and never reaches a build.
+- `op` signs in through the 1Password app, or with the service-account token the optional `~/.env.1password` supplies on a machine without it. The token is `@internal`, which `varlock run` strips from the child, and nothing else is: a child that loads the schema again needs every other value passed through.
 - Quote an `op://` path that contains a space; unquoted, it resolves to the literal text.
-- Bun still loads `.env.development.local` itself, for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not.
+- `.env.development.local` stays Bun's to load, for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not.
+- The varlock-docs server's index has lagged the site; check a surprising answer against `https://varlock.dev/llms-full.txt`.
 - `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted, and the project MCP server `varlock-docs` answers from varlock's current docs. The project skill `.claude/skills/varlock` is varlock's general guidance; this section wins where they differ.
 
 ## Boundaries

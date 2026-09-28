@@ -1,10 +1,2 @@
-# No `env = false`: Bun's own loading of `.env.development.local` is what keeps a
-# development device id out of `build:js`, which pins `NODE_ENV=production`.
-preload = ["varlock/auto-load"]
-
 [install]
 linker = "hoisted"
-
-# The top-level preload does not reach `bun test` (dmno-dev/varlock#1125).
-[test]
-preload = ["varlock/auto-load"]
