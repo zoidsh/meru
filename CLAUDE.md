@@ -62,7 +62,7 @@ Things that take more than one file to see:
 - Quote an `op://` path that contains a space; unquoted, it resolves to the literal text.
 - `.env.development.local` stays Bun's to load, for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not.
 - The varlock-docs server's index has lagged the site; check a surprising answer against `https://varlock.dev/llms-full.txt`.
-- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted, and the project MCP server `varlock-docs` answers from varlock's current docs. The project skill `.claude/skills/varlock` is varlock's general guidance; this section wins where they differ.
+- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted; never `--format json`, which prints them. The project MCP server `varlock-docs` answers from varlock's current docs.
 
 ## Boundaries
 
