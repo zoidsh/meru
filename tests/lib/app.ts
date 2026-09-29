@@ -9,6 +9,7 @@
  * That build is Linux only. Elsewhere, build the app for the platform and point
  * MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
+import { existsSync } from "node:fs";
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -620,8 +621,8 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
  * A real key against the production backend rather than a stub, so what these
  * tests prove is that Meru unlocks on the answer the live API actually gives
  * rather than on one a fake was told to give. CI passes it as a secret; a local
- * run keeps it in `.env.test.local`, which the `test:e2e` script reads through
- * `bun --env-file` and the Playwright process inherits.
+ * run resolves it from 1Password through `.env.e2e`, which `test:e2e` asks
+ * varlock for and the Playwright process inherits.
  *
  * Thrown rather than skipped. A key that has been rotated away, or a workflow
  * that stopped passing it, is a broken run — and a suite that skipped itself
@@ -632,7 +633,7 @@ function requireLicenseKey() {
 
   if (!licenseKey) {
     throw new Error(
-      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
+      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run resolves it from 1Password through .env.e2e.",
     );
   }
 
@@ -676,11 +677,9 @@ export function useProApp(seedConfig: SeedConfig = {}, options: UseAppOptions = 
  * The user data directory somebody signed a Gmail account in to, and the address
  * signed in there, or undefined when either is missing.
  *
- * Both come out of `.env.test.local`, which the `test:e2e` script reads through
- * `bun --env-file` and the Playwright process inherits:
- *
- *     MERU_TEST_PROFILE_DIR=/absolute/path/to/.meru/e2e-signed-in
- *     MERU_TEST_ACCOUNT_EMAIL=someone@gmail.com
+ * Both come from `.env.e2e`: the directory is the main checkout's
+ * `.meru/e2e-signed-in`, and the address is in 1Password. A directory that does
+ * not exist counts as missing, since every local run names it.
  *
  * Missing is not the broken run a missing license key is, so this answers
  * instead of throwing. Signing in to Google is done by hand, once, at a password
@@ -699,7 +698,7 @@ export function signedInProfile() {
 
   const email = process.env.MERU_TEST_ACCOUNT_EMAIL;
 
-  return directory && email ? { directory, email } : undefined;
+  return directory && email && existsSync(directory) ? { directory, email } : undefined;
 }
 
 /**

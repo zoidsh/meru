@@ -46,7 +46,7 @@ test.skip(
 
 test.skip(
   !signedIn,
-  "no signed-in profile is named in .env.test.local, by MERU_TEST_PROFILE_DIR and MERU_TEST_ACCOUNT_EMAIL",
+  "no signed-in profile at MERU_TEST_PROFILE_DIR, or no MERU_TEST_ACCOUNT_EMAIL",
 );
 
 const meru = useSignedInProApp({
