@@ -61,8 +61,7 @@ Things that take more than one file to see:
 - `@requireAllOrNone`, from `@timche/varlock-require-all-or-none`, fails a load that has only some of a group set: the macOS signing values and `AZURE_*`, which is why `build:win` runs `package:win` under `varlock run` too. The checks live in `.env.groups`, imported first because varlock runs a file's imports last to first and a check must run after `@initOp`.
 - Quote an `op://` path that contains a space; unquoted, it resolves to the literal text.
 - `.env.development.local` stays Bun's to load, for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not.
-- The varlock-docs server's index has lagged the site; check a surprising answer against `https://varlock.dev/llms-full.txt`.
-- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted; never `--format json`, which prints them. The project MCP server `varlock-docs` answers from varlock's current docs.
+- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted; never `--format json`, which prints them. For varlock's behaviour, search `https://varlock.dev/llms-full.txt`, its current docs in one file.
 
 ## Boundaries
 
