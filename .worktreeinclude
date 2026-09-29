@@ -1,6 +1,0 @@
-# dotenv environment variable files
-
-.env
-.env.development.local
-.env.production.local
-.env.local
