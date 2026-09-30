@@ -17,7 +17,22 @@ class Trial {
   daysLeft = 0;
 
   async validate({ useFallback }: { useFallback?: boolean } = {}): Promise<boolean> {
-    if (licenseKey.isValid || config.get("trial.expired")) {
+    if (licenseKey.isValid) {
+      return true;
+    }
+
+    /*
+     * Outside production the trial follows `MERU_DEV_DEVICE_ID` alone, as the
+     * license follows `MERU_LICENSE_KEY`: without it a run is the free version
+     * and asks the API nothing, whatever the machine's own trial or the
+     * profile's stored expiry says. `scripts/build.ts` defines `NODE_ENV` as
+     * production in every build but a development run.
+     */
+    if (
+      process.env.NODE_ENV === "production"
+        ? config.get("trial.expired")
+        : !process.env.MERU_DEV_DEVICE_ID
+    ) {
       return true;
     }
 

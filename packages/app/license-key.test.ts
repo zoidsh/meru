@@ -67,6 +67,8 @@ const { licenseKey } = await import("./license-key");
 // nothing settles the variable for a run. Every case sets or clears it.
 const inheritedLicenseKey = process.env.MERU_LICENSE_KEY;
 
+const inheritedNodeEnv = process.env.NODE_ENV;
+
 function setEnvironmentLicenseKey(value: string | undefined) {
   if (value === undefined) {
     delete process.env.MERU_LICENSE_KEY;
@@ -83,6 +85,7 @@ beforeEach(() => {
 
 afterEach(() => {
   setEnvironmentLicenseKey(inheritedLicenseKey);
+  process.env.NODE_ENV = inheritedNodeEnv;
 });
 
 describe("init", () => {
@@ -121,7 +124,8 @@ describe("init", () => {
     expect(configWrites).toEqual([]);
   });
 
-  test("leaves the stored key alone when the variable is unset or empty", () => {
+  test("leaves the stored key alone in production when the variable is unset or empty", () => {
+    process.env.NODE_ENV = "production";
     storedKey = activatedLicenseKey;
 
     setEnvironmentLicenseKey(undefined);
@@ -134,5 +138,29 @@ describe("init", () => {
 
     expect(configWrites).toEqual([]);
     expect(storedKey).toBe(activatedLicenseKey);
+  });
+
+  test("removes the stored key outside production when the variable is unset or empty", () => {
+    for (const value of [undefined, ""]) {
+      storedKey = activatedLicenseKey;
+      setEnvironmentLicenseKey(value);
+
+      licenseKey.init();
+
+      expect(storedKey).toBeNull();
+    }
+
+    expect(configWrites).toEqual([
+      ["licenseKey", null],
+      ["licenseKey", null],
+    ]);
+  });
+
+  test("writes nothing outside production when neither holds a key", () => {
+    setEnvironmentLicenseKey(undefined);
+
+    licenseKey.init();
+
+    expect(configWrites).toEqual([]);
   });
 });

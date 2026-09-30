@@ -16,12 +16,23 @@ class LicenseKey {
    * API on every launch like any other, and a device that was never activated
    * is refused with `DEVICE_NOT_ACTIVATED`. That is what lets a fleet or an MDM
    * deployment hand Meru its license instead of someone typing it in.
+   *
+   * Outside production the variable is the only source: a run without it
+   * removes the stored key, so a profile once run licensed comes up on its
+   * trial again. Only the local key goes; the device stays activated, and the
+   * next licensed run validates as before. `scripts/build.ts` defines
+   * `NODE_ENV` as production in every build but a development run, so no
+   * shipped app ever removes a key.
    */
   init() {
-    const environmentKey = process.env.MERU_LICENSE_KEY;
+    const environmentKey = process.env.MERU_LICENSE_KEY || null;
+
+    if (!environmentKey && process.env.NODE_ENV === "production") {
+      return;
+    }
 
     // A launch that changes nothing must not fire `config.onDidChange`
-    if (!environmentKey || config.get("licenseKey") === environmentKey) {
+    if (config.get("licenseKey") === environmentKey) {
       return;
     }
 
