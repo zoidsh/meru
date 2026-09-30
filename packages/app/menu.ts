@@ -3,6 +3,7 @@ import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { accounts } from "@/accounts";
+import { getActiveView } from "@/active-view";
 import { config } from "@/config";
 import { showRestartDialog } from "@/dialogs";
 import { downloads } from "@/downloads";
@@ -162,18 +163,7 @@ export class AppMenu {
 
     const selectedAccount = accounts.getSelectedAccount();
 
-    const getActiveViewWebContents = () => {
-      if (focusedWindow && focusedWindow !== main.window) {
-        const workspaceApp = WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
-
-        if (workspaceApp) {
-          return workspaceApp.view.webContents;
-        }
-      }
-
-      return (selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view)
-        .webContents;
-    };
+    const getActiveViewWebContents = () => getActiveView(focusedWindow).webContents;
 
     const selectNextTab = () => {
       accounts.getSelectedAccount().instance.tabs.activateNextTab();
