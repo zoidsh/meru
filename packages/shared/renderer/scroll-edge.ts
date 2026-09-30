@@ -14,6 +14,7 @@ function readCandidate(element: Element, isViewport: boolean): ScrollEdgeCandida
     clientWidth: element.clientWidth,
     overflowX: style.overflowX,
     overscrollBehaviorX: style.overscrollBehaviorX,
+    direction: style.direction,
     isViewport,
   };
 }

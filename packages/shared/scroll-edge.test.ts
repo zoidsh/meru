@@ -8,6 +8,7 @@ function candidate(overrides: Partial<ScrollEdgeCandidate> = {}): ScrollEdgeCand
     clientWidth: 800,
     overflowX: "visible",
     overscrollBehaviorX: "auto",
+    direction: "ltr",
     ...overrides,
   };
 }
@@ -109,6 +110,39 @@ describe("resolveScrollEdge", () => {
       canScrollLeft: false,
       canScrollRight: false,
     });
+  });
+
+  test("a right-to-left scroller at its start claims only the back direction", () => {
+    expect(
+      resolveScrollEdge([
+        candidate({ direction: "rtl", overflowX: "auto", scrollWidth: 1600, scrollLeft: 0 }),
+      ]),
+    ).toEqual({ canScrollLeft: true, canScrollRight: false });
+  });
+
+  test("a right-to-left scroller at its end claims only the forward direction", () => {
+    expect(
+      resolveScrollEdge([
+        candidate({ direction: "rtl", overflowX: "auto", scrollWidth: 1600, scrollLeft: -800 }),
+      ]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: true });
+  });
+
+  test("a right-to-left scroller in the middle claims both directions", () => {
+    expect(
+      resolveScrollEdge([
+        candidate({ direction: "rtl", overflowX: "auto", scrollWidth: 1600, scrollLeft: -400 }),
+      ]),
+    ).toEqual({ canScrollLeft: true, canScrollRight: true });
+  });
+
+  test("a right-to-left page with nothing to scroll sideways claims nothing", () => {
+    expect(
+      resolveScrollEdge([
+        candidate({ direction: "rtl", overflowX: "auto" }),
+        candidate({ direction: "rtl", isViewport: true }),
+      ]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: false });
   });
 
   test("sub-pixel scroll offsets count as the edge", () => {

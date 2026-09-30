@@ -4,6 +4,11 @@ export type ScrollEdgeCandidate = {
   clientWidth: number;
   overflowX: string;
   overscrollBehaviorX: string;
+  /**
+   * `rtl` puts `scrollLeft` at `0` on the right-hand end and takes it negative
+   * from there, which is what CSSOM says and what Chromium does.
+   */
+  direction: string;
   isViewport?: boolean;
 };
 
@@ -57,10 +62,17 @@ export function resolveScrollEdge(chain: ScrollEdgeCandidate[]): PageScrollEdge 
       return { canScrollLeft: true, canScrollRight: true };
     }
 
-    const remaining = candidate.scrollWidth - candidate.clientWidth - candidate.scrollLeft;
+    const scrollableWidth = candidate.scrollWidth - candidate.clientWidth;
 
-    canScrollLeft = canScrollLeft || candidate.scrollLeft > SCROLL_EDGE_EPSILON;
-    canScrollRight = canScrollRight || remaining > SCROLL_EDGE_EPSILON;
+    if (candidate.direction === "rtl") {
+      canScrollLeft =
+        canScrollLeft || -candidate.scrollLeft < scrollableWidth - SCROLL_EDGE_EPSILON;
+      canScrollRight = canScrollRight || candidate.scrollLeft < -SCROLL_EDGE_EPSILON;
+    } else {
+      canScrollLeft = canScrollLeft || candidate.scrollLeft > SCROLL_EDGE_EPSILON;
+      canScrollRight =
+        canScrollRight || scrollableWidth - candidate.scrollLeft > SCROLL_EDGE_EPSILON;
+    }
 
     if (canScrollLeft && canScrollRight) {
       break;
