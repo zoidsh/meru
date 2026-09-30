@@ -43,6 +43,13 @@ napi_ref g_on_progress = nullptr;
 napi_ref g_on_end = nullptr;
 bool g_cleanup_hook_added = false;
 
+// AppKit calls in from outside any Node callback, so every call to JavaScript
+// goes through this resource: `napi_make_callback` then drains the microtask
+// queue and the `nextTick` queue the handlers leave behind, as an asynchronous
+// completion would.
+napi_ref g_async_resource = nullptr;
+napi_async_context g_async_context = nullptr;
+
 // The accumulated scroll of the gesture being considered, reset by every
 // `NSEventPhaseBegan`. A gesture that has been refused is refused for the rest
 // of its life, so that turning a vertical scroll horizontal halfway through
@@ -238,7 +245,7 @@ void FadeOutOverlay() {
 }
 
 bool CallJs(napi_ref ref, size_t argc, napi_value* argv, napi_value* result) {
-  if (!g_env || !ref) {
+  if (!g_env || !ref || !g_async_context || !g_async_resource) {
     return false;
   }
 
@@ -248,24 +255,42 @@ bool CallJs(napi_ref ref, size_t argc, napi_value* argv, napi_value* result) {
     return false;
   }
 
+  napi_value resource = nullptr;
+
+  if (napi_get_reference_value(g_env, g_async_resource, &resource) != napi_ok || !resource) {
+    return false;
+  }
+
+  napi_callback_scope scope = nullptr;
+
+  if (napi_open_callback_scope(g_env, resource, g_async_context, &scope) != napi_ok) {
+    return false;
+  }
+
   napi_value undefined = nullptr;
   napi_get_undefined(g_env, &undefined);
 
-  if (napi_call_function(g_env, undefined, fn, argc, argv, result) == napi_ok) {
-    return true;
-  }
+  const bool called =
+      napi_make_callback(g_env, g_async_context, undefined, fn, argc, argv, result) == napi_ok;
 
   // An exception left pending would be rethrown at an unrelated point in the
-  // main process, a gesture later.
+  // main process, a gesture later, so it is taken before the scope closes and
+  // handed to Node's uncaught handling, which logs it and leaves Meru running.
+  napi_value error = nullptr;
   bool isPending = false;
   napi_is_exception_pending(g_env, &isPending);
 
   if (isPending) {
-    napi_value error = nullptr;
     napi_get_and_clear_last_exception(g_env, &error);
   }
 
-  return false;
+  napi_close_callback_scope(g_env, scope);
+
+  if (error) {
+    napi_fatal_exception(g_env, error);
+  }
+
+  return called;
 }
 
 napi_value MakeNumber(double value) {
@@ -585,6 +610,38 @@ void ReleaseCallbacks() {
   }
 }
 
+void ReleaseAsyncResource() {
+  if (!g_env) {
+    return;
+  }
+
+  if (g_async_context) {
+    napi_async_destroy(g_env, g_async_context);
+
+    g_async_context = nullptr;
+  }
+
+  if (g_async_resource) {
+    napi_delete_reference(g_env, g_async_resource);
+
+    g_async_resource = nullptr;
+  }
+}
+
+bool CreateAsyncResource(napi_env env) {
+  napi_value resource = nullptr;
+  napi_value resourceName = nullptr;
+
+  if (napi_create_object(env, &resource) != napi_ok ||
+      napi_create_string_utf8(env, "meru.swipeNavigation", NAPI_AUTO_LENGTH, &resourceName) !=
+          napi_ok ||
+      napi_async_init(env, resource, resourceName, &g_async_context) != napi_ok) {
+    return false;
+  }
+
+  return napi_create_reference(env, resource, 1, &g_async_resource) == napi_ok;
+}
+
 bool ReadCallback(napi_env env, napi_value options, const char* name, napi_ref* out) {
   napi_value value = nullptr;
 
@@ -615,6 +672,7 @@ void StopSwipeNavigation() {
 
   RemoveOverlay();
   ReleaseCallbacks();
+  ReleaseAsyncResource();
 }
 
 void CleanUpEnvironment(void*) {
@@ -639,6 +697,7 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_env = env;
 
   ReleaseCallbacks();
+  ReleaseAsyncResource();
 
   if (!ReadCallback(env, argv[0], "onBegin", &g_on_begin) ||
       !ReadCallback(env, argv[0], "onEnd", &g_on_end)) {
@@ -650,6 +709,15 @@ napi_value Start(napi_env env, napi_callback_info info) {
   }
 
   ReadCallback(env, argv[0], "onProgress", &g_on_progress);
+
+  if (!CreateAsyncResource(env)) {
+    ReleaseCallbacks();
+    ReleaseAsyncResource();
+
+    napi_throw_error(env, nullptr, "start could not create its async resource");
+
+    return nullptr;
+  }
 
   g_tuning.arrivalProgress = ReadTuning(argv[0], "arrivalProgress", 0.3);
   g_tuning.completionAmount = ReadTuning(argv[0], "completionAmount", 0.99);

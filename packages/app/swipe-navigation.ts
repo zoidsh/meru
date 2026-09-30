@@ -115,8 +115,12 @@ class SwipeNavigation {
       return { id: webContents.id, ...bounds };
     } catch (error) {
       // Thrown from the moments when there is no account to act on, such as the
-      // repair that follows disabling the last enabled one.
-      this.logGesture("refused", { direction, refusedBecause: "noView", error: `${error}` });
+      // repair that follows disabling the last enabled one. Nothing may escape:
+      // the addon calls in from an AppKit event monitor, where a throw reaches
+      // Node's uncaught handling rather than a caller.
+      log.error("Swipe navigation could not answer a gesture", serializeError(error));
+
+      this.logGesture("refused", { direction, refusedBecause: "noView" });
 
       return undefined;
     }
@@ -136,20 +140,30 @@ class SwipeNavigation {
 
     this.gesture = undefined;
 
-    this.logGesture(committed ? "committed" : "cancelled", {
-      direction,
-      action: gesture?.action,
-      maxProgress,
-    });
+    try {
+      this.logGesture(committed ? "committed" : "cancelled", {
+        direction,
+        action: gesture?.action,
+        maxProgress,
+      });
 
-    if (!committed || gesture?.webContents.id !== id || gesture.webContents.isDestroyed()) {
-      return;
-    }
+      // A tab closed mid-gesture leaves a webContents that throws on every
+      // property, `id` included, so it is asked whether it is still there first.
+      if (!committed || !gesture || gesture.webContents.isDestroyed()) {
+        return;
+      }
 
-    if (gesture.action === "back") {
-      gesture.webContents.navigationHistory.goBack();
-    } else {
-      gesture.webContents.navigationHistory.goForward();
+      if (gesture.webContents.id !== id) {
+        return;
+      }
+
+      if (gesture.action === "back") {
+        gesture.webContents.navigationHistory.goBack();
+      } else {
+        gesture.webContents.navigationHistory.goForward();
+      }
+    } catch (error) {
+      log.error("Swipe navigation could not finish a gesture", serializeError(error));
     }
   };
 
