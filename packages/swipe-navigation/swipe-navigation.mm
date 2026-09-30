@@ -47,6 +47,8 @@ NSSize g_pending_delta = NSZeroSize;
 bool g_pending_refused = false;
 
 bool g_tracking = false;
+bool g_tracking_released = false;
+int32_t g_tracking_generation = 0;
 int32_t g_tracking_id = 0;
 double g_tracking_max_progress = 0;
 NSString* g_tracking_direction = nil;
@@ -402,7 +404,15 @@ void ReportEnd(bool committed) {
 /** Whether the event has been taken over by a swipe and must not be delivered. */
 bool HandleScrollWheel(NSEvent* event) {
   if (g_tracking) {
-    return true;
+    // Once released, only the momentum still belongs to the swipe. Fingers
+    // coming down again start a new gesture, which must not wait out the
+    // settle animation of the last one.
+    if (!(g_tracking_released && event.phase == NSEventPhaseBegan)) {
+      return true;
+    }
+
+    g_tracking = false;
+    g_tracking_released = false;
   }
 
   if (event.phase == NSEventPhaseBegan) {
@@ -459,6 +469,9 @@ bool HandleScrollWheel(NSEvent* event) {
   }
 
   g_tracking = true;
+  g_tracking_released = false;
+
+  const int32_t generation = ++g_tracking_generation;
   g_tracking_id = target.id;
   g_tracking_direction = direction;
   g_tracking_max_progress = 0;
@@ -472,7 +485,7 @@ bool HandleScrollWheel(NSEvent* event) {
                                max:1
                       usingHandler:^(CGFloat gestureAmount, NSEventPhase phase, BOOL isComplete,
                                      BOOL* stop) {
-                        if (!g_tracking) {
+                        if (!g_tracking || generation != g_tracking_generation) {
                           *stop = YES;
 
                           return;
@@ -484,24 +497,50 @@ bool HandleScrollWheel(NSEvent* event) {
 
                         g_overlay.progress = progress;
 
-                        ReportProgress(progress);
+                        if (!g_tracking_released) {
+                          ReportProgress(progress);
+                        }
+
+                        // AppKit decides at release, with Ended or Cancelled, and
+                        // then animates the amount home for up to a second before
+                        // `isComplete`. Chrome navigates at release, so the
+                        // decision is acted on then, and tracking goes on only to
+                        // swallow the momentum that follows.
+                        const bool released =
+                            phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled;
+
+                        if (released && !g_tracking_released) {
+                          g_tracking_released = true;
+
+                          const bool committed = phase == NSEventPhaseEnded;
+
+                          ReportEnd(committed);
+
+                          if (committed) {
+                            FadeOutOverlay();
+                          } else {
+                            RemoveOverlay();
+                          }
+                        }
 
                         if (!isComplete) {
                           return;
                         }
 
-                        const bool committed = progress >= g_tuning.completionAmount;
+                        if (!g_tracking_released) {
+                          const bool committed = progress >= g_tuning.completionAmount;
 
-                        g_tracking = false;
+                          ReportEnd(committed);
 
-                        ReportEnd(committed);
-
-                        if (committed) {
-                          FadeOutOverlay();
-                        } else {
-                          RemoveOverlay();
+                          if (committed) {
+                            FadeOutOverlay();
+                          } else {
+                            RemoveOverlay();
+                          }
                         }
 
+                        g_tracking = false;
+                        g_tracking_released = false;
                         g_pending_delta = NSZeroSize;
                         g_pending_refused = false;
                         g_tracking_direction = nil;

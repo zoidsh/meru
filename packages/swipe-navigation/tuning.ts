@@ -14,7 +14,8 @@ export const SWIPE_NAVIGATION_TUNING = {
   commitThreshold: 0.3,
 
   /**
-   * The progress at or above which a finished gesture counts as a navigation.
+   * The progress at or above which a gesture AppKit finished without first
+   * reporting a release counts as a navigation. A release decides it otherwise.
    * AppKit animates the amount to exactly `1` for a swipe it completed and back
    * to `0` for one it did not, so anything short of the whole way is a cancel.
    */
