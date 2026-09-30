@@ -7,11 +7,12 @@ import { ms } from "@meru/shared/ms";
  */
 export const SWIPE_NAVIGATION_TUNING = {
   /**
-   * The gesture progress, from `0` to `1`, at which the bubble finishes sliding
-   * in and takes on its committed look. Only what the bubble shows: whether the
-   * swipe navigates is AppKit's decision, reported through `completionAmount`.
+   * The gesture progress, from `0` to `1`, at which the bubble has slid fully
+   * into view, where it stays for the rest of the gesture. It shows no commit
+   * point, because whether a swipe navigates is AppKit's decision at release,
+   * which Meru only learns then.
    */
-  commitThreshold: 0.3,
+  arrivalProgress: 0.3,
 
   /**
    * The progress at or above which a gesture AppKit finished without first
@@ -43,13 +44,10 @@ export const SWIPE_NAVIGATION_TUNING = {
   overlayDiameter: 44,
 
   /**
-   * How far the bubble's center sits from the view's edge once it has finished
-   * arriving, which is where `commitThreshold` puts it.
+   * How far the bubble's center sits from the view's edge once it has fully
+   * arrived, which leaves the whole circle in view just inside the edge.
    */
-  overlayMaxOffset: 56,
-
-  /** How much further the bubble drifts over the rest of a committed gesture. */
-  overlayCommittedDrift: 14,
+  overlayMaxOffset: 40,
 
   /** The progress over which the bubble fades in from nothing. */
   overlayFadeInProgress: 0.15,

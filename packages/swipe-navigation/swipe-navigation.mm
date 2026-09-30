@@ -20,14 +20,13 @@
 namespace {
 
 struct Tuning {
-  double commitThreshold;
+  double arrivalProgress;
   double completionAmount;
   double horizontalDominanceRatio;
   double minimumHorizontalDelta;
   double maximumVerticalDelta;
   double overlayDiameter;
   double overlayMaxOffset;
-  double overlayCommittedDrift;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
 };
@@ -92,18 +91,8 @@ NSString* g_tracking_direction = nil;
 
   const CGFloat radius = g_tuning.overlayDiameter / 2;
 
-  const bool committed = progress >= g_tuning.commitThreshold;
-
-  // The bubble finishes arriving exactly as it fills, so the two read as one
-  // moment, and drifts on afterwards so that the gesture never looks stuck.
-  const CGFloat arrival = std::min(1.0, progress / std::max(0.001, g_tuning.commitThreshold));
-  const CGFloat drift = committed
-                            ? (progress - g_tuning.commitThreshold) /
-                                  std::max(0.001, 1 - g_tuning.commitThreshold) *
-                                  g_tuning.overlayCommittedDrift
-                            : 0;
-
-  const CGFloat inset = -radius + arrival * (g_tuning.overlayMaxOffset + radius) + drift;
+  const CGFloat arrival = std::min(1.0, progress / std::max(0.001, g_tuning.arrivalProgress));
+  const CGFloat inset = -radius + arrival * (g_tuning.overlayMaxOffset + radius);
   const CGFloat centerX = self.fromLeftEdge ? inset : NSWidth(self.bounds) - inset;
   const CGFloat centerY = NSMidY(self.bounds);
 
@@ -126,18 +115,15 @@ NSString* g_tracking_direction = nil;
   shadow.shadowOffset = NSZeroSize;
   [shadow set];
 
-  NSColor* fill = committed ? NSColor.controlAccentColor : NSColor.controlBackgroundColor;
-  [[fill colorWithAlphaComponent:(committed ? 1.0 : 0.94) * alpha] setFill];
+  [[NSColor.controlBackgroundColor colorWithAlphaComponent:alpha] setFill];
   [[NSBezierPath bezierPathWithOvalInRect:circle] fill];
 
   [context restoreGraphicsState];
 
-  if (!committed) {
-    NSBezierPath* ring = [NSBezierPath bezierPathWithOvalInRect:NSInsetRect(circle, 0.5, 0.5)];
-    ring.lineWidth = 1;
-    [[NSColor.separatorColor colorWithAlphaComponent:alpha] setStroke];
-    [ring stroke];
-  }
+  NSBezierPath* ring = [NSBezierPath bezierPathWithOvalInRect:NSInsetRect(circle, 0.5, 0.5)];
+  ring.lineWidth = 1;
+  [[NSColor.separatorColor colorWithAlphaComponent:alpha] setStroke];
+  [ring stroke];
 
   const CGFloat chevronHalfHeight = g_tuning.overlayDiameter * 0.17;
   const CGFloat chevronHalfWidth = g_tuning.overlayDiameter * 0.11;
@@ -152,9 +138,7 @@ NSString* g_tracking_direction = nil;
   chevron.lineCapStyle = NSLineCapStyleRound;
   chevron.lineJoinStyle = NSLineJoinStyleRound;
 
-  NSColor* chevronColor =
-      committed ? NSColor.alternateSelectedControlTextColor : NSColor.secondaryLabelColor;
-  [[chevronColor colorWithAlphaComponent:alpha] setStroke];
+  [[NSColor.secondaryLabelColor colorWithAlphaComponent:alpha] setStroke];
   [chevron stroke];
 }
 
@@ -619,14 +603,13 @@ napi_value Start(napi_env env, napi_callback_info info) {
 
   ReadCallback(env, argv[0], "onProgress", &g_on_progress);
 
-  g_tuning.commitThreshold = ReadTuning(argv[0], "commitThreshold", 0.3);
+  g_tuning.arrivalProgress = ReadTuning(argv[0], "arrivalProgress", 0.3);
   g_tuning.completionAmount = ReadTuning(argv[0], "completionAmount", 0.99);
   g_tuning.horizontalDominanceRatio = ReadTuning(argv[0], "horizontalDominanceRatio", 1);
   g_tuning.minimumHorizontalDelta = ReadTuning(argv[0], "minimumHorizontalDelta", 3);
   g_tuning.maximumVerticalDelta = ReadTuning(argv[0], "maximumVerticalDelta", 20);
   g_tuning.overlayDiameter = ReadTuning(argv[0], "overlayDiameter", 44);
-  g_tuning.overlayMaxOffset = ReadTuning(argv[0], "overlayMaxOffset", 56);
-  g_tuning.overlayCommittedDrift = ReadTuning(argv[0], "overlayCommittedDrift", 14);
+  g_tuning.overlayMaxOffset = ReadTuning(argv[0], "overlayMaxOffset", 40);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
 
