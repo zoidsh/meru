@@ -193,8 +193,14 @@ async function buildSwipeNavigationAddon() {
     "include",
   );
 
+  // Through xcrun so the compiler and linker come from the toolchain
+  // `DEVELOPER_DIR` or xcode-select names, not whichever clang++ is first in
+  // PATH. An older Xcode selected beside newer Command Line Tools still pairs
+  // its linker with their SDK and fails to read it; `DEVELOPER_DIR` pointed at
+  // the Command Line Tools is the way out.
   const clang = spawn(
     [
+      "xcrun",
       "clang++",
       "-bundle",
       "-undefined",
@@ -222,6 +228,15 @@ async function buildSwipeNavigationAddon() {
   );
 
   if ((await clang.exited) !== 0) {
+    // A development run loads without the addon and only loses swiping, while
+    // a packaged app would ship without the feature.
+    if (args.values.dev) {
+      console.warn(
+        "Failed to compile the swipe navigation addon; starting without swipe navigation",
+      );
+      return;
+    }
+
     throw new Error("Failed to compile the swipe navigation addon");
   }
 }
