@@ -273,7 +273,9 @@ bool CallJs(napi_ref ref, size_t argc, napi_value* argv, napi_value* result) {
 
   // An exception left pending would be rethrown at an unrelated point in the
   // main process, a gesture later, so it is taken before the scope closes and
-  // handed to Node's uncaught handling, which logs it and leaves Meru running.
+  // handed to the process's uncaught handling, which Electron surfaces without
+  // ending the process. The handlers catch and log for themselves, so reaching
+  // here means one of them is broken.
   napi_value error = nullptr;
   bool isPending = false;
   napi_is_exception_pending(g_env, &isPending);
