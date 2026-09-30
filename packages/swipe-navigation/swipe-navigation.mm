@@ -1,12 +1,12 @@
 // Two-finger history swiping for macOS, as a Node-API addon.
 //
 // AppKit is the only source of the gesture: `trackSwipeEventWithOptions` owns
-// the rubber-band physics and decides on release whether the swipe completed,
-// and while it tracks, AppKit stops delivering the scroll events, so the page
-// under the pointer does not also scroll. What is left here is the decision to
-// start tracking, which is asked of JavaScript, and the arrow bubble, which has
-// to be a native view because Chromium's render widgets are siblings in the
-// window and paint over anything the renderer draws.
+// the rubber-band physics and decides at release whether the swipe completed.
+// The scroll events of a tracked gesture are swallowed in the event monitor
+// below, so the page under the pointer does not scroll as well. What is left
+// here is the decision to start tracking, which is asked of JavaScript, and the
+// arrow bubble, which has to be a native view because Chromium's render widgets
+// are siblings in the window and paint over anything the renderer draws.
 
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
@@ -56,6 +56,7 @@ napi_async_context g_async_context = nullptr;
 // cannot navigate.
 NSSize g_pending_delta = NSZeroSize;
 bool g_pending_refused = false;
+bool g_pending_while_settling = false;
 
 bool g_tracking = false;
 bool g_tracking_released = false;
@@ -358,6 +359,10 @@ bool AskJsToTrack(NSWindow* window, NSPoint pointInWindow, NSString* direction, 
   napi_create_string_utf8(g_env, direction.UTF8String, NAPI_AUTO_LENGTH, &directionValue);
   napi_set_named_property(g_env, request, "direction", directionValue);
 
+  napi_value whileSettling = nullptr;
+  napi_get_boolean(g_env, g_pending_while_settling, &whileSettling);
+  napi_set_named_property(g_env, request, "whileSettling", whileSettling);
+
   napi_value response = nullptr;
 
   if (CallJs(g_on_begin, 1, &request, &response)) {
@@ -433,6 +438,8 @@ void ReportEnd(bool committed) {
 
 /** Whether the event has been taken over by a swipe and must not be delivered. */
 bool HandleScrollWheel(NSEvent* event) {
+  bool whileSettling = false;
+
   if (g_tracking) {
     // Once released, only the momentum still belongs to the swipe. Fingers
     // coming down again start a new gesture, which must not wait out the
@@ -443,11 +450,14 @@ bool HandleScrollWheel(NSEvent* event) {
 
     g_tracking = false;
     g_tracking_released = false;
+
+    whileSettling = true;
   }
 
   if (event.phase == NSEventPhaseBegan) {
     g_pending_delta = NSZeroSize;
     g_pending_refused = false;
+    g_pending_while_settling = whileSettling;
 
     return false;
   }
@@ -498,10 +508,13 @@ bool HandleScrollWheel(NSEvent* event) {
     return false;
   }
 
+  // The generation is claimed before anything says a gesture is being tracked,
+  // so there is no moment in which the tracker of a settling swipe finds itself
+  // holding the current one.
+  const int32_t generation = ++g_tracking_generation;
+
   g_tracking = true;
   g_tracking_released = false;
-
-  const int32_t generation = ++g_tracking_generation;
   g_tracking_id = target.id;
   g_tracking_direction = direction;
   g_tracking_max_progress = 0;
@@ -515,6 +528,10 @@ bool HandleScrollWheel(NSEvent* event) {
                                max:1
                       usingHandler:^(CGFloat gestureAmount, NSEventPhase phase, BOOL isComplete,
                                      BOOL* stop) {
+                        // First, and before every path through the block:
+                        // AppKit goes on calling the tracker of a swipe that
+                        // has been superseded, and it must touch neither the
+                        // overlay nor the state of the one that replaced it.
                         if (!g_env || !g_tracking || generation != g_tracking_generation) {
                           *stop = YES;
 

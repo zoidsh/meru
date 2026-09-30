@@ -27,6 +27,13 @@ export type SwipeBeginRequest = {
   y: number;
 
   direction: SwipeDirection;
+
+  /**
+   * Whether the fingers came down while the last swipe was still settling, which
+   * is the case a log line is worth having for: AppKit is then tracking two
+   * gestures at once.
+   */
+  whileSettling: boolean;
 };
 
 /** The view a swipe belongs to, in the window coordinates the bubble is drawn in. */

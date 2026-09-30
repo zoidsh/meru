@@ -61,6 +61,10 @@ class SwipeNavigation {
     const { direction, x, y } = request;
 
     try {
+      if (request.whileSettling) {
+        this.logGesture("began while the last swipe was still settling", { direction });
+      }
+
       const window = this.findWindow(request.windowHandle);
 
       if (!window) {
