@@ -69,6 +69,7 @@
     "lefthook": "^2.1.2",
     "lucide-react": "^0.475.0",
     "meru-api-client": "2.1.1",
+    "node-api-headers": "^1.9.0",
     "oxfmt": "^0.57.0",
     "oxlint": "^1.72.0",
     "postcss": "^8.5.8",
@@ -99,7 +100,8 @@
       "static"
     ],
     "asarUnpack": [
-      "build-js/fixture-extension/**"
+      "build-js/fixture-extension/**",
+      "build-js/*.node"
     ],
     "appId": "sh.zoid.meru",
     "protocols": {

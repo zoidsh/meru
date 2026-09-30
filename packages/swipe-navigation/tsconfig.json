@@ -1,0 +1,7 @@
+{
+  "extends": "@total-typescript/tsconfig/bundler/no-dom",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "exclude": ["**/*.test.ts"]
+}

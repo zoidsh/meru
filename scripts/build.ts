@@ -153,6 +153,79 @@ const browserTarget = "chrome146";
  */
 const appBundleMinify = args.values.dev ? false : { mangle: { keepNames: true } };
 
+/**
+ * The history-swiping addon, compiled straight with clang++ rather than through
+ * node-gyp: it is one file against `node_api.h`, and node-gyp would add a
+ * toolchain, a binding.gyp and a rebuild step to every install on every
+ * platform for a file only macOS ever loads. `-undefined dynamic_lookup` leaves
+ * the Node-API symbols to be resolved by whatever loads the bundle, which is
+ * how a `.node` links against the host process.
+ */
+async function buildSwipeNavigationAddon() {
+  if (process.platform !== "darwin") {
+    return;
+  }
+
+  const sourceFilePath = path.join(
+    process.cwd(),
+    "packages",
+    "swipe-navigation",
+    "swipe-navigation.mm",
+  );
+
+  const outputFilePath = path.join(process.cwd(), "build-js", "swipe-navigation.node");
+
+  const [source, output] = await Promise.all([
+    Bun.file(sourceFilePath).stat(),
+    Bun.file(outputFilePath)
+      .stat()
+      .catch(() => undefined),
+  ]);
+
+  // The watcher rebuilds the app on a change anywhere in `packages`, and a
+  // universal binary takes seconds to link.
+  if (output && output.mtimeMs >= source.mtimeMs) {
+    return;
+  }
+
+  const nodeApiHeadersDir = path.join(
+    path.dirname(Bun.resolveSync("node-api-headers/package.json", process.cwd())),
+    "include",
+  );
+
+  const clang = spawn(
+    [
+      "clang++",
+      "-bundle",
+      "-undefined",
+      "dynamic_lookup",
+      "-arch",
+      "arm64",
+      "-arch",
+      "x86_64",
+      "-mmacosx-version-min=13.0",
+      "-fobjc-arc",
+      "-std=c++20",
+      "-O2",
+      "-Wall",
+      "-I",
+      nodeApiHeadersDir,
+      "-framework",
+      "AppKit",
+      "-framework",
+      "QuartzCore",
+      "-o",
+      outputFilePath,
+      sourceFilePath,
+    ],
+    { stdout: "inherit", stderr: "inherit" },
+  );
+
+  if ((await clang.exited) !== 0) {
+    throw new Error("Failed to compile the swipe navigation addon");
+  }
+}
+
 function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
@@ -344,6 +417,7 @@ function buildAppFiles() {
       "extensions-runtime-proxy-relay.js",
     ),
     buildFixtureExtension(),
+    buildSwipeNavigationAddon(),
   ]);
 }
 
