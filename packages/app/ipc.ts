@@ -32,6 +32,7 @@ import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
+import { swipeNavigation } from "@/swipe-navigation";
 import { DormantTab, isWindowedTab } from "@/tabs";
 import {
   canOpenWorkspaceAppInApp,
@@ -177,6 +178,10 @@ class Ipc {
           outOfOffice,
         });
       }
+    });
+
+    this.main.on("swipeNavigation.setPageScrollEdge", (event, pageScrollEdge) => {
+      swipeNavigation.setPageScrollEdge(event.sender, pageScrollEdge);
     });
 
     this.main.on("titleBar.toggleAppMenu", () => {

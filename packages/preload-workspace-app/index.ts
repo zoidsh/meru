@@ -1,5 +1,7 @@
 import "@meru/shared/electron-api";
 import "./ipc";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { observePageScrollEdge } from "@meru/shared/renderer/scroll-edge";
 import { initDocsPreload } from "./apps/docs";
 import { initMailPreload } from "./apps/mail";
 import { initMeetPreload } from "./apps/meet";
@@ -21,3 +23,7 @@ if (appPreloadScript) {
 if (window.location.hostname !== "mail.google.com") {
   initServiceWorkerNotifications();
 }
+
+observePageScrollEdge((pageScrollEdge) => {
+  ipc.main.send("swipeNavigation.setPageScrollEdge", pageScrollEdge);
+});

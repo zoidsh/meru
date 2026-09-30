@@ -1,3 +1,4 @@
+import type { PageScrollEdge } from "@meru/shared/scroll-edge";
 import type { SwipeDirection } from "./types";
 
 export type SwipeNavigationAction = "back" | "forward";
@@ -6,15 +7,6 @@ export const SWIPE_DIRECTION_ACTIONS = {
   left: "back",
   right: "forward",
 } as const satisfies Record<SwipeDirection, SwipeNavigationAction>;
-
-/**
- * Whether the page under the pointer has anywhere left to scroll sideways,
- * which is the page's claim on the gesture.
- */
-export type PageScrollEdge = {
-  canScrollLeft: boolean;
-  canScrollRight: boolean;
-};
 
 export type SwipeBeginDecision =
   | { action: SwipeNavigationAction }

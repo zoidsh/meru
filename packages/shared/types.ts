@@ -11,6 +11,7 @@ import type {
   GmailLabelColors,
   GmailSavedSearches,
 } from "./schemas";
+import type { PageScrollEdge } from "./scroll-edge";
 import type {
   AccountTabsState,
   VerticalTabsGmailUnreadBadge,
@@ -268,6 +269,7 @@ export type IpcMainEvents =
       "downloads.openFile": [item: Pick<DownloadItem, "id" | "filePath">];
       "downloads.showFileInFolder": [item: Pick<DownloadItem, "id" | "filePath">];
       "downloads.dragFile": [item: Pick<DownloadItem, "id" | "filePath">];
+      "swipeNavigation.setPageScrollEdge": [pageScrollEdge: PageScrollEdge];
     }
   | {
       "gmail.handleMessage": (
