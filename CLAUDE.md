@@ -20,9 +20,9 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
 | Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                    |
 | Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
-| Signed, notarised macOS build           | `MERU_SIGN=true bun run build:mac`                          |
+| Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`    |
 
-`bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. `bun run dev:licensed` takes the same flags and adds the development license key and trial device id from 1Password.
+`bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. `op run --env-file .env.dev.op -- bun run dev` adds the development license key and trial device id from 1Password.
 
 Several worktrees run it at once, with nothing to pass. The renderer serves on the next free port from 3000, or on `PORT` when something outside assigns one, and Electron is handed the address the server came up on. A run in a linked worktree takes a profile named after its branch unless `--profile` names one, which gives it a user data directory and a single instance lock of its own; the main checkout keeps the default directory and the accounts signed in to it. `--debug-port 0` leaves the port to Chromium and prints what it picked. The docs' `conventions.md` has the rest.
 
@@ -55,13 +55,11 @@ Things that take more than one file to see:
 
 ## Environment
 
-- varlock validates the build, signing and test environment against `.env.schema` and starts the commands that need it with `varlock run --`, so the values are in the environment before any process starts, electron-builder's included: `build:mac` and `build:win` run `package:mac` and `package:win` under it, and `test:e2e` runs `scripts/e2e.ts`. No bunfig preload: it would validate on every Bun command, `bun test` ignores the top-level one, and it never reaches a process that is not Bun.
-- Values from 1Password are `op()` references in `.env.signing` and `.env.e2e`, never in `.env.schema`: without vault access an `op()` fails the whole load, even for an optional item, and a clone, `bun test`, `bun run dev` and CI have none. `MERU_SIGN=true` imports `.env.signing`; `test:e2e` sets `MERU_E2E`, which imports `.env.e2e` everywhere but CI; `dev:licensed` sets `MERU_DEV`, which imports `.env.dev`. Never set `MERU_DEV` around a build, which would inline the trial device id. Anything already in the process environment wins without an `op()` call, which is how CI passes its secrets.
-- `op` signs in through the 1Password app, or with the service-account token the optional `~/.env.1password` supplies on a machine without it. The token is `@internal`, which `varlock run` strips from the child, and nothing else is: a child that loads the schema again needs every other value passed through.
-- `@requireAllOrNone`, from `@timche/varlock-require-all-or-none`, fails a load that has only some of a group set: the macOS signing values and `AZURE_*`, which is why `build:win` runs `package:win` under `varlock run` too. The checks live in `.env.groups`, imported first because varlock runs a file's imports last to first and a check must run after `@initOp`.
-- Quote an `op://` path that contains a space; unquoted, it resolves to the literal text.
-- Bun still loads a developer's own `.env.development.local` for `bun run dev`, and `build:js` pins `NODE_ENV=production` so that it does not. The files varlock imports are named so Bun never loads them: never `.env.development`, `.env.test` or `.env.production`.
-- `varlock load --agent` and `varlock explain <KEY>` show the resolved environment with secrets redacted; never `--format json`, which prints them. For varlock's behaviour, search `https://varlock.dev/llms-full.txt`, its current docs in one file.
+- Code and `package.json` scripts read plain environment variables and never call `op`. Maintainers take them from 1Password with `op run --env-file <file> -- <command>`; contributors put their own in a gitignored `.env`, from the names in `.env.example`; CI passes GitHub secrets.
+- The `.env.<scope>.op` files are scoped, so a command resolves only what it needs: `.env.signing.op` signs a macOS build, `.env.e2e.op` has the end-to-end suite's license key and signed-in account, and `.env.dev.op` licenses `bun run dev`. Never wrap a build or the end-to-end suite in `.env.dev.op`: `build:js` inlines `MERU_DEV_DEVICE_ID`, and the suite's apps would all launch licensed through `MERU_LICENSE_KEY`.
+- A signing environment is all or none, checked by `scripts/signing-env.ts`: electron-builder signs with whatever part it finds and skips the rest with a log line. `build:mac` runs the check first, and `build-win.ts` builds unsigned without the Azure values. `test:e2e` strips the macOS values from the build it makes, so the suite can run beside them.
+- Quote an `op://` path that contains a space.
+- Bun loads `.env` for every command, and `.env.development.local` for `bun run dev`, which `build:js` avoids by pinning `NODE_ENV=production`. `.env.<scope>.op` and `.env.example` are names Bun never loads.
 
 ## Boundaries
 

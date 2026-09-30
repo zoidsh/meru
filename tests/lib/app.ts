@@ -9,6 +9,7 @@
  * That build is Linux only. Elsewhere, build the app for the platform and point
  * MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -621,8 +622,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
  * A real key against the production backend rather than a stub, so what these
  * tests prove is that Meru unlocks on the answer the live API actually gives
  * rather than on one a fake was told to give. CI passes it as a secret; a local
- * run resolves it from 1Password through `.env.e2e`, which `test:e2e` asks
- * varlock for and the Playwright process inherits.
+ * run takes it from 1Password with `op run --env-file .env.e2e.op`.
  *
  * Thrown rather than skipped. A key that has been rotated away, or a workflow
  * that stopped passing it, is a broken run — and a suite that skipped itself
@@ -633,7 +633,7 @@ function requireLicenseKey() {
 
   if (!licenseKey) {
     throw new Error(
-      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run resolves it from 1Password through .env.e2e.",
+      "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run takes it from 1Password with `op run --env-file .env.e2e.op -- bun run test:e2e`.",
     );
   }
 
@@ -677,9 +677,10 @@ export function useProApp(seedConfig: SeedConfig = {}, options: UseAppOptions = 
  * The user data directory somebody signed a Gmail account in to, and the address
  * signed in there, or undefined when either is missing.
  *
- * Both come from `.env.e2e`: the directory is the main checkout's
- * `.meru/e2e-signed-in`, and the address is in 1Password. A directory that does
- * not exist counts as missing, since every local run names it.
+ * The directory is the main checkout's `.meru/e2e-signed-in` unless
+ * `MERU_TEST_PROFILE_DIR` names another, so every worktree shares the one
+ * signed in by hand, and the address comes from `.env.e2e.op`. A directory
+ * that does not exist counts as missing, since every run names one.
  *
  * Missing is not the broken run a missing license key is, so this answers
  * instead of throwing. Signing in to Google is done by hand, once, at a password
@@ -694,7 +695,14 @@ export function useProApp(seedConfig: SeedConfig = {}, options: UseAppOptions = 
  * resolves against.
  */
 export function signedInProfile() {
-  const directory = process.env.MERU_TEST_PROFILE_DIR;
+  const directory =
+    process.env.MERU_TEST_PROFILE_DIR ??
+    path.join(
+      execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+        encoding: "utf8",
+      }).trim(),
+      "../.meru/e2e-signed-in",
+    );
 
   const email = process.env.MERU_TEST_ACCOUNT_EMAIL;
 

@@ -8,6 +8,7 @@
  * single command on every platform.
  */
 import { spawn } from "bun";
+import { SIGNING_ENV_VARS } from "./signing-env";
 
 const BUILDS = {
   darwin: { script: "build:mac", args: ["--arm64"] },
@@ -26,7 +27,7 @@ if (!build) {
   );
 }
 
-async function run(command: string[], env?: Record<string, string>) {
+async function run(command: string[], env: Record<string, string | undefined> = {}) {
   const { exited } = spawn(command, {
     stdout: "inherit",
     stderr: "inherit",
@@ -57,16 +58,12 @@ const project = Bun.argv.slice(2).find((argument) => argument.startsWith(PROJECT
 // platform themselves: naming it again to skip a build would be the same three
 // paths written down in a second place, free to drift from the first.
 if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
-  const buildStatus = await run([
-    "bun",
-    "run",
-    build.script,
-    "--",
-    "--dir",
-    ...build.args,
-    "--publish",
-    "never",
-  ]);
+  const buildStatus = await run(
+    ["bun", "run", build.script, "--", "--dir", ...build.args, "--publish", "never"],
+    // Signing and notarising would only slow down an app launched in place, so
+    // a run under `op run --env-file .env.signing.op` builds unsigned.
+    Object.fromEntries(SIGNING_ENV_VARS.mac.map((name) => [name, undefined])),
+  );
 
   if (buildStatus !== 0) {
     process.exit(buildStatus);

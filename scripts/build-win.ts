@@ -18,12 +18,7 @@ import {
   configureBuildCommand,
   createYargs,
 } from "electron-builder/out/builder";
-
-// Azure Artifact Signing authenticates through the Azure SDK's
-// EnvironmentCredential, which reads exactly these three names.
-const CREDENTIAL_ENV_VARS = ["AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET"];
-
-const missingEnvVars = CREDENTIAL_ENV_VARS.filter((name) => !process.env[name]);
+import { hasSigningEnv, SIGNING_ENV_VARS } from "./signing-env";
 
 const args = configureBuildCommand(createYargs()).parse(process.argv.slice(2)) as CliOptions & {
   win?: string[];
@@ -33,8 +28,8 @@ const args = configureBuildCommand(createYargs()).parse(process.argv.slice(2)) a
 // layers, which electron-builder merges in order, so the override goes last.
 const config = [args.config].flat();
 
-if (missingEnvVars.length > 0) {
-  console.log(`Skipping Windows code signing: ${missingEnvVars.join(", ")} not set`);
+if (!hasSigningEnv("win")) {
+  console.log(`Skipping Windows code signing: ${SIGNING_ENV_VARS.win.join(", ")} not set`);
 
   config.push({ win: { azureSignOptions: null } });
 }
