@@ -42,6 +42,7 @@ export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => 
   let pointer: { x: number; y: number } | undefined;
   let sent: PageScrollEdge | undefined;
   let lastUpdatedAt = 0;
+  let trailingUpdate: ReturnType<typeof setTimeout> | undefined;
 
   const update = () => {
     if (!pointer) {
@@ -66,13 +67,24 @@ export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => 
   };
 
   const throttledUpdate = () => {
-    const now = Date.now();
+    const elapsed = Date.now() - lastUpdatedAt;
 
-    if (now - lastUpdatedAt < SCROLL_EDGE_THROTTLE) {
+    if (elapsed < SCROLL_EDGE_THROTTLE) {
+      // Where a scroller comes to rest is the state the next gesture is judged
+      // on, and it arrives in the last event of a burst, which the leading edge
+      // alone would drop.
+      trailingUpdate ??= setTimeout(() => {
+        trailingUpdate = undefined;
+
+        lastUpdatedAt = Date.now();
+
+        update();
+      }, SCROLL_EDGE_THROTTLE - elapsed);
+
       return;
     }
 
-    lastUpdatedAt = now;
+    lastUpdatedAt = Date.now();
 
     update();
   };
