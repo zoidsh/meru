@@ -206,6 +206,14 @@ void ShowOverlay(NSWindow* window, NSRect viewBounds, bool fromLeftEdge, double 
     g_overlay = [[MeruSwipeOverlay alloc] initWithFrame:NSZeroRect];
     g_overlay.wantsLayer = YES;
 
+    // The bubble slides in from outside the web view's edge, which past a
+    // window edge is the vertical tabs strip. Linked against the macOS 14 SDK
+    // or later, a view draws outside its bounds unless told not to.
+    if (@available(macOS 14, *)) {
+      g_overlay.clipsToBounds = YES;
+    }
+    g_overlay.layer.masksToBounds = YES;
+
     [contentView addSubview:g_overlay positioned:NSWindowAbove relativeTo:nil];
   }
 
