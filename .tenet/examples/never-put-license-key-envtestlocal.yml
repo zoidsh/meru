@@ -1,0 +1,195 @@
+- label: violation
+  lang: ts
+  lines: 2
+  note: The env read is still there, but the fallback hardcodes a real key into the file.
+  code: |
+    function requireLicenseKey() {
+      const licenseKey = process.env.MERU_TEST_LICENSE_KEY ?? "MERU-7QF3-2XKD-9M4A-LP0V-88TC";
+
+      return licenseKey;
+    }
+
+- label: violation
+  lang: ts
+  lines: 2
+  code: |
+    /** The license key the Pro suite launches with. */
+    const LICENSE_KEY = "MERU-4B8H-1WNE-6ZR2-QD5K-30YJ";
+
+    export function useProApp(seedConfig: SeedConfig = {}) {
+      return useApp({ licenseKey: LICENSE_KEY, ...seedConfig });
+    }
+
+- label: violation
+  lang: ts
+  lines: 5
+  note: The docblock is right about where the key lives and then spells the value out.
+  code: |
+    /**
+     * The license key a Pro run launches with. CI passes it as a repository
+     * secret; a local run keeps it in `.env.test.local`:
+     *
+     *     MERU_TEST_LICENSE_KEY=MERU-2JD9-8KQP-4XVB-77MN-C1LA
+     */
+    function requireLicenseKey() {
+      return process.env.MERU_TEST_LICENSE_KEY;
+    }
+
+- label: violation
+  lang: ts
+  lines: [1, 2]
+  code: |
+    // Rotated 2026-02-11; the old key MERU-1HVB-9XQD-5TKM-0PZA-63RW keeps
+    // activating until the billing period ends, so a stale .env.test.local
+    // still passes this file.
+    const meru = useProApp();
+
+- label: violation
+  lang: bash
+  lines: 2
+  note: The example file is committed, so the key it is filled in with is committed too.
+  code: |
+    # Copy to .env.test.local before running `bun run test:e2e`.
+    MERU_TEST_LICENSE_KEY=MERU-6TQX-0SZC-9E3H-KW1D-45RB
+    MERU_TEST_PROFILE_DIR=
+    MERU_TEST_ACCOUNT_EMAIL=
+
+- label: violation
+  lang: yaml
+  lines: 4
+  code: |
+    - if: runner.os == 'Linux'
+      run: xvfb-run -a bun run test:e2e
+      env:
+        MERU_TEST_LICENSE_KEY: MERU-5PLW-3HGN-8YRT-QA62-XZ90
+
+- label: violation
+  lang: md
+  lines: 3
+  code: |
+    ### Fixed
+
+    - Pro features no longer lock after a restart. Caught by an end-to-end run with `MERU_TEST_LICENSE_KEY=MERU-8NQV-5RJD-2KWX-P731-LMAE`.
+
+- label: violation
+  lang: md
+  lines: 3
+  note: A pull request description rather than a file, which the tenet covers as well.
+  code: |
+    ## Testing
+
+    Ran `bun run test:e2e` locally with the team key (MERU-3XKD-7WPM-1QZB-59NF-TRJ4) exported, all 42 tests green on Linux.
+
+- label: violation
+  lang: json
+  lines: 2
+  code: |
+    {
+      "licenseKey": "MERU-9GDS-4MTP-6XHV-0LWQ-82RY",
+      "trial.expired": true,
+      "accounts": []
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    function requireLicenseKey() {
+      const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
+
+      if (!licenseKey) {
+        throw new Error(
+          "MERU_TEST_LICENSE_KEY is not set. CI passes it as a repository secret; a local run reads it from .env.test.local.",
+        );
+      }
+
+      return licenseKey;
+    }
+
+- label: ok
+  lang: yaml
+  code: |
+    - if: runner.os != 'Linux'
+      run: bun run test:e2e
+      env:
+        MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
+
+- label: ok
+  lang: bash
+  code: |
+    # Copy to .env.test.local and fill in. The key is in 1Password, under "Meru e2e".
+    MERU_TEST_LICENSE_KEY=
+    MERU_TEST_PROFILE_DIR=
+    MERU_TEST_ACCOUNT_EMAIL=
+
+- label: ok
+  lang: tsx
+  note: The masked shape a user sees in the activation dialog, not a key.
+  code: |
+    <Input
+      id={field.name}
+      value={field.state.value}
+      onChange={(event) => field.handleChange(event.target.value)}
+      placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
+    />
+
+- label: ok
+  lang: ts
+  code: |
+    test("rejects a key the API does not know", async () => {
+      await activateLicenseKey(meru, "MERU-0000-0000-0000-0000-0000");
+
+      await expect(meru.page.getByText("This license key is invalid")).toBeVisible();
+    });
+
+- label: ok
+  lang: ts
+  code: |
+    /** A key the API is guaranteed not to know, for the rejection path. */
+    const UNKNOWN_LICENSE_KEY = "MERU-TEST-TEST-TEST-TEST-TEST";
+
+    test("shows the invalid-key error", async () => {
+      await activateLicenseKey(meru, UNKNOWN_LICENSE_KEY);
+
+      await expect(meru.page.getByText("This license key is invalid")).toBeVisible();
+    });
+
+- label: ok
+  lang: ts
+  code: |
+    /**
+     * The license key a Pro run launches with. CI passes it as a repository
+     * secret; a local run keeps it in `.env.test.local`, which the `test:e2e`
+     * script reads through `bun --env-file` and Playwright inherits.
+     */
+    function requireLicenseKey() {
+      return process.env.MERU_TEST_LICENSE_KEY;
+    }
+
+- label: ok
+  lang: ts
+  note: Unsure. The value reaches a CI log, which is a leak, but never a commit, comment or pull request, which is what this tenet is about.
+  code: |
+    test.beforeAll(() => {
+      if (process.env.MERU_E2E_DEBUG) {
+        console.log("launching Pro with", process.env.MERU_TEST_LICENSE_KEY);
+      }
+    });
+
+- label: ok
+  lang: json
+  code: |
+    {
+      "scripts": {
+        "test:e2e": "bun --env-file=.env.test.local run scripts/e2e.ts --project=e2e"
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: A key value handled at runtime, never written down.
+  code: |
+    const { success } = await ipc.main.invoke("licenseKey.activate", licenseKey);
+
+    if (success) {
+      config.set("licenseKey", licenseKey);
+    }

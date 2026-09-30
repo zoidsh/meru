@@ -1,0 +1,226 @@
+- label: violation
+  lang: ts
+  lines: 2
+  note: The e2e project matches *.spec.ts, the one suffix bun test also claims.
+  code: |
+    projects: [
+      { name: "e2e", testMatch: "**/*.spec.ts", outputDir: "test-results/e2e" },
+      {
+        name: "perf",
+        testMatch: "**/*.perf.ts",
+        outputDir: "test-results/perf",
+        retries: 0,
+      },
+    ],
+
+- label: violation
+  lang: json
+  lines: 5
+  note: A script that runs a Playwright file named tests/menu.spec.ts.
+  code: |
+    {
+      "scripts": {
+        "test:e2e": "bun --env-file=.env.test.local run scripts/e2e.ts --project=e2e",
+        "test:perf": "bun run scripts/e2e.ts --project=perf",
+        "test:menu": "bunx playwright test tests/menu.spec.ts"
+      }
+    }
+
+- label: violation
+  lang: yaml
+  lines: 8
+  note: CI runs a single end-to-end file carrying the .spec.ts suffix.
+  code: |
+    e2e:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v7
+        - uses: jdx/mise-action@v4
+        - run: bun install --frozen-lockfile
+        - if: runner.os == 'Linux'
+          run: xvfb-run -a bunx playwright test tests/launch.spec.ts
+
+- label: violation
+  lang: json
+  lines: 3
+  note: Keeps the .spec.ts name and hides the suite from bun test instead of renaming it.
+  code: |
+    {
+      "scripts": {
+        "test": "bun test --isolate --ignore 'tests/**/*.spec.ts'",
+        "test:e2e": "bun run scripts/e2e.ts --project=e2e"
+      }
+    }
+
+- label: violation
+  lang: ts
+  lines: 5
+  note: Not .spec.ts, but *.test.ts is claimed by bun test just the same, and it also sweeps up every unit test beside source.
+  code: |
+    export default defineConfig({
+      testDir: "tests",
+      workers: 1,
+      projects: [
+        { name: "e2e", testMatch: "**/*.test.ts", outputDir: "test-results/e2e" },
+        { name: "perf", testMatch: "**/*.perf.ts", outputDir: "test-results/perf" },
+      ],
+    });
+
+- label: violation
+  lang: yaml
+  lines: 4
+  note: A hook that runs Playwright over tests/**/*.test.ts, so the end-to-end files are named .test.ts.
+  code: |
+    pre-push:
+      commands:
+        e2e:
+          glob: "tests/**/*.test.ts"
+          run: bunx playwright test {push_files}
+
+- label: violation
+  lang: ts
+  lines: 6
+  note: The runner script hardcodes the suite as tests/*.spec.ts.
+  code: |
+    process.exit(
+      await run([
+        "bunx",
+        "playwright",
+        "test",
+        "tests/*.spec.ts",
+        ...Bun.argv.slice(2),
+      ]),
+    );
+
+- label: violation
+  lang: ts
+  lines: 3
+  note: Importing ./sign-in.spec means a tests/sign-in.spec.ts exists.
+  code: |
+    import { expect, test } from "@playwright/test";
+    import { useApp } from "./lib/app";
+    import { signInWithProfile } from "./sign-in.spec";
+
+    const meru = useApp();
+
+    test("shows the unified inbox after signing in", async () => {
+      await signInWithProfile(meru);
+      await expect(meru.renderer.getByRole("heading", { name: "Inbox" })).toBeVisible();
+    });
+
+- label: ok
+  lang: ts
+  note: The suffixes the suite is supposed to use, and a comment that names .spec.ts only to rule it out.
+  code: |
+    /*
+     * Two projects rather than one suite, so that `bun run test:e2e` and
+     * `bun run test:perf` each run their own and neither waits on the other.
+     *
+     * Not *.spec.ts for either: `bun test` claims that name and would try to run
+     * these files as unit tests, where Playwright's test() throws.
+     */
+    projects: [
+      { name: "e2e", testMatch: "**/*.e2e.ts", outputDir: "test-results/e2e" },
+      { name: "perf", testMatch: "**/*.perf.ts", outputDir: "test-results/perf" },
+    ],
+
+- label: ok
+  lang: ts
+  note: A unit test beside its source, which is exactly what bun test is meant to claim, so *.test.ts is right here.
+  code: |
+    import { describe, expect, test } from "bun:test";
+    import { getVisibleVerticalTabs } from "./tabs";
+
+    describe("getVisibleVerticalTabs", () => {
+      test("lists an unloaded unpinned tab in windows mode", () => {
+        expect(getVisibleVerticalTabs(tabs, { mode: "windows" })).toHaveLength(4);
+      });
+    });
+
+- label: ok
+  lang: ts
+  note: A value that happens to contain the letters spec.
+  code: |
+    const TILING_WINDOW_MANAGERS = new Set([
+      "i3",
+      "sway",
+      "bspwm",
+      "spectrwm",
+      "xmonad",
+    ]);
+
+- label: ok
+  lang: ts
+  note: Prose mentioning spec(), unrelated to file naming.
+  code: |
+    /*
+     * Chromium hands the check handler `GURL::spec()`, which for a standard
+     * scheme such as `chrome-extension:` carries the trailing slash the
+     * manifest omits.
+     */
+    export function matchesResource(url: string, pattern: string) {
+      return new URL(url).pathname === pattern;
+    }
+
+- label: ok
+  lang: json
+  note: The real scripts, which reach the suite through its project rather than by file name.
+  code: |
+    {
+      "scripts": {
+        "test:e2e": "bun --env-file=.env.test.local run scripts/e2e.ts --project=e2e",
+        "test:perf": "bun run scripts/e2e.ts --project=perf",
+        "types": "tsc && bun run --filter='*' types"
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: A helper under tests/ that holds no test of its own, so it carries no suffix and no testMatch glob reaches it.
+  code: |
+    /*
+     * The harness every end-to-end test launches through.
+     */
+    import { test } from "@playwright/test";
+    import { _electron, type ElectronApplication } from "playwright";
+
+    export function useApp() {
+      let electronApp: ElectronApplication;
+
+      test.beforeAll(async () => {
+        electronApp = await _electron.launch({ executablePath: resolveExecutable() });
+      });
+
+      return { get app() { return electronApp; } };
+    }
+
+- label: ok
+  lang: yaml
+  note: Unit tests and the end-to-end suite each run through their own entry point, neither naming a file.
+  code: |
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v7
+        - run: bun install --frozen-lockfile --ignore-scripts
+        - run: bun test --isolate
+    e2e:
+      runs-on: ${{ matrix.os }}
+      steps:
+        - uses: actions/checkout@v7
+        - run: bun install --frozen-lockfile
+        - run: bun run test:e2e
+
+- label: ok
+  lang: ts
+  note: A lint override globbing both suite suffixes, spelled the way the suite names them.
+  code: |
+    export default defineConfig({
+      ...oxlintConfig,
+      overrides: [
+        {
+          files: ["tests/**/*.e2e.ts", "tests/**/*.perf.ts"],
+          rules: { "no-await-in-loop": "off" },
+        },
+      ],
+    });

@@ -1,0 +1,254 @@
+- label: violation
+  lang: ts
+  lines: 1
+  note: The npm ms package imported in the main process, where @meru/shared/ms is the vendored one.
+  code: |
+    import ms from "ms";
+    import { config } from "@/config";
+
+    export function startTrialWatch() {
+      setInterval(() => {
+        trial.validate();
+      }, ms("3h"));
+    }
+
+- label: violation
+  lang: ts
+  lines: 2
+  note: Same npm import in an end-to-end test, which imports the shared helper elsewhere.
+  code: |
+    import { expect, test } from "@playwright/test";
+    import ms from "ms";
+
+    test("settles within a minute", async ({ page }) => {
+      await page.waitForTimeout(ms("5s"));
+    });
+
+- label: violation
+  lang: ts
+  lines: 12
+  note: From packages/app/updater/index.ts, which still spells three hours as arithmetic.
+  code: |
+    init() {
+      if (is.dev || !config.get("updates.autoCheck")) {
+        return;
+      }
+
+      autoUpdater.checkForUpdates();
+
+      setInterval(
+        () => {
+          autoUpdater.checkForUpdates();
+        },
+        1000 * 60 * 60 * 3,
+      );
+    }
+
+- label: violation
+  lang: ts
+  lines: 1
+  note: A named constant does not launder the raw millisecond number; packages/preload-gmail/toast.ts.
+  code: |
+    const FADE_MS = 200;
+
+    export function dismissToast(id: number) {
+      const toast = toasts.get(id);
+
+      toast?.element.classList.add("toast-hidden");
+
+      setTimeout(() => {
+        toast?.element.remove();
+      }, FADE_MS);
+    }
+
+- label: violation
+  lang: ts
+  lines: 5
+  note: The state of url-preview.ts before it was converted to ms("1.5s").
+  code: |
+    removeUrlPreviewElementTimeout = setTimeout(() => {
+      if (urlPreviewElement) {
+        urlPreviewElement.setAttribute("data-long-hover", "true");
+      }
+    }, 1500);
+
+- label: violation
+  lang: ts
+  lines: [5, 7]
+  note: Underscored millisecond literals for poll and timeout constants in packages/app/gmail.
+  code: |
+    /*
+     * Thirty seconds keeps the worst case lag behind a phone to about half a
+     * minute, for two small feed requests a minute per account.
+     */
+    const INBOX_FEED_POLL_INTERVAL = 30_000;
+
+    const HANDLE_MESSAGE_TIMEOUT = 15_000;
+
+- label: violation
+  lang: ts
+  lines: 6
+  note: A raw millisecond timeout option in an option bag, not a timer argument.
+  code: |
+    function runPowerShell(scriptPath: string, args: string[]) {
+      return new Promise<string>((resolve) => {
+        execFile(
+          "powershell.exe",
+          ["-NoProfile", "-File", scriptPath, ...args],
+          { timeout: 120_000 },
+          (_error, stdout) => resolve(stdout),
+        );
+      });
+    }
+
+- label: violation
+  lang: json
+  lines: 5
+  note: Pulling the npm package in, when the repo vendors it at packages/shared/ms.ts.
+  code: |
+    {
+      "name": "@meru/app",
+      "devDependencies": {
+        "electron": "38.0.0",
+        "ms": "2.1.3"
+      }
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    import { ms } from "@meru/shared/ms";
+
+    const INBOX_FEED_POLL_INTERVAL = ms("30s");
+
+    this.inboxFeedPollInterval = setInterval(() => {
+      this.fetchInboxFeed({ retryWhileUnchanged: false });
+    }, INBOX_FEED_POLL_INTERVAL);
+
+- label: ok
+  lang: ts
+  note: packages/shared/utils.ts; `ms` here is a parameter holding a count the caller already built.
+  code: |
+    export function wait(ms: number) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+- label: ok
+  lang: ts
+  note: The vendored helper itself, packages/shared/ms.ts, whose whole job is these constants.
+  code: |
+    /*
+     * https://github.com/vercel/ms
+     */
+
+    const s = 1000;
+    const m = s * 60;
+    const h = m * 60;
+    const d = h * 24;
+
+- label: ok
+  lang: ts
+  note: packages/electron-extensions/install/omaha.ts. The package is app-agnostic Chrome extension support, depends on no Meru package and so cannot import the helper.
+  code: |
+    import { buildEndpointParams } from "./params";
+    import type { CrxDownloadOptions } from "../crx";
+
+    const CRX_UPDATE_ENDPOINT = "https://clients2.google.com/service/update2/crx";
+
+    const UPDATE_CHECK_TIMEOUT_MS = 2 * 60 * 1000;
+
+    export async function checkCrxUpdate(options: CrxDownloadOptions) {
+      return fetch(CRX_UPDATE_ENDPOINT, {
+        signal: AbortSignal.timeout(UPDATE_CHECK_TIMEOUT_MS),
+      });
+    }
+
+- label: ok
+  lang: ts
+  note: packages/electron-extensions/alarms/schedule.ts. The same standalone package, converting the minutes chrome.alarms speaks in into the milliseconds a timer takes.
+  code: |
+    import type { AlarmCreateInfo } from "./bridge-protocol";
+
+    const MS_PER_MINUTE = 60_000;
+
+    export function createAlarmSchedule(info: AlarmCreateInfo, now: number) {
+      const delayInMinutes = readNumber(info.delayInMinutes);
+
+      return { scheduledTime: now + (delayInMinutes ?? 0) * MS_PER_MINUTE };
+    }
+
+- label: ok
+  lang: ts
+  note: A local `ms` holding an elapsed measurement, not a duration being chosen.
+  code: |
+    const startedAt = Date.now();
+
+    await account.gmail.fetchInboxFeed();
+
+    const ms = Date.now() - startedAt;
+
+    log.debug(`inbox feed took ${ms}ms`);
+
+- label: ok
+  lang: ts
+  note: CSS durations are a stylesheet unit, not a value the helper can produce.
+  code: |
+    style.textContent = `
+      .toast { transition: opacity 200ms ease, transform 200ms ease; }
+      .toast-hidden { opacity: 0; transform: translateY(0.5rem); }
+    `;
+
+- label: ok
+  lang: tsx
+  note: A Tailwind transition duration, again a style unit.
+  code: |
+    <span className="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      {account.label}
+    </span>
+
+- label: ok
+  lang: ts
+  note: A duration expressed in dayjs's own units, where a millisecond count would be the clumsier spelling.
+  code: |
+    case "until tomorrow": {
+      const until = dayjs().add(1, "day").startOf("day").valueOf();
+
+      config.set("doNotDisturb.until", until);
+
+      this.setTimer(until);
+
+      break;
+    }
+
+- label: ok
+  lang: ts
+  code: |
+    const hibernation = config.get("workspaceApps.hibernation");
+
+    const idleTimeout = ms(config.get("workspaceApps.hibernationTimeout"));
+
+    for (const tab of this.tabs.slice()) {
+      if (now - tab.lastActiveAt > idleTimeout) {
+        tab.hibernate();
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: Minutes of a day, not a count of milliseconds.
+  code: |
+    const endMinutes = endHour * 60 + endMinute;
+
+    if (endMinutes > 24 * 60) {
+      return "Quiet hours must end within the day.";
+    }
+
+- label: ok
+  lang: ts
+  note: Unsure. document.cookie max-age counts seconds, so ms() cannot supply it without a /1000, and packages/ui is vendored shadcn with no Meru dependency. Labelled ok, worth Tim's ruling.
+  code: |
+    const SIDEBAR_COOKIE_NAME = "sidebar_state";
+
+    const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;

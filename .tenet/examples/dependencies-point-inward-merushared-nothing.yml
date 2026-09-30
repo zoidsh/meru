@@ -1,0 +1,285 @@
+# Labelled cases for the dependencies-point-inward-merushared-nothing tenet, measured by `tenet check`.
+- label: violation
+  lang: ts
+  lines: 3
+  note: A type-only import still makes the renderer package depend on the main-process package; the type belongs in @meru/shared.
+  code: |
+    // packages/renderer/lib/stores.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import type { AccountConfig } from "@meru/app/config";
+    import { create } from "zustand";
+
+    export const useAccountsStore = create<{ accounts: AccountConfig[] }>(() => ({
+      accounts: [],
+    }));
+
+    ipc.renderer.on("accounts.changed", (_event, accounts) => {
+      useAccountsStore.setState({ accounts });
+    });
+- label: violation
+  lang: ts
+  lines: 2
+  note: The contract layer reaching out into the renderer package for a store.
+  code: |
+    // packages/shared/tabs.ts
+    import { useTabsStore } from "@meru/renderer/lib/stores";
+    import { VERTICAL_TABS_NARROW_WIDTH } from "./constants";
+    import type { AccountConfig } from "./schemas";
+
+    export function getVisibleVerticalTabs(account: AccountConfig) {
+      const { accountsTabs } = useTabsStore.getState();
+
+      return accountsTabs
+        .filter((tabs) => tabs.accountId === account.id)
+        .map((tabs) => tabs.visible);
+    }
+- label: violation
+  lang: ts
+  lines: 3
+  note: From packages/preload-gmail, `../app/` is packages/app; the preload is pulling in main-process code.
+  code: |
+    // packages/preload-gmail/lib/verification-code.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { openPopup } from "../../app/lib/popup";
+
+    export function showVerificationCodeToast(code: string) {
+      openPopup("verification-code", { code });
+
+      ipc.main.send("verificationCode.copied", code);
+    }
+- label: violation
+  lang: ts
+  lines: 2
+  note: The contract layer typing a channel with a main-process class inverts the direction every other package depends on.
+  code: |
+    // packages/shared/types.ts
+    import type { Gmail } from "@meru/app/gmail";
+    import type { AccountConfig } from "./schemas";
+
+    export type IpcMainEvents = {
+      "gmail.navigateTo": (accountId: string, path: string) => void;
+      "gmail.instanceReady": (gmail: Gmail) => void;
+      "accounts.add": (account: AccountConfig) => void;
+    };
+- label: violation
+  lang: json
+  lines: 6
+  code: |
+    {
+      "name": "@meru/renderer",
+      "version": "0.0.0",
+      "private": true,
+      "dependencies": {
+        "@meru/app": "workspace:*",
+        "@meru/shared": "workspace:*",
+        "@meru/ui": "workspace:*"
+      }
+    }
+- label: violation
+  lang: ts
+  lines: 3
+  note: An app-agnostic package reaching for the Meru main process, lazily so the bundler does not complain.
+  code: |
+    // packages/electron-extensions/options-page.ts
+    export async function openExtensionOptionsPage(extensionId: string) {
+      const { accounts } = await import("@meru/app/accounts");
+
+      const account = accounts.getSelected();
+
+      account?.tabs.openWorkspaceApp(`chrome-extension://${extensionId}/options.html`);
+    }
+- label: violation
+  lang: ts
+  lines: 3
+  note: Preload and renderer are siblings; a helper both need belongs in @meru/shared.
+  code: |
+    // packages/preload-workspace-app/service-worker-notifications.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { showToast } from "@meru/renderer/lib/toast";
+
+    export function initServiceWorkerNotifications() {
+      ipc.renderer.on("workspaceApp.notification", (_event, notification) => {
+        showToast(notification.title);
+      });
+    }
+- label: violation
+  lang: tsx
+  lines: 2
+  note: Uncertain label. packages/shared is the contract layer both processes import and @meru/ui is a React leaf; nothing in shared imports it today, so I read the component import as outward.
+  code: |
+    // packages/shared/account-badge.tsx
+    import { Badge } from "@meru/ui/components/badge";
+    import type { AccountConfig } from "./schemas";
+
+    export function accountBadgeLabel(account: AccountConfig) {
+      return account.label ?? account.email;
+    }
+
+    export function AccountBadge({ account }: { account: AccountConfig }) {
+      return <Badge>{accountBadgeLabel(account)}</Badge>;
+    }
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/main.ts
+    import path from "node:path";
+    import { platform } from "@electron-toolkit/utils";
+    import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
+    import { app, BrowserWindow } from "electron";
+    import { accounts } from "@/accounts";
+    import { getCommonBrowserWindowOptions, loadRenderer } from "@/lib/window";
+    import { appMenu } from "@/menu";
+    import { ipc } from "./ipc";
+    import { trial } from "./trial";
+- label: ok
+  lang: tsx
+  note: In packages/renderer `@/*` is the renderer's own root, not packages/app.
+  code: |
+    // packages/renderer/components/titlebar.tsx
+    import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+    import { Button } from "@meru/ui/components/button";
+    import { cn } from "@meru/ui/lib/utils";
+    import { XIcon } from "lucide-react";
+    import { useCloseOnWindowBlur } from "@/lib/hooks";
+
+    export function TitlebarCloseButton({ className }: { className?: string }) {
+      useCloseOnWindowBlur();
+
+      return (
+        <Button className={cn("h-7 w-7", className)} style={{ height: APP_TITLEBAR_HEIGHT }}>
+          <XIcon />
+        </Button>
+      );
+    }
+- label: ok
+  lang: ts
+  note: "@meru/shared/renderer/ipc lives in the contract layer despite the `renderer` segment, so a preload importing it still points inward."
+  code: |
+    // packages/preload-gmail/index.ts
+    import "@meru/shared/electron-api";
+    import { observeBodyMutations } from "@meru/shared/dom";
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { darkThemeMessage } from "@meru/dark-theme";
+    import { observeUnreadCount } from "./unread-count";
+
+    observeBodyMutations(() => {
+      observeUnreadCount((count) => {
+        ipc.main.send("gmail.unreadCountChanged", count);
+      });
+
+      darkThemeMessage();
+    });
+- label: ok
+  lang: ts
+  code: |
+    // packages/app/extensions.ts
+    import path from "node:path";
+    import { is } from "@electron-toolkit/utils";
+    import { Extensions, pruneDerivedExtensions } from "@meru/electron-extensions";
+    import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
+    import { ms } from "@meru/shared/ms";
+    import { config } from "./config";
+
+    const EXTENSION_UPDATE_INTERVAL = ms("6h");
+- label: ok
+  lang: ts
+  note: The main process loads the renderer's built HTML as a file; naming another package in a path string is not an import of it.
+  code: |
+    // packages/app/lib/window.ts
+    import path from "node:path";
+    import { is } from "@electron-toolkit/utils";
+    import { BrowserWindow } from "electron";
+
+    export function loadRenderer(window: BrowserWindow, searchParams: URLSearchParams) {
+      if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+        return window.loadURL(`${process.env.ELECTRON_RENDERER_URL}/main.html?${searchParams}`);
+      }
+
+      return window.loadFile(path.join(__dirname, "../renderer/main.html"), {
+        search: searchParams.toString(),
+      });
+    }
+- label: ok
+  lang: ts
+  note: Channel names starting with `app.` are strings over IPC, not a dependency on @meru/app.
+  code: |
+    // packages/preload-renderer/window-controls.ts
+    import { ipc } from "@meru/shared/renderer/ipc";
+
+    export function initWindowControls() {
+      document.querySelector("#quit")?.addEventListener("click", () => {
+        ipc.main.send("app.quit");
+      });
+
+      document.querySelector("#reload")?.addEventListener("click", () => {
+        ipc.main.send("app.reload");
+      });
+    }
+- label: ok
+  lang: ts
+  code: |
+    // packages/shared/tabs.ts
+    import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
+    import type { AccountConfig } from "./schemas";
+    import type { WorkspaceAppsMode } from "./workspace-apps";
+
+    export const GMAIL_TAB_ID = "gmail";
+
+    export function getVerticalTabsWidth(account: AccountConfig, mode: WorkspaceAppsMode) {
+      return mode === "hidden" ? VERTICAL_TABS_NARROW_WIDTH : VERTICAL_TABS_WIDE_WIDTH;
+    }
+- label: ok
+  lang: ts
+  note: Both paths stay inside packages/electron-extensions, however many directories they climb.
+  code: |
+    // packages/electron-extensions/facade/api/alarms.ts
+    import { ALARMS_PATHS, type AlarmFrame } from "../../alarms/bridge-protocol";
+    import { NativeMessageDecoder } from "../../native-messaging/framing";
+
+    export function decodeAlarmFrames(chunk: Uint8Array): AlarmFrame[] {
+      const decoder = new NativeMessageDecoder(ALARMS_PATHS.connect);
+
+      return decoder.push(chunk);
+    }
+- label: violation
+  lang: json
+  lines: 6
+  note: The alias is what lets a file under packages/shared import main-process code; it is the dependency in configuration form.
+  code: |
+    {
+      "extends": "@total-typescript/tsconfig/bundler/dom",
+      "compilerOptions": {
+        "paths": {
+          "@/*": ["./*"],
+          "@app/*": ["../app/*"]
+        }
+      },
+      "exclude": ["**/*.test.ts"]
+    }
+- label: violation
+  lang: ts
+  lines: 2
+  note: Uncertain label, same question as the @meru/ui one. @meru/shared imports no workspace package but itself today, and the main process pulls it in, so a DOM theme leaf inside it reads as outward.
+  code: |
+    // packages/shared/schemas.ts
+    import { darkThemeColors } from "@meru/dark-theme";
+    import { z } from "zod";
+
+    export const accountConfigSchema = z.object({
+      id: z.string(),
+      label: z.string(),
+      color: z.enum(Object.keys(darkThemeColors)),
+    });
+- label: ok
+  lang: json
+  note: The alias stays inside the package that declares it.
+  code: |
+    {
+      "extends": "@total-typescript/tsconfig/bundler/dom",
+      "compilerOptions": {
+        "jsx": "react-jsx",
+        "paths": {
+          "@/*": ["./*"]
+        }
+      }
+    }

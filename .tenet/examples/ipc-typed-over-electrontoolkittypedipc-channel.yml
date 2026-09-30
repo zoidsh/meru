@@ -1,0 +1,353 @@
+- label: violation
+  lang: ts
+  note: "Raw ipcMain.handle in a main module: the channel bypasses the typed listener and never reaches the shared map."
+  lines: 6
+  code: |
+    import { dialog, ipcMain } from "electron";
+    import { config } from "@/config";
+
+    class Downloads {
+      init() {
+        ipcMain.handle("downloads.setLocation", async () => {
+          const { canceled, filePaths } = await dialog.showOpenDialog({
+            properties: ["openDirectory"],
+          });
+
+          if (!canceled) {
+            config.set("downloads.location", filePaths[0]);
+          }
+
+          return { canceled };
+        });
+      }
+    }
+
+- label: violation
+  lang: ts
+  note: "Shipped code in packages/app/account.ts. The channel is declared in the shared map and well named, but the listener is raw Electron because the typed listener has no once/removeListener pair for a one-shot tied to a window. Labelled violation because the tenet's first sentence admits no untyped path; ask Tim whether this lifetime case is meant to be carved out."
+  lines: [12, 17]
+  code: |
+    const windowEvent = "closed";
+
+    const ipcEvent = "desktopSources.select";
+
+    const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+      desktopSourcesWindow.removeListener(windowEvent, windowListener);
+
+      callback({ video: desktopSource });
+    };
+
+    const windowListener = () => {
+      ipcMain.removeListener(ipcEvent, ipcListener);
+
+      callback({});
+    };
+
+    ipcMain.once(ipcEvent, ipcListener);
+
+    desktopSourcesWindow.once(windowEvent, windowListener);
+
+- label: violation
+  lang: ts
+  note: "A second channel map, declared in packages/app rather than once in packages/shared/types.ts, with its own listener instance."
+  lines: [4, 9]
+  code: |
+    import { IpcListener } from "@electron-toolkit/typed-ipc/main";
+    import type { InstalledExtensionState } from "@meru/shared/types";
+
+    type ExtensionsIpcEvents = {
+      "extensions.getInstalled": () => InstalledExtensionState[];
+      "extensions.install": (extensionId: string) => { error?: string };
+    };
+
+    const extensionsIpc = new IpcListener<ExtensionsIpcEvents>();
+
+    export function initExtensionsIpc() {
+      extensionsIpc.handle("extensions.getInstalled", () => getInstalledExtensions());
+
+      extensionsIpc.handle("extensions.install", (_event, extensionId) =>
+        installCuratedExtension(extensionId),
+      );
+    }
+
+- label: violation
+  lang: ts
+  note: "Typed client and a well formed name, but the handler registers in the feature module's own init() instead of ipc.init()."
+  lines: [12, 16]
+  code: |
+    import { config } from "@/config";
+    import { ipc } from "@/ipc";
+
+    class DoNotDisturb {
+      init() {
+        config.onDidChange("doNotDisturb.showTitlebarButton", (showTitlebarButton) => {
+          if (!showTitlebarButton) {
+            this.disable();
+          }
+        });
+
+        ipc.main.on("doNotDisturb.toggle", () => {
+          this.toggle();
+        });
+
+        ipc.main.on("doNotDisturb.showOptions", () => {
+          this.showOptionsMenu();
+        });
+      }
+    }
+
+    export const doNotDisturb = new DoNotDisturb();
+
+- label: violation
+  lang: ts
+  note: "Channel name with no domain segment, sitting among properly namespaced neighbours."
+  lines: 5
+  code: |
+    export type IpcMainEvents = {
+      "gmail.search": [searchQuery: string];
+      "gmail.navigateTo": [hashLocation: GmailHashLocation];
+      "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
+      toggleFullScreen: [];
+      "theme.setTheme": [theme: "system" | "light" | "dark"];
+    };
+
+- label: violation
+  lang: ts
+  note: "Colon and kebab separators instead of domain.verbNoun, and the send repeats the misshapen name."
+  lines: [3, 8]
+  code: |
+    export type IpcRendererEvent = {
+      "theme.darkModeChanged": [darkMode: boolean];
+      "gmail:unread-count-changed": [unreadCount: number];
+    };
+
+    // packages/app/gmail/index.ts
+    function pushUnreadCount(unreadCount: number) {
+      ipc.renderer.send(main.window.webContents, "gmail:unread-count-changed", unreadCount);
+    }
+
+- label: violation
+  lang: tsx
+  note: "The renderer reaches the channel through the exposed electronAPI instead of the typed client in packages/shared/renderer/ipc.ts, so the argument and return types are lost."
+  lines: 7
+  code: |
+    import { useQuery } from "@tanstack/react-query";
+
+    export function AboutSettings() {
+      const { data: aboutInfo } = useQuery({
+        queryKey: ["about", "info"],
+        queryFn: () =>
+          window.electron.ipcRenderer.invoke("about.getInfo") as Promise<{ version: string }>,
+      });
+
+      return <p>{aboutInfo?.version}</p>;
+    }
+
+- label: violation
+  lang: ts
+  note: "A hand-rolled bridge that forwards arbitrary channel strings, replacing the typed layer with an untyped one."
+  lines: [3, 4]
+  code: |
+    import { contextBridge, ipcRenderer } from "electron";
+
+    contextBridge.exposeInMainWorld("meru", {
+      send: (channel: string, ...args: unknown[]) => ipcRenderer.send(channel, ...args),
+      invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+      on: (channel: string, listener: (...args: unknown[]) => void) =>
+        ipcRenderer.on(channel, (_event, ...args) => listener(...args)),
+    });
+
+- label: ok
+  lang: ts
+  note: "A push on a declared channel from a main module other than ipc.ts, which is how every main module reaches the renderer."
+  code: |
+    import { ipc } from "@/ipc";
+    import { main } from "@/main";
+
+    class Trial {
+      setDaysLeft(daysLeft: number) {
+        this.daysLeft = daysLeft;
+
+        ipc.renderer.send(main.window.webContents, "trial.daysLeftChanged", daysLeft);
+      }
+    }
+
+    export const trial = new Trial();
+
+- label: ok
+  lang: ts
+  code: |
+    broadcastNavigationState = () => {
+      ipc.renderer.send(
+        this.chromeWebContents,
+        "workspaceApp.navigationStateChanged",
+        this.navigationHistory,
+      );
+    };
+
+    broadcastLoadingState = () => {
+      ipc.renderer.send(
+        this.chromeWebContents,
+        "workspaceApp.loadingStateChanged",
+        this.view.webContents.isLoading(),
+      );
+    };
+
+- label: ok
+  lang: ts
+  note: 'Dotted "section.camelCase" strings that are electron-store keys, not IPC channels.'
+  code: |
+    import { config } from "@/config";
+
+    export function resolveWorkspaceAppOpenBehavior() {
+      if (config.get("workspaceApps.mode") === "disabled") {
+        return "externalBrowser";
+      }
+
+      if (!config.get("workspaceApps.openInApp")) {
+        return "externalBrowser";
+      }
+
+      config.set("workspaceApps.launcherDisplay", "iconAndLabel");
+
+      return "tab";
+    }
+
+- label: ok
+  lang: ts
+  note: "config.onDidChange keys look exactly like channel names but are store paths, and the collection-level registration is the documented pattern."
+  code: |
+    class Accounts {
+      init() {
+        config.onDidChange("gmail.labelColors", () => {
+          for (const account of this.getAccounts()) {
+            account.instance.gmail.applyLabelColors();
+          }
+        });
+
+        config.onDidChange("verticalTabs.showWindows", () => {
+          this.sendTabsChangedToRenderer();
+        });
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: "Emitter event names, which are kebab-case by Electron's own contract and are not IPC channels."
+  code: |
+    view.webContents.on("did-finish-load", () => {
+      this.applyUserStyles();
+    });
+
+    view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
+
+    item.once("done", (_event, state) => {
+      if (state === "completed") {
+        this.addDownloadHistoryItem(item);
+      }
+    });
+
+    nativeTheme.on("updated", () => {
+      appTray.updateIcon();
+    });
+
+- label: ok
+  lang: ts
+  note: "@meru/electron-extensions is app-agnostic: its bridge is its own transport over path constants, deliberately not the app's channel map."
+  code: |
+    import { ALARMS_PATHS } from "./bridge-protocol";
+
+    export function registerAlarms(bridge: ExtensionBridge) {
+      bridge.handle(ALARMS_PATHS.create, ({ session, extensionId, body, headers }) => {
+        return this.create(session, extensionId, body, headers);
+      });
+
+      bridge.handle(ALARMS_PATHS.clearAll, ({ session, extensionId, headers }) =>
+        this.clearAll(session, extensionId, headers),
+      );
+    }
+
+- label: ok
+  lang: tsx
+  code: |
+    import { ipc } from "@meru/shared/renderer/ipc";
+
+    export function WorkspaceAppToolbar({ workspaceAppId }: { workspaceAppId: string }) {
+      const [isLoading, setIsLoading] = useState(false);
+
+      useEffect(() => {
+        const unsubscribe = ipc.renderer.on("workspaceApp.loadingStateChanged", (_event, loading) => {
+          setIsLoading(loading);
+        });
+
+        ipc.main.invoke("workspaceApp.getLoadingState", workspaceAppId).then(setIsLoading);
+
+        return unsubscribe;
+      }, [workspaceAppId]);
+
+      return <Button onClick={() => ipc.main.send("workspaceApp.reload", workspaceAppId)} />;
+    }
+
+- label: ok
+  lang: ts
+  note: "A content preload listening and replying on declared channels through the typed client. Preloads never register main-process handlers, so this is not an ipc.init() case."
+  code: |
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import { refreshInbox, sendMailAction } from "./inbox";
+
+    ipc.renderer.on("gmail.navigateTo", (_event, destination) => {
+      window.location.hash = `#${destination}`;
+    });
+
+    ipc.renderer.on("gmail.handleMessage", async (_event, messageId, action, requestId) => {
+      let success = true;
+
+      try {
+        await sendMailAction(messageId, action);
+
+        refreshInbox();
+      } catch {
+        success = false;
+      }
+
+      ipc.main.send("gmail.messageHandled", requestId, success);
+    });
+
+- label: ok
+  lang: ts
+  note: "A new channel declared once in the shared map and handled in ipc.init()."
+  code: |
+    // packages/shared/types.ts
+    export type IpcMainEvents = {
+      "bookmarks.moveBookmark": [accountId: string, bookmarkId: string, targetIndex: number];
+    };
+
+    // packages/app/ipc.ts
+    class Ipc {
+      main = new IpcListener<IpcMainEvents>();
+
+      init() {
+        ipc.main.on("bookmarks.moveBookmark", (_event, accountId, bookmarkId, targetIndex) => {
+          bookmarks.moveBookmark(accountId, bookmarkId, targetIndex);
+        });
+      }
+    }
+
+- label: ok
+  lang: ts
+  note: "contextBridge exposing one named page API, not a channel forwarder — the message itself still leaves over the typed client on a declared channel."
+  code: |
+    import { ipc } from "@meru/shared/renderer/ipc";
+    import type { WorkspaceAppNotification } from "@meru/shared/types";
+    import { contextBridge, webFrame } from "electron";
+
+    export function initServiceWorkerNotifications() {
+      contextBridge.exposeInMainWorld(
+        "meruShowNotification",
+        (notification: WorkspaceAppNotification) => {
+          ipc.main.send("workspaceApp.showNotification", notification);
+        },
+      );
+
+      webFrame.executeJavaScript(`(${patchShowNotification.toString()})()`);
+    }
