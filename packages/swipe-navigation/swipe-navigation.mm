@@ -67,13 +67,10 @@ NSString* g_tracking_direction = nil;
 
 }  // namespace
 
-/** The arrow bubble, over the web view it belongs to. */
 @interface MeruSwipeOverlay : NSView
 
-/** How far along the gesture is, from `0` to `1`. */
 @property(nonatomic) CGFloat progress;
 
-/** Whether the bubble slides in from the left edge, as going back does. */
 @property(nonatomic) BOOL fromLeftEdge;
 
 @end
@@ -436,7 +433,6 @@ void ReportEnd(bool committed) {
   napi_close_handle_scope(g_env, scope);
 }
 
-/** Whether the event has been taken over by a swipe and must not be delivered. */
 bool HandleScrollWheel(NSEvent* event) {
   bool whileSettling = false;
 
@@ -854,12 +850,12 @@ napi_value HideOverlayForDebugging(napi_env env, napi_callback_info info) {
 napi_value Init(napi_env env, napi_value exports) {
   const napi_property_descriptor properties[] = {
       {"isSwipeTrackingEnabled", nullptr, IsSwipeTrackingEnabled, nullptr, nullptr, nullptr,
-       napi_default, nullptr},
-      {"start", nullptr, Start, nullptr, nullptr, nullptr, napi_default, nullptr},
-      {"stop", nullptr, Stop, nullptr, nullptr, nullptr, napi_default, nullptr},
-      {"showOverlay", nullptr, ShowOverlayForDebugging, nullptr, nullptr, nullptr, napi_default,
+       napi_enumerable, nullptr},
+      {"start", nullptr, Start, nullptr, nullptr, nullptr, napi_enumerable, nullptr},
+      {"stop", nullptr, Stop, nullptr, nullptr, nullptr, napi_enumerable, nullptr},
+      {"showOverlay", nullptr, ShowOverlayForDebugging, nullptr, nullptr, nullptr, napi_enumerable,
        nullptr},
-      {"hideOverlay", nullptr, HideOverlayForDebugging, nullptr, nullptr, nullptr, napi_default,
+      {"hideOverlay", nullptr, HideOverlayForDebugging, nullptr, nullptr, nullptr, napi_enumerable,
        nullptr},
   };
 
