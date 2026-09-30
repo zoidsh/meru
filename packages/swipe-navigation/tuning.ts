@@ -49,6 +49,20 @@ export const SWIPE_NAVIGATION_TUNING = {
    */
   overlayMaxOffset: 40,
 
+  /**
+   * Points the bubble's diameter grows by once it has fully arrived, with its
+   * opacity going to `1`: Chrome's cue that letting go now navigates.
+   */
+  overlayArrivedGrowth: 4,
+
+  /**
+   * The bubble's opacity as it starts sliding in and just before it arrives.
+   * Arriving then jumps it to fully opaque, which is what makes the arrival
+   * readable, as Chrome's shield goes from 0.25–0.65 to 0.75.
+   */
+  overlayArrivingOpacityStart: 0.5,
+  overlayArrivingOpacityEnd: 0.8,
+
   /** The progress over which the bubble fades in from nothing. */
   overlayFadeInProgress: 0.15,
 

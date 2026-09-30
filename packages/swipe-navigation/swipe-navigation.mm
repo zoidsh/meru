@@ -27,6 +27,9 @@ struct Tuning {
   double maximumVerticalDelta;
   double overlayDiameter;
   double overlayMaxOffset;
+  double overlayArrivedGrowth;
+  double overlayArrivingOpacityStart;
+  double overlayArrivingOpacityEnd;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
 };
@@ -89,19 +92,30 @@ NSString* g_tracking_direction = nil;
     return;
   }
 
-  const CGFloat radius = g_tuning.overlayDiameter / 2;
-
   const CGFloat arrival = std::min(1.0, progress / std::max(0.001, g_tuning.arrivalProgress));
-  const CGFloat inset = -radius + arrival * (g_tuning.overlayMaxOffset + radius);
+
+  // Chrome's cue that letting go now navigates: once fully arrived, the bubble
+  // grows a little and turns opaque, rather than changing colour.
+  const bool arrived = arrival >= 1;
+
+  const CGFloat inset = -g_tuning.overlayDiameter / 2 +
+                        arrival * (g_tuning.overlayMaxOffset + g_tuning.overlayDiameter / 2);
+  const CGFloat diameter =
+      g_tuning.overlayDiameter + (arrived ? g_tuning.overlayArrivedGrowth : 0);
+  const CGFloat radius = diameter / 2;
   const CGFloat centerX = self.fromLeftEdge ? inset : NSWidth(self.bounds) - inset;
   const CGFloat centerY = NSMidY(self.bounds);
 
   const NSRect circle =
-      NSMakeRect(centerX - radius, centerY - radius, g_tuning.overlayDiameter,
-                 g_tuning.overlayDiameter);
+      NSMakeRect(centerX - radius, centerY - radius, diameter, diameter);
 
+  const CGFloat opacity =
+      arrived ? 1
+              : g_tuning.overlayArrivingOpacityStart +
+                    arrival * (g_tuning.overlayArrivingOpacityEnd -
+                               g_tuning.overlayArrivingOpacityStart);
   const CGFloat alpha =
-      std::min(1.0, progress / std::max(0.001, g_tuning.overlayFadeInProgress));
+      opacity * std::min(1.0, progress / std::max(0.001, g_tuning.overlayFadeInProgress));
 
   NSGraphicsContext* context = NSGraphicsContext.currentContext;
 
@@ -125,8 +139,8 @@ NSString* g_tracking_direction = nil;
   [[NSColor.separatorColor colorWithAlphaComponent:alpha] setStroke];
   [ring stroke];
 
-  const CGFloat chevronHalfHeight = g_tuning.overlayDiameter * 0.17;
-  const CGFloat chevronHalfWidth = g_tuning.overlayDiameter * 0.11;
+  const CGFloat chevronHalfHeight = diameter * 0.17;
+  const CGFloat chevronHalfWidth = diameter * 0.11;
   const CGFloat tipX = self.fromLeftEdge ? centerX - chevronHalfWidth : centerX + chevronHalfWidth;
   const CGFloat baseX = self.fromLeftEdge ? centerX + chevronHalfWidth : centerX - chevronHalfWidth;
 
@@ -134,7 +148,7 @@ NSString* g_tracking_direction = nil;
   [chevron moveToPoint:NSMakePoint(baseX, centerY - chevronHalfHeight)];
   [chevron lineToPoint:NSMakePoint(tipX, centerY)];
   [chevron lineToPoint:NSMakePoint(baseX, centerY + chevronHalfHeight)];
-  chevron.lineWidth = std::max(2.0, g_tuning.overlayDiameter * 0.07);
+  chevron.lineWidth = std::max(2.0, diameter * 0.07);
   chevron.lineCapStyle = NSLineCapStyleRound;
   chevron.lineJoinStyle = NSLineJoinStyleRound;
 
@@ -610,6 +624,9 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.maximumVerticalDelta = ReadTuning(argv[0], "maximumVerticalDelta", 20);
   g_tuning.overlayDiameter = ReadTuning(argv[0], "overlayDiameter", 44);
   g_tuning.overlayMaxOffset = ReadTuning(argv[0], "overlayMaxOffset", 40);
+  g_tuning.overlayArrivedGrowth = ReadTuning(argv[0], "overlayArrivedGrowth", 4);
+  g_tuning.overlayArrivingOpacityStart = ReadTuning(argv[0], "overlayArrivingOpacityStart", 0.5);
+  g_tuning.overlayArrivingOpacityEnd = ReadTuning(argv[0], "overlayArrivingOpacityEnd", 0.8);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
 
