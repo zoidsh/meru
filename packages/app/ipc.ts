@@ -1147,13 +1147,7 @@ class Ipc {
     });
 
     this.main.on("gmail.openMessage", (_event, messageId) => {
-      const selectedAccount = accounts.getSelectedAccount();
-
-      ipc.renderer.send(
-        selectedAccount.instance.gmail.view.webContents,
-        "gmail.openMessage",
-        messageId,
-      );
+      accounts.openMessage(accounts.getSelectedAccount().config.id, messageId);
     });
 
     this.main.handle("gmail.handleMessage", async (_event, accountId, messageId, action) => {

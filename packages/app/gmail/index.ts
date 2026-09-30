@@ -941,9 +941,7 @@ export class Gmail {
           click: () => {
             main.show();
 
-            accounts.selectAccount(this.accountId);
-
-            ipc.renderer.send(this.view.webContents, "gmail.openMessage", newMail.id);
+            accounts.openMessage(this.accountId, newMail.id);
           },
           action: (index) => {
             const notificationAction = NEW_EMAIL_NOTIFICATION_ACTIONS[index];

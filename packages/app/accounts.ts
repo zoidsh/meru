@@ -3,6 +3,7 @@ import { platform } from "@electron-toolkit/utils";
 import { ms } from "@meru/shared/ms";
 import type { AccountConfig, AccountConfigs } from "@meru/shared/schemas";
 import {
+  GMAIL_TAB_ID,
   getVerticalTabsWidth,
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
@@ -415,6 +416,20 @@ class Accounts {
     this.updateAllViewBounds();
 
     this.refreshSelectedAccountView();
+  }
+
+  openMessage(accountId: string, messageId: string) {
+    const account = this.getAccount(accountId);
+
+    account.instance.tabs.activateTab(GMAIL_TAB_ID);
+
+    if (account.config.selected) {
+      this.refreshSelectedAccountView();
+    } else {
+      this.selectAccount(accountId);
+    }
+
+    ipc.renderer.send(account.instance.gmail.view.webContents, "gmail.openMessage", messageId);
   }
 
   selectPreviousAccount() {
