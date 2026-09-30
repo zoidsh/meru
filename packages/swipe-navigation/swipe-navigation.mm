@@ -34,10 +34,14 @@ struct Tuning {
 
 Tuning g_tuning = {};
 
+// Null once the Node environment has gone, which is what every path into
+// JavaScript checks: AppKit outlives it, and a scroll event or a settling
+// tracker afterwards would call into a torn-down environment.
 napi_env g_env = nullptr;
 napi_ref g_on_begin = nullptr;
 napi_ref g_on_progress = nullptr;
 napi_ref g_on_end = nullptr;
+bool g_cleanup_hook_added = false;
 
 // The accumulated scroll of the gesture being considered, reset by every
 // `NSEventPhaseBegan`. A gesture that has been refused is refused for the rest
@@ -301,6 +305,10 @@ struct Target {
  * loop runs on.
  */
 bool AskJsToTrack(NSWindow* window, NSPoint pointInWindow, NSString* direction, Target* target) {
+  if (!g_env) {
+    return false;
+  }
+
   napi_handle_scope scope = nullptr;
 
   if (napi_open_handle_scope(g_env, &scope) != napi_ok) {
@@ -357,7 +365,7 @@ bool AskJsToTrack(NSWindow* window, NSPoint pointInWindow, NSString* direction, 
 }
 
 void ReportProgress(double progress) {
-  if (!g_on_progress) {
+  if (!g_env || !g_on_progress) {
     return;
   }
 
@@ -377,7 +385,7 @@ void ReportProgress(double progress) {
 }
 
 void ReportEnd(bool committed) {
-  if (!g_on_end) {
+  if (!g_env || !g_on_end) {
     return;
   }
 
@@ -482,7 +490,7 @@ bool HandleScrollWheel(NSEvent* event) {
                                max:1
                       usingHandler:^(CGFloat gestureAmount, NSEventPhase phase, BOOL isComplete,
                                      BOOL* stop) {
-                        if (!g_tracking || generation != g_tracking_generation) {
+                        if (!g_env || !g_tracking || generation != g_tracking_generation) {
                           *stop = YES;
 
                           return;
@@ -554,6 +562,10 @@ napi_value IsSwipeTrackingEnabled(napi_env env, napi_callback_info info) {
 }
 
 void ReleaseCallbacks() {
+  if (!g_env) {
+    return;
+  }
+
   if (g_on_begin) {
     napi_delete_reference(g_env, g_on_begin);
 
@@ -588,6 +600,29 @@ bool ReadCallback(napi_env env, napi_value options, const char* name, napi_ref* 
   }
 
   return napi_create_reference(env, value, 1, out) == napi_ok;
+}
+
+void StopSwipeNavigation() {
+  if (g_monitor) {
+    [NSEvent removeMonitor:g_monitor];
+
+    g_monitor = nil;
+  }
+
+  g_tracking = false;
+  g_tracking_released = false;
+  g_tracking_direction = nil;
+
+  RemoveOverlay();
+  ReleaseCallbacks();
+}
+
+void CleanUpEnvironment(void*) {
+  g_cleanup_hook_added = false;
+
+  StopSwipeNavigation();
+
+  g_env = nullptr;
 }
 
 napi_value Start(napi_env env, napi_callback_info info) {
@@ -627,9 +662,18 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
 
+  if (!g_cleanup_hook_added &&
+      napi_add_env_cleanup_hook(env, CleanUpEnvironment, nullptr) == napi_ok) {
+    g_cleanup_hook_added = true;
+  }
+
   if (!g_monitor) {
     g_monitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                                      handler:^NSEvent*(NSEvent* event) {
+                                                       if (!g_env) {
+                                                         return event;
+                                                       }
+
                                                        return HandleScrollWheel(event) ? nil
                                                                                        : event;
                                                      }];
@@ -639,17 +683,15 @@ napi_value Start(napi_env env, napi_callback_info info) {
 }
 
 napi_value Stop(napi_env env, napi_callback_info info) {
-  if (g_monitor) {
-    [NSEvent removeMonitor:g_monitor];
+  // Taken off here as well, so that the environment going away later cannot
+  // remove a hook a second time.
+  if (g_cleanup_hook_added) {
+    napi_remove_env_cleanup_hook(env, CleanUpEnvironment, nullptr);
 
-    g_monitor = nil;
+    g_cleanup_hook_added = false;
   }
 
-  g_tracking = false;
-  g_tracking_direction = nil;
-
-  RemoveOverlay();
-  ReleaseCallbacks();
+  StopSwipeNavigation();
 
   return nullptr;
 }
