@@ -27,9 +27,7 @@ struct Tuning {
   double maximumVerticalDelta;
   double overlayDiameter;
   double overlayMaxOffset;
-  double overlayArrivedGrowth;
-  double overlayArrivingOpacityStart;
-  double overlayArrivingOpacityEnd;
+  double overlayArrivingOpacity;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
 };
@@ -94,26 +92,19 @@ NSString* g_tracking_direction = nil;
 
   const CGFloat arrival = std::min(1.0, progress / std::max(0.001, g_tuning.arrivalProgress));
 
-  // Chrome's cue that letting go now navigates: once fully arrived, the bubble
-  // grows a little and turns opaque, rather than changing colour.
-  const bool arrived = arrival >= 1;
-
-  const CGFloat inset = -g_tuning.overlayDiameter / 2 +
-                        arrival * (g_tuning.overlayMaxOffset + g_tuning.overlayDiameter / 2);
-  const CGFloat diameter =
-      g_tuning.overlayDiameter + (arrived ? g_tuning.overlayArrivedGrowth : 0);
+  const CGFloat diameter = g_tuning.overlayDiameter;
   const CGFloat radius = diameter / 2;
+  const CGFloat inset = -radius + arrival * (g_tuning.overlayMaxOffset + radius);
   const CGFloat centerX = self.fromLeftEdge ? inset : NSWidth(self.bounds) - inset;
   const CGFloat centerY = NSMidY(self.bounds);
 
   const NSRect circle =
       NSMakeRect(centerX - radius, centerY - radius, diameter, diameter);
 
+  // Chrome's cue that letting go now navigates is the bubble going opaque as
+  // it arrives, rather than a change of colour.
   const CGFloat opacity =
-      arrived ? 1
-              : g_tuning.overlayArrivingOpacityStart +
-                    arrival * (g_tuning.overlayArrivingOpacityEnd -
-                               g_tuning.overlayArrivingOpacityStart);
+      g_tuning.overlayArrivingOpacity + arrival * (1 - g_tuning.overlayArrivingOpacity);
   const CGFloat alpha =
       opacity * std::min(1.0, progress / std::max(0.001, g_tuning.overlayFadeInProgress));
 
@@ -632,9 +623,7 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.maximumVerticalDelta = ReadTuning(argv[0], "maximumVerticalDelta", 20);
   g_tuning.overlayDiameter = ReadTuning(argv[0], "overlayDiameter", 44);
   g_tuning.overlayMaxOffset = ReadTuning(argv[0], "overlayMaxOffset", 40);
-  g_tuning.overlayArrivedGrowth = ReadTuning(argv[0], "overlayArrivedGrowth", 4);
-  g_tuning.overlayArrivingOpacityStart = ReadTuning(argv[0], "overlayArrivingOpacityStart", 0.5);
-  g_tuning.overlayArrivingOpacityEnd = ReadTuning(argv[0], "overlayArrivingOpacityEnd", 0.8);
+  g_tuning.overlayArrivingOpacity = ReadTuning(argv[0], "overlayArrivingOpacity", 0.5);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
 
