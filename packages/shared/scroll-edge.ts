@@ -17,6 +17,12 @@ export type PageScrollEdge = {
   canScrollRight: boolean;
 };
 
+/** A page with nowhere to go sideways, which is how an unread one is treated. */
+export const PAGE_AT_BOTH_EDGES: PageScrollEdge = {
+  canScrollLeft: false,
+  canScrollRight: false,
+};
+
 /** Sub-pixel scroll offsets put the end of a scroller off an exact integer. */
 const SCROLL_EDGE_EPSILON = 1;
 

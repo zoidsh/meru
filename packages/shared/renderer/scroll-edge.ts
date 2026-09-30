@@ -1,7 +1,12 @@
 /// <reference lib="dom" />
 
 import { ms } from "../ms";
-import { type PageScrollEdge, resolveScrollEdge, type ScrollEdgeCandidate } from "../scroll-edge";
+import {
+  PAGE_AT_BOTH_EDGES,
+  type PageScrollEdge,
+  resolveScrollEdge,
+  type ScrollEdgeCandidate,
+} from "../scroll-edge";
 
 const SCROLL_EDGE_THROTTLE = ms("100ms");
 
@@ -40,9 +45,14 @@ function readChain(element: Element | null) {
  */
 export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => void) {
   let pointer: { x: number; y: number } | undefined;
-  let sent: PageScrollEdge | undefined;
+  let sent = PAGE_AT_BOTH_EDGES;
   let lastUpdatedAt = 0;
   let trailingUpdate: ReturnType<typeof setTimeout> | undefined;
+
+  // The main process keeps the last report per view, and a navigation runs this
+  // again with the pointer unknown, so nothing would replace what it holds about
+  // the page that has gone.
+  send(sent);
 
   const update = () => {
     if (!pointer) {
@@ -54,7 +64,6 @@ export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => 
     );
 
     if (
-      sent &&
       sent.canScrollLeft === pageScrollEdge.canScrollLeft &&
       sent.canScrollRight === pageScrollEdge.canScrollRight
     ) {
@@ -99,7 +108,17 @@ export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => 
     { passive: true },
   );
 
-  window.addEventListener("wheel", throttledUpdate, { capture: true, passive: true });
+  window.addEventListener(
+    "wheel",
+    (event) => {
+      // A scroll is the first thing a fresh page gets, and until something says
+      // where the pointer is there is nothing to read the chain from.
+      pointer = { x: event.clientX, y: event.clientY };
+
+      throttledUpdate();
+    },
+    { capture: true, passive: true },
+  );
 
   window.addEventListener("scroll", throttledUpdate, { capture: true, passive: true });
 }

@@ -1,5 +1,5 @@
 import { platform } from "@electron-toolkit/utils";
-import type { PageScrollEdge } from "@meru/shared/scroll-edge";
+import { PAGE_AT_BOTH_EDGES, type PageScrollEdge } from "@meru/shared/scroll-edge";
 import {
   decideSwipeBegin,
   isPointInBounds,
@@ -16,12 +16,6 @@ import { getActiveView } from "@/active-view";
 import { log } from "@/lib/log";
 import { main } from "@/main";
 import { WorkspaceApp } from "@/workspace-app";
-
-/** What a view that has never reported is treated as: a page with nowhere to go. */
-const PAGE_AT_BOTH_EDGES: PageScrollEdge = {
-  canScrollLeft: false,
-  canScrollRight: false,
-};
 
 /** `MERU_SWIPE_NAVIGATION_PREVIEW=left:0.5` and the like. */
 const PREVIEW_PATTERN = /^(?<direction>left|right):(?<progress>[\d.]+)$/;
