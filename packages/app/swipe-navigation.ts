@@ -14,6 +14,7 @@ import { BrowserWindow, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { getActiveView } from "@/active-view";
 import { log } from "@/lib/log";
+import { Popup } from "@/lib/popup";
 import { main } from "@/main";
 import { WorkspaceApp } from "@/workspace-app";
 
@@ -89,6 +90,16 @@ class SwipeNavigation {
 
       if (!isPointInBounds({ x, y }, bounds)) {
         this.logGesture("refused", { direction, refusedBecause: "pointerOutsideView" });
+
+        return undefined;
+      }
+
+      const isPointOverPopup = Popup.getOpenBoundsIn(window).some((popupBounds) =>
+        isPointInBounds({ x, y }, popupBounds),
+      );
+
+      if (isPointOverPopup) {
+        this.logGesture("refused", { direction, refusedBecause: "pointerOverPopup" });
 
         return undefined;
       }
