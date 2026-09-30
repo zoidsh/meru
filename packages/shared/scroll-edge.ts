@@ -1,11 +1,9 @@
-/** One element of the chain out from the pointer, as the scroll edge reads it. */
 export type ScrollEdgeCandidate = {
   scrollLeft: number;
   scrollWidth: number;
   clientWidth: number;
   overflowX: string;
   overscrollBehaviorX: string;
-  /** The viewport scrolls whatever its computed `overflow-x` says. */
   isViewport?: boolean;
 };
 
@@ -17,12 +15,24 @@ export type PageScrollEdge = {
 /** Sub-pixel scroll offsets put the end of a scroller off an exact integer. */
 const SCROLL_EDGE_EPSILON = 1;
 
-const SCROLL_CONTAINER_OVERFLOWS = new Set(["auto", "scroll", "overlay", "hidden"]);
+const SCROLL_CONTAINER_OVERFLOWS = new Set(["auto", "scroll", "overlay"]);
+
+/**
+ * `hidden` scrolls only programmatically, and it is what truncates a row of text
+ * beside `text-overflow: ellipsis`, as every row of Gmail's inbox does — so
+ * counting it as a scroller refuses a forward swipe anywhere in the list.
+ */
+const NON_SCROLLING_OVERFLOWS = new Set(["hidden", "clip"]);
 
 const OVERSCROLL_CONTAINING_BEHAVIORS = new Set(["contain", "none"]);
 
+/** The viewport scrolls on anything but an overflow that cuts the page off. */
 function isScrollContainer(candidate: ScrollEdgeCandidate) {
-  return candidate.isViewport === true || SCROLL_CONTAINER_OVERFLOWS.has(candidate.overflowX);
+  if (candidate.isViewport === true) {
+    return !NON_SCROLLING_OVERFLOWS.has(candidate.overflowX);
+  }
+
+  return SCROLL_CONTAINER_OVERFLOWS.has(candidate.overflowX);
 }
 
 /**

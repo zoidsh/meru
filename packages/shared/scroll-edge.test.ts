@@ -56,6 +56,30 @@ describe("resolveScrollEdge", () => {
     });
   });
 
+  test("a truncated row of text claims nothing", () => {
+    expect(
+      resolveScrollEdge([candidate({ overflowX: "hidden", scrollWidth: 1600, scrollLeft: 0 })]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: false });
+  });
+
+  test("a clipped element claims nothing", () => {
+    expect(
+      resolveScrollEdge([candidate({ overflowX: "clip", scrollWidth: 1600, scrollLeft: 0 })]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: false });
+  });
+
+  test("a viewport with overflow-x of hidden claims nothing", () => {
+    expect(
+      resolveScrollEdge([candidate({ isViewport: true, overflowX: "hidden", scrollWidth: 1600 })]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: false });
+  });
+
+  test("a viewport with overflow-x of clip claims nothing", () => {
+    expect(
+      resolveScrollEdge([candidate({ isViewport: true, overflowX: "clip", scrollWidth: 1600 })]),
+    ).toEqual({ canScrollLeft: false, canScrollRight: false });
+  });
+
   test("a scroller at its edge hands the direction to the one outside it", () => {
     expect(
       resolveScrollEdge([
