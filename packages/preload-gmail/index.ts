@@ -27,9 +27,13 @@ const features = [
   darkThemeCompose,
 ];
 
-observePageScrollEdge((pageScrollEdge) => {
-  ipc.main.send("swipeNavigation.setPageScrollEdge", pageScrollEdge);
-});
+// Only macOS swipes between pages, and elsewhere the reads would cost every
+// pointer move for nothing.
+if (process.platform === "darwin") {
+  observePageScrollEdge((pageScrollEdge) => {
+    ipc.main.send("swipeNavigation.setPageScrollEdge", pageScrollEdge);
+  });
+}
 
 function runFeatures() {
   for (const feature of features) {
