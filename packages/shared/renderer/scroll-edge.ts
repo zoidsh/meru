@@ -10,25 +10,57 @@ import {
 
 const SCROLL_EDGE_THROTTLE = ms("100ms");
 
-function readCandidate(element: Element, isViewport: boolean): ScrollEdgeCandidate {
+function readCandidate(
+  element: Element,
+  isViewport: boolean,
+  overflowX?: string,
+): ScrollEdgeCandidate {
   const style = window.getComputedStyle(element);
 
   return {
     scrollLeft: element.scrollLeft,
     scrollWidth: element.scrollWidth,
     clientWidth: element.clientWidth,
-    overflowX: style.overflowX,
+    overflowX: overflowX ?? style.overflowX,
     overscrollBehaviorX: style.overscrollBehaviorX,
     direction: style.direction,
     isViewport,
   };
 }
 
+/**
+ * A root left at `overflow-x: visible` takes the body's value for the viewport,
+ * as CSS propagates it, while the body's own box then clips nothing, although
+ * `getComputedStyle` still reports the value on the body for both.
+ */
+function readViewportOverflows() {
+  const root = document.documentElement;
+  const { body } = document;
+
+  if (
+    !body ||
+    document.scrollingElement !== root ||
+    window.getComputedStyle(root).overflowX !== "visible"
+  ) {
+    return undefined;
+  }
+
+  return { root: window.getComputedStyle(body).overflowX, body: "visible" };
+}
+
 function readChain(element: Element | null) {
   const chain: ScrollEdgeCandidate[] = [];
+  const viewportOverflows = readViewportOverflows();
 
   for (let current = element; current; current = current.parentElement) {
-    chain.push(readCandidate(current, current === document.scrollingElement));
+    const overflowX =
+      current === document.documentElement
+        ? viewportOverflows?.root
+        : current === document.body
+          ? viewportOverflows?.body
+          : undefined;
+
+    chain.push(readCandidate(current, current === document.scrollingElement, overflowX));
   }
 
   return chain;
