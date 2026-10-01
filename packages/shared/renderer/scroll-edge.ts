@@ -130,15 +130,18 @@ export function observePageScrollEdge(send: (pageScrollEdge: PageScrollEdge) => 
     update();
   };
 
-  window.addEventListener(
-    "pointermove",
-    (event) => {
-      pointer = { x: event.clientX, y: event.clientY };
+  const trackPointer = (event: PointerEvent) => {
+    pointer = { x: event.clientX, y: event.clientY };
 
-      throttledUpdate();
-    },
-    { passive: true },
-  );
+    throttledUpdate();
+  };
+
+  window.addEventListener("pointermove", trackPointer, { passive: true });
+
+  // Inside an iframe, such as Gmail's side panel or Chat, this window gets no
+  // more pointer or wheel events, so entering one is the last word on where the
+  // pointer is.
+  window.addEventListener("pointerover", trackPointer, { capture: true, passive: true });
 
   window.addEventListener(
     "wheel",
