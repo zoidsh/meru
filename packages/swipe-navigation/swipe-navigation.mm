@@ -32,6 +32,7 @@ struct Tuning {
   double overlayArrivingOpacity;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
+  double staleTrackingTimeout;
 };
 
 Tuning g_tuning = {};
@@ -65,6 +66,7 @@ bool g_tracking_released = false;
 int32_t g_tracking_generation = 0;
 int32_t g_tracking_id = 0;
 double g_tracking_max_progress = 0;
+CFTimeInterval g_tracking_started_at = 0;
 NSString* g_tracking_direction = nil;
 
 NSColor* ColorFromRgb(double rgb, CGFloat alpha) {
@@ -444,17 +446,28 @@ bool HandleScrollWheel(NSEvent* event) {
   bool whileSettling = false;
 
   if (g_tracking) {
-    // Once released, only the momentum still belongs to the swipe. Fingers
-    // coming down again start a new gesture, which must not wait out the
-    // settle animation of the last one.
-    if (!(g_tracking_released && event.phase == NSEventPhaseBegan)) {
+    // Fingers coming down again start a new gesture, which must not wait out
+    // the settle animation of the last one, and only the last one's momentum
+    // still belongs to it. A tracker that never heard its release or its
+    // completion, as when its window closes mid-swipe, would otherwise leave
+    // every scroll in the app swallowed until a restart.
+    const bool isNewGesture = event.phase == NSEventPhaseBegan;
+    const bool isStale =
+        CACurrentMediaTime() - g_tracking_started_at > g_tuning.staleTrackingTimeout / 1000;
+
+    if (!isNewGesture && !isStale) {
       return true;
+    }
+
+    whileSettling = isNewGesture && g_tracking_released;
+
+    if (!g_tracking_released) {
+      ReportEnd(false);
+      RemoveOverlay();
     }
 
     g_tracking = false;
     g_tracking_released = false;
-
-    whileSettling = true;
   }
 
   if (event.phase == NSEventPhaseBegan) {
@@ -521,6 +534,7 @@ bool HandleScrollWheel(NSEvent* event) {
   g_tracking_id = target.id;
   g_tracking_direction = direction;
   g_tracking_max_progress = 0;
+  g_tracking_started_at = CACurrentMediaTime();
 
   const bool fromLeftEdge = [direction isEqualToString:@"left"];
 
@@ -751,6 +765,7 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.overlayArrivingOpacity = ReadTuning(argv[0], "overlayArrivingOpacity", 0.5);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
+  g_tuning.staleTrackingTimeout = ReadTuning(argv[0], "staleTrackingTimeout", 10000);
 
   if (!g_cleanup_hook_added &&
       napi_add_env_cleanup_hook(env, CleanUpEnvironment, nullptr) == napi_ok) {

@@ -68,4 +68,11 @@ export const SWIPE_NAVIGATION_TUNING = {
 
   /** How long the bubble takes to fade away once the swipe has navigated. */
   overlayFadeOutDuration: ms("150ms"),
+
+  /**
+   * How long a swipe may go on being tracked before the next scroll treats it
+   * as lost. Far past any real gesture and its settle animation, it only
+   * bounds how long scrolling stays swallowed when AppKit never finishes one.
+   */
+  staleTrackingTimeout: ms("10s"),
 } as const;
