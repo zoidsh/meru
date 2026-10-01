@@ -58,8 +58,11 @@ async function readCommandLine(pid: number) {
 
 /**
  * The renderer process ids of the child views of the window whose page is
- * `pageName`, or null while there is no such window. A view whose process has
- * not started yet reports 0.
+ * `pageName`, or null while there is no such window. A view that has not
+ * committed a page yet reports 0: the process it starts with is picked for the
+ * URL it was asked for, and signed out, Gmail redirects to
+ * accounts.google.com, an origin Chromium isolates, so the page commits in a
+ * fresh process and the first one exits.
  */
 function readViewProcessIds(meru: MeruApp, pageName: string) {
   return meru.app.evaluate(({ BrowserWindow }, page) => {
@@ -72,16 +75,18 @@ function readViewProcessIds(meru: MeruApp, pageName: string) {
     }
 
     return (window.contentView.children as Electron.WebContentsView[]).map((view) =>
-      view.webContents.getOSProcessId(),
+      view.webContents.getURL() ? view.webContents.getOSProcessId() : 0,
     );
   }, pageName);
 }
 
 test("Help → Report Issue… opens a compose window that carries the Gmail preload arguments", async () => {
   // The precondition, so a key that failed to validate reads as that and not as the bug.
-  const gmailViewPid = (await readViewProcessIds(meru, "main.html"))?.[0] ?? 0;
+  await expect
+    .poll(async () => (await readViewProcessIds(meru, "main.html"))?.[0] ?? 0)
+    .toBeGreaterThan(0);
 
-  expect(gmailViewPid).toBeGreaterThan(0);
+  const gmailViewPid = (await readViewProcessIds(meru, "main.html"))?.[0] ?? 0;
 
   expect(await readCommandLine(gmailViewPid)).toContain(GMAIL_PRELOAD_ARGUMENTS.extendDarkTheme);
 
