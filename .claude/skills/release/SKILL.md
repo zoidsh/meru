@@ -14,8 +14,8 @@ Check all of these first. If one fails, report it and stop — never work around
 
 - On `main`, clean and up to date: `git status --porcelain` empty, then `git checkout main && git pull --ff-only`.
 - The workflow names below are real: `.github/workflows/` holds `ci.yml` and `release.yml`. Check that before running any `gh run list --workflow=` command — GitHub answers a renamed workflow with its pre-rename runs instead of an error, so a stale name here reads as "no run yet" on every release and never verifies anything.
-- The last `ci.yml` run is for the current `HEAD` and passed: `gh run list --workflow=ci.yml --branch=main -L 1 --json headSha,status,conclusion,url`.
-  - `headSha` must equal `git rev-parse HEAD`. A `HEAD` with no run yet, or a run still `in_progress`, means waiting — say which and ask whether to wait for it.
+- The `ci.yml` push run for the current `HEAD` passed: `gh run list --commit "$(git rev-parse HEAD)" --json workflowName,event,status,conclusion,url -q '.[] | select(.workflowName == "ci" and .event == "push")'`. Ask by commit, never `--workflow=ci.yml --branch=main -L 1`, which can answer with a run weeks older than `HEAD`.
+  - A `HEAD` with no run yet, or a run still `in_progress`, means waiting — say which and ask whether to wait for it.
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
   - That run is also the build check. `ci.yml`'s `e2e` job builds the app with electron-builder and launches it on macOS, Windows and Linux, so a green run at `HEAD` is what says the app still compiles on all three — the thing `release.yml` does next, at the most expensive place for it to fail. There is no second workflow to query; `build.yml` was deleted when its jobs moved here.
   - What it still doesn't cover: `e2e` builds `--dir` and unsigned, so installer packaging and macOS signing run for the first time in the release itself. That is a known risk of every release, not something to check here.
