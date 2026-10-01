@@ -265,11 +265,10 @@ bool CallJs(napi_ref ref, size_t argc, napi_value* argv, napi_value* result) {
     return false;
   }
 
-  napi_value undefined = nullptr;
-  napi_get_undefined(g_env, &undefined);
-
+  // Unlike napi_call_function, napi_make_callback refuses a receiver that is
+  // not an object, without calling the function.
   const bool called =
-      napi_make_callback(g_env, g_async_context, undefined, fn, argc, argv, result) == napi_ok;
+      napi_make_callback(g_env, g_async_context, resource, fn, argc, argv, result) == napi_ok;
 
   // An exception left pending would be rethrown at an unrelated point in the
   // main process, a gesture later, so it is taken before the scope closes and
