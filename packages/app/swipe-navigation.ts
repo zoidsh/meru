@@ -223,12 +223,22 @@ class SwipeNavigation {
       return;
     }
 
-    this.addon.start({
-      ...SWIPE_NAVIGATION_TUNING,
-      onBegin: this.handleBegin,
-      onEnd: this.handleEnd,
-      ...(this.isVerbose && { onProgress: this.handleProgress }),
-    });
+    // Startup goes on past this point, so swiping is the most a failure here
+    // may cost.
+    try {
+      this.addon.start({
+        ...SWIPE_NAVIGATION_TUNING,
+        onBegin: this.handleBegin,
+        onEnd: this.handleEnd,
+        ...(this.isVerbose && { onProgress: this.handleProgress }),
+      });
+    } catch (error) {
+      log.error("Swipe navigation is unavailable", serializeError(error));
+
+      this.addon = undefined;
+
+      return;
+    }
 
     log.info("Swipe navigation is ready", {
       swipeTrackingEnabled: this.addon.isSwipeTrackingEnabled(),
