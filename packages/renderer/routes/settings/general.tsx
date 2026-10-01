@@ -203,6 +203,19 @@ export function GeneralSettings() {
               configKey="launchMinimized"
             />
           </FieldSet>
+          {platform.isMacOS && (
+            <>
+              <FieldSeparator />
+              <FieldSet>
+                <FieldLegend>Navigation</FieldLegend>
+                <ConfigSwitchField
+                  label="Swipe between pages"
+                  description="Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+                  configKey="swipeNavigation.enabled"
+                />
+              </FieldSet>
+            </>
+          )}
         </FieldGroup>
       </SettingsContent>
     </Settings>

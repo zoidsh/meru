@@ -13,6 +13,7 @@ import {
 import { BrowserWindow, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { getActiveView } from "@/active-view";
+import { config } from "@/config";
 import { log } from "@/lib/log";
 import { Popup } from "@/lib/popup";
 import { main } from "@/main";
@@ -22,8 +23,6 @@ import { WorkspaceApp } from "@/workspace-app";
 const PREVIEW_PATTERN = /^(?<direction>left|right):(?<progress>[\d.]+)$/;
 
 class SwipeNavigation {
-  private addon: SwipeNavigationAddon | undefined;
-
   /**
    * Weak, so a closed tab's entry goes with it: the gesture is answered from
    * this cache, and nothing else reads it.
@@ -210,23 +209,11 @@ class SwipeNavigation {
     });
   }
 
-  init() {
-    if (!platform.isMacOS) {
-      return;
-    }
-
-    try {
-      this.addon = loadSwipeNavigationAddon(__dirname);
-    } catch (error) {
-      log.error("Swipe navigation is unavailable", serializeError(error));
-
-      return;
-    }
-
+  private start(addon: SwipeNavigationAddon) {
     // Startup goes on past this point, so swiping is the most a failure here
     // may cost.
     try {
-      this.addon.start({
+      addon.start({
         ...SWIPE_NAVIGATION_TUNING,
         onBegin: this.handleBegin,
         onEnd: this.handleEnd,
@@ -235,16 +222,50 @@ class SwipeNavigation {
     } catch (error) {
       log.error("Swipe navigation is unavailable", serializeError(error));
 
-      this.addon = undefined;
-
       return;
     }
 
     log.info("Swipe navigation is ready", {
-      swipeTrackingEnabled: this.addon.isSwipeTrackingEnabled(),
+      swipeTrackingEnabled: addon.isSwipeTrackingEnabled(),
+    });
+  }
+
+  private stop(addon: SwipeNavigationAddon) {
+    addon.stop();
+
+    this.gesture = undefined;
+
+    log.info("Swipe navigation is off");
+  }
+
+  init() {
+    if (!platform.isMacOS) {
+      return;
+    }
+
+    let addon: SwipeNavigationAddon;
+
+    try {
+      addon = loadSwipeNavigationAddon(__dirname);
+    } catch (error) {
+      log.error("Swipe navigation is unavailable", serializeError(error));
+
+      return;
+    }
+
+    if (config.get("swipeNavigation.enabled")) {
+      this.start(addon);
+    }
+
+    config.onDidChange("swipeNavigation.enabled", (enabled) => {
+      if (enabled) {
+        this.start(addon);
+      } else {
+        this.stop(addon);
+      }
     });
 
-    this.showPreviewOverlay(this.addon);
+    this.showPreviewOverlay(addon);
   }
 }
 

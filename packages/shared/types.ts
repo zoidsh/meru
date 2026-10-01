@@ -147,6 +147,7 @@ export type Config = {
   "gmail.extendDarkTheme": boolean;
   "gmail.inboxCategoriesToMonitor": "primary" | "all";
   "screenShare.useSystemPicker": boolean;
+  "swipeNavigation.enabled": boolean;
   "window.lastState": {
     bounds: {
       width: number;
