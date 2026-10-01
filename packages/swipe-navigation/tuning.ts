@@ -48,14 +48,13 @@ export const SWIPE_NAVIGATION_TUNING = {
   overlayEdgeGap: BASE_SPACING,
 
   /**
-   * `--popover` and `--popover-foreground` from `@meru/ui/styles/globals.css`,
-   * as sRGB, since the addon draws natively and cannot read the stylesheet.
-   * Change them together with those tokens.
+   * The dark theme's `--popover` and `--popover-foreground` from
+   * `@meru/ui/styles/globals.css`, as sRGB, since the addon draws natively and
+   * cannot read the stylesheet. Dark in either theme, as Chrome's is, so it
+   * stands out over a white page. Change them together with those tokens.
    */
-  overlayLightBackground: 0xffffff,
-  overlayLightForeground: 0x0a0a0a,
-  overlayDarkBackground: 0x171717,
-  overlayDarkForeground: 0xfafafa,
+  overlayBackground: 0x171717,
+  overlayForeground: 0xfafafa,
 
   /**
    * The bubble's opacity as it starts sliding in, from which it turns steadily

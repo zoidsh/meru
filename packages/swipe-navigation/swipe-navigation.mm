@@ -27,10 +27,8 @@ struct Tuning {
   double maximumVerticalDelta;
   double overlayDiameter;
   double overlayEdgeGap;
-  double overlayLightBackground;
-  double overlayLightForeground;
-  double overlayDarkBackground;
-  double overlayDarkForeground;
+  double overlayBackground;
+  double overlayForeground;
   double overlayArrivingOpacity;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
@@ -142,14 +140,7 @@ NSColor* ColorFromRgb(double rgb, CGFloat alpha) {
   shadow.shadowOffset = NSZeroSize;
   [shadow set];
 
-  // Electron sets the app's appearance from Meru's theme, which is what the
-  // renderer's `.dark` class follows too.
-  const bool isDark = [[self.effectiveAppearance bestMatchFromAppearancesWithNames:@[
-    NSAppearanceNameAqua, NSAppearanceNameDarkAqua
-  ]] isEqualToString:NSAppearanceNameDarkAqua];
-
-  [ColorFromRgb(isDark ? g_tuning.overlayDarkBackground : g_tuning.overlayLightBackground, alpha)
-      setFill];
+  [ColorFromRgb(g_tuning.overlayBackground, alpha) setFill];
   [[NSBezierPath bezierPathWithOvalInRect:circle] fill];
 
   [context restoreGraphicsState];
@@ -167,8 +158,7 @@ NSColor* ColorFromRgb(double rgb, CGFloat alpha) {
   chevron.lineCapStyle = NSLineCapStyleRound;
   chevron.lineJoinStyle = NSLineJoinStyleRound;
 
-  [ColorFromRgb(isDark ? g_tuning.overlayDarkForeground : g_tuning.overlayLightForeground, alpha)
-      setStroke];
+  [ColorFromRgb(g_tuning.overlayForeground, alpha) setStroke];
   [chevron stroke];
 }
 
@@ -756,10 +746,8 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.maximumVerticalDelta = ReadTuning(argv[0], "maximumVerticalDelta", 20);
   g_tuning.overlayDiameter = ReadTuning(argv[0], "overlayDiameter", 44);
   g_tuning.overlayEdgeGap = ReadTuning(argv[0], "overlayEdgeGap", 8);
-  g_tuning.overlayLightBackground = ReadTuning(argv[0], "overlayLightBackground", 0xffffff);
-  g_tuning.overlayLightForeground = ReadTuning(argv[0], "overlayLightForeground", 0x0a0a0a);
-  g_tuning.overlayDarkBackground = ReadTuning(argv[0], "overlayDarkBackground", 0x171717);
-  g_tuning.overlayDarkForeground = ReadTuning(argv[0], "overlayDarkForeground", 0xfafafa);
+  g_tuning.overlayBackground = ReadTuning(argv[0], "overlayBackground", 0x171717);
+  g_tuning.overlayForeground = ReadTuning(argv[0], "overlayForeground", 0xfafafa);
   g_tuning.overlayArrivingOpacity = ReadTuning(argv[0], "overlayArrivingOpacity", 0.5);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);
