@@ -62,7 +62,7 @@ async function readCommandLine(pid: number) {
  * committed a page yet reports 0: the process it starts with is picked for the
  * URL it was asked for, and signed out, Gmail redirects to
  * accounts.google.com, an origin Chromium isolates, so the page commits in a
- * fresh process and the first one exits.
+ * fresh process and the first one may already be gone.
  */
 function readViewProcessIds(meru: MeruApp, pageName: string) {
   return meru.app.evaluate(({ BrowserWindow }, page) => {
