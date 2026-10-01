@@ -164,6 +164,25 @@ async function readSelectedAccountId(app: MeruApp) {
   return (await app.readConfig()).accounts?.find((account) => account.selected)?.id;
 }
 
+/**
+ * Waits for every account to have finished widening its button.
+ *
+ * None of the seeded accounts is signed in, so each one's Gmail lands on
+ * Google's sign-in page and its button gains an attention icon. All sixteen land
+ * over the first few seconds after launch, at whatever pace the network sets,
+ * and each one moves the row's end further out. A row scrolled to its end before
+ * the last of them is no longer at its end after it.
+ */
+async function waitForAccountsToNeedSignIn(app: MeruApp) {
+  await expect
+    .poll(() =>
+      app.renderer.evaluate(
+        () => document.querySelectorAll("[data-account-id] svg.lucide-circle-alert").length,
+      ),
+    )
+    .toBe(ACCOUNT_LABELS.length);
+}
+
 /** One of the row's scroll arrows, which is in the page for as long as the row overflows. */
 function readScrollArrow(app: MeruApp, end: "left" | "right") {
   return app.renderer.getByTitle(`Scroll accounts ${end}`);
@@ -362,6 +381,10 @@ test.describe("coming up on the first account", () => {
   });
 
   test("reaching the end does not jolt the row sideways", async () => {
+    // The end this is about is the arrow's, not one an account moves by
+    // widening its button underneath the scroll.
+    await waitForAccountsToNeedSignIn(meru);
+
     /*
      * Wheeled first, and over a button rather than between two, for two reasons
      * at once: the row only stops owing the account it came up on a scroll into
