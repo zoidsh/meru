@@ -105,6 +105,7 @@ export function createDefaultConfig({
     "gmail.extendDarkTheme": false,
     "gmail.inboxCategoriesToMonitor": "primary",
     "screenShare.useSystemPicker": true,
+    "swipeNavigation.enabled": true,
     "window.lastState": {
       bounds: DEFAULT_WINDOW_STATE_BOUNDS,
       fullscreen: false,
