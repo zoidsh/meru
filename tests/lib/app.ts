@@ -17,7 +17,7 @@ import path from "node:path";
 import type { Config } from "@meru/shared/types";
 import { expect, test, type TestInfo } from "@playwright/test";
 import { _electron, type ElectronApplication, type Locator, type Page } from "playwright";
-import { killProcesses, readProcessTree, waitForProcessesToExit } from "./process-tree";
+import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
 
 // Where electron-builder leaves the unpacked app, per platform. macOS and
 // Windows name it after productName, "Meru"; Linux lowercases it. Getting that
@@ -423,7 +423,7 @@ async function closeApp(app: ElectronApplication) {
   if (!closed) {
     console.log(`[e2e] the app did not quit within ${CLOSE_TIMEOUT}ms; killing it`);
 
-    killProcesses(tree);
+    tree.push(...(await killProcessTree(tree)));
   }
 
   await waitForProcessesToExit(tree);

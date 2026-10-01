@@ -15,6 +15,8 @@ const execFileAsync = promisify(execFile);
 
 const EXIT_POLL_INTERVAL = 100;
 
+const EXIT_TIMEOUT = 30_000;
+
 type ProcessEntry = {
   pid: number;
   ppid: number;
@@ -68,8 +70,10 @@ async function listProcesses(): Promise<ProcessEntry[]> {
  * start.
  */
 export async function readProcessTree(rootPid: number) {
-  const processes = await listProcesses();
+  return findTree(rootPid, await listProcesses());
+}
 
+function findTree(rootPid: number, processes: ProcessEntry[]) {
   const tree = processes.filter(({ pid }) => pid === rootPid);
 
   for (let index = 0; index < tree.length; index++) {
@@ -85,26 +89,69 @@ export async function readProcessTree(rootPid: number) {
   return tree;
 }
 
-export function killProcesses(tree: ProcessEntry[]) {
-  for (const { pid } of tree) {
+function isSameProcess(a: ProcessEntry, b: ProcessEntry) {
+  return a.pid === b.pid && a.startedAt === b.startedAt;
+}
+
+/**
+ * Kills what is left of a tree read earlier, along with anything the root has
+ * started since, and hands back every process killed.
+ *
+ * Checked against the process table first rather than killed by pid. The tree
+ * was read before a quit that may have run for seconds, and a child that exited
+ * in that time has freed a pid Windows may already have given to a process that
+ * has nothing to do with the app.
+ */
+export async function killProcessTree(tree: ProcessEntry[]) {
+  const processes = await listProcesses();
+
+  const root = tree[0];
+
+  const remaining = [
+    ...processes.filter((entry) => tree.some((member) => isSameProcess(member, entry))),
+    ...(root && processes.some((entry) => isSameProcess(entry, root))
+      ? findTree(root.pid, processes)
+      : []),
+  ].filter(
+    (entry, index, entries) => entries.findIndex((other) => isSameProcess(other, entry)) === index,
+  );
+
+  for (const { pid } of remaining) {
     try {
       process.kill(pid, "SIGKILL");
     } catch {
       // Already gone, which is what the kill was for.
     }
   }
+
+  return remaining;
 }
 
 /**
- * Resolves once none of the processes is running, however long that takes,
- * since the files they hold stay locked until then. A test that has to wait too
- * long runs into its own timeout, which is the right place for that failure.
+ * Resolves once none of the processes is running, since the files they hold
+ * stay locked until then.
+ *
+ * Bounded so that a process that will not go away fails the teardown by name,
+ * rather than as a hook timeout that says nothing about what was left.
  */
 export async function waitForProcessesToExit(tree: ProcessEntry[]) {
-  const isInTree = ({ pid, startedAt }: ProcessEntry) =>
-    tree.some((entry) => entry.pid === pid && entry.startedAt === startedAt);
+  const giveUpAt = Date.now() + EXIT_TIMEOUT;
 
-  while ((await listProcesses()).some(isInTree)) {
+  for (;;) {
+    const survivors = (await listProcesses()).filter((entry) =>
+      tree.some((member) => isSameProcess(member, entry)),
+    );
+
+    if (survivors.length === 0) {
+      return;
+    }
+
+    if (Date.now() > giveUpAt) {
+      throw new Error(
+        `The app's processes ${survivors.map(({ pid }) => pid).join(", ")} were still running ${EXIT_TIMEOUT}ms after it closed`,
+      );
+    }
+
     await sleep(EXIT_POLL_INTERVAL);
   }
 }
