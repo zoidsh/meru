@@ -41,6 +41,7 @@ import { appUpdater } from "@/updater";
 import { doNotDisturb } from "./do-not-disturb";
 import { isMeruUrl, isWebUrl } from "./lib/deep-link";
 import { spellchecker } from "./spellchecker";
+import { swipeNavigation } from "./swipe-navigation";
 import { trial } from "./trial";
 
 async function resetApp() {
@@ -175,6 +176,8 @@ async function init() {
   accounts.createViews();
 
   ipc.init();
+
+  swipeNavigation.init();
 
   theme.listen();
 

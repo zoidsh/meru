@@ -6,6 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
+- **macOS:** Swipe sideways with two fingers on the trackpad to go back and forward in a Gmail tab or a workspace app, as you would in a browser. An arrow slides in from the edge to show where the swipe is heading, and Meru follows Swipe between pages in System Settings → Trackpad → More Gestures
 - Download notifications now have a Show in Finder (Show in File Explorer on Windows) or Open button. Clicking the notification itself brings Meru forward
 - **Meru Pro:** Archive, mark as read, delete or mark as spam a message straight from the unified inbox, by hovering its row or with Gmail's own shortcuts: `e`, `Shift+I`, `#` and `!`
 - **Meru Pro:** Meru links can now open a Google link in Meru: `meru://open?url=<link>` asks which account should open it when you have more than one, and `meru://<email>/open?url=<link>` opens it in that account

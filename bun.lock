@@ -44,6 +44,7 @@
         "lefthook": "^2.1.2",
         "lucide-react": "^0.475.0",
         "meru-api-client": "2.1.1",
+        "node-api-headers": "^1.9.0",
         "oxfmt": "^0.57.0",
         "oxlint": "^1.72.0",
         "postcss": "^8.5.8",
@@ -99,6 +100,10 @@
     },
     "packages/shared": {
       "name": "@meru/shared",
+      "version": "0.0.0",
+    },
+    "packages/swipe-navigation": {
+      "name": "@meru/swipe-navigation",
       "version": "0.0.0",
     },
     "packages/ui": {
@@ -300,6 +305,8 @@
     "@meru/renderer": ["@meru/renderer@workspace:packages/renderer"],
 
     "@meru/shared": ["@meru/shared@workspace:packages/shared"],
+
+    "@meru/swipe-navigation": ["@meru/swipe-navigation@workspace:packages/swipe-navigation"],
 
     "@meru/ui": ["@meru/ui@workspace:packages/ui"],
 
@@ -1426,6 +1433,8 @@
     "node-abi": ["node-abi@4.31.0", "", { "dependencies": { "semver": "^7.6.3" } }, "sha512-Erq5w/t3syw3s4sDsUaX4QttIdBPsGKTT1DTRsCkTonGggczhlDKm/wDX3o+HPJpQ41EjXCbcmXf0tgr5YZJXw=="],
 
     "node-addon-api": ["node-addon-api@1.7.2", "", {}, "sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg=="],
+
+    "node-api-headers": ["node-api-headers@1.9.0", "", {}, "sha512-2oNILP4jXwRB4ywnYKjVk1YyJ96n2D4EOVJO6S3oYZ5PtbJrw3Yt9TpAuX3nBLMuzn74rnfGQrv13pS9vC+YiA=="],
 
     "node-api-version": ["node-api-version@0.2.1", "", { "dependencies": { "semver": "^7.3.5" } }, "sha512-2xP/IGGMmmSQpI1+O/k72jF/ykvZ89JeuKX3TLJAYPDVLUalrshrLHkeVcCCZqG/eEa635cr8IBYzgnDvM2O8Q=="],
 

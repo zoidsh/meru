@@ -1,7 +1,7 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
-import type { BrowserWindow } from "electron";
+import type { BrowserWindow, Rectangle } from "electron";
 import { WebContentsView } from "electron";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
@@ -31,6 +31,8 @@ function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor 
   );
 }
 
+const openPopups = new Set<Popup>();
+
 /**
  * A page drawn over the window it was opened from, as a child view rather than
  * renderer-drawn markup: child views paint above the main window's HTML, so a
@@ -41,6 +43,22 @@ function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor 
  * entrance animation has room to move without being cut off at the view edge.
  */
 export class Popup {
+  /**
+   * Where each popup open over `parentWindow` sits, in its content coordinates,
+   * so a gesture over one is not answered by the view underneath.
+   */
+  static getOpenBoundsIn(parentWindow: BrowserWindow) {
+    const bounds: Rectangle[] = [];
+
+    for (const popup of openPopups) {
+      if (popup.parentWindow === parentWindow && popup.view) {
+        bounds.push(popup.view.getBounds());
+      }
+    }
+
+    return bounds;
+  }
+
   private options: PopupOptions | null = null;
 
   private view: WebContentsView | null = null;
@@ -113,6 +131,8 @@ export class Popup {
    */
   close = () => {
     const { view, parentWindow } = this;
+
+    openPopups.delete(this);
 
     this.view = null;
     this.parentWindow = null;
@@ -188,6 +208,8 @@ export class Popup {
     // hung on, or the main window on quit — leaves the view attached to
     // something that is going away, so the popup comes down with it
     parentWindow.once("closed", this.close);
+
+    openPopups.add(this);
 
     return true;
   }

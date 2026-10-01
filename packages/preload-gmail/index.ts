@@ -1,6 +1,8 @@
 import "@meru/shared/electron-api";
 import "./ipc";
 import { observeBodyMutations } from "@meru/shared/dom";
+import { ipc } from "@meru/shared/renderer/ipc";
+import { observePageScrollEdge } from "@meru/shared/renderer/scroll-edge";
 import { moveAttachmentsToTop } from "./attachments";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
@@ -24,6 +26,14 @@ const features = [
   darkThemeMessage,
   darkThemeCompose,
 ];
+
+// Only macOS swipes between pages, and elsewhere the reads would cost every
+// pointer move for nothing.
+if (process.platform === "darwin") {
+  observePageScrollEdge((pageScrollEdge) => {
+    ipc.main.send("swipeNavigation.setPageScrollEdge", pageScrollEdge);
+  });
+}
 
 function runFeatures() {
   for (const feature of features) {
