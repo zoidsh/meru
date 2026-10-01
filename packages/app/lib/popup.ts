@@ -31,6 +31,8 @@ function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor 
   );
 }
 
+const openPopups = new Set<Popup>();
+
 /**
  * A page drawn over the window it was opened from, as a child view rather than
  * renderer-drawn markup: child views paint above the main window's HTML, so a
@@ -40,8 +42,6 @@ function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor 
  * past the popup on every side, so the popup sits where the gaps put it and its
  * entrance animation has room to move without being cut off at the view edge.
  */
-const openPopups = new Set<Popup>();
-
 export class Popup {
   /**
    * Where each popup open over `parentWindow` sits, in its content coordinates,
