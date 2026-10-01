@@ -796,8 +796,6 @@ napi_value ShowOverlayForDebugging(napi_env env, napi_callback_info info) {
     return result;
   }
 
-  g_env = env;
-
   void* handleData = nullptr;
   size_t handleLength = 0;
   napi_get_buffer_info(env, argv[0], &handleData, &handleLength);
