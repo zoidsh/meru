@@ -1,6 +1,7 @@
 import { nativeTheme } from "electron";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { getSystemColors } from "@/lib/system-colors";
 import { main } from "@/main";
 import { appTray } from "@/tray";
 
@@ -20,6 +21,8 @@ class Theme {
         "theme.darkModeChanged",
         nativeTheme.shouldUseDarkColors,
       );
+
+      ipc.renderer.send(main.window.webContents, "theme.systemColorsChanged", getSystemColors());
 
       main.updateTitlebarOverlay();
 
