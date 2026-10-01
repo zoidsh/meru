@@ -26,7 +26,7 @@ struct Tuning {
   double minimumHorizontalDelta;
   double maximumVerticalDelta;
   double overlayDiameter;
-  double overlayMaxOffset;
+  double overlayEdgeGap;
   double overlayArrivingOpacity;
   double overlayFadeInProgress;
   double overlayFadeOutDuration;
@@ -103,7 +103,7 @@ NSString* g_tracking_direction = nil;
 
   const CGFloat diameter = g_tuning.overlayDiameter;
   const CGFloat radius = diameter / 2;
-  const CGFloat inset = -radius + arrival * (g_tuning.overlayMaxOffset + radius);
+  const CGFloat inset = -radius + arrival * (g_tuning.overlayEdgeGap + diameter);
   const CGFloat centerX = self.fromLeftEdge ? inset : NSWidth(self.bounds) - inset;
   const CGFloat centerY = NSMidY(self.bounds);
 
@@ -739,7 +739,7 @@ napi_value Start(napi_env env, napi_callback_info info) {
   g_tuning.minimumHorizontalDelta = ReadTuning(argv[0], "minimumHorizontalDelta", 3);
   g_tuning.maximumVerticalDelta = ReadTuning(argv[0], "maximumVerticalDelta", 20);
   g_tuning.overlayDiameter = ReadTuning(argv[0], "overlayDiameter", 44);
-  g_tuning.overlayMaxOffset = ReadTuning(argv[0], "overlayMaxOffset", 40);
+  g_tuning.overlayEdgeGap = ReadTuning(argv[0], "overlayEdgeGap", 8);
   g_tuning.overlayArrivingOpacity = ReadTuning(argv[0], "overlayArrivingOpacity", 0.5);
   g_tuning.overlayFadeInProgress = ReadTuning(argv[0], "overlayFadeInProgress", 0.15);
   g_tuning.overlayFadeOutDuration = ReadTuning(argv[0], "overlayFadeOutDuration", 150);

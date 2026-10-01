@@ -1,3 +1,4 @@
+import { BASE_SPACING } from "@meru/shared/constants";
 import { ms } from "@meru/shared/ms";
 
 /**
@@ -43,11 +44,8 @@ export const SWIPE_NAVIGATION_TUNING = {
   /** The bubble's diameter, in points. */
   overlayDiameter: 44,
 
-  /**
-   * How far the bubble's center sits from the view's edge once it has fully
-   * arrived, which leaves the whole circle in view just inside the edge.
-   */
-  overlayMaxOffset: 40,
+  /** The gap between the view's edge and the bubble once it has fully arrived. */
+  overlayEdgeGap: BASE_SPACING,
 
   /**
    * The bubble's opacity as it starts sliding in, from which it turns steadily
