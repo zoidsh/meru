@@ -17,6 +17,7 @@ import path from "node:path";
 import type { Config } from "@meru/shared/types";
 import { expect, test, type TestInfo } from "@playwright/test";
 import { _electron, type ElectronApplication, type Locator, type Page } from "playwright";
+import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
 
 // Where electron-builder leaves the unpacked app, per platform. macOS and
 // Windows name it after productName, "Meru"; Linux lowercases it. Getting that
@@ -407,17 +408,25 @@ async function collectDiagnostics(launched: LaunchedApp, testInfo: TestInfo) {
 
 /**
  * Quitting can hang, and Playwright's own close() takes no timeout until after
- * 1.62, so the process gets killed rather than left to stall the worker for its
+ * 1.62, so the app gets killed rather than left to stall the worker for its
  * whole teardown budget.
+ *
+ * Resolves only once every process the app was made of has exited, killed or
+ * not, because the user data directory is deleted next and Windows will not
+ * delete a file one of them still has open.
  */
 async function closeApp(app: ElectronApplication) {
+  const tree = await readProcessTree(app.process().pid as number);
+
   const closed = await withTimeout(app.close(), CLOSE_TIMEOUT).catch(() => false);
 
   if (!closed) {
     console.log(`[e2e] the app did not quit within ${CLOSE_TIMEOUT}ms; killing it`);
 
-    app.process().kill("SIGKILL");
+    tree.push(...(await killProcessTree(tree)));
   }
+
+  await waitForProcessesToExit(tree);
 }
 
 export type MeruApp = {
