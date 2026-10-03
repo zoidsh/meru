@@ -1,6 +1,12 @@
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { type ComponentProps, useId } from "react";
 
+/**
+ * Every icon's painted pixels reach 1px from the edge of the 24px box on their
+ * longer side and are centred on the shorter one, so icons from different
+ * Google sources read as one set in the launcher. Fit an icon that doesn't by
+ * adjusting its `viewBox`, not its path data.
+ */
 export function WorkspaceAppIcon({
   app,
   ...props
