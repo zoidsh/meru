@@ -13,6 +13,9 @@ type WorkspaceAppDefinition = {
  */
 const workspaceAppDefinitions = {
   admin: { label: "Admin" },
+  ads: { label: "Ads" },
+  analytics: { label: "Analytics" },
+  appsScript: { label: "Apps Script", url: "https://script.google.com" },
   calendar: { label: "Calendar" },
   chat: { label: "Chat" },
   classroom: { label: "Classroom" },
@@ -27,10 +30,13 @@ const workspaceAppDefinitions = {
   keep: { label: "Keep" },
   meet: { label: "Meet" },
   myaccount: { label: "My Account", availableInLauncher: false },
+  photos: { label: "Photos" },
+  searchConsole: { label: "Search Console", url: "https://search.google.com/search-console" },
   sheets: { label: "Sheets" },
   sites: { label: "Sites" },
   slides: { label: "Slides" },
   tasks: { label: "Tasks" },
+  vids: { label: "Vids" },
   voice: { label: "Voice" },
 } as const satisfies Record<string, WorkspaceAppDefinition>;
 

@@ -28,20 +28,26 @@ const workspaceAppsBySubdomain = new Map<string, SupportedWorkspaceApp>([
   ...Object.entries(legacyWorkspaceAppSubdomains),
 ]);
 
+/**
+ * The subdomain is anchored to the start of the URL or to the `/` or `.` in
+ * front of it. Short names such as `ads` and `search` would otherwise match
+ * inside a longer one, making `research.google.com` Search Console.
+ */
 const WORKSPACE_APPS_SUBDOMAIN_REGEXP = new RegExp(
-  `(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,
+  `(?:^|[/.])(${Array.from(workspaceAppsBySubdomain.keys()).join("|")})(?:\\.usercontent)?\\.google\\.com`,
 );
 
 /**
- * Docs, Sheets, Slides and Forms all share the `docs.google.com` host — their
- * own subdomains only redirect there — so the leading path segment is the only
- * thing telling them apart. Anything else on that host stays Docs.
+ * Docs, Sheets, Slides, Forms and Vids all share the `docs.google.com` host —
+ * their own subdomains only redirect there — so the leading path segment is the
+ * only thing telling them apart. Anything else on that host stays Docs.
  */
 const workspaceAppsByDocsPathSegment: Record<string, SupportedWorkspaceApp> = {
   document: "docs",
   spreadsheets: "sheets",
   presentation: "slides",
   forms: "forms",
+  videos: "vids",
 };
 
 const WORKSPACE_APPS_DOCS_PATH_REGEXP = new RegExp(
