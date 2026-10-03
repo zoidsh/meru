@@ -82,7 +82,7 @@ describe("resolveRoutableUrl", () => {
   });
 
   test("rejects a google host with no workspace app", () => {
-    expect(resolveRoutableUrl("https://photos.google.com/")).toBeUndefined();
+    expect(resolveRoutableUrl("https://news.google.com/")).toBeUndefined();
   });
 
   test("rejects every scheme but https", () => {

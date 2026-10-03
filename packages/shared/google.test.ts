@@ -7,6 +7,14 @@ describe("getWorkspaceAppFromUrl", () => {
     expect(getWorkspaceAppFromUrl("https://calendar.google.com/calendar/u/0/r")).toBe("calendar");
     expect(getWorkspaceAppFromUrl("https://drive.google.com/drive/u/0/my-drive")).toBe("drive");
     expect(getWorkspaceAppFromUrl("https://keep.google.com/u/0/")).toBe("keep");
+    expect(getWorkspaceAppFromUrl("https://photos.google.com/")).toBe("photos");
+    expect(getWorkspaceAppFromUrl("https://vids.google.com/")).toBe("vids");
+    expect(getWorkspaceAppFromUrl("https://analytics.google.com/analytics/web/")).toBe("analytics");
+    expect(getWorkspaceAppFromUrl("https://ads.google.com/aw/campaigns")).toBe("ads");
+    expect(getWorkspaceAppFromUrl("https://script.google.com/home")).toBe("appsScript");
+    expect(
+      getWorkspaceAppFromUrl("https://search.google.com/search-console?resource_id=abc123"),
+    ).toBe("searchConsole");
   });
 
   test("resolves the docs.google.com apps from their path", () => {
@@ -18,6 +26,7 @@ describe("getWorkspaceAppFromUrl", () => {
       "slides",
     );
     expect(getWorkspaceAppFromUrl("https://docs.google.com/forms/d/abc123/edit")).toBe("forms");
+    expect(getWorkspaceAppFromUrl("https://docs.google.com/videos/d/abc123/edit")).toBe("vids");
   });
 
   test("resolves the docs.google.com apps behind an account or domain prefix", () => {
@@ -58,9 +67,13 @@ describe("getWorkspaceAppFromUrl", () => {
     );
   });
 
+  test("resolves Vids from the docs.google.com url its own subdomain redirects to", () => {
+    expect(getWorkspaceAppFromUrl("https://docs.google.com/videos?usp=direct_url")).toBe("vids");
+  });
+
   test("returns undefined for unsupported urls", () => {
     expect(getWorkspaceAppFromUrl("https://example.com/spreadsheets/d/abc123")).toBeUndefined();
     expect(getWorkspaceAppFromUrl("https://myaccount.google.com/")).toBe("myaccount");
-    expect(getWorkspaceAppFromUrl("https://photos.google.com/")).toBeUndefined();
+    expect(getWorkspaceAppFromUrl("https://research.google.com/")).toBeUndefined();
   });
 });
