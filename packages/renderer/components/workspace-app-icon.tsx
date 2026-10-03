@@ -79,7 +79,12 @@ export function WorkspaceAppIcon({
     }
     case "appsScript": {
       return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0.338 0.338 23.324 23.324"
+          fill="none"
+          {...props}
+        >
           <path
             fill="#EA4335"
             d="M3.8138 15.4413c-1.3813 0-2.5013 1.1187-2.5013 2.4975s1.12 2.4975 2.5013 2.4975h12.5075v-4.9962H3.8138z"
@@ -1332,7 +1337,12 @@ export function WorkspaceAppIcon({
     }
     case "searchConsole": {
       return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="1.835 1.645 20.52 20.52"
+          fill="none"
+          {...props}
+        >
           <path
             fill="#FBBC04"
             d="M6.6487 18.3163l-2.8325 2.8325c-0.2175 0.2175-0.5713 0.2175-0.79 0l-0.175-0.175c-0.2175-0.2175-0.2175-0.5713 0-0.79l2.8325-2.8325c0.2175-0.2175 0.5713-0.2175 0.79 0l0.175 0.175C6.8675 17.7437 6.8675 18.0975 6.6487 18.3163z"
@@ -1711,7 +1721,12 @@ export function WorkspaceAppIcon({
     }
     case "vids": {
       return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0.761 1.636 20.727 20.727"
+          fill="none"
+          {...props}
+        >
           <path
             fill="#d0d9ff"
             d="M5.875 16.875c-0.8136 0-1.2204 0-1.555-0.0854a2.75 2.75 0 0 1-1.9846-1.9845C2.25 14.4704 2.25 14.0636 2.25 13.25V10.75c0-0.8136 0-1.2204 0.0854-1.555A2.75 2.75 0 0 1 4.32 7.2103C4.6546 7.125 5.0614 7.125 5.875 7.125s1.2204 0 1.555 0.0854A2.75 2.75 0 0 1 9.4147 9.195C9.5 9.5296 9.5 9.9364 9.5 10.75v2.5c0 0.8136 0 1.2204-0.0854 1.5551a2.75 2.75 0 0 1-1.9845 1.9845C7.0954 16.875 6.6886 16.875 5.875 16.875"
