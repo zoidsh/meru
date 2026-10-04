@@ -120,6 +120,13 @@ export function GmailSettings() {
               licenseKeyRequired
             />
             <ConfigSwitchField
+              label="Always show trimmed content"
+              description="Show the quoted text Gmail hides behind the ••• button."
+              configKey="gmail.showTrimmedContent"
+              restartRequired
+              licenseKeyRequired
+            />
+            <ConfigSwitchField
               label="Always reply and forward in a pop-out"
               description="Open replies and forwards in a pop-out instead of below the message."
               configKey="gmail.replyForwardInPopOut"

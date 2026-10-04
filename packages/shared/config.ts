@@ -100,6 +100,7 @@ export function createDefaultConfig({
     "gmail.openComposeInNewWindow": false,
     "gmail.showSenderIcons": true,
     "gmail.moveAttachmentsToTop": false,
+    "gmail.showTrimmedContent": false,
     "gmail.closeComposeWindowAfterSend": false,
     "gmail.replyForwardInPopOut": false,
     "gmail.extendDarkTheme": false,

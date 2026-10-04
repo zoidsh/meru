@@ -142,6 +142,7 @@ export type Config = {
   "gmail.openComposeInNewWindow": boolean;
   "gmail.showSenderIcons": boolean;
   "gmail.moveAttachmentsToTop": boolean;
+  "gmail.showTrimmedContent": boolean;
   "gmail.closeComposeWindowAfterSend": boolean;
   "gmail.replyForwardInPopOut": boolean;
   "gmail.extendDarkTheme": boolean;

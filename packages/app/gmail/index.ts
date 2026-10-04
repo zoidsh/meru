@@ -272,6 +272,10 @@ export class Gmail {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.moveAttachmentsToTop);
       }
 
+      if (config.get("gmail.showTrimmedContent")) {
+        additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.showTrimmedContent);
+      }
+
       if (config.get("gmail.closeComposeWindowAfterSend")) {
         additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.closeComposeWindowAfterSend);
       }

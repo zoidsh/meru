@@ -13,6 +13,10 @@ export function initCss() {
     document.documentElement.classList.add("meru-reverse-conversation");
   }
 
+  if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.showTrimmedContent)) {
+    document.documentElement.classList.add("meru-show-trimmed-content");
+  }
+
   if (process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.hideOutOfOfficeBanner)) {
     document.documentElement.classList.add("meru-hide-out-of-office-banner");
   }
