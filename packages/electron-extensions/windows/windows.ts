@@ -16,6 +16,9 @@ import {
  */
 const FIRST_WINDOW_ID = 2;
 
+/** Chrome's `windows.WINDOW_ID_CURRENT`, which names the caller's own window. */
+const WINDOW_ID_CURRENT = -2;
+
 /**
  * A window the embedder opened, which is as much of one as this module holds:
  * where it is, whether it is still there, and how to focus or close it.
@@ -125,8 +128,8 @@ export class Windows {
       }),
     );
 
-    bridge.handle(WINDOWS_PATHS.remove, ({ extensionId, body, headers }) => {
-      this.remove(extensionId, body.windowId);
+    bridge.handle(WINDOWS_PATHS.remove, ({ extensionId, senderFrame, body, headers }) => {
+      this.remove(extensionId, body.windowId, senderFrame);
 
       return Response.json(null, { headers });
     });
@@ -215,18 +218,27 @@ export class Windows {
    * facade still answers the fake window — is left alone silently rather than
    * reported, the way the noop behaved.
    */
-  remove(extensionId: string, windowId: unknown) {
+  remove(extensionId: string, windowId: unknown, senderFrame?: WebFrameMain) {
     if (typeof windowId !== "number") {
       return;
     }
 
-    const tracked = this.windows.get(windowId);
+    const removedWindowId =
+      windowId === WINDOW_ID_CURRENT
+        ? this.get(extensionId, windowId, senderFrame).window?.id
+        : windowId;
+
+    if (removedWindowId === undefined) {
+      return;
+    }
+
+    const tracked = this.windows.get(removedWindowId);
 
     if (!tracked || tracked.extensionId !== extensionId) {
       return;
     }
 
-    this.windows.delete(windowId);
+    this.windows.delete(removedWindowId);
 
     if (!tracked.window.isDestroyed()) {
       tracked.window.close();
@@ -235,7 +247,8 @@ export class Windows {
 
   /**
    * A window of this extension by id, or — with no id, which is what
-   * `getCurrent` asks — the one the calling frame is the page of.
+   * `getCurrent` asks, or `WINDOW_ID_CURRENT` — the one the calling frame is
+   * the page of.
    */
   get(
     extensionId: string,
@@ -247,7 +260,7 @@ export class Windows {
         return false;
       }
 
-      return typeof windowId === "number"
+      return typeof windowId === "number" && windowId !== WINDOW_ID_CURRENT
         ? trackedWindowId === windowId
         : senderFrame !== undefined && tracked.window.containsFrame(senderFrame);
     });

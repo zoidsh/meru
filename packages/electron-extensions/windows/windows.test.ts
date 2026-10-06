@@ -292,6 +292,24 @@ describe("Windows", () => {
     expect(windows.get(BITWARDEN_ID, undefined, undefined).window).toBeNull();
   });
 
+  test("resolves WINDOW_ID_CURRENT to the window the calling frame is the page of", () => {
+    const { windows, openedWindows } = createFakeEmbedder();
+
+    const { window } = windows.create(BITWARDEN_ID, { url: UNLOCK_PATH });
+
+    const popoutFrame = openedWindows[0]?.frame as WebFrameMain;
+
+    expect(windows.get(BITWARDEN_ID, -2, popoutFrame).window?.id).toBe(window?.id);
+
+    windows.remove(BITWARDEN_ID, -2, undefined);
+
+    expect(windows.get(BITWARDEN_ID, window?.id, undefined).window).not.toBeNull();
+
+    windows.remove(BITWARDEN_ID, -2, popoutFrame);
+
+    expect(windows.get(BITWARDEN_ID, window?.id, undefined).window).toBeNull();
+  });
+
   /*
    * What unloading takes with it: an uninstall deletes the copy the page was
    * loaded from, so a window left open would be a window of nothing.
