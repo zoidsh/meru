@@ -30,6 +30,7 @@ import {
   getChromeStorage,
   getChromeTabs,
   getChromeWebNavigation,
+  getChromeWindows,
   readExtensionGlobals,
 } from "./chrome";
 import { watchStorageChanges } from "./probes";
@@ -72,10 +73,12 @@ type ProbeMessage = {
   key?: string;
   value?: unknown;
   url?: string;
-  /** Which `chrome.permissions` method a permissions message asks for. */
+  /** Which `chrome.permissions` or `chrome.windows` method a message asks for. */
   method?: string;
   permissions?: string[];
   keys?: string[];
+  /** What a `windows` message calls that method with. */
+  args?: unknown[];
 };
 
 /**
@@ -113,6 +116,8 @@ const tabs = getChromeTabs();
 const webNavigation = getChromeWebNavigation();
 
 const permissions = getChromePermissions();
+
+const windows = getChromeWindows();
 
 /**
  * Sends back into the tab the message came from, which is the whole
@@ -458,6 +463,52 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
       permissions.request(query, answer);
     } else if (method === "remove") {
       permissions.remove(query, answer);
+    } else {
+      answer(null);
+    }
+
+    return true;
+  }
+
+  /*
+   * `chrome.windows` as the worker sees it, which is where a password manager
+   * opens its unlock popout and where Electron implements nothing. The call
+   * runs here rather than in the asking context because the window is the
+   * worker's: it has no page of its own to show one in.
+   *
+   * The callback form throughout, and what it answers is whatever the method
+   * gave back next to the `lastError` Chrome sets instead of a result — a
+   * refusal being the whole answer for a URL outside the extension. This
+   * listener answers late.
+   */
+  if (probeMessage?.type === "windows" && typeof probeMessage.method === "string") {
+    const { method } = probeMessage;
+
+    const callArguments = probeMessage.args ?? [];
+
+    const answer = (result: unknown) => {
+      const lastError = runtime.lastError;
+
+      sendResponse({
+        type: "windows-reply",
+        method,
+        result: result ?? null,
+        lastError: lastError?.message ?? null,
+      });
+    };
+
+    if (method === "create") {
+      windows.create((callArguments[0] ?? {}) as Record<string, unknown>, answer);
+    } else if (method === "get") {
+      windows.get(
+        callArguments[0] as number,
+        (callArguments[1] ?? {}) as Record<string, unknown>,
+        answer,
+      );
+    } else if (method === "remove") {
+      windows.remove(callArguments[0] as number, () => {
+        answer(undefined);
+      });
     } else {
       answer(null);
     }
