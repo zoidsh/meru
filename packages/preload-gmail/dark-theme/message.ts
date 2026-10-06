@@ -1,7 +1,10 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { GMAIL_PRELOAD_ARGUMENTS } from "@meru/shared/gmail";
+import {
+  GMAIL_EDITOR_DARK_THEME_CSS,
+  GMAIL_EDITOR_SELECTOR,
+} from "@meru/shared/gmail-editor-dark-theme";
 import { $$ } from "select-dom";
-import editorCss from "./editor.css";
 import messageCss from "./message.css";
 
 const isExtendDarkThemeEnabled = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.extendDarkTheme);
@@ -33,8 +36,7 @@ export function darkThemeMessage() {
       applyDarkTheme(messageElement, {
         backgroundColor: "rgb(19, 19, 19)",
         ignore: [
-          // Gmail's rich-text editor, themed by stylesheet in editor.css instead
-          '[contenteditable="true"]',
+          GMAIL_EDITOR_SELECTOR,
           // Conversation labels inside message
           ".edeTZ",
           // Reply container
@@ -56,7 +58,7 @@ export function darkThemeMessage() {
           "schedule_send_googblue_20dp.png",
           "label_important_fill_googyellow500_20dp.png",
         ],
-        css: `${messageCss}\n${editorCss}`,
+        css: `${messageCss}\n${GMAIL_EDITOR_DARK_THEME_CSS}`,
       }),
     );
   }

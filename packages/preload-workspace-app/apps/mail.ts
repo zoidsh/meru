@@ -1,6 +1,10 @@
 import { applyDarkTheme, type DarkThemeController } from "@meru/dark-theme";
 import { observeBodyMutations } from "@meru/shared/dom";
 import { GMAIL_PRELOAD_ARGUMENTS, isGmailComposeWindowUrl } from "@meru/shared/gmail";
+import {
+  GMAIL_EDITOR_DARK_THEME_CSS,
+  GMAIL_EDITOR_SELECTOR,
+} from "@meru/shared/gmail-editor-dark-theme";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { $ } from "select-dom";
 import mailCss from "./mail.css";
@@ -63,6 +67,7 @@ function darkThemeMail() {
     controller = applyDarkTheme(rootElement, {
       backgroundColor: "rgb(19, 19, 19)",
       ignore: [
+        GMAIL_EDITOR_SELECTOR,
         // Conversation labels inside message
         ".edeTZ",
         // Reply container
@@ -85,7 +90,7 @@ function darkThemeMail() {
         "label_important_fill_googyellow500_20dp.png",
         "arrow_drop_down_white_20dp.png",
       ],
-      css: mailCss,
+      css: `${mailCss}\n${GMAIL_EDITOR_DARK_THEME_CSS}`,
     });
   }
 }
