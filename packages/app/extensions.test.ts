@@ -23,6 +23,7 @@ mock.module("electron", () => ({
   app: { getPath: () => userDataPath, getAppPath: () => userDataPath },
   protocol: { registerSchemesAsPrivileged: () => {} },
   session: { defaultSession: { getStoragePath: () => userDataPath } },
+  webContents: { fromId: () => undefined, getAllWebContents: () => [] },
 }));
 
 mock.module("@/config", () => ({
@@ -49,6 +50,14 @@ mock.module("@/accounts", () => ({ accounts: {} }));
 mock.module("@/license-key", () => ({ licenseKey: { isValid: true } }));
 
 mock.module("@/workspace-app", () => ({ WorkspaceApp: {} }));
+
+mock.module("@/lib/window", () => ({
+  createBrowserWindow: () => {},
+  getBackgroundColor: () => "",
+  isWindowVisibleOnConnectedDisplay: () => true,
+}));
+
+mock.module("@/url", () => ({ openExternalUrl: () => {} }));
 
 const { removeUncataloguedExtensions } = await import("./extensions");
 
