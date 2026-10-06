@@ -2,7 +2,7 @@ import { modifyBackgroundImage } from "./background-image";
 import { parseColorWithCache } from "./color";
 import { replaceColorTokens } from "./css-value";
 import { getCSSFilterValue } from "./filter";
-import { coversProperty, type IgnorePropertyRule } from "./ignore";
+import { collectIgnoreAttributeNames, coversProperty, type IgnorePropertyRule } from "./ignore";
 import { getImageDetails, isImageElementLarge, shouldInvertDarkImage } from "./image";
 import { modifyBackgroundColor, modifyBorderColor, modifyForegroundColor } from "./modify-colors";
 import { buildDarkStateOverrides } from "./state-rules";
@@ -563,12 +563,67 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
     }
   };
 
+  // Undoes this engine's writes on one element, for an element that has come to
+  // match `ignore`. Returns whether it dropped pseudo rules, so the caller writes
+  // the sheet once for the batch.
+  const restoreElement = (element: HTMLElement) => {
+    const originalStyle = originalStyles.get(element);
+
+    if (originalStyle !== undefined) {
+      element.style.cssText = originalStyle;
+      originalStyles.delete(element);
+    }
+
+    element.removeAttribute(PROCESSED_ATTRIBUTE);
+    overriddenProperties.delete(element);
+    invertedImageElements.delete(element);
+
+    const pseudoId = pseudoIds.get(element);
+
+    if (pseudoId === undefined) {
+      return false;
+    }
+
+    pseudoIds.delete(element);
+    element.removeAttribute(PSEUDO_ATTRIBUTE);
+
+    return pseudoRulesById.delete(pseudoId);
+  };
+
   // Same read-then-write batching as processBatch: snapshotting after another
   // element's inline writes would force a style recalc per element.
   const refreshElements = (elements: Iterable<HTMLElement>) => {
-    const targets = [...elements].filter(
-      (element) => element.hasAttribute(PROCESSED_ATTRIBUTE) && !isIgnored(element),
-    );
+    const targets: HTMLElement[] = [];
+
+    let didRestorePseudoRules = false;
+
+    for (const element of elements) {
+      if (!element.hasAttribute(PROCESSED_ATTRIBUTE)) {
+        continue;
+      }
+
+      // An element the page turns into something `ignore` covers only after it was
+      // themed keeps the overrides otherwise, and an inline `!important` outranks
+      // the stylesheet the caller themes such an element with instead. `ignore`
+      // covers the subtree, so the descendants come back with it.
+      if (isIgnored(element)) {
+        didRestorePseudoRules = restoreElement(element) || didRestorePseudoRules;
+
+        for (const descendant of element.querySelectorAll<HTMLElement>(
+          `[${PROCESSED_ATTRIBUTE}]`,
+        )) {
+          didRestorePseudoRules = restoreElement(descendant) || didRestorePseudoRules;
+        }
+
+        continue;
+      }
+
+      targets.push(element);
+    }
+
+    if (didRestorePseudoRules) {
+      flushPseudoRules();
+    }
 
     if (targets.length === 0) {
       return;
@@ -677,7 +732,16 @@ export function applyDarkTheme(root: HTMLElement, options?: DarkThemeOptions): D
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "aria-checked"],
+      attributeFilter: [
+        ...new Set([
+          "class",
+          "aria-checked",
+          ...collectIgnoreAttributeNames([
+            ...ignoreSelectors,
+            ...ignorePropertyRules.map((rule) => rule.selector),
+          ]),
+        ]),
+      ],
     });
   }
 
