@@ -124,6 +124,13 @@ export type ExtensionsOptions = {
    */
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
   /**
+   * Which extensions get `storage.onChanged` synthesized in their service
+   * worker, by the id the extension is loaded as, where Electron never fires it.
+   * Only with a shared instance, whose relay is what synthesizes it. Without it
+   * no extension does, and none pays the extra reads on every write.
+   */
+  synthesizesStorageChanges?: (extensionId: string) => boolean;
+  /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
@@ -211,6 +218,8 @@ export class Extensions {
 
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
 
+  private synthesizesStorageChanges: ExtensionsOptions["synthesizesStorageChanges"];
+
   private sharedInstance: SharedExtensionInstance | undefined;
 
   private workerSessionPagePatterns: string[] | undefined;
@@ -262,6 +271,7 @@ export class Extensions {
     derivedExtensionsDir,
     strippedManifestKeys,
     getContentScriptMatches,
+    synthesizesStorageChanges,
     isNativeMessagingHostAllowed,
     getGrantableOptionalPermissions,
     grantedPermissionsPath,
@@ -281,6 +291,8 @@ export class Extensions {
     this.strippedManifestKeys = strippedManifestKeys;
 
     this.getContentScriptMatches = getContentScriptMatches;
+
+    this.synthesizesStorageChanges = synthesizesStorageChanges;
 
     this.sharedInstance = sharedInstance;
 
@@ -343,6 +355,7 @@ export class Extensions {
         facadeScriptPath: this.facadeScriptPath,
         strippedManifestKeys: this.strippedManifestKeys,
         getContentScriptMatches: this.getContentScriptMatches,
+        synthesizesStorageChanges: this.synthesizesStorageChanges,
         sharedInstance: sharedInstanceDerive,
       });
 

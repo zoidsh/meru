@@ -910,20 +910,18 @@ test("session storage keeps Chrome's access level across the proxy", async () =>
 });
 
 /*
- * Skipped because it cannot pass on Electron 43.2.0, and kept because it is the
- * pin that flips when it can. The fan-out has carriage and no source: the
- * relay's listener sits in the extension's service worker, and Electron
- * dispatches no `EventRouter` events into one — measured 2 September 2026 on a
- * bare Electron, with `alarms.onAlarm` and `runtime.onInstalled` just as silent
- * as storage's own events. `runtime.onMessage` does arrive, being messaging
- * rather than an event dispatch, which is why every other test here passes.
- * Unskip it the day that changes; nothing else here should need to.
+ * Electron dispatches no `EventRouter` event into an extension service worker,
+ * so the change events here exist only because the fixture is opted into the
+ * relay's synthesis (`storage-synthesis.ts`), which shadows the worker's
+ * writes and dispatches what they changed. `runtime.onMessage` arrives
+ * natively, being messaging rather than an event dispatch, which is why every
+ * other test here passes without it.
  */
-test.skip("storage.onChanged fires in the shim session, for the worker's writes and its own", async () => {
+test("storage.onChanged fires in the worker and the shim session, for the worker's writes and relayed ones", async () => {
   /*
    * The flag is what makes a context wait on the change events at all. Every
-   * other test's contexts skip the wait, since it is a deadline spent against
-   * a source that cannot fire — see `probes.ts`.
+   * other test's contexts skip the wait, which would spend a deadline on
+   * something they do not assert — see `probes.ts`.
    */
   const workerPopupId = await openProbeWindow(
     WORKER_SESSION,
@@ -999,6 +997,36 @@ test.skip("storage.onChanged fires in the shim session, for the worker's writes 
       areaName,
     });
   }
+
+  /*
+   * And the worker hears both on its own events, which is what Electron never
+   * delivers natively: the shim session's writes come through the relay and
+   * the worker session's popup writes natively in its own context, so only
+   * the worker's write and the relayed ones are the synthesis's to see. The
+   * popup's own write is a change the worker misses, as `storage-synthesis.ts`
+   * says, and the assertion pins that too, so the day it is covered this
+   * fails and says so.
+   */
+  const workerHeard = (newValueOf: string) => ({
+    status: "heard",
+    newValue: newValueOf,
+    areaName,
+  });
+
+  expect(shimPopup.writesHeardByWorker).toEqual([
+    workerHeard(shimPopup.contextId),
+    workerHeard(shimPopup.contextId),
+  ]);
+
+  expect(contentScript.writesHeardByWorker).toEqual([
+    workerHeard(contentScript.contextId),
+    workerHeard(contentScript.contextId),
+  ]);
+
+  expect(workerPopup.writesHeardByWorker).toEqual([
+    { status: "timeout" },
+    workerHeard(workerPopup.contextId),
+  ]);
 });
 
 /*

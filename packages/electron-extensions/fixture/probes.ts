@@ -25,9 +25,8 @@ const ARRIVAL_POLL_INTERVAL_MS = 25;
 
 /**
  * Whether this context waits on the change events at all. Each wait is a
- * deadline spent against a source that cannot fire on Electron 43.2.0, and
- * these probes run in every context of every test — so only the test that is
- * about them asks for them, by putting this in the URL it opens. Registering
+ * deadline, and these probes run in every context of every test — so only the
+ * test that is about them asks for them, by putting this in the URL it opens. Registering
  * the listeners is free and happens regardless, so what the context *has* is
  * always reported.
  */
@@ -170,6 +169,14 @@ export type ProbeResults = {
    * the worker and comes back on the same fan-out as any other.
    */
   ownWriteHeard: StorageChangeOutcome;
+  /**
+   * The same two changes as the worker heard them on its own `onChanged`:
+   * this context's write first, the worker's second. Electron fires no event in
+   * a worker, so hearing them there means the synthesis did, and that a write
+   * relayed from another session goes through it as much as the worker's own.
+   * `null` where the context was not asked to probe changes.
+   */
+  writesHeardByWorker: StorageChangeOutcome[] | null;
   /** Whether this context saw its port die after asking the worker to close it. */
   workerClosedPort: boolean;
   /** Whether the worker's event log recorded this context closing its own port. */
@@ -620,7 +627,7 @@ async function probeWriteSeenByWorker(
  * with it. An event that is not there records `null` for what it heard, which
  * is what the tests assert against.
  */
-function watchStorageChanges(storage: FixtureStorage) {
+export function watchStorageChanges(storage: FixtureStorage) {
   const heardByAreaEvent = new Map<string, unknown>();
 
   const heardByTopLevelEvent = new Map<string, string>();
@@ -795,6 +802,8 @@ export async function runProbes(): Promise<ProbeResults> {
 
   let workerWriteHeard: StorageChangeOutcome = { status: "notProbed" };
 
+  let writesHeardByWorker: StorageChangeOutcome[] | null = null;
+
   if (probesStorageChanges) {
     const workerWrote = await sendMessage(runtime, {
       type: "write-storage",
@@ -811,6 +820,16 @@ export async function runProbes(): Promise<ProbeResults> {
     ownWriteHeard = outcomes[0] ?? { status: "timeout" };
 
     workerWriteHeard = outcomes[1] ?? { status: "timeout" };
+
+    const workerHeard = await sendMessage(runtime, {
+      type: "storage-changes-heard",
+      keys: [`probe:${contextId}`, workerWriteKey],
+    });
+
+    writesHeardByWorker =
+      workerHeard.status === "replied"
+        ? (workerHeard.reply as { outcomes: StorageChangeOutcome[] }).outcomes
+        : [];
   }
 
   const port = await probePort(runtime, contextId);
@@ -855,6 +874,7 @@ export async function runProbes(): Promise<ProbeResults> {
     writeSeenByWorker,
     workerWriteHeard,
     ownWriteHeard,
+    writesHeardByWorker,
     storageChangeEvents,
     workerClosedPort,
     selfCloseSeenByWorker,

@@ -46,6 +46,14 @@ export const RUNTIME_PROXY_RELAY_START_GLOBAL = "__meruRuntimeProxyStartRelay";
  */
 export const RUNTIME_PROXY_MANIFEST_GLOBAL = "__meruRuntimeProxyManifest";
 
+/**
+ * Set on the relay's own script, by the derive, for an extension the embedder
+ * opted into `storage.onChanged` synthesis (`storage-synthesis.ts`). A global
+ * rather than a bridge question, because the synthesis has to be in place
+ * before the extension's own background script registers its first listener.
+ */
+export const RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL = "__meruRuntimeProxySynthesizeStorageChanges";
+
 /** What every extension URL starts with, from a worker scope to a page's own. */
 export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 

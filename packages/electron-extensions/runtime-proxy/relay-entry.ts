@@ -1,7 +1,11 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
-import { RUNTIME_PROXY_RELAY_START_GLOBAL } from "./bridge-protocol";
+import {
+  RUNTIME_PROXY_RELAY_START_GLOBAL,
+  RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+} from "./bridge-protocol";
 import { createRelayClient } from "./relay-client";
 import { createStorageRelay } from "./storage-relay";
+import { installStorageSynthesis } from "./storage-synthesis";
 
 /**
  * Entry point of the runtime proxy's worker-side relay client. It is bundled
@@ -19,7 +23,9 @@ import { createStorageRelay } from "./storage-relay";
  * value Chrome offers no way to read back and which the relay has to know to
  * refuse a content script the call Chromium would have refused it. Its
  * `onChanged` is only listened to, not shadowed, and what it hears is fanned
- * out to the sessions whose own stores no longer change.
+ * out to the sessions whose own stores no longer change — unless the extension
+ * is opted into synthesis, which shadows the writes and the events both, since
+ * Electron never fires those events in a worker.
  */
 const workerGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
 
@@ -40,6 +46,12 @@ for (const extensionApi of extensionApis) {
 // Before the extension's own background script runs, so its own boot-time call
 // is the first one the relay sees
 storageRelay.mirrorAccessLevels();
+
+// Ahead of `watchChanges`, so the relay's listener lands on the synthesized
+// event and fans out what it dispatches, rather than on the native one
+if (workerGlobals[RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]) {
+  installStorageSynthesis(extensionApis);
+}
 
 // And before its boot-time writes, so a change made while the worker is still
 // evaluating reaches whichever contexts are already listening
