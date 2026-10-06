@@ -1,6 +1,6 @@
 {
   "app.js": 1305600,
-  "extensions-chrome-facade.js": 12288,
+  "extensions-chrome-facade.js": 9216,
   "extensions-runtime-proxy-relay.js": 13312,
   "extensions-runtime-proxy-shim.js": 12288,
   "fixture-extension/background.js": 5120,

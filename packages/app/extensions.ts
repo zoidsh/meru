@@ -12,7 +12,6 @@ import {
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
-import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import {
   curatedExtensions,
   hostnameToMatchPattern,
@@ -33,9 +32,6 @@ import { WorkspaceApp } from "@/workspace-app";
 const INSTALL_DIR = path.join(app.getPath("userData"), "extensions");
 
 const DERIVED_EXTENSIONS_DIR = path.join(app.getPath("userData"), "derived-extensions");
-
-/** Where an extension's granted optional permissions are kept, by its id. */
-const GRANTED_PERMISSIONS_PATH = path.join(app.getPath("userData"), "extension-permissions.json");
 
 /**
  * Unpacked extensions to load on top of the installed ones, one directory
@@ -83,25 +79,6 @@ function getFixtureExtensionDirs() {
       .join(app.getAppPath(), "build-js", "fixture-extension")
       .replace("app.asar", "app.asar.unpacked"),
   ];
-}
-
-/**
- * The optional permissions `chrome.permissions.request` may grant an extension:
- * the catalog's own list for a curated extension, and `nativeMessaging` for the
- * fixture, which is what the end-to-end suite grants and relaunches on. The
- * fixture's is behind the condition that loads it at all, so a shipped build
- * grants it nothing.
- *
- * Everything else is answered the way Chrome answers a prompt the user
- * declined, the catalog being the only place a grant can come from.
- */
-function getGrantableOptionalPermissions(extensionId: string) {
-  if (extensionId === FIXTURE_EXTENSION_ID) {
-    return getFixtureExtensionDirs().length > 0 ? ["nativeMessaging"] : [];
-  }
-
-  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
-    ?.grantableOptionalPermissions;
 }
 
 /**
@@ -239,8 +216,6 @@ export const extensions = new Extensions({
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
-  getGrantableOptionalPermissions,
-  grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
   // One shared extension instance across every session — one 1Password sign-in
   // instead of one per account, and one worker whatever the account count. It
   // is how Meru runs extensions rather than something the user chooses: a
@@ -481,10 +456,6 @@ export async function uninstallCuratedExtension(extensionId: string) {
   extensions.unloadExtension(session.defaultSession, extensionId);
 
   await extensions.clearSessionData(session.defaultSession);
-
-  // And what the user allowed it, which Chrome drops with the install, so a
-  // reinstall asks again rather than coming back already granted
-  await extensions.clearGrantedPermissions(extensionId);
 
   log.info("Uninstalled extension", { extensionId });
 }

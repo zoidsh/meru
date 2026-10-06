@@ -60,7 +60,6 @@ describe("installChromeFacade", () => {
       "commands",
       "contextMenus",
       "notifications",
-      "permissions",
       "privacy",
       "webNavigation",
       "windows",

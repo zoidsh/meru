@@ -13,9 +13,6 @@
  * `matchesUrl` is the other question, pattern against a URL, which is what
  * `chrome.tabs.query({url})` filters on (`runtime-proxy/worker-tabs.ts`); there
  * the path is part of the answer, since an extension may well ask for one.
- *
- * `coversPattern` is the third, pattern against pattern, which is what
- * `chrome.permissions.contains({origins})` asks (`facade/api/permissions.ts`).
  */
 
 const ALL_URLS = "<all_urls>";
@@ -161,56 +158,5 @@ export function matchesUrl(pattern: string, url: string) {
     schemeCovers(parsedPattern.scheme.toLowerCase(), scheme) &&
     hostCovers(parsedPattern.host.toLowerCase(), parsedUrl.hostname) &&
     pathCovers(parsedPattern.path, `${parsedUrl.pathname}${parsedUrl.search}`)
-  );
-}
-
-/** The concrete schemes a pattern's scheme position stands for. */
-function expandScheme(scheme: string) {
-  return scheme === "*" ? [...WILDCARD_SCHEMES] : [scheme];
-}
-
-/**
- * Whether one match pattern covers every page another one names, which is what
- * `chrome.permissions.contains({origins})` asks: the extension holds a set of
- * host permissions, and the question is whether one of them already reaches
- * everywhere the pattern asked about would.
- *
- * Pattern against pattern, so a wildcard on the asked-about side has to be
- * covered rather than matched: a wildcard-scheme pattern is covered by
- * `<all_urls>` and by itself, and never by an https-only one, which leaves
- * `http` out. An extension that narrowed its host permissions is told `false`
- * where Chrome tells it `false`, which is the whole point of answering
- * honestly: a wrong `true` sends an extension down a path that then fails for
- * reasons it cannot see.
- */
-export function coversPattern(pattern: string, coveredPattern: string) {
-  if (coveredPattern === ALL_URLS) {
-    return pattern === ALL_URLS;
-  }
-
-  const covered = parseMatchPattern(coveredPattern);
-
-  if (!covered) {
-    return false;
-  }
-
-  const coveredSchemes = expandScheme(covered.scheme.toLowerCase());
-
-  // `<all_urls>` is every permitted scheme, so it covers any pattern written in
-  // one of them whatever its host and path
-  if (pattern === ALL_URLS) {
-    return coveredSchemes.every((scheme) => ALL_URLS_SCHEMES.has(scheme));
-  }
-
-  const parsedPattern = parseMatchPattern(pattern);
-
-  if (!parsedPattern) {
-    return false;
-  }
-
-  return (
-    coveredSchemes.every((scheme) => schemeCovers(parsedPattern.scheme.toLowerCase(), scheme)) &&
-    hostCovers(parsedPattern.host.toLowerCase(), covered.host.toLowerCase()) &&
-    pathCovers(parsedPattern.path, covered.path)
   );
 }

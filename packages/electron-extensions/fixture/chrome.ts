@@ -120,24 +120,6 @@ export type FixtureRuntime = {
   onConnect: FixtureEvent<(port: FixturePort) => void>;
 };
 
-/** A `chrome.permissions` query, in the two halves every method takes. */
-export type FixturePermissionsQuery = {
-  permissions?: string[];
-  origins?: string[];
-};
-
-/**
- * The slice of `chrome.permissions` the fixture drives, in the callback form —
- * the one a `webextension-polyfill`-shaped wrapper over `chrome` calls, and the
- * one Bitwarden's own helper uses.
- */
-export type FixturePermissions = {
-  contains: (query: FixturePermissionsQuery, callback: (contains: boolean) => void) => void;
-  getAll: (callback: (permissions: FixturePermissionsQuery) => void) => void;
-  request: (query: FixturePermissionsQuery, callback: (granted: boolean) => void) => void;
-  remove: (query: FixturePermissionsQuery, callback: (removed: boolean) => void) => void;
-};
-
 /**
  * The `chrome` global of whatever extension context this runs in — the
  * service worker, a content script's isolated world, or an extension page.
@@ -188,15 +170,4 @@ export function getChromeStorage(): FixtureStorage {
   const contextGlobals = globalThis as unknown as { chrome: { storage: FixtureStorage } };
 
   return contextGlobals.chrome.storage;
-}
-
-/**
- * The worker's `chrome.permissions`, which is the facade's throughout —
- * Electron implements none of the namespace, so the worker reaching for it is
- * also the proof that the fill arrived before the extension's own code ran.
- */
-export function getChromePermissions(): FixturePermissions {
-  const workerGlobals = globalThis as unknown as { chrome: { permissions: FixturePermissions } };
-
-  return workerGlobals.chrome.permissions;
 }

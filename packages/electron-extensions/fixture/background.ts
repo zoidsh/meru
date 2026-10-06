@@ -25,7 +25,6 @@
  */
 import {
   type FixtureMessageSender,
-  getChromePermissions,
   getChromeRuntime,
   getChromeStorage,
   getChromeTabs,
@@ -68,9 +67,6 @@ type ProbeMessage = {
   key?: string;
   value?: unknown;
   url?: string;
-  /** Which `chrome.permissions` method a permissions message asks for. */
-  method?: string;
-  permissions?: string[];
 };
 
 /**
@@ -100,8 +96,6 @@ const runtime = getChromeRuntime();
 const tabs = getChromeTabs();
 
 const webNavigation = getChromeWebNavigation();
-
-const permissions = getChromePermissions();
 
 /**
  * Sends back into the tab the message came from, which is the whole
@@ -403,39 +397,6 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
     storage.local.set({ [key]: value }, () => {
       sendResponse({ type: "write-storage-reply", key });
     });
-
-    return true;
-  }
-
-  /*
-   * `chrome.permissions` as the worker sees it, which is where Electron ships
-   * nothing at all and where Bitwarden asks. The call runs here rather than in
-   * the asking context because a grant belongs to the extension rather than to
-   * a context: the worker is what has to still hold it after a relaunch.
-   *
-   * The callback form throughout, since that is the form the polyfill a missing
-   * `browser` global sends an extension to uses. This listener answers late.
-   */
-  if (probeMessage?.type === "permissions" && typeof probeMessage.method === "string") {
-    const { method } = probeMessage;
-
-    const query = { permissions: probeMessage.permissions ?? [] };
-
-    const answer = (result: unknown) => {
-      sendResponse({ type: "permissions-reply", method, result });
-    };
-
-    if (method === "contains") {
-      permissions.contains(query, answer);
-    } else if (method === "getAll") {
-      permissions.getAll(answer);
-    } else if (method === "request") {
-      permissions.request(query, answer);
-    } else if (method === "remove") {
-      permissions.remove(query, answer);
-    } else {
-      answer(null);
-    }
 
     return true;
   }

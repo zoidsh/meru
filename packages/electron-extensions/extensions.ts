@@ -16,7 +16,6 @@ import {
   NativeMessaging,
   type NativeMessagingHostPolicy,
 } from "./native-messaging/native-messaging";
-import { type GrantableOptionalPermissionsPolicy, Permissions } from "./permissions/permissions";
 import { readExtensionDirId } from "./scan";
 import { WebNavigation } from "./web-navigation/web-navigation";
 
@@ -117,19 +116,6 @@ export type ExtensionsOptions = {
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
   isNativeMessagingHostAllowed?: NativeMessagingHostPolicy;
-  /**
-   * Which optional permissions `chrome.permissions.request` may grant an
-   * extension, by the id it is loaded as. Without it no request is ever
-   * granted, which is what every extension already handles: Chrome answers a
-   * prompt the user declined the same way.
-   */
-  getGrantableOptionalPermissions?: GrantableOptionalPermissionsPolicy;
-  /**
-   * The JSON file granted optional permissions are kept in, keyed by extension
-   * id. Chrome's grants survive a restart, so without a path they are the one
-   * thing here that does not.
-   */
-  grantedPermissionsPath?: string;
   /**
    * Which extensions a due alarm may start a stopped service worker for. Without
    * it an alarm reaches only the contexts already running, which is what Meru
@@ -235,8 +221,6 @@ export class Extensions {
 
   private alarms: Alarms;
 
-  private permissions: Permissions;
-
   private serviceWorkerConsoleListeners = new Map<
     Session,
     (event: ElectronEvent, messageDetails: MessageDetails) => void
@@ -252,8 +236,6 @@ export class Extensions {
     strippedManifestKeys,
     getContentScriptMatches,
     isNativeMessagingHostAllowed,
-    getGrantableOptionalPermissions,
-    grantedPermissionsPath,
     shouldWakeWorkerForAlarm,
     sharedInstance,
     workerSessionPagePatterns,
@@ -300,14 +282,6 @@ export class Extensions {
     this.alarms = new Alarms({ shouldWakeWorker: shouldWakeWorkerForAlarm, logger });
 
     this.alarms.registerRoutes(this.bridge);
-
-    this.permissions = new Permissions({
-      storePath: grantedPermissionsPath,
-      getGrantableOptionalPermissions,
-      logger,
-    });
-
-    this.permissions.registerRoutes(this.bridge);
 
     this.sharedInstance?.install({ bridge: this.bridge, logger });
   }
@@ -889,19 +863,6 @@ export class Extensions {
     );
 
     this.logger?.info("Cleared extension data", { storagePath });
-  }
-
-  /**
-   * What `chrome.permissions.request` granted one extension, which an uninstall
-   * has to drop: Chrome's grants go with the install, so a reinstall under the
-   * same id must not come back holding a permission the user allowed an
-   * extension they removed.
-   *
-   * Per id rather than per session, the grants being per id — one extension
-   * uninstalled leaves every other one's alone.
-   */
-  async clearGrantedPermissions(extensionId: string) {
-    await this.permissions.clear(extensionId);
   }
 
   private async getExtensionIndexedDbPaths(storagePath: string) {
