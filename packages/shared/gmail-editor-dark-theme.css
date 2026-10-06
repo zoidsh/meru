@@ -1,10 +1,11 @@
-/* Gmail's rich-text editor, shared by the compose window and the inline reply.
-   Gmail serializes its innerHTML as the draft and as the sent message, so the
-   inline overrides the engine writes would be baked into the mail — recipients,
-   and the sender in a light-themed client, would see near-white text on white.
-   Both call sites pass it to `ignore` instead, which skips the whole subtree,
-   and it is themed here by a CSS filter, which never leaves Meru's page. Keep
-   the selector in sync with those `ignore` entries.
+/* Gmail's rich-text editor, shared by the docked compose, the inline reply and
+   the pop-out. Gmail serializes its innerHTML as the draft and as the sent
+   message, so the inline overrides the engine writes would be baked into the
+   mail — recipients, and the sender in a light-themed client, would see
+   near-white text on white. Every call site passes `GMAIL_EDITOR_SELECTOR` to
+   `ignore` instead, which skips the whole subtree, and the editor is themed
+   here by a CSS filter, which never leaves Meru's page. The rules below spell
+   that selector out, so keep the two in step.
 
    Inverting flips lightness and the hue rotation restores the hue, so black
    text and a signature set to #000 read light, a color picked in the toolbar
