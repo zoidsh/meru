@@ -43,3 +43,8 @@ export type { NativeMessagingHostPolicy } from "./native-messaging/native-messag
 export { createSharedExtensionInstance } from "./runtime-proxy";
 export type { CreateSharedExtensionInstanceOptions } from "./runtime-proxy";
 export { findExtensionDirs, readExtensionDirId } from "./scan";
+export type {
+  ExtensionWindow,
+  ExtensionWindowOpenDetails,
+  ExtensionWindowsPolicy,
+} from "./windows/windows";
