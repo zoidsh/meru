@@ -31,6 +31,19 @@ export type CuratedExtension = {
    */
   telemetryUrls?: string[];
   /**
+   * Optional permissions `chrome.permissions.request` may grant the extension,
+   * which is the whole of what it can ever hold beyond the required permissions
+   * its manifest declares. A request for anything else is answered the way
+   * Chrome answers a prompt the user declined.
+   *
+   * A grant is an answer rather than a capability: Chromium grants nothing, so
+   * what the permission names still has to work through the facade or not at
+   * all. Only a permission whose feature Meru already serves belongs here —
+   * one that merely reads as granted sends an extension down a path that then
+   * fails for reasons it cannot see.
+   */
+  grantableOptionalPermissions?: string[];
+  /**
    * Error lines the extension's service worker writes that say nothing an
    * embedder can act on, as prefixes matched against the start of the message.
    * The worker's console is forwarded to Meru's log, and a line named here
