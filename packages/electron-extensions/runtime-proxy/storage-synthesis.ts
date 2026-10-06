@@ -95,7 +95,16 @@ function answerCall(
       ? (callArguments.at(-1) as (value?: unknown) => void)
       : undefined;
 
-  const result = run(callback ? callArguments.slice(0, -1) : callArguments);
+  const forwardedArguments = callback ? callArguments.slice(0, -1) : [...callArguments];
+
+  // Chrome takes a trailing `undefined` or `null` for an omitted optional
+  // argument, but only in last place: forwarded ahead of the callback the
+  // native call is given, it fails Chromium's signature matching instead
+  while (forwardedArguments.length > 0 && forwardedArguments.at(-1) == null) {
+    forwardedArguments.pop();
+  }
+
+  const result = run(forwardedArguments);
 
   if (!callback) {
     return result.then((settled) => {

@@ -42,6 +42,12 @@ function createWorkerApi() {
   let backend = Promise.resolve();
 
   const later = (method: string, callback: unknown, run: () => unknown) => {
+    // Chromium's signature matching refuses anything but a function in the
+    // callback's place, synchronously
+    if (typeof callback !== "function") {
+      throw new TypeError("No matching signature.");
+    }
+
     backend = backend.then(() => new Promise((resolve) => setTimeout(resolve, Math.random() * 3)));
 
     void backend.then(() => {
@@ -301,6 +307,31 @@ describe("installStorageSynthesis", () => {
     void call(api.local, "set", { a: 1 });
 
     expect(nativeCalls).toEqual(["get", "set", "get"]);
+  });
+
+  test("takes a trailing undefined or null for an omitted argument, as Chrome does", async () => {
+    const api = createWorkerApi();
+
+    installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    await call(api.local, "set", { a: 1 }, undefined);
+
+    let lastError: unknown = "unset";
+
+    call(api.local, "remove", "a", null, () => {
+      lastError = api.runtime.lastError;
+    });
+
+    await settle();
+
+    expect(lastError).toBeUndefined();
+
+    expect(heard.filter(({ event }) => event === "area").map(({ changes }) => changes)).toEqual([
+      { a: { newValue: 1 } },
+      { a: { oldValue: 1 } },
+    ]);
   });
 
   test("leaves reads unshadowed", () => {
