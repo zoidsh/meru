@@ -3,6 +3,7 @@ import { createCommands } from "./api/commands";
 import { createContextMenus } from "./api/context-menus";
 import { installNativeMessaging } from "./api/native-messaging";
 import { createNotifications } from "./api/notifications";
+import { createPermissions } from "./api/permissions";
 import { createPrivacy } from "./api/privacy";
 import { createTabs } from "./api/tabs";
 import { createWebNavigation } from "./api/web-navigation";
@@ -25,6 +26,11 @@ export function createChromeFacade(): ChromeNamespace {
     commands: createCommands(),
     contextMenus: createContextMenus(),
     notifications: createNotifications(),
+    // SPIKE: optional permissions the embedder lets an extension grant itself.
+    // Hardcoded here rather than taken from the catalog, which the facade has
+    // no channel to; the real one would ride in the derived copy the way the
+    // bridge token does
+    permissions: createPermissions(() => ["nativeMessaging", "privacy"]),
     privacy: createPrivacy(),
     tabs: createTabs(),
     webNavigation: createWebNavigation(),

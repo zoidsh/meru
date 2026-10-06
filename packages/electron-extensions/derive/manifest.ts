@@ -172,6 +172,49 @@ export type SharedInstanceManifestOptions =
   | { role: "contentScriptOnly"; shimFileName: string };
 
 /**
+ * SPIKE: a content script entry the derive adds to the content-script-only
+ * copy, standing in for a script the worker would have injected with
+ * `chrome.scripting.executeScript` into a tab it cannot reach.
+ */
+export type InjectedContentScript = {
+  js: string[];
+  allFrames?: boolean;
+  runAt?: string;
+  world?: string;
+};
+
+/**
+ * SPIKE: the added entries, clamped to the same sites as the manifest's own and
+ * with the shim ahead of them, since they need the proxied `chrome.runtime` as
+ * much as the author's own scripts do.
+ *
+ * Added only to the content-script-only copy: the worker's own session reaches
+ * its tabs with `executeScript` natively, so a static copy there would be a
+ * second instance of every script.
+ */
+function appendInjectedContentScripts(
+  contentScripts: ExtensionManifest["content_scripts"],
+  injectedContentScripts: InjectedContentScript[] | undefined,
+  matches: string[] | undefined,
+  shimFileName: string,
+) {
+  if (!injectedContentScripts || !matches || matches.length === 0) {
+    return contentScripts;
+  }
+
+  return [
+    ...(contentScripts ?? []),
+    ...injectedContentScripts.map(({ js, allFrames, runAt, world }) => ({
+      matches,
+      js: world === "MAIN" ? js : [shimFileName, ...js],
+      all_frames: allFrames ?? false,
+      run_at: runAt ?? "document_idle",
+      ...(world === undefined ? {} : { world }),
+    })),
+  ];
+}
+
+/**
  * Runs the shim ahead of the extension's own scripts in every content script
  * entry, in the same isolated world, which is what lets it shadow
  * `chrome.runtime.sendMessage` and `connect` before any extension code reads
@@ -251,6 +294,7 @@ export function deriveManifest(
     strippedManifestKeys = [],
     contentScriptMatches,
     sharedInstance,
+    injectedContentScripts,
   }: {
     facadeFileName: string;
     serviceWorkerFileName: string;
@@ -267,6 +311,8 @@ export function deriveManifest(
      * for the ordinary copy every session gets its own instance of.
      */
     sharedInstance?: SharedInstanceManifestOptions;
+    /** SPIKE: entries added to the content-script-only copy. */
+    injectedContentScripts?: InjectedContentScript[];
   },
 ): DerivedManifest {
   const clampedContentScripts = deriveContentScripts(
@@ -280,7 +326,12 @@ export function deriveManifest(
     content_security_policy: deriveContentSecurityPolicy(manifest, bridgeConnectSource),
     content_scripts:
       sharedInstance?.role === "contentScriptOnly"
-        ? prependContentScriptShim(clampedContentScripts, sharedInstance.shimFileName)
+        ? appendInjectedContentScripts(
+            prependContentScriptShim(clampedContentScripts, sharedInstance.shimFileName),
+            injectedContentScripts,
+            contentScriptMatches,
+            sharedInstance.shimFileName,
+          )
         : clampedContentScripts,
   };
 

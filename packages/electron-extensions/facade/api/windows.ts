@@ -1,6 +1,8 @@
+import { WINDOWS_PATHS } from "../../windows/bridge-protocol";
+import { postBridge } from "../lib/bridge";
 import type { ChromeNamespace } from "../lib/chrome";
 import { createNoopEvent } from "../lib/event";
-import { createNoopMethod } from "../lib/method";
+import { createBridgedMethod, createNoopMethod } from "../lib/method";
 
 /**
  * The one window every query answers with. An embedder promoting this namespace
@@ -34,9 +36,36 @@ export function createWindows(): ChromeNamespace {
     getCurrent: createNoopMethod(createWindow),
     getLastFocused: createNoopMethod(createWindow),
     getAll: createNoopMethod(() => [createWindow()]),
-    create: createNoopMethod(createWindow),
+    // SPIKE: promoted, since Bitwarden's sign-in and unlock surfaces are
+    // `windows.create` popouts of its own pages and a noop leaves it no way in.
+    // A window the embedder declines still answers the fake one, which is the
+    // noop's behavior and what every other method here keeps
+    create: createBridgedMethod(async (callArguments) => {
+      try {
+        const response = await postBridge(WINDOWS_PATHS.create, {
+          createData: callArguments[0],
+        });
+
+        if (!response.ok) {
+          return createWindow();
+        }
+
+        return (await response.json()) ?? createWindow();
+      } catch {
+        return createWindow();
+      }
+    }),
     update: createNoopMethod(createWindow),
-    remove: createNoopMethod(() => undefined),
+    remove: createBridgedMethod(async (callArguments) => {
+      try {
+        await postBridge(WINDOWS_PATHS.remove, { windowId: callArguments[0] });
+      } catch {
+        // Chrome resolves `remove` with nothing, so a bridge that cannot be
+        // reached is a window that stays open rather than an error
+      }
+
+      return undefined;
+    }),
 
     onCreated: createNoopEvent(),
     onRemoved: createNoopEvent(),

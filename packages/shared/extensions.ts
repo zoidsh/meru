@@ -46,10 +46,27 @@ export type CuratedExtension = {
    * written for takes real errors down to debug with it.
    */
   benignWorkerConsoleErrors?: string[];
+  /**
+   * SPIKE: content script entries the derive adds to the content-script-only
+   * copy, for scripts the extension's worker would otherwise inject with
+   * `chrome.scripting.executeScript` — which cannot reach a tab of another
+   * session, and which the worker's relay client answers success for.
+   *
+   * Clamped to the same sites as the manifest's own entries.
+   */
+  injectedContentScripts?: {
+    js: string[];
+    allFrames?: boolean;
+    runAt?: "document_start" | "document_end" | "document_idle";
+    world?: "ISOLATED" | "MAIN";
+  }[];
 };
 
 /** The 1Password Chrome Web Store id, which app and settings both single out. */
 export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
+/** SPIKE: Bitwarden's Chrome Web Store id. */
+export const BITWARDEN_EXTENSION_ID = "nngceckbapebfimnlniiiahkandclblb";
 
 /**
  * The extensions Meru offers, the only ones it installs. An id outside this
@@ -113,6 +130,36 @@ export const curatedExtensions: CuratedExtension[] = [
       // request name — `<autofill-item>`, which once was one — still surfaces
       "[Messaging] Exception while handling request <get-nested-frame-configuration>",
       "[Messaging] Exception while handling request <remove-inline-button>",
+    ],
+  },
+  {
+    id: BITWARDEN_EXTENSION_ID,
+    name: "Bitwarden",
+    description: "SPIKE entry. Fills and generates passwords and passkeys for your Google Account.",
+    category: "passwordManager",
+    contentScriptMatches: ["https://accounts.google.com/*", "https://myaccount.google.com/*"],
+    injectedContentScripts: [
+      // What `injectAutofillScripts` executes per frame. The overlay bundle is
+      // the superset of the four bootstrap variants the worker picks between,
+      // so a static copy ignores the inline-menu and notification settings
+      {
+        js: ["content/bootstrap-autofill-overlay.js", "content/contextMenuHandler.js"],
+        allFrames: true,
+        runAt: "document_start",
+      },
+      // What `registerContentScripts` registers at runtime for FIDO2, which
+      // lands only in the worker's own session
+      {
+        js: ["content/fido2-page-script.js"],
+        allFrames: true,
+        runAt: "document_start",
+        world: "MAIN",
+      },
+      {
+        js: ["content/fido2-content-script.js"],
+        allFrames: true,
+        runAt: "document_start",
+      },
     ],
   },
 ];

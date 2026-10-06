@@ -19,7 +19,7 @@ import {
 } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
-import { app, session, type WebContents } from "electron";
+import { app, BrowserWindow, session, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -206,6 +206,57 @@ function getWorkerSessionPagePatterns() {
   }
 }
 
+/**
+ * SPIKE: a `chrome.windows.create` popout, as a plain BrowserWindow in the
+ * session the extension asked from — the worker's, for a popout the service
+ * worker opens. Bitwarden's sign-in and unlock both live in one.
+ *
+ * No Meru chrome on it: the page is the extension's own and draws its own, and
+ * a titlebar would be Meru's to position. No preload is attached, so the window
+ * holds the extension's page and nothing else.
+ */
+function openExtensionWindow({
+  session: windowSession,
+  url,
+  width,
+  height,
+}: {
+  session: Electron.Session;
+  url: string;
+  width: number;
+  height: number;
+}) {
+  const window = new BrowserWindow({
+    width,
+    height,
+    useContentSize: true,
+    autoHideMenuBar: true,
+    webPreferences: { session: windowSession },
+  });
+
+  window.loadURL(url).catch((error: unknown) => {
+    log.error("Failed to load an extension window", { url, error: serializeError(error) });
+  });
+
+  return {
+    id: window.id,
+    focus: () => {
+      window.focus();
+    },
+    close: () => {
+      window.close();
+    },
+    getBounds: () => window.getBounds(),
+    isDestroyed: () => window.isDestroyed(),
+  };
+}
+
+/** SPIKE: the entries the content-script-only copy gains, from the catalog. */
+function getInjectedContentScripts(extensionId: string) {
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.injectedContentScripts;
+}
+
 // Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerExtensionBridgeScheme();
@@ -250,6 +301,8 @@ export const extensions = new Extensions({
   benignWorkerConsoleErrors: curatedExtensions.flatMap(
     (curatedExtension) => curatedExtension.benignWorkerConsoleErrors ?? [],
   ),
+  getInjectedContentScripts,
+  openExtensionWindow,
   sharedInstance: createSharedExtensionInstance({
     shimScriptPath: path.join(__dirname, "extensions-runtime-proxy-shim.js"),
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
@@ -340,7 +393,27 @@ function isActiveTab(contents: WebContents) {
  * `clearSessionData` already looks for, at a root that carries nothing else of
  * the kind.
  */
+/**
+ * SPIKE ONLY: trusts the certificate of the hosts in
+ * `MERU_SPIKE_TRUST_HOSTS`, so a self-hosted test server with a self-signed
+ * certificate is reachable from the worker. Development builds only, and never
+ * a path into a shipped one.
+ */
+function trustSpikeHosts() {
+  if (!is.dev || !process.env.MERU_SPIKE_TRUST_HOSTS) {
+    return;
+  }
+
+  const trustedHosts = new Set(process.env.MERU_SPIKE_TRUST_HOSTS.split(","));
+
+  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+    callback(trustedHosts.has(request.hostname) ? 0 : -3);
+  });
+}
+
 export function setupExtensionsWorkerSession() {
+  trustSpikeHosts();
+
   extensions.setupSession(session.defaultSession).catch((error: unknown) => {
     log.error("Failed to set up extensions worker session", { error: serializeError(error) });
   });

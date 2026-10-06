@@ -10,6 +10,7 @@ import {
 import { Alarms, type AlarmWakePolicy } from "./alarms/alarms";
 import { ExtensionBridge } from "./bridge/bridge";
 import { deriveExtension, type SharedInstanceDeriveOptions } from "./derive";
+import type { InjectedContentScript } from "./derive/manifest";
 import { reachesClampedSite } from "./derive/match-pattern";
 import type { ExtensionsLogger } from "./logger";
 import {
@@ -18,6 +19,7 @@ import {
 } from "./native-messaging/native-messaging";
 import { readExtensionDirId } from "./scan";
 import { WebNavigation } from "./web-navigation/web-navigation";
+import { Windows, type WindowsOptions } from "./windows/windows";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -111,6 +113,8 @@ export type ExtensionsOptions = {
    * manifest says, which for a password manager is every frame of every view.
    */
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+  /** SPIKE: entries the content-script-only copy gains, per extension id. */
+  getInjectedContentScripts?: (extensionId: string) => InjectedContentScript[] | undefined;
   /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
@@ -122,6 +126,8 @@ export type ExtensionsOptions = {
    * ships: a worker woken every minute is a worker that never idles out.
    */
   shouldWakeWorkerForAlarm?: AlarmWakePolicy;
+  /** SPIKE: how `chrome.windows.create` opens the extension's own page. */
+  openExtensionWindow?: WindowsOptions["openWindow"];
   /**
    * Lets one extension instance serve every session
    * (`createSharedExtensionInstance` in `runtime-proxy/`). Without it every
@@ -186,6 +192,8 @@ export class Extensions {
 
   private getContentScriptMatches: ExtensionsOptions["getContentScriptMatches"];
 
+  private getInjectedContentScripts: ExtensionsOptions["getInjectedContentScripts"];
+
   private sharedInstance: SharedExtensionInstance | undefined;
 
   private workerSessionPagePatterns: string[] | undefined;
@@ -219,6 +227,8 @@ export class Extensions {
 
   private webNavigation: WebNavigation;
 
+  private windows: Windows;
+
   private alarms: Alarms;
 
   private serviceWorkerConsoleListeners = new Map<
@@ -235,8 +245,10 @@ export class Extensions {
     derivedExtensionsDir,
     strippedManifestKeys,
     getContentScriptMatches,
+    getInjectedContentScripts,
     isNativeMessagingHostAllowed,
     shouldWakeWorkerForAlarm,
+    openExtensionWindow,
     sharedInstance,
     workerSessionPagePatterns,
     workerSessionBlockedUrls,
@@ -252,6 +264,8 @@ export class Extensions {
     this.strippedManifestKeys = strippedManifestKeys;
 
     this.getContentScriptMatches = getContentScriptMatches;
+
+    this.getInjectedContentScripts = getInjectedContentScripts;
 
     this.sharedInstance = sharedInstance;
 
@@ -278,6 +292,11 @@ export class Extensions {
     });
 
     this.webNavigation.registerRoutes(this.bridge);
+
+    // SPIKE: `windows.create` opening the extension's own page in a real window
+    this.windows = new Windows({ openWindow: openExtensionWindow, logger });
+
+    this.windows.registerRoutes(this.bridge);
 
     this.alarms = new Alarms({ shouldWakeWorker: shouldWakeWorkerForAlarm, logger });
 
@@ -306,6 +325,7 @@ export class Extensions {
         facadeScriptPath: this.facadeScriptPath,
         strippedManifestKeys: this.strippedManifestKeys,
         getContentScriptMatches: this.getContentScriptMatches,
+        getInjectedContentScripts: this.getInjectedContentScripts,
         sharedInstance: sharedInstanceDerive,
       });
 

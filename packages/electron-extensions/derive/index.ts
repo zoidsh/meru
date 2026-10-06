@@ -9,6 +9,7 @@ import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
   deriveManifest,
   type ExtensionManifest,
+  type InjectedContentScript,
   type SharedInstanceManifestOptions,
 } from "./manifest";
 
@@ -62,6 +63,8 @@ export type DeriveExtensionOptions = {
    * has no id to be recognised by and keeps the patterns its author declared.
    */
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+  /** SPIKE: entries the content-script-only copy gains, per extension id. */
+  getInjectedContentScripts?: (extensionId: string) => InjectedContentScript[] | undefined;
   /**
    * Derives the copy for its part in one shared instance across sessions.
    * Without it the copy carries no proxy script and keeps its worker — the
@@ -232,6 +235,7 @@ export async function deriveExtension({
   facadeScriptPath,
   strippedManifestKeys = [],
   getContentScriptMatches,
+  getInjectedContentScripts,
   sharedInstance,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
@@ -241,6 +245,8 @@ export async function deriveExtension({
   const extensionId = getExtensionIdFromManifestKey(sourceManifest.key);
 
   const contentScriptMatches = extensionId ? getContentScriptMatches?.(extensionId) : undefined;
+
+  const injectedContentScripts = extensionId ? getInjectedContentScripts?.(extensionId) : undefined;
 
   const derivedDirName = `${hash(sourceDir).slice(0, 16)}${
     sharedInstance?.role === "contentScriptOnly" ? CONTENT_SCRIPT_ONLY_DIR_SUFFIX : ""
@@ -262,6 +268,7 @@ export async function deriveExtension({
     sourceTree: await hashSourceTree(sourceDir),
     strippedManifestKeys,
     contentScriptMatches,
+    injectedContentScripts,
     sharedInstanceRole: sharedInstance?.role,
   });
 
@@ -299,6 +306,7 @@ export async function deriveExtension({
       bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
       strippedManifestKeys,
       contentScriptMatches,
+      injectedContentScripts,
       sharedInstance: toSharedInstanceManifestOptions(sharedInstance),
     });
 

@@ -81,6 +81,28 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
     }
   }
 
+  /*
+   * SPIKE: Chrome defines no `browser` global in a content script's isolated
+   * world and Electron does, which is not a convenience here but a different
+   * code path. Bitwarden's `sendExtensionMessage` branches on it: with
+   * `browser` present it returns `browser.runtime.sendMessage(...)` bare, and
+   * with only `chrome` it uses the callback form, which swallows `lastError`
+   * and resolves `null`. The promise form rejects when a listener took the
+   * message and never answered — Chrome's own semantics, which the relay
+   * follows — and the rejection is never caught, so every setup call that goes
+   * unanswered throws out of Bitwarden's own `await` and aborts the chain. The
+   * visible cost is an autofill content script that never finishes wiring its
+   * field listeners, so focusing a password field does nothing.
+   *
+   * Removed in a content script only. An extension page keeps both globals,
+   * which is what Chrome gives a page too.
+   */
+  const contextProtocol = (contextGlobals.location as { protocol?: string } | undefined)?.protocol;
+
+  if (contextGlobals.chrome && contextProtocol && !contextProtocol.startsWith("chrome-extension")) {
+    delete contextGlobals.browser;
+  }
+
   pageStreamClient.start();
 
   return pageStreamClient;

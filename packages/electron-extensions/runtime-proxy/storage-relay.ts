@@ -19,6 +19,7 @@ import {
   type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
+import { installStorageSynthesis } from "./storage-synthesis";
 
 /** Marks a `setAccessLevel` this relay already mirrored, since `chrome` and
  * `browser` can hand back the same area object. */
@@ -384,5 +385,23 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
     );
   };
 
-  return { mirrorAccessLevels, run, watchChanges };
+  /**
+   * SPIKE: the deferred synthesis, now that a curated extension needs it.
+   * Shadows the area writes, diffs them, and dispatches what Electron never
+   * delivers — to the worker's own listeners and, through `reportChange`, to
+   * every shimmed context the fan-out already covers.
+   */
+  const synthesizeChanges = () => {
+    installStorageSynthesis(extensionApis, {
+      reportChange: (areaName, changes) => {
+        void reportChange({
+          area: areaName,
+          changes,
+          accessLevel: accessLevels.get(areaName) ?? DEFAULT_STORAGE_ACCESS_LEVELS[areaName],
+        });
+      },
+    });
+  };
+
+  return { mirrorAccessLevels, run, watchChanges, synthesizeChanges };
 }

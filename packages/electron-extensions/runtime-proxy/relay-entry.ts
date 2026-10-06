@@ -2,6 +2,7 @@ import type { ChromeNamespace } from "../facade/lib/chrome";
 import { RUNTIME_PROXY_RELAY_START_GLOBAL } from "./bridge-protocol";
 import { createRelayClient } from "./relay-client";
 import { createStorageRelay } from "./storage-relay";
+import { wrapScripting } from "./worker-scripting";
 
 /**
  * Entry point of the runtime proxy's worker-side relay client. It is bundled
@@ -35,6 +36,10 @@ for (const extensionApi of extensionApis) {
   relayClient.wrapRuntime(extensionApi);
 
   relayClient.wrapTabs(extensionApi);
+
+  // SPIKE: answers the worker's own `executeScript` for a tab of a session it
+  // has none of, where the derive declared the file as a content script instead
+  wrapScripting(extensionApi);
 }
 
 // Before the extension's own background script runs, so its own boot-time call
@@ -44,6 +49,10 @@ storageRelay.mirrorAccessLevels();
 // And before its boot-time writes, so a change made while the worker is still
 // evaluating reaches whichever contexts are already listening
 storageRelay.watchChanges();
+
+// SPIKE: and before the extension registers its own `onChanged` listeners,
+// which this is what holds, since Electron delivers none of them
+storageRelay.synthesizeChanges();
 
 /*
  * The stream is parked by the derived wrapper, as the last thing it does,

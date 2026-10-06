@@ -1,0 +1,15 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    environment:
+      ADMIN_TOKEN: spike-admin-token
+      SIGNUPS_ALLOWED: "true"
+      ROCKET_PORT: "8443"
+      ROCKET_TLS: '{certs="/tls/cert.pem",key="/tls/key.pem"}'
+    ports:
+      - "8443"
+    volumes:
+      - vw-data:/data
+      - ./tls:/tls:ro
+volumes:
+  vw-data:
