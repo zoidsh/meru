@@ -19,9 +19,9 @@ type Callback = (value?: unknown) => void;
 
 /**
  * A worker's `chrome.storage`, answering in the callback form only, a few
- * milliseconds late and in no fixed order, so overlapping calls interleave the
- * way they can in Chromium's browser process. Its events record what was
- * registered on them natively, which the synthesis must never do.
+ * milliseconds late but in the order the calls were made, as Chromium runs an
+ * extension's storage calls. Its events record what was registered on them
+ * natively, which the synthesis must never do.
  */
 function createWorkerApi() {
   const runtime: ChromeNamespace = {};
@@ -39,8 +39,12 @@ function createWorkerApi() {
     hasListeners: () => false,
   });
 
+  let backend = Promise.resolve();
+
   const later = (method: string, callback: unknown, run: () => unknown) => {
-    setTimeout(() => {
+    backend = backend.then(() => new Promise((resolve) => setTimeout(resolve, Math.random() * 3)));
+
+    void backend.then(() => {
       const failure = failures.get(method);
 
       const value = failure === undefined ? run() : undefined;
@@ -54,7 +58,7 @@ function createWorkerApi() {
       } finally {
         delete runtime.lastError;
       }
-    }, Math.random() * 5);
+    });
   };
 
   const createArea = () => {
@@ -277,14 +281,36 @@ describe("installStorageSynthesis", () => {
     ]);
   });
 
-  test("answers a read made after an unawaited write with what the write stored", async () => {
+  test("hands the write to the store in the call itself, ahead of anything after it", () => {
     const api = createWorkerApi();
+
+    const nativeCalls: string[] = [];
+
+    for (const method of ["get", "set"]) {
+      const native = api.local[method] as (...callArguments: unknown[]) => void;
+
+      api.local[method] = (...callArguments: unknown[]) => {
+        nativeCalls.push(method);
+
+        native(...callArguments);
+      };
+    }
 
     installStorageSynthesis([api.extensionApi]);
 
     void call(api.local, "set", { a: 1 });
 
-    expect(await call(api.local, "get", "a")).toEqual({ a: 1 });
+    expect(nativeCalls).toEqual(["get", "set", "get"]);
+  });
+
+  test("leaves reads unshadowed", () => {
+    const api = createWorkerApi();
+
+    const nativeGet = api.local.get;
+
+    installStorageSynthesis([api.extensionApi]);
+
+    expect(api.local.get).toBe(nativeGet);
   });
 
   test("answers the callback form after the listeners, with the read's value", async () => {
@@ -365,30 +391,6 @@ describe("installStorageSynthesis", () => {
     await call(api.local, "set", { a: 2 });
 
     expect(heard).toHaveLength(2);
-  });
-
-  test("fails a read in both forms the way the native read failed", async () => {
-    const api = createWorkerApi();
-
-    installStorageSynthesis([api.extensionApi]);
-
-    api.failures.set("get", "Storage is unavailable");
-
-    let seen: unknown;
-
-    call(api.local, "get", "a", () => {
-      seen = api.runtime.lastError;
-    });
-
-    await settle();
-
-    expect(seen).toEqual({ message: "Storage is unavailable" });
-
-    expect(api.runtime.lastError).toBeUndefined();
-
-    await expect(call(api.local, "get", "a") as Promise<unknown>).rejects.toThrow(
-      "Storage is unavailable",
-    );
   });
 
   test("keeps dispatching to the other listeners when one throws", async () => {

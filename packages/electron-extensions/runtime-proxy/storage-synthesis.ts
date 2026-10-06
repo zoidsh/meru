@@ -15,8 +15,6 @@ const WRITE_METHOD_NAMES = ["set", "remove", "clear"] as const;
 
 type WriteMethodName = (typeof WRITE_METHOD_NAMES)[number];
 
-const READ_METHOD_NAMES = ["get", "getKeys", "getBytesInUse"] as const;
-
 type StorageItems = Record<string, unknown>;
 
 /**
@@ -140,11 +138,14 @@ function answerCall(
  * behind it: one made by an extension page in the worker's own session, whose
  * native events fire there but whose write the worker never hears.
  *
- * Writes to one area run one at a time, or two overlapping ones would each read
- * the other's state as their own before and report a change that never
- * happened. Reads wait behind the writes already queued and not behind each
- * other, which keeps the order Chromium answers calls in: a `get` made after a
- * `set` sees what the `set` wrote, even unawaited.
+ * The read before, the write and the read after are issued back to back, in
+ * the call itself, and that is what keeps them correct. Chromium runs an
+ * extension's storage calls in the order they arrive, so no other call can
+ * land between them, two overlapping writes each read their own before, and a
+ * `get` made after an unawaited `set` sees what it wrote. Holding the write
+ * back until the read before had answered would break the ordering another
+ * context relies on: a worker that writes and then messages a page could have
+ * the page read the store before the write had reached it.
  *
  * Opted into per extension, since it puts two extra reads on every write.
  */
@@ -153,11 +154,11 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
 
   const shadowedAreas = new WeakSet<ChromeNamespace>();
 
-  /** The last write queued on each area, which never rejects. */
-  const writeQueues = new Map<RuntimeProxyStorageAreaName, Promise<unknown>>();
-
-  const getWriteQueue = (areaName: RuntimeProxyStorageAreaName) =>
-    writeQueues.get(areaName) ?? Promise.resolve();
+  /**
+   * The last dispatch on each area, which never rejects. Chromium answers in
+   * order anyway; the chain is what makes the events' order not depend on it.
+   */
+  const dispatchChains = new Map<RuntimeProxyStorageAreaName, Promise<unknown>>();
 
   const shadowArea = (
     areaName: RuntimeProxyStorageAreaName,
@@ -173,32 +174,51 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
     const readKeys = (keys: string[] | null) =>
       invokeNativeMethod(runtime, area, nativeGet as NativeMethod, [keys]);
 
-    const write = async (
+    const write = (
       method: WriteMethodName,
       nativeWrite: NativeMethod,
       callArguments: unknown[],
     ) => {
       const keys = getAffectedKeys(method, callArguments);
 
-      const before = keys?.length === 0 ? undefined : await readKeys(keys);
+      const touchesNothing = keys?.length === 0;
 
-      const written = await invokeNativeMethod(runtime, area, nativeWrite, callArguments);
+      const before = touchesNothing ? undefined : readKeys(keys);
 
-      if (written.status === "error" || before?.status !== "ok") {
-        return written;
-      }
+      const written = invokeNativeMethod(runtime, area, nativeWrite, callArguments);
 
-      const after = await readKeys(keys);
+      const after = touchesNothing ? undefined : readKeys(keys);
 
-      if (after.status === "ok" && isStorageItems(before.value) && isStorageItems(after.value)) {
-        const changes = diffStorageItems(before.value, after.value);
+      const dispatched = (dispatchChains.get(areaName) ?? Promise.resolve()).then(async () => {
+        const [beforeResult, writtenResult, afterResult] = await Promise.all([
+          before,
+          written,
+          after,
+        ]);
 
-        if (Object.keys(changes).length > 0) {
-          changedEvents.dispatch(areaName, changes);
+        if (
+          writtenResult.status === "ok" &&
+          beforeResult?.status === "ok" &&
+          afterResult?.status === "ok" &&
+          isStorageItems(beforeResult.value) &&
+          isStorageItems(afterResult.value)
+        ) {
+          const changes = diffStorageItems(beforeResult.value, afterResult.value);
+
+          if (Object.keys(changes).length > 0) {
+            changedEvents.dispatch(areaName, changes);
+          }
         }
-      }
 
-      return written;
+        return writtenResult;
+      });
+
+      dispatchChains.set(
+        areaName,
+        dispatched.catch(() => undefined),
+      );
+
+      return dispatched;
     };
 
     for (const method of WRITE_METHOD_NAMES) {
@@ -209,32 +229,8 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
       }
 
       area[method] = (...callArguments: unknown[]) =>
-        answerCall(runtime, callArguments, (forwardedArguments) => {
-          const written = getWriteQueue(areaName).then(() =>
-            write(method, nativeWrite as NativeMethod, forwardedArguments),
-          );
-
-          writeQueues.set(
-            areaName,
-            written.catch(() => undefined),
-          );
-
-          return written;
-        });
-    }
-
-    for (const method of READ_METHOD_NAMES) {
-      const nativeRead = area[method];
-
-      if (typeof nativeRead !== "function") {
-        continue;
-      }
-
-      area[method] = (...callArguments: unknown[]) =>
         answerCall(runtime, callArguments, (forwardedArguments) =>
-          getWriteQueue(areaName).then(() =>
-            invokeNativeMethod(runtime, area, nativeRead as NativeMethod, forwardedArguments),
-          ),
+          write(method, nativeWrite as NativeMethod, forwardedArguments),
         );
     }
   };
