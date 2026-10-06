@@ -342,7 +342,15 @@ function openExtensionWindow({
   });
 
   return {
+    // `focus` alone leaves a minimized window minimized on macOS and Windows,
+    // so a second Unlock would look like it did nothing
     focus: () => {
+      if (window.isMinimized()) {
+        window.restore();
+      }
+
+      window.show();
+
       window.focus();
     },
     close: () => {
