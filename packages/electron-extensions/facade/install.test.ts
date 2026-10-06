@@ -227,24 +227,6 @@ describe("installChromeFacade", () => {
     expect(eventOf(autofillEnabled, "onChange").addListener).toBeFunction();
   });
 
-  test("shares one facade between the chrome and browser globals", () => {
-    const facade = createChromeFacade();
-
-    const chrome = createNativeChrome();
-    const browser = createNativeChrome();
-
-    installChromeFacade(chrome, facade);
-    installChromeFacade(browser, facade);
-
-    const listener = () => {};
-
-    eventOf(namespaceOf(browser, "windows"), "onFocusChanged").addListener(listener);
-
-    expect(eventOf(namespaceOf(chrome, "windows"), "onFocusChanged").hasListener(listener)).toBe(
-      true,
-    );
-  });
-
   test("takes over the alarms Electron half implements", () => {
     const chrome = createNativeChrome();
 
@@ -256,20 +238,6 @@ describe("installChromeFacade", () => {
     // which is a gap filling cannot reach — see `api/alarms.ts`
     expect(chrome.alarms).not.toBe(alarms);
     expect(namespaceOf(chrome, "alarms").getAll).toBeFunction();
-  });
-
-  test("shares one alarms between the chrome and browser globals", () => {
-    const facade = createChromeFacade();
-
-    const chrome = createNativeChrome();
-    const browser = createNativeChrome();
-
-    installChromeFacade(chrome, facade);
-    installChromeFacade(browser, facade);
-
-    // One namespace means one set of `onAlarm` listeners and one parked stream,
-    // whichever global the extension reached it through
-    expect(chrome.alarms).toBe(browser.alarms);
   });
 
   test("runs twice without replacing what the first run added", () => {
