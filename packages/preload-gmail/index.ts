@@ -4,6 +4,7 @@ import { observeBodyMutations } from "@meru/shared/dom";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { observePageScrollEdge } from "@meru/shared/renderer/scroll-edge";
 import { moveAttachmentsToTop } from "./attachments";
+import { loadClippedMessages } from "./clipped-messages";
 import { openComposeInNewWindow } from "./compose";
 import { initCss } from "./css";
 import { darkThemeCompose } from "./dark-theme/compose";
@@ -20,6 +21,7 @@ const features = [
   observeOutOfOfficeBanner,
   addSenderIcons,
   moveAttachmentsToTop,
+  loadClippedMessages,
   openComposeInNewWindow,
   setUserEmail,
   replyForwardInPopOut,

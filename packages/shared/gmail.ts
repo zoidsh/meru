@@ -37,6 +37,7 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
   hideUpgradeButton: "--meru-hide-gmail-upgrade",
   moveAttachmentsToTop: "--meru-move-attachments-to-top",
   showTrimmedContent: "--meru-show-trimmed-content",
+  loadClippedMessages: "--meru-load-clipped-messages",
   closeComposeWindowAfterSend: "--meru-close-compose-after-send",
   replyForwardInPopOut: "--meru-reply-forward-in-pop-out",
   extendDarkTheme: "--meru-extend-dark-theme",

@@ -101,6 +101,7 @@ export function createDefaultConfig({
     "gmail.showSenderIcons": true,
     "gmail.moveAttachmentsToTop": false,
     "gmail.showTrimmedContent": false,
+    "gmail.loadClippedMessages": false,
     "gmail.closeComposeWindowAfterSend": false,
     "gmail.replyForwardInPopOut": false,
     "gmail.extendDarkTheme": false,

@@ -127,6 +127,13 @@ export function GmailSettings() {
               licenseKeyRequired
             />
             <ConfigSwitchField
+              label="Load clipped messages in full"
+              description="Show the whole message when Gmail clips a long one, instead of a “View entire message” link."
+              configKey="gmail.loadClippedMessages"
+              restartRequired
+              licenseKeyRequired
+            />
+            <ConfigSwitchField
               label="Always reply and forward in a pop-out"
               description="Open replies and forwards in a pop-out instead of below the message."
               configKey="gmail.replyForwardInPopOut"
