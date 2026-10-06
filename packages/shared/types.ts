@@ -143,6 +143,7 @@ export type Config = {
   "gmail.showSenderIcons": boolean;
   "gmail.moveAttachmentsToTop": boolean;
   "gmail.showTrimmedContent": boolean;
+  "gmail.loadClippedMessages": boolean;
   "gmail.closeComposeWindowAfterSend": boolean;
   "gmail.replyForwardInPopOut": boolean;
   "gmail.extendDarkTheme": boolean;
