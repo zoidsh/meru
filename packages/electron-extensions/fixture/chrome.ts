@@ -138,6 +138,32 @@ export type FixturePermissions = {
   remove: (query: FixturePermissionsQuery, callback: (removed: boolean) => void) => void;
 };
 
+/** One window as `chrome.windows` describes it, in the slice the fixture reads. */
+export type FixtureWindow = {
+  id?: number;
+  type?: string;
+  width?: number;
+  height?: number;
+};
+
+/**
+ * The slice of `chrome.windows` the fixture drives, in the callback form — the
+ * form a `webextension-polyfill`-shaped wrapper calls and the one a refusal is
+ * reported through, `lastError` being readable only inside the callback.
+ */
+export type FixtureWindows = {
+  create: (
+    createData: Record<string, unknown>,
+    callback: (window: FixtureWindow | undefined) => void,
+  ) => void;
+  get: (
+    windowId: number,
+    queryOptions: Record<string, unknown>,
+    callback: (window: FixtureWindow | undefined) => void,
+  ) => void;
+  remove: (windowId: number, callback: () => void) => void;
+};
+
 /**
  * The `chrome` global of whatever extension context this runs in — the
  * service worker, a content script's isolated world, or an extension page.
@@ -199,6 +225,18 @@ export function getChromePermissions(): FixturePermissions {
   const workerGlobals = globalThis as unknown as { chrome: { permissions: FixturePermissions } };
 
   return workerGlobals.chrome.permissions;
+}
+
+/**
+ * The worker's `chrome.windows`, which is the facade's — Electron implements
+ * none of the namespace. A window opened from here is the one surface a worker
+ * has that no page of its own can stand in for, which is what a password
+ * manager's unlock popout is.
+ */
+export function getChromeWindows(): FixtureWindows {
+  const workerGlobals = globalThis as unknown as { chrome: { windows: FixtureWindows } };
+
+  return workerGlobals.chrome.windows;
 }
 
 /** What the extension API globals are in this context, as `typeof` names them. */

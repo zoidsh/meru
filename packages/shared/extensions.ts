@@ -54,6 +54,20 @@ export type CuratedExtension = {
    */
   synthesizeStorageChanges?: boolean;
   /**
+   * Whether `chrome.windows.create` opens the extension's own pages in a Meru
+   * window. Nothing else is ever opened through it, and without this the call
+   * opens nothing at all and answers the way it always has.
+   *
+   * An opt-in because the namespace is a view of a browser Meru is not: an
+   * extension whose popup entries open detached windows of their own reaches
+   * for one wherever its page cannot do the job, and 1Password's is the
+   * half-working detached popup the popup surface was taken away for. One
+   * belongs here only where the window is the extension's whole way in — a
+   * password manager whose unlock and sign-in surfaces are popouts has no other
+   * — and where its pages have been seen to work in one.
+   */
+  opensExtensionWindows?: boolean;
+  /**
    * Error lines the extension's service worker writes that say nothing an
    * embedder can act on, as prefixes matched against the start of the message.
    * The worker's console is forwarded to Meru's log, and a line named here
