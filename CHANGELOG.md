@@ -7,3 +7,4 @@ This file is the draft of the next release, written one line at a time as work l
 ### Added
 
 - Vids, Photos, Apps Script, Analytics, Ads and Search Console open in Meru as workspace apps, and can be added to the launcher in `Settings… → Workspace Apps`
+- **Meru Pro:** `Always show trimmed content` in `Settings… → Gmail` shows the quoted text Gmail hides behind the `•••` button

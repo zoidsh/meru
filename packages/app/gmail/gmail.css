@@ -35,6 +35,17 @@ html.meru-reverse-conversation div[role="list"]:has(div[role="listitem"]) {
   flex-direction: column-reverse;
 }
 
+/* Trimmed content: Gmail hides the quote only through `.adO .adL` and `.h5`; `.ajU` and `.ajV` are its ••• toggle. */
+html.meru-show-trimmed-content .adO .adL,
+html.meru-show-trimmed-content .adO .h5 {
+  display: block !important;
+}
+
+html.meru-show-trimmed-content .adO .ajU,
+html.meru-show-trimmed-content .adO .ajV {
+  display: none !important;
+}
+
 html.meru-hide-out-of-office-banner #\:7 {
   display: none !important;
 }
