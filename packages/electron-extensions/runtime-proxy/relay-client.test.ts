@@ -183,7 +183,7 @@ describe("createRelayClient", () => {
     expect(onMessage.hasListeners()).toBe(false);
   });
 
-  test("two wrapped extension API objects share one set of mirrored listeners", async () => {
+  test("chrome and browser share one set of mirrored listeners", async () => {
     const stub = stubBridge();
 
     const { chrome } = createWorkerChrome();
@@ -1337,7 +1337,7 @@ describe("what the worker asks about tabs", () => {
     expect(listed).toEqual([[RELAYED_TAB]]);
   });
 
-  test("every extension API object wrapped is shadowed", async () => {
+  test("chrome and browser are both shadowed, as Electron builds two objects", async () => {
     const stub = stubBridge();
 
     stub.answerWith(RUNTIME_PROXY_PATHS.workerQueryTabs, { tabs: [RELAYED_TAB] });

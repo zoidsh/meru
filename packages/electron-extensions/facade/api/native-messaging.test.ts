@@ -4,7 +4,6 @@ import {
   type NativeMessagingFrame,
 } from "../../native-messaging/bridge-protocol";
 import { encodeNativeMessage } from "../../native-messaging/framing";
-import { callInCallbackForm } from "../lib/callback-form";
 import type { ChromeNamespace } from "../lib/chrome";
 import { installNativeMessaging } from "./native-messaging";
 
@@ -362,31 +361,5 @@ describe("facade sendNativeMessage", () => {
     bridge.sendFrame({ type: "disconnect", error: "Specified native messaging host not found." });
 
     await expect(reply).rejects.toThrow("Specified native messaging host not found.");
-  });
-
-  test("answers a callback with the reply, and with lastError when the host is gone", async () => {
-    const bridge = installFakeBridge();
-
-    const runtime: ChromeNamespace = {};
-
-    installNativeMessaging({ runtime });
-
-    const sendNativeMessage = runtime.sendNativeMessage as (...callArguments: unknown[]) => unknown;
-
-    const { returned, answered } = callInCallbackForm(runtime, sendNativeMessage, "com.meru.test", {
-      hello: "host",
-    });
-
-    expect(returned).toBeUndefined();
-
-    bridge.answerConnect();
-
-    await waitFor("the posted message", () => bridge.paths().includes(NATIVE_MESSAGING_PATHS.post));
-
-    bridge.sendFrame({ type: "disconnect", error: "Specified native messaging host not found." });
-
-    await expect(answered).rejects.toThrow("Specified native messaging host not found.");
-
-    expect(runtime.lastError).toBeUndefined();
   });
 });

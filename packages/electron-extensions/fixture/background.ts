@@ -30,7 +30,6 @@ import {
   getChromeStorage,
   getChromeTabs,
   getChromeWebNavigation,
-  readExtensionGlobals,
 } from "./chrome";
 
 const workerGlobals = globalThis as unknown as {
@@ -39,8 +38,6 @@ const workerGlobals = globalThis as unknown as {
 };
 
 const workerInstanceId = workerGlobals.crypto.randomUUID();
-
-const extensionGlobals = readExtensionGlobals();
 
 /**
  * Port connects and disconnects, in the order the worker saw them. A context
@@ -310,10 +307,6 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
       workerInstanceId,
       sender: serializeSender(sender),
     });
-  }
-
-  if (probeMessage?.type === "read-globals") {
-    sendResponse({ type: "globals-reply", extensionGlobals });
   }
 
   if (probeMessage?.type === "read-events") {

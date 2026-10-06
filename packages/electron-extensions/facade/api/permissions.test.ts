@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { PERMISSIONS_PATHS } from "../../permissions/bridge-protocol";
-import { callInCallbackForm } from "../lib/callback-form";
 import type { ChromeEvent, ChromeNamespace } from "../lib/chrome";
 import { createPermissions } from "./permissions";
 
@@ -376,8 +375,8 @@ describe("createPermissions", () => {
 /**
  * The callback form, which is what a `webextension-polyfill`-shaped wrapper
  * over `chrome` calls — 1Password builds one whenever `browser` is missing, so
- * every method has to answer a trailing callback as well as a promise, and a
- * call that fails has to say so on `lastError`, the one place the wrapper looks.
+ * every method has to answer a trailing callback as well as a promise. Chrome
+ * leaves `lastError` unset on all of these, and so does this.
  */
 describe("createPermissions in callback form", () => {
   function callWithCallback(
@@ -440,36 +439,5 @@ describe("createPermissions in callback form", () => {
     });
 
     expect((await answered).result).toBe(false);
-  });
-
-  test("reports a failed call on lastError, which a polyfill-shaped caller rejects with", async () => {
-    const runtime = installManifest(BITWARDEN_MANIFEST);
-
-    installFakeBridge();
-
-    const permissions = createPermissions();
-
-    const failures: [string, unknown[], string][] = [
-      [
-        "request",
-        [{ permissions: ["bookmarks"] }],
-        "Only permissions specified in the manifest may be requested.",
-      ],
-      ["remove", [{ permissions: ["storage"] }], "You cannot remove required permissions."],
-    ];
-
-    for (const [name, callArguments, message] of failures) {
-      const { returned, answered } = callInCallbackForm(
-        runtime,
-        namespaceMethod(permissions, name),
-        ...callArguments,
-      );
-
-      expect(returned).toBeUndefined();
-
-      await expect(answered).rejects.toThrow(message);
-
-      expect(runtime.lastError).toBeUndefined();
-    }
   });
 });

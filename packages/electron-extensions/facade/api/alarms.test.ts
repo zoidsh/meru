@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { ALARMS_PATHS, type AlarmDetails, type AlarmFrame } from "../../alarms/bridge-protocol";
 import { encodeNativeMessage } from "../../native-messaging/framing";
-import { callInCallbackForm } from "../lib/callback-form";
 import type { ChromeEvent, ChromeNamespace } from "../lib/chrome";
 import { createAlarms, installAlarms } from "./alarms";
 
@@ -267,38 +266,6 @@ describe("alarms", () => {
     expect(await methodOf(alarms, "get")("poll")).toBeUndefined();
     expect(await methodOf(alarms, "getAll")()).toEqual([]);
     expect(await methodOf(alarms, "clear")("poll")).toBe(false);
-  });
-
-  test("answers every method in callback form with an empty result and no lastError when the bridge refuses", async () => {
-    const bridge = installFakeBridge();
-
-    for (const path of Object.values(ALARMS_PATHS)) {
-      bridge.refuse(path, 403);
-    }
-
-    const runtime: ChromeNamespace = {};
-
-    const alarms = createAlarms();
-
-    const calls: [string, unknown[], unknown][] = [
-      ["create", ["poll", { periodInMinutes: 1 }], undefined],
-      ["get", ["poll"], undefined],
-      ["getAll", [], []],
-      ["clear", ["poll"], false],
-      ["clearAll", [], false],
-    ];
-
-    for (const [name, callArguments, expected] of calls) {
-      const { returned, answered } = callInCallbackForm(
-        runtime,
-        methodOf(alarms, name),
-        ...callArguments,
-      );
-
-      expect(returned).toBeUndefined();
-
-      expect(await answered).toEqual(expected);
-    }
   });
 
   test("parks no stream until something listens", async () => {

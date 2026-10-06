@@ -101,7 +101,8 @@ export function createPageStreamClient({
 
   /**
    * `lastError` around an emit, set on every runtime object this client
-   * wrapped, so a listener reads it whichever one it was written against.
+   * wrapped: Electron builds `chrome` and `browser` as two objects, one client
+   * serves both, and a listener reads whichever one it was written against.
    */
   const withRuntimesLastError = (error: string, emit: () => void) => {
     let run = emit;
@@ -305,7 +306,8 @@ export function createPageStreamClient({
   return {
     /**
      * Wraps `runtime.onMessage` and `runtime.onConnect` of one extension API
-     * object. Every object wrapped shares the one set of mirrored listeners.
+     * object. Called for both `chrome` and `browser` — Electron builds them as
+     * two objects — with the mirrored listeners shared between them.
      */
     wrapRuntime(extensionApi: ChromeNamespace) {
       const runtime = extensionApi.runtime as ChromeNamespace | undefined;

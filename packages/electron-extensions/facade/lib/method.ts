@@ -1,5 +1,3 @@
-import { getContextRuntime, withLastError } from "./last-error";
-
 /**
  * A method that does nothing and answers with `createResult`, the way Chrome
  * would: extensions written against MV3 await a promise, while
@@ -30,9 +28,7 @@ export function createNoopMethod(createResult: (callArguments: unknown[]) => unk
  * callback-or-promise duality as a noop. `produceResult` receives the call's
  * arguments without any trailing callback. A rejection reaches a promise-style
  * caller as its own, the way Chrome's APIs reject; a callback-style caller is
- * called with no result and `runtime.lastError` set around it, which is how
- * Chrome's callback form reports a failure and what a
- * `webextension-polyfill`-shaped wrapper turns back into the rejection.
+ * answered `undefined`, never left waiting on a callback that no longer fires.
  */
 export function createBridgedMethod(produceResult: (callArguments: unknown[]) => Promise<unknown>) {
   return (...callArguments: unknown[]) => {
@@ -43,14 +39,8 @@ export function createBridgedMethod(produceResult: (callArguments: unknown[]) =>
         (result) => {
           (callback as (callbackResult: unknown) => void)(result);
         },
-        (error: unknown) => {
-          withLastError(
-            getContextRuntime(),
-            error instanceof Error ? error.message : String(error),
-            () => {
-              (callback as () => void)();
-            },
-          );
+        () => {
+          (callback as (callbackResult: unknown) => void)(undefined);
         },
       );
 

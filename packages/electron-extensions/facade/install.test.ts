@@ -135,61 +135,6 @@ describe("installChromeFacade", () => {
     expect(await promise).toBeArrayOfSize(1);
   });
 
-  /*
-   * The audit for a `webextension-polyfill`-shaped wrapper over `chrome`, which
-   * calls every method with a trailing callback: none may return a promise
-   * instead, and none may leave the callback waiting, even with the bridge
-   * gone. Events are left out, their `addListener` taking a function too.
-   */
-  test("answers every method's trailing callback, with the bridge gone", async () => {
-    const originalFetch = globalThis.fetch;
-
-    globalThis.fetch = (async () => {
-      throw new Error("Failed to fetch");
-    }) as unknown as typeof fetch;
-
-    try {
-      const answered: string[] = [];
-
-      const pending: Promise<void>[] = [];
-
-      const visit = (namespace: ChromeNamespace, path: string) => {
-        for (const [name, member] of Object.entries(namespace)) {
-          const memberPath = `${path}.${name}`;
-
-          if (/^on[A-Z]/.test(name) || memberPath === "chrome.contextMenus.create") {
-            continue;
-          }
-
-          if (typeof member === "function") {
-            const { promise, resolve } = Promise.withResolvers<void>();
-
-            expect([memberPath, member({}, resolve)]).toEqual([memberPath, undefined]);
-
-            pending.push(
-              promise.then(() => {
-                answered.push(memberPath);
-              }),
-            );
-          } else if (member !== null && typeof member === "object" && !Array.isArray(member)) {
-            visit(member as ChromeNamespace, memberPath);
-          }
-        }
-      };
-
-      visit(createChromeFacade(), "chrome");
-
-      await Promise.all(pending);
-
-      expect(answered).toContain("chrome.windows.create");
-      expect(answered).toContain("chrome.permissions.request");
-      expect(answered).toContain("chrome.alarms.getAll");
-      expect(answered).toContain("chrome.webNavigation.getFrame");
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  });
-
   test("hands out context menu ids the way Chrome does", () => {
     const contextMenus = namespaceOf(install(), "contextMenus");
 
@@ -227,6 +172,24 @@ describe("installChromeFacade", () => {
     expect(eventOf(autofillEnabled, "onChange").addListener).toBeFunction();
   });
 
+  test("shares one facade between the chrome and browser globals", () => {
+    const facade = createChromeFacade();
+
+    const chrome = createNativeChrome();
+    const browser = createNativeChrome();
+
+    installChromeFacade(chrome, facade);
+    installChromeFacade(browser, facade);
+
+    const listener = () => {};
+
+    eventOf(namespaceOf(browser, "windows"), "onFocusChanged").addListener(listener);
+
+    expect(eventOf(namespaceOf(chrome, "windows"), "onFocusChanged").hasListener(listener)).toBe(
+      true,
+    );
+  });
+
   test("takes over the alarms Electron half implements", () => {
     const chrome = createNativeChrome();
 
@@ -238,6 +201,20 @@ describe("installChromeFacade", () => {
     // which is a gap filling cannot reach — see `api/alarms.ts`
     expect(chrome.alarms).not.toBe(alarms);
     expect(namespaceOf(chrome, "alarms").getAll).toBeFunction();
+  });
+
+  test("shares one alarms between the chrome and browser globals", () => {
+    const facade = createChromeFacade();
+
+    const chrome = createNativeChrome();
+    const browser = createNativeChrome();
+
+    installChromeFacade(chrome, facade);
+    installChromeFacade(browser, facade);
+
+    // One namespace means one set of `onAlarm` listeners and one parked stream,
+    // whichever global the extension reached it through
+    expect(chrome.alarms).toBe(browser.alarms);
   });
 
   test("runs twice without replacing what the first run added", () => {

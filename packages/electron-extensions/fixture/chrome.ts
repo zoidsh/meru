@@ -200,17 +200,3 @@ export function getChromePermissions(): FixturePermissions {
 
   return workerGlobals.chrome.permissions;
 }
-
-/** What the extension API globals are in this context, as `typeof` names them. */
-export type FixtureExtensionGlobals = { chrome: string; browser: string };
-
-/**
- * Read as an extension feature-detects them, before anything else of its own
- * has run: Chrome defines `chrome` alone, and an extension that finds `browser`
- * as well takes its Firefox paths.
- */
-export function readExtensionGlobals(): FixtureExtensionGlobals {
-  const contextGlobals = globalThis as unknown as Record<string, unknown>;
-
-  return { chrome: typeof contextGlobals.chrome, browser: typeof contextGlobals.browser };
-}
