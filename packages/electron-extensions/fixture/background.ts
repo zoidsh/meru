@@ -33,6 +33,7 @@ import {
   getChromeWindows,
   readExtensionGlobals,
 } from "./chrome";
+import { watchStorageChanges } from "./probes";
 
 const workerGlobals = globalThis as unknown as {
   crypto: { randomUUID: () => string };
@@ -75,6 +76,7 @@ type ProbeMessage = {
   /** Which `chrome.permissions` or `chrome.windows` method a message asks for. */
   method?: string;
   permissions?: string[];
+  keys?: string[];
   /** What a `windows` message calls that method with. */
   args?: unknown[];
 };
@@ -95,6 +97,12 @@ type SeenTab = {
 };
 
 const storage = getChromeStorage();
+
+/**
+ * Registered at top level and before the first write, as an extension's state
+ * framework would be, so a context can ask whether a change reached the worker.
+ */
+const workerStorageChanges = watchStorageChanges(storage);
 
 /** The stamps, written once at boot, that the probes read back. */
 storage.local.set({ workerStamp: workerInstanceId }, () => {});
@@ -414,6 +422,16 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     storage.local.set({ [key]: value }, () => {
       sendResponse({ type: "write-storage-reply", key });
+    });
+
+    return true;
+  }
+
+  // Waits rather than looks once, since nothing orders this message after a
+  // change the asking context only just heard itself
+  if (probeMessage?.type === "storage-changes-heard" && Array.isArray(probeMessage.keys)) {
+    void workerStorageChanges.waitForChanges(probeMessage.keys).then((outcomes) => {
+      sendResponse({ type: "storage-changes-heard-reply", outcomes });
     });
 
     return true;
