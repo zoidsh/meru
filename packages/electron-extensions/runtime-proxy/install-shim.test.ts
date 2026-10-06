@@ -126,6 +126,28 @@ describe("installShim", () => {
     expect(stub.parksSoFar()).toBe(1);
   });
 
+  test("takes away the browser global and shims chrome alone", () => {
+    stubBridge();
+
+    const runtime = createContextGlobals();
+
+    const nativeSendMessage = runtime.sendMessage;
+
+    const browserRuntime: ChromeNamespace = { ...runtime };
+
+    contextGlobals.browser = { runtime: browserRuntime };
+
+    install();
+
+    expect("browser" in contextGlobals).toBe(false);
+
+    expect(runtime.sendMessage).not.toBe(nativeSendMessage);
+
+    // The object Electron put under `browser` is left as it was, unshimmed,
+    // since nothing can reach it any more
+    expect(browserRuntime.sendMessage).toBe(nativeSendMessage);
+  });
+
   test("a manifest's overlapping entries all carry the shim, which is why", () => {
     // The premise the guard exists for, held against the derive rather than
     // asserted in prose: every entry with scripts gets the shim prepended, so

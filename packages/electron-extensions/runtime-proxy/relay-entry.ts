@@ -9,8 +9,7 @@ import { createStorageRelay } from "./storage-relay";
  * facade and the extension's own background script, so its wrapped `onMessage`
  * and `onConnect` are what the extension registers its listeners on, and its
  * shadowed `tabs.sendMessage`, `tabs.connect` and `runtime.sendMessage` are
- * what the extension calls to reach the sessions it has no worker in. One
- * client serves both `chrome` and `browser`, sharing one set of listeners.
+ * what the extension calls to reach the sessions it has no worker in.
  *
  * The same client answers the other sessions' `chrome.storage` calls against
  * this session's own store, which is the one store the shared instance keeps.
@@ -23,9 +22,8 @@ import { createStorageRelay } from "./storage-relay";
  */
 const workerGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
 
-const extensionApis = ["chrome", "browser"]
-  .map((globalName) => workerGlobals[globalName])
-  .filter((extensionApi): extensionApi is ChromeNamespace => extensionApi !== undefined);
+// The facade ran first and took `browser` away, so `chrome` is the one object
+const extensionApis = workerGlobals.chrome ? [workerGlobals.chrome] : [];
 
 const storageRelay = createStorageRelay(extensionApis);
 

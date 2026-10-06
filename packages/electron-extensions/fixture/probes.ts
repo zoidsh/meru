@@ -7,6 +7,7 @@
 import {
   type FixtureManifest,
   type FixtureEvent,
+  type FixtureExtensionGlobals,
   type FixtureMessageSender,
   type FixturePort,
   type FixtureRuntime,
@@ -14,6 +15,7 @@ import {
   type FixtureStorageArea,
   getChromeRuntime,
   getChromeStorage,
+  readExtensionGlobals,
 } from "./chrome";
 
 /** Long enough for a relay wake, far under the test runner's own timeouts. */
@@ -128,6 +130,8 @@ export type ProbeResults = {
    * extension.
    */
   manifest: FixtureManifest | null;
+  /** Which extension API globals this context was handed. */
+  extensionGlobals: FixtureExtensionGlobals;
   echo: EchoOutcome;
   port: PortOutcome;
   /**
@@ -685,6 +689,8 @@ function addChangeListener<Listener>(
 }
 
 export async function runProbes(): Promise<ProbeResults> {
+  const extensionGlobals = readExtensionGlobals();
+
   const runtime = getChromeRuntime();
 
   const contextGlobals = globalThis as unknown as {
@@ -848,6 +854,7 @@ export async function runProbes(): Promise<ProbeResults> {
     documentUrl: contextGlobals.location.href,
     extensionId: runtime.id,
     manifest: manifest ?? null,
+    extensionGlobals,
     echo,
     port,
     workerStampInLocal,
