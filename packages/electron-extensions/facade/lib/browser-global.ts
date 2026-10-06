@@ -8,7 +8,18 @@
  *
  * It has to run before any of the extension's own code, which reads it once at
  * startup.
+ *
+ * Only where `chrome.runtime.id` names an extension: the derive prepends the
+ * shim to `world: "MAIN"` entries too, and a `browser` there is the page's own.
  */
 export function removeBrowserGlobal() {
-  delete (globalThis as unknown as Record<string, unknown>).browser;
+  const contextGlobals = globalThis as unknown as Record<string, unknown>;
+
+  const runtime = (contextGlobals.chrome as { runtime?: { id?: unknown } } | undefined)?.runtime;
+
+  if (typeof runtime?.id !== "string") {
+    return;
+  }
+
+  delete contextGlobals.browser;
 }
