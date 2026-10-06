@@ -20,8 +20,8 @@ import {
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
 
-/** Marks a `setAccessLevel` this relay already mirrored, since `chrome` and
- * `browser` can hand back the same area object. */
+/** Marks a `setAccessLevel` this relay already mirrored, since two extension
+ * API objects can hand back the same area object. */
 const MIRRORED_METHOD_MARK = "__meruRuntimeProxyStorageMirror";
 
 type NativeMethod = (...callArguments: unknown[]) => unknown;
@@ -158,9 +158,8 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
    *
    * One listener, and on the top-level `chrome.storage.onChanged`: it names the
    * area itself, where the four per-area events would take four listeners to
-   * hear the same changes. And on one global only — Electron builds `chrome`
-   * and `browser` separately, both dispatch every change, and a listener on
-   * each would report all of them twice.
+   * hear the same changes. And on one extension API object only, since a
+   * listener on each of several would report every change more than once.
    *
    * The level the change is stamped with is this relay's own record rather than
    * main's, taken the moment the change fired: main's is written by a POST that

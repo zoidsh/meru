@@ -449,7 +449,7 @@ describe("createStorageRelay", () => {
       await waitFor(() => posts.length > 0, "the access level report");
     });
 
-    test("mirrors an area shared by chrome and browser only once", async () => {
+    test("mirrors an area two extension API objects share only once", async () => {
       const posts = stubFetch();
 
       const worker = createWorkerApi();
@@ -547,8 +547,7 @@ describe("createStorageRelay", () => {
 
       const worker = createWorkerApi();
 
-      // Electron builds `chrome` and `browser` separately, and both dispatch
-      // every change of the one store
+      // Two extension API objects over the one store both dispatch every change
       const browser = createWorkerApi();
 
       createStorageRelay([worker.extensionApi, browser.extensionApi]).watchChanges();
