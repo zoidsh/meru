@@ -74,6 +74,17 @@ async function postPermissions(pathName: string, permissions: string[]) {
   }
 }
 
+/**
+ * The grants the manifest still declares optional. Chrome drops a grant from
+ * the active set when an update stops declaring it, and one that kept reading
+ * as held would send the extension down a path its own manifest gave up.
+ */
+async function readGranted(optionalPermissions: string[]) {
+  const granted = await postPermissions(PERMISSIONS_PATHS.granted, []);
+
+  return granted.filter((permission) => optionalPermissions.includes(permission));
+}
+
 function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
   return askedOrigins.every((askedOrigin) =>
     heldOrigins.some((heldOrigin) => coversPattern(heldOrigin, askedOrigin)),
@@ -95,9 +106,9 @@ function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
  * retry loop against a desktop app that was not there. So `contains` and
  * `getAll` answer from the manifest's required permissions, which are the ones
  * Chromium really did grant, plus whatever a `request` has been allowed since;
- * and `request` answers `false` for everything else, which is Chrome's own
- * answer for a prompt the user declined and a path every extension already
- * handles.
+ * and `request` answers `false` for an optional permission the catalog does
+ * not allow, which is Chrome's own answer for a prompt the user declined and a
+ * path every extension already handles.
  *
  * Nothing granted here turns a capability on: Chromium grants nothing, so an
  * optional permission belongs in a catalog entry's
@@ -112,20 +123,18 @@ function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
  */
 export function createPermissions(): ChromeNamespace {
   const contains = async (query: PermissionsQuery | undefined) => {
+    // Chrome's schema check, which fails the call before anything is answered
+    if (typeof query !== "object" || query === null) {
+      throw new TypeError("Error in invocation of permissions.contains");
+    }
+
     const askedPermissions = toStrings(query?.permissions);
 
     const askedOrigins = toStrings(query?.origins);
 
-    // Chrome refuses a query that names neither with a schema error, which is a
-    // throw in the extension; `false` is the nearest answer that is not one
-    if (askedPermissions.length === 0 && askedOrigins.length === 0) {
-      return false;
-    }
+    const { permissions, optionalPermissions, origins } = readManifest();
 
-    const { permissions, origins } = readManifest();
-
-    const granted =
-      askedPermissions.length === 0 ? [] : await postPermissions(PERMISSIONS_PATHS.granted, []);
+    const granted = askedPermissions.length === 0 ? [] : await readGranted(optionalPermissions);
 
     return (
       askedPermissions.every(
@@ -141,23 +150,22 @@ export function createPermissions(): ChromeNamespace {
 
     const { permissions, optionalPermissions, origins } = readManifest();
 
-    // An origin is granted only in the sense that the manifest already holds it
-    if (!containsOrigins(origins, askedOrigins)) {
-      return false;
-    }
-
     const missingPermissions = askedPermissions.filter(
       (permission) => !permissions.includes(permission),
     );
 
-    if (missingPermissions.length === 0) {
-      return askedPermissions.length > 0 || askedOrigins.length > 0;
+    // An origin is granted only in the sense that the manifest already holds
+    // it, and Chrome fails a request for anything the manifest does not declare
+    // rather than declining it
+    if (
+      !containsOrigins(origins, askedOrigins) ||
+      !missingPermissions.every((permission) => optionalPermissions.includes(permission))
+    ) {
+      throw new Error("Only permissions specified in the manifest may be requested.");
     }
 
-    // Chrome refuses a request for a permission the manifest never declared
-    // optional, whatever the embedder allows
-    if (!missingPermissions.every((permission) => optionalPermissions.includes(permission))) {
-      return false;
+    if (missingPermissions.length === 0) {
+      return true;
     }
 
     const granted = await postPermissions(PERMISSIONS_PATHS.request, missingPermissions);
@@ -172,19 +180,18 @@ export function createPermissions(): ChromeNamespace {
 
     const { permissions, origins } = readManifest();
 
-    // Chrome refuses to remove what the manifest requires, and every origin
-    // this namespace ever answers `contains` for is one of those
+    // Every origin this namespace ever answers `contains` for is a required one
     if (
       askedPermissions.some((permission) => permissions.includes(permission)) ||
       askedOrigins.some((askedOrigin) =>
         origins.some((heldOrigin) => coversPattern(heldOrigin, askedOrigin)),
       )
     ) {
-      return false;
+      throw new Error("You cannot remove required permissions.");
     }
 
     if (askedPermissions.length === 0) {
-      return askedOrigins.length > 0;
+      return true;
     }
 
     const granted = await postPermissions(PERMISSIONS_PATHS.remove, askedPermissions);
@@ -198,9 +205,9 @@ export function createPermissions(): ChromeNamespace {
     ),
 
     getAll: createBridgedMethod(async () => {
-      const { permissions, origins } = readManifest();
+      const { permissions, optionalPermissions, origins } = readManifest();
 
-      const granted = await postPermissions(PERMISSIONS_PATHS.granted, []);
+      const granted = await readGranted(optionalPermissions);
 
       return {
         permissions: [

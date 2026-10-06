@@ -177,14 +177,45 @@ describe("createPermissions", () => {
     expect(await namespaceMethod(permissions, "contains")({ origins: ["<all_urls>"] })).toBe(false);
   });
 
-  test("answers contains false for a query that names nothing", async () => {
+  test("answers contains true for a query that names nothing, and fails one with no query", async () => {
     installManifest(BITWARDEN_MANIFEST);
 
     installFakeBridge();
 
-    expect(await namespaceMethod(createPermissions(), "contains")({})).toBe(false);
+    expect(await namespaceMethod(createPermissions(), "contains")({})).toBe(true);
 
-    expect(await namespaceMethod(createPermissions(), "contains")()).toBe(false);
+    await expect(namespaceMethod(createPermissions(), "contains")()).rejects.toThrow(TypeError);
+  });
+
+  test("answers request and remove true for a query that names nothing", async () => {
+    installManifest(BITWARDEN_MANIFEST);
+
+    const bridge = installFakeBridge();
+
+    expect(await namespaceMethod(createPermissions(), "request")({})).toBe(true);
+
+    expect(await namespaceMethod(createPermissions(), "remove")({})).toBe(true);
+
+    expect(bridge.paths).toEqual([]);
+  });
+
+  test("answers contains and getAll without a grant the manifest no longer declares optional", async () => {
+    installManifest(BITWARDEN_MANIFEST);
+
+    const bridge = installFakeBridge();
+
+    bridge.granted.add("bookmarks");
+
+    const permissions = createPermissions();
+
+    expect(await namespaceMethod(permissions, "contains")({ permissions: ["bookmarks"] })).toBe(
+      false,
+    );
+
+    expect(await namespaceMethod(permissions, "getAll")()).toEqual({
+      permissions: ["storage", "alarms"],
+      origins: ["<all_urls>"],
+    });
   });
 
   test("answers getAll with the required permissions, the grants and the origins", async () => {
@@ -216,14 +247,14 @@ describe("createPermissions", () => {
     expect(bridge.granted.size).toBe(0);
   });
 
-  test("refuses a request for a permission the manifest never declared optional", async () => {
+  test("fails a request for a permission the manifest never declared optional", async () => {
     installManifest(BITWARDEN_MANIFEST);
 
     const bridge = installFakeBridge({ grantable: ["bookmarks"] });
 
-    expect(
-      await namespaceMethod(createPermissions(), "request")({ permissions: ["bookmarks"] }),
-    ).toBe(false);
+    await expect(
+      namespaceMethod(createPermissions(), "request")({ permissions: ["bookmarks"] }),
+    ).rejects.toThrow("Only permissions specified in the manifest may be requested.");
 
     // Refused in the context, so the embedder is never asked
     expect(bridge.paths).toEqual([]);
@@ -241,14 +272,14 @@ describe("createPermissions", () => {
     expect(bridge.paths).toEqual([]);
   });
 
-  test("refuses a request for an origin the manifest does not hold", async () => {
+  test("fails a request for an origin the manifest does not hold", async () => {
     installManifest({ host_permissions: ["https://accounts.google.com/*"] });
 
     installFakeBridge();
 
-    expect(
-      await namespaceMethod(createPermissions(), "request")({ origins: ["https://example.com/*"] }),
-    ).toBe(false);
+    await expect(
+      namespaceMethod(createPermissions(), "request")({ origins: ["https://example.com/*"] }),
+    ).rejects.toThrow("Only permissions specified in the manifest may be requested.");
   });
 
   test("removes a granted permission", async () => {
@@ -269,14 +300,14 @@ describe("createPermissions", () => {
     ).toBe(false);
   });
 
-  test("refuses to remove a permission the manifest requires", async () => {
+  test("fails to remove a permission the manifest requires", async () => {
     installManifest(BITWARDEN_MANIFEST);
 
     const bridge = installFakeBridge();
 
-    expect(await namespaceMethod(createPermissions(), "remove")({ permissions: ["storage"] })).toBe(
-      false,
-    );
+    await expect(
+      namespaceMethod(createPermissions(), "remove")({ permissions: ["storage"] }),
+    ).rejects.toThrow("You cannot remove required permissions.");
 
     expect(bridge.paths).toEqual([]);
   });

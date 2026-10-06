@@ -153,9 +153,13 @@ test("a request for a permission the app does not allow is declined", async () =
 
   expect((await callInWorker(popupId, "contains", [UNGRANTABLE_PERMISSION]))?.result).toBe(false);
 
-  // And a permission the manifest never declared optional at all, which Chrome
-  // refuses whatever an embedder allows
-  expect((await callInWorker(popupId, "request", ["bookmarks"]))?.result).toBe(false);
+  // A permission the manifest never declared optional fails the call, so the
+  // callback is answered with no result, as Chrome answers it
+  const undeclaredReply = await callInWorker(popupId, "request", ["bookmarks"]);
+
+  expect(undeclaredReply?.method).toBe("request");
+
+  expect(undeclaredReply?.result).toBeUndefined();
 });
 
 test("the permissions the manifest requires are the ones the worker holds", async () => {
@@ -168,6 +172,12 @@ test("the permissions the manifest requires are the ones the worker holds", asyn
     origins: [],
   });
 
-  // Chrome refuses to remove a required permission, and so does this
-  expect((await callInWorker(popupId, "remove", ["storage"]))?.result).toBe(false);
+  // Chrome fails a call that removes a required permission
+  const requiredReply = await callInWorker(popupId, "remove", ["storage"]);
+
+  expect(requiredReply?.method).toBe("remove");
+
+  expect(requiredReply?.result).toBeUndefined();
+
+  expect((await callInWorker(popupId, "contains", ["storage"]))?.result).toBe(true);
 });
