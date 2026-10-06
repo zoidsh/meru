@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { matchesUrl, reachesClampedSite } from "./match-pattern";
+import { coversPattern, matchesUrl, reachesClampedSite } from "./match-pattern";
 
 const CLAMPED_SITE = "https://accounts.google.com/*";
 
@@ -109,5 +109,44 @@ describe("matchesUrl", () => {
     expect(matchesUrl("accounts.google.com", PAGE_URL)).toBe(false);
     expect(matchesUrl("<all_urls>", "not a url")).toBe(false);
     expect(matchesUrl("https://accounts.google.com/*", "")).toBe(false);
+  });
+});
+
+describe("coversPattern", () => {
+  test("every URL covers every pattern written in a scheme it holds", () => {
+    expect(coversPattern("<all_urls>", "<all_urls>")).toBe(true);
+    expect(coversPattern("<all_urls>", "*://*/*")).toBe(true);
+    expect(coversPattern("<all_urls>", "https://accounts.google.com/*")).toBe(true);
+    expect(coversPattern("<all_urls>", "file:///*")).toBe(true);
+    expect(coversPattern("<all_urls>", "chrome-extension://*/*")).toBe(false);
+  });
+
+  test("a narrower pattern covers nothing wider than itself", () => {
+    expect(coversPattern("https://*/*", "https://accounts.google.com/*")).toBe(true);
+    expect(coversPattern("https://*/*", "https://*/*")).toBe(true);
+    expect(coversPattern("https://*/*", "*://*/*")).toBe(false);
+    expect(coversPattern("https://*/*", "<all_urls>")).toBe(false);
+    expect(coversPattern("*://*/*", "<all_urls>")).toBe(false);
+  });
+
+  test("a host wildcard covers the domain and its subdomains alone", () => {
+    expect(coversPattern("https://*.google.com/*", "https://accounts.google.com/*")).toBe(true);
+    expect(coversPattern("https://*.google.com/*", "https://google.com/*")).toBe(true);
+    expect(coversPattern("https://*.google.com/*", "https://google.co.uk/*")).toBe(false);
+    expect(coversPattern("https://accounts.google.com/*", "https://*.google.com/*")).toBe(false);
+  });
+
+  test("a path is covered by a path pattern that reaches it", () => {
+    expect(
+      coversPattern("https://accounts.google.com/*", "https://accounts.google.com/signin"),
+    ).toBe(true);
+    expect(
+      coversPattern("https://accounts.google.com/signin", "https://accounts.google.com/*"),
+    ).toBe(false);
+  });
+
+  test("a pattern that cannot be read covers nothing and is covered by nothing", () => {
+    expect(coversPattern("accounts.google.com", "https://accounts.google.com/*")).toBe(false);
+    expect(coversPattern("<all_urls>", "accounts.google.com")).toBe(false);
   });
 });
