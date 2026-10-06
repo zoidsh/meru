@@ -35,10 +35,9 @@ const SHADOWED_EVENT_MARK = "__meruRuntimeProxyStorageChangedShim";
 
 type ShadowedArea = {
   /**
-   * Every runtime object whose global shares this area. Electron builds
-   * `chrome` and `browser` separately and may hand back one area object for
-   * both, so an error has to reach the `lastError` of each — a listener reads
-   * whichever global it was written against, as `relay-client.ts` found.
+   * Every runtime object whose extension API object shares this area, so an
+   * error reaches the `lastError` of each — a listener reads whichever one it
+   * was written against.
    */
   runtimes: ChromeNamespace[];
   /** The area's one call chain, shared by every install that finds it. */
@@ -359,10 +358,9 @@ export type CreateRuntimeProxyStorageShimOptions = {
  *
  * `install` runs before any of the extension's own code, so the extension only
  * ever sees the shadowed methods and only ever registers on the shadowed
- * events. It is called once per extension API global, since Electron builds
- * `chrome` and `browser` separately, and the two share one set of listeners:
- * an extension writing through one and listening on the other still hears
- * itself, as it would natively.
+ * events. Every extension API object it is called for shares one set of
+ * listeners, so an extension writing through one and listening on another
+ * still hears itself, as it would natively.
  */
 export function createRuntimeProxyStorageShim({
   getSenderReport = getContextSenderReport,

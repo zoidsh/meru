@@ -1,5 +1,13 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { callInCallbackForm } from "./callback-form";
+import type { ChromeNamespace } from "./chrome";
 import { createBridgedMethod } from "./method";
+
+const extensionGlobals = globalThis as unknown as { chrome?: ChromeNamespace };
+
+afterEach(() => {
+  delete extensionGlobals.chrome;
+});
 
 describe("createBridgedMethod", () => {
   test("answers a promise-style call with the produced result", async () => {
@@ -26,15 +34,56 @@ describe("createBridgedMethod", () => {
     expect(method("a")).rejects.toThrow("bridge gone");
   });
 
-  test("answers a callback-style call with undefined when the producer rejects", async () => {
+  test("answers a callback-style call with lastError set when the producer rejects", async () => {
+    const runtime: ChromeNamespace = {};
+
+    extensionGlobals.chrome = { runtime };
+
     const method = createBridgedMethod(async () => {
       throw new Error("bridge gone");
     });
 
-    const { promise: answered, resolve } = Promise.withResolvers<unknown>();
+    const { promise: answered, resolve } = Promise.withResolvers<{
+      callbackArguments: unknown[];
+      lastError: unknown;
+    }>();
 
-    method("a", resolve);
+    method("a", (...callbackArguments: unknown[]) => {
+      resolve({ callbackArguments, lastError: runtime.lastError });
+    });
 
-    expect(await answered).toBeUndefined();
+    expect(await answered).toEqual({
+      callbackArguments: [],
+      lastError: { message: "bridge gone" },
+    });
+
+    // Only for the duration of the callback, as in Chrome
+    expect(runtime.lastError).toBeUndefined();
+  });
+
+  test("a polyfill-shaped caller gets the rejection back", async () => {
+    const runtime: ChromeNamespace = {};
+
+    extensionGlobals.chrome = { runtime };
+
+    const method = createBridgedMethod(async () => {
+      throw new Error("bridge gone");
+    });
+
+    await expect(callInCallbackForm(runtime, method, "a").answered).rejects.toThrow("bridge gone");
+  });
+
+  test("still answers a callback in a context with no runtime", async () => {
+    const method = createBridgedMethod(async () => {
+      throw new Error("bridge gone");
+    });
+
+    const { promise: answered, resolve } = Promise.withResolvers<unknown[]>();
+
+    method("a", (...callbackArguments: unknown[]) => {
+      resolve(callbackArguments);
+    });
+
+    expect(await answered).toEqual([]);
   });
 });
