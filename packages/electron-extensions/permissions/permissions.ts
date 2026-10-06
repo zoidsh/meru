@@ -89,18 +89,33 @@ export class Permissions {
     });
   }
 
+  /**
+   * Filtered through the policy as it stands rather than as it stood at the
+   * grant, so a permission the embedder stops allowing stops reading as held
+   * without an uninstall: one that stayed `true` after Meru stopped serving its
+   * feature is the `connectNative` retry loop again.
+   */
   async getGranted(extensionId: string) {
-    return [...((await this.load()).get(extensionId) ?? [])];
+    const grantable = this.getGrantable(extensionId);
+
+    return [...((await this.load()).get(extensionId) ?? [])].filter((permission) =>
+      grantable.includes(permission),
+    );
   }
 
   /**
-   * Grants what the embedder allows this extension and nothing else. A
+   * Grants all of `permissions` or none of them, as Chrome's prompt does, so an
+   * extension told its request was declined never finds part of it held. A
    * permission already granted is granted again without a write, since an
    * extension that asks on every boot — which is what a worker restart looks
    * like — would otherwise rewrite the store each time.
    */
   async grant(extensionId: string, permissions: string[]) {
-    const grantable = this.getGrantableOptionalPermissions?.(extensionId) ?? [];
+    const grantable = this.getGrantable(extensionId);
+
+    if (!permissions.every((permission) => grantable.includes(permission))) {
+      return;
+    }
 
     const granted = await this.load();
 
@@ -109,7 +124,7 @@ export class Permissions {
     let hasChanged = false;
 
     for (const permission of permissions) {
-      if (!grantable.includes(permission) || extensionGranted.has(permission)) {
+      if (extensionGranted.has(permission)) {
         continue;
       }
 
@@ -160,6 +175,10 @@ export class Permissions {
     if (granted.delete(extensionId)) {
       await this.persist(granted);
     }
+  }
+
+  private getGrantable(extensionId: string) {
+    return this.getGrantableOptionalPermissions?.(extensionId) ?? [];
   }
 
   private async answerGranted(extensionId: string) {

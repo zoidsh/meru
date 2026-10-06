@@ -49,12 +49,14 @@ describe("Permissions", () => {
     expect(await permissions.getGranted(BITWARDEN_ID)).toEqual(["nativeMessaging"]);
   });
 
-  test("grants nothing the embedder did not allow", async () => {
+  test("grants none of a request that names one permission the embedder did not allow", async () => {
     const permissions = createPermissions();
 
     await permissions.grant(BITWARDEN_ID, ["nativeMessaging", "bookmarks"]);
 
-    expect(await permissions.getGranted(BITWARDEN_ID)).toEqual(["nativeMessaging"]);
+    expect(await permissions.getGranted(BITWARDEN_ID)).toEqual([]);
+
+    await expect(readStore()).rejects.toThrow();
   });
 
   test("grants nothing to an extension the embedder allows nothing for", async () => {
@@ -90,6 +92,12 @@ describe("Permissions", () => {
     await createPermissions().grant(BITWARDEN_ID, ["nativeMessaging"]);
 
     expect(await createPermissions().getGranted(BITWARDEN_ID)).toEqual(["nativeMessaging"]);
+  });
+
+  test("stops answering a grant the embedder no longer allows", async () => {
+    await createPermissions().grant(BITWARDEN_ID, ["nativeMessaging"]);
+
+    expect(await createPermissions({}).getGranted(BITWARDEN_ID)).toEqual([]);
   });
 
   test("keeps no store for an extension whose last grant was revoked", async () => {
