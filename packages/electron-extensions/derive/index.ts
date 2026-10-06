@@ -3,7 +3,10 @@ import { constants } from "node:fs";
 import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
-import { RUNTIME_PROXY_MANIFEST_GLOBAL } from "../runtime-proxy/bridge-protocol";
+import {
+  RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+} from "../runtime-proxy/bridge-protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
@@ -62,6 +65,12 @@ export type DeriveExtensionOptions = {
    * has no id to be recognised by and keeps the patterns its author declared.
    */
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
+  /**
+   * Whether the worker copy's relay synthesizes `storage.onChanged`, asked for
+   * by the id the copy will be loaded as. An extension without a
+   * `manifest.key` has no id to be asked about and goes without.
+   */
+  synthesizesStorageChanges?: (extensionId: string) => boolean;
   /**
    * Derives the copy for its part in one shared instance across sessions.
    * Without it the copy carries no proxy script and keeps its worker — the
@@ -232,6 +241,7 @@ export async function deriveExtension({
   facadeScriptPath,
   strippedManifestKeys = [],
   getContentScriptMatches,
+  synthesizesStorageChanges,
   sharedInstance,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
@@ -338,7 +348,13 @@ export async function deriveExtension({
   // The proxy scripts run where the facade never loads — the shim in content
   // scripts' isolated worlds — so each carries the token itself, the same way
   if (sharedInstance?.role === "worker") {
-    await writeTokenCarryingScript(RUNTIME_PROXY_RELAY_FILE_NAME, sharedInstance.relayScriptPath);
+    await writeTokenCarryingScript(
+      RUNTIME_PROXY_RELAY_FILE_NAME,
+      sharedInstance.relayScriptPath,
+      extensionId && synthesizesStorageChanges?.(extensionId)
+        ? { [RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]: true }
+        : {},
+    );
   }
 
   if (sharedInstance?.role === "contentScriptOnly") {

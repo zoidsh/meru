@@ -1,18 +1,18 @@
 import { postBridge } from "../facade/lib/bridge";
-import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
+import type { ChromeNamespace } from "../facade/lib/chrome";
 import { withLastError } from "../facade/lib/last-error";
 import {
   RUNTIME_PROXY_PATHS,
   type RuntimeProxySenderReport,
   type RuntimeProxyStorageCallRequest,
 } from "./bridge-protocol";
+import { createStorageChangedEvents } from "./storage-events";
 import {
   STORAGE_AREA_NAMES,
   STORAGE_METHOD_NAMES,
   STORAGE_UNAVAILABLE_ERROR,
   type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
-  type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageMethodName,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
@@ -29,9 +29,6 @@ import {
  * puts there and nothing of Meru's.
  */
 const SHADOWED_AREA_MARK = "__meruRuntimeProxyStorageShim";
-
-/** The same, for an `onChanged` whose listeners this shim has taken over. */
-const SHADOWED_EVENT_MARK = "__meruRuntimeProxyStorageChangedShim";
 
 type ShadowedArea = {
   /**
@@ -250,96 +247,6 @@ function shadowArea(
   }
 }
 
-/**
- * The listeners a shimmed context registered on `chrome.storage`'s change
- * events, which is where they have to be kept: the native events watch this
- * session's own store, and nothing writes that any more.
- */
-type StorageChangedListeners = {
-  /** On `chrome.storage.onChanged`, which is told the area's name as well. */
-  everyArea: Set<ChromeEventListener>;
-  /** On `chrome.storage.<area>.onChanged`, which is not. */
-  byArea: Map<RuntimeProxyStorageAreaName, Set<ChromeEventListener>>;
-};
-
-function createStorageChangedListeners(): StorageChangedListeners {
-  return {
-    everyArea: new Set(),
-    byArea: new Map(STORAGE_AREA_NAMES.map((areaName) => [areaName, new Set()])),
-  };
-}
-
-/**
- * Takes over one `onChanged`, in place on Chrome's own event object rather
- * than by replacing it: whatever else Chromium put there stays, and an
- * extension holding a reference to the event from before the shim ran holds
- * the same object afterwards.
- *
- * Nothing is registered natively, which is the one place this differs from how
- * `runtime.onMessage` is mirrored (`message-dispatch.ts`). There, native
- * dispatch is still real — the worker's own session messages itself. Here it
- * can only be wrong: the native event watches this session's store, which is
- * not the extension's store any more, so a native registration could report a
- * change of the wrong store and could never report a change of the right one.
- */
-function shadowChangedEvent(event: ChromeNamespace, listeners: Set<ChromeEventListener>) {
-  if (event[SHADOWED_EVENT_MARK]) {
-    return;
-  }
-
-  event.addListener = (listener: ChromeEventListener) => {
-    listeners.add(listener);
-  };
-
-  event.removeListener = (listener: ChromeEventListener) => {
-    listeners.delete(listener);
-  };
-
-  event.hasListener = (listener: ChromeEventListener) => listeners.has(listener);
-
-  event.hasListeners = () => listeners.size > 0;
-
-  try {
-    Object.defineProperty(event, SHADOWED_EVENT_MARK, {
-      value: true,
-      enumerable: false,
-      configurable: true,
-    });
-  } catch {
-    // A mark Chromium will not let us set costs nothing but the guard above
-  }
-}
-
-/**
- * A copy per event, the way Chromium hands each one its own `changes.Clone()`.
- * Without it a listener on the area event that mutates or deletes a key would
- * change what the `chrome.storage.onChanged` listeners then see. A structured
- * clone is exactly right for the shape: the values came over the bridge as
- * JSON, so nothing in here is unclonable.
- */
-function cloneChanges(changes: RuntimeProxyStorageChanges): RuntimeProxyStorageChanges {
-  try {
-    return structuredClone(changes);
-  } catch {
-    // A value a clone chokes on is not worth the whole event
-    return changes;
-  }
-}
-
-function emitChange(
-  listeners: Set<ChromeEventListener>,
-  callArguments: unknown[],
-  logLabel: string,
-) {
-  for (const listener of listeners) {
-    try {
-      listener(...callArguments);
-    } catch (error) {
-      console.error(`[${logLabel}] a storage.onChanged listener threw`, error);
-    }
-  }
-}
-
 export type CreateRuntimeProxyStorageShimOptions = {
   getSenderReport?: () => RuntimeProxySenderReport;
 };
@@ -365,7 +272,7 @@ export type CreateRuntimeProxyStorageShimOptions = {
 export function createRuntimeProxyStorageShim({
   getSenderReport = getContextSenderReport,
 }: CreateRuntimeProxyStorageShimOptions = {}) {
-  const listeners = createStorageChangedListeners();
+  const changedEvents = createStorageChangedEvents(LOG_LABEL);
 
   return {
     install(extensionApi: ChromeNamespace) {
@@ -377,46 +284,21 @@ export function createRuntimeProxyStorageShim({
 
       const runtime = extensionApi.runtime as ChromeNamespace | undefined;
 
-      const changedEvent = storage.onChanged as ChromeNamespace | undefined;
-
-      if (changedEvent) {
-        shadowChangedEvent(changedEvent, listeners.everyArea);
-      }
+      changedEvents.shadow(storage);
 
       for (const areaName of STORAGE_AREA_NAMES) {
         shadowArea(runtime, storage, areaName, getSenderReport);
-
-        const areaChangedEvent = (storage[areaName] as ChromeNamespace | undefined)?.onChanged as
-          | ChromeNamespace
-          | undefined;
-
-        const areaListeners = listeners.byArea.get(areaName);
-
-        if (areaChangedEvent && areaListeners) {
-          shadowChangedEvent(areaChangedEvent, areaListeners);
-        }
       }
     },
 
     /**
-     * One change of the worker's store, dispatched here the way Chrome
-     * dispatches its own: to the area's own event, which hears the changes
-     * alone, and to `chrome.storage.onChanged`, which is told the area's name
-     * as well. A listener that throws does not cost the others theirs.
+     * One change of the worker's store, dispatched here as Chrome would.
      *
      * Every context of the extension hears this, the one whose own write
      * caused it included — Chrome fires `onChanged` there too, and since every
      * write in a shimmed session goes to the worker and comes back on this
      * fan-out, no special case is needed for it to.
      */
-    dispatchChange(area: RuntimeProxyStorageAreaName, changes: RuntimeProxyStorageChanges) {
-      const areaListeners = listeners.byArea.get(area);
-
-      if (areaListeners) {
-        emitChange(areaListeners, [cloneChanges(changes)], `${LOG_LABEL}:${area}`);
-      }
-
-      emitChange(listeners.everyArea, [cloneChanges(changes), area], LOG_LABEL);
-    },
+    dispatchChange: changedEvents.dispatch,
   };
 }
