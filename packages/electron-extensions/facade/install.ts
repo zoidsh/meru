@@ -54,11 +54,8 @@ export function createChromeFacade(): ChromeNamespace {
  * are taken over rather than filled, which is why `alarms` is lifted out of the
  * fill below — it is a real implementation and not a gap to leave alone.
  */
-export function installChromeFacade(
-  extensionApi: ChromeNamespace,
-  facade: ChromeNamespace = createChromeFacade(),
-) {
-  const { alarms, ...fillableFacade } = facade;
+export function installChromeFacade(extensionApi: ChromeNamespace) {
+  const { alarms, ...fillableFacade } = createChromeFacade();
 
   fillMissing(extensionApi, fillableFacade);
 

@@ -1,3 +1,4 @@
+import { removeBrowserGlobal } from "../facade/lib/browser-global";
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import type { RuntimeProxySenderReport } from "./bridge-protocol";
 import { createPageStreamClient } from "./page-stream-client";
@@ -53,6 +54,10 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
 
   contextGlobals[INSTALLED_GLOBAL] = true;
 
+  // A content script's isolated world is the one context the facade never
+  // runs in, so the shim is what takes `browser` away there
+  removeBrowserGlobal();
+
   const reportSender = getSenderReport ?? getContextSenderReport;
 
   // Before the client, which hands it every change of the worker's store: the
@@ -65,20 +70,14 @@ export function installShim({ getSenderReport, retryDelayMs }: InstallShimOption
     retryDelayMs,
   });
 
-  // Electron hands a context the extension API under both names, as two
-  // objects, and an extension reads whichever it was written against
-  for (const globalName of ["chrome", "browser"]) {
-    const extensionApi = (contextGlobals as Record<string, ChromeNamespace | undefined>)[
-      globalName
-    ];
+  const extensionApi = contextGlobals.chrome as ChromeNamespace | undefined;
 
-    if (extensionApi) {
-      installRuntimeProxyShim(extensionApi);
+  if (extensionApi) {
+    installRuntimeProxyShim(extensionApi);
 
-      storageShim.install(extensionApi);
+    storageShim.install(extensionApi);
 
-      pageStreamClient.wrapRuntime(extensionApi);
-    }
+    pageStreamClient.wrapRuntime(extensionApi);
   }
 
   pageStreamClient.start();
