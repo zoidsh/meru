@@ -44,6 +44,16 @@ export type CuratedExtension = {
    */
   grantableOptionalPermissions?: string[];
   /**
+   * Synthesizes `chrome.storage.onChanged` in the extension's service worker,
+   * where Electron never fires it, from the writes that pass through
+   * `chrome.storage` there. For an extension whose worker state is fed by that
+   * event and stays stale without it.
+   *
+   * Opt-in because it reads the touched keys before and after every write: an
+   * extension that never listens in its worker pays that for nothing.
+   */
+  synthesizeStorageChanges?: boolean;
+  /**
    * Whether `chrome.windows.create` opens the extension's own pages in a Meru
    * window. Nothing else is ever opened through it, and without this the call
    * opens nothing at all and answers the way it always has.
