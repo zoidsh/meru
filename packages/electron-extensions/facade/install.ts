@@ -3,6 +3,7 @@ import { createCommands } from "./api/commands";
 import { createContextMenus } from "./api/context-menus";
 import { installNativeMessaging } from "./api/native-messaging";
 import { createNotifications } from "./api/notifications";
+import { createPermissions } from "./api/permissions";
 import { createPrivacy } from "./api/privacy";
 import { createTabs } from "./api/tabs";
 import { createWebNavigation } from "./api/web-navigation";
@@ -14,10 +15,11 @@ import { fillMissing } from "./lib/fill";
 /**
  * Everything the facade has to offer, built without looking at what Electron
  * implements: noop namespaces for what Electron is missing entirely, the odd
- * member for a namespace it ships half-finished, and — for `alarms` — a real
- * implementation backed by the embedder's bridge. Promoting a namespace to one
- * of those does not change where the facade is installed, only whether it is
- * filled in around or taken over; `installChromeFacade` holds that list.
+ * member for a namespace it ships half-finished, and — for `alarms` and
+ * `permissions` — a real implementation backed by the embedder's bridge.
+ * Promoting a namespace to one of those does not change where the facade is
+ * installed, only whether it is filled in around or taken over;
+ * `installChromeFacade` holds that list.
  */
 export function createChromeFacade(): ChromeNamespace {
   return {
@@ -25,6 +27,11 @@ export function createChromeFacade(): ChromeNamespace {
     commands: createCommands(),
     contextMenus: createContextMenus(),
     notifications: createNotifications(),
+    // Filled rather than taken over, Electron shipping no `permissions` module
+    // at all. The facade reaches no content script — only the runtime proxy's
+    // shim rides in one — so filling cannot put a namespace where Chrome
+    // exposes none
+    permissions: createPermissions(),
     privacy: createPrivacy(),
     tabs: createTabs(),
     webNavigation: createWebNavigation(),
