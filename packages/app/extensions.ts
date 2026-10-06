@@ -474,13 +474,12 @@ export async function uninstallCuratedExtension(extensionId: string) {
    * hold no store, and unloading them would only take away the content scripts
    * of documents already open, which the restart does anyway.
    *
-   * It clears every extension's store in that session rather than this one's,
-   * which is exact while the catalog holds a single entry and is why a second
-   * curated extension needs a per-id clear before it lands.
+   * Only this extension's store goes, since every curated extension keeps its
+   * sign-in in the same session.
    */
   extensions.unloadExtension(session.defaultSession, extensionId);
 
-  await extensions.clearSessionData(session.defaultSession);
+  await extensions.clearExtensionData(session.defaultSession, extensionId);
 
   // And what the user allowed it, which Chrome drops with the install, so a
   // reinstall asks again rather than coming back already granted
