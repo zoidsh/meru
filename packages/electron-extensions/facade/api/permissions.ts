@@ -85,6 +85,15 @@ async function readGranted(optionalPermissions: string[]) {
   return granted.filter((permission) => optionalPermissions.includes(permission));
 }
 
+/** Chrome's schema check, which fails the call before anything is answered. */
+function readQuery(methodName: string, query: PermissionsQuery | undefined) {
+  if (typeof query !== "object" || query === null) {
+    throw new TypeError(`Error in invocation of permissions.${methodName}`);
+  }
+
+  return { askedPermissions: toStrings(query.permissions), askedOrigins: toStrings(query.origins) };
+}
+
 function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
   return askedOrigins.every((askedOrigin) =>
     heldOrigins.some((heldOrigin) => coversPattern(heldOrigin, askedOrigin)),
@@ -123,14 +132,7 @@ function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
  */
 export function createPermissions(): ChromeNamespace {
   const contains = async (query: PermissionsQuery | undefined) => {
-    // Chrome's schema check, which fails the call before anything is answered
-    if (typeof query !== "object" || query === null) {
-      throw new TypeError("Error in invocation of permissions.contains");
-    }
-
-    const askedPermissions = toStrings(query?.permissions);
-
-    const askedOrigins = toStrings(query?.origins);
+    const { askedPermissions, askedOrigins } = readQuery("contains", query);
 
     const { permissions, optionalPermissions, origins } = readManifest();
 
@@ -144,9 +146,7 @@ export function createPermissions(): ChromeNamespace {
   };
 
   const request = async (query: PermissionsQuery | undefined) => {
-    const askedPermissions = toStrings(query?.permissions);
-
-    const askedOrigins = toStrings(query?.origins);
+    const { askedPermissions, askedOrigins } = readQuery("request", query);
 
     const { permissions, optionalPermissions, origins } = readManifest();
 
@@ -174,9 +174,7 @@ export function createPermissions(): ChromeNamespace {
   };
 
   const remove = async (query: PermissionsQuery | undefined) => {
-    const askedPermissions = toStrings(query?.permissions);
-
-    const askedOrigins = toStrings(query?.origins);
+    const { askedPermissions, askedOrigins } = readQuery("remove", query);
 
     const { permissions, origins } = readManifest();
 

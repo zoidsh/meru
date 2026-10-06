@@ -177,14 +177,16 @@ describe("createPermissions", () => {
     expect(await namespaceMethod(permissions, "contains")({ origins: ["<all_urls>"] })).toBe(false);
   });
 
-  test("answers contains true for a query that names nothing, and fails one with no query", async () => {
+  test("answers contains true for a query that names nothing, and fails any call with no query", async () => {
     installManifest(BITWARDEN_MANIFEST);
 
     installFakeBridge();
 
     expect(await namespaceMethod(createPermissions(), "contains")({})).toBe(true);
 
-    await expect(namespaceMethod(createPermissions(), "contains")()).rejects.toThrow(TypeError);
+    for (const methodName of ["contains", "request", "remove"]) {
+      await expect(namespaceMethod(createPermissions(), methodName)()).rejects.toThrow(TypeError);
+    }
   });
 
   test("answers request and remove true for a query that names nothing", async () => {
