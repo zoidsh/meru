@@ -2,6 +2,8 @@ import path from "node:path";
 import { is } from "@electron-toolkit/utils";
 import {
   createSharedExtensionInstance,
+  type ExtensionWindow,
+  type ExtensionWindowOpenDetails,
   Extensions,
   findExtensionDirs,
   getInstalledExtension,
@@ -20,13 +22,20 @@ import {
 } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
-import { app, session, type WebContents } from "electron";
+import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import { serializeErrorDetails } from "@/lib/log-details";
+import {
+  createBrowserWindow,
+  getBackgroundColor,
+  isWindowVisibleOnConnectedDisplay,
+} from "@/lib/window";
 import { licenseKey } from "@/license-key";
+import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
 
 /** Where the curated extensions are installed, `<installDir>/<id>/<version>`. */
@@ -245,6 +254,135 @@ function getWorkerSessionPagePatterns() {
   }
 }
 
+/**
+ * Which extensions `chrome.windows.create` opens a window for: the catalog
+ * entry says so per extension, and the fixture is opted in wherever it is
+ * loaded, which is how the end-to-end suite drives the namespace. Behind the
+ * condition that loads the fixture at all, so a shipped build opens windows
+ * only for what the catalog named.
+ */
+function canOpenExtensionWindows(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0;
+  }
+
+  return (
+    curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+      ?.opensExtensionWindows === true
+  );
+}
+
+/**
+ * What a popout gets when the extension names no size. Bitwarden's own popout
+ * dimensions, which is what its unlock window asks for anyway — this is for the
+ * call that leaves them out, where a window at Electron's 800x600 default would
+ * be a popup page in the corner of an empty window.
+ */
+const EXTENSION_WINDOW_SIZE = { width: 380, height: 630 };
+
+/** Only a browser's to open, which is anything that is not an extension page. */
+function openExtensionWindowUrlExternally(url: string) {
+  if (url.startsWith("https://") || url.startsWith("http://")) {
+    openExternalUrl(url);
+  }
+}
+
+function isExtensionPageUrl(extensionId: string, url: string) {
+  const pageUrl = URL.parse(url);
+
+  // `URL.origin` is `"null"` for every scheme the URL standard doesn't call
+  // special, `chrome-extension:` among them
+  return pageUrl?.protocol === "chrome-extension:" && pageUrl.host === extensionId;
+}
+
+/**
+ * A `chrome.windows.create` window: one page of the extension, in the default
+ * session, where the full copy and its worker are. Meru draws nothing on it —
+ * the extension's own page is the whole window, and a titlebar would be Meru's
+ * to position over a page it knows nothing about — and no preload is attached,
+ * the facade already being in the copy the page is loaded from.
+ *
+ * `useContentSize`, because the size an extension asks for is the size its
+ * popout was laid out at, which a window frame would otherwise eat into.
+ *
+ * The window stays on the extension it was opened for: a page it navigates to
+ * or opens is the user's browser's, since nothing here is an account's view and
+ * none of the handling one carries — the request blocking, the permission
+ * handler, the user agent — applies to it.
+ */
+function openExtensionWindow({
+  extensionId,
+  url,
+  width,
+  height,
+  left,
+  top,
+}: ExtensionWindowOpenDetails): ExtensionWindow {
+  const size = {
+    width: width ?? EXTENSION_WINDOW_SIZE.width,
+    height: height ?? EXTENSION_WINDOW_SIZE.height,
+  };
+
+  const window = createBrowserWindow({
+    ...size,
+    // Where the extension asked for, as long as the user can see it: a popout
+    // placed against a display since unplugged would open offscreen, with
+    // nothing on screen to drag it back by
+    ...(left !== undefined &&
+    top !== undefined &&
+    isWindowVisibleOnConnectedDisplay({ x: left, y: top, ...size })
+      ? { x: left, y: top }
+      : {}),
+    useContentSize: true,
+    autoHideMenuBar: true,
+    backgroundColor: getBackgroundColor(),
+    webPreferences: { session: session.defaultSession },
+  });
+
+  loadUrl(window.webContents, url);
+
+  window.webContents.setWindowOpenHandler(({ url: openedUrl }) => {
+    openExtensionWindowUrlExternally(openedUrl);
+
+    return { action: "deny" };
+  });
+
+  window.webContents.on("will-navigate", (event, navigationUrl) => {
+    if (isExtensionPageUrl(extensionId, navigationUrl)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    openExtensionWindowUrlExternally(navigationUrl);
+  });
+
+  return {
+    // `focus` alone leaves a minimized window minimized on macOS and Windows,
+    // so a second Unlock would look like it did nothing
+    focus: () => {
+      if (window.isMinimized()) {
+        window.restore();
+      }
+
+      window.show();
+
+      window.focus();
+    },
+    close: () => {
+      window.close();
+    },
+    isDestroyed: () => window.isDestroyed(),
+    isFocused: () => window.isFocused(),
+    getBounds: () => window.getBounds(),
+    containsFrame: (frame) =>
+      !window.isDestroyed() && webContents.fromFrame(frame) === window.webContents,
+    onClosed: (listener) => {
+      window.once("closed", listener);
+    },
+  };
+}
+
 // Extension contexts reach the main process over the bridge's custom scheme,
 // and Electron only takes scheme privileges while modules are still loading
 registerExtensionBridgeScheme();
@@ -258,6 +396,8 @@ export const extensions = new Extensions({
   synthesizesStorageChanges,
   getGrantableOptionalPermissions,
   grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
+  canOpenExtensionWindows,
+  openExtensionWindow,
   // One shared extension instance across every session — one 1Password sign-in
   // instead of one per account, and one worker whatever the account count. It
   // is how Meru runs extensions rather than something the user chooses: a
@@ -491,13 +631,12 @@ export async function uninstallCuratedExtension(extensionId: string) {
    * hold no store, and unloading them would only take away the content scripts
    * of documents already open, which the restart does anyway.
    *
-   * It clears every extension's store in that session rather than this one's,
-   * which is exact while the catalog holds a single entry and is why a second
-   * curated extension needs a per-id clear before it lands.
+   * Only this extension's store goes, since every curated extension keeps its
+   * sign-in in the same session.
    */
   extensions.unloadExtension(session.defaultSession, extensionId);
 
-  await extensions.clearSessionData(session.defaultSession);
+  await extensions.clearExtensionData(session.defaultSession, extensionId);
 
   // And what the user allowed it, which Chrome drops with the install, so a
   // reinstall asks again rather than coming back already granted

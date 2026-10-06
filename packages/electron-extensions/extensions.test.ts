@@ -1537,11 +1537,84 @@ describe("the shared instance's worker session", () => {
 
     expect(removedExtensionIds).toEqual(["aaa"]);
 
-    await extensions.clearSessionData(workerSession);
+    await extensions.clearExtensionData(workerSession, "aaa");
 
-    expect(await listPartitionDir(userDataPath)).toEqual(["IndexedDB", "config.json"]);
+    expect(await listPartitionDir(userDataPath)).toEqual([
+      "IndexedDB",
+      "Local Extension Settings",
+      "config.json",
+    ]);
 
     await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  test("clearing one extension's data leaves another's store in the same userData root", async () => {
+    const userDataPath = await createPartitionDir([
+      "Local Extension Settings/aaa/000003.log",
+      "Sync Extension Settings/aaa/000003.log",
+      "Managed Extension Settings/aaa/000003.log",
+      "IndexedDB/chrome-extension_aaa_0.indexeddb.leveldb/000003.log",
+      "IndexedDB/chrome-extension_aaa_1.indexeddb.blob/1/00/1",
+      "Local Extension Settings/aaab/000003.log",
+      "Sync Extension Settings/aaab/000003.log",
+      "Managed Extension Settings/aaab/000003.log",
+      "IndexedDB/chrome-extension_aaab_0.indexeddb.leveldb/000003.log",
+      "Extension Rules/000003.log",
+      "Extension Scripts/000003.log",
+      "Extension State/000003.log",
+      "config.json",
+    ]);
+
+    const { session: workerSession } = createSession({ storagePath: userDataPath });
+
+    const extensions = createSharedExtensions(
+      [await createExtensionDir("one")],
+      await createSharedInstance(workerSession),
+    );
+
+    await extensions.clearExtensionData(workerSession, "aaa");
+
+    expect(await listPartitionDir(userDataPath)).toEqual([
+      "Extension Rules",
+      path.join("Extension Rules", "000003.log"),
+      "Extension Scripts",
+      path.join("Extension Scripts", "000003.log"),
+      "Extension State",
+      path.join("Extension State", "000003.log"),
+      "IndexedDB",
+      path.join("IndexedDB", "chrome-extension_aaab_0.indexeddb.leveldb"),
+      path.join("IndexedDB", "chrome-extension_aaab_0.indexeddb.leveldb", "000003.log"),
+      "Local Extension Settings",
+      path.join("Local Extension Settings", "aaab"),
+      path.join("Local Extension Settings", "aaab", "000003.log"),
+      "Managed Extension Settings",
+      path.join("Managed Extension Settings", "aaab"),
+      path.join("Managed Extension Settings", "aaab", "000003.log"),
+      "Sync Extension Settings",
+      path.join("Sync Extension Settings", "aaab"),
+      path.join("Sync Extension Settings", "aaab", "000003.log"),
+      "config.json",
+    ]);
+
+    await fs.rm(userDataPath, { recursive: true, force: true });
+  });
+
+  test("clearing one extension's data clears nothing for a session without a storage path", async () => {
+    const loggedErrors: Record<string, unknown>[] = [];
+
+    const { session } = createSession();
+
+    const extensions = createExtensions([await createExtensionDir("one")], {
+      debug: () => {},
+      info: () => {},
+      error: (_message, details) => {
+        loggedErrors.push(details);
+      },
+    });
+
+    await extensions.clearExtensionData(session, "aaa");
+
+    expect(loggedErrors).toEqual([]);
   });
 
   test("tearing down an account session says nothing about the worker", async () => {
