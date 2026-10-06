@@ -423,6 +423,52 @@ test("both accounts' popups reach the one worker the default session keeps", asy
   );
 });
 
+/*
+ * Chrome defines `chrome` alone, and Electron adds a `browser` beside it that
+ * sends Bitwarden and 1Password down their Firefox paths. Every context an
+ * account can reach is asked, plus the worker and a page of its own session.
+ */
+test("every extension context has chrome and no browser", async () => {
+  const chromeOnly = { chrome: "object", browser: "undefined" };
+
+  const workerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("globals-worker-popup"));
+
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("globals-shim-popup"));
+
+  const contentScriptPageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/plain`);
+
+  const frameHostId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/frame`);
+
+  expect((await readProbeResults(workerPopupId)).extensionGlobals).toEqual(chromeOnly);
+
+  expect((await readProbeResults(shimPopupId)).extensionGlobals).toEqual(chromeOnly);
+
+  expect((await readProbeResults(contentScriptPageId)).extensionGlobals).toEqual(chromeOnly);
+
+  expect(
+    (
+      await readProbeResults(
+        frameHostId,
+        `chrome-extension://${FIXTURE_EXTENSION_ID}/fixture-frame.html`,
+      )
+    ).extensionGlobals,
+  ).toEqual(chromeOnly);
+
+  const workerGlobals = await meru.app.evaluate(
+    ({ webContents }, { webContentsId }) =>
+      webContents.fromId(webContentsId)?.mainFrame.executeJavaScript(
+        `new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: "read-globals" }, (reply) => {
+              resolve(reply ? reply.extensionGlobals : null);
+            });
+          })`,
+      ) as Promise<unknown>,
+    { webContentsId: workerPopupId },
+  );
+
+  expect(workerGlobals).toEqual(chromeOnly);
+});
+
 test("content scripts inject into the shim session and round-trip, a strict page CSP included", async () => {
   const plainPageUrl = `${serverOrigin}/plain`;
 

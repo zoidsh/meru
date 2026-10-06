@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { WEB_NAVIGATION_PATHS } from "../../web-navigation/bridge-protocol";
+import { callInCallbackForm } from "../lib/callback-form";
 import { createWebNavigation } from "./web-navigation";
 
 const originalFetch = globalThis.fetch;
@@ -49,5 +50,25 @@ describe("facade webNavigation", () => {
     globalThis.fetch = (async () => new Response(null, { status: 403 })) as unknown as typeof fetch;
 
     expect(await (webNavigation.getAllFrames as FrameQueryMethod)({ tabId: 12 })).toBeNull();
+  });
+
+  test("answers a callback with null and no lastError when the bridge is unreachable", async () => {
+    globalThis.fetch = (async () => {
+      throw new Error("Failed to fetch");
+    }) as unknown as typeof fetch;
+
+    const webNavigation = createWebNavigation();
+
+    for (const name of ["getFrame", "getAllFrames"]) {
+      const { returned, answered } = callInCallbackForm(
+        {},
+        webNavigation[name] as (...callArguments: unknown[]) => unknown,
+        { tabId: 12, frameId: 0 },
+      );
+
+      expect(returned).toBeUndefined();
+
+      expect(await answered).toBeNull();
+    }
   });
 });

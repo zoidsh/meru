@@ -27,3 +27,15 @@ export function withLastError(
 export function getLastErrorMessage(runtime: ChromeNamespace) {
   return (runtime.lastError as { message?: string } | undefined)?.message;
 }
+
+/**
+ * The `runtime` an extension reads `lastError` from, looked up at call time
+ * because a facade namespace is built before it is installed into `chrome`.
+ * A context with none gets an object nothing reads, so the callback still runs.
+ */
+export function getContextRuntime(): ChromeNamespace {
+  const extensionApi = (globalThis as unknown as Record<string, ChromeNamespace | undefined>)
+    .chrome;
+
+  return (extensionApi?.runtime as ChromeNamespace | undefined) ?? {};
+}
