@@ -19,6 +19,7 @@ import {
 import { type GrantableOptionalPermissionsPolicy, Permissions } from "./permissions/permissions";
 import { readExtensionDirId } from "./scan";
 import { WebNavigation } from "./web-navigation/web-navigation";
+import { type ExtensionWindowsPolicy, Windows, type WindowsOptions } from "./windows/windows";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -142,6 +143,19 @@ export type ExtensionsOptions = {
    */
   grantedPermissionsPath?: string;
   /**
+   * Which extensions `chrome.windows.create` opens a real window for, by the id
+   * they are loaded as. Without it the namespace stays the facade's noop, which
+   * is what an extension reaching for a window the embedder has no equivalent
+   * of is better left with.
+   */
+  canOpenExtensionWindows?: ExtensionWindowsPolicy;
+  /**
+   * How a `chrome.windows.create` for one of the extension's own pages is
+   * opened. Without it nothing is opened whatever the policy allows, a window
+   * being the embedder's to make.
+   */
+  openExtensionWindow?: WindowsOptions["openWindow"];
+  /**
    * Which extensions a due alarm may start a stopped service worker for. Without
    * it an alarm reaches only the contexts already running, which is what Meru
    * ships: a worker woken every minute is a worker that never idles out.
@@ -248,6 +262,8 @@ export class Extensions {
 
   private permissions: Permissions;
 
+  private windows: Windows;
+
   private serviceWorkerConsoleListeners = new Map<
     Session,
     (event: ElectronEvent, messageDetails: MessageDetails) => void
@@ -265,6 +281,8 @@ export class Extensions {
     isNativeMessagingHostAllowed,
     getGrantableOptionalPermissions,
     grantedPermissionsPath,
+    canOpenExtensionWindows,
+    openExtensionWindow,
     shouldWakeWorkerForAlarm,
     sharedInstance,
     workerSessionPagePatterns,
@@ -319,6 +337,14 @@ export class Extensions {
     });
 
     this.permissions.registerRoutes(this.bridge);
+
+    this.windows = new Windows({
+      canOpenWindows: canOpenExtensionWindows,
+      openWindow: openExtensionWindow,
+      logger,
+    });
+
+    this.windows.registerRoutes(this.bridge);
 
     this.sharedInstance?.install({ bridge: this.bridge, logger });
   }
@@ -800,6 +826,13 @@ export class Extensions {
     for (const extensionId of loadedExtensionIds) {
       session.extensions.removeExtension(extensionId);
 
+      // A window holds a page of the extension, and the extension is still
+      // loaded in every other session that has it — an account session going
+      // away must not close the window the one worker opened
+      if (!this.isExtensionLoadedAnywhere(extensionId)) {
+        this.windows.closeExtensionWindows(extensionId);
+      }
+
       this.logger?.info("Unloaded extension", { id: extensionId });
     }
 
@@ -822,6 +855,11 @@ export class Extensions {
     }
 
     session.extensions.removeExtension(extensionId);
+
+    // Whatever other sessions still hold a content-script-only copy: this is
+    // the uninstall path, so the derived copy the window's page comes from is
+    // about to be deleted
+    this.windows.closeExtensionWindows(extensionId);
 
     const actions = this.actionsBySession.get(session);
 
@@ -966,6 +1004,12 @@ export class Extensions {
    */
   isExtensionLoaded(session: Session, extensionId: string) {
     return this.loadedExtensionIdsBySession.get(session)?.has(extensionId) ?? false;
+  }
+
+  private isExtensionLoadedAnywhere(extensionId: string) {
+    return [...this.loadedExtensionIdsBySession.values()].some((loadedExtensionIds) =>
+      loadedExtensionIds.has(extensionId),
+    );
   }
 
   /**
