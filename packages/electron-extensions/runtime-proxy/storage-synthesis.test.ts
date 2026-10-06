@@ -367,6 +367,30 @@ describe("installStorageSynthesis", () => {
     expect(heard).toHaveLength(2);
   });
 
+  test("fails a read in both forms the way the native read failed", async () => {
+    const api = createWorkerApi();
+
+    installStorageSynthesis([api.extensionApi]);
+
+    api.failures.set("get", "Storage is unavailable");
+
+    let seen: unknown;
+
+    call(api.local, "get", "a", () => {
+      seen = api.runtime.lastError;
+    });
+
+    await settle();
+
+    expect(seen).toEqual({ message: "Storage is unavailable" });
+
+    expect(api.runtime.lastError).toBeUndefined();
+
+    await expect(call(api.local, "get", "a") as Promise<unknown>).rejects.toThrow(
+      "Storage is unavailable",
+    );
+  });
+
   test("keeps dispatching to the other listeners when one throws", async () => {
     const api = createWorkerApi();
 
