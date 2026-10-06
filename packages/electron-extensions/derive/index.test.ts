@@ -15,7 +15,10 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { RUNTIME_PROXY_MANIFEST_GLOBAL } from "../runtime-proxy/bridge-protocol";
+import {
+  RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+} from "../runtime-proxy/bridge-protocol";
 import { deriveExtension, pruneDerivedExtensions } from "./index";
 
 let workDir: string;
@@ -548,6 +551,42 @@ describe("deriveExtension for a shared instance", () => {
     expect(
       await readFile(path.join(derivedDir, "chrome-facade-service-worker.js"), "utf8"),
     ).toContain('import "./chrome-runtime-proxy-relay.js";');
+  });
+
+  test("the worker copy's relay is told to synthesize storage changes only when opted in", async () => {
+    const askedFor: string[] = [];
+
+    const deriveRelay = async (optedIn: boolean) => {
+      const { derivedDir, extensionId } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        synthesizesStorageChanges: (askedExtensionId) => {
+          askedFor.push(askedExtensionId);
+
+          return optedIn;
+        },
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      return {
+        extensionId,
+        relaySource: await readFile(path.join(derivedDir, "chrome-runtime-proxy-relay.js"), "utf8"),
+      };
+    };
+
+    const optedIn = await deriveRelay(true);
+
+    expect(optedIn.relaySource).toContain(
+      `globalThis.${RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL} = true;`,
+    );
+
+    expect(askedFor).toEqual([optedIn.extensionId as string]);
+
+    // Rewritten on every launch, so turning it off needs no re-derive
+    expect((await deriveRelay(false)).relaySource).not.toContain(
+      RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+    );
   });
 
   test("the content-script-only copy loses the worker and gains the shim", async () => {

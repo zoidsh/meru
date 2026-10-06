@@ -105,6 +105,22 @@ function getGrantableOptionalPermissions(extensionId: string) {
 }
 
 /**
+ * Whether an extension's worker gets `storage.onChanged` synthesized: the
+ * catalog's flag for a curated extension, and always for the fixture, whose
+ * end-to-end suite checks the change events across sessions.
+ */
+function synthesizesStorageChanges(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0;
+  }
+
+  return (
+    curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+      ?.synthesizeStorageChanges === true
+  );
+}
+
+/**
  * `MERU_EXTENSIONS_STRIP=content_scripts,declarative_net_request` derives every
  * extension without those manifest keys, so a run can tell which part of an
  * extension a page is reacting to. Development only, like the extensions
@@ -239,6 +255,7 @@ export const extensions = new Extensions({
   derivedExtensionsDir: DERIVED_EXTENSIONS_DIR,
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
+  synthesizesStorageChanges,
   getGrantableOptionalPermissions,
   grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
   // One shared extension instance across every session — one 1Password sign-in
