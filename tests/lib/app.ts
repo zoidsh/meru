@@ -305,6 +305,20 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
     JSON.stringify({ ...profileConfig, "trial.expired": true, ...seededConfig }, null, "\t"),
   );
 
+  return launchOnUserDataDir(userDataDir, options);
+}
+
+/**
+ * Launches the app on a user data directory that is already there, with the
+ * config in it left exactly as it stands — the first launch's seed, plus
+ * whatever the app itself has written since. It is what a restart is, and the
+ * only way to prove that state outliving a launch does: an extension permission
+ * grant, say, which is the main process's rather than the config's.
+ */
+async function launchOnUserDataDir(
+  userDataDir: string,
+  options: UseAppOptions,
+): Promise<LaunchedApp> {
   // The built binary, not `electron .`: only a packaged app has isPackaged
   // true, which is what sends loadRenderer down its production loadFile
   // branch. Running the app the way it ships is the point.
@@ -436,6 +450,15 @@ export type MeruApp = {
   /** Runs a menu command the way the menu bar would, and reports whether it was there. */
   runMenuCommand(label: string): Promise<boolean>;
   /**
+   * Quits the app and starts it again on the same user data directory, which is
+   * the only shape a restart can take: the single instance lock is scoped to
+   * that directory, so the second launch has to wait for the first to be gone.
+   *
+   * Everything the test held from before — a window, a `WebContents` id —
+   * belongs to the app that quit, so a test asks the new one for its own.
+   */
+  relaunch(): Promise<void>;
+  /**
    * Opens settings through the menu, and hands back its navigation sidebar to
    * pick a page from.
    */
@@ -557,6 +580,31 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
     },
     get userDataDir() {
       return current().userDataDir;
+    },
+    async relaunch() {
+      const previous = current();
+
+      // The trace of the launch that is going away is dropped rather than kept
+      // beside the next one's: `afterEach` writes one trace, and the app a
+      // failure is read off is the one still running
+      if (previous.isTraced) {
+        await previous.app
+          .context()
+          .tracing.stop()
+          .catch(() => undefined);
+      }
+
+      await closeApp(previous.app);
+
+      launched = await launchOnUserDataDir(previous.userDataDir, options);
+
+      try {
+        launched.renderer = await findRendererWindow(launched.app);
+      } catch (error) {
+        hasFailed = true;
+
+        throw error;
+      }
     },
     runMenuCommand(label) {
       return current().app.evaluate(({ Menu }, commandLabel) => {
