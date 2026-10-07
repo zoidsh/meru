@@ -339,6 +339,74 @@ describe("Windows", () => {
   });
 });
 
+describe("Windows.watch", () => {
+  function watchEvents(windows: Windows) {
+    const events: string[] = [];
+
+    windows.watch({
+      opened: (extensionId, windowId) => {
+        events.push(`opened ${extensionId} ${windowId}`);
+      },
+      closedByUser: (extensionId, windowId) => {
+        events.push(`closedByUser ${extensionId} ${windowId}`);
+      },
+    });
+
+    return events;
+  }
+
+  test("reports a window opening, and the user closing it", () => {
+    const { windows, openedWindows } = createFakeEmbedder();
+
+    const events = watchEvents(windows);
+
+    const windowId = windows.create(BITWARDEN_ID, { url: UNLOCK_PATH }).window?.id;
+
+    openedWindows[0]?.close();
+
+    expect(events).toEqual([
+      `opened ${BITWARDEN_ID} ${windowId}`,
+      `closedByUser ${BITWARDEN_ID} ${windowId}`,
+    ]);
+  });
+
+  test("reports no user close for a window the extension removed", () => {
+    const { windows } = createFakeEmbedder();
+
+    const events = watchEvents(windows);
+
+    const windowId = windows.create(BITWARDEN_ID, { url: UNLOCK_PATH }).window?.id;
+
+    windows.remove(BITWARDEN_ID, windowId);
+
+    expect(events).toEqual([`opened ${BITWARDEN_ID} ${windowId}`]);
+  });
+
+  test("reports no user close for a window an unload closed", () => {
+    const { windows } = createFakeEmbedder();
+
+    const events = watchEvents(windows);
+
+    const windowId = windows.create(BITWARDEN_ID, { url: UNLOCK_PATH }).window?.id;
+
+    windows.closeExtensionWindows(BITWARDEN_ID);
+
+    expect(events).toEqual([`opened ${BITWARDEN_ID} ${windowId}`]);
+  });
+
+  test("reports no second opening for a create that focused the window already open", () => {
+    const { windows } = createFakeEmbedder();
+
+    const events = watchEvents(windows);
+
+    windows.create(BITWARDEN_ID, { url: UNLOCK_PATH });
+
+    windows.create(BITWARDEN_ID, { url: UNLOCK_PATH });
+
+    expect(events).toHaveLength(1);
+  });
+});
+
 describe("Windows.getWindowIdOfFrame", () => {
   /*
    * What a tab's `windowId` is read from: the popout's page is in the popout,

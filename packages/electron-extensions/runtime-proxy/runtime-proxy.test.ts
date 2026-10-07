@@ -410,6 +410,49 @@ describe("RuntimeProxy", () => {
     expect(await response.json()).toEqual({ status: "replied", reply: { unlocked: true } });
   });
 
+  describe("a fallback reply after the user closed the extension's window", () => {
+    const fallbackReply = { error: { fallbackRequested: true, message: "FallbackRequested" } };
+
+    async function sendClosingWindow(proxyOptions: RuntimeProxyOptions) {
+      const harness = createHarness(proxyOptions);
+
+      const workerStream = await harness.openWorkerStream();
+
+      const shimResponse = harness.sendShimMessage({ command: "fido2GetCredentialRequest" });
+
+      const [job] = await workerStream.waitForJobs(1);
+
+      await harness.ackJob(job?.jobId as string);
+
+      harness.proxy.extensionWindowOpened(EXTENSION_ID, 2);
+
+      harness.proxy.extensionWindowClosedByUser(EXTENSION_ID, 2);
+
+      await harness.replyToJob(job?.jobId as string, { status: "replied", reply: fallbackReply });
+
+      return (await shimResponse).json();
+    }
+
+    test("reaches the page as the rejection the extension's rule names", async () => {
+      expect(
+        await sendClosingWindow({
+          getWindowCloseFallbackRejection: () => ({
+            commands: ["fido2GetCredentialRequest"],
+            fallbackMarker: "fallbackRequested",
+            error: { name: "NotAllowedError", message: "Not allowed." },
+          }),
+        }),
+      ).toEqual({
+        status: "replied",
+        reply: { error: { name: "NotAllowedError", message: "Not allowed." } },
+      });
+    });
+
+    test("reaches the page unchanged for an extension with no rule", async () => {
+      expect(await sendClosingWindow({})).toEqual({ status: "replied", reply: fallbackReply });
+    });
+  });
+
   test("two tabs on one URL: the sender is the tab that called, not the first match", async () => {
     const harness = createHarness();
 
