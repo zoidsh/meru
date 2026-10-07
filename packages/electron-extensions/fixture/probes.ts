@@ -761,6 +761,26 @@ export async function runProbes(): Promise<ProbeResults> {
       return undefined;
     }
 
+    /*
+     * Bitwarden's fill from its popup: the popup asks the tab for its page
+     * details, and each frame's content script answers with a
+     * `runtime.sendMessage` of its own, which the popup gathers on its
+     * `onMessage`. The direct answer is the other half, for a sender that
+     * waits on it.
+     */
+    if (probeMessage.type === "collect") {
+      arrivals.set(probeMessage.nonce, { message, sender: seeSender(sender) });
+
+      runtime.sendMessage({ type: "collected", nonce: probeMessage.nonce, contextId }, () => {
+        // Read so Chrome does not log the worker's unanswered port as unchecked
+        void runtime.lastError;
+      });
+
+      sendResponse({ type: "collect-reply", nonce: probeMessage.nonce, contextId });
+
+      return undefined;
+    }
+
     return undefined;
   });
 
