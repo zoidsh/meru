@@ -7,7 +7,10 @@ import {
   type WebNavigationEventDetails,
   type WebNavigationEventFrame,
   type WebNavigationEventName,
+  type WebNavigationListenedEvents,
+  type WebNavigationListenersBody,
 } from "./bridge-protocol";
+import { matchesEventFilters } from "./url-filter";
 import { getExtensionFrameId } from "./web-navigation";
 
 export type NavigationEventsPolicy = (extensionId: string) => boolean;
@@ -30,7 +33,18 @@ export type NavigationEventsOptions = {
 type ParkedStream = {
   session: Session;
   extensionId: string;
+  streamId: string;
+  sequence: number;
+  listened: WebNavigationListenedEvents;
   controller: ReadableStreamDefaultController<Uint8Array>;
+};
+
+/** The page event each synthesized event is read from. */
+const PAGE_EVENTS: Record<WebNavigationEventName, string> = {
+  onBeforeNavigate: "did-start-navigation",
+  onCommitted: "did-frame-navigate",
+  onDOMContentLoaded: "dom-ready",
+  onCompleted: "did-frame-finish-load",
 };
 
 /**
@@ -55,6 +69,46 @@ function subscribeToElectronWebContentsCreated(listener: (contents: WebContents)
   return () => {
     app.off("web-contents-created", handleCreated);
   };
+}
+
+/** What a context said it listens to, taken as untrusted. */
+function readListened(listened: unknown): WebNavigationListenedEvents {
+  const read: WebNavigationListenedEvents = {};
+
+  if (typeof listened !== "object" || listened === null) {
+    return read;
+  }
+
+  for (const eventName of Object.keys(PAGE_EVENTS) as WebNavigationEventName[]) {
+    const filters = (listened as Record<string, unknown>)[eventName];
+
+    if (filters === null) {
+      read[eventName] = null;
+    } else if (Array.isArray(filters)) {
+      read[eventName] = filters.filter(
+        (filter): filter is Record<string, unknown> =>
+          typeof filter === "object" && filter !== null,
+      );
+    }
+  }
+
+  return read;
+}
+
+/**
+ * Whether a stream hears an event for this URL: it listens to the event, and
+ * its listeners' merged filters match, `null` matching every URL.
+ */
+function streamHears(parked: ParkedStream, type: WebNavigationEventName, url: string) {
+  const filters = parked.listened[type];
+
+  if (filters === undefined) {
+    return false;
+  }
+
+  // An empty list can only be filters that were all dropped as malformed,
+  // which match nothing, whereas Chrome reads an empty `url` as every URL
+  return filters === null || (filters.length > 0 && matchesEventFilters(url, { url: filters }));
 }
 
 /**
@@ -118,9 +172,12 @@ export function describeNavigationEvent(
  * use, and only for the pages that context may resolve a tab of — its own
  * session's, and those `canResolveTabAcrossSessions` lets it reach.
  *
- * The pages are listened to only while a stream is parked, which the facade
- * does only while one of its events has a listener: every navigation of every
- * page would otherwise pay for an extension that never asked.
+ * Each stream says which events its context listens to and with which url
+ * filters (`WebNavigationListenersBody`). Pages are listened to only for the
+ * events some parked stream wants, and only a frame some stream's filters
+ * match is serialized at all. A context can listen for its whole life —
+ * Bitwarden's badge keeps an unfiltered `onCommitted` — so that is what keeps
+ * the cost to the events it asked for rather than every event of every frame.
  *
  * `onDOMContentLoaded` fires for main frames only, Electron reporting
  * `dom-ready` for no other frame.
@@ -139,6 +196,9 @@ export class NavigationEvents {
   private logger: ExtensionsLogger | undefined;
 
   private streams = new Set<ParkedStream>();
+
+  /** The events some parked stream listens to, which the pages are listened to for. */
+  private attachedEvents = new Set<WebNavigationEventName>();
 
   /** Every page listened to, with what takes its listeners off again. */
   private watchedContents = new Map<WebContents, () => void>();
@@ -167,30 +227,50 @@ export class NavigationEvents {
   }
 
   registerRoutes(bridge: ExtensionBridge) {
-    bridge.handle(WEB_NAVIGATION_PATHS.events, ({ session, extensionId, headers }) =>
-      this.handleEvents(session, extensionId, headers),
+    bridge.handle(WEB_NAVIGATION_PATHS.events, ({ session, extensionId, body, headers }) =>
+      this.handleEvents(session, extensionId, body, headers),
+    );
+
+    bridge.handle(WEB_NAVIGATION_PATHS.listeners, ({ session, extensionId, body, headers }) => {
+      this.updateListeners(session, extensionId, body);
+
+      return Response.json(null, { headers });
+    });
+  }
+
+  /** Whether a page is listened to for an event, for tests and the embedder's own diagnostics. */
+  isWatching(contents: WebContents, type?: WebNavigationEventName) {
+    return (
+      this.watchedContents.has(contents) && (type === undefined || this.attachedEvents.has(type))
     );
   }
 
-  /** Whether a page is watched, for tests and the embedder's own diagnostics. */
-  isWatching(contents: WebContents) {
-    return this.watchedContents.has(contents);
-  }
-
-  private handleEvents(session: Session, extensionId: string, headers: Record<string, string>) {
+  private handleEvents(
+    session: Session,
+    extensionId: string,
+    body: Record<string, unknown>,
+    headers: Record<string, string>,
+  ) {
     if (this.deliversNavigationEvents?.(extensionId) !== true) {
       return new Response(null, { status: 403, headers });
     }
 
     let parked: ParkedStream | undefined;
 
-    const body = new ReadableStream<Uint8Array>({
+    const readable = new ReadableStream<Uint8Array>({
       start: (controller) => {
-        parked = { session, extensionId, controller };
+        parked = {
+          session,
+          extensionId,
+          streamId: typeof body.streamId === "string" ? body.streamId : "",
+          sequence: typeof body.sequence === "number" ? body.sequence : 0,
+          listened: readListened(body.listened),
+          controller,
+        };
 
         this.streams.add(parked);
 
-        this.watch();
+        this.refresh();
       },
       cancel: () => {
         if (parked) {
@@ -199,16 +279,41 @@ export class NavigationEvents {
       },
     });
 
-    return new Response(body, {
+    return new Response(readable, {
       headers: { ...headers, "content-type": "application/octet-stream" },
     });
   }
 
-  private dropStream(parked: ParkedStream) {
-    this.streams.delete(parked);
+  /**
+   * A context's listeners changed. Only its own stream, by the id it parked
+   * with, and only an update newer than what the stream already holds.
+   */
+  private updateListeners(session: Session, extensionId: string, body: Record<string, unknown>) {
+    const { streamId, sequence } = body as Partial<WebNavigationListenersBody>;
 
-    if (this.streams.size === 0) {
-      this.unwatch();
+    if (typeof streamId !== "string" || typeof sequence !== "number") {
+      return;
+    }
+
+    for (const parked of this.streams) {
+      if (
+        parked.streamId === streamId &&
+        parked.extensionId === extensionId &&
+        parked.session === session &&
+        sequence > parked.sequence
+      ) {
+        parked.sequence = sequence;
+
+        parked.listened = readListened(body.listened);
+
+        this.refresh();
+      }
+    }
+  }
+
+  private dropStream(parked: ParkedStream) {
+    if (this.streams.delete(parked)) {
+      this.refresh();
     }
   }
 
@@ -229,11 +334,36 @@ export class NavigationEvents {
   }
 
   /**
-   * Attaches to every page some parked stream reaches, and to every page
-   * created from now on. Asked again for each stream parked, since a stream
-   * from another session reaches pages the first did not.
+   * Brings the pages' listeners in line with what the parked streams want:
+   * none at all when nothing listens, and otherwise every reachable page,
+   * attached for the events some stream listens to. A page attached for a set
+   * that has since changed is attached again.
    */
-  private watch() {
+  private refresh() {
+    const wantedEvents = new Set<WebNavigationEventName>();
+
+    for (const parked of this.streams) {
+      for (const eventName of Object.keys(parked.listened) as WebNavigationEventName[]) {
+        wantedEvents.add(eventName);
+      }
+    }
+
+    if (wantedEvents.size === 0) {
+      this.unwatch();
+
+      return;
+    }
+
+    const eventsChanged =
+      wantedEvents.size !== this.attachedEvents.size ||
+      [...wantedEvents].some((eventName) => !this.attachedEvents.has(eventName));
+
+    if (eventsChanged) {
+      this.detachAll();
+
+      this.attachedEvents = wantedEvents;
+    }
+
     if (!this.stopWatchingCreated) {
       this.stopWatchingCreated = this.onWebContentsCreated((contents) => {
         this.attach(contents);
@@ -242,23 +372,35 @@ export class NavigationEvents {
       this.logger?.info("Started delivering navigation events", {});
     }
 
+    // Again for every stream parked, since one from another session reaches
+    // pages the others did not
     for (const contents of this.getAllWebContents()) {
       this.attach(contents);
     }
   }
 
   private unwatch() {
-    this.stopWatchingCreated?.();
+    if (!this.stopWatchingCreated) {
+      return;
+    }
+
+    this.stopWatchingCreated();
 
     this.stopWatchingCreated = undefined;
 
+    this.detachAll();
+
+    this.attachedEvents = new Set();
+
+    this.logger?.info("Stopped delivering navigation events", {});
+  }
+
+  private detachAll() {
     for (const detach of this.watchedContents.values()) {
       detach();
     }
 
     this.watchedContents.clear();
-
-    this.logger?.info("Stopped delivering navigation events", {});
   }
 
   private attach(contents: WebContents) {
@@ -270,63 +412,69 @@ export class NavigationEvents {
       return;
     }
 
-    const handleStartNavigation = (
-      details: ElectronEvent<{
-        url: string;
-        isSameDocument: boolean;
-        frame: WebFrameMain | null;
-      }>,
-    ) => {
-      // A same-document navigation is `onReferenceFragmentUpdated` or
-      // `onHistoryStateUpdated` in Chrome, never `onBeforeNavigate`
-      if (details.isSameDocument || !details.frame || details.frame.isDestroyed()) {
-        return;
-      }
+    const handlers: Record<string, (...eventArguments: never[]) => void> = {
+      [PAGE_EVENTS.onBeforeNavigate]: (
+        details: ElectronEvent<{
+          url: string;
+          isSameDocument: boolean;
+          frame: WebFrameMain | null;
+        }>,
+      ) => {
+        // A same-document navigation is `onReferenceFragmentUpdated` or
+        // `onHistoryStateUpdated` in Chrome, never `onBeforeNavigate`
+        if (details.isSameDocument || !details.frame || details.frame.isDestroyed()) {
+          return;
+        }
 
-      this.emit(contents, "onBeforeNavigate", details.frame, details.url);
+        this.emit(contents, "onBeforeNavigate", details.frame, details.url);
+      },
+      [PAGE_EVENTS.onCommitted]: (
+        _event: ElectronEvent,
+        url: string,
+        _httpResponseCode: number,
+        _httpStatusText: string,
+        isMainFrame: boolean,
+        frameProcessId: number,
+        frameRoutingId: number,
+      ) => {
+        const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
+
+        if (frame) {
+          this.emit(contents, "onCommitted", frame, url);
+        }
+      },
+      [PAGE_EVENTS.onDOMContentLoaded]: () => {
+        this.emit(contents, "onDOMContentLoaded", contents.mainFrame);
+      },
+      [PAGE_EVENTS.onCompleted]: (
+        _event: ElectronEvent,
+        isMainFrame: boolean,
+        frameProcessId: number,
+        frameRoutingId: number,
+      ) => {
+        const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
+
+        if (frame) {
+          this.emit(contents, "onCompleted", frame);
+        }
+      },
     };
 
-    const handleFrameNavigate = (
-      _event: ElectronEvent,
-      url: string,
-      _httpResponseCode: number,
-      _httpStatusText: string,
-      isMainFrame: boolean,
-      frameProcessId: number,
-      frameRoutingId: number,
-    ) => {
-      const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
+    const pageEvents = [...this.attachedEvents].map((eventName) => PAGE_EVENTS[eventName]);
 
-      if (frame) {
-        this.emit(contents, "onCommitted", frame, url);
-      }
+    const emitter = contents as unknown as {
+      on: (eventName: string, listener: (...eventArguments: never[]) => void) => void;
+      off: (eventName: string, listener: (...eventArguments: never[]) => void) => void;
     };
 
-    const handleDomReady = () => {
-      this.emit(contents, "onDOMContentLoaded", contents.mainFrame);
-    };
-
-    const handleFrameFinishLoad = (
-      _event: ElectronEvent,
-      isMainFrame: boolean,
-      frameProcessId: number,
-      frameRoutingId: number,
-    ) => {
-      const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
-
-      if (frame) {
-        this.emit(contents, "onCompleted", frame);
-      }
-    };
+    for (const pageEvent of pageEvents) {
+      emitter.on(pageEvent, handlers[pageEvent] as (...eventArguments: never[]) => void);
+    }
 
     const handleDestroyed = () => {
       this.watchedContents.delete(contents);
     };
 
-    contents.on("did-start-navigation", handleStartNavigation);
-    contents.on("did-frame-navigate", handleFrameNavigate);
-    contents.on("dom-ready", handleDomReady);
-    contents.on("did-frame-finish-load", handleFrameFinishLoad);
     contents.once("destroyed", handleDestroyed);
 
     this.watchedContents.set(contents, () => {
@@ -334,10 +482,10 @@ export class NavigationEvents {
         return;
       }
 
-      contents.off("did-start-navigation", handleStartNavigation);
-      contents.off("did-frame-navigate", handleFrameNavigate);
-      contents.off("dom-ready", handleDomReady);
-      contents.off("did-frame-finish-load", handleFrameFinishLoad);
+      for (const pageEvent of pageEvents) {
+        emitter.off(pageEvent, handlers[pageEvent] as (...eventArguments: never[]) => void);
+      }
+
       contents.off("destroyed", handleDestroyed);
     });
   }
@@ -354,15 +502,22 @@ export class NavigationEvents {
 
     const tabSession = contents.session;
 
-    const frameBytes = encodeNativeMessage({
-      type,
-      details: describeNavigationEvent(type, contents.id, frame, { url, timeStamp: this.now() }),
-    } satisfies WebNavigationEventFrame);
+    const eventUrl = url ?? frame.url;
+
+    let frameBytes: Uint8Array | undefined;
 
     for (const parked of this.streams) {
-      if (!this.canReach(parked.session, tabSession)) {
+      if (!this.canReach(parked.session, tabSession) || !streamHears(parked, type, eventUrl)) {
         continue;
       }
+
+      frameBytes ??= encodeNativeMessage({
+        type,
+        details: describeNavigationEvent(type, contents.id, frame, {
+          url: eventUrl,
+          timeStamp: this.now(),
+        }),
+      } satisfies WebNavigationEventFrame);
 
       try {
         parked.controller.enqueue(frameBytes);

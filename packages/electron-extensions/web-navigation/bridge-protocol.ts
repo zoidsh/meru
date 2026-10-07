@@ -7,6 +7,7 @@ export const WEB_NAVIGATION_PATHS = {
   getFrame: "/web-navigation/get-frame",
   getAllFrames: "/web-navigation/get-all-frames",
   events: "/web-navigation/events",
+  listeners: "/web-navigation/listeners",
 } as const;
 
 /**
@@ -24,9 +25,29 @@ export type WebNavigationEventName =
   | "onCompleted";
 
 /**
+ * Which events a context listens to, each with the url filters of its
+ * listeners, or `null` where one of them has none and so hears every URL. An
+ * event the context does not listen to is absent.
+ */
+export type WebNavigationListenedEvents = Partial<
+  Record<WebNavigationEventName, Record<string, unknown>[] | null>
+>;
+
+/**
+ * What a context parks its stream with, and sends again to the listeners path
+ * whenever its listeners change. Two updates can be in flight at once, so
+ * `sequence` orders them and main keeps the highest it has seen.
+ */
+export type WebNavigationListenersBody = {
+  streamId: string;
+  sequence: number;
+  listened: WebNavigationListenedEvents;
+};
+
+/**
  * Chrome's event details, without `documentId` and `parentDocumentId` for the
- * reason `WebNavigationFrameDetails` gives. `processId` is -1 before a
- * navigation commits, as in Chrome, where the process is not settled yet.
+ * reason `WebNavigationFrameDetails` gives. `processId` is -1 where no
+ * document committed, as in Chrome, where the process is not settled.
  */
 export type WebNavigationEventDetails = {
   tabId: number;

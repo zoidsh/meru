@@ -3,7 +3,11 @@ import { EventEmitter } from "node:events";
 import type { Session, WebContents, WebFrameMain } from "electron";
 import type { ExtensionBridge, ExtensionBridgeHandler } from "../bridge/bridge";
 import { NativeMessageDecoder } from "../native-messaging/framing";
-import { WEB_NAVIGATION_PATHS, type WebNavigationEventFrame } from "./bridge-protocol";
+import {
+  WEB_NAVIGATION_PATHS,
+  type WebNavigationEventFrame,
+  type WebNavigationListenedEvents,
+} from "./bridge-protocol";
 import { describeNavigationEvent, findEventFrame, NavigationEvents } from "./navigation-events";
 
 const ACCOUNT_SESSION = { partition: "persist:account" } as unknown as Session;
@@ -15,6 +19,13 @@ const WORKER_SESSION = { partition: "worker" } as unknown as Session;
 const BITWARDEN_ID = "nngceckbapebfimnlniiiahkandclblb";
 
 const ONEPASSWORD_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
+const EVERY_EVENT: WebNavigationListenedEvents = {
+  onBeforeNavigate: null,
+  onCommitted: null,
+  onDOMContentLoaded: null,
+  onCompleted: null,
+};
 
 const NAVIGATION_EVENTS = [
   "did-start-navigation",
@@ -113,14 +124,19 @@ function createNavigationEvents(pages: WebContents[]) {
   } as ExtensionBridge);
 
   /** Parks a stream as a context of the extension would, and collects what reaches it. */
-  const listen = async ({ session = WORKER_SESSION, extensionId = BITWARDEN_ID } = {}) => {
+  const listen = async ({
+    session = WORKER_SESSION,
+    extensionId = BITWARDEN_ID,
+    listened = EVERY_EVENT as WebNavigationListenedEvents,
+    streamId = "stream",
+  } = {}) => {
     const handler = routes.get(WEB_NAVIGATION_PATHS.events) as ExtensionBridgeHandler;
 
     const response = await handler({
       session,
       extensionId,
       senderFrame: undefined,
-      body: {},
+      body: { streamId, sequence: 1, listened },
       headers: {},
     });
 
@@ -149,9 +165,27 @@ function createNavigationEvents(pages: WebContents[]) {
     return { response, frames, cancel: () => reader.cancel() };
   };
 
+  /** Tells main a stream's listeners changed, as the facade does. */
+  const updateListeners = async (
+    streamId: string,
+    sequence: number,
+    listened: WebNavigationListenedEvents,
+  ) => {
+    const handler = routes.get(WEB_NAVIGATION_PATHS.listeners) as ExtensionBridgeHandler;
+
+    await handler({
+      session: WORKER_SESSION,
+      extensionId: BITWARDEN_ID,
+      senderFrame: undefined,
+      body: { streamId, sequence, listened },
+      headers: {},
+    });
+  };
+
   return {
     navigationEvents,
     listen,
+    updateListeners,
     createdListeners,
     create(contents: WebContents) {
       for (const listener of createdListeners) {
@@ -381,5 +415,86 @@ describe("NavigationEvents", () => {
     expect(response.status).toBe(403);
 
     expect(navigationEvents.isWatching(page.contents)).toBe(false);
+  });
+
+  /*
+   * Bitwarden's shape: an unfiltered `onCommitted` for the worker's whole life,
+   * and an `onCompleted` only while it waits on a page after a login.
+   */
+  test("listens to pages only for the events some stream listens to", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen, updateListeners } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen({ listened: { onCommitted: null } });
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 0]);
+
+    page.emitter.emit("dom-ready");
+    page.emitter.emit("did-frame-navigate", {}, page.mainFrame.url, 200, "OK", true, 7, 1);
+
+    await updateListeners("stream", 2, { onCommitted: null, onCompleted: null });
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 1]);
+
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+
+    await updateListeners("stream", 3, { onCommitted: null });
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 0]);
+
+    await settle();
+
+    expect(frames.map(({ type }) => type)).toEqual(["onCommitted", "onCompleted"]);
+  });
+
+  test("ignores an update older than what the stream already holds", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen, updateListeners } = createNavigationEvents([page.contents]);
+
+    await listen({ listened: { onCommitted: null } });
+
+    await updateListeners("stream", 3, { onCompleted: null });
+
+    await updateListeners("stream", 2, { onDOMContentLoaded: null });
+
+    await updateListeners("another-stream", 9, { onBeforeNavigate: null });
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 1]);
+  });
+
+  test("never sends a frame no stream's url filters match", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const filtered = await listen({
+      listened: { onCompleted: [{ pathPrefix: "/frame" }] },
+      streamId: "filtered",
+    });
+
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+    page.emitter.emit("did-frame-finish-load", {}, false, 7, 5);
+
+    await settle();
+
+    expect(filtered.frames.map(({ details }) => details.url)).toEqual([
+      "https://accounts.google.com/frame",
+    ]);
+  });
+
+  test("stops listening to pages once no stream listens to any event", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { navigationEvents, listen, updateListeners } = createNavigationEvents([page.contents]);
+
+    await listen({ listened: { onCompleted: null } });
+
+    await updateListeners("stream", 2, {});
+
+    expect(navigationEvents.isWatching(page.contents)).toBe(false);
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
   });
 });

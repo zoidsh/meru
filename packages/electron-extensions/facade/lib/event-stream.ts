@@ -29,7 +29,17 @@ function delay(delayMs: number) {
 export function createEventStream<Frame>(
   pathName: string,
   onFrame: (frame: Frame) => void,
-  { label }: { label: string },
+  {
+    label,
+    getBody = () => ({}),
+    onConnected,
+  }: {
+    label: string;
+    /** What each park sends, read afresh every time the stream is parked. */
+    getBody?: () => Record<string, unknown>;
+    /** Called once main has answered a park, so the stream is in its delivery set. */
+    onConnected?: () => void;
+  },
 ) {
   let isListening = false;
 
@@ -40,11 +50,13 @@ export function createEventStream<Frame>(
   let abortController: AbortController | undefined;
 
   const readStream = async (signal: AbortSignal) => {
-    const response = await postBridge(pathName, {}, undefined, signal);
+    const response = await postBridge(pathName, getBody(), undefined, signal);
 
     if (!response.ok || !response.body) {
       throw new Error(`The ${label} bridge answered ${response.status}`);
     }
+
+    onConnected?.();
 
     const reader = response.body.getReader();
 

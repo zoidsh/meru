@@ -4,6 +4,7 @@ import {
   WEB_NAVIGATION_PATHS,
   type WebNavigationEventDetails,
   type WebNavigationEventFrame,
+  type WebNavigationListenersBody,
 } from "../../web-navigation/bridge-protocol";
 import { callInCallbackForm } from "../lib/callback-form";
 import type { ChromeEvent } from "../lib/chrome";
@@ -103,16 +104,28 @@ function createDetails(url: string): WebNavigationEventDetails {
  * records each park and whether its request was aborted since.
  */
 function serveEventStream() {
-  const parks: { signal: AbortSignal | undefined }[] = [];
+  const parks: { signal: AbortSignal | undefined; body: WebNavigationListenersBody }[] = [];
+
+  const updates: WebNavigationListenersBody[] = [];
 
   let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
 
   globalThis.fetch = (async (url: string, init: RequestInit) => {
-    if (new URL(url).pathname !== WEB_NAVIGATION_PATHS.events) {
+    const { pathname } = new URL(url);
+
+    const body = JSON.parse(init.body as string) as WebNavigationListenersBody;
+
+    if (pathname === WEB_NAVIGATION_PATHS.listeners) {
+      updates.push(body);
+
+      return Response.json(null);
+    }
+
+    if (pathname !== WEB_NAVIGATION_PATHS.events) {
       return new Response(null, { status: 404 });
     }
 
-    parks.push({ signal: init.signal ?? undefined });
+    parks.push({ signal: init.signal ?? undefined, body });
 
     return new Response(
       new ReadableStream<Uint8Array>({
@@ -125,6 +138,7 @@ function serveEventStream() {
 
   return {
     parks,
+    updates,
     send(frame: WebNavigationEventFrame) {
       controller?.enqueue(encodeNativeMessage(frame));
     },
@@ -220,5 +234,67 @@ describe("facade webNavigation events", () => {
     expect(parks).toHaveLength(2);
 
     expect(parks[1]?.signal?.aborted).toBe(false);
+  });
+
+  test("tell main which events are listened to, with the listeners' merged filters", async () => {
+    const { parks, updates } = serveEventStream();
+
+    const webNavigation = createWebNavigation({ deliversNavigationEvents: true });
+
+    const onCompleted = webNavigation.onCompleted as ChromeEvent;
+
+    const onCommitted = webNavigation.onCommitted as ChromeEvent;
+
+    const filtered = () => undefined;
+
+    onCompleted.addListener(filtered, { url: [{ hostEquals: "accounts.google.com" }] });
+
+    await settle();
+
+    expect(parks.map(({ body }) => body.listened)).toEqual([
+      { onCompleted: [{ hostEquals: "accounts.google.com" }] },
+    ]);
+
+    onCompleted.addListener(() => undefined, { url: [{ pathPrefix: "/login" }] });
+
+    onCommitted.addListener(() => undefined);
+
+    onCompleted.removeListener(filtered);
+
+    await settle();
+
+    expect(updates.map(({ listened }) => listened)).toEqual([
+      {
+        onCompleted: [{ hostEquals: "accounts.google.com" }, { pathPrefix: "/login" }],
+      },
+      {
+        onCommitted: null,
+        onCompleted: [{ hostEquals: "accounts.google.com" }, { pathPrefix: "/login" }],
+      },
+      { onCommitted: null, onCompleted: [{ pathPrefix: "/login" }] },
+    ]);
+
+    expect(updates.every(({ streamId }) => streamId === parks[0]?.body.streamId)).toBe(true);
+
+    expect(updates.map(({ sequence }) => sequence)).toEqual([2, 3, 4]);
+  });
+
+  test("catch main up when a listener changes while the stream is being parked", async () => {
+    const { parks, updates } = serveEventStream();
+
+    const onCompleted = createWebNavigation({ deliversNavigationEvents: true })
+      .onCompleted as ChromeEvent;
+
+    onCompleted.addListener(() => undefined, { url: [{ hostEquals: "a.example" }] });
+
+    onCompleted.addListener(() => undefined);
+
+    await settle();
+
+    expect(parks).toHaveLength(1);
+
+    expect(parks[0]?.body.listened).toEqual({ onCompleted: [{ hostEquals: "a.example" }] });
+
+    expect(updates.map(({ listened }) => listened)).toEqual([{ onCompleted: null }]);
   });
 });

@@ -2,6 +2,8 @@ import {
   WEB_NAVIGATION_PATHS,
   type WebNavigationEventFrame,
   type WebNavigationEventName,
+  type WebNavigationListenedEvents,
+  type WebNavigationListenersBody,
 } from "../../web-navigation/bridge-protocol";
 import { matchesEventFilters } from "../../web-navigation/url-filter";
 import { postBridge } from "../lib/bridge";
@@ -40,16 +42,81 @@ const DELIVERED_EVENT_NAMES: WebNavigationEventName[] = [
 ];
 
 /**
- * The four events main synthesizes (`web-navigation/navigation-events.ts`),
- * sharing one stream. The stream is parked by the first listener of any of
- * them and let go when the last is removed, since main listens to every page
- * the context reaches for as long as one is parked. Each listener keeps the
- * url filters it was added with, and hears only the events they match.
+ * The url filters an event's listeners were added with, merged: `null` where
+ * any listener has none, since that listener hears every URL.
+ */
+function mergeListenerFilters(listeners: Map<ChromeEventListener, unknown>) {
+  const merged: Record<string, unknown>[] = [];
+
+  for (const filters of listeners.values()) {
+    const urlFilters = (filters as { url?: unknown } | undefined)?.url;
+
+    if (!Array.isArray(urlFilters) || urlFilters.length === 0) {
+      return null;
+    }
+
+    for (const urlFilter of urlFilters) {
+      if (typeof urlFilter === "object" && urlFilter !== null) {
+        merged.push(urlFilter as Record<string, unknown>);
+      }
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * The events main synthesizes (`web-navigation/navigation-events.ts`), sharing
+ * one stream. The stream is parked by the first listener of any of them and let
+ * go when the last is removed.
+ *
+ * Main is told which events have listeners, with their merged url filters, as
+ * the stream is parked and again whenever they change. It then listens to pages
+ * for those events alone and sends only what some listener here would hear: an
+ * extension can hold one listener for its worker's whole life — Bitwarden's
+ * badge keeps an unfiltered `onCommitted` — and without this every event of
+ * every frame would cross the bridge only to be dropped here. Each listener
+ * still keeps its own filters.
  */
 function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
   const listenersByEvent = new Map<WebNavigationEventName, Map<ChromeEventListener, unknown>>(
     DELIVERED_EVENT_NAMES.map((eventName) => [eventName, new Map()]),
   );
+
+  const streamId = crypto.randomUUID();
+
+  let sequence = 0;
+
+  let isConnected = false;
+
+  /** What main was last told, so a park that answers after a change can catch up. */
+  let sentListened = "";
+
+  const describeListened = () => {
+    const listened: WebNavigationListenedEvents = {};
+
+    for (const [eventName, listeners] of listenersByEvent) {
+      if (listeners.size > 0) {
+        listened[eventName] = mergeListenerFilters(listeners);
+      }
+    }
+
+    return listened;
+  };
+
+  const createBody = (): WebNavigationListenersBody => {
+    sequence += 1;
+
+    const listened = describeListened();
+
+    sentListened = JSON.stringify(listened);
+
+    return { streamId, sequence, listened };
+  };
+
+  const sendListeners = () => {
+    postBridge(WEB_NAVIGATION_PATHS.listeners, createBody()).catch(() => undefined);
+  };
 
   const listen = createEventStream<WebNavigationEventFrame>(
     WEB_NAVIGATION_PATHS.events,
@@ -72,11 +139,37 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
         }
       }
     },
-    { label: "webNavigation" },
+    {
+      label: "webNavigation",
+      getBody: createBody,
+      onConnected: () => {
+        isConnected = true;
+
+        if (JSON.stringify(describeListened()) !== sentListened) {
+          sendListeners();
+        }
+      },
+    },
   );
 
   const hasAnyListener = () =>
     [...listenersByEvent.values()].some((listeners) => listeners.size > 0);
+
+  const handleListenersChanged = () => {
+    if (!hasAnyListener()) {
+      isConnected = false;
+
+      listen.stop();
+
+      return;
+    }
+
+    if (isConnected) {
+      sendListeners();
+    } else {
+      void listen();
+    }
+  };
 
   const createDeliveredEvent = (eventName: WebNavigationEventName): ChromeEvent => {
     const listeners = listenersByEvent.get(eventName) as Map<ChromeEventListener, unknown>;
@@ -85,13 +178,11 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
       addListener(listener, filters) {
         listeners.set(listener, filters);
 
-        void listen();
+        handleListenersChanged();
       },
       removeListener(listener) {
-        listeners.delete(listener);
-
-        if (!hasAnyListener()) {
-          listen.stop();
+        if (listeners.delete(listener)) {
+          handleListenersChanged();
         }
       },
       hasListener: (listener) => listeners.has(listener),
