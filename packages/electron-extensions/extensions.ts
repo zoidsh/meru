@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Event as ElectronEvent, Extension, MessageDetails, Session } from "electron";
+import type {
+  Event as ElectronEvent,
+  Extension,
+  MessageDetails,
+  Session,
+  WebContents,
+} from "electron";
 import {
   type ActionExtension,
   createExtensionAction,
@@ -74,7 +80,12 @@ export type ExtensionDirs = string[] | (() => Promise<string[]> | string[]);
  */
 export type SharedExtensionInstance = {
   /** Called once, from the loader's constructor. */
-  install(context: { bridge: ExtensionBridge; logger?: ExtensionsLogger }): void;
+  install(context: {
+    bridge: ExtensionBridge;
+    logger?: ExtensionsLogger;
+    /** The window a page is in, as `chrome.windows` numbers them. */
+    getWindowId?: (contents: WebContents) => number;
+  }): void;
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
   /**
@@ -248,6 +259,8 @@ export class Extensions {
 
   private synthesizesStorageChanges: ExtensionsOptions["synthesizesStorageChanges"];
 
+  private canOpenExtensionWindows: ExtensionsOptions["canOpenExtensionWindows"];
+
   private getDeclaredContentScripts: ExtensionsOptions["getDeclaredContentScripts"];
 
   private getLocalStorageDefaults: ExtensionsOptions["getLocalStorageDefaults"];
@@ -332,6 +345,8 @@ export class Extensions {
 
     this.synthesizesStorageChanges = synthesizesStorageChanges;
 
+    this.canOpenExtensionWindows = canOpenExtensionWindows;
+
     this.getDeclaredContentScripts = getDeclaredContentScripts;
 
     this.getLocalStorageDefaults = getLocalStorageDefaults;
@@ -382,7 +397,13 @@ export class Extensions {
 
     this.windows.registerRoutes(this.bridge);
 
-    this.sharedInstance?.install({ bridge: this.bridge, logger });
+    const { windows } = this;
+
+    this.sharedInstance?.install({
+      bridge: this.bridge,
+      logger,
+      getWindowId: (contents) => windows.getWindowIdOfFrame(contents.mainFrame),
+    });
   }
 
   /**
@@ -406,6 +427,7 @@ export class Extensions {
         strippedManifestKeys: this.strippedManifestKeys,
         getContentScriptMatches: this.getContentScriptMatches,
         synthesizesStorageChanges: this.synthesizesStorageChanges,
+        opensExtensionWindows: this.canOpenExtensionWindows,
         getDeclaredContentScripts: this.getDeclaredContentScripts,
         getLocalStorageDefaults: this.getLocalStorageDefaults,
         sharedInstance: sharedInstanceDerive,
