@@ -25,6 +25,8 @@ import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from ".
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
 import {
   STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageAreaName,
+  type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageCall,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
@@ -62,6 +64,19 @@ export type CreateRelayClientOptions = {
     call: RuntimeProxyStorageCall,
     isTrustedContext: boolean,
   ) => Promise<RuntimeProxyStorageResult>;
+  /**
+   * Rewrites everything this client sends over the bridge, serialized, on its
+   * way to the other sessions (`dynamic-url.ts`). Absent, it goes as it is.
+   */
+  rewriteOutgoing?: (serializedBody: string) => string;
+  /**
+   * Where a change an extension page in the worker's session made is
+   * dispatched: the synthesized events, for an extension opted into them.
+   */
+  onStorageChanged?: (
+    area: RuntimeProxyStorageAreaName,
+    changes: RuntimeProxyStorageChanges,
+  ) => void;
 };
 
 /**
@@ -83,6 +98,8 @@ export function createRelayClient({
   cleanEndWindowMs = DEFAULT_CLEAN_END_WINDOW_MS,
   maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
   runStorageCall,
+  rewriteOutgoing,
+  onStorageChanged,
 }: CreateRelayClientOptions = {}) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -96,8 +113,11 @@ export function createRelayClient({
 
   let isStopped = false;
 
+  const sendToBridge = (pathName: string, body: Record<string, unknown>) =>
+    postBridge(pathName, body, rewriteOutgoing);
+
   const postToBridge = (pathName: string, body: Record<string, unknown>) =>
-    postBridge(pathName, body).catch(() => undefined);
+    sendToBridge(pathName, body).catch(() => undefined);
 
   /**
    * Where this worker is running, which main puts on the sender a shimmed
@@ -128,7 +148,7 @@ export function createRelayClient({
   /** The transport a relayed port posts over: the bridge, both ways. */
   const createBridgeTransport = (portId: string): RelayedPortTransport => ({
     async post(message: unknown) {
-      const response = await postBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message });
+      const response = await sendToBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message });
 
       if (!response.ok) {
         throw new Error(bridgeAnsweredError(response.status));
@@ -284,6 +304,12 @@ export function createRelayClient({
         break;
       }
 
+      case "storageChanged": {
+        onStorageChanged?.(job.area, job.changes);
+
+        break;
+      }
+
       case "portDisconnect": {
         // The port drops itself from the map as it closes. An error means the
         // page-side end went away rather than hung up — nothing there to hand
@@ -307,7 +333,7 @@ export function createRelayClient({
       let hasEndedCleanly = false;
 
       try {
-        const response = await postBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
+        const response = await sendToBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
 
         if (!response.ok || !response.body) {
           throw new Error(bridgeAnsweredError(response.status));
@@ -399,7 +425,7 @@ export function createRelayClient({
 
   /** A relayed call's answer, or a refused bridge read as no receiving end. */
   const postForResult = async <Result>(pathName: string, body: Record<string, unknown>) => {
-    const response = await postBridge(pathName, body);
+    const response = await sendToBridge(pathName, body);
 
     if (!response.ok) {
       throw new Error(bridgeAnsweredError(response.status));

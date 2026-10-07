@@ -1,11 +1,19 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_RELAY_START_GLOBAL,
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+  type RuntimeProxyStaticContentScript,
 } from "./bridge-protocol";
+import { createDynamicUrlRewrite } from "./dynamic-url";
 import { createRelayClient } from "./relay-client";
+import { seedLocalStorageDefaults } from "./storage-defaults";
 import { createStorageRelay } from "./storage-relay";
 import { installStorageSynthesis } from "./storage-synthesis";
+import { wrapScripting } from "./worker-scripting";
+
+type StorageChangeDispatch = ReturnType<typeof installStorageSynthesis>["dispatch"];
 
 /**
  * Entry point of the runtime proxy's worker-side relay client. It is bundled
@@ -33,12 +41,30 @@ const extensionApis = workerGlobals.chrome ? [workerGlobals.chrome] : [];
 
 const storageRelay = createStorageRelay(extensionApis);
 
-const relayClient = createRelayClient({ runStorageCall: storageRelay.run });
+let dispatchPageStorageChange: StorageChangeDispatch | undefined;
+
+const relayClient = createRelayClient({
+  runStorageCall: storageRelay.run,
+  rewriteOutgoing: createDynamicUrlRewrite(extensionApis[0]),
+  onStorageChanged: (area, changes) => {
+    dispatchPageStorageChange?.(area, changes);
+  },
+});
+
+const staticContentScripts = (workerGlobals as unknown as Record<string, unknown>)[
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL
+] as RuntimeProxyStaticContentScript[] | undefined;
 
 for (const extensionApi of extensionApis) {
   relayClient.wrapRuntime(extensionApi);
 
   relayClient.wrapTabs(extensionApi);
+
+  // Only for an extension that declared scripts of its own: for any other, an
+  // `executeScript` into an account's tab stays the failure it really is
+  if (staticContentScripts) {
+    wrapScripting(extensionApi, staticContentScripts);
+  }
 }
 
 // Before the extension's own background script runs, so its own boot-time call
@@ -48,12 +74,24 @@ storageRelay.mirrorAccessLevels();
 // Ahead of `watchChanges`, so the relay's listener lands on the synthesized
 // event and fans out what it dispatches, rather than on the native one
 if (workerGlobals[RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]) {
-  installStorageSynthesis(extensionApis);
+  dispatchPageStorageChange = installStorageSynthesis(extensionApis).dispatch;
 }
 
 // And before its boot-time writes, so a change made while the worker is still
 // evaluating reaches whichever contexts are already listening
 storageRelay.watchChanges();
+
+// After synthesis and the relay's listener, so a default written here reaches
+// the extension and the other sessions as any other change would
+const localStorageDefaults = (workerGlobals as unknown as Record<string, unknown>)[
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL
+] as Record<string, unknown> | undefined;
+
+if (localStorageDefaults) {
+  for (const extensionApi of extensionApis) {
+    void seedLocalStorageDefaults(extensionApi, localStorageDefaults);
+  }
+}
 
 /*
  * The stream is parked by the derived wrapper, as the last thing it does,

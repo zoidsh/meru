@@ -27,6 +27,7 @@ import {
   type FixtureMessageSender,
   getChromePermissions,
   getChromeRuntime,
+  getChromeScripting,
   getChromeStorage,
   getChromeTabs,
   getChromeWebNavigation,
@@ -79,6 +80,8 @@ type ProbeMessage = {
   keys?: string[];
   /** What a `windows` message calls that method with. */
   args?: unknown[];
+  /** The injection an `execute-script` message asks the worker for. */
+  injection?: Record<string, unknown>;
 };
 
 /**
@@ -118,6 +121,8 @@ const webNavigation = getChromeWebNavigation();
 const permissions = getChromePermissions();
 
 const windows = getChromeWindows();
+
+const scripting = getChromeScripting();
 
 /**
  * Sends back into the tab the message came from, which is the whole
@@ -532,6 +537,25 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ type: "fetch-url-reply", status: "error", message: String(error) });
       },
     );
+
+    return true;
+  }
+
+  /*
+   * `chrome.scripting.executeScript` from the worker into a tab the asking
+   * context names, which is how a password manager injects its fill bundle.
+   * An account's tab is in another session, where the call is answered only
+   * for a file the account copies declared. The callback form, so a refusal
+   * comes back as the `lastError` Chrome sets. This listener answers late.
+   */
+  if (probeMessage?.type === "execute-script" && probeMessage.injection) {
+    scripting.executeScript(probeMessage.injection, (results) => {
+      sendResponse({
+        type: "execute-script-reply",
+        frameIds: results?.map((result) => result.frameId) ?? null,
+        lastError: runtime.lastError?.message ?? null,
+      });
+    });
 
     return true;
   }
