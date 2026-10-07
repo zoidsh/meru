@@ -57,9 +57,43 @@ async function waitForFixture(partition: string | null) {
     .toBe(true);
 }
 
+/**
+ * Waits until the fixture's worker can be started, which after a relaunch is
+ * later than the fixture being loaded.
+ *
+ * The loader drops the worker's registration before every load, but Chromium's
+ * extension prefs still record one, so the load counts the worker as registered
+ * until Chromium checks, finds nothing, and registers it again. A message sent
+ * in between fails to start the worker with status 5, not found, and is never
+ * answered. That takes milliseconds on macOS and Linux and around 400ms on the
+ * Windows runners, where it outran the popup.
+ */
+async function waitForWorker() {
+  await expect
+    .poll(async () =>
+      meru.app.evaluate(
+        async ({ session }, { extensionId }) => {
+          try {
+            await session.defaultSession.serviceWorkers.startWorkerForScope(
+              `chrome-extension://${extensionId}/`,
+            );
+
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { extensionId: FIXTURE_EXTENSION_ID },
+      ),
+    )
+    .toBe(true);
+}
+
 /** Opens the fixture's popup in the worker session, and hands back its id. */
 async function openWorkerPopup() {
   await waitForFixture(WORKER_SESSION);
+
+  await waitForWorker();
 
   return meru.app.evaluate(
     async ({ BrowserWindow }, { extensionId }) => {
