@@ -310,9 +310,11 @@ export class NavigationEvents {
     );
 
     bridge.handle(WEB_NAVIGATION_PATHS.listeners, ({ session, extensionId, body, headers }) => {
-      this.updateListeners(session, extensionId, body);
-
-      return Response.json(null, { headers });
+      // 404 for a stream main does not hold, which the facade takes as an
+      // update its next park has to carry rather than one that landed
+      return this.updateListeners(session, extensionId, body)
+        ? Response.json(null, { headers })
+        : new Response(null, { status: 404, headers });
     });
   }
 
@@ -364,22 +366,30 @@ export class NavigationEvents {
 
   /**
    * A context's listeners changed. Only its own stream, by the id it parked
-   * with, and only an update newer than what the stream already holds.
+   * with, and only an update newer than what the stream already holds. Answers
+   * whether main holds that stream at all.
    */
   private updateListeners(session: Session, extensionId: string, body: Record<string, unknown>) {
     const { streamId, sequence } = body as Partial<WebNavigationListenersBody>;
 
     if (typeof streamId !== "string" || typeof sequence !== "number") {
-      return;
+      return false;
     }
+
+    let isHeld = false;
 
     for (const parked of this.streams) {
       if (
-        parked.streamId === streamId &&
-        parked.extensionId === extensionId &&
-        parked.session === session &&
-        sequence > parked.sequence
+        parked.streamId !== streamId ||
+        parked.extensionId !== extensionId ||
+        parked.session !== session
       ) {
+        continue;
+      }
+
+      isHeld = true;
+
+      if (sequence > parked.sequence) {
         parked.sequence = sequence;
 
         parked.listened = readListened(body.listened);
@@ -387,6 +397,8 @@ export class NavigationEvents {
         this.refresh();
       }
     }
+
+    return isHeld;
   }
 
   private dropStream(parked: ParkedStream) {

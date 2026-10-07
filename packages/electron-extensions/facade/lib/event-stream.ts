@@ -33,12 +33,19 @@ export function createEventStream<Frame>(
     label,
     getBody = () => ({}),
     onConnected,
+    onDisconnected,
   }: {
     label: string;
     /** What each park sends, read afresh every time the stream is parked. */
     getBody?: () => Record<string, unknown>;
     /** Called once main has answered a park, so the stream is in its delivery set. */
     onConnected?: () => void;
+    /**
+     * Called when a connected stream ends, however it ends, until the next
+     * `onConnected`: main has let it go, so nothing sent about it in between
+     * reaches a stream.
+     */
+    onDisconnected?: () => void;
   },
 ) {
   let isListening = false;
@@ -49,7 +56,7 @@ export function createEventStream<Frame>(
 
   let abortController: AbortController | undefined;
 
-  const readStream = async (signal: AbortSignal) => {
+  const readStream = async (signal: AbortSignal, startedGeneration: number) => {
     const response = await postBridge(pathName, getBody(), undefined, signal);
 
     if (!response.ok || !response.body) {
@@ -78,6 +85,11 @@ export function createEventStream<Frame>(
         }
       }
     } finally {
+      // A stopped loop says nothing: a restart may already have connected
+      if (generation === startedGeneration) {
+        onDisconnected?.();
+      }
+
       await reader.cancel().catch(() => undefined);
     }
   };
@@ -95,7 +107,7 @@ export function createEventStream<Frame>(
       abortController = new AbortController();
 
       try {
-        await readStream(abortController.signal);
+        await readStream(abortController.signal, startedGeneration);
       } catch (error) {
         if (generation === startedGeneration) {
           console.error(`[chrome-facade] ${label} stream failed`, error);

@@ -90,8 +90,17 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
 
   let isConnected = false;
 
-  /** What main was last told, so a park that answers after a change can catch up. */
-  let sentListened = "";
+  /** Counts connections, so an update's answer can tell whether a park came since. */
+  let connections = 0;
+
+  /**
+   * What the stream main holds was parked with. Updates sent while the park was
+   * in flight can reach main before the stream does and be answered 404, so
+   * this, not the last update, is what main is known to hold on connecting.
+   */
+  let parkedListened = "";
+
+  let shouldResendOnConnect = false;
 
   const describeListened = () => {
     const listened: WebNavigationListenedEvents = {};
@@ -108,15 +117,37 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
   const createBody = (): WebNavigationListenersBody => {
     sequence += 1;
 
-    const listened = describeListened();
-
-    sentListened = JSON.stringify(listened);
-
-    return { streamId, sequence, listened };
+    return { streamId, sequence, listened: describeListened() };
   };
 
-  const sendListeners = () => {
-    postBridge(WEB_NAVIGATION_PATHS.listeners, createBody()).catch(() => undefined);
+  const createParkBody = () => {
+    const body = createBody();
+
+    parkedListened = JSON.stringify(body.listened);
+
+    return body;
+  };
+
+  const sendListeners = async () => {
+    const connectionsAtSend = connections;
+
+    try {
+      const response = await postBridge(WEB_NAVIGATION_PATHS.listeners, createBody());
+
+      // Main holds no stream by this id: it dropped the stream, or the park
+      // has not reached it yet. Either way the update is lost, and the next
+      // connection has to carry it — or this one, if it connected meanwhile
+      if (response.status === 404) {
+        if (isConnected && connections !== connectionsAtSend) {
+          void sendListeners();
+        } else {
+          shouldResendOnConnect = true;
+        }
+      }
+    } catch {
+      // The bridge going away is the stream going away, and the re-park
+      // carries the listeners as they are then
+    }
   };
 
   const listen = createEventStream<WebNavigationEventFrame>(
@@ -142,13 +173,20 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
     },
     {
       label: "webNavigation",
-      getBody: createBody,
+      getBody: createParkBody,
       onConnected: () => {
         isConnected = true;
 
-        if (JSON.stringify(describeListened()) !== sentListened) {
-          sendListeners();
+        connections += 1;
+
+        if (shouldResendOnConnect || JSON.stringify(describeListened()) !== parkedListened) {
+          shouldResendOnConnect = false;
+
+          void sendListeners();
         }
+      },
+      onDisconnected: () => {
+        isConnected = false;
       },
     },
   );
@@ -166,7 +204,7 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
     }
 
     if (isConnected) {
-      sendListeners();
+      void sendListeners();
     } else {
       void listen();
     }

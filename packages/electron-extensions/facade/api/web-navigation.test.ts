@@ -298,3 +298,156 @@ describe("facade webNavigation events", () => {
     expect(updates.map(({ listened }) => listened)).toEqual([{ onCompleted: null }]);
   });
 });
+
+/**
+ * Main as the facade sees it: parks it answers only when the test releases
+ * them, a listeners route that answers 404 for a stream it does not hold, and
+ * a way to drop the stream it holds.
+ */
+/** Waits until the condition holds, or gives up after three seconds. */
+async function waitFor(condition: () => boolean) {
+  for (let attempt = 0; attempt < 300 && !condition(); attempt += 1) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+  }
+}
+
+function serveMain() {
+  const parks: WebNavigationListenersBody[] = [];
+
+  const acceptedUpdates: WebNavigationListenersBody[] = [];
+
+  const releases: (() => void)[] = [];
+
+  let held: { listened: WebNavigationListenersBody["listened"]; sequence: number } | undefined;
+
+  let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+  globalThis.fetch = (async (url: string, init: RequestInit) => {
+    const { pathname } = new URL(url);
+
+    const body = JSON.parse(init.body as string) as WebNavigationListenersBody;
+
+    if (pathname === WEB_NAVIGATION_PATHS.listeners) {
+      if (!held) {
+        return new Response(null, { status: 404 });
+      }
+
+      if (body.sequence > held.sequence) {
+        held = { listened: body.listened, sequence: body.sequence };
+      }
+
+      acceptedUpdates.push(body);
+
+      return Response.json(null);
+    }
+
+    parks.push(body);
+
+    await new Promise<void>((resolve) => {
+      releases.push(resolve);
+    });
+
+    held = { listened: body.listened, sequence: body.sequence };
+
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        start(streamController) {
+          controller = streamController;
+        },
+      }),
+    );
+  }) as typeof fetch;
+
+  return {
+    parks,
+    acceptedUpdates,
+    readHeldListened: () => held?.listened,
+    releasePark() {
+      releases.shift()?.();
+    },
+    /** Main letting the stream go, the way the unread-frames bound or a teardown does. */
+    dropStream() {
+      held = undefined;
+
+      controller?.close();
+    },
+    /** Main no longer holding the stream, before the facade has noticed. */
+    forgetStream() {
+      held = undefined;
+    },
+  };
+}
+
+describe("facade webNavigation listeners across a re-park", () => {
+  /*
+   * Bitwarden adding its `onCompleted` while its stream is being parked again,
+   * after main let the first one go: main has to end up attaching for it, or
+   * the save prompt never fires.
+   */
+  test("a listener added while the stream is parked again reaches main", async () => {
+    const main = serveMain();
+
+    const webNavigation = createWebNavigation({ deliversNavigationEvents: true });
+
+    (webNavigation.onCommitted as ChromeEvent).addListener(() => undefined);
+
+    await settle();
+
+    main.releasePark();
+
+    await settle();
+
+    expect(main.readHeldListened()).toEqual({ onCommitted: null });
+
+    main.dropStream();
+
+    // The facade parks again behind its retry delay
+    await waitFor(() => main.parks.length === 2);
+
+    (webNavigation.onCompleted as ChromeEvent).addListener(() => undefined);
+
+    await settle();
+
+    main.releasePark();
+
+    await waitFor(() => main.readHeldListened()?.onCompleted !== undefined);
+
+    expect(main.readHeldListened()).toEqual({ onCommitted: null, onCompleted: null });
+  });
+
+  test("an update main answers 404 is sent again once a park connects", async () => {
+    const main = serveMain();
+
+    const webNavigation = createWebNavigation({ deliversNavigationEvents: true });
+
+    (webNavigation.onCommitted as ChromeEvent).addListener(() => undefined);
+
+    await settle();
+
+    main.releasePark();
+
+    await settle();
+
+    main.forgetStream();
+
+    (webNavigation.onCompleted as ChromeEvent).addListener(() => undefined);
+
+    await settle();
+
+    expect(main.acceptedUpdates).toHaveLength(0);
+
+    main.dropStream();
+
+    await waitFor(() => main.parks.length === 2);
+
+    main.releasePark();
+
+    await waitFor(() => main.readHeldListened()?.onCompleted !== undefined);
+
+    expect(main.readHeldListened()).toEqual({ onCommitted: null, onCompleted: null });
+
+    expect(main.acceptedUpdates.length).toBeGreaterThan(0);
+  });
+});

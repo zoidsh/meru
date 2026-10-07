@@ -181,13 +181,15 @@ function createNavigationEvents(pages: WebContents[]) {
   ) => {
     const handler = routes.get(WEB_NAVIGATION_PATHS.listeners) as ExtensionBridgeHandler;
 
-    await handler({
+    const response = await handler({
       session: WORKER_SESSION,
       extensionId: BITWARDEN_ID,
       senderFrame: undefined,
       body: { streamId, sequence, listened },
       headers: {},
     });
+
+    return response.status;
   };
 
   return {
@@ -479,6 +481,27 @@ describe("NavigationEvents", () => {
     await settle();
 
     expect(frames.map(({ type }) => type)).toEqual(["onCommitted", "onCompleted"]);
+  });
+
+  test("answers 404 for an update to a stream it does not hold", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen, updateListeners } = createNavigationEvents([page.contents]);
+
+    expect(await updateListeners("stream", 2, { onCompleted: null })).toBe(404);
+
+    const { cancel } = await listen({ listened: { onCommitted: null } });
+
+    expect(await updateListeners("stream", 2, { onCompleted: null })).toBe(200);
+
+    // Held, so a stale update is answered as landed rather than lost
+    expect(await updateListeners("stream", 1, { onCommitted: null })).toBe(200);
+
+    await cancel();
+
+    await settle();
+
+    expect(await updateListeners("stream", 3, { onCompleted: null })).toBe(404);
   });
 
   test("ignores an update older than what the stream already holds", async () => {
