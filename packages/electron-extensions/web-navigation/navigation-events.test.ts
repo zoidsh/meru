@@ -663,6 +663,48 @@ describe("NavigationEvents for a navigation that fails", () => {
     expect(frames.map(({ type }) => type)).toEqual(["onCompleted"]);
   });
 
+  /*
+   * Bitwarden adds its `onCompleted` listener after the submit, which changes
+   * the events main listens for and so re-attaches every page — between the
+   * failure and the error page's load.
+   */
+  test("keeps a failure across a change of the events listened to", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen, updateListeners } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen({ listened: { onCommitted: null, onErrorOccurred: null } });
+
+    page.emitter.emit("did-start-navigation", {
+      url: "https://accounts.google.com/login",
+      isSameDocument: false,
+      frame: page.mainFrame,
+    });
+
+    page.emitter.emit(
+      "did-fail-load",
+      {},
+      -102,
+      "ERR_CONNECTION_REFUSED",
+      "https://accounts.google.com/login",
+      true,
+      7,
+      1,
+    );
+
+    await updateListeners("stream", 2, {
+      onCommitted: null,
+      onErrorOccurred: null,
+      onCompleted: null,
+    });
+
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+
+    await settle();
+
+    expect(frames.map(({ type }) => type)).toEqual(["onErrorOccurred"]);
+  });
+
   test("keeps a subframe's failure to that subframe", async () => {
     const page = createPage(12, ACCOUNT_SESSION);
 

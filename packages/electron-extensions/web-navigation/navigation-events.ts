@@ -275,6 +275,14 @@ export class NavigationEvents {
 
   private stopWatchingCreated: (() => void) | undefined;
 
+  /**
+   * Frames whose last navigation failed, by frame tree node id, until the frame
+   * starts another: what loads in them is Chromium's error page. Kept outside
+   * a page's attachment, which a change of listened events replaces, so a
+   * failure recorded before the change still holds back the load after it.
+   */
+  private failedFrameIdsByContents = new WeakMap<WebContents, Set<number>>();
+
   constructor({
     deliversNavigationEvents,
     canResolveTabAcrossSessions,
@@ -482,9 +490,9 @@ export class NavigationEvents {
       return;
     }
 
-    // Frames whose last navigation failed, by frame tree node id, until the
-    // frame starts another: what loads in them is Chromium's error page
-    const failedFrameIds = new Set<number>();
+    const failedFrameIds = this.failedFrameIdsByContents.get(contents) ?? new Set<number>();
+
+    this.failedFrameIdsByContents.set(contents, failedFrameIds);
 
     const handlers: Record<string, (...eventArguments: never[]) => void> = {
       "did-start-navigation": (
