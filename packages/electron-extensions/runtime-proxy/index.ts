@@ -2,6 +2,7 @@ import type { Session, WebContents } from "electron";
 import type { SharedExtensionInstance } from "../extensions";
 import { RuntimeProxy } from "./runtime-proxy";
 import type { GetWebContentsFromFrame } from "./sender";
+import type { GetWindowCloseFallbackRejection } from "./window-close-rejection";
 
 export type CreateSharedExtensionInstanceOptions = {
   /**
@@ -41,6 +42,12 @@ export type CreateSharedExtensionInstanceOptions = {
    * rather than wrong.
    */
   isActiveTab?: (contents: WebContents) => boolean;
+  /**
+   * Which extensions have a fallback reply turned into a rejection when the
+   * user closed a window opened for the request, by the id they are loaded as;
+   * `window-close-rejection.ts` says why. Without it no reply is rewritten.
+   */
+  getWindowCloseFallbackRejection?: GetWindowCloseFallbackRejection;
 };
 
 /**
@@ -68,6 +75,7 @@ export function createSharedExtensionInstance({
   getWorkerSession,
   getWebContentsFromFrame,
   isActiveTab,
+  getWindowCloseFallbackRejection,
 }: CreateSharedExtensionInstanceOptions): SharedExtensionInstance {
   let proxy: RuntimeProxy | undefined;
 
@@ -76,8 +84,8 @@ export function createSharedExtensionInstance({
   const shimmedSessions = new Set<Session>();
 
   return {
-    install({ bridge, logger, getWindowId }) {
-      proxy = new RuntimeProxy({
+    install({ bridge, logger, getWindowId, watchExtensionWindows }) {
+      const installedProxy = new RuntimeProxy({
         logger,
         getWebContentsFromFrame,
         getWindowId,
@@ -86,9 +94,21 @@ export function createSharedExtensionInstance({
         // already keeps, and a second copy of it would be free to drift
         isShimmedSession: (session) => shimmedSessions.has(session),
         isActiveTab,
+        getWindowCloseFallbackRejection,
       });
 
-      proxy.registerRoutes(bridge);
+      installedProxy.registerRoutes(bridge);
+
+      watchExtensionWindows?.({
+        opened: (extensionId, windowId) => {
+          installedProxy.extensionWindowOpened(extensionId, windowId);
+        },
+        closedByUser: (extensionId, windowId) => {
+          installedProxy.extensionWindowClosedByUser(extensionId, windowId);
+        },
+      });
+
+      proxy = installedProxy;
     },
 
     adoptSession(session) {
