@@ -86,7 +86,7 @@ describe("reconstructSender", () => {
         id: 7,
         url: "https://accounts.google.com/signin",
         title: "Sign in",
-        windowId: -1,
+        windowId: 1,
         index: -1,
         active: true,
         highlighted: true,

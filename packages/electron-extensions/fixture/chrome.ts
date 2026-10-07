@@ -162,6 +162,7 @@ export type FixtureWindows = {
     callback: (window: FixtureWindow | undefined) => void,
   ) => void;
   remove: (windowId: number, callback: () => void) => void;
+  onRemoved: FixtureEvent<(windowId: number) => void>;
 };
 
 /**

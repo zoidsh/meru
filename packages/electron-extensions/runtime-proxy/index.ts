@@ -76,10 +76,11 @@ export function createSharedExtensionInstance({
   const shimmedSessions = new Set<Session>();
 
   return {
-    install({ bridge, logger }) {
+    install({ bridge, logger, getWindowId }) {
       proxy = new RuntimeProxy({
         logger,
         getWebContentsFromFrame,
+        getWindowId,
         // The same bookkeeping `canResolveTabAcrossSessions` answers from, for
         // the same reason: which sessions are shimmed is what `adoptSession`
         // already keeps, and a second copy of it would be free to drift
