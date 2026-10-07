@@ -172,6 +172,8 @@ export type RuntimeProxyOptions = {
    * focus-based answer is the wrong default for it.
    */
   isActiveTab?: (contents: WebContents) => boolean;
+  /** The window a page is in, which `worker-tabs.ts` reports as a tab's `windowId`. */
+  getWindowId?: (contents: WebContents) => number;
 };
 
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
@@ -276,6 +278,7 @@ export class RuntimeProxy {
     waitForContextMs,
     isShimmedSession = () => false,
     isActiveTab,
+    getWindowId,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
@@ -302,6 +305,8 @@ export class RuntimeProxy {
       isShimmedSession,
       isActiveTab,
       getWebContentsById,
+      getWebContentsFromFrame,
+      getWindowId,
     });
 
     // A bound context going away takes its share of a worker-opened port with
