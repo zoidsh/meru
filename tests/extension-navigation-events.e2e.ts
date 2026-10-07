@@ -366,15 +366,11 @@ test("main stops listening to pages once the worker stops", async () => {
 
   await stopWorkerSessionWorkers();
 
-  // Each poll loads a page the worker's filter matches, which is what would
-  // trip the unread-frames bound if the stream's cancel never arrived
-  await expect
-    .poll(async () => {
-      await loadInWindow(pageId, `${serverOrigin}/navigation`);
-
-      return isListenedTo(pageId);
-    })
-    .toBe(false);
+  // Nothing is loaded while waiting: a page the fixture's content script runs
+  // in messages the worker, which starts it again and parks a new stream. So
+  // this holds only if the stopped worker's stream is canceled, and the
+  // unread-frames bound behind it is left to the unit tests
+  await expect.poll(() => isListenedTo(pageId)).toBe(false);
 
   await closeWindow(pageId);
 });
