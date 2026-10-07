@@ -237,6 +237,11 @@ export type RuntimeProxyWorkerStorageChangedRequest = {
 
 export type RuntimeProxyPortPostRequest = {
   portId: string;
+  /**
+   * The parked context posting, which a page of the worker's session names
+   * for a port a content script opened to it as well as to the worker.
+   */
+  contextId?: string;
   message: unknown;
 };
 
