@@ -21,7 +21,10 @@ import { fillMissing } from "./lib/fill";
  * installed, only whether it is filled in around or taken over;
  * `installChromeFacade` holds that list.
  */
-export function createChromeFacade({ opensExtensionWindows = false } = {}): ChromeNamespace {
+export function createChromeFacade({
+  opensExtensionWindows = false,
+  deliversNavigationEvents = false,
+} = {}): ChromeNamespace {
   return {
     alarms: createAlarms(),
     commands: createCommands(),
@@ -34,7 +37,7 @@ export function createChromeFacade({ opensExtensionWindows = false } = {}): Chro
     permissions: createPermissions(),
     privacy: createPrivacy(),
     tabs: createTabs(),
-    webNavigation: createWebNavigation(),
+    webNavigation: createWebNavigation({ deliversNavigationEvents }),
     webRequest: createWebRequest(),
     windows: createWindows({ opensExtensionWindows }),
   };
@@ -56,9 +59,12 @@ export function createChromeFacade({ opensExtensionWindows = false } = {}): Chro
  */
 export function installChromeFacade(
   extensionApi: ChromeNamespace,
-  { opensExtensionWindows = false } = {},
+  { opensExtensionWindows = false, deliversNavigationEvents = false } = {},
 ) {
-  const { alarms, ...fillableFacade } = createChromeFacade({ opensExtensionWindows });
+  const { alarms, ...fillableFacade } = createChromeFacade({
+    opensExtensionWindows,
+    deliversNavigationEvents,
+  });
 
   fillMissing(extensionApi, fillableFacade);
 
