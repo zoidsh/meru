@@ -9,7 +9,8 @@
     "./install": "./install/index.ts",
     "./fixture/catalog": "./fixture/catalog.ts",
     "./fixture/id": "./fixture/id.ts",
-    "./fixture/probes": "./fixture/probes.ts"
+    "./fixture/probes": "./fixture/probes.ts",
+    "./runtime-proxy/window-close-rejection": "./runtime-proxy/window-close-rejection.ts"
   },
   "scripts": {
     "test": "bun test --isolate",
