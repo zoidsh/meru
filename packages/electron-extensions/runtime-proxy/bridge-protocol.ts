@@ -118,6 +118,8 @@ export const RUNTIME_PROXY_PATHS = {
   workerBroadcast: "/runtime-proxy/worker-broadcast",
   workerQueryTabs: "/runtime-proxy/worker-query-tabs",
   workerGetTab: "/runtime-proxy/worker-get-tab",
+  /** Any extension frame, for the tab it is embedded in. */
+  currentTab: "/runtime-proxy/current-tab",
 } as const;
 
 /**
@@ -514,3 +516,11 @@ export type RuntimeProxyWorkerGetTabRequest = {
 export type RuntimeProxyWorkerGetTabResult =
   | { status: "tab"; tab: RuntimeProxyTab }
   | { status: "noTarget"; error: string };
+
+/**
+ * The tab an extension frame embedded in a page is in, for `tabs.getCurrent`,
+ * or `null` for a frame that is no tab's — a top-level extension page.
+ */
+export type RuntimeProxyCurrentTabResult = {
+  tab: RuntimeProxyTab | null;
+};

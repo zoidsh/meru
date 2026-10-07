@@ -1,9 +1,11 @@
-import type { Session, WebContents } from "electron";
+import type { Session, WebContents, WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import { matchesUrl } from "../derive/match-pattern";
 import { MAIN_WINDOW_ID, WINDOW_ID_CURRENT } from "../windows/bridge-protocol";
 import {
+  EXTENSION_SCHEME_PREFIX,
   noTabError,
+  type RuntimeProxyCurrentTabResult,
   type RuntimeProxyTab,
   type RuntimeProxyTabQueryInfo,
   type RuntimeProxyWorkerGetTabRequest,
@@ -12,7 +14,7 @@ import {
   type RuntimeProxyWorkerQueryTabsResult,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
-import { createTabDetails } from "./sender";
+import { createTabDetails, type GetWebContentsFromFrame } from "./sender";
 
 /**
  * Resolved at call time: a value import of "electron" cannot even be loaded
@@ -28,6 +30,12 @@ function getElectronWebContentsById(tabId: number) {
   const { webContents } = require("electron") as typeof import("electron");
 
   return webContents.fromId(tabId);
+}
+
+function getElectronWebContentsFromFrame(frame: WebFrameMain) {
+  const { webContents } = require("electron") as typeof import("electron");
+
+  return webContents.fromFrame(frame);
 }
 
 export type WorkerTabsOptions = {
@@ -46,6 +54,8 @@ export type WorkerTabsOptions = {
   getAllWebContents?: () => WebContents[];
   /** How a tab id resolves to the page behind it, Electron's own mapping by default. */
   getWebContentsById?: (tabId: number) => WebContents | undefined;
+  /** How a calling frame resolves to the page it is in, Electron's own mapping by default. */
+  getWebContentsFromFrame?: GetWebContentsFromFrame;
   /**
    * The window a page is in: one the loader opened for an extension page
    * (`windows/windows.ts`), or the main window every other page is in, which is
@@ -106,6 +116,8 @@ export class WorkerTabs {
 
   private getWebContentsById: (tabId: number) => WebContents | undefined;
 
+  private getWebContentsFromFrame: GetWebContentsFromFrame;
+
   private getWindowId: (contents: WebContents) => number;
 
   constructor({
@@ -114,6 +126,7 @@ export class WorkerTabs {
     isActiveTab = (contents) => contents.isFocused(),
     getAllWebContents = getElectronWebContents,
     getWebContentsById = getElectronWebContentsById,
+    getWebContentsFromFrame = getElectronWebContentsFromFrame,
     getWindowId = () => MAIN_WINDOW_ID,
   }: WorkerTabsOptions) {
     this.getWorkerSession = getWorkerSession;
@@ -125,6 +138,8 @@ export class WorkerTabs {
     this.getAllWebContents = getAllWebContents;
 
     this.getWebContentsById = getWebContentsById;
+
+    this.getWebContentsFromFrame = getWebContentsFromFrame;
 
     this.getWindowId = getWindowId;
   }
@@ -154,6 +169,17 @@ export class WorkerTabs {
         headers,
       });
     });
+
+    // Any session, since the frame asking can only learn about the page it is
+    // already in
+    bridge.handle(RUNTIME_PROXY_PATHS.currentTab, ({ extensionId, senderFrame, headers }) =>
+      Response.json(
+        {
+          tab: this.getCurrentTab(extensionId, senderFrame),
+        } satisfies RuntimeProxyCurrentTabResult,
+        { headers },
+      ),
+    );
   }
 
   /**
@@ -259,6 +285,35 @@ export class WorkerTabs {
     }
 
     return { status: "tab", tab: this.describeTab(contents) };
+  }
+
+  /**
+   * `tabs.getCurrent` for an extension frame: the page it is embedded in, which
+   * is what Chrome answers for an extension iframe inside a tab — Bitwarden's
+   * inline menu is one — and nothing for a top-level extension page, which
+   * Chrome's toolbar popup is and Meru's popouts stand in for.
+   *
+   * Only the calling extension's own frame is answered, and only in a session
+   * the worker keeps or shims, the sessions every other answer here is drawn
+   * from.
+   */
+  getCurrentTab(extensionId: string, senderFrame: WebFrameMain | undefined) {
+    if (
+      !senderFrame ||
+      senderFrame.isDestroyed() ||
+      senderFrame.parent === null ||
+      !senderFrame.url.startsWith(`${EXTENSION_SCHEME_PREFIX}${extensionId}/`)
+    ) {
+      return null;
+    }
+
+    const contents = this.getWebContentsFromFrame(senderFrame);
+
+    if (!contents || contents.isDestroyed() || !this.isListedSession(contents.session)) {
+      return null;
+    }
+
+    return this.describeTab(contents);
   }
 
   private describeTab(contents: WebContents) {

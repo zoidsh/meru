@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type { OnBeforeSendHeadersListenerDetails, Session, WebContents } from "electron";
+import type {
+  OnBeforeSendHeadersListenerDetails,
+  Session,
+  WebContents,
+  WebFrameMain,
+} from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
 import { getExtensionBridgeUrl } from "../bridge/protocol";
 import { MAIN_WINDOW_ID, WINDOW_ID_CURRENT } from "../windows/bridge-protocol";
@@ -163,14 +168,35 @@ function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness =
 
   const allContents = [shimTab, secondShimTab, workerTab, strangerTab, destroyedTab];
 
+  /** Which page each fake frame is in, the mapping Electron keeps. */
+  const framePages = new Map<WebFrameMain, WebContents>();
+
   const workerTabs = new WorkerTabs({
     getWorkerSession: () => workerSession.session,
     isShimmedSession: (session) => isShimmed && session === shimSession.session,
     isActiveTab,
     getAllWebContents: () => allContents,
     getWebContentsById: (tabId) => allContents.find((contents) => contents.id === tabId),
+    getWebContentsFromFrame: (frame) => framePages.get(frame),
     getWindowId,
   });
+
+  /** A frame of a page, embedded in it unless it is the page's own top frame. */
+  const createFrame = (
+    contents: WebContents,
+    url: string,
+    { isTopFrame = false, isDestroyed = false } = {},
+  ) => {
+    const frame = {
+      url,
+      parent: isTopFrame ? null : {},
+      isDestroyed: () => isDestroyed,
+    } as unknown as WebFrameMain;
+
+    framePages.set(frame, contents);
+
+    return frame;
+  };
 
   workerTabs.registerRoutes(bridge);
 
@@ -198,6 +224,7 @@ function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness =
 
   return {
     workerTabs,
+    createFrame,
     workerSession,
     shimSession,
     shimTab,
@@ -392,6 +419,57 @@ describe("tabs.query from the worker", () => {
     expect(tabIds(await query("everything" as unknown as Record<string, unknown>))).toEqual([
       7, 8, 9,
     ]);
+  });
+});
+
+describe("tabs.getCurrent from an extension frame", () => {
+  const FRAME_URL = `chrome-extension://${EXTENSION_ID}/overlay/menu.html`;
+
+  test("answers the tab an extension frame is embedded in", () => {
+    const { workerTabs, createFrame, shimTab } = createHarness({
+      isActiveTab: (contents) => contents === shimTab,
+    });
+
+    expect(workerTabs.getCurrentTab(EXTENSION_ID, createFrame(shimTab, FRAME_URL))).toEqual(
+      expect.objectContaining({ id: 7, url: PAGE_URL, active: true, windowId: MAIN_WINDOW_ID }),
+    );
+  });
+
+  test("answers nothing for a top-level extension page, which is no tab", () => {
+    const { workerTabs, createFrame, workerTab } = createHarness();
+
+    expect(
+      workerTabs.getCurrentTab(
+        EXTENSION_ID,
+        createFrame(workerTab, FRAME_URL, { isTopFrame: true }),
+      ),
+    ).toBeNull();
+  });
+
+  test("answers only the calling extension's own frame, in a session it keeps or shims", () => {
+    const { workerTabs, createFrame, shimTab, strangerTab } = createHarness();
+
+    expect(
+      workerTabs.getCurrentTab(EXTENSION_ID, createFrame(shimTab, "https://accounts.google.com/")),
+    ).toBeNull();
+
+    expect(
+      workerTabs.getCurrentTab(
+        EXTENSION_ID,
+        createFrame(shimTab, "chrome-extension://another-extension/frame.html"),
+      ),
+    ).toBeNull();
+
+    expect(workerTabs.getCurrentTab(EXTENSION_ID, createFrame(strangerTab, FRAME_URL))).toBeNull();
+
+    expect(
+      workerTabs.getCurrentTab(
+        EXTENSION_ID,
+        createFrame(shimTab, FRAME_URL, { isDestroyed: true }),
+      ),
+    ).toBeNull();
+
+    expect(workerTabs.getCurrentTab(EXTENSION_ID, undefined)).toBeNull();
   });
 });
 

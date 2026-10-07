@@ -305,6 +305,7 @@ export class RuntimeProxy {
       isShimmedSession,
       isActiveTab,
       getWebContentsById,
+      getWebContentsFromFrame,
       getWindowId,
     });
 
