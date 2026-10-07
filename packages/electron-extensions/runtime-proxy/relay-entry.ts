@@ -5,6 +5,7 @@ import {
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
   type RuntimeProxyStaticContentScript,
 } from "./bridge-protocol";
+import { createDynamicUrlRewrite } from "./dynamic-url";
 import { createRelayClient } from "./relay-client";
 import { createStorageRelay } from "./storage-relay";
 import { installStorageSynthesis } from "./storage-synthesis";
@@ -36,7 +37,10 @@ const extensionApis = workerGlobals.chrome ? [workerGlobals.chrome] : [];
 
 const storageRelay = createStorageRelay(extensionApis);
 
-const relayClient = createRelayClient({ runStorageCall: storageRelay.run });
+const relayClient = createRelayClient({
+  runStorageCall: storageRelay.run,
+  rewriteOutgoing: createDynamicUrlRewrite(extensionApis[0]),
+});
 
 const staticContentScripts = (workerGlobals as unknown as Record<string, unknown>)[
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL

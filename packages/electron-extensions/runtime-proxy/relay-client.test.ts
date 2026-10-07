@@ -241,6 +241,53 @@ describe("createRelayClient", () => {
     });
   });
 
+  test("rewrites what it sends over the bridge, and nothing it receives", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    const client = createRelayClient({
+      retryDelayMs: 5,
+      rewriteOutgoing: (serializedBody) => serializedBody.replaceAll("dynamic-id", "static-id"),
+    });
+
+    client.wrapRuntime(chrome);
+
+    client.start();
+
+    startedClients.push(client);
+
+    const heard: unknown[] = [];
+
+    ((chrome.runtime as ChromeNamespace).onMessage as WrappedEvent).addListener(
+      (message, _sender, sendResponse) => {
+        heard.push(message);
+
+        (sendResponse as (response: unknown) => void)({
+          iframeUrl: "chrome-extension://dynamic-id/menu.html",
+        });
+      },
+    );
+
+    await stub.waitForStream();
+
+    stub.pushJob({
+      type: "sendMessage",
+      jobId: "job-1",
+      message: "chrome-extension://dynamic-id/asked.html",
+      sender: SENDER,
+    });
+
+    await waitFor(() => stub.postsTo(RUNTIME_PROXY_PATHS.workerReply).length === 1, "the reply");
+
+    expect(heard).toEqual(["chrome-extension://dynamic-id/asked.html"]);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerReply)[0]?.body).toEqual({
+      jobId: "job-1",
+      result: { status: "replied", reply: { iframeUrl: "chrome-extension://static-id/menu.html" } },
+    });
+  });
+
   /*
    * The relay redelivers anything it holds no ack for, and an ack can go
    * missing on its own since a failed POST is swallowed. A redelivered job that

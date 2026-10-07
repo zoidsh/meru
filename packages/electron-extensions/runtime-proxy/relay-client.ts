@@ -62,6 +62,11 @@ export type CreateRelayClientOptions = {
     call: RuntimeProxyStorageCall,
     isTrustedContext: boolean,
   ) => Promise<RuntimeProxyStorageResult>;
+  /**
+   * Rewrites everything this client sends over the bridge, serialized, on its
+   * way to the other sessions (`dynamic-url.ts`). Absent, it goes as it is.
+   */
+  rewriteOutgoing?: (serializedBody: string) => string;
 };
 
 /**
@@ -83,6 +88,7 @@ export function createRelayClient({
   cleanEndWindowMs = DEFAULT_CLEAN_END_WINDOW_MS,
   maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
   runStorageCall,
+  rewriteOutgoing,
 }: CreateRelayClientOptions = {}) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -96,8 +102,11 @@ export function createRelayClient({
 
   let isStopped = false;
 
+  const sendToBridge = (pathName: string, body: Record<string, unknown>) =>
+    postBridge(pathName, body, rewriteOutgoing);
+
   const postToBridge = (pathName: string, body: Record<string, unknown>) =>
-    postBridge(pathName, body).catch(() => undefined);
+    sendToBridge(pathName, body).catch(() => undefined);
 
   /**
    * Where this worker is running, which main puts on the sender a shimmed
@@ -128,7 +137,7 @@ export function createRelayClient({
   /** The transport a relayed port posts over: the bridge, both ways. */
   const createBridgeTransport = (portId: string): RelayedPortTransport => ({
     async post(message: unknown) {
-      const response = await postBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message });
+      const response = await sendToBridge(RUNTIME_PROXY_PATHS.workerPortPost, { portId, message });
 
       if (!response.ok) {
         throw new Error(bridgeAnsweredError(response.status));
@@ -307,7 +316,7 @@ export function createRelayClient({
       let hasEndedCleanly = false;
 
       try {
-        const response = await postBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
+        const response = await sendToBridge(RUNTIME_PROXY_PATHS.workerJobs, {});
 
         if (!response.ok || !response.body) {
           throw new Error(bridgeAnsweredError(response.status));
@@ -399,7 +408,7 @@ export function createRelayClient({
 
   /** A relayed call's answer, or a refused bridge read as no receiving end. */
   const postForResult = async <Result>(pathName: string, body: Record<string, unknown>) => {
-    const response = await postBridge(pathName, body);
+    const response = await sendToBridge(pathName, body);
 
     if (!response.ok) {
       throw new Error(bridgeAnsweredError(response.status));
