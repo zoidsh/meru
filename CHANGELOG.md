@@ -7,3 +7,4 @@ This file is the draft of the next release, written one line at a time as work l
 ### Fixed
 
 - **Meru Pro:** Downloading a file from a Google Chat conversation saves it, instead of opening an empty tab that left the conversation unresponsive
+- **Meru Pro:** A link that opens in a new tab and turns out to be a download closes that tab and returns to the one it was opened from, instead of leaving an invisible tab in front of it
