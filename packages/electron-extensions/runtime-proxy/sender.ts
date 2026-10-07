@@ -1,5 +1,6 @@
 import type { Session, WebContents, WebFrameMain } from "electron";
 import { getExtensionFrameId } from "../web-navigation/web-navigation";
+import { MAIN_WINDOW_ID } from "../windows/bridge-protocol";
 import {
   EXTENSION_SCHEME_PREFIX,
   type RuntimeProxySender,
@@ -51,15 +52,19 @@ export function parseSenderReport(reported: unknown): RuntimeProxySenderReport |
  */
 export function createTabDetails(
   contents: WebContents,
-  { active }: { active: boolean },
+  { active, windowId = MAIN_WINDOW_ID }: { active: boolean; windowId?: number },
 ): RuntimeProxyTab {
   return {
     id: contents.id,
     url: contents.getURL(),
     title: contents.getTitle(),
-    // Where the page sits in the embedder's UI isn't the proxy's to know, so
-    // these carry Chrome's own "no such thing" values rather than a guess
-    windowId: -1,
+    // A window `chrome.windows` answers for: one the embedder opened for an
+    // extension page, or the main window every other page is in. Chrome never
+    // reports a tab outside a window, and `windows.get(tab.windowId)` is how
+    // an extension reads the window a tab is in
+    windowId,
+    // Where the page sits among the embedder's views isn't the proxy's to know,
+    // so this carries Chrome's own "no such thing" rather than a guess
     index: -1,
     // Whether the page is the one its window is showing, which only the
     // embedder can say — a sender says `true`, the page being the one
