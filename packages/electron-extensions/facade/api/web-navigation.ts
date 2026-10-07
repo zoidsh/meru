@@ -3,12 +3,12 @@ import {
   type WebNavigationEventFrame,
   type WebNavigationEventName,
 } from "../../web-navigation/bridge-protocol";
+import { matchesEventFilters } from "../../web-navigation/url-filter";
 import { postBridge } from "../lib/bridge";
 import type { ChromeEvent, ChromeEventListener, ChromeNamespace } from "../lib/chrome";
 import { createNoopEvent } from "../lib/event";
 import { createEventStream } from "../lib/event-stream";
 import { createBridgedMethod } from "../lib/method";
-import { matchesEventFilters } from "../lib/url-filter";
 
 /**
  * A frame query answered by the main process, since only it holds the session's
