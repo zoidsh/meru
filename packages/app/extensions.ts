@@ -584,6 +584,24 @@ export async function getInstalledExtensions() {
 }
 
 /**
+ * Opens the page the catalog names for a curated extension's settings item —
+ * Bitwarden's popup, where it signs in — in a window of the worker's session.
+ * Only once the extension is loaded there, which an install is not until the
+ * restart after it.
+ */
+export function openCuratedExtensionWindow(extensionId: string) {
+  const windowPagePath = curatedExtensions.find(
+    (curatedExtension) => curatedExtension.id === extensionId,
+  )?.windowPagePath;
+
+  return (
+    windowPagePath !== undefined &&
+    extensions.isExtensionLoaded(session.defaultSession, extensionId) &&
+    extensions.openExtensionWindow(extensionId, windowPagePath)
+  );
+}
+
+/**
  * The install in flight per extension, which a second call joins rather than
  * starting its own. Two installs of one extension — the user toggling it on
  * while the updater is checking it — unpack into the same staging directory,
