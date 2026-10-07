@@ -27,7 +27,12 @@ import { type GrantableOptionalPermissionsPolicy, Permissions } from "./permissi
 import { readExtensionDirId } from "./scan";
 import { NavigationEvents, type NavigationEventsPolicy } from "./web-navigation/navigation-events";
 import { WebNavigation } from "./web-navigation/web-navigation";
-import { type ExtensionWindowsPolicy, Windows, type WindowsOptions } from "./windows/windows";
+import {
+  type ExtensionWindowsPolicy,
+  type ExtensionWindowsWatcher,
+  Windows,
+  type WindowsOptions,
+} from "./windows/windows";
 
 /**
  * Chromium keeps every `chrome.storage` area of every extension in its own
@@ -86,6 +91,8 @@ export type SharedExtensionInstance = {
     logger?: ExtensionsLogger;
     /** The window a page is in, as `chrome.windows` numbers them. */
     getWindowId?: (contents: WebContents) => number;
+    /** Hears the windows `chrome.windows.create` opens for extensions come and go. */
+    watchExtensionWindows?: (watcher: ExtensionWindowsWatcher) => void;
   }): void;
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
@@ -428,6 +435,9 @@ export class Extensions {
       bridge: this.bridge,
       logger,
       getWindowId: (contents) => windows.getWindowIdOfFrame(contents.mainFrame),
+      watchExtensionWindows: (watcher) => {
+        windows.watch(watcher);
+      },
     });
   }
 

@@ -83,7 +83,14 @@ type ProbeMessage = {
   args?: unknown[];
   /** The injection an `execute-script` message asks the worker for. */
   injection?: Record<string, unknown>;
+  /** Bitwarden's key for what a FIDO2 message asks, which the fallback request uses. */
+  command?: string;
+  /** Whether a fallback request is answered at once rather than after a window. */
+  withoutWindow?: boolean;
 };
+
+/** The reply Bitwarden's worker sends when it asks for the browser's own WebAuthn. */
+const FALLBACK_REPLY = { error: { fallbackRequested: true, message: "FallbackRequested" } };
 
 /**
  * How a call the worker made ended, in the shape the probes record their own
@@ -131,8 +138,15 @@ const windows = getChromeWindows();
  */
 const removedWindowIds: number[] = [];
 
+/** The pending fallback requests, each answered once its popout is gone. */
+const fallbackAnswersByPopoutId = new Map<number, () => void>();
+
 windows.onRemoved.addListener((windowId) => {
   removedWindowIds.push(windowId);
+
+  fallbackAnswersByPopoutId.get(windowId)?.();
+
+  fallbackAnswersByPopoutId.delete(windowId);
 });
 
 /**
@@ -522,6 +536,33 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else {
       answer(null);
     }
+
+    return true;
+  }
+
+  /*
+   * Bitwarden's passkey request in miniature: the worker opens a popout and,
+   * once that window is gone however it went, asks for the browser's fallback.
+   * This listener answers late.
+   */
+  if (probeMessage?.command === "fixture-fallback-request") {
+    if (probeMessage.withoutWindow) {
+      sendResponse(FALLBACK_REPLY);
+
+      return undefined;
+    }
+
+    windows.create({ url: "popup.html?context=fallback", type: "popup" }, (popout) => {
+      if (typeof popout?.id !== "number") {
+        sendResponse({ error: { message: "No popout" } });
+
+        return;
+      }
+
+      fallbackAnswersByPopoutId.set(popout.id, () => {
+        sendResponse(FALLBACK_REPLY);
+      });
+    });
 
     return true;
   }

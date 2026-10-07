@@ -16,6 +16,15 @@ export type DeclaredContentScript = {
   standsInFor?: string[];
 };
 
+export type WindowCloseFallbackRejection = {
+  /** The `command` of each message from a content script whose reply may be rewritten. */
+  commands: string[];
+  /** The property set to `true` on the reply's `error` when it asks for the browser's fallback. */
+  fallbackMarker: string;
+  /** What the reply's `error` becomes. */
+  error: { name: string; message: string };
+};
+
 export type CuratedExtension = {
   /** The Chrome Web Store id, which every package has to be signed for. */
   id: string;
@@ -126,6 +135,22 @@ export type CuratedExtension = {
    * checked against each new version the way its content scripts are.
    */
   localStorageDefaults?: Record<string, unknown>;
+  /**
+   * Turns the extension's reply asking for the browser's own WebAuthn into a
+   * rejection, when the user closed a window the extension opened for that
+   * request before it answered. Needs `opensExtensionWindows`.
+   *
+   * Electron's native WebAuthn shows no dialog and answers only after 180
+   * seconds, so a password manager that falls back to it when the user closes
+   * its passkey popout leaves the page waiting three minutes. Every other
+   * fallback reply still reaches the page, since native is the route that
+   * works for a security key or a site the extension leaves alone.
+   *
+   * The command names, the reply's shape and how the page script treats the
+   * error are the extension's private code, which an update can change without
+   * notice, so an entry here is checked against each new version.
+   */
+  rejectFallbackOnWindowClose?: WindowCloseFallbackRejection;
   /**
    * Error lines the extension's service worker writes that say nothing an
    * embedder can act on, as prefixes matched against the start of the message.
@@ -240,6 +265,27 @@ export const curatedExtensions: CuratedExtension[] = [
     // to the unlock popout from a page
     localStorageDefaults: {
       global_autofillSettingsLocal_inlineMenuVisibility: { __json__: true, value: "2" },
+    },
+    // Its worker hears `windows.onRemoved` for a passkey popout the user closed
+    // and answers the request with its `FallbackRequestedError` spread into
+    // the reply. Its page script falls back to native WebAuthn on
+    // `fallbackRequested`, and turns an error named `NotAllowedError` into the
+    // `DOMException` Chrome rejects with when the user dismisses its own
+    // passkey dialog.
+    //
+    // The popout's own buttons, Cancel among them, send a non-fallback abort
+    // and then close it with `window.close()`, which counts as the user's
+    // close: the abort normally answers first and is left alone, and if the
+    // close wins, a rejection is what a cancel should get anyway. Its "Use
+    // your device or hardware key" menu asks for the fallback, and the worker
+    // then closes the popout with `windows.remove`, which keeps the fallback
+    rejectFallbackOnWindowClose: {
+      commands: ["fido2RegisterCredentialRequest", "fido2GetCredentialRequest"],
+      fallbackMarker: "fallbackRequested",
+      error: {
+        name: "NotAllowedError",
+        message: "The operation either timed out or was not allowed.",
+      },
     },
     declaredContentScripts: [
       // What its worker injects into every frame to fill. It picks one of four

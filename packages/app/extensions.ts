@@ -17,6 +17,7 @@ import {
 import {
   FIXTURE_DECLARED_CONTENT_SCRIPTS,
   FIXTURE_LOCAL_STORAGE_DEFAULTS,
+  FIXTURE_WINDOW_CLOSE_FALLBACK_REJECTION,
 } from "@meru/electron-extensions/fixture/catalog";
 import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import {
@@ -160,6 +161,22 @@ function getLocalStorageDefaults(extensionId: string) {
 
   return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
     ?.localStorageDefaults;
+}
+
+/**
+ * Which replies are turned into a rejection when the user closed a window
+ * opened for the request: the catalog's rule for a curated extension, and the
+ * fixture's for the fixture, behind the condition that loads it at all.
+ */
+function getWindowCloseFallbackRejection(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0
+      ? FIXTURE_WINDOW_CLOSE_FALLBACK_REJECTION
+      : undefined;
+  }
+
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.rejectFallbackOnWindowClose;
 }
 
 /**
@@ -489,6 +506,7 @@ export const extensions = new Extensions({
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
     getWorkerSession: () => session.defaultSession,
     isActiveTab,
+    getWindowCloseFallbackRejection,
   }),
   logger: {
     debug: (message, details) => {
