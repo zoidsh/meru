@@ -262,3 +262,66 @@ test("the worker hears an account page's navigation, with its tab and frame ids"
 
   await closeWindow(popupId);
 });
+
+/**
+ * Stops every service worker of the default session, the way Chromium's idle
+ * timer would, which Playwright's debugger keeps from ever firing. Asked of a
+ * blank page of that session rather than the fixture's popup, whose probes
+ * would message the worker straight back up.
+ */
+async function stopWorkerSessionWorkers() {
+  const blankId = await openWindow(null, "about:blank");
+
+  await meru.app.evaluate(
+    async ({ webContents }, { webContentsId }) => {
+      const contents = webContents.fromId(webContentsId);
+
+      if (!contents) {
+        return;
+      }
+
+      contents.debugger.attach();
+
+      await contents.debugger.sendCommand("ServiceWorker.enable");
+
+      await contents.debugger.sendCommand("ServiceWorker.stopAllWorkers");
+
+      contents.debugger.detach();
+    },
+    { webContentsId: blankId },
+  );
+
+  await closeWindow(blankId);
+}
+
+/*
+ * A worker that stops takes its stream with it, and main has to notice and
+ * stop listening to every page: otherwise each navigation keeps being
+ * serialized for nobody, and the stream's queue grows for as long as the app
+ * runs.
+ */
+test("main stops listening to pages once the worker stops", async () => {
+  const popupId = await openWindow(null, POPUP_URL);
+
+  await expect.poll(() => readNavigationEvents(popupId)).not.toBeNull();
+
+  await closeWindow(popupId);
+
+  const pageId = await openWindow(ACCOUNT_PARTITION, "about:blank");
+
+  await expect.poll(() => isListenedTo(pageId)).toBe(true);
+
+  await stopWorkerSessionWorkers();
+
+  // Each poll loads a page the worker's filter matches, which is what would
+  // trip the unread-frames bound if the stream's cancel never arrived
+  await expect
+    .poll(async () => {
+      await loadInWindow(pageId, `${serverOrigin}/navigation`);
+
+      return isListenedTo(pageId);
+    })
+    .toBe(false);
+
+  await closeWindow(pageId);
+});

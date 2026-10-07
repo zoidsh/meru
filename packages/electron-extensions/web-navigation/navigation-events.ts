@@ -39,6 +39,14 @@ type ParkedStream = {
   controller: ReadableStreamDefaultController<Uint8Array>;
 };
 
+/**
+ * How many frames a stream may hold unread before it is taken for a context
+ * that died without canceling. A live context drains its stream as frames
+ * arrive; Electron's own pipe to it sits in front of this queue and absorbs
+ * any burst a busy context lets build up.
+ */
+const MAX_UNREAD_FRAMES = 64;
+
 /** The page event each synthesized event is read from. */
 const PAGE_EVENTS: Record<WebNavigationEventName, string> = {
   onBeforeNavigate: "did-start-navigation",
@@ -508,6 +516,22 @@ export class NavigationEvents {
 
     for (const parked of this.streams) {
       if (!this.canReach(parked.session, tabSession) || !streamHears(parked, type, eventUrl)) {
+        continue;
+      }
+
+      // `enqueue` throws only once a stream is canceled or closed, and a
+      // context that goes without canceling leaves one that buffers forever
+      const { desiredSize } = parked.controller;
+
+      if (desiredSize !== null && desiredSize < -MAX_UNREAD_FRAMES) {
+        parked.controller.error(new Error("The context stopped reading its navigation events"));
+
+        this.logger?.info("Dropped a navigation event stream nothing reads", {
+          extensionId: parked.extensionId,
+        });
+
+        this.dropStream(parked);
+
         continue;
       }
 

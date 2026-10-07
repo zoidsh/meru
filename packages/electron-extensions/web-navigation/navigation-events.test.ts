@@ -129,6 +129,7 @@ function createNavigationEvents(pages: WebContents[]) {
     extensionId = BITWARDEN_ID,
     listened = EVERY_EVENT as WebNavigationListenedEvents,
     streamId = "stream",
+    read = true,
   } = {}) => {
     const handler = routes.get(WEB_NAVIGATION_PATHS.events) as ExtensionBridgeHandler;
 
@@ -142,7 +143,7 @@ function createNavigationEvents(pages: WebContents[]) {
 
     const frames: WebNavigationEventFrame[] = [];
 
-    if (!response.body) {
+    if (!response.body || !read) {
       return { response, frames, cancel: async () => undefined };
     }
 
@@ -482,6 +483,51 @@ describe("NavigationEvents", () => {
     expect(filtered.frames.map(({ details }) => details.url)).toEqual([
       "https://accounts.google.com/frame",
     ]);
+  });
+
+  test("drops a stream nothing reads once it has fallen far enough behind", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { navigationEvents, listen } = createNavigationEvents([page.contents]);
+
+    const reading = await listen({ listened: { onCommitted: null }, streamId: "reading" });
+
+    await listen({ listened: { onCommitted: null }, streamId: "dead", read: false });
+
+    for (let index = 0; index < 100; index += 1) {
+      page.emitter.emit("did-frame-navigate", {}, page.mainFrame.url, 200, "OK", true, 7, 1);
+
+      await Promise.resolve();
+    }
+
+    await settle();
+
+    // Still listened to, for the stream that reads
+    expect(navigationEvents.isWatching(page.contents)).toBe(true);
+
+    expect(reading.frames).toHaveLength(100);
+
+    await reading.cancel();
+
+    await settle();
+
+    expect(navigationEvents.isWatching(page.contents)).toBe(false);
+  });
+
+  test("stops listening to pages once its only stream stops reading", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { navigationEvents, listen } = createNavigationEvents([page.contents]);
+
+    await listen({ listened: { onCommitted: null }, read: false });
+
+    for (let index = 0; index < 100; index += 1) {
+      page.emitter.emit("did-frame-navigate", {}, page.mainFrame.url, 200, "OK", true, 7, 1);
+    }
+
+    expect(navigationEvents.isWatching(page.contents)).toBe(false);
+
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
   });
 
   test("stops listening to pages once no stream listens to any event", async () => {
