@@ -11,6 +11,7 @@ import {
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
   type RuntimeProxyStaticContentScript,
 } from "../runtime-proxy/bridge-protocol";
+import { DELIVERS_NAVIGATION_EVENTS_GLOBAL } from "../web-navigation/bridge-protocol";
 import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { allowPageConnectSource, injectPageScripts } from "./html";
@@ -87,6 +88,11 @@ export type DeriveExtensionOptions = {
    * `tabs.get` from main, which only an extension with such windows needs.
    */
   opensExtensionWindows?: (extensionId: string) => boolean;
+  /**
+   * Whether the worker copy's contexts hear the `webNavigation` events main
+   * synthesizes, asked for by the id the copy will be loaded as.
+   */
+  deliversNavigationEvents?: (extensionId: string) => boolean;
   /**
    * Scripts the content-script-only copy declares on top of the extension's
    * own content scripts, asked for by the id the copy will be loaded as. An
@@ -342,6 +348,7 @@ export async function deriveExtension({
   getContentScriptMatches,
   synthesizesStorageChanges,
   opensExtensionWindows,
+  deliversNavigationEvents,
   getDeclaredContentScripts,
   getLocalStorageDefaults,
   sharedInstance,
@@ -462,9 +469,15 @@ export async function deriveExtension({
   // of the worker session, and the worker is what waits on one closing
   const opensWindows = Boolean(isWorkerCopy && extensionId && opensExtensionWindows?.(extensionId));
 
+  // The worker copy alone, the one whose worker reaches every account's pages
+  const deliversNavigation = Boolean(
+    isWorkerCopy && extensionId && deliversNavigationEvents?.(extensionId),
+  );
+
   await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath, {
     ...(synthesizes ? { [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]: true } : {}),
     ...(opensWindows ? { [OPENS_EXTENSION_WINDOWS_GLOBAL]: true } : {}),
+    ...(deliversNavigation ? { [DELIVERS_NAVIGATION_EVENTS_GLOBAL]: true } : {}),
   });
 
   // The proxy scripts run where the facade never loads — the shim in content
