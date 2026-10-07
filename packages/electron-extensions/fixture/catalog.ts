@@ -31,3 +31,14 @@ export const FIXTURE_DECLARED_CONTENT_SCRIPTS = [
 
 /** A key the fixture's worker never writes, so it holds only the default. */
 export const FIXTURE_LOCAL_STORAGE_DEFAULTS = { seededDefault: "from the catalog" };
+
+/**
+ * The fixture's stand-in for Bitwarden's passkey request: the worker opens a
+ * window for it and, once that window is gone, answers with a fallback in
+ * Bitwarden's shape.
+ */
+export const FIXTURE_WINDOW_CLOSE_FALLBACK_REJECTION = {
+  commands: ["fixture-fallback-request"],
+  fallbackMarker: "fallbackRequested",
+  error: { name: "NotAllowedError", message: "The fixture's request was not allowed." },
+};

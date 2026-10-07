@@ -73,12 +73,24 @@ export type WindowsOptions = {
   logger?: ExtensionsLogger;
 };
 
+/** Hears the windows this class opens come and go, by the extension each is for. */
+export type ExtensionWindowsWatcher = {
+  opened: (extensionId: string, windowId: number) => void;
+  /**
+   * A window that closed other than through the extension's own `remove` or
+   * an unload: the user closing it, its page calling `window.close()`, or the
+   * app quitting.
+   */
+  closedByUser: (extensionId: string, windowId: number) => void;
+};
+
 type TrackedExtensionWindow = {
   extensionId: string;
   /** What it was opened for, which is what a second `create` dedupes on. */
   url: string;
   type: "popup" | "normal";
   window: ExtensionWindow;
+  isClosedByLoader: boolean;
 };
 
 /**
@@ -117,12 +129,18 @@ export class Windows {
   /** The parked `onRemoved` streams, by the extension whose contexts parked them. */
   private eventStreams = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 
+  private watchers = new Set<ExtensionWindowsWatcher>();
+
   constructor({ canOpenWindows, openWindow, logger }: WindowsOptions = {}) {
     this.canOpenWindows = canOpenWindows;
 
     this.openWindow = openWindow;
 
     this.logger = logger;
+  }
+
+  watch(watcher: ExtensionWindowsWatcher) {
+    this.watchers.add(watcher);
   }
 
   registerRoutes(bridge: ExtensionBridge) {
@@ -204,7 +222,13 @@ export class Windows {
 
     this.nextWindowId += 1;
 
-    const tracked: TrackedExtensionWindow = { extensionId, url, type, window };
+    const tracked: TrackedExtensionWindow = {
+      extensionId,
+      url,
+      type,
+      window,
+      isClosedByLoader: false,
+    };
 
     this.windows.set(windowId, tracked);
 
@@ -219,7 +243,17 @@ export class Windows {
       // However it went — the user closing it, the extension's own `remove`,
       // an uninstall — which is when Chrome fires it too
       this.emitRemoved(extensionId, windowId);
+
+      if (!tracked.isClosedByLoader) {
+        for (const watcher of this.watchers) {
+          watcher.closedByUser(extensionId, windowId);
+        }
+      }
     });
+
+    for (const watcher of this.watchers) {
+      watcher.opened(extensionId, windowId);
+    }
 
     return { window: describeWindow(windowId, tracked) };
   }
@@ -251,6 +285,8 @@ export class Windows {
     }
 
     this.windows.delete(removedWindowId);
+
+    tracked.isClosedByLoader = true;
 
     if (!tracked.window.isDestroyed()) {
       tracked.window.close();
@@ -367,6 +403,8 @@ export class Windows {
       }
 
       this.windows.delete(windowId);
+
+      tracked.isClosedByLoader = true;
 
       if (!tracked.window.isDestroyed()) {
         tracked.window.close();
