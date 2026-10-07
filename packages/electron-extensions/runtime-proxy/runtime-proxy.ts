@@ -47,6 +47,10 @@ import {
   parseStorageChangedReport,
   StorageAccessLevels,
 } from "./storage-proxy";
+import {
+  type GetWindowCloseFallbackRejection,
+  WindowCloseFallbackRejections,
+} from "./window-close-rejection";
 import { WorkerTabs } from "./worker-tabs";
 import { createWorkerSender, WorkerToPage } from "./worker-to-page";
 
@@ -182,6 +186,12 @@ export type RuntimeProxyOptions = {
   isActiveTab?: (contents: WebContents) => boolean;
   /** The window a page is in, which `worker-tabs.ts` reports as a tab's `windowId`. */
   getWindowId?: (contents: WebContents) => number;
+  /**
+   * Which extensions have a fallback reply rewritten when the user closed a
+   * window opened for the request; `window-close-rejection.ts` says why.
+   * Without it every reply reaches the page as the worker sent it.
+   */
+  getWindowCloseFallbackRejection?: GetWindowCloseFallbackRejection;
 };
 
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
@@ -273,6 +283,8 @@ export class RuntimeProxy {
   /** The worker's own `tabs.query` and `tabs.get`, answered from here. */
   private workerTabs: WorkerTabs;
 
+  private windowCloseFallbackRejections: WindowCloseFallbackRejections;
+
   /** What each extension's worker last said about who may reach an area. */
   private storageAccessLevels = new StorageAccessLevels();
 
@@ -287,6 +299,7 @@ export class RuntimeProxy {
     isShimmedSession = () => false,
     isActiveTab,
     getWindowId,
+    getWindowCloseFallbackRejection = () => undefined,
   }: RuntimeProxyOptions = {}) {
     this.logger = logger;
 
@@ -316,6 +329,10 @@ export class RuntimeProxy {
       getWebContentsFromFrame,
       getWindowId,
     });
+
+    this.windowCloseFallbackRejections = new WindowCloseFallbackRejections(
+      getWindowCloseFallbackRejection,
+    );
 
     // A bound context going away takes its share of a worker-opened port with
     // it, and the last one takes the port
@@ -747,6 +764,10 @@ export class RuntimeProxy {
 
     const sender = this.reconstructSender(session, extensionId, report, senderFrame);
 
+    // Before the job is queued, since a window the worker opens in answer to
+    // the request is what ties it to the request
+    const pendingRequest = this.windowCloseFallbackRejections.track(extensionId, request.message);
+
     const toWorker = new Promise<RuntimeProxySendMessageResult>((resolve) => {
       const job = this.createJob(session, extensionId, "sendMessage", {
         message: request.message,
@@ -770,7 +791,30 @@ export class RuntimeProxy {
 
     const result = await firstReply([toWorker, toWorkerSessionPages]);
 
-    return Response.json(result, { headers });
+    if (!pendingRequest) {
+      return Response.json(result, { headers });
+    }
+
+    const settledResult = this.windowCloseFallbackRejections.settle(pendingRequest, result);
+
+    if (settledResult !== result) {
+      this.logger?.info("Rejected a fallback asked for after the user closed an extension window", {
+        extensionId,
+        command: (request.message as { command?: unknown }).command,
+      });
+    }
+
+    return Response.json(settledResult, { headers });
+  }
+
+  /** A window the loader opened for an extension, as `windows/windows.ts` reports it. */
+  extensionWindowOpened(extensionId: string, windowId: number) {
+    this.windowCloseFallbackRejections.windowOpened(extensionId, windowId);
+  }
+
+  /** A window the loader opened that closed other than through the extension's own calls. */
+  extensionWindowClosedByUser(extensionId: string, windowId: number) {
+    this.windowCloseFallbackRejections.windowClosedByUser(extensionId, windowId);
   }
 
   /**
