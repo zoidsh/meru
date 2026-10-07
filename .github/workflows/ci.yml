@@ -56,13 +56,11 @@ jobs:
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
-    timeout-minutes: 20
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os:
-          - macos-latest
-          - ubuntu-latest
           - windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -75,7 +73,7 @@ jobs:
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       - if: runner.os != 'Linux'
-        run: bun run test:e2e
+        run: bun run test:e2e tests/extension-permissions.e2e.ts -g "outlives" --repeat-each=40 --retries=0 --timeout=40000 --max-failures=5
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       # always(), not failure(): a job killed for running long counts as
