@@ -21,6 +21,29 @@ export type ExtensionManifest = {
   web_accessible_resources?: WebAccessibleResources;
 };
 
+/**
+ * A script the embedder declares as a static content script of the
+ * content-script-only copy, for one the extension's worker would inject at
+ * runtime into a tab it cannot reach from its own session.
+ */
+export type DeclaredContentScript = {
+  js: string[];
+  matches: string[];
+  excludeMatches?: string[];
+  runAt?: "document_start" | "document_end" | "document_idle";
+  allFrames?: boolean;
+  world?: "ISOLATED" | "MAIN";
+  /**
+   * Files the worker may ask `executeScript` for that these scripts already
+   * cover, for an extension choosing between variants of one bundle where the
+   * one declared is the superset of the rest.
+   */
+  standsInFor?: string[];
+};
+
+/** A manifest `content_scripts` entry as the derive writes and reads one. */
+export type ManifestContentScript = NonNullable<ExtensionManifest["content_scripts"]>[number];
+
 export type DerivedManifest = {
   manifest: ExtensionManifest;
   serviceWorkerWrapper: string | null;
@@ -175,17 +198,38 @@ export type SharedInstanceManifestOptions =
  * Runs the shim ahead of the extension's own scripts in every content script
  * entry, in the same isolated world, which is what lets it shadow
  * `chrome.runtime.sendMessage` and `connect` before any extension code reads
- * them. Entries without scripts — CSS-only ones — have nothing to shadow.
+ * them. Entries without scripts — CSS-only ones — have nothing to shadow, and
+ * neither does a MAIN-world entry, which runs in the page's own world: there
+ * is no `chrome.runtime` there to stand in for, and the shim cannot start.
  */
 function prependContentScriptShim(
   contentScripts: ExtensionManifest["content_scripts"],
   shimFileName: string,
 ) {
   return contentScripts?.map((contentScript) =>
-    Array.isArray(contentScript.js)
+    Array.isArray(contentScript.js) && contentScript.world !== "MAIN"
       ? { ...contentScript, js: [shimFileName, ...contentScript.js] }
       : contentScript,
   );
+}
+
+/** The embedder's casing, written as the manifest's. */
+export function toManifestContentScript({
+  js,
+  matches,
+  excludeMatches,
+  runAt,
+  allFrames,
+  world,
+}: DeclaredContentScript): ManifestContentScript {
+  return {
+    matches,
+    ...(excludeMatches === undefined ? {} : { exclude_matches: excludeMatches }),
+    js,
+    run_at: runAt ?? "document_idle",
+    all_frames: allFrames ?? false,
+    ...(world === undefined ? {} : { world }),
+  };
 }
 
 /**
@@ -203,7 +247,7 @@ function prependContentScriptShim(
  * Every surviving entry keeps the rest of what its author wrote — which scripts
  * run, when they run, which frames they reach — and only the sites change.
  */
-function deriveContentScripts(
+export function deriveContentScripts(
   contentScripts: ExtensionManifest["content_scripts"],
   matches: string[] | undefined,
 ) {
@@ -250,6 +294,7 @@ export function deriveManifest(
     bridgeConnectSource,
     strippedManifestKeys = [],
     contentScriptMatches,
+    declaredContentScripts = [],
     sharedInstance,
   }: {
     facadeFileName: string;
@@ -263,16 +308,28 @@ export function deriveManifest(
      */
     contentScriptMatches?: string[];
     /**
+     * Entries the content-script-only copy gains after the extension's own,
+     * clamped and shimmed the same way. The other copies leave them out: the
+     * worker's own session injects with `executeScript` natively, so a static
+     * copy there would run every script twice.
+     */
+    declaredContentScripts?: DeclaredContentScript[];
+    /**
      * The copy's part in one shared instance across sessions, or `undefined`
      * for the ordinary copy every session gets its own instance of.
      */
     sharedInstance?: SharedInstanceManifestOptions;
   },
 ): DerivedManifest {
-  const clampedContentScripts = deriveContentScripts(
-    manifest.content_scripts,
-    contentScriptMatches,
-  );
+  const contentScripts =
+    sharedInstance?.role === "contentScriptOnly" && declaredContentScripts.length > 0
+      ? [
+          ...(manifest.content_scripts ?? []),
+          ...declaredContentScripts.map(toManifestContentScript),
+        ]
+      : manifest.content_scripts;
+
+  const clampedContentScripts = deriveContentScripts(contentScripts, contentScriptMatches);
 
   const derivedManifest: ExtensionManifest = {
     ...manifest,

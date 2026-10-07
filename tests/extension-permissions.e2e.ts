@@ -168,7 +168,7 @@ test("the permissions the manifest requires are the ones the worker holds", asyn
   expect((await callInWorker(popupId, "contains", ["storage"]))?.result).toBe(true);
 
   expect((await callInWorker(popupId, "getAll"))?.result).toEqual({
-    permissions: ["storage"],
+    permissions: ["storage", "scripting"],
     origins: [],
   });
 
