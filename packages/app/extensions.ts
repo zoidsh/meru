@@ -536,6 +536,42 @@ function isActiveTab(contents: WebContents) {
 }
 
 /**
+ * What an extension page may be granted, in any session: copying a password
+ * and posting a notification are what a curated extension has business asking
+ * for. Anything else, the microphone and camera above all, is refused, since
+ * manifest permissions don't gate these requests.
+ */
+export const EXTENSION_PAGE_PERMISSIONS = new Set([
+  "clipboard-read",
+  "clipboard-sanitized-write",
+  "notifications",
+]);
+
+/**
+ * The allowlist for an extension page of the worker's session, which is a
+ * window `chrome.windows.create` opened — where Bitwarden's master password is
+ * typed — under the same rule as the same page in an account session.
+ * Everything else there, Meru's own renderer, keeps Electron's default of
+ * granting, which is what it had with no handler at all.
+ */
+function registerWorkerSessionPermissionHandlers() {
+  const workerSession = session.defaultSession;
+
+  workerSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+    callback(
+      !extensions.isLoadedExtensionUrl(workerSession, details.requestingUrl) ||
+        EXTENSION_PAGE_PERMISSIONS.has(permission),
+    );
+  });
+
+  workerSession.setPermissionCheckHandler(
+    (_webContents, permission, requestingOrigin) =>
+      !extensions.isLoadedExtensionUrl(workerSession, requestingOrigin) ||
+      EXTENSION_PAGE_PERMISSIONS.has(permission),
+  );
+}
+
+/**
  * Loads the extensions into the session the one worker runs in, which is
  * Electron's default session: no account owns it, so removing an account is a
  * non-event for the worker and the one 1Password sign-in outlives every
@@ -557,6 +593,8 @@ function isActiveTab(contents: WebContents) {
  * the kind.
  */
 export function setupExtensionsWorkerSession() {
+  registerWorkerSessionPermissionHandlers();
+
   extensions.setupSession(session.defaultSession).catch((error: unknown) => {
     log.error("Failed to set up extensions worker session", { error: serializeError(error) });
   });
@@ -581,6 +619,24 @@ export async function getInstalledExtensions() {
   }
 
   return installedExtensions;
+}
+
+/**
+ * Opens the page the catalog names for a curated extension's settings item —
+ * Bitwarden's popup, where it signs in — in a window of the worker's session.
+ * Only once the extension is loaded there, which an install is not until the
+ * restart after it.
+ */
+export function openCuratedExtensionWindow(extensionId: string) {
+  const windowPagePath = curatedExtensions.find(
+    (curatedExtension) => curatedExtension.id === extensionId,
+  )?.windowPagePath;
+
+  return (
+    windowPagePath !== undefined &&
+    extensions.isExtensionLoaded(session.defaultSession, extensionId) &&
+    extensions.openExtensionWindow(extensionId, windowPagePath)
+  );
 }
 
 /**

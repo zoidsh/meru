@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
-import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
+import { curatedExtensions } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { clamp } from "@meru/shared/utils";
@@ -178,9 +178,15 @@ export class WorkspaceApp {
       return;
     }
 
-    // 1Password overrides `navigator.credentials` in the page, which is what lets
-    // a passkey sign-in go through in Electron and makes the passkey dialog moot.
-    if (extensions.isExtensionLoaded(session, ONEPASSWORD_EXTENSION_ID)) {
+    // A password manager overrides `navigator.credentials` in the page, which is
+    // what lets a passkey sign-in go through in Electron and makes the passkey
+    // dialog moot. 1Password and Bitwarden both do.
+    if (
+      curatedExtensions.some(
+        ({ id, category }) =>
+          category === "passwordManager" && extensions.isExtensionLoaded(session, id),
+      )
+    ) {
       return;
     }
 

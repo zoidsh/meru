@@ -4,7 +4,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { isExtensionId } from "@meru/electron-extensions";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
-import { isCuratedExtensionId } from "@meru/shared/extensions";
+import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
@@ -46,6 +46,7 @@ import {
   extensionUpdater,
   getInstalledExtensions,
   installCuratedExtension,
+  openCuratedExtensionWindow,
   uninstallCuratedExtension,
 } from "./extensions";
 import { Gmail, GMAIL_USER_STYLES_PATH } from "./gmail";
@@ -1092,6 +1093,18 @@ class Ipc {
       }
 
       return { results: await extensionUpdater.checkForUpdates() };
+    });
+
+    ipc.main.handle("extensions.openWindow", (_event, extensionId) => {
+      if (openCuratedExtensionWindow(extensionId)) {
+        return {};
+      }
+
+      const name =
+        curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)?.name ??
+        "The extension";
+
+      return { error: `${name} starts after Meru restarts. Restart Meru, then try again.` };
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {
