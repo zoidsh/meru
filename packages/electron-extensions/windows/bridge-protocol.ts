@@ -21,6 +21,25 @@ export const WINDOWS_PATHS = {
   get: "/windows/get",
 } as const;
 
+/**
+ * The window every page outside the windows the embedder opened is in: the
+ * fake window the facade answers with, and the `windowId` of every tab that is
+ * not an extension window's own page. An embedder's own windows are none of an
+ * extension's business (see above), so they are all this one.
+ */
+export const MAIN_WINDOW_ID = 1;
+
+/** Chrome's `windows.WINDOW_ID_CURRENT`, which names the caller's own window. */
+export const WINDOW_ID_CURRENT = -2;
+
+/**
+ * Set in the facade of an extension the embedder opens windows for, which is
+ * what turns on the parts of `chrome.tabs` that only make sense once it has
+ * windows of its own: a page's `tabs.query` and `tabs.get` answered from main
+ * (`facade/api/page-tabs.ts`).
+ */
+export const OPENS_EXTENSION_WINDOWS_GLOBAL = "__meruOpensExtensionWindows";
+
 /** What the extension handed to `create`, taken as untrusted. */
 export type WindowsCreateData = {
   url?: unknown;

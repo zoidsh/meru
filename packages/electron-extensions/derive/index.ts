@@ -11,6 +11,7 @@ import {
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
   type RuntimeProxyStaticContentScript,
 } from "../runtime-proxy/bridge-protocol";
+import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
@@ -79,6 +80,13 @@ export type DeriveExtensionOptions = {
    * `manifest.key` has no id to be asked about and goes without.
    */
   synthesizesStorageChanges?: (extensionId: string) => boolean;
+  /**
+   * Whether the extension gets windows of its own from `chrome.windows.create`,
+   * asked for by the id the copy will be loaded as. The worker copy's facade
+   * then answers its pages' `tabs.query` and `tabs.get` from main, which only an
+   * extension with such windows needs.
+   */
+  opensExtensionWindows?: (extensionId: string) => boolean;
   /**
    * Scripts the content-script-only copy declares on top of the extension's
    * own content scripts, asked for by the id the copy will be loaded as. An
@@ -333,6 +341,7 @@ export async function deriveExtension({
   strippedManifestKeys = [],
   getContentScriptMatches,
   synthesizesStorageChanges,
+  opensExtensionWindows,
   getDeclaredContentScripts,
   getLocalStorageDefaults,
   sharedInstance,
@@ -449,11 +458,14 @@ export async function deriveExtension({
   const localStorageDefaults =
     isWorkerCopy && extensionId ? getLocalStorageDefaults?.(extensionId) : undefined;
 
-  await writeTokenCarryingScript(
-    FACADE_FILE_NAME,
-    facadeScriptPath,
-    synthesizes ? { [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]: true } : {},
-  );
+  // The worker copy alone, which is where the windows open: a popout is a page
+  // of the worker session, and the worker is what waits on one closing
+  const opensWindows = Boolean(isWorkerCopy && extensionId && opensExtensionWindows?.(extensionId));
+
+  await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath, {
+    ...(synthesizes ? { [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]: true } : {}),
+    ...(opensWindows ? { [OPENS_EXTENSION_WINDOWS_GLOBAL]: true } : {}),
+  });
 
   // The proxy scripts run where the facade never loads — the shim in content
   // scripts' isolated worlds — so each carries the token itself, the same way

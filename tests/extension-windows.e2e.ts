@@ -129,6 +129,70 @@ async function closeWorkerPopup(webContentsId: number) {
   );
 }
 
+/** The `WebContents` id of the page an extension window shows, once it has loaded. */
+async function findWindowPageId() {
+  let pageId: number | null = null;
+
+  await expect
+    .poll(async () => {
+      pageId = await meru.app.evaluate(
+        ({ BrowserWindow }, { url }) =>
+          BrowserWindow.getAllWindows().find(
+            (window) => window.webContents.getURL() === url && !window.webContents.isLoading(),
+          )?.webContents.id ?? null,
+        { url: getWindowPageUrl() },
+      );
+
+      return pageId;
+    })
+    .not.toBeNull();
+
+  return pageId as unknown as number;
+}
+
+/**
+ * Runs a script in an extension page's own world, where its `chrome` is — the
+ * one the facade completed — and hands back what it resolves to.
+ */
+async function runInPage<Result>(webContentsId: number, script: string) {
+  return meru.app.evaluate(
+    ({ webContents }, { webContentsId: contentsId, script: pageScript }) =>
+      webContents.fromId(contentsId)?.mainFrame.executeJavaScript(pageScript) ?? null,
+    { webContentsId, script },
+  ) as Promise<Result | null>;
+}
+
+/**
+ * The `WebContents` ids of the views Meru is showing, which is what the
+ * embedder answers `tabs.Tab.active` from.
+ */
+async function readVisibleViewIds() {
+  return meru.app.evaluate(({ BrowserWindow, WebContentsView }) => {
+    const viewIds: number[] = [];
+
+    for (const window of BrowserWindow.getAllWindows()) {
+      for (const child of window.contentView.children) {
+        if (child instanceof WebContentsView && child.getVisible()) {
+          viewIds.push(child.webContents.id);
+        }
+      }
+    }
+
+    return viewIds;
+  });
+}
+
+/** Opens the fixture's own page in a window, the way a password manager's popout opens. */
+async function openExtensionWindow(popupId: number) {
+  const created = await callInWorker(popupId, "create", [
+    { url: WINDOW_PAGE_PATH, type: "popup", width: 380, height: 630 },
+  ]);
+
+  expect(created?.result?.id).toBeGreaterThan(FAKE_WINDOW_ID);
+
+  return { windowId: created?.result?.id as number, pageId: await findWindowPageId() };
+}
+
 test("the worker opens one of the extension's own pages in a window", async () => {
   const popupId = await openWorkerPopup();
 
@@ -186,6 +250,81 @@ test("a window for anything but the extension's own pages is refused", async () 
   expect(created?.lastError).toBeTruthy();
 
   expect(await readWindowUrls()).toEqual(windowUrlsBefore);
+
+  await closeWorkerPopup(popupId);
+});
+
+type SeenTab = { id: number; windowId: number; active: boolean; url: string };
+
+/*
+ * How Bitwarden closes its unlock and passkey popouts: `tabs.query` for its
+ * popup page's URL, then `windows.remove` of each match's `windowId`. Asked
+ * from the window's own page, which natively sees only its own session and a
+ * `windowId` that names no window `remove` knows.
+ */
+test("a page finds its own window by URL and closes it", async () => {
+  const popupId = await openWorkerPopup();
+
+  const { windowId, pageId } = await openExtensionWindow(popupId);
+
+  const found = await runInPage<SeenTab[]>(
+    pageId,
+    `chrome.tabs.query({ url: chrome.runtime.getURL("popup.html") + "*" })`,
+  );
+
+  const windowPage = found?.find((tab) => tab.url === getWindowPageUrl());
+
+  expect(windowPage).toMatchObject({ id: pageId, windowId });
+
+  // Not awaited in the page, which goes away with its window before it could
+  // answer
+  await runInPage(pageId, `chrome.windows.remove(${windowId}); null`);
+
+  await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
+
+  await closeWorkerPopup(popupId);
+});
+
+/*
+ * The popup page in a window of its own, the way Bitwarden's is opened, asks
+ * for the active tab of its current window to list what it can fill there.
+ * The window stands in for Chrome's toolbar popup, whose current window is the
+ * browser window under it, so the answer is the view Meru is showing rather
+ * than the popup's own page.
+ */
+test("a page in an extension window sees the view Meru is showing as the current tab", async () => {
+  const popupId = await openWorkerPopup();
+
+  const { windowId, pageId } = await openExtensionWindow(popupId);
+
+  const activeTabs = await runInPage<SeenTab[]>(
+    pageId,
+    "chrome.tabs.query({ active: true, currentWindow: true })",
+  );
+
+  expect(activeTabs).toHaveLength(1);
+
+  const [activeTab] = activeTabs as SeenTab[];
+
+  expect(activeTab?.id).not.toBe(pageId);
+
+  expect(activeTab?.windowId).toBe(FAKE_WINDOW_ID);
+
+  expect(await readVisibleViewIds()).toContain(activeTab?.id);
+
+  // And by id, which is what a popup holding a tab id from its URL asks
+  expect(await runInPage<SeenTab>(pageId, `chrome.tabs.get(${activeTab?.id})`)).toMatchObject({
+    id: activeTab?.id,
+  });
+
+  // The window's own page is in its own window, not the current one
+  expect(
+    await runInPage<SeenTab[]>(pageId, `chrome.tabs.query({ windowId: ${windowId} })`),
+  ).toEqual([expect.objectContaining({ id: pageId })]);
+
+  await runInPage(pageId, `chrome.windows.remove(${windowId}); null`);
+
+  await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
 
   await closeWorkerPopup(popupId);
 });

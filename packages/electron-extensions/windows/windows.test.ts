@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Session, WebFrameMain } from "electron";
 import type { ExtensionBridge, ExtensionBridgeHandler } from "../bridge/bridge";
-import { WINDOWS_PATHS, type WindowsWindowResponse } from "./bridge-protocol";
+import { MAIN_WINDOW_ID, WINDOWS_PATHS, type WindowsWindowResponse } from "./bridge-protocol";
 import { type ExtensionWindow, type ExtensionWindowOpenDetails, Windows } from "./windows";
 
 const BITWARDEN_ID = "nngceckbapebfimnlniiiahkandclblb";
@@ -330,6 +330,31 @@ describe("Windows", () => {
     expect(openedWindows.map((window) => window.isClosed)).toEqual([true, true, false]);
 
     expect(windows.get(ONEPASSWORD_ID, otherWindow.window?.id, undefined).window).not.toBeNull();
+  });
+});
+
+describe("Windows.getWindowIdOfFrame", () => {
+  /*
+   * What a tab's `windowId` is read from: the popout's page is in the popout,
+   * which is how an extension finds it to close it, and every other page is in
+   * the main window.
+   */
+  test("answers the window a frame's page is in, or the main window", () => {
+    const { windows, openedWindows } = createFakeEmbedder();
+
+    const { window } = windows.create(BITWARDEN_ID, { url: UNLOCK_PATH });
+
+    expect(windows.getWindowIdOfFrame(openedWindows[0]?.frame as WebFrameMain)).toBe(
+      window?.id as number,
+    );
+
+    expect(windows.getWindowIdOfFrame({} as WebFrameMain)).toBe(MAIN_WINDOW_ID);
+
+    openedWindows[0]?.close();
+
+    expect(windows.getWindowIdOfFrame(openedWindows[0]?.frame as WebFrameMain)).toBe(
+      MAIN_WINDOW_ID,
+    );
   });
 });
 

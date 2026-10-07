@@ -2,6 +2,8 @@ import type { WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
 import {
+  MAIN_WINDOW_ID,
+  WINDOW_ID_CURRENT,
   WINDOWS_PATHS,
   type WindowsCreateData,
   type WindowsWindow,
@@ -14,10 +16,7 @@ import {
  * embedder's own window ids start there too — Electron's do — so the ids here
  * are the loader's alone and name nothing outside it.
  */
-const FIRST_WINDOW_ID = 2;
-
-/** Chrome's `windows.WINDOW_ID_CURRENT`, which names the caller's own window. */
-const WINDOW_ID_CURRENT = -2;
+const FIRST_WINDOW_ID = MAIN_WINDOW_ID + 1;
 
 /**
  * A window the embedder opened, which is as much of one as this module holds:
@@ -275,6 +274,15 @@ export class Windows {
         this.windows.get(foundWindowId) as TrackedExtensionWindow,
       ),
     };
+  }
+
+  /**
+   * The window a frame's page is in: one this class opened, or the window
+   * every other page is in. Any extension's, since a tab's `windowId` is the
+   * same whoever asks about it.
+   */
+  getWindowIdOfFrame(frame: WebFrameMain): number {
+    return this.findWindowId((tracked) => tracked.window.containsFrame(frame)) ?? MAIN_WINDOW_ID;
   }
 
   /**

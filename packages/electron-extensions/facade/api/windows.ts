@@ -1,4 +1,8 @@
-import { WINDOWS_PATHS, type WindowsWindowResponse } from "../../windows/bridge-protocol";
+import {
+  MAIN_WINDOW_ID,
+  WINDOWS_PATHS,
+  type WindowsWindowResponse,
+} from "../../windows/bridge-protocol";
 import { postBridge } from "../lib/bridge";
 import type { ChromeNamespace } from "../lib/chrome";
 import { createNoopEvent } from "../lib/event";
@@ -8,9 +12,10 @@ import { createBridgedMethod, createNoopMethod } from "../lib/method";
  * The one window every query the embedder does not serve answers with. An
  * extension only needs a stable id that is neither `WINDOW_ID_NONE` nor
  * `WINDOW_ID_CURRENT`; the ids the main process hands out for windows it really
- * opened start past it (`windows/windows.ts`).
+ * opened start past it (`windows/windows.ts`). It is also the `windowId` of
+ * every tab not in one of those (`runtime-proxy/worker-tabs.ts`).
  */
-const WINDOW_ID = 1;
+const WINDOW_ID = MAIN_WINDOW_ID;
 
 function createWindow() {
   return {

@@ -1,6 +1,7 @@
 import type { Session, WebContents } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import { matchesUrl } from "../derive/match-pattern";
+import { MAIN_WINDOW_ID, WINDOW_ID_CURRENT } from "../windows/bridge-protocol";
 import {
   noTabError,
   type RuntimeProxyTab,
@@ -45,6 +46,12 @@ export type WorkerTabsOptions = {
   getAllWebContents?: () => WebContents[];
   /** How a tab id resolves to the page behind it, Electron's own mapping by default. */
   getWebContentsById?: (tabId: number) => WebContents | undefined;
+  /**
+   * The window a page is in: one the loader opened for an extension page
+   * (`windows/windows.ts`), or the main window every other page is in, which is
+   * the default.
+   */
+  getWindowId?: (contents: WebContents) => number;
 };
 
 /**
@@ -73,9 +80,20 @@ export type WorkerTabsOptions = {
  * Only the worker session may ask (403 otherwise, as `workerSendToTab` does),
  * and only the worker session and sessions that adopted the content-script-only
  * role are listed — the same line `canResolveTabAcrossSessions` draws for frame
- * queries, so one session's tabs never surface in another's answer. Nothing
- * changes for a shimmed session's own extension pages: their native
- * `chrome.tabs` stays scoped to their session.
+ * queries, so one session's tabs never surface in another's answer. The worker
+ * session's extension pages ask too, for an extension that opens windows of its
+ * own (`facade/api/page-tabs.ts`): a popout of the password manager's popup
+ * page has to see the account's tab the way the toolbar popup it stands in for
+ * does. Nothing changes for a shimmed session's own extension pages: their
+ * native `chrome.tabs` stays scoped to their session.
+ *
+ * One window filter has no answer Chrome would give. Chrome's current window is
+ * the one the caller is in, and for a popout that is the popout itself, holding
+ * nothing but the extension's own page. Meru's popout stands in for Chrome's
+ * toolbar popup instead, whose current window is the browser window underneath
+ * it — so the current window, and the last focused one, is the main window for
+ * every caller, and the active tab in it is the view Meru is showing. A popout
+ * is still found by its own `windowId`, or by its URL.
  */
 export class WorkerTabs {
   private getWorkerSession: () => Session | undefined;
@@ -88,12 +106,15 @@ export class WorkerTabs {
 
   private getWebContentsById: (tabId: number) => WebContents | undefined;
 
+  private getWindowId: (contents: WebContents) => number;
+
   constructor({
     getWorkerSession,
     isShimmedSession,
     isActiveTab = (contents) => contents.isFocused(),
     getAllWebContents = getElectronWebContents,
     getWebContentsById = getElectronWebContentsById,
+    getWindowId = () => MAIN_WINDOW_ID,
   }: WorkerTabsOptions) {
     this.getWorkerSession = getWorkerSession;
 
@@ -104,6 +125,8 @@ export class WorkerTabs {
     this.getAllWebContents = getAllWebContents;
 
     this.getWebContentsById = getWebContentsById;
+
+    this.getWindowId = getWindowId;
   }
 
   registerRoutes(bridge: ExtensionBridge) {
@@ -153,7 +176,7 @@ export class WorkerTabs {
         continue;
       }
 
-      tabs.push(createTabDetails(contents, { active: this.isActiveTab(contents) }));
+      tabs.push(this.describeTab(contents));
     }
 
     return tabs;
@@ -162,8 +185,8 @@ export class WorkerTabs {
   /**
    * The listed tabs a `queryInfo` keeps. Electron honors `active`, `audible`,
    * `muted`, `url` and `title` and ignores the rest of Chrome's keys; this
-   * honors the same five, so an extension gets one answer whichever session it
-   * asks from. A `queryInfo` that is not an object at all — or one carrying
+   * honors the same five, and the window filters `RuntimeProxyTabQueryInfo`
+   * says why. A `queryInfo` that is not an object at all — or one carrying
    * nothing but ignored keys — filters nothing, which is what `query({})`
    * means.
    */
@@ -172,10 +195,30 @@ export class WorkerTabs {
       return this.listTabs();
     }
 
-    const { active, audible, muted, url, title } = queryInfo;
+    const { active, audible, muted, url, title, currentWindow, lastFocusedWindow } = queryInfo;
+
+    const windowId = queryInfo.windowId === WINDOW_ID_CURRENT ? MAIN_WINDOW_ID : queryInfo.windowId;
 
     return this.listTabs().filter((tab) => {
       if (typeof active === "boolean" && tab.active !== active) {
+        return false;
+      }
+
+      if (typeof windowId === "number" && tab.windowId !== windowId) {
+        return false;
+      }
+
+      if (
+        typeof currentWindow === "boolean" &&
+        (tab.windowId === MAIN_WINDOW_ID) !== currentWindow
+      ) {
+        return false;
+      }
+
+      if (
+        typeof lastFocusedWindow === "boolean" &&
+        (tab.windowId === MAIN_WINDOW_ID) !== lastFocusedWindow
+      ) {
         return false;
       }
 
@@ -215,10 +258,14 @@ export class WorkerTabs {
       return { status: "noTarget", error: noTabError(tabId) };
     }
 
-    return {
-      status: "tab",
-      tab: createTabDetails(contents, { active: this.isActiveTab(contents) }),
-    };
+    return { status: "tab", tab: this.describeTab(contents) };
+  }
+
+  private describeTab(contents: WebContents) {
+    return createTabDetails(contents, {
+      active: this.isActiveTab(contents),
+      windowId: this.getWindowId(contents),
+    });
   }
 
   private isListedSession(session: Session) {

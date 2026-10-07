@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { OnBeforeSendHeadersListenerDetails, Session, WebContents } from "electron";
 import { ExtensionBridge } from "../bridge/bridge";
 import { getExtensionBridgeUrl } from "../bridge/protocol";
+import { MAIN_WINDOW_ID, WINDOW_ID_CURRENT } from "../windows/bridge-protocol";
 import {
   noTabError,
   type RuntimeProxyTab,
@@ -121,11 +122,12 @@ const WORKER_PAGE_URL = "https://127.0.0.1/worker-page";
 
 type Harness = {
   isActiveTab?: (contents: WebContents) => boolean;
+  getWindowId?: (contents: WebContents) => number;
   /** Whether the shimmed session ever adopted the content-script-only role. */
   isShimmed?: boolean;
 };
 
-function createHarness({ isActiveTab, isShimmed = true }: Harness = {}) {
+function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness = {}) {
   const workerSession = createFakeSession();
 
   const shimSession = createFakeSession();
@@ -167,6 +169,7 @@ function createHarness({ isActiveTab, isShimmed = true }: Harness = {}) {
     isActiveTab,
     getAllWebContents: () => allContents,
     getWebContentsById: (tabId) => allContents.find((contents) => contents.id === tabId),
+    getWindowId,
   });
 
   workerTabs.registerRoutes(bridge);
@@ -262,7 +265,7 @@ describe("tabs.query from the worker", () => {
       id: 7,
       url: PAGE_URL,
       title: "A page",
-      windowId: -1,
+      windowId: MAIN_WINDOW_ID,
       index: -1,
       active: false,
       highlighted: false,
@@ -331,27 +334,54 @@ describe("tabs.query from the worker", () => {
   });
 
   /*
-   * Everything Electron's own query ignores is ignored here too, so an
-   * extension gets one answer whichever session it asks from. There is one
-   * window in the facade's model anyway — `windows` answers a single fake
-   * window — so a window filter has nothing to narrow.
+   * Everything Electron's own query ignores is ignored here too, rather than
+   * filtering everything out on a key nothing here can answer.
    */
   test("ignores the keys Electron ignores rather than answering nothing", async () => {
     const { query } = createHarness();
 
-    expect(
-      tabIds(
-        await query({
-          windowId: 42,
-          currentWindow: true,
-          lastFocusedWindow: true,
-          index: 3,
-          pinned: true,
-          status: "loading",
-          groupId: 7,
-        }),
-      ),
-    ).toEqual([7, 8, 9]);
+    expect(tabIds(await query({ index: 3, pinned: true, status: "loading", groupId: 7 }))).toEqual([
+      7, 8, 9,
+    ]);
+  });
+
+  test("puts every page in the main window while no extension window is open", async () => {
+    const { query } = createHarness();
+
+    expect(tabIds(await query({ currentWindow: true, lastFocusedWindow: true }))).toEqual([
+      7, 8, 9,
+    ]);
+
+    expect(tabIds(await query({ windowId: MAIN_WINDOW_ID }))).toEqual([7, 8, 9]);
+
+    expect(tabIds(await query({ windowId: 42 }))).toEqual([]);
+  });
+
+  /*
+   * An extension window's page is found by its own window id — which is how a
+   * popout is closed, by the `windowId` of the tab its URL matched — and is
+   * never in the current window, which is the main window for every caller:
+   * a popout stands in for Chrome's toolbar popup, whose current window is the
+   * browser window under it.
+   */
+  test("finds an extension window's page by its window, and keeps it out of the current one", async () => {
+    const { query } = createHarness({
+      getWindowId: (contents) => (contents.id === 9 ? 2 : MAIN_WINDOW_ID),
+    });
+
+    const [workerPage] = await query({ url: WORKER_PAGE_URL });
+
+    expect(workerPage?.windowId).toBe(2);
+
+    expect(tabIds(await query({ windowId: 2 }))).toEqual([9]);
+
+    expect(tabIds(await query({ currentWindow: true }))).toEqual([7, 8]);
+
+    expect(tabIds(await query({ windowId: WINDOW_ID_CURRENT }))).toEqual([7, 8]);
+
+    expect(tabIds(await query({ lastFocusedWindow: true }))).toEqual([7, 8]);
+
+    expect(tabIds(await query({ currentWindow: false }))).toEqual([9]);
   });
 
   test("a queryInfo that is no object at all filters nothing", async () => {
