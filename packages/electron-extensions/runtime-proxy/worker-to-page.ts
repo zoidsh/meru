@@ -273,11 +273,29 @@ export class WorkerToPage {
     };
   }
 
-  deliverToContexts(contexts: PageContext[], message: unknown, sender: RuntimeProxySender) {
-    return firstReply(contexts.map((context) => this.deliverToContext(context, message, sender)));
+  /**
+   * `isBesideWorker` is for a delivery the worker gets as well. A listener
+   * there that keeps the channel open and never answers is the extension's own
+   * choice, and the worker's answer, or its own timeout, settles the call, so
+   * the silence is logged at debug rather than as the relay's failure.
+   */
+  deliverToContexts(
+    contexts: PageContext[],
+    message: unknown,
+    sender: RuntimeProxySender,
+    { isBesideWorker = false } = {},
+  ) {
+    return firstReply(
+      contexts.map((context) => this.deliverToContext(context, message, sender, isBesideWorker)),
+    );
   }
 
-  private deliverToContext(context: PageContext, message: unknown, sender: RuntimeProxySender) {
+  private deliverToContext(
+    context: PageContext,
+    message: unknown,
+    sender: RuntimeProxySender,
+    isBesideWorker: boolean,
+  ) {
     return new Promise<RuntimeProxySendMessageResult>((resolve) => {
       const deliveryId = randomUUID();
 
@@ -289,10 +307,10 @@ export class WorkerToPage {
         settle: resolve,
         isSettled: false,
         timer: setTimeout(() => {
-          this.logger?.error("A shimmed context never answered a relayed message", {
-            extensionId: context.extensionId,
-            url: context.url,
-          });
+          this.logger?.[isBesideWorker ? "debug" : "error"](
+            "A shimmed context never answered a relayed message",
+            { extensionId: context.extensionId, url: context.url },
+          );
 
           this.settleDelivery(delivery, { status: "closed" });
         }, this.deliveryTimeoutMs),

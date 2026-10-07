@@ -133,11 +133,17 @@ export function createPageStreamClient({
    * This context's end of a port the worker opened. Its posts take the same
    * route a port this context opened itself takes, since the relay keeps both
    * kinds as one record and tells them apart by the transport, not the caller.
+   * A post names this context, which is how a page of the worker's session
+   * answers on a port a content script opened to it beside the worker.
    */
   const createPort = (portId: string, name: string | undefined) => {
     const transport: RelayedPortTransport = {
       async post(message: unknown) {
-        const response = await postBridge(RUNTIME_PROXY_PATHS.portPost, { portId, message });
+        const response = await postBridge(RUNTIME_PROXY_PATHS.portPost, {
+          portId,
+          contextId,
+          message,
+        });
 
         if (!response.ok) {
           throw new Error(bridgeAnsweredError(response.status));

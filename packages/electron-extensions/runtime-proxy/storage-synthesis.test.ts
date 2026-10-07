@@ -504,19 +504,105 @@ describe("installStorageSynthesis", () => {
   });
 });
 
-describe("installStorageSynthesis's dispatch", () => {
-  test("hands a change the shadowed writes never saw to the same listeners", () => {
+describe("installStorageSynthesis's dispatchReported", () => {
+  /** A write by a page in the worker's session, which only the store sees. */
+  function writeAsPage(area: ChromeNamespace, key: string, value: unknown) {
+    (area.store as Map<string, unknown>).set(key, value);
+  }
+
+  test("hands a change the shadowed writes never saw to the same listeners", async () => {
     const api = createWorkerApi();
 
-    const { dispatch } = installStorageSynthesis([api.extensionApi]);
+    const { dispatchReported } = installStorageSynthesis([api.extensionApi]);
 
     const heard = listen(api);
 
-    dispatch("local", { unlocked: { newValue: true } });
+    writeAsPage(api.local, "unlocked", true);
+
+    await dispatchReported("local", { unlocked: { newValue: true } });
 
     expect(heard).toEqual([
       { event: "area", changes: { unlocked: { newValue: true } } },
       { event: "topLevel", changes: { unlocked: { newValue: true } }, areaName: "local" },
+    ]);
+  });
+
+  test("drops a report that arrives after a later write here to the same key", async () => {
+    const api = createWorkerApi();
+
+    const { dispatchReported } = installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    writeAsPage(api.local, "userKey", "v1");
+
+    await call(api.local, "set", { userKey: "v2" });
+
+    await dispatchReported("local", { userKey: { newValue: "v1" }, other: { newValue: 1 } });
+
+    expect(api.local.store).toEqual(new Map([["userKey", "v2"]]));
+
+    expect(heard.filter(({ event }) => event === "area").map(({ changes }) => changes)).toEqual([
+      { userKey: { oldValue: "v1", newValue: "v2" } },
+    ]);
+  });
+
+  test("keeps the keys a report is still current for", async () => {
+    const api = createWorkerApi();
+
+    const { dispatchReported } = installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    writeAsPage(api.local, "userKey", "v1");
+
+    writeAsPage(api.local, "cipher", "c1");
+
+    await call(api.local, "set", { userKey: "v2" });
+
+    await dispatchReported("local", {
+      userKey: { newValue: "v1" },
+      cipher: { newValue: "c1" },
+    });
+
+    expect(heard.filter(({ event }) => event === "area").map(({ changes }) => changes)).toEqual([
+      { userKey: { oldValue: "v1", newValue: "v2" } },
+      { cipher: { newValue: "c1" } },
+    ]);
+  });
+
+  test("dispatches a report for a removed key the store still lacks", async () => {
+    const api = createWorkerApi();
+
+    const { dispatchReported } = installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    await dispatchReported("local", { userKey: { oldValue: "v1" } });
+
+    expect(heard.filter(({ event }) => event === "area").map(({ changes }) => changes)).toEqual([
+      { userKey: { oldValue: "v1" } },
+    ]);
+  });
+
+  test("dispatches a report after the writes issued ahead of it", async () => {
+    const api = createWorkerApi();
+
+    const { dispatchReported } = installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    const written = call(api.local, "set", { userKey: "v2" });
+
+    writeAsPage(api.local, "cipher", "c1");
+
+    const reported = dispatchReported("local", { cipher: { newValue: "c1" } });
+
+    await Promise.all([written, reported]);
+
+    expect(heard.filter(({ event }) => event === "area").map(({ changes }) => changes)).toEqual([
+      { userKey: { newValue: "v2" } },
+      { cipher: { newValue: "c1" } },
     ]);
   });
 });
