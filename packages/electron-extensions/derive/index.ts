@@ -4,6 +4,7 @@ import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_MANIFEST_GLOBAL,
   RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
@@ -84,6 +85,12 @@ export type DeriveExtensionOptions = {
    * extension without a `manifest.key` declares none.
    */
   getDeclaredContentScripts?: (extensionId: string) => DeclaredContentScript[] | undefined;
+  /**
+   * Values the worker copy's relay writes into `chrome.storage.local` for every
+   * key the store does not hold, asked for by the id the copy will be loaded
+   * as.
+   */
+  getLocalStorageDefaults?: (extensionId: string) => Record<string, unknown> | undefined;
   /**
    * Derives the copy for its part in one shared instance across sessions.
    * Without it the copy carries no proxy script and keeps its worker — the
@@ -327,6 +334,7 @@ export async function deriveExtension({
   getContentScriptMatches,
   synthesizesStorageChanges,
   getDeclaredContentScripts,
+  getLocalStorageDefaults,
   sharedInstance,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
@@ -438,6 +446,9 @@ export async function deriveExtension({
     isWorkerCopy && extensionId && synthesizesStorageChanges?.(extensionId),
   );
 
+  const localStorageDefaults =
+    isWorkerCopy && extensionId ? getLocalStorageDefaults?.(extensionId) : undefined;
+
   await writeTokenCarryingScript(
     FACADE_FILE_NAME,
     facadeScriptPath,
@@ -449,6 +460,9 @@ export async function deriveExtension({
   if (sharedInstance?.role === "worker") {
     await writeTokenCarryingScript(RUNTIME_PROXY_RELAY_FILE_NAME, sharedInstance.relayScriptPath, {
       ...(synthesizes ? { [RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]: true } : {}),
+      ...(localStorageDefaults
+        ? { [RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL]: localStorageDefaults }
+        : {}),
       ...(declaredContentScripts && declaredContentScripts.length > 0
         ? {
             [RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL]: deriveStaticContentScripts({

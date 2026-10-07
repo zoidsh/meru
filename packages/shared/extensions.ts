@@ -99,6 +99,18 @@ export type CuratedExtension = {
    */
   declaredContentScripts?: DeclaredContentScript[];
   /**
+   * Values written into the extension's `chrome.storage.local` for any key it
+   * holds no value for, each time its service worker starts. For a setting an
+   * extension keeps in storage whose default Meru needs to differ from the
+   * extension's own, without touching its code: a value the user chose is a
+   * value the key holds, so it is never written over.
+   *
+   * The keys and the shape of the values are the extension's private storage
+   * format, which an update can change without notice, so an entry here is
+   * checked against each new version the way its content scripts are.
+   */
+  localStorageDefaults?: Record<string, unknown>;
+  /**
    * Error lines the extension's service worker writes that say nothing an
    * embedder can act on, as prefixes matched against the start of the message.
    * The worker's console is forwarded to Meru's log, and a line named here

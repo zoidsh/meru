@@ -55,6 +55,13 @@ export const RUNTIME_PROXY_MANIFEST_GLOBAL = "__meruRuntimeProxyManifest";
 export const RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL = "__meruRuntimeProxySynthesizeStorageChanges";
 
 /**
+ * Set on the relay's own script, by the derive, for an extension the embedder
+ * gave `chrome.storage.local` defaults: the keys and the values the relay
+ * writes for whichever of them the store does not hold (`storage-defaults.ts`).
+ */
+export const RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL = "__meruRuntimeProxyLocalStorageDefaults";
+
+/**
  * Set on the worker copy's facade, by the derive, for the same extensions as
  * the synthesis global: their extension pages in the worker's session report
  * their own storage writes to the worker (`page-storage-writes.ts`). The

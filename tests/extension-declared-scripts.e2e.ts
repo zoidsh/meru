@@ -1,6 +1,7 @@
 /*
- * Declared content scripts and the worker's `executeScript` answer,
- * exercised through the checked-in fixture extension (`packages/electron-extensions/fixture`), which the app
+ * Declared content scripts, the worker's `executeScript` answer and the
+ * catalog's `chrome.storage.local` defaults, exercised through the checked-in
+ * fixture extension (`packages/electron-extensions/fixture`), which the app
  * hands the declarations a catalog entry would (`fixture/catalog.ts`).
  *
  * A worker's `executeScript` into an account's tab can never inject anything:
@@ -287,4 +288,19 @@ test("the worker's executeScript into an account's tab is answered for declared 
     frameIds: null,
     lastError: `No tab with id: ${pageId}`,
   });
+});
+
+test("the worker's store starts with the catalog's defaults", async () => {
+  const popupId = await openWindow(null, POPUP_URL);
+
+  await expect
+    .poll(() =>
+      evaluateInFrame(
+        popupId,
+        `new Promise((resolve) => {
+          chrome.storage.local.get("seededDefault", (items) => resolve(items.seededDefault ?? null));
+        })`,
+      ),
+    )
+    .toBe("from the catalog");
 });

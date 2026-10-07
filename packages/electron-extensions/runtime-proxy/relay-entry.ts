@@ -1,5 +1,6 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_RELAY_START_GLOBAL,
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
@@ -7,6 +8,7 @@ import {
 } from "./bridge-protocol";
 import { createDynamicUrlRewrite } from "./dynamic-url";
 import { createRelayClient } from "./relay-client";
+import { seedLocalStorageDefaults } from "./storage-defaults";
 import { createStorageRelay } from "./storage-relay";
 import { installStorageSynthesis } from "./storage-synthesis";
 import { wrapScripting } from "./worker-scripting";
@@ -78,6 +80,18 @@ if (workerGlobals[RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]) {
 // And before its boot-time writes, so a change made while the worker is still
 // evaluating reaches whichever contexts are already listening
 storageRelay.watchChanges();
+
+// After synthesis and the relay's listener, so a default written here reaches
+// the extension and the other sessions as any other change would
+const localStorageDefaults = (workerGlobals as unknown as Record<string, unknown>)[
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL
+] as Record<string, unknown> | undefined;
+
+if (localStorageDefaults) {
+  for (const extensionApi of extensionApis) {
+    void seedLocalStorageDefaults(extensionApi, localStorageDefaults);
+  }
+}
 
 /*
  * The stream is parked by the derived wrapper, as the last thing it does,

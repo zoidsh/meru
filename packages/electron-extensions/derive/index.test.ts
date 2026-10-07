@@ -16,6 +16,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_MANIFEST_GLOBAL,
   RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
@@ -624,6 +625,26 @@ describe("deriveExtension for a shared instance", () => {
     expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).not.toContain(
       RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
     );
+  });
+
+  test("the worker copy's relay carries the extension's storage defaults", async () => {
+    const deriveRelay = async (defaults: Record<string, unknown> | undefined) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        getLocalStorageDefaults: () => defaults,
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      return readFile(path.join(derivedDir, "chrome-runtime-proxy-relay.js"), "utf8");
+    };
+
+    expect(await deriveRelay({ setting: { on: true } })).toContain(
+      `globalThis.${RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL} = {"setting":{"on":true}};`,
+    );
+
+    expect(await deriveRelay(undefined)).not.toContain(RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL);
   });
 
   test("the content-script-only copy declares the scripts, and derives again when they change", async () => {

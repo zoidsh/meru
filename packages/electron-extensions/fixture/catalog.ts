@@ -28,3 +28,6 @@ export const FIXTURE_DECLARED_CONTENT_SCRIPTS = [
     world: "MAIN" as const,
   },
 ];
+
+/** A key the fixture's worker never writes, so it holds only the default. */
+export const FIXTURE_LOCAL_STORAGE_DEFAULTS = { seededDefault: "from the catalog" };

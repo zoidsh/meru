@@ -140,6 +140,12 @@ export type ExtensionsOptions = {
    */
   getDeclaredContentScripts?: (extensionId: string) => DeclaredContentScript[] | undefined;
   /**
+   * Values an extension's `chrome.storage.local` starts with, by the id it is
+   * loaded as: each is written by the worker's relay whenever the store holds
+   * no value for its key. Only with a shared instance, whose relay writes them.
+   */
+  getLocalStorageDefaults?: (extensionId: string) => Record<string, unknown> | undefined;
+  /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
@@ -244,6 +250,8 @@ export class Extensions {
 
   private getDeclaredContentScripts: ExtensionsOptions["getDeclaredContentScripts"];
 
+  private getLocalStorageDefaults: ExtensionsOptions["getLocalStorageDefaults"];
+
   private sharedInstance: SharedExtensionInstance | undefined;
 
   private workerSessionPagePatterns: string[] | undefined;
@@ -299,6 +307,7 @@ export class Extensions {
     getContentScriptMatches,
     synthesizesStorageChanges,
     getDeclaredContentScripts,
+    getLocalStorageDefaults,
     isNativeMessagingHostAllowed,
     getGrantableOptionalPermissions,
     grantedPermissionsPath,
@@ -324,6 +333,8 @@ export class Extensions {
     this.synthesizesStorageChanges = synthesizesStorageChanges;
 
     this.getDeclaredContentScripts = getDeclaredContentScripts;
+
+    this.getLocalStorageDefaults = getLocalStorageDefaults;
 
     this.sharedInstance = sharedInstance;
 
@@ -396,6 +407,7 @@ export class Extensions {
         getContentScriptMatches: this.getContentScriptMatches,
         synthesizesStorageChanges: this.synthesizesStorageChanges,
         getDeclaredContentScripts: this.getDeclaredContentScripts,
+        getLocalStorageDefaults: this.getLocalStorageDefaults,
         sharedInstance: sharedInstanceDerive,
       });
 
