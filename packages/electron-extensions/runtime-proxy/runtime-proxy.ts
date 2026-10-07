@@ -32,12 +32,15 @@ import {
   isChangeVisibleToUntrustedContext,
   refuseStorageCall,
   STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageAreaName,
   type RuntimeProxyStorageCall,
+  type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
 import {
   isTrustedStorageCaller,
   parseStorageAccessLevelReport,
+  parsePageStorageChangedReport,
   parseStorageCall,
   parseStorageChangedReport,
   StorageAccessLevels,
@@ -388,6 +391,26 @@ export class RuntimeProxy {
 
         if (report) {
           this.fanOutStorageChange(extensionId, report);
+        }
+
+        return new Response(null, { status: 204, headers });
+      },
+    );
+
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.pageStorageChanged,
+      ({ session, extensionId, senderFrame, body, headers }) => {
+        if (
+          session !== this.workerSession ||
+          !senderFrame?.url.startsWith(`${EXTENSION_SCHEME_PREFIX}${extensionId}/`)
+        ) {
+          return new Response(null, { status: 403, headers });
+        }
+
+        const report = parsePageStorageChangedReport(body);
+
+        if (report) {
+          this.sendPageStorageChange(extensionId, report);
         }
 
         return new Response(null, { status: 204, headers });
@@ -852,6 +875,37 @@ export class RuntimeProxy {
     return new Response(stream, {
       headers: { ...headers, "content-type": "application/octet-stream" },
     });
+  }
+
+  /**
+   * Hands a page's change to the worker on its parked stream, outside the job
+   * bookkeeping: there is no reply to wait for, and a change that finds no
+   * stream is dropped rather than queued, because a worker that is not running
+   * reads the store afresh when it starts and so already has it. The worker
+   * acks it like any job, and the ack, naming no job here, is ignored.
+   */
+  private sendPageStorageChange(
+    extensionId: string,
+    { area, changes }: { area: RuntimeProxyStorageAreaName; changes: RuntimeProxyStorageChanges },
+  ) {
+    const stream = this.workerStreams.get(extensionId);
+
+    if (!stream || stream.isClosed) {
+      return;
+    }
+
+    try {
+      stream.controller.enqueue(
+        encodeNativeMessage({
+          type: "storageChanged",
+          jobId: randomUUID(),
+          area,
+          changes,
+        } satisfies RuntimeProxyJob),
+      );
+    } catch {
+      this.invalidateWorkerStream(extensionId);
+    }
   }
 
   private handleWorkerAck(jobId: string) {

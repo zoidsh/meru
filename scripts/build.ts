@@ -379,9 +379,12 @@ function buildAppFiles() {
     return Promise.all([
       buildFixtureScript("background"),
       buildFixtureScript("probe"),
+      buildFixtureScript("declared"),
+      buildFixtureScript("declared-main"),
       copyFixtureFile("manifest.json"),
       copyFixtureFile("popup.html"),
       copyFixtureFile("fixture-frame.html"),
+      copyFixtureFile("stand-in.js"),
       // Chromium substitutes the manifest's `__MSG_*__` names out of these as
       // it loads the copy, which is what the proxy's `getManifest` overlay is
       // held against

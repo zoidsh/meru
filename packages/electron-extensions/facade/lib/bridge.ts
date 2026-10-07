@@ -9,7 +9,11 @@ import { EXTENSION_BRIDGE_TOKEN_GLOBAL, getExtensionBridgeUrl } from "../../brid
  * refuse an unknown one without reading the body at all; see
  * `EXTENSION_BRIDGE_TOKEN_PARAM`.
  */
-export function postBridge(pathName: string, body: Record<string, unknown>) {
+export function postBridge(
+  pathName: string,
+  body: Record<string, unknown>,
+  rewriteBody: (serializedBody: string) => string = (serializedBody) => serializedBody,
+) {
   const bridgeToken =
     (globalThis as unknown as Record<string, string | undefined>)[EXTENSION_BRIDGE_TOKEN_GLOBAL] ??
     "";
@@ -18,6 +22,6 @@ export function postBridge(pathName: string, body: Record<string, unknown>) {
     method: "POST",
     // A safelisted content type keeps this a simple request, so no preflight
     headers: { "content-type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(body),
+    body: rewriteBody(JSON.stringify(body)),
   });
 }

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { WebFrameMain } from "electron";
 import {
   isTrustedStorageCaller,
+  parsePageStorageChangedReport,
   parseStorageAccessLevelReport,
   parseStorageCall,
   parseStorageChangedReport,
@@ -176,6 +177,31 @@ describe("parseStorageChangedReport", () => {
       { area: "local", changes: CHANGES, accessLevel: "SOMETHING_ELSE" },
     ]) {
       expect(parseStorageChangedReport(report)).toBeUndefined();
+    }
+  });
+});
+
+describe("parsePageStorageChangedReport", () => {
+  const CHANGES = { userKey: { newValue: "key" } };
+
+  test("takes an area and its changes, which is all a page's report carries", () => {
+    expect(parsePageStorageChangedReport({ area: "session", changes: CHANGES })).toEqual({
+      area: "session",
+      changes: CHANGES,
+    });
+  });
+
+  test("refuses anything it could not act on", () => {
+    for (const report of [
+      undefined,
+      null,
+      { changes: CHANGES },
+      { area: "somewhere-else", changes: CHANGES },
+      { area: "local" },
+      { area: "local", changes: [] },
+      { area: "local", changes: "not an object" },
+    ]) {
+      expect(parsePageStorageChangedReport(report)).toBeUndefined();
     }
   });
 });

@@ -374,6 +374,122 @@ describe("deriveManifest for a shared instance", () => {
     ]);
   });
 
+  test("a MAIN-world entry runs without the shim, which has nothing to stand in for there", () => {
+    const { manifest } = deriveManifest(
+      {
+        content_scripts: [
+          { matches: ["https://*/*"], js: ["isolated.js"] },
+          { matches: ["https://*/*"], js: ["page.js"], world: "MAIN" },
+          { matches: ["https://*/*"], js: ["explicit.js"], world: "ISOLATED" },
+        ],
+      },
+      { ...fileNames, sharedInstance: contentScriptOnlyOptions },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://*/*"], js: ["chrome-runtime-proxy-shim.js", "isolated.js"] },
+      { matches: ["https://*/*"], js: ["page.js"], world: "MAIN" },
+      {
+        matches: ["https://*/*"],
+        js: ["chrome-runtime-proxy-shim.js", "explicit.js"],
+        world: "ISOLATED",
+      },
+    ]);
+  });
+
+  test("the content-script-only copy declares the embedder's scripts after its own", () => {
+    const { manifest } = deriveManifest(
+      { content_scripts: [{ matches: ["*://*/*"], js: ["trigger.js"] }] },
+      {
+        ...fileNames,
+        contentScriptMatches: ["https://accounts.google.com/*"],
+        declaredContentScripts: [
+          {
+            js: ["bootstrap.js", "handler.js"],
+            matches: ["*://*/*"],
+            excludeMatches: ["*://*/*.xml*"],
+            runAt: "document_start",
+            allFrames: true,
+            standsInFor: ["bootstrap-lite.js"],
+          },
+          {
+            js: ["page-script.js"],
+            matches: ["https://*/*"],
+            runAt: "document_start",
+            allFrames: true,
+            world: "MAIN",
+          },
+          { js: ["elsewhere.js"], matches: ["https://example.com/*"] },
+        ],
+        sharedInstance: contentScriptOnlyOptions,
+      },
+    );
+
+    // Clamped like the extension's own, shimmed in the isolated world only,
+    // and gone where the clamp leaves them no site
+    expect(manifest.content_scripts).toEqual([
+      {
+        matches: ["https://accounts.google.com/*"],
+        js: ["chrome-runtime-proxy-shim.js", "trigger.js"],
+      },
+      {
+        matches: ["https://accounts.google.com/*"],
+        exclude_matches: ["*://*/*.xml*"],
+        js: ["chrome-runtime-proxy-shim.js", "bootstrap.js", "handler.js"],
+        run_at: "document_start",
+        all_frames: true,
+      },
+      {
+        matches: ["https://accounts.google.com/*"],
+        js: ["page-script.js"],
+        run_at: "document_start",
+        all_frames: true,
+        world: "MAIN",
+      },
+    ]);
+  });
+
+  test("a declared script without run-at or frames runs as a manifest entry would", () => {
+    const { manifest } = deriveManifest(
+      {},
+      {
+        ...fileNames,
+        declaredContentScripts: [{ js: ["declared.js"], matches: ["http://127.0.0.1/*"] }],
+        sharedInstance: contentScriptOnlyOptions,
+      },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      {
+        matches: ["http://127.0.0.1/*"],
+        js: ["chrome-runtime-proxy-shim.js", "declared.js"],
+        run_at: "document_idle",
+        all_frames: false,
+      },
+    ]);
+  });
+
+  test("the worker copy and the ordinary one declare nothing extra", () => {
+    const declaredContentScripts = [{ js: ["declared.js"], matches: ["https://*/*"] }];
+
+    const manifest = {
+      background: { service_worker: "background.js" },
+      content_scripts: [{ matches: ["https://*/*"], js: ["content.js"] }],
+    };
+
+    expect(
+      deriveManifest(manifest, {
+        ...fileNames,
+        declaredContentScripts,
+        sharedInstance: workerOptions,
+      }).manifest.content_scripts,
+    ).toEqual(manifest.content_scripts);
+
+    expect(
+      deriveManifest(manifest, { ...fileNames, declaredContentScripts }).manifest.content_scripts,
+    ).toEqual(manifest.content_scripts);
+  });
+
   test("refuses a pattern making the token-carrying shim fetchable by pages", () => {
     expect(() =>
       deriveManifest(

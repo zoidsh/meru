@@ -1134,6 +1134,113 @@ describe("RuntimeProxy storage", () => {
     });
   });
 
+  test("hands a write an extension page of the worker session made to the worker", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    const response = await harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.pageStorageChanged,
+      WORKER_TOKEN,
+      { area: "session", changes: { userKey: { newValue: "key" } } },
+      createExtensionPageFrame(),
+    );
+
+    expect(response.status).toBe(204);
+
+    const [job] = await stream.waitForJobs(1);
+
+    expect(job).toEqual({
+      type: "storageChanged",
+      jobId: expect.any(String),
+      area: "session",
+      changes: { userKey: { newValue: "key" } },
+    });
+
+    // An event rather than a call: the worker's ack names no job here, and
+    // nothing waits on a reply
+    await harness.ackJob((job as { jobId: string }).jobId);
+  });
+
+  test("drops a page's write when no worker is running to hear it, without waking one", async () => {
+    const harness = createHarness();
+
+    const response = await harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.pageStorageChanged,
+      WORKER_TOKEN,
+      { area: "local", changes: { cipher: { newValue: 1 } } },
+      createExtensionPageFrame(),
+    );
+
+    expect(response.status).toBe(204);
+
+    expect(harness.workerSession.workerStarts).toEqual([]);
+
+    // A worker that starts later reads the store afresh, so nothing is owed it
+    const stream = await harness.openWorkerStream();
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(stream.jobs).toEqual([]);
+  });
+
+  test("takes a page's write only from an extension page of the worker session", async () => {
+    const harness = createHarness();
+
+    const stream = await harness.openWorkerStream();
+
+    const body = { area: "local", changes: { cipher: { newValue: 1 } } };
+
+    expect(
+      (
+        await harness.shimSession.request(
+          RUNTIME_PROXY_PATHS.pageStorageChanged,
+          SHIM_TOKEN,
+          body,
+          createExtensionPageFrame(),
+        )
+      ).status,
+    ).toBe(403);
+
+    // A content script of the worker session's own copy is no extension page
+    expect(
+      (
+        await harness.workerSession.request(
+          RUNTIME_PROXY_PATHS.pageStorageChanged,
+          WORKER_TOKEN,
+          body,
+          createPage(harness.workerSession.session).frame,
+        )
+      ).status,
+    ).toBe(403);
+
+    expect(
+      (
+        await harness.workerSession.request(
+          RUNTIME_PROXY_PATHS.pageStorageChanged,
+          WORKER_TOKEN,
+          body,
+        )
+      ).status,
+    ).toBe(403);
+
+    // A malformed report is acknowledged and goes nowhere
+    expect(
+      (
+        await harness.workerSession.request(
+          RUNTIME_PROXY_PATHS.pageStorageChanged,
+          WORKER_TOKEN,
+          { area: "elsewhere", changes: {} },
+          createExtensionPageFrame(),
+        )
+      ).status,
+    ).toBe(204);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(stream.jobs).toEqual([]);
+  });
+
   test("wakes a stopped worker for a storage call, like any other job", async () => {
     const harness = createHarness();
 
