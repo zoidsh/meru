@@ -19,7 +19,27 @@ export const WINDOWS_PATHS = {
   create: "/windows/create",
   remove: "/windows/remove",
   get: "/windows/get",
+  events: "/windows/events",
 } as const;
+
+/**
+ * The window every page outside the windows the embedder opened is in: the
+ * fake window the facade answers with, and the `windowId` of every tab that is
+ * not an extension window's own page. An embedder's own windows are none of an
+ * extension's business (see above), so they are all this one.
+ */
+export const MAIN_WINDOW_ID = 1;
+
+/** Chrome's `windows.WINDOW_ID_CURRENT`, which names the caller's own window. */
+export const WINDOW_ID_CURRENT = -2;
+
+/**
+ * Set in the facade of an extension the embedder opens windows for, which is
+ * what turns on the parts of `chrome.windows` and `chrome.tabs` that only make
+ * sense once it has windows of its own: `onRemoved`, and a page's `tabs.query`
+ * and `tabs.get` answered from main (`facade/api/page-tabs.ts`).
+ */
+export const OPENS_EXTENSION_WINDOWS_GLOBAL = "__meruOpensExtensionWindows";
 
 /** What the extension handed to `create`, taken as untrusted. */
 export type WindowsCreateData = {
@@ -49,6 +69,16 @@ export type WindowsWindow = {
   width: number;
   height: number;
   tabs: [];
+};
+
+/**
+ * Frames on the events response body, in the length-prefixed framing alarms
+ * use (`alarms/bridge-protocol.ts`). Only one kind so far: a window the
+ * embedder opened for the extension is gone, however it went.
+ */
+export type WindowsEventFrame = {
+  type: "removed";
+  windowId: number;
 };
 
 /** What `create` and `get` answer with. */

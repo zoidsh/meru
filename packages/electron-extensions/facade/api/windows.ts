@@ -1,16 +1,23 @@
-import { WINDOWS_PATHS, type WindowsWindowResponse } from "../../windows/bridge-protocol";
+import {
+  MAIN_WINDOW_ID,
+  WINDOWS_PATHS,
+  type WindowsEventFrame,
+  type WindowsWindowResponse,
+} from "../../windows/bridge-protocol";
 import { postBridge } from "../lib/bridge";
-import type { ChromeNamespace } from "../lib/chrome";
-import { createNoopEvent } from "../lib/event";
+import type { ChromeEventListener, ChromeNamespace } from "../lib/chrome";
+import { createEvent, createNoopEvent } from "../lib/event";
+import { createEventStream } from "../lib/event-stream";
 import { createBridgedMethod, createNoopMethod } from "../lib/method";
 
 /**
  * The one window every query the embedder does not serve answers with. An
  * extension only needs a stable id that is neither `WINDOW_ID_NONE` nor
  * `WINDOW_ID_CURRENT`; the ids the main process hands out for windows it really
- * opened start past it (`windows/windows.ts`).
+ * opened start past it (`windows/windows.ts`). It is also the `windowId` of
+ * every tab not in one of those (`runtime-proxy/worker-tabs.ts`).
  */
-const WINDOW_ID = 1;
+const WINDOW_ID = MAIN_WINDOW_ID;
 
 function createWindow() {
   return {
@@ -47,6 +54,40 @@ async function postWindows(pathName: string, body: Record<string, unknown>) {
   }
 }
 
+/**
+ * `onRemoved`, fired for the windows main opened for the extension when they
+ * close, however they close. The stream it rides is parked by the first
+ * listener, so a context that never listens never opens one.
+ *
+ * Chrome fires it for every window, and nothing here is a window an extension
+ * could tell apart but these. It is what a password manager's worker ends a
+ * request on when the user closes the popout it opened for it: Bitwarden's
+ * passkey request otherwise waits out the page's own timeout, two minutes on
+ * the page it was measured on.
+ */
+function createRemovedEvent() {
+  const { emit, addListener, ...removedEvent } = createEvent();
+
+  const listen = createEventStream<WindowsEventFrame>(
+    WINDOWS_PATHS.events,
+    (frame) => {
+      if (frame.type === "removed") {
+        emit(frame.windowId);
+      }
+    },
+    { label: "windows" },
+  );
+
+  return {
+    ...removedEvent,
+    addListener(listener: ChromeEventListener, ...eventOptions: unknown[]) {
+      addListener(listener, ...eventOptions);
+
+      void listen();
+    },
+  };
+}
+
 /** Whether this context is a page, the one kind that is inside a window. */
 function isPageContext() {
   return (globalThis as unknown as Record<string, unknown>).document !== undefined;
@@ -67,8 +108,12 @@ function isPageContext() {
  * `getCurrent` is answered without asking in a service worker, which has no
  * window of its own and is where an extension reads it at boot: the bridge
  * would answer the same fake window a round trip later.
+ *
+ * `onRemoved` fires only for an extension the embedder opens windows for,
+ * `opensExtensionWindows`, there being no window another extension could hear
+ * about.
  */
-export function createWindows(): ChromeNamespace {
+export function createWindows({ opensExtensionWindows = false } = {}): ChromeNamespace {
   return {
     WINDOW_ID_NONE: -1,
     WINDOW_ID_CURRENT: -2,
@@ -118,7 +163,7 @@ export function createWindows(): ChromeNamespace {
     }),
 
     onCreated: createNoopEvent(),
-    onRemoved: createNoopEvent(),
+    onRemoved: opensExtensionWindows ? createRemovedEvent() : createNoopEvent(),
     onFocusChanged: createNoopEvent(),
     onBoundsChanged: createNoopEvent(),
   };

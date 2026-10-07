@@ -681,6 +681,64 @@ test("a message is attributed to the frame that sent it, an embedded extension f
   });
 });
 
+/** What `chrome.tabs.getCurrent` answers in one frame of a page, `undefined` as `null`. */
+async function readCurrentTab(webContentsId: number, frameUrlPrefix?: string) {
+  return meru.app.evaluate(
+    async (
+      { webContents },
+      { webContentsId: contentsId, frameUrlPrefix: urlPrefix },
+    ): Promise<{ id: number; url: string } | null | "no frame"> => {
+      const contents = webContents.fromId(contentsId);
+
+      const frame = urlPrefix
+        ? contents?.mainFrame.frames.find((candidate) => candidate.url.startsWith(urlPrefix))
+        : contents?.mainFrame;
+
+      if (!frame) {
+        return "no frame";
+      }
+
+      return frame.executeJavaScript(
+        "chrome.tabs.getCurrent().then((tab) => (tab ? { id: tab.id, url: tab.url } : null))",
+      ) as Promise<{ id: number; url: string } | null>;
+    },
+    { webContentsId, frameUrlPrefix },
+  );
+}
+
+/*
+ * Chrome answers `tabs.getCurrent` with the tab an extension frame is embedded
+ * in — Bitwarden's inline menu is such a frame — and with nothing for a
+ * top-level extension page, which the toolbar popup is.
+ */
+test("tabs.getCurrent answers an embedded extension frame's host tab, and nothing for a top-level page", async () => {
+  const frameHostUrl = `${serverOrigin}/frame`;
+
+  const frameHostId = await openProbeWindow(SURVIVING_PARTITION, frameHostUrl);
+
+  const embeddedFrameUrl = `chrome-extension://${FIXTURE_EXTENSION_ID}/fixture-frame.html`;
+
+  // Wait for the frame to have run, so its `chrome` is the one the facade completed
+  await readProbeResults(frameHostId, embeddedFrameUrl);
+
+  expect(await readCurrentTab(frameHostId, embeddedFrameUrl)).toEqual({
+    id: frameHostId,
+    url: frameHostUrl,
+  });
+
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("current-tab"));
+
+  await readProbeResults(shimPopupId);
+
+  expect(await readCurrentTab(shimPopupId)).toBeNull();
+
+  const workerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("current-tab-worker"));
+
+  await readProbeResults(workerPopupId);
+
+  expect(await readCurrentTab(workerPopupId)).toBeNull();
+});
+
 /*
  * The relay shape 1Password's `get-nested-frame-configuration` and
  * `remove-inline-button` requests have, and the one nothing else here covered:
