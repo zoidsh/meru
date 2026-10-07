@@ -280,6 +280,7 @@ export class NavigationEvents {
    * starts another: what loads in them is Chromium's error page. Kept outside
    * a page's attachment, which a change of listened events replaces, so a
    * failure recorded before the change still holds back the load after it.
+   * Dropped whenever nothing listens, since no start is seen to clear it then.
    */
   private failedFrameIdsByContents = new WeakMap<WebContents, Set<number>>();
 
@@ -481,6 +482,10 @@ export class NavigationEvents {
     this.detachAll();
 
     this.attachedEvents = new Set();
+
+    // With nothing attached, no start clears a failure, so a page navigated
+    // since would keep one recorded against a load that has since succeeded
+    this.failedFrameIdsByContents = new WeakMap();
 
     this.logger?.info("Stopped delivering navigation events", {});
   }

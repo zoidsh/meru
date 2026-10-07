@@ -691,6 +691,52 @@ describe("NavigationEvents for a navigation that fails", () => {
    * the events main listens for and so re-attaches every page — between the
    * failure and the error page's load.
    */
+  /*
+   * A login fails, the worker stops, and the retry starts while nothing is
+   * attached. The retry's content script then starts the worker again, which
+   * re-attaches while the load is in flight: the old failure must not hold
+   * back the successful page's `onCompleted`.
+   */
+  test("forgets a failure once nothing listens", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const first = await listen({
+      listened: { onCompleted: null, onErrorOccurred: null },
+      streamId: "first",
+    });
+
+    page.emitter.emit(
+      "did-fail-load",
+      {},
+      -102,
+      "ERR_CONNECTION_REFUSED",
+      "https://accounts.google.com/login",
+      true,
+      7,
+      1,
+    );
+
+    await first.cancel();
+
+    await settle();
+
+    page.emitter.emit("did-start-navigation", {
+      url: "https://accounts.google.com/login",
+      isSameDocument: false,
+      frame: page.mainFrame,
+    });
+
+    const second = await listen({ listened: { onCompleted: null }, streamId: "second" });
+
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+
+    await settle();
+
+    expect(second.frames.map(({ type }) => type)).toEqual(["onCompleted"]);
+  });
+
   test("keeps a failure across a change of the events listened to", async () => {
     const page = createPage(12, ACCOUNT_SESSION);
 
