@@ -147,7 +147,36 @@ test("closing the popout rejects the request instead of falling back", async () 
   await closePage(pageId);
 });
 
-test("a popout the extension closes itself leaves the fallback in place", async () => {
+/*
+ * The page's own `window.close()` reaches the main process the way the user's
+ * close does, and nothing tells the two apart. Bitwarden's popout buttons close
+ * it this way after sending their own answer.
+ */
+test("a popout closing itself with window.close() counts as the user's close", async () => {
+  const pageId = await openAccountPage();
+
+  await sendFallbackRequest(pageId);
+
+  const popoutId = await findPopoutId();
+
+  await runInPage(popoutId, "setTimeout(() => window.close(), 50); null");
+
+  await expect.poll(() => readFallbackReply(pageId)).not.toBeNull();
+
+  expect(await readFallbackReply(pageId)).toEqual({
+    error: FIXTURE_WINDOW_CLOSE_FALLBACK_REJECTION.error,
+  });
+
+  await closePage(pageId);
+});
+
+/*
+ * A generic guarantee rather than a Bitwarden flow: whatever an extension
+ * closes through `windows.remove` is its own doing, so its fallback stands.
+ * Bitwarden's worker closes its passkey popout this way after the popout asks
+ * for the user's device or security key.
+ */
+test("a window the extension removes through chrome.windows leaves the fallback in place", async () => {
   const pageId = await openAccountPage();
 
   await sendFallbackRequest(pageId);

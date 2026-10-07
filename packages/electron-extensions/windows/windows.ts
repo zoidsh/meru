@@ -78,7 +78,8 @@ export type ExtensionWindowsWatcher = {
   opened: (extensionId: string, windowId: number) => void;
   /**
    * A window that closed other than through the extension's own `remove` or
-   * an unload: the user closing it, or the app quitting.
+   * an unload: the user closing it, its page calling `window.close()`, or the
+   * app quitting.
    */
   closedByUser: (extensionId: string, windowId: number) => void;
 };

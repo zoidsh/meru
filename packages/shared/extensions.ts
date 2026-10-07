@@ -253,11 +253,19 @@ export const curatedExtensions: CuratedExtension[] = [
     localStorageDefaults: {
       global_autofillSettingsLocal_inlineMenuVisibility: { __json__: true, value: "2" },
     },
-    // Its worker answers a passkey request whose popout the user closed with
-    // its `FallbackRequestedError` spread into the reply. Its page script falls
-    // back to native WebAuthn on `fallbackRequested`, and turns an error named
-    // `NotAllowedError` into the `DOMException` Chrome rejects with when the
-    // user dismisses its own passkey dialog
+    // Its worker hears `windows.onRemoved` for a passkey popout the user closed
+    // and answers the request with its `FallbackRequestedError` spread into
+    // the reply. Its page script falls back to native WebAuthn on
+    // `fallbackRequested`, and turns an error named `NotAllowedError` into the
+    // `DOMException` Chrome rejects with when the user dismisses its own
+    // passkey dialog.
+    //
+    // The popout's own buttons, Cancel among them, send a non-fallback abort
+    // and then close it with `window.close()`, which counts as the user's
+    // close: the abort normally answers first and is left alone, and if the
+    // close wins, a rejection is what a cancel should get anyway. Its "Use
+    // your device or hardware key" menu asks for the fallback, and the worker
+    // then closes the popout with `windows.remove`, which keeps the fallback
     rejectFallbackOnWindowClose: {
       commands: ["fido2RegisterCredentialRequest", "fido2GetCredentialRequest"],
       fallbackMarker: "fallbackRequested",

@@ -40,12 +40,14 @@ export type PendingRequestHandle = object;
  *
  * The reply alone can't say why the fallback was asked for: an extension asks
  * for it the same way when its passkeys are off, when the site is excluded,
- * when only a security key will do and when the user picks another device in
- * the popout, and native is the route that works for each of those. So a reply
- * is rewritten only for a request that saw a window open and then saw the user
- * close that window before the reply came. A window the extension closes
- * itself, which is how a popout goes away after the user picks another device,
- * doesn't count.
+ * when only a security key will do and when the user asks in the popout for
+ * their device or security key, and native is the route that works for each of
+ * those. So a reply is rewritten only for a request that saw a window open and
+ * then saw the user close that window before the reply came. A window the
+ * extension closes through `windows.remove` doesn't count, which is how
+ * Bitwarden's popout goes away after the user asks for their device. A page
+ * closing its own window with `window.close()` does count, since nothing tells
+ * that apart from the user closing it.
  */
 export class WindowCloseFallbackRejections {
   private getRejection: GetWindowCloseFallbackRejection;
