@@ -13,6 +13,7 @@ import {
   type RuntimeProxyConnectRequest,
   type RuntimeProxyConnectResult,
   type RuntimeProxyJob,
+  type RuntimeProxyPageEnvelope,
   type RuntimeProxyPortDisconnectRequest,
   type RuntimeProxyPortFrame,
   type RuntimeProxyPortPostRequest,
@@ -26,6 +27,7 @@ import {
   type RuntimeProxyWorkerReplyRequest,
   type RuntimeProxyWorkerStorageChangedRequest,
 } from "./bridge-protocol";
+import { firstReply } from "./message-dispatch";
 import { type PageContext, PageStreams } from "./page-stream";
 import { type GetWebContentsFromFrame, parseSenderReport, reconstructSender } from "./sender";
 import {
@@ -126,6 +128,12 @@ type ProxyPort = {
   /** The session the far end lives in, whichever side opened the port. */
   shimSession: Session;
   transport: ProxyPortTransport;
+  /**
+   * The page of the worker's session that opened the port with `tabs.connect`,
+   * whose stream the port's traffic from the far end goes to. Absent, that
+   * traffic is the worker's and rides its job stream.
+   */
+  openerContextId?: string;
   isClosed: boolean;
 };
 
@@ -334,7 +342,9 @@ export class RuntimeProxy {
 
       const port = this.getShimPort(session, extensionId, portId);
 
-      if (port) {
+      if (port?.openerContextId !== undefined) {
+        this.sendToOpener(port, { kind: "portMessage", portId, message });
+      } else if (port) {
         this.enqueueJob(
           this.createJob(port.shimSession, extensionId, "portMessage", { portId, message }),
         );
@@ -490,10 +500,11 @@ export class RuntimeProxy {
 
     this.workerTabs.registerRoutes(bridge);
 
-    this.pageStreams.registerRoutes(
-      bridge,
-      (session) => this.workerSession !== undefined && session !== this.workerSession,
-    );
+    this.pageStreams.registerRoutes(bridge, {
+      isShimmedSession: (session) =>
+        this.workerSession !== undefined && session !== this.workerSession,
+      isWorkerSession: (session) => session === this.workerSession,
+    });
   }
 
   /**
@@ -501,6 +512,10 @@ export class RuntimeProxy {
    * target tab. The port record is kept here with every other, so a bound
    * context posting on it and the worker posting back both take the paths the
    * page-opened ports already use.
+   *
+   * A page of the worker's session opens one the same way, naming the context
+   * it parked as, which is where the far end's traffic then goes instead of
+   * the worker.
    */
   private async handleWorkerConnectToTab(
     extensionId: string,
@@ -511,6 +526,21 @@ export class RuntimeProxy {
 
     if (typeof request.portId !== "string" || this.ports.has(request.portId)) {
       return new Response(null, { status: 400, headers });
+    }
+
+    let openerContextId: string | undefined;
+
+    if (request.contextId !== undefined) {
+      const opener =
+        typeof request.contextId === "string"
+          ? this.pageStreams.getContext(request.contextId)
+          : undefined;
+
+      if (!opener || !opener.isInWorkerSession || opener.extensionId !== extensionId) {
+        return new Response(null, { status: 400, headers });
+      }
+
+      openerContextId = opener.contextId;
     }
 
     const resolution = await this.workerToPage.resolveTabTarget(extensionId, request);
@@ -541,8 +571,15 @@ export class RuntimeProxy {
       // the session the first of them is in
       shimSession: firstContext.session,
       transport: { kind: "contexts", contextIds },
+      openerContextId,
       isClosed: false,
     };
+
+    // A page is a document with a URL of its own, which Chrome's sender carries
+    const sender = createWorkerSender(
+      extensionId,
+      openerContextId === undefined ? undefined : request.workerUrl,
+    );
 
     for (const context of resolution.contexts) {
       if (
@@ -550,7 +587,7 @@ export class RuntimeProxy {
           kind: "connect",
           portId: port.id,
           name,
-          sender: createWorkerSender(extensionId),
+          sender,
         })
       ) {
         contextIds.add(context.contextId);
@@ -575,6 +612,14 @@ export class RuntimeProxy {
 
   private handlePageContextClosed(context: PageContext) {
     for (const port of this.ports.values()) {
+      // The page that opened it is gone, which Chrome reports to the far end as
+      // the port going away
+      if (port.openerContextId === context.contextId) {
+        this.closeShimPort(port, { notifyWorker: false });
+
+        continue;
+      }
+
       if (
         port.transport.kind !== "contexts" ||
         !port.transport.contextIds.delete(context.contextId)
@@ -633,6 +678,8 @@ export class RuntimeProxy {
 
   teardownSession(session: Session) {
     if (session === this.workerSession) {
+      this.pageStreams.teardownSession(session);
+
       this.removeWorkerSessionListener?.();
 
       this.workerSession = undefined;
@@ -698,16 +745,30 @@ export class RuntimeProxy {
       return new Response(null, { status: 400, headers });
     }
 
-    const result = await new Promise<RuntimeProxySendMessageResult>((resolve) => {
+    const sender = this.reconstructSender(session, extensionId, report, senderFrame);
+
+    const toWorker = new Promise<RuntimeProxySendMessageResult>((resolve) => {
       const job = this.createJob(session, extensionId, "sendMessage", {
         message: request.message,
-        sender: this.reconstructSender(session, extensionId, report, senderFrame),
+        sender,
         settle: resolve,
         isSettled: false,
       });
 
       this.enqueueJob(job);
     });
+
+    // Chrome delivers it to every frame of the extension as well as the worker,
+    // and Chromium cannot reach the worker session's pages from here: a popup
+    // in a window collecting a tab's page details hears the content script's
+    // answer this way. The first `sendResponse` wins, as between any two frames
+    const toWorkerSessionPages = this.workerToPage.deliverToContexts(
+      this.pageStreams.workerSessionPageContexts(extensionId),
+      request.message,
+      sender,
+    );
+
+    const result = await firstReply([toWorker, toWorkerSessionPages]);
 
     return Response.json(result, { headers });
   }
@@ -1093,8 +1154,13 @@ export class RuntimeProxy {
         .map((job) => (job as ConnectJob).portId),
     );
 
+    // A port a page opened was never the worker's, and outlives it
     for (const port of this.ports.values()) {
-      if (port.extensionId === extensionId && !requeuedConnectPortIds.has(port.id)) {
+      if (
+        port.extensionId === extensionId &&
+        port.openerContextId === undefined &&
+        !requeuedConnectPortIds.has(port.id)
+      ) {
         this.closeShimPort(port, { notifyWorker: false });
       }
     }
@@ -1567,6 +1633,12 @@ export class RuntimeProxy {
       }
     }
 
+    if (notifyWorker && port.openerContextId !== undefined) {
+      this.sendToOpener(port, { kind: "portDisconnect", portId: port.id, error });
+
+      return;
+    }
+
     if (notifyWorker && !wasConnectQueued) {
       this.enqueueJob(
         this.createJob(port.shimSession, port.extensionId, "portDisconnect", {
@@ -1574,6 +1646,18 @@ export class RuntimeProxy {
           error,
         }),
       );
+    }
+  }
+
+  /** A frame to the page of the worker's session that opened the port. */
+  private sendToOpener(port: ProxyPort, envelope: RuntimeProxyPageEnvelope) {
+    const opener =
+      port.openerContextId === undefined
+        ? undefined
+        : this.pageStreams.getContext(port.openerContextId);
+
+    if (opener) {
+      this.pageStreams.send(opener, envelope);
     }
   }
 

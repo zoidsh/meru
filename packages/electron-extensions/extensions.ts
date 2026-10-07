@@ -1059,6 +1059,17 @@ export class Extensions {
   }
 
   /**
+   * Opens one of an extension's own pages in a window, as its own
+   * `chrome.windows.create` would, for a surface of the embedder's that leads
+   * into the extension. The same rules hold: only an extension the embedder
+   * lets open windows, only a page of its own, and an open window for the page
+   * is focused rather than doubled. Whether a window is showing it afterwards.
+   */
+  openExtensionWindow(extensionId: string, pagePath: string) {
+    return this.windows.create(extensionId, { url: pagePath, type: "popup" }).window !== null;
+  }
+
+  /**
    * Whether one particular extension is loaded into this session, for stepping
    * a behavior of the embedder's own aside while the extension takes it over —
    * a password manager overriding WebAuthn in the page, say.
