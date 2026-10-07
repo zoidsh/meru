@@ -25,6 +25,7 @@
  */
 import {
   type FixtureMessageSender,
+  type FixtureNavigationDetails,
   getChromePermissions,
   getChromeRuntime,
   getChromeScripting,
@@ -147,6 +148,36 @@ windows.onRemoved.addListener((windowId) => {
 
   fallbackAnswersByPopoutId.delete(windowId);
 });
+
+/**
+ * Every `webNavigation` event the worker heard for a page under `/navigation`,
+ * registered at top level so the stream is parked long before a test loads
+ * one. The filter keeps out every other page the suite loads, Meru's own
+ * renderer included.
+ */
+const navigationEvents: (FixtureNavigationDetails & { event: string })[] = [];
+
+const NAVIGATION_FILTER = { url: [{ hostEquals: "127.0.0.1", pathPrefix: "/navigation" }] };
+
+for (const eventName of [
+  "onBeforeNavigate",
+  "onCommitted",
+  "onDOMContentLoaded",
+  "onCompleted",
+  "onErrorOccurred",
+] as const) {
+  webNavigation[eventName].addListener((details) => {
+    navigationEvents.push({
+      event: eventName,
+      tabId: details.tabId,
+      frameId: details.frameId,
+      parentFrameId: details.parentFrameId,
+      url: details.url,
+      frameType: details.frameType,
+      error: details.error,
+    });
+  }, NAVIGATION_FILTER);
+}
 
 const scripting = getChromeScripting();
 
@@ -362,6 +393,10 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (probeMessage?.type === "read-removed-windows") {
     sendResponse({ type: "removed-windows-reply", windowIds: [...removedWindowIds] });
+  }
+
+  if (probeMessage?.type === "read-navigation-events") {
+    sendResponse({ type: "navigation-events-reply", events: [...navigationEvents] });
   }
 
   if (probeMessage?.type === "read-events") {

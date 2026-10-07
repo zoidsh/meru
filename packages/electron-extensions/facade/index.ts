@@ -1,6 +1,7 @@
 import { RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL } from "../runtime-proxy/bridge-protocol";
 import { proxyPageMessaging } from "../runtime-proxy/page-messaging";
 import { reportPageStorageWrites } from "../runtime-proxy/page-storage-writes";
+import { DELIVERS_NAVIGATION_EVENTS_GLOBAL } from "../web-navigation/bridge-protocol";
 import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { proxyPageTabs } from "./api/page-tabs";
 import { installChromeFacade } from "./install";
@@ -20,6 +21,7 @@ const contextGlobals = globalThis as unknown as {
   document?: unknown;
   [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]?: boolean;
   [OPENS_EXTENSION_WINDOWS_GLOBAL]?: boolean;
+  [DELIVERS_NAVIGATION_EVENTS_GLOBAL]?: boolean;
 };
 
 const { chrome } = contextGlobals;
@@ -27,7 +29,10 @@ const { chrome } = contextGlobals;
 const opensExtensionWindows = contextGlobals[OPENS_EXTENSION_WINDOWS_GLOBAL] === true;
 
 if (chrome) {
-  installChromeFacade(chrome, { opensExtensionWindows });
+  installChromeFacade(chrome, {
+    opensExtensionWindows,
+    deliversNavigationEvents: contextGlobals[DELIVERS_NAVIGATION_EVENTS_GLOBAL] === true,
+  });
 
   // A page only: the worker's own queries and messages are the relay's to answer
   if (opensExtensionWindows && contextGlobals.document !== undefined) {
