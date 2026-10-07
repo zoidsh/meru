@@ -14,6 +14,7 @@ import {
   RECEIVING_END_ERROR,
   type RuntimeProxyJob,
   type RuntimeProxyPageEnvelope,
+  type RuntimeProxyPortFrame,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
 import { RuntimeProxy, type RuntimeProxyOptions } from "./runtime-proxy";
@@ -1024,6 +1025,79 @@ describe("a page of the worker's own session", () => {
     expect(await (await sent).json()).toEqual({ status: "replied", reply: "from the page" });
   });
 
+  test("logs a page that keeps the channel open beside the worker at debug", async () => {
+    const logged: { level: string; message: string }[] = [];
+
+    const record = (level: string) => (message: string) => {
+      logged.push({ level, message });
+    };
+
+    const {
+      workerSession,
+      shimSession,
+      shimTab,
+      windowPageFrame,
+      parkPageStream,
+      openWorkerStream,
+    } = createHarness({
+      inFlightTimeoutMs: 20,
+      logger: { debug: record("debug"), info: record("info"), error: record("error") },
+    });
+
+    const workerStream = await openWorkerStream();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const sent = shimSession.request(
+      RUNTIME_PROXY_PATHS.sendMessage,
+      SHIM_TOKEN,
+      { message: "page details", sender: { url: PAGE_URL, isTopFrame: true } },
+      shimTab.mainFrame,
+    );
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    await windowPage.waitForEnvelopes(1);
+
+    await workerSession.request(RUNTIME_PROXY_PATHS.workerReply, WORKER_TOKEN, {
+      jobId: job?.jobId,
+      result: { status: "replied", reply: "from the worker" },
+    });
+
+    expect(await (await sent).json()).toEqual({ status: "replied", reply: "from the worker" });
+
+    await waitFor(() => logged.length > 0, "the page's delivery to time out");
+
+    expect(logged).toEqual([
+      { level: "debug", message: "A shimmed context never answered a relayed message" },
+    ]);
+  });
+
+  test("still logs a content script that never answers the worker as an error", async () => {
+    const logged: { level: string; message: string }[] = [];
+
+    const record = (level: string) => (message: string) => {
+      logged.push({ level, message });
+    };
+
+    const { shimTab, parkPageStream, sendToTab } = createHarness({
+      inFlightTimeoutMs: 20,
+      logger: { debug: record("debug"), info: record("info"), error: record("error") },
+    });
+
+    const contentScript = await parkPageStream(shimTab.mainFrame);
+
+    const delivered = sendToTab({ tabId: SHIM_TAB_ID, frameId: 0, message: "anyone" });
+
+    await contentScript.waitForEnvelopes(1);
+
+    expect(await delivered).toEqual({ status: "closed" });
+
+    expect(logged).toEqual([
+      { level: "error", message: "A shimmed context never answered a relayed message" },
+    ]);
+  });
+
   test("hears neither the worker's broadcast nor its store changes, which Chromium delivers", async () => {
     const { popupFrame, windowPageFrame, parkPageStream, broadcast, reportStorageChange } =
       createHarness();
@@ -1152,5 +1226,231 @@ describe("a page of the worker's own session", () => {
 
       expect(response.status).toBe(400);
     }
+  });
+});
+
+describe("a content script's runtime.connect", () => {
+  /** Opens a content script's port and collects the frames streamed back to it. */
+  async function connectContentScript(harness: ReturnType<typeof createHarness>, portId: string) {
+    const response = await harness.shimSession.request(
+      RUNTIME_PROXY_PATHS.connect,
+      SHIM_TOKEN,
+      { portId, name: "autofill", sender: { url: PAGE_URL, isTopFrame: true } },
+      harness.shimTab.mainFrame,
+    );
+
+    expect(response.status).toBe(200);
+
+    const frames: RuntimeProxyPortFrame[] = [];
+
+    const reader = response.body?.getReader();
+
+    void (async () => {
+      const decoder = new NativeMessageDecoder();
+
+      for (;;) {
+        const result = await reader?.read();
+
+        if (!result || result.done) {
+          return;
+        }
+
+        frames.push(...(decoder.push(result.value) as RuntimeProxyPortFrame[]));
+      }
+    })();
+
+    return {
+      frames,
+      waitForFrames: async (frameCount: number) => {
+        await waitFor(() => frames.length >= frameCount, `${frameCount} port frames`);
+
+        return frames;
+      },
+      post: (message: unknown) =>
+        harness.shimSession.request(RUNTIME_PROXY_PATHS.portPost, SHIM_TOKEN, { portId, message }),
+      disconnect: () =>
+        harness.shimSession.request(RUNTIME_PROXY_PATHS.portDisconnect, SHIM_TOKEN, { portId }),
+    };
+  }
+
+  function replyToJob(harness: ReturnType<typeof createHarness>, jobId: string, result: unknown) {
+    return harness.workerSession.request(RUNTIME_PROXY_PATHS.workerReply, WORKER_TOKEN, {
+      jobId,
+      result,
+    });
+  }
+
+  test("reaches the worker's own pages beside the worker, both ways", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-1");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    const [connectEnvelope] = await windowPage.waitForEnvelopes(1);
+
+    expect(connectJob).toMatchObject({ type: "connect", portId: "port-1", name: "autofill" });
+
+    expect(connectEnvelope).toMatchObject({
+      kind: "connect",
+      portId: "port-1",
+      name: "autofill",
+      sender: { tab: { id: SHIM_TAB_ID }, frameId: 0, url: PAGE_URL },
+    });
+
+    await contentScript.post("page details");
+
+    const [, portMessageJob] = await workerStream.waitForJobs(2);
+
+    const [, portMessage] = await windowPage.waitForEnvelopes(2);
+
+    expect(portMessageJob).toMatchObject({ type: "portMessage", message: "page details" });
+
+    expect(portMessage).toEqual({ kind: "portMessage", portId: "port-1", message: "page details" });
+
+    await harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.portPost,
+      WORKER_TOKEN,
+      { portId: "port-1", contextId: windowPage.contextId(), message: "fill" },
+      harness.windowPageFrame,
+    );
+
+    expect(await contentScript.waitForFrames(1)).toEqual([{ type: "message", message: "fill" }]);
+  });
+
+  test("stays open while a page holds it after the worker refuses it", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-2");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    await replyToJob(harness, connectJob?.jobId ?? "", { status: "noListener" });
+
+    await contentScript.post("page details");
+
+    await windowPage.waitForEnvelopes(2);
+
+    // Nothing more for the worker, whose leg is gone
+    expect(workerStream.jobs).toHaveLength(1);
+
+    expect(contentScript.frames).toEqual([]);
+
+    await windowPage.disconnectPort("port-2");
+
+    expect(await contentScript.waitForFrames(1)).toEqual([
+      { type: "disconnect", error: undefined },
+    ]);
+  });
+
+  test("says the receiving end does not exist once every end refused it", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-3");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    await windowPage.waitForEnvelopes(1);
+
+    await windowPage.disconnectPort("port-3", "noListener");
+
+    expect(contentScript.frames).toEqual([]);
+
+    await replyToJob(harness, connectJob?.jobId ?? "", { status: "noListener" });
+
+    expect(await contentScript.waitForFrames(1)).toEqual([
+      { type: "disconnect", error: RECEIVING_END_ERROR },
+    ]);
+  });
+
+  test("tells the worker and the pages when the content script hangs up", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-4");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    await replyToJob(harness, connectJob?.jobId ?? "", { status: "connected" });
+
+    await contentScript.disconnect();
+
+    const [, disconnectJob] = await workerStream.waitForJobs(2);
+
+    const [, disconnectEnvelope] = await windowPage.waitForEnvelopes(2);
+
+    expect(disconnectJob).toMatchObject({ type: "portDisconnect", portId: "port-4" });
+
+    expect(disconnectEnvelope).toEqual({
+      kind: "portDisconnect",
+      portId: "port-4",
+      error: undefined,
+    });
+  });
+
+  test("ignores a post naming a context that is no end of the port", async () => {
+    const harness = createHarness();
+
+    await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-5");
+
+    await windowPage.waitForEnvelopes(1);
+
+    const response = await harness.workerSession.request(
+      RUNTIME_PROXY_PATHS.portPost,
+      WORKER_TOKEN,
+      { portId: "port-5", contextId: "no-such-context", message: "fill" },
+      harness.windowPageFrame,
+    );
+
+    expect(response.status).toBe(204);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(contentScript.frames).toEqual([]);
+  });
+
+  test("reaches only the worker when no page of its session is parked", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const contentScript = await connectContentScript(harness, "port-6");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    await replyToJob(harness, connectJob?.jobId ?? "", { status: "noListener" });
+
+    expect(await contentScript.waitForFrames(1)).toEqual([
+      { type: "disconnect", error: RECEIVING_END_ERROR },
+    ]);
   });
 });
