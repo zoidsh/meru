@@ -134,7 +134,24 @@ type ProxyPort = {
    * traffic is the worker's and rides its job stream.
    */
   openerContextId?: string;
+  /**
+   * The pages of the worker's session a content script's `runtime.connect`
+   * reached beside the worker. Chrome keeps the opener's port open while any
+   * receiving end is, so the worker hanging up ends only its own leg here.
+   */
+  pageLegs?: PortPageLegs;
   isClosed: boolean;
+};
+
+type PortPageLegs = {
+  contextIds: Set<string>;
+  isWorkerLegClosed: boolean;
+  /**
+   * Whether any end took the port, rather than refusing it for want of an
+   * `onConnect` listener, which decides whether the opener hears Chrome's
+   * "receiving end does not exist" once every end is gone.
+   */
+  hasConnected: boolean;
 };
 
 type Wake = {
@@ -338,16 +355,30 @@ export class RuntimeProxy {
     );
 
     bridge.handle(RUNTIME_PROXY_PATHS.portPost, ({ session, extensionId, body, headers }) => {
-      const { portId, message } = body as unknown as RuntimeProxyPortPostRequest;
+      const { portId, contextId, message } = body as unknown as RuntimeProxyPortPostRequest;
+
+      const pageLegPort = this.getPageLegPort(session, extensionId, portId, contextId);
+
+      if (pageLegPort?.pageLegs) {
+        pageLegPort.pageLegs.hasConnected = true;
+
+        this.sendPortFrame(pageLegPort, { type: "message", message });
+
+        return new Response(null, { status: 204, headers });
+      }
 
       const port = this.getShimPort(session, extensionId, portId);
 
       if (port?.openerContextId !== undefined) {
         this.sendToOpener(port, { kind: "portMessage", portId, message });
       } else if (port) {
-        this.enqueueJob(
-          this.createJob(port.shimSession, extensionId, "portMessage", { portId, message }),
-        );
+        this.sendToPageLegs(port, { kind: "portMessage", portId: port.id, message });
+
+        if (!port.pageLegs?.isWorkerLegClosed) {
+          this.enqueueJob(
+            this.createJob(port.shimSession, extensionId, "portMessage", { portId, message }),
+          );
+        }
       }
 
       return new Response(null, { status: 204, headers });
@@ -357,6 +388,14 @@ export class RuntimeProxy {
       RUNTIME_PROXY_PATHS.portDisconnect,
       ({ session, extensionId, senderFrame, body, headers }) => {
         const { portId, contextId, reason } = body as unknown as RuntimeProxyPortDisconnectRequest;
+
+        const pageLegPort = this.getPageLegPort(session, extensionId, portId, contextId);
+
+        if (pageLegPort && typeof contextId === "string") {
+          this.endPageLeg(pageLegPort, contextId, { isRefusal: reason === "noListener" });
+
+          return new Response(null, { status: 204, headers });
+        }
 
         const port = this.getShimPort(session, extensionId, portId);
 
@@ -476,7 +515,7 @@ export class RuntimeProxy {
 
           if (port && port.extensionId === extensionId) {
             // The worker hung up on purpose, which Chrome reports without error
-            this.closeShimPort(port, { notifyWorker: false });
+            this.endWorkerLeg(port);
           }
         }
 
@@ -612,6 +651,12 @@ export class RuntimeProxy {
 
   private handlePageContextClosed(context: PageContext) {
     for (const port of this.ports.values()) {
+      if (port.pageLegs?.contextIds.has(context.contextId)) {
+        this.endPageLeg(port, context.contextId, { isRefusal: false });
+
+        continue;
+      }
+
       // The page that opened it is gone, which Chrome reports to the far end as
       // the port going away
       if (port.openerContextId === context.contextId) {
@@ -766,6 +811,7 @@ export class RuntimeProxy {
       this.pageStreams.workerSessionPageContexts(extensionId),
       request.message,
       sender,
+      { isBesideWorker: true },
     );
 
     const result = await firstReply([toWorker, toWorkerSessionPages]);
@@ -904,13 +950,30 @@ export class RuntimeProxy {
       },
     });
 
+    const name = typeof request.name === "string" ? request.name : undefined;
+
+    const sender = this.reconstructSender(session, extensionId, report, senderFrame);
+
     this.enqueueJob(
-      this.createJob(session, extensionId, "connect", {
-        portId: request.portId,
-        name: typeof request.name === "string" ? request.name : undefined,
-        sender: this.reconstructSender(session, extensionId, report, senderFrame),
-      }),
+      this.createJob(session, extensionId, "connect", { portId: request.portId, name, sender }),
     );
+
+    // Chrome opens it to every frame of the extension as well as the worker,
+    // as with `runtime.sendMessage`, and Chromium cannot reach the worker
+    // session's pages from here
+    if (port) {
+      const pageLegs = new Set<string>();
+
+      for (const context of this.pageStreams.workerSessionPageContexts(extensionId)) {
+        if (this.pageStreams.send(context, { kind: "connect", portId: port.id, name, sender })) {
+          pageLegs.add(context.contextId);
+        }
+      }
+
+      if (pageLegs.size > 0) {
+        port.pageLegs = { contextIds: pageLegs, isWorkerLegClosed: false, hasConnected: false };
+      }
+    }
 
     return new Response(stream, {
       headers: { ...headers, "content-type": "application/octet-stream" },
@@ -1027,12 +1090,14 @@ export class RuntimeProxy {
     if (job.kind === "connect") {
       const connectResult = result as RuntimeProxyConnectResult;
 
-      if (connectResult?.status !== "connected") {
-        const port = this.ports.get(job.portId);
+      const port = this.ports.get(job.portId);
 
-        if (port) {
-          this.closeShimPort(port, { notifyWorker: false, error: RECEIVING_END_ERROR });
+      if (port && connectResult?.status === "connected") {
+        if (port.pageLegs) {
+          port.pageLegs.hasConnected = true;
         }
+      } else if (port) {
+        this.endWorkerLeg(port, { error: RECEIVING_END_ERROR });
       }
     }
   }
@@ -1161,7 +1226,7 @@ export class RuntimeProxy {
         port.openerContextId === undefined &&
         !requeuedConnectPortIds.has(port.id)
       ) {
-        this.closeShimPort(port, { notifyWorker: false });
+        this.endWorkerLeg(port);
       }
     }
 
@@ -1475,8 +1540,7 @@ export class RuntimeProxy {
     }
 
     if (job.kind === "connect") {
-      this.closeShimPort(port, {
-        notifyWorker: false,
+      this.endWorkerLeg(port, {
         error: failure === "noListener" ? RECEIVING_END_ERROR : PORT_CLOSED_ERROR,
       });
 
@@ -1484,7 +1548,99 @@ export class RuntimeProxy {
     }
 
     // An undeliverable port job means the port's far end is gone for good
-    this.closeShimPort(port, { notifyWorker: false });
+    this.endWorkerLeg(port);
+  }
+
+  /**
+   * The worker's end of a port is gone. That closes the port, unless a content
+   * script's `runtime.connect` also reached pages of the worker's session that
+   * still hold it, in which case only the worker's leg ends, as in Chrome.
+   */
+  private endWorkerLeg(port: ProxyPort, { error }: { error?: string } = {}) {
+    const legs = port.pageLegs;
+
+    if (!legs) {
+      this.closeShimPort(port, { notifyWorker: false, error });
+
+      return;
+    }
+
+    legs.isWorkerLegClosed = true;
+
+    if (legs.contextIds.size === 0) {
+      this.closeShimPort(port, {
+        notifyWorker: false,
+        error: legs.hasConnected ? undefined : error,
+      });
+    }
+  }
+
+  /**
+   * One page's end of a port a content script opened. The port closes with the
+   * last end, the worker's included, and the opener hears "receiving end does
+   * not exist" only when every end refused it.
+   */
+  private endPageLeg(port: ProxyPort, contextId: string, { isRefusal }: { isRefusal: boolean }) {
+    const legs = port.pageLegs;
+
+    if (!legs?.contextIds.delete(contextId)) {
+      return;
+    }
+
+    if (!isRefusal) {
+      legs.hasConnected = true;
+    }
+
+    if (legs.contextIds.size === 0 && legs.isWorkerLegClosed) {
+      this.closeShimPort(port, {
+        notifyWorker: false,
+        error: legs.hasConnected ? undefined : RECEIVING_END_ERROR,
+      });
+    }
+  }
+
+  /**
+   * A port a content script opened that this page of the worker's session is
+   * one end of, named by the context the page parked as.
+   */
+  private getPageLegPort(
+    session: Session,
+    extensionId: string,
+    portId: unknown,
+    contextId: unknown,
+  ) {
+    if (session !== this.workerSession || typeof portId !== "string") {
+      return undefined;
+    }
+
+    const port = this.ports.get(portId);
+
+    const context =
+      typeof contextId === "string" ? this.pageStreams.getContext(contextId) : undefined;
+
+    if (
+      !port ||
+      port.isClosed ||
+      port.extensionId !== extensionId ||
+      !context ||
+      context.session !== session ||
+      context.extensionId !== extensionId ||
+      !port.pageLegs?.contextIds.has(context.contextId)
+    ) {
+      return undefined;
+    }
+
+    return port;
+  }
+
+  private sendToPageLegs(port: ProxyPort, envelope: RuntimeProxyPageEnvelope) {
+    for (const contextId of port.pageLegs?.contextIds ?? []) {
+      const context = this.pageStreams.getContext(contextId);
+
+      if (context) {
+        this.pageStreams.send(context, envelope);
+      }
+    }
   }
 
   private settleSendMessage(job: SendMessageJob, result: RuntimeProxySendMessageResult) {
@@ -1633,13 +1789,16 @@ export class RuntimeProxy {
       }
     }
 
+    // Whatever closed it, an end still holding it has to hear so
+    this.sendToPageLegs(port, { kind: "portDisconnect", portId: port.id, error });
+
     if (notifyWorker && port.openerContextId !== undefined) {
       this.sendToOpener(port, { kind: "portDisconnect", portId: port.id, error });
 
       return;
     }
 
-    if (notifyWorker && !wasConnectQueued) {
+    if (notifyWorker && !wasConnectQueued && !port.pageLegs?.isWorkerLegClosed) {
       this.enqueueJob(
         this.createJob(port.shimSession, port.extensionId, "portDisconnect", {
           portId: port.id,

@@ -30,6 +30,7 @@ import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import type { ExtensionWindowOutcome } from "@/lib/extension-window";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
 import { serializeErrorDetails } from "@/lib/log-details";
@@ -627,16 +628,18 @@ export async function getInstalledExtensions() {
  * Only once the extension is loaded there, which an install is not until the
  * restart after it.
  */
-export function openCuratedExtensionWindow(extensionId: string) {
+export function openCuratedExtensionWindow(extensionId: string): ExtensionWindowOutcome {
+  if (!extensions.isExtensionLoaded(session.defaultSession, extensionId)) {
+    return "notLoaded";
+  }
+
   const windowPagePath = curatedExtensions.find(
     (curatedExtension) => curatedExtension.id === extensionId,
   )?.windowPagePath;
 
-  return (
-    windowPagePath !== undefined &&
-    extensions.isExtensionLoaded(session.defaultSession, extensionId) &&
-    extensions.openExtensionWindow(extensionId, windowPagePath)
-  );
+  return windowPagePath !== undefined && extensions.openExtensionWindow(extensionId, windowPagePath)
+    ? "opened"
+    : "refused";
 }
 
 /**
