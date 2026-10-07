@@ -1024,6 +1024,79 @@ describe("a page of the worker's own session", () => {
     expect(await (await sent).json()).toEqual({ status: "replied", reply: "from the page" });
   });
 
+  test("logs a page that keeps the channel open beside the worker at debug", async () => {
+    const logged: { level: string; message: string }[] = [];
+
+    const record = (level: string) => (message: string) => {
+      logged.push({ level, message });
+    };
+
+    const {
+      workerSession,
+      shimSession,
+      shimTab,
+      windowPageFrame,
+      parkPageStream,
+      openWorkerStream,
+    } = createHarness({
+      inFlightTimeoutMs: 20,
+      logger: { debug: record("debug"), info: record("info"), error: record("error") },
+    });
+
+    const workerStream = await openWorkerStream();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const sent = shimSession.request(
+      RUNTIME_PROXY_PATHS.sendMessage,
+      SHIM_TOKEN,
+      { message: "page details", sender: { url: PAGE_URL, isTopFrame: true } },
+      shimTab.mainFrame,
+    );
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    await windowPage.waitForEnvelopes(1);
+
+    await workerSession.request(RUNTIME_PROXY_PATHS.workerReply, WORKER_TOKEN, {
+      jobId: job?.jobId,
+      result: { status: "replied", reply: "from the worker" },
+    });
+
+    expect(await (await sent).json()).toEqual({ status: "replied", reply: "from the worker" });
+
+    await waitFor(() => logged.length > 0, "the page's delivery to time out");
+
+    expect(logged).toEqual([
+      { level: "debug", message: "A shimmed context never answered a relayed message" },
+    ]);
+  });
+
+  test("still logs a content script that never answers the worker as an error", async () => {
+    const logged: { level: string; message: string }[] = [];
+
+    const record = (level: string) => (message: string) => {
+      logged.push({ level, message });
+    };
+
+    const { shimTab, parkPageStream, sendToTab } = createHarness({
+      inFlightTimeoutMs: 20,
+      logger: { debug: record("debug"), info: record("info"), error: record("error") },
+    });
+
+    const contentScript = await parkPageStream(shimTab.mainFrame);
+
+    const delivered = sendToTab({ tabId: SHIM_TAB_ID, frameId: 0, message: "anyone" });
+
+    await contentScript.waitForEnvelopes(1);
+
+    expect(await delivered).toEqual({ status: "closed" });
+
+    expect(logged).toEqual([
+      { level: "error", message: "A shimmed context never answered a relayed message" },
+    ]);
+  });
+
   test("hears neither the worker's broadcast nor its store changes, which Chromium delivers", async () => {
     const { popupFrame, windowPageFrame, parkPageStream, broadcast, reportStorageChange } =
       createHarness();

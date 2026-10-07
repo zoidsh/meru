@@ -766,6 +766,7 @@ export class RuntimeProxy {
       this.pageStreams.workerSessionPageContexts(extensionId),
       request.message,
       sender,
+      { isBesideWorker: true },
     );
 
     const result = await firstReply([toWorker, toWorkerSessionPages]);
