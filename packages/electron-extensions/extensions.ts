@@ -25,6 +25,7 @@ import {
 } from "./native-messaging/native-messaging";
 import { type GrantableOptionalPermissionsPolicy, Permissions } from "./permissions/permissions";
 import { readExtensionDirId } from "./scan";
+import { NavigationEvents, type NavigationEventsPolicy } from "./web-navigation/navigation-events";
 import { WebNavigation } from "./web-navigation/web-navigation";
 import {
   type ExtensionWindowsPolicy,
@@ -195,6 +196,14 @@ export type ExtensionsOptions = {
    */
   openExtensionWindow?: WindowsOptions["openWindow"];
   /**
+   * Which extensions hear `webNavigation`'s `onBeforeNavigate`, `onCommitted`,
+   * `onDOMContentLoaded` and `onCompleted`, synthesized from the pages their
+   * worker reaches, by the id they are loaded as. Only with a shared instance,
+   * whose worker copy is the one told to listen. Without it the events stay
+   * noops and no page is listened to.
+   */
+  deliversNavigationEvents?: NavigationEventsPolicy;
+  /**
    * Which extensions a due alarm may start a stopped service worker for. Without
    * it an alarm reaches only the contexts already running, which is what Meru
    * ships: a worker woken every minute is a worker that never idles out.
@@ -268,6 +277,8 @@ export class Extensions {
 
   private canOpenExtensionWindows: ExtensionsOptions["canOpenExtensionWindows"];
 
+  private deliversNavigationEvents: ExtensionsOptions["deliversNavigationEvents"];
+
   private getDeclaredContentScripts: ExtensionsOptions["getDeclaredContentScripts"];
 
   private getLocalStorageDefaults: ExtensionsOptions["getLocalStorageDefaults"];
@@ -305,6 +316,8 @@ export class Extensions {
 
   private webNavigation: WebNavigation;
 
+  private navigationEvents: NavigationEvents;
+
   private alarms: Alarms;
 
   private permissions: Permissions;
@@ -333,6 +346,7 @@ export class Extensions {
     grantedPermissionsPath,
     canOpenExtensionWindows,
     openExtensionWindow,
+    deliversNavigationEvents,
     shouldWakeWorkerForAlarm,
     sharedInstance,
     workerSessionPagePatterns,
@@ -353,6 +367,8 @@ export class Extensions {
     this.synthesizesStorageChanges = synthesizesStorageChanges;
 
     this.canOpenExtensionWindows = canOpenExtensionWindows;
+
+    this.deliversNavigationEvents = deliversNavigationEvents;
 
     this.getDeclaredContentScripts = getDeclaredContentScripts;
 
@@ -383,6 +399,15 @@ export class Extensions {
     });
 
     this.webNavigation.registerRoutes(this.bridge);
+
+    this.navigationEvents = new NavigationEvents({
+      deliversNavigationEvents,
+      canResolveTabAcrossSessions: (askingSession, tabSession) =>
+        this.sharedInstance?.canResolveTabAcrossSessions(askingSession, tabSession) === true,
+      logger,
+    });
+
+    this.navigationEvents.registerRoutes(this.bridge);
 
     this.alarms = new Alarms({ shouldWakeWorker: shouldWakeWorkerForAlarm, logger });
 
@@ -438,6 +463,7 @@ export class Extensions {
         getContentScriptMatches: this.getContentScriptMatches,
         synthesizesStorageChanges: this.synthesizesStorageChanges,
         opensExtensionWindows: this.canOpenExtensionWindows,
+        deliversNavigationEvents: this.deliversNavigationEvents,
         getDeclaredContentScripts: this.getDeclaredContentScripts,
         getLocalStorageDefaults: this.getLocalStorageDefaults,
         sharedInstance: sharedInstanceDerive,
