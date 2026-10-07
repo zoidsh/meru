@@ -23,7 +23,8 @@ function delay(delayMs: number) {
  *
  * Returns a function that starts it, once however often it is called, so the
  * first listener can park the stream and a context that never listens never
- * opens one.
+ * opens one. Its `stop` lets the stream go again, for an event whose parked
+ * stream costs main something while nothing listens.
  */
 export function createEventStream<Frame>(
   pathName: string,
@@ -32,8 +33,14 @@ export function createEventStream<Frame>(
 ) {
   let isListening = false;
 
-  const readStream = async () => {
-    const response = await postBridge(pathName, {});
+  // Bumped by each stop, so a loop still waiting out its retry delay after a
+  // stop and a restart knows it is no longer the current one
+  let generation = 0;
+
+  let abortController: AbortController | undefined;
+
+  const readStream = async (signal: AbortSignal) => {
+    const response = await postBridge(pathName, {}, undefined, signal);
 
     if (!response.ok || !response.body) {
       throw new Error(`The ${label} bridge answered ${response.status}`);
@@ -63,21 +70,47 @@ export function createEventStream<Frame>(
     }
   };
 
-  return async () => {
+  const start = async () => {
     if (isListening) {
       return;
     }
 
     isListening = true;
 
-    for (;;) {
+    const startedGeneration = generation;
+
+    while (generation === startedGeneration) {
+      abortController = new AbortController();
+
       try {
-        await readStream();
+        await readStream(abortController.signal);
       } catch (error) {
-        console.error(`[chrome-facade] ${label} stream failed`, error);
+        if (generation === startedGeneration) {
+          console.error(`[chrome-facade] ${label} stream failed`, error);
+        }
+      }
+
+      if (generation !== startedGeneration) {
+        return;
       }
 
       await delay(RETRY_DELAY_MS);
     }
   };
+
+  const stop = () => {
+    if (!isListening) {
+      return;
+    }
+
+    isListening = false;
+
+    generation += 1;
+
+    abortController?.abort();
+
+    abortController = undefined;
+  };
+
+  return Object.assign(start, { stop });
 }
