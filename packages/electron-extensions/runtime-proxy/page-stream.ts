@@ -27,6 +27,12 @@ export type PageContext = {
   url: string;
   /** Whether the context is a page of the extension rather than a content script. */
   isExtensionPage: boolean;
+  /**
+   * Whether the context is a page of the worker's own session, where Chromium
+   * already delivers what the worker sends and stores; such a page parks only
+   * to hear what Chromium cannot carry across sessions to it.
+   */
+  isInWorkerSession: boolean;
   controller: ReadableStreamDefaultController<Uint8Array>;
   isClosed: boolean;
 };
@@ -100,18 +106,41 @@ export class PageStreams {
   }
 
   /**
-   * Registers the stream route. The caller owns the refusal of a request from
-   * the worker's own session, since only it knows which session that is.
+   * Registers the stream route. The caller says which sessions are which, since
+   * only it knows: any context of a shimmed session may park, and of the
+   * worker's session only a top-level page of the calling extension.
    */
-  registerRoutes(bridge: ExtensionBridge, isShimmedSession: (session: Session) => boolean) {
+  registerRoutes(
+    bridge: ExtensionBridge,
+    {
+      isShimmedSession,
+      isWorkerSession,
+    }: {
+      isShimmedSession: (session: Session) => boolean;
+      isWorkerSession: (session: Session) => boolean;
+    },
+  ) {
     bridge.handle(
       RUNTIME_PROXY_PATHS.pageStream,
       ({ session, extensionId, senderFrame, body, headers }) => {
-        if (!isShimmedSession(session)) {
+        const isInWorkerSession = isWorkerSession(session);
+
+        if (
+          isInWorkerSession
+            ? !isTopLevelExtensionPage(extensionId, senderFrame)
+            : !isShimmedSession(session)
+        ) {
           return new Response(null, { status: 403, headers });
         }
 
-        return this.handlePageStream(session, extensionId, senderFrame, body, headers);
+        return this.handlePageStream(
+          session,
+          extensionId,
+          senderFrame,
+          body,
+          headers,
+          isInWorkerSession,
+        );
       },
     );
   }
@@ -127,6 +156,7 @@ export class PageStreams {
     senderFrame: WebFrameMain | undefined,
     body: Record<string, unknown>,
     headers: Record<string, string>,
+    isInWorkerSession: boolean,
   ) {
     const request = body as unknown as RuntimeProxyPageStreamRequest;
 
@@ -171,6 +201,7 @@ export class PageStreams {
           frameId: sender.frameId,
           url,
           isExtensionPage: url.startsWith(EXTENSION_SCHEME_PREFIX),
+          isInWorkerSession,
           controller,
           isClosed: false,
         };
@@ -214,20 +245,36 @@ export class PageStreams {
 
   /**
    * The contexts a worker's `runtime.sendMessage` broadcast reaches: the
-   * extension's own pages, wherever they are. Chrome delivers a runtime
+   * extension's own pages in every shimmed session. Chrome delivers a runtime
    * broadcast to the extension's frames and never to content scripts, which are
    * reached with `tabs.sendMessage` — so 1Password's inline menu, notification
    * and modal frames hear it, being extension pages in a web page's frames, and
-   * the content script in the same tab does not.
+   * the content script in the same tab does not. The worker's own session is
+   * Chromium's to deliver in, and a page there would hear it twice.
    */
   extensionPageContexts(extensionId: string) {
     return this.liveContexts().filter(
-      (context) => context.extensionId === extensionId && context.isExtensionPage,
+      (context) =>
+        context.extensionId === extensionId &&
+        context.isExtensionPage &&
+        !context.isInWorkerSession,
     );
   }
 
   /**
-   * Every parked context of an extension, in every shimmed session — the
+   * The extension's pages in the worker's own session, which hear a shimmed
+   * context's `runtime.sendMessage` from here: Chrome delivers it to every
+   * frame of the extension, and Chromium's native delivery never leaves the
+   * session it was sent in.
+   */
+  workerSessionPageContexts(extensionId: string) {
+    return this.liveContexts().filter(
+      (context) => context.extensionId === extensionId && context.isInWorkerSession,
+    );
+  }
+
+  /**
+   * Every parked context of an extension in every shimmed session — the
    * fan-out shape a `chrome.storage` change event needs, which is addressed to
    * every context rather than to a tab or to the extension's own pages.
    *
@@ -243,7 +290,12 @@ export class PageStreams {
     let deliveredCount = 0;
 
     for (const context of this.liveContexts()) {
-      if (context.extensionId !== extensionId || canReceive?.(context) === false) {
+      // The worker's session hears its own store natively
+      if (
+        context.extensionId !== extensionId ||
+        context.isInWorkerSession ||
+        canReceive?.(context) === false
+      ) {
         continue;
       }
 
@@ -409,4 +461,12 @@ export class PageStreams {
       listener(context);
     }
   }
+}
+
+function isTopLevelExtensionPage(extensionId: string, frame: WebFrameMain | undefined) {
+  return (
+    frame !== undefined &&
+    frame.parent === null &&
+    frame.url.startsWith(`${EXTENSION_SCHEME_PREFIX}${extensionId}/`)
+  );
 }
