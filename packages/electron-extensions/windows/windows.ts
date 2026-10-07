@@ -1,9 +1,13 @@
 import type { WebFrameMain } from "electron";
 import type { ExtensionBridge } from "../bridge/bridge";
 import type { ExtensionsLogger } from "../logger";
+import { encodeNativeMessage } from "../native-messaging/framing";
 import {
+  MAIN_WINDOW_ID,
+  WINDOW_ID_CURRENT,
   WINDOWS_PATHS,
   type WindowsCreateData,
+  type WindowsEventFrame,
   type WindowsWindow,
   type WindowsWindowResponse,
 } from "./bridge-protocol";
@@ -14,10 +18,7 @@ import {
  * embedder's own window ids start there too — Electron's do — so the ids here
  * are the loader's alone and name nothing outside it.
  */
-const FIRST_WINDOW_ID = 2;
-
-/** Chrome's `windows.WINDOW_ID_CURRENT`, which names the caller's own window. */
-const WINDOW_ID_CURRENT = -2;
+const FIRST_WINDOW_ID = MAIN_WINDOW_ID + 1;
 
 /**
  * A window the embedder opened, which is as much of one as this module holds:
@@ -113,6 +114,9 @@ export class Windows {
 
   private nextWindowId = FIRST_WINDOW_ID;
 
+  /** The parked `onRemoved` streams, by the extension whose contexts parked them. */
+  private eventStreams = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
+
   constructor({ canOpenWindows, openWindow, logger }: WindowsOptions = {}) {
     this.canOpenWindows = canOpenWindows;
 
@@ -136,6 +140,10 @@ export class Windows {
 
     bridge.handle(WINDOWS_PATHS.get, ({ extensionId, senderFrame, body, headers }) =>
       Response.json(this.get(extensionId, body.windowId, senderFrame), { headers }),
+    );
+
+    bridge.handle(WINDOWS_PATHS.events, ({ extensionId, headers }) =>
+      this.handleEvents(extensionId, headers),
     );
   }
 
@@ -207,6 +215,10 @@ export class Windows {
       if (this.windows.get(windowId) === tracked) {
         this.windows.delete(windowId);
       }
+
+      // However it went — the user closing it, the extension's own `remove`,
+      // an uninstall — which is when Chrome fires it too
+      this.emitRemoved(extensionId, windowId);
     });
 
     return { window: describeWindow(windowId, tracked) };
@@ -275,6 +287,72 @@ export class Windows {
         this.windows.get(foundWindowId) as TrackedExtensionWindow,
       ),
     };
+  }
+
+  /**
+   * The window a frame's page is in: one this class opened, or the window
+   * every other page is in. Any extension's, since a tab's `windowId` is the
+   * same whoever asks about it.
+   */
+  getWindowIdOfFrame(frame: WebFrameMain): number {
+    return this.findWindowId((tracked) => tracked.window.containsFrame(frame)) ?? MAIN_WINDOW_ID;
+  }
+
+  /**
+   * The stream a context parks to hear `onRemoved`, in the shape alarms are
+   * delivered in (`alarms/alarms.ts`): Electron dispatches no Chrome event to a
+   * service worker, and a password manager's worker is what waits on its
+   * popout closing. Electron cancels the stream when the context goes, which is
+   * what drops it.
+   */
+  private handleEvents(extensionId: string, headers: Record<string, string>) {
+    let streams = this.eventStreams.get(extensionId);
+
+    if (!streams) {
+      streams = new Set();
+
+      this.eventStreams.set(extensionId, streams);
+    }
+
+    const extensionStreams = streams;
+
+    let parkedController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+    const body = new ReadableStream<Uint8Array>({
+      start: (controller) => {
+        parkedController = controller;
+
+        extensionStreams.add(controller);
+      },
+      cancel: () => {
+        if (parkedController) {
+          extensionStreams.delete(parkedController);
+        }
+      },
+    });
+
+    return new Response(body, {
+      headers: { ...headers, "content-type": "application/octet-stream" },
+    });
+  }
+
+  private emitRemoved(extensionId: string, windowId: number) {
+    const streams = this.eventStreams.get(extensionId);
+
+    if (!streams) {
+      return;
+    }
+
+    const frame = encodeNativeMessage({ type: "removed", windowId } satisfies WindowsEventFrame);
+
+    for (const controller of streams) {
+      try {
+        controller.enqueue(frame);
+      } catch {
+        // A stream whose context went away without canceling
+        streams.delete(controller);
+      }
+    }
   }
 
   /**

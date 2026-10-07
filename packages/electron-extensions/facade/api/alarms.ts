@@ -5,21 +5,12 @@ import {
   type AlarmFrame,
 } from "../../alarms/bridge-protocol";
 import { getAlarmClampWarning } from "../../alarms/schedule";
-import { NativeMessageDecoder } from "../../native-messaging/framing";
 import { postBridge } from "../lib/bridge";
 import type { ChromeEventListener, ChromeNamespace } from "../lib/chrome";
 import { createEvent } from "../lib/event";
+import { createEventStream } from "../lib/event-stream";
 import { defineMember, readMember } from "../lib/fill";
 import { createBridgedMethod } from "../lib/method";
-
-/** How long a dropped events stream waits before it is parked again. */
-const RETRY_DELAY_MS = 1000;
-
-function delay(delayMs: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delayMs);
-  });
-}
 
 /**
  * Chrome takes `create(alarmInfo)` as well as `create(name, alarmInfo)`, and an
@@ -96,8 +87,6 @@ function createAlarmQuery<QueryResult>(pathName: string, emptyResult: QueryResul
 export function createAlarms(): ChromeNamespace {
   const { emit: emitAlarm, addListener: addAlarmListener, ...alarmEvent } = createEvent();
 
-  let isListening = false;
-
   /**
    * The alarm names this context has already warned about, kept for as long as
    * the namespace lives.
@@ -110,62 +99,15 @@ export function createAlarms(): ChromeNamespace {
    */
   const warnedAlarmNames = new Set<string>();
 
-  /**
-   * Reads the parked stream until it ends, which is what a torn-down session
-   * and a refused request both look like from here. Ending is not the same as
-   * being done: the context is still live and still holds listeners, so the
-   * stream is parked again behind a delay for as long as the context lasts.
-   */
-  const readAlarmStream = async () => {
-    const response = await postBridge(ALARMS_PATHS.events, {});
-
-    if (!response.ok || !response.body) {
-      throw new Error(`The alarms bridge answered ${response.status}`);
-    }
-
-    const reader = response.body.getReader();
-
-    const decoder = new NativeMessageDecoder();
-
-    // A frame the decoder refuses throws out of the loop, and a reader left
-    // open then means main keeps this stream in its delivery set and writes to
-    // it forever while the retry parks another one
-    try {
-      for (;;) {
-        const { value, done } = await reader.read();
-
-        if (done) {
-          return;
-        }
-
-        for (const frame of decoder.push(value) as AlarmFrame[]) {
-          if (frame.type === "alarm") {
-            emitAlarm(frame.alarm satisfies AlarmDetails);
-          }
-        }
+  const listenForAlarms = createEventStream<AlarmFrame>(
+    ALARMS_PATHS.events,
+    (frame) => {
+      if (frame.type === "alarm") {
+        emitAlarm(frame.alarm satisfies AlarmDetails);
       }
-    } finally {
-      await reader.cancel().catch(() => undefined);
-    }
-  };
-
-  const listenForAlarms = async () => {
-    if (isListening) {
-      return;
-    }
-
-    isListening = true;
-
-    for (;;) {
-      try {
-        await readAlarmStream();
-      } catch (error) {
-        console.error("[chrome-facade] alarms stream failed", error);
-      }
-
-      await delay(RETRY_DELAY_MS);
-    }
-  };
+    },
+    { label: "alarms" },
+  );
 
   return {
     create: createBridgedMethod(async (callArguments) => {
