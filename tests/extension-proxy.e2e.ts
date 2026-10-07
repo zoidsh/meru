@@ -1046,12 +1046,11 @@ test("storage.onChanged fires in the worker and the shim session, for the worker
 
   /*
    * And the worker hears both on its own events, which is what Electron never
-   * delivers natively: the shim session's writes come through the relay and
-   * the worker session's popup writes natively in its own context, so only
-   * the worker's write and the relayed ones are the synthesis's to see. The
-   * popup's own write is a change the worker misses, as `storage-synthesis.ts`
-   * says, and the assertion pins that too, so the day it is covered this
-   * fails and says so.
+   * delivers natively. The shim session's writes come through the relay, where
+   * the synthesis sees them; the worker session's popup writes natively in its
+   * own context, and reports its write to the worker instead
+   * (`page-storage-writes.ts`), which is how Bitwarden's worker hears an unlock
+   * its popout made.
    */
   const workerHeard = (newValueOf: string) => ({
     status: "heard",
@@ -1070,7 +1069,7 @@ test("storage.onChanged fires in the worker and the shim session, for the worker
   ]);
 
   expect(workerPopup.writesHeardByWorker).toEqual([
-    { status: "timeout" },
+    workerHeard(workerPopup.contextId),
     workerHeard(workerPopup.contextId),
   ]);
 });

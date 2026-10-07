@@ -16,10 +16,14 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
 } from "../runtime-proxy/bridge-protocol";
 import { deriveExtension, pruneDerivedExtensions } from "./index";
+import type { DeclaredContentScript } from "./manifest";
 
 let workDir: string;
 
@@ -587,6 +591,157 @@ describe("deriveExtension for a shared instance", () => {
     expect((await deriveRelay(false)).relaySource).not.toContain(
       RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
     );
+  });
+
+  test("the worker copy's pages report their writes only when its relay synthesizes", async () => {
+    const deriveFacade = async (optedIn: boolean) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        synthesizesStorageChanges: () => optedIn,
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      return readFile(path.join(derivedDir, "chrome-facade.js"), "utf8");
+    };
+
+    expect(await deriveFacade(true)).toContain(
+      `globalThis.${RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL} = true;`,
+    );
+
+    expect(await deriveFacade(false)).not.toContain(RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL);
+
+    // The account copies' pages write through the relay, which already sees
+    // every one of their writes
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      synthesizesStorageChanges: () => true,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).not.toContain(
+      RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
+    );
+  });
+
+  test("the worker copy's relay carries the extension's storage defaults", async () => {
+    const deriveRelay = async (defaults: Record<string, unknown> | undefined) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        getLocalStorageDefaults: () => defaults,
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      return readFile(path.join(derivedDir, "chrome-runtime-proxy-relay.js"), "utf8");
+    };
+
+    expect(await deriveRelay({ setting: { on: true } })).toContain(
+      `globalThis.${RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL} = {"setting":{"on":true}};`,
+    );
+
+    expect(await deriveRelay(undefined)).not.toContain(RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL);
+  });
+
+  test("the content-script-only copy declares the scripts, and derives again when they change", async () => {
+    const deriveContentScripts = async (declaredFile: string) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        getDeclaredContentScripts: () => [
+          { js: [declaredFile], matches: ["https://*/*"], allFrames: true },
+        ],
+        sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+      });
+
+      return (
+        JSON.parse(await readFile(path.join(derivedDir, "manifest.json"), "utf8")) as {
+          content_scripts: { js: string[] }[];
+        }
+      ).content_scripts.map(({ js }) => js);
+    };
+
+    expect(await deriveContentScripts("first.js")).toEqual([
+      ["chrome-runtime-proxy-shim.js", "content.js"],
+      ["chrome-runtime-proxy-shim.js", "first.js"],
+    ]);
+
+    expect(await deriveContentScripts("second.js")).toEqual([
+      ["chrome-runtime-proxy-shim.js", "content.js"],
+      ["chrome-runtime-proxy-shim.js", "second.js"],
+    ]);
+  });
+
+  test("the worker copy's relay knows every static script the account copies run", async () => {
+    const readStaticContentScripts = async (
+      declaredContentScripts: DeclaredContentScript[] | undefined,
+    ) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        getContentScriptMatches: () => ["https://accounts.google.com/*"],
+        getDeclaredContentScripts: () => declaredContentScripts,
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      const relaySource = await readFile(
+        path.join(derivedDir, "chrome-runtime-proxy-relay.js"),
+        "utf8",
+      );
+
+      const assignment = `globalThis.${RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL} = `;
+
+      const line = relaySource.split("\n").find((candidate) => candidate.startsWith(assignment));
+
+      return line === undefined ? undefined : JSON.parse(line.slice(assignment.length, -1));
+    };
+
+    expect(
+      await readStaticContentScripts([
+        {
+          js: ["/bootstrap.js"],
+          matches: ["*://*/*"],
+          excludeMatches: ["*://*/*.xml*"],
+          allFrames: true,
+          standsInFor: ["bootstrap-lite.js"],
+        },
+        { js: ["page.js"], matches: ["https://*/*"], world: "MAIN" },
+        { js: ["elsewhere.js"], matches: ["https://example.com/*"] },
+      ]),
+    ).toEqual([
+      {
+        files: ["content.js"],
+        matches: ["https://accounts.google.com/*"],
+        excludeMatches: [],
+        allFrames: false,
+        world: "ISOLATED",
+      },
+      {
+        files: ["bootstrap.js", "bootstrap-lite.js"],
+        matches: ["https://accounts.google.com/*"],
+        excludeMatches: ["*://*/*.xml*"],
+        allFrames: true,
+        world: "ISOLATED",
+      },
+      {
+        files: ["page.js"],
+        matches: ["https://accounts.google.com/*"],
+        excludeMatches: [],
+        allFrames: false,
+        world: "MAIN",
+      },
+    ]);
+
+    // An extension that declares nothing keeps every executeScript failure
+    expect(await readStaticContentScripts(undefined)).toBeUndefined();
+
+    expect(await readStaticContentScripts([])).toBeUndefined();
   });
 
   test("the content-script-only copy loses the worker and gains the shim", async () => {

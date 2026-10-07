@@ -15,6 +15,10 @@ import {
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
+import {
+  FIXTURE_DECLARED_CONTENT_SCRIPTS,
+  FIXTURE_LOCAL_STORAGE_DEFAULTS,
+} from "@meru/electron-extensions/fixture/catalog";
 import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import {
   curatedExtensions,
@@ -128,6 +132,34 @@ function synthesizesStorageChanges(extensionId: string) {
     curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
       ?.synthesizeStorageChanges === true
   );
+}
+
+/**
+ * The scripts an extension's account-session copies declare on top of its own
+ * content scripts: the catalog's list for a curated extension, and the
+ * fixture's for the fixture, behind the condition that loads it at all.
+ */
+function getDeclaredContentScripts(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0 ? FIXTURE_DECLARED_CONTENT_SCRIPTS : undefined;
+  }
+
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.declaredContentScripts;
+}
+
+/**
+ * What an extension's `chrome.storage.local` starts with: the catalog's values
+ * for a curated extension, and one key for the fixture, whose end-to-end suite
+ * reads it back, behind the condition that loads it at all.
+ */
+function getLocalStorageDefaults(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0 ? FIXTURE_LOCAL_STORAGE_DEFAULTS : undefined;
+  }
+
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.localStorageDefaults;
 }
 
 /**
@@ -395,6 +427,8 @@ export const extensions = new Extensions({
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
   synthesizesStorageChanges,
+  getDeclaredContentScripts,
+  getLocalStorageDefaults,
   getGrantableOptionalPermissions,
   grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
   canOpenExtensionWindows,
