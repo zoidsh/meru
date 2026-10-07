@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { deriveManifest } from "@meru/electron-extensions/derive/manifest";
-import { BITWARDEN_EXTENSION_ID, curatedExtensions } from "@meru/shared/extensions";
+import { WindowCloseFallbackRejections } from "@meru/electron-extensions/runtime-proxy/window-close-rejection";
+import {
+  BITWARDEN_EXTENSION_ID,
+  curatedExtensions,
+  ONEPASSWORD_EXTENSION_ID,
+} from "@meru/shared/extensions";
 
 /**
  * The parts of Bitwarden 2026.9.2's manifest the derive reads. The package
@@ -100,5 +105,96 @@ describe("the Bitwarden catalog entry", () => {
 
   test("blocks nothing of its own", () => {
     expect(bitwarden?.telemetryUrls).toBeUndefined();
+  });
+});
+
+/**
+ * Bitwarden 2026.9.2's own code, reproduced so its reply and its page script's
+ * reading of it are pinned: `FallbackRequestedError` in
+ * `libs/common/src/platform/abstractions/fido2/fido2-client.service.abstraction.ts`,
+ * the worker's `handleExtensionMessage` in
+ * `apps/browser/src/autofill/fido2/background/fido2.background.ts`, and the
+ * page script's `createWebAuthnCredential` and `rehydrateDOMException`.
+ */
+class FallbackRequestedError extends Error {
+  readonly fallbackRequested = true;
+
+  constructor() {
+    super("FallbackRequested");
+  }
+}
+
+function replyWithError(error: Error): { error: Record<string, unknown> } {
+  return { error: { ...error, message: error.message } };
+}
+
+function readInPageScript(error: Record<string, unknown>) {
+  if ("fallbackRequested" in error && error.fallbackRequested) {
+    return "fallback";
+  }
+
+  if (error.name === "NotAllowedError" && typeof error.message === "string") {
+    return new DOMException(error.message, "NotAllowedError");
+  }
+
+  return error;
+}
+
+describe("the Bitwarden passkey popout rejection", () => {
+  const rejections = new WindowCloseFallbackRejections(
+    (extensionId) =>
+      curatedExtensions.find(({ id }) => id === extensionId)?.rejectFallbackOnWindowClose,
+  );
+
+  test("matches the reply Bitwarden's worker sends when it asks for the fallback", () => {
+    const reply = replyWithError(new FallbackRequestedError());
+
+    expect(reply).toEqual({ error: { fallbackRequested: true, message: "FallbackRequested" } });
+
+    expect(readInPageScript(reply.error)).toBe("fallback");
+  });
+
+  test("turns it into the DOMException Chrome rejects a dismissed passkey dialog with", () => {
+    for (const command of ["fido2RegisterCredentialRequest", "fido2GetCredentialRequest"]) {
+      const request = rejections.track(BITWARDEN_EXTENSION_ID, { command, requestId: "1" });
+
+      expect(request).toBeDefined();
+
+      rejections.windowOpened(BITWARDEN_EXTENSION_ID, 2);
+
+      rejections.windowClosedByUser(BITWARDEN_EXTENSION_ID, 2);
+
+      const result = rejections.settle(request as object, {
+        status: "replied",
+        reply: replyWithError(new FallbackRequestedError()),
+      });
+
+      const reply = (result as { reply: { error: Record<string, unknown> } }).reply;
+
+      const rejection = readInPageScript(reply.error);
+
+      expect(rejection).toBeInstanceOf(DOMException);
+
+      expect((rejection as DOMException).name).toBe("NotAllowedError");
+    }
+  });
+
+  test("is not set for 1Password", () => {
+    expect(
+      curatedExtensions.find(({ id }) => id === ONEPASSWORD_EXTENSION_ID)
+        ?.rejectFallbackOnWindowClose,
+    ).toBeUndefined();
+
+    expect(
+      rejections.track(ONEPASSWORD_EXTENSION_ID, { command: "fido2RegisterCredentialRequest" }),
+    ).toBeUndefined();
+  });
+
+  test("opts in only where the extension opens windows", () => {
+    for (const curatedExtension of curatedExtensions) {
+      if (curatedExtension.rejectFallbackOnWindowClose !== undefined) {
+        expect(curatedExtension.opensExtensionWindows).toBe(true);
+      }
+    }
   });
 });
