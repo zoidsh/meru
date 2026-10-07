@@ -73,6 +73,26 @@ export function parseStorageChangedReport(value: unknown) {
   return { area, changes: changes as RuntimeProxyStorageChanges, accessLevel };
 }
 
+/** A worker-session page's report of its own write: an area and its changes. */
+export function parsePageStorageChangedReport(value: unknown) {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+
+  const { area, changes } = value as Record<string, unknown>;
+
+  if (
+    !isStorageAreaName(area) ||
+    typeof changes !== "object" ||
+    changes === null ||
+    Array.isArray(changes)
+  ) {
+    return undefined;
+  }
+
+  return { area, changes: changes as RuntimeProxyStorageChanges };
+}
+
 /**
  * Whether the caller is one of the extension's own documents, which Chrome
  * calls a trusted context and never refuses, rather than a content script.
