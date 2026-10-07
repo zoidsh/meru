@@ -273,7 +273,7 @@ export class WorkerToPage {
     };
   }
 
-  private deliverToContexts(contexts: PageContext[], message: unknown, sender: RuntimeProxySender) {
+  deliverToContexts(contexts: PageContext[], message: unknown, sender: RuntimeProxySender) {
     return firstReply(contexts.map((context) => this.deliverToContext(context, message, sender)));
   }
 
