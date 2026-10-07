@@ -27,6 +27,7 @@ import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { copyText } from "@/lib/clipboard";
+import { getExtensionWindowError } from "@/lib/extension-window";
 import { readFindRequest } from "@/lib/find-in-page";
 import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
@@ -1119,15 +1120,11 @@ class Ipc {
     });
 
     ipc.main.handle("extensions.openWindow", (_event, extensionId) => {
-      if (openCuratedExtensionWindow(extensionId)) {
-        return {};
-      }
-
       const name =
         curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)?.name ??
         "The extension";
 
-      return { error: `${name} starts after Meru restarts. Restart Meru, then try again.` };
+      return { error: getExtensionWindowError(name, openCuratedExtensionWindow(extensionId)) };
     });
 
     ipc.main.on("downloads.toggleRecentDownloadHistoryPopup", (event) => {

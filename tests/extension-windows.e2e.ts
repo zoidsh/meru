@@ -103,10 +103,16 @@ async function callInWorker(webContentsId: number, method: string, args: unknown
   );
 }
 
-/** The URLs of the windows the app holds, which is how a window is counted. */
+/**
+ * The URLs of the windows the app holds, which is how a window is counted. On
+ * Windows a closing window stays listed for a moment after its `WebContents`
+ * is destroyed, and reading that one's URL throws, so it is counted as gone.
+ */
 async function readWindowUrls() {
   return meru.app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows().map((window) => window.webContents.getURL()),
+    BrowserWindow.getAllWindows()
+      .filter((window) => !window.isDestroyed() && !window.webContents.isDestroyed())
+      .map((window) => window.webContents.getURL()),
   );
 }
 
