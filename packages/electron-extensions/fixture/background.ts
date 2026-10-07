@@ -122,6 +122,18 @@ const permissions = getChromePermissions();
 
 const windows = getChromeWindows();
 
+/**
+ * Every window id `windows.onRemoved` told the worker about, registered at top
+ * level the way an extension waiting on its popout would be, so a test can ask
+ * whether closing a window reached the worker at all — the one context
+ * Electron delivers no event to.
+ */
+const removedWindowIds: number[] = [];
+
+windows.onRemoved.addListener((windowId) => {
+  removedWindowIds.push(windowId);
+});
+
 const scripting = getChromeScripting();
 
 /**
@@ -332,6 +344,10 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (probeMessage?.type === "read-globals") {
     sendResponse({ type: "globals-reply", extensionGlobals });
+  }
+
+  if (probeMessage?.type === "read-removed-windows") {
+    sendResponse({ type: "removed-windows-reply", windowIds: [...removedWindowIds] });
   }
 
   if (probeMessage?.type === "read-events") {

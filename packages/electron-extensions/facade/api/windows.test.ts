@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { WINDOWS_PATHS, type WindowsWindow } from "../../windows/bridge-protocol";
+import { encodeNativeMessage } from "../../native-messaging/framing";
+import {
+  WINDOWS_PATHS,
+  type WindowsEventFrame,
+  type WindowsWindow,
+} from "../../windows/bridge-protocol";
 import { callInCallbackForm } from "../lib/callback-form";
-import type { ChromeNamespace } from "../lib/chrome";
+import type { ChromeEvent, ChromeNamespace } from "../lib/chrome";
 import { createWindows } from "./windows";
 
 type BridgeRequest = { path: string; body: Record<string, unknown> };
@@ -280,5 +285,102 @@ describe("createWindows", () => {
     });
 
     expect(bridge.requests).toEqual([]);
+  });
+});
+
+/**
+ * The main-process end of the events stream alone, left open so a test can
+ * close a window down it the way main does.
+ */
+function installFakeEventsBridge() {
+  const paths: string[] = [];
+
+  let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+  let markParked = () => {};
+
+  const parked = new Promise<void>((resolve) => {
+    markParked = resolve;
+  });
+
+  extensionGlobals.fetch = (async (url: string) => {
+    const { pathname: path } = new URL(url);
+
+    paths.push(path);
+
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        start: (streamController) => {
+          controller = streamController;
+
+          markParked();
+        },
+      }),
+    );
+  }) as unknown as typeof fetch;
+
+  return {
+    paths,
+    parked,
+    remove: (windowId: number) => {
+      controller?.enqueue(
+        encodeNativeMessage({ type: "removed", windowId } satisfies WindowsEventFrame),
+      );
+    },
+  };
+}
+
+function settle() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 10);
+  });
+}
+
+describe("windows.onRemoved", () => {
+  /*
+   * What a password manager's worker ends a request on when the user closes
+   * the popout it opened for it, which Electron would never deliver to a
+   * worker.
+   */
+  test("fires for a window main says is gone, for an extension that opens windows", async () => {
+    const bridge = installFakeEventsBridge();
+
+    const onRemoved = createWindows({ opensExtensionWindows: true }).onRemoved as ChromeEvent;
+
+    const removedWindowIds: unknown[] = [];
+
+    onRemoved.addListener((windowId) => {
+      removedWindowIds.push(windowId);
+    });
+
+    await bridge.parked;
+
+    bridge.remove(OPENED_WINDOW.id);
+
+    await settle();
+
+    expect(removedWindowIds).toEqual([OPENED_WINDOW.id]);
+
+    expect(bridge.paths).toEqual([WINDOWS_PATHS.events]);
+  });
+
+  test("parks no stream until something listens", async () => {
+    const bridge = installFakeEventsBridge();
+
+    createWindows({ opensExtensionWindows: true });
+
+    await settle();
+
+    expect(bridge.paths).toEqual([]);
+  });
+
+  test("never asks for an extension that opens no windows", async () => {
+    const bridge = installFakeEventsBridge();
+
+    (createWindows().onRemoved as ChromeEvent).addListener(() => {});
+
+    await settle();
+
+    expect(bridge.paths).toEqual([]);
   });
 });
