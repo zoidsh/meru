@@ -145,7 +145,8 @@ function answerCall(
  * every write from a shimmed session too, since the relay answers those against
  * the same area objects. What it cannot see is a write with no call here
  * behind it: one made by an extension page in the worker's own session, whose
- * native events fire there but whose write the worker never hears.
+ * native events fire there and which the page reports for `dispatch` to carry
+ * the rest of the way (`page-storage-writes.ts`).
  *
  * The read before, the write and the read after are issued back to back, in
  * the call itself, and that is what keeps them correct. Chromium runs an
@@ -161,6 +162,35 @@ function answerCall(
 export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
   const changedEvents = createStorageChangedEvents(LOG_LABEL);
 
+  for (const extensionApi of extensionApis) {
+    const storage = extensionApi.storage as ChromeNamespace | undefined;
+
+    if (storage) {
+      changedEvents.shadow(storage);
+    }
+  }
+
+  shadowStorageWrites(extensionApis, changedEvents.dispatch);
+
+  return {
+    /**
+     * A change made somewhere the shadowed writes cannot see, dispatched the
+     * same way as the ones they do (`page-storage-writes.ts`).
+     */
+    dispatch: changedEvents.dispatch,
+  };
+}
+
+/**
+ * Shadows each area's `set`, `remove` and `clear` to read the keys they touch,
+ * write, read them again, and hand the difference to `onChanges`. The worker's
+ * synthesis dispatches it; an extension page in the worker's session reports
+ * it to the worker instead, its own native events being the ones that work.
+ */
+export function shadowStorageWrites(
+  extensionApis: ChromeNamespace[],
+  onChanges: (area: RuntimeProxyStorageAreaName, changes: RuntimeProxyStorageChanges) => void,
+) {
   const shadowedAreas = new WeakSet<ChromeNamespace>();
 
   /**
@@ -215,7 +245,7 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
           const changes = diffStorageItems(beforeResult.value, afterResult.value);
 
           if (Object.keys(changes).length > 0) {
-            changedEvents.dispatch(areaName, changes);
+            onChanges(areaName, changes);
           }
         }
 
@@ -250,8 +280,6 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
     if (!storage) {
       continue;
     }
-
-    changedEvents.shadow(storage);
 
     for (const areaName of STORAGE_AREA_NAMES) {
       const area = storage[areaName];
