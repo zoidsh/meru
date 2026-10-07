@@ -305,6 +305,22 @@ function canOpenExtensionWindows(extensionId: string) {
 }
 
 /**
+ * Which extensions hear the `webNavigation` events main synthesizes: the
+ * catalog entry says so per extension, and the fixture wherever it is loaded,
+ * whose end-to-end suite checks them.
+ */
+function deliversNavigationEvents(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0;
+  }
+
+  return (
+    curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+      ?.deliversNavigationEvents === true
+  );
+}
+
+/**
  * What a popout gets when the extension names no size. Bitwarden's own popout
  * dimensions, which is what its unlock window asks for anyway — this is for the
  * call that leaves them out, where a window at Electron's 800x600 default would
@@ -432,6 +448,7 @@ export const extensions = new Extensions({
   grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
   canOpenExtensionWindows,
   openExtensionWindow,
+  deliversNavigationEvents,
   // One shared extension instance across every session — one 1Password sign-in
   // instead of one per account, and one worker whatever the account count. It
   // is how Meru runs extensions rather than something the user chooses: a
