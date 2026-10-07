@@ -13,6 +13,7 @@ export function postBridge(
   pathName: string,
   body: Record<string, unknown>,
   rewriteBody: (serializedBody: string) => string = (serializedBody) => serializedBody,
+  signal?: AbortSignal,
 ) {
   const bridgeToken =
     (globalThis as unknown as Record<string, string | undefined>)[EXTENSION_BRIDGE_TOKEN_GLOBAL] ??
@@ -23,5 +24,6 @@ export function postBridge(
     // A safelisted content type keeps this a simple request, so no preflight
     headers: { "content-type": "text/plain;charset=UTF-8" },
     body: rewriteBody(JSON.stringify(body)),
+    signal,
   });
 }

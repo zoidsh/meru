@@ -63,12 +63,32 @@ export type FixtureFrameDetails = {
   url: string;
 };
 
+/** What a `webNavigation` event says about a frame, in the slice the fixture records. */
+export type FixtureNavigationDetails = {
+  tabId: number;
+  frameId: number;
+  parentFrameId: number;
+  url: string;
+  frameType?: string;
+  error?: string;
+};
+
+/** An event registered with url filters, as `webNavigation`'s are. */
+export type FixtureFilteredEvent<Listener> = {
+  addListener: (listener: Listener, filters?: { url: Record<string, unknown>[] }) => void;
+};
+
 /** The slice of `chrome.webNavigation` the fixture's worker asks. */
 export type FixtureWebNavigation = {
   getFrame: (
     query: { tabId: number; frameId: number },
     callback: (frame: FixtureFrameDetails | null) => void,
   ) => void;
+  onBeforeNavigate: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
+  onCommitted: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
+  onDOMContentLoaded: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
+  onCompleted: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
+  onErrorOccurred: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
 };
 
 /** One key's entry in an `onChanged`, in Chrome's own shape. */

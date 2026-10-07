@@ -98,6 +98,16 @@ export type CuratedExtension = {
    */
   windowPagePath?: string;
   /**
+   * Delivers `chrome.webNavigation`'s `onBeforeNavigate`, `onCommitted`,
+   * `onDOMContentLoaded` and `onCompleted` to the extension's worker and pages,
+   * synthesized in main from the account pages, where Electron fires none.
+   *
+   * Opt-in because main listens to every account page's loads while one of
+   * those events has a listener, and an extension that never reads them would
+   * pay that for nothing.
+   */
+  deliversNavigationEvents?: boolean;
+  /**
    * Scripts the extension's worker injects at runtime, with
    * `chrome.scripting.executeScript` or `registerContentScripts`, declared as
    * static content scripts of every account session's copy instead. Neither
@@ -244,6 +254,9 @@ export const curatedExtensions: CuratedExtension[] = [
     // Sign-in, unlock and passkey confirmation are all popouts of its own pages
     opensExtensionWindows: true,
     windowPagePath: "popup/index.html",
+    // Its save and update prompt waits on `onCompleted` when the page after a
+    // login is still loading 1.5 seconds after the submit
+    deliversNavigationEvents: true,
     // Biometric unlock, through the Bitwarden desktop app's native host
     grantableOptionalPermissions: ["nativeMessaging"],
     // What its `runtime.onInstalled` handler sets in Chrome, which never fires

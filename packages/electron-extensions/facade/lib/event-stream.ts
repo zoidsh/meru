@@ -23,21 +23,47 @@ function delay(delayMs: number) {
  *
  * Returns a function that starts it, once however often it is called, so the
  * first listener can park the stream and a context that never listens never
- * opens one.
+ * opens one. Its `stop` lets the stream go again, for an event whose parked
+ * stream costs main something while nothing listens.
  */
 export function createEventStream<Frame>(
   pathName: string,
   onFrame: (frame: Frame) => void,
-  { label }: { label: string },
+  {
+    label,
+    getBody = () => ({}),
+    onConnected,
+    onDisconnected,
+  }: {
+    label: string;
+    /** What each park sends, read afresh every time the stream is parked. */
+    getBody?: () => Record<string, unknown>;
+    /** Called once main has answered a park, so the stream is in its delivery set. */
+    onConnected?: () => void;
+    /**
+     * Called when a connected stream ends, however it ends, until the next
+     * `onConnected`: main has let it go, so nothing sent about it in between
+     * reaches a stream.
+     */
+    onDisconnected?: () => void;
+  },
 ) {
   let isListening = false;
 
-  const readStream = async () => {
-    const response = await postBridge(pathName, {});
+  // Bumped by each stop, so a loop still waiting out its retry delay after a
+  // stop and a restart knows it is no longer the current one
+  let generation = 0;
+
+  let abortController: AbortController | undefined;
+
+  const readStream = async (signal: AbortSignal, startedGeneration: number) => {
+    const response = await postBridge(pathName, getBody(), undefined, signal);
 
     if (!response.ok || !response.body) {
       throw new Error(`The ${label} bridge answered ${response.status}`);
     }
+
+    onConnected?.();
 
     const reader = response.body.getReader();
 
@@ -59,25 +85,56 @@ export function createEventStream<Frame>(
         }
       }
     } finally {
+      // A stopped loop says nothing: a restart may already have connected
+      if (generation === startedGeneration) {
+        onDisconnected?.();
+      }
+
       await reader.cancel().catch(() => undefined);
     }
   };
 
-  return async () => {
+  const start = async () => {
     if (isListening) {
       return;
     }
 
     isListening = true;
 
-    for (;;) {
+    const startedGeneration = generation;
+
+    while (generation === startedGeneration) {
+      abortController = new AbortController();
+
       try {
-        await readStream();
+        await readStream(abortController.signal, startedGeneration);
       } catch (error) {
-        console.error(`[chrome-facade] ${label} stream failed`, error);
+        if (generation === startedGeneration) {
+          console.error(`[chrome-facade] ${label} stream failed`, error);
+        }
+      }
+
+      if (generation !== startedGeneration) {
+        return;
       }
 
       await delay(RETRY_DELAY_MS);
     }
   };
+
+  const stop = () => {
+    if (!isListening) {
+      return;
+    }
+
+    isListening = false;
+
+    generation += 1;
+
+    abortController?.abort();
+
+    abortController = undefined;
+  };
+
+  return Object.assign(start, { stop });
 }
