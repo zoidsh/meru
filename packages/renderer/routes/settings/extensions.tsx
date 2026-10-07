@@ -328,6 +328,19 @@ function ExtensionItem({
 
   const [extensionError, setExtensionError] = useState<ExtensionError | null>(null);
 
+  // Shown only once there is a loaded extension to open, rather than locked
+  // like the buttons beside it, since it is the extension's own way in
+  const showsWindowButton = Boolean(extension.windowPagePath) && !dialogsLocked;
+
+  const openWindowMutation = useMutation({
+    mutationFn: () => ipc.main.invoke("extensions.openWindow", extension.id),
+    onSuccess: ({ error }) => {
+      if (error) {
+        setExtensionError({ title: `Couldn't open ${extension.name}`, description: error });
+      }
+    },
+  });
+
   const extensionMutation = useMutation({
     mutationFn: (install: boolean) =>
       install
@@ -379,8 +392,20 @@ function ExtensionItem({
             <LicenseKeyRequiredFieldBadge />
           </ItemTitle>
           <ItemDescription>{extension.description}</ItemDescription>
-          {(isOnePassword || extension.contentScriptMatches) && (
+          {(isOnePassword || showsWindowButton || extension.contentScriptMatches) && (
             <div className="mt-1 flex flex-wrap gap-2 self-start">
+              {showsWindowButton && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={openWindowMutation.isPending}
+                  onClick={() => {
+                    openWindowMutation.mutate();
+                  }}
+                >
+                  Open {extension.name}
+                </Button>
+              )}
               {isOnePassword && (
                 <Button
                   variant="outline"

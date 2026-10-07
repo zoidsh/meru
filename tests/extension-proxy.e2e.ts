@@ -739,6 +739,82 @@ test("tabs.getCurrent answers an embedded extension frame's host tab, and nothin
   expect(await readCurrentTab(workerPopupId)).toBeNull();
 });
 
+/** Runs a script in a page's main frame, in the extension's own world when it is one. */
+async function runInPage<Result>(webContentsId: number, script: string) {
+  return meru.app.evaluate(
+    ({ webContents }, { webContentsId: contentsId, script: pageScript }) =>
+      webContents.fromId(contentsId)?.mainFrame.executeJavaScript(pageScript) ?? null,
+    { webContentsId, script },
+  ) as Promise<Result | null>;
+}
+
+type CollectedMessage = { nonce: string; tabId?: number; frameId?: number };
+
+/*
+ * Bitwarden's Fill from its popup in a Meru window. The popup is a page of the
+ * worker's session, where Chromium's own messaging reaches no account tab: it
+ * sends `collectPageDetails` into the tab with `tabs.sendMessage`, gathers what
+ * each frame's content script sends back with `runtime.sendMessage` on its
+ * `onMessage`, then sends the fill into the frame that answered. The fixture's
+ * `collect` stands in for both legs, and a port for `tabs.connect`.
+ */
+test("a page of the worker's session messages an account's tab, and hears its content script", async () => {
+  const pageId = await openProbeWindow(SURVIVING_PARTITION, `${serverOrigin}/plain`);
+
+  await readProbeResults(pageId);
+
+  const popupId = await openProbeWindow(WORKER_SESSION, popupUrl("fill"));
+
+  await readProbeResults(popupId);
+
+  await runInPage(
+    popupId,
+    `window.collected = [];
+     chrome.runtime.onMessage.addListener((message, sender) => {
+       if (message && message.type === "collected") {
+         window.collected.push({
+           nonce: message.nonce,
+           tabId: sender.tab && sender.tab.id,
+           frameId: sender.frameId,
+         });
+       }
+     });
+     null`,
+  );
+
+  const sent = await runInPage<{ reply: unknown; lastError: string | null }>(
+    popupId,
+    `new Promise((resolve) => {
+       chrome.tabs.sendMessage(${pageId}, { type: "collect", nonce: "fill-1" }, { frameId: 0 }, (reply) => {
+         resolve({ reply, lastError: chrome.runtime.lastError ? chrome.runtime.lastError.message : null });
+       });
+     })`,
+  );
+
+  expect(sent).toEqual({
+    reply: { type: "collect-reply", nonce: "fill-1", contextId: expect.any(String) },
+    lastError: null,
+  });
+
+  await expect
+    .poll(() => runInPage<CollectedMessage[]>(popupId, "window.collected"))
+    .toEqual([{ nonce: "fill-1", tabId: pageId, frameId: 0 }]);
+
+  const portReply = await runInPage<unknown>(
+    popupId,
+    `new Promise((resolve) => {
+       const port = chrome.tabs.connect(${pageId}, { name: "fill" });
+       port.onMessage.addListener((message) => {
+         port.disconnect();
+         resolve(message);
+       });
+       port.postMessage({ type: "ping-from-worker", nonce: "fill-port" });
+     })`,
+  );
+
+  expect(portReply).toEqual({ type: "pong", nonce: "fill-port", contextId: expect.any(String) });
+});
+
 /*
  * The relay shape 1Password's `get-nested-frame-configuration` and
  * `remove-inline-button` requests have, and the one nothing else here covered:
