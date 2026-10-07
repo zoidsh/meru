@@ -239,6 +239,25 @@ export function getChromeWindows(): FixtureWindows {
   return workerGlobals.chrome.windows;
 }
 
+/** The slice of `chrome.scripting` the fixture's worker calls, in callback form. */
+export type FixtureScripting = {
+  executeScript: (
+    injection: Record<string, unknown>,
+    callback: (results: { frameId: number }[] | undefined) => void,
+  ) => void;
+};
+
+/**
+ * The worker's `chrome.scripting`, Electron's own with `executeScript`
+ * shadowed by the relay for a tab of another session, where only the scripts
+ * the account copies declared can be answered for.
+ */
+export function getChromeScripting(): FixtureScripting {
+  const workerGlobals = globalThis as unknown as { chrome: { scripting: FixtureScripting } };
+
+  return workerGlobals.chrome.scripting;
+}
+
 /** What the extension API globals are in this context, as `typeof` names them. */
 export type FixtureExtensionGlobals = { chrome: string; browser: string };
 

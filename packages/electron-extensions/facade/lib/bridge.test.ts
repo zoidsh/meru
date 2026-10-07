@@ -49,6 +49,18 @@ describe("postBridge", () => {
     expect(JSON.parse(request?.init.body as string)).toEqual({ portId: "port-1" });
   });
 
+  test("sends the body through the rewrite it was handed, once serialized", async () => {
+    const requests = stubFetch();
+
+    await postBridge("/echo", { url: "chrome-extension://dynamic/a.html" }, (serializedBody) =>
+      serializedBody.replaceAll("dynamic", "static"),
+    );
+
+    expect(JSON.parse(requests[0]?.init.body as string)).toEqual({
+      url: "chrome-extension://static/a.html",
+    });
+  });
+
   test("escapes a token the query string would otherwise take apart", async () => {
     const requests = stubFetch();
 

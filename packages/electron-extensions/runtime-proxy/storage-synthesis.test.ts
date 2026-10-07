@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { ChromeEventListener, ChromeNamespace } from "../facade/lib/chrome";
 import { RUNTIME_PROXY_PATHS } from "./bridge-protocol";
+import { reportPageStorageWrites } from "./page-storage-writes";
 import { createStorageRelay } from "./storage-relay";
 import { diffStorageItems, getAffectedKeys, installStorageSynthesis } from "./storage-synthesis";
 
@@ -498,6 +499,69 @@ describe("installStorageSynthesis", () => {
           changes: { b: { newValue: 2 } },
           accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
         },
+      },
+    ]);
+  });
+});
+
+describe("installStorageSynthesis's dispatch", () => {
+  test("hands a change the shadowed writes never saw to the same listeners", () => {
+    const api = createWorkerApi();
+
+    const { dispatch } = installStorageSynthesis([api.extensionApi]);
+
+    const heard = listen(api);
+
+    dispatch("local", { unlocked: { newValue: true } });
+
+    expect(heard).toEqual([
+      { event: "area", changes: { unlocked: { newValue: true } } },
+      { event: "topLevel", changes: { unlocked: { newValue: true } }, areaName: "local" },
+    ]);
+  });
+});
+
+describe("reportPageStorageWrites", () => {
+  test("reports a page's own writes to main, and leaves the page's events native", async () => {
+    const api = createWorkerApi();
+
+    const posts: { pathName: string; body: unknown }[] = [];
+
+    globalThis.fetch = (async (url: string, init: RequestInit) => {
+      posts.push({ pathName: new URL(url).pathname, body: JSON.parse(init.body as string) });
+
+      return new Response(null, { status: 204 });
+    }) as unknown as typeof fetch;
+
+    reportPageStorageWrites(api.extensionApi);
+
+    listen(api);
+
+    await call(api.local, "set", { cipher: { id: "c1" } });
+
+    await call(api.session, "set", { userKey: "k" });
+
+    await call(api.local, "set", { cipher: { id: "c1" } });
+
+    await call(api.local, "remove", "cipher");
+
+    await settle();
+
+    // The page's own listeners went to its native events, which already fire
+    expect(api.nativeRegistrations).toHaveLength(2);
+
+    expect(posts).toEqual([
+      {
+        pathName: RUNTIME_PROXY_PATHS.pageStorageChanged,
+        body: { area: "local", changes: { cipher: { newValue: { id: "c1" } } } },
+      },
+      {
+        pathName: RUNTIME_PROXY_PATHS.pageStorageChanged,
+        body: { area: "session", changes: { userKey: { newValue: "k" } } },
+      },
+      {
+        pathName: RUNTIME_PROXY_PATHS.pageStorageChanged,
+        body: { area: "local", changes: { cipher: { oldValue: { id: "c1" } } } },
       },
     ]);
   });
