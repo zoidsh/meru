@@ -1,6 +1,21 @@
 /** The class an extension belongs to, which is what the page can speak about. */
 export type CuratedExtensionCategory = "passwordManager";
 
+export type DeclaredContentScript = {
+  js: string[];
+  matches: string[];
+  excludeMatches?: string[];
+  runAt?: "document_start" | "document_end" | "document_idle";
+  allFrames?: boolean;
+  world?: "ISOLATED" | "MAIN";
+  /**
+   * Files the worker may ask `executeScript` for that these scripts already
+   * cover, for an extension choosing between variants of one bundle where the
+   * one declared is the superset of the rest.
+   */
+  standsInFor?: string[];
+};
+
 export type CuratedExtension = {
   /** The Chrome Web Store id, which every package has to be signed for. */
   id: string;
@@ -67,6 +82,22 @@ export type CuratedExtension = {
    * — and where its pages have been seen to work in one.
    */
   opensExtensionWindows?: boolean;
+  /**
+   * Scripts the extension's worker injects at runtime, with
+   * `chrome.scripting.executeScript` or `registerContentScripts`, declared as
+   * static content scripts of every account session's copy instead. Neither
+   * call reaches an account: the worker runs in another session, where
+   * Chromium knows none of an account's tabs, and nothing can carry a script
+   * file across. Declared, a script is already in the page when the worker
+   * asks, and the worker's `executeScript` for one of these files is answered
+   * as though it had run.
+   *
+   * Each entry is a manifest `content_scripts` entry in the catalog's own
+   * casing, clamped like the extension's own entries. Each costs every matched
+   * frame the script whether the extension would have injected it or not, so
+   * declare only what the extension injects into the sites it is offered for.
+   */
+  declaredContentScripts?: DeclaredContentScript[];
   /**
    * Error lines the extension's service worker writes that say nothing an
    * embedder can act on, as prefixes matched against the start of the message.

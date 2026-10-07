@@ -54,6 +54,26 @@ export const RUNTIME_PROXY_MANIFEST_GLOBAL = "__meruRuntimeProxyManifest";
  */
 export const RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL = "__meruRuntimeProxySynthesizeStorageChanges";
 
+/**
+ * Set on the relay's own script, by the derive, for an extension whose
+ * account-session copies declare content scripts beyond its own: every static
+ * content script those copies carry, the shim left out. It is what the worker's
+ * `chrome.scripting.executeScript` into an account's tab is answered from
+ * (`worker-scripting.ts`), and a global for the same reason synthesis is one:
+ * the shadow has to be in place before the extension's own script runs.
+ */
+export const RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL = "__meruRuntimeProxyStaticContentScripts";
+
+/** One static content script of an account-session copy, as the relay reads it. */
+export type RuntimeProxyStaticContentScript = {
+  /** The files it runs, and the ones the embedder declared it stands in for. */
+  files: string[];
+  matches: string[];
+  excludeMatches: string[];
+  allFrames: boolean;
+  world: "ISOLATED" | "MAIN";
+};
+
 /** What every extension URL starts with, from a worker scope to a page's own. */
 export const EXTENSION_SCHEME_PREFIX = "chrome-extension://";
 

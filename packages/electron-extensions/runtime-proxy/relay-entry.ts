@@ -1,11 +1,14 @@
 import type { ChromeNamespace } from "../facade/lib/chrome";
 import {
   RUNTIME_PROXY_RELAY_START_GLOBAL,
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+  type RuntimeProxyStaticContentScript,
 } from "./bridge-protocol";
 import { createRelayClient } from "./relay-client";
 import { createStorageRelay } from "./storage-relay";
 import { installStorageSynthesis } from "./storage-synthesis";
+import { wrapScripting } from "./worker-scripting";
 
 /**
  * Entry point of the runtime proxy's worker-side relay client. It is bundled
@@ -35,10 +38,20 @@ const storageRelay = createStorageRelay(extensionApis);
 
 const relayClient = createRelayClient({ runStorageCall: storageRelay.run });
 
+const staticContentScripts = (workerGlobals as unknown as Record<string, unknown>)[
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL
+] as RuntimeProxyStaticContentScript[] | undefined;
+
 for (const extensionApi of extensionApis) {
   relayClient.wrapRuntime(extensionApi);
 
   relayClient.wrapTabs(extensionApi);
+
+  // Only for an extension that declared scripts of its own: for any other, an
+  // `executeScript` into an account's tab stays the failure it really is
+  if (staticContentScripts) {
+    wrapScripting(extensionApi, staticContentScripts);
+  }
 }
 
 // Before the extension's own background script runs, so its own boot-time call

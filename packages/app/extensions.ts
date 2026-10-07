@@ -14,6 +14,7 @@ import {
   registerExtensionBridgeScheme,
   uninstallExtension,
 } from "@meru/electron-extensions";
+import { FIXTURE_DECLARED_CONTENT_SCRIPTS } from "@meru/electron-extensions/fixture/catalog";
 import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import {
   curatedExtensions,
@@ -127,6 +128,20 @@ function synthesizesStorageChanges(extensionId: string) {
     curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
       ?.synthesizeStorageChanges === true
   );
+}
+
+/**
+ * The scripts an extension's account-session copies declare on top of its own
+ * content scripts: the catalog's list for a curated extension, and the
+ * fixture's for the fixture, behind the condition that loads it at all.
+ */
+function getDeclaredContentScripts(extensionId: string) {
+  if (extensionId === FIXTURE_EXTENSION_ID) {
+    return getFixtureExtensionDirs().length > 0 ? FIXTURE_DECLARED_CONTENT_SCRIPTS : undefined;
+  }
+
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)
+    ?.declaredContentScripts;
 }
 
 /**
@@ -394,6 +409,7 @@ export const extensions = new Extensions({
   strippedManifestKeys: getStrippedManifestKeys(),
   getContentScriptMatches,
   synthesizesStorageChanges,
+  getDeclaredContentScripts,
   getGrantableOptionalPermissions,
   grantedPermissionsPath: GRANTED_PERMISSIONS_PATH,
   canOpenExtensionWindows,

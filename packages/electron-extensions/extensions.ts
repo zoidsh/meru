@@ -10,6 +10,7 @@ import {
 import { Alarms, type AlarmWakePolicy } from "./alarms/alarms";
 import { ExtensionBridge } from "./bridge/bridge";
 import { deriveExtension, type SharedInstanceDeriveOptions } from "./derive";
+import type { DeclaredContentScript } from "./derive/manifest";
 import { reachesClampedSite } from "./derive/match-pattern";
 import type { ExtensionsLogger } from "./logger";
 import {
@@ -132,6 +133,13 @@ export type ExtensionsOptions = {
    */
   synthesizesStorageChanges?: (extensionId: string) => boolean;
   /**
+   * Scripts an extension's account-session copies declare as static content
+   * scripts, by the id the extension is loaded as, for what its worker would
+   * otherwise inject at runtime into tabs it cannot reach. Only with a shared
+   * instance, whose content-script-only copy is the one that carries them.
+   */
+  getDeclaredContentScripts?: (extensionId: string) => DeclaredContentScript[] | undefined;
+  /**
    * Narrows which native messaging hosts an extension may drive. Without it any
    * host that lists the extension in its own `allowed_origins` is reachable.
    */
@@ -234,6 +242,8 @@ export class Extensions {
 
   private synthesizesStorageChanges: ExtensionsOptions["synthesizesStorageChanges"];
 
+  private getDeclaredContentScripts: ExtensionsOptions["getDeclaredContentScripts"];
+
   private sharedInstance: SharedExtensionInstance | undefined;
 
   private workerSessionPagePatterns: string[] | undefined;
@@ -288,6 +298,7 @@ export class Extensions {
     strippedManifestKeys,
     getContentScriptMatches,
     synthesizesStorageChanges,
+    getDeclaredContentScripts,
     isNativeMessagingHostAllowed,
     getGrantableOptionalPermissions,
     grantedPermissionsPath,
@@ -311,6 +322,8 @@ export class Extensions {
     this.getContentScriptMatches = getContentScriptMatches;
 
     this.synthesizesStorageChanges = synthesizesStorageChanges;
+
+    this.getDeclaredContentScripts = getDeclaredContentScripts;
 
     this.sharedInstance = sharedInstance;
 
@@ -382,6 +395,7 @@ export class Extensions {
         strippedManifestKeys: this.strippedManifestKeys,
         getContentScriptMatches: this.getContentScriptMatches,
         synthesizesStorageChanges: this.synthesizesStorageChanges,
+        getDeclaredContentScripts: this.getDeclaredContentScripts,
         sharedInstance: sharedInstanceDerive,
       });
 
