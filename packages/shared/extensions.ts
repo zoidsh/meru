@@ -83,6 +83,12 @@ export type CuratedExtension = {
    */
   opensExtensionWindows?: boolean;
   /**
+   * The extension's own page the settings item opens in a window, relative to
+   * the package, for an extension whose sign-in has no other way in. Needs
+   * `opensExtensionWindows`, which is what opens it.
+   */
+  windowPagePath?: string;
+  /**
    * Scripts the extension's worker injects at runtime, with
    * `chrome.scripting.executeScript` or `registerContentScripts`, declared as
    * static content scripts of every account session's copy instead. Neither
@@ -130,6 +136,8 @@ export type CuratedExtension = {
 
 /** The 1Password Chrome Web Store id, which app and settings both single out. */
 export const ONEPASSWORD_EXTENSION_ID = "aeblfdkhhhdcdjpifhhbdiojplfjncoa";
+
+export const BITWARDEN_EXTENSION_ID = "nngceckbapebfimnlniiiahkandclblb";
 
 /**
  * The extensions Meru offers, the only ones it installs. An id outside this
@@ -193,6 +201,68 @@ export const curatedExtensions: CuratedExtension[] = [
       // request name — `<autofill-item>`, which once was one — still surfaces
       "[Messaging] Exception while handling request <get-nested-frame-configuration>",
       "[Messaging] Exception while handling request <remove-inline-button>",
+    ],
+  },
+  {
+    id: BITWARDEN_EXTENSION_ID,
+    name: "Bitwarden",
+    // Standalone, unlike 1Password: it signs in to its own server from the
+    // window the settings item opens, so the only outside requirement left to
+    // name is the desktop app biometric unlock talks to
+    description:
+      "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app.",
+    category: "passwordManager",
+    // The same two hosts as 1Password, for the same reasons
+    contentScriptMatches: ["https://accounts.google.com/*", "https://myaccount.google.com/*"],
+    // Its account state reaches its worker only through `storage.onChanged`
+    synthesizeStorageChanges: true,
+    // Sign-in, unlock and passkey confirmation are all popouts of its own pages
+    opensExtensionWindows: true,
+    windowPagePath: "popup/index.html",
+    // Biometric unlock, through the Bitwarden desktop app's native host
+    grantableOptionalPermissions: ["nativeMessaging"],
+    // What its `runtime.onInstalled` handler sets in Chrome, which never fires
+    // here: the inline menu on field focus, in Bitwarden's own serialized form.
+    // Without it the menu is off, and logged out or locked it is the only way
+    // to the unlock popout from a page
+    localStorageDefaults: {
+      global_autofillSettingsLocal_inlineMenuVisibility: { __json__: true, value: "2" },
+    },
+    declaredContentScripts: [
+      // What its worker injects into every frame to fill. It picks one of four
+      // bootstrap bundles by the inline-menu and notification settings, and
+      // this one is the superset of the other three. The matches are the
+      // manifest's own, clamped to the hosts above like every entry
+      {
+        js: ["content/bootstrap-autofill-overlay.js", "content/contextMenuHandler.js"],
+        standsInFor: [
+          "content/bootstrap-autofill.js",
+          "content/bootstrap-autofill-overlay-menu.js",
+          "content/bootstrap-autofill-overlay-notifications.js",
+        ],
+        matches: ["*://*/*"],
+        excludeMatches: ["*://*/*.xml*"],
+        runAt: "document_start",
+        allFrames: true,
+      },
+      // What it registers with `registerContentScripts` for passkeys: the
+      // override of the page's own `navigator.credentials`, and the isolated
+      // script it talks to the worker through
+      {
+        js: ["content/fido2-page-script.js"],
+        matches: ["https://*/*"],
+        excludeMatches: ["https://*/*.xml*"],
+        runAt: "document_start",
+        allFrames: true,
+        world: "MAIN",
+      },
+      {
+        js: ["content/fido2-content-script.js"],
+        matches: ["https://*/*"],
+        excludeMatches: ["https://*/*.xml*"],
+        runAt: "document_start",
+        allFrames: true,
+      },
     ],
   },
 ];
