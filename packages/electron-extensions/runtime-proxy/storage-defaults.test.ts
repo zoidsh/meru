@@ -89,3 +89,111 @@ describe("seedLocalStorageDefaults", () => {
     await seedLocalStorageDefaults({ runtime: {} }, { menu: 1 });
   });
 });
+
+describe("seedLocalStorageDefaults while the extension writes", () => {
+  /**
+   * A local area whose calls run in the order they were made, a moment later,
+   * so the extension's own script can write while the seed's read is out.
+   */
+  function createSlowLocalArea() {
+    const items: Record<string, unknown> = {};
+
+    const writes: Record<string, unknown>[] = [];
+
+    let backend = Promise.resolve();
+
+    const later = (run: () => unknown, callback: (value?: unknown) => void) => {
+      backend = backend.then(() => new Promise((resolve) => setTimeout(resolve, 1)));
+
+      void backend.then(() => {
+        callback(run());
+      });
+    };
+
+    const local: ChromeNamespace = {
+      get: (keys: string[], callback: (value?: unknown) => void) => {
+        later(
+          () =>
+            Object.fromEntries(keys.filter((key) => key in items).map((key) => [key, items[key]])),
+          callback,
+        );
+      },
+      set: (newItems: Record<string, unknown>, callback: () => void) => {
+        later(() => {
+          writes.push(newItems);
+
+          Object.assign(items, newItems);
+        }, callback);
+      },
+      remove: (keys: string | string[], callback: () => void) => {
+        later(() => {
+          for (const key of typeof keys === "string" ? [keys] : keys) {
+            delete items[key];
+          }
+        }, callback);
+      },
+      clear: (callback: () => void) => {
+        later(() => {
+          for (const key of Object.keys(items)) {
+            delete items[key];
+          }
+        }, callback);
+      },
+    };
+
+    return {
+      extensionApi: { runtime: {}, storage: { local } } as ChromeNamespace,
+      local,
+      items,
+      writes,
+    };
+  }
+
+  test("leaves a key the extension writes while the read is out", async () => {
+    const { extensionApi, local, items, writes } = createSlowLocalArea();
+
+    const seeded = seedLocalStorageDefaults(extensionApi, { menu: 2, other: 1 });
+
+    (local.set as (items: unknown, callback: () => void) => void)({ menu: 0 }, () => undefined);
+
+    await seeded;
+
+    expect(items).toEqual({ menu: 0, other: 1 });
+
+    expect(writes).toEqual([{ menu: 0 }, { other: 1 }]);
+  });
+
+  test("leaves a key the extension removes while the read is out", async () => {
+    const { extensionApi, local, writes } = createSlowLocalArea();
+
+    const seeded = seedLocalStorageDefaults(extensionApi, { menu: 2, other: 1 });
+
+    (local.remove as (keys: unknown, callback: () => void) => void)("menu", () => undefined);
+
+    await seeded;
+
+    expect(writes).toEqual([{ other: 1 }]);
+  });
+
+  test("seeds nothing after a clear while the read is out", async () => {
+    const { extensionApi, local, writes } = createSlowLocalArea();
+
+    const seeded = seedLocalStorageDefaults(extensionApi, { menu: 2 });
+
+    (local.clear as (callback: () => void) => void)(() => undefined);
+
+    await seeded;
+
+    expect(writes).toEqual([]);
+  });
+
+  test("hands the area its own methods back once the seed is written", async () => {
+    const { extensionApi, local } = createSlowLocalArea();
+
+    const { set, remove, clear } = local;
+
+    await seedLocalStorageDefaults(extensionApi, { menu: 2 });
+
+    expect([local.set, local.remove, local.clear]).toEqual([set, remove, clear]);
+  });
+});
