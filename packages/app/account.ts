@@ -15,7 +15,7 @@ import {
 import { serializeError } from "serialize-error";
 import { blocker } from "./blocker";
 import { config } from "./config";
-import { extensions } from "./extensions";
+import { EXTENSION_PAGE_PERMISSIONS, extensions } from "./extensions";
 import { Gmail } from "./gmail";
 import { log } from "./lib/log";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
@@ -24,12 +24,6 @@ import { main } from "./main";
 import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
-
-const EXTENSION_PAGE_PERMISSIONS = new Set([
-  "clipboard-read",
-  "clipboard-sanitized-write",
-  "notifications",
-]);
 
 export class Account {
   accountId: AccountConfig["id"];

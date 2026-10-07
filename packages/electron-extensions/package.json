@@ -5,6 +5,7 @@
   "exports": {
     ".": "./index.ts",
     "./crx": "./crx/index.ts",
+    "./derive/manifest": "./derive/manifest.ts",
     "./install": "./install/index.ts",
     "./fixture/catalog": "./fixture/catalog.ts",
     "./fixture/id": "./fixture/id.ts",

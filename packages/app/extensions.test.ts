@@ -5,7 +5,7 @@ import path from "node:path";
 import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
 
 // Bitwarden's id, which a Beta catalog offers and this one doesn't
-const UNCATALOGUED_EXTENSION_ID = "nngceckbapebfimnlniiiahkandclblb";
+const UNCATALOGUED_EXTENSION_ID = "abcdefghijklmnopabcdefghijklmnop";
 
 // The worker session is the default session, whose storage path is `userData`
 // itself, so one directory stands in for both
