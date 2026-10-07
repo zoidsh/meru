@@ -25,6 +25,8 @@ import { getNativeMethod, type NativeMethod, parseSendMessageArguments } from ".
 import { createRelayedPort, type RelayedPort, type RelayedPortTransport } from "./relayed-port";
 import {
   STORAGE_UNAVAILABLE_ERROR,
+  type RuntimeProxyStorageAreaName,
+  type RuntimeProxyStorageChanges,
   type RuntimeProxyStorageCall,
   type RuntimeProxyStorageResult,
 } from "./storage-protocol";
@@ -67,6 +69,14 @@ export type CreateRelayClientOptions = {
    * way to the other sessions (`dynamic-url.ts`). Absent, it goes as it is.
    */
   rewriteOutgoing?: (serializedBody: string) => string;
+  /**
+   * Where a change an extension page in the worker's session made is
+   * dispatched: the synthesized events, for an extension opted into them.
+   */
+  onStorageChanged?: (
+    area: RuntimeProxyStorageAreaName,
+    changes: RuntimeProxyStorageChanges,
+  ) => void;
 };
 
 /**
@@ -89,6 +99,7 @@ export function createRelayClient({
   maxRememberedJobIds = MAX_REMEMBERED_JOB_IDS,
   runStorageCall,
   rewriteOutgoing,
+  onStorageChanged,
 }: CreateRelayClientOptions = {}) {
   const messageListeners = new Set<ChromeEventListener>();
 
@@ -289,6 +300,12 @@ export function createRelayClient({
             message: STORAGE_UNAVAILABLE_ERROR,
           })
         ).then((result) => postReply(job.jobId, result));
+
+        break;
+      }
+
+      case "storageChanged": {
+        onStorageChanged?.(job.area, job.changes);
 
         break;
       }

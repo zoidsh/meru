@@ -5,6 +5,7 @@ import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import {
   RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
   type RuntimeProxyStaticContentScript,
@@ -437,7 +438,11 @@ export async function deriveExtension({
     isWorkerCopy && extensionId && synthesizesStorageChanges?.(extensionId),
   );
 
-  await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath);
+  await writeTokenCarryingScript(
+    FACADE_FILE_NAME,
+    facadeScriptPath,
+    synthesizes ? { [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]: true } : {},
+  );
 
   // The proxy scripts run where the facade never loads — the shim in content
   // scripts' isolated worlds — so each carries the token itself, the same way

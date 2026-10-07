@@ -55,6 +55,14 @@ export const RUNTIME_PROXY_MANIFEST_GLOBAL = "__meruRuntimeProxyManifest";
 export const RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL = "__meruRuntimeProxySynthesizeStorageChanges";
 
 /**
+ * Set on the worker copy's facade, by the derive, for the same extensions as
+ * the synthesis global: their extension pages in the worker's session report
+ * their own storage writes to the worker (`page-storage-writes.ts`). The
+ * facade rather than the relay, because the relay runs in the worker alone.
+ */
+export const RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL = "__meruRuntimeProxyReportPageStorageWrites";
+
+/**
  * Set on the relay's own script, by the derive, for an extension whose
  * account-session copies declare content scripts beyond its own: every static
  * content script those copies carry, the shim left out. It is what the worker's
@@ -95,6 +103,8 @@ export const RUNTIME_PROXY_PATHS = {
   workerPortDisconnect: "/runtime-proxy/worker-port-disconnect",
   workerStorageAccessLevel: "/runtime-proxy/worker-storage-access-level",
   workerStorageChanged: "/runtime-proxy/worker-storage-changed",
+  /** Worker-session side, called by an extension page that wrote to the store. */
+  pageStorageChanged: "/runtime-proxy/page-storage-changed",
   /** Worker side again, for the calls that start in the worker. */
   workerSendToTab: "/runtime-proxy/worker-send-to-tab",
   workerConnectToTab: "/runtime-proxy/worker-connect-to-tab",
@@ -317,6 +327,17 @@ export type RuntimeProxyJob =
        * worker sends, and that POST can land after the job did.
        */
       isTrustedContext: boolean;
+    }
+  /**
+   * A change an extension page in the worker's own session made, which the
+   * worker's synthesized `onChanged` would otherwise never carry. Nothing comes
+   * back for it, as nothing comes back from an event.
+   */
+  | {
+      type: "storageChanged";
+      jobId: string;
+      area: RuntimeProxyStorageAreaName;
+      changes: RuntimeProxyStorageChanges;
     };
 
 export type RuntimeProxyWorkerAckRequest = {

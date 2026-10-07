@@ -11,6 +11,8 @@ import { createStorageRelay } from "./storage-relay";
 import { installStorageSynthesis } from "./storage-synthesis";
 import { wrapScripting } from "./worker-scripting";
 
+type StorageChangeDispatch = ReturnType<typeof installStorageSynthesis>["dispatch"];
+
 /**
  * Entry point of the runtime proxy's worker-side relay client. It is bundled
  * on its own and imported by the derived service worker wrapper between the
@@ -37,9 +39,14 @@ const extensionApis = workerGlobals.chrome ? [workerGlobals.chrome] : [];
 
 const storageRelay = createStorageRelay(extensionApis);
 
+let dispatchPageStorageChange: StorageChangeDispatch | undefined;
+
 const relayClient = createRelayClient({
   runStorageCall: storageRelay.run,
   rewriteOutgoing: createDynamicUrlRewrite(extensionApis[0]),
+  onStorageChanged: (area, changes) => {
+    dispatchPageStorageChange?.(area, changes);
+  },
 });
 
 const staticContentScripts = (workerGlobals as unknown as Record<string, unknown>)[
@@ -65,7 +72,7 @@ storageRelay.mirrorAccessLevels();
 // Ahead of `watchChanges`, so the relay's listener lands on the synthesized
 // event and fans out what it dispatches, rather than on the native one
 if (workerGlobals[RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]) {
-  installStorageSynthesis(extensionApis);
+  dispatchPageStorageChange = installStorageSynthesis(extensionApis).dispatch;
 }
 
 // And before its boot-time writes, so a change made while the worker is still

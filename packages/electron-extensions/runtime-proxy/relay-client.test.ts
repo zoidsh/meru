@@ -241,6 +241,48 @@ describe("createRelayClient", () => {
     });
   });
 
+  test("hands a page's storage change to the worker's events, acked and answered by nothing", async () => {
+    const stub = stubBridge();
+
+    const { chrome } = createWorkerChrome();
+
+    const changes: unknown[] = [];
+
+    const client = createRelayClient({
+      retryDelayMs: 5,
+      onStorageChanged: (area, storageChanges) => {
+        changes.push({ area, storageChanges });
+      },
+    });
+
+    client.wrapRuntime(chrome);
+
+    client.start();
+
+    startedClients.push(client);
+
+    await stub.waitForStream();
+
+    stub.pushJob({
+      type: "storageChanged",
+      jobId: "job-1",
+      area: "session",
+      changes: { userKey: { newValue: "key" } },
+    });
+
+    await waitFor(() => changes.length === 1, "the change");
+
+    expect(changes).toEqual([
+      { area: "session", storageChanges: { userKey: { newValue: "key" } } },
+    ]);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerAck)).toEqual([
+      { pathName: RUNTIME_PROXY_PATHS.workerAck, body: { jobId: "job-1" } },
+    ]);
+
+    expect(stub.postsTo(RUNTIME_PROXY_PATHS.workerReply)).toEqual([]);
+  });
+
   test("rewrites what it sends over the bridge, and nothing it receives", async () => {
     const stub = stubBridge();
 

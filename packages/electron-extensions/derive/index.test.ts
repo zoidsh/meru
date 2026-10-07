@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import {
   RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
 } from "../runtime-proxy/bridge-protocol";
@@ -588,6 +589,40 @@ describe("deriveExtension for a shared instance", () => {
     // Rewritten on every launch, so turning it off needs no re-derive
     expect((await deriveRelay(false)).relaySource).not.toContain(
       RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+    );
+  });
+
+  test("the worker copy's pages report their writes only when its relay synthesizes", async () => {
+    const deriveFacade = async (optedIn: boolean) => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        synthesizesStorageChanges: () => optedIn,
+        sharedInstance: { role: "worker", relayScriptPath },
+      });
+
+      return readFile(path.join(derivedDir, "chrome-facade.js"), "utf8");
+    };
+
+    expect(await deriveFacade(true)).toContain(
+      `globalThis.${RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL} = true;`,
+    );
+
+    expect(await deriveFacade(false)).not.toContain(RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL);
+
+    // The account copies' pages write through the relay, which already sees
+    // every one of their writes
+    const { derivedDir } = await deriveExtension({
+      sourceDir,
+      derivedExtensionsDir,
+      facadeScriptPath,
+      synthesizesStorageChanges: () => true,
+      sharedInstance: { role: "contentScriptOnly", shimScriptPath },
+    });
+
+    expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).not.toContain(
+      RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
     );
   });
 
