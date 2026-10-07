@@ -374,6 +374,29 @@ describe("deriveManifest for a shared instance", () => {
     ]);
   });
 
+  test("a MAIN-world entry runs without the shim, which has nothing to stand in for there", () => {
+    const { manifest } = deriveManifest(
+      {
+        content_scripts: [
+          { matches: ["https://*/*"], js: ["isolated.js"] },
+          { matches: ["https://*/*"], js: ["page.js"], world: "MAIN" },
+          { matches: ["https://*/*"], js: ["explicit.js"], world: "ISOLATED" },
+        ],
+      },
+      { ...fileNames, sharedInstance: contentScriptOnlyOptions },
+    );
+
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://*/*"], js: ["chrome-runtime-proxy-shim.js", "isolated.js"] },
+      { matches: ["https://*/*"], js: ["page.js"], world: "MAIN" },
+      {
+        matches: ["https://*/*"],
+        js: ["chrome-runtime-proxy-shim.js", "explicit.js"],
+        world: "ISOLATED",
+      },
+    ]);
+  });
+
   test("refuses a pattern making the token-carrying shim fetchable by pages", () => {
     expect(() =>
       deriveManifest(

@@ -175,14 +175,16 @@ export type SharedInstanceManifestOptions =
  * Runs the shim ahead of the extension's own scripts in every content script
  * entry, in the same isolated world, which is what lets it shadow
  * `chrome.runtime.sendMessage` and `connect` before any extension code reads
- * them. Entries without scripts — CSS-only ones — have nothing to shadow.
+ * them. Entries without scripts — CSS-only ones — have nothing to shadow, and
+ * neither does a MAIN-world entry, which runs in the page's own world: there
+ * is no `chrome.runtime` there to stand in for, and the shim cannot start.
  */
 function prependContentScriptShim(
   contentScripts: ExtensionManifest["content_scripts"],
   shimFileName: string,
 ) {
   return contentScripts?.map((contentScript) =>
-    Array.isArray(contentScript.js)
+    Array.isArray(contentScript.js) && contentScript.world !== "MAIN"
       ? { ...contentScript, js: [shimFileName, ...contentScript.js] }
       : contentScript,
   );
