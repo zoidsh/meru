@@ -6,4 +6,4 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
-- **Meru Pro:** Bitwarden can be installed from `Settings… → Extensions`. It fills and generates passwords and passkeys on Google's sign-in and account pages, and **Open Bitwarden** under its description opens Bitwarden to sign in. Unlocking with biometrics needs the Bitwarden desktop app.
+- **Meru Pro:** Bitwarden can be installed from `Settings… → Extensions`. It fills and generates passwords and passkeys on Google's sign-in and account pages, offers to save and update logins, and **Open Bitwarden** under its description opens Bitwarden to sign in. Unlocking with biometrics needs the Bitwarden desktop app.

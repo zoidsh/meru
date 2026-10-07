@@ -229,6 +229,9 @@ export const curatedExtensions: CuratedExtension[] = [
     // Sign-in, unlock and passkey confirmation are all popouts of its own pages
     opensExtensionWindows: true,
     windowPagePath: "popup/index.html",
+    // Its save and update prompt waits on `onCompleted` when the page after a
+    // login is still loading 1.5 seconds after the submit
+    deliversNavigationEvents: true,
     // Biometric unlock, through the Bitwarden desktop app's native host
     grantableOptionalPermissions: ["nativeMessaging"],
     // What its `runtime.onInstalled` handler sets in Chrome, which never fires
