@@ -3,3 +3,8 @@
 This file is the draft of the next release, written one line at a time as work lands, in the section layout of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The version commit empties the section and its lines become the notes on the GitHub Release, so released versions are never listed here; see https://github.com/zoidsh/meru/releases for those.
 
 ## [Unreleased]
+
+### Fixed
+
+- **Meru Pro:** Downloading a file from a Google Chat conversation saves it, instead of opening an empty tab that left the conversation unresponsive
+- **Meru Pro:** A link that opens in a new tab and turns out to be a download closes that tab and returns to the one it was opened from, instead of leaving an invisible tab in front of it

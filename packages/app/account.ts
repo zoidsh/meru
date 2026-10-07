@@ -3,7 +3,7 @@ import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { VerticalTabsSessionWidth } from "@meru/shared/tabs";
 import type { SelectedDesktopSource } from "@meru/shared/types";
-import { app, type IpcMainEvent, ipcMain, type Session, session } from "electron";
+import { app, type IpcMainEvent, ipcMain, type Session, session, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { blocker } from "./blocker";
 import { config } from "./config";
@@ -72,9 +72,21 @@ export class Account {
     this.tabs = new Tabs(accountConfig.id, this.gmail);
 
     this.tabs.restoreSavedTabs(accountConfig.workspaceApps.savedTabs);
+
+    this.session.on("will-download", this.handleWillDownload);
   }
 
+  private handleWillDownload = (
+    _event: Electron.Event,
+    _item: Electron.DownloadItem,
+    webContents: WebContents,
+  ) => {
+    this.tabs.closeTabOpenedForDownload(webContents);
+  };
+
   destroy() {
+    this.session.off("will-download", this.handleWillDownload);
+
     this.session.setPermissionRequestHandler(null);
 
     this.session.setPermissionCheckHandler(null);

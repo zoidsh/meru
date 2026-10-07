@@ -4,7 +4,7 @@ import { ms } from "@meru/shared/ms";
 import type { SavedTab } from "@meru/shared/schemas";
 import { getTabSection, GMAIL_TAB_ID, type TabState, tabSections } from "@meru/shared/tabs";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
-import type { RestoreOptions, WebContentsView } from "electron";
+import type { RestoreOptions, WebContents, WebContentsView } from "electron";
 import { accounts } from "./accounts";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
@@ -149,6 +149,8 @@ export class Tabs {
 
   private _activeTabId: string = GMAIL_TAB_ID;
 
+  private previousActiveTabId: string | null = null;
+
   private recentlyClosedTabUrls: string[] = [];
 
   constructor(accountId: string, gmail: Gmail) {
@@ -191,6 +193,8 @@ export class Tabs {
     if (this._activeTabId === tabId) {
       return;
     }
+
+    this.previousActiveTabId = this._activeTabId;
 
     this._activeTabId = tabId;
 
@@ -428,6 +432,34 @@ export class Tabs {
     }
 
     closableTab.close();
+  }
+
+  /**
+   * A link opened in a tab of its own can turn out to be a download, which never
+   * commits a page, and a view without one draws nothing: the tab beneath shows
+   * through while this one keeps the input. Chrome closes such a tab, and so
+   * does this, going back to the tab it was opened over.
+   */
+  closeTabOpenedForDownload(webContents: WebContents) {
+    const downloadTab = this.tabs.find(
+      (tab) => tab instanceof WorkspaceApp && tab.view.webContents === webContents,
+    );
+
+    if (!(downloadTab instanceof WorkspaceApp) || webContents.getURL()) {
+      return;
+    }
+
+    const returnTabId = this.activeTabId === downloadTab.id ? this.previousActiveTabId : null;
+
+    downloadTab.close();
+
+    if (returnTabId && this.getTab(returnTabId)) {
+      this.activateTab(returnTabId);
+    }
+
+    if (accounts.getAccount(this.accountId).config.selected) {
+      accounts.refreshSelectedAccountView();
+    }
   }
 
   handleWindowedTabClosed(windowedTab: WorkspaceApp) {
