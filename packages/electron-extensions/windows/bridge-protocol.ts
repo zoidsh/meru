@@ -19,6 +19,7 @@ export const WINDOWS_PATHS = {
   create: "/windows/create",
   remove: "/windows/remove",
   get: "/windows/get",
+  events: "/windows/events",
 } as const;
 
 /**
@@ -34,9 +35,9 @@ export const WINDOW_ID_CURRENT = -2;
 
 /**
  * Set in the facade of an extension the embedder opens windows for, which is
- * what turns on the parts of `chrome.tabs` that only make sense once it has
- * windows of its own: a page's `tabs.query` and `tabs.get` answered from main
- * (`facade/api/page-tabs.ts`).
+ * what turns on the parts of `chrome.windows` and `chrome.tabs` that only make
+ * sense once it has windows of its own: `onRemoved`, and a page's `tabs.query`
+ * and `tabs.get` answered from main (`facade/api/page-tabs.ts`).
  */
 export const OPENS_EXTENSION_WINDOWS_GLOBAL = "__meruOpensExtensionWindows";
 
@@ -68,6 +69,16 @@ export type WindowsWindow = {
   width: number;
   height: number;
   tabs: [];
+};
+
+/**
+ * Frames on the events response body, in the length-prefixed framing alarms
+ * use (`alarms/bridge-protocol.ts`). Only one kind so far: a window the
+ * embedder opened for the extension is gone, however it went.
+ */
+export type WindowsEventFrame = {
+  type: "removed";
+  windowId: number;
 };
 
 /** What `create` and `get` answer with. */

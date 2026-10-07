@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import type { Session, WebFrameMain } from "electron";
 import type { ExtensionBridge, ExtensionBridgeHandler } from "../bridge/bridge";
-import { MAIN_WINDOW_ID, WINDOWS_PATHS, type WindowsWindowResponse } from "./bridge-protocol";
+import { NativeMessageDecoder } from "../native-messaging/framing";
+import {
+  MAIN_WINDOW_ID,
+  WINDOWS_PATHS,
+  type WindowsEventFrame,
+  type WindowsWindowResponse,
+} from "./bridge-protocol";
 import { type ExtensionWindow, type ExtensionWindowOpenDetails, Windows } from "./windows";
 
 const BITWARDEN_ID = "nngceckbapebfimnlniiiahkandclblb";
@@ -395,8 +401,82 @@ describe("Windows routes", () => {
 
         return (await response.json()) as WindowsWindowResponse | null;
       },
+      /** Parks an events stream for the extension and collects what reaches it. */
+      listen: async (extensionId = BITWARDEN_ID) => {
+        const handler = routes.get(WINDOWS_PATHS.events) as ExtensionBridgeHandler;
+
+        const response = await handler({
+          session: undefined as unknown as Session,
+          extensionId,
+          senderFrame: undefined,
+          body: {},
+          headers: {},
+        });
+
+        const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+
+        const decoder = new NativeMessageDecoder();
+
+        const frames: WindowsEventFrame[] = [];
+
+        void (async () => {
+          for (;;) {
+            const { value, done } = await reader.read();
+
+            if (done) {
+              return;
+            }
+
+            frames.push(...(decoder.push(value) as WindowsEventFrame[]));
+          }
+        })();
+
+        return frames;
+      },
     };
   }
+
+  function settle() {
+    return new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+  }
+
+  /*
+   * However the window goes — the user closing it, which is no call of the
+   * extension's at all, or its own `remove` — every context of the extension
+   * that listens hears it, and no other extension does.
+   */
+  test("tells the extension's parked streams when one of its windows is gone", async () => {
+    const { call, listen, openedWindows } = registerRoutes();
+
+    const workerFrames = await listen();
+
+    const pageFrames = await listen();
+
+    const otherExtensionFrames = await listen(ONEPASSWORD_ID);
+
+    const closedByUser = await call(WINDOWS_PATHS.create, { createData: { url: UNLOCK_PATH } });
+
+    const removed = await call(WINDOWS_PATHS.create, { createData: { url: "popup/index.html" } });
+
+    openedWindows[0]?.close();
+
+    await call(WINDOWS_PATHS.remove, { windowId: removed?.window?.id });
+
+    await settle();
+
+    const expected: WindowsEventFrame[] = [
+      { type: "removed", windowId: closedByUser?.window?.id as number },
+      { type: "removed", windowId: removed?.window?.id as number },
+    ];
+
+    expect(workerFrames).toEqual(expected);
+
+    expect(pageFrames).toEqual(expected);
+
+    expect(otherExtensionFrames).toEqual([]);
+  });
 
   test("answers a create with the window it opened", async () => {
     const { call, openedWindows } = registerRoutes();

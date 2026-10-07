@@ -83,8 +83,8 @@ export type DeriveExtensionOptions = {
   /**
    * Whether the extension gets windows of its own from `chrome.windows.create`,
    * asked for by the id the copy will be loaded as. The worker copy's facade
-   * then answers its pages' `tabs.query` and `tabs.get` from main, which only an
-   * extension with such windows needs.
+   * then fires `windows.onRemoved` and answers its pages' `tabs.query` and
+   * `tabs.get` from main, which only an extension with such windows needs.
    */
   opensExtensionWindows?: (extensionId: string) => boolean;
   /**

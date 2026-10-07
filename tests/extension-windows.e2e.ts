@@ -328,3 +328,50 @@ test("a page in an extension window sees the view Meru is showing as the current
 
   await closeWorkerPopup(popupId);
 });
+
+/*
+ * Closing the window is the user's doing, not a call of the extension's, and
+ * the worker is the context Electron delivers no event to. Bitwarden ends a
+ * passkey request on this event when the user closes its popout.
+ */
+test("the worker and a page hear windows.onRemoved when the user closes an extension window", async () => {
+  const popupId = await openWorkerPopup();
+
+  await runInPage(
+    popupId,
+    `window.removedWindowIds = [];
+     chrome.windows.onRemoved.addListener((windowId) => window.removedWindowIds.push(windowId));
+     null`,
+  );
+
+  const { windowId, pageId } = await openExtensionWindow(popupId);
+
+  await meru.app.evaluate(
+    ({ BrowserWindow, webContents }, { webContentsId }) => {
+      const contents = webContents.fromId(webContentsId);
+
+      if (contents) {
+        BrowserWindow.fromWebContents(contents)?.close();
+      }
+    },
+    { webContentsId: pageId },
+  );
+
+  await expect
+    .poll(() =>
+      runInPage<number[]>(
+        popupId,
+        `new Promise((resolve) => chrome.runtime.sendMessage(
+          { type: "read-removed-windows" },
+          (reply) => resolve(reply ? reply.windowIds : []),
+        ))`,
+      ),
+    )
+    .toContain(windowId);
+
+  await expect
+    .poll(() => runInPage<number[]>(popupId, "window.removedWindowIds"))
+    .toEqual([windowId]);
+
+  await closeWorkerPopup(popupId);
+});

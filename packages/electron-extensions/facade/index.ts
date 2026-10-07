@@ -26,7 +26,7 @@ const { chrome } = contextGlobals;
 const opensExtensionWindows = contextGlobals[OPENS_EXTENSION_WINDOWS_GLOBAL] === true;
 
 if (chrome) {
-  installChromeFacade(chrome);
+  installChromeFacade(chrome, { opensExtensionWindows });
 
   // A page only: the worker's own queries are the relay's to answer
   if (opensExtensionWindows && contextGlobals.document !== undefined) {
