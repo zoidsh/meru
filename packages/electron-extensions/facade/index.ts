@@ -1,5 +1,7 @@
 import { RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL } from "../runtime-proxy/bridge-protocol";
 import { reportPageStorageWrites } from "../runtime-proxy/page-storage-writes";
+import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
+import { proxyPageTabs } from "./api/page-tabs";
 import { installChromeFacade } from "./install";
 import { removeBrowserGlobal } from "./lib/browser-global";
 import type { ChromeNamespace } from "./lib/chrome";
@@ -16,12 +18,20 @@ const contextGlobals = globalThis as unknown as {
   chrome?: ChromeNamespace;
   document?: unknown;
   [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]?: boolean;
+  [OPENS_EXTENSION_WINDOWS_GLOBAL]?: boolean;
 };
 
 const { chrome } = contextGlobals;
 
+const opensExtensionWindows = contextGlobals[OPENS_EXTENSION_WINDOWS_GLOBAL] === true;
+
 if (chrome) {
-  installChromeFacade(chrome);
+  installChromeFacade(chrome, { opensExtensionWindows });
+
+  // A page only: the worker's own queries are the relay's to answer
+  if (opensExtensionWindows && contextGlobals.document !== undefined) {
+    proxyPageTabs(chrome);
+  }
 
   // The worker copy's facade runs in the worker too, where synthesis already
   // sees every write, so only a document reports

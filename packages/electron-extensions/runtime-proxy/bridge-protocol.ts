@@ -118,6 +118,8 @@ export const RUNTIME_PROXY_PATHS = {
   workerBroadcast: "/runtime-proxy/worker-broadcast",
   workerQueryTabs: "/runtime-proxy/worker-query-tabs",
   workerGetTab: "/runtime-proxy/worker-get-tab",
+  /** Any extension frame, for the tab it is embedded in. */
+  currentTab: "/runtime-proxy/current-tab",
 } as const;
 
 /**
@@ -469,12 +471,16 @@ export type RuntimeProxyWorkerConnectToTabResult =
   | { status: "noTarget"; error: string };
 
 /**
- * What a worker's `chrome.tabs.query` filters on, which is what Electron's own
- * query honors and no more: `windowId`, `currentWindow`, `lastFocusedWindow`,
- * `index`, `pinned`, `status`, `groupId` and the rest are ignored there, and
- * ignoring them here keeps one answer rather than two. The facade shows one
- * window anyway (`windows` answers a single fake window, id 1), so a window
- * filter has nothing to narrow.
+ * What a worker's `chrome.tabs.query` filters on: what Electron's own query
+ * honors, and the three window filters. `index`, `pinned`, `status`, `groupId`
+ * and the rest are ignored, as Electron ignores them.
+ *
+ * The window filters are honored because a tab can now be in a window of its
+ * own — an extension page the embedder opened with `windows.create` — and
+ * finding that window by its page is how a password manager closes its popout:
+ * `tabs.query({url})`, then `windows.remove(tab.windowId)`. Every other page
+ * is in the one main window, which is the current and last focused window for
+ * every caller (`worker-tabs.ts` says why).
  *
  * `url` is one or more Chrome match patterns and `title` a glob, as Chrome
  * documents them; both are matched against what the page is showing now.
@@ -485,6 +491,9 @@ export type RuntimeProxyTabQueryInfo = {
   muted?: boolean;
   url?: string | string[];
   title?: string;
+  windowId?: number;
+  currentWindow?: boolean;
+  lastFocusedWindow?: boolean;
 };
 
 export type RuntimeProxyWorkerQueryTabsRequest = {
@@ -507,3 +516,11 @@ export type RuntimeProxyWorkerGetTabRequest = {
 export type RuntimeProxyWorkerGetTabResult =
   | { status: "tab"; tab: RuntimeProxyTab }
   | { status: "noTarget"; error: string };
+
+/**
+ * The tab an extension frame embedded in a page is in, for `tabs.getCurrent`,
+ * or `null` for a frame that is no tab's — a top-level extension page.
+ */
+export type RuntimeProxyCurrentTabResult = {
+  tab: RuntimeProxyTab | null;
+};

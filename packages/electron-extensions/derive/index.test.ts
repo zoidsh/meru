@@ -22,6 +22,7 @@ import {
   RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
 } from "../runtime-proxy/bridge-protocol";
+import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { deriveExtension, pruneDerivedExtensions } from "./index";
 import type { DeclaredContentScript } from "./manifest";
 
@@ -624,6 +625,32 @@ describe("deriveExtension for a shared instance", () => {
 
     expect(await readFile(path.join(derivedDir, "chrome-facade.js"), "utf8")).not.toContain(
       RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
+    );
+  });
+
+  test("the worker copy's facade knows the extension opens windows, and only that copy's", async () => {
+    const deriveFacade = async (optedIn: boolean, role: "worker" | "contentScriptOnly") => {
+      const { derivedDir } = await deriveExtension({
+        sourceDir,
+        derivedExtensionsDir,
+        facadeScriptPath,
+        opensExtensionWindows: () => optedIn,
+        sharedInstance: role === "worker" ? { role, relayScriptPath } : { role, shimScriptPath },
+      });
+
+      return readFile(path.join(derivedDir, "chrome-facade.js"), "utf8");
+    };
+
+    expect(await deriveFacade(true, "worker")).toContain(
+      `globalThis.${OPENS_EXTENSION_WINDOWS_GLOBAL} = true;`,
+    );
+
+    expect(await deriveFacade(false, "worker")).not.toContain(OPENS_EXTENSION_WINDOWS_GLOBAL);
+
+    // The windows open on the worker session, so an account copy's pages have
+    // none to ask about
+    expect(await deriveFacade(true, "contentScriptOnly")).not.toContain(
+      OPENS_EXTENSION_WINDOWS_GLOBAL,
     );
   });
 
