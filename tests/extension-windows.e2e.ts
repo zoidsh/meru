@@ -286,6 +286,31 @@ test("a page finds its own window by URL and closes it", async () => {
 });
 
 /*
+ * How Bitwarden's popout closes itself once it is done: `windows.getCurrent`
+ * from its own page, then `windows.remove` of the id that answered.
+ */
+test("a page closes its own window with windows.getCurrent and remove", async () => {
+  const popupId = await openWorkerPopup();
+
+  const { windowId, pageId } = await openExtensionWindow(popupId);
+
+  expect(await runInPage<{ id: number }>(pageId, "chrome.windows.getCurrent()")).toMatchObject({
+    id: windowId,
+  });
+
+  // Not awaited in the page, which goes away with its window before it could
+  // answer
+  await runInPage(
+    pageId,
+    "chrome.windows.getCurrent().then((window) => chrome.windows.remove(window.id)); null",
+  );
+
+  await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
+
+  await closeWorkerPopup(popupId);
+});
+
+/*
  * The popup page in a window of its own, the way Bitwarden's is opened, asks
  * for the active tab of its current window to list what it can fill there.
  * The window stands in for Chrome's toolbar popup, whose current window is the
