@@ -56,7 +56,7 @@ const GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR = "CommandOrControl+Shift+1";
 
 const GOOGLE_MEET_TOGGLE_CAMERA_ACCELERATOR = "CommandOrControl+Shift+2";
 
-const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d\/api\/get_attachment_url/;
+const GOOGLE_CHAT_ATTACHMENT_URL_REGEXP = /chat\.google\.com\/u\/\d+\/api\/get_attachment_url/;
 
 const GOOGLE_PDF_VIEWER_URL_REGEXP = /googleusercontent\.com\/viewer\/secure\/pdf/;
 
@@ -307,6 +307,14 @@ export class WorkspaceApp {
       return { action: "allow" };
     }
 
+    // A Chat attachment is a download behind a Chat URL, so a tab or window
+    // opened for it would never paint.
+    if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+      webContents.downloadURL(url);
+
+      return { action: "deny" };
+    }
+
     if (GOOGLE_PDF_VIEWER_URL_REGEXP.test(url) && disposition !== "background-tab") {
       new WorkspaceApp({ accountId, url, asWindow: true });
 
@@ -349,10 +357,8 @@ export class WorkspaceApp {
       const account = accounts.getAccount(accountId);
 
       // A tab designated for this app takes the link, unless the modifier keys
-      // asked for a window or a background tab of its own. A Chat attachment is
-      // a download dressed as a Chat URL, so it must never land in the tab the
-      // user is chatting in.
-      if (!requestedOpenBehavior && !GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
+      // asked for a window or a background tab of its own.
+      if (!requestedOpenBehavior) {
         const appLinksTab = account.instance.tabs.openInAppLinksTab(url);
 
         if (appLinksTab) {
@@ -385,12 +391,6 @@ export class WorkspaceApp {
 
         main.show();
       }
-
-      return { action: "deny" };
-    }
-
-    if (GOOGLE_CHAT_ATTACHMENT_URL_REGEXP.test(url)) {
-      webContents.downloadURL(url);
 
       return { action: "deny" };
     }
