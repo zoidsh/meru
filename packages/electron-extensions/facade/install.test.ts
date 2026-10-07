@@ -80,6 +80,18 @@ describe("installChromeFacade", () => {
     expect(namespaceOf(chrome, "windows").WINDOW_ID_CURRENT).toBe(-2);
   });
 
+  test("answers tabs.getCurrent as Chrome does outside a tab, in both forms", async () => {
+    const getCurrent = methodOf(namespaceOf(install(), "tabs"), "getCurrent");
+
+    expect(await getCurrent()).toBeUndefined();
+
+    const answered = await new Promise((resolve) => {
+      expect(getCurrent((tab: unknown) => resolve({ tab }))).toBeUndefined();
+    });
+
+    expect(answered).toEqual({ tab: undefined });
+  });
+
   test("defines the webRequest events Electron declares but never defines", () => {
     const webRequest = namespaceOf(install(), "webRequest");
 

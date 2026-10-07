@@ -4,15 +4,23 @@ import { cp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EXTENSION_BRIDGE_SCHEME, EXTENSION_BRIDGE_TOKEN_GLOBAL } from "../bridge/protocol";
 import {
+  RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL,
   RUNTIME_PROXY_MANIFEST_GLOBAL,
+  RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL,
+  RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL,
   RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL,
+  type RuntimeProxyStaticContentScript,
 } from "../runtime-proxy/bridge-protocol";
 import { getExtensionIdFromManifestKey } from "./extension-id";
 import { allowPageConnectSource, injectPageScripts } from "./html";
 import {
+  type DeclaredContentScript,
+  deriveContentScripts,
   deriveManifest,
   type ExtensionManifest,
+  type ManifestContentScript,
   type SharedInstanceManifestOptions,
+  toManifestContentScript,
 } from "./manifest";
 
 const MANIFEST_FILE_NAME = "manifest.json";
@@ -36,7 +44,7 @@ const RUNTIME_PROXY_RELAY_FILE_NAME = "chrome-runtime-proxy-relay.js";
 const CONTENT_SCRIPT_ONLY_DIR_SUFFIX = "-content-scripts";
 
 /** Bump whenever what is written into a derived copy changes. */
-const DERIVE_VERSION = 10;
+const DERIVE_VERSION = 11;
 
 /**
  * The copy's part in one shared extension instance serving every session (see
@@ -71,6 +79,18 @@ export type DeriveExtensionOptions = {
    * `manifest.key` has no id to be asked about and goes without.
    */
   synthesizesStorageChanges?: (extensionId: string) => boolean;
+  /**
+   * Scripts the content-script-only copy declares on top of the extension's
+   * own content scripts, asked for by the id the copy will be loaded as. An
+   * extension without a `manifest.key` declares none.
+   */
+  getDeclaredContentScripts?: (extensionId: string) => DeclaredContentScript[] | undefined;
+  /**
+   * Values the worker copy's relay writes into `chrome.storage.local` for every
+   * key the store does not hold, asked for by the id the copy will be loaded
+   * as.
+   */
+  getLocalStorageDefaults?: (extensionId: string) => Record<string, unknown> | undefined;
   /**
    * Derives the copy for its part in one shared instance across sessions.
    * Without it the copy carries no proxy script and keeps its worker — the
@@ -220,6 +240,77 @@ function deriveWorkerRoleManifest({
   }).manifest;
 }
 
+function toStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function toStaticContentScript(
+  contentScript: ManifestContentScript,
+  standsInFor: string[] = [],
+): RuntimeProxyStaticContentScript {
+  return {
+    files: [...toStringArray(contentScript.js), ...standsInFor]
+      .map((fileName) => fileName.replace(/^\//, ""))
+      .filter((fileName) => fileName !== RUNTIME_PROXY_SHIM_FILE_NAME),
+    matches: toStringArray(contentScript.matches),
+    excludeMatches: toStringArray(contentScript.exclude_matches),
+    allFrames: contentScript.all_frames === true,
+    world: contentScript.world === "MAIN" ? "MAIN" : "ISOLATED",
+  };
+}
+
+/**
+ * The static content scripts the content-script-only copy runs, which the worker
+ * copy's relay answers `executeScript` from: the extension's own as well as the
+ * declared ones, since a file its manifest declares is in the page just the
+ * same. Computed from the source manifest the way `deriveWorkerRoleManifest`
+ * is, and for the same reason: the content-script-only copy belongs to other
+ * sessions and may not have been derived yet.
+ *
+ * Each declared entry is clamped on its own rather than read back off the
+ * derived manifest, which has nowhere to carry the files it stands in for.
+ */
+function deriveStaticContentScripts({
+  sourceManifest,
+  strippedManifestKeys,
+  contentScriptMatches,
+  declaredContentScripts,
+}: {
+  sourceManifest: ExtensionManifest;
+  strippedManifestKeys: string[];
+  contentScriptMatches: string[] | undefined;
+  declaredContentScripts: DeclaredContentScript[];
+}): RuntimeProxyStaticContentScript[] {
+  if (strippedManifestKeys.includes("content_scripts")) {
+    return [];
+  }
+
+  const { content_scripts: ownContentScripts = [] } = deriveManifest(sourceManifest, {
+    facadeFileName: FACADE_FILE_NAME,
+    serviceWorkerFileName: SERVICE_WORKER_FILE_NAME,
+    bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
+    strippedManifestKeys,
+    contentScriptMatches,
+    sharedInstance: { role: "contentScriptOnly", shimFileName: RUNTIME_PROXY_SHIM_FILE_NAME },
+  }).manifest;
+
+  return [
+    ...ownContentScripts.map((contentScript) => toStaticContentScript(contentScript)),
+    ...declaredContentScripts.flatMap((declaredContentScript) =>
+      (
+        deriveContentScripts(
+          [toManifestContentScript(declaredContentScript)],
+          contentScriptMatches,
+        ) ?? []
+      ).map((contentScript) =>
+        toStaticContentScript(contentScript, declaredContentScript.standsInFor),
+      ),
+    ),
+  ];
+}
+
 /**
  * Copies an unpacked extension into a directory the loader owns and adds the
  * `chrome.*` facade to it: the service worker gets a wrapper that pulls the
@@ -242,6 +333,8 @@ export async function deriveExtension({
   strippedManifestKeys = [],
   getContentScriptMatches,
   synthesizesStorageChanges,
+  getDeclaredContentScripts,
+  getLocalStorageDefaults,
   sharedInstance,
 }: DeriveExtensionOptions) {
   const manifestSource = await readFile(path.join(sourceDir, MANIFEST_FILE_NAME), "utf8");
@@ -251,6 +344,8 @@ export async function deriveExtension({
   const extensionId = getExtensionIdFromManifestKey(sourceManifest.key);
 
   const contentScriptMatches = extensionId ? getContentScriptMatches?.(extensionId) : undefined;
+
+  const declaredContentScripts = extensionId ? getDeclaredContentScripts?.(extensionId) : undefined;
 
   const derivedDirName = `${hash(sourceDir).slice(0, 16)}${
     sharedInstance?.role === "contentScriptOnly" ? CONTENT_SCRIPT_ONLY_DIR_SUFFIX : ""
@@ -272,6 +367,7 @@ export async function deriveExtension({
     sourceTree: await hashSourceTree(sourceDir),
     strippedManifestKeys,
     contentScriptMatches,
+    declaredContentScripts,
     sharedInstanceRole: sharedInstance?.role,
   });
 
@@ -309,6 +405,7 @@ export async function deriveExtension({
       bridgeConnectSource: `${EXTENSION_BRIDGE_SCHEME}:`,
       strippedManifestKeys,
       contentScriptMatches,
+      declaredContentScripts,
       sharedInstance: toSharedInstanceManifestOptions(sharedInstance),
     });
 
@@ -343,18 +440,40 @@ export async function deriveExtension({
     );
   };
 
-  await writeTokenCarryingScript(FACADE_FILE_NAME, facadeScriptPath);
+  const isWorkerCopy = sharedInstance?.role === "worker";
+
+  const synthesizes = Boolean(
+    isWorkerCopy && extensionId && synthesizesStorageChanges?.(extensionId),
+  );
+
+  const localStorageDefaults =
+    isWorkerCopy && extensionId ? getLocalStorageDefaults?.(extensionId) : undefined;
+
+  await writeTokenCarryingScript(
+    FACADE_FILE_NAME,
+    facadeScriptPath,
+    synthesizes ? { [RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL]: true } : {},
+  );
 
   // The proxy scripts run where the facade never loads — the shim in content
   // scripts' isolated worlds — so each carries the token itself, the same way
   if (sharedInstance?.role === "worker") {
-    await writeTokenCarryingScript(
-      RUNTIME_PROXY_RELAY_FILE_NAME,
-      sharedInstance.relayScriptPath,
-      extensionId && synthesizesStorageChanges?.(extensionId)
-        ? { [RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]: true }
-        : {},
-    );
+    await writeTokenCarryingScript(RUNTIME_PROXY_RELAY_FILE_NAME, sharedInstance.relayScriptPath, {
+      ...(synthesizes ? { [RUNTIME_PROXY_STORAGE_SYNTHESIS_GLOBAL]: true } : {}),
+      ...(localStorageDefaults
+        ? { [RUNTIME_PROXY_LOCAL_STORAGE_DEFAULTS_GLOBAL]: localStorageDefaults }
+        : {}),
+      ...(declaredContentScripts && declaredContentScripts.length > 0
+        ? {
+            [RUNTIME_PROXY_STATIC_CONTENT_SCRIPTS_GLOBAL]: deriveStaticContentScripts({
+              sourceManifest,
+              strippedManifestKeys,
+              contentScriptMatches,
+              declaredContentScripts,
+            }),
+          }
+        : {}),
+    });
   }
 
   if (sharedInstance?.role === "contentScriptOnly") {
