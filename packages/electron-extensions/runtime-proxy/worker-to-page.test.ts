@@ -35,6 +35,11 @@ const SHIM_TAB_ID = 7;
 
 const WORKER_TAB_ID = 9;
 
+/** A page of the extension in a window of the worker's own session. */
+const WINDOW_PAGE_URL = `chrome-extension://${EXTENSION_ID}/popup/index.html`;
+
+const WINDOW_PAGE_ID = 15;
+
 async function waitFor(condition: () => boolean, what: string) {
   const deadline = Date.now() + 1000;
 
@@ -199,18 +204,34 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     mainFrame: { ...popupFrame, framesInSubtree: [popupFrame] },
   } as unknown as WebContents;
 
+  const windowPageFrame = createFrame(WINDOW_PAGE_URL, null, 1);
+
+  const windowPageContents = {
+    id: WINDOW_PAGE_ID,
+    session: workerSession.session,
+    isDestroyed: () => false,
+    getURL: () => WINDOW_PAGE_URL,
+    getTitle: () => "Bitwarden",
+    isLoading: () => false,
+    isCurrentlyAudible: () => false,
+    isAudioMuted: () => false,
+    mainFrame: { ...windowPageFrame, framesInSubtree: [windowPageFrame] },
+  } as unknown as WebContents;
+
   const contentsByFrame = new Map<WebFrameMain, WebContents>([
     [shimTab.mainFrame, shimTab.contents],
     [shimTab.subFrame, shimTab.contents],
     [shimTab.inlineMenuFrame, shimTab.contents],
     [workerTab.mainFrame, workerTab.contents],
     [popupFrame, popupContents],
+    [windowPageFrame, windowPageContents],
   ]);
 
   const contentsById = new Map<number, WebContents>([
     [SHIM_TAB_ID, shimTab.contents],
     [WORKER_TAB_ID, workerTab.contents],
     [11, popupContents],
+    [WINDOW_PAGE_ID, windowPageContents],
   ]);
 
   const proxy = new RuntimeProxy({
@@ -224,11 +245,18 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
 
   proxy.setWorkerSession(workerSession.session);
 
-  /** Parks a page stream the way a shimmed context's client does. */
-  const parkPageStream = async (frame: WebFrameMain) => {
-    const response = await shimSession.request(
+  /**
+   * Parks a page stream the way a shimmed context's client does, or a page of
+   * the worker's own session.
+   */
+  const parkPageStream = async (frame: WebFrameMain, { inWorkerSession = false } = {}) => {
+    const { request } = inWorkerSession ? workerSession : shimSession;
+
+    const token = inWorkerSession ? WORKER_TOKEN : SHIM_TOKEN;
+
+    const response = await request(
       RUNTIME_PROXY_PATHS.pageStream,
-      SHIM_TOKEN,
+      token,
       { sender: { url: frame.url, isTopFrame: frame.parent === null } },
       frame,
     );
@@ -280,20 +308,10 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
       },
       /** Answers a delivery the way the page-stream client answers one. */
       reply: (deliveryId: string, result: Record<string, unknown>) =>
-        shimSession.request(
-          RUNTIME_PROXY_PATHS.pageReply,
-          SHIM_TOKEN,
-          { deliveryId, result },
-          frame,
-        ),
+        request(RUNTIME_PROXY_PATHS.pageReply, token, { deliveryId, result }, frame),
       /** Hangs up one end of a port, naming this context as the client does. */
       disconnectPort: (portId: string, reason?: "noListener") =>
-        shimSession.request(
-          RUNTIME_PROXY_PATHS.portDisconnect,
-          SHIM_TOKEN,
-          { portId, contextId, reason },
-          frame,
-        ),
+        request(RUNTIME_PROXY_PATHS.portDisconnect, token, { portId, contextId, reason }, frame),
     };
   };
 
@@ -379,6 +397,7 @@ function createHarness(proxyOptions: RuntimeProxyOptions = {}) {
     shimTab,
     workerTab,
     popupFrame,
+    windowPageFrame,
     parkPageStream,
     openWorkerStream,
     sendToTab,
@@ -942,5 +961,196 @@ describe("a storage change from the worker", () => {
     }
 
     expect(contentScript.envelopes).toEqual([]);
+  });
+});
+
+describe("a page of the worker's own session", () => {
+  test("parks a stream only as a top-level page of the extension", async () => {
+    const { workerSession, windowPageFrame, parkPageStream } = createHarness();
+
+    await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const embeddedFrame = createFrame(WINDOW_PAGE_URL, windowPageFrame, 4);
+
+    const response = await workerSession.request(
+      RUNTIME_PROXY_PATHS.pageStream,
+      WORKER_TOKEN,
+      { sender: { url: WINDOW_PAGE_URL, isTopFrame: false } },
+      embeddedFrame,
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  test("hears a content script's runtime.sendMessage beside the worker, first answer winning", async () => {
+    const { shimSession, shimTab, windowPageFrame, parkPageStream, openWorkerStream } =
+      createHarness();
+
+    const workerStream = await openWorkerStream();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const sent = shimSession.request(
+      RUNTIME_PROXY_PATHS.sendMessage,
+      SHIM_TOKEN,
+      {
+        message: { command: "collectPageDetailsResponse" },
+        sender: { url: PAGE_URL, isTopFrame: true },
+      },
+      shimTab.mainFrame,
+    );
+
+    const [job] = await workerStream.waitForJobs(1);
+
+    const [envelope] = await windowPage.waitForEnvelopes(1);
+
+    expect(job).toMatchObject({
+      type: "sendMessage",
+      message: { command: "collectPageDetailsResponse" },
+    });
+
+    // The same sender the worker gets: the page's details are gathered per
+    // frame of the tab, which is what the popup tells them apart by
+    expect(envelope).toMatchObject({
+      kind: "message",
+      message: { command: "collectPageDetailsResponse" },
+      sender: { tab: { id: SHIM_TAB_ID }, frameId: 0, url: PAGE_URL },
+    });
+
+    if (envelope?.kind === "message") {
+      await windowPage.reply(envelope.deliveryId, { status: "replied", reply: "from the page" });
+    }
+
+    expect(await (await sent).json()).toEqual({ status: "replied", reply: "from the page" });
+  });
+
+  test("hears neither the worker's broadcast nor its store changes, which Chromium delivers", async () => {
+    const { popupFrame, windowPageFrame, parkPageStream, broadcast, reportStorageChange } =
+      createHarness();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const popup = await parkPageStream(popupFrame);
+
+    void broadcast({ kind: "locked" });
+
+    await reportStorageChange({
+      area: "local",
+      changes: { unlocked: { newValue: true } },
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+    });
+
+    await popup.waitForEnvelopes(2);
+
+    expect(windowPage.envelopes).toEqual([]);
+  });
+
+  test("opens a port to a tab whose traffic comes back to the page, not the worker", async () => {
+    const {
+      shimSession,
+      shimTab,
+      workerSession,
+      windowPageFrame,
+      parkPageStream,
+      openWorkerStream,
+      connectToTab,
+    } = createHarness();
+
+    const workerStream = await openWorkerStream();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const contentScript = await parkPageStream(shimTab.mainFrame);
+
+    expect(
+      await connectToTab({
+        portId: "page-port",
+        name: "fill",
+        tabId: SHIM_TAB_ID,
+        workerUrl: WINDOW_PAGE_URL,
+        contextId: windowPage.contextId(),
+      }),
+    ).toEqual({ status: "connected" });
+
+    const [connectEnvelope] = await contentScript.waitForEnvelopes(1);
+
+    expect(connectEnvelope).toMatchObject({
+      kind: "connect",
+      portId: "page-port",
+      sender: { url: WINDOW_PAGE_URL },
+    });
+
+    await workerSession.request(
+      RUNTIME_PROXY_PATHS.workerPortPost,
+      WORKER_TOKEN,
+      { portId: "page-port", message: "marco" },
+      windowPageFrame,
+    );
+
+    await contentScript.waitForEnvelopes(2);
+
+    await shimSession.request(
+      RUNTIME_PROXY_PATHS.portPost,
+      SHIM_TOKEN,
+      { portId: "page-port", message: "polo" },
+      shimTab.mainFrame,
+    );
+
+    const [portMessage] = await windowPage.waitForEnvelopes(1);
+
+    expect(portMessage).toEqual({ kind: "portMessage", portId: "page-port", message: "polo" });
+
+    await contentScript.disconnectPort("page-port");
+
+    const [, portDisconnect] = await windowPage.waitForEnvelopes(2);
+
+    expect(portDisconnect).toMatchObject({ kind: "portDisconnect", portId: "page-port" });
+
+    expect(workerStream.jobs).toEqual([]);
+  });
+
+  test("a port goes away with the page that opened it", async () => {
+    const { shimSession, shimTab, windowPageFrame, parkPageStream, connectToTab } = createHarness();
+
+    const windowPage = await parkPageStream(windowPageFrame, { inWorkerSession: true });
+
+    const contentScript = await parkPageStream(shimTab.mainFrame);
+
+    await connectToTab({
+      portId: "page-port",
+      tabId: SHIM_TAB_ID,
+      contextId: windowPage.contextId(),
+    });
+
+    await contentScript.waitForEnvelopes(1);
+
+    (windowPageFrame as FakeFrame).destroy();
+
+    await shimSession.request(
+      RUNTIME_PROXY_PATHS.portPost,
+      SHIM_TOKEN,
+      { portId: "page-port", message: "anyone there?" },
+      shimTab.mainFrame,
+    );
+
+    const [, portDisconnect] = await contentScript.waitForEnvelopes(2);
+
+    expect(portDisconnect).toMatchObject({ kind: "portDisconnect", portId: "page-port" });
+  });
+
+  test("a port naming a context that is not a page of the worker's session is refused", async () => {
+    const { workerSession, shimTab, parkPageStream } = createHarness();
+
+    const contentScript = await parkPageStream(shimTab.mainFrame);
+
+    for (const contextId of ["no-such-context", contentScript.contextId(), 4]) {
+      const response = await workerSession.request(
+        RUNTIME_PROXY_PATHS.workerConnectToTab,
+        WORKER_TOKEN,
+        { portId: `port-${String(contextId)}`, tabId: SHIM_TAB_ID, contextId },
+      );
+
+      expect(response.status).toBe(400);
+    }
   });
 });

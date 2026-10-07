@@ -4,6 +4,7 @@ import { withLastError } from "../facade/lib/last-error";
 import { NativeMessageDecoder } from "../native-messaging/framing";
 import {
   MAX_RUNTIME_PROXY_FRAME_BYTES,
+  RECEIVING_END_ERROR,
   type RuntimeProxyPageEnvelope,
   type RuntimeProxySenderReport,
   RUNTIME_PROXY_PATHS,
@@ -94,6 +95,17 @@ export function createPageStreamClient({
    */
   let contextId: string | undefined;
 
+  /**
+   * The same, only while the stream that named it is still open: a port this
+   * context opens is bound to the stream its far end's traffic arrives on.
+   */
+  let parkedContextId: string | undefined;
+
+  const parkedContextWaiters = new Set<(parkedId: string | undefined) => void>();
+
+  /** The ports this context opened, which end with the stream they ride. */
+  const openedPortIds = new Set<string>();
+
   let isStopped = false;
 
   const postToBridge = (pathName: string, body: Record<string, unknown>) =>
@@ -152,6 +164,14 @@ export function createPageStreamClient({
     switch (envelope.kind) {
       case "ready": {
         contextId = envelope.contextId;
+
+        parkedContextId = envelope.contextId;
+
+        for (const waiter of parkedContextWaiters) {
+          waiter(parkedContextId);
+        }
+
+        parkedContextWaiters.clear();
 
         break;
       }
@@ -223,6 +243,31 @@ export function createPageStreamClient({
   };
 
   /**
+   * The stream this context's own ports rode is gone, and main closed them with
+   * it; a port waiting to open hears that there is nowhere to open it.
+   */
+  const endParkedContext = () => {
+    parkedContextId = undefined;
+
+    for (const waiter of parkedContextWaiters) {
+      waiter(undefined);
+    }
+
+    parkedContextWaiters.clear();
+
+    for (const portId of openedPortIds) {
+      ports.get(portId)?.emitDisconnect();
+    }
+  };
+
+  const waitForParkedContext = () =>
+    parkedContextId === undefined
+      ? new Promise<string | undefined>((resolve) => {
+          parkedContextWaiters.add(resolve);
+        })
+      : Promise.resolve(parkedContextId);
+
+  /**
    * Parks the stream, and parks it again whenever it ends. A stream ends when
    * the relay drops this context — the worker's session went away and took the
    * relay's idea of this one with it — where the context itself is still very
@@ -282,6 +327,8 @@ export function createPageStreamClient({
         failureCount += 1;
       }
 
+      endParkedContext();
+
       if (isStopped) {
         return;
       }
@@ -319,6 +366,48 @@ export function createPageStreamClient({
       mirrorEvent(runtime, "onMessage", messageListeners, LOG_LABEL);
 
       mirrorEvent(runtime, "onConnect", connectListeners, LOG_LABEL);
+    },
+
+    /**
+     * A port this context opens itself, whose far end's traffic arrives on this
+     * context's stream. `open` is handed the id the stream was parked as, and
+     * a port opened while no stream is parked waits for the next one.
+     */
+    openPort(
+      name: string,
+      open: (
+        parkedId: string,
+        portId: string,
+        port: RelayedPort,
+      ) => Promise<RelayedPortTransport> | RelayedPortTransport,
+    ) {
+      const portId = crypto.randomUUID();
+
+      // Initialized before `open` reads it, which is only past the first await
+      const port: RelayedPort = createRelayedPort({
+        name,
+        open: async () => {
+          const parkedId = await waitForParkedContext();
+
+          if (parkedId === undefined) {
+            throw new Error(RECEIVING_END_ERROR);
+          }
+
+          return open(parkedId, portId, port);
+        },
+        withRuntimesLastError,
+        onClosed: () => {
+          ports.delete(portId);
+
+          openedPortIds.delete(portId);
+        },
+      });
+
+      ports.set(portId, port);
+
+      openedPortIds.add(portId);
+
+      return port.externalPort;
     },
 
     /** Parks the receive stream at the bridge, and keeps it parked. */
