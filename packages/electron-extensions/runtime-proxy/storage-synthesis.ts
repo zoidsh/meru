@@ -145,7 +145,7 @@ function answerCall(
  * every write from a shimmed session too, since the relay answers those against
  * the same area objects. What it cannot see is a write with no call here
  * behind it: one made by an extension page in the worker's own session, whose
- * native events fire there and which the page reports for `dispatch` to carry
+ * native events fire there and which the page reports for `dispatchReported` to carry
  * the rest of the way (`page-storage-writes.ts`).
  *
  * The read before, the write and the read after are issued back to back, in
@@ -170,15 +170,7 @@ export function installStorageSynthesis(extensionApis: ChromeNamespace[]) {
     }
   }
 
-  shadowStorageWrites(extensionApis, changedEvents.dispatch);
-
-  return {
-    /**
-     * A change made somewhere the shadowed writes cannot see, dispatched the
-     * same way as the ones they do (`page-storage-writes.ts`).
-     */
-    dispatch: changedEvents.dispatch,
-  };
+  return shadowStorageWrites(extensionApis, changedEvents.dispatch);
 }
 
 /**
@@ -199,6 +191,22 @@ export function shadowStorageWrites(
    */
   const dispatchChains = new Map<RuntimeProxyStorageAreaName, Promise<unknown>>();
 
+  const areaReaders = new Map<
+    RuntimeProxyStorageAreaName,
+    (keys: string[] | null) => Promise<RuntimeProxyStorageResult>
+  >();
+
+  const chainDispatch = <T>(areaName: RuntimeProxyStorageAreaName, run: () => Promise<T>) => {
+    const dispatched = (dispatchChains.get(areaName) ?? Promise.resolve()).then(run);
+
+    dispatchChains.set(
+      areaName,
+      dispatched.catch(() => undefined),
+    );
+
+    return dispatched;
+  };
+
   const shadowArea = (
     areaName: RuntimeProxyStorageAreaName,
     area: ChromeNamespace,
@@ -212,6 +220,10 @@ export function shadowStorageWrites(
 
     const readKeys = (keys: string[] | null) =>
       invokeNativeMethod(runtime, area, nativeGet as NativeMethod, [keys]);
+
+    if (!areaReaders.has(areaName)) {
+      areaReaders.set(areaName, readKeys);
+    }
 
     const write = (
       method: WriteMethodName,
@@ -228,7 +240,7 @@ export function shadowStorageWrites(
 
       const after = touchesNothing ? undefined : readKeys(keys);
 
-      const dispatched = (dispatchChains.get(areaName) ?? Promise.resolve()).then(async () => {
+      return chainDispatch(areaName, async () => {
         const [beforeResult, writtenResult, afterResult] = await Promise.all([
           before,
           written,
@@ -251,13 +263,6 @@ export function shadowStorageWrites(
 
         return writtenResult;
       });
-
-      dispatchChains.set(
-        areaName,
-        dispatched.catch(() => undefined),
-      );
-
-      return dispatched;
     };
 
     for (const method of WRITE_METHOD_NAMES) {
@@ -293,4 +298,51 @@ export function shadowStorageWrites(
       shadowArea(areaName, area as ChromeNamespace, extensionApi.runtime as ChromeNamespace);
     }
   }
+
+  return {
+    /**
+     * A change made somewhere the shadowed writes cannot see, handed to
+     * `onChanges` in its place among theirs (`page-storage-writes.ts`).
+     *
+     * The report travels through main, so it can arrive after a write made
+     * here later than the one it describes, and dispatched as it came it would
+     * leave the listeners on the older value. Only Chromium knows where the
+     * report's write fell among this store's writes, so the keys are read
+     * again, issued now so the read lands after every write issued before it,
+     * and a key whose value has moved on since is dropped: whichever write
+     * moved it is dispatched by this chain or by a later report.
+     */
+    dispatchReported(areaName: RuntimeProxyStorageAreaName, changes: RuntimeProxyStorageChanges) {
+      const readKeys = areaReaders.get(areaName);
+
+      const keys = Object.keys(changes);
+
+      if (!readKeys || keys.length === 0) {
+        return Promise.resolve();
+      }
+
+      const current = readKeys(keys);
+
+      return chainDispatch(areaName, async () => {
+        const currentResult = await current;
+
+        if (currentResult.status !== "ok" || !isStorageItems(currentResult.value)) {
+          return;
+        }
+
+        const currentItems = currentResult.value;
+
+        const currentChanges = Object.fromEntries(
+          Object.entries(changes).filter(
+            ([key, change]) =>
+              JSON.stringify(currentItems[key]) === JSON.stringify(change.newValue),
+          ),
+        );
+
+        if (Object.keys(currentChanges).length > 0) {
+          onChanges(areaName, currentChanges);
+        }
+      });
+    },
+  };
 }
