@@ -8,7 +8,12 @@ import {
   type WebNavigationEventFrame,
   type WebNavigationListenedEvents,
 } from "./bridge-protocol";
-import { describeNavigationEvent, findEventFrame, NavigationEvents } from "./navigation-events";
+import {
+  describeNavigationEvent,
+  describeNetError,
+  findEventFrame,
+  NavigationEvents,
+} from "./navigation-events";
 
 const ACCOUNT_SESSION = { partition: "persist:account" } as unknown as Session;
 
@@ -253,6 +258,19 @@ describe("describeNavigationEvent", () => {
         timeStamp: 1,
       }),
     ).toMatchObject({ transitionType: "auto_subframe", transitionQualifiers: [] });
+  });
+});
+
+describe("describeNetError", () => {
+  test("names the error by its code, whatever Electron described it as", () => {
+    expect(describeNetError(-3, "")).toBe("net::ERR_ABORTED");
+    expect(describeNetError(-102, "ERR_CONNECTION_REFUSED")).toBe("net::ERR_CONNECTION_REFUSED");
+  });
+
+  test("falls back to the description for a code it has no name for, and to ERR_FAILED", () => {
+    expect(describeNetError(-999, "ERR_SOMETHING_NEW")).toBe("net::ERR_SOMETHING_NEW");
+    expect(describeNetError(-999, "net::ERR_SOMETHING_NEW")).toBe("net::ERR_SOMETHING_NEW");
+    expect(describeNetError(-999, "")).toBe("net::ERR_FAILED");
   });
 });
 
@@ -584,7 +602,9 @@ describe("NavigationEvents for a navigation that fails", () => {
       "did-fail-load",
       {},
       errorCode,
-      errorCode === -3 ? "ERR_ABORTED" : "ERR_CONNECTION_REFUSED",
+      // A stopped load reaches `did-fail-load` from `WebContents::DidFailLoad`,
+      // which passes no description at all
+      errorCode === -3 ? "" : "ERR_CONNECTION_REFUSED",
       "https://accounts.google.com/login",
       true,
       7,

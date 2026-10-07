@@ -62,8 +62,54 @@ const PAGE_EVENTS: Record<WebNavigationEventName, string[]> = {
   onErrorOccurred: ["did-fail-load"],
 };
 
-/** Chromium's code for a navigation another one replaced, which leaves no error page. */
+/**
+ * Chromium's code for a load that was stopped: by another navigation, by
+ * `window.stop()`, or by the user. It does reach `did-fail-load`, but no error
+ * page ever follows it.
+ */
 const ERR_ABORTED = -3;
+
+/**
+ * Chromium's names for the net errors a page load commonly ends in, by code.
+ * Electron hands `did-fail-load` a description only when the navigation itself
+ * failed; for a committed document whose load is stopped it passes an empty
+ * string, and that is the slow-login case, where a second navigation aborts
+ * the first.
+ */
+const NET_ERROR_NAMES: Record<number, string> = {
+  [-2]: "ERR_FAILED",
+  [ERR_ABORTED]: "ERR_ABORTED",
+  [-6]: "ERR_FILE_NOT_FOUND",
+  [-7]: "ERR_TIMED_OUT",
+  [-10]: "ERR_ACCESS_DENIED",
+  [-20]: "ERR_BLOCKED_BY_CLIENT",
+  [-21]: "ERR_NETWORK_CHANGED",
+  [-27]: "ERR_BLOCKED_BY_RESPONSE",
+  [-100]: "ERR_CONNECTION_CLOSED",
+  [-101]: "ERR_CONNECTION_RESET",
+  [-102]: "ERR_CONNECTION_REFUSED",
+  [-105]: "ERR_NAME_NOT_RESOLVED",
+  [-106]: "ERR_INTERNET_DISCONNECTED",
+  [-107]: "ERR_SSL_PROTOCOL_ERROR",
+  [-109]: "ERR_ADDRESS_UNREACHABLE",
+  [-118]: "ERR_CONNECTION_TIMED_OUT",
+  [-137]: "ERR_NAME_RESOLUTION_FAILED",
+  [-200]: "ERR_CERT_COMMON_NAME_INVALID",
+  [-201]: "ERR_CERT_DATE_INVALID",
+  [-202]: "ERR_CERT_AUTHORITY_INVALID",
+  [-300]: "ERR_INVALID_URL",
+  [-310]: "ERR_TOO_MANY_REDIRECTS",
+  [-312]: "ERR_UNSAFE_PORT",
+  [-324]: "ERR_EMPTY_RESPONSE",
+};
+
+/** Chrome's `onErrorOccurred` error string for what `did-fail-load` reported. */
+export function describeNetError(errorCode: number, errorDescription: string) {
+  const name =
+    NET_ERROR_NAMES[errorCode] ?? (errorDescription.replace(/^net::/, "") || "ERR_FAILED");
+
+  return `net::${name}`;
+}
 
 /**
  * Resolved at call time: a value import of "electron" cannot even be loaded
@@ -494,7 +540,7 @@ export class NavigationEvents {
 
         this.emit(contents, "onErrorOccurred", frame, {
           url: validatedUrl,
-          error: `net::${errorDescription}`,
+          error: describeNetError(errorCode, errorDescription),
         });
       },
       "dom-ready": () => {
