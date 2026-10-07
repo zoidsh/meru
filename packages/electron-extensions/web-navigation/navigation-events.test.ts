@@ -25,6 +25,7 @@ const EVERY_EVENT: WebNavigationListenedEvents = {
   onCommitted: null,
   onDOMContentLoaded: null,
   onCompleted: null,
+  onErrorOccurred: null,
 };
 
 const NAVIGATION_EVENTS = [
@@ -32,6 +33,7 @@ const NAVIGATION_EVENTS = [
   "did-frame-navigate",
   "dom-ready",
   "did-frame-finish-load",
+  "did-fail-load",
 ];
 
 type FakeFrame = {
@@ -321,13 +323,17 @@ describe("NavigationEvents", () => {
       page.contents,
     ]);
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 0, 0, 0, 0,
+    ]);
 
     const worker = await listen();
 
     const page2 = await listen();
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([1, 1, 1, 1]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      1, 1, 1, 1, 1,
+    ]);
 
     const later = createPage(13, ACCOUNT_SESSION);
 
@@ -345,7 +351,9 @@ describe("NavigationEvents", () => {
 
     await settle();
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 0, 0, 0, 0,
+    ]);
 
     expect(page.emitter.listenerCount("destroyed")).toBe(0);
 
@@ -429,20 +437,26 @@ describe("NavigationEvents", () => {
 
     const { frames } = await listen({ listened: { onCommitted: null } });
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 1, 0, 0, 0,
+    ]);
 
     page.emitter.emit("dom-ready");
     page.emitter.emit("did-frame-navigate", {}, page.mainFrame.url, 200, "OK", true, 7, 1);
 
     await updateListeners("stream", 2, { onCommitted: null, onCompleted: null });
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 1]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      1, 1, 0, 1, 1,
+    ]);
 
     page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
 
     await updateListeners("stream", 3, { onCommitted: null });
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 1, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 1, 0, 0, 0,
+    ]);
 
     await settle();
 
@@ -462,7 +476,9 @@ describe("NavigationEvents", () => {
 
     await updateListeners("another-stream", 9, { onBeforeNavigate: null });
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 1]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      1, 0, 0, 1, 1,
+    ]);
   });
 
   test("never sends a frame no stream's url filters match", async () => {
@@ -527,7 +543,9 @@ describe("NavigationEvents", () => {
 
     expect(navigationEvents.isWatching(page.contents)).toBe(false);
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 0, 0, 0, 0,
+    ]);
   });
 
   test("stops listening to pages once no stream listens to any event", async () => {
@@ -541,6 +559,133 @@ describe("NavigationEvents", () => {
 
     expect(navigationEvents.isWatching(page.contents)).toBe(false);
 
-    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([0, 0, 0, 0]);
+    expect(NAVIGATION_EVENTS.map((name) => page.emitter.listenerCount(name))).toEqual([
+      0, 0, 0, 0, 0,
+    ]);
+  });
+});
+
+describe("NavigationEvents for a navigation that fails", () => {
+  /*
+   * What Electron 43 reports for a POST to a refused port, measured: the
+   * start, `did-fail-load` with the URL that failed, and then `dom-ready` and
+   * `did-frame-finish-load` for the error page under that same URL — and no
+   * `did-frame-navigate`. Chrome fires `onBeforeNavigate` and
+   * `onErrorOccurred` there, and no load event.
+   */
+  function failMainFrame(page: ReturnType<typeof createPage>, errorCode = -102) {
+    page.emitter.emit("did-start-navigation", {
+      url: "https://accounts.google.com/login",
+      isSameDocument: false,
+      frame: page.mainFrame,
+    });
+
+    page.emitter.emit(
+      "did-fail-load",
+      {},
+      errorCode,
+      errorCode === -3 ? "ERR_ABORTED" : "ERR_CONNECTION_REFUSED",
+      "https://accounts.google.com/login",
+      true,
+      7,
+      1,
+    );
+
+    page.emitter.emit("dom-ready");
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+  }
+
+  test("fires onErrorOccurred in Chrome's shape and no load event for the error page", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen();
+
+    failMainFrame(page);
+
+    await settle();
+
+    expect(frames.map(({ type }) => type)).toEqual(["onBeforeNavigate", "onErrorOccurred"]);
+
+    expect(frames[1]?.details).toEqual({
+      tabId: 12,
+      url: "https://accounts.google.com/login",
+      processId: -1,
+      frameId: 0,
+      parentFrameId: -1,
+      timeStamp: 1234,
+      frameType: "outermost_frame",
+      documentLifecycle: "active",
+      error: "net::ERR_CONNECTION_REFUSED",
+    });
+  });
+
+  test("hears the frame's next navigation complete again", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen({ listened: { onCompleted: null } });
+
+    failMainFrame(page);
+
+    page.emitter.emit("did-start-navigation", {
+      url: page.mainFrame.url,
+      isSameDocument: false,
+      frame: page.mainFrame,
+    });
+
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+
+    await settle();
+
+    expect(frames.map(({ type }) => type)).toEqual(["onCompleted"]);
+  });
+
+  test("keeps a subframe's failure to that subframe", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen({ listened: { onCompleted: null, onErrorOccurred: null } });
+
+    page.emitter.emit(
+      "did-fail-load",
+      {},
+      -102,
+      "ERR_CONNECTION_REFUSED",
+      page.subframe.url,
+      false,
+      7,
+      5,
+    );
+
+    page.emitter.emit("did-frame-finish-load", {}, false, 7, 5);
+    page.emitter.emit("did-frame-finish-load", {}, true, 7, 1);
+
+    await settle();
+
+    expect(frames.map(({ type, details }) => [type, details.frameId])).toEqual([
+      ["onErrorOccurred", 42],
+      ["onCompleted", 0],
+    ]);
+  });
+
+  test("still completes a frame whose navigation was replaced rather than failed", async () => {
+    const page = createPage(12, ACCOUNT_SESSION);
+
+    const { listen } = createNavigationEvents([page.contents]);
+
+    const { frames } = await listen({ listened: { onCompleted: null, onErrorOccurred: null } });
+
+    failMainFrame(page, -3);
+
+    await settle();
+
+    expect(frames.map(({ type, details }) => [type, details.error])).toEqual([
+      ["onErrorOccurred", "net::ERR_ABORTED"],
+      ["onCompleted", undefined],
+    ]);
   });
 });

@@ -22,7 +22,8 @@ export type WebNavigationEventName =
   | "onBeforeNavigate"
   | "onCommitted"
   | "onDOMContentLoaded"
-  | "onCompleted";
+  | "onCompleted"
+  | "onErrorOccurred";
 
 /**
  * Which events a context listens to, each with the url filters of its
@@ -64,6 +65,8 @@ export type WebNavigationEventDetails = {
    */
   transitionType?: "link" | "auto_subframe";
   transitionQualifiers?: string[];
+  /** `onErrorOccurred` only: Chromium's net error, as in `net::ERR_CONNECTION_REFUSED`. */
+  error?: string;
 };
 
 /**

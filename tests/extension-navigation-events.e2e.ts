@@ -133,6 +133,7 @@ type NavigationEvent = {
   parentFrameId: number;
   url: string;
   frameType: string;
+  error?: string;
 };
 
 /** What the worker heard, asked through a page of its own session. */
@@ -257,6 +258,58 @@ test("the worker hears an account page's navigation, with its tab and frame ids"
   expect(
     (await readNavigationEvents(popupId))?.some((event) => event.url.endsWith("/elsewhere")),
   ).toBe(false);
+
+  await closeWindow(pageId);
+
+  await closeWindow(popupId);
+});
+
+/** A loopback port nothing listens on, so a connection to it is refused. */
+async function findClosedPort() {
+  const probe = http.createServer();
+
+  await new Promise<void>((resolve) => {
+    probe.listen(0, "127.0.0.1", resolve);
+  });
+
+  const { port } = probe.address() as AddressInfo;
+
+  await new Promise((resolve) => {
+    probe.close(resolve);
+  });
+
+  return port;
+}
+
+/*
+ * A login POST to a server that refuses the connection leaves Chromium's error
+ * page, which Electron reports as loaded. Chrome fires `onErrorOccurred` there
+ * and no load event, and a password manager waiting on `onCompleted` would
+ * otherwise offer to save a login that never reached the server.
+ */
+test("a navigation that fails is onErrorOccurred, never onCompleted", async () => {
+  const popupId = await openWindow(null, POPUP_URL);
+
+  await expect.poll(() => readNavigationEvents(popupId)).not.toBeNull();
+
+  const pageId = await openWindow(ACCOUNT_PARTITION, "about:blank");
+
+  await expect.poll(() => isListenedTo(pageId)).toBe(true);
+
+  const refusedUrl = `http://127.0.0.1:${await findClosedPort()}/navigation-refused`;
+
+  await loadInWindow(pageId, refusedUrl).catch(() => undefined);
+
+  await expect
+    .poll(async () =>
+      (await readNavigationEvents(popupId))
+        ?.filter((event) => event.tabId === pageId && event.url === refusedUrl)
+        .map(({ event, frameId, error }) => ({ event, frameId, error })),
+    )
+    .toEqual([
+      { event: "onBeforeNavigate", frameId: 0, error: undefined },
+      { event: "onErrorOccurred", frameId: 0, error: "net::ERR_CONNECTION_REFUSED" },
+    ]);
 
   await closeWindow(pageId);
 

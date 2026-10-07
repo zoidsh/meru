@@ -70,6 +70,7 @@ export type FixtureNavigationDetails = {
   parentFrameId: number;
   url: string;
   frameType?: string;
+  error?: string;
 };
 
 /** An event registered with url filters, as `webNavigation`'s are. */
@@ -87,6 +88,7 @@ export type FixtureWebNavigation = {
   onCommitted: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
   onDOMContentLoaded: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
   onCompleted: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
+  onErrorOccurred: FixtureFilteredEvent<(details: FixtureNavigationDetails) => void>;
 };
 
 /** One key's entry in an `onChanged`, in Chrome's own shape. */

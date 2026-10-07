@@ -39,6 +39,7 @@ const DELIVERED_EVENT_NAMES: WebNavigationEventName[] = [
   "onCommitted",
   "onDOMContentLoaded",
   "onCompleted",
+  "onErrorOccurred",
 ];
 
 /**
@@ -197,8 +198,8 @@ function createDeliveredEvents(): Record<WebNavigationEventName, ChromeEvent> {
 
 /**
  * The frame queries are real (`web-navigation/web-navigation.ts`). The events
- * never fire, except `onBeforeNavigate`, `onCommitted`, `onDOMContentLoaded`
- * and `onCompleted` in an extension the embedder delivers them to
+ * never fire, except `onBeforeNavigate`, `onCommitted`, `onDOMContentLoaded`,
+ * `onCompleted` and `onErrorOccurred` in an extension the embedder delivers them to
  * (`DELIVERS_NAVIGATION_EVENTS_GLOBAL`): Bitwarden's worker waits on
  * `onCompleted` before offering to save a login whose next page is still
  * loading. 1Password registers four of them at boot, but its fill flow asks
@@ -212,6 +213,7 @@ export function createWebNavigation({ deliversNavigationEvents = false } = {}): 
         onCommitted: createNoopEvent(),
         onDOMContentLoaded: createNoopEvent(),
         onCompleted: createNoopEvent(),
+        onErrorOccurred: createNoopEvent(),
       };
 
   return {
@@ -219,7 +221,6 @@ export function createWebNavigation({ deliversNavigationEvents = false } = {}): 
     getAllFrames: createFrameQuery(WEB_NAVIGATION_PATHS.getAllFrames),
 
     ...deliveredEvents,
-    onErrorOccurred: createNoopEvent(),
     onCreatedNavigationTarget: createNoopEvent(),
     onReferenceFragmentUpdated: createNoopEvent(),
     onTabReplaced: createNoopEvent(),

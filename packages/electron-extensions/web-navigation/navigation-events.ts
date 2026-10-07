@@ -47,13 +47,23 @@ type ParkedStream = {
  */
 const MAX_UNREAD_FRAMES = 64;
 
-/** The page event each synthesized event is read from. */
-const PAGE_EVENTS: Record<WebNavigationEventName, string> = {
-  onBeforeNavigate: "did-start-navigation",
-  onCommitted: "did-frame-navigate",
-  onDOMContentLoaded: "dom-ready",
-  onCompleted: "did-frame-finish-load",
+/**
+ * The page events each synthesized event is read from. A load event needs the
+ * failure and the next start as well, which is how an error page's load is
+ * told apart from a document's: Electron reports `dom-ready` and
+ * `did-frame-finish-load` for the error page a failed navigation leaves, under
+ * the URL that failed, where Chrome fires only `onErrorOccurred`.
+ */
+const PAGE_EVENTS: Record<WebNavigationEventName, string[]> = {
+  onBeforeNavigate: ["did-start-navigation"],
+  onCommitted: ["did-frame-navigate"],
+  onDOMContentLoaded: ["dom-ready", "did-fail-load", "did-start-navigation"],
+  onCompleted: ["did-frame-finish-load", "did-fail-load", "did-start-navigation"],
+  onErrorOccurred: ["did-fail-load"],
 };
+
+/** Chromium's code for a navigation another one replaced, which leaves no error page. */
+const ERR_ABORTED = -3;
 
 /**
  * Resolved at call time: a value import of "electron" cannot even be loaded
@@ -150,14 +160,14 @@ export function describeNavigationEvent(
   type: WebNavigationEventName,
   tabId: number,
   frame: WebFrameMain,
-  { url = frame.url, timeStamp }: { url?: string; timeStamp: number },
+  { url = frame.url, timeStamp, error }: { url?: string; timeStamp: number; error?: string },
 ): WebNavigationEventDetails {
   const isSubframe = frame.parent !== null;
 
   return {
     tabId,
     url,
-    processId: type === "onBeforeNavigate" ? -1 : frame.processId,
+    processId: type === "onBeforeNavigate" || type === "onErrorOccurred" ? -1 : frame.processId,
     frameId: getExtensionFrameId(frame),
     parentFrameId: frame.parent ? getExtensionFrameId(frame.parent) : -1,
     timeStamp,
@@ -166,12 +176,13 @@ export function describeNavigationEvent(
     ...(type === "onCommitted"
       ? { transitionType: isSubframe ? "auto_subframe" : "link", transitionQualifiers: [] }
       : {}),
+    ...(type === "onErrorOccurred" ? { error } : {}),
   };
 }
 
 /**
  * `chrome.webNavigation`'s `onBeforeNavigate`, `onCommitted`,
- * `onDOMContentLoaded` and `onCompleted`, synthesized from the pages' own load
+ * `onDOMContentLoaded`, `onCompleted` and `onErrorOccurred`, synthesized from the pages' own load
  * events for the extensions an embedder opted in. Electron dispatches none of
  * them, and a password manager's worker waits on `onCompleted` before it
  * offers to save a login whose next page was still loading.
@@ -189,6 +200,11 @@ export function describeNavigationEvent(
  *
  * `onDOMContentLoaded` fires for main frames only, Electron reporting
  * `dom-ready` for no other frame.
+ *
+ * A navigation that fails fires `onErrorOccurred` and neither load event, as
+ * in Chrome, although Electron reports the error page it leaves loading: a
+ * password manager waiting on `onCompleted` would otherwise offer to save a
+ * login whose POST never reached the server.
  */
 export class NavigationEvents {
   private deliversNavigationEvents: NavigationEventsPolicy | undefined;
@@ -420,8 +436,12 @@ export class NavigationEvents {
       return;
     }
 
+    // Frames whose last navigation failed, by frame tree node id, until the
+    // frame starts another: what loads in them is Chromium's error page
+    const failedFrameIds = new Set<number>();
+
     const handlers: Record<string, (...eventArguments: never[]) => void> = {
-      [PAGE_EVENTS.onBeforeNavigate]: (
+      "did-start-navigation": (
         details: ElectronEvent<{
           url: string;
           isSameDocument: boolean;
@@ -434,9 +454,11 @@ export class NavigationEvents {
           return;
         }
 
-        this.emit(contents, "onBeforeNavigate", details.frame, details.url);
+        failedFrameIds.delete(details.frame.frameTreeNodeId);
+
+        this.emit(contents, "onBeforeNavigate", details.frame, { url: details.url });
       },
-      [PAGE_EVENTS.onCommitted]: (
+      "did-frame-navigate": (
         _event: ElectronEvent,
         url: string,
         _httpResponseCode: number,
@@ -448,13 +470,39 @@ export class NavigationEvents {
         const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
 
         if (frame) {
-          this.emit(contents, "onCommitted", frame, url);
+          this.emit(contents, "onCommitted", frame, { url });
         }
       },
-      [PAGE_EVENTS.onDOMContentLoaded]: () => {
-        this.emit(contents, "onDOMContentLoaded", contents.mainFrame);
+      "did-fail-load": (
+        _event: ElectronEvent,
+        errorCode: number,
+        errorDescription: string,
+        validatedUrl: string,
+        isMainFrame: boolean,
+        frameProcessId: number,
+        frameRoutingId: number,
+      ) => {
+        const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
+
+        if (!frame) {
+          return;
+        }
+
+        if (errorCode !== ERR_ABORTED) {
+          failedFrameIds.add(frame.frameTreeNodeId);
+        }
+
+        this.emit(contents, "onErrorOccurred", frame, {
+          url: validatedUrl,
+          error: `net::${errorDescription}`,
+        });
       },
-      [PAGE_EVENTS.onCompleted]: (
+      "dom-ready": () => {
+        if (!failedFrameIds.has(contents.mainFrame.frameTreeNodeId)) {
+          this.emit(contents, "onDOMContentLoaded", contents.mainFrame);
+        }
+      },
+      "did-frame-finish-load": (
         _event: ElectronEvent,
         isMainFrame: boolean,
         frameProcessId: number,
@@ -462,13 +510,15 @@ export class NavigationEvents {
       ) => {
         const frame = findEventFrame(contents, isMainFrame, frameProcessId, frameRoutingId);
 
-        if (frame) {
+        if (frame && !failedFrameIds.has(frame.frameTreeNodeId)) {
           this.emit(contents, "onCompleted", frame);
         }
       },
     };
 
-    const pageEvents = [...this.attachedEvents].map((eventName) => PAGE_EVENTS[eventName]);
+    const pageEvents = [
+      ...new Set([...this.attachedEvents].flatMap((eventName) => PAGE_EVENTS[eventName])),
+    ];
 
     const emitter = contents as unknown as {
       on: (eventName: string, listener: (...eventArguments: never[]) => void) => void;
@@ -502,7 +552,7 @@ export class NavigationEvents {
     contents: WebContents,
     type: WebNavigationEventName,
     frame: WebFrameMain,
-    url?: string,
+    { url, error }: { url?: string; error?: string } = {},
   ) {
     if (contents.isDestroyed() || frame.isDestroyed()) {
       return;
@@ -540,6 +590,7 @@ export class NavigationEvents {
         details: describeNavigationEvent(type, contents.id, frame, {
           url: eventUrl,
           timeStamp: this.now(),
+          error,
         }),
       } satisfies WebNavigationEventFrame);
 

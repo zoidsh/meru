@@ -150,6 +150,7 @@ for (const eventName of [
   "onCommitted",
   "onDOMContentLoaded",
   "onCompleted",
+  "onErrorOccurred",
 ] as const) {
   webNavigation[eventName].addListener((details) => {
     navigationEvents.push({
@@ -159,6 +160,7 @@ for (const eventName of [
       parentFrameId: details.parentFrameId,
       url: details.url,
       frameType: details.frameType,
+      error: details.error,
     });
   }, NAVIGATION_FILTER);
 }
