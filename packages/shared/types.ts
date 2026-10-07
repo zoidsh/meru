@@ -303,6 +303,7 @@ export type IpcMainEvents =
       "extensions.install": (extensionId: string) => { error?: string };
       "extensions.uninstall": (extensionId: string) => { error?: string };
       "extensions.update": () => { error?: string; results?: ExtensionUpdateResult[] };
+      "extensions.openWindow": (extensionId: string) => { error?: string };
     };
 
 export type IpcRendererEvent = {

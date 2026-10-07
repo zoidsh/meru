@@ -1,4 +1,5 @@
 import { RUNTIME_PROXY_PAGE_STORAGE_WRITES_GLOBAL } from "../runtime-proxy/bridge-protocol";
+import { proxyPageMessaging } from "../runtime-proxy/page-messaging";
 import { reportPageStorageWrites } from "../runtime-proxy/page-storage-writes";
 import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { proxyPageTabs } from "./api/page-tabs";
@@ -28,9 +29,11 @@ const opensExtensionWindows = contextGlobals[OPENS_EXTENSION_WINDOWS_GLOBAL] ===
 if (chrome) {
   installChromeFacade(chrome, { opensExtensionWindows });
 
-  // A page only: the worker's own queries are the relay's to answer
+  // A page only: the worker's own queries and messages are the relay's to answer
   if (opensExtensionWindows && contextGlobals.document !== undefined) {
     proxyPageTabs(chrome);
+
+    proxyPageMessaging(chrome);
   }
 
   // The worker copy's facade runs in the worker too, where synthesis already
