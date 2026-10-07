@@ -446,6 +446,11 @@ export type RuntimeProxyWorkerConnectToTabRequest = RuntimeProxyTabTarget &
   RuntimeProxyWorkerOrigin & {
     portId: string;
     name?: string;
+    /**
+     * The parked context of the worker-session page opening the port, which
+     * the far end's traffic is streamed to. The worker opens without one.
+     */
+    contextId?: string;
   };
 
 export type RuntimeProxyWorkerBroadcastRequest = RuntimeProxyWorkerOrigin & {
