@@ -124,7 +124,7 @@ describe("installExtensionReplacingConflicts", () => {
     expect(
       await getInstallError(installExtensionReplacingConflicts(ONEPASSWORD_EXTENSION_ID, steps)),
     ).toBe(
-      "Couldn't turn off Bitwarden: Files in use\n\nBitwarden is off, but some of its data may be left behind. 1Password wasn't installed. Turn it on to try again.",
+      "Couldn't turn off Bitwarden: Files in use\n\nBitwarden is off, but some of its files may be left in Meru. 1Password wasn't installed. Turn it on to try again.",
     );
 
     expect(calls).not.toContain("recordOptIn");
@@ -140,7 +140,7 @@ describe("installExtensionReplacingConflicts", () => {
     expect(
       await getInstallError(installExtensionReplacingConflicts(ONEPASSWORD_EXTENSION_ID, steps)),
     ).toBe(
-      "Couldn't install the extension: Config is read-only\n\nBitwarden was turned off and its data removed.",
+      "Couldn't install the extension: Config is read-only\n\nBitwarden was turned off, and you're signed out of it in Meru.",
     );
 
     expect(calls).toEqual(["download", `uninstall ${BITWARDEN_EXTENSION_ID}`, "recordOptIn"]);
