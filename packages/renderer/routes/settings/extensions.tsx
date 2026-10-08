@@ -1,12 +1,25 @@
 import {
   type CuratedExtension,
   curatedExtensions,
+  getConflictingExtensionIds,
+  getCuratedExtension,
   normalizeExtensionSiteHostname,
   ONEPASSWORD_EXTENSION_ID,
 } from "@meru/shared/extensions";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { Config } from "@meru/shared/types";
 import { Alert, AlertDescription, AlertTitle } from "@meru/ui/components/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@meru/ui/components/alert-dialog";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -40,9 +53,9 @@ import {
 import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { ExternalLinkIcon, FlaskConicalIcon, KeyRoundIcon } from "lucide-react";
-import { type ComponentProps, useId, useState } from "react";
+import { type ComponentProps, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { CopyButton } from "@/components/copy-button";
@@ -56,6 +69,13 @@ import { restartRequiredToast } from "@/lib/toast";
 import { platform } from "@/lib/utils";
 
 const installedExtensionsQueryKey = ["installed-extensions"];
+
+/**
+ * Shared by every item's install and uninstall, so that one in flight locks
+ * the others: a swap reads what is installed when the user confirms it, and a
+ * second item turned on meanwhile would install without asking.
+ */
+const extensionToggleMutationKey = ["extension-toggle"];
 
 const ONEPASSWORD_ALLOWED_BROWSERS_COMMAND = "sudo nano /etc/1password/custom_allowed_browsers";
 
@@ -142,6 +162,53 @@ function OnePasswordSetupDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ReplaceExtensionDialog({
+  extension,
+  replacedExtension,
+  open,
+  onOpenChange,
+  onReplace,
+}: {
+  extension: CuratedExtension;
+  replacedExtension: CuratedExtension | undefined;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onReplace: () => void;
+}) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  if (!replacedExtension) {
+    return;
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent initialFocus={cancelButtonRef}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Replace {replacedExtension.name} with {extension.name}?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Only one password manager can be on at a time. Turning on {extension.name} turns off{" "}
+            {replacedExtension.name} and removes its data from{" "}
+            {platform.isMacOS ? "this Mac" : "this computer"}, so you'll need to sign in to{" "}
+            {replacedExtension.name} again to use it.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel ref={cancelButtonRef}>Cancel</AlertDialogCancel>
+          <AlertDialogClose
+            render={<AlertDialogAction variant="destructive" />}
+            onClick={onReplace}
+          >
+            Replace
+          </AlertDialogClose>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -298,17 +365,29 @@ function ExtensionSitesDialog({
 function ExtensionItem({
   extension,
   extensionsEnabled,
-  installed,
+  installedExtensionIds,
   installedVersion,
   additionalSites,
 }: {
   extension: CuratedExtension;
   extensionsEnabled: boolean;
-  installed: boolean;
+  installedExtensionIds: string[];
   installedVersion: string | undefined;
   additionalSites: Config["extensions.additionalSites"];
 }) {
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const installed = installedExtensionIds.includes(extension.id);
+
+  const [replacedExtensionId] = getConflictingExtensionIds(extension.id, installedExtensionIds);
+
+  const replacedExtension = replacedExtensionId
+    ? getCuratedExtension(replacedExtensionId)
+    : undefined;
+
+  const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false);
+
+  const isAnyToggleRunning = useIsMutating({ mutationKey: extensionToggleMutationKey }) > 0;
 
   // Uninstalling is deliberately ungated, so that an extension can be taken off
   // a device that has lost its license — which needs the switch to stay on and
@@ -342,12 +421,18 @@ function ExtensionItem({
   });
 
   const extensionMutation = useMutation({
+    mutationKey: extensionToggleMutationKey,
     mutationFn: (install: boolean) =>
       install
         ? ipc.main.invoke("extensions.install", extension.id)
         : ipc.main.invoke("extensions.uninstall", extension.id),
     onSuccess: ({ error }, install) => {
       if (error) {
+        // A swap that failed partway has still uninstalled the other
+        queryClient.invalidateQueries({
+          queryKey: installedExtensionsQueryKey,
+        });
+
         setExtensionError({
           title: install
             ? `Couldn't install ${extension.name}`
@@ -443,14 +528,29 @@ function ExtensionItem({
           {extensionMutation.isPending && <Spinner />}
           <Switch
             checked={extensionsEnabled && installed}
-            disabled={toggleLocked || extensionMutation.isPending}
+            disabled={toggleLocked || isAnyToggleRunning}
             onCheckedChange={(checked) => {
+              if (checked && replacedExtension) {
+                setIsReplaceDialogOpen(true);
+
+                return;
+              }
+
               extensionMutation.mutate(checked);
             }}
             aria-label={`Install ${extension.name}`}
           />
         </ItemActions>
       </Item>
+      <ReplaceExtensionDialog
+        extension={extension}
+        replacedExtension={replacedExtension}
+        open={isReplaceDialogOpen}
+        onOpenChange={setIsReplaceDialogOpen}
+        onReplace={() => {
+          extensionMutation.mutate(true);
+        }}
+      />
       {isOnePassword && (
         <OnePasswordSetupDialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen} />
       )}
@@ -672,7 +772,7 @@ export function ExtensionsSettings() {
                     key={extension.id}
                     extension={extension}
                     extensionsEnabled={extensionsEnabled}
-                    installed={config["extensions.installed"].includes(extension.id)}
+                    installedExtensionIds={config["extensions.installed"]}
                     installedVersion={
                       installedExtensions?.find(({ id }) => id === extension.id)?.version
                     }
