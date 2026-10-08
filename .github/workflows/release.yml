@@ -20,9 +20,16 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
           PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
-          case "$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...main" --jq .status)" in
+          # A failed call must stop the release rather than read as "not on
+          # main", which is the answer that lets a prerelease through.
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...main" --jq .status) || exit 1
+          case "$status" in
             ahead | identical) on_main=true ;;
-            *) on_main=false ;;
+            behind | diverged) on_main=false ;;
+            *)
+              echo "::error::The compare API answered '$status' for $GITHUB_SHA against main."
+              exit 1
+              ;;
           esac
           if [ "$PRERELEASE" = true ]; then
             if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
