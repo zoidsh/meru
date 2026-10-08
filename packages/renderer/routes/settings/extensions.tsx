@@ -193,9 +193,8 @@ function ReplaceExtensionDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             Only one password manager can be on at a time. Turning on {extension.name} turns off{" "}
-            {replacedExtension.name} and removes its data from{" "}
-            {platform.isMacOS ? "this Mac" : "this computer"}, so you'll need to sign in to{" "}
-            {replacedExtension.name} again to use it.
+            {replacedExtension.name} in Meru and signs you out of it here. Your passwords stay in
+            your {replacedExtension.name} account.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
