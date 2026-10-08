@@ -32,6 +32,22 @@ Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
+## Branches
+
+- `main` is releasable at every commit, and stable releases are cut from it. `beta` is `main` plus the features not yet proven, and Beta releases are cut from it. The `release` skill holds the version rules for both.
+- A feature pull request targets `beta` and lands squashed, its changelog line in the same commit. A fix to something already on `main` targets `main` and reaches `beta` at the next rebase.
+- No branch ever gets a merge commit. `beta` is kept current by rebasing it onto `main` and force-pushing, from a detached checkout so no worktree has to give the branch up. The sequence editor drops the beta version commits, which only bump `package.json` and would conflict with every stable's:
+
+  ```sh
+  git fetch origin && git checkout --detach origin/beta
+  GIT_SEQUENCE_EDITOR="sed -i.bak -E '/^pick [0-9a-f]+ (# )?[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$/d'" git rebase -i --empty=drop origin/main
+  git push --force-with-lease=beta origin HEAD:beta && gh workflow run ci.yml --ref beta
+  ```
+
+  A `CHANGELOG.md` conflict resolves to `main`'s file plus the lines that one commit adds. Anything more brings back lines a stable already released. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
+
+- A feature that has proven itself on Beta is promoted to `main`. Its commits have to be the oldest on `beta`, so reorder them there first if they aren't. A pull request into `main` from a branch at the newest of them carries them across, and it lands with **Rebase and merge**, never squash, so each commit keeps its patch and the next rebase of `beta`, run straight after, drops them as already upstream. Beta version commits never reach `main`.
+
 ## Architecture
 
 Bun workspaces monorepo. `scripts/build.ts` bundles the main process, the three preloads and the extension scripts with rolldown and the renderer with Vite, all into `build-js/`. In `bun run dev`, the renderer is a Vite dev server and everything else rebuilds and restarts Electron on change.
@@ -77,7 +93,7 @@ Things that take more than one file to see:
 ## Practices
 
 - Durations come from `ms` in `@meru/shared/ms`, never the `ms` package.
-- A user-visible change adds one line to the `[Unreleased]` section of `CHANGELOG.md`, under `Added`, `Changed` or `Fixed`, written for users in the style of the `release-notes` skill. The line lands in the same commit and pull request as the change, not in a follow-up. Refactors, tests, CI, docs and dependency bumps other than Electron get no line. The file holds only that section: the version commit empties it and the `release-notes` skill moves the lines onto the GitHub Release, so never add a versioned section.
+- A user-visible change adds one line to the `[Unreleased]` section of `CHANGELOG.md`, under `Added`, `Changed` or `Fixed`, written for users in the style of the `release-notes` skill. The line lands in the same commit and pull request as the change, not in a follow-up. Refactors, tests, CI, docs and dependency bumps other than Electron get no line. The file holds only that section: a stable version commit empties it, a beta one leaves it, and the `release-notes` skill moves the lines onto the GitHub Release, so never add a versioned section.
 - Before attaching a listener to a `webContents` or emitter, grep the file for that event on the same target and add the work to the existing handler. Listeners that attach and detach independently stay separate.
 - Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere.
 - Renderer: `packages/ui` components follow shadcn conventions and many are compound, so read the component file and use its sub-components instead of `<div>` wrappers. Merge conditional classes with `cn` from `@meru/ui/lib/utils`. Keyboard keys in copy render through `Kbd`. A config-backed settings field is `ConfigSwitchField` for a boolean key or `ConfigSelectField` for a string-union key; a fixed set of named choices is a string union, not a boolean.
