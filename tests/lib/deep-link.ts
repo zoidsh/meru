@@ -41,7 +41,7 @@ export async function sendDeepLink(meru: MeruApp, url: string) {
    * does for a launch that names none of its own. DISPLAY is in it, and a
    * second instance that cannot reach one never gets as far as the lock.
    */
-  await execFileAsync(EXECUTABLE_PATH, [...launchArguments(meru.userDataDir, {}), url], {
+  await execFileAsync(EXECUTABLE_PATH, [...launchArguments(meru.userDataDir), url], {
     cwd: process.cwd(),
   });
 }

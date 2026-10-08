@@ -18,7 +18,6 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`           |
 | One test by name                        | `bun test --isolate -t "name"`                              |
 | End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
-| Perf suite (memory, CPU, bundle size)   | `bun run test:perf`, same display caveat                    |
 | Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
 | Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`    |
 
@@ -28,7 +27,7 @@ Several worktrees run it at once, with nothing to pass. The renderer serves on t
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
-End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts` and `*.perf.ts`, never `*.spec.ts`, because `bun test` would claim that name.
+End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
 ## Architecture
 
@@ -67,7 +66,6 @@ Things that take more than one file to see:
 - Style lands as a rule in `@timche/oxc-configs`, checked out at `~/oxc-configs` and extended by `oxlint.config.ts`, never as a sweep inside a feature pull request. New code matches its neighbors until a rule lands.
 - Ask before bumping Electron or electron-builder. CI builds unsigned, so signing and installer packaging first run in the release itself.
 - Ask before adding a config migration to the ladder in `packages/app/config.ts`. Every migration guards every key it reads and branches on a legacy key, never on a value equal to a default. An unguarded read bricked every fresh install of a 3.60 beta, and only a release build runs a new migration. Nothing runs the ladder against an empty store, so the guards are held by review alone.
-- Ask before changing `tests/memory-budget.json` or `tests/bundle-budget.json`; a budget moves only when the issue asks for it.
 - Ask before touching licensing, the trial, Pro gating or the settings behind them. Plan decisions span both repositories.
 - Never bump the version, tag or cut a release. That is the `release` skill, run by Tim, and the updater ships whatever is tagged.
 - Never put a value resolved from 1Password, the test license key included, in a commit, comment or pull request.
