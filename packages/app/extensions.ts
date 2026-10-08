@@ -23,6 +23,7 @@ import {
 import { FIXTURE_EXTENSION_ID } from "@meru/electron-extensions/fixture/id";
 import {
   curatedExtensions,
+  getSkippedPasswordManagerIds,
   hostnameToMatchPattern,
   isCuratedExtensionId,
 } from "@meru/shared/extensions";
@@ -32,6 +33,7 @@ import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import { installExtensionReplacingConflicts } from "@/lib/extension-swap";
 import type { ExtensionWindowOutcome } from "@/lib/extension-window";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
@@ -197,15 +199,34 @@ function getStrippedManifestKeys() {
     .filter(Boolean);
 }
 
-/** The curated extensions the user opted into, and Pro is what they run on. */
+/** Logged once per launch, though the opt-ins are read again for every session. */
+const loggedSkippedExtensionIds = new Set<string>();
+
+/**
+ * The curated extensions the user opted into, and Pro is what they run on. A
+ * second password manager is left out, which only a config edited by hand can
+ * list, since installing one uninstalls the other.
+ */
 function getOptedInExtensionIds() {
   if (!config.get("extensions.enabled") || !licenseKey.isValid) {
     return [];
   }
 
-  return config
+  const installedExtensionIds = config
     .get("extensions.installed")
     .filter((extensionId) => isCuratedExtensionId(extensionId));
+
+  const skippedExtensionIds = getSkippedPasswordManagerIds(installedExtensionIds);
+
+  for (const extensionId of skippedExtensionIds) {
+    if (!loggedSkippedExtensionIds.has(extensionId)) {
+      loggedSkippedExtensionIds.add(extensionId);
+
+      log.warn("Skipped loading a second password manager", { extensionId });
+    }
+  }
+
+  return installedExtensionIds.filter((extensionId) => !skippedExtensionIds.includes(extensionId));
 }
 
 async function getInstalledExtensionDirs() {
@@ -704,17 +725,59 @@ function installLatestCuratedExtension(extensionId: string) {
   return runningInstall;
 }
 
-/** Installs the latest version and records the opt-in, which is what loads it. */
-export async function installCuratedExtension(extensionId: string) {
-  const { version } = await installLatestCuratedExtension(extensionId);
-
-  const installedExtensionIds = config.get("extensions.installed");
-
-  if (!installedExtensionIds.includes(extensionId)) {
-    config.set("extensions.installed", [...installedExtensionIds, extensionId]);
+/**
+ * Stands in for the Chrome Web Store download in the end-to-end suite, which
+ * has no package signed for a curated id and so can't install one any other
+ * way. It writes nothing, so the opt-in it leads to loads nothing either.
+ * Behind the flag alone rather than the fixture's development default, so a
+ * development run still downloads what it installs.
+ */
+async function downloadCuratedExtension(extensionId: string) {
+  if (isFixtureExtensionEnabled()) {
+    return { version: "fixture" };
   }
 
-  log.info("Installed extension", { extensionId, version });
+  return installLatestCuratedExtension(extensionId);
+}
+
+/**
+ * The install in flight, which the next one waits for. Each reads the opt-ins
+ * after its download to find what it turns off, and two reading them at once
+ * would each miss the other.
+ */
+let runningOptIn: Promise<unknown> = Promise.resolve();
+
+/**
+ * Installs the latest version and records the opt-in, which is what loads it,
+ * turning off an installed extension it can't run beside.
+ */
+export function installCuratedExtension(extensionId: string) {
+  const optIn = runningOptIn
+    .catch(() => {})
+    .then(async () => {
+      let version: string | undefined;
+
+      await installExtensionReplacingConflicts(extensionId, {
+        download: async () => {
+          ({ version } = await downloadCuratedExtension(extensionId));
+        },
+        getInstalledExtensionIds: () => config.get("extensions.installed"),
+        uninstall: uninstallCuratedExtension,
+        recordOptIn: () => {
+          const installedExtensionIds = config.get("extensions.installed");
+
+          if (!installedExtensionIds.includes(extensionId)) {
+            config.set("extensions.installed", [...installedExtensionIds, extensionId]);
+          }
+        },
+      });
+
+      log.info("Installed extension", { extensionId, version });
+    });
+
+  runningOptIn = optIn;
+
+  return optIn;
 }
 
 export async function uninstallCuratedExtension(extensionId: string) {
