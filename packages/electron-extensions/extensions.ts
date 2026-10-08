@@ -93,6 +93,8 @@ export type SharedExtensionInstance = {
     getWindowId?: (contents: WebContents) => number;
     /** Hears the windows `chrome.windows.create` opens for extensions come and go. */
     watchExtensionWindows?: (watcher: ExtensionWindowsWatcher) => void;
+    /** Which extensions `chrome.windows.create` opens windows for. */
+    canOpenExtensionWindows?: ExtensionWindowsPolicy;
   }): void;
   /** Called per session before its extensions derive. */
   adoptSession(session: Session): SharedInstanceDeriveOptions;
@@ -438,6 +440,7 @@ export class Extensions {
       watchExtensionWindows: (watcher) => {
         windows.watch(watcher);
       },
+      canOpenExtensionWindows,
     });
   }
 

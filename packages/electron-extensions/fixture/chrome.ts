@@ -54,6 +54,11 @@ export type FixtureTabs = {
    */
   query: (queryInfo: Record<string, unknown>, callback: (tabs: FixtureTab[]) => void) => void;
   get: (tabId: number, callback: (tab: FixtureTab | undefined) => void) => void;
+  update: (
+    tabId: number,
+    updateProperties: Record<string, unknown>,
+    callback: (tab: FixtureTab | undefined) => void,
+  ) => void;
 };
 
 /** One frame as `chrome.webNavigation` describes it, in the slice the fixture reads. */

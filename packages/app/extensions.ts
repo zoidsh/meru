@@ -28,6 +28,7 @@ import {
   isCuratedExtensionId,
 } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
 import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
@@ -528,6 +529,7 @@ export const extensions = new Extensions({
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
     getWorkerSession: () => session.defaultSession,
     isActiveTab,
+    activateTab,
     getWindowCloseFallbackRejection,
   }),
   logger: {
@@ -591,6 +593,32 @@ function isActiveTab(contents: WebContents) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Makes a page the one its window shows, for an extension's `tabs.update(tabId,
+ * {active: true})`, which the loader asks for only when `isActiveTab` says it
+ * isn't: its account and its tab within the account are selected. The window
+ * is neither shown nor focused, since Chrome's `active` never touches window
+ * focus. Bitwarden asks for it each time a popout finishes, by which time the
+ * user may be in another app, or have Meru hidden in the tray. A workspace app
+ * in a window of its own never gets here, since `isActiveTab` answers true for
+ * it, and a page no account shows as a tab is left where it is.
+ */
+function activateTab(contents: WebContents) {
+  const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
+
+  const account = workspaceApp
+    ? accounts.instances.get(workspaceApp.accountId)
+    : accounts.findInstanceByGmailWebContentsId(contents.id);
+
+  if (!account) {
+    return;
+  }
+
+  account.tabs.activateTab(workspaceApp?.id ?? GMAIL_TAB_ID);
+
+  accounts.selectAccount(account.accountId);
 }
 
 /**
