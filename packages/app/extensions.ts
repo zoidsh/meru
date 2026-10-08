@@ -27,6 +27,7 @@ import {
   isCuratedExtensionId,
 } from "@meru/shared/extensions";
 import { ms } from "@meru/shared/ms";
+import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { ExtensionUpdateResult, InstalledExtensionState } from "@meru/shared/types";
 import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
@@ -43,6 +44,7 @@ import {
   isWindowVisibleOnConnectedDisplay,
 } from "@/lib/window";
 import { licenseKey } from "@/license-key";
+import { main } from "@/main";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
 
@@ -527,6 +529,7 @@ export const extensions = new Extensions({
     relayScriptPath: path.join(__dirname, "extensions-runtime-proxy-relay.js"),
     getWorkerSession: () => session.defaultSession,
     isActiveTab,
+    activateTab,
     getWindowCloseFallbackRejection,
   }),
   logger: {
@@ -590,6 +593,38 @@ function isActiveTab(contents: WebContents) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Brings a page to the front for an extension's `tabs.update(tabId, {active:
+ * true})`, which the loader asks for only when `isActiveTab` says the page is
+ * not there yet: its account and its tab within the account are selected and
+ * the main window is shown, the way a notification click brings a tab forward.
+ * A workspace app in a window of its own has that window focused instead, and
+ * any other page, which no account shows as a tab, is left where it is.
+ */
+function activateTab(contents: WebContents) {
+  const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
+
+  if (workspaceApp?.isWindowed) {
+    workspaceApp.focusWindow();
+
+    return;
+  }
+
+  const account = workspaceApp
+    ? accounts.instances.get(workspaceApp.accountId)
+    : accounts.findInstanceByGmailWebContentsId(contents.id);
+
+  if (!account) {
+    return;
+  }
+
+  account.tabs.activateTab(workspaceApp?.id ?? GMAIL_TAB_ID);
+
+  accounts.selectAccount(account.accountId);
+
+  main.show();
 }
 
 /**

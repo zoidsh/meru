@@ -43,6 +43,13 @@ export type CreateSharedExtensionInstanceOptions = {
    */
   isActiveTab?: (contents: WebContents) => boolean;
   /**
+   * Brings a page to the front: Chrome's `tabs.update(tabId, {active: true})`,
+   * which a password manager calls to hand focus back to the page its popout
+   * was opened for. Only the embedder knows what in front means, as for
+   * `isActiveTab`. Without it the update answers and activates nothing.
+   */
+  activateTab?: (contents: WebContents) => void;
+  /**
    * Which extensions have a fallback reply turned into a rejection when the
    * user closed a window opened for the request, by the id they are loaded as;
    * `window-close-rejection.ts` says why. Without it no reply is rewritten.
@@ -75,6 +82,7 @@ export function createSharedExtensionInstance({
   getWorkerSession,
   getWebContentsFromFrame,
   isActiveTab,
+  activateTab,
   getWindowCloseFallbackRejection,
 }: CreateSharedExtensionInstanceOptions): SharedExtensionInstance {
   let proxy: RuntimeProxy | undefined;
@@ -84,16 +92,21 @@ export function createSharedExtensionInstance({
   const shimmedSessions = new Set<Session>();
 
   return {
-    install({ bridge, logger, getWindowId, watchExtensionWindows }) {
+    install({ bridge, logger, getWindowId, watchExtensionWindows, canOpenExtensionWindows }) {
       const installedProxy = new RuntimeProxy({
         logger,
         getWebContentsFromFrame,
         getWindowId,
+        // A tab is handed back to after an extension window closes, so only an
+        // extension that opens windows needs it, and 1Password, which doesn't,
+        // keeps Electron's own `tabs.update`
+        canUpdateTabs: canOpenExtensionWindows,
         // The same bookkeeping `canResolveTabAcrossSessions` answers from, for
         // the same reason: which sessions are shimmed is what `adoptSession`
         // already keeps, and a second copy of it would be free to drift
         isShimmedSession: (session) => shimmedSessions.has(session),
         isActiveTab,
+        activateTab,
         getWindowCloseFallbackRejection,
       });
 

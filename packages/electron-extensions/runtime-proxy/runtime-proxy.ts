@@ -201,6 +201,10 @@ export type RuntimeProxyOptions = {
    * focus-based answer is the wrong default for it.
    */
   isActiveTab?: (contents: WebContents) => boolean;
+  /** Brings a page to the front, for `tabs.update`; `worker-tabs.ts` says when. */
+  activateTab?: (contents: WebContents) => void;
+  /** Which extensions `tabs.update` is answered for. */
+  canUpdateTabs?: (extensionId: string) => boolean;
   /** The window a page is in, which `worker-tabs.ts` reports as a tab's `windowId`. */
   getWindowId?: (contents: WebContents) => number;
   /**
@@ -315,6 +319,8 @@ export class RuntimeProxy {
     waitForContextMs,
     isShimmedSession = () => false,
     isActiveTab,
+    activateTab,
+    canUpdateTabs,
     getWindowId,
     getWindowCloseFallbackRejection = () => undefined,
   }: RuntimeProxyOptions = {}) {
@@ -342,6 +348,8 @@ export class RuntimeProxy {
       getWorkerSession: () => this.workerSession,
       isShimmedSession,
       isActiveTab,
+      activateTab,
+      canUpdateTabs,
       getWebContentsById,
       getWebContentsFromFrame,
       getWindowId,

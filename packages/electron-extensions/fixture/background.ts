@@ -79,7 +79,7 @@ type ProbeMessage = {
   method?: string;
   permissions?: string[];
   keys?: string[];
-  /** What a `windows` message calls that method with. */
+  /** What a `windows` or `tabs-update` message calls its method with. */
   args?: unknown[];
   /** The injection an `execute-script` message asks the worker for. */
   injection?: Record<string, unknown>;
@@ -609,6 +609,25 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else {
       answer(null);
     }
+
+    return true;
+  }
+
+  /*
+   * `chrome.tabs.update` as the worker calls it, in callback form, which is how
+   * Bitwarden hands focus back to an account's tab when its popout is done.
+   * This listener answers late.
+   */
+  if (probeMessage?.type === "tabs-update" && Array.isArray(probeMessage.args)) {
+    const [tabId, updateProperties] = probeMessage.args as [number, Record<string, unknown>];
+
+    tabs.update(tabId, updateProperties, (tab) => {
+      sendResponse({
+        type: "tabs-update-reply",
+        result: tab ?? null,
+        lastError: runtime.lastError?.message ?? null,
+      });
+    });
 
     return true;
   }

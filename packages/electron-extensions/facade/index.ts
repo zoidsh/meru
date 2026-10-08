@@ -4,6 +4,7 @@ import { reportPageStorageWrites } from "../runtime-proxy/page-storage-writes";
 import { DELIVERS_NAVIGATION_EVENTS_GLOBAL } from "../web-navigation/bridge-protocol";
 import { OPENS_EXTENSION_WINDOWS_GLOBAL } from "../windows/bridge-protocol";
 import { proxyPageTabs } from "./api/page-tabs";
+import { proxyTabsUpdate } from "./api/tabs-update";
 import { installChromeFacade } from "./install";
 import { removeBrowserGlobal } from "./lib/browser-global";
 import type { ChromeNamespace } from "./lib/chrome";
@@ -33,6 +34,10 @@ if (chrome) {
     opensExtensionWindows,
     deliversNavigationEvents: contextGlobals[DELIVERS_NAVIGATION_EVENTS_GLOBAL] === true,
   });
+
+  if (opensExtensionWindows) {
+    proxyTabsUpdate(chrome);
+  }
 
   // A page only: the worker's own queries and messages are the relay's to answer
   if (opensExtensionWindows && contextGlobals.document !== undefined) {

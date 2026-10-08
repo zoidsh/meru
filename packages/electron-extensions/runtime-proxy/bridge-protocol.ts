@@ -118,6 +118,7 @@ export const RUNTIME_PROXY_PATHS = {
   workerBroadcast: "/runtime-proxy/worker-broadcast",
   workerQueryTabs: "/runtime-proxy/worker-query-tabs",
   workerGetTab: "/runtime-proxy/worker-get-tab",
+  workerUpdateTab: "/runtime-proxy/worker-update-tab",
   /** Any extension frame, for the tab it is embedded in. */
   currentTab: "/runtime-proxy/current-tab",
 } as const;
@@ -526,6 +527,25 @@ export type RuntimeProxyWorkerGetTabRequest = {
 export type RuntimeProxyWorkerGetTabResult =
   | { status: "tab"; tab: RuntimeProxyTab }
   | { status: "noTarget"; error: string };
+
+/**
+ * `chrome.tabs.update`'s arguments, with `tabId` left out when the caller left
+ * it out, which Chrome reads as the current window's active tab.
+ */
+export type RuntimeProxyWorkerUpdateTabRequest = {
+  tabId?: unknown;
+  updateProperties: unknown;
+};
+
+/**
+ * The tab as updated; `ownSession` for a tab of the worker's own session, which
+ * Chromium updates itself; or an error Chrome would give, which includes a tab
+ * this app is not showing and a change to a tab's URL, which Meru refuses.
+ */
+export type RuntimeProxyWorkerUpdateTabResult =
+  | { status: "tab"; tab: RuntimeProxyTab }
+  | { status: "ownSession" }
+  | { status: "noTarget" | "refused"; error: string };
 
 /**
  * The tab an extension frame embedded in a page is in, for `tabs.getCurrent`,
