@@ -68,12 +68,50 @@ export function filterTodo(
   return { todo: kept.join("\n"), dropped };
 }
 
-export function promotedSubjects(betaSubjects: string[], mainSubjects: ReadonlySet<string>) {
-  return betaSubjects.filter((subject) => mainSubjects.has(subject));
+type Commit = { sha: string; subject: string };
+
+/** Each commit on `beta` whose subject is also on `main`, with the first `main` commit carrying it. */
+export function sharedSubjects(betaCommits: Commit[], mainCommits: Commit[]) {
+  const onMain = new Map<string, string>();
+
+  for (const { sha, subject } of mainCommits) {
+    if (!onMain.has(subject)) {
+      onMain.set(subject, sha);
+    }
+  }
+
+  return betaCommits.flatMap((commit) => {
+    const mainSha = onMain.get(commit.subject);
+
+    return mainSha === undefined ? [] : [{ ...commit, mainSha }];
+  });
+}
+
+export function sharedSubjectsMessage(shared: ReturnType<typeof sharedSubjects>) {
+  return [
+    "These commits on beta share their subject with a commit on main:",
+    ...shared.map(
+      ({ sha, subject, mainSha }) =>
+        `  ${sha.slice(0, 10)} ${subject} (main: ${mainSha.slice(0, 10)})`,
+    ),
+    "",
+    "A promoted commit the rebase kept: rebase again with the sequence editor in CLAUDE.md, which drops it.",
+    "A different commit that happens to match an older one on main: give it its own subject, with",
+    "`git rebase -i <sha>~1` and `reword` on its line. The check reads all of main on purpose, so",
+    "the subject has to change rather than the check.",
+  ].join("\n");
 }
 
 function lines(output: string) {
   return output.split("\n").filter(Boolean);
+}
+
+async function commits(range: string) {
+  return lines(await $`git log --format=${"%H %s"} ${range}`.text()).map((line) => {
+    const space = line.indexOf(" ");
+
+    return { sha: line.slice(0, space), subject: line.slice(space + 1) };
+  });
 }
 
 function gitSubject(sha: string) {
@@ -113,17 +151,13 @@ if (import.meta.main) {
 
     await Bun.write(todoPath, result.todo);
   } else if (command === "check") {
-    const betaSubjects = lines(await $`git log --format=%s origin/main..HEAD`.text());
     // All of main, not only what landed since `origin/beta`'s base: once
     // `beta` is pushed that base is main's tip, and the check would pass
     // vacuously.
-    const mainSubjects = new Set(lines(await $`git log --format=%s origin/main`.text()));
-    const promoted = promotedSubjects(betaSubjects, mainSubjects);
+    const shared = sharedSubjects(await commits("origin/main..HEAD"), await commits("origin/main"));
 
-    if (promoted.length > 0) {
-      console.error(
-        `These commits are already on main and must not stay on beta:\n${promoted.join("\n")}`,
-      );
+    if (shared.length > 0) {
+      console.error(sharedSubjectsMessage(shared));
       process.exit(1);
     }
   } else {

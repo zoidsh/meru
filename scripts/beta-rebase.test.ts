@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { filterTodo, promotedSubjects } from "./beta-rebase";
+import { filterTodo, sharedSubjects, sharedSubjectsMessage } from "./beta-rebase";
 
 const subjects: Record<string, string> = {
   "1111111": "Feature A (#1)",
@@ -92,10 +92,21 @@ describe("filterTodo", () => {
   });
 });
 
-describe("promotedSubjects", () => {
-  test("lists beta subjects that are also on main", () => {
-    expect(
-      promotedSubjects(["Feature B (#2)", "Feature A (#1)"], new Set(["Feature A (#1)"])),
-    ).toEqual(["Feature A (#1)"]);
+describe("sharedSubjects", () => {
+  test("names each beta commit whose subject is on main, with the main commit", () => {
+    const shared = sharedSubjects(
+      [
+        { sha: "b2", subject: "Feature B (#2)" },
+        { sha: "b1", subject: "fix types" },
+      ],
+      [
+        { sha: "m2", subject: "fix types" },
+        { sha: "m1", subject: "fix types" },
+      ],
+    );
+
+    expect(shared).toEqual([{ sha: "b1", subject: "fix types", mainSha: "m2" }]);
+    expect(sharedSubjectsMessage(shared)).toContain("b1 fix types (main: m2)");
+    expect(sharedSubjectsMessage(shared)).toContain("`reword`");
   });
 });
