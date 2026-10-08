@@ -70,7 +70,7 @@ export async function installExtensionReplacingConflicts(
           `Couldn't turn off ${conflictName}: ${getErrorMessage(error)}`,
           isStillOn
             ? `${conflictName} is still on, and ${getName(extensionId)} wasn't installed.`
-            : `${conflictName} is off, but some of its data may be left behind. ${getName(extensionId)} wasn't installed. Turn it on to try again.`,
+            : `${conflictName} is off, but some of its files may be left in Meru. ${getName(extensionId)} wasn't installed. Turn it on to try again.`,
         ].join("\n\n"),
         { cause: error },
       );
@@ -85,7 +85,7 @@ export async function installExtensionReplacingConflicts(
         `Couldn't install the extension: ${getErrorMessage(error)}`,
         ...conflictingExtensionIds.map(
           (conflictingExtensionId) =>
-            `${getName(conflictingExtensionId)} was turned off and its data removed.`,
+            `${getName(conflictingExtensionId)} was turned off, and you're signed out of it in Meru.`,
         ),
       ].join("\n\n"),
       { cause: error },
