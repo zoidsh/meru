@@ -12,6 +12,8 @@ import {
   type RuntimeProxyWorkerGetTabResult,
   type RuntimeProxyWorkerQueryTabsRequest,
   type RuntimeProxyWorkerQueryTabsResult,
+  type RuntimeProxyWorkerUpdateTabRequest,
+  type RuntimeProxyWorkerUpdateTabResult,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
 import { createTabDetails, type GetWebContentsFromFrame } from "./sender";
@@ -50,6 +52,18 @@ export type WorkerTabsOptions = {
    * still showing the page.
    */
   isActiveTab?: (contents: WebContents) => boolean;
+  /**
+   * Makes a page the one its window shows, without focusing the window, which
+   * is Chrome's `tabs.update(tabId, {active: true})` and, like `isActiveTab`,
+   * only the embedder can do. Without it the update answers and activates
+   * nothing.
+   */
+  activateTab?: (contents: WebContents) => void;
+  /**
+   * Which extensions may change a tab with `tabs.update`. Without it none may,
+   * and the call stays Electron's, which knows no account's tab.
+   */
+  canUpdateTabs?: (extensionId: string) => boolean;
   /** Every page the app has, Electron's own list by default. */
   getAllWebContents?: () => WebContents[];
   /** How a tab id resolves to the page behind it, Electron's own mapping by default. */
@@ -66,7 +80,8 @@ export type WorkerTabsOptions = {
 
 /**
  * The worker's own `chrome.tabs.query` and `chrome.tabs.get`, answered from
- * main.
+ * main, and `chrome.tabs.update` for an extension the embedder lets change
+ * tabs (`updateTab` says what changes).
  *
  * Chromium answers both natively, scoped to the browser context the asking
  * extension is loaded into — `TabsQueryFunction` filters the WebContents list
@@ -112,6 +127,10 @@ export class WorkerTabs {
 
   private isActiveTab: (contents: WebContents) => boolean;
 
+  private activateTab: ((contents: WebContents) => void) | undefined;
+
+  private canUpdateTabs: (extensionId: string) => boolean;
+
   private getAllWebContents: () => WebContents[];
 
   private getWebContentsById: (tabId: number) => WebContents | undefined;
@@ -124,6 +143,8 @@ export class WorkerTabs {
     getWorkerSession,
     isShimmedSession,
     isActiveTab = (contents) => contents.isFocused(),
+    activateTab,
+    canUpdateTabs = () => false,
     getAllWebContents = getElectronWebContents,
     getWebContentsById = getElectronWebContentsById,
     getWebContentsFromFrame = getElectronWebContentsFromFrame,
@@ -134,6 +155,10 @@ export class WorkerTabs {
     this.isShimmedSession = isShimmedSession;
 
     this.isActiveTab = isActiveTab;
+
+    this.activateTab = activateTab;
+
+    this.canUpdateTabs = canUpdateTabs;
 
     this.getAllWebContents = getAllWebContents;
 
@@ -170,6 +195,22 @@ export class WorkerTabs {
       });
     });
 
+    bridge.handle(
+      RUNTIME_PROXY_PATHS.workerUpdateTab,
+      ({ session, extensionId, body, headers }) => {
+        if (session !== this.getWorkerSession() || !this.canUpdateTabs(extensionId)) {
+          return new Response(null, { status: 403, headers });
+        }
+
+        const { tabId, updateProperties } = body as unknown as RuntimeProxyWorkerUpdateTabRequest;
+
+        return Response.json(
+          this.updateTab(tabId, updateProperties) satisfies RuntimeProxyWorkerUpdateTabResult,
+          { headers },
+        );
+      },
+    );
+
     // Any session, since the frame asking can only learn about the page it is
     // already in
     bridge.handle(RUNTIME_PROXY_PATHS.currentTab, ({ extensionId, senderFrame, headers }) =>
@@ -195,17 +236,13 @@ export class WorkerTabs {
    * a page an extension does not care about in it.
    */
   listTabs(): RuntimeProxyTab[] {
-    const tabs: RuntimeProxyTab[] = [];
+    return this.listContents().map((contents) => this.describeTab(contents));
+  }
 
-    for (const contents of this.getAllWebContents()) {
-      if (contents.isDestroyed() || !this.isListedSession(contents.session)) {
-        continue;
-      }
-
-      tabs.push(this.describeTab(contents));
-    }
-
-    return tabs;
+  private listContents() {
+    return this.getAllWebContents().filter(
+      (contents) => !contents.isDestroyed() && this.isListedSession(contents.session),
+    );
   }
 
   /**
@@ -274,14 +311,59 @@ export class WorkerTabs {
    * id", rather than a tab from a session the worker has no business reading.
    */
   getTab(tabId: unknown): RuntimeProxyWorkerGetTabResult {
-    if (typeof tabId !== "number") {
+    const contents = this.resolveTab(tabId);
+
+    if (!contents) {
       return { status: "noTarget", error: noTabError(tabId) };
     }
 
-    const contents = this.getWebContentsById(tabId);
+    return { status: "tab", tab: this.describeTab(contents) };
+  }
 
-    if (!contents || contents.isDestroyed() || !this.isListedSession(contents.session)) {
+  /**
+   * `tabs.update` for a tab of a session the worker shims, which Electron's own
+   * `tabs.update` cannot find. A tab of the worker's own session comes back as
+   * `ownSession`, to be updated natively, as `tabs.sendMessage` does. No id is
+   * Chrome's current window's active tab, which is the view Meru is showing.
+   *
+   * `active: true` makes the tab the one its window shows, through the
+   * embedder, and leaves window focus alone, as Chrome's `active` does. A tab
+   * already in front isn't asked about again.
+   *
+   * A new `url` is refused. Chrome allows it, but these tabs are Meru's views
+   * of an account, which an extension has no business taking somewhere Meru
+   * did not send them. Neither curated extension needs it: Bitwarden's one
+   * caller redirects a tab its phishing detection blocked, and 1Password's
+   * navigate tabs it opened itself.
+   *
+   * The other properties change nothing. Pinning, highlighting, an opener and
+   * discarding have no counterpart in Meru's views, and muting an account is
+   * not an extension's call, so the tab comes back as it is.
+   */
+  updateTab(tabId: unknown, updateProperties: unknown): RuntimeProxyWorkerUpdateTabResult {
+    const contents =
+      tabId === undefined || tabId === null
+        ? this.getActiveMainWindowTab()
+        : this.resolveTab(tabId);
+
+    if (!contents) {
       return { status: "noTarget", error: noTabError(tabId) };
+    }
+
+    if (contents.session === this.getWorkerSession()) {
+      return { status: "ownSession" };
+    }
+
+    const { url, active } = (
+      typeof updateProperties === "object" && updateProperties !== null ? updateProperties : {}
+    ) as { url?: unknown; active?: unknown };
+
+    if (url !== undefined) {
+      return { status: "refused", error: cannotNavigateTabError(contents.id) };
+    }
+
+    if (active === true && !this.isActiveTab(contents)) {
+      this.activateTab?.(contents);
     }
 
     return { status: "tab", tab: this.describeTab(contents) };
@@ -316,6 +398,26 @@ export class WorkerTabs {
     return this.describeTab(contents);
   }
 
+  private resolveTab(tabId: unknown) {
+    if (typeof tabId !== "number") {
+      return undefined;
+    }
+
+    const contents = this.getWebContentsById(tabId);
+
+    if (!contents || contents.isDestroyed() || !this.isListedSession(contents.session)) {
+      return undefined;
+    }
+
+    return contents;
+  }
+
+  private getActiveMainWindowTab() {
+    return this.listContents().find(
+      (contents) => this.getWindowId(contents) === MAIN_WINDOW_ID && this.isActiveTab(contents),
+    );
+  }
+
   private describeTab(contents: WebContents) {
     return createTabDetails(contents, {
       active: this.isActiveTab(contents),
@@ -326,6 +428,10 @@ export class WorkerTabs {
   private isListedSession(session: Session) {
     return session === this.getWorkerSession() || this.isShimmedSession(session);
   }
+}
+
+function cannotNavigateTabError(tabId: number) {
+  return `Cannot change the URL of tab with id: ${tabId}.`;
 }
 
 /**
