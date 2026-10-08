@@ -6,14 +6,15 @@ on:
       - main
   pull_request:
   workflow_call:
+  workflow_dispatch:
 
 # One run per pull request, with a superseded one cancelled rather than left to
 # finish. Two pushes seconds apart otherwise pay for three app builds on a
 # commit that has already been replaced.
 #
 # Everything else gets a group of its own, because `run_id` is unique to a run:
-# a push to main and a release build never wait on each other, which is what a
-# shared group without cancellation would make them do.
+# a push to main, a dispatched run and a release build never wait on each
+# other, which is what a shared group without cancellation would make them do.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
