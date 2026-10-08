@@ -10,7 +10,7 @@ export const MINIMUM_MACOS_VERSION = "13.0.0";
  * version rather than the Darwin number that would have to stand in for it.
  *
  * `semver` is not imported: electron-updater's nested copy is not shared with a
- * declared one, and declaring it takes `app.js` far past its bundle budget.
+ * declared one, and declaring it adds some 50 KB to `app.js`.
  */
 export function isUpdateSupported(platform: NodeJS.Platform, systemVersion: string) {
   if (platform !== "darwin") {
