@@ -5,9 +5,6 @@
  * do first beyond having a display. On a machine without one, wrap the command:
  * `xvfb-run -a bun run test:e2e`. The -a matters, because it picks a free
  * display number rather than colliding on :99 with another run.
- *
- * That build is Linux only. Elsewhere, build the app for the platform and point
- * MERU_EXECUTABLE at what electron-builder leaves in dist.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";

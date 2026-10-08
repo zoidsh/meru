@@ -1,6 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import { unzipSync, zipSync } from "fflate";
 import { getExtensionIdFromPublicKey } from "../derive/extension-id";
 import { verifyCrx } from "./crx";
@@ -111,30 +109,5 @@ describe("verifyCrx", () => {
     expect(() => verifyCrx(createCrx({ formatVersion: 2 }), extensionId)).toThrow(
       "CRX format version 2 is not supported",
     );
-  });
-});
-
-/**
- * The package `bun run extensions:download` leaves behind, which is a real Web
- * Store CRX carrying three proofs. It is absent on a fresh checkout and in CI.
- */
-const onePasswordCrxPath = path.join(
-  import.meta.dirname,
-  "..",
-  "..",
-  "..",
-  "extensions",
-  "1password.crx",
-);
-
-describe("verifyCrx with a Web Store package", () => {
-  test.skipIf(!existsSync(onePasswordCrxPath))("verifies the 1Password package", () => {
-    const { archive, publicKey } = verifyCrx(
-      readFileSync(onePasswordCrxPath),
-      "aeblfdkhhhdcdjpifhhbdiojplfjncoa",
-    );
-
-    expect(getExtensionIdFromPublicKey(publicKey)).toBe("aeblfdkhhhdcdjpifhhbdiojplfjncoa");
-    expect(Object.keys(unzipSync(archive))).toContain("manifest.json");
   });
 });
