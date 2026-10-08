@@ -330,6 +330,44 @@ export function isCuratedExtensionId(extensionId: string) {
   return curatedExtensions.some((curatedExtension) => curatedExtension.id === extensionId);
 }
 
+export function getCuratedExtension(extensionId: string) {
+  return curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId);
+}
+
+/**
+ * The installed extensions that turning on `extensionId` turns off. Only one
+ * password manager runs at a time: two would each draw an inline menu on the
+ * same field, and both override `navigator.credentials` in the page in an order
+ * Chromium doesn't define.
+ */
+export function getConflictingExtensionIds(extensionId: string, installedExtensionIds: string[]) {
+  if (getCuratedExtension(extensionId)?.category !== "passwordManager") {
+    return [];
+  }
+
+  return installedExtensionIds.filter(
+    (installedExtensionId) =>
+      installedExtensionId !== extensionId &&
+      getCuratedExtension(installedExtensionId)?.category === "passwordManager",
+  );
+}
+
+/**
+ * The password managers the loader leaves out when a config lists more than
+ * one, which nothing Meru ships writes but a hand edit can: every one after the
+ * first in catalog order.
+ */
+export function getSkippedPasswordManagerIds(installedExtensionIds: string[]) {
+  return curatedExtensions
+    .filter(
+      (curatedExtension) =>
+        curatedExtension.category === "passwordManager" &&
+        installedExtensionIds.includes(curatedExtension.id),
+    )
+    .slice(1)
+    .map((curatedExtension) => curatedExtension.id);
+}
+
 /** The pattern a site the user added stands for: every path of it over HTTPS. */
 export function hostnameToMatchPattern(hostname: string) {
   return `https://${hostname}/*`;
