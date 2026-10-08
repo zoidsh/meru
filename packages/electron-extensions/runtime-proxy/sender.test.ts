@@ -368,3 +368,129 @@ describe("reconstructSender", () => {
     expect(sender.url).toBe("not a url");
   });
 });
+
+describe("reconstructSender for a page that navigated away", () => {
+  /*
+   * Bitwarden's content script closes the inline menu as its page unloads, and
+   * the message reaches main after the frame's next document took over. The
+   * frame still names the tab and its place in the page; it no longer names
+   * the document that sent the message.
+   */
+  test("keeps the tab and the frame, and nothing of the document", () => {
+    const mainFrame = createFrame("https://localhost/next", 12);
+
+    const contents = createContents(7, "Next", "https://localhost/next");
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: "https://accounts.google.com/v3/signin", isTopFrame: true },
+      senderFrame: undefined,
+      navigatedSenderFrame: mainFrame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[mainFrame, contents]]),
+    });
+
+    expect(sender).toEqual({
+      id: EXTENSION_ID,
+      frameId: 0,
+      tab: expect.objectContaining({ id: 7, active: true }),
+      documentLifecycle: "pending_deletion",
+    });
+  });
+
+  test("a subframe keeps its frame tree node id", () => {
+    const mainFrame = createFrame("https://accounts.google.com/", 12);
+
+    const subFrame = createFrame("https://accounts.google.com/next-frame", 34, mainFrame);
+
+    const contents = createContents(7, "Sign in", "https://accounts.google.com/");
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: "https://accounts.google.com/frame", isTopFrame: false },
+      senderFrame: undefined,
+      navigatedSenderFrame: subFrame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[subFrame, contents]]),
+    });
+
+    expect(sender).toMatchObject({ frameId: 34, tab: { id: 7 } });
+  });
+
+  test("delivers the id alone where the frame can't be the one that sent it", () => {
+    const mainFrame = createFrame("https://accounts.google.com/", 12);
+
+    const subFrame = createFrame("https://accounts.google.com/frame", 34, mainFrame);
+
+    const destroyedFrame = {
+      ...createFrame("https://accounts.google.com/", 56),
+      isDestroyed: () => true,
+    };
+
+    const contents = createContents(7, "Sign in", "https://accounts.google.com/");
+
+    const otherSession = { partition: "persist:account-2" } as unknown as Session;
+
+    const cases: {
+      report: { url: string; isTopFrame: boolean };
+      frame: FakeFrame;
+      contents: WebContents;
+    }[] = [
+      // The other side of the top-frame line from what the report says
+      {
+        report: { url: "https://accounts.google.com/frame", isTopFrame: true },
+        frame: subFrame,
+        contents,
+      },
+      // A top-level extension page, which is no tab
+      {
+        report: { url: `chrome-extension://${EXTENSION_ID}/popup.html`, isTopFrame: true },
+        frame: mainFrame,
+        contents,
+      },
+      {
+        report: { url: "https://accounts.google.com/", isTopFrame: true },
+        frame: destroyedFrame,
+        contents,
+      },
+      {
+        report: { url: "https://accounts.google.com/", isTopFrame: true },
+        frame: mainFrame,
+        contents: createContents(8, "Sign in", "https://accounts.google.com/", otherSession),
+      },
+    ];
+
+    for (const { report, frame, contents: frameContents } of cases) {
+      expect(
+        reconstructSender({
+          session,
+          extensionId: EXTENSION_ID,
+          report,
+          senderFrame: undefined,
+          navigatedSenderFrame: frame as unknown as WebFrameMain,
+          getWebContentsFromFrame: contentsOf([[frame, frameContents]]),
+        }),
+      ).toEqual({ id: EXTENSION_ID });
+    }
+  });
+
+  test("a live sender frame wins over a navigated one", () => {
+    const frame = createFrame("https://accounts.google.com/", 12);
+
+    const contents = createContents(7, "Sign in", "https://accounts.google.com/");
+
+    const sender = reconstructSender({
+      session,
+      extensionId: EXTENSION_ID,
+      report: { url: "https://accounts.google.com/", isTopFrame: true },
+      senderFrame: frame as unknown as WebFrameMain,
+      navigatedSenderFrame: frame as unknown as WebFrameMain,
+      getWebContentsFromFrame: contentsOf([[frame, contents]]),
+    });
+
+    expect(sender).toMatchObject({
+      url: "https://accounts.google.com/",
+      documentLifecycle: "active",
+    });
+  });
+});

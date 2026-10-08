@@ -215,6 +215,12 @@ export type RuntimeProxyOptions = {
   getWindowCloseFallbackRejection?: GetWindowCloseFallbackRejection;
 };
 
+/** The bridge's word on which frame made a request; `bridge/bridge.ts` has both. */
+type CallerFrames = {
+  senderFrame: WebFrameMain | undefined;
+  navigatedSenderFrame?: WebFrameMain;
+};
+
 const DEFAULT_WAKE_TIMEOUT_MS = 10_000;
 
 const DEFAULT_MAX_DELIVERY_ATTEMPTS = 3;
@@ -369,14 +375,26 @@ export class RuntimeProxy {
   registerRoutes(bridge: ExtensionBridge) {
     bridge.handle(
       RUNTIME_PROXY_PATHS.sendMessage,
-      ({ session, extensionId, senderFrame, body, headers }) =>
-        this.handleSendMessage(session, extensionId, senderFrame, body, headers),
+      ({ session, extensionId, senderFrame, navigatedSenderFrame, body, headers }) =>
+        this.handleSendMessage(
+          session,
+          extensionId,
+          { senderFrame, navigatedSenderFrame },
+          body,
+          headers,
+        ),
     );
 
     bridge.handle(
       RUNTIME_PROXY_PATHS.connect,
-      ({ session, extensionId, senderFrame, body, headers }) =>
-        this.handleConnect(session, extensionId, senderFrame, body, headers),
+      ({ session, extensionId, senderFrame, navigatedSenderFrame, body, headers }) =>
+        this.handleConnect(
+          session,
+          extensionId,
+          { senderFrame, navigatedSenderFrame },
+          body,
+          headers,
+        ),
     );
 
     bridge.handle(RUNTIME_PROXY_PATHS.portPost, ({ session, extensionId, body, headers }) => {
@@ -803,7 +821,7 @@ export class RuntimeProxy {
   private async handleSendMessage(
     session: Session,
     extensionId: string,
-    senderFrame: WebFrameMain | undefined,
+    caller: CallerFrames,
     body: Record<string, unknown>,
     headers: Record<string, string>,
   ) {
@@ -815,7 +833,7 @@ export class RuntimeProxy {
       return new Response(null, { status: 400, headers });
     }
 
-    const sender = this.reconstructSender(session, extensionId, report, senderFrame);
+    const sender = this.reconstructSender(session, extensionId, report, caller);
 
     // Before the job is queued, since a window the worker opens in answer to
     // the request is what ties it to the request
@@ -962,7 +980,7 @@ export class RuntimeProxy {
   private handleConnect(
     session: Session,
     extensionId: string,
-    senderFrame: WebFrameMain | undefined,
+    caller: CallerFrames,
     body: Record<string, unknown>,
     headers: Record<string, string>,
   ) {
@@ -1004,7 +1022,7 @@ export class RuntimeProxy {
 
     const name = typeof request.name === "string" ? request.name : undefined;
 
-    const sender = this.reconstructSender(session, extensionId, report, senderFrame);
+    const sender = this.reconstructSender(session, extensionId, report, caller);
 
     this.enqueueJob(
       this.createJob(session, extensionId, "connect", { portId: request.portId, name, sender }),
@@ -1906,13 +1924,14 @@ export class RuntimeProxy {
     session: Session,
     extensionId: string,
     report: { url: string; isTopFrame: boolean },
-    senderFrame: WebFrameMain | undefined,
+    { senderFrame, navigatedSenderFrame }: CallerFrames,
   ) {
     return reconstructSender({
       session,
       extensionId,
       report,
       senderFrame,
+      navigatedSenderFrame,
       getWebContentsFromFrame: this.getWebContentsFromFrame,
     });
   }

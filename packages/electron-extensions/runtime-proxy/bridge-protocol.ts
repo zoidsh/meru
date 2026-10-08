@@ -300,10 +300,11 @@ export type RuntimeProxyTab = {
  * The `MessageSender` a relayed message hands the worker's listeners. Only `id`
  * is always there: everything else is held back unless the frame Chromium
  * recorded as the request's caller backs the report, so a report the caller's
- * own frame does not back — the page navigated away while the message was in
- * flight, or the report was never true — arrives carrying nothing but the
- * extension's own id. `tab` and `frameId` are missing on top of that when the
- * message came from an extension page, which is no tab.
+ * own frame does not back arrives carrying nothing but the extension's own id.
+ * A page that navigated away while the message was in flight keeps its `tab`
+ * and `frameId`, which are still true of it, and loses the rest. `tab` and
+ * `frameId` are missing on top of that when the message came from an
+ * extension page, which is no tab.
  */
 export type RuntimeProxySender = {
   id: string;
@@ -312,11 +313,12 @@ export type RuntimeProxySender = {
   frameId?: number;
   tab?: RuntimeProxyTab;
   /**
-   * Always `"active"`: the frame is the one Chromium recorded as the request's
-   * caller and the sender is built while it is alive, so it is never a
-   * prerendered or back-forward-cached document.
+   * `"active"` for the frame Chromium recorded as the request's caller, built
+   * while it is alive, so never a prerendered or back-forward-cached document.
+   * `"pending_deletion"` for a page that navigated away since it sent the
+   * message, which is what Chrome says of a document that is unloading.
    */
-  documentLifecycle?: "active";
+  documentLifecycle?: "active" | "pending_deletion";
 };
 
 /**
