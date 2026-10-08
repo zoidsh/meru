@@ -36,17 +36,23 @@ End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dis
 
 - `main` is releasable at every commit, and stable releases are cut from it. `beta` is `main` plus the features not yet proven, and Beta releases are cut from it. The `release` skill holds the version rules for both.
 - A feature pull request targets `beta` and lands squashed, its changelog line in the same commit. A fix to something already on `main` targets `main` and reaches `beta` at the next rebase.
-- No branch ever gets a merge commit. `beta` is kept current by rebasing it onto `main` and force-pushing, from a detached checkout so no worktree has to give the branch up. The sequence editor drops the beta version commits, which only bump `package.json` and would conflict with every stable's:
+- No branch ever gets a merge commit. `beta` is kept current by rebasing it onto `main` and force-pushing. Run it from the root of a worktree of its own, detached, never in the main checkout, whose `HEAD` other sessions share. `scripts/beta-rebase.ts` is the sequence editor. It drops beta version commits, which only bump `package.json` and would conflict with every stable's, and every commit whose subject landed on `main` since `beta` was last based on it, which is how promoted commits leave. Its `check` refuses a rebased `beta` that still holds a commit whose subject is on `main`; stop there and find out why rather than pushing:
 
   ```sh
   git fetch origin && git checkout --detach origin/beta
-  GIT_SEQUENCE_EDITOR="sed -i.bak -E '/^pick [0-9a-f]+ (# )?[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$/d'" git rebase -i --empty=drop origin/main
+  GIT_SEQUENCE_EDITOR="bun $PWD/scripts/beta-rebase.ts todo" git rebase -i --empty=drop origin/main
+  bun scripts/beta-rebase.ts check
   git push --force-with-lease=beta origin HEAD:beta && gh workflow run ci.yml --ref beta
   ```
 
-  A `CHANGELOG.md` conflict resolves to `main`'s file plus the lines that one commit adds. Anything more brings back lines a stable already released. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
+  A `CHANGELOG.md` conflict resolves to the file as it stands at that point in the rebase, `HEAD`, plus the lines this one commit adds. Taking `main`'s file instead would lose the lines of features already replayed in the same rebase. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
 
-- A feature that has proven itself on Beta is promoted to `main`. Its commits have to be the oldest on `beta`, so reorder them there first if they aren't. A pull request into `main` from a branch at the newest of them carries them across, and it lands with **Rebase and merge**, never squash, so each commit keeps its patch and the next rebase of `beta`, run straight after, drops them as already upstream. Beta version commits never reach `main`.
+- A feature that has proven itself on Beta is promoted to `main`.
+  - Rebase `beta` just before, so its commits sit on `main`'s tip, and reorder them to be the oldest on `beta` if they aren't.
+  - Open a pull request into `main` from a branch at the newest of them, and keep the commits' subjects as they are.
+  - It merges only at `main`'s tip: `gh pr view <n> --json mergeStateStatus` must not read `BEHIND`. When `main` has moved, or the pull request conflicts, rebase `beta` onto `main` again and push the promotion branch at the rebased commits, or reopen the pull request from them. Never use GitHub's **Update branch**, which makes a merge commit, and never fix the pull request branch alone, which leaves `beta` with a different patch for the same commit.
+  - It lands with **Rebase and merge**, never squash, so each commit keeps its subject and its patch. Rebase `beta` straight after; the sequence editor drops the promoted commits.
+  - Beta version commits never reach `main`.
 
 ## Architecture
 
