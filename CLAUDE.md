@@ -8,18 +8,21 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `mise.toml` pins bun and node, so setup is `mise install` and then `bun install --frozen-lockfile`; CI gets the same versions from `jdx/mise-action`. Lefthook formats and lint-fixes staged files at every commit.
 
-| Task                                    | Command                                                     |
-| --------------------------------------- | ----------------------------------------------------------- |
-| Run the app with rebuild-on-change      | `bun run dev`, flags below                                  |
-| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                         |
-| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                         |
-| Typecheck every package                 | `bun run types`                                             |
-| Unit tests                              | `bun test --isolate`                                        |
-| One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`           |
-| One test by name                        | `bun test --isolate -t "name"`                              |
-| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e` |
-| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`           |
-| Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`    |
+| Task                                    | Command                                                      |
+| --------------------------------------- | ------------------------------------------------------------ |
+| Run the app with rebuild-on-change      | `bun run dev`, flags below                                   |
+| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                          |
+| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                          |
+| Typecheck every package                 | `bun run types`                                              |
+| Unit tests                              | `bun test --isolate`                                         |
+| One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`            |
+| One test by name                        | `bun test --isolate -t "name"`                               |
+| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e`  |
+| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`            |
+| Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`     |
+| Signed arm64 DMG to test locally        | `op run --env-file .env.signing.op -- bun run build:mac:dmg` |
+
+`build:mac:dmg` builds only the arm64 DMG and skips notarisation and the signing timestamp, so it is minutes faster, and the result opens only on a Mac it reached without quarantine, such as by `scp`. Never ship it.
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. A development run is the free version, `op run --env-file .env.trial.op -- bun run dev` has seven days of trial left, and `op run --env-file .env.license.op -- bun run dev` is licensed. Its entitlement follows the environment alone: without `MERU_LICENSE_KEY` the stored key is removed, so a key activated in Settings lasts only until the next start, and without `MERU_DEV_DEVICE_ID` the API is never asked about a trial.
 
