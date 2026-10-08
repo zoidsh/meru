@@ -44,7 +44,7 @@ test("turning on a second password manager asks first, and replacing turns the o
   await expect(replaceBitwarden).toBeVisible();
 
   await expect(replaceBitwarden).toContainText(
-    "Turning on 1Password turns off Bitwarden and removes its data",
+    "Only one password manager can be on at a time. Turning on 1Password turns off Bitwarden in Meru and signs you out of it here. Your passwords stay in your Bitwarden account.",
   );
 
   // Cancel is the default, so the safe answer is the one Return gives
@@ -83,7 +83,7 @@ test("turning on a second password manager asks first, and replacing turns the o
   });
 
   await expect(replaceOnePassword).toContainText(
-    "Turning on Bitwarden turns off 1Password and removes its data",
+    "Only one password manager can be on at a time. Turning on Bitwarden turns off 1Password in Meru and signs you out of it here. Your passwords stay in your 1Password account.",
   );
 
   await replaceOnePassword.getByRole("button", { name: "Replace" }).click();
