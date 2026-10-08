@@ -78,6 +78,13 @@ export type ExtensionBridgeHandler = (request: {
    * frame is gone by the time the request is handled.
    */
   senderFrame: WebFrameMain | undefined;
+  /**
+   * The frame that made the request when it has since navigated to another
+   * document, in place of `senderFrame`. It still names the tab and the frame
+   * the request came from, and nothing about the document that made it: its
+   * URL and origin are the new document's.
+   */
+  navigatedSenderFrame?: WebFrameMain;
   body: Record<string, unknown>;
   /** For the handler's `Response`, so every answer carries the CORS headers. */
   headers: Record<string, string>;
@@ -263,13 +270,18 @@ export class ExtensionBridge {
    * otherwise be handed over as the sender of a message the old document sent.
    * A cross-document navigation swaps the `RenderFrameHost` and so the token; a
    * same-document one — `pushState`, a hash change — keeps both, which is the
-   * case that must still go through.
+   * case that must still go through. A frame that navigated is handed over
+   * apart, as `navigatedSenderFrame`, since its tab and its place in the page
+   * are still the request's.
    */
-  private takeCallerFrame(sessionState: ExtensionBridgeSessionState, request: GlobalRequest) {
+  private takeCallerFrame(
+    sessionState: ExtensionBridgeSessionState,
+    request: GlobalRequest,
+  ): { senderFrame?: WebFrameMain; navigatedSenderFrame?: WebFrameMain } {
     const callerNonce = request.headers.get(EXTENSION_BRIDGE_CALLER_HEADER);
 
     if (callerNonce === null) {
-      return undefined;
+      return {};
     }
 
     const recorded = sessionState.callerFramesByNonce.get(callerNonce);
@@ -277,10 +289,12 @@ export class ExtensionBridge {
     sessionState.callerFramesByNonce.delete(callerNonce);
 
     if (!recorded || recorded.frame.isDestroyed()) {
-      return undefined;
+      return {};
     }
 
-    return recorded.frame.frameToken === recorded.frameToken ? recorded.frame : undefined;
+    return recorded.frame.frameToken === recorded.frameToken
+      ? { senderFrame: recorded.frame }
+      : { navigatedSenderFrame: recorded.frame };
   }
 
   /**
@@ -314,7 +328,7 @@ export class ExtensionBridge {
 
       // Consumed whatever else the request turns out to be, so a nonce that
       // reached a refused request cannot be presented again
-      const senderFrame = this.takeCallerFrame(sessionState, request);
+      const { senderFrame, navigatedSenderFrame } = this.takeCallerFrame(sessionState, request);
 
       const bridgeToken = searchParams.get(EXTENSION_BRIDGE_TOKEN_PARAM);
 
@@ -356,7 +370,14 @@ export class ExtensionBridge {
 
       const body = JSON.parse(bodySource) as Record<string, unknown>;
 
-      return await handler({ session, extensionId, senderFrame, body, headers });
+      return await handler({
+        session,
+        extensionId,
+        senderFrame,
+        navigatedSenderFrame,
+        body,
+        headers,
+      });
     } catch (error) {
       this.logger?.error("Extension bridge request failed", { pathname, error });
 

@@ -13,6 +13,7 @@ import {
   type RuntimeProxyTab,
   type RuntimeProxyWorkerGetTabResult,
   type RuntimeProxyWorkerQueryTabsResult,
+  type RuntimeProxyWorkerUpdateTabResult,
   RUNTIME_PROXY_PATHS,
 } from "./bridge-protocol";
 import { WorkerTabs } from "./worker-tabs";
@@ -130,9 +131,16 @@ type Harness = {
   getWindowId?: (contents: WebContents) => number;
   /** Whether the shimmed session ever adopted the content-script-only role. */
   isShimmed?: boolean;
+  /** Whether the extension may change tabs, which only an opted-in one may. */
+  canUpdateTabs?: boolean;
 };
 
-function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness = {}) {
+function createHarness({
+  isActiveTab,
+  getWindowId,
+  isShimmed = true,
+  canUpdateTabs = true,
+}: Harness = {}) {
   const workerSession = createFakeSession();
 
   const shimSession = createFakeSession();
@@ -171,6 +179,8 @@ function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness =
   /** Which page each fake frame is in, the mapping Electron keeps. */
   const framePages = new Map<WebFrameMain, WebContents>();
 
+  const activatedTabIds: number[] = [];
+
   const workerTabs = new WorkerTabs({
     getWorkerSession: () => workerSession.session,
     isShimmedSession: (session) => isShimmed && session === shimSession.session,
@@ -179,6 +189,10 @@ function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness =
     getWebContentsById: (tabId) => allContents.find((contents) => contents.id === tabId),
     getWebContentsFromFrame: (frame) => framePages.get(frame),
     getWindowId,
+    activateTab: (contents) => {
+      activatedTabIds.push(contents.id);
+    },
+    canUpdateTabs: (extensionId) => canUpdateTabs && extensionId === EXTENSION_ID,
   });
 
   /** A frame of a page, embedded in it unless it is the page's own top frame. */
@@ -222,9 +236,27 @@ function createHarness({ isActiveTab, getWindowId, isShimmed = true }: Harness =
     return (await response.json()) as RuntimeProxyWorkerGetTabResult;
   };
 
+  const requestUpdate = (body: Record<string, unknown>, session = workerSession) =>
+    session.request(
+      RUNTIME_PROXY_PATHS.workerUpdateTab,
+      session === workerSession ? WORKER_TOKEN : SHIM_TOKEN,
+      body,
+    );
+
+  const updateTab = async (body: Record<string, unknown>) => {
+    const response = await requestUpdate(body);
+
+    expect(response.status).toBe(200);
+
+    return (await response.json()) as RuntimeProxyWorkerUpdateTabResult;
+  };
+
   return {
     workerTabs,
     createFrame,
+    activatedTabIds,
+    requestUpdate,
+    updateTab,
     workerSession,
     shimSession,
     shimTab,
@@ -511,5 +543,123 @@ describe("tabs.get from the worker", () => {
     expect(await getTab(404)).toEqual({ status: "noTarget", error: noTabError(404) });
 
     expect(await getTab("7")).toEqual({ status: "noTarget", error: noTabError("7") });
+  });
+});
+
+describe("tabs.update from the worker", () => {
+  test("is refused from any session but the worker's, and for an extension not let change tabs", async () => {
+    const { requestUpdate, shimSession, activatedTabIds } = createHarness();
+
+    const fromShim = await requestUpdate(
+      { tabId: 7, updateProperties: { active: true } },
+      shimSession,
+    );
+
+    expect(fromShim.status).toBe(403);
+
+    const { requestUpdate: requestUnopted } = createHarness({ canUpdateTabs: false });
+
+    const unopted = await requestUnopted({ tabId: 7, updateProperties: { active: true } });
+
+    expect(unopted.status).toBe(403);
+
+    expect(activatedTabIds).toEqual([]);
+  });
+
+  test("activates a shimmed tab that is not in front, and answers it as active", async () => {
+    let frontTabId = 8;
+
+    const { updateTab, activatedTabIds } = createHarness({
+      isActiveTab: (contents) => contents.id === frontTabId,
+    });
+
+    const result = await updateTab({
+      tabId: 7,
+      updateProperties: { active: true, highlighted: true },
+    });
+
+    expect(activatedTabIds).toEqual([7]);
+
+    expect(result).toEqual({
+      status: "tab",
+      tab: expect.objectContaining({ id: 7, url: PAGE_URL }),
+    });
+
+    frontTabId = 7;
+
+    // Already in front, so the window is not raised again
+    await updateTab({ tabId: 7, updateProperties: { active: true } });
+
+    expect(activatedTabIds).toEqual([7]);
+  });
+
+  test("activates nothing for properties that ask for nothing", async () => {
+    const { updateTab, activatedTabIds } = createHarness({ isActiveTab: () => false });
+
+    expect(await updateTab({ tabId: 7, updateProperties: { active: false, muted: true } })).toEqual(
+      {
+        status: "tab",
+        tab: expect.objectContaining({ id: 7, mutedInfo: { muted: false } }),
+      },
+    );
+
+    expect(await updateTab({ tabId: 7, updateProperties: "garbage" })).toEqual({
+      status: "tab",
+      tab: expect.objectContaining({ id: 7 }),
+    });
+
+    expect(activatedTabIds).toEqual([]);
+  });
+
+  test("refuses to navigate a shimmed tab, and activates nothing then either", async () => {
+    const { updateTab, activatedTabIds } = createHarness({ isActiveTab: () => false });
+
+    expect(
+      await updateTab({
+        tabId: 7,
+        updateProperties: { url: "https://example.com/", active: true },
+      }),
+    ).toEqual({ status: "refused", error: "Cannot change the URL of tab with id: 7." });
+
+    expect(activatedTabIds).toEqual([]);
+  });
+
+  test("leaves a tab of the worker's own session to Chromium", async () => {
+    const { updateTab, activatedTabIds } = createHarness({ isActiveTab: () => false });
+
+    expect(await updateTab({ tabId: 9, updateProperties: { url: WORKER_PAGE_URL } })).toEqual({
+      status: "ownSession",
+    });
+
+    expect(activatedTabIds).toEqual([]);
+  });
+
+  test("an un-adopted session's tab, a destroyed one and an unknown id are no tab", async () => {
+    const { updateTab, activatedTabIds } = createHarness({ isActiveTab: () => false });
+
+    for (const tabId of [10, 11, 404, "7"]) {
+      expect(await updateTab({ tabId, updateProperties: { active: true } })).toEqual({
+        status: "noTarget",
+        error: noTabError(tabId),
+      });
+    }
+
+    expect(activatedTabIds).toEqual([]);
+  });
+
+  test("no id is the main window's active tab, as Chrome's current tab", async () => {
+    const { updateTab } = createHarness({ isActiveTab: (contents) => contents.id === 8 });
+
+    expect(await updateTab({ updateProperties: { active: true } })).toEqual({
+      status: "tab",
+      tab: expect.objectContaining({ id: 8, active: true }),
+    });
+
+    const { updateTab: updateWithNothingInFront } = createHarness({ isActiveTab: () => false });
+
+    expect(await updateWithNothingInFront({ updateProperties: { active: true } })).toEqual({
+      status: "noTarget",
+      error: noTabError(undefined),
+    });
   });
 });
