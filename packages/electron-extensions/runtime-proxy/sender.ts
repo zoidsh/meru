@@ -100,6 +100,11 @@ export type ReconstructSenderOptions = {
    * part of the sender the shim has no hand in.
    */
   senderFrame: WebFrameMain | undefined;
+  /**
+   * The caller's frame when it navigated to another document after the
+   * request was stamped, in place of `senderFrame` (`bridge/bridge.ts`).
+   */
+  navigatedSenderFrame?: WebFrameMain;
   getWebContentsFromFrame?: GetWebContentsFromFrame;
 };
 
@@ -157,10 +162,19 @@ export function reconstructSender({
   extensionId,
   report,
   senderFrame,
+  navigatedSenderFrame,
   getWebContentsFromFrame = getElectronWebContentsFromFrame,
 }: ReconstructSenderOptions): RuntimeProxySender {
   if (!senderFrame || senderFrame.isDestroyed()) {
-    return { id: extensionId };
+    return navigatedSenderFrame
+      ? reconstructNavigatedSender({
+          session,
+          extensionId,
+          report,
+          frame: navigatedSenderFrame,
+          getWebContentsFromFrame,
+        })
+      : { id: extensionId };
   }
 
   if (
@@ -199,6 +213,57 @@ export function reconstructSender({
         // The page is speaking, which is the closest a sender has to "in front"
         tab: createTabDetails(contents, { active: true }),
       };
+}
+
+/**
+ * The sender of a message whose frame navigated away while it was on its way:
+ * the tab and the frame it came from, and nothing about the document that sent
+ * it. Bitwarden's content scripts close the inline menu as their page unloads.
+ * Chrome delivers that message with the tab and a `documentLifecycle` of
+ * `pending_deletion`, and Bitwarden logs an error for one that has no tab.
+ *
+ * `url` and `origin` stay out: the frame now shows the next document, and the
+ * shim's report is a claim nothing backs. A listener that takes only the
+ * extension's own pages, which is how 1Password guards its page-only
+ * requests, reads the origin and still refuses the message.
+ *
+ * A top-level extension page is no tab, as in `reconstructSender`, and the
+ * report is the only word on whether the document was one, so a report that
+ * says so delivers the id alone.
+ */
+function reconstructNavigatedSender({
+  session,
+  extensionId,
+  report,
+  frame,
+  getWebContentsFromFrame,
+}: {
+  session: Session;
+  extensionId: string;
+  report: RuntimeProxySenderReport;
+  frame: WebFrameMain;
+  getWebContentsFromFrame: GetWebContentsFromFrame;
+}): RuntimeProxySender {
+  if (
+    frame.isDestroyed() ||
+    (frame.parent === null) !== report.isTopFrame ||
+    (report.isTopFrame && report.url.startsWith(EXTENSION_SCHEME_PREFIX))
+  ) {
+    return { id: extensionId };
+  }
+
+  const contents = getWebContentsFromFrame(frame);
+
+  if (!contents || contents.isDestroyed() || contents.session !== session) {
+    return { id: extensionId };
+  }
+
+  return {
+    id: extensionId,
+    frameId: getExtensionFrameId(frame),
+    tab: createTabDetails(contents, { active: true }),
+    documentLifecycle: "pending_deletion",
+  };
 }
 
 function getOrigin(url: string) {
