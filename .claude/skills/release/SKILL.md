@@ -30,7 +30,7 @@ Check all of these first. If one fails, report it and stop. Never work around it
 
 ### Stable
 
-- On `main` and up to date: `git checkout main && git pull --ff-only`.
+- In a worktree of its own, detached at `origin/main`, for the same reason as the beta path below: never move the shared main checkout. Use the session's own worktree, or enter one, then `git fetch origin && git checkout --detach origin/main`. The version commit is pushed with `git push origin HEAD:main`.
 - The `ci.yml` push run for the current `HEAD` passed: `gh run list --commit "$(git rev-parse HEAD)" --json workflowName,event,status,conclusion,url -q '.[] | select(.workflowName == "ci" and .event == "push")'`. Ask by commit, never `--workflow=ci.yml --branch=main -L 1`, which can answer with a run weeks older than `HEAD`.
   - A `HEAD` with no run yet, or a run still `in_progress`, means waiting. Say which and ask whether to wait for it.
   - Any `conclusion` other than `success` means `main` is broken. Report the run URL and stop.
@@ -83,7 +83,7 @@ Always confirm before editing `package.json`, even when the version is obvious.
 - **Beta:** leave `CHANGELOG.md` alone. On `beta`, `[Unreleased]` holds `main`'s pending lines and every unpromoted feature's, and each feature's line travels to `main` inside its own commit when it's promoted. Emptying it here would conflict at every rebase, and the next rebase drops this commit anyway.
 - Don't reach for `npm version` or `bun pm version`, because they commit and tag on their own terms.
 - Commit with the bare version as the subject, with no prefix and no body: `git commit -m "3.59.0"`, or `git commit -m "3.64.0-beta.1"`. The rebase of `beta` finds its version commits by that subject.
-- Push: `git push` on `main`, `git push origin HEAD:beta` for a beta. Both are fast-forwards; never force-push from this skill.
+- Push: `git push origin HEAD:main` for a stable, `git push origin HEAD:beta` for a beta. Both are fast-forwards; never force-push from this skill.
 
 ## Create the release
 
