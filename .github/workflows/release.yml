@@ -7,7 +7,51 @@ on:
       - released
 
 jobs:
+  # Stable releases are cut on main and betas on the beta branch, and the build
+  # picks the update feed from the prerelease flag alone. A beta edited into a
+  # full release, or a release cut on the wrong branch, would otherwise publish
+  # onto the other channel's feed: `latest*.yml` carrying a `-beta.N` version,
+  # or a stable shipping features main has not taken yet.
+  channel:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          # A failed call must stop the release rather than read as "not on
+          # main", which is the answer that lets a prerelease through.
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...main" --jq .status) || exit 1
+          case "$status" in
+            ahead | identical) on_main=true ;;
+            behind | diverged) on_main=false ;;
+            *)
+              echo "::error::The compare API answered '$status' for $GITHUB_SHA against main."
+              exit 1
+              ;;
+          esac
+          if [ "$PRERELEASE" = true ]; then
+            if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+              echo "::error::A prerelease is tagged vX.Y.Z-beta.N, and $TAG is not."
+              exit 1
+            fi
+            if [ "$on_main" = true ]; then
+              echo "::error::$TAG is on main. A beta is cut on the beta branch."
+              exit 1
+            fi
+          else
+            if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::A stable release is tagged vX.Y.Z, and $TAG is not. A beta is never promoted by editing it into a release."
+              exit 1
+            fi
+            if [ "$on_main" = false ]; then
+              echo "::error::$TAG is not on main. A stable release is cut on main."
+              exit 1
+            fi
+          fi
   ci:
+    needs: channel
     uses: ./.github/workflows/ci.yml
     # Reusable workflows get none of the caller's secrets without this,
     # so the e2e job would run without a license key and fail the release.

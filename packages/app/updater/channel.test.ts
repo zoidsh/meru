@@ -493,4 +493,23 @@ describe("the GitHub provider against the channels Meru resolves", () => {
     expect(check?.isUpdateAvailable).toBe(false);
     expect(check?.updateInfo.version).toBe("3.59.1");
   });
+
+  test("frees a stranded Beta user once a prerelease is published after the stable hotfix", async () => {
+    const v3_60_0_beta_3 = {
+      tag: "v3.60.0-beta.3",
+      prerelease: true,
+      channels: ["beta"],
+      publishedAt: "2026-09-03T00:00:00Z",
+    };
+    const github = await startFakeGitHub([v3_60_0_beta_3, v3_59_1, v3_60_0_beta_1, v3_59_0]);
+    const updater = await createUpdater("3.60.0-beta.1", github.host);
+
+    applyChannel(updater, "beta");
+
+    const check = await updater.checkForUpdates();
+
+    expect(github.requests).toEqual([feedPath, downloadPath("v3.60.0-beta.3", "beta")]);
+    expect(check?.isUpdateAvailable).toBe(true);
+    expect(check?.updateInfo.version).toBe("3.60.0-beta.3");
+  });
 });

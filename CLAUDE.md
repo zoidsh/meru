@@ -32,6 +32,29 @@ Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
+## Branches
+
+- `main` is releasable at every commit, and stable releases are cut from it. `beta` is `main` plus the features not yet proven, and Beta releases are cut from it. The `release` skill holds the version rules for both.
+- A feature pull request targets `beta` and lands squashed, its changelog line in the same commit. A fix to something already on `main` targets `main` and reaches `beta` at the next rebase.
+- No branch ever gets a merge commit. `beta` is kept current by rebasing it onto `main` and force-pushing. Run it from the root of a worktree of its own, detached, never in the main checkout, whose `HEAD` other sessions share. `scripts/beta-rebase.ts` is the sequence editor. It drops beta version commits, which only bump `package.json` and would conflict with every stable's, and every commit whose subject landed on `main` since `beta` was last based on it, which is how promoted commits leave. Its `check` refuses a rebased `beta` that still holds a commit whose subject is on `main`; stop there and find out why rather than pushing:
+
+  ```sh
+  git fetch origin && git checkout --detach origin/beta
+  GIT_SEQUENCE_EDITOR="bun $PWD/scripts/beta-rebase.ts todo" git rebase -i --empty=drop origin/main
+  bun scripts/beta-rebase.ts check
+  git push --force-with-lease=beta origin HEAD:beta && gh workflow run ci.yml --ref beta
+  ```
+
+  A `CHANGELOG.md` conflict resolves to the file as it stands at that point in the rebase, `HEAD`, plus the lines this one commit adds. Taking `main`'s file instead would lose the lines of features already replayed in the same rebase. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
+
+- A feature that has proven itself on Beta is promoted to `main`.
+  - Rebase `beta` just before, so its commits sit on `main`'s tip. If they aren't the oldest on `beta`, reorder them with a second rebase after the scripted one and its `check`, before the push: `git rebase -i origin/main` with the default editor, moving their `pick` lines to the top.
+  - Open a pull request into `main` from a branch at the newest of them, and keep the commits' subjects as they are.
+  - It merges only at `main`'s tip: `gh pr view <n> --json mergeStateStatus` must not read `BEHIND`. When `main` has moved, or the pull request conflicts, rebase `beta` onto `main` again and push the promotion branch at the rebased commits, or reopen the pull request from them. Never use GitHub's **Update branch**, which makes a merge commit, and never fix the pull request branch alone, which leaves `beta` with a different patch for the same commit.
+  - It lands with **Rebase and merge**, never squash, so each commit keeps its subject and its patch. Rebase `beta` straight after; the sequence editor drops the promoted commits.
+  - Beta version commits never reach `main`.
+  - A promotion reverted on `main` still leaves its subjects there, so the next rebase drops the feature from `beta` too. Bring it back by landing it again as a new pull request into `beta`.
+
 ## Architecture
 
 Bun workspaces monorepo. `scripts/build.ts` bundles the main process, the three preloads and the extension scripts with rolldown and the renderer with Vite, all into `build-js/`. In `bun run dev`, the renderer is a Vite dev server and everything else rebuilds and restarts Electron on change.
@@ -77,7 +100,7 @@ Things that take more than one file to see:
 ## Practices
 
 - Durations come from `ms` in `@meru/shared/ms`, never the `ms` package.
-- A user-visible change adds one line to the `[Unreleased]` section of `CHANGELOG.md`, under `Added`, `Changed` or `Fixed`, written for users in the style of the `release-notes` skill. The line lands in the same commit and pull request as the change, not in a follow-up. Refactors, tests, CI, docs and dependency bumps other than Electron get no line. The file holds only that section: the version commit empties it and the `release-notes` skill moves the lines onto the GitHub Release, so never add a versioned section.
+- A user-visible change adds one line to the `[Unreleased]` section of `CHANGELOG.md`, under `Added`, `Changed` or `Fixed`, written for users in the style of the `release-notes` skill. The line lands in the same commit and pull request as the change, not in a follow-up. Refactors, tests, CI, docs and dependency bumps other than Electron get no line. The file holds only that section: a stable version commit empties it, a beta one leaves it, and the `release-notes` skill moves the lines onto the GitHub Release, so never add a versioned section.
 - Before attaching a listener to a `webContents` or emitter, grep the file for that event on the same target and add the work to the existing handler. Listeners that attach and detach independently stay separate.
 - Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere.
 - Renderer: `packages/ui` components follow shadcn conventions and many are compound, so read the component file and use its sub-components instead of `<div>` wrappers. Merge conditional classes with `cn` from `@meru/ui/lib/utils`. Keyboard keys in copy render through `Kbd`. A config-backed settings field is `ConfigSwitchField` for a boolean key or `ConfigSelectField` for a string-union key; a fixed set of named choices is a string union, not a boolean.
