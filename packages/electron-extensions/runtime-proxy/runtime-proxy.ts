@@ -201,7 +201,7 @@ export type RuntimeProxyOptions = {
    * focus-based answer is the wrong default for it.
    */
   isActiveTab?: (contents: WebContents) => boolean;
-  /** Brings a page to the front, for `tabs.update`; `worker-tabs.ts` says when. */
+  /** Makes a page the one its window shows, for `tabs.update`; `worker-tabs.ts` says when. */
   activateTab?: (contents: WebContents) => void;
   /** Which extensions `tabs.update` is answered for. */
   canUpdateTabs?: (extensionId: string) => boolean;

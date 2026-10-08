@@ -43,10 +43,11 @@ export type CreateSharedExtensionInstanceOptions = {
    */
   isActiveTab?: (contents: WebContents) => boolean;
   /**
-   * Brings a page to the front: Chrome's `tabs.update(tabId, {active: true})`,
-   * which a password manager calls to hand focus back to the page its popout
-   * was opened for. Only the embedder knows what in front means, as for
-   * `isActiveTab`. Without it the update answers and activates nothing.
+   * Makes a page the one its window shows: Chrome's `tabs.update(tabId,
+   * {active: true})`, which a password manager calls to return to the page its
+   * popout was opened for. Like Chrome's, it leaves window focus alone. Only
+   * the embedder knows which page a window shows, as for `isActiveTab`.
+   * Without it the update answers and activates nothing.
    */
   activateTab?: (contents: WebContents) => void;
   /**

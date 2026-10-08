@@ -140,6 +140,33 @@ async function readFrontViewId() {
   });
 }
 
+async function setMainWindowVisible(isVisible: boolean) {
+  await meru.app.evaluate(
+    ({ BrowserWindow }, { isVisible: shouldShow }) => {
+      const mainWindow = BrowserWindow.getAllWindows().find((window) =>
+        window.webContents.getURL().includes("main.html"),
+      );
+
+      if (shouldShow) {
+        mainWindow?.show();
+      } else {
+        mainWindow?.hide();
+      }
+    },
+    { isVisible },
+  );
+}
+
+async function isMainWindowVisible() {
+  return meru.app.evaluate(({ BrowserWindow }) =>
+    Boolean(
+      BrowserWindow.getAllWindows()
+        .find((window) => window.webContents.getURL().includes("main.html"))
+        ?.isVisible(),
+    ),
+  );
+}
+
 async function readViewUrl(webContentsId: number) {
   return meru.app.evaluate(
     ({ webContents }, { webContentsId: contentsId }) =>
@@ -148,7 +175,7 @@ async function readViewUrl(webContentsId: number) {
   );
 }
 
-test("the worker and a page of its session bring an account's tab to the front", async () => {
+test("the worker and a page of its session switch to an account's tab without showing the window", async () => {
   const popupId = await openWorkerPopup();
 
   const firstViewId = (await readAccountViewId("first-account")) as number;
@@ -161,6 +188,10 @@ test("the worker and a page of its session bring an account's tab to the front",
 
   await expect.poll(readFrontViewId).toBe(firstViewId);
 
+  // Hidden the way the tray hides it, which `active` must not undo: Chrome's
+  // `active` switches the tab and leaves window focus alone
+  await setMainWindowVisible(false);
+
   // Bitwarden's own call, in callback form, on a tab its session can't see
   expect(await updateInWorker(popupId, secondViewId, { active: true, highlighted: true })).toEqual({
     type: "tabs-update-reply",
@@ -169,6 +200,10 @@ test("the worker and a page of its session bring an account's tab to the front",
   });
 
   await expect.poll(readFrontViewId).toBe(secondViewId);
+
+  expect(await isMainWindowVisible()).toBe(false);
+
+  await setMainWindowVisible(true);
 
   // And from a page of the worker's session, in promise form
   expect(

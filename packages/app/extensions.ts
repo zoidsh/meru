@@ -44,7 +44,6 @@ import {
   isWindowVisibleOnConnectedDisplay,
 } from "@/lib/window";
 import { licenseKey } from "@/license-key";
-import { main } from "@/main";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
 
@@ -596,12 +595,14 @@ function isActiveTab(contents: WebContents) {
 }
 
 /**
- * Brings a page to the front for an extension's `tabs.update(tabId, {active:
- * true})`, which the loader asks for only when `isActiveTab` says the page is
- * not there yet: its account and its tab within the account are selected and
- * the main window is shown, the way a notification click brings a tab forward.
- * A workspace app in a window of its own has that window focused instead, and
- * any other page, which no account shows as a tab, is left where it is.
+ * Makes a page the one its window shows, for an extension's `tabs.update(tabId,
+ * {active: true})`, which the loader asks for only when `isActiveTab` says it
+ * isn't: its account and its tab within the account are selected. The window
+ * is neither shown nor focused, since Chrome's `active` never touches window
+ * focus. Bitwarden asks for it each time a popout finishes, by which time the
+ * user may be in another app, or have Meru hidden in the tray. A workspace app
+ * in a window of its own has that window focused instead, and a page no
+ * account shows as a tab is left where it is.
  */
 function activateTab(contents: WebContents) {
   const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
@@ -623,8 +624,6 @@ function activateTab(contents: WebContents) {
   account.tabs.activateTab(workspaceApp?.id ?? GMAIL_TAB_ID);
 
   accounts.selectAccount(account.accountId);
-
-  main.show();
 }
 
 /**

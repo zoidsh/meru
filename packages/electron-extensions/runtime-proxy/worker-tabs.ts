@@ -53,9 +53,10 @@ export type WorkerTabsOptions = {
    */
   isActiveTab?: (contents: WebContents) => boolean;
   /**
-   * Brings a page to the front of the window it is in, which is Chrome's
-   * `tabs.update(tabId, {active: true})` and, like `isActiveTab`, only the
-   * embedder can do. Without it the update answers and activates nothing.
+   * Makes a page the one its window shows, without focusing the window, which
+   * is Chrome's `tabs.update(tabId, {active: true})` and, like `isActiveTab`,
+   * only the embedder can do. Without it the update answers and activates
+   * nothing.
    */
   activateTab?: (contents: WebContents) => void;
   /**
@@ -325,10 +326,9 @@ export class WorkerTabs {
    * `ownSession`, to be updated natively, as `tabs.sendMessage` does. No id is
    * Chrome's current window's active tab, which is the view Meru is showing.
    *
-   * `active: true` brings the tab to the front: its account and its tab within
-   * the account, with the main window raised. Bitwarden asks for this each
-   * time a popout finishes, so a tab already in front is left alone rather
-   * than the window being raised again under whatever the user moved to.
+   * `active: true` makes the tab the one its window shows, through the
+   * embedder, and leaves window focus alone, as Chrome's `active` does. A tab
+   * already in front isn't asked about again.
    *
    * A new `url` is refused. Chrome allows it, but these tabs are Meru's views
    * of an account, which an extension has no business taking somewhere Meru
