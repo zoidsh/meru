@@ -17,6 +17,8 @@ A `beta` argument, or an explicit `-beta.N` version, cuts a Beta release. Anythi
 
 Refuse a request that ties a channel to the other branch, such as "cut a stable off beta" or "a quick beta from main", say why, and stop. `release.yml` refuses the same releases, but only after the tag exists.
 
+The `channel` job has two deliberate limits. It refuses any stable whose commit isn't on `main`, so a hotfix cut from an old tag on a side branch can't be released; such a fix lands on `main` and ships as the next stable. And a re-run builds with the `release.yml` of the release's own commit, so re-running a release older than the job runs no check at all.
+
 The channel is named Beta in the app and versioned `beta` on the wire, so the interface and the version string agree. The reasoning is in the project docs, in `decisions.md` under "The prerelease channel is named Beta" and "Beta releases are cut from a `beta` branch".
 
 ## Preconditions
@@ -38,8 +40,9 @@ Check all of these first. If one fails, report it and stop. Never work around it
 
 ### Beta
 
-- On `beta` and matching `origin/beta`. `beta` is force-pushed after every rebase, so `git pull --ff-only` fails on a stale copy. Run `git fetch origin && git checkout beta`, check `git log --oneline origin/beta..beta` is empty so nothing local is lost, then `git reset --hard origin/beta`.
+- In a worktree of its own, detached at `origin/beta`. Never check `beta` out in the main checkout, which other sessions share: moving its `HEAD` moves theirs. Use the session's own worktree, or enter one, then `git fetch origin && git checkout --detach origin/beta`. Detached, because `beta` is force-pushed after every rebase, so a local branch goes stale and `git pull --ff-only` fails on it; the version commit is pushed with `git push origin HEAD:beta` below.
 - `beta` contains all of `main`: `git merge-base --is-ancestor origin/main HEAD`. If it fails, `main` has commits `beta` lacks, and a beta cut now would ship without them. Stop and say `beta` needs rebasing first. The rebase follows `CLAUDE.md` and ends in a force-push, so it is a separate step the user approves, never part of this skill. After it, start again from the top.
+- No promoted commit is left on `beta`: `bun scripts/beta-rebase.ts check` passes. A failure means a rebase kept a commit `main` already has, which can carry released changelog lines back into the beta. Stop; `beta` needs the rebase from `CLAUDE.md` again.
 - A `ci.yml` run for the current `HEAD` passed. Nothing pushes CI on `beta`, so the run is a dispatched one: `gh run list --commit "$(git rev-parse HEAD)" --json workflowName,event,status,conclusion,url -q '.[] | select(.workflowName == "ci" and .event == "workflow_dispatch")'`.
   - No run yet: start one with `gh workflow run ci.yml --ref beta`, then ask whether to wait for it. It runs at whatever `beta` points to when it starts, so query by commit again rather than trusting the newest run.
   - A run still `in_progress` means waiting. Any `conclusion` other than `success` means `beta` is broken; report the run URL and stop.
@@ -80,7 +83,7 @@ Always confirm before editing `package.json`, even when the version is obvious.
 - **Beta:** leave `CHANGELOG.md` alone. On `beta`, `[Unreleased]` holds `main`'s pending lines and every unpromoted feature's, and each feature's line travels to `main` inside its own commit when it's promoted. Emptying it here would conflict at every rebase, and the next rebase drops this commit anyway.
 - Don't reach for `npm version` or `bun pm version`, because they commit and tag on their own terms.
 - Commit with the bare version as the subject, with no prefix and no body: `git commit -m "3.59.0"`, or `git commit -m "3.64.0-beta.1"`. The rebase of `beta` finds its version commits by that subject.
-- `git push`. On `beta` too this is a fast-forward; never force-push from this skill.
+- Push: `git push` on `main`, `git push origin HEAD:beta` for a beta. Both are fast-forwards; never force-push from this skill.
 
 ## Create the release
 
