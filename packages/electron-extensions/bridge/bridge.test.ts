@@ -338,8 +338,12 @@ describe("ExtensionBridge", () => {
 
     let handledSenderFrame: WebFrameMain | undefined;
 
-    bridge.handle("/echo", ({ senderFrame, headers }) => {
+    let handledNavigatedSenderFrame: WebFrameMain | undefined;
+
+    bridge.handle("/echo", ({ senderFrame, navigatedSenderFrame, headers }) => {
       handledSenderFrame = senderFrame;
+
+      handledNavigatedSenderFrame = navigatedSenderFrame;
 
       return new Response(null, { status: 204, headers });
     });
@@ -356,6 +360,9 @@ describe("ExtensionBridge", () => {
     await sendWithHeaders("/echo", "{}", stampedHeaders, BRIDGE_TOKEN);
 
     expect(handledSenderFrame).toBeUndefined();
+
+    // Still where the request came from, handed over apart from a sender frame
+    expect(handledNavigatedSenderFrame).toBe(frame);
   });
 
   test("a same-document navigation keeps its frame, since the document is the same", async () => {
