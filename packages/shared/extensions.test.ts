@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
+  BITWARDEN_EXTENSION_ID,
   curatedExtensions,
+  getConflictingExtensionIds,
+  getSkippedPasswordManagerIds,
   hostnameToMatchPattern,
   normalizeExtensionSiteHostname,
+  ONEPASSWORD_EXTENSION_ID,
 } from "./extensions";
 
 /**
@@ -197,5 +201,42 @@ describe("normalizeExtensionSiteHostname", () => {
     expect(normalizeExtensionSiteHostname("sso..okta.com")).toBeUndefined();
     expect(normalizeExtensionSiteHostname(".okta.com")).toBeUndefined();
     expect(normalizeExtensionSiteHostname("okta.com.")).toBeUndefined();
+  });
+});
+
+describe("getConflictingExtensionIds", () => {
+  test("names the other installed password manager", () => {
+    expect(
+      getConflictingExtensionIds(ONEPASSWORD_EXTENSION_ID, [
+        BITWARDEN_EXTENSION_ID,
+        ONEPASSWORD_EXTENSION_ID,
+      ]),
+    ).toEqual([BITWARDEN_EXTENSION_ID]);
+  });
+
+  test("names nothing when no other password manager is installed", () => {
+    expect(getConflictingExtensionIds(BITWARDEN_EXTENSION_ID, [BITWARDEN_EXTENSION_ID])).toEqual(
+      [],
+    );
+  });
+
+  test("ignores ids outside the catalog", () => {
+    expect(getConflictingExtensionIds("unknown", [BITWARDEN_EXTENSION_ID])).toEqual([]);
+
+    expect(getConflictingExtensionIds(BITWARDEN_EXTENSION_ID, ["unknown"])).toEqual([]);
+  });
+});
+
+describe("getSkippedPasswordManagerIds", () => {
+  test("keeps the first in catalog order, whatever order the config lists them in", () => {
+    expect(
+      getSkippedPasswordManagerIds([BITWARDEN_EXTENSION_ID, ONEPASSWORD_EXTENSION_ID]),
+    ).toEqual([BITWARDEN_EXTENSION_ID]);
+  });
+
+  test("skips nothing with one password manager", () => {
+    expect(getSkippedPasswordManagerIds([BITWARDEN_EXTENSION_ID])).toEqual([]);
+
+    expect(getSkippedPasswordManagerIds([])).toEqual([]);
   });
 });
