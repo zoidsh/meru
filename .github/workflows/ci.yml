@@ -89,5 +89,5 @@ jobs:
           # The trace opens in the trace viewer and is the thing worth having;
           # the report is the readable index into it.
           path: |
-            test-results/e2e/
-            playwright-report/e2e/
+            test-results/
+            playwright-report/

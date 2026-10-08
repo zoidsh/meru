@@ -56,19 +56,8 @@ const DIAGNOSTICS_TIMEOUT = 10_000;
  * exactly as the app under test was — the user data directory above all, since
  * it is what the single instance lock is scoped to.
  */
-export function launchArguments(userDataDir: string, { profile }: UseAppOptions) {
+export function launchArguments(userDataDir: string) {
   const args = [`--user-data-dir=${userDataDir}`];
-
-  /*
-   * Only for the performance tests, and never for the rest, because it is a
-   * departure from the app as it ships. It is what lets a sample collect
-   * garbage in the main process before reading its heap; without it a figure
-   * records when the collector last happened to run, which measured here is a
-   * larger difference than most regressions worth catching.
-   */
-  if (profile) {
-    args.push("--js-flags=--expose-gc");
-  }
 
   // chrome-sandbox ships without its setuid bit outside an installed package,
   // so an unpacked Linux build cannot use the sandbox. The packaged apps on the
@@ -119,13 +108,6 @@ async function findRendererWindow(app: ElectronApplication) {
 
 export type UseAppOptions = {
   /**
-   * Launches the app so that its memory can be measured, which today means
-   * exposing the main process garbage collector. Set by the performance tests;
-   * leave it alone everywhere else, so that what the end-to-end suite exercises
-   * stays the app as it ships.
-   */
-  profile?: boolean;
-  /**
    * Extra environment for the launched app, on top of the runner's own rather
    * than in place of it — the launch needs DISPLAY and friends either way.
    * What the extension tests use to set the fixture and shared-instance flags.
@@ -145,8 +127,6 @@ type LaunchedApp = {
   /** Unset until the app has shown its window, which it may never do. */
   renderer: Page | undefined;
   userDataDir: string;
-  /** False for a profiled run, which is launched with no trace to stop. */
-  isTraced: boolean;
 };
 
 /** Resolves true when the work finishes in time, false when it runs over. */
@@ -324,7 +304,7 @@ async function launchOnUserDataDir(
   // branch. Running the app the way it ships is the point.
   const app = await _electron.launch({
     executablePath: EXECUTABLE_PATH,
-    args: launchArguments(userDataDir, options),
+    args: launchArguments(userDataDir),
     cwd: process.cwd(),
     env: options.env ? { ...(process.env as Record<string, string>), ...options.env } : undefined,
   });
@@ -332,26 +312,10 @@ async function launchOnUserDataDir(
   /*
    * Started by hand rather than through the `trace` option, which only covers
    * contexts the runner creates itself, and this one is launched here.
-   *
-   * Never for a profiled run, because a trace instruments the page it records.
-   * With snapshots on, a sample of Meru's own window reads 173 nodes, 3
-   * listeners and about 112 KB of JavaScript heap that are Playwright's rather
-   * than the app's — none of them in the document, which walks to the same 75
-   * nodes traced or not — and the screencast keeps the app busy enough to add
-   * a quarter to its CPU to idle and roughly double how long it takes to
-   * settle. All of that lands in the report as the app's own cost. It is also
-   * what put `main.html` in two DOM states on hosted Linux: the samples
-   * reading 78 nodes are the ones the snapshotter never reached, and the app
-   * rendered the same DOM in both. A performance test that fails still has its
-   * report, its stdout and its screenshot.
    */
-  const isTraced = !options.profile;
+  await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
 
-  if (isTraced) {
-    await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
-  }
-
-  return { app, renderer: undefined, userDataDir, isTraced };
+  return { app, renderer: undefined, userDataDir };
 }
 
 async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestInfo) {
@@ -532,21 +496,19 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       await collectDiagnostics(current(), testInfo);
     }
 
-    const { app, userDataDir, isTraced } = current();
+    const { app, userDataDir } = current();
 
     try {
-      if (isTraced) {
-        // Written only when the test failed; a passing run has nothing worth
-        // uploading.
-        if (hasFailed) {
-          const tracePath = testInfo.outputPath("trace.zip");
+      // Written only when the test failed; a passing run has nothing worth
+      // uploading.
+      if (hasFailed) {
+        const tracePath = testInfo.outputPath("trace.zip");
 
-          await app.context().tracing.stop({ path: tracePath });
+        await app.context().tracing.stop({ path: tracePath });
 
-          await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
-        } else {
-          await app.context().tracing.stop();
-        }
+        await testInfo.attach("trace", { path: tracePath, contentType: "application/zip" });
+      } else {
+        await app.context().tracing.stop();
       }
     } finally {
       // Whatever the trace did. A test fails because the app is in a bad way,
@@ -587,12 +549,10 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       // The trace of the launch that is going away is dropped rather than kept
       // beside the next one's: `afterEach` writes one trace, and the app a
       // failure is read off is the one still running
-      if (previous.isTraced) {
-        await previous.app
-          .context()
-          .tracing.stop()
-          .catch(() => undefined);
-      }
+      await previous.app
+        .context()
+        .tracing.stop()
+        .catch(() => undefined);
 
       await closeApp(previous.app);
 

@@ -37,21 +37,6 @@ async function run(command: string[], env: Record<string, string | undefined> = 
   return await exited;
 }
 
-const PROJECT_FLAG = "--project=";
-
-/**
- * Which project this run is for, so that its report lands in a folder of its
- * own.
- *
- * Each project is a separate `playwright test` run, and a run empties the
- * report folder before writing to it. Sharing one meant whichever ran second
- * replaced the first's report and the traces it indexes — including, on CI, the
- * trace from an end-to-end attempt that failed before a retry passed, which is
- * the run worth having. The output directories are separated in the config for
- * the same reason.
- */
-const project = Bun.argv.slice(2).find((argument) => argument.startsWith(PROJECT_FLAG));
-
 // Skipped when MERU_EXECUTABLE names an app already built, so that a rerun
 // against the same build costs nothing, and when MERU_SKIP_BUILD says one is
 // already in dist. The second exists because the tests resolve that path per
@@ -71,11 +56,4 @@ if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
 }
 
 // Arguments carry through, so `bun run test:e2e --ui` and friends still work.
-process.exit(
-  await run(
-    ["bunx", "playwright", "test", ...Bun.argv.slice(2)],
-    project
-      ? { MERU_REPORT_DIR: `playwright-report/${project.slice(PROJECT_FLAG.length)}` }
-      : undefined,
-  ),
-);
+process.exit(await run(["bunx", "playwright", "test", ...Bun.argv.slice(2)]));
