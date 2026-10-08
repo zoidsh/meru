@@ -601,17 +601,11 @@ function isActiveTab(contents: WebContents) {
  * is neither shown nor focused, since Chrome's `active` never touches window
  * focus. Bitwarden asks for it each time a popout finishes, by which time the
  * user may be in another app, or have Meru hidden in the tray. A workspace app
- * in a window of its own has that window focused instead, and a page no
- * account shows as a tab is left where it is.
+ * in a window of its own never gets here, since `isActiveTab` answers true for
+ * it, and a page no account shows as a tab is left where it is.
  */
 function activateTab(contents: WebContents) {
   const workspaceApp = WorkspaceApp.tryFromViewWebContents(contents);
-
-  if (workspaceApp?.isWindowed) {
-    workspaceApp.focusWindow();
-
-    return;
-  }
 
   const account = workspaceApp
     ? accounts.instances.get(workspaceApp.accountId)
