@@ -118,6 +118,7 @@ export const RUNTIME_PROXY_PATHS = {
   workerBroadcast: "/runtime-proxy/worker-broadcast",
   workerQueryTabs: "/runtime-proxy/worker-query-tabs",
   workerGetTab: "/runtime-proxy/worker-get-tab",
+  workerUpdateTab: "/runtime-proxy/worker-update-tab",
   /** Any extension frame, for the tab it is embedded in. */
   currentTab: "/runtime-proxy/current-tab",
 } as const;
@@ -299,10 +300,11 @@ export type RuntimeProxyTab = {
  * The `MessageSender` a relayed message hands the worker's listeners. Only `id`
  * is always there: everything else is held back unless the frame Chromium
  * recorded as the request's caller backs the report, so a report the caller's
- * own frame does not back — the page navigated away while the message was in
- * flight, or the report was never true — arrives carrying nothing but the
- * extension's own id. `tab` and `frameId` are missing on top of that when the
- * message came from an extension page, which is no tab.
+ * own frame does not back arrives carrying nothing but the extension's own id.
+ * A page that navigated away while the message was in flight keeps its `tab`
+ * and `frameId`, which are still true of it, and loses the rest. `tab` and
+ * `frameId` are missing on top of that when the message came from an
+ * extension page, which is no tab.
  */
 export type RuntimeProxySender = {
   id: string;
@@ -311,11 +313,12 @@ export type RuntimeProxySender = {
   frameId?: number;
   tab?: RuntimeProxyTab;
   /**
-   * Always `"active"`: the frame is the one Chromium recorded as the request's
-   * caller and the sender is built while it is alive, so it is never a
-   * prerendered or back-forward-cached document.
+   * `"active"` for the frame Chromium recorded as the request's caller, built
+   * while it is alive, so never a prerendered or back-forward-cached document.
+   * `"pending_deletion"` for a page that navigated away since it sent the
+   * message, which is what Chrome says of a document that is unloading.
    */
-  documentLifecycle?: "active";
+  documentLifecycle?: "active" | "pending_deletion";
 };
 
 /**
@@ -526,6 +529,25 @@ export type RuntimeProxyWorkerGetTabRequest = {
 export type RuntimeProxyWorkerGetTabResult =
   | { status: "tab"; tab: RuntimeProxyTab }
   | { status: "noTarget"; error: string };
+
+/**
+ * `chrome.tabs.update`'s arguments, with `tabId` left out when the caller left
+ * it out, which Chrome reads as the current window's active tab.
+ */
+export type RuntimeProxyWorkerUpdateTabRequest = {
+  tabId?: unknown;
+  updateProperties: unknown;
+};
+
+/**
+ * The tab as updated; `ownSession` for a tab of the worker's own session, which
+ * Chromium updates itself; or an error Chrome would give, which includes a tab
+ * this app is not showing and a change to a tab's URL, which Meru refuses.
+ */
+export type RuntimeProxyWorkerUpdateTabResult =
+  | { status: "tab"; tab: RuntimeProxyTab }
+  | { status: "ownSession" }
+  | { status: "noTarget" | "refused"; error: string };
 
 /**
  * The tab an extension frame embedded in a page is in, for `tabs.getCurrent`,
