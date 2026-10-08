@@ -52,6 +52,7 @@ import {
   uninstallCuratedExtension,
 } from "./extensions";
 import { Gmail, GMAIL_USER_STYLES_PATH } from "./gmail";
+import { ExtensionInstallError } from "./lib/extension-swap";
 import { hibernatesTabWhenIdle } from "./lib/hibernation";
 import { log } from "./lib/log";
 import {
@@ -1082,6 +1083,10 @@ class Ipc {
         return {};
       } catch (error) {
         log.error("Failed to install extension", { extensionId, error: serializeError(error) });
+
+        if (error instanceof ExtensionInstallError) {
+          return { error: error.message };
+        }
 
         return {
           error: `Couldn't install the extension: ${error instanceof Error ? error.message : String(error)}`,
