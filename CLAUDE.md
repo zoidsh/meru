@@ -48,11 +48,12 @@ End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dis
   A `CHANGELOG.md` conflict resolves to the file as it stands at that point in the rebase, `HEAD`, plus the lines this one commit adds. Taking `main`'s file instead would lose the lines of features already replayed in the same rebase. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
 
 - A feature that has proven itself on Beta is promoted to `main`.
-  - Rebase `beta` just before, so its commits sit on `main`'s tip, and reorder them to be the oldest on `beta` if they aren't.
+  - Rebase `beta` just before, so its commits sit on `main`'s tip. If they aren't the oldest on `beta`, reorder them with a second rebase after the scripted one and its `check`, before the push: `git rebase -i origin/main` with the default editor, moving their `pick` lines to the top.
   - Open a pull request into `main` from a branch at the newest of them, and keep the commits' subjects as they are.
   - It merges only at `main`'s tip: `gh pr view <n> --json mergeStateStatus` must not read `BEHIND`. When `main` has moved, or the pull request conflicts, rebase `beta` onto `main` again and push the promotion branch at the rebased commits, or reopen the pull request from them. Never use GitHub's **Update branch**, which makes a merge commit, and never fix the pull request branch alone, which leaves `beta` with a different patch for the same commit.
   - It lands with **Rebase and merge**, never squash, so each commit keeps its subject and its patch. Rebase `beta` straight after; the sequence editor drops the promoted commits.
   - Beta version commits never reach `main`.
+  - A promotion reverted on `main` still leaves its subjects there, so the next rebase drops the feature from `beta` too. Bring it back by landing it again as a new pull request into `beta`.
 
 ## Architecture
 
