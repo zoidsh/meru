@@ -11,6 +11,7 @@ import {
   extensionUpdater,
   pruneDerivedExtensionCopies,
   pruneInstalledExtensionVersions,
+  removeUncataloguedExtensions,
   setupExtensionsWorkerSession,
 } from "@/extensions";
 import { ipc } from "@/ipc";
@@ -152,6 +153,8 @@ async function init() {
   blocker.init();
 
   spellchecker.init();
+
+  await removeUncataloguedExtensions();
 
   // Both prunes delete what the sessions are about to read from, so they run
   // before the first session derives its copies rather than alongside

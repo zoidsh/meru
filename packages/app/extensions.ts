@@ -6,6 +6,7 @@ import {
   findExtensionDirs,
   getInstalledExtension,
   installLatestExtension,
+  isExtensionId,
   type LatestExtensionInstall,
   pruneDerivedExtensions,
   pruneExtensionVersions,
@@ -503,6 +504,62 @@ export async function uninstallCuratedExtension(extensionId: string) {
   await extensions.clearGrantedPermissions(extensionId);
 
   log.info("Uninstalled extension", { extensionId });
+}
+
+/**
+ * Removes every opt-in this build's catalog doesn't offer, with its package,
+ * its store in the worker session and its permission grants. Such an id comes from another channel: a
+ * Beta catalog offers extensions stable doesn't, and leaving Beta installs
+ * stable over it. The loader already skips the id, but the opt-in would keep
+ * its package from being pruned and the Update extensions button showing.
+ *
+ * Runs whatever the master switch and the license say, since it is cleanup,
+ * and before the prunes and the worker session load, so nothing holds the
+ * store open. Only the curated install writes `extensions.installed`, so the
+ * development folder and the fixture extension are never in it.
+ *
+ * A malformed id keeps its package and store, because the id becomes a path
+ * segment in those deletes.
+ */
+export async function removeUncataloguedExtensions() {
+  const installedExtensionIds = config.get("extensions.installed");
+
+  const uncataloguedExtensionIds = installedExtensionIds.filter(
+    (extensionId) => !isCuratedExtensionId(extensionId),
+  );
+
+  if (uncataloguedExtensionIds.length === 0) {
+    return;
+  }
+
+  config.set("extensions.installed", installedExtensionIds.filter(isCuratedExtensionId));
+
+  const additionalSites = { ...config.get("extensions.additionalSites") };
+
+  for (const extensionId of uncataloguedExtensionIds) {
+    delete additionalSites[extensionId];
+  }
+
+  config.set("extensions.additionalSites", additionalSites);
+
+  for (const extensionId of uncataloguedExtensionIds) {
+    try {
+      if (isExtensionId(extensionId)) {
+        await uninstallExtension({ installDir: INSTALL_DIR, extensionId });
+
+        await extensions.clearExtensionData(session.defaultSession, extensionId);
+      }
+
+      await extensions.clearGrantedPermissions(extensionId);
+
+      log.info("Removed extension this version doesn't offer", { extensionId });
+    } catch (error) {
+      log.error("Failed to remove extension this version doesn't offer", {
+        extensionId,
+        error: serializeError(error),
+      });
+    }
+  }
 }
 
 /**
