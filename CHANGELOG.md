@@ -6,4 +6,4 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Changed
 
-- **Meru Pro:** Switching from the Beta channel back to stable removes any extension that only Beta offers, along with its data. If you return to Beta, install it again and sign in to it again
+- **Meru Pro:** Switching from the Beta channel back to stable removes any extension that only Beta offers, along with its data. If you return to Beta, you'll need to install it and sign in to it again.
