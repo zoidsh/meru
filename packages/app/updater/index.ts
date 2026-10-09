@@ -41,22 +41,26 @@ class AppUpdater {
       this.checkForUpdates();
     });
 
-    if (config.get("updates.showNotifications")) {
-      autoUpdater.on("update-downloaded", (updateInfo) => {
-        // electron-updater re-emits this on every check once a version is downloaded.
-        if (!shouldAnnounceUpdate(this.lastAnnouncedVersion, updateInfo.version)) {
-          return;
-        }
+    // The setting is read here rather than around the listener, so that turning
+    // it on or off takes effect without a restart.
+    autoUpdater.on("update-downloaded", (updateInfo) => {
+      if (!config.get("updates.showNotifications")) {
+        return;
+      }
 
-        ipc.renderer.send(
-          main.window.webContents,
-          "appUpdater.updateAvailable",
-          `v${updateInfo.version}`,
-        );
+      // electron-updater re-emits this on every check once a version is downloaded.
+      if (!shouldAnnounceUpdate(this.lastAnnouncedVersion, updateInfo.version)) {
+        return;
+      }
 
-        this.lastAnnouncedVersion = updateInfo.version;
-      });
-    }
+      ipc.renderer.send(
+        main.window.webContents,
+        "appUpdater.updateAvailable",
+        `v${updateInfo.version}`,
+      );
+
+      this.lastAnnouncedVersion = updateInfo.version;
+    });
 
     const systemVersion = process.getSystemVersion();
 
