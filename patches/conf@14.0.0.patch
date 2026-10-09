@@ -46,3 +46,28 @@ index 921db5c7ae623eba8029b268928567b19aff69d7..d696775d9aff4c67c67580301f76fde6
      /**
      Watches the whole config object, calling `callback` on any changes.
  
+diff --git a/dist/source/index.js b/dist/source/index.js
+index 6c13a46b7a5fb2d7e2b22fc9672188535588ff85..725441cc917f16cf1ae96f8b010f76f1b97e7726 100644
+--- a/dist/source/index.js
++++ b/dist/source/index.js
+@@ -93,14 +93,18 @@ export default class Conf {
+         this.#encryptionKey = options.encryptionKey;
+         const fileExtension = options.fileExtension ? `.${options.fileExtension}` : '';
+         this.path = path.resolve(options.cwd, `${options.configName ?? 'config'}${fileExtension}`);
+-        const fileStore = this.store;
+-        const store = Object.assign(createPlainObject(), options.defaults, fileStore);
+         if (options.migrations) {
+             if (!options.projectVersion) {
+                 throw new Error('Please specify the `projectVersion` option.');
+             }
+             this._migrate(options.migrations, options.projectVersion, options.beforeEachMigration);
+         }
++        // Patched: the file is read back after the migrations rather than
++        // before them, so that merging the defaults in cannot write the
++        // pre-migration state over what they wrote. Fixed upstream in conf 15,
++        // which seeds the defaults before the ladder instead.
++        const fileStore = this.store;
++        const store = Object.assign(createPlainObject(), options.defaults, fileStore);
+         // We defer validation until after migrations are applied so that the store can be updated to the current schema.
+         this._validate(store);
+         try {
