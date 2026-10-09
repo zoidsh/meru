@@ -33,7 +33,10 @@ import { app, session, type WebContents, webContents } from "electron";
 import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { installExtensionReplacingConflicts } from "@/lib/extension-swap";
+import {
+  installExtensionReplacingConflicts,
+  normalizeInstalledPasswordManagers,
+} from "@/lib/extension-swap";
 import type { ExtensionWindowOutcome } from "@/lib/extension-window";
 import { loadUrl } from "@/lib/load-url";
 import { log } from "@/lib/log";
@@ -204,8 +207,9 @@ const loggedSkippedExtensionIds = new Set<string>();
 
 /**
  * The curated extensions the user opted into, and Pro is what they run on. A
- * second password manager is left out, which only a config edited by hand can
- * list, since installing one uninstalls the other.
+ * second password manager is left out, the same one the launch's
+ * `uninstallReplacedPasswordManagers` uninstalls, so the two agree when that
+ * uninstall fails.
  */
 function getOptedInExtensionIds() {
   if (!config.get("extensions.enabled") || !licenseKey.isValid) {
@@ -862,6 +866,21 @@ export async function uninstallCuratedExtension(extensionId: string) {
   await extensions.clearGrantedPermissions(extensionId);
 
   log.info("Uninstalled extension", { extensionId });
+}
+
+/**
+ * A version of Meru without the one-at-a-time rule, sharing this profile, can
+ * have installed a second password manager. Whatever the master switch and the
+ * license say, since this is cleanup rather than loading. After the app is
+ * ready, since the uninstall clears storage in the default session, and before
+ * the prunes and the first load.
+ */
+export async function uninstallReplacedPasswordManagers() {
+  await normalizeInstalledPasswordManagers({
+    getInstalledExtensionIds: () => config.get("extensions.installed"),
+    uninstall: uninstallCuratedExtension,
+    log,
+  });
 }
 
 /**

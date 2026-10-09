@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { BITWARDEN_EXTENSION_ID, ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
-import { ExtensionInstallError, installExtensionReplacingConflicts } from "./extension-swap";
+import {
+  ExtensionInstallError,
+  installExtensionReplacingConflicts,
+  normalizeInstalledPasswordManagers,
+} from "./extension-swap";
 
 function createSteps(
   installedExtensionIds: string[],
@@ -160,5 +164,112 @@ describe("installExtensionReplacingConflicts", () => {
     });
 
     expect(calls).toEqual(["download", `uninstall ${BITWARDEN_EXTENSION_ID}`, "recordOptIn"]);
+  });
+});
+
+function createNormalizationSteps(
+  installedExtensionIds: string[],
+  failingExtensionIds: string[] = [],
+) {
+  let installed = [...installedExtensionIds];
+
+  const uninstalled: string[] = [];
+
+  const logged: { level: "info" | "error"; message: string; details: Record<string, unknown> }[] =
+    [];
+
+  return {
+    uninstalled,
+    logged,
+    getInstalled: () => installed,
+    steps: {
+      getInstalledExtensionIds: () => installed,
+      uninstall: async (extensionId: string) => {
+        if (failingExtensionIds.includes(extensionId)) {
+          throw new Error("Files in use");
+        }
+
+        uninstalled.push(extensionId);
+
+        installed = installed.filter(
+          (installedExtensionId) => installedExtensionId !== extensionId,
+        );
+      },
+      log: {
+        info: (message: string, details: Record<string, unknown>) => {
+          logged.push({ level: "info", message, details });
+        },
+        error: (message: string, details: Record<string, unknown>) => {
+          logged.push({ level: "error", message, details });
+        },
+      },
+    },
+  };
+}
+
+describe("normalizeInstalledPasswordManagers", () => {
+  test("uninstalls the password manager installed first and keeps the later one", async () => {
+    const { uninstalled, logged, getInstalled, steps } = createNormalizationSteps([
+      ONEPASSWORD_EXTENSION_ID,
+      BITWARDEN_EXTENSION_ID,
+    ]);
+
+    await normalizeInstalledPasswordManagers(steps);
+
+    expect(uninstalled).toEqual([ONEPASSWORD_EXTENSION_ID]);
+
+    expect(getInstalled()).toEqual([BITWARDEN_EXTENSION_ID]);
+
+    expect(logged).toEqual([
+      {
+        level: "info",
+        message: "Uninstalled a password manager replaced by a later install",
+        details: { extensionId: ONEPASSWORD_EXTENSION_ID, keptExtensionId: BITWARDEN_EXTENSION_ID },
+      },
+    ]);
+  });
+
+  test("keeps the later one whatever the catalog order", async () => {
+    const { uninstalled, getInstalled, steps } = createNormalizationSteps([
+      BITWARDEN_EXTENSION_ID,
+      ONEPASSWORD_EXTENSION_ID,
+    ]);
+
+    await normalizeInstalledPasswordManagers(steps);
+
+    expect(uninstalled).toEqual([BITWARDEN_EXTENSION_ID]);
+
+    expect(getInstalled()).toEqual([ONEPASSWORD_EXTENSION_ID]);
+  });
+
+  test("uninstalls nothing with one password manager", async () => {
+    const { uninstalled, logged, steps } = createNormalizationSteps([BITWARDEN_EXTENSION_ID]);
+
+    await normalizeInstalledPasswordManagers(steps);
+
+    expect(uninstalled).toEqual([]);
+
+    expect(logged).toEqual([]);
+  });
+
+  test("logs a failed uninstall rather than throwing", async () => {
+    const { logged, getInstalled, steps } = createNormalizationSteps(
+      [ONEPASSWORD_EXTENSION_ID, BITWARDEN_EXTENSION_ID],
+      [ONEPASSWORD_EXTENSION_ID],
+    );
+
+    await normalizeInstalledPasswordManagers(steps);
+
+    expect(getInstalled()).toEqual([ONEPASSWORD_EXTENSION_ID, BITWARDEN_EXTENSION_ID]);
+
+    expect(logged).toEqual([
+      expect.objectContaining({
+        level: "error",
+        details: expect.objectContaining({
+          extensionId: ONEPASSWORD_EXTENSION_ID,
+          keptExtensionId: BITWARDEN_EXTENSION_ID,
+        }),
+      }),
+    ]);
   });
 });
