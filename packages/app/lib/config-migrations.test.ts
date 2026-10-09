@@ -101,20 +101,12 @@ function previousVersion(range: string) {
 
 /**
  * Runs the rung keyed `range`, and nothing else, over `stored`, and returns the
- * store once the ladder has settled.
+ * store the launch it ran on came up with.
  *
- * Two launches, because conf 14 snapshots the config file before the ladder
- * runs and writes `defaults + snapshot` back afterwards. Any release that adds
- * a default key makes the two differ, so the first launch after an upgrade
- * overwrites everything the ladder wrote — `__internal__.migrations.version`
- * with it — and the rung runs again on the next launch, against a file that now
- * holds every default, and only then sticks. The test below pins that; here it
- * is just the number of launches a stored value takes to appear.
+ * One launch, because that is the launch a migration's writes have to be on.
  */
 async function migrate(range: string, stored: Record<string, unknown>) {
   await writeStoredConfig(stored, previousVersion(range));
-
-  launch(targetVersion(range));
 
   const ranRungs: string[] = [];
   const store = launch(targetVersion(range), ranRungs);
@@ -635,6 +627,16 @@ describe("a profile with no config file", () => {
     expect(store.get("workspaceApps.zoomFactors")).toEqual({});
     expect(store.get("accounts")).toHaveLength(1);
   });
+
+  test("leaves the account it starts with exactly as the defaults have it", () => {
+    // The ladder still sees the config file and nothing else, so it does not
+    // run over the defaults. If it did, `">=3.4.0"` would put an `unreadBadge`
+    // back on the account, where `">=3.31.2"` no longer moves it, and every
+    // fresh install would carry a key nothing reads.
+    const store = launch(shippedVersion);
+
+    expect(store.get("accounts")[0]).toEqual(defaults.accounts[0]);
+  });
 });
 
 describe("an account with nothing but an id", () => {
@@ -688,28 +690,49 @@ describe("a stored config with an account the rung's own reads need repairing", 
   }
 });
 
-describe("the launch a migration's writes land on", () => {
-  test("is the second, because conf 14 writes its pre-migration snapshot back", async () => {
-    // conf 14.0.0 snapshots the config file, computes `defaults + snapshot`,
-    // runs the ladder, and then writes that snapshot back if it differs from
-    // the file it read. Neither snapshot reflects the migration, so any release
-    // that adds a default key overwrites everything the ladder wrote — the
-    // migration version with it — and the ladder runs again on the next launch,
-    // against a file that now holds every default, and sticks.
-    //
-    // conf's behavior rather than ours, pinned here so that changing conf shows
-    // up as a failure here rather than in the field.
-    await writeStoredConfig(
-      { "workspaceApps.launcherApps": ["calendar", "notebooklm"] },
-      previousVersion(">=3.60.0"),
-    );
+describe("the first launch after an upgrade", () => {
+  // conf 14.0.0 read the config file before the ladder ran, merged the defaults
+  // into that snapshot, and wrote the result back afterwards. Neither side of
+  // that merge reflected the migrations, so every release that adds a default
+  // key — which is most of them — wrote the pre-migration state over
+  // everything the ladder had done, `__internal__.migrations.version` with it.
+  // The ladder then ran again on the next launch and stuck. The patch in
+  // `patches/conf@14.0.0.patch` reads the file back after the ladder instead.
+  const stored = {
+    "workspaceApps.launcherApps": ["calendar", "notebooklm"],
+    "verificationCodes.autoCopy": false,
+    "verificationCodes.copyMode": "immediately",
+  };
 
-    const first = launch(targetVersion(">=3.60.0"));
+  test("shows what the migration wrote", async () => {
+    await writeStoredConfig(stored, previousVersion(">=3.60.0"));
 
-    expect(first.get("workspaceApps.launcherApps")).toEqual(["calendar", "notebooklm"]);
+    const store = launch(targetVersion(">=3.60.0"));
 
-    const second = launch(targetVersion(">=3.60.0"));
+    expect(store.get("workspaceApps.launcherApps")).toEqual(["calendar", "notebook"]);
+    expect(store.get("verificationCodes.copyMode")).toBe("notificationClick");
+  });
 
-    expect(second.get("workspaceApps.launcherApps")).toEqual(["calendar", "notebook"]);
+  test("keeps what the migration wrote, and runs no rung on the next launch", async () => {
+    await writeStoredConfig(stored, previousVersion(">=3.60.0"));
+
+    launch(targetVersion(">=3.60.0"));
+
+    const ranRungs: string[] = [];
+    const store = launch(targetVersion(">=3.60.0"), ranRungs);
+
+    expect(ranRungs).toEqual([]);
+    expect(store.get("workspaceApps.launcherApps")).toEqual(["calendar", "notebook"]);
+  });
+
+  test("lands the defaults the new version added", async () => {
+    // The defaults still have to reach the file, and on the same launch: a key
+    // the new version added reads as `undefined` everywhere until it does.
+    await writeStoredConfig(stored, previousVersion(">=3.60.0"));
+
+    const store = launch(targetVersion(">=3.60.0"));
+
+    expect(store.get("workspaceApps.hibernation")).toBe("unpinned");
+    expect(store.get("updates.channel")).toBe("stable");
   });
 });
