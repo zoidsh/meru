@@ -149,6 +149,12 @@ export class WorkspaceApp {
     }
   }
 
+  static updateWindowTitles() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.updateWindowTitle();
+    }
+  }
+
   static getAllWindows() {
     return Array.from(WorkspaceApp.instances.values())
       .filter((instance) => instance._window)
@@ -964,15 +970,21 @@ export class WorkspaceApp {
     this.updateWindowTitle();
   };
 
-  private updateWindowTitle() {
+  updateWindowTitle() {
+    if (!this._window) {
+      return;
+    }
+
     if (!this.title) {
       this.window.setTitle(app.name);
 
       return;
     }
 
-    const accountLabelPrefix =
-      accounts.getAccountConfigs().length > 1 ? `[${this.account.config.label}] ` : "";
+    const showsAccountLabel =
+      config.get("workspaceApps.showAccountLabel") && accounts.getAccountConfigs().length > 1;
+
+    const accountLabelPrefix = showsAccountLabel ? `[${this.account.config.label}] ` : "";
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   }

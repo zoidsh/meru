@@ -75,6 +75,10 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
+    config.onDidChange("workspaceApps.showAccountLabel", () => {
+      WorkspaceApp.updateWindowTitles();
+    });
+
     config.onDidChange("workspaceApps.zoomFactors", () => {
       WorkspaceApp.applyPersistedZoomFactors();
 

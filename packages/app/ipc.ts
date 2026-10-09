@@ -120,6 +120,10 @@ class Ipc {
       bookmarks.sendChangedToPopup();
 
       WorkspaceApp.broadcastBookmarkStates();
+
+      // An account's label, and whether there is more than one account to tell
+      // apart, both decide the title every workspace app window carries.
+      WorkspaceApp.updateWindowTitles();
     });
 
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {
