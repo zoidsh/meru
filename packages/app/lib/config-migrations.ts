@@ -145,6 +145,7 @@ export const configMigrations = {
         if (
           // @ts-expect-error: `unreadBadge` is now under 'gmail'
           typeof account.unreadBadge === "boolean" &&
+          account.gmail &&
           typeof account.gmail.unreadBadge === "undefined"
         ) {
           // @ts-expect-error
@@ -185,7 +186,7 @@ export const configMigrations = {
       let accountsMigrated = false;
 
       for (const account of accounts) {
-        if (typeof account.gmail.unifiedInbox !== "boolean") {
+        if (account.gmail && typeof account.gmail.unifiedInbox !== "boolean") {
           account.gmail.unifiedInbox = true;
 
           accountsMigrated = true;
