@@ -1,4 +1,9 @@
-import { getConflictingExtensionIds, getCuratedExtension } from "@meru/shared/extensions";
+import {
+  getConflictingExtensionIds,
+  getCuratedExtension,
+  getSkippedPasswordManagerIds,
+} from "@meru/shared/extensions";
+import { serializeError } from "serialize-error";
 
 /** A failed install, with a message written for the settings page. */
 export class ExtensionInstallError extends Error {}
@@ -90,5 +95,47 @@ export async function installExtensionReplacingConflicts(
       ].join("\n\n"),
       { cause: error },
     );
+  }
+}
+
+export type PasswordManagerNormalizationSteps = {
+  getInstalledExtensionIds: () => string[];
+  uninstall: (extensionId: string) => Promise<void>;
+  log: {
+    info: (message: string, details: Record<string, unknown>) => void;
+    error: (message: string, details: Record<string, unknown>) => void;
+  };
+};
+
+/**
+ * Uninstalls every password manager but the one installed last, which a
+ * version of Meru without the one-at-a-time rule can leave listed beside
+ * another. A failure is logged and the rest go on, since the loader skips the
+ * same ones anyway.
+ */
+export async function normalizeInstalledPasswordManagers(steps: PasswordManagerNormalizationSteps) {
+  const installedExtensionIds = steps.getInstalledExtensionIds();
+
+  const replacedExtensionIds = getSkippedPasswordManagerIds(installedExtensionIds);
+
+  const keptExtensionId = installedExtensionIds
+    .filter((extensionId) => getCuratedExtension(extensionId)?.category === "passwordManager")
+    .at(-1);
+
+  for (const replacedExtensionId of replacedExtensionIds) {
+    try {
+      await steps.uninstall(replacedExtensionId);
+
+      steps.log.info("Uninstalled a password manager replaced by a later install", {
+        extensionId: replacedExtensionId,
+        keptExtensionId,
+      });
+    } catch (error) {
+      steps.log.error("Failed to uninstall a password manager replaced by a later install", {
+        extensionId: replacedExtensionId,
+        keptExtensionId,
+        error: serializeError(error),
+      });
+    }
   }
 }

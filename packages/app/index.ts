@@ -13,6 +13,7 @@ import {
   pruneInstalledExtensionVersions,
   removeUncataloguedExtensions,
   setupExtensionsWorkerSession,
+  uninstallReplacedPasswordManagers,
 } from "@/extensions";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
@@ -155,6 +156,7 @@ async function init() {
   spellchecker.init();
 
   await removeUncataloguedExtensions();
+  await uninstallReplacedPasswordManagers();
 
   // Both prunes delete what the sessions are about to read from, so they run
   // before the first session derives its copies rather than alongside

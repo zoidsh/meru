@@ -228,10 +228,30 @@ describe("getConflictingExtensionIds", () => {
 });
 
 describe("getSkippedPasswordManagerIds", () => {
-  test("keeps the first in catalog order, whatever order the config lists them in", () => {
+  test("keeps the last listed, whatever the catalog order", () => {
     expect(
       getSkippedPasswordManagerIds([BITWARDEN_EXTENSION_ID, ONEPASSWORD_EXTENSION_ID]),
     ).toEqual([BITWARDEN_EXTENSION_ID]);
+
+    expect(
+      getSkippedPasswordManagerIds([ONEPASSWORD_EXTENSION_ID, BITWARDEN_EXTENSION_ID]),
+    ).toEqual([ONEPASSWORD_EXTENSION_ID]);
+  });
+
+  test("ignores ids that aren't password managers", () => {
+    expect(
+      getSkippedPasswordManagerIds([ONEPASSWORD_EXTENSION_ID, BITWARDEN_EXTENSION_ID, "unknown"]),
+    ).toEqual([ONEPASSWORD_EXTENSION_ID]);
+  });
+
+  test("never skips the kept one, even when it is listed twice", () => {
+    expect(
+      getSkippedPasswordManagerIds([
+        BITWARDEN_EXTENSION_ID,
+        ONEPASSWORD_EXTENSION_ID,
+        BITWARDEN_EXTENSION_ID,
+      ]),
+    ).toEqual([ONEPASSWORD_EXTENSION_ID]);
   });
 
   test("skips nothing with one password manager", () => {

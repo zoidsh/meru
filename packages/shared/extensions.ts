@@ -353,19 +353,19 @@ export function getConflictingExtensionIds(extensionId: string, installedExtensi
 }
 
 /**
- * The password managers the loader leaves out when a config lists more than
- * one, which nothing Meru ships writes but a hand edit can: every one after the
- * first in catalog order.
+ * The password managers to drop when a config lists more than one, which a
+ * version of Meru without the one-at-a-time rule can leave behind: every one
+ * but the last listed. An install appends its id, so the last listed is the
+ * one the user chose most recently.
  */
 export function getSkippedPasswordManagerIds(installedExtensionIds: string[]) {
-  return curatedExtensions
-    .filter(
-      (curatedExtension) =>
-        curatedExtension.category === "passwordManager" &&
-        installedExtensionIds.includes(curatedExtension.id),
-    )
-    .slice(1)
-    .map((curatedExtension) => curatedExtension.id);
+  const passwordManagerIds = installedExtensionIds.filter(
+    (extensionId) => getCuratedExtension(extensionId)?.category === "passwordManager",
+  );
+
+  const keptExtensionId = passwordManagerIds.at(-1);
+
+  return [...new Set(passwordManagerIds)].filter((extensionId) => extensionId !== keptExtensionId);
 }
 
 /** The pattern a site the user added stands for: every path of it over HTTPS. */
