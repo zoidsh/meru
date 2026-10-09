@@ -14,6 +14,7 @@ import {
   filterNewMailIdsByImportance,
   generateGmailLabelColorsCss,
   gmailFeedUrl,
+  gmailSearchHash,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
@@ -1126,7 +1127,7 @@ export class Gmail {
   }
 
   search(query: string) {
-    this.view.webContents.executeJavaScript(`window.location.hash = "#search/${query}"`);
+    this.navigateToHash(gmailSearchHash(query));
   }
 
   navigateToHash(urlOrHash: string) {

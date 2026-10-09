@@ -4,6 +4,7 @@ import {
   filterNewMailIdsByImportance,
   GMAIL_INBOX_FEED_URL,
   gmailFeedUrl,
+  gmailSearchHash,
   parseGmailMessageId,
 } from "./gmail";
 
@@ -201,6 +202,29 @@ describe("gmailFeedUrl", () => {
   test("appends the system label id of a label", () => {
     expect(gmailFeedUrl("primary")).toBe(`${GMAIL_INBOX_FEED_URL}/^sq_ig_i_personal`);
     expect(gmailFeedUrl("important")).toBe(`${GMAIL_INBOX_FEED_URL}/^iim`);
+  });
+});
+
+describe("gmailSearchHash", () => {
+  test("percent-encodes the operators and quoting a query is written with", () => {
+    expect(gmailSearchHash('from:a@b.com "x y"')).toBe("#search/from%3Aa%40b.com%20%22x%20y%22");
+  });
+
+  test("encodes a slash, so the query stays one hash segment", () => {
+    expect(gmailSearchHash("filename:report/final")).toBe("#search/filename%3Areport%2Ffinal");
+    expect(parseGmailMessageId(`${gmailSearchHash("a/b")}/${MESSAGE_ID}`)).toBe(MESSAGE_ID);
+  });
+
+  test("encodes a plus, which a reader that takes it for a space would swallow", () => {
+    expect(gmailSearchHash("c++")).toBe("#search/c%2B%2B");
+  });
+
+  test("encodes a hash and an ampersand, which would end the fragment or start a parameter", () => {
+    expect(gmailSearchHash("#urgent & new")).toBe("#search/%23urgent%20%26%20new");
+  });
+
+  test("encodes a quote and a backslash, which broke the string the hash used to be built in", () => {
+    expect(gmailSearchHash('"\\')).toBe("#search/%22%5C");
   });
 });
 

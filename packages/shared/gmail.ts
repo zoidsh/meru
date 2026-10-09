@@ -24,6 +24,21 @@ export function gmailFeedUrl(label?: keyof typeof GMAIL_FEED_LABELS) {
   return label ? `${GMAIL_INBOX_FEED_URL}/${GMAIL_FEED_LABELS[label]}` : GMAIL_INBOX_FEED_URL;
 }
 
+/**
+ * The hash that puts Gmail on a search, written the way Gmail writes its own:
+ * one percent-encoded path segment, so that `from:a@b.com "x y"` reads
+ * `#search/from%3Aa%40b.com%20%22x%20y%22`.
+ *
+ * A space stays `%20` rather than becoming `+`, which Gmail's own links use:
+ * both decode to a space, and `%20` is also what a reader that only
+ * percent-decodes sees. Encoding the whole query is what keeps a `/` in it
+ * from reading as another hash segment, which is how `parseGmailMessageId`
+ * tells a search apart from a message opened out of one.
+ */
+export function gmailSearchHash(query: string) {
+  return `#search/${encodeURIComponent(query)}`;
+}
+
 export const GMAIL_DELEGATED_ACCOUNT_URL_REGEXP = new RegExp(`${GMAIL_URL}/d/([^/]+)`);
 
 export const GMAIL_PRELOAD_ARGUMENTS = {
