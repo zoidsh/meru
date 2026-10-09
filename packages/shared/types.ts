@@ -327,8 +327,8 @@ export type IpcRendererEvent = {
   "appUpdater.updateAvailable": [version: string];
   "googleMeet.toggleMicrophone": [];
   "googleMeet.toggleCamera": [];
-  "workspaceApp.initAccountColorIndicator": [
-    color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
+  "workspaceApp.accountColorChanged": [
+    color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"] | null,
   ];
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "workspaceApp.pageTitleChanged": [title: string];

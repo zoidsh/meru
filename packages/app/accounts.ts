@@ -75,6 +75,10 @@ class Accounts {
       accounts.updateAllViewBounds();
     });
 
+    config.onDidChange("workspaceApps.showAccountColor", () => {
+      WorkspaceApp.applyAccountColorIndicators();
+    });
+
     config.onDidChange("workspaceApps.zoomFactors", () => {
       WorkspaceApp.applyPersistedZoomFactors();
 

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
+import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
@@ -146,6 +147,12 @@ export class WorkspaceApp {
   static broadcastBookmarkStates() {
     for (const instance of WorkspaceApp.instances.values()) {
       instance.broadcastBookmarkState();
+    }
+  }
+
+  static applyAccountColorIndicators() {
+    for (const instance of WorkspaceApp.instances.values()) {
+      instance.applyAccountColorIndicator();
     }
   }
 
@@ -779,6 +786,7 @@ export class WorkspaceApp {
     this.view.webContents.on("did-navigate-in-page", this.handleWindowedNavigation);
     this.view.webContents.on("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.on("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.on("dom-ready", this.applyAccountColorIndicator);
   }
 
   private unregisterWindowedViewListeners() {
@@ -786,6 +794,7 @@ export class WorkspaceApp {
     this.view.webContents.off("did-navigate-in-page", this.handleWindowedNavigation);
     this.view.webContents.off("did-start-loading", this.broadcastLoadingState);
     this.view.webContents.off("did-stop-loading", this.broadcastLoadingState);
+    this.view.webContents.off("dom-ready", this.applyAccountColorIndicator);
   }
 
   private handleWindowedNavigation = () => {
@@ -821,6 +830,9 @@ export class WorkspaceApp {
     this.updateViewBounds();
     this.updateWindowTitle();
 
+    // The page is already loaded, so no `dom-ready` is coming to paint the bar.
+    this.applyAccountColorIndicator();
+
     this.window.webContents.once("did-finish-load", () => {
       this.broadcastNavigationState();
 
@@ -855,6 +867,8 @@ export class WorkspaceApp {
     discardedWindow.contentView.removeChildView(this.view);
 
     this._window = undefined;
+
+    this.applyAccountColorIndicator();
 
     discardedWindow.destroy();
 
@@ -976,6 +990,41 @@ export class WorkspaceApp {
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   }
+
+  /**
+   * The color the window's bar is painted, or `null` for no bar. Only a window
+   * gets one: an embedded tab sits beside its own account's strip, which
+   * already says whose it is.
+   */
+  private get accountColorIndicator() {
+    if (
+      !this._window ||
+      !config.get("workspaceApps.showAccountColor") ||
+      accounts.getAccountConfigs().length < 2
+    ) {
+      return null;
+    }
+
+    const { color } = this.account.config;
+
+    return color ? accountColorsMap[color].value : null;
+  }
+
+  /**
+   * The bar is drawn by the workspace-app preload inside the page, because the
+   * view paints over anything the window's own renderer could put there.
+   */
+  applyAccountColorIndicator = () => {
+    if (this.viewDestroyed) {
+      return;
+    }
+
+    ipc.renderer.send(
+      this.view.webContents,
+      "workspaceApp.accountColorChanged",
+      this.accountColorIndicator,
+    );
+  };
 
   broadcastLoadingState = () => {
     ipc.renderer.send(

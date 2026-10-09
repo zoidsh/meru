@@ -1,7 +1,17 @@
 const elementId = "meru-account-color";
 
-export function initAccountColorIndicator(color: string) {
-  if (document.getElementById(elementId)) {
+export function setAccountColorIndicator(color: string | null) {
+  const existingElement = document.getElementById(elementId);
+
+  if (!color) {
+    existingElement?.remove();
+
+    return;
+  }
+
+  if (existingElement) {
+    existingElement.style.backgroundColor = color;
+
     return;
   }
 

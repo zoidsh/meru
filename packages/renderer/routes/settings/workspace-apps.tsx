@@ -287,7 +287,7 @@ export function WorkspaceAppsSettings() {
             />
             <ConfigSwitchField
               label="Show account color"
-              description="Show a colored indicator on top of a Workspace apps window, naming the account in use. It appears only for accounts that have a color."
+              description="Show a bar in the account's color at the top of Workspace apps windows, with more than one account. It appears only for accounts that have a color."
               configKey="workspaceApps.showAccountColor"
               licenseKeyRequired
             />

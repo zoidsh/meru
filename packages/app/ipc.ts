@@ -120,6 +120,10 @@ class Ipc {
       bookmarks.sendChangedToPopup();
 
       WorkspaceApp.broadcastBookmarkStates();
+
+      // An account's color, and whether there is more than one account to tell
+      // apart, both decide the bar every workspace app window paints.
+      WorkspaceApp.applyAccountColorIndicators();
     });
 
     this.main.on("accounts.selectAccount", (_event, selectedAccountId) => {

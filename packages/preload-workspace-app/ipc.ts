@@ -1,6 +1,6 @@
 import { ipc } from "@meru/shared/renderer/ipc";
-import { initAccountColorIndicator } from "./account-color-indicator";
+import { setAccountColorIndicator } from "./account-color-indicator";
 
-ipc.renderer.on("workspaceApp.initAccountColorIndicator", (_event, color) => {
-  initAccountColorIndicator(color);
+ipc.renderer.on("workspaceApp.accountColorChanged", (_event, color) => {
+  setAccountColorIndicator(color);
 });
