@@ -122,11 +122,7 @@
 
 @layer base {
   * {
-    @apply border-border;
-  }
-
-  *:focus-visible {
-    @apply outline-none;
+    @apply border-border outline-ring/50;
   }
 
   body {
