@@ -7,3 +7,4 @@ This file is the draft of the next release, written one line at a time as work l
 ### Fixed
 
 - **Meru Pro:** During a Pro trial, the saved searches button appears in the titlebar, instead of staying hidden until a license key is activated
+- **Meru Pro:** A saved search whose query holds a quote, a backslash or a slash, such as `subject:"out of office"`, opens in Gmail instead of doing nothing
