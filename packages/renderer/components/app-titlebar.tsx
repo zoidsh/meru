@@ -651,7 +651,7 @@ export function AppTitlebar() {
     isLicenseKeyValid && config["unifiedInbox.enabled"] && accounts.length > 1;
 
   const shouldShowSavedSearchesButton =
-    config["gmail.savedSearches"].length > 0 && Boolean(config.licenseKey);
+    config["gmail.savedSearches"].length > 0 && isLicenseKeyValid;
 
   const isWorkspaceAppTabActive = Boolean(activeTab?.app && activeTab.app !== "gmail");
 

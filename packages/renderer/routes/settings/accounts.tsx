@@ -55,8 +55,9 @@ import type { Entries } from "type-fest";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
-import { useAccountsStore, useTrialStore } from "@/lib/stores";
+import { useAccountsStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 
 function AccountForm({
@@ -270,15 +271,9 @@ function AddAccountButton() {
 
   const setIsDialogOpen = useAccountsStore((state) => state.setIsAddAccountDialogOpen);
 
-  const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
+  const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const { config } = useConfig();
-
-  if (!config) {
-    return;
-  }
-
-  if (!isTrialActive && !config.licenseKey) {
+  if (!isLicenseKeyValid) {
     return <Button disabled>Add</Button>;
   }
 
