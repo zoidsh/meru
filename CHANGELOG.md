@@ -7,6 +7,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Changed
 
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account label` is gone, because a Workspace apps window always names its account when you have more than one, in its titlebar and in the window title
+- **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account color` is gone, because a Workspace apps window's titlebar names the account and shows its color, which is what the setting's colored bar was for
 
 ### Fixed
 

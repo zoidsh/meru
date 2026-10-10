@@ -1,5 +1,4 @@
 import type { LoginItemSettings } from "electron";
-import type { accountColorsMap } from "./accounts";
 import type { GmailAction, GmailInboxMessage } from "./gmail";
 import type {
   AccountConfig,
@@ -170,7 +169,6 @@ export type Config = {
   "workspaceApps.launcherDisplay": WorkspaceAppsLauncherDisplay;
   "workspaceApps.launcherAndBookmarksPlacement": LauncherAndBookmarksPlacement;
   "workspaceApps.showBookmarksButton": boolean;
-  "workspaceApps.showAccountColor": boolean;
   "workspaceApps.persistZoom": boolean;
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
   "workspaceApps.hidePasskeyDialog": boolean;
@@ -326,9 +324,6 @@ export type IpcRendererEvent = {
   "appUpdater.updateAvailable": [version: string];
   "googleMeet.toggleMicrophone": [];
   "googleMeet.toggleCamera": [];
-  "workspaceApp.initAccountColorIndicator": [
-    color: (typeof accountColorsMap)[keyof typeof accountColorsMap]["value"],
-  ];
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
   "workspaceApp.pageTitleChanged": [title: string];
   "workspaceApp.loadingStateChanged": [loading: boolean];

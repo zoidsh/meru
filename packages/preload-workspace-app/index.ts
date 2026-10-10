@@ -1,5 +1,4 @@
 import "@meru/shared/electron-api";
-import "./ipc";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { observePageScrollEdge } from "@meru/shared/renderer/scroll-edge";
 import { initDocsPreload } from "./apps/docs";

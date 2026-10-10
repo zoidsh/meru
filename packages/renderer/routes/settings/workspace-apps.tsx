@@ -278,13 +278,6 @@ export function WorkspaceAppsSettings() {
           )}
           <FieldSeparator />
           <ConfigSwitchField
-            label="Show account color"
-            description="Show a colored indicator on top of a Workspace apps window, naming the account in use. It appears only for accounts that have a color."
-            configKey="workspaceApps.showAccountColor"
-            licenseKeyRequired
-          />
-          <FieldSeparator />
-          <ConfigSwitchField
             label="Persist zoom"
             description="Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
             configKey="workspaceApps.persistZoom"
