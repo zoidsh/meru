@@ -277,21 +277,12 @@ export function WorkspaceAppsSettings() {
             </>
           )}
           <FieldSeparator />
-          <FieldSet>
-            <FieldLegend>Windows</FieldLegend>
-            <ConfigSwitchField
-              label="Show account label"
-              description="Show the account label in the titlebar of Workspace apps windows, with more than one account."
-              configKey="workspaceApps.showAccountLabel"
-              licenseKeyRequired
-            />
-            <ConfigSwitchField
-              label="Show account color"
-              description="Show a colored indicator on top of a Workspace apps window, naming the account in use. It appears only for accounts that have a color."
-              configKey="workspaceApps.showAccountColor"
-              licenseKeyRequired
-            />
-          </FieldSet>
+          <ConfigSwitchField
+            label="Show account color"
+            description="Show a colored indicator on top of a Workspace apps window, naming the account in use. It appears only for accounts that have a color."
+            configKey="workspaceApps.showAccountColor"
+            licenseKeyRequired
+          />
           <FieldSeparator />
           <ConfigSwitchField
             label="Persist zoom"

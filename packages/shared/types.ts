@@ -171,7 +171,6 @@ export type Config = {
   "workspaceApps.launcherAndBookmarksPlacement": LauncherAndBookmarksPlacement;
   "workspaceApps.showBookmarksButton": boolean;
   "workspaceApps.showAccountColor": boolean;
-  "workspaceApps.showAccountLabel": boolean;
   "workspaceApps.persistZoom": boolean;
   "workspaceApps.zoomFactors": Partial<Record<SupportedWorkspaceApp, number>>;
   "workspaceApps.hidePasskeyDialog": boolean;

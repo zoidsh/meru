@@ -4,6 +4,10 @@ This file is the draft of the next release, written one line at a time as work l
 
 ## [Unreleased]
 
+### Changed
+
+- **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account label` is gone, because a Workspace apps window always names its account when you have more than one, in its titlebar and in the window title
+
 ### Fixed
 
 - **Meru Pro:** During a Pro trial, the saved searches button appears in the titlebar, instead of staying hidden until a license key is activated
