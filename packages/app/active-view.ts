@@ -21,3 +21,20 @@ export function getActiveView(window: BrowserWindow | null) {
 
   return selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
 }
+
+/**
+ * Electron reports AppKit's navigation swipe without acting on it. A
+ * three-finger trackpad swipe sends it, and so do mouse drivers such as Logi
+ * Options+ in place of the back and forward buttons.
+ */
+export function navigateOnSwipe(window: BrowserWindow) {
+  window.on("swipe", (_event, direction) => {
+    const { navigationHistory } = getActiveView(window).webContents;
+
+    if (direction === "right") {
+      navigationHistory.goBack();
+    } else if (direction === "left") {
+      navigationHistory.goForward();
+    }
+  });
+}
