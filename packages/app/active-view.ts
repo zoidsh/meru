@@ -1,5 +1,7 @@
 import type { BrowserWindow } from "electron";
+import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
+import { log } from "@/lib/log";
 import { main } from "@/main";
 import { WorkspaceApp } from "@/workspace-app";
 
@@ -20,4 +22,32 @@ export function getActiveView(window: BrowserWindow | null) {
   const selectedAccount = accounts.getSelectedAccount();
 
   return selectedAccount.instance.tabs.activeTab.view ?? selectedAccount.instance.gmail.view;
+}
+
+/**
+ * Electron reports AppKit's navigation swipe without acting on it. A
+ * three-finger trackpad swipe sends it, and so do mouse drivers such as Logi
+ * Options+ in place of the back and forward buttons.
+ */
+export function navigateOnSwipe(window: BrowserWindow) {
+  window.on("swipe", (_event, direction) => {
+    // Every view is hidden away from `/`, so a renderer page is showing.
+    if (window === main.window && main.location !== "/") {
+      return;
+    }
+
+    try {
+      const { navigationHistory } = getActiveView(window).webContents;
+
+      if (direction === "right") {
+        navigationHistory.goBack();
+      } else if (direction === "left") {
+        navigationHistory.goForward();
+      }
+    } catch (error) {
+      // Thrown while there is no account to act on, such as in the repair that
+      // follows disabling the last enabled one.
+      log.error("Could not navigate on a swipe", serializeError(error));
+    }
+  });
 }
