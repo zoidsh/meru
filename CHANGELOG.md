@@ -19,3 +19,4 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** A saved search whose query holds a quote, a backslash or a slash, such as `subject:"out of office"`, opens in Gmail instead of doing nothing
 - `Notify when updates are available` in `Settings… → Updates` takes effect as soon as it is switched, instead of at the next start
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
+- Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.
