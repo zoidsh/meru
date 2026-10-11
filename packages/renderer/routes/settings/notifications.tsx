@@ -379,6 +379,10 @@ export function NotificationsSettings() {
                       </FieldDescription>
                       <Slider
                         className="my-2"
+                        // A sound that plays at no volume is a sound setting
+                        // that looks on and is silent. Silence is turning
+                        // sounds off instead.
+                        min={5}
                         step={5}
                         value={[config["notifications.volume"] * 100]}
                         onValueChange={(value) => {
@@ -386,13 +390,9 @@ export function NotificationsSettings() {
                             return;
                           }
 
-                          const volume = value / 100;
-
-                          if (volume) {
-                            configMutation.mutate({
-                              "notifications.volume": volume,
-                            });
-                          }
+                          configMutation.mutate({
+                            "notifications.volume": value / 100,
+                          });
                         }}
                         onValueCommitted={(value) => {
                           if (typeof value !== "number") {
@@ -401,7 +401,7 @@ export function NotificationsSettings() {
 
                           const volume = value / 100;
 
-                          if (volume && config["notifications.sound"] !== "system") {
+                          if (config["notifications.sound"] !== "system") {
                             playNotificationSound({
                               sound: config["notifications.sound"],
                               volume,
