@@ -25,3 +25,4 @@ This file is the draft of the next release, written one line at a time as work l
 - Closing Settings, the unified inbox or the download history puts the keyboard back in your mail, so you can type straight away instead of first clicking the page
 - **Meru Pro:** Changing label colors in quick succession leaves only the latest colors in Gmail, instead of sometimes keeping earlier colors applied alongside them
 - Restarting to install an update reopens the tabs you had open, the way any other quit does, instead of losing recent changes to them
+- Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.

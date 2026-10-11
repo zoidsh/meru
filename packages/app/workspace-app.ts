@@ -25,6 +25,7 @@ import {
   type WebContentsViewConstructorOptions,
 } from "electron";
 import { accounts } from "./accounts";
+import { navigateOnSwipe } from "./active-view";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
 import { openProUpgradeUrl } from "./dialogs";
@@ -797,6 +798,7 @@ export class WorkspaceApp {
   private registerWindowListeners() {
     this.window.on("resize", this.updateViewBounds);
     this.window.on("close", this.handleClose);
+    navigateOnSwipe(this.window);
     this.window.on("focus", () => {
       WorkspaceApp.instances.delete(this.id);
 
