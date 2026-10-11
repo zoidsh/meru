@@ -2,6 +2,7 @@ import { is, platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
 import { app, session } from "electron";
 import { accounts } from "@/accounts";
+import { navigateOnSwipe } from "@/active-view";
 import { blocker } from "@/blocker";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
@@ -277,6 +278,8 @@ async function init() {
       }
     });
   }
+
+  navigateOnSwipe(main.window);
 
   if (!app.commandLine.hasSwitch("disable-bring-to-top-on-focus")) {
     main.window.on("focus", () => {

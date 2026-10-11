@@ -25,3 +25,4 @@ This file is the draft of the next release, written one line at a time as work l
 - Tab walks the page you are on rather than the titlebar and the tab strip around it, the way it already does in Gmail
 - **Windows and Linux:** F10, and a tap of Alt, open the app menu from anywhere in the window, so it no longer takes a click
 - Closing Settings, the unified inbox or the download history puts the keyboard back in your mail, so you can type straight away instead of first clicking the page
+- Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.
