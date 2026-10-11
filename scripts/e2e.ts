@@ -44,7 +44,23 @@ async function run(command: string[], env: Record<string, string | undefined> = 
 // paths written down in a second place, free to drift from the first.
 if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
   const buildStatus = await run(
-    ["bun", "run", build.script, "--", "--dir", ...build.args, "--publish", "never"],
+    [
+      "bun",
+      "run",
+      build.script,
+      "--",
+      "--dir",
+      ...build.args,
+      "--publish",
+      "never",
+      // `_electron.launch` waits for the main process to print "Debugger
+      // listening on", which it gets by passing `--inspect=0`, so the shipped
+      // build's `enableNodeCliInspectArguments: false` would hang every test.
+      // The suite therefore drives a build that differs from a release in that
+      // one fuse, and in nothing else: a config override merges into the
+      // `electronFuses` block rather than replacing it.
+      "-c.electronFuses.enableNodeCliInspectArguments=true",
+    ],
     // Signing and notarising would only slow down an app launched in place, so
     // a run under `op run --env-file .env.signing.op` builds unsigned.
     Object.fromEntries(SIGNING_ENV_VARS.mac.map((name) => [name, undefined])),
