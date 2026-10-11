@@ -21,13 +21,7 @@ import { ms } from "@meru/shared/ms";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { extractVerificationCode } from "@meru/verification-code";
-import {
-  app,
-  BrowserWindow,
-  type Session,
-  type WebContentsView,
-  type WebContentsViewConstructorOptions,
-} from "electron";
+import { app, BrowserWindow, type Session, type WebContentsView } from "electron";
 import z from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -323,12 +317,20 @@ export class Gmail {
     }, INBOX_FEED_POLL_INTERVAL);
   }
 
-  async createView(options?: WebContentsViewConstructorOptions) {
+  /**
+   * The one way a Gmail view is made, for an account the app starts with and
+   * for one added while it runs alike.
+   *
+   * Chromium throttles timers in a view that is not visible, and every account
+   * but the selected one comes up behind the others, so the load runs
+   * unthrottled and throttling goes back on once the page is up.
+   */
+  async createView() {
     this.view = createChildWebContentsView({
       session: this.session,
       preload: getPreloadPath("gmail"),
       additionalArguments: this.additionalArguments,
-      viewOptions: options,
+      viewOptions: { webPreferences: { backgroundThrottling: false } },
       attachView: (view) => {
         main.window.contentView.addChildView(view);
       },
@@ -392,13 +394,17 @@ export class Gmail {
 
     const loaded = await loadUrl(this.view.webContents, this.url);
 
-    if (loaded || !this._view || this._view.webContents.isDestroyed()) {
+    if (!loaded && this._view && !this._view.webContents.isDestroyed()) {
+      log.info("Retrying Gmail load", { url: this.url });
+
+      await loadUrl(this.view.webContents, this.url);
+    }
+
+    if (!this._view || this._view.webContents.isDestroyed()) {
       return;
     }
 
-    log.info("Retrying Gmail load", { url: this.url });
-
-    await loadUrl(this.view.webContents, this.url);
+    this.view.webContents.setBackgroundThrottling(true);
   }
 
   async applyLabelColors() {

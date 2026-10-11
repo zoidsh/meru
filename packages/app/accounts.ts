@@ -150,19 +150,7 @@ class Accounts {
       return 0;
     });
 
-    await Promise.all(
-      accounts.map((account) =>
-        account.instance.gmail.createView({
-          webPreferences: {
-            backgroundThrottling: false,
-          },
-        }),
-      ),
-    );
-
-    for (const account of accounts) {
-      account.instance.gmail.view.webContents.setBackgroundThrottling(true);
-    }
+    await Promise.all(accounts.map((account) => account.instance.gmail.createView()));
 
     for (const account of accounts) {
       account.instance.tabs.loadLaunchTabs();
