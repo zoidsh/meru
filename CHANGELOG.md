@@ -14,4 +14,5 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** During a Pro trial, the saved searches button appears in the titlebar, instead of staying hidden until a license key is activated
 - **Meru Pro:** A saved search whose query holds a quote, a backslash or a slash, such as `subject:"out of office"`, opens in Gmail instead of doing nothing
 - `Notify when updates are available` in `Settings… → Updates` takes effect as soon as it is switched, instead of at the next start
+- **macOS:** A downloaded file is marked as coming from the internet, so macOS checks an app, installer or script before it opens, the way it does for a browser download
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
