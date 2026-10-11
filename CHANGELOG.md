@@ -10,4 +10,4 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
-- The back and forward buttons of a mouse set up with Logi Options+ now go back and forward, as does a three-finger swipe on a trackpad set to swipe between pages with three fingers.
+- Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.

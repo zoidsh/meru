@@ -1,5 +1,7 @@
 import type { BrowserWindow } from "electron";
+import { serializeError } from "serialize-error";
 import { accounts } from "@/accounts";
+import { log } from "@/lib/log";
 import { main } from "@/main";
 import { WorkspaceApp } from "@/workspace-app";
 
@@ -29,12 +31,23 @@ export function getActiveView(window: BrowserWindow | null) {
  */
 export function navigateOnSwipe(window: BrowserWindow) {
   window.on("swipe", (_event, direction) => {
-    const { navigationHistory } = getActiveView(window).webContents;
+    // Every view is hidden away from `/`, so a renderer page is showing.
+    if (window === main.window && main.location !== "/") {
+      return;
+    }
 
-    if (direction === "right") {
-      navigationHistory.goBack();
-    } else if (direction === "left") {
-      navigationHistory.goForward();
+    try {
+      const { navigationHistory } = getActiveView(window).webContents;
+
+      if (direction === "right") {
+        navigationHistory.goBack();
+      } else if (direction === "left") {
+        navigationHistory.goForward();
+      }
+    } catch (error) {
+      // Thrown while there is no account to act on, such as in the repair that
+      // follows disabling the last enabled one.
+      log.error("Could not navigate on a swipe", serializeError(error));
     }
   });
 }
