@@ -72,12 +72,8 @@ class Downloads {
         const filePath = item.getSavePath();
         const fileName = path.basename(filePath);
 
-        // Chromium quarantines a download in-process on Windows only and
-        // otherwise expects a quarantine service from the embedder, which
-        // Electron does not supply, so without this Gatekeeper never checks a
-        // downloaded app, installer or script. `LSFileQuarantineEnabled` would
-        // quarantine every file Meru writes instead, update archives and its
-        // own databases included. Written before anything can open the file.
+        // Awaited first, so nothing below can lead to the file being opened
+        // before it is quarantined.
         if (state === "completed" && platform.isMacOS) {
           try {
             await quarantineFile(filePath);

@@ -12,11 +12,17 @@ export function buildQuarantineAttributeValue(downloadedAt: Date) {
   return `0081;${Math.floor(downloadedAt.getTime() / 1000).toString(16)};Meru;`;
 }
 
+/**
+ * Chromium quarantines a download in-process on Windows only and otherwise
+ * expects a quarantine service from the embedder, which Electron does not
+ * supply, so Gatekeeper never checks a file Meru downloads without this.
+ */
 export async function quarantineFile(filePath: string, downloadedAt = new Date()) {
   await execFileAsync("/usr/bin/xattr", [
     "-w",
     "com.apple.quarantine",
     buildQuarantineAttributeValue(downloadedAt),
+    "--",
     filePath,
   ]);
 }
