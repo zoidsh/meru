@@ -146,6 +146,10 @@ export class Gmail {
     return this._view;
   }
 
+  get hasView() {
+    return this._view !== undefined;
+  }
+
   set view(view: WebContentsView) {
     this._view = view;
   }
