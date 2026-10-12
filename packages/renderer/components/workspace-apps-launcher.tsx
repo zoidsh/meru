@@ -109,6 +109,7 @@ export function VerticalTabsWorkspaceAppsLauncher({
           <Button
             variant="ghost"
             size={isWide ? "sm" : "icon"}
+            tabIndex={-1}
             // Colours transition, the box never does: the button takes its new
             // width in the same step the strip does rather than animating into
             // it once the strip has already arrived

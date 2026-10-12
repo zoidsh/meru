@@ -121,7 +121,7 @@ function Trial() {
         },
       )}
     >
-      <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
+      <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer" tabIndex={-1}>
         <span className="fade-out group-hover:opacity-0">
           Pro trial ends in{" "}
           {trialDaysLeft >= 2
@@ -672,6 +672,7 @@ export function AppTitlebar() {
         data-account-id={account.config.id}
         variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
+        tabIndex={-1}
         className="draggable-none"
         onClick={() => {
           navigate("/");
@@ -704,6 +705,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Button
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.quitAndInstall");
@@ -714,6 +716,7 @@ export function AppTitlebar() {
             <Button
               variant="outline"
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 dismissAppUpdate();
@@ -725,6 +728,7 @@ export function AppTitlebar() {
             <Button
               variant="ghost"
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.openVersionHistory");
@@ -767,6 +771,7 @@ export function AppTitlebar() {
               <Button
                 variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
                 size="icon"
+                tabIndex={-1}
                 className="size-7 draggable-none"
                 onClick={() => {
                   navigate("/unified-inbox");
@@ -783,6 +788,7 @@ export function AppTitlebar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  tabIndex={-1}
                   className="draggable-none"
                   title="Open Gmail settings to turn off out of office"
                   onClick={() => {
@@ -939,6 +945,7 @@ export function AppTitlebar() {
           {appUpdateVersion && (
             <Button
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 setIsAppUpdateDetailsOpen(true);
