@@ -18,7 +18,7 @@ function release(key: string, overrides: Partial<Parameters<typeof readAppMenuKe
 }
 
 /** Feeds a whole sequence and says whether the menu opened, and how often. */
-function run(inputs: Array<ReturnType<typeof press>>) {
+function run(inputs: Array<Parameters<typeof readAppMenuKey>[1]>) {
   let state: AppMenuKeyState = "idle";
   let opened = 0;
 
@@ -82,6 +82,10 @@ describe("readAppMenuKey", () => {
 
   test("rawKeyDown is ignored, so a press is never counted twice", () => {
     expect(run([{ ...press("Alt"), type: "rawKeyDown" }, press("Alt"), release("Alt")])).toBe(1);
+  });
+
+  test("Alt held for a click is not a tap", () => {
+    expect(run([press("Alt"), { type: "mouseDown" }, { type: "mouseUp" }, release("Alt")])).toBe(0);
   });
 
   test("two taps open it twice", () => {

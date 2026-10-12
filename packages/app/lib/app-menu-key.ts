@@ -7,11 +7,11 @@
  */
 export type AppMenuKeyInput = {
   type: string;
-  key: string;
-  control: boolean;
-  shift: boolean;
-  meta: boolean;
-  isAutoRepeat: boolean;
+  key?: string;
+  control?: boolean;
+  shift?: boolean;
+  meta?: boolean;
+  isAutoRepeat?: boolean;
 };
 
 /** Whether a bare Alt is still down with nothing having happened since. */
@@ -21,6 +21,12 @@ export function readAppMenuKey(
   state: AppMenuKeyState,
   input: AppMenuKeyInput,
 ): { state: AppMenuKeyState; opensMenu: boolean } {
+  // Alt+click is a drag or a modified click, not a reach for the menu, and it
+  // is what Chromium's own menu bar disarms on too.
+  if (input.type === "mouseDown") {
+    return { state: "idle", opensMenu: false };
+  }
+
   if (input.type === "keyDown") {
     if (input.key === "F10" && !input.control && !input.shift && !input.meta) {
       return { state: "idle", opensMenu: true };

@@ -35,6 +35,14 @@ export function watchForAppMenuKey(webContents: WebContents) {
     ipc.renderer.send(main.window.webContents, "appMenu.toggle");
   });
 
+  // A press of the mouse ends the gesture, the way it does in Chromium's own
+  // menu bar: Alt held for a drag or a modified click is not a reach for the
+  // menu. This is `input-event` rather than `before-input-event`, which is
+  // keys only.
+  webContents.on("input-event", (_event, input) => {
+    state = readAppMenuKey(state, input).state;
+  });
+
   // Alt+Tab takes the window away mid-gesture and the release never arrives.
   webContents.on("blur", () => {
     state = "idle";
