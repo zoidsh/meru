@@ -184,8 +184,8 @@ class Ipc {
       swipeNavigation.setPageScrollEdge(event.sender, pageScrollEdge);
     });
 
-    this.main.on("titleBar.toggleAppMenu", () => {
-      appMenu.togglePopup();
+    this.main.on("titleBar.toggleAppMenu", (_event, anchor) => {
+      appMenu.togglePopup(anchor);
     });
 
     this.main.handle("licenseKey.activate", (_event, input) =>

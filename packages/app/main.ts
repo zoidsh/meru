@@ -3,6 +3,7 @@ import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
 import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
+import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { config } from "@/config";
 import {
   getCommonBrowserWindowOptions,
@@ -147,6 +148,8 @@ class Main {
         this.window.maximize();
       }
     }
+
+    watchForAppMenuKey(this.window.webContents);
 
     this.window.webContents.on("did-navigate-in-page", (_event, url) => {
       this.setLocation(`/${new URL(url).hash.replace(/^#?\/?/, "")}`);
