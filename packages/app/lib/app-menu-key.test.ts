@@ -88,6 +88,16 @@ describe("readAppMenuKey", () => {
     expect(run([press("Alt"), { type: "mouseDown" }, { type: "mouseUp" }, release("Alt")])).toBe(0);
   });
 
+  test("keys an input method is composing with are left alone", () => {
+    expect(run([press("Alt", { isComposing: true }), release("Alt", { isComposing: true })])).toBe(
+      0,
+    );
+  });
+
+  test("a composition in the middle of the gesture ends it", () => {
+    expect(run([press("Alt"), press("a", { isComposing: true }), release("Alt")])).toBe(0);
+  });
+
   test("two taps open it twice", () => {
     expect(run([press("Alt"), release("Alt"), press("Alt"), release("Alt")])).toBe(2);
   });

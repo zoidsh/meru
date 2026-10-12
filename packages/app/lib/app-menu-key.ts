@@ -12,6 +12,7 @@ export type AppMenuKeyInput = {
   shift?: boolean;
   meta?: boolean;
   isAutoRepeat?: boolean;
+  isComposing?: boolean;
 };
 
 /** Whether a bare Alt is still down with nothing having happened since. */
@@ -24,6 +25,12 @@ export function readAppMenuKey(
   // Alt+click is a drag or a modified click, not a reach for the menu, and it
   // is what Chromium's own menu bar disarms on too.
   if (input.type === "mouseDown") {
+    return { state: "idle", opensMenu: false };
+  }
+
+  // Keys being fed to an input method belong to the text being composed, and
+  // the Alt they may carry is the method's, not a reach for the menu.
+  if (input.isComposing) {
     return { state: "idle", opensMenu: false };
   }
 
