@@ -207,12 +207,18 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const targetWebContents =
-        WorkspaceApp.tryFromWebContents(event.sender)?.view.webContents ??
-        getNavigationWebContents();
+      const workspaceApp = WorkspaceApp.tryFromWebContents(event.sender);
+
+      const targetWebContents = workspaceApp?.view.webContents ?? getNavigationWebContents();
 
       if (!text) {
         targetWebContents.stopFindInPage("clearSelection");
+
+        // Closing the field gives the keyboard back to the page it searched,
+        // which is where the window's own find bar took it from.
+        if (!workspaceApp) {
+          accounts.focusActiveView();
+        }
 
         return;
       }
@@ -1016,8 +1022,16 @@ class Ipc {
       bookmarks.togglePopup(parentWindow, placement);
     });
 
+    /*
+     * Only the closes the popup asks for land here — Escape, its close button,
+     * opening a bookmark — so the keyboard goes back to the content behind it.
+     * A close the popup's own blur caused does not: something else has the
+     * focus by then, and it is where the click went.
+     */
     ipc.main.on("bookmarks.closePopup", () => {
       bookmarks.popup.close();
+
+      accounts.focusActiveView();
     });
 
     ipc.main.on("bookmarks.setPopupCloseOnBlurEnabled", (_event, enabled) => {
@@ -1108,6 +1122,8 @@ class Ipc {
 
     ipc.main.on("downloads.closeRecentDownloadHistoryPopup", () => {
       downloads.recentDownloadHistoryPopup.close();
+
+      accounts.focusActiveView();
     });
 
     ipc.main.on("downloads.setDownloadHistoryPopupOnBlurEnabled", (_event, enabled) => {
