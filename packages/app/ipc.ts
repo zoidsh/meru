@@ -27,6 +27,7 @@ import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { copyText } from "@/lib/clipboard";
+import { readFindRequest } from "@/lib/find-in-page";
 import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
@@ -211,19 +212,22 @@ class Ipc {
 
       const targetWebContents = workspaceApp?.view.webContents ?? getNavigationWebContents();
 
-      if (!text) {
+      const request = readFindRequest(text);
+
+      if (request.kind !== "search") {
         targetWebContents.stopFindInPage("clearSelection");
 
         // Closing the field gives the keyboard back to the page it searched,
-        // which is where the window's own find bar took it from.
-        if (!workspaceApp) {
+        // which is where the window's own find bar took it from. Clearing the
+        // text does not: the field is still open and still being typed in.
+        if (request.kind === "close" && !workspaceApp) {
           accounts.focusActiveView();
         }
 
         return;
       }
 
-      targetWebContents.findInPage(text, {
+      targetWebContents.findInPage(request.text, {
         forward: options?.forward,
         findNext: options?.findNext,
       });
