@@ -17,4 +17,6 @@ This file is the draft of the next release, written one line at a time as work l
 - **macOS:** A downloaded file is marked as coming from the internet, so macOS checks an app, installer or script before it opens, the way it does for a browser download
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
 - Keyboard focus is visible again in Meru's own interface: buttons, switches, checkboxes, tabs and sliders draw a focus ring when you tab to them, instead of leaving you to guess where you are
+- Tab walks the page you are on rather than the titlebar and the tab strip around it, the way it already does in Gmail
+- `Show Bookmarks`, `Saved Searches`, `Open Workspace App`, `Do Not Disturb`, `Widen Tab Strip` and `Stop` join the View menu, `Bookmark` joins the Tabs menu, and `Upgrade to Meru Pro` joins the Help menu, so everything the titlebar and the tab strip offer can be reached from the keyboard
 - Closing Settings, the unified inbox or the download history puts the keyboard back in your mail, so you can type straight away instead of first clicking the page

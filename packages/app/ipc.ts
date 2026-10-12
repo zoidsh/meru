@@ -34,11 +34,8 @@ import { main } from "@/main";
 import { appMenu } from "@/menu";
 import { swipeNavigation } from "@/swipe-navigation";
 import { DormantTab, isWindowedTab } from "@/tabs";
-import {
-  canOpenWorkspaceAppInApp,
-  resolveWorkspaceAppOpenBehavior,
-  WorkspaceApp,
-} from "@/workspace-app";
+import { WorkspaceApp } from "@/workspace-app";
+import { openWorkspaceApp } from "@/workspace-apps";
 import { confirmAppLinksTabHandover } from "./dialogs";
 import { DoNotDisturb, doNotDisturb } from "./do-not-disturb";
 import { downloads } from "./downloads";
@@ -825,38 +822,7 @@ class Ipc {
     });
 
     ipc.main.on("workspaceApps.openApp", (_event, app, modifierOpenBehavior) => {
-      if (!licenseKey.isValid) {
-        return;
-      }
-
-      if (!canOpenWorkspaceAppInApp(app)) {
-        openExternalUrl(getWorkspaceAppUrl(app), {
-          skipTrustedHostCheck: true,
-          focusBrowser: modifierOpenBehavior !== "backgroundTab",
-        });
-
-        return;
-      }
-
-      const openBehavior = resolveWorkspaceAppOpenBehavior(modifierOpenBehavior);
-
-      const selectedAccount = accounts.getSelectedAccount();
-
-      if (openBehavior === "newWindow") {
-        selectedAccount.instance.tabs.openWindowedTab(getWorkspaceAppUrl(app));
-
-        return;
-      }
-
-      const workspaceApp = selectedAccount.instance.tabs.openTab(getWorkspaceAppUrl(app));
-
-      if (openBehavior === "backgroundTab") {
-        return;
-      }
-
-      selectedAccount.instance.tabs.activateTab(workspaceApp.id);
-
-      accounts.refreshSelectedAccountView();
+      openWorkspaceApp(app, modifierOpenBehavior);
     });
 
     ipc.main.on("doNotDisturb.toggle", () => {

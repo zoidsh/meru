@@ -1,11 +1,14 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
+import { workspaceApps } from "@meru/shared/workspace-apps";
 import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { accounts } from "@/accounts";
 import { getActiveView } from "@/active-view";
+import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
-import { showRestartDialog } from "@/dialogs";
+import { showRestartDialog, openProUpgradeUrl } from "@/dialogs";
+import { doNotDisturb, DoNotDisturb } from "@/do-not-disturb";
 import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
 import { copyText } from "@/lib/clipboard";
@@ -15,6 +18,7 @@ import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
+import { openWorkspaceApp } from "@/workspace-apps";
 import { createMeruMessageUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
 
@@ -259,6 +263,25 @@ export class AppMenu {
 
     const allAccounts = accounts.getAccounts();
 
+    const selectedAccountActiveTabInstance = selectedAccount.instance.tabs.activeTab;
+
+    const activeWorkspaceAppTab =
+      selectedAccountActiveTabInstance instanceof WorkspaceApp &&
+      selectedAccountActiveTabInstance.isSavable
+        ? selectedAccountActiveTabInstance
+        : undefined;
+
+    const isSavedSearchesEnabled =
+      licenseKey.isValid && isGmailVisible && config.get("gmail.savedSearches").length > 0;
+
+    const isWorkspaceAppLauncherEnabled =
+      licenseKey.isValid &&
+      main.location === "/" &&
+      config.get("workspaceApps.launcherApps").length > 0;
+
+    const isVerticalTabsWide =
+      (selectedAccount.instance.verticalTabsWidth ?? config.get("verticalTabs.width")) === "wide";
+
     const template: MenuItemConstructorOptions[] = [
       {
         label: app.name,
@@ -426,6 +449,107 @@ export class AppMenu {
           {
             type: "separator",
           },
+          /*
+           * The titlebar and the tab strip are not in the tab order, so the
+           * controls they hold reach the keyboard from here instead. Each one
+           * gates its own click as well as the item: a disabled parent leaves
+           * its children live on Windows and Linux.
+           */
+          {
+            label: "Show Bookmarks",
+            enabled: licenseKey.isValid && main.location === "/",
+            click: () => {
+              if (!licenseKey.isValid) {
+                return;
+              }
+
+              bookmarks.togglePopup(main.window, "titlebar");
+            },
+          },
+          {
+            label: "Saved Searches",
+            enabled: isSavedSearchesEnabled,
+            submenu: config.get("gmail.savedSearches").map((savedSearch) => ({
+              label: savedSearch.label,
+              click: () => {
+                if (!isSavedSearchesEnabled) {
+                  return;
+                }
+
+                main.navigate("/");
+
+                selectedAccount.instance.gmail.search(savedSearch.query);
+              },
+            })),
+          },
+          {
+            label: "Open Workspace App",
+            enabled: isWorkspaceAppLauncherEnabled,
+            submenu: config.get("workspaceApps.launcherApps").map((launcherApp) => ({
+              label: workspaceApps[launcherApp].label,
+              click: () => {
+                if (!isWorkspaceAppLauncherEnabled) {
+                  return;
+                }
+
+                main.navigate("/");
+
+                openWorkspaceApp(launcherApp);
+              },
+            })),
+          },
+          {
+            label: "Do Not Disturb",
+            enabled: licenseKey.isValid,
+            submenu: [
+              ...(config.get("doNotDisturb.enabled")
+                ? [
+                    {
+                      label: "Turn Off",
+                      click: () => {
+                        if (!licenseKey.isValid) {
+                          return;
+                        }
+
+                        doNotDisturb.disable();
+                      },
+                    },
+                    { type: "separator" as const },
+                  ]
+                : []),
+              ...DoNotDisturb.options.map(({ label, duration }) => ({
+                label,
+                type: "checkbox" as const,
+                checked:
+                  config.get("doNotDisturb.enabled") &&
+                  config.get("doNotDisturb.duration") === duration,
+                click: () => {
+                  if (!licenseKey.isValid) {
+                    return;
+                  }
+
+                  doNotDisturb.enable(duration);
+                },
+              })),
+            ],
+          },
+          {
+            label: isVerticalTabsWide ? "Narrow Tab Strip" : "Widen Tab Strip",
+            enabled: licenseKey.isValid && main.location === "/",
+            click: () => {
+              if (!licenseKey.isValid) {
+                return;
+              }
+
+              accounts.setVerticalTabsWidth(
+                selectedAccount.config.id,
+                isVerticalTabsWide ? "narrow" : "wide",
+              );
+            },
+          },
+          {
+            type: "separator",
+          },
           {
             label: "Actual Size",
             accelerator: "CommandOrControl+0",
@@ -471,6 +595,12 @@ export class AppMenu {
             accelerator: "CommandOrControl+Shift+R",
             click: () => {
               getActiveViewWebContents().reloadIgnoringCache();
+            },
+          },
+          {
+            label: "Stop",
+            click: () => {
+              getActiveViewWebContents().stop();
             },
           },
           {
@@ -590,6 +720,16 @@ export class AppMenu {
             },
           },
           {
+            label: activeWorkspaceAppTab?.bookmarkState.bookmarked ? "Remove Bookmark" : "Bookmark",
+            enabled: Boolean(activeWorkspaceAppTab),
+            click: () => {
+              activeWorkspaceAppTab?.toggleBookmark();
+            },
+          },
+          {
+            type: "separator",
+          },
+          {
             label: "Reopen Closed Tab",
             accelerator: "CommandOrControl+Shift+T",
             click: () => {
@@ -685,6 +825,13 @@ export class AppMenu {
           },
           {
             type: "separator",
+          },
+          {
+            label: "Upgrade to Meru Pro",
+            visible: !licenseKey.isValid,
+            click: () => {
+              openProUpgradeUrl();
+            },
           },
           {
             label: "Website",
