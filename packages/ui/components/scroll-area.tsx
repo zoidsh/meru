@@ -3,15 +3,31 @@
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
 import { cn } from "../lib/utils";
 
-function ScrollArea({ className, children, ...props }: ScrollAreaPrimitive.Root.Props) {
+function ScrollArea({
+  className,
+  children,
+  viewportTabIndex,
+  ...props
+}: ScrollAreaPrimitive.Root.Props & {
+  /** `-1` keeps a scroller out of the tab order even when nothing inside it is focusable. */
+  viewportTabIndex?: number;
+}) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
       className={cn("relative", className)}
       {...props}
     >
+      {/*
+       * Base UI gives a scrollable viewport `tabIndex={0}`, which puts a stop in
+       * front of whatever it holds. Chromium already makes a scroller focusable
+       * on its own, and only when nothing inside it is, so it is left to decide:
+       * the settings nav hands Tab straight to its items, while a viewport of
+       * plain text can still be scrolled from the keyboard.
+       */}
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
+        tabIndex={viewportTabIndex}
         className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
       >
         {children}
