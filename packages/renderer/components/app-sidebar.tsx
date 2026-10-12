@@ -156,9 +156,17 @@ export function AppSidebar() {
                   onClick={() => {
                     navigate(path);
                   }}
-                  className={cn("w-full justify-start font-normal", {
-                    "text-muted-foreground hover:text-muted-foreground": location !== path,
-                  })}
+                  className={cn(
+                    /*
+                     * The item is as wide as the scroller it sits in, so a ring
+                     * outside it would be clipped at both sides. Inside, it
+                     * shows whole and the items stay aligned with the content.
+                     */
+                    "w-full justify-start font-normal focus-visible:ring-0 focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50",
+                    {
+                      "text-muted-foreground hover:text-muted-foreground": location !== path,
+                    },
+                  )}
                   variant={location === path ? "secondary" : "ghost"}
                 >
                   {label}

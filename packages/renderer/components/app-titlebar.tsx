@@ -804,7 +804,12 @@ export function AppTitlebar() {
                    */}
                   <div
                     ref={accountRow.setRowElement}
-                    className="scrollbar-none flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden draggable-none motion-safe:scroll-smooth"
+                    /*
+                     * The gutter the negative margin sets back out is the room
+                     * the first button's focus ring needs: the row clips at its
+                     * own edge, and the button starts there.
+                     */
+                    className="scrollbar-none -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden px-1 draggable-none motion-safe:scroll-smooth"
                     style={{
                       height: APP_TITLEBAR_HEIGHT,
                       scrollPaddingLeft: accountRow.canScrollLeft ? accountRow.leftArrowWidth : 0,

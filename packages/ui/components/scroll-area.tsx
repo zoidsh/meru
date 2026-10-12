@@ -10,9 +10,14 @@ function ScrollArea({ className, children, ...props }: ScrollAreaPrimitive.Root.
       className={cn("relative", className)}
       {...props}
     >
+      {/*
+       * The focus ring goes inside the viewport. It fills the root, so a ring
+       * drawn outside it is clipped away wherever the root clips, which is
+       * every scroll area that rounds its own corners.
+       */}
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
-        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
+        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
