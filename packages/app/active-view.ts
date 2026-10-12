@@ -39,9 +39,11 @@ export function navigateOnSwipe(window: BrowserWindow) {
     try {
       const { navigationHistory } = getActiveView(window).webContents;
 
-      if (direction === "right") {
+      // Electron names the direction after the sign of AppKit's deltaX, where
+      // 1 means back, so "left" is back.
+      if (direction === "left") {
         navigationHistory.goBack();
-      } else if (direction === "left") {
+      } else if (direction === "right") {
         navigationHistory.goForward();
       }
     } catch (error) {
