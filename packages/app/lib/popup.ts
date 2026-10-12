@@ -3,6 +3,7 @@ import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
 import type { BrowserWindow, Rectangle } from "electron";
 import { WebContentsView } from "electron";
+import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
 
 /**
@@ -185,6 +186,8 @@ export class Popup {
     this.view = new WebContentsView({
       webPreferences: { preload: getPreloadPath("renderer") },
     });
+
+    watchForAppMenuKey(this.view.webContents);
 
     // The page paints its own background as it fades in, so the view stays clear
     // instead of flashing white until the first frame lands

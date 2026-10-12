@@ -24,6 +24,10 @@ function ScrollArea({
        * on its own, and only when nothing inside it is, so it is left to decide:
        * the settings nav hands Tab straight to its items, while a viewport of
        * plain text can still be scrolled from the keyboard.
+       *
+       * Passing `undefined` is what takes Base UI's value off, because its
+       * `mergeProps` treats an explicit `undefined` as a value rather than as
+       * nothing to merge. `scroll-area.test.ts` holds it to that.
        */}
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
