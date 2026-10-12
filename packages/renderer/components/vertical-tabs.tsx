@@ -537,6 +537,7 @@ export function VerticalTabs() {
            * scroll container clips at would otherwise shave off.
            */}
           <ScrollArea
+            viewportTabIndex={-1}
             className="-mx-4 -my-1 shrink-0"
             style={{
               maxHeight: normalSectionReservedHeight
@@ -578,7 +579,7 @@ export function VerticalTabs() {
             }}
           >
             {/* The section that gives ground, no further than the ceiling above holds open for it */}
-            <ScrollArea className="-mx-4 -my-1 min-h-0">
+            <ScrollArea viewportTabIndex={-1} className="-mx-4 -my-1 min-h-0">
               <div
                 className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
               >
