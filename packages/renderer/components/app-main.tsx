@@ -9,21 +9,22 @@ import { DownloadHistory } from "@/routes/download-history";
 import { UnifiedInbox } from "@/routes/unified-inbox";
 import { sidebarNavItems } from "./app-sidebar";
 
-function CloseButton() {
-  const closeSettings = () => {
+/** Names the page it closes, since the same button closes all three. */
+function CloseButton({ label }: { label: string }) {
+  const closePage = () => {
     navigate("/");
   };
 
-  useHotkeys("esc", closeSettings);
+  useHotkeys("esc", closePage);
 
   return (
     <div className="flex flex-col items-center gap-2">
       <Button
         variant="outline"
         size="icon"
-        onClick={closeSettings}
+        onClick={closePage}
         className="rounded-full"
-        title="Close settings"
+        title={label}
       >
         <XIcon />
       </Button>
@@ -65,7 +66,15 @@ export function AppMain() {
             ))}
         </div>
         <div className="absolute top-8 right-8">
-          <CloseButton />
+          <CloseButton
+            label={
+              matchUnifiedInboxRoute
+                ? "Close unified inbox"
+                : matchDownloadHistoryRoute
+                  ? "Close download history"
+                  : "Close settings"
+            }
+          />
         </div>
       </ScrollArea>
     </div>
