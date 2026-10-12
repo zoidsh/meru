@@ -7,10 +7,13 @@ import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
 import { type BrowserWindow, shell } from "electron";
 import electronDl from "electron-dl";
+import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { createNotification } from "@/notifications";
 import { fileExists } from "./lib/fs";
+import { log } from "./lib/log";
 import { Popup } from "./lib/popup";
+import { quarantineFile } from "./lib/quarantine";
 
 const FILE_MANAGER_NAME = platform.isMacOS
   ? "Finder"
@@ -65,9 +68,19 @@ class Downloads {
 
   init() {
     const handleStarted = (item: Electron.DownloadItem) => {
-      item.once("done", (_, state) => {
+      item.once("done", async (_, state) => {
         const filePath = item.getSavePath();
         const fileName = path.basename(filePath);
+
+        // Awaited first, so nothing below can lead to the file being opened
+        // before it is quarantined.
+        if (state === "completed" && platform.isMacOS) {
+          try {
+            await quarantineFile(filePath);
+          } catch (error) {
+            log.error("Failed to quarantine download", { error: serializeError(error) });
+          }
+        }
 
         this.addDownloadHistoryItem({
           fileName,
