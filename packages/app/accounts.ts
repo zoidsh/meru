@@ -227,7 +227,13 @@ class Accounts {
    * off whatever the renderer had, which otherwise keeps its focus ring while
    * the view in front of it takes the keys.
    */
-  focusActiveView() {
+  /**
+   * `blurRenderer` is off for the window regaining focus. That event arrives
+   * before the click that caused it reaches the page, so a blur sent from there
+   * lands after the click has focused something and takes it away again; the
+   * focus call below is synchronous, so the click still wins against it.
+   */
+  focusActiveView({ blurRenderer = true }: { blurRenderer?: boolean } = {}) {
     const { instance } = this.getSelectedAccount();
 
     const activeTab = instance.tabs.activeTab;
@@ -252,7 +258,9 @@ class Accounts {
         ? instance.gmail.view
         : (activeTab.view ?? instance.gmail.view);
 
-    ipc.renderer.send(main.window.webContents, "window.blurFocusedElement");
+    if (blurRenderer) {
+      ipc.renderer.send(main.window.webContents, "window.blurFocusedElement");
+    }
 
     view.webContents.focus();
   }

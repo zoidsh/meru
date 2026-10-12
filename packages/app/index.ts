@@ -278,7 +278,7 @@ async function init() {
 
   if (!app.commandLine.hasSwitch("disable-bring-to-top-on-focus")) {
     main.window.on("focus", () => {
-      accounts.focusActiveView();
+      accounts.focusActiveView({ blurRenderer: false });
     });
   }
 
