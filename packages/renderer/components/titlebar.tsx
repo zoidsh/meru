@@ -12,6 +12,14 @@ import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } 
 import { type ComponentProps, type ReactNode, type Ref, useState } from "react";
 import { useCloseOnWindowBlur } from "@/lib/hooks";
 
+/**
+ * The titlebar is window chrome, so nothing in it is a tab stop: Tab belongs to
+ * whatever is in front, the way it does in a browser's page. Every control here
+ * is reachable from the application menu instead, and each one still takes a
+ * click. The exceptions carry their own note: the app menu button, which is the
+ * keyboard's way into the menu on Windows and Linux, and the find field, which
+ * a shortcut opens and the keyboard then works inside.
+ */
 export function Titlebar({ children }: { children: ReactNode }) {
   return (
     <div
@@ -96,7 +104,13 @@ export function TitlebarTitle({ children }: { children: string }) {
 
 export function TitlebarIconButton({ className, ...props }: ComponentProps<typeof Button>) {
   return (
-    <Button variant="ghost" size="icon-sm" className={cn("draggable-none", className)} {...props} />
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      tabIndex={-1}
+      className={cn("draggable-none", className)}
+      {...props}
+    />
   );
 }
 
