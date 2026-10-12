@@ -48,6 +48,7 @@ class Main {
 
     if (isAccountLocation) {
       accounts.show();
+      accounts.focusActiveView();
     } else {
       accounts.hide();
     }

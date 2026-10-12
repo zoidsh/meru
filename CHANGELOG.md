@@ -18,3 +18,4 @@ This file is the draft of the next release, written one line at a time as work l
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
 - The close button on the unified inbox and the download history says what it closes, instead of offering to close settings that are not open
 - Keyboard focus is visible again in Meru's own interface: buttons, switches, checkboxes, tabs and sliders draw a focus ring when you tab to them, instead of leaving you to guess where you are
+- Closing Settings, the unified inbox or the download history puts the keyboard back in your mail, so you can type straight away instead of first clicking the page

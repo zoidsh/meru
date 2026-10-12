@@ -13,6 +13,7 @@ import { Account } from "./account";
 import { config } from "./config";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
+import { resolveViewFocusTarget } from "./lib/view-focus";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { isWindowedTab } from "./tabs";
@@ -217,9 +218,43 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    if (main.location === "/") {
-      activeTab.view.webContents.focus();
+    this.focusActiveView();
+  }
+
+  /**
+   * The one place that decides where keyboard focus goes when an account's
+   * content comes back to the front, so no caller has to. It also takes focus
+   * off whatever the renderer had, which otherwise keeps its focus ring while
+   * the view in front of it takes the keys.
+   */
+  focusActiveView() {
+    const { instance } = this.getSelectedAccount();
+
+    const activeTab = instance.tabs.activeTab;
+
+    const isGmailTab = activeTab.id === GMAIL_TAB_ID;
+
+    const target = resolveViewFocusTarget({
+      location: main.location,
+      activeTab: {
+        isWindowed: isWindowedTab(activeTab),
+        hasView: isGmailTab ? instance.gmail.hasView : activeTab.view !== undefined,
+      },
+      hasGmailView: instance.gmail.hasView,
+    });
+
+    if (!target) {
+      return;
     }
+
+    const view =
+      target === "gmail" || isGmailTab
+        ? instance.gmail.view
+        : (activeTab.view ?? instance.gmail.view);
+
+    ipc.renderer.send(main.window.webContents, "window.blurFocusedElement");
+
+    view.webContents.focus();
   }
 
   /**

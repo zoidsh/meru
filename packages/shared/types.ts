@@ -304,6 +304,7 @@ export type IpcMainEvents =
 
 export type IpcRendererEvent = {
   navigate: [to: string];
+  "window.blurFocusedElement": [];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: GmailAction, requestId: string];
   "gmail.refreshInbox": [];

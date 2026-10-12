@@ -6,6 +6,16 @@ ipc.renderer.on("navigate", (_event, to) => {
   navigate(to);
 });
 
+/*
+ * A view in front of the page takes the keys, but the page keeps its focused
+ * element, and with it the focus ring. Main says when that has happened.
+ */
+ipc.renderer.on("window.blurFocusedElement", () => {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+});
+
 ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
   const canvas = document.createElement("canvas");
 
