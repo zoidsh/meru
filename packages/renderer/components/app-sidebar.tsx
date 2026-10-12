@@ -138,9 +138,15 @@ export function AppSidebar() {
   const [location, navigate] = useLocation();
 
   return (
-    <div className="bg-sidebar p-4 pr-0" data-testid="settings-nav">
-      <ScrollArea className="h-full w-56">
-        <div className="space-y-2">
+    /*
+     * The gutter the items need for their focus rings is set inside the
+     * scroller rather than around it, because the scroller clips at its own
+     * edge and the items are as wide as it is. The padding that used to sit out
+     * here pays for it, so the items land where they always did.
+     */
+    <div className="bg-sidebar py-3 pl-3" data-testid="settings-nav">
+      <ScrollArea className="h-full w-58">
+        <div className="space-y-2 p-1">
           {sidebarNavItems
             .filter((item) => !item.hidden)
             .map(({ type, label, path }, index) => {
@@ -156,17 +162,9 @@ export function AppSidebar() {
                   onClick={() => {
                     navigate(path);
                   }}
-                  className={cn(
-                    /*
-                     * The item is as wide as the scroller it sits in, so a ring
-                     * outside it would be clipped at both sides. Inside, it
-                     * shows whole and the items stay aligned with the content.
-                     */
-                    "w-full justify-start font-normal focus-visible:ring-0 focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50",
-                    {
-                      "text-muted-foreground hover:text-muted-foreground": location !== path,
-                    },
-                  )}
+                  className={cn("w-full justify-start font-normal", {
+                    "text-muted-foreground hover:text-muted-foreground": location !== path,
+                  })}
                   variant={location === path ? "secondary" : "ghost"}
                 >
                   {label}
