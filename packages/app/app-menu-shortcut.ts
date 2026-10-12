@@ -40,6 +40,11 @@ export function watchForAppMenuKey(webContents: WebContents) {
   // menu. This is `input-event` rather than `before-input-event`, which is
   // keys only.
   webContents.on("input-event", (_event, input) => {
+    // Keys arrive here too, as `rawKeyDown`. They are the other listener's.
+    if (input.type !== "mouseDown") {
+      return;
+    }
+
     state = readAppMenuKey(state, input).state;
   });
 

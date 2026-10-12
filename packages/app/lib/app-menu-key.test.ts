@@ -94,8 +94,8 @@ describe("readAppMenuKey", () => {
     );
   });
 
-  test("a composition in the middle of the gesture ends it", () => {
-    expect(run([press("Alt"), press("a", { isComposing: true }), release("Alt")])).toBe(0);
+  test("a release an input method is composing through ends the gesture", () => {
+    expect(run([press("Alt"), release("Alt", { isComposing: true })])).toBe(0);
   });
 
   test("two taps open it twice", () => {
