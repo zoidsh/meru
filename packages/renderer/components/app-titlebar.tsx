@@ -672,7 +672,12 @@ export function AppTitlebar() {
         data-account-id={account.config.id}
         variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
-        className="draggable-none"
+        /*
+         * The row scrolls sideways and clips at its own edge, where the first
+         * button starts, so the focus ring goes inside. Room outside would have
+         * to come from the row, and the scroll arrows are placed from its width.
+         */
+        className="draggable-none focus-visible:ring-0 focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50"
         onClick={() => {
           navigate("/");
 
@@ -809,7 +814,7 @@ export function AppTitlebar() {
                      * the first button's focus ring needs: the row clips at its
                      * own edge, and the button starts there.
                      */
-                    className="scrollbar-none -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden px-1 draggable-none motion-safe:scroll-smooth"
+                    className="scrollbar-none flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden draggable-none motion-safe:scroll-smooth"
                     style={{
                       height: APP_TITLEBAR_HEIGHT,
                       scrollPaddingLeft: accountRow.canScrollLeft ? accountRow.leftArrowWidth : 0,
