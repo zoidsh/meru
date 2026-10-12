@@ -193,6 +193,9 @@ const ACCOUNT_ROW_SCROLL_OVERLAP = 40;
 /** The shortest an arrow click moves, for a row with barely anything visible. */
 const ACCOUNT_ROW_MINIMUM_SCROLL = 80;
 
+/** The room a button's focus ring needs inside the row, which clips at its edge. */
+const ACCOUNT_ROW_GUTTER = 4;
+
 /**
  * An arrow is measured rather than assumed, because it is only in the page while
  * the row has somewhere to go that way and is a different width in every font
@@ -672,12 +675,7 @@ export function AppTitlebar() {
         data-account-id={account.config.id}
         variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
-        /*
-         * The row scrolls sideways and clips at its own edge, where the first
-         * button starts, so the focus ring goes inside. Room outside would have
-         * to come from the row, and the scroll arrows are placed from its width.
-         */
-        className="draggable-none focus-visible:ring-0 focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50"
+        className="draggable-none"
         onClick={() => {
           navigate("/");
 
@@ -809,14 +807,17 @@ export function AppTitlebar() {
                    */}
                   <div
                     ref={accountRow.setRowElement}
-                    /*
-                     * The gutter the negative margin sets back out is the room
-                     * the first button's focus ring needs: the row clips at its
-                     * own edge, and the button starts there.
-                     */
                     className="scrollbar-none flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden draggable-none motion-safe:scroll-smooth"
                     style={{
                       height: APP_TITLEBAR_HEIGHT,
+                      /*
+                       * The row clips at its own edge and the first button
+                       * starts there, so the gutter is the room that button's
+                       * focus ring needs. It is padding rather than a margin,
+                       * which would move the edge the overlays are measured
+                       * against; the spacer below gives back what it takes.
+                       */
+                      paddingInline: ACCOUNT_ROW_GUTTER,
                       scrollPaddingLeft: accountRow.canScrollLeft ? accountRow.leftArrowWidth : 0,
                       scrollPaddingRight:
                         accountRow.coveredRowWidth +
@@ -831,7 +832,9 @@ export function AppTitlebar() {
                      */}
                     <div
                       className="h-full flex-1 draggable"
-                      style={{ minWidth: accountRow.coveredRowWidth }}
+                      style={{
+                        minWidth: Math.max(0, accountRow.coveredRowWidth - ACCOUNT_ROW_GUTTER),
+                      }}
                     />
                   </div>
                   {/*
