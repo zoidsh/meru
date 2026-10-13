@@ -10,6 +10,7 @@ import {
 import { cn } from "@meru/ui/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RotateCwIcon, XIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode, type Ref, useState } from "react";
+import { useChromeMenu } from "@/lib/chrome-menu";
 import { useCloseOnWindowBlur } from "@/lib/hooks";
 
 /**
@@ -131,13 +132,16 @@ export function TitlebarDropdownMenu({
   onOpenChange: (isOpen: boolean) => void;
   children: ReactNode;
 }) {
+  const { rootProps, triggerProps, contentProps } = useChromeMenu(isOpen, onOpenChange);
+
   useCloseOnWindowBlur(isOpen, () => {
     onOpenChange(false);
   });
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={onOpenChange} orientation="horizontal">
+    <DropdownMenu {...rootProps} orientation="horizontal">
       <DropdownMenuTrigger
+        {...triggerProps}
         render={
           <TitlebarIconButton title={title} disabled={disabled}>
             {icon}
@@ -146,6 +150,7 @@ export function TitlebarDropdownMenu({
       />
       <DropdownMenuBackdrop className="draggable-none" />
       <DropdownMenuContent
+        {...contentProps}
         side={side}
         align="center"
         collisionPadding={0}

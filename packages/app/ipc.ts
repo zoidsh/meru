@@ -189,6 +189,11 @@ class Ipc {
       appMenu.togglePopup(anchor);
     });
 
+    // A menu in the chrome closing, which leaves the keyboard nowhere on purpose.
+    ipc.main.on("window.focusActiveView", () => {
+      accounts.focusActiveView();
+    });
+
     this.main.handle("licenseKey.activate", (_event, input) =>
       licenseKey.activate({ licenseKey: input }),
     );

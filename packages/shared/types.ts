@@ -228,6 +228,7 @@ export type IpcMainEvents =
       "gmail.openMessage": [messageId: string];
       "gmail.messageHandled": [requestId: string, success: boolean];
       "titleBar.toggleAppMenu": [anchor?: { x: number; y: number }];
+      "window.focusActiveView": [];
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];
       "taskbar.setOverlayIcon": [dataUrl: string];
