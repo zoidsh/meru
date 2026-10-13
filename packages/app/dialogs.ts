@@ -68,7 +68,7 @@ export function showUpdateAvailableDialog(version: string) {
   showUpdateMessageBox({
     type: "info",
     message: `Meru ${version} is available.`,
-    detail: "Meru downloads it in the background and installs it when you quit.",
+    detail: "Meru installs it when you quit.",
     buttons: ["OK"],
     defaultId: 0,
     cancelId: 0,
@@ -79,7 +79,7 @@ export function showUpdateCheckFailedDialog() {
   showUpdateMessageBox({
     type: "warning",
     message: "Meru couldn't check for updates.",
-    detail: "Check your internet connection, then try again.",
+    detail: "Try again later.",
     buttons: ["OK"],
     defaultId: 0,
     cancelId: 0,
