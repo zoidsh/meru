@@ -1,3 +1,4 @@
+// Proof of the CI skip: a code change runs everything.
 type Rgb = {
   red: number;
   green: number;
