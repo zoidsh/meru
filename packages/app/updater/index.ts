@@ -1,5 +1,6 @@
 import { is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
+import { accounts } from "@/accounts";
 import { config } from "@/config";
 import { showUnsupportedMacOSDialog } from "../dialogs";
 import { ipc } from "../ipc";
@@ -100,6 +101,9 @@ class AppUpdater {
 
   quitAndInstall() {
     main.saveWindowState();
+
+    // Set after the save, since saveTabs() is a no-op once the app is quitting
+    accounts.saveTabs();
 
     main.isQuittingApp = true;
 
