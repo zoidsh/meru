@@ -30,6 +30,8 @@ import type {
   WorkspaceAppsMode,
 } from "./workspace-apps";
 
+export type TrialState = { daysLeft: number; expired: boolean };
+
 export type DesktopSource = { id: string; name: string; thumbnail: string };
 
 export type DesktopSources = DesktopSource[];
@@ -321,7 +323,7 @@ export type IpcRendererEvent = {
   "bookmarks.changed": [bookmarks: BookmarkState[]];
   "findInPage.activate": [];
   "findInPage.result": [result: { activeMatch: number; totalMatches: number }];
-  "trial.daysLeftChanged": [daysLeft: number];
+  "trial.changed": [trial: TrialState];
   "notifications.playSound": [options: { sound: NotificationSound; volume: number }];
   "taskbar.setOverlayIcon": [unreadCount: number];
   "appUpdater.updateAvailable": [version: string];

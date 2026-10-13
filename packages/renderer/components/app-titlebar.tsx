@@ -128,7 +128,9 @@ function AppMenuButton({ className }: { className?: string }) {
 function Trial() {
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
-  if (!trialDaysLeft) {
+  const isTrialExpired = useTrialStore((state) => state.expired);
+
+  if (!trialDaysLeft && !isTrialExpired) {
     return;
   }
 
@@ -138,18 +140,21 @@ function Trial() {
       className={cn(
         "group relative h-7 border-yellow-600/60 text-yellow-600/60 transition draggable-none hover:border-transparent hover:bg-secondary hover:text-secondary-foreground",
         {
-          "border-red-600/60 text-red-600/60": trialDaysLeft <= 3,
+          "border-red-600/60 text-red-600/60": isTrialExpired || trialDaysLeft <= 3,
         },
       )}
     >
       <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer" tabIndex={-1}>
         <span className="fade-out group-hover:opacity-0">
-          Pro trial ends in{" "}
-          {trialDaysLeft >= 2
-            ? `${trialDaysLeft} days`
-            : trialDaysLeft >= 1
-              ? `${trialDaysLeft} day`
-              : "less than a day"}
+          {isTrialExpired
+            ? "Pro trial ended"
+            : `Pro trial ends in ${
+                trialDaysLeft >= 2
+                  ? `${trialDaysLeft} days`
+                  : trialDaysLeft >= 1
+                    ? `${trialDaysLeft} day`
+                    : "less than a day"
+              }`}
         </span>
         <span className="absolute inset-0 items-center justify-center opacity-0 fade-in group-hover:inline-flex group-hover:opacity-100">
           Upgrade to Meru Pro

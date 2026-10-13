@@ -1,8 +1,9 @@
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstances } from "@meru/shared/schemas";
 import type { AccountTabsState } from "@meru/shared/tabs";
+import type { TrialState } from "@meru/shared/types";
 import { create } from "zustand";
-import { accountsSearchParam, trialDaysLeftSearchParam } from "./search-params";
+import { accountsSearchParam, trialSearchParam } from "./search-params";
 
 export const useAccountsStore = create<{
   accounts: AccountInstances;
@@ -59,18 +60,12 @@ ipc.renderer.on("findInPage.result", (_event, { activeMatch, totalMatches }) => 
   }));
 });
 
-export const useTrialStore = create<{
-  daysLeft: number;
-}>(() => {
-  const daysLeft = Number(trialDaysLeftSearchParam);
+export const useTrialStore = create<TrialState>(() =>
+  trialSearchParam ? JSON.parse(trialSearchParam) : { daysLeft: 0, expired: false },
+);
 
-  return {
-    daysLeft,
-  };
-});
-
-ipc.renderer.on("trial.daysLeftChanged", (_event, daysLeft) => {
-  useTrialStore.setState({ daysLeft });
+ipc.renderer.on("trial.changed", (_event, trial) => {
+  useTrialStore.setState(trial);
 });
 
 export const useAppUpdaterStore = create<{

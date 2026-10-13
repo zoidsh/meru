@@ -4,4 +4,4 @@ export const accountsSearchParam = searchParams.get("accounts");
 
 export const darkModeSearchParam = searchParams.get("darkMode");
 
-export const trialDaysLeftSearchParam = searchParams.get("trialDaysLeft");
+export const trialSearchParam = searchParams.get("trial");
