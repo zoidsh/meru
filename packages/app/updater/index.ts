@@ -31,6 +31,8 @@ class AppUpdater {
    */
   private isManualCheck = false;
 
+  private isInstallingUpdate = false;
+
   private applyChannel() {
     const { channel, allowPrerelease, allowDowngrade } = resolveUpdateChannel(
       config.get("updates.channel"),
@@ -120,6 +122,15 @@ class AppUpdater {
     // electron-updater attaches an `error` listener of its own that logs every
     // error it dispatches, so this one only has to decide what to say about it.
     autoUpdater.on("error", (error) => {
+      // An install with no downloaded file left dispatches its error from
+      // inside `quitAndInstall` and returns, so the quitting state set for a
+      // quit that is not going to happen is given back: left standing, the
+      // close button would destroy the window instead of hiding it, and the
+      // next real quit would save neither the window state nor the tabs.
+      if (this.isInstallingUpdate) {
+        main.isQuittingApp = false;
+      }
+
       const report = resolveUpdateErrorReport(error, { isManualCheck: this.isManualCheck });
 
       if (report === "checkFailed") {
@@ -206,7 +217,11 @@ class AppUpdater {
 
     main.isQuittingApp = true;
 
+    this.isInstallingUpdate = true;
+
     autoUpdater.quitAndInstall();
+
+    this.isInstallingUpdate = false;
   }
 }
 
