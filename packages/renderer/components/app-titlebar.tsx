@@ -757,7 +757,7 @@ export function AppTitlebar() {
       );
     }
 
-    if (isAppUpdateDetailsOpen) {
+    if (isAppUpdateDetailsOpen && appUpdateVersion) {
       return (
         <div className="flex flex-1 items-center justify-center gap-4 text-xs">
           <div>Meru {appUpdateVersion} is available and ready to install</div>

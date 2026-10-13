@@ -61,6 +61,16 @@ class AppUpdater {
     );
   }
 
+  private sendUpdateAvailable(version: string | null) {
+    ipc.renderer.send(
+      main.window.webContents,
+      "appUpdater.updateAvailable",
+      version ? `v${version}` : null,
+    );
+
+    this.lastAnnouncedVersion = version;
+  }
+
   /**
    * Both promises electron-updater hands back reject on their own on top of the
    * `error` event that reports them, so both are swallowed here rather than
@@ -115,6 +125,11 @@ class AppUpdater {
       if (report === "checkFailed") {
         showUpdateCheckFailedDialog();
       } else if (report === "updateNotVerified" && this.availableVersion) {
+        // electron-updater drops what it downloaded before it verifies the
+        // version that replaces it, so an update announced earlier has no
+        // installer behind it any more and Restart now would find nothing.
+        this.sendUpdateAvailable(null);
+
         this.sendUpdateNotVerified(this.availableVersion);
       }
     });
@@ -136,13 +151,7 @@ class AppUpdater {
         return;
       }
 
-      ipc.renderer.send(
-        main.window.webContents,
-        "appUpdater.updateAvailable",
-        `v${updateInfo.version}`,
-      );
-
-      this.lastAnnouncedVersion = updateInfo.version;
+      this.sendUpdateAvailable(updateInfo.version);
     });
 
     const systemVersion = process.getSystemVersion();
