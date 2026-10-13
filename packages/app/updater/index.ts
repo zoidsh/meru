@@ -3,20 +3,27 @@ import { GITHUB_REPO_URL } from "@meru/shared/constants";
 import { autoUpdater } from "electron-updater";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
-import { showUnsupportedMacOSDialog } from "../dialogs";
+import {
+  showUnsupportedMacOSDialog,
+  showUpdateCheckFailedDialog,
+  showUpdateAvailableDialog,
+  showUpdateNotAvailableDialog,
+} from "../dialogs";
 import { ipc } from "../ipc";
 import { log } from "../lib/log";
 import { main } from "../main";
 import { openExternalUrl } from "../url";
 import { shouldAnnounceUpdate } from "./announce";
 import { resolveUpdateChannel } from "./channel";
-import { isInvalidSignatureError } from "./errors";
+import { resolveUpdateErrorReport } from "./errors";
 import { isUpdateSupported, MINIMUM_MACOS_VERSION } from "./support";
 
 class AppUpdater {
   private lastAnnouncedVersion: string | null = null;
 
   private availableVersion: string | null = null;
+
+  private isManualCheck = false;
 
   private applyChannel() {
     const { channel, allowPrerelease, allowDowngrade } = resolveUpdateChannel(
@@ -47,9 +54,17 @@ class AppUpdater {
    * Both promises electron-updater hands back reject on their own on top of the
    * `error` event that reports them, so both are swallowed here rather than
    * left to surface as unhandled rejections.
+   *
+   * A check is only manual until it settles. The download it starts, and the
+   * signature failure that can end that, arrive long after the menu item was
+   * chosen, so they belong in the titlebar rather than in a dialog.
    */
-  private async requestUpdateCheck() {
+  private async requestUpdateCheck({ isManualCheck = false }: { isManualCheck?: boolean } = {}) {
+    this.isManualCheck = isManualCheck;
+
     const result = await autoUpdater.checkForUpdates().catch(() => null);
+
+    this.isManualCheck = false;
 
     result?.downloadPromise?.catch(() => null);
   }
@@ -69,12 +84,26 @@ class AppUpdater {
 
     autoUpdater.on("update-available", (updateInfo) => {
       this.availableVersion = updateInfo.version;
+
+      if (this.isManualCheck) {
+        showUpdateAvailableDialog(updateInfo.version);
+      }
+    });
+
+    autoUpdater.on("update-not-available", () => {
+      if (this.isManualCheck) {
+        showUpdateNotAvailableDialog();
+      }
     });
 
     // electron-updater attaches an `error` listener of its own that logs every
     // error it dispatches, so this one only has to decide what to say about it.
     autoUpdater.on("error", (error) => {
-      if (isInvalidSignatureError(error) && this.availableVersion) {
+      const report = resolveUpdateErrorReport(error, { isManualCheck: this.isManualCheck });
+
+      if (report === "checkFailed") {
+        showUpdateCheckFailedDialog();
+      } else if (report === "updateNotVerified" && this.availableVersion) {
         this.sendUpdateNotVerified(this.availableVersion);
       }
     });
@@ -126,14 +155,14 @@ class AppUpdater {
     );
   }
 
-  checkForUpdates() {
+  checkForUpdates({ isManualCheck = false }: { isManualCheck?: boolean } = {}) {
     if (is.dev || !this.isUpdateSupported()) {
       return;
     }
 
     this.lastAnnouncedVersion = null;
 
-    this.requestUpdateCheck();
+    this.requestUpdateCheck({ isManualCheck });
   }
 
   openReleasePage() {

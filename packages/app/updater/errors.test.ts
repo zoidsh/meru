@@ -1,42 +1,56 @@
 import { describe, expect, test } from "bun:test";
-import { isInvalidSignatureError } from "./errors";
+import { resolveUpdateErrorReport } from "./errors";
 
-/** The error electron-updater throws when the downloaded signature is wrong. */
-function invalidSignatureError() {
-  const error = new Error(
-    "New version 3.64.0 is not signed by the application owner: publisherNames: Zoid Ltd, raw info: ...",
-  );
+function updaterError(message: string, code?: string) {
+  const error = new Error(message);
 
-  Object.assign(error, { code: "ERR_UPDATER_INVALID_SIGNATURE" });
+  if (code) {
+    Object.assign(error, { code });
+  }
 
   return error;
 }
 
-describe("isInvalidSignatureError", () => {
-  test("recognizes the signature error by its code", () => {
-    expect(isInvalidSignatureError(invalidSignatureError())).toBe(true);
+/** The error electron-updater throws when the downloaded signature is wrong. */
+const invalidSignatureError = updaterError(
+  "New version 3.64.0 is not signed by the application owner: publisherNames: Zoid Ltd",
+  "ERR_UPDATER_INVALID_SIGNATURE",
+);
+
+describe("resolveUpdateErrorReport", () => {
+  test("reports an unverified update, whichever check downloaded it", () => {
+    expect(resolveUpdateErrorReport(invalidSignatureError, { isManualCheck: false })).toBe(
+      "updateNotVerified",
+    );
+    expect(resolveUpdateErrorReport(invalidSignatureError, { isManualCheck: true })).toBe(
+      "updateNotVerified",
+    );
   });
 
-  test("ignores another updater error", () => {
-    const error = new Error("Cannot find channel file");
+  test("reports any other error only to whoever asked for the check", () => {
+    const error = updaterError("net::ERR_INTERNET_DISCONNECTED");
 
-    Object.assign(error, { code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" });
-
-    expect(isInvalidSignatureError(error)).toBe(false);
+    expect(resolveUpdateErrorReport(error, { isManualCheck: true })).toBe("checkFailed");
+    expect(resolveUpdateErrorReport(error, { isManualCheck: false })).toBe(null);
   });
 
-  test("ignores an error with no code, whatever it says", () => {
-    expect(isInvalidSignatureError(new Error("net::ERR_INTERNET_DISCONNECTED"))).toBe(false);
+  test("tells another updater error code apart from the signature one", () => {
+    const error = updaterError("Cannot find channel file", "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND");
+
+    expect(resolveUpdateErrorReport(error, { isManualCheck: false })).toBe(null);
+  });
+
+  test("goes by the code rather than the message", () => {
+    const error = updaterError("New version 3.64.0 is not signed by the application owner");
+
+    expect(resolveUpdateErrorReport(error, { isManualCheck: false })).toBe(null);
+  });
+
+  test("takes what is not an error at all as any other failure", () => {
+    expect(resolveUpdateErrorReport(null, { isManualCheck: true })).toBe("checkFailed");
+    expect(resolveUpdateErrorReport(undefined, { isManualCheck: false })).toBe(null);
     expect(
-      isInvalidSignatureError(
-        new Error("New version 3.64.0 is not signed by the application owner"),
-      ),
-    ).toBe(false);
-  });
-
-  test("ignores what is not an error at all", () => {
-    expect(isInvalidSignatureError(null)).toBe(false);
-    expect(isInvalidSignatureError(undefined)).toBe(false);
-    expect(isInvalidSignatureError("ERR_UPDATER_INVALID_SIGNATURE")).toBe(false);
+      resolveUpdateErrorReport("ERR_UPDATER_INVALID_SIGNATURE", { isManualCheck: false }),
+    ).toBe(null);
   });
 });

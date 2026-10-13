@@ -37,6 +37,39 @@ export async function showUnsupportedMacOSDialog() {
   }
 }
 
+export function showUpdateNotAvailableDialog() {
+  dialog.showMessageBox(main.window, {
+    type: "info",
+    message: "Meru is up to date.",
+    detail: `Meru ${app.getVersion()} is the latest version.`,
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
+}
+
+export function showUpdateAvailableDialog(version: string) {
+  dialog.showMessageBox(main.window, {
+    type: "info",
+    message: `Meru ${version} is available.`,
+    detail: "Meru downloads it in the background and installs it when you quit.",
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
+}
+
+export function showUpdateCheckFailedDialog() {
+  dialog.showMessageBox(main.window, {
+    type: "warning",
+    message: "Meru couldn't check for updates.",
+    detail: "Check your internet connection, then try again.",
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
+}
+
 export async function confirmAppLinksTabHandover(
   workspaceApp: SupportedWorkspaceApp,
   appLinksTabTitle: string,
