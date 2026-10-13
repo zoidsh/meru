@@ -23,6 +23,12 @@ class AppUpdater {
 
   private availableVersion: string | null = null;
 
+  /**
+   * One flag for the whole updater, rather than one per check: a background
+   * check or a channel change starting while a manual one is in flight takes it
+   * over, so that manual check can go unanswered, and an error from a download
+   * running under a manual check can be reported as a failed check.
+   */
   private isManualCheck = false;
 
   private applyChannel() {
