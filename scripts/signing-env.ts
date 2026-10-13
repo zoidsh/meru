@@ -1,7 +1,7 @@
 /*
  * electron-builder signs with whatever part of a signing environment it finds,
  * and skips what is missing with no more than a log line: without the
- * certificate it builds unsigned, without the Apple ID it skips notarisation,
+ * certificate it builds unsigned, without the API key it skips notarisation,
  * and without the profile the Touch ID entitlement stops the app launching. A
  * partial set is therefore a mistake, and fails the build here.
  */
@@ -9,8 +9,9 @@ export const SIGNING_ENV_VARS = {
   mac: [
     "CSC_LINK",
     "CSC_KEY_PASSWORD",
-    "APPLE_ID",
-    "APPLE_APP_SPECIFIC_PASSWORD",
+    "APPLE_API_KEY",
+    "APPLE_API_KEY_ID",
+    "APPLE_API_ISSUER",
     "APPLE_TEAM_ID",
     "APPLE_PROVISIONING_PROFILE",
   ],
