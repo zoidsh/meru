@@ -272,6 +272,10 @@ class Ipc {
       main.navigate("/settings/version-history");
     });
 
+    ipc.main.on("appUpdater.openReleasePage", () => {
+      appUpdater.openReleasePage();
+    });
+
     ipc.main.on("gmail.search", (_event, searchQuery) => {
       const selectedAccount = accounts.getSelectedAccount();
 

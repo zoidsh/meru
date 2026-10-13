@@ -70,9 +70,11 @@ ipc.renderer.on("trial.changed", (_event, trial) => {
 
 export const useAppUpdaterStore = create<{
   version: string | null;
+  unverifiedVersion: string | null;
   dismiss: () => void;
 }>((set) => ({
   version: null,
+  unverifiedVersion: null,
   dismiss: () => {
     set({ version: null });
   },
@@ -80,4 +82,8 @@ export const useAppUpdaterStore = create<{
 
 ipc.renderer.on("appUpdater.updateAvailable", (_event, version) => {
   useAppUpdaterStore.setState({ version });
+});
+
+ipc.renderer.on("appUpdater.updateNotVerified", (_event, version) => {
+  useAppUpdaterStore.setState({ unverifiedVersion: version });
 });
