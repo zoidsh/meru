@@ -11,6 +11,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
+- **Meru Pro:** During a Pro trial, the days left in the titlebar count down while Meru stays open, and a trial that ends while Meru is open says so in a dialog and in the titlebar, instead of waiting for the next start
 - **Meru Pro:** During a Pro trial, the saved searches button appears in the titlebar, instead of staying hidden until a license key is activated
 - **Meru Pro:** A saved search whose query holds a quote, a backslash or a slash, such as `subject:"out of office"`, opens in Gmail instead of doing nothing
 - `Notify when updates are available` in `Settings… → Updates` takes effect as soon as it is switched, instead of at the next start

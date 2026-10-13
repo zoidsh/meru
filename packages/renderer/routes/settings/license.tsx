@@ -141,6 +141,8 @@ function ActivateLicenseKeyButton() {
 export function LicenseSettings() {
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
+  const isTrialExpired = useTrialStore((state) => state.expired);
+
   const [isChangeLicenseDialogOpen, setIsChangeLicenseDialogOpen] = useState(false);
 
   const [isLicenseKeyRevealed, setIsLicenseKeyRevealed] = useState(false);
@@ -306,15 +308,26 @@ export function LicenseSettings() {
       );
     }
 
-    if (trialDaysLeft) {
+    if (trialDaysLeft || isTrialExpired) {
       return (
         <>
           <div className="mb-4 space-y-2 text-sm">
-            <div>
-              You're using a Meru Pro trial with {trialDaysLeft} day
-              {trialDaysLeft > 1 ? "s" : ""} left.
-            </div>
-            <div>Purchase Meru Pro before your trial ends to keep using all features.</div>
+            {isTrialExpired ? (
+              <>
+                <div>
+                  Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru.
+                </div>
+                <div>Purchase Meru Pro to keep using all features.</div>
+              </>
+            ) : (
+              <>
+                <div>
+                  You're using a Meru Pro trial with {trialDaysLeft} day
+                  {trialDaysLeft > 1 ? "s" : ""} left.
+                </div>
+                <div>Purchase Meru Pro before your trial ends to keep using all features.</div>
+              </>
+            )}
           </div>
           <div className="flex gap-4">
             <ActivateLicenseKeyButton />

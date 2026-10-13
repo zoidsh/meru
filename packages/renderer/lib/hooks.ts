@@ -87,7 +87,8 @@ export function useVerticalTabs() {
 export function useIsLicenseKeyValid() {
   const { config } = useConfig();
 
-  const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft));
+  // A trial that ends mid-session keeps Pro until the next launch, as main does.
+  const isTrialActive = useTrialStore((state) => Boolean(state.daysLeft) || state.expired);
 
   return isTrialActive || Boolean(config?.licenseKey);
 }

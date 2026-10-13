@@ -12,11 +12,17 @@ import { main } from "./main";
 import { openExternalUrl } from "./url";
 
 class Trial {
-  private validationInterval: NodeJS.Timeout | undefined;
+  private checkInterval: NodeJS.Timeout | undefined;
 
   daysLeft = 0;
 
-  async validate({ useFallback }: { useFallback?: boolean } = {}): Promise<boolean> {
+  /*
+   * Set when the periodic check finds the trial over. Pro stays on until the
+   * next launch, which then takes the stored `trial.expired` and starts free.
+   */
+  expired = false;
+
+  async validate(): Promise<boolean> {
     if (licenseKey.isValid) {
       return true;
     }
@@ -36,21 +42,9 @@ class Trial {
       return true;
     }
 
-    const { error, data } = await (useFallback ? apiFallbackClient : apiClient).v2.license.trial({
-      deviceId: await getMachineId(),
-    });
+    const { error, data } = await this.request();
 
     if (error) {
-      if (!useFallback) {
-        log.error("Failed to validate trial, retrying with fallback API client", {
-          error: serializeError(error),
-        });
-
-        return this.validate({ useFallback: true });
-      }
-
-      log.error("Failed to validate trial", { error: serializeError(error) });
-
       const { response } = await dialog.showMessageBox({
         type: "error",
         message: "Couldn't validate your Meru Pro trial.",
@@ -70,12 +64,6 @@ class Trial {
     }
 
     if (data.expired) {
-      if (this.validationInterval) {
-        clearInterval(this.validationInterval);
-
-        this.validationInterval = undefined;
-      }
-
       config.set("trial.expired", true);
 
       const { response } = await dialog.showMessageBox({
@@ -88,29 +76,19 @@ class Trial {
       });
 
       if (response === 0) {
-        openExternalUrl("https://meru.so/#pricing", { skipTrustedHostCheck: true });
+        openPricing();
       }
 
-      if (response === 2) {
-        return false;
-      }
-
-      return true;
-    }
-
-    if (this.validationInterval) {
-      this.setDaysLeft(data.daysLeft);
-
-      return true;
+      return response !== 2;
     }
 
     licenseKey.isValid = true;
 
     this.daysLeft = data.daysLeft;
 
-    this.validationInterval = setInterval(
+    this.checkInterval = setInterval(
       () => {
-        this.validate();
+        this.check();
       },
       1000 * 60 * 60 * 3,
     );
@@ -118,11 +96,82 @@ class Trial {
     return true;
   }
 
-  setDaysLeft(daysLeft: number) {
-    this.daysLeft = daysLeft;
+  // A failure here is silent: nothing changes before the next launch, which
+  // validates again and owns the dialogs.
+  private async check() {
+    const { error, data } = await this.request();
 
-    ipc.renderer.send(main.window.webContents, "trial.daysLeftChanged", daysLeft);
+    if (error) {
+      return;
+    }
+
+    if (!data.expired) {
+      this.daysLeft = data.daysLeft;
+
+      this.sendChanged();
+
+      return;
+    }
+
+    clearInterval(this.checkInterval);
+
+    this.checkInterval = undefined;
+
+    this.daysLeft = 0;
+
+    this.expired = true;
+
+    config.set("trial.expired", true);
+
+    this.sendChanged();
+
+    const { response } = await dialog.showMessageBox(main.window, {
+      type: "info",
+      message: "Your Meru Pro trial has ended.",
+      detail:
+        "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade.",
+      buttons: ["Upgrade to Meru Pro", "Not now"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+
+    if (response === 0) {
+      openPricing();
+    }
   }
+
+  private async request() {
+    const deviceId = await getMachineId();
+
+    const result = await apiClient.v2.license.trial({ deviceId });
+
+    if (!result.error) {
+      return result;
+    }
+
+    log.error("Failed to validate trial, retrying with fallback API client", {
+      error: serializeError(result.error),
+    });
+
+    const fallbackResult = await apiFallbackClient.v2.license.trial({ deviceId });
+
+    if (fallbackResult.error) {
+      log.error("Failed to validate trial", { error: serializeError(fallbackResult.error) });
+    }
+
+    return fallbackResult;
+  }
+
+  private sendChanged() {
+    ipc.renderer.send(main.window.webContents, "trial.changed", {
+      daysLeft: this.daysLeft,
+      expired: this.expired,
+    });
+  }
+}
+
+function openPricing() {
+  openExternalUrl("https://meru.so/#pricing", { skipTrustedHostCheck: true });
 }
 
 export const trial = new Trial();

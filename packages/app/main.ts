@@ -1,6 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
+import type { TrialState } from "@meru/shared/types";
 import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { watchForAppMenuKey } from "@/app-menu-shortcut";
@@ -90,8 +91,11 @@ class Main {
 
     searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
 
-    if (trial.daysLeft) {
-      searchParams.set("trialDaysLeft", JSON.stringify(trial.daysLeft));
+    if (trial.daysLeft || trial.expired) {
+      searchParams.set(
+        "trial",
+        JSON.stringify({ daysLeft: trial.daysLeft, expired: trial.expired } satisfies TrialState),
+      );
     }
 
     loadRenderer(this.window, {
