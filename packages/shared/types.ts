@@ -227,7 +227,8 @@ export type IpcMainEvents =
       "gmail.setUserEmail": [email: string];
       "gmail.openMessage": [messageId: string];
       "gmail.messageHandled": [requestId: string, success: boolean];
-      "titleBar.toggleAppMenu": [];
+      "titleBar.toggleAppMenu": [anchor?: { x: number; y: number }];
+      "window.focusActiveView": [];
       "desktopSources.select": [desktopSource: SelectedDesktopSource];
       findInPage: [text: string | null, options?: { forward?: boolean; findNext: boolean }];
       "taskbar.setOverlayIcon": [dataUrl: string];
@@ -304,6 +305,8 @@ export type IpcMainEvents =
 
 export type IpcRendererEvent = {
   navigate: [to: string];
+  "window.blurFocusedElement": [];
+  "appMenu.toggle": [];
   "gmail.navigateTo": [hashLocation: GmailHashLocation];
   "gmail.handleMessage": [messageId: string, action: GmailAction, requestId: string];
   "gmail.refreshInbox": [];

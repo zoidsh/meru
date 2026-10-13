@@ -27,6 +27,7 @@ import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
 import { copyText } from "@/lib/clipboard";
+import { readFindRequest } from "@/lib/find-in-page";
 import { getMachineId } from "@/lib/machine-id";
 import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
@@ -184,8 +185,13 @@ class Ipc {
       swipeNavigation.setPageScrollEdge(event.sender, pageScrollEdge);
     });
 
-    this.main.on("titleBar.toggleAppMenu", () => {
-      appMenu.togglePopup();
+    this.main.on("titleBar.toggleAppMenu", (_event, anchor) => {
+      appMenu.togglePopup(anchor);
+    });
+
+    // A menu in the chrome closing, which leaves the keyboard nowhere on purpose.
+    ipc.main.on("window.focusActiveView", () => {
+      accounts.focusActiveView();
     });
 
     this.main.handle("licenseKey.activate", (_event, input) =>
@@ -207,17 +213,26 @@ class Ipc {
     });
 
     this.main.on("findInPage", (event, text, options) => {
-      const targetWebContents =
-        WorkspaceApp.tryFromWebContents(event.sender)?.view.webContents ??
-        getNavigationWebContents();
+      const workspaceApp = WorkspaceApp.tryFromWebContents(event.sender);
 
-      if (!text) {
+      const targetWebContents = workspaceApp?.view.webContents ?? getNavigationWebContents();
+
+      const request = readFindRequest(text);
+
+      if (request.kind !== "search") {
         targetWebContents.stopFindInPage("clearSelection");
+
+        // Closing the field gives the keyboard back to the page it searched,
+        // which is where the window's own find bar took it from. Clearing the
+        // text does not: the field is still open and still being typed in.
+        if (request.kind === "close" && !workspaceApp) {
+          accounts.focusActiveView();
+        }
 
         return;
       }
 
-      targetWebContents.findInPage(text, {
+      targetWebContents.findInPage(request.text, {
         forward: options?.forward,
         findNext: options?.findNext,
       });
@@ -1016,8 +1031,16 @@ class Ipc {
       bookmarks.togglePopup(parentWindow, placement);
     });
 
+    /*
+     * Only the closes the popup asks for land here — Escape, its close button,
+     * opening a bookmark — so the keyboard goes back to the content behind it.
+     * A close the popup's own blur caused does not: something else has the
+     * focus by then, and it is where the click went.
+     */
     ipc.main.on("bookmarks.closePopup", () => {
       bookmarks.popup.close();
+
+      accounts.focusActiveView();
     });
 
     ipc.main.on("bookmarks.setPopupCloseOnBlurEnabled", (_event, enabled) => {
@@ -1108,6 +1131,8 @@ class Ipc {
 
     ipc.main.on("downloads.closeRecentDownloadHistoryPopup", () => {
       downloads.recentDownloadHistoryPopup.close();
+
+      accounts.focusActiveView();
     });
 
     ipc.main.on("downloads.setDownloadHistoryPopupOnBlurEnabled", (_event, enabled) => {

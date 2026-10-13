@@ -83,7 +83,28 @@ function RecentDownloadHistoryButton() {
   );
 }
 
+/**
+ * Windows and Linux have no system menu bar, so this button is the menu. It is
+ * not a tab stop either: F10 and a tap of Alt open it, the way they open a menu
+ * anywhere else on those platforms, and both arrive here so that the menu comes
+ * up against the button whichever way it was asked for.
+ */
 function AppMenuButton({ className }: { className?: string }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const toggleAppMenu = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+
+    ipc.main.send(
+      "titleBar.toggleAppMenu",
+      rect && { x: Math.round(rect.left), y: Math.round(rect.bottom) },
+    );
+  };
+
+  useEffect(() => {
+    return ipc.renderer.on("appMenu.toggle", toggleAppMenu);
+  });
+
   if (window.electron.process.platform === "darwin") {
     return;
   }
@@ -91,11 +112,11 @@ function AppMenuButton({ className }: { className?: string }) {
   return (
     <div className={cn("draggable-none", className)}>
       <Button
+        ref={buttonRef}
         variant="ghost"
         size="icon-sm"
-        onClick={() => {
-          ipc.main.send("titleBar.toggleAppMenu");
-        }}
+        tabIndex={-1}
+        onClick={toggleAppMenu}
         title="App menu"
       >
         <EllipsisVerticalIcon />
@@ -121,7 +142,7 @@ function Trial() {
         },
       )}
     >
-      <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer">
+      <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer" tabIndex={-1}>
         <span className="fade-out group-hover:opacity-0">
           Pro trial ends in{" "}
           {trialDaysLeft >= 2
@@ -672,6 +693,7 @@ export function AppTitlebar() {
         data-account-id={account.config.id}
         variant={account.config.selected && isAccountLocation ? "secondary" : "ghost"}
         size="sm"
+        tabIndex={-1}
         className="draggable-none"
         onClick={() => {
           navigate("/");
@@ -704,6 +726,7 @@ export function AppTitlebar() {
           <div className="flex gap-2">
             <Button
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.quitAndInstall");
@@ -714,6 +737,7 @@ export function AppTitlebar() {
             <Button
               variant="outline"
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 dismissAppUpdate();
@@ -725,6 +749,7 @@ export function AppTitlebar() {
             <Button
               variant="ghost"
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 ipc.main.send("appUpdater.openVersionHistory");
@@ -767,6 +792,7 @@ export function AppTitlebar() {
               <Button
                 variant={isUnifiedInboxLocation ? "secondary" : "ghost"}
                 size="icon"
+                tabIndex={-1}
                 className="size-7 draggable-none"
                 onClick={() => {
                   navigate("/unified-inbox");
@@ -783,6 +809,7 @@ export function AppTitlebar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  tabIndex={-1}
                   className="draggable-none"
                   title="Open Gmail settings to turn off out of office"
                   onClick={() => {
@@ -939,6 +966,7 @@ export function AppTitlebar() {
           {appUpdateVersion && (
             <Button
               size="sm"
+              tabIndex={-1}
               className="draggable-none"
               onClick={() => {
                 setIsAppUpdateDetailsOpen(true);

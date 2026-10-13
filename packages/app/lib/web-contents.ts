@@ -4,6 +4,7 @@ import {
   WebContentsView,
   type WebContentsViewConstructorOptions,
 } from "electron";
+import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { setupWindowContextMenu } from "@/context-menu";
 import { ipc } from "@/ipc";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
@@ -119,6 +120,8 @@ export function createChildWebContentsView({
   attachView(view);
 
   setupWindowContextMenu(view);
+
+  watchForAppMenuKey(view.webContents);
 
   applyViewZoomLimits(view);
 

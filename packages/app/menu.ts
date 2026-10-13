@@ -808,12 +808,14 @@ export class AppMenu {
     return menu;
   }
 
-  togglePopup() {
+  /** Without an anchor the menu comes up at the pointer, which is where a click left it. */
+  togglePopup(anchor?: { x: number; y: number }) {
     if (this._isPopupOpen) {
       this.menu.closePopup(main.window);
     } else {
       this.menu.popup({
         window: main.window,
+        ...anchor,
       });
     }
   }

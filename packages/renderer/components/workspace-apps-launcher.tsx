@@ -22,6 +22,7 @@ import {
   TitlebarIconButton,
 } from "@/components/titlebar";
 import { WorkspaceAppIcon } from "@/components/workspace-app-icon";
+import { useChromeMenu } from "@/lib/chrome-menu";
 import { useCloseOnWindowBlur } from "@/lib/hooks";
 import { getModifierOpenBehavior } from "@/lib/workspace-apps";
 
@@ -102,9 +103,12 @@ export function VerticalTabsWorkspaceAppsLauncher({
 }) {
   const { isOpen, setIsOpen, getLauncherAppProps } = useLauncherApps();
 
+  const { rootProps, triggerProps, contentProps } = useChromeMenu(isOpen, setIsOpen);
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu {...rootProps}>
       <DropdownMenuTrigger
+        {...triggerProps}
         render={
           <Button
             variant="ghost"
@@ -128,6 +132,7 @@ export function VerticalTabsWorkspaceAppsLauncher({
           would be painted over by the workspace app view next to it. That
           leaves room for app names only in the wide strip. */}
       <DropdownMenuContent
+        {...contentProps}
         align="center"
         collisionPadding={0}
         className={cn("flex flex-col gap-1 p-0.5", !isWide && "w-auto min-w-0")}

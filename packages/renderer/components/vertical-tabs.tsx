@@ -173,6 +173,7 @@ function VerticalTab({
       <Button
         variant={tab.active ? "secondary" : !isWideRow && isPinnedSectionTab ? "outline" : "ghost"}
         size={isWideRow ? "sm" : "icon"}
+        tabIndex={-1}
         className={cn(
           // Colours transition, the box never does. The hover controls take
           // their room instantly rather than over a transition, and the tab
@@ -234,6 +235,7 @@ function VerticalTab({
         <Button
           variant="secondary"
           size="icon"
+          tabIndex={-1}
           data-sortable-action
           className={cn(
             // Centered with margins rather than a transform, which the button's
@@ -255,6 +257,7 @@ function VerticalTab({
         <Button
           variant="secondary"
           size="icon"
+          tabIndex={-1}
           data-sortable-action
           className={cn(
             "absolute opacity-0 transition-colors group-hover:opacity-100 focus-visible:opacity-100",
@@ -317,6 +320,7 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
     <Button
       variant="ghost"
       size={isWide ? "sm" : "icon"}
+      tabIndex={-1}
       // Colours transition, the box never does, as in `VerticalTab`
       className={cn("text-muted-foreground transition-colors", isWide && "w-full justify-start")}
       title="Show bookmarks"
@@ -361,6 +365,7 @@ function VerticalTabsWidthToggle({
     <Button
       variant="ghost"
       size="icon"
+      tabIndex={-1}
       className={cn(
         "mt-auto text-muted-foreground transition-[color,background-color]",
         isWide && "self-end",
@@ -532,6 +537,7 @@ export function VerticalTabs() {
            * scroll container clips at would otherwise shave off.
            */}
           <ScrollArea
+            viewportTabIndex={-1}
             className="-mx-4 -my-1 shrink-0"
             style={{
               maxHeight: normalSectionReservedHeight
@@ -573,7 +579,7 @@ export function VerticalTabs() {
             }}
           >
             {/* The section that gives ground, no further than the ceiling above holds open for it */}
-            <ScrollArea className="-mx-4 -my-1 min-h-0">
+            <ScrollArea viewportTabIndex={-1} className="-mx-4 -my-1 min-h-0">
               <div
                 className={cn("flex flex-col px-4 py-1", isWide ? "gap-1" : "items-center gap-2")}
               >
