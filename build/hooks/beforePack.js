@@ -54,25 +54,26 @@ export default async (context) => {
 
 // The profile authorizes that keychain access group, and a signed app without it will not
 // launch. electron-builder takes a profile only as a path, and the file is gitignored, so it is
-// written from the base64 the signing environment carries. One already there is left alone.
+// written from the base64 the signing environment carries. The environment is the only source: a
+// file left by an earlier build may hold a profile that no longer lists the signing certificate.
 async function writeProvisioningProfile(packager) {
   const profile = packager.platformSpecificBuildOptions.provisioningProfile;
 
-  const base64 = process.env.APPLE_PROVISIONING_PROFILE;
-
-  if (!profile || !base64) {
+  if (!profile) {
     return;
   }
 
   const profilePath = path.resolve(packager.projectDir, profile);
 
-  try {
-    await fs.writeFile(profilePath, Buffer.from(base64, "base64"), { flag: "wx" });
+  const base64 = process.env.APPLE_PROVISIONING_PROFILE;
 
-    console.log(`Wrote the provisioning profile to ${profile}`);
-  } catch (error) {
-    if (error.code !== "EEXIST") {
-      throw error;
-    }
+  if (!base64) {
+    await fs.rm(profilePath, { force: true });
+
+    return;
   }
+
+  await fs.writeFile(profilePath, Buffer.from(base64, "base64"));
+
+  console.log(`Wrote the provisioning profile to ${profile}`);
 }
