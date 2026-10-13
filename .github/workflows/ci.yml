@@ -20,6 +20,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decides whether a pull request touches anything lint, types, test and e2e
+  # could catch a break in. It lists files that cannot break the app rather
+  # than files that can, so a path nobody thought of runs everything instead of
+  # shipping untested. fmt runs regardless, because oxfmt formats markdown.
+  #
+  # Only a pull request is gated. A push to main is the run the release skill
+  # reads as main's build check, and a docs-only commit skipping there would
+  # turn a red commit beneath it green; a release and a dispatched run must
+  # never skip either. The whole pull request's files count, not the latest
+  # push's, because a superseded run is cancelled before it finishes.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          code=true
+          if [ -n "$PR" ] && files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename'); then
+            echo "$files"
+            echo "$files" | grep -qvE '\.md$|^\.claude/|^LICENSE$' || code=false
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
   fmt:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +56,8 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run fmt:check
   lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,6 +65,8 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run lint
   types:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -42,6 +74,8 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run types:ci
   test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,6 +87,8 @@ jobs:
     # still compiles. There is no separate build workflow: building without
     # launching proved strictly less, and a signed build is only needed at
     # release, which release.yml does itself.
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
