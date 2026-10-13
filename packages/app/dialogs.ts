@@ -40,8 +40,7 @@ export async function showUnsupportedMacOSDialog() {
 /**
  * A dialog given the main window is a sheet inside it, and closing Meru's
  * window hides it rather than quitting, while Check for Updates… stays in the
- * macOS app menu. A sheet on a hidden window is never seen, so the window is
- * only passed when it is on screen.
+ * macOS app menu. A sheet on a hidden window is never seen.
  */
 function showUpdateMessageBox(options: MessageBoxOptions) {
   if (main.window.isVisible()) {
