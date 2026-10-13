@@ -125,9 +125,13 @@ class AppUpdater {
       // inside `quitAndInstall` and returns, so the quitting state set for a
       // quit that is not going to happen is given back: left standing, the
       // close button would destroy the window instead of hiding it, and the
-      // next real quit would save neither the window state nor the tabs.
+      // next real quit would save neither the window state nor the tabs. The
+      // announcement goes with it, since this error is what says there is
+      // nothing behind it to install.
       if (this.isInstallingUpdate) {
         main.isQuittingApp = false;
+
+        this.sendUpdateAvailable(null);
       }
 
       const report = resolveUpdateErrorReport(error, { isManualCheck: this.isManualCheck });
@@ -218,9 +222,11 @@ class AppUpdater {
 
     this.isInstallingUpdate = true;
 
-    autoUpdater.quitAndInstall();
-
-    this.isInstallingUpdate = false;
+    try {
+      autoUpdater.quitAndInstall();
+    } finally {
+      this.isInstallingUpdate = false;
+    }
   }
 }
 
