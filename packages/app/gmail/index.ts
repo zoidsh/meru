@@ -207,8 +207,7 @@ export class Gmail {
 
   private labelColorsCssKey: string | null = null;
 
-  // Each call removes the previous sheet and awaits inserting its own, so
-  // overlapping calls would both find no key and insert twice.
+  // Overlapping calls would both find no key and insert the sheet twice.
   private labelColorsApplied: Promise<void> = Promise.resolve();
 
   private inboxFeedBaseline: { url: string; ids: Set<string>; readAt: number } | null = null;
@@ -366,7 +365,7 @@ export class Gmail {
           this.view.webContents.insertCSS(GMAIL_USER_STYLES);
         }
 
-        this.applyLabelColors({ documentReplaced: true });
+        this.applyLabelColors();
 
         this.fetchInboxFeed();
       }
@@ -413,9 +412,9 @@ export class Gmail {
     this.view.webContents.setBackgroundThrottling(true);
   }
 
-  applyLabelColors({ documentReplaced = false }: { documentReplaced?: boolean } = {}) {
+  applyLabelColors() {
     this.labelColorsApplied = this.labelColorsApplied
-      .then(() => this.replaceLabelColorsCss({ documentReplaced }))
+      .then(() => this.replaceLabelColorsCss())
       .catch((error) => {
         log.error("Failed to apply label colors", { error });
       });
@@ -423,21 +422,24 @@ export class Gmail {
     return this.labelColorsApplied;
   }
 
-  private async replaceLabelColorsCss({ documentReplaced }: { documentReplaced: boolean }) {
-    // The old document's sheets went with it. Dropping the key here rather than
-    // in `dom-ready` also drops one a call in flight across the navigation set.
-    if (documentReplaced) {
-      this.labelColorsCssKey = null;
-    }
-
+  private async replaceLabelColorsCss() {
     if (!this._view || this._view.webContents.isDestroyed()) {
       return;
     }
 
+    const { webContents } = this._view;
+
+    // A key from before a navigation is still removed: the call that stored it
+    // may have inserted into the new document, and a key the page never had is
+    // ignored.
     if (this.labelColorsCssKey) {
-      await this.view.webContents.removeInsertedCSS(this.labelColorsCssKey);
+      await webContents.removeInsertedCSS(this.labelColorsCssKey);
 
       this.labelColorsCssKey = null;
+
+      if (webContents.isDestroyed()) {
+        return;
+      }
     }
 
     if (!licenseKey.isValid) {
@@ -446,8 +448,14 @@ export class Gmail {
 
     const css = generateGmailLabelColorsCss(config.get("gmail.labelColors"));
 
-    if (css) {
-      this.labelColorsCssKey = await this.view.webContents.insertCSS(css);
+    if (!css) {
+      return;
+    }
+
+    const key = await webContents.insertCSS(css);
+
+    if (!webContents.isDestroyed()) {
+      this.labelColorsCssKey = key;
     }
   }
 
