@@ -14,6 +14,7 @@ import { Skeleton } from "@meru/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import z from "zod";
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { dayjs } from "@/lib/date";
@@ -98,7 +99,7 @@ export function VersionHistorySettings() {
           <ItemDescription>{dayjs(release.published_at).fromNow()}</ItemDescription>
           <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 mt-6 text-sm">
             <Markdown
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
               components={{
                 h2: "h3",
                 kbd: Kbd,
