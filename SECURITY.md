@@ -1,5 +1,7 @@
 # Security Policy
 
+Proof of the docs-only CI skip.
+
 ## Supported Versions
 
 Only the latest release gets security fixes, on both the stable and the beta channel. Meru updates itself, so a fix ships as a new release rather than a patch to an older one.
