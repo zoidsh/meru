@@ -29,11 +29,15 @@ jobs:
   # reads as main's build check, and a docs-only commit skipping there would
   # turn a red commit beneath it green; a release and a dispatched run must
   # never skip either. The whole pull request's files count, not the latest
-  # push's, because a superseded run is cancelled before it finishes.
+  # push's, because a superseded run is cancelled before it finishes. A rename
+  # counts its old path too, so a source file renamed to markdown still runs.
+  #
+  # No permissions block: release.yml calls this workflow with a token that
+  # holds no pull-requests scope, and a called job asking for more than its
+  # caller has rejects the whole release run before it starts. The repository
+  # is public, so the files list needs no scope.
   changes:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -43,7 +47,7 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: |
           code=true
-          if [ -n "$PR" ] && files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename'); then
+          if [ -n "$PR" ] && files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)'); then
             echo "$files"
             echo "$files" | grep -qvE '\.md$|^\.claude/|^LICENSE$' || code=false
           fi
