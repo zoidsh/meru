@@ -16,7 +16,6 @@ import {
   InboxIcon,
   MailSearchIcon,
   MoonIcon,
-  SparklesIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -977,7 +976,7 @@ export function AppTitlebar() {
                 setIsAppUpdateDetailsOpen(true);
               }}
             >
-              <SparklesIcon /> Update available
+              Update available
             </Button>
           )}
           <AppMenuButton />
