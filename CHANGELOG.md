@@ -23,3 +23,4 @@ This file is the draft of the next release, written one line at a time as work l
 - **Windows and Linux:** F10, and a tap of Alt, open the app menu from anywhere in the window, so it no longer takes a click
 - Closing Settings, the unified inbox or the download history puts the keyboard back in your mail, so you can type straight away instead of first clicking the page
 - **Meru Pro:** Changing label colors in quick succession leaves only the latest colors in Gmail, instead of sometimes keeping earlier colors applied alongside them
+- Restarting to install an update reopens the tabs you had open, the way any other quit does, instead of losing recent changes to them
