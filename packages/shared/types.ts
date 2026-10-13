@@ -329,7 +329,7 @@ export type IpcRendererEvent = {
   "notifications.playSound": [options: { sound: NotificationSound; volume: number }];
   "taskbar.setOverlayIcon": [unreadCount: number];
   "appUpdater.updateAvailable": [version: string];
-  "appUpdater.updateNotVerified": [version: string];
+  "appUpdater.updateNotVerified": [version: string | null];
   "googleMeet.toggleMicrophone": [];
   "googleMeet.toggleCamera": [];
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];

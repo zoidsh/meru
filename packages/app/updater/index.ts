@@ -44,10 +44,15 @@ class AppUpdater {
   /**
    * Shown whatever `updates.showNotifications` says, unlike an available
    * update: an update Meru won't install is not an announcement but the only
-   * way out of an install that can no longer update itself.
+   * way out of an install that can no longer update itself. `null` takes the
+   * notice back down.
    */
-  private sendUpdateNotVerified(version: string) {
-    ipc.renderer.send(main.window.webContents, "appUpdater.updateNotVerified", `v${version}`);
+  private sendUpdateNotVerified(version: string | null) {
+    ipc.renderer.send(
+      main.window.webContents,
+      "appUpdater.updateNotVerified",
+      version ? `v${version}` : null,
+    );
   }
 
   /**
@@ -111,6 +116,11 @@ class AppUpdater {
     // The setting is read here rather than around the listener, so that turning
     // it on or off takes effect without a restart.
     autoUpdater.on("update-downloaded", (updateInfo) => {
+      // A download that got this far passed verification, so a notice about an
+      // earlier one is stale. Taken down before the setting is read, since the
+      // notice it takes down ignores the setting as well.
+      this.sendUpdateNotVerified(null);
+
       if (!config.get("updates.showNotifications")) {
         return;
       }

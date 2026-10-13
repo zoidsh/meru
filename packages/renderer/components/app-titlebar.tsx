@@ -726,7 +726,7 @@ export function AppTitlebar() {
   };
 
   const renderContent = () => {
-    if (isUnverifiedAppUpdateDetailsOpen) {
+    if (isUnverifiedAppUpdateDetailsOpen && unverifiedAppUpdateVersion) {
       return (
         <div className="flex flex-1 items-center justify-center gap-4 text-xs">
           <div>Meru {unverifiedAppUpdateVersion} couldn't be verified, so it wasn't installed</div>
