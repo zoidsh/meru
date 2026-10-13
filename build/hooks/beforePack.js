@@ -1,4 +1,6 @@
+import { rmSync } from "node:fs";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 // `codesign` never expands Xcode's `$(AppIdentifierPrefix)`, and macOS refuses to launch an app
@@ -16,6 +18,8 @@ export default async (context) => {
   }
 
   await writeProvisioningProfile(context.packager);
+
+  await writeNotarizationKey();
 
   const buildPath = path.join(process.cwd(), "build");
 
@@ -76,4 +80,27 @@ async function writeProvisioningProfile(packager) {
   await fs.writeFile(profilePath, Buffer.from(base64, "base64"));
 
   console.log(`Wrote the provisioning profile to ${profile}`);
+}
+
+// notarytool takes the App Store Connect API key only as a path, while 1Password and GitHub hand
+// over its contents, so the key is written to a private temporary file for the rest of the build
+// and removed when the process exits, failed builds included. A path is used as given.
+async function writeNotarizationKey() {
+  const key = process.env.APPLE_API_KEY;
+
+  if (!key?.startsWith("-----BEGIN")) {
+    return;
+  }
+
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "meru-notarization-"));
+
+  const keyPath = path.join(dir, `AuthKey_${process.env.APPLE_API_KEY_ID}.p8`);
+
+  await fs.writeFile(keyPath, key, { mode: 0o600 });
+
+  process.once("exit", () => rmSync(dir, { recursive: true, force: true }));
+
+  process.env.APPLE_API_KEY = keyPath;
+
+  console.log("Wrote the App Store Connect API key to a temporary file for notarisation");
 }
