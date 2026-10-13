@@ -207,6 +207,10 @@ export class Gmail {
 
   private labelColorsCssKey: string | null = null;
 
+  // Each call removes the previous sheet and awaits inserting its own, so
+  // overlapping calls would both find no key and insert twice.
+  private labelColorsApplied: Promise<void> = Promise.resolve();
+
   private inboxFeedBaseline: { url: string; ids: Set<string>; readAt: number } | null = null;
 
   private seenInboxFeedEntryIds = new Set<string>();
@@ -362,9 +366,7 @@ export class Gmail {
           this.view.webContents.insertCSS(GMAIL_USER_STYLES);
         }
 
-        this.labelColorsCssKey = null;
-
-        this.applyLabelColors();
+        this.applyLabelColors({ documentReplaced: true });
 
         this.fetchInboxFeed();
       }
@@ -411,8 +413,24 @@ export class Gmail {
     this.view.webContents.setBackgroundThrottling(true);
   }
 
-  async applyLabelColors() {
-    if (!this._view) {
+  applyLabelColors({ documentReplaced = false }: { documentReplaced?: boolean } = {}) {
+    this.labelColorsApplied = this.labelColorsApplied
+      .then(() => this.replaceLabelColorsCss({ documentReplaced }))
+      .catch((error) => {
+        log.error("Failed to apply label colors", { error });
+      });
+
+    return this.labelColorsApplied;
+  }
+
+  private async replaceLabelColorsCss({ documentReplaced }: { documentReplaced: boolean }) {
+    // The old document's sheets went with it. Dropping the key here rather than
+    // in `dom-ready` also drops one a call in flight across the navigation set.
+    if (documentReplaced) {
+      this.labelColorsCssKey = null;
+    }
+
+    if (!this._view || this._view.webContents.isDestroyed()) {
       return;
     }
 
