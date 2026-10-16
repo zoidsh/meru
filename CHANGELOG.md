@@ -7,7 +7,7 @@ This file is the draft of the next release, written one line at a time as work l
 ### Added
 
 - **Meru Pro:** Bitwarden can be installed from `Settings… → Extensions`. It fills and generates passwords and passkeys on Google's sign-in and account pages, offers to save and update logins, and **Open Bitwarden** under its description opens Bitwarden to sign in. Unlocking with biometrics needs the Bitwarden desktop app.
-- **Linux:** New email notifications have **Archive**, **Mark as Read**, **Delete** and **Mark as Spam** buttons, as on macOS and Windows. GNOME shows the first three.
+- **Linux:** Notifications have buttons, as on macOS and Windows: **Archive**, **Mark as Read**, **Delete** and **Mark as Spam** on new email, of which GNOME shows the first three, **Open** or **Show in your file manager** on a finished download, and **Copy** on a verification code
 
 ### Changed
 
