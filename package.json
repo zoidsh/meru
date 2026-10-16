@@ -47,7 +47,6 @@
     "@lingui/react": "^6.10.0",
     "@lingui/vite-plugin": "^6.10.0",
     "@playwright/test": "^1.62.1",
-    "@rolldown/plugin-babel": "^0.2.4",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
