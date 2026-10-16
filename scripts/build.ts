@@ -2,6 +2,7 @@ import { rm, watch } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import { type ParseArgsConfig, parseArgs } from "node:util";
+import { lingui as viteLingui } from "@lingui/vite-plugin";
 import postcssTailwind from "@tailwindcss/postcss";
 import viteTailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -17,6 +18,7 @@ import {
   resolveRendererUrl,
   resolveWorktreeProfile,
 } from "./lib/dev-run";
+import { linguiMacro } from "./lib/lingui-macro";
 
 const options = {
   dev: {
@@ -244,6 +246,7 @@ async function buildSwipeNavigationAddon() {
 function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
+    plugins: [linguiMacro()],
     transform: {
       define: !args.values.dev
         ? {
@@ -285,6 +288,7 @@ function buildAppFiles() {
         target: browserTarget,
       },
       plugins: [
+        linguiMacro(),
         {
           name: "css-loader",
           load: async (id) => {
@@ -445,7 +449,7 @@ async function buildRenderer(rendererName: string, port: number) {
     configFile: false,
     root: rendererRoot,
     base: "./",
-    plugins: [viteReact(), viteTailwindcss()],
+    plugins: [viteReact(), viteTailwindcss(), ...viteLingui({ macroTransform: true })],
     resolve: {
       tsconfigPaths: true,
     },

@@ -1,5 +1,7 @@
 import { is, platform } from "@electron-toolkit/utils";
+import { plural, t } from "@lingui/core/macro";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import { activateLocale, i18n, LOCALES } from "@meru/shared/i18n";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { accounts } from "@/accounts";
@@ -12,6 +14,7 @@ import { copyText } from "@/lib/clipboard";
 import { log } from "@/lib/log";
 import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
+import { trial } from "@/trial";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
@@ -84,6 +87,10 @@ export class AppMenu {
   }
 
   createMenu() {
+    // A local binding, so the extracted placeholder is named `{daysLeft}`
+    // rather than the positional `{0}` a member expression gets.
+    const daysLeft = trial.daysLeft;
+
     const macOSAppHideItems: MenuItemConstructorOptions[] = [
       {
         label: `Hide ${app.name}`,
@@ -279,8 +286,16 @@ export class AppMenu {
           {
             type: "separator",
           },
+          // Spike only: proves an ICU plural in a native menu label.
           {
-            label: "Settings",
+            label: plural(daysLeft, {
+              one: "# day left in your trial",
+              other: "# days left in your trial",
+            }),
+            enabled: false,
+          },
+          {
+            label: t`Settings`,
             accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
@@ -677,6 +692,27 @@ export class AppMenu {
         label: "Help",
         role: "help",
         submenu: [
+          // Spike only: stands in for the Language field in Settings, so a
+          // locale change can be seen without the config key behind it.
+          ...LOCALES.map((locale) => ({
+            label: `Spike: switch to ${locale}`,
+            type: "checkbox" as const,
+            checked: i18n.locale === locale,
+            click: () => {
+              activateLocale(locale);
+
+              this.refresh();
+            },
+          })),
+          {
+            label: "Spike: show restart dialog",
+            click: () => {
+              showRestartDialog();
+            },
+          },
+          {
+            type: "separator",
+          },
           {
             label: "What's New",
             click: () => {

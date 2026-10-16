@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog } from "electron";
@@ -9,8 +10,15 @@ import { openExternalUrl } from "./url";
 export async function showRestartDialog() {
   const { response } = await dialog.showMessageBox({
     type: "info",
-    buttons: ["Restart", "Later"],
-    message: "Restart Meru to apply the changes.",
+    buttons: [
+      t({
+        message: "Restart",
+        context: "button",
+        comment: "Button that restarts Meru so a changed setting takes effect",
+      }),
+      t`Later`,
+    ],
+    message: t`Restart Meru to apply the changes.`,
     defaultId: 0,
     cancelId: 1,
   });
@@ -51,7 +59,7 @@ export async function confirmAppLinksTabHandover(
   const { response } = await dialog.showMessageBox(main.window, {
     type: "info",
     buttons: ["Open links here", "Cancel"],
-    message: `Open ${appLabel} links in this ${targetLabel}?`,
+    message: t`Open ${appLabel} links in this ${targetLabel}?`,
     detail: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This ${targetLabel} will open them instead.`,
     defaultId: 0,
     cancelId: 1,

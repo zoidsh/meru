@@ -1,0 +1,25 @@
+{
+  "jsPlugins": [{ "name": "lingui", "specifier": "eslint-plugin-lingui" }],
+  "plugins": [],
+  "categories": {},
+  "rules": {
+    "lingui/no-unlocalized-strings": [
+      "error",
+      {
+        "ignore": ["^[A-Z_]+$", "^[a-z-]+$"],
+        "ignoreFunctions": ["console.*", "log.*", "openExternalUrl", "require"],
+        "ignoreNames": [
+          "type",
+          "role",
+          "id",
+          "accelerator",
+          "className",
+          "key",
+          "partition",
+          "defaultId",
+          "cancelId"
+        ]
+      }
+    ]
+  }
+}

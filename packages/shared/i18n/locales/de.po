@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-16 15:35+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+#: packages/app/menu.ts:291
+msgid "{daysLeft, plural, one {# day left in your trial} other {# days left in your trial}}"
+msgstr "{daysLeft, plural, one {# Tag in deiner Testphase übrig} other {# Tage in deiner Testphase übrig}}"
+
+#: packages/app/dialogs.ts:19
+msgid "Later"
+msgstr "Später"
+
+#: packages/renderer/routes/settings/general.tsx:55
+msgid "Launch at login"
+msgstr "Beim Anmelden starten"
+
+#: packages/app/dialogs.ts:62
+msgid "Open {appLabel} links in this {targetLabel}?"
+msgstr "{appLabel}-Links in diesem {targetLabel} öffnen?"
+
+#. Button that restarts Meru so a changed setting takes effect
+#: packages/app/dialogs.ts:14
+msgctxt "button"
+msgid "Restart"
+msgstr "Neu starten"
+
+#: packages/app/dialogs.ts:21
+msgid "Restart Meru to apply the changes."
+msgstr "Starte Meru neu, um die Änderungen zu übernehmen."
+
+#: packages/app/menu.ts:298
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: packages/renderer/routes/settings/general.tsx:58
+msgid "Start the application automatically when you log in to your computer."
+msgstr "Meru automatisch starten, wenn du dich an deinem Computer anmeldest."

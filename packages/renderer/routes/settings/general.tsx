@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -50,9 +51,11 @@ function LaunchAtLoginField() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>Launch at login</FieldLabel>
+        <FieldLabel htmlFor={fieldId}>
+          <Trans>Launch at login</Trans>
+        </FieldLabel>
         <FieldDescription>
-          Start the application automatically when you log in to your computer.
+          <Trans>Start the application automatically when you log in to your computer.</Trans>
         </FieldDescription>
       </FieldContent>
       <Switch
