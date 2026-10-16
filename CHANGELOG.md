@@ -7,9 +7,11 @@ This file is the draft of the next release, written one line at a time as work l
 ### Added
 
 - **Meru Pro:** Bitwarden can be installed from `Settings… → Extensions`. It fills and generates passwords and passkeys on Google's sign-in and account pages, offers to save and update logins, and **Open Bitwarden** under its description opens Bitwarden to sign in. Unlocking with biometrics needs the Bitwarden desktop app.
+- **Linux:** Notifications have buttons, as on macOS and Windows: **Archive**, **Mark as Read**, **Delete** and **Mark as Spam** on new email, of which GNOME shows the first three, **Open** or **Show in your file manager** on a finished download, and **Copy** on a verification code
 
 ### Changed
 
+- Updated to Electron 44, which brings Chrome 152 and its security fixes
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account label` is gone, because a Workspace apps window always names its account when you have more than one, in its titlebar and in the window title
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account color` is gone, because a Workspace apps window's titlebar names the account and shows its color, which is what the setting's colored bar was for
 - The `Update available` button in the titlebar drops its icon, so it takes less room
