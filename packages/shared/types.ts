@@ -236,6 +236,7 @@ export type IpcMainEvents =
       "taskbar.setOverlayIcon": [dataUrl: string];
       "appUpdater.quitAndInstall": [];
       "appUpdater.openVersionHistory": [];
+      "appUpdater.openReleasePage": [];
       "app.relaunch": [];
       "app.openDefaultAppsSettings": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
@@ -327,7 +328,8 @@ export type IpcRendererEvent = {
   "trial.changed": [trial: TrialState];
   "notifications.playSound": [options: { sound: NotificationSound; volume: number }];
   "taskbar.setOverlayIcon": [unreadCount: number];
-  "appUpdater.updateAvailable": [version: string];
+  "appUpdater.updateAvailable": [version: string | null];
+  "appUpdater.updateNotVerified": [version: string | null];
   "googleMeet.toggleMicrophone": [];
   "googleMeet.toggleCamera": [];
   "workspaceApp.navigationStateChanged": [state: { canGoBack: boolean; canGoForward: boolean }];
