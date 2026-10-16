@@ -14,6 +14,9 @@ export default defineConfig({
     // new key fails the check until a translation lands.
     defaultValue: "",
     warnOnConflicts: true,
+    // On by default, and on it extracts a `t(…)` call written inside a code
+    // comment, so a comment quoting a call puts its key into every catalog.
+    extractFromComments: false,
   },
   types: {
     input: ["packages/shared/i18n/locales/en.json"],
