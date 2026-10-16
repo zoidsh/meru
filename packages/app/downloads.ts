@@ -115,30 +115,22 @@ class Downloads {
             }
           };
 
-          // Clicking a notification's body brings Meru forward, so opening
-          // Finder or the file from it would put them behind Meru. An action
-          // button does not bring Meru forward, because Electron registers
-          // actions without the foreground option. Linux has no action
-          // buttons, so there the body click opens the download.
-          const hasActionButton = !platform.isLinux;
-
+          // On macOS, clicking a notification's body brings Meru forward, so
+          // opening Finder or the file from it would put them behind Meru. An
+          // action button does not, because Electron registers actions
+          // without the foreground option. On Linux the body click opens the
+          // download as well, because some notification servers, such as
+          // dunst, draw no buttons.
           createNotification({
             title: `Downloaded ${fileName}`,
-            body: hasActionButton
-              ? undefined
-              : shouldOpenFile
-                ? "Click to open the file."
-                : `Click to show the file in ${FILE_MANAGER_NAME}.`,
-            actions: hasActionButton
-              ? [
-                  {
-                    text: shouldOpenFile ? "Open" : `Show in ${FILE_MANAGER_NAME}`,
-                    type: "button",
-                  },
-                ]
-              : undefined,
-            action: hasActionButton ? openDownload : undefined,
-            click: hasActionButton ? undefined : openDownload,
+            actions: [
+              {
+                text: shouldOpenFile ? "Open" : `Show in ${FILE_MANAGER_NAME}`,
+                type: "button",
+              },
+            ],
+            action: openDownload,
+            click: platform.isLinux ? openDownload : undefined,
           });
         }
       });
