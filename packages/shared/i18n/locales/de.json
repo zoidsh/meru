@@ -1,0 +1,25 @@
+{
+  "dialog": {
+    "appLinksHandover": {
+      "message": "{{appLabel}}-Links in diesem {{targetLabel}} öffnen?"
+    },
+    "restart": {
+      "confirm": "Neu starten",
+      "later": "Später",
+      "message": "Starte Meru neu, um die Änderungen zu übernehmen."
+    }
+  },
+  "menu": {
+    "settings": "Einstellungen",
+    "trialDaysLeft_one": "{{count}} Tag in deiner Testphase übrig",
+    "trialDaysLeft_other": "{{count}} Tage in deiner Testphase übrig"
+  },
+  "settings": {
+    "general": {
+      "launchAtLogin": {
+        "description": "Meru automatisch starten, wenn du dich an deinem Computer anmeldest.",
+        "label": "Beim Anmelden starten"
+      }
+    }
+  }
+}

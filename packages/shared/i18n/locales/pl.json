@@ -1,0 +1,27 @@
+{
+  "dialog": {
+    "appLinksHandover": {
+      "message": "Otworzyć linki {{appLabel}} w tym elemencie: {{targetLabel}}?"
+    },
+    "restart": {
+      "confirm": "Uruchom ponownie",
+      "later": "Później",
+      "message": "Uruchom ponownie Meru, aby zastosować zmiany."
+    }
+  },
+  "menu": {
+    "settings": "Ustawienia",
+    "trialDaysLeft_one": "Został {{count}} dzień okresu próbnego",
+    "trialDaysLeft_few": "Zostały {{count}} dni okresu próbnego",
+    "trialDaysLeft_many": "Zostało {{count}} dni okresu próbnego",
+    "trialDaysLeft_other": "Zostało {{count}} dnia okresu próbnego"
+  },
+  "settings": {
+    "general": {
+      "launchAtLogin": {
+        "description": "Uruchamiaj Meru automatycznie po zalogowaniu się na komputerze.",
+        "label": "Uruchamiaj po zalogowaniu"
+      }
+    }
+  }
+}

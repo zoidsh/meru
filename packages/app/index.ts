@@ -1,5 +1,6 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_ID } from "@meru/shared/constants";
+import { activateLocale, isLocale, resolveLocale } from "@meru/shared/i18n";
 import { app, session } from "electron";
 import { accounts } from "@/accounts";
 import { navigateOnSwipe } from "@/active-view";
@@ -122,6 +123,17 @@ async function init() {
   downloads.init();
 
   await app.whenReady();
+
+  /*
+   * Spike: `MERU_LOCALE` stands in for the `"app.language"` config key, and the
+   * system languages are only readable once the app is ready. Ahead of the menu
+   * and the first renderer load, both of which read the active catalog.
+   */
+  await activateLocale(
+    process.env.MERU_LOCALE && isLocale(process.env.MERU_LOCALE)
+      ? process.env.MERU_LOCALE
+      : resolveLocale(app.getPreferredSystemLanguages()),
+  );
 
   licenseKey.init();
 

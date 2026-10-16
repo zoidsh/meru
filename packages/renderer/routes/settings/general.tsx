@@ -15,6 +15,7 @@ import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LoginItemSettings } from "electron";
 import { useEffect, useId } from "react";
+import { useTranslation } from "react-i18next";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
@@ -24,6 +25,8 @@ import { queryClient } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
 
 function LaunchAtLoginField() {
+  const { t } = useTranslation();
+
   const queryKey = ["login-item-settings"];
 
   const { data: loginItemSettings } = useQuery({
@@ -50,9 +53,14 @@ function LaunchAtLoginField() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>Launch at login</FieldLabel>
+        <FieldLabel htmlFor={fieldId}>
+          {t("settings.general.launchAtLogin.label", "Launch at login")}
+        </FieldLabel>
         <FieldDescription>
-          Start the application automatically when you log in to your computer.
+          {t(
+            "settings.general.launchAtLogin.description",
+            "Start the application automatically when you log in to your computer.",
+          )}
         </FieldDescription>
       </FieldContent>
       <Switch

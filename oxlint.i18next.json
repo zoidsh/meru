@@ -1,0 +1,60 @@
+{
+  "jsPlugins": [{ "name": "i18next", "specifier": "eslint-plugin-i18next" }],
+  "plugins": [],
+  "categories": {},
+  "rules": {
+    "i18next/no-literal-string": [
+      "error",
+      {
+        "mode": "all",
+        "message": "Wrap the string in t() and add its key to packages/shared/i18n/locales/en.json",
+        "callees": {
+          "exclude": [
+            "^t$",
+            "^console\\.",
+            "^log\\.",
+            "openExternalUrl",
+            "require",
+            "invoke",
+            "send",
+            "on",
+            "get",
+            "set",
+            "has"
+          ]
+        },
+        "words": { "exclude": ["^[A-Z_]+$", "^[a-z][a-zA-Z0-9.\\-_]*$", "^\\s*$"] },
+        "jsx-attributes": {
+          "exclude": [
+            "className",
+            "key",
+            "id",
+            "type",
+            "role",
+            "partition",
+            "accelerator",
+            "configKey",
+            "variant",
+            "htmlFor",
+            "orientation",
+            "href",
+            "value"
+          ]
+        },
+        "object-properties": {
+          "exclude": [
+            "type",
+            "role",
+            "id",
+            "accelerator",
+            "className",
+            "key",
+            "partition",
+            "defaultId",
+            "cancelId"
+          ]
+        }
+      }
+    ]
+  }
+}

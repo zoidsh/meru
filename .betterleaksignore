@@ -1,0 +1,4 @@
+# `@inquirer/password` is a package name, and the "secret" beside it is that
+# package's semver range, which the generic-password rule reads as a password.
+# It reaches the lockfile through i18next-cli's prompt dependencies.
+bun.lock:generic-password:297
