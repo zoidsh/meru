@@ -946,18 +946,14 @@ export class Gmail {
             // Electron registers actions without the foreground option, so
             // macOS delivers the press and leaves the user in the app they
             // were signing in to. The body click stays as a fallback that
-            // copies too. Linux has no action buttons, so its body says click.
-            const hasCopyButton = copiesOnNotificationClick && !platform.isLinux;
-
+            // copies too.
             createNotification({
               title: notificationTitle,
-              body: hasCopyButton
+              body: copiesOnNotificationClick
                 ? `Verification code ${verificationCode}`
-                : copiesOnNotificationClick
-                  ? `Click to copy verification code ${verificationCode}`
-                  : `Copied verification code ${verificationCode}`,
-              actions: hasCopyButton ? [{ text: "Copy", type: "button" }] : undefined,
-              action: hasCopyButton ? copyVerificationCode : undefined,
+                : `Copied verification code ${verificationCode}`,
+              actions: copiesOnNotificationClick ? [{ text: "Copy", type: "button" }] : undefined,
+              action: copiesOnNotificationClick ? copyVerificationCode : undefined,
               click: copiesOnNotificationClick ? copyVerificationCode : undefined,
             });
 
