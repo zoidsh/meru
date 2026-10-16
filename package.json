@@ -179,7 +179,7 @@
       "category": "Network;Office"
     },
     "win": {
-      "verifyUpdateCodeSignature": false,
+      "verifyUpdateCodeSignature": true,
       "icon": "build/icon.ico",
       "azureSignOptions": {
         "endpoint": "https://neu.codesigning.azure.net",
