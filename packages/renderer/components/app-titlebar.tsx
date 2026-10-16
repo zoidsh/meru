@@ -633,12 +633,15 @@ export function AppTitlebar() {
 
   const appUpdateVersion = useAppUpdaterStore((state) => state.version);
   const dismissAppUpdate = useAppUpdaterStore((state) => state.dismiss);
+  const unverifiedAppUpdateVersion = useAppUpdaterStore((state) => state.unverifiedVersion);
 
   const { config } = useConfig();
 
   const [isGmailSavedSearchesOpen, setIsGmailSavedSearchesOpen] = useState(false);
 
   const [isAppUpdateDetailsOpen, setIsAppUpdateDetailsOpen] = useState(false);
+
+  const [isUnverifiedAppUpdateDetailsOpen, setIsUnverifiedAppUpdateDetailsOpen] = useState(false);
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
@@ -723,7 +726,38 @@ export function AppTitlebar() {
   };
 
   const renderContent = () => {
-    if (isAppUpdateDetailsOpen) {
+    if (isUnverifiedAppUpdateDetailsOpen && unverifiedAppUpdateVersion) {
+      return (
+        <div className="flex flex-1 items-center justify-center gap-4 text-xs">
+          <div>Meru {unverifiedAppUpdateVersion} couldn't be verified, so it wasn't installed</div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              tabIndex={-1}
+              className="draggable-none"
+              onClick={() => {
+                ipc.main.send("appUpdater.openReleasePage");
+              }}
+            >
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              tabIndex={-1}
+              className="draggable-none"
+              onClick={() => {
+                setIsUnverifiedAppUpdateDetailsOpen(false);
+              }}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (isAppUpdateDetailsOpen && appUpdateVersion) {
       return (
         <div className="flex flex-1 items-center justify-center gap-4 text-xs">
           <div>Meru {appUpdateVersion} is available and ready to install</div>
@@ -967,6 +1001,18 @@ export function AppTitlebar() {
             <RecentDownloadHistoryButton />
             <DoNotDisturb />
           </div>
+          {unverifiedAppUpdateVersion && (
+            <Button
+              size="sm"
+              tabIndex={-1}
+              className="draggable-none"
+              onClick={() => {
+                setIsUnverifiedAppUpdateDetailsOpen(true);
+              }}
+            >
+              <CircleAlertIcon /> Update not verified
+            </Button>
+          )}
           {appUpdateVersion && (
             <Button
               size="sm"

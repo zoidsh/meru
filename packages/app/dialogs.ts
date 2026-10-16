@@ -1,6 +1,6 @@
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
-import { app, dialog } from "electron";
+import { app, dialog, type MessageBoxOptions } from "electron";
 import { relaunchApp } from "@/lib/relaunch";
 import { config } from "./config";
 import { main } from "./main";
@@ -35,6 +35,54 @@ export async function showUnsupportedMacOSDialog() {
   if (checkboxChecked) {
     config.set("updates.autoCheck", false);
   }
+}
+
+/**
+ * A dialog given the main window is a sheet inside it, and closing Meru's
+ * window hides it rather than quitting, while Check for Updates… stays in the
+ * macOS app menu. A sheet on a hidden window is never seen.
+ */
+function showUpdateMessageBox(options: MessageBoxOptions) {
+  if (main.window.isVisible()) {
+    dialog.showMessageBox(main.window, options);
+
+    return;
+  }
+
+  dialog.showMessageBox(options);
+}
+
+export function showUpdateNotAvailableDialog() {
+  showUpdateMessageBox({
+    type: "info",
+    message: "Meru is up to date.",
+    detail: `Meru ${app.getVersion()} is the latest version.`,
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
+}
+
+export function showUpdateAvailableDialog(version: string) {
+  showUpdateMessageBox({
+    type: "info",
+    message: `Meru ${version} is available.`,
+    detail: "Meru installs it when you quit.",
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
+}
+
+export function showUpdateCheckFailedDialog() {
+  showUpdateMessageBox({
+    type: "warning",
+    message: "Meru couldn't check for updates.",
+    detail: "Try again later.",
+    buttons: ["OK"],
+    defaultId: 0,
+    cancelId: 0,
+  });
 }
 
 export async function confirmAppLinksTabHandover(
