@@ -6,7 +6,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 ## Commands
 
-`mise.toml` pins bun and node, so setup is `mise install` and then `bun install --frozen-lockfile`; CI gets the same versions from `jdx/mise-action`. Lefthook formats and lint-fixes staged files at every commit.
+`mise.toml` pins bun and node, so setup is `mise install` and then `bun install --frozen-lockfile`. `mise.lock` holds the exact build for each CI runner's platform, and `jdx/mise-action` installs from it with `--locked`, which fails for a platform the file lacks; after changing a version in `mise.toml`, run `mise lock`, which refreshes every platform already in the file. Lefthook formats and lint-fixes staged files at every commit.
 
 | Task                                    | Command                                                      |
 | --------------------------------------- | ------------------------------------------------------------ |
