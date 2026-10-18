@@ -171,6 +171,31 @@ msgstr "{daysLeft, plural, one {残り#日} other {残り#日}}"`,
     expect(problems[0]?.detail).toBe("one is never selected in ja");
   });
 
+  test("names a plural replaced by plain text", async () => {
+    const problems = await problemsIn(
+      "pl",
+      `#: packages/renderer/routes/settings/license.tsx:1
+msgid "{count, plural, one {# card} other {# cards}}"
+msgstr "{count} kart"`,
+    );
+
+    expect(kinds(problems)).toEqual(["plural replaced"]);
+    expect(problems[0]?.detail).toBe(
+      "{count} is a plural in the source but not in the translation",
+    );
+  });
+
+  test("passes a plural kept as a plural on the same argument", async () => {
+    expect(
+      await problemsIn(
+        "pl",
+        `#: packages/renderer/routes/settings/license.tsx:1
+msgid "{count, plural, one {# card} other {# cards}}"
+msgstr "{count, plural, one {# karta} few {# karty} many {# kart} other {# karty}}"`,
+      ),
+    ).toEqual([]);
+  });
+
   test("names invalid ICU in a translation", async () => {
     expect(
       kinds(

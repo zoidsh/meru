@@ -10,9 +10,9 @@ import {
 /*
  * What `lingui compile --strict` and `lingui check` do not catch: a plural whose
  * translation is missing a CLDR category for its locale, which compiles and
- * silently falls back to `other` at runtime, a placeholder or a `<0>` tag
- * dropped, renamed or invented in a translation, and entries left fuzzy or
- * obsolete. Each problem is named with the entry and the source line it came
+ * silently falls back to `other` at runtime, a plural replaced by plain text, a
+ * placeholder or a `<0>` tag dropped, renamed or invented in a translation, and
+ * entries left fuzzy or obsolete. Each problem is named with the entry and the source line it came
  * from, since a count alone says nothing a translating agent can act on.
  */
 
@@ -196,6 +196,20 @@ export function findCatalogProblems(locale: string, catalog: Catalog, catalogPat
     for (const [index, count] of translationInspection.tags) {
       if (!sourceInspection.tags.has(index)) {
         report("tag invented", `<${index}> appears ${count} time(s) but is not in the source`);
+      }
+    }
+
+    for (const sourcePluralArg of sourceInspection.pluralArgs) {
+      const isKept = translationInspection.pluralArgs.some(
+        (pluralArg) =>
+          pluralArg.name === sourcePluralArg.name && pluralArg.type === sourcePluralArg.type,
+      );
+
+      if (!isKept) {
+        report(
+          "plural replaced",
+          `{${sourcePluralArg.name}} is a ${sourcePluralArg.type} in the source but not in the translation`,
+        );
       }
     }
 
