@@ -1,11 +1,11 @@
 import { defineConfig } from "@lingui/cli";
 import { formatter } from "@lingui/format-po";
 import { createSwcExtractor } from "@lingui/native-tools";
+import { SHIPPED_CATALOG_TAGS } from "./packages/shared/i18n/tags";
 
 export default defineConfig({
   sourceLocale: "en",
-  // The shipped list, which `@meru/shared/i18n` reads back as `CATALOG_TAGS`.
-  locales: ["en"],
+  locales: [...SHIPPED_CATALOG_TAGS],
   catalogs: [
     {
       path: "<rootDir>/packages/shared/i18n/locales/{locale}",

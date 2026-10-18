@@ -1,28 +1,8 @@
 import { i18n, type Messages } from "@lingui/core";
 import { messages as en } from "./locales/en";
+import { CATALOG_TAGS, type CatalogTag } from "./tags";
 
-/** Every catalog Meru has a translation for, English included as the source. */
-export const CATALOG_TAGS = [
-  "en",
-  "de",
-  "fr",
-  "it",
-  "es",
-  "es-419",
-  "pt-BR",
-  "nl",
-  "pl",
-  "sv",
-  "ja",
-] as const;
-
-export type CatalogTag = (typeof CATALOG_TAGS)[number];
-
-/**
- * The catalogs this build ships, which is what the picker offers and what the
- * system languages are matched against.
- */
-export const SHIPPED_CATALOG_TAGS: readonly CatalogTag[] = ["en"];
+export { CATALOG_TAGS, type CatalogTag, SHIPPED_CATALOG_TAGS } from "./tags";
 
 /**
  * Each language named in itself, because `Intl.DisplayNames` gives lowercase
