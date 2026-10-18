@@ -12,6 +12,14 @@ msgstr ""
 msgid "Close toast"
 msgstr "Close toast"
 
+#: packages/renderer/routes/settings/general.tsx:196
+msgid "Gmail and Google apps follow your Google account's language."
+msgstr "Gmail and Google apps follow your Google account's language."
+
+#: packages/renderer/routes/settings/general.tsx:195
+msgid "Language"
+msgstr "Language"
+
 #. Toast in the Gmail view once a message has been sent
 #: packages/app/ipc.ts:704
 msgid "Message sent"
@@ -21,6 +29,10 @@ msgstr "Message sent"
 #: packages/app/ipc.ts:713
 msgid "Notifications"
 msgstr "Notifications"
+
+#: packages/renderer/routes/settings/general.tsx:198
+msgid "System"
+msgstr "System"
 
 #. Button in the message-sent toast, which recalls the message
 #: packages/app/ipc.ts:708
