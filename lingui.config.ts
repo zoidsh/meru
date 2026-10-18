@@ -16,6 +16,6 @@ export default defineConfig({
   // `.ts` catalogs typecheck and bundle like any other module, so the main
   // bundle takes them through the same rolldown graph as the code.
   compileNamespace: "ts",
-  format: formatter({ lineNumbers: true, explicitIdAsDefault: false }),
+  format: formatter({ lineNumbers: false, explicitIdAsDefault: false }),
   extractors: [createSwcExtractor()],
 });
