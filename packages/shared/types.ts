@@ -1,5 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { GmailAction, GmailInboxMessage } from "./gmail";
+import type { CatalogTag } from "./i18n";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -95,6 +96,7 @@ export type Config = {
   accounts: AccountConfigs;
   "accounts.unreadBadge": boolean;
   "app.hardwareAcceleration": boolean;
+  "app.language": "system" | CatalogTag;
   launchMinimized: boolean;
   launchAtLogin: boolean;
   resetApp: boolean;
@@ -320,6 +322,7 @@ export type IpcRendererEvent = {
   "gmail.dismissMessageSentNotification": [browserWindowId: number];
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
+  "i18n.localeChanged": [locale: CatalogTag];
   "accounts.changed": [accounts: AccountInstances];
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];

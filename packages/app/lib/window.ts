@@ -1,6 +1,7 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
+import { i18n } from "@meru/shared/i18n";
 import type { Config } from "@meru/shared/types";
 import {
   BrowserWindow,
@@ -162,6 +163,8 @@ export function loadRenderer(
   const searchParams = options.searchParams ?? new URLSearchParams();
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
+
+  searchParams.set("locale", i18n.locale);
 
   if (is.dev) {
     // `||`, not `??`: an empty value is as unusable as an unset one, and
