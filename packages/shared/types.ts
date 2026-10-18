@@ -71,6 +71,17 @@ export type ExtensionUpdateResult =
   | { id: string; status: "upToDate" }
   | { id: string; status: "failed"; error: string };
 
+/**
+ * The Gmail preload's own strings. Main holds the catalog, so it translates them
+ * and the preload carries no English of its own.
+ */
+export type GmailPreloadMessages = {
+  messageSent: string;
+  undo: string;
+  toasts: string;
+  closeToast: string;
+};
+
 export type WorkspaceAppNotification = {
   title: string;
   body?: string;
@@ -287,6 +298,7 @@ export type IpcMainEvents =
       "license.getDeviceInfo": () => { label: string };
       "license.updateDeviceInfo": (input: { label: string }) => void;
       "desktopSources.getSources": () => DesktopSources;
+      "i18n.getGmailMessages": () => GmailPreloadMessages;
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
       "spellchecker.getAvailableLanguages": () => string[];

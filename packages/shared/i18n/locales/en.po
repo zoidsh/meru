@@ -6,3 +6,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+
+#. Accessible name of a toast's close button
+#: packages/app/ipc.ts:717
+msgid "Close toast"
+msgstr "Close toast"
+
+#. Toast in the Gmail view once a message has been sent
+#: packages/app/ipc.ts:704
+msgid "Message sent"
+msgstr "Message sent"
+
+#. Accessible name of the region Meru's own toasts appear in
+#: packages/app/ipc.ts:713
+msgid "Notifications"
+msgstr "Notifications"
+
+#. Button in the message-sent toast, which recalls the message
+#: packages/app/ipc.ts:708
+msgctxt "button"
+msgid "Undo"
+msgstr "Undo"
