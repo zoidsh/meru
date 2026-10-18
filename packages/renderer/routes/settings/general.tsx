@@ -1,5 +1,3 @@
-import { Trans, useLingui } from "@lingui/react/macro";
-import { CATALOG_NAMES, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -17,7 +15,6 @@ import { Switch } from "@meru/ui/components/switch";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LoginItemSettings } from "electron";
 import { useEffect, useId } from "react";
-import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
@@ -25,6 +22,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
+import { LanguageField } from "./language-field";
 
 function LaunchAtLoginField() {
   const queryKey = ["login-item-settings"];
@@ -183,22 +181,6 @@ function DefaultMailClientField() {
         />
       )}
     </Field>
-  );
-}
-
-function LanguageField() {
-  const { t } = useLingui();
-
-  return (
-    <ConfigSelectField
-      configKey="app.language"
-      label={t`Language`}
-      description={<Trans>Gmail and Google apps follow your Google account's language.</Trans>}
-      items={[
-        { value: "system", label: t`System` },
-        ...SHIPPED_CATALOG_TAGS.map((tag) => ({ value: tag, label: CATALOG_NAMES[tag] })),
-      ]}
-    />
   );
 }
 

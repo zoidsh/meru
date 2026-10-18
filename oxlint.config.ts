@@ -7,7 +7,11 @@ import { defineConfig } from "oxlint";
  * time as the interface is translated; everywhere else still holds about a
  * thousand unwrapped strings, which would bury everything else lint reports.
  */
-const LOCALIZED_FILES = ["packages/preload-gmail/ipc.ts", "packages/preload-gmail/toast.ts"];
+const LOCALIZED_FILES = [
+  "packages/preload-gmail/ipc.ts",
+  "packages/preload-gmail/toast.ts",
+  "packages/renderer/routes/settings/language-field.tsx",
+];
 
 export default defineConfig({
   ...oxlintConfig,

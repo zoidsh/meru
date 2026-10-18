@@ -12,11 +12,11 @@ msgstr ""
 msgid "Close toast"
 msgstr "Close toast"
 
-#: packages/renderer/routes/settings/general.tsx
+#: packages/renderer/routes/settings/language-field.tsx
 msgid "Gmail and Google apps follow your Google account's language."
 msgstr "Gmail and Google apps follow your Google account's language."
 
-#: packages/renderer/routes/settings/general.tsx
+#: packages/renderer/routes/settings/language-field.tsx
 msgid "Language"
 msgstr "Language"
 
@@ -30,7 +30,7 @@ msgstr "Message sent"
 msgid "Notifications"
 msgstr "Notifications"
 
-#: packages/renderer/routes/settings/general.tsx
+#: packages/renderer/routes/settings/language-field.tsx
 msgid "System"
 msgstr "System"
 
