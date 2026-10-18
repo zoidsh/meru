@@ -185,3 +185,6 @@ build-js
 
 # Claude
 .claude/worktrees/
+
+# Lingui
+packages/shared/i18n/locales/*.ts
