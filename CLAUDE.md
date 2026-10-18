@@ -14,9 +14,12 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | Format / check formatting               | `bun run fmt` / `bun run fmt:check`                          |
 | Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                          |
 | Typecheck every package                 | `bun run types`                                              |
-| Unit tests                              | `bun test --isolate`                                         |
-| One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`            |
-| One test by name                        | `bun test --isolate -t "name"`                               |
+| Unit tests                              | `bun run test`                                               |
+| One unit test file                      | `bun run test packages/shared/tabs.test.ts`                  |
+| One test by name                        | `bun run test -t "name"`                                     |
+| Extract strings into the catalogs       | `bun run i18n:extract`                                       |
+| Compile the catalogs                    | `bun run i18n:compile`                                       |
+| Check the catalogs                      | `bun run i18n:check`                                         |
 | End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e`  |
 | Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`            |
 | Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`     |
@@ -24,11 +27,13 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `build:mac:dmg` builds only the arm64 DMG and skips notarisation and the signing timestamp, so it is minutes faster, and the result opens only on a Mac it reached without quarantine, such as by `scp`. Never ship it.
 
+`bun run test`, `types`, `dev` and `build:js` each compile the message catalogs first, because the compiled ones are not committed and nothing resolves `@meru/shared/i18n` without them.
+
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. A development run is the free version, `op run --env-file .env.trial.op -- bun run dev` has seven days of trial left, and `op run --env-file .env.license.op -- bun run dev` is licensed. Its entitlement follows the environment alone: without `MERU_LICENSE_KEY` the stored key is removed, so a key activated in Settings lasts only until the next start, and without `MERU_DEV_DEVICE_ID` the API is never asked about a trial.
 
 Several worktrees run it at once, with nothing to pass. The renderer serves on the next free port from 3000, or on `PORT` when something outside assigns one, and Electron is handed the address the server came up on. A run in a linked worktree takes a profile named after its branch unless `--profile` names one, which gives it a user data directory and a single instance lock of its own; the main checkout keeps the default directory and the accounts signed in to it. `--debug-port 0` leaves the port to Chromium and prints what it picked. The docs' `conventions.md` has the rest.
 
-Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
+Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun run test` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
@@ -109,4 +114,5 @@ Things that take more than one file to see:
 - Platform branches use `platform` from `@electron-toolkit/utils` in main and from `@/lib/utils` in the renderer. A cross-platform accelerator uses `CommandOrControl` and `Alt`; a bare `Command` or `Option` is honored on macOS only and fails silently elsewhere.
 - Renderer: `packages/ui` components follow shadcn conventions and many are compound, so read the component file and use its sub-components instead of `<div>` wrappers. Merge conditional classes with `cn` from `@meru/ui/lib/utils`. Keyboard keys in copy render through `Kbd`. A config-backed settings field is `ConfigSwitchField` for a boolean key or `ConfigSelectField` for a string-union key; a fixed set of named choices is a string union, not a boolean.
 - Interface text matches its neighbours: native menus, the tray and context menus in title case on every platform, and everything the renderer draws in sentence case. The docs' `decisions.md`, under "Interface text", has the rest of the house calls.
+- A user-visible string is wrapped in the Lingui macro: `t` from `@lingui/core/macro` in main and the preloads, `<Trans>` or `useLingui()`'s `t` in the renderer, which redraws the component when the language changes. A word that is ambiguous on its own takes the object form, `t({ message, context, comment })`; the native extractor reads a `comment` but no source comment. `bun run i18n:extract` then writes the entry into `packages/shared/i18n/locales/en.po`, which is committed, unlike the compiled catalogs beside it. Three checks run in CI: `lingui check sync` that the catalogs are what extract would write, `lingui check missing --mode catalog --verbose` that nothing is untranslated, and `bun run i18n:check` that no translation lost a placeholder, a `<0>` tag or a plural category its language selects. `no-unlocalized-strings` runs only over the files listed in `oxlint.config.ts`, which grows as each area is wrapped.
 - Behavior specific to a platform other than the one the session runs on, such as macOS accelerators, menus or signing from Linux, cannot be verified. Do what can be done and say so under a `## Not verified` heading.
