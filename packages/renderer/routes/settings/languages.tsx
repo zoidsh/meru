@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -11,19 +12,14 @@ import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@meru/ui/co
 import { cn } from "@meru/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
+import { useMemo } from "react";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
-const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
-
-function getLanguageLabel(code: string) {
-  return displayNames.of(code) ?? code;
-}
-
-function getTriggerLabel(selected: string[]) {
+function getTriggerLabel(selected: string[], getLanguageLabel: (code: string) => string) {
   if (selected.length === 0) {
     return "No additional languages selected";
   }
@@ -41,6 +37,17 @@ export function LanguagesSettings() {
   const configMutation = useConfigMutation();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  // The spellchecker's languages are named in the interface language, so the
+  // list is rebuilt whenever that changes.
+  const { i18n } = useLingui();
+
+  const displayNames = useMemo(
+    () => new Intl.DisplayNames([i18n.locale], { type: "language" }),
+    [i18n.locale],
+  );
+
+  const getLanguageLabel = (code: string) => displayNames.of(code) ?? code;
 
   const { data: availableLanguages = [] } = useQuery({
     queryKey: ["spellchecker.availableLanguages"],
@@ -98,7 +105,7 @@ export function LanguagesSettings() {
                       selected.length === 0 && "text-muted-foreground",
                     )}
                   >
-                    <span className="truncate">{getTriggerLabel(selected)}</span>
+                    <span className="truncate">{getTriggerLabel(selected, getLanguageLabel)}</span>
                     <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
                   </Button>
                 }
