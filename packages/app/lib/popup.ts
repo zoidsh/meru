@@ -48,6 +48,12 @@ export class Popup {
    * Where each popup open over `parentWindow` sits, in its content coordinates,
    * so a gesture over one is not answered by the view underneath.
    */
+  static getAllOpenWebContents() {
+    return Array.from(openPopups, (popup) => popup.webContents).filter(
+      (webContents) => webContents !== null,
+    );
+  }
+
   static getOpenBoundsIn(parentWindow: BrowserWindow) {
     const bounds: Rectangle[] = [];
 
