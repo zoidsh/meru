@@ -14,9 +14,9 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 | Format / check formatting               | `bun run fmt` / `bun run fmt:check`                          |
 | Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                          |
 | Typecheck every package                 | `bun run types`                                              |
-| Unit tests                              | `bun run test`                                               |
-| One unit test file                      | `bun run test packages/shared/tabs.test.ts`                  |
-| One test by name                        | `bun run test -t "name"`                                     |
+| Unit tests                              | `bun test --isolate`                                         |
+| One unit test file                      | `bun test --isolate packages/shared/tabs.test.ts`            |
+| One test by name                        | `bun test --isolate -t "name"`                               |
 | Extract strings into the catalogs       | `bun run i18n:extract`                                       |
 | Compile the catalogs                    | `bun run i18n:compile`                                       |
 | Check the catalogs                      | `bun run i18n:check`                                         |
@@ -27,13 +27,13 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `build:mac:dmg` builds only the arm64 DMG and skips notarisation and the signing timestamp, so it is minutes faster, and the result opens only on a Mac it reached without quarantine, such as by `scp`. Never ship it.
 
-`bun run test`, `types`, `dev` and `build:js` each compile the message catalogs first, because the compiled ones are not committed and nothing resolves `@meru/shared/i18n` without them.
+`types`, `dev` and `build:js` each compile the message catalogs first, and `bun test` does through the preload in `bunfig.toml`, because the compiled ones are not committed and nothing resolves `@meru/shared/i18n` without them.
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. A development run is the free version, `op run --env-file .env.trial.op -- bun run dev` has seven days of trial left, and `op run --env-file .env.license.op -- bun run dev` is licensed. Its entitlement follows the environment alone: without `MERU_LICENSE_KEY` the stored key is removed, so a key activated in Settings lasts only until the next start, and without `MERU_DEV_DEVICE_ID` the API is never asked about a trial.
 
 Several worktrees run it at once, with nothing to pass. The renderer serves on the next free port from 3000, or on `PORT` when something outside assigns one, and Electron is handed the address the server came up on. A run in a linked worktree takes a profile named after its branch unless `--profile` names one, which gives it a user data directory and a single instance lock of its own; the main checkout keeps the default directory and the accounts signed in to it. `--debug-port 0` leaves the port to Chromium and prints what it picked. The docs' `conventions.md` has the rest.
 
-Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun run test` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
+Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun test --isolate` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
 
