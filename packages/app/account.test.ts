@@ -57,7 +57,10 @@ mock.module("./blocker", () => ({ blocker: { setupSession: () => {} } }));
 
 mock.module("./config", () => ({ config: { get: () => false } }));
 
-mock.module("./extensions", () => ({ extensions: { setupSession: async () => {} } }));
+mock.module("./extensions", () => ({
+  EXTENSION_PAGE_PERMISSIONS: new Set(),
+  extensions: { setupSession: async () => {} },
+}));
 
 mock.module("./gmail", () => ({ Gmail: class {} }));
 
