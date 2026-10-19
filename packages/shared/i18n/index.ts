@@ -103,8 +103,24 @@ export function getDayjsLocale(tag: CatalogTag) {
   return tag.toLowerCase();
 }
 
+/**
+ * A tag without a catalog activates English whole, since another locale's
+ * plural rules over English messages would pick the wrong forms.
+ */
 export function activateLocale(tag: CatalogTag) {
-  i18n.loadAndActivate({ locale: tag, messages: catalogs[tag] ?? catalogs.en });
+  const messages = catalogs[tag];
+
+  if (messages) {
+    i18n.loadAndActivate({ locale: tag, messages });
+  } else {
+    i18n.loadAndActivate({ locale: "en", messages: catalogs.en });
+  }
 }
+
+/*
+ * A macro call throws while no locale is active, and main runs some code before
+ * it resolves the user's language, so English is active from the start.
+ */
+activateLocale("en");
 
 export { i18n };

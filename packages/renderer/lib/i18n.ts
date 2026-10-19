@@ -4,9 +4,11 @@ import { setDayjsLocale } from "./date";
 import { localeSearchParam } from "./search-params";
 
 function activate(locale: CatalogTag) {
-  activateLocale(locale);
-
+  // Ahead of Lingui, whose activation re-renders, so dates redraw in the new
+  // language too.
   setDayjsLocale(locale);
+
+  activateLocale(locale);
 
   // Japanese needs it to pick Japanese glyphs over Chinese ones for the
   // characters the two scripts share.

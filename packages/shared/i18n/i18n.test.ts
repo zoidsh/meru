@@ -94,6 +94,13 @@ describe("getDayjsLocale", () => {
 });
 
 describe("activateLocale", () => {
+  // Runs before any test here activates a locale, which `--isolate` makes
+  // the state the module is loaded into.
+  test("has English active once the module loads", () => {
+    expect(i18n.locale).toBe("en");
+    expect(translate("Settings")).toBe("Settings");
+  });
+
   test("activates the catalog this build ships", () => {
     activateLocale("en");
 
@@ -101,10 +108,18 @@ describe("activateLocale", () => {
     expect(translate("Settings")).toBe("Settings");
   });
 
-  test("answers in English for a tag whose catalog is not in this build", () => {
+  test("has a catalog for every shipped tag", () => {
+    for (const tag of SHIPPED_CATALOG_TAGS) {
+      activateLocale(tag);
+
+      expect(i18n.locale).toBe(tag);
+    }
+  });
+
+  test("activates English, plural rules included, for a tag whose catalog is not in this build", () => {
     activateLocale("de");
 
-    expect(i18n.locale).toBe("de");
+    expect(i18n.locale).toBe("en");
     expect(translate("Settings")).toBe("Settings");
   });
 });
