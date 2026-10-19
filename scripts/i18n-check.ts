@@ -12,8 +12,9 @@ import {
  * translation is missing a CLDR category for its locale, which compiles and
  * silently falls back to `other` at runtime, a plural replaced by plain text, a
  * placeholder or a `<0>` tag dropped, renamed or invented in a translation, and
- * entries left fuzzy or obsolete. Each problem is named with the entry and the source line it came
- * from, since a count alone says nothing a translating agent can act on.
+ * entries left fuzzy or obsolete. Each problem is named by its entry and the
+ * file it came from, since a count alone says nothing a translating agent can
+ * act on.
  */
 
 export type Problem = {
