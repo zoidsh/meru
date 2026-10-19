@@ -1,6 +1,6 @@
 /*
- * The interface language: what the picker offers, what it writes, and the
- * `lang` every renderer page carries.
+ * The interface language: what the picker offers, what it writes, the restart
+ * it asks for, and the `lang` every renderer page carries at first paint.
  *
  * Seeded with `"system"` rather than the `"en"` every other launch takes, so
  * that picking English is a change the config has to record. English is the
@@ -17,7 +17,7 @@ function readDocumentLanguage(page: Page) {
   return page.evaluate(() => document.documentElement.lang);
 }
 
-test("the language field offers the shipped languages and writes the one picked", async () => {
+test("the language field offers the shipped languages, writes the one picked and asks for a restart", async () => {
   await openSettingsPage(meru, await meru.openSettings(), "General");
 
   const language = meru.renderer.locator('[id="app.language"]');
@@ -41,6 +41,18 @@ test("the language field offers the shipped languages and writes the one picked"
   await expect.poll(async () => (await meru.readConfig())["app.language"]).toBe("en");
 
   await expect(language).toContainText("English");
+
+  const restartRequired = meru.renderer
+    .getByRole("listitem")
+    .filter({ hasText: "Restart Meru to apply the changes." });
+
+  await expect(restartRequired).toBeVisible();
+
+  await expect(restartRequired.getByRole("button", { name: "Restart" })).toBeVisible();
+
+  await restartRequired.getByRole("button", { name: "Later" }).click();
+
+  await expect(restartRequired).toBeHidden();
 });
 
 test("every renderer page carries the active language", async () => {
