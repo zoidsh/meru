@@ -44,12 +44,6 @@ const openPopups = new Set<Popup>();
  * entrance animation has room to move without being cut off at the view edge.
  */
 export class Popup {
-  static getAllOpenWebContents() {
-    return Array.from(openPopups, (popup) => popup.webContents).filter(
-      (webContents) => webContents !== null,
-    );
-  }
-
   /**
    * Where each popup open over `parentWindow` sits, in its content coordinates,
    * so a gesture over one is not answered by the view underneath.

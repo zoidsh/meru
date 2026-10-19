@@ -56,7 +56,6 @@ import { Gmail, GMAIL_USER_STYLES_PATH } from "./gmail";
 import { ExtensionInstallError } from "./lib/extension-swap";
 import { hibernatesTabWhenIdle } from "./lib/hibernation";
 import { log } from "./lib/log";
-import { Popup } from "./lib/popup";
 import {
   areWorkspaceAppNotificationsAllowed,
   createNewEmailNotification,
@@ -90,21 +89,17 @@ function getNavigationWebContents(workspaceAppId?: string) {
     .webContents;
 }
 
-/**
- * A page `loadRenderer` creates that is missing here keeps the config and the
- * language it was opened with until it is closed.
- */
-export function getRendererWebContents() {
-  const rendererWebContents = [main.window.webContents, ...Popup.getAllOpenWebContents()];
+function getRendererWebContents() {
+  const rendererWebContents = [main.window.webContents];
+
+  const recentDownloadHistoryPopupWebContents = downloads.recentDownloadHistoryPopup.webContents;
+
+  if (recentDownloadHistoryPopupWebContents) {
+    rendererWebContents.push(recentDownloadHistoryPopupWebContents);
+  }
 
   for (const workspaceAppWindow of WorkspaceApp.getAllWindows()) {
     rendererWebContents.push(workspaceAppWindow.webContents);
-  }
-
-  for (const { instance } of accounts.getAccounts()) {
-    if (instance.desktopSourcesWindow) {
-      rendererWebContents.push(instance.desktopSourcesWindow.webContents);
-    }
   }
 
   return rendererWebContents;
