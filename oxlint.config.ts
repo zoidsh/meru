@@ -24,6 +24,14 @@ export default defineConfig({
     // A placeholder that is not a plain identifier extracts as `{0}`, which
     // tells a translating agent nothing about what goes there.
     "lingui/no-expression-in-message": "error",
+    // A message that is only a placeholder or only a tag leaves a translator
+    // nothing to translate.
+    "lingui/no-single-variables-to-translate": "error",
+    "lingui/no-single-tag-to-translate": "error",
+    "lingui/no-trans-inside-trans": "error",
+    // A `lingui-set` directive applies to every message below it in the file
+    // until a `lingui-reset` closes it.
+    "lingui/require-directive-reset": "error",
   },
   overrides: [
     {
@@ -48,6 +56,16 @@ export default defineConfig({
               // IPC channel names, which are the contract rather than copy.
               "ipc.main.*",
               "ipc.renderer.*",
+              // Class names.
+              "cn",
+              "cva",
+              "clsx",
+              // Config keys.
+              "config.get",
+              "config.set",
+              "config.onDidChange",
+              // `new URL(…)`, whose callee the rule matches like a call's.
+              "URL",
             ],
             ignoreNames: [
               // A module constant is an id, a namespace or a selector, not copy.
