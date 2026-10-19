@@ -68,7 +68,8 @@ export function resolveLocale(
   shippedTags: readonly CatalogTag[],
 ): CatalogTag {
   for (const preferredLanguage of preferredLanguages) {
-    const language = preferredLanguage.toLowerCase();
+    // Linux hands over glibc modifiers such as `@euro` and `@latin`.
+    const language = preferredLanguage.toLowerCase().replace(/@.*/, "");
 
     const exactTag = shippedTags.find((tag) => tag.toLowerCase() === language);
 

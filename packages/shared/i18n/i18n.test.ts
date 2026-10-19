@@ -57,6 +57,13 @@ describe("resolveLocale", () => {
     [["en-GB"], "en"],
     [["zh-CN", "ru-RU"], "en"],
     [[], "en"],
+    [["c"], "en"],
+    [["posix"], "en"],
+    [["es-ES@euro", "es@euro", "es-ES", "es"], "es"],
+    [["pt-PT@euro", "pt@euro", "pt-PT", "pt"], "pt-BR"],
+    [["de-DE@euro", "de@euro", "de-DE", "de"], "de"],
+    [["sr-RS@latin", "sr-RS@latin", "sr", "sr"], "en"],
+    [["es-MX@euro"], "es-419"],
     // The first preferred language that matches anything wins, even where one
     // further down would have matched exactly.
     [["xx", "pt-PT", "de"], "pt-BR"],
