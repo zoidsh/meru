@@ -298,7 +298,6 @@ export type IpcMainEvents =
       "license.getDeviceInfo": () => { label: string };
       "license.updateDeviceInfo": (input: { label: string }) => void;
       "desktopSources.getSources": () => DesktopSources;
-      "i18n.getGmailMessages": () => GmailPreloadMessages;
       "config.getConfig": () => Config;
       "config.setConfig": (config: Partial<Config>) => void;
       "spellchecker.getAvailableLanguages": () => string[];
@@ -330,7 +329,7 @@ export type IpcRendererEvent = {
   "gmail.refreshInbox": [];
   "gmail.inboxChanged": [accountId: AccountConfig["id"], messages: GmailInboxMessage[]];
   "gmail.openMessage": [messageId: string];
-  "gmail.showMessageSentNotification": [browserWindowId: number];
+  "gmail.showMessageSentNotification": [browserWindowId: number, messages: GmailPreloadMessages];
   "gmail.dismissMessageSentNotification": [browserWindowId: number];
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];

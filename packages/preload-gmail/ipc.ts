@@ -30,11 +30,7 @@ ipc.renderer.on("gmail.refreshInbox", () => {
   refreshInbox();
 });
 
-ipc.renderer.on("gmail.showMessageSentNotification", async (_event, browserWindowId: number) => {
-  // Asked for on every toast rather than cached, so the strings follow a
-  // language changed since the view loaded.
-  const messages = await ipc.main.invoke("i18n.getGmailMessages");
-
+ipc.renderer.on("gmail.showMessageSentNotification", (_event, browserWindowId, messages) => {
   // No duration: the main process ends this one when it closes the compose
   // window, 30 seconds in, which is Gmail's own undo-send window.
   showToast({

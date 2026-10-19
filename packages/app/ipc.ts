@@ -699,28 +699,6 @@ class Ipc {
       accounts.setVerticalTabsWidth(accountId, width);
     });
 
-    // The Gmail preload shows these four and holds no catalog of its own.
-    ipc.main.handle("i18n.getGmailMessages", () => ({
-      messageSent: t({
-        message: "Message sent",
-        comment: "Toast in the Gmail view once a message has been sent",
-      }),
-      undo: t({
-        message: "Undo",
-        context: "button",
-        comment: "Button in the message-sent toast, which recalls the message",
-      }),
-      toasts: t({
-        message: "Notifications",
-        comment: "Accessible name of the region Meru's own toasts appear in",
-      }),
-      closeToast: t({
-        message: "Close toast",
-        comment:
-          "Accessible name of the close button on a brief notification Meru shows over Gmail",
-      }),
-    }));
-
     ipc.main.handle("config.getConfig", () => config.store);
 
     ipc.main.handle(
@@ -1011,7 +989,26 @@ class Ipc {
         return;
       }
 
-      ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId);
+      ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId, {
+        messageSent: t({
+          message: "Message sent",
+          comment: "Toast in the Gmail view once a message has been sent",
+        }),
+        undo: t({
+          message: "Undo",
+          context: "button",
+          comment: "Button in the message-sent toast, which recalls the message",
+        }),
+        toasts: t({
+          message: "Notifications",
+          comment: "Accessible name of the region Meru's own toasts appear in",
+        }),
+        closeToast: t({
+          message: "Close toast",
+          comment:
+            "Accessible name of the close button on a brief notification Meru shows over Gmail",
+        }),
+      });
     });
 
     ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {
