@@ -153,7 +153,7 @@ beforeEach(() => {
 
 describe("display media requests", () => {
   test("answer with the source picked in the picker", () => {
-    const { requestDisplayMedia } = createAccount("a");
+    const { account, requestDisplayMedia } = createAccount("a");
 
     const answers = requestDisplayMedia();
 
@@ -161,17 +161,19 @@ describe("display media requests", () => {
 
     expect(answers).toEqual([{ video: screen }]);
     expect(openedPicker(0).destroyed).toBe(true);
+    expect(account.desktopSourcesWindow).toBeNull();
     expect(ipcMain.listenerCount("desktopSources.select")).toBe(0);
   });
 
   test("answer with nothing when the picker closes without a pick", () => {
-    const { requestDisplayMedia } = createAccount("a");
+    const { account, requestDisplayMedia } = createAccount("a");
 
     const answers = requestDisplayMedia();
 
     openedPicker(0).emit("closed");
 
     expect(answers).toEqual([{}]);
+    expect(account.desktopSourcesWindow).toBeNull();
     expect(ipcMain.listenerCount("desktopSources.select")).toBe(0);
   });
 
@@ -207,6 +209,24 @@ describe("display media requests", () => {
 
     expect(firstAnswers).toEqual([{ video: screen }]);
     expect(secondAnswers).toEqual([{ video: window }]);
+  });
+
+  test("bring the open picker to the front and decline a second request from the same account", () => {
+    const { account, requestDisplayMedia } = createAccount("a");
+
+    const firstAnswers = requestDisplayMedia();
+    const secondAnswers = requestDisplayMedia();
+
+    expect(pickerWindows).toHaveLength(1);
+    expect(openedPicker(0).focused).toBe(1);
+    expect(secondAnswers).toEqual([{}]);
+    expect(firstAnswers).toEqual([]);
+
+    pick(openedPicker(0), screen);
+
+    expect(firstAnswers).toEqual([{ video: screen }]);
+    expect(secondAnswers).toEqual([{}]);
+    expect(account.desktopSourcesWindow).toBeNull();
   });
 
   test("open a new picker once the previous one has closed", () => {
