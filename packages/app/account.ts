@@ -217,11 +217,20 @@ export class Account {
           },
         });
 
+        const desktopSourcesWebContents = desktopSourcesWindow.webContents;
+
         const windowEvent = "closed";
 
         const ipcEvent = "desktopSources.select";
 
-        const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+        // `ipcMain` hears every window, including other accounts' pickers
+        const ipcListener = (event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+          if (event.sender !== desktopSourcesWebContents) {
+            return;
+          }
+
+          ipcMain.removeListener(ipcEvent, ipcListener);
+
           desktopSourcesWindow.removeListener(windowEvent, windowListener);
 
           callback({ video: desktopSource });
@@ -237,7 +246,7 @@ export class Account {
           desktopSourcesWindow.destroy();
         };
 
-        ipcMain.once(ipcEvent, ipcListener);
+        ipcMain.on(ipcEvent, ipcListener);
 
         desktopSourcesWindow.once(windowEvent, windowListener);
 
