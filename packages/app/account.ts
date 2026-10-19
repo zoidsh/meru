@@ -3,7 +3,15 @@ import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { VerticalTabsSessionWidth } from "@meru/shared/tabs";
 import type { SelectedDesktopSource } from "@meru/shared/types";
-import { app, type IpcMainEvent, ipcMain, type Session, session, type WebContents } from "electron";
+import {
+  app,
+  type BrowserWindow,
+  type IpcMainEvent,
+  ipcMain,
+  type Session,
+  session,
+  type WebContents,
+} from "electron";
 import { serializeError } from "serialize-error";
 import { blocker } from "./blocker";
 import { config } from "./config";
@@ -38,6 +46,8 @@ export class Account {
    * the next one. `null` leaves the width to the setting.
    */
   verticalTabsWidth: VerticalTabsSessionWidth | null = null;
+
+  desktopSourcesWindow: BrowserWindow | null = null;
 
   constructor(accountConfig: AccountConfig) {
     this.accountId = accountConfig.id;
@@ -197,6 +207,16 @@ export class Account {
   private registerSessionDisplayMediaRequestHandler() {
     this.session.setDisplayMediaRequestHandler(
       async (_request, callback) => {
+        // A second picker would answer neither request reliably, so the open
+        // one is surfaced and keeps the request it was opened for
+        if (this.desktopSourcesWindow) {
+          this.desktopSourcesWindow.focus();
+
+          callback({});
+
+          return;
+        }
+
         const googleMeetParentWindow = this.findGoogleMeetParentWindow();
 
         if (!googleMeetParentWindow) {
@@ -217,12 +237,25 @@ export class Account {
           },
         });
 
+        this.desktopSourcesWindow = desktopSourcesWindow;
+
+        const desktopSourcesWebContents = desktopSourcesWindow.webContents;
+
         const windowEvent = "closed";
 
         const ipcEvent = "desktopSources.select";
 
-        const ipcListener = (_event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+        // `ipcMain` hears every window, including other accounts' pickers
+        const ipcListener = (event: IpcMainEvent, desktopSource: SelectedDesktopSource) => {
+          if (event.sender !== desktopSourcesWebContents) {
+            return;
+          }
+
+          ipcMain.removeListener(ipcEvent, ipcListener);
+
           desktopSourcesWindow.removeListener(windowEvent, windowListener);
+
+          this.desktopSourcesWindow = null;
 
           callback({ video: desktopSource });
 
@@ -232,12 +265,14 @@ export class Account {
         const windowListener = () => {
           ipcMain.removeListener(ipcEvent, ipcListener);
 
+          this.desktopSourcesWindow = null;
+
           callback({});
 
           desktopSourcesWindow.destroy();
         };
 
-        ipcMain.once(ipcEvent, ipcListener);
+        ipcMain.on(ipcEvent, ipcListener);
 
         desktopSourcesWindow.once(windowEvent, windowListener);
 
