@@ -1,19 +1,6 @@
-import { activateLocale, type CatalogTag, isCatalogTag } from "@meru/shared/i18n";
-import { ipc } from "@meru/shared/renderer/ipc";
+import { activateLocale, isCatalogTag } from "@meru/shared/i18n";
 import { setDayjsLocale } from "./date";
 import { localeSearchParam } from "./search-params";
-
-function activate(locale: CatalogTag) {
-  // Ahead of Lingui, whose activation re-renders, so dates redraw in the new
-  // language too.
-  setDayjsLocale(locale);
-
-  activateLocale(locale);
-
-  // Japanese needs it to pick Japanese glyphs over Chinese ones for the
-  // characters the two scripts share.
-  document.documentElement.lang = locale;
-}
 
 /**
  * Only main can read the preferred system languages, so it resolves the locale
@@ -22,14 +9,13 @@ function activate(locale: CatalogTag) {
  * without an IPC round trip, and `"system"` never has to be resolved here.
  */
 export function initLocale() {
-  activate(localeSearchParam && isCatalogTag(localeSearchParam) ? localeSearchParam : "en");
-}
+  const locale = localeSearchParam && isCatalogTag(localeSearchParam) ? localeSearchParam : "en";
 
-/*
- * A change reaches the pages that are already open from here rather than from
- * the `config.configChanged` push, which carries `"app.language"` as it is
- * stored and so may carry `"system"`.
- */
-ipc.renderer.on("i18n.localeChanged", (_event, locale) => {
-  activate(locale);
-});
+  setDayjsLocale(locale);
+
+  activateLocale(locale);
+
+  // Japanese needs it to pick Japanese glyphs over Chinese ones for the
+  // characters the two scripts share.
+  document.documentElement.lang = locale;
+}

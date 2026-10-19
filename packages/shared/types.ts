@@ -333,7 +333,6 @@ export type IpcRendererEvent = {
   "gmail.dismissMessageSentNotification": [browserWindowId: number];
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
-  "i18n.localeChanged": [locale: CatalogTag];
   "accounts.changed": [accounts: AccountInstances];
   "tabs.changed": [accountsTabs: AccountTabsState[]];
   "bookmarks.changed": [bookmarks: BookmarkState[]];

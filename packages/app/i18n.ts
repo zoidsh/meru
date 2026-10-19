@@ -6,9 +6,6 @@ import {
 } from "@meru/shared/i18n";
 import { app } from "electron";
 import { config } from "@/config";
-import { getRendererWebContents, ipc } from "@/ipc";
-import { appMenu } from "@/menu";
-import { appTray } from "@/tray";
 
 class AppI18n {
   /**
@@ -32,25 +29,11 @@ class AppI18n {
 
   /**
    * Called before the menu, the tray and the first renderer load, each of which
-   * reads the active catalog as it is built.
+   * reads the active catalog as it is built. A language picked later takes
+   * effect at the next start.
    */
   init() {
     activateLocale(this.locale);
-
-    config.onDidChange("app.language", () => {
-      activateLocale(this.locale);
-
-      appMenu.refresh();
-
-      appTray.createOrUpdateContextMenu();
-
-      // Every renderer page holds its own Lingui instance, seeded from the
-      // locale `loadRenderer` puts in its search parameters, so a change
-      // reaches the pages that are already open from here.
-      for (const rendererWebContents of getRendererWebContents()) {
-        ipc.renderer.send(rendererWebContents, "i18n.localeChanged", this.locale);
-      }
-    });
   }
 }
 
