@@ -38,8 +38,7 @@ export function LanguagesSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  // The spellchecker's languages are named in the interface language, so the
-  // list is rebuilt whenever that changes.
+  // The spellchecker's languages are named in the interface language.
   const { i18n } = useLingui();
 
   const displayNames = useMemo(
