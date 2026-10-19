@@ -8,6 +8,7 @@ export function LanguageField() {
   return (
     <ConfigSelectField
       configKey="app.language"
+      restartRequired
       label={t({
         message: "Language",
         comment: "Label of the setting that chooses the language of Meru's own menus and settings",
