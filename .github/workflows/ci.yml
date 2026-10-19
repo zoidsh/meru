@@ -81,8 +81,8 @@ jobs:
       - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bunx lingui compile --strict
-      - run: bunx lingui check sync
-      - run: bunx lingui check missing --mode catalog --verbose
+      - run: bunx lingui check sync --clean --workers 1
+      - run: bunx lingui check missing --mode catalog --verbose --workers 1
       - run: bun run i18n:check
   types:
     needs: changes
