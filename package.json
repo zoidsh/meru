@@ -26,6 +26,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
     "postinstall": "electron-builder install-app-deps",
+    "test": "bun run i18n:compile && bun test --isolate",
     "test:e2e": "bun run scripts/e2e.ts",
     "types": "bun run i18n:compile && tsc && bun run --filter='*' --elide-lines=0 types",
     "types:ci": "bun run i18n:compile && tsc && bun run --filter='*' types"
