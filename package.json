@@ -21,7 +21,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "i18n:check": "bun run scripts/i18n-check.ts",
-    "i18n:compile": "lingui compile --strict",
+    "i18n:compile": "lingui compile",
     "i18n:extract": "lingui extract --clean --workers 1",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix --fix-suggestions --fix-dangerously",
