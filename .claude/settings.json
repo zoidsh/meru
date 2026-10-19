@@ -1,0 +1,6 @@
+{
+  "extraKnownMarketplaces": {
+    "lingui-skills": { "source": { "source": "github", "repo": "lingui/skills" } }
+  },
+  "enabledPlugins": { "lingui@lingui-skills": true }
+}
