@@ -7,7 +7,7 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
-#. Accessible name of a toast's close button
+#. Accessible name of the close button on a brief notification Meru shows over Gmail
 #: packages/app/ipc.ts
 msgid "Close toast"
 msgstr "Close toast"
@@ -16,6 +16,7 @@ msgstr "Close toast"
 msgid "Gmail and Google apps follow your Google account's language."
 msgstr "Gmail and Google apps follow your Google account's language."
 
+#. Label of the setting that chooses the language of Meru's own menus and settings
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "Language"
 msgstr "Language"
@@ -30,6 +31,7 @@ msgstr "Message sent"
 msgid "Notifications"
 msgstr "Notifications"
 
+#. Language picker option: follow the operating system's language
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "System"
 msgstr "System"

@@ -8,10 +8,19 @@ export function LanguageField() {
   return (
     <ConfigSelectField
       configKey="app.language"
-      label={t`Language`}
+      label={t({
+        message: "Language",
+        comment: "Label of the setting that chooses the language of Meru's own menus and settings",
+      })}
       description={<Trans>Gmail and Google apps follow your Google account's language.</Trans>}
       items={[
-        { value: "system", label: t`System` },
+        {
+          value: "system",
+          label: t({
+            message: "System",
+            comment: "Language picker option: follow the operating system's language",
+          }),
+        },
         ...SHIPPED_CATALOG_TAGS.map((tag) => ({ value: tag, label: CATALOG_NAMES[tag] })),
       ]}
     />

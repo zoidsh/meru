@@ -716,7 +716,8 @@ class Ipc {
       }),
       closeToast: t({
         message: "Close toast",
-        comment: "Accessible name of a toast's close button",
+        comment:
+          "Accessible name of the close button on a brief notification Meru shows over Gmail",
       }),
     }));
 
