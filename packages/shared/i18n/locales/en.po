@@ -7,16 +7,1071 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: packages/app/lib/extension-swap.ts
+msgid "{conflictName} is off, but some of its files may be left in Meru. {extensionName} wasn't installed. Turn it on to try again."
+msgstr "{conflictName} is off, but some of its files may be left in Meru. {extensionName} wasn't installed. Turn it on to try again."
+
+#: packages/app/lib/extension-swap.ts
+msgid "{conflictName} is still on, and {extensionName} wasn't installed."
+msgstr "{conflictName} is still on, and {extensionName} wasn't installed."
+
+#: packages/app/lib/extension-swap.ts
+msgid "{conflictName} was turned off, and you're signed out of it in Meru."
+msgstr "{conflictName} was turned off, and you're signed out of it in Meru."
+
+#. name is the name of a browser extension, such as Bitwarden
+#: packages/app/lib/extension-window.ts
+msgid "{name} is running, but Meru can't open a window for it."
+msgstr "{name} is running, but Meru can't open a window for it."
+
+#. name is the name of a browser extension, such as Bitwarden
+#: packages/app/lib/extension-swap.ts
+msgid "{name} is still on."
+msgstr "{name} is still on."
+
+#. name is the name of a browser extension, such as Bitwarden
+#: packages/app/lib/extension-window.ts
+msgid "{name} starts after Meru restarts. Restart Meru, then try again."
+msgstr "{name} starts after Meru restarts. Restart Meru, then try again."
+
+#. The first form is shown on Windows, the other on macOS
+#: packages/app/workspace-app.ts
+msgid "{platformName, select, windows {Continue with Windows Hello if you've created a passkey in Meru. Passkeys from Chrome, Google Password Manager, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.} other {Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.}}"
+msgstr "{platformName, select, windows {Continue with Windows Hello if you've created a passkey in Meru. Passkeys from Chrome, Google Password Manager, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.} other {Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.}}"
+
+#. appLinksTabTitle is the title of the tab that opens the links today; appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/dialogs.ts
+msgid "{target, select, window {“{appLinksTabTitle}” currently opens all {appLabel} links. This window will open them instead.} other {“{appLinksTabTitle}” currently opens all {appLabel} links. This tab will open them instead.}}"
+msgstr "{target, select, window {“{appLinksTabTitle}” currently opens all {appLabel} links. This window will open them instead.} other {“{appLinksTabTitle}” currently opens all {appLabel} links. This tab will open them instead.}}"
+
+#. Tab context menu item; appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/ipc.ts
+msgid "{target, select, window {New {appLabel} Window} other {New {appLabel} Tab}}"
+msgstr "{target, select, window {New {appLabel} Window} other {New {appLabel} Tab}}"
+
+#. appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/dialogs.ts
+msgid "{target, select, window {Open {appLabel} links in this window?} other {Open {appLabel} links in this tab?}}"
+msgstr "{target, select, window {Open {appLabel} links in this window?} other {Open {appLabel} links in this tab?}}"
+
+#. Tab context menu checkbox that makes this tab open the app's links; appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/ipc.ts
+msgid "{target, select, window {Open {appLabel} Links in This Window} other {Open {appLabel} Links in This Tab}}"
+msgstr "{target, select, window {Open {appLabel} Links in This Window} other {Open {appLabel} Links in This Tab}}"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Copy"
+msgstr "&Copy"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Learn Spelling"
+msgstr "&Learn Spelling"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Paste"
+msgstr "&Paste"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Paste And Match Style"
+msgstr "&Paste And Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Search with Google"
+msgstr "&Search with Google"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "1 Hour"
+msgstr "1 Hour"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "10 Minutes"
+msgstr "10 Minutes"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "12 Hours"
+msgstr "12 Hours"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "15 Minutes"
+msgstr "15 Minutes"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "2 Hours"
+msgstr "2 Hours"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "30 Minutes"
+msgstr "30 Minutes"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "4 Hours"
+msgstr "4 Hours"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 Minutes"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "8 Hours"
+msgstr "8 Hours"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "About {appName}"
+msgstr "About {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Accounts"
+msgstr "Accounts"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Actual Size"
+msgstr "Actual Size"
+
+#. Button on a new email notification
+#: packages/app/gmail/index.ts
+msgid "Archive"
+msgstr "Archive"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Ask Question…"
+msgstr "Ask Question…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Back"
+msgstr "Back"
+
+#. Context menu item that bookmarks the tab
+#: packages/app/ipc.ts
+msgid "Bookmark"
+msgstr "Bookmark"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Bring All to Front"
+msgstr "Bring All to Front"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "C&opy Image Address"
+msgstr "C&opy Image Address"
+
+#: packages/app/dialogs.ts
+#: packages/app/license-key.ts
+#: packages/app/menu.ts
+#: packages/app/protocol/index.ts
+#: packages/app/url.ts
+#: packages/app/workspace-app.ts
+msgid "Cancel"
+msgstr "Cancel"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
+
+#. Title of the window that picks a screen or a window to share in a Google Meet call
+#: packages/app/account.ts
+msgid "Choose what to share"
+msgstr "Choose what to share"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Clear Cache"
+msgstr "Clear Cache"
+
+#. Context menu item that closes the tab
+#: packages/app/ipc.ts
+msgctxt "tab"
+msgid "Close"
+msgstr "Close"
+
+#. File menu item that closes the window
+#: packages/app/menu.ts
+msgctxt "window"
+msgid "Close"
+msgstr "Close"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Close Other Tabs"
+msgstr "Close Other Tabs"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Close Tab"
+msgstr "Close Tab"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Close Tabs Below"
+msgstr "Close Tabs Below"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Close Window"
+msgstr "Close Window"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Compose"
+msgstr "Compose"
+
+#: packages/app/trial.ts
+msgid "Continue with the free version"
+msgstr "Continue with the free version"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Cop&y Image"
+msgstr "Cop&y Image"
+
+#: packages/app/gmail/index.ts
+msgid "Copied verification code {verificationCode}"
+msgstr "Copied verification code {verificationCode}"
+
+#. A menu or a menu item in Meru's menu bar
+#. Button on a notification that copies the verification code
+#: packages/app/gmail/index.ts
+#: packages/app/menu.ts
+msgid "Copy"
+msgstr "Copy"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Copy Email Address"
+msgstr "Copy Email Address"
+
+#: packages/app/url.ts
+msgid "Copy link"
+msgstr "Copy link"
+
+#. Context menu item that copies the address of the clicked link; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Copy Link Addr&ess"
+msgstr "Copy Link Addr&ess"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgid "Copy Message Link"
+msgstr "Copy Message Link"
+
+#. Copies the address of the page open in a Google Workspace app; an item in the app's page context menu and its tab's context menu
+#: packages/app/context-menu.ts
+#: packages/app/ipc.ts
+msgid "Copy URL"
+msgstr "Copy URL"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Copy Video Ad&dress"
+msgstr "Copy Video Ad&dress"
+
+#: packages/app/license-key.ts
+msgid "Couldn't activate the license key."
+msgstr "Couldn't activate the license key."
+
+#. errorMessage is the technical reason, left untranslated
+#: packages/app/lib/extension-swap.ts
+msgid "Couldn't install the extension: {errorMessage}"
+msgstr "Couldn't install the extension: {errorMessage}"
+
+#. conflictName is an extension's name; errorMessage is the technical reason, left untranslated
+#: packages/app/lib/extension-swap.ts
+msgid "Couldn't turn off {conflictName}: {errorMessage}"
+msgstr "Couldn't turn off {conflictName}: {errorMessage}"
+
+#. errorMessage is the technical reason, left untranslated
+#: packages/app/ipc.ts
+msgid "Couldn't uninstall the extension: {errorMessage}"
+msgstr "Couldn't uninstall the extension: {errorMessage}"
+
+#: packages/app/license-key.ts
+msgid "Couldn't validate the license key."
+msgstr "Couldn't validate the license key."
+
+#: packages/app/trial.ts
+msgid "Couldn't validate your Meru Pro trial."
+msgstr "Couldn't validate your Meru Pro trial."
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Cu&t"
+msgstr "Cu&t"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Cut"
+msgstr "Cut"
+
+#. A menu or a menu item in Meru's menu bar
+#. Button on a new email notification
+#: packages/app/gmail/index.ts
+#: packages/app/menu.ts
+msgid "Delete"
+msgstr "Delete"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Developer Tools"
+msgstr "Developer Tools"
+
+#. Do Not Disturb menu item that turns Do Not Disturb off
+#: packages/app/ipc.ts
+msgid "Disable"
+msgstr "Disable"
+
+#: packages/app/dialogs.ts
+#: packages/app/workspace-app.ts
+msgid "Don't show again"
+msgstr "Don't show again"
+
+#: packages/app/downloads.ts
+msgid "Downloaded {fileName}"
+msgstr "Downloaded {fileName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Downloads"
+msgstr "Downloads"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Duplicate"
+msgstr "Duplicate"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit"
+msgstr "Edit"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit Config"
+msgstr "Edit Config"
+
+#. Tray menu item that quits Meru, as Windows names it
+#: packages/app/tray.ts
+msgid "Exit"
+msgstr "Exit"
+
+#. Button in the save dialog that exports Meru's log file
+#: packages/app/ipc.ts
+msgid "Export"
+msgstr "Export"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "File"
+msgstr "File"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Find…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Forward"
+msgstr "Forward"
+
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "Gmail and Google apps follow your Google account's language."
 msgstr "Gmail and Google apps follow your Google account's language."
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Gmail Keyboard Shortcuts"
+msgstr "Gmail Keyboard Shortcuts"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Gmail Settings"
+msgstr "Gmail Settings"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "Hard Reload"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Help"
+msgstr "Help"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Hibernate When Idle"
+msgstr "Hibernate When Idle"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Hide {appName}"
+msgstr "Hide {appName}"
+
+#. Tray menu item that hides Meru's window
+#: packages/app/tray.ts
+msgid "Hide Meru"
+msgstr "Hide Meru"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Hide Others"
+msgstr "Hide Others"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "History"
+msgstr "History"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "I&nspect Element"
+msgstr "I&nspect Element"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "Indefinitely"
+msgstr "Indefinitely"
+
+#. Context menu item that opens the developer tools on the element clicked
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Inspect Element"
 
 #. Label of the setting that chooses the language of Meru's own menus and settings
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "Language"
 msgstr "Language"
 
+#. Dialog button that puts off restarting Meru
+#. Dialog button that puts off restarting Meru
+#: packages/app/dialogs.ts
+#: packages/app/license-key.ts
+msgid "Later"
+msgstr "Later"
+
+#: packages/app/license-key.ts
+msgid "License key activated."
+msgstr "License key activated."
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Load on Launch"
+msgstr "Load on Launch"
+
+#. Context menu item on macOS; selection is the selected text
+#: packages/app/context-menu.ts
+msgid "Look Up “{selection}”"
+msgstr "Look Up “{selection}”"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Manage Accounts"
+msgstr "Manage Accounts"
+
+#. Button on a new email notification
+#: packages/app/gmail/index.ts
+msgid "Mark as Read"
+msgstr "Mark as Read"
+
+#. Button on a new email notification
+#: packages/app/gmail/index.ts
+msgid "Mark as Spam"
+msgstr "Mark as Spam"
+
+#: packages/app/dialogs.ts
+msgid "Meru {version} is available."
+msgstr "Meru {version} is available."
+
+#: packages/app/dialogs.ts
+msgid "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
+msgstr "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
+
+#: packages/app/dialogs.ts
+msgid "Meru {version} is the latest version."
+msgstr "Meru {version} is the latest version."
+
+#: packages/app/url.ts
+msgid "Meru can't open this link in a browser."
+msgstr "Meru can't open this link in a browser."
+
+#: packages/app/license-key.ts
+msgid "Meru can't reach the internet. Connect and try again."
+msgstr "Meru can't reach the internet. Connect and try again."
+
+#: packages/app/license-key.ts
+#: packages/app/trial.ts
+msgid "Meru can't reach the internet. Connect, then restart Meru to try again."
+msgstr "Meru can't reach the internet. Connect, then restart Meru to try again."
+
+#: packages/app/dialogs.ts
+msgid "Meru couldn't check for updates."
+msgstr "Meru couldn't check for updates."
+
+#: packages/app/ipc.ts
+msgid "Meru doesn't know this extension."
+msgstr "Meru doesn't know this extension."
+
+#: packages/app/ipc.ts
+msgid "Meru doesn't offer this extension."
+msgstr "Meru doesn't offer this extension."
+
+#: packages/app/dialogs.ts
+msgid "Meru installs it when you quit."
+msgstr "Meru installs it when you quit."
+
+#: packages/app/url.ts
+msgid "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru."
+msgstr "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru."
+
+#: packages/app/dialogs.ts
+msgid "Meru is up to date."
+msgstr "Meru is up to date."
+
+#: packages/app/trial.ts
+msgid "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
+msgstr "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
+
+#: packages/app/ipc.ts
+msgid "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue."
+msgstr "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue."
+
+#: packages/app/protocol/index.ts
+msgid "Meru Pro is required to open links sent to Meru."
+msgstr "Meru Pro is required to open links sent to Meru."
+
+#: packages/app/protocol/index.ts
+msgid "Meru Pro is required to open Meru links."
+msgstr "Meru Pro is required to open Meru links."
+
+#: packages/app/protocol/index.ts
+msgid "Meru Pro is required to set Meru as the default mail client."
+msgstr "Meru Pro is required to set Meru as the default mail client."
+
+#: packages/app/workspace-app.ts
+msgid "Meru Pro is required to sign in with Touch ID."
+msgstr "Meru Pro is required to sign in with Touch ID."
+
+#: packages/app/ipc.ts
+msgid "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
+msgstr "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Message"
+msgstr "Message"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Minimize"
+msgstr "Minimize"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Move to New Window"
+msgstr "Move to New Window"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Move to Tab"
+msgstr "Move to Tab"
+
+#. Disabled context menu item shown in place of spelling suggestions when there are none
+#: packages/app/context-menu.ts
+msgid "No Guesses Found"
+msgstr "No Guesses Found"
+
+#. Dialog button that dismisses the end-of-trial message
+#: packages/app/trial.ts
+msgid "Not now"
+msgstr "Not now"
+
+#: packages/app/dialogs.ts
+#: packages/app/workspace-app.ts
+msgid "OK"
+msgstr "OK"
+
+#: packages/app/workspace-app.ts
+msgid "Only passkeys created in Meru work here."
+msgstr "Only passkeys created in Meru work here."
+
+#. Button on the download notification that opens the file
+#. Context menu item that loads an unloaded tab
+#: packages/app/downloads.ts
+#: packages/app/ipc.ts
+msgid "Open"
+msgstr "Open"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/context-menu.ts
+#: packages/app/ipc.ts
+msgid "Open in Default Browser"
+msgstr "Open in Default Browser"
+
+#: packages/app/url.ts
+msgid "Open link"
+msgstr "Open link"
+
+#. Button that makes this tab or window the one that opens the app's links
+#: packages/app/dialogs.ts
+msgid "Open links here"
+msgstr "Open links here"
+
+#: packages/app/license-key.ts
+msgid "Open Meru Portal"
+msgstr "Open Meru Portal"
+
+#: packages/app/url.ts
+msgid "Open this link in your default browser?"
+msgstr "Open this link in your default browser?"
+
+#: packages/app/workspace-app.ts
+msgid "Passkey sign-in isn't supported on this platform yet."
+msgstr "Passkey sign-in isn't supported on this platform yet."
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Paste"
+msgstr "Paste"
+
+#. A menu or a menu item in Meru's menu bar
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Paste and Match Style"
+msgstr "Paste and Match Style"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Pin"
+msgstr "Pin"
+
+#. Dialog button that quits Meru
+#. Dialog button that quits Meru
+#. Dialog button that quits Meru
+#. Dialog button that quits Meru
+#. Tray menu item that quits Meru
+#: packages/app/license-key.ts
+#: packages/app/tray.ts
+#: packages/app/trial.ts
+msgid "Quit"
+msgstr "Quit"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+#: packages/app/tray.ts
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Redo"
+msgstr "Redo"
+
+#. A menu or a menu item in Meru's menu bar
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+#: packages/app/menu.ts
+msgid "Reload"
+msgstr "Reload"
+
+#. Button that removes the license key from Meru and restarts it
+#: packages/app/license-key.ts
+msgid "Remove and restart"
+msgstr "Remove and restart"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Remove Bookmark"
+msgstr "Remove Bookmark"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/ipc.ts
+#: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "Reopen Closed Tab"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Report Issue…"
+msgstr "Report Issue…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Request Feature…"
+msgstr "Request Feature…"
+
+#. Button in the Reset App dialog that erases Meru's data
+#: packages/app/menu.ts
+msgid "Reset"
+msgstr "Reset"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Reset App"
+msgstr "Reset App"
+
+#: packages/app/menu.ts
+msgid "Reset Meru to its original state?"
+msgstr "Reset Meru to its original state?"
+
+#. Context menu item that resets the width of the vertical tabs strip
+#: packages/app/ipc.ts
+msgid "Reset Width"
+msgstr "Reset Width"
+
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#: packages/app/dialogs.ts
+#: packages/app/license-key.ts
+#: packages/app/trial.ts
+msgid "Restart"
+msgstr "Restart"
+
+#: packages/app/dialogs.ts
+#: packages/app/license-key.ts
+msgid "Restart Meru to apply the changes."
+msgstr "Restart Meru to apply the changes."
+
+#. errorMessage and errorCause are the technical reason, left untranslated
+#. errorMessage and errorCause are the technical reason, left untranslated
+#: packages/app/license-key.ts
+#: packages/app/trial.ts
+msgid "Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n"
+"\n"
+"{errorMessage} ({errorCause})"
+msgstr "Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n"
+"\n"
+"{errorMessage} ({errorCause})"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Sa&ve Image As…"
+msgstr "Sa&ve Image As…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Save I&mage"
+msgstr "Save I&mage"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Save Link As…"
+msgstr "Save Link As…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Save Vide&o"
+msgstr "Save Vide&o"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Save Video& As…"
+msgstr "Save Video& As…"
+
+#. Button in the folder picker that chooses where downloads are saved
+#: packages/app/ipc.ts
+msgid "Select"
+msgstr "Select"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Select &All"
+msgstr "Select &All"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Select All"
+msgstr "Select All"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Select Next Account"
+msgstr "Select Next Account"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Select Next Tab"
+msgstr "Select Next Tab"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Select Previous Account"
+msgstr "Select Previous Account"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Select Previous Tab"
+msgstr "Select Previous Tab"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Services"
+msgstr "Services"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Settings"
+msgstr "Settings"
+
+#. A menu or a menu item in Meru's menu bar
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgid "Share"
+msgstr "Share"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Show All"
+msgstr "Show All"
+
+#. Button on the download notification that shows the file in the file manager
+#: packages/app/downloads.ts
+msgid "Show in File Explorer"
+msgstr "Show in File Explorer"
+
+#. Button on the download notification that shows the file in the file manager
+#: packages/app/downloads.ts
+msgid "Show in Finder"
+msgstr "Show in Finder"
+
+#. Button on the download notification that shows the file in the file manager
+#: packages/app/downloads.ts
+msgid "Show in your file manager"
+msgstr "Show in your file manager"
+
+#. Tray menu item that brings Meru's window back
+#: packages/app/tray.ts
+msgid "Show Meru"
+msgstr "Show Meru"
+
+#: packages/app/workspace-app.ts
+msgid "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
+msgstr "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
+
+#: packages/app/workspace-app.ts
+msgid "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
+msgstr "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Source Code"
+msgstr "Source Code"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Speech"
+msgstr "Speech"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Start Speaking"
+msgstr "Start Speaking"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Stop Speaking"
+msgstr "Stop Speaking"
+
 #. Language picker option: follow the operating system's language
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "System"
 msgstr "System"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Tabs"
+msgstr "Tabs"
+
+#: packages/app/lib/extension-window.ts
+msgid "The extension is running, but Meru can't open a window for it."
+msgstr "The extension is running, but Meru can't open a window for it."
+
+#: packages/app/lib/extension-window.ts
+msgid "The extension starts after Meru restarts. Restart Meru, then try again."
+msgstr "The extension starts after Meru restarts. Restart Meru, then try again."
+
+#: packages/app/dialogs.ts
+msgid "This is the last version of Meru for this Mac."
+msgstr "This is the last version of Meru for this Mac."
+
+#: packages/app/ipc.ts
+msgid "This is what a new email notification looks like."
+msgstr "This is what a new email notification looks like."
+
+#: packages/app/license-key.ts
+msgid "This license key has been disabled. Contact support if you need help."
+msgstr "This license key has been disabled. Contact support if you need help."
+
+#: packages/app/license-key.ts
+msgid "This license key has been disabled. Use another license key, or contact support."
+msgstr "This license key has been disabled. Use another license key, or contact support."
+
+#: packages/app/license-key.ts
+msgid "This license key has expired. Contact support if you need help."
+msgstr "This license key has expired. Contact support if you need help."
+
+#: packages/app/license-key.ts
+msgid "This license key has expired. Use another license key, or contact support."
+msgstr "This license key has expired. Use another license key, or contact support."
+
+#: packages/app/license-key.ts
+msgid "This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support."
+msgstr "This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support."
+
+#: packages/app/license-key.ts
+msgid "This license key is invalid. Contact support if you need help."
+msgstr "This license key is invalid. Contact support if you need help."
+
+#: packages/app/license-key.ts
+msgid "This license key is invalid. Use another license key, or contact support."
+msgstr "This license key is invalid. Use another license key, or contact support."
+
+#: packages/app/license-key.ts
+msgid "This license key isn't activated for this device. Contact support if you need help."
+msgstr "This license key isn't activated for this device. Contact support if you need help."
+
+#: packages/app/menu.ts
+msgid "This signs out of every account and clears all settings and data on this device. It can't be undone."
+msgstr "This signs out of every account and clears all settings and data on this device. It can't be undone."
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Troubleshooting"
+msgstr "Troubleshooting"
+
+#. origin is the scheme and host of a website, such as https://example.com
+#: packages/app/url.ts
+msgid "Trust all links on {origin}"
+msgstr "Trust all links on {origin}"
+
+#: packages/app/dialogs.ts
+msgid "Try again later."
+msgstr "Try again later."
+
+#. errorMessage and errorCause are the technical reason, left untranslated
+#: packages/app/license-key.ts
+msgid "Try again, or contact support. A VPN or a firewall can block the connection.\n"
+"\n"
+"{errorMessage} ({errorCause})"
+msgstr "Try again, or contact support. A VPN or a firewall can block the connection.\n"
+"\n"
+"{errorMessage} ({errorCause})"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Undo"
+msgstr "Undo"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Unified Inbox"
+msgstr "Unified Inbox"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Unpin"
+msgstr "Unpin"
+
+#. How long Do Not Disturb keeps notifications silenced, in its menu
+#: packages/app/do-not-disturb.ts
+msgid "Until Tomorrow"
+msgstr "Until Tomorrow"
+
+#: packages/app/dialogs.ts
+#: packages/app/trial.ts
+#: packages/app/workspace-app.ts
+msgid "Upgrade to Meru Pro"
+msgstr "Upgrade to Meru Pro"
+
+#: packages/app/trial.ts
+msgid "Upgrade to Meru Pro to keep every feature, or continue with the free version."
+msgstr "Upgrade to Meru Pro to keep every feature, or continue with the free version."
+
+#: packages/app/gmail/index.ts
+msgid "Verification code {verificationCode}"
+msgstr "Verification code {verificationCode}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "View"
+msgstr "View"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "View Logs"
+msgstr "View Logs"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "Website"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "What's New"
+msgstr "What's New"
+
+#: packages/app/protocol/index.ts
+msgid "Which account should compose this email?"
+msgstr "Which account should compose this email?"
+
+#: packages/app/protocol/index.ts
+msgid "Which account should open this link?"
+msgstr "Which account should open this link?"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Window"
+msgstr "Window"
+
+#. Accessible description of the unread badge on Meru's taskbar button on Windows
+#: packages/app/ipc.ts
+msgid "You have unread messages"
+msgstr "You have unread messages"
+
+#: packages/app/trial.ts
+msgid "Your Meru Pro trial has ended."
+msgstr "Your Meru Pro trial has ended."
+
+#. Subject of the sample email in the test notification
+#: packages/app/ipc.ts
+msgid "Your test notification request"
+msgstr "Your test notification request"
+
+#. Window menu item that toggles the window between its size and filling the screen
+#: packages/app/menu.ts
+msgid "Zoom"
+msgstr "Zoom"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Zoom In"
+msgstr "Zoom In"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Zoom Out"
+msgstr "Zoom Out"
