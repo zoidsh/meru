@@ -98,9 +98,8 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
-    # Three shards per platform, because the suite runs one test at a time and
-    # was the run's critical path. Every shard builds the app itself, so each
-    # one still proves its platform compiles.
+    # Every shard builds the app itself, so each one still proves its platform
+    # compiles.
     strategy:
       fail-fast: false
       matrix:
