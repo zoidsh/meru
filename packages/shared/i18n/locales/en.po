@@ -428,6 +428,7 @@ msgstr "Hibernate When Idle"
 msgid "Hide {appName}"
 msgstr "Hide {appName}"
 
+#. Tray menu item that hides Meru's window
 #: packages/app/tray.ts
 msgid "Hide Meru"
 msgstr "Hide Meru"
@@ -452,6 +453,7 @@ msgstr "I&nspect Element"
 msgid "Indefinitely"
 msgstr "Indefinitely"
 
+#. Context menu item that opens the developer tools on the element clicked
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
 msgstr "Inspect Element"
@@ -860,6 +862,7 @@ msgstr "Show in Finder"
 msgid "Show in your file manager"
 msgstr "Show in your file manager"
 
+#. Tray menu item that brings Meru's window back
 #: packages/app/tray.ts
 msgid "Show Meru"
 msgstr "Show Meru"

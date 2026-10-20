@@ -171,7 +171,9 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: mainWindowIsVisible ? t`Hide Meru` : t`Show Meru`,
+        label: mainWindowIsVisible
+          ? t({ message: "Hide Meru", comment: "Tray menu item that hides Meru's window" })
+          : t({ message: "Show Meru", comment: "Tray menu item that brings Meru's window back" }),
         click: () => {
           main.window[mainWindowIsVisible ? "hide" : "show"]();
         },

@@ -118,7 +118,10 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       }
 
       menuItems.push({
-        label: t`Inspect Element`,
+        label: t({
+          message: "Inspect Element",
+          comment: "Context menu item that opens the developer tools on the element clicked",
+        }),
         click: () => {
           window.webContents.inspectElement(parameters.x, parameters.y);
 
