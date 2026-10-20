@@ -6,6 +6,7 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 export function VerificationCodesSettings() {
   const { config } = useConfig();
@@ -19,20 +20,25 @@ export function VerificationCodesSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Verification codes</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.verificationCodes)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Copy codes to clipboard"
-            description="Detect a verification code in an incoming email and copy it to your clipboard."
+            label={t`Copy codes to clipboard`}
+            description={t`Detect a verification code in an incoming email and copy it to your clipboard.`}
             configKey="verificationCodes.autoCopy"
             licenseKeyRequired
           />
           <ConfigSelectField
-            label="When to copy"
-            description="A notification shows the code either way. Press its Copy button to copy the code yourself."
+            label={t`When to copy`}
+            description={t({
+              message:
+                "A notification shows the code either way. Press its Copy button to copy the code yourself.",
+              comment:
+                "Copy names the button on the verification code notification, so it matches that button's label",
+            })}
             configKey="verificationCodes.copyMode"
             items={Object.entries(verificationCodeCopyModes).map(([value, label]) => ({
               value,
@@ -42,14 +48,22 @@ export function VerificationCodesSettings() {
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Mark email as read after copying"
-            description="Mark the email as read once its verification code has been copied."
+            label={t`Mark email as read after copying`}
+            description={t`Mark the email as read once its verification code has been copied.`}
             configKey="verificationCodes.autoMarkAsRead"
             licenseKeyRequired
           />
           <ConfigSwitchField
-            label="Move email to Trash after copying"
-            description="Move the email to Trash once its verification code has been copied. Detection can misfire, and a real email can be moved too — Mark email as read is the safer choice."
+            label={t({
+              message: "Move email to Trash after copying",
+              comment: "Trash is Gmail's folder of that name, so it follows Gmail's word for it",
+            })}
+            description={t({
+              message:
+                "Move the email to Trash once its verification code has been copied. Detection can misfire, and a real email can be moved too — Mark email as read is the safer choice.",
+              comment:
+                "Trash is Gmail's folder of that name; Mark email as read names the setting above this one, Mark email as read after copying",
+            })}
             configKey="verificationCodes.autoDelete"
             licenseKeyRequired
           />
