@@ -98,6 +98,9 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
+    # Three shards per platform, because the suite runs one test at a time and
+    # was the run's critical path. Every shard builds the app itself, so each
+    # one still proves its platform compiles.
     strategy:
       fail-fast: false
       matrix:
@@ -105,6 +108,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
@@ -112,11 +116,11 @@ jobs:
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'
-        run: xvfb-run -a bun run test:e2e
+        run: xvfb-run -a bun run test:e2e --shard=${{ matrix.shard }}/3
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       - if: runner.os != 'Linux'
-        run: bun run test:e2e
+        run: bun run test:e2e --shard=${{ matrix.shard }}/3
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       # always(), not failure(): a job killed for running long counts as
@@ -125,7 +129,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-${{ matrix.os }}
+          name: e2e-${{ matrix.os }}-${{ matrix.shard }}
           if-no-files-found: ignore
           # The trace opens in the trace viewer and is the thing worth having;
           # the report is the readable index into it.
