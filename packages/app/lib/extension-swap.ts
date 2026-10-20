@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import {
   getConflictingExtensionIds,
   getCuratedExtension,
@@ -15,8 +16,17 @@ export type ExtensionInstallSteps = {
   recordOptIn: () => void;
 };
 
-function getErrorMessage(error: unknown) {
+export function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+export function getCouldNotInstallExtensionMessage(error: unknown) {
+  const errorMessage = getErrorMessage(error);
+
+  return t({
+    message: `Couldn't install the extension: ${errorMessage}`,
+    comment: "errorMessage is the technical reason, left untranslated",
+  });
 }
 
 function getName(extensionId: string) {
@@ -49,8 +59,13 @@ export async function installExtensionReplacingConflicts(
 
     throw new ExtensionInstallError(
       [
-        `Couldn't install the extension: ${getErrorMessage(error)}`,
-        ...conflictNames.map((name) => `${name} is still on.`),
+        getCouldNotInstallExtensionMessage(error),
+        ...conflictNames.map((name) =>
+          t({
+            message: `${name} is still on.`,
+            comment: "name is the name of a browser extension, such as Bitwarden",
+          }),
+        ),
       ].join("\n\n"),
       { cause: error },
     );
@@ -70,12 +85,20 @@ export async function installExtensionReplacingConflicts(
     } catch (error) {
       const isStillOn = steps.getInstalledExtensionIds().includes(conflictingExtensionId);
 
+      const errorMessage = getErrorMessage(error);
+
+      const extensionName = getName(extensionId);
+
       throw new ExtensionInstallError(
         [
-          `Couldn't turn off ${conflictName}: ${getErrorMessage(error)}`,
+          t({
+            message: `Couldn't turn off ${conflictName}: ${errorMessage}`,
+            comment:
+              "conflictName is an extension's name; errorMessage is the technical reason, left untranslated",
+          }),
           isStillOn
-            ? `${conflictName} is still on, and ${getName(extensionId)} wasn't installed.`
-            : `${conflictName} is off, but some of its files may be left in Meru. ${getName(extensionId)} wasn't installed. Turn it on to try again.`,
+            ? t`${conflictName} is still on, and ${extensionName} wasn't installed.`
+            : t`${conflictName} is off, but some of its files may be left in Meru. ${extensionName} wasn't installed. Turn it on to try again.`,
         ].join("\n\n"),
         { cause: error },
       );
@@ -87,11 +110,12 @@ export async function installExtensionReplacingConflicts(
   } catch (error) {
     throw new ExtensionInstallError(
       [
-        `Couldn't install the extension: ${getErrorMessage(error)}`,
-        ...conflictingExtensionIds.map(
-          (conflictingExtensionId) =>
-            `${getName(conflictingExtensionId)} was turned off, and you're signed out of it in Meru.`,
-        ),
+        getCouldNotInstallExtensionMessage(error),
+        ...conflictingExtensionIds.map((conflictingExtensionId) => {
+          const conflictName = getName(conflictingExtensionId);
+
+          return t`${conflictName} was turned off, and you're signed out of it in Meru.`;
+        }),
       ].join("\n\n"),
       { cause: error },
     );
