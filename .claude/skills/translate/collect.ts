@@ -153,9 +153,15 @@ async function run() {
 
   const { base, locales: requested } = argumentsOf(process.argv.slice(2));
 
-  const refs = [...new Set(["HEAD", base && mergeBase(base)])].filter((ref): ref is string =>
-    Boolean(ref),
-  );
+  const baseCommit = base ? mergeBase(base) : undefined;
+
+  if (base && !baseCommit) {
+    console.error(
+      `Warning: --base ${base} has no merge base with HEAD, so prior art comes from HEAD alone. Fetch it or pass another ref.`,
+    );
+  }
+
+  const refs = [...new Set(["HEAD", baseCommit])].filter((ref): ref is string => Boolean(ref));
 
   const locales = config.locales.filter(
     (locale) =>
