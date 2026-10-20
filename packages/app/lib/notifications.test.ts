@@ -167,15 +167,15 @@ describe("resolveNewEmailSound", () => {
       expect(resolve(true, true, "system")).toEqual({ silent: false });
     });
 
-    test("a stored bundled sound plays Glass", () => {
+    test("a stored bundled sound plays Blow", () => {
       for (const sound of ["breeze", "chime", "duet", "knock", "linen"] as const) {
-        expect(resolve(true, true, sound)).toEqual({ silent: false, sound: "Glass" });
+        expect(resolve(true, true, sound)).toEqual({ silent: false, sound: "Blow" });
       }
     });
 
-    test("an unlicensed user always hears Glass", () => {
+    test("an unlicensed user always hears Blow", () => {
       for (const sound of ["Tink", "system", "linen"] as const) {
-        expect(resolve(true, false, sound)).toEqual({ silent: false, sound: "Glass" });
+        expect(resolve(true, false, sound)).toEqual({ silent: false, sound: "Blow" });
       }
     });
 

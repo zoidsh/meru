@@ -24,7 +24,7 @@ export const MACOS_NOTIFICATION_SOUNDS = [
 
 export type MacOSNotificationSound = (typeof MACOS_NOTIFICATION_SOUNDS)[number];
 
-export const DEFAULT_MACOS_NOTIFICATION_SOUND = "Glass" satisfies MacOSNotificationSound;
+export const DEFAULT_MACOS_NOTIFICATION_SOUND = "Blow" satisfies MacOSNotificationSound;
 
 export function isMacOSNotificationSound(sound: unknown): sound is MacOSNotificationSound {
   return MACOS_NOTIFICATION_SOUNDS.includes(sound as MacOSNotificationSound);
