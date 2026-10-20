@@ -1,4 +1,5 @@
 import { is, platform } from "@electron-toolkit/utils";
+import { t } from "@lingui/core/macro";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
@@ -84,17 +85,20 @@ export class AppMenu {
   }
 
   createMenu() {
+    const appName = app.name;
+
+    // lingui-set comment="A menu or a menu item in Meru's menu bar"
     const macOSAppHideItems: MenuItemConstructorOptions[] = [
       {
-        label: `Hide ${app.name}`,
+        label: t`Hide ${appName}`,
         role: "hide",
       },
       {
-        label: "Hide Others",
+        label: t`Hide Others`,
         role: "hideOthers",
       },
       {
-        label: "Show All",
+        label: t`Show All`,
         role: "unhide",
       },
       {
@@ -103,7 +107,7 @@ export class AppMenu {
     ];
 
     const minimizeItem: MenuItemConstructorOptions = {
-      label: "Minimize",
+      label: t`Minimize`,
       accelerator: "CommandOrControl+M",
       role: "minimize",
     };
@@ -112,17 +116,23 @@ export class AppMenu {
     // itself is a macOS convention, so the whole menu ships on macOS alone.
     const macOSWindowMenuItems: MenuItemConstructorOptions[] = [
       {
-        label: "Window",
+        label: t`Window`,
         role: "window",
         submenu: [
           minimizeItem,
           {
+            label: t({
+              message: "Zoom",
+              comment:
+                "Window menu item that toggles the window between its size and filling the screen",
+            }),
             role: "zoom",
           },
           {
             type: "separator",
           },
           {
+            label: t`Bring All to Front`,
             role: "front",
           },
         ],
@@ -215,6 +225,7 @@ export class AppMenu {
     const selectPinnedTabItems: MenuItemConstructorOptions[] = Array.from(
       { length: 9 },
       (_pinnedTabEntry, pinnedTabIndex) => ({
+        // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
         label: `Select Pinned Tab ${pinnedTabIndex + 1} (hidden shortcut)`,
         // Literal Ctrl on every platform, like the Ctrl+Tab pair above:
         // Command+Shift+3..6 are macOS screenshot shortcuts that never reach the
@@ -257,13 +268,14 @@ export class AppMenu {
     // `click`, so elsewhere a Share item would have nothing to do.
     const macOSShareMessageItem: MenuItemConstructorOptions = copyOrShareMessageLink
       ? {
+          label: t`Share`,
           role: "shareMenu",
           sharingItem: {
             urls: [copyOrShareMessageLink],
           },
         }
       : {
-          label: "Share",
+          label: t`Share`,
           enabled: false,
           submenu: [],
         };
@@ -279,13 +291,13 @@ export class AppMenu {
         label: app.name,
         submenu: [
           {
-            label: `About ${app.name}`,
+            label: t`About ${appName}`,
             click: () => {
               main.navigate("/settings/about");
             },
           },
           {
-            label: "Check for Updates…",
+            label: t`Check for Updates…`,
             enabled: appUpdater.isUpdateSupported(),
             click: () => {
               appUpdater.checkForUpdates({ isManualCheck: true });
@@ -295,14 +307,14 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Settings",
+            label: t`Settings`,
             accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
             },
           },
           {
-            label: "Gmail Settings",
+            label: t`Gmail Settings`,
             accelerator: "CommandOrControl+Shift+,",
             click: () => {
               ipc.renderer.send(
@@ -319,7 +331,7 @@ export class AppMenu {
           },
           ...(platform.isMacOS ? macOSAppHideItems : []),
           {
-            label: `Quit ${app.name}`,
+            label: t`Quit ${appName}`,
             accelerator: "CommandOrControl+Q",
             click: () => {
               app.quit();
@@ -328,10 +340,11 @@ export class AppMenu {
         ],
       },
       {
+        label: t`File`,
         role: "fileMenu",
         submenu: [
           {
-            label: "Compose",
+            label: t`Compose`,
             enabled: isGmailVisible,
             click: () => {
               ipc.renderer.send(
@@ -347,53 +360,70 @@ export class AppMenu {
             type: "separator",
           },
           {
+            label: platform.isMacOS
+              ? t`Close Window`
+              : t({
+                  message: "Close",
+                  context: "window",
+                  comment: "File menu item that closes the window",
+                }),
             role: "close",
           },
           ...(platform.isMacOS ? [] : [nonMacOSMinimizeItem]),
         ],
       },
       {
+        label: t`Edit`,
         role: "editMenu",
         submenu: [
           {
+            label: t`Undo`,
             role: "undo",
           },
           {
+            label: t`Redo`,
             role: "redo",
           },
           {
             type: "separator",
           },
           {
+            label: t`Cut`,
             role: "cut",
           },
           {
+            label: t`Copy`,
             role: "copy",
           },
           {
+            label: t`Paste`,
             role: "paste",
           },
           {
+            label: t`Paste and Match Style`,
             role: "pasteAndMatchStyle",
             accelerator: "CommandOrControl+Shift+V",
           },
           {
+            label: t`Paste and Match Style`,
             role: "pasteAndMatchStyle",
             accelerator: "CommandOrControl+Alt+Shift+V",
             visible: false,
             acceleratorWorksWhenHidden: platform.isMacOS,
           },
           {
+            label: t`Delete`,
             role: "delete",
           },
           {
+            label: t`Select All`,
             role: "selectAll",
           },
           {
             type: "separator",
           },
           {
-            label: "Find…",
+            label: t`Find…`,
             accelerator: "CommandOrControl+F",
             enabled: isFindInPageEnabled,
             click: () => {
@@ -410,16 +440,19 @@ export class AppMenu {
             },
           },
           {
-            label: "Speech",
-            submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
+            label: t`Speech`,
+            submenu: [
+              { label: t`Start Speaking`, role: "startSpeaking" },
+              { label: t`Stop Speaking`, role: "stopSpeaking" },
+            ],
           },
         ],
       },
       {
-        label: "View",
+        label: t`View`,
         submenu: [
           {
-            label: "Unified Inbox",
+            label: t`Unified Inbox`,
             enabled:
               licenseKey.isValid && config.get("unifiedInbox.enabled") && allAccounts.length > 1,
             accelerator: "CommandOrControl+Shift+I",
@@ -428,7 +461,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Downloads",
+            label: t`Downloads`,
             accelerator: "CommandOrControl+Alt+L",
             click: () => {
               downloads.recentDownloadHistoryPopup.close();
@@ -442,18 +475,19 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Actual Size",
+            label: t`Actual Size`,
             accelerator: "CommandOrControl+0",
             click: () => {
               getActiveZoomTarget()?.resetZoom();
             },
           },
           {
-            label: "Zoom In",
+            label: t`Zoom In`,
             accelerator: "CommandOrControl+Plus",
             click: zoomIn,
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Zoom In (hidden shortcut 1)",
             visible: is.dev,
             acceleratorWorksWhenHidden: true,
@@ -461,11 +495,12 @@ export class AppMenu {
             click: zoomIn,
           },
           {
-            label: "Zoom Out",
+            label: t`Zoom Out`,
             accelerator: "CommandOrControl+-",
             click: zoomOut,
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Zoom Out (hidden shortcut 1)",
             visible: is.dev,
             accelerator: "CommandOrControl+numsub",
@@ -475,14 +510,14 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Reload",
+            label: t`Reload`,
             accelerator: "CommandOrControl+R",
             click: () => {
               getActiveViewWebContents().reload();
             },
           },
           {
-            label: "Hard Reload",
+            label: t`Hard Reload`,
             accelerator: "CommandOrControl+Shift+R",
             click: () => {
               getActiveViewWebContents().reloadIgnoringCache();
@@ -492,7 +527,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Developer Tools",
+            label: t`Developer Tools`,
             accelerator: is.dev && platform.isMacOS ? "Command+Alt+I" : undefined,
             click: () => {
               if (focusedWindow && focusedWindow !== main.window) {
@@ -515,11 +550,11 @@ export class AppMenu {
         ],
       },
       {
-        label: "Message",
+        label: t`Message`,
         enabled: licenseKey.isValid,
         submenu: [
           {
-            label: "Copy Message Link",
+            label: t`Copy Message Link`,
             enabled: Boolean(copyOrShareMessageLink),
             accelerator: "CommandOrControl+Shift+C",
             click: () => {
@@ -532,17 +567,17 @@ export class AppMenu {
         ],
       },
       {
-        label: "History",
+        label: t`History`,
         submenu: [
           {
-            label: "Back",
+            label: t`Back`,
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
               getActiveViewWebContents().navigationHistory.goBack();
             },
           },
           {
-            label: "Forward",
+            label: t`Forward`,
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
               getActiveViewWebContents().navigationHistory.goForward();
@@ -551,14 +586,15 @@ export class AppMenu {
         ],
       },
       {
-        label: "Tabs",
+        label: t`Tabs`,
         submenu: [
           {
-            label: "Select Next Tab",
+            label: t`Select Next Tab`,
             accelerator: "Ctrl+Tab",
             click: selectNextTab,
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Select Next Tab (hidden shortcut 1)",
             accelerator: platform.isMacOS ? "Command+Option+Down" : "Ctrl+PageDown",
             visible: is.dev,
@@ -566,11 +602,12 @@ export class AppMenu {
             click: selectNextTab,
           },
           {
-            label: "Select Previous Tab",
+            label: t`Select Previous Tab`,
             accelerator: "Ctrl+Shift+Tab",
             click: selectPreviousTab,
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Select Previous Tab (hidden shortcut 1)",
             accelerator: platform.isMacOS ? "Command+Option+Up" : "Ctrl+PageUp",
             visible: is.dev,
@@ -582,7 +619,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Close Tab",
+            label: t`Close Tab`,
             accelerator: "CommandOrControl+Shift+W",
             enabled: isActiveTabCloseable,
             click: () => {
@@ -594,7 +631,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Reopen Closed Tab",
+            label: t`Reopen Closed Tab`,
             accelerator: "CommandOrControl+Shift+T",
             click: () => {
               if (accounts.getSelectedAccount().instance.tabs.reopenClosedTab()) {
@@ -605,7 +642,7 @@ export class AppMenu {
         ],
       },
       {
-        label: "Accounts",
+        label: t`Accounts`,
         submenu: [
           ...allAccounts.map((account, index) => ({
             label: account.config.label,
@@ -626,7 +663,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Select Next Account",
+            label: t`Select Next Account`,
             accelerator: platform.isMacOS ? "Command+Shift+]" : undefined,
             click: () => {
               accounts.selectNextAccount();
@@ -635,6 +672,7 @@ export class AppMenu {
             },
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Select Next Account (hidden shortcut 1)",
             accelerator: "Command+Option+Right",
             visible: is.dev,
@@ -646,7 +684,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Select Previous Account",
+            label: t`Select Previous Account`,
             accelerator: platform.isMacOS ? "Command+Shift+[" : undefined,
             click: () => {
               accounts.selectPreviousAccount();
@@ -655,6 +693,7 @@ export class AppMenu {
             },
           },
           {
+            // oxlint-disable-next-line lingui/no-unlocalized-strings -- shown only in development
             label: "Select Previous Account (hidden shortcut 1)",
             accelerator: "Command+Option+Left",
             visible: is.dev,
@@ -669,7 +708,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Manage Accounts",
+            label: t`Manage Accounts`,
             click: () => {
               main.navigate("/settings/accounts");
             },
@@ -678,11 +717,11 @@ export class AppMenu {
       },
       ...(platform.isMacOS ? macOSWindowMenuItems : []),
       {
-        label: "Help",
+        label: t`Help`,
         role: "help",
         submenu: [
           {
-            label: "What's New",
+            label: t`What's New`,
             click: () => {
               main.navigate("/settings/version-history");
             },
@@ -691,13 +730,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Website",
+            label: t`Website`,
             click: () => {
               openExternalUrl(WEBSITE_URL);
             },
           },
           {
-            label: "Source Code",
+            label: t`Source Code`,
             click: () => {
               openExternalUrl(GITHUB_REPO_URL);
             },
@@ -706,7 +745,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Gmail Keyboard Shortcuts",
+            label: t`Gmail Keyboard Shortcuts`,
             click: () => {
               openExternalUrl("https://support.google.com/mail/answer/6594");
             },
@@ -715,13 +754,13 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Ask Question…",
+            label: t`Ask Question…`,
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow("mailto:tim@meru.so");
             },
           },
           {
-            label: "Request Feature…",
+            label: t`Request Feature…`,
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Feature%20Request:%20",
@@ -729,7 +768,7 @@ export class AppMenu {
             },
           },
           {
-            label: "Report Issue…",
+            label: t`Report Issue…`,
             click: () => {
               selectedAccount.instance.gmail.createComposeWindow(
                 "mailto:tim@meru.so?subject=Report Issue:%20",
@@ -740,16 +779,16 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: "Troubleshooting",
+            label: t`Troubleshooting`,
             submenu: [
               {
-                label: "Edit Config",
+                label: t`Edit Config`,
                 click: () => {
                   config.openInEditor();
                 },
               },
               {
-                label: "View Logs",
+                label: t`View Logs`,
                 click: () => {
                   shell.openPath(log.transports.file.getFile().path);
                 },
@@ -758,7 +797,7 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "Clear Cache",
+                label: t`Clear Cache`,
                 click: async () => {
                   await Promise.all(
                     accounts.getAccounts().map((account) => account.instance.session.clearCache()),
@@ -771,15 +810,21 @@ export class AppMenu {
                 type: "separator",
               },
               {
-                label: "Reset App",
+                label: t`Reset App`,
                 click: async () => {
+                  // lingui-reset
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
-                    buttons: ["Cancel", "Reset"],
+                    buttons: [
+                      t`Cancel`,
+                      t({
+                        message: "Reset",
+                        comment: "Button in the Reset App dialog that erases Meru's data",
+                      }),
+                    ],
                     defaultId: 1,
-                    message: "Reset Meru to its original state?",
-                    detail:
-                      "This signs out of every account and clears all settings and data on this device. It can't be undone.",
+                    message: t`Reset Meru to its original state?`,
+                    detail: t`This signs out of every account and clears all settings and data on this device. It can't be undone.`,
                   });
 
                   if (response === 0) {

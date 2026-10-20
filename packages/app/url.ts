@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { dialog, shell } from "electron";
 import { config } from "@/config";
 import { copyText } from "./lib/clipboard";
@@ -27,9 +28,12 @@ export async function openExternalUrl(
     if (!options?.skipTrustedHostCheck && !trustedHosts.includes(origin)) {
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
-        buttons: ["Open link", "Copy link", "Cancel"],
-        message: "Open this link in your default browser?",
-        checkboxLabel: `Trust all links on ${origin}`,
+        buttons: [t`Open link`, t`Copy link`, t`Cancel`],
+        message: t`Open this link in your default browser?`,
+        checkboxLabel: t({
+          message: `Trust all links on ${origin}`,
+          comment: "origin is the scheme and host of a website, such as https://example.com",
+        }),
         detail:
           cleanUrl.length > MAX_EXTERNAL_URL_LENGTH
             ? `${cleanUrl.slice(0, MAX_EXTERNAL_URL_LENGTH - 1)}…`
@@ -57,10 +61,9 @@ export async function openExternalUrl(
   if (await getIsDefaultBrowser()) {
     const { response } = await dialog.showMessageBox({
       type: "info",
-      buttons: ["Copy link", "Cancel"],
-      message: "Meru can't open this link in a browser.",
-      detail:
-        "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru.",
+      buttons: [t`Copy link`, t`Cancel`],
+      message: t`Meru can't open this link in a browser.`,
+      detail: t`Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru.`,
       defaultId: 0,
       cancelId: 1,
     });

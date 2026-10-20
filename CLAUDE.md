@@ -27,7 +27,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `build:mac:dmg` builds only the arm64 DMG and skips notarisation and the signing timestamp, so it is minutes faster, and the result opens only on a Mac it reached without quarantine, such as by `scp`. Never ship it.
 
-`bun run test`, `types`, `dev` and `build:js` each compile the message catalogs first, because the compiled ones are not committed and nothing resolves `@meru/shared/i18n` without them. Plain `bun test` skips the compile, which is why the `test` script exists.
+`bun run test`, `types`, `dev` and `build:js` each compile the message catalogs first, because the compiled ones are not committed and nothing resolves `@meru/shared/i18n` without them. Plain `bun test --isolate` skips the compile, which is why the `test` script exists: it needs `bun run i18n:compile` run once first, and stops with that hint when the catalogs are missing. Its preload, `scripts/test-preload.ts`, compiles the Lingui macro in the modules under test with the build's transformer.
 
 `bun run dev` takes `--devtools` to open devtools, `--debug-port 9222` to expose CDP, and `--profile <name>` to use `.meru/<name>` as the user data directory, so a signed-in account survives between runs. Any other option goes to Electron as typed, such as `--disable-gpu`. A development run is the free version, `op run --env-file .env.trial.op -- bun run dev` has seven days of trial left, and `op run --env-file .env.license.op -- bun run dev` is licensed. Its entitlement follows the environment alone: without `MERU_LICENSE_KEY` the stored key is removed, so a key activated in Settings lasts only until the next start, and without `MERU_DEV_DEVICE_ID` the API is never asked about a trial.
 

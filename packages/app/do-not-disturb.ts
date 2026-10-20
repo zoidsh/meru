@@ -1,54 +1,57 @@
+import { msg } from "@lingui/core/macro";
 import { ms } from "@meru/shared/ms";
 import dayjs from "dayjs";
 import { config } from "./config";
 
 export class DoNotDisturb {
+  // lingui-set comment="How long Do Not Disturb keeps notifications silenced, in its menu"
   static options = [
     {
-      label: "Indefinitely",
+      label: msg`Indefinitely`,
       duration: "indefinite",
     },
     {
-      label: "5 Minutes",
+      label: msg`5 Minutes`,
       duration: "5m",
     },
     {
-      label: "10 Minutes",
+      label: msg`10 Minutes`,
       duration: "10m",
     },
     {
-      label: "15 Minutes",
+      label: msg`15 Minutes`,
       duration: "15m",
     },
     {
-      label: "30 Minutes",
+      label: msg`30 Minutes`,
       duration: "30m",
     },
     {
-      label: "1 Hour",
+      label: msg`1 Hour`,
       duration: "1h",
     },
     {
-      label: "2 Hours",
+      label: msg`2 Hours`,
       duration: "2h",
     },
     {
-      label: "4 Hours",
+      label: msg`4 Hours`,
       duration: "4h",
     },
     {
-      label: "8 Hours",
+      label: msg`8 Hours`,
       duration: "8h",
     },
     {
-      label: "12 Hours",
+      label: msg`12 Hours`,
       duration: "12h",
     },
     {
-      label: "Until Tomorrow",
+      label: msg`Until Tomorrow`,
       duration: "until tomorrow",
     },
   ] as const;
+  // lingui-reset
 
   timer: NodeJS.Timeout | null = null;
 
