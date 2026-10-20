@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
@@ -19,14 +20,19 @@ import z from "zod";
 import { SettingsDescription, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { dayjs } from "@/lib/date";
 import { useConfig } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 export function VersionHistorySettings() {
   const { config } = useConfig();
+
+  const { t } = useLingui();
 
   const { data: info } = useQuery({
     queryKey: ["about", "info"],
     queryFn: () => ipc.main.invoke("about.getInfo"),
   });
+
+  const version = info?.version;
 
   const currentTagName = info ? `v${info.version}` : undefined;
 
@@ -66,9 +72,13 @@ export function VersionHistorySettings() {
       return (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Couldn't load what's new</EmptyTitle>
+            <EmptyTitle>
+              <Trans>Couldn't load what's new</Trans>
+            </EmptyTitle>
             <EmptyDescription>
-              The release notes come from GitHub. Check your connection, then try again.
+              <Trans>
+                The release notes come from GitHub. Check your connection, then try again.
+              </Trans>
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -77,7 +87,9 @@ export function VersionHistorySettings() {
                 refetch();
               }}
             >
-              Try again
+              <Trans comment="Button that loads the release notes again after they failed to load">
+                Try again
+              </Trans>
             </Button>
           </EmptyContent>
         </Empty>
@@ -94,7 +106,13 @@ export function VersionHistorySettings() {
         <ItemContent>
           <div className="flex items-center justify-between gap-2">
             <ItemTitle className="text-2xl font-semibold">{release.tag_name}</ItemTitle>
-            {release.tag_name === currentTagName ? <Badge>Current version</Badge> : null}
+            {release.tag_name === currentTagName ? (
+              <Badge>
+                <Trans comment="Badge on the release notes of the version that is running">
+                  Current version
+                </Trans>
+              </Badge>
+            ) : null}
           </div>
           <ItemDescription>{dayjs(release.published_at).fromNow()}</ItemDescription>
           <div className="prose dark:prose-invert prose-h3:text-lg prose-li:marker:text-white prose-li:pl-0 mt-6 text-sm">
@@ -116,8 +134,12 @@ export function VersionHistorySettings() {
   return (
     <>
       <SettingsHeader className="flex-col items-start justify-start gap-1">
-        <SettingsTitle>What's new</SettingsTitle>
-        {info ? <SettingsDescription>Current version: v{info.version}</SettingsDescription> : null}
+        <SettingsTitle>{t(settingsPageLabels.versionHistory)}</SettingsTitle>
+        {info ? (
+          <SettingsDescription>
+            <Trans>Current version: v{version}</Trans>
+          </SettingsDescription>
+        ) : null}
       </SettingsHeader>
       <div className="space-y-8">{renderContent()}</div>
     </>

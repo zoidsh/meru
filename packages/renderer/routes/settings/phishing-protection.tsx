@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -12,6 +13,7 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 export function PhishingProtectionSettings() {
   const { config } = useConfig();
@@ -20,6 +22,8 @@ export function PhishingProtectionSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const { t } = useLingui();
+
   if (!config) {
     return;
   }
@@ -27,14 +31,14 @@ export function PhishingProtectionSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Phishing protection</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.phishingProtection)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <ConfigSwitchField
-            label="Confirm external links before opening"
-            description="Prompt for confirmation before opening links from untrusted hosts in your browser."
+            label={t`Confirm external links before opening`}
+            description={t`Prompt for confirmation before opening links from untrusted hosts in your browser.`}
             configKey="externalLinks.confirm"
             licenseKeyRequired
           />
@@ -43,11 +47,15 @@ export function PhishingProtectionSettings() {
               <FieldSeparator />
               <Field>
                 <FieldContent>
-                  <FieldTitle>Trusted hosts</FieldTitle>
+                  <FieldTitle>
+                    <Trans>Trusted hosts</Trans>
+                  </FieldTitle>
                   {config["externalLinks.trustedHosts"].length === 0 && (
                     <FieldDescription>
-                      No trusted hosts yet. Selecting Trust all links on a host in the link prompt
-                      adds it here.
+                      <Trans comment="Trust all links on quotes the checkbox in the dialog that asks before opening an external link, Trust all links on {origin}, so it matches that checkbox's wording">
+                        No trusted hosts yet. Selecting Trust all links on a host in the link prompt
+                        adds it here.
+                      </Trans>
                     </FieldDescription>
                   )}
                 </FieldContent>
@@ -67,7 +75,9 @@ export function PhishingProtectionSettings() {
                             });
                           }}
                         >
-                          Remove
+                          <Trans comment="Button that removes a host from the trusted hosts">
+                            Remove
+                          </Trans>
                         </Button>
                       </div>
                     ))}

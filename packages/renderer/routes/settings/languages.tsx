@@ -1,4 +1,5 @@
-import { useLingui } from "@lingui/react/macro";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -18,18 +19,7 @@ import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
-
-function getTriggerLabel(selected: string[], getLanguageLabel: (code: string) => string) {
-  if (selected.length === 0) {
-    return "No additional languages selected";
-  }
-
-  if (selected.length <= 2) {
-    return selected.map(getLanguageLabel).join(", ");
-  }
-
-  return `${selected.length} additional languages`;
-}
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 export function LanguagesSettings() {
   const { config } = useConfig();
@@ -39,10 +29,17 @@ export function LanguagesSettings() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   // The spellchecker's languages are named in the interface language.
-  const { i18n } = useLingui();
+  const { i18n, t } = useLingui();
 
   const displayNames = useMemo(
     () => new Intl.DisplayNames([i18n.locale], { type: "language" }),
+    [i18n.locale],
+  );
+
+  // A unit list joins with a bare comma in English, where a conjunction would
+  // put "and" between the two.
+  const listFormat = useMemo(
+    () => new Intl.ListFormat(i18n.locale, { type: "unit", style: "short" }),
     [i18n.locale],
   );
 
@@ -71,6 +68,27 @@ export function LanguagesSettings() {
     .map((code) => ({ code, label: getLanguageLabel(code) }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
+  function getTriggerLabel() {
+    if (selected.length === 0) {
+      return t`No additional languages selected`;
+    }
+
+    if (selected.length <= 2) {
+      return listFormat.format(selected.map(getLanguageLabel));
+    }
+
+    const selectedCount = selected.length;
+
+    return t({
+      message: plural(selectedCount, {
+        one: "# additional language",
+        other: "# additional languages",
+      }),
+      comment:
+        "Spellchecker languages chosen beyond the system language, counted once there are more than two to name",
+    });
+  }
+
   function toggleLanguage(code: string, checked: boolean) {
     const updated = checked ? [...selected, code] : selected.filter((l) => l !== code);
 
@@ -80,18 +98,22 @@ export function LanguagesSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Languages</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.languages)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
             <FieldLegend variant="label" className="flex items-center gap-2">
-              Spellchecker
+              <Trans comment="Setting that picks the languages the spellchecker checks">
+                Spellchecker
+              </Trans>
               <LicenseKeyRequiredFieldBadge />
             </FieldLegend>
             <FieldDescription>
-              Select additional languages for spellchecking alongside the system language.
+              <Trans>
+                Select additional languages for spellchecking alongside the system language.
+              </Trans>
             </FieldDescription>
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -104,7 +126,7 @@ export function LanguagesSettings() {
                       selected.length === 0 && "text-muted-foreground",
                     )}
                   >
-                    <span className="truncate">{getTriggerLabel(selected, getLanguageLabel)}</span>
+                    <span className="truncate">{getTriggerLabel()}</span>
                     <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
                   </Button>
                 }

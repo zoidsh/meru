@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { useLingui } from "@lingui/react/macro";
 import { GMAIL_TAB_ID, verticalTabsGmailUnreadBadges, verticalTabsWidths } from "@meru/shared/tabs";
 import {
   DEV_WORKSPACE_APPS_HIBERNATION_TIMEOUT,
@@ -91,6 +92,8 @@ function SortableLauncherAppItem({
 export function WorkspaceAppsSettings() {
   const { config } = useConfig();
 
+  const { t } = useLingui();
+
   const excludedAppsFieldId = useId();
 
   const configMutation = useConfigMutation();
@@ -165,7 +168,7 @@ export function WorkspaceAppsSettings() {
                 licenseKeyRequired
                 items={Object.entries(workspaceAppsModes).map(([value, label]) => ({
                   value,
-                  label,
+                  label: t(label),
                 }))}
                 confirmation={{
                   when: (mode) =>
@@ -248,7 +251,7 @@ export function WorkspaceAppsSettings() {
                   licenseKeyRequired
                   items={Object.entries(verticalTabsWidths).map(([value, label]) => ({
                     value,
-                    label,
+                    label: t(label),
                   }))}
                 />
                 <ConfigSwitchField
@@ -264,7 +267,7 @@ export function WorkspaceAppsSettings() {
                   licenseKeyRequired
                   items={Object.entries(verticalTabsGmailUnreadBadges).map(([value, label]) => ({
                     value,
-                    label,
+                    label: t(label),
                   }))}
                 />
                 <ConfigSwitchField
@@ -291,7 +294,7 @@ export function WorkspaceAppsSettings() {
             licenseKeyRequired
             items={Object.entries(workspaceAppsHibernations).map(([value, label]) => ({
               value,
-              label,
+              label: t(label),
             }))}
           />
           <ConfigSelectField
@@ -306,7 +309,7 @@ export function WorkspaceAppsSettings() {
               )
               .map(([value, label]) => ({
                 value,
-                label,
+                label: t(label),
               }))}
           />
           <FieldSeparator />
@@ -395,7 +398,7 @@ export function WorkspaceAppsSettings() {
               licenseKeyRequired
               items={Object.entries(workspaceAppsLauncherDisplays).map(([value, label]) => ({
                 value,
-                label,
+                label: t(label),
               }))}
             />
             {config["workspaceApps.mode"] === "tabs" && (
@@ -406,7 +409,7 @@ export function WorkspaceAppsSettings() {
                 licenseKeyRequired
                 items={Object.entries(launcherAndBookmarksPlacements).map(([value, label]) => ({
                   value,
-                  label,
+                  label: t(label),
                 }))}
               />
             )}

@@ -82,8 +82,9 @@ function EmojiPickerCategoryHeader({ category, ...props }: EmojiPickerListCatego
 
 function EmojiPickerContent({
   className,
+  emptyText = "No emoji found.",
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport>) {
+}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { emptyText?: string }) {
   return (
     <EmojiPickerPrimitive.Viewport
       className={cn("relative flex-1 outline-hidden", className)}
@@ -100,7 +101,7 @@ function EmojiPickerContent({
         className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
         data-slot="emoji-picker-empty"
       >
-        No emoji found.
+        {emptyText}
       </EmojiPickerPrimitive.Empty>
       <EmojiPickerPrimitive.List
         className="pb-1 select-none"
@@ -115,7 +116,11 @@ function EmojiPickerContent({
   );
 }
 
-function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">) {
+function EmojiPickerFooter({
+  className,
+  placeholder = "Select an emoji…",
+  ...props
+}: React.ComponentProps<"div"> & { placeholder?: string }) {
   return (
     <div
       className={cn(
@@ -136,7 +141,7 @@ function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">)
             </>
           ) : (
             <span className="ml-1.5 flex h-7 items-center truncate text-xs text-muted-foreground">
-              Select an emoji…
+              {placeholder}
             </span>
           )
         }

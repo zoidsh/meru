@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { Badge } from "@meru/ui/components/badge";
 
 /**
@@ -12,6 +15,15 @@ import { Badge } from "@meru/ui/components/badge";
  */
 export type FieldMaturity = "Experimental" | "Beta";
 
+// lingui-set comment="Badge beside a setting whose feature isn't stable yet"
+const maturityLabels: Record<FieldMaturity, MessageDescriptor> = {
+  Experimental: msg`Experimental`,
+  Beta: msg`Beta`,
+};
+// lingui-reset
+
 export function MaturityFieldBadge({ maturity }: { maturity: FieldMaturity }) {
-  return <Badge variant="outline">{maturity}</Badge>;
+  const { t } = useLingui();
+
+  return <Badge variant="outline">{t(maturityLabels[maturity])}</Badge>;
 }
