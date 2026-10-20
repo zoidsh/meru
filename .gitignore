@@ -188,3 +188,4 @@ build-js
 
 # Lingui
 packages/shared/i18n/locales/*.ts
+packages/preload-gmail/locales/*.ts

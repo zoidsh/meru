@@ -10,11 +10,24 @@ export default defineConfig({
   // `pt-PT` would borrow from `es` or `pt`. Meru resolves its own aliases and
   // keeps `es` and `es-419` apart.
   fallbackLocales: false,
+  // The Gmail preload bundles a catalog of its own, so a Gmail view loads only
+  // its own handful of messages rather than the whole app's.
   catalogs: [
     {
       path: "<rootDir>/packages/shared/i18n/locales/{locale}",
       include: ["<rootDir>/packages"],
-      exclude: ["**/node_modules/**", "**/*.test.ts", "**/*.e2e.ts", "**/i18n/locales/**"],
+      exclude: [
+        "**/node_modules/**",
+        "**/*.test.ts",
+        "**/*.e2e.ts",
+        "**/i18n/locales/**",
+        "<rootDir>/packages/preload-gmail/**",
+      ],
+    },
+    {
+      path: "<rootDir>/packages/preload-gmail/locales/{locale}",
+      include: ["<rootDir>/packages/preload-gmail"],
+      exclude: ["**/node_modules/**", "**/*.test.ts", "**/*.e2e.ts"],
     },
   ],
   // `.ts` catalogs typecheck and bundle like any other module, so the main
