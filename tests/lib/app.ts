@@ -280,6 +280,10 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
    * It also settles which entitlement the tests see: no license key and no
    * running trial is the free version, so every Pro-gated control is locked.
    *
+   * The language is pinned to English rather than left to follow the machine,
+   * because the suite selects by English text in about a hundred places,
+   * menu labels read off `Menu.getApplicationMenu()` included.
+   *
    * A copied profile's own config goes underneath both, so that the accounts it
    * signed in survive: an account's session is partitioned on its id, and an
    * accounts array from anywhere else would leave the app looking for a
@@ -288,7 +292,11 @@ async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promis
    */
   await writeFile(
     path.join(userDataDir, "config.json"),
-    JSON.stringify({ ...profileConfig, "trial.expired": true, ...seededConfig }, null, "\t"),
+    JSON.stringify(
+      { ...profileConfig, "trial.expired": true, "app.language": "en", ...seededConfig },
+      null,
+      "\t",
+    ),
   );
 
   return launchOnUserDataDir(userDataDir, options);
