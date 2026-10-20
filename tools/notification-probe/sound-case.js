@@ -1,3 +1,5 @@
+const { execFile } = require("node:child_process");
+const path = require("node:path");
 const { Notification, app } = require("electron");
 
 /*
@@ -5,7 +7,7 @@ const { Notification, app } = require("electron");
  * between cases. The label goes in the title so a case can be found in the
  * unified log and in Notification Center afterwards.
  */
-async function fireCase({ label, sound, meruShape, silent }) {
+async function fireCase({ label, sound, meruShape, silent, selfPlay }) {
   await app.whenReady();
 
   console.log(`PROBE app=${app.getAppPath()} resources=${process.resourcesPath}`);
@@ -29,7 +31,19 @@ async function fireCase({ label, sound, meruShape, silent }) {
     ...(sound ? { sound } : {}),
   });
 
-  notification.on("show", () => console.log(`PROBE ${new Date().toISOString()} event: show`));
+  notification.on("show", () => {
+    console.log(`PROBE ${new Date().toISOString()} event: show`);
+
+    if (selfPlay) {
+      const file = path.join(process.resourcesPath, `${selfPlay}.wav`);
+      console.log(`PROBE ${new Date().toISOString()} self-play start ${file}`);
+      execFile("/usr/bin/afplay", [file], (error) =>
+        console.log(
+          `PROBE ${new Date().toISOString()} self-play end ${error ? `error ${error.message}` : "ok"}`,
+        ),
+      );
+    }
+  });
   notification.on("failed", (_event, error) =>
     console.log(`PROBE ${new Date().toISOString()} event: failed(${error})`),
   );
@@ -57,6 +71,7 @@ function readCaseArgs(argv) {
     sound: value("case-sound") || null,
     meruShape: argv.includes("--meru-shape"),
     silent: argv.includes("--silent"),
+    selfPlay: value("self-play") || null,
   };
 }
 
