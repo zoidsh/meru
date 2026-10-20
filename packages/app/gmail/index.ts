@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t } from "@lingui/core/macro";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
@@ -18,6 +20,7 @@ import {
   gmailSearchHash,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
+import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
@@ -112,12 +115,14 @@ const INBOX_FEED_SLACK = ms("5m");
 
 const HANDLE_MESSAGE_TIMEOUT = ms("15s");
 
+// lingui-set comment="Button on a new email notification"
 const NEW_EMAIL_NOTIFICATION_ACTIONS = [
-  { text: "Archive", action: "archive" },
-  { text: "Mark as Read", action: "markAsRead" },
-  { text: "Delete", action: "delete" },
-  { text: "Mark as Spam", action: "markAsSpam" },
-] as const satisfies { text: string; action: GmailAction }[];
+  { text: msg`Archive`, action: "archive" },
+  { text: msg`Mark as Read`, action: "markAsRead" },
+  { text: msg`Delete`, action: "delete" },
+  { text: msg`Mark as Spam`, action: "markAsSpam" },
+] as const satisfies { text: MessageDescriptor; action: GmailAction }[];
+// lingui-reset
 
 export class Gmail {
   /**
@@ -952,9 +957,19 @@ export class Gmail {
             createNotification({
               title: notificationTitle,
               body: copiesOnNotificationClick
-                ? `Verification code ${verificationCode}`
-                : `Copied verification code ${verificationCode}`,
-              actions: copiesOnNotificationClick ? [{ text: "Copy", type: "button" }] : undefined,
+                ? t`Verification code ${verificationCode}`
+                : t`Copied verification code ${verificationCode}`,
+              actions: copiesOnNotificationClick
+                ? [
+                    {
+                      text: t({
+                        message: "Copy",
+                        comment: "Button on a notification that copies the verification code",
+                      }),
+                      type: "button",
+                    },
+                  ]
+                : undefined,
               action: copiesOnNotificationClick ? copyVerificationCode : undefined,
               click: copiesOnNotificationClick ? copyVerificationCode : undefined,
             });
@@ -978,7 +993,7 @@ export class Gmail {
           subtitle,
           body,
           actions: NEW_EMAIL_NOTIFICATION_ACTIONS.map(({ text }) => ({
-            text,
+            text: i18n.t(text),
             type: "button" as const,
           })),
           click: () => {
