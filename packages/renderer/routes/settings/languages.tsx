@@ -36,8 +36,8 @@ export function LanguagesSettings() {
     [i18n.locale],
   );
 
-  // A unit list is the one that joins with a bare comma in English, as this
-  // label always has, where a conjunction would put "and" between the two.
+  // A unit list joins with a bare comma in English, where a conjunction would
+  // put "and" between the two.
   const listFormat = useMemo(
     () => new Intl.ListFormat(i18n.locale, { type: "unit", style: "short" }),
     [i18n.locale],
