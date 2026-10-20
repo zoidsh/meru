@@ -26,6 +26,8 @@ type PriorArt = { source: string; translation: string; match: string };
 
 const SIMILARITY_THRESHOLD = 0.6;
 
+const SHARED_COMMENT_THRESHOLD = 0.4;
+
 const po = formatter({ lineNumbers: false });
 
 function bigrams(text: string) {
@@ -61,49 +63,63 @@ function keyOf(id: string, entry: Entry) {
   return `${entry.context ?? ""}\u0004${entry.message ?? id}`;
 }
 
-function sameNote(a: Entry, b: Entry) {
+function sameComment(a: Entry, b: Entry) {
   const comments = (a.comments ?? []).join("\n");
 
-  return (
-    comments !== "" &&
-    (a.context ?? "") === (b.context ?? "") &&
-    comments === (b.comments ?? []).join("\n")
-  );
+  return comments !== "" && comments === (b.comments ?? []).join("\n");
 }
 
-function findPriorArt(entry: Entry, id: string, candidates: [string, Entry][]) {
-  const priorArt = ([candidateId, candidate]: [string, Entry], match: string): PriorArt => ({
-    source: candidate.message ?? candidateId,
-    translation: candidate.translation ?? "",
-    match,
-  });
+/*
+ * A comment is often shared by a whole block of strings, such as "Menu item"
+ * or a `lingui-set comment`, so it never picks a pairing on its own. It only
+ * lowers the bar and breaks a tie. Pairs are taken best first and each side at
+ * most once, so two reworded strings never inherit the same old translation.
+ */
+function assignPriorArt(pending: [string, Entry][], candidates: [string, Entry][]) {
+  const pairs: { pendingId: string; candidate: [string, Entry]; score: number; shared: boolean }[] =
+    [];
 
-  const byNote = candidates.find(([, candidate]) => sameNote(entry, candidate));
+  for (const [pendingId, entry] of pending) {
+    for (const candidate of candidates) {
+      const [candidateId, candidateEntry] = candidate;
 
-  if (byNote) {
-    return priorArt(byNote, "same context and comment");
+      if ((candidateEntry.context ?? "") !== (entry.context ?? "")) {
+        continue;
+      }
+
+      const score = similarity(entry.message ?? pendingId, candidateEntry.message ?? candidateId);
+
+      const shared = sameComment(entry, candidateEntry);
+
+      if (score >= (shared ? SHARED_COMMENT_THRESHOLD : SIMILARITY_THRESHOLD)) {
+        pairs.push({ pendingId, candidate, score, shared });
+      }
+    }
   }
 
-  const source = entry.message ?? id;
+  pairs.sort((a, b) => b.score - a.score || Number(b.shared) - Number(a.shared));
 
-  let best: PriorArt | undefined;
+  const assigned = new Map<string, PriorArt>();
 
-  let bestScore = SIMILARITY_THRESHOLD;
+  const usedCandidates = new Set<string>();
 
-  for (const candidate of candidates) {
-    if ((candidate[1].context ?? "") !== (entry.context ?? "")) {
+  for (const { pendingId, candidate, score, shared } of pairs) {
+    const [candidateId, candidateEntry] = candidate;
+
+    if (assigned.has(pendingId) || usedCandidates.has(candidateId)) {
       continue;
     }
 
-    const score = similarity(source, candidate[1].message ?? candidate[0]);
+    usedCandidates.add(candidateId);
 
-    if (score >= bestScore) {
-      bestScore = score;
-      best = priorArt(candidate, `similar English (${score.toFixed(2)})`);
-    }
+    assigned.set(pendingId, {
+      source: candidateEntry.message ?? candidateId,
+      translation: candidateEntry.translation ?? "",
+      match: `similar English (${score.toFixed(2)})${shared ? ", same comment" : ""}`,
+    });
   }
 
-  return best;
+  return assigned;
 }
 
 async function parse(text: string, locale: string, sourceLocale: string, filename: string) {
@@ -213,6 +229,8 @@ async function run() {
 
       pendingTotal += pending.length;
 
+      const priorArtById = assignPriorArt(pending, candidates);
+
       const lines = pending.map(([id, entry]) => {
         const status = entry.translation
           ? `fuzzy, current translation ${JSON.stringify(entry.translation)}`
@@ -226,7 +244,7 @@ async function run() {
           `  status: ${status}`,
         ];
 
-        const priorArt = findPriorArt(entry, id, candidates);
+        const priorArt = priorArtById.get(id);
 
         if (priorArt) {
           fields.push(

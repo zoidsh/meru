@@ -21,7 +21,7 @@ Run `bun run i18n:extract`, so each catalog holds every string in the code.
 
 Run `bun .claude/skills/translate/collect.ts --base origin/<base>`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`. It prints, for every shipped locale except `en` and across both catalogs, each untranslated or fuzzy entry with its `msgctxt`, its `#.` comments and its origin.
 
-When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, matching by the same context and comment or else by the closest English, and prints its translation as `prior art`. Check that each pairing is really the same string reworded; drop one that isn't.
+When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`. Check that each pairing is really the same string reworded; drop one that isn't.
 
 If it prints `Nothing to translate`, go to step 5.
 
