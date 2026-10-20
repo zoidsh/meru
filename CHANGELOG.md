@@ -18,6 +18,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Fixed
 
+- Several new emails arriving at once play the notification sound once, instead of overlapping copies of it
 - **Meru Pro:** During a Pro trial, the days left in the titlebar count down while Meru stays open, and a trial that ends while Meru is open says so in a dialog and in the titlebar, instead of waiting for the next start
 - **Windows:** When an update can't be verified, the titlebar says so and offers to download it, so you can install it yourself instead of being left on a version that never updates
 - `Check for Updates…` says what it found — that Meru is up to date, that an update is available, or that the check couldn't be made — instead of leaving you without an answer
