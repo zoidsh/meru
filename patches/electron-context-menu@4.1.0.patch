@@ -1,3 +1,6 @@
+diff --git a/node_modules/electron-context-menu/.bun-tag-405046b2af346c1b b/.bun-tag-405046b2af346c1b
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/node_modules/electron-context-menu/.bun-tag-82a8a449178bd38a b/.bun-tag-82a8a449178bd38a
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
@@ -11,10 +14,33 @@ diff --git a/node_modules/electron-context-menu/.bun-tag-ed88adbba809482d b/.bun
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/index.d.ts b/index.d.ts
-index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..7a52ea17aec36bcab6e2e0640c8fadb3d0782b2a 100644
+index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..979f87b118a7aef352a43fab22f00ab76d8fa076 100644
 --- a/index.d.ts
 +++ b/index.d.ts
-@@ -227,6 +227,13 @@ export type Options = {
+@@ -99,6 +99,22 @@ export type Labels = {
+ 	@default 'Services'
+ 	*/
+ 	readonly services?: string;
++
++	/**
++	@default 'Paste And Match Style'
++	*/
++	readonly pasteAndMatchStyle?: string;
++
++	/**
++	@default 'Copy Email Address'
++	*/
++	readonly copyEmailAddress?: string;
++
++	/**
++	Shown in place of the spelling suggestions when there are none.
++	@default 'No Guesses Found'
++	*/
++	readonly noGuessesFound?: string;
+ };
+ 
+ export type ActionOptions = {
+@@ -227,6 +243,13 @@ export type Options = {
  	*/
  	readonly showCopyVideoAddress?: boolean;
  
@@ -29,7 +55,7 @@ index 657d3776641c554d8c0188e3cd7192fe5a1e1ce0..7a52ea17aec36bcab6e2e0640c8fadb3
  	Show the `Save Video` menu item when right-clicking on a video.
  
 diff --git a/index.js b/index.js
-index 8ec2624b2ed049733788311aed0852432dbefb42..4f8124fbd4f036cece184b4e3f580aef7d1bb131 100644
+index 8ec2624b2ed049733788311aed0852432dbefb42..fd91467291c8f462ed690fadf1dd51b44bd5318e 100644
 --- a/index.js
 +++ b/index.js
 @@ -117,6 +117,23 @@ const create = (win, options) => {
@@ -80,6 +106,15 @@ index 8ec2624b2ed049733788311aed0852432dbefb42..4f8124fbd4f036cece184b4e3f580aef
  			inspect: () => ({
  				id: 'inspect',
  				label: 'I&nspect Element',
+@@ -256,7 +290,7 @@ const create = (win, options) => {
+ 		} else {
+ 			dictionarySuggestions.push(
+ 				{
+-					id: 'dictionarySuggestions',
++					id: 'noGuessesFound',
+ 					label: 'No Guesses Found',
+ 					visible: Boolean(hasText && properties.misspelledWord),
+ 					enabled: false,
 @@ -277,6 +311,7 @@ const create = (win, options) => {
  			defaultActions.cut(),
  			defaultActions.copy(),
