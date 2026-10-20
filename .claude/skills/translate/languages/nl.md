@@ -39,7 +39,7 @@ Say what happened, without _helaas_ or _sorry_: _Het account kan niet worden toe
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Annuleer_, OK _OK_, Undo _Herstel_, Close _Sluit_, Delete _Verwijder_, Remove _Verwijder_, Add _Voeg toe_, Save _Bewaar_, Edit _Wijzig_, Open _Open_, Show _Toon_, Hide _Verberg_, Quit _Stop_, Reload _Laad opnieuw_, Try Again _Probeer opnieuw_, Learn More… _Meer informatie…_
 - Close Tab _Sluit tabblad_, Close Other Tabs _Sluit andere tabbladen_, Close Window _Sluit venster_, Pin Tab _Maak tabblad vast_, Show Sidebar _Toon navigatiekolom_, Minimize _Minimaliseer_, Copy Link _Kopieer link_, Mark as Read _Markeer als gelezen_, Add Account… _Voeg account toe…_, Quit Mail _Stop Mail_

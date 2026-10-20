@@ -2,6 +2,8 @@
 
 One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. **Apple** marks Apple's own word, read from macOS Mail, AppKit or, where noted, macOS's Focus strings; a word without the mark has no Apple equivalent and was chosen to sit beside Apple's. Where a term is missing here, follow the style sheet and Apple's word for it, and say in your summary which word you chose so it can be added.
 
+**Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
+
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
 ## Terms that stay English
@@ -70,18 +72,18 @@ A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu 
 
 ## Unified inbox
 
-The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Built on Apple's word for the inbox.
+The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Meru's own feature, built on Gmail's word for the inbox, which is Apple's too except where noted.
 
-- de: gemeinsamer Posteingang (Apple's _Posteingang_)
-- fr: boîte de réception unifiée (Apple's _boîte de réception_)
-- it: posta in entrata unificata (Apple's _In entrata_)
-- es: buzón de entrada unificado (Apple's _buzón de entrada_)
-- es-419: bandeja de entrada unificada (Apple's _bandeja de entrada_)
-- pt-BR: caixa de entrada unificada (Apple's _Caixa de Entrada_)
-- nl: gecombineerde inbox. Apple's Dutch inbox is the mailbox name _Inkomend_, which reads as a folder rather than a feature.
-- pl: wspólna skrzynka odbiorcza
-- sv: samlad inkorg (Apple's _inkorg_)
-- ja: 統合受信トレイ (Apple's 受信トレイ)
+- de: gemeinsamer Posteingang (Gmail's and Apple's _Posteingang_)
+- fr: boîte de réception unifiée (Gmail's and Apple's _boîte de réception_)
+- it: posta in arrivo unificata (Gmail's _Posta in arrivo_; Apple's is _In entrata_)
+- es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; Apple's is _buzón de entrada_)
+- es-419: bandeja de entrada unificada (Gmail's and Apple's _bandeja de entrada_)
+- pt-BR: caixa de entrada unificada (Gmail's and Apple's _Caixa de entrada_)
+- nl: gecombineerde inbox (Gmail's _inbox_; Apple's is _Inkomend_)
+- pl: wspólna skrzynka odbiorcza. Gmail's folder is _Odebrane_ and Apple's _Przychodzące_, both folder names that read badly as a feature.
+- sv: samlad inkorg (Gmail's and Apple's _inkorg_)
+- ja: 統合受信トレイ (Gmail's and Apple's 受信トレイ)
 
 ## Do Not Disturb
 
@@ -304,18 +306,18 @@ A one-time passcode Meru copies to the clipboard.
 
 ## Move email to Trash
 
-The verification-codes switch. It names Gmail's own folder, so _Trash_ takes the word Gmail shows in the language, which is Apple's too except where noted. Never a word for _delete_.
+The verification-codes switch. It names Gmail's own folder, so _Trash_ takes Gmail's word, as the rule above says. Never a word for _delete_. Source: Gmail Help, "Delete or recover deleted Gmail messages" (support.google.com/mail/answer/7401, `hl=<tag>`).
 
-- de: Papierkorb (Apple)
-- fr: Corbeille (Apple)
-- it: Cestino (Apple)
-- es: Papelera (Apple)
-- es-419: Papelera, Gmail's word; Apple's is _Basurero_
-- pt-BR: Lixeira, Gmail's word; Apple's is _Lixo_
-- nl: Prullenbak, Gmail's word; Apple's is _Prullenmand_
-- pl: Kosz (Apple)
-- sv: Papperskorgen (Apple's _Papperskorg_)
-- ja: ゴミ箱 (Apple)
+- de: Papierkorb (Gmail, and Apple's)
+- fr: Corbeille (Gmail, and Apple's)
+- it: Cestino (Gmail, and Apple's)
+- es: Papelera (Gmail, and Apple's)
+- es-419: Papelera (Gmail; Apple's is _Basurero_)
+- pt-BR: Lixeira (Gmail; Apple's is _Lixo_)
+- nl: Prullenbak (Gmail; Apple's is _Prullenmand_)
+- pl: Kosz (Gmail, and Apple's)
+- sv: Papperskorgen (Gmail; Apple's _Papperskorg_ in the definite)
+- ja: ゴミ箱 (Gmail, and Apple's)
 
 ## Extension
 
@@ -416,6 +418,94 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 - sv: mörkt tema; blockerare; stavningskontroll
 - ja: ダークテーマ; ブロッカー; スペルチェック
 
+## Gmail's words
+
+What Gmail itself shows for the things a Meru string can name, used over Apple's word by the rule above. Folder names keep Gmail's capitalization. Sources, all Gmail Help with `hl=<tag>`: **shortcuts** is "Keyboard shortcuts for Gmail" (support.google.com/mail/answer/6594), **undo send** is "Undo sending" (answer/2819488), **spam** is "Mark or unmark Spam" (answer/1366858) and **trash** is "Delete or recover deleted Gmail messages" (answer/7401).
+
+### Undo, in the message-sent toast
+
+- de: Rückgängig machen (Tim's call, from Gmail's own toast; the undo send page writes _Rückgängig_; Apple's is _Widerrufen_)
+- fr: Annuler (undo send)
+- it: Annulla (undo send)
+- es: Deshacer (undo send)
+- es-419: Deshacer (undo send)
+- pt-BR: Desfazer (undo send)
+- nl: Ongedaan maken (undo send; Apple's is _Herstel_)
+- pl: Cofnij (undo send)
+- sv: Ångra (undo send)
+- ja: 取り消し (undo send; Apple's is 取り消す)
+
+### Message sent, the toast
+
+- de: Nachricht gesendet (undo send has _Ihre Nachricht wurde gesendet_, in Gmail's _Sie_; Apple's word for a message is _E-Mail_)
+- fr: Message envoyé (undo send)
+- it: Messaggio inviato (undo send)
+- es: Mensaje enviado (undo send)
+- es-419: Se envió el mensaje (undo send)
+- pt-BR: Mensagem enviada (undo send)
+- nl: Bericht verzonden (undo send)
+- pl: Wiadomość wysłana (undo send)
+- sv: Meddelandet har skickats (undo send; Apple's word for a message is _mejl_)
+- ja: メールを送信しました (undo send)
+
+### Inbox
+
+- de: Posteingang (trash)
+- fr: boîte de réception (trash, shortcuts)
+- it: Posta in arrivo (trash, shortcuts; Apple's is _In entrata_)
+- es: Recibidos as the folder, _bandeja de entrada_ in prose (shortcuts, trash)
+- es-419: Recibidos (trash)
+- pt-BR: Caixa de entrada (trash, shortcuts)
+- nl: inbox (trash, shortcuts; Apple's is _Inkomend_)
+- pl: Odebrane (trash, shortcuts; Apple's is _Przychodzące_)
+- sv: Inkorgen (trash, shortcuts)
+- ja: 受信トレイ (trash, shortcuts)
+
+### Spam
+
+The folder, and _Not spam_ for the button that takes a message out of it.
+
+- de: Spam; Kein Spam (spam, and Apple's _Spam_)
+- fr: Spam; Non-spam (spam; Apple's is _Indésirable_)
+- it: Spam; Non spam (spam; Apple's is _Indesiderati_)
+- es: Spam; No es spam (spam; Apple's is _No deseado_)
+- es-419: Spam; No es spam (spam; Apple's is _No deseado_)
+- pt-BR: Spam; Não é spam (spam, and Apple's _Spam_)
+- nl: Spam; Geen spam (spam, and Apple's _Spam_)
+- pl: Spam; To nie jest spam (spam; Apple's is _Niechciana_)
+- sv: Skräppost; Inte skräppost (spam; Apple's is _Skräp_)
+- ja: 迷惑メール; 迷惑メールではない (spam)
+
+### Archive, Compose, Drafts, Sent
+
+From shortcuts, with Sent and Drafts confirmed by undo send.
+
+- de: Archivieren; Schreiben; Entwürfe; Gesendet
+- fr: Archiver; Nouveau message; Brouillons; Messages envoyés
+- it: Archivia; Scrivi; Bozze; Posta inviata
+- es: Archivar; Redactar; Borradores; Enviados
+- es-419: Archivar; Redactar; Borradores; Enviados
+- pt-BR: Arquivar; Escrever; Rascunhos; Enviados
+- nl: Archiveren; Opstellen; Concepten; Verzonden
+- pl: Archiwizuj; Utwórz; Wersje robocze; Wysłane
+- sv: Arkivera; Skriv; Utkast; Skickat
+- ja: アーカイブ; 作成; 下書き; 送信済み
+
+### Starred, Snooze, Label
+
+From shortcuts: the folder of starred conversations, the action and the folder of snoozed ones, and a label.
+
+- de: Markiert; Zurückstellen, zurückgestellt; Label
+- fr: suivi (_conversations dont le suivi est activé_); Mettre en attente, En attente; libellé
+- it: Speciali; Posticipa, posticipate; etichetta
+- es: Destacados; Posponer, pospuestas; etiqueta
+- es-419: Destacados; Posponer, pospuestas; etiqueta
+- pt-BR: Com estrela; Adiar, adiadas; marcador
+- nl: Met ster; Snoozen, gesnoozed; label
+- pl: Oznaczone gwiazdką; Odłóż, Odłożone; etykieta
+- sv: Stjärnmärkt; Skjut upp, uppskjutna; etikett
+- ja: スター付き; スヌーズ; ラベル
+
 ## Common actions
 
-Apple's labels for everyday actions such as Cancel, Undo, Close, Delete, Save, Quit and Copy Link are in each style sheet, under Apple's words. Use them for the same actions and as the model for others.
+Apple's labels for everyday actions such as Cancel, Undo, Close, Delete, Save, Quit and Copy Link are in each style sheet, under Apple's words. Use them for the same actions and as the model for others, except where the string names a Gmail action or folder: then Gmail's word above wins, as for the Undo button in the message-sent toast.

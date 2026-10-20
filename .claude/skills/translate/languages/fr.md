@@ -39,7 +39,7 @@ Say what happened, without _Désolé_ or _Veuillez_: _Impossible d’ajouter le 
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Annuler_, OK _OK_, Undo _Annuler_, Close _Fermer_, Delete _Supprimer_, Remove _Supprimer_, Add _Ajouter_, Save _Enregistrer_, Edit _Modifier_, Open _Ouvrir_, Show _Afficher_, Hide _Masquer_, Quit _Quitter_, Reload _Recharger_, Try Again _Réessayer_, Learn More… _En savoir plus…_
 - Close Tab _Fermer l’onglet_, Close Other Tabs _Fermer les autres onglets_, Close Window _Fermer la fenêtre_, Pin Tab _Épingler l’onglet_, Show Sidebar _Afficher la barre latérale_, Minimize _Minimiser_, Copy Link _Copier le lien_, Mark as Read _Marquer comme lu_, Quit Mail _Quitter Mail_

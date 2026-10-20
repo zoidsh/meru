@@ -39,7 +39,7 @@ Say what happened, without _Niestety_ or _Przepraszamy_: _Nie można dodać kont
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Anuluj_, OK _OK_, Undo _Cofnij_, Close _Zamknij_, Delete _Usuń_, Remove _Usuń_, Add _Dodaj_, Save _Zachowaj_, Edit _Edytuj_, Open _Otwórz_, Show _Pokaż_, Hide _Ukryj_, Quit _Zakończ_, Reload _Odśwież_, Try Again _Spróbuj ponownie_, Learn More… _Więcej informacji…_
 - Close Tab _Zamknij kartę_, Close Other Tabs _Zamknij pozostałe karty_, Close Window _Zamknij okno_, Pin Tab _Przypnij kartę_, Show Sidebar _Pokaż pasek boczny_, Minimize _Minimalizuj okno_, Copy Link _Kopiuj łącze_, Mark as Read _Oznacz jako przeczytane_, Add Account… _Dodaj konto…_

@@ -39,7 +39,7 @@ Say what happened, without _leider_, _Entschuldigung_ or _Bitte_: _Der Account k
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Abbrechen_, OK _OK_, Undo _Widerrufen_, Close _Schließen_, Delete _Löschen_, Remove _Entfernen_, Add _Hinzufügen_, Save _Sichern_, Edit _Bearbeiten_, Open _Öffnen_, Show _Einblenden_, Hide _Ausblenden_, Quit _Beenden_, Reload _Neu laden_, Try Again _Erneut versuchen_, Learn More… _Weitere Infos …_
 - Close Tab _Tab schließen_, Close Other Tabs _Andere Tabs schließen_, Close Window _Fenster schließen_, Pin Tab _Tab fixieren_, Show Sidebar _Seitenleiste einblenden_, Minimize _Im Dock ablegen_, Copy Link _Link kopieren_, Mark as Read _Als gelesen markieren_, Hide Mail _Mail ausblenden_, Quit Mail _Mail beenden_

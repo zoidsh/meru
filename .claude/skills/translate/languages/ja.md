@@ -40,7 +40,7 @@ Say what happened, without すみません or 申し訳ありません: アカ�
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel キャンセル, OK OK, Undo 取り消す, Close 閉じる, Delete 削除, Remove 削除, Add 追加, Save 保存, Edit 編集, Open 開く, Show 表示, Hide 非表示, Quit 終了, Reload 再読み込み, Try Again やり直す, Learn More… 詳しい情報…
 - Close Tab タブを閉じる, Close Other Tabs その他のタブを閉じる, Close Window ウインドウを閉じる, Pin Tab タブを固定, Show Sidebar サイドバーを表示, Minimize しまう, Copy Link リンクをコピー, Mark as Read 開封済みにする, Add Account… アカウントを追加…, Quit Mail メールを終了

@@ -30,7 +30,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro. A compound joins with a hyphen:
 
 - **No split compounds (_särskrivning_).** A compound is one word, or hyphenated after a name or abbreviation: _notistider_, _verifieringskod_, _Workspace-app_; never _notis tider_ or _verifierings kod_.
 - **Notification is _notis_.** Apple writes _notis_, never _avisering_ or _meddelande_.
-- **Email is _mejl_.** As Apple writes it, never _e-brev_.
+- **Email is _mejl_.** As Apple writes it, never _e-brev_, except where a string repeats Gmail's own text, such as its toast, which says _meddelande_.
 - **Placeholders.** Definite endings attach to the noun; put the placeholder after the noun (_kontot {name}_).
 - Quotation marks are ”…” (U+201D on both sides).
 
@@ -40,7 +40,7 @@ Say what happened, without _Tyvärr_ or _Ursäkta_: _Det gick inte att lägga ti
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Avbryt_, OK _OK_, Undo _Ångra_, Close _Stäng_, Delete _Radera_, Remove _Ta bort_, Add _Lägg till_, Save _Spara_, Edit _Redigera_, Open _Öppna_, Show _Visa_, Hide _Göm_, Quit _Avsluta_, Reload _Uppdatera_, Try Again _Försök igen_, Learn More… _Läs mer…_
 - Close Tab _Stäng flik_, Close Other Tabs _Stäng övriga flikar_, Close Window _Stäng fönster_, Pin Tab _Nåla fast flik_, Show Sidebar _Visa sidofältet_, Minimize _Minimera_, Copy Link _Kopiera länk_, Mark as Read _Markera som läst_, Add Account… _Lägg till konto…_, Quit Mail _Avsluta Mail_

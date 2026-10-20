@@ -38,7 +38,7 @@ Say what happened, without _Desculpe_ or _Por favor_: _Não foi possível adicio
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Cancelar_, OK _OK_, Undo _Desfazer_, Close _Fechar_, Delete _Apagar_, Remove _Remover_, Add _Adicionar_, Save _Salvar_, Edit _Editar_, Open _Abrir_, Show _Mostrar_, Hide _Ocultar_, Quit _Encerrar_, Reload _Recarregar_, Try Again _Tentar Novamente_, Learn More… _Saiba mais…_
 - Close Tab _Fechar Aba_, Close Other Tabs _Fechar as Outras Abas_, Close Window _Fechar Janela_, Pin Tab _Fixar Aba_, Show Sidebar _Mostrar Barra Lateral_, Minimize _Minimizar_, Copy Link _Copiar Link_, Mark as Read _Marcar como Lida_, Add Account… _Adicionar Conta…_, Quit Mail _Encerrar Mail_

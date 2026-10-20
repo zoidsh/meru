@@ -39,7 +39,7 @@ Say what happened, without _Spiacenti_ or _Ci dispiace_: _Impossibile aggiungere
 
 ## Apple's words
 
-From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`:
+From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead:
 
 - Cancel _Annulla_, OK _OK_, Undo _Annulla_, Close _Chiudi_, Delete _Elimina_, Remove _Rimuovi_, Add _Aggiungi_, Save _Salva_, Edit _Modifica_, Open _Apri_, Show _Mostra_, Hide _Nascondi_, Quit _Esci_, Reload _Ricarica_, Try Again _Riprova_, Learn More… _Scopri di più…_
 - Close Tab _Chiudi pannello_, Close Other Tabs _Chiudi gli altri pannelli_, Close Window _Chiudi finestra_, Pin Tab _Fissa pannello_, Show Sidebar _Mostra la barra laterale_, Minimize _Contrai_, Copy Link _Copia link_, Mark as Read _Segna come letto_, Quit Mail _Esci da Mail_

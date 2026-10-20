@@ -15,7 +15,7 @@ Read, in full:
 1. `.claude/skills/translate/languages/<locale>.md`, your language's style sheet: address, label form, capitalization, plural categories, traps.
 2. `.claude/skills/translate/glossary.md`, the one fixed word per term for your locale.
 
-The style sheet and the glossary win over your own preference and over what other software does. When neither covers a term, use Apple's word for it in macOS Mail or AppKit if you know it, and name the term and your choice in your reply.
+The style sheet and the glossary win over your own preference and over what other software does. When neither covers a term, use Apple's word for it in macOS Mail or AppKit if you know it, and name the term and your choice in your reply. The exception is a string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail: it takes Gmail's word in your language, from the glossary's Gmail's words or from Gmail itself, even where Apple's differs, and keeps your style sheet's address form.
 
 ## What you are given
 
