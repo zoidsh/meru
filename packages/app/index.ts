@@ -16,6 +16,7 @@ import {
   setupExtensionsWorkerSession,
   uninstallReplacedPasswordManagers,
 } from "@/extensions";
+import { appI18n } from "@/i18n";
 import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { log } from "@/lib/log";
@@ -123,6 +124,8 @@ async function init() {
   downloads.init();
 
   await app.whenReady();
+
+  appI18n.init();
 
   licenseKey.init();
 

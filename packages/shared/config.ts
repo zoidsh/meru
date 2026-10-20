@@ -52,6 +52,7 @@ export function createDefaultConfig({
     ],
     "accounts.unreadBadge": true,
     "app.hardwareAcceleration": true,
+    "app.language": "system",
     launchMinimized: false,
     launchAtLogin: false,
     resetApp: false,
