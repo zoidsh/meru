@@ -956,7 +956,7 @@ class Ipc {
     ipc.main.on("doNotDisturb.showOptions", () => {
       const options: MenuItemConstructorOptions[] = DoNotDisturb.options.map(
         ({ label, duration }) => ({
-          label: i18n._(label),
+          label: i18n.t(label),
           type: "checkbox",
           checked: config.get("doNotDisturb.duration") === duration,
           click: () => {

@@ -134,7 +134,7 @@ class Downloads {
                       message: "Open",
                       comment: "Button on the download notification that opens the file",
                     })
-                  : i18n._(SHOW_IN_FILE_MANAGER),
+                  : i18n.t(SHOW_IN_FILE_MANAGER),
                 type: "button",
               },
             ],

@@ -993,7 +993,7 @@ export class Gmail {
           subtitle,
           body,
           actions: NEW_EMAIL_NOTIFICATION_ACTIONS.map(({ text }) => ({
-            text: i18n._(text),
+            text: i18n.t(text),
             type: "button" as const,
           })),
           click: () => {
