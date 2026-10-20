@@ -7,24 +7,34 @@ import {
 import { app } from "electron";
 import { config } from "@/config";
 
+/**
+ * `"system"` and a tag this build no longer ships both resolve against the
+ * preferred system languages, which Electron only answers for once the app is
+ * ready.
+ *
+ * Nothing passes `--lang` or appends a `lang` switch: that would move
+ * `navigator.language`, the `Accept-Language` the embedded views send and the
+ * spellchecker's defaults along with it, and all three follow the OS.
+ */
+function resolveAppLocale(): CatalogTag {
+  const language = config.get("app.language");
+
+  if (language !== "system" && SHIPPED_CATALOG_TAGS.includes(language)) {
+    return language;
+  }
+
+  return resolveLocale(app.getPreferredSystemLanguages(), SHIPPED_CATALOG_TAGS);
+}
+
 class AppI18n {
+  private activeLocale: CatalogTag = "en";
+
   /**
-   * The catalog the interface is drawn from. `"system"` and a tag this build no
-   * longer ships both resolve against the preferred system languages, which
-   * Electron only answers for once the app is ready.
-   *
-   * Nothing passes `--lang` or appends a `lang` switch: that would move
-   * `navigator.language`, the `Accept-Language` the embedded views send and the
-   * spellchecker's defaults along with it, and all three follow the OS.
+   * The catalog the interface is drawn from, as activated at startup, so a
+   * view made after a change in Settings still matches the rest of the app.
    */
   get locale(): CatalogTag {
-    const language = config.get("app.language");
-
-    if (language !== "system" && SHIPPED_CATALOG_TAGS.includes(language)) {
-      return language;
-    }
-
-    return resolveLocale(app.getPreferredSystemLanguages(), SHIPPED_CATALOG_TAGS);
+    return this.activeLocale;
   }
 
   /**
@@ -33,7 +43,7 @@ class AppI18n {
    * effect at the next start.
    */
   init() {
-    activateLocale(this.locale);
+    this.activeLocale = activateLocale(resolveAppLocale());
   }
 }
 

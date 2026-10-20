@@ -106,16 +106,21 @@ export function getDayjsLocale(tag: CatalogTag) {
 
 /**
  * A tag without a catalog activates English whole, since another locale's
- * plural rules over English messages would pick the wrong forms.
+ * plural rules over English messages would pick the wrong forms. Returns the
+ * tag it activated.
  */
-export function activateLocale(tag: CatalogTag) {
+export function activateLocale(tag: CatalogTag): CatalogTag {
   const messages = catalogs[tag];
 
   if (messages) {
     i18n.loadAndActivate({ locale: tag, messages });
-  } else {
-    i18n.loadAndActivate({ locale: "en", messages: catalogs.en });
+
+    return tag;
   }
+
+  i18n.loadAndActivate({ locale: "en", messages: catalogs.en });
+
+  return "en";
 }
 
 /*

@@ -1,7 +1,6 @@
 import path from "node:path";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
-import { i18n } from "@meru/shared/i18n";
 import type { Config } from "@meru/shared/types";
 import {
   BrowserWindow,
@@ -10,6 +9,7 @@ import {
   screen,
   WebContentsView,
 } from "electron";
+import { appI18n } from "@/i18n";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
 import { loadUrl } from "./load-url";
@@ -164,7 +164,7 @@ export function loadRenderer(
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
 
-  searchParams.set("locale", i18n.locale);
+  searchParams.set("locale", appI18n.locale);
 
   if (is.dev) {
     // `||`, not `??`: an empty value is as unusable as an unset one, and
