@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { cn } from "@meru/ui/lib/utils";
@@ -28,12 +29,17 @@ function CloseButton({ label }: { label: string }) {
       >
         <XIcon />
       </Button>
-      <div className="text-xs font-semibold text-muted-foreground">Esc</div>
+      <div className="text-xs font-semibold text-muted-foreground">
+        {/* oxlint-disable-next-line lingui/no-unlocalized-strings -- the key's name as its keycap prints it */}
+        Esc
+      </div>
     </div>
   );
 }
 
 export function AppMain() {
+  const { t } = useLingui();
+
   const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
   const [matchDownloadHistoryRoute] = useRoute("/download-history");
 
@@ -69,10 +75,10 @@ export function AppMain() {
           <CloseButton
             label={
               matchUnifiedInboxRoute
-                ? "Close unified inbox"
+                ? t`Close unified inbox`
                 : matchDownloadHistoryRoute
-                  ? "Close download history"
-                  : "Close settings"
+                  ? t`Close download history`
+                  : t`Close settings`
             }
           />
         </div>

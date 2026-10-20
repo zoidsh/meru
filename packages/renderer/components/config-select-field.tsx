@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { Config } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -66,6 +67,8 @@ export function ConfigSelectField({
 
   const [confirmableValue, setConfirmableValue] = useState<string | null>(null);
 
+  const { t } = useLingui();
+
   if (!config) {
     return;
   }
@@ -131,13 +134,26 @@ export function ConfigSelectField({
             }
           }}
         >
-          <DialogContent>
+          <DialogContent
+            closeLabel={t({
+              message: "Close",
+              comment: "Screen reader label of the button that closes a dialog in Settings",
+            })}
+          >
             <DialogHeader>
               <DialogTitle>{confirmation.title}</DialogTitle>
             </DialogHeader>
             <DialogDescription>{confirmation.description}</DialogDescription>
             <DialogFooter>
-              <DialogClose render={<Button variant="outline">Cancel</Button>} />
+              <DialogClose
+                render={
+                  <Button variant="outline">
+                    <Trans comment="Button in a dialog asking to confirm a setting change, which leaves the setting as it was">
+                      Cancel
+                    </Trans>
+                  </Button>
+                }
+              />
               <Button
                 onClick={() => {
                   if (confirmableValue) {

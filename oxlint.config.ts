@@ -26,7 +26,20 @@ const LOCALIZED_FILES = [
   "packages/app/workspace-app.ts",
   "packages/preload-gmail/ipc.ts",
   "packages/preload-gmail/toast.ts",
+  "packages/renderer/components/app-main.tsx",
+  "packages/renderer/components/app-sidebar.tsx",
+  "packages/renderer/components/config-select-field.tsx",
+  "packages/renderer/components/config-switch-field.tsx",
+  "packages/renderer/components/emoji-picker-button.tsx",
+  "packages/renderer/components/license-key-required-banner.tsx",
+  "packages/renderer/components/license-key-required-field-badge.tsx",
+  "packages/renderer/components/maturity-field-badge.tsx",
+  "packages/renderer/lib/settings-pages.ts",
+  "packages/renderer/lib/toast.ts",
   "packages/renderer/routes/settings/language-field.tsx",
+  "packages/shared/accounts.ts",
+  "packages/shared/tabs.ts",
+  "packages/shared/verification-codes.ts",
 ];
 
 export default defineConfig({
@@ -69,6 +82,8 @@ export default defineConfig({
               "^[a-z]+(?:_[a-z]+)+$",
               // An IPC channel, named `domain.verbNoun`.
               "^[a-z][A-Za-z]*\\.[a-z][A-Za-z]*$",
+              // An HTML heading element, which Markdown's headings are mapped onto.
+              "^h[1-6]$",
             ],
             ignoreFunctions: [
               "console.*",
@@ -110,6 +125,8 @@ export default defineConfig({
               "path.join",
               "fs.readFileSync",
               "execFile",
+              "fetch",
+              "useRoute",
             ],
             ignoreNames: [
               // A module constant is an id, a namespace or a selector, not copy.
@@ -128,6 +145,8 @@ export default defineConfig({
               "duration",
               "url",
               "defaultPath",
+              // A route the renderer navigates to.
+              "path",
               { regex: { pattern: "^iconFileName" } },
             ],
           },

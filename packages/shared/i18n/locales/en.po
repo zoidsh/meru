@@ -159,8 +159,15 @@ msgstr "8 Hours"
 msgid "About {appName}"
 msgstr "About {appName}"
 
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "About Meru"
+msgstr "About Meru"
+
 #. A menu or a menu item in Meru's menu bar
+#. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/app/menu.ts
+#: packages/renderer/lib/settings-pages.ts
 msgid "Accounts"
 msgstr "Accounts"
 
@@ -168,6 +175,11 @@ msgstr "Accounts"
 #: packages/app/menu.ts
 msgid "Actual Size"
 msgstr "Actual Size"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Advanced"
+msgstr "Advanced"
 
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
@@ -183,6 +195,11 @@ msgstr "Always"
 #: packages/shared/accounts.ts
 msgid "Amber"
 msgstr "Amber"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Appearance"
+msgstr "Appearance"
 
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
@@ -212,6 +229,16 @@ msgstr "Auto"
 msgid "Back"
 msgstr "Back"
 
+#. Badge beside a setting whose feature isn't stable yet
+#: packages/renderer/components/maturity-field-badge.tsx
+msgid "Beta"
+msgstr "Beta"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Blocker"
+msgstr "Blocker"
+
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
 msgid "Blue"
@@ -232,12 +259,14 @@ msgstr "Bring All to Front"
 msgid "C&opy Image Address"
 msgstr "C&opy Image Address"
 
+#. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
 #: packages/app/menu.ts
 #: packages/app/protocol/index.ts
 #: packages/app/url.ts
 #: packages/app/workspace-app.ts
+#: packages/renderer/components/config-select-field.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -256,6 +285,11 @@ msgstr "Choose what to share"
 msgid "Clear Cache"
 msgstr "Clear Cache"
 
+#. Screen reader label of the button that closes a dialog in Settings
+#: packages/renderer/components/config-select-field.tsx
+msgid "Close"
+msgstr "Close"
+
 #. Context menu item that closes the tab
 #: packages/app/ipc.ts
 msgctxt "tab"
@@ -268,10 +302,18 @@ msgctxt "window"
 msgid "Close"
 msgstr "Close"
 
+#: packages/renderer/components/app-main.tsx
+msgid "Close download history"
+msgstr "Close download history"
+
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Close Other Tabs"
 msgstr "Close Other Tabs"
+
+#: packages/renderer/components/app-main.tsx
+msgid "Close settings"
+msgstr "Close settings"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -282,6 +324,10 @@ msgstr "Close Tab"
 #: packages/app/ipc.ts
 msgid "Close Tabs Below"
 msgstr "Close Tabs Below"
+
+#: packages/renderer/components/app-main.tsx
+msgid "Close unified inbox"
+msgstr "Close unified inbox"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -418,7 +464,9 @@ msgid "Downloaded {fileName}"
 msgstr "Downloaded {fileName}"
 
 #. A menu or a menu item in Meru's menu bar
+#. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/app/menu.ts
+#: packages/renderer/lib/settings-pages.ts
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -452,10 +500,20 @@ msgstr "Exit"
 msgid "Expanded"
 msgstr "Expanded"
 
+#. Badge beside a setting whose feature isn't stable yet
+#: packages/renderer/components/maturity-field-badge.tsx
+msgid "Experimental"
+msgstr "Experimental"
+
 #. Button in the save dialog that exports Meru's log file
 #: packages/app/ipc.ts
 msgid "Export"
 msgstr "Export"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Extensions"
+msgstr "Extensions"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -476,6 +534,11 @@ msgstr "Forward"
 #: packages/shared/accounts.ts
 msgid "Fuchsia"
 msgstr "Fuchsia"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "General"
+msgstr "General"
 
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "Gmail and Google apps follow your Google account's language."
@@ -556,12 +619,24 @@ msgstr "Inspect Element"
 msgid "Language"
 msgstr "Language"
 
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Languages"
+msgstr "Languages"
+
+#. Button on the toast after a setting changes, which dismisses it and leaves the restart for later
 #. Dialog button that puts off restarting Meru
 #. Dialog button that puts off restarting Meru
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
+#: packages/renderer/lib/toast.ts
 msgid "Later"
 msgstr "Later"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "License"
+msgstr "License"
 
 #: packages/app/license-key.ts
 msgid "License key activated."
@@ -674,6 +749,11 @@ msgstr "Meru Pro is required to sign in with Touch ID."
 msgid "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
 msgstr "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
 
+#. Badge beside a setting that needs a Meru Pro license
+#: packages/renderer/components/license-key-required-field-badge.tsx
+msgid "Meru Pro required"
+msgstr "Meru Pro required"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Message"
@@ -709,6 +789,10 @@ msgstr "Never"
 msgid "New windows"
 msgstr "New windows"
 
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "No emoji found."
+msgstr "No emoji found."
+
 #. Disabled context menu item shown in place of spelling suggestions when there are none
 #: packages/app/context-menu.ts
 msgid "No Guesses Found"
@@ -718,6 +802,11 @@ msgstr "No Guesses Found"
 #: packages/app/trial.ts
 msgid "Not now"
 msgstr "Not now"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Notifications"
+msgstr "Notifications"
 
 #: packages/app/dialogs.ts
 #: packages/app/workspace-app.ts
@@ -782,6 +871,16 @@ msgstr "Paste"
 #: packages/app/menu.ts
 msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Phishing protection"
+msgstr "Phishing protection"
+
+#. Tooltip of the button that opens the emoji picker
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Pick emoji"
+msgstr "Pick emoji"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -872,6 +971,7 @@ msgstr "Reset Meru to its original state?"
 msgid "Reset Width"
 msgstr "Reset Width"
 
+#. Button on the toast after a setting changes, which restarts Meru now
 #. Dialog button that restarts Meru
 #. Dialog button that restarts Meru
 #. Dialog button that restarts Meru
@@ -879,11 +979,13 @@ msgstr "Reset Width"
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
 #: packages/app/trial.ts
+#: packages/renderer/lib/toast.ts
 msgid "Restart"
 msgstr "Restart"
 
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
+#: packages/renderer/lib/toast.ts
 msgid "Restart Meru to apply the changes."
 msgstr "Restart Meru to apply the changes."
 
@@ -923,6 +1025,16 @@ msgstr "Save Vide&o"
 msgid "Save Video& As…"
 msgstr "Save Video& As…"
 
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Saved searches"
+msgstr "Saved searches"
+
+#. Placeholder of the emoji picker's search field
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Search…"
+msgstr "Search…"
+
 #. Button in the folder picker that chooses where downloads are saved
 #: packages/app/ipc.ts
 msgid "Select"
@@ -937,6 +1049,11 @@ msgstr "Select &All"
 #: packages/app/menu.ts
 msgid "Select All"
 msgstr "Select All"
+
+#. Shown at the foot of the emoji picker until an emoji is pointed at
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Select an emoji…"
+msgstr "Select an emoji…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1145,6 +1262,11 @@ msgstr "Try again, or contact support. A VPN or a firewall can block the connect
 msgid "Undo"
 msgstr "Undo"
 
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Unified inbox"
+msgstr "Unified inbox"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
@@ -1165,6 +1287,16 @@ msgstr "Unpinned tabs"
 msgid "Until Tomorrow"
 msgstr "Until Tomorrow"
 
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Updates"
+msgstr "Updates"
+
+#. Button on the banner at the top of a Settings page, which opens Meru Pro's pricing page
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Upgrade"
+
 #: packages/app/dialogs.ts
 #: packages/app/trial.ts
 #: packages/app/workspace-app.ts
@@ -1175,9 +1307,18 @@ msgstr "Upgrade to Meru Pro"
 msgid "Upgrade to Meru Pro to keep every feature, or continue with the free version."
 msgstr "Upgrade to Meru Pro to keep every feature, or continue with the free version."
 
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade to Meru Pro to unlock all options"
+msgstr "Upgrade to Meru Pro to unlock all options"
+
 #: packages/app/gmail/index.ts
 msgid "Verification code {verificationCode}"
 msgstr "Verification code {verificationCode}"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Verification codes"
+msgstr "Verification codes"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1198,6 +1339,11 @@ msgstr "Violet"
 #: packages/app/menu.ts
 msgid "Website"
 msgstr "Website"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "What's new"
+msgstr "What's new"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1226,6 +1372,11 @@ msgstr "Wide"
 #: packages/app/menu.ts
 msgid "Window"
 msgstr "Window"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Workspace apps"
+msgstr "Workspace apps"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
