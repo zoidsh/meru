@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { getPreloadLocale } from "./i18n";
+import { SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
+import { catalogs, getPreloadLocale } from "./i18n";
+
+describe("catalogs", () => {
+  test("has a catalog for every shipped tag", () => {
+    for (const tag of SHIPPED_CATALOG_TAGS) {
+      expect(catalogs[tag]).toBeDefined();
+    }
+  });
+});
 
 describe("getPreloadLocale", () => {
   test("takes a shipped tag from the argument", () => {

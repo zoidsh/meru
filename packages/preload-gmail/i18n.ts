@@ -7,7 +7,7 @@ import { messages as en } from "./locales/en";
  * Imports the tags alone, never `@meru/shared/i18n`, whose runtime brings the
  * whole app's catalogs into every Gmail view.
  */
-const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en };
+export const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en };
 
 const LOCALE_ARGUMENT_PREFIX = `${GMAIL_PRELOAD_LOCALE_ARGUMENT}=`;
 
