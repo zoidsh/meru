@@ -2,10 +2,12 @@ import fs from "node:fs";
 import os from "node:os";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
+import { select, t } from "@lingui/core/macro";
 import { isExtensionId } from "@meru/electron-extensions";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
+import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
@@ -23,6 +25,7 @@ import {
   shell,
 } from "electron";
 import { serializeError } from "serialize-error";
+import { getDesktopSourcesWindowTitle } from "@/account";
 import { accounts } from "@/accounts";
 import { bookmarks } from "@/bookmarks";
 import { config } from "@/config";
@@ -52,7 +55,11 @@ import {
   uninstallCuratedExtension,
 } from "./extensions";
 import { Gmail, GMAIL_USER_STYLES_PATH } from "./gmail";
-import { ExtensionInstallError } from "./lib/extension-swap";
+import {
+  ExtensionInstallError,
+  getCouldNotInstallExtensionMessage,
+  getErrorMessage,
+} from "./lib/extension-swap";
 import { hibernatesTabWhenIdle } from "./lib/hibernation";
 import { log } from "./lib/log";
 import {
@@ -102,6 +109,37 @@ function getRendererWebContents() {
   }
 
   return rendererWebContents;
+}
+
+function getNewTabLabel(appLabel: string, target: "window" | "tab") {
+  return t({
+    message: select(target, {
+      window: `New ${appLabel} Window`,
+      other: `New ${appLabel} Tab`,
+    }),
+    comment:
+      "Tab context menu item; appLabel is the name of a Google Workspace app, such as Docs or Sheets",
+  });
+}
+
+function getOpenLinksHereLabel(appLabel: string, target: "window" | "tab") {
+  return t({
+    message: select(target, {
+      window: `Open ${appLabel} Links in This Window`,
+      other: `Open ${appLabel} Links in This Tab`,
+    }),
+    comment:
+      "Tab context menu checkbox that makes this tab open the app's links; appLabel is the name of a Google Workspace app, such as Docs or Sheets",
+  });
+}
+
+function getCouldNotUninstallExtensionMessage(error: unknown) {
+  const errorMessage = getErrorMessage(error);
+
+  return t({
+    message: `Couldn't uninstall the extension: ${errorMessage}`,
+    comment: "errorMessage is the technical reason, left untranslated",
+  });
 }
 
 class Ipc {
@@ -209,8 +247,10 @@ class Ipc {
         types: ["screen", "window"],
       });
 
+      const desktopSourcesWindowTitle = getDesktopSourcesWindowTitle();
+
       return desktopSources
-        .filter((source) => !source.name.startsWith("Choose what to share"))
+        .filter((source) => !source.name.startsWith(desktopSourcesWindowTitle))
         .map(({ id, name, thumbnail }) => ({
           id,
           name,
@@ -263,7 +303,10 @@ class Ipc {
     ipc.main.on("taskbar.setOverlayIcon", (_event, dataUrl) => {
       main.window.setOverlayIcon(
         nativeImage.createFromDataURL(dataUrl),
-        "You have unread messages",
+        t({
+          message: "You have unread messages",
+          comment: "Accessible description of the unread badge on Meru's taskbar button on Windows",
+        }),
       );
     });
 
@@ -303,7 +346,7 @@ class Ipc {
           ? []
           : [
               {
-                label: "Move to Tab",
+                label: t`Move to Tab`,
                 click: () => {
                   workspaceApp.adoptIntoTabs();
                 },
@@ -315,7 +358,7 @@ class Ipc {
         ...(workspaceApp.isSavable
           ? [
               {
-                label: "Load on Launch",
+                label: t`Load on Launch`,
                 type: "checkbox" as const,
                 checked: workspaceApp.pinned && workspaceApp.loadOnLaunch,
                 click: () => {
@@ -338,13 +381,13 @@ class Ipc {
             ]
           : []),
         {
-          label: "Copy Link",
+          label: t`Copy Link`,
           click: () => {
             workspaceApp.copyUrl();
           },
         },
         {
-          label: "Open in Default Browser",
+          label: t`Open in Default Browser`,
           click: () => {
             workspaceApp.openInBrowser();
           },
@@ -425,11 +468,15 @@ class Ipc {
         }
       };
 
+      // lingui-set comment="An item in the context menu of a Google Workspace app's tab"
       Menu.buildFromTemplate([
         ...(tabApp && !workspaceApps[tabApp].singleInstance
           ? [
               {
-                label: `New ${workspaceApps[tabApp].label} ${isWindowsMode ? "Window" : "Tab"}`,
+                label: getNewTabLabel(
+                  workspaceApps[tabApp].label,
+                  isWindowsMode ? "window" : "tab",
+                ),
                 click: () => {
                   openWorkspaceAppUrl(getWorkspaceAppUrl(tabApp));
                 },
@@ -437,7 +484,7 @@ class Ipc {
             ]
           : []),
         {
-          label: "Reload",
+          label: t`Reload`,
           enabled: tab instanceof WorkspaceApp,
           click: () => {
             if (tab instanceof WorkspaceApp) {
@@ -446,7 +493,7 @@ class Ipc {
           },
         },
         {
-          label: "Duplicate",
+          label: t`Duplicate`,
           click: () => {
             const currentTabUrl =
               tab instanceof WorkspaceApp ? tab.view.webContents.getURL() : tab.url;
@@ -460,7 +507,7 @@ class Ipc {
         ...(tab instanceof WorkspaceApp && tab.isWindowed
           ? [
               {
-                label: "Move to Tab",
+                label: t`Move to Tab`,
                 click: () => {
                   if (tab instanceof WorkspaceApp) {
                     tab.adoptIntoTabs();
@@ -474,7 +521,7 @@ class Ipc {
             ]
           : [
               {
-                label: "Move to New Window",
+                label: t`Move to New Window`,
                 enabled: tab instanceof WorkspaceApp && !tab.isWindowed,
                 click: () => {
                   if (tab instanceof WorkspaceApp) {
@@ -491,7 +538,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Copy Link",
+          label: t`Copy Link`,
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.copyUrl();
@@ -503,7 +550,7 @@ class Ipc {
           },
         },
         {
-          label: "Open in Default Browser",
+          label: t`Open in Default Browser`,
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.openInBrowser();
@@ -520,13 +567,15 @@ class Ipc {
         ...(tabApp
           ? [
               {
-                label: tab.pinned ? "Unpin" : "Pin",
+                label: tab.pinned ? t`Unpin` : t`Pin`,
                 click: () => {
                   account.instance.tabs.setTabPinned(tabId, !tab.pinned);
                 },
               },
               {
-                label: bookmarks.isBookmarked(accountId, tab.url) ? "Remove Bookmark" : "Bookmark",
+                label: bookmarks.isBookmarked(accountId, tab.url)
+                  ? t`Remove Bookmark`
+                  : t({ message: "Bookmark", comment: "Context menu item that bookmarks the tab" }),
                 click: () => {
                   bookmarks.toggle(accountId, {
                     app: tabApp,
@@ -538,7 +587,7 @@ class Ipc {
               ...(tab.pinned
                 ? [
                     {
-                      label: "Load on Launch",
+                      label: t`Load on Launch`,
                       type: "checkbox" as const,
                       checked: tab.loadOnLaunch,
                       click: () => {
@@ -555,7 +604,7 @@ class Ipc {
         // mark it already carries, so ticking it always says hibernate this one
         // and clearing it always says leave it alone.
         {
-          label: "Hibernate When Idle",
+          label: t`Hibernate When Idle`,
           type: "checkbox" as const,
           checked: hibernatesTabWhenIdle(tab, config.get("workspaceApps.hibernation")),
           click: () => {
@@ -574,9 +623,10 @@ class Ipc {
         ...(appLinksApp && !workspaceApps[appLinksApp].singleInstance
           ? [
               {
-                label: `Open ${workspaceApps[appLinksApp].label} Links in This ${
-                  isTabWindowed ? "Window" : "Tab"
-                }`,
+                label: getOpenLinksHereLabel(
+                  workspaceApps[appLinksApp].label,
+                  isTabWindowed ? "window" : "tab",
+                ),
                 type: "checkbox" as const,
                 checked: Boolean(tab.opensLinksForApp),
                 click: async () => {
@@ -608,7 +658,10 @@ class Ipc {
         ...(tab instanceof DormantTab
           ? [
               {
-                label: "Open",
+                label: t({
+                  message: "Open",
+                  comment: "Context menu item that loads an unloaded tab",
+                }),
                 click: () => {
                   account.instance.tabs.activateTab(tabId);
 
@@ -625,7 +678,11 @@ class Ipc {
           ? []
           : [
               {
-                label: "Close",
+                label: t({
+                  message: "Close",
+                  context: "tab",
+                  comment: "Context menu item that closes the tab",
+                }),
                 click: () => {
                   account.instance.tabs.closeTab(tabId);
 
@@ -636,7 +693,7 @@ class Ipc {
               },
             ]),
         {
-          label: "Close Other Tabs",
+          label: t`Close Other Tabs`,
           enabled: hasOtherClosableTabs,
           click: () => {
             account.instance.tabs.closeOtherTabs(tabId);
@@ -647,7 +704,7 @@ class Ipc {
           },
         },
         {
-          label: "Close Tabs Below",
+          label: t`Close Tabs Below`,
           enabled: hasClosableTabsBelow,
           click: () => {
             account.instance.tabs.closeTabsBelow(tabId);
@@ -658,6 +715,7 @@ class Ipc {
           },
         },
       ]).popup();
+      // lingui-reset
     });
 
     ipc.main.on("tabs.showVerticalTabsContextMenu", (_event, accountId) => {
@@ -665,7 +723,7 @@ class Ipc {
 
       Menu.buildFromTemplate([
         {
-          label: "Reopen Closed Tab",
+          label: t`Reopen Closed Tab`,
           enabled: account.instance.tabs.hasRecentlyClosedTabs,
           click: () => {
             if (account.instance.tabs.reopenClosedTab() && account.config.selected) {
@@ -680,7 +738,10 @@ class Ipc {
         // Width setting's to give — and there is nothing to reset to on `auto`,
         // where picking it again in settings changes nothing.
         {
-          label: "Reset Width",
+          label: t({
+            message: "Reset Width",
+            comment: "Context menu item that resets the width of the vertical tabs strip",
+          }),
           enabled: Boolean(account.instance.verticalTabsWidth),
           click: () => {
             accounts.setVerticalTabsWidth(accountId, null);
@@ -711,7 +772,10 @@ class Ipc {
     ipc.main.handle("downloads.setLocation", async () => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         properties: ["openDirectory"],
-        buttonLabel: "Select",
+        buttonLabel: t({
+          message: "Select",
+          comment: "Button in the folder picker that chooses where downloads are saved",
+        }),
         defaultPath: config.get("downloads.location"),
       });
 
@@ -762,7 +826,10 @@ class Ipc {
     ipc.main.handle("about.exportLogs", async () => {
       const { canceled, filePath } = await dialog.showSaveDialog({
         defaultPath: "meru.log",
-        buttonLabel: "Export",
+        buttonLabel: t({
+          message: "Export",
+          comment: "Button in the save dialog that exports Meru's log file",
+        }),
       });
 
       if (canceled || !filePath) {
@@ -776,9 +843,13 @@ class Ipc {
 
     ipc.main.on("notifications.showTestNotification", () => {
       createNewEmailNotification({
+        // oxlint-disable-next-line lingui/no-unlocalized-strings -- a sender's name, which stays as it is
         title: "Tim from Meru",
-        subtitle: "Your test notification request",
-        body: "This is what a new email notification looks like.",
+        subtitle: t({
+          message: "Your test notification request",
+          comment: "Subject of the sample email in the test notification",
+        }),
+        body: t`This is what a new email notification looks like.`,
       });
     });
 
@@ -885,7 +956,7 @@ class Ipc {
     ipc.main.on("doNotDisturb.showOptions", () => {
       const options: MenuItemConstructorOptions[] = DoNotDisturb.options.map(
         ({ label, duration }) => ({
-          label,
+          label: i18n._(label),
           type: "checkbox",
           checked: config.get("doNotDisturb.duration") === duration,
           click: () => {
@@ -898,7 +969,10 @@ class Ipc {
         config.get("doNotDisturb.enabled")
           ? [
               {
-                label: "Disable",
+                label: t({
+                  message: "Disable",
+                  comment: "Do Not Disturb menu item that turns Do Not Disturb off",
+                }),
                 click: () => {
                   doNotDisturb.disable();
                 },
@@ -1076,12 +1150,12 @@ class Ipc {
     ipc.main.handle("extensions.install", async (_event, extensionId) => {
       if (!licenseKey.isValid) {
         return {
-          error: "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue.",
+          error: t`Meru Pro is required to install extensions. Upgrade to Meru Pro to continue.`,
         };
       }
 
       if (!isCuratedExtensionId(extensionId)) {
-        return { error: "Meru doesn't offer this extension." };
+        return { error: t`Meru doesn't offer this extension.` };
       }
 
       try {
@@ -1096,7 +1170,7 @@ class Ipc {
         }
 
         return {
-          error: `Couldn't install the extension: ${error instanceof Error ? error.message : String(error)}`,
+          error: getCouldNotInstallExtensionMessage(error),
         };
       }
     });
@@ -1105,7 +1179,7 @@ class Ipc {
     // has lost its license
     ipc.main.handle("extensions.uninstall", async (_event, extensionId) => {
       if (!isExtensionId(extensionId)) {
-        return { error: "Meru doesn't know this extension." };
+        return { error: t`Meru doesn't know this extension.` };
       }
 
       try {
@@ -1116,7 +1190,7 @@ class Ipc {
         log.error("Failed to uninstall extension", { extensionId, error: serializeError(error) });
 
         return {
-          error: `Couldn't uninstall the extension: ${error instanceof Error ? error.message : String(error)}`,
+          error: getCouldNotUninstallExtensionMessage(error),
         };
       }
     });
@@ -1124,7 +1198,7 @@ class Ipc {
     ipc.main.handle("extensions.update", async () => {
       if (!licenseKey.isValid) {
         return {
-          error: "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue.",
+          error: t`Meru Pro is required to update extensions. Upgrade to Meru Pro to continue.`,
         };
       }
 
@@ -1132,9 +1206,9 @@ class Ipc {
     });
 
     ipc.main.handle("extensions.openWindow", (_event, extensionId) => {
-      const name =
-        curatedExtensions.find((curatedExtension) => curatedExtension.id === extensionId)?.name ??
-        "The extension";
+      const name = curatedExtensions.find(
+        (curatedExtension) => curatedExtension.id === extensionId,
+      )?.name;
 
       return { error: getExtensionWindowError(name, openCuratedExtensionWindow(extensionId)) };
     });

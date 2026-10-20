@@ -2,7 +2,9 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { msg, t } from "@lingui/core/macro";
 import { BASE_SPACING } from "@meru/shared/constants";
+import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
 import { type BrowserWindow, shell } from "electron";
@@ -15,11 +17,13 @@ import { log } from "./lib/log";
 import { Popup } from "./lib/popup";
 import { quarantineFile } from "./lib/quarantine";
 
-const FILE_MANAGER_NAME = platform.isMacOS
-  ? "Finder"
+// lingui-set comment="Button on the download notification that shows the file in the file manager"
+const SHOW_IN_FILE_MANAGER = platform.isMacOS
+  ? msg`Show in Finder`
   : platform.isWindows
-    ? "File Explorer"
-    : "your file manager";
+    ? msg`Show in File Explorer`
+    : msg`Show in your file manager`;
+// lingui-reset
 
 class Downloads {
   recentDownloadHistoryPopup = new Popup();
@@ -122,10 +126,15 @@ class Downloads {
           // download as well, because some notification servers, such as
           // dunst, draw no buttons.
           createNotification({
-            title: `Downloaded ${fileName}`,
+            title: t`Downloaded ${fileName}`,
             actions: [
               {
-                text: shouldOpenFile ? "Open" : `Show in ${FILE_MANAGER_NAME}`,
+                text: shouldOpenFile
+                  ? t({
+                      message: "Open",
+                      comment: "Button on the download notification that opens the file",
+                    })
+                  : i18n._(SHOW_IN_FILE_MANAGER),
                 type: "button",
               },
             ],

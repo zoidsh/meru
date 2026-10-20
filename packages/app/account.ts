@@ -1,4 +1,5 @@
 import { platform } from "@electron-toolkit/utils";
+import { t } from "@lingui/core/macro";
 import { GOOGLE_MEET_URL } from "@meru/shared/constants";
 import type { AccountConfig } from "@meru/shared/schemas";
 import type { VerticalTabsSessionWidth } from "@meru/shared/tabs";
@@ -24,6 +25,14 @@ import { main } from "./main";
 import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
 import { WorkspaceApp } from "./workspace-app";
+
+/** The source list leaves the picker's own window out by this title. */
+export function getDesktopSourcesWindowTitle() {
+  return t({
+    message: "Choose what to share",
+    comment: "Title of the window that picks a screen or a window to share in a Google Meet call",
+  });
+}
 
 export class Account {
   accountId: AccountConfig["id"];
@@ -220,7 +229,7 @@ export class Account {
         }
 
         const desktopSourcesWindow = createBrowserWindow({
-          title: "Choose what to share",
+          title: getDesktopSourcesWindowTitle(),
           parent: googleMeetParentWindow,
           width: 576,
           height: 512,

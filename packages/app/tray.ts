@@ -1,5 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { t } from "@lingui/core/macro";
 import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -75,7 +76,16 @@ export class AppTray {
     } else {
       const iconColor = config.get("tray.iconColor");
 
-      iconFileName = `IconTray${unread ? "Unread" : ""}-${iconColor === "system" ? (nativeTheme.shouldUseDarkColors ? "Light" : "Dark") : `${iconColor[0]?.toUpperCase()}${iconColor.slice(1)}`}.${platform.isWindows ? "ico" : "png"}`;
+      const iconFileNameState = unread ? "Unread" : "";
+
+      const iconFileNameColor =
+        iconColor === "system"
+          ? nativeTheme.shouldUseDarkColors
+            ? "Light"
+            : "Dark"
+          : `${iconColor[0]?.toUpperCase()}${iconColor.slice(1)}`;
+
+      iconFileName = `IconTray${iconFileNameState}-${iconFileNameColor}.${platform.isWindows ? "ico" : "png"}`;
     }
 
     const image = Electron.nativeImage.createFromPath(
@@ -127,6 +137,20 @@ export class AppTray {
     this.createOrUpdateContextMenu();
   }
 
+  private getQuitLabel() {
+    if (platform.isMacOS) {
+      const appName = Electron.app.name;
+
+      return t`Quit ${appName}`;
+    }
+
+    if (platform.isWindows) {
+      return t({ message: "Exit", comment: "Tray menu item that quits Meru, as Windows names it" });
+    }
+
+    return t({ message: "Quit", comment: "Tray menu item that quits Meru" });
+  }
+
   getMenuTemplate() {
     const mainWindowIsVisible = main.window.isVisible();
 
@@ -147,7 +171,7 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: mainWindowIsVisible ? "Hide Meru" : "Show Meru",
+        label: mainWindowIsVisible ? t`Hide Meru` : t`Show Meru`,
         click: () => {
           main.window[mainWindowIsVisible ? "hide" : "show"]();
         },
@@ -156,6 +180,7 @@ export class AppTray {
         type: "separator",
       },
       {
+        label: this.getQuitLabel(),
         role: "quit",
       },
     ];
