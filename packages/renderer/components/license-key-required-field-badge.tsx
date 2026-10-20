@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import { Badge } from "@meru/ui/components/badge";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 
@@ -19,7 +20,9 @@ export function LicenseKeyRequiredFieldBadge() {
 
   return (
     <Badge data-meru-pro="" variant="secondary">
-      Meru Pro required
+      <Trans comment="Badge beside a setting that needs a Meru Pro license">
+        Meru Pro required
+      </Trans>
     </Badge>
   );
 }
