@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { NotificationTime } from "@meru/shared/types";
-import { checkWithinNotificationTimes } from "./notifications";
+import { checkWithinNotificationTimes, shouldPlayNewEmailSound } from "./notifications";
 
 function makeTime(start: string, end: string, days?: number[]): NotificationTime {
   return {
@@ -114,5 +114,33 @@ describe("checkWithinNotificationTimes", () => {
     expect(checkWithinNotificationTimes(times, makeDate(1, 9, 0))).toBe(true);
     expect(checkWithinNotificationTimes(times, makeDate(1, 14, 0))).toBe(false);
     expect(checkWithinNotificationTimes(times, makeDate(1, 19, 0))).toBe(true);
+  });
+});
+
+describe("shouldPlayNewEmailSound", () => {
+  function soundsFor(times: number[]) {
+    let last: number | undefined;
+
+    return times.map((now) => {
+      const sounds = shouldPlayNewEmailSound(now, last);
+      last = now;
+      return sounds;
+    });
+  }
+
+  test("the first notification plays a sound", () => {
+    expect(shouldPlayNewEmailSound(1000)).toBe(true);
+  });
+
+  test("a notification within 5 seconds of the last is silent", () => {
+    expect(soundsFor([1000, 1000, 1000, 5999])).toEqual([true, false, false, false]);
+  });
+
+  test("a chain 4 seconds apart stays silent after the first", () => {
+    expect(soundsFor([0, 4000, 8000, 12000, 16000])).toEqual([true, false, false, false, false]);
+  });
+
+  test("a notification after 5 seconds of quiet plays a sound", () => {
+    expect(soundsFor([0, 4000, 9000, 20000])).toEqual([true, false, true, true]);
   });
 });

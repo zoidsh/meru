@@ -1,3 +1,4 @@
+import { ms } from "@meru/shared/ms";
 import { timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
 
@@ -27,4 +28,13 @@ export function checkWithinNotificationTimes(times: NotificationTime[], now: Dat
 
     return days.includes(now.getDay());
   });
+}
+
+const NEW_EMAIL_SOUND_QUIET_PERIOD = ms("5s");
+
+export function shouldPlayNewEmailSound(now: number, lastNewEmailNotificationAt?: number) {
+  return (
+    lastNewEmailNotificationAt === undefined ||
+    now - lastNewEmailNotificationAt >= NEW_EMAIL_SOUND_QUIET_PERIOD
+  );
 }

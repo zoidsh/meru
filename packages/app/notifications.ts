@@ -1,7 +1,7 @@
 import { Notification, type NotificationConstructorOptions } from "electron";
 import { config } from "./config";
 import { ipc } from "./ipc";
-import { checkWithinNotificationTimes } from "./lib/notifications";
+import { checkWithinNotificationTimes, shouldPlayNewEmailSound } from "./lib/notifications";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 
@@ -50,6 +50,10 @@ export function areWorkspaceAppNotificationsAllowed() {
   return licenseKey.isValid && config.get("notifications.allowFromWorkspaceApps");
 }
 
+// One inbox check can post several notifications at once, and each starting its
+// own copy of the sound plays them over each other.
+let lastNewEmailNotificationAt: number | undefined;
+
 export function createNewEmailNotification({
   click,
   action,
@@ -62,8 +66,13 @@ export function createNewEmailNotification({
     return;
   }
 
+  const now = performance.now();
   const sound = config.get("notifications.sound");
-  const playSound = config.get("notifications.playSound");
+  const playSound =
+    config.get("notifications.playSound") &&
+    shouldPlayNewEmailSound(now, lastNewEmailNotificationAt);
+
+  lastNewEmailNotificationAt = now;
 
   const notification = new Notification({
     silent: licenseKey.isValid && sound === "system" ? !playSound : true,
