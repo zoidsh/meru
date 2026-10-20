@@ -40,8 +40,8 @@ export type ToastOptions = {
     onClick: () => void;
   };
   /**
-   * Accessible names for the column and the close button. Passed in rather than
-   * written here, because the catalog they are translated from lives in main.
+   * Accessible names for the column and the close button. Passed in like the
+   * title, so every string a toast shows is translated where it is shown.
    */
   labels: {
     toasts: string;

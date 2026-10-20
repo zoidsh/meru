@@ -2,7 +2,6 @@ import fs from "node:fs";
 import os from "node:os";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
-import { t } from "@lingui/core/macro";
 import { isExtensionId } from "@meru/electron-extensions";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
@@ -984,26 +983,7 @@ class Ipc {
         return;
       }
 
-      ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId, {
-        messageSent: t({
-          message: "Message sent",
-          comment: "Toast in the Gmail view once a message has been sent",
-        }),
-        undo: t({
-          message: "Undo",
-          context: "button",
-          comment: "Button in the message-sent toast, which recalls the message",
-        }),
-        toasts: t({
-          message: "Notifications",
-          comment: "Accessible name of the region Meru's own toasts appear in",
-        }),
-        closeToast: t({
-          message: "Close toast",
-          comment:
-            "Accessible name of the close button on a brief notification Meru shows over Gmail",
-        }),
-      });
+      ipc.renderer.send(gmailWebContents, "gmail.showMessageSentNotification", browserWindowId);
     });
 
     ipc.main.on("gmail.undoMessageSent", (_event, browserWindowId) => {

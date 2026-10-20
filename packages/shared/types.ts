@@ -71,17 +71,6 @@ export type ExtensionUpdateResult =
   | { id: string; status: "upToDate" }
   | { id: string; status: "failed"; error: string };
 
-/**
- * The Gmail preload's own strings. Main holds the catalog, so it translates them
- * and the preload carries no English of its own.
- */
-export type GmailPreloadMessages = {
-  messageSent: string;
-  undo: string;
-  toasts: string;
-  closeToast: string;
-};
-
 export type WorkspaceAppNotification = {
   title: string;
   body?: string;
@@ -329,7 +318,7 @@ export type IpcRendererEvent = {
   "gmail.refreshInbox": [];
   "gmail.inboxChanged": [accountId: AccountConfig["id"], messages: GmailInboxMessage[]];
   "gmail.openMessage": [messageId: string];
-  "gmail.showMessageSentNotification": [browserWindowId: number, messages: GmailPreloadMessages];
+  "gmail.showMessageSentNotification": [browserWindowId: number];
   "gmail.dismissMessageSentNotification": [browserWindowId: number];
   "gmail.undoMessageSent": [];
   "theme.darkModeChanged": [darkMode: boolean];
