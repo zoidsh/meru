@@ -678,7 +678,12 @@ export class WorkspaceApp {
       },
     });
 
-    loadUrlOrRestoreNavigationHistory(view.webContents, url, navigationHistory);
+    // A pop-out adopts the `webContents` Chromium opened it in, which
+    // navigates it to the page itself. Loading it as well requests the page
+    // twice, and Chromium's navigation aborts ours.
+    if (!options?.webContents) {
+      loadUrlOrRestoreNavigationHistory(view.webContents, url, navigationHistory);
+    }
 
     openViewDevToolsOnLaunch(view);
 
