@@ -1,3 +1,4 @@
+import "./i18n";
 import "@meru/shared/electron-api";
 import "./ipc";
 import { observeBodyMutations } from "@meru/shared/dom";
