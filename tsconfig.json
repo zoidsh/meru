@@ -1,4 +1,5 @@
 {
   "extends": "@total-typescript/tsconfig/bundler/no-dom",
+  "include": ["**/*", ".claude/skills/**/*.ts"],
   "exclude": ["packages"]
 }
