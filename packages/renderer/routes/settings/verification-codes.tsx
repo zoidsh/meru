@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { verificationCodeCopyModes } from "@meru/shared/verification-codes";
 import { FieldGroup } from "@meru/ui/components/field";
 import { ConfigSelectField } from "@/components/config-select-field";
@@ -8,6 +9,8 @@ import { useConfig } from "@/lib/react-query";
 
 export function VerificationCodesSettings() {
   const { config } = useConfig();
+
+  const { t } = useLingui();
 
   if (!config) {
     return;
@@ -33,7 +36,7 @@ export function VerificationCodesSettings() {
             configKey="verificationCodes.copyMode"
             items={Object.entries(verificationCodeCopyModes).map(([value, label]) => ({
               value,
-              label,
+              label: t(label),
             }))}
             disabled={!config["verificationCodes.autoCopy"]}
             licenseKeyRequired

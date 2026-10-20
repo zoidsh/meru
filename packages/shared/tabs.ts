@@ -1,3 +1,4 @@
+import { msg } from "@lingui/core/macro";
 import { VERTICAL_TABS_NARROW_WIDTH, VERTICAL_TABS_WIDE_WIDTH } from "./constants";
 import type { AccountConfig } from "./schemas";
 import type {
@@ -8,11 +9,13 @@ import type {
 
 export const GMAIL_TAB_ID = "gmail";
 
+// lingui-set comment="Option of the Width setting for the vertical tabs sidebar"
 export const verticalTabsWidths = {
-  auto: "Auto",
-  narrow: "Narrow",
-  wide: "Wide",
+  auto: msg`Auto`,
+  narrow: msg`Narrow`,
+  wide: msg`Wide`,
 } as const;
+// lingui-reset
 
 export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
 
@@ -23,11 +26,13 @@ export type VerticalTabsWidth = keyof typeof verticalTabsWidths;
  */
 export type VerticalTabsSessionWidth = Exclude<VerticalTabsWidth, "auto">;
 
+// lingui-set comment="Option of the Show Gmail unread badge setting: when the Gmail tab shows its unread count"
 export const verticalTabsGmailUnreadBadges = {
-  always: "Always",
-  whenInactive: "When another tab is active",
-  never: "Never",
+  always: msg`Always`,
+  whenInactive: msg`When another tab is active`,
+  never: msg`Never`,
 } as const;
+// lingui-reset
 
 export type VerticalTabsGmailUnreadBadge = keyof typeof verticalTabsGmailUnreadBadges;
 

@@ -84,10 +84,20 @@ msgstr "&Paste And Match Style"
 msgid "&Search with Google"
 msgstr "&Search with Google"
 
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "1 hour"
+msgstr "1 hour"
+
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "1 Hour"
 msgstr "1 Hour"
+
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "1 minute"
+msgstr "1 minute"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
@@ -109,6 +119,16 @@ msgstr "15 Minutes"
 msgid "2 Hours"
 msgstr "2 Hours"
 
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "3 hours"
+msgstr "3 hours"
+
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "30 minutes"
+msgstr "30 minutes"
+
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "30 Minutes"
@@ -123,6 +143,11 @@ msgstr "4 Hours"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 Minutes"
+
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "6 hours"
+msgstr "6 hours"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
@@ -144,20 +169,53 @@ msgstr "Accounts"
 msgid "Actual Size"
 msgstr "Actual Size"
 
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "All tabs"
+msgstr "All tabs"
+
+#. Option of the Show Gmail unread badge setting: when the Gmail tab shows its unread count
+#: packages/shared/tabs.ts
+msgid "Always"
+msgstr "Always"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Amber"
+msgstr "Amber"
+
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
 msgid "Archive"
 msgstr "Archive"
+
+#. Option of the When to copy setting: when a detected verification code is copied to the clipboard
+#: packages/shared/verification-codes.ts
+msgid "As soon as it arrives"
+msgstr "As soon as it arrives"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Ask Question…"
 msgstr "Ask Question…"
 
+#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
+#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
+#. Option of the Width setting for the vertical tabs sidebar
+#: packages/shared/tabs.ts
+#: packages/shared/workspace-apps.ts
+msgid "Auto"
+msgstr "Auto"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Back"
 msgstr "Back"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Blue"
+msgstr "Blue"
 
 #. Context menu item that bookmarks the tab
 #: packages/app/ipc.ts
@@ -229,6 +287,11 @@ msgstr "Close Tabs Below"
 #: packages/app/menu.ts
 msgid "Close Window"
 msgstr "Close Window"
+
+#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
+#: packages/shared/workspace-apps.ts
+msgid "Collapsed"
+msgstr "Collapsed"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -323,6 +386,11 @@ msgstr "Cu&t"
 msgid "Cut"
 msgstr "Cut"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Cyan"
+msgstr "Cyan"
+
 #. A menu or a menu item in Meru's menu bar
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
@@ -369,10 +437,20 @@ msgstr "Edit"
 msgid "Edit Config"
 msgstr "Edit Config"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Emerald"
+msgstr "Emerald"
+
 #. Tray menu item that quits Meru, as Windows names it
 #: packages/app/tray.ts
 msgid "Exit"
 msgstr "Exit"
+
+#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
+#: packages/shared/workspace-apps.ts
+msgid "Expanded"
+msgstr "Expanded"
 
 #. Button in the save dialog that exports Meru's log file
 #: packages/app/ipc.ts
@@ -394,6 +472,11 @@ msgstr "Find…"
 msgid "Forward"
 msgstr "Forward"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Fuchsia"
+msgstr "Fuchsia"
+
 #: packages/renderer/routes/settings/language-field.tsx
 msgid "Gmail and Google apps follow your Google account's language."
 msgstr "Gmail and Google apps follow your Google account's language."
@@ -407,6 +490,11 @@ msgstr "Gmail Keyboard Shortcuts"
 #: packages/app/menu.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Green"
+msgstr "Green"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -453,6 +541,11 @@ msgstr "I&nspect Element"
 msgid "Indefinitely"
 msgstr "Indefinitely"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Indigo"
+msgstr "Indigo"
+
 #. Context menu item that opens the developer tools on the element clicked
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
@@ -473,6 +566,11 @@ msgstr "Later"
 #: packages/app/license-key.ts
 msgid "License key activated."
 msgstr "License key activated."
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Lime"
+msgstr "Lime"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -596,6 +694,21 @@ msgstr "Move to New Window"
 msgid "Move to Tab"
 msgstr "Move to Tab"
 
+#. Option of the Width setting for the vertical tabs sidebar
+#: packages/shared/tabs.ts
+msgid "Narrow"
+msgstr "Narrow"
+
+#. Option of the Show Gmail unread badge setting: when the Gmail tab shows its unread count
+#: packages/shared/tabs.ts
+msgid "Never"
+msgstr "Never"
+
+#. Option of the Workspace apps Mode setting: whether Workspace apps open as tabs in the main window or in windows of their own
+#: packages/shared/workspace-apps.ts
+msgid "New windows"
+msgstr "New windows"
+
 #. Disabled context menu item shown in place of spelling suggestions when there are none
 #: packages/app/context-menu.ts
 msgid "No Guesses Found"
@@ -614,6 +727,11 @@ msgstr "OK"
 #: packages/app/workspace-app.ts
 msgid "Only passkeys created in Meru work here."
 msgstr "Only passkeys created in Meru work here."
+
+#. Option of the When to copy setting: when a detected verification code is copied to the clipboard
+#: packages/shared/verification-codes.ts
+msgid "Only when you ask"
+msgstr "Only when you ask"
 
 #. Button on the download notification that opens the file
 #. Context menu item that loads an unloaded tab
@@ -645,6 +763,11 @@ msgstr "Open Meru Portal"
 msgid "Open this link in your default browser?"
 msgstr "Open this link in your default browser?"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Orange"
+msgstr "Orange"
+
 #: packages/app/workspace-app.ts
 msgid "Passkey sign-in isn't supported on this platform yet."
 msgstr "Passkey sign-in isn't supported on this platform yet."
@@ -664,6 +787,16 @@ msgstr "Paste and Match Style"
 #: packages/app/ipc.ts
 msgid "Pin"
 msgstr "Pin"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Pink"
+msgstr "Pink"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Purple"
+msgstr "Purple"
 
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
@@ -825,6 +958,11 @@ msgstr "Select Previous Account"
 msgid "Select Previous Tab"
 msgstr "Select Previous Tab"
 
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "Selected tabs"
+msgstr "Selected tabs"
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Services"
@@ -867,6 +1005,11 @@ msgstr "Show in your file manager"
 msgid "Show Meru"
 msgstr "Show Meru"
 
+#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
+#: packages/shared/workspace-apps.ts
+msgid "Sidebar"
+msgstr "Sidebar"
+
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
 msgstr "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
@@ -874,6 +1017,11 @@ msgstr "Sign in with your password or another available second factor. If the ac
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
 msgstr "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Sky"
+msgstr "Sky"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -901,9 +1049,16 @@ msgid "System"
 msgstr "System"
 
 #. A menu or a menu item in Meru's menu bar
+#. Option of the Workspace apps Mode setting: whether Workspace apps open as tabs in the main window or in windows of their own
 #: packages/app/menu.ts
+#: packages/shared/workspace-apps.ts
 msgid "Tabs"
 msgstr "Tabs"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Teal"
+msgstr "Teal"
 
 #: packages/app/lib/extension-window.ts
 msgid "The extension is running, but Meru can't open a window for it."
@@ -957,6 +1112,11 @@ msgstr "This license key isn't activated for this device. Contact support if you
 msgid "This signs out of every account and clears all settings and data on this device. It can't be undone."
 msgstr "This signs out of every account and clears all settings and data on this device. It can't be undone."
 
+#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
+#: packages/shared/workspace-apps.ts
+msgid "Titlebar"
+msgstr "Titlebar"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Troubleshooting"
@@ -995,6 +1155,11 @@ msgstr "Unified Inbox"
 msgid "Unpin"
 msgstr "Unpin"
 
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "Unpinned tabs"
+msgstr "Unpinned tabs"
+
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "Until Tomorrow"
@@ -1024,6 +1189,11 @@ msgstr "View"
 msgid "View Logs"
 msgstr "View Logs"
 
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Violet"
+msgstr "Violet"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Website"
@@ -1034,6 +1204,11 @@ msgstr "Website"
 msgid "What's New"
 msgstr "What's New"
 
+#. Option of the Show Gmail unread badge setting: when the Gmail tab shows its unread count
+#: packages/shared/tabs.ts
+msgid "When another tab is active"
+msgstr "When another tab is active"
+
 #: packages/app/protocol/index.ts
 msgid "Which account should compose this email?"
 msgstr "Which account should compose this email?"
@@ -1042,10 +1217,20 @@ msgstr "Which account should compose this email?"
 msgid "Which account should open this link?"
 msgstr "Which account should open this link?"
 
+#. Option of the Width setting for the vertical tabs sidebar
+#: packages/shared/tabs.ts
+msgid "Wide"
+msgstr "Wide"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Window"
 msgstr "Window"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Yellow"
+msgstr "Yellow"
 
 #. Accessible description of the unread badge on Meru's taskbar button on Windows
 #: packages/app/ipc.ts
