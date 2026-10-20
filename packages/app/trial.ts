@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { dialog } from "electron";
 import isOnline from "is-online";
 import { serializeError } from "serialize-error";
@@ -45,13 +46,25 @@ class Trial {
     const { error, data } = await this.request();
 
     if (error) {
+      const errorMessage = error.message;
+
+      // A missing cause reads `undefined`, as a template literal writes it,
+      // where the macro would leave the parentheses empty.
+      const errorCause = String(error.cause);
+
       const { response } = await dialog.showMessageBox({
         type: "error",
-        message: "Couldn't validate your Meru Pro trial.",
+        message: t`Couldn't validate your Meru Pro trial.`,
         detail: (await isOnline())
-          ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
-          : "Meru can't reach the internet. Connect, then restart Meru to try again.",
-        buttons: ["Restart", "Quit"],
+          ? t({
+              message: `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${errorMessage} (${errorCause})`,
+              comment: "errorMessage and errorCause are the technical reason, left untranslated",
+            })
+          : t`Meru can't reach the internet. Connect, then restart Meru to try again.`,
+        buttons: [
+          t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
+          t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+        ],
         defaultId: 0,
         cancelId: 1,
       });
@@ -68,9 +81,13 @@ class Trial {
 
       const { response } = await dialog.showMessageBox({
         type: "info",
-        message: "Your Meru Pro trial has ended.",
-        detail: "Upgrade to Meru Pro to keep every feature, or continue with the free version.",
-        buttons: ["Upgrade to Meru Pro", "Continue with the free version", "Quit"],
+        message: t`Your Meru Pro trial has ended.`,
+        detail: t`Upgrade to Meru Pro to keep every feature, or continue with the free version.`,
+        buttons: [
+          t`Upgrade to Meru Pro`,
+          t`Continue with the free version`,
+          t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+        ],
         defaultId: 0,
         cancelId: 2,
       });
@@ -127,10 +144,12 @@ class Trial {
 
     const { response } = await dialog.showMessageBox(main.window, {
       type: "info",
-      message: "Your Meru Pro trial has ended.",
-      detail:
-        "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade.",
-      buttons: ["Upgrade to Meru Pro", "Not now"],
+      message: t`Your Meru Pro trial has ended.`,
+      detail: t`Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade.`,
+      buttons: [
+        t`Upgrade to Meru Pro`,
+        t({ message: "Not now", comment: "Dialog button that dismisses the end-of-trial message" }),
+      ],
       defaultId: 0,
       cancelId: 1,
     });

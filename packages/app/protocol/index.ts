@@ -1,5 +1,6 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
+import { t } from "@lingui/core/macro";
 import { app, dialog } from "electron";
 import { accounts } from "@/accounts";
 import { showProUpgradeDialog } from "@/dialogs";
@@ -75,7 +76,7 @@ async function promptForAccount(message: string) {
   const { response } = await dialog.showMessageBox(main.window, {
     type: "question",
     message,
-    buttons: [...accountConfigs.map((accountConfig) => accountConfig.label), "Cancel"],
+    buttons: [...accountConfigs.map((accountConfig) => accountConfig.label), t`Cancel`],
     cancelId,
   });
 
@@ -88,7 +89,7 @@ async function promptForAccount(message: string) {
 
 export async function handleMailtoUrl(url: string) {
   if (!licenseKey.isValid) {
-    showProUpgradeDialog("Meru Pro is required to set Meru as the default mail client.");
+    showProUpgradeDialog(t`Meru Pro is required to set Meru as the default mail client.`);
 
     return;
   }
@@ -97,7 +98,7 @@ export async function handleMailtoUrl(url: string) {
     return;
   }
 
-  const accountId = await promptForAccount("Which account should compose this email?");
+  const accountId = await promptForAccount(t`Which account should compose this email?`);
 
   if (!accountId) {
     return;
@@ -129,7 +130,7 @@ export function setMeruProtocolClient() {
  */
 async function resolveDeepLinkAccount(email: string | undefined) {
   if (!email) {
-    return promptForAccount("Which account should open this link?");
+    return promptForAccount(t`Which account should open this link?`);
   }
 
   for (const [accountId, account] of accounts.instances) {
@@ -186,7 +187,7 @@ async function openUrlDeepLink(deepLink: Extract<MeruDeepLink, { type: "open" }>
 
 export async function handleMeruUrl(url: string) {
   if (!licenseKey.isValid) {
-    showProUpgradeDialog("Meru Pro is required to open Meru links.");
+    showProUpgradeDialog(t`Meru Pro is required to open Meru links.`);
 
     return;
   }
@@ -215,7 +216,7 @@ export async function handleMeruUrl(url: string) {
  */
 export async function handleWebUrl(url: string) {
   if (!licenseKey.isValid) {
-    showProUpgradeDialog("Meru Pro is required to open links sent to Meru.");
+    showProUpgradeDialog(t`Meru Pro is required to open links sent to Meru.`);
 
     return;
   }

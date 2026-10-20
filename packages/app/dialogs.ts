@@ -1,3 +1,4 @@
+import { select, t } from "@lingui/core/macro";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog, type MessageBoxOptions } from "electron";
@@ -9,8 +10,11 @@ import { openExternalUrl } from "./url";
 export async function showRestartDialog() {
   const { response } = await dialog.showMessageBox({
     type: "info",
-    buttons: ["Restart", "Later"],
-    message: "Restart Meru to apply the changes.",
+    buttons: [
+      t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
+      t({ message: "Later", comment: "Dialog button that puts off restarting Meru" }),
+    ],
+    message: t`Restart Meru to apply the changes.`,
     defaultId: 0,
     cancelId: 1,
   });
@@ -22,14 +26,18 @@ export async function showRestartDialog() {
 }
 
 export async function showUnsupportedMacOSDialog() {
+  const version = app.getVersion();
+
+  const macOSVersion = process.getSystemVersion();
+
   const { checkboxChecked } = await dialog.showMessageBox(main.window, {
     type: "info",
-    message: "This is the last version of Meru for this Mac.",
-    detail: `Meru ${app.getVersion()} is the last version that runs on macOS ${process.getSystemVersion()}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk.`,
-    buttons: ["OK"],
+    message: t`This is the last version of Meru for this Mac.`,
+    detail: t`Meru ${version} is the last version that runs on macOS ${macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk.`,
+    buttons: [t`OK`],
     defaultId: 0,
     cancelId: 0,
-    checkboxLabel: "Don't show again",
+    checkboxLabel: t`Don't show again`,
   });
 
   if (checkboxChecked) {
@@ -53,11 +61,13 @@ function showUpdateMessageBox(options: MessageBoxOptions) {
 }
 
 export function showUpdateNotAvailableDialog() {
+  const version = app.getVersion();
+
   showUpdateMessageBox({
     type: "info",
-    message: "Meru is up to date.",
-    detail: `Meru ${app.getVersion()} is the latest version.`,
-    buttons: ["OK"],
+    message: t`Meru is up to date.`,
+    detail: t`Meru ${version} is the latest version.`,
+    buttons: [t`OK`],
     defaultId: 0,
     cancelId: 0,
   });
@@ -66,9 +76,9 @@ export function showUpdateNotAvailableDialog() {
 export function showUpdateAvailableDialog(version: string) {
   showUpdateMessageBox({
     type: "info",
-    message: `Meru ${version} is available.`,
-    detail: "Meru installs it when you quit.",
-    buttons: ["OK"],
+    message: t`Meru ${version} is available.`,
+    detail: t`Meru installs it when you quit.`,
+    buttons: [t`OK`],
     defaultId: 0,
     cancelId: 0,
   });
@@ -77,9 +87,9 @@ export function showUpdateAvailableDialog(version: string) {
 export function showUpdateCheckFailedDialog() {
   showUpdateMessageBox({
     type: "warning",
-    message: "Meru couldn't check for updates.",
-    detail: "Try again later.",
-    buttons: ["OK"],
+    message: t`Meru couldn't check for updates.`,
+    detail: t`Try again later.`,
+    buttons: [t`OK`],
     defaultId: 0,
     cancelId: 0,
   });
@@ -94,13 +104,32 @@ export async function confirmAppLinksTabHandover(
 
   // The tab taking the links can be living in its own window, and the context
   // menu item that opens this dialog already says so.
-  const targetLabel = isTargetWindowed ? "window" : "tab";
+  const target = isTargetWindowed ? "window" : "tab";
 
   const { response } = await dialog.showMessageBox(main.window, {
     type: "info",
-    buttons: ["Open links here", "Cancel"],
-    message: `Open ${appLabel} links in this ${targetLabel}?`,
-    detail: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This ${targetLabel} will open them instead.`,
+    buttons: [
+      t({
+        message: "Open links here",
+        comment: "Button that makes this tab or window the one that opens the app's links",
+      }),
+      t`Cancel`,
+    ],
+    message: t({
+      message: select(target, {
+        window: `Open ${appLabel} links in this window?`,
+        other: `Open ${appLabel} links in this tab?`,
+      }),
+      comment: "appLabel is the name of a Google Workspace app, such as Docs or Sheets",
+    }),
+    detail: t({
+      message: select(target, {
+        window: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This window will open them instead.`,
+        other: `“${appLinksTabTitle}” currently opens all ${appLabel} links. This tab will open them instead.`,
+      }),
+      comment:
+        "appLinksTabTitle is the title of the tab that opens the links today; appLabel is the name of a Google Workspace app, such as Docs or Sheets",
+    }),
     defaultId: 0,
     cancelId: 1,
   });
@@ -115,7 +144,7 @@ export function openProUpgradeUrl() {
 export async function showProUpgradeDialog(message: string) {
   const { response } = await dialog.showMessageBox(main.window, {
     type: "warning",
-    buttons: ["Upgrade to Meru Pro", "Cancel"],
+    buttons: [t`Upgrade to Meru Pro`, t`Cancel`],
     message,
     defaultId: 0,
     cancelId: 1,

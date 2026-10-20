@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { app, dialog, type MessageBoxOptions } from "electron";
 import isOnline from "is-online";
 import { serializeError } from "serialize-error";
@@ -42,7 +43,7 @@ class LicenseKey {
   showActivationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
       type: "warning",
-      message: "Couldn't activate the license key.",
+      message: t`Couldn't activate the license key.`,
       ...options,
     });
   }
@@ -66,16 +67,15 @@ class LicenseKey {
           Record<typeof error.code, string>,
           "MAX_DEVICE_ACTIVATIONS_REACHED"
         > = {
-          LICENSE_KEY_INVALID: "This license key is invalid",
-          LICENSE_DISABLED: "This license key has been disabled",
-          LICENSE_EXPIRED: "This license key has expired",
+          LICENSE_KEY_INVALID: t`This license key is invalid. Use another license key, or contact support.`,
+          LICENSE_DISABLED: t`This license key has been disabled. Use another license key, or contact support.`,
+          LICENSE_EXPIRED: t`This license key has expired. Use another license key, or contact support.`,
         };
 
         if (error.code === "MAX_DEVICE_ACTIVATIONS_REACHED") {
           const { response } = await this.showActivationError({
-            detail:
-              "This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support.",
-            buttons: ["Open Meru Portal", "Cancel"],
+            detail: t`This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support.`,
+            buttons: [t`Open Meru Portal`, t`Cancel`],
             defaultId: 0,
             cancelId: 1,
           });
@@ -85,7 +85,7 @@ class LicenseKey {
           }
         } else {
           await this.showActivationError({
-            detail: `${errorMessages[error.code]}. Use another license key, or contact support.`,
+            detail: errorMessages[error.code],
           });
         }
       } else {
@@ -99,10 +99,19 @@ class LicenseKey {
 
         log.error("Failed to activate license key", { error: serializeError(error) });
 
+        const errorMessage = error.message;
+
+        // A missing cause reads `undefined`, as a template literal writes it,
+        // where the macro would leave the parentheses empty.
+        const errorCause = String(error.cause);
+
         await this.showActivationError({
           detail: (await isOnline())
-            ? `Try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
-            : "Meru can't reach the internet. Connect and try again.",
+            ? t({
+                message: `Try again, or contact support. A VPN or a firewall can block the connection.\n\n${errorMessage} (${errorCause})`,
+                comment: "errorMessage and errorCause are the technical reason, left untranslated",
+              })
+            : t`Meru can't reach the internet. Connect and try again.`,
         });
       }
 
@@ -113,9 +122,12 @@ class LicenseKey {
 
     const { response } = await dialog.showMessageBox({
       type: "info",
-      message: "License key activated.",
-      detail: "Restart Meru to apply the changes.",
-      buttons: ["Restart", "Later"],
+      message: t`License key activated.`,
+      detail: t`Restart Meru to apply the changes.`,
+      buttons: [
+        t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
+        t({ message: "Later", comment: "Dialog button that puts off restarting Meru" }),
+      ],
       defaultId: 0,
       cancelId: 1,
     });
@@ -131,7 +143,7 @@ class LicenseKey {
   showValidationError(options: Omit<MessageBoxOptions, "type" | "message">) {
     return dialog.showMessageBox({
       type: "warning",
-      message: "Couldn't validate the license key.",
+      message: t`Couldn't validate the license key.`,
       ...options,
     });
   }
@@ -153,15 +165,21 @@ class LicenseKey {
     if (error) {
       if (isDefined) {
         const errorMessages: Record<typeof error.code, string> = {
-          LICENSE_KEY_INVALID: "This license key is invalid",
-          LICENSE_DISABLED: "This license key has been disabled",
-          LICENSE_EXPIRED: "This license key has expired",
-          DEVICE_NOT_ACTIVATED: "This license key isn't activated for this device",
+          LICENSE_KEY_INVALID: t`This license key is invalid. Contact support if you need help.`,
+          LICENSE_DISABLED: t`This license key has been disabled. Contact support if you need help.`,
+          LICENSE_EXPIRED: t`This license key has expired. Contact support if you need help.`,
+          DEVICE_NOT_ACTIVATED: t`This license key isn't activated for this device. Contact support if you need help.`,
         };
 
         const { response } = await this.showValidationError({
-          detail: `${errorMessages[error.code]}. Contact support if you need help.`,
-          buttons: ["Remove and restart", "Quit"],
+          detail: errorMessages[error.code],
+          buttons: [
+            t({
+              message: "Remove and restart",
+              comment: "Button that removes the license key from Meru and restarts it",
+            }),
+            t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+          ],
           defaultId: 0,
           cancelId: 1,
         });
@@ -182,11 +200,23 @@ class LicenseKey {
 
         log.error("Failed to validate license key", { error: serializeError(error) });
 
+        const errorMessage = error.message;
+
+        // A missing cause reads `undefined`, as a template literal writes it,
+        // where the macro would leave the parentheses empty.
+        const errorCause = String(error.cause);
+
         const { response } = await this.showValidationError({
           detail: (await isOnline())
-            ? `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${error.message} (${error.cause})`
-            : "Meru can't reach the internet. Connect, then restart Meru to try again.",
-          buttons: ["Restart", "Quit"],
+            ? t({
+                message: `Restart Meru to try again, or contact support. A VPN or a firewall can block the connection.\n\n${errorMessage} (${errorCause})`,
+                comment: "errorMessage and errorCause are the technical reason, left untranslated",
+              })
+            : t`Meru can't reach the internet. Connect, then restart Meru to try again.`,
+          buttons: [
+            t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
+            t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+          ],
           defaultId: 0,
           cancelId: 1,
         });
