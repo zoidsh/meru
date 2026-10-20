@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -21,6 +22,7 @@ import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { platform } from "@/lib/utils";
 import { LanguageField } from "./language-field";
 
@@ -51,9 +53,11 @@ function LaunchAtLoginField() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor={fieldId}>Launch at login</FieldLabel>
+        <FieldLabel htmlFor={fieldId}>
+          <Trans>Launch at login</Trans>
+        </FieldLabel>
         <FieldDescription>
-          Start the application automatically when you log in to your computer.
+          <Trans>Start the application automatically when you log in to your computer.</Trans>
         </FieldDescription>
       </FieldContent>
       <Switch
@@ -118,7 +122,7 @@ function DefaultMailClientField() {
 
   const heading = (
     <>
-      Default mail client <LicenseKeyRequiredFieldBadge />
+      <Trans>Default mail client</Trans> <LicenseKeyRequiredFieldBadge />
     </>
   );
 
@@ -128,9 +132,13 @@ function DefaultMailClientField() {
         <FieldContent>
           <FieldTitle>{heading}</FieldTitle>
           <FieldDescription>
-            {isDefaultMailtoClient
-              ? "Meru is set as the default mail client."
-              : "Choose Meru as the default mail client in Windows Settings."}
+            {isDefaultMailtoClient ? (
+              <Trans>Meru is set as the default mail client.</Trans>
+            ) : (
+              <Trans comment="Windows Settings is the Settings app of Windows, so it follows Microsoft's name for it">
+                Choose Meru as the default mail client in Windows Settings.
+              </Trans>
+            )}
           </FieldDescription>
         </FieldContent>
         {!isDefaultMailtoClient && (
@@ -141,7 +149,9 @@ function DefaultMailClientField() {
             }}
             disabled={!isLicenseKeyValid}
           >
-            Open Windows Settings
+            <Trans comment="Button that opens the Settings app of Windows at its default apps, named as Microsoft names it">
+              Open Windows Settings
+            </Trans>
           </Button>
         )}
       </Field>
@@ -163,9 +173,13 @@ function DefaultMailClientField() {
           <FieldLabel htmlFor={fieldId}>{heading}</FieldLabel>
         )}
         <FieldDescription>
-          {isDefaultMailtoClient
-            ? "Meru is set as the default mail client."
-            : "Set Meru as the default mail client to handle email links and related protocols."}
+          {isDefaultMailtoClient ? (
+            <Trans>Meru is set as the default mail client.</Trans>
+          ) : (
+            <Trans>
+              Set Meru as the default mail client to handle email links and related protocols.
+            </Trans>
+          )}
         </FieldDescription>
       </FieldContent>
       {!isDefaultMailtoClient && (
@@ -185,10 +199,12 @@ function DefaultMailClientField() {
 }
 
 export function GeneralSettings() {
+  const { t } = useLingui();
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>General</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.general)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
@@ -198,11 +214,13 @@ export function GeneralSettings() {
           <DefaultMailClientField />
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Startup</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Settings section about how Meru starts">Startup</Trans>
+            </FieldLegend>
             <LaunchAtLoginField />
             <ConfigSwitchField
-              label="Launch minimized"
-              description="Start the application minimized."
+              label={t`Launch minimized`}
+              description={t`Start the application minimized.`}
               configKey="launchMinimized"
             />
           </FieldSet>
@@ -210,10 +228,19 @@ export function GeneralSettings() {
             <>
               <FieldSeparator />
               <FieldSet>
-                <FieldLegend>Navigation</FieldLegend>
+                <FieldLegend>
+                  <Trans comment="Heading of the Settings section about going back and forward between pages">
+                    Navigation
+                  </Trans>
+                </FieldLegend>
                 <ConfigSwitchField
-                  label="Swipe between pages"
-                  description="Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+                  label={t`Swipe between pages`}
+                  description={t({
+                    message:
+                      "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
+                    comment:
+                      "The second Swipe between pages names the macOS setting of that name in System Settings, so it follows Apple's wording for it",
+                  })}
                   configKey="swipeNavigation.enabled"
                 />
               </FieldSet>
