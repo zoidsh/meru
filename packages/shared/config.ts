@@ -8,8 +8,8 @@ export const DEFAULT_WINDOW_STATE_BOUNDS = {
 };
 
 /**
- * The three values the default config can't compute for itself, because each
- * one comes from the environment the app is running in.
+ * The values the default config can't compute for itself, because each one
+ * comes from the environment the app is running in.
  */
 export type DefaultConfigEnvironment = {
   /** The id of the account the config starts with. */
@@ -18,6 +18,8 @@ export type DefaultConfigEnvironment = {
   downloadsLocation: string;
   /** Whether the tray icon starts on, which it does everywhere but macOS. */
   trayEnabled: boolean;
+  /** The new email sound, which on macOS is one of the system's own. */
+  notificationSound: Config["notifications.sound"];
 };
 
 /**
@@ -30,6 +32,7 @@ export function createDefaultConfig({
   accountId,
   downloadsLocation,
   trayEnabled,
+  notificationSound,
 }: DefaultConfigEnvironment): Config {
   return {
     accounts: [
@@ -73,7 +76,7 @@ export function createDefaultConfig({
     "notifications.showSummary": true,
     "notifications.playSound": true,
     "notifications.allowFromWorkspaceApps": true,
-    "notifications.sound": "linen",
+    "notifications.sound": notificationSound,
     "notifications.volume": 1,
     "notifications.downloadCompleted": true,
     "notifications.onClickDownloadCompleted": "showInFolder",

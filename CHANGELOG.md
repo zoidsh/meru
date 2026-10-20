@@ -15,6 +15,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account label` is gone, because a Workspace apps window always names its account when you have more than one, in its titlebar and in the window title
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account color` is gone, because a Workspace apps window's titlebar names the account and shows its color, which is what the setting's colored bar was for
 - The `Update available` button in the titlebar drops its icon, so it takes less room
+- **macOS:** Notification sounds are now the system's built-in sounds, such as Glass and Tink, and stay quiet during Do Not Disturb and Focus. Their volume follows the alert volume in macOS's Sound settings
 
 ### Fixed
 

@@ -1,6 +1,11 @@
+import {
+  isMacOSNotificationSound,
+  MACOS_NOTIFICATION_SOUNDS,
+  resolveMacOSNotificationSound,
+} from "@meru/shared/notification-sounds";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
-import type { NotificationTime } from "@meru/shared/types";
+import type { Config, NotificationSound, NotificationTime } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import {
   Field,
@@ -35,6 +40,13 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
+
+const soundItems: { value: Config["notifications.sound"]; label: string }[] = platform.isMacOS
+  ? MACOS_NOTIFICATION_SOUNDS.map((sound) => ({ value: sound, label: sound }))
+  : Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
+      value: sound as NotificationSound,
+      label,
+    }));
 
 const newEmailsItems = [
   { value: "all", label: "All new emails" },
@@ -334,18 +346,25 @@ export function NotificationsSettings() {
                     </FieldLabel>
                     <FieldDescription>Select the sound to play for notifications.</FieldDescription>
                     <Select
-                      items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
-                        value: sound,
-                        label,
-                      }))}
-                      value={config["notifications.sound"]}
+                      items={soundItems}
+                      value={
+                        platform.isMacOS
+                          ? resolveMacOSNotificationSound(config["notifications.sound"])
+                          : config["notifications.sound"]
+                      }
                       onValueChange={(value) => {
                         if (value) {
                           configMutation.mutate({
                             "notifications.sound": value,
                           });
 
-                          if (value !== "system") {
+                          if (value === "system") {
+                            return;
+                          }
+
+                          if (isMacOSNotificationSound(value)) {
+                            ipc.main.send("notifications.previewSound", value);
+                          } else {
                             playNotificationSound({
                               sound: value,
                               volume: config["notifications.volume"],
@@ -359,8 +378,8 @@ export function NotificationsSettings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => (
-                          <SelectItem key={sound} value={sound}>
+                        {soundItems.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
                             {label}
                           </SelectItem>
                         ))}
@@ -369,7 +388,8 @@ export function NotificationsSettings() {
                       </SelectContent>
                     </Select>
                   </Field>
-                  {config["notifications.sound"] !== "system" && (
+                  {/* macOS plays the sound at its own alert volume. */}
+                  {config["notifications.sound"] !== "system" && !platform.isMacOS && (
                     <Field>
                       <FieldTitle>
                         Volume {(config["notifications.volume"] * 100).toFixed(0)}%
@@ -400,12 +420,10 @@ export function NotificationsSettings() {
                           }
 
                           const volume = value / 100;
+                          const sound = config["notifications.sound"];
 
-                          if (config["notifications.sound"] !== "system") {
-                            playNotificationSound({
-                              sound: config["notifications.sound"],
-                              volume,
-                            });
+                          if (sound !== "system" && !isMacOSNotificationSound(sound)) {
+                            playNotificationSound({ sound, volume });
                           }
                         }}
                       />
