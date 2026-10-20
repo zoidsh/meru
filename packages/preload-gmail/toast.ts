@@ -39,6 +39,14 @@ export type ToastOptions = {
     label: string;
     onClick: () => void;
   };
+  /**
+   * Accessible names for the column and the close button. Passed in like the
+   * title, so every string a toast shows is translated where it is shown.
+   */
+  labels: {
+    toasts: string;
+    close: string;
+  };
 };
 
 type Toast = {
@@ -85,7 +93,7 @@ function createCloseIcon() {
  * page load. A Gmail session that sends nothing, and every sign-in page that is
  * not Gmail at all, now builds no DOM here.
  */
-function getToaster() {
+function getToaster(label: string) {
   if (toaster) {
     return toaster;
   }
@@ -109,7 +117,7 @@ function getToaster() {
   toaster.setAttribute("role", "status");
   toaster.setAttribute("aria-live", "polite");
   toaster.setAttribute("aria-atomic", "false");
-  toaster.setAttribute("aria-label", "Notifications");
+  toaster.setAttribute("aria-label", label);
 
   shadowRoot.append(styleElement, toaster);
 
@@ -127,7 +135,7 @@ function createTextElement(className: string, text: string) {
   return element;
 }
 
-export function showToast({ id, title, description, duration, action }: ToastOptions) {
+export function showToast({ id, title, description, duration, action, labels }: ToastOptions) {
   const replaced = toasts.get(id);
 
   // Replaced rather than dismissed, so it goes without a fade: fading it would
@@ -174,7 +182,7 @@ export function showToast({ id, title, description, duration, action }: ToastOpt
 
   closeButton.type = "button";
   closeButton.className = "toast-close";
-  closeButton.setAttribute("aria-label", "Close toast");
+  closeButton.setAttribute("aria-label", labels.close);
   closeButton.append(createCloseIcon());
 
   closeButton.addEventListener("click", () => {
@@ -183,7 +191,7 @@ export function showToast({ id, title, description, duration, action }: ToastOpt
 
   element.append(closeButton);
 
-  getToaster().append(element);
+  getToaster(labels.toasts).append(element);
 
   // Two frames: one for the browser to lay the toast out at opacity zero, and
   // one for the change to it to be a transition rather than a starting value.

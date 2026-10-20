@@ -5,3 +5,5 @@ export const accountsSearchParam = searchParams.get("accounts");
 export const darkModeSearchParam = searchParams.get("darkMode");
 
 export const trialSearchParam = searchParams.get("trial");
+
+export const localeSearchParam = searchParams.get("locale");

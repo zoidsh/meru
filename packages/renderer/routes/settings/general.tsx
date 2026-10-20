@@ -22,6 +22,7 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient } from "@/lib/react-query";
 import { platform } from "@/lib/utils";
+import { LanguageField } from "./language-field";
 
 function LaunchAtLoginField() {
   const queryKey = ["login-item-settings"];
@@ -192,6 +193,8 @@ export function GeneralSettings() {
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
+          <LanguageField />
+          <FieldSeparator />
           <DefaultMailClientField />
           <FieldSeparator />
           <FieldSet>

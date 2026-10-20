@@ -88,6 +88,22 @@ function getNavigationWebContents(workspaceAppId?: string) {
     .webContents;
 }
 
+function getRendererWebContents() {
+  const rendererWebContents = [main.window.webContents];
+
+  const recentDownloadHistoryPopupWebContents = downloads.recentDownloadHistoryPopup.webContents;
+
+  if (recentDownloadHistoryPopupWebContents) {
+    rendererWebContents.push(recentDownloadHistoryPopupWebContents);
+  }
+
+  for (const workspaceAppWindow of WorkspaceApp.getAllWindows()) {
+    rendererWebContents.push(workspaceAppWindow.webContents);
+  }
+
+  return rendererWebContents;
+}
+
 class Ipc {
   main = new IpcListener<IpcMainEvents>();
 
@@ -95,21 +111,8 @@ class Ipc {
 
   init() {
     config.onDidAnyChange(() => {
-      ipc.renderer.send(main.window.webContents, "config.configChanged", config.store);
-
-      const recentDownloadHistoryPopupWebContents =
-        downloads.recentDownloadHistoryPopup.webContents;
-
-      if (recentDownloadHistoryPopupWebContents) {
-        ipc.renderer.send(
-          recentDownloadHistoryPopupWebContents,
-          "config.configChanged",
-          config.store,
-        );
-      }
-
-      for (const workspaceAppWindow of WorkspaceApp.getAllWindows()) {
-        ipc.renderer.send(workspaceAppWindow.webContents, "config.configChanged", config.store);
+      for (const rendererWebContents of getRendererWebContents()) {
+        ipc.renderer.send(rendererWebContents, "config.configChanged", config.store);
       }
     });
 

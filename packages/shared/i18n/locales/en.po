@@ -1,0 +1,22 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-18 18:29+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: packages/renderer/routes/settings/language-field.tsx
+msgid "Gmail and Google apps follow your Google account's language."
+msgstr "Gmail and Google apps follow your Google account's language."
+
+#. Label of the setting that chooses the language of Meru's own menus and settings
+#: packages/renderer/routes/settings/language-field.tsx
+msgid "Language"
+msgstr "Language"
+
+#. Language picker option: follow the operating system's language
+#: packages/renderer/routes/settings/language-field.tsx
+msgid "System"
+msgstr "System"

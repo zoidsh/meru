@@ -9,6 +9,7 @@ import {
   screen,
   WebContentsView,
 } from "electron";
+import { appI18n } from "@/i18n";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
 import { loadUrl } from "./load-url";
@@ -175,6 +176,8 @@ export function loadRenderer(
   const searchParams = options.searchParams ?? new URLSearchParams();
 
   searchParams.set("darkMode", nativeTheme.shouldUseDarkColors ? "true" : "false");
+
+  searchParams.set("locale", appI18n.locale);
 
   if (is.dev) {
     // `||`, not `??`: an empty value is as unusable as an unset one, and
