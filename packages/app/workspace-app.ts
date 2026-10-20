@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
+import { select, t } from "@lingui/core/macro";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { curatedExtensions } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
@@ -205,36 +206,38 @@ export class WorkspaceApp {
     const touchIdRequiresUpgrade =
       platform.isMacOS && platformPasskeySupported && !licenseKey.isValid;
 
-    const authenticator = platform.isWindows ? "Windows Hello" : "Touch ID";
-
-    const externalProviders = platform.isWindows
-      ? "Chrome, Google Password Manager, or your phone"
-      : "Chrome, iCloud, or your phone";
-
     let message: string;
     let detail: string;
 
     if (!platformPasskeySupported) {
-      message = "Passkey sign-in isn't supported on this platform yet.";
-      detail =
-        "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.";
+      message = t`Passkey sign-in isn't supported on this platform yet.`;
+      detail = t`Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here.`;
     } else if (touchIdRequiresUpgrade) {
-      message = "Meru Pro is required to sign in with Touch ID.";
-      detail =
-        "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way.";
+      message = t`Meru Pro is required to sign in with Touch ID.`;
+      detail = t`Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way.`;
     } else {
-      message = "Only passkeys created in Meru work here.";
-      detail = `Continue with ${authenticator} if you've created a passkey in Meru. Passkeys from ${externalProviders} don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.`;
+      const platformName = platform.isWindows ? "windows" : "macos";
+
+      message = t`Only passkeys created in Meru work here.`;
+      detail = t({
+        message: select(platformName, {
+          windows:
+            "Continue with Windows Hello if you've created a passkey in Meru. Passkeys from Chrome, Google Password Manager, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.",
+          other:
+            "Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.",
+        }),
+        comment: "The first form is shown on Windows, the other on macOS",
+      });
     }
 
     const { response, checkboxChecked } = await dialog.showMessageBox({
       type: "info",
       message,
       detail,
-      buttons: touchIdRequiresUpgrade ? ["Upgrade to Meru Pro", "Cancel"] : ["OK"],
+      buttons: touchIdRequiresUpgrade ? [t`Upgrade to Meru Pro`, t`Cancel`] : [t`OK`],
       defaultId: 0,
       cancelId: touchIdRequiresUpgrade ? 1 : 0,
-      checkboxLabel: "Don't show again",
+      checkboxLabel: t`Don't show again`,
     });
 
     if (checkboxChecked) {
@@ -452,6 +455,7 @@ export class WorkspaceApp {
       return appLabel;
     }
 
+    // oxlint-disable-next-line lingui/no-unlocalized-strings -- matches Google's own English page title
     return pageTitle.replace(`Google ${appLabel}`, appLabel);
   }
 
