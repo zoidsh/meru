@@ -1355,6 +1355,42 @@ describe("a content script's runtime.connect", () => {
     ]);
   });
 
+  test("closes when the worker hangs up, though a page still holds it", async () => {
+    const harness = createHarness();
+
+    const workerStream = await harness.openWorkerStream();
+
+    const windowPage = await harness.parkPageStream(harness.windowPageFrame, {
+      inWorkerSession: true,
+    });
+
+    const contentScript = await connectContentScript(harness, "port-7");
+
+    const [connectJob] = await workerStream.waitForJobs(1);
+
+    await windowPage.waitForEnvelopes(1);
+
+    await replyToJob(harness, connectJob?.jobId ?? "", { status: "connected" });
+
+    await harness.workerSession.request(RUNTIME_PROXY_PATHS.workerPortDisconnect, WORKER_TOKEN, {
+      portId: "port-7",
+    });
+
+    expect(await contentScript.waitForFrames(1)).toEqual([
+      { type: "disconnect", error: undefined },
+    ]);
+
+    const [, disconnectEnvelope] = await windowPage.waitForEnvelopes(2);
+
+    expect(disconnectEnvelope).toEqual({
+      kind: "portDisconnect",
+      portId: "port-7",
+      error: undefined,
+    });
+
+    expect(workerStream.jobs).toHaveLength(1);
+  });
+
   test("says the receiving end does not exist once every end refused it", async () => {
     const harness = createHarness();
 

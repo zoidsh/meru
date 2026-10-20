@@ -141,7 +141,9 @@ type ProxyPort = {
   /**
    * The pages of the worker's session a content script's `runtime.connect`
    * reached beside the worker. Chrome keeps the opener's port open while any
-   * receiving end is, so the worker hanging up ends only its own leg here.
+   * receiving end is, so the worker refusing the port or stopping ends only its
+   * own leg here. The worker calling `disconnect()` closes it for every end,
+   * since in Chrome that closes the channel rather than one receiving end.
    */
   pageLegs?: PortPageLegs;
   isClosed: boolean;
@@ -557,8 +559,9 @@ export class RuntimeProxy {
           const port = this.ports.get(portId);
 
           if (port && port.extensionId === extensionId) {
-            // The worker hung up on purpose, which Chrome reports without error
-            this.endWorkerLeg(port);
+            // A deliberate hang-up closes Chrome's whole channel, without error,
+            // however many pages also hold the port
+            this.closeShimPort(port, { notifyWorker: false });
           }
         }
 
@@ -1622,9 +1625,10 @@ export class RuntimeProxy {
   }
 
   /**
-   * The worker's end of a port is gone. That closes the port, unless a content
-   * script's `runtime.connect` also reached pages of the worker's session that
-   * still hold it, in which case only the worker's leg ends, as in Chrome.
+   * The worker's end of a port is gone without its hanging up. That closes the
+   * port, unless a content script's `runtime.connect` also reached pages of the
+   * worker's session that still hold it, in which case only the worker's leg
+   * ends, as in Chrome.
    */
   private endWorkerLeg(port: ProxyPort, { error }: { error?: string } = {}) {
     const legs = port.pageLegs;
