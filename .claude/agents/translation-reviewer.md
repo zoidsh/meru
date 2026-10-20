@@ -26,7 +26,7 @@ Check every given entry against each item.
 4. **Glossary.** Each glossary term in the English uses the glossary's word for this locale, and Gmail, Google Workspace, Meru, Meru Pro and Pro stay English. A string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, uses Gmail's word from the glossary's Gmail's words, not Apple's: German _Rückgängig machen_ for the toast's Undo, never _Widerrufen_.
 5. **Register.** The address form is the style sheet's, everywhere: German _du_ and never _Sie_, Polish capitalized _Ty_/_Twój_/_Ci_, Japanese です/ます and never だ/である, and so on.
 6. **Labels.** Buttons and menu items take the form the style sheet gives (infinitive, imperative or noun), and capitalization follows it, including pt-BR's title case for menu items.
-7. **Traps.** None of the style sheet's traps: punctuation such as French no-break spaces and Japanese full-width 、。「」？！, gendered forms, a placeholder inside an inflected phrase, Swedish split compounds, a Spanish catalog borrowing the other's vocabulary.
+7. **Traps.** None of the style sheet's traps: punctuation such as French no-break spaces and Japanese full-width 、 and 。 beside Apple's half-width `?` and `!` and “” quotes, gendered forms, a placeholder inside an inflected phrase, Swedish split compounds, a Spanish catalog borrowing the other's vocabulary.
 8. **Length.** Compare each translation's length with the English. Flag a menu item or button more than about half again as long, with a shorter wording.
 9. **Error messages** describe what happened. None apologizes or pleads.
 10. **Meaning.** The translation says what the English and its comment say, in the context the comment gives.
