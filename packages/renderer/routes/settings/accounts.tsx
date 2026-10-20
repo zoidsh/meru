@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { useLingui } from "@lingui/react/macro";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -79,6 +80,8 @@ function AccountForm({
   /** Locks the Disabled switch: turning this one off would leave Meru nothing to run. */
   isLastEnabledAccount?: boolean;
 }) {
+  const { t } = useLingui();
+
   const form = useForm({
     defaultValues: account,
     validators: {
@@ -122,7 +125,7 @@ function AccountForm({
                           return (
                             <div className="flex items-center gap-2">
                               <div className={`size-2 rounded-full ${className}`} />
-                              {label}
+                              {t(label)}
                             </div>
                           );
                         }}
@@ -134,7 +137,7 @@ function AccountForm({
                           <SelectItem key={colorKey} value={colorKey}>
                             <div className="flex items-center gap-2">
                               <div className={`size-2 rounded-full ${className}`} />
-                              {label}
+                              {t(label)}
                             </div>
                           </SelectItem>
                         ),

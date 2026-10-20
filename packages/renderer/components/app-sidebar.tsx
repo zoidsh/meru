@@ -1,8 +1,11 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { useLingui } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import { ScrollArea } from "@meru/ui/components/scroll-area";
 import { Separator } from "@meru/ui/components/separator";
 import { cn } from "@meru/ui/lib/utils";
 import { type RouteProps, useLocation } from "wouter";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { platform } from "@/lib/utils";
 import { AboutSettings } from "@/routes/settings/about";
 import { AccountsSettings } from "@/routes/settings/accounts";
@@ -26,91 +29,92 @@ import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
   {
-    label: "General",
+    label: settingsPageLabels.general,
     path: "/settings/general",
     component: GeneralSettings,
   },
   {
-    label: "Accounts",
+    label: settingsPageLabels.accounts,
     path: "/settings/accounts",
     component: AccountsSettings,
   },
   {
-    label: "Appearance",
+    label: settingsPageLabels.appearance,
     path: "/settings/appearance",
     component: AppearanceSettings,
   },
-  { label: "Blocker", path: "/settings/blocker", component: BlockerSettings },
+  { label: settingsPageLabels.blocker, path: "/settings/blocker", component: BlockerSettings },
   {
-    label: "Downloads",
+    label: settingsPageLabels.downloads,
     path: "/settings/downloads",
     component: DownloadsSettings,
   },
   {
+    // oxlint-disable-next-line lingui/no-unlocalized-strings -- a product name, which stays as it is
     label: "Gmail",
     path: "/settings/gmail",
     component: GmailSettings,
   },
   {
-    label: "Workspace apps",
+    label: settingsPageLabels.workspaceApps,
     path: "/settings/workspace-apps",
     component: WorkspaceAppsSettings,
   },
   {
-    label: "Extensions",
+    label: settingsPageLabels.extensions,
     path: "/settings/extensions",
     component: ExtensionsSettings,
   },
   {
-    label: "Languages",
+    label: settingsPageLabels.languages,
     path: "/settings/languages",
     component: LanguagesSettings,
     hidden: platform.isMacOS,
   },
   {
-    label: "Notifications",
+    label: settingsPageLabels.notifications,
     path: "/settings/notifications",
     component: NotificationsSettings,
   },
   {
-    label: "Phishing protection",
+    label: settingsPageLabels.phishingProtection,
     path: "/settings/phishing-protection",
     component: PhishingProtectionSettings,
   },
   {
-    label: "Saved searches",
+    label: settingsPageLabels.savedSearches,
     path: "/settings/saved-searches",
     component: SavedSearchesSettings,
   },
   {
-    label: "Unified inbox",
+    label: settingsPageLabels.unifiedInbox,
     path: "/settings/unified-inbox",
     component: UnifiedInboxSettings,
   },
   {
-    label: "Updates",
+    label: settingsPageLabels.updates,
     path: "/settings/updates",
     component: UpdatesSettings,
   },
   {
-    label: "Verification codes",
+    label: settingsPageLabels.verificationCodes,
     path: "/settings/verification-codes",
     component: VerificationCodesSettings,
   },
   {
-    label: "Advanced",
+    label: settingsPageLabels.advanced,
     path: "/settings/advanced",
     component: AdvancedSettings,
   },
   { type: "separator" },
-  { label: "License", path: "/settings/license", component: LicenseSettings },
+  { label: settingsPageLabels.license, path: "/settings/license", component: LicenseSettings },
   {
-    label: "What's new",
+    label: settingsPageLabels.versionHistory,
     path: "/settings/version-history",
     component: VersionHistorySettings,
   },
   {
-    label: "About Meru",
+    label: settingsPageLabels.about,
     path: "/settings/about",
     component: AboutSettings,
   },
@@ -119,7 +123,8 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
 type SidebarNavItemProps =
   | {
       type?: "item";
-      label: string;
+      /** A string only for a product name, which is never translated. */
+      label: MessageDescriptor | string;
       path: string;
       disabled?: boolean;
       hidden?: boolean;
@@ -136,6 +141,8 @@ type SidebarNavItemProps =
 
 export function AppSidebar() {
   const [location, navigate] = useLocation();
+
+  const { t } = useLingui();
 
   return (
     /*
@@ -167,7 +174,7 @@ export function AppSidebar() {
                   })}
                   variant={location === path ? "secondary" : "ghost"}
                 >
-                  {label}
+                  {typeof label === "string" ? label : t(label)}
                 </Button>
               );
             })}

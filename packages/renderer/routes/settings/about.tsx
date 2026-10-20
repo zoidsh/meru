@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -21,8 +22,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/copy-button";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 function DiagnosticInfo() {
+  const { t } = useLingui();
+
   const { data: info, isPending } = useQuery({
     queryKey: ["about", "info"],
     queryFn: () => ipc.main.invoke("about.getInfo"),
@@ -39,9 +43,15 @@ function DiagnosticInfo() {
   }
 
   const rows = [
-    { label: "Application version", value: info.version },
-    { label: "Operating system", value: info.os },
-    { label: "Device ID", value: info.deviceId },
+    { label: t`Application version`, value: info.version },
+    { label: t`Operating system`, value: info.os },
+    {
+      label: t({
+        message: "Device ID",
+        comment: "The identifier Meru's license and trial checks know this computer by",
+      }),
+      value: info.deviceId,
+    },
   ];
 
   return (
@@ -62,18 +72,26 @@ function DiagnosticInfo() {
 }
 
 function ExportLogsField() {
+  const { t } = useLingui();
+
   const exportLogsMutation = useMutation({
     mutationFn: () => ipc.main.invoke("about.exportLogs"),
     onError: () => {
-      toast.error("Couldn't export the logs.");
+      toast.error(t`Couldn't export the logs.`);
     },
   });
 
   return (
     <Field>
-      <FieldTitle>Logs</FieldTitle>
+      <FieldTitle>
+        <Trans comment="Heading of the About Meru section for exporting the application's logs">
+          Logs
+        </Trans>
+      </FieldTitle>
       <FieldDescription>
-        Export the application logs to a file, to diagnose a problem or to share with support.
+        <Trans>
+          Export the application logs to a file, to diagnose a problem or to share with support.
+        </Trans>
       </FieldDescription>
       <div>
         <Button
@@ -83,7 +101,7 @@ function ExportLogsField() {
           }}
           disabled={exportLogsMutation.isPending}
         >
-          Export logs
+          <Trans>Export logs</Trans>
         </Button>
       </div>
     </Field>
@@ -91,10 +109,12 @@ function ExportLogsField() {
 }
 
 export function AboutSettings() {
+  const { t } = useLingui();
+
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>About Meru</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.about)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>
