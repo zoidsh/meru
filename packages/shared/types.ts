@@ -1,5 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { GmailAction, GmailInboxMessage } from "./gmail";
+import type { CatalogTag } from "./i18n";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -95,6 +96,7 @@ export type Config = {
   accounts: AccountConfigs;
   "accounts.unreadBadge": boolean;
   "app.hardwareAcceleration": boolean;
+  "app.language": "system" | CatalogTag;
   launchMinimized: boolean;
   launchAtLogin: boolean;
   resetApp: boolean;
