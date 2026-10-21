@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -188,22 +189,24 @@ export function TitlebarNavigationControls({
   onReload: () => void;
   onStop: () => void;
 }) {
+  const { t } = useLingui();
+
   const [isReloadHovered, setIsReloadHovered] = useState(false);
 
   return (
     <>
-      <TitlebarIconButton title="Go back" disabled={disabled || !canGoBack} onClick={onGoBack}>
+      <TitlebarIconButton title={t`Go back`} disabled={disabled || !canGoBack} onClick={onGoBack}>
         <ArrowLeftIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
-        title="Go forward"
+        title={t`Go forward`}
         disabled={disabled || !canGoForward}
         onClick={onGoForward}
       >
         <ArrowRightIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
-        title={isLoading ? "Stop loading" : "Reload page"}
+        title={isLoading ? t`Stop loading` : t`Reload page`}
         disabled={disabled}
         onMouseEnter={() => setIsReloadHovered(true)}
         onMouseLeave={() => setIsReloadHovered(false)}
