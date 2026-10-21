@@ -1,3 +1,5 @@
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -45,6 +47,8 @@ import {
 } from "../lib/stores";
 
 function BookmarksButton() {
+  const { t } = useLingui();
+
   return (
     <TitlebarIconButton
       onClick={() => {
@@ -56,7 +60,7 @@ function BookmarksButton() {
       onMouseLeave={() => {
         ipc.main.send("bookmarks.setPopupCloseOnBlurEnabled", true);
       }}
-      title="Show bookmarks"
+      title={t`Show bookmarks`}
     >
       <BookOpenIcon />
     </TitlebarIconButton>
@@ -64,6 +68,8 @@ function BookmarksButton() {
 }
 
 function RecentDownloadHistoryButton() {
+  const { t } = useLingui();
+
   return (
     <TitlebarIconButton
       onClick={() => {
@@ -75,7 +81,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Show recent download history"
+      title={t`Show recent download history`}
     >
       <DownloadIcon />
     </TitlebarIconButton>
@@ -89,6 +95,8 @@ function RecentDownloadHistoryButton() {
  * up against the button whichever way it was asked for.
  */
 function AppMenuButton({ className }: { className?: string }) {
+  const { t } = useLingui();
+
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const toggleAppMenu = () => {
@@ -116,7 +124,11 @@ function AppMenuButton({ className }: { className?: string }) {
         size="icon-sm"
         tabIndex={-1}
         onClick={toggleAppMenu}
-        title="App menu"
+        title={t({
+          message: "App menu",
+          comment:
+            "Titlebar button on Windows and Linux that opens Meru's menu, in place of a menu bar",
+        })}
       >
         <EllipsisVerticalIcon />
       </Button>
@@ -125,13 +137,18 @@ function AppMenuButton({ className }: { className?: string }) {
 }
 
 function Trial() {
-  const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+  const { t } = useLingui();
+
+  const exactTrialDaysLeft = useTrialStore((state) => state.daysLeft);
 
   const isTrialExpired = useTrialStore((state) => state.expired);
 
-  if (!trialDaysLeft && !isTrialExpired) {
+  if (!exactTrialDaysLeft && !isTrialExpired) {
     return;
   }
+
+  // The API counts to a tenth of a day, which reads as noise in a badge.
+  const trialDaysLeft = Math.floor(exactTrialDaysLeft);
 
   return (
     <Badge
@@ -139,24 +156,32 @@ function Trial() {
       className={cn(
         "group relative h-7 border-yellow-600/60 text-yellow-600/60 transition draggable-none hover:border-transparent hover:bg-secondary hover:text-secondary-foreground",
         {
-          "border-red-600/60 text-red-600/60": isTrialExpired || trialDaysLeft <= 3,
+          "border-red-600/60 text-red-600/60": isTrialExpired || exactTrialDaysLeft <= 3,
         },
       )}
     >
       <a href={`${WEBSITE_URL}#pricing`} target="_blank" rel="noreferrer" tabIndex={-1}>
         <span className="fade-out group-hover:opacity-0">
           {isTrialExpired
-            ? "Pro trial ended"
-            : `Pro trial ends in ${
-                trialDaysLeft >= 2
-                  ? `${trialDaysLeft} days`
-                  : trialDaysLeft >= 1
-                    ? `${trialDaysLeft} day`
-                    : "less than a day"
-              }`}
+            ? t({
+                message: "Pro trial ended",
+                comment: "Titlebar badge once the Meru Pro trial has run out",
+              })
+            : trialDaysLeft >= 1
+              ? t({
+                  message: plural(trialDaysLeft, {
+                    one: "Pro trial ends in # day",
+                    other: "Pro trial ends in # days",
+                  }),
+                  comment: "Titlebar badge counting the whole days left in the Meru Pro trial",
+                })
+              : t({
+                  message: "Pro trial ends in less than a day",
+                  comment: "Titlebar badge in the last day of the Meru Pro trial",
+                })}
         </span>
         <span className="absolute inset-0 items-center justify-center opacity-0 fade-in group-hover:inline-flex group-hover:opacity-100">
-          Upgrade to Meru Pro
+          <Trans>Upgrade to Meru Pro</Trans>
         </span>
       </a>
     </Badge>
@@ -183,6 +208,8 @@ function FindInPage() {
 }
 
 function DoNotDisturb() {
+  const { t } = useLingui();
+
   const { config } = useConfig();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
@@ -201,7 +228,9 @@ function DoNotDisturb() {
 
         ipc.main.send("doNotDisturb.showOptions");
       }}
-      title={config["doNotDisturb.enabled"] ? "Turn Do Not Disturb off" : "Turn Do Not Disturb on"}
+      title={
+        config["doNotDisturb.enabled"] ? t`Turn Do Not Disturb off` : t`Turn Do Not Disturb on`
+      }
     >
       <MoonIcon
         className={cn({
@@ -621,6 +650,8 @@ function useAccountRow(accounts: AccountInstances) {
 }
 
 export function AppTitlebar() {
+  const { t } = useLingui();
+
   const accounts = useAccountsStore((state) => state.accounts);
 
   const accountRow = useAccountRow(accounts);
@@ -648,7 +679,9 @@ export function AppTitlebar() {
   if (location.startsWith("/settings/")) {
     return (
       <Titlebar>
-        <TitlebarTitle>Settings</TitlebarTitle>
+        <TitlebarTitle>
+          {t({ message: "Settings", comment: "Title of the Settings window, in its titlebar" })}
+        </TitlebarTitle>
         <AppMenuButton className="ml-auto" />
       </Titlebar>
     );
@@ -727,9 +760,13 @@ export function AppTitlebar() {
 
   const renderContent = () => {
     if (isUnverifiedAppUpdateDetailsOpen && unverifiedAppUpdateVersion) {
+      const version = unverifiedAppUpdateVersion;
+
       return (
         <div className="flex flex-1 items-center justify-center gap-4 text-xs">
-          <div>Meru {unverifiedAppUpdateVersion} couldn't be verified, so it wasn't installed</div>
+          <div>
+            <Trans>Meru {version} couldn't be verified, so it wasn't installed</Trans>
+          </div>
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -739,7 +776,9 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.openReleasePage");
               }}
             >
-              Download
+              <Trans comment="Titlebar button that opens the release page of an update Meru couldn't verify, to download it from there">
+                Download
+              </Trans>
             </Button>
             <Button
               variant="outline"
@@ -750,7 +789,9 @@ export function AppTitlebar() {
                 setIsUnverifiedAppUpdateDetailsOpen(false);
               }}
             >
-              Close
+              <Trans comment="Titlebar button that closes the details of an update Meru couldn't verify">
+                Close
+              </Trans>
             </Button>
           </div>
         </div>
@@ -758,9 +799,13 @@ export function AppTitlebar() {
     }
 
     if (isAppUpdateDetailsOpen && appUpdateVersion) {
+      const version = appUpdateVersion;
+
       return (
         <div className="flex flex-1 items-center justify-center gap-4 text-xs">
-          <div>Meru {appUpdateVersion} is available and ready to install</div>
+          <div>
+            <Trans>Meru {version} is available and ready to install</Trans>
+          </div>
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -770,7 +815,9 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.quitAndInstall");
               }}
             >
-              Restart now
+              <Trans comment="Titlebar button that restarts Meru to install a downloaded update">
+                Restart now
+              </Trans>
             </Button>
             <Button
               variant="outline"
@@ -782,7 +829,9 @@ export function AppTitlebar() {
                 setIsAppUpdateDetailsOpen(false);
               }}
             >
-              Later
+              <Trans comment="Titlebar button that puts off installing a downloaded update">
+                Later
+              </Trans>
             </Button>
             <Button
               variant="ghost"
@@ -793,7 +842,9 @@ export function AppTitlebar() {
                 ipc.main.send("appUpdater.openVersionHistory");
               }}
             >
-              What's new
+              <Trans comment="Titlebar button beside a downloaded update that opens the version history">
+                What's new
+              </Trans>
             </Button>
           </div>
         </div>
@@ -835,7 +886,7 @@ export function AppTitlebar() {
                 onClick={() => {
                   navigate("/unified-inbox");
                 }}
-                title="Open unified inbox"
+                title={t`Open unified inbox`}
               >
                 <InboxIcon />
               </Button>
@@ -849,7 +900,7 @@ export function AppTitlebar() {
                   size="icon-sm"
                   tabIndex={-1}
                   className="draggable-none"
-                  title="Open Gmail settings to turn off out of office"
+                  title={t`Open Gmail settings to turn off out of office`}
                   onClick={() => {
                     ipc.main.send("gmail.navigateTo", "settings");
                   }}
@@ -908,7 +959,7 @@ export function AppTitlebar() {
                     >
                       <TitlebarIconButton
                         className="text-muted-foreground"
-                        title="Scroll accounts left"
+                        title={t`Scroll accounts left`}
                         disabled={!accountRow.canScrollLeft}
                         aria-hidden={!accountRow.canScrollLeft || undefined}
                         onClick={() => {
@@ -935,7 +986,7 @@ export function AppTitlebar() {
                     >
                       <TitlebarIconButton
                         className="text-muted-foreground"
-                        title="Scroll accounts right"
+                        title={t`Scroll accounts right`}
                         disabled={!accountRow.canScrollRight}
                         aria-hidden={!accountRow.canScrollRight || undefined}
                         onClick={() => {
@@ -979,7 +1030,7 @@ export function AppTitlebar() {
               )}
             {shouldShowSavedSearchesButton && (
               <TitlebarDropdownMenu
-                title="Show saved searches"
+                title={t`Show saved searches`}
                 icon={<MailSearchIcon />}
                 side="left"
                 disabled={isUnifiedInboxLocation || isWorkspaceAppTabActive}
@@ -1010,7 +1061,10 @@ export function AppTitlebar() {
                 setIsUnverifiedAppUpdateDetailsOpen(true);
               }}
             >
-              <CircleAlertIcon /> Update not verified
+              <CircleAlertIcon />{" "}
+              <Trans comment="Titlebar button that shows the details of an update Meru downloaded but couldn't verify">
+                Update not verified
+              </Trans>
             </Button>
           )}
           {appUpdateVersion && (
@@ -1022,7 +1076,9 @@ export function AppTitlebar() {
                 setIsAppUpdateDetailsOpen(true);
               }}
             >
-              Update available
+              <Trans comment="Titlebar button that shows the details of a downloaded update, ready to install">
+                Update available
+              </Trans>
             </Button>
           )}
           <AppMenuButton />

@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { type DragEndEvent, DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { VERTICAL_TABS_WIDE_WIDTH } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -134,6 +135,8 @@ function VerticalTab({
   gmailStatus?: GmailTabStatus;
   className?: string;
 }) {
+  const { t } = useLingui();
+
   const { config } = useConfig();
 
   const isPinnedSectionTab = getTabSection(tab) === "pinned";
@@ -164,8 +167,16 @@ function VerticalTab({
     config?.["verticalTabs.showAppLinksBadge"] && tab.opensLinksForApp,
   );
 
-  const tooltip = tab.opensLinksForApp
-    ? `${tab.title} — opens ${workspaceApps[tab.opensLinksForApp].label} links`
+  const tabTitle = tab.title;
+
+  const appName = tab.opensLinksForApp && workspaceApps[tab.opensLinksForApp].label;
+
+  const tooltip = appName
+    ? t({
+        message: `${tabTitle} — opens ${appName} links`,
+        comment:
+          "Tooltip of the tab every link to a Google Workspace app opens in. tabTitle is the page's title; appName is the app's English name, such as Calendar",
+      })
     : tab.title;
 
   return (
@@ -245,7 +256,17 @@ function VerticalTab({
               ? "bg-transparent text-muted-foreground group-hover:bg-secondary group-hover:text-secondary-foreground"
               : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
-          title={tab.bookmarked ? "Remove bookmark" : "Bookmark"}
+          title={
+            tab.bookmarked
+              ? t({
+                  message: "Remove bookmark",
+                  comment: "Button that removes the bookmark of the page on display",
+                })
+              : t({
+                  message: "Bookmark",
+                  comment: "Button that bookmarks the page on display",
+                })
+          }
           onClick={() => {
             ipc.main.send("workspaceApp.toggleBookmark", tab.id);
           }}
@@ -264,7 +285,11 @@ function VerticalTab({
             isWideRow ? "inset-y-0 my-auto size-5" : "-top-1 -right-1 size-4 rounded-full",
             isWideRow && (isBookmarkable ? "right-7" : "right-1"),
           )}
-          title="Close"
+          title={t({
+            message: "Close",
+            context: "tab",
+            comment: "Button on a tab in the vertical tabs strip that closes the tab",
+          })}
           onClick={() => {
             ipc.main.send("tabs.closeTab", accountId, tab.id);
           }}
@@ -316,6 +341,8 @@ function SortableVerticalTab({
  * above the workspace app views a renderer-drawn list would be covered by.
  */
 function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
+  const { t } = useLingui();
+
   return (
     <Button
       variant="ghost"
@@ -323,7 +350,7 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
       tabIndex={-1}
       // Colours transition, the box never does, as in `VerticalTab`
       className={cn("text-muted-foreground transition-colors", isWide && "w-full justify-start")}
-      title="Show bookmarks"
+      title={t`Show bookmarks`}
       onClick={() => {
         ipc.main.send("bookmarks.togglePopup", "verticalTabs");
       }}
@@ -335,7 +362,11 @@ function VerticalTabsBookmarks({ isWide }: { isWide: boolean }) {
       }}
     >
       <BookOpenIcon />
-      {isWide && "Bookmarks"}
+      {isWide && (
+        <Trans comment="Button in the vertical tabs strip that shows the bookmarks">
+          Bookmarks
+        </Trans>
+      )}
     </Button>
   );
 }
@@ -361,6 +392,8 @@ function VerticalTabsWidthToggle({
   accountId: AccountConfig["id"];
   isWide: boolean;
 }) {
+  const { t } = useLingui();
+
   return (
     <Button
       variant="ghost"
@@ -370,7 +403,7 @@ function VerticalTabsWidthToggle({
         "mt-auto text-muted-foreground transition-[color,background-color]",
         isWide && "self-end",
       )}
-      title={isWide ? "Narrow the tab strip" : "Widen the tab strip"}
+      title={isWide ? t`Narrow the tab strip` : t`Widen the tab strip`}
       onClick={() => {
         ipc.main.send("tabs.setVerticalTabsWidth", accountId, isWide ? "narrow" : "wide");
       }}
