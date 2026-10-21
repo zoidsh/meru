@@ -33,6 +33,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/components/emoji-picker-button.tsx",
   "packages/renderer/components/license-key-required-banner.tsx",
   "packages/renderer/components/license-key-required-field-badge.tsx",
+  "packages/renderer/components/loading-spinner.tsx",
   "packages/renderer/components/maturity-field-badge.tsx",
   "packages/renderer/components/settings-dialog-content.tsx",
   "packages/renderer/lib/notifications/index.ts",

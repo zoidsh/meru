@@ -1426,11 +1426,7 @@ msgid "Load on Launch"
 msgstr "Load on Launch"
 
 #. Screen reader label of a spinner shown while something loads
-#. Screen reader label of a spinner shown while something loads
-#. Screen reader label of a spinner shown while something loads
-#. Screen reader label of a spinner shown while something loads
-#: packages/renderer/routes/settings/extensions.tsx
-#: packages/renderer/routes/settings/license.tsx
+#: packages/renderer/components/loading-spinner.tsx
 msgid "Loading"
 msgstr "Loading"
 

@@ -53,7 +53,6 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@meru/ui/components/item";
-import { Spinner } from "@meru/ui/components/spinner";
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
 import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
@@ -64,6 +63,7 @@ import { ConfigSwitchField } from "@/components/config-switch-field";
 import { CopyButton } from "@/components/copy-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { MaturityFieldBadge } from "@/components/maturity-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { SettingsDialogContent } from "@/components/settings-dialog-content";
@@ -640,14 +640,7 @@ function ExtensionItem({
           )}
         </ItemContent>
         <ItemActions>
-          {extensionMutation.isPending && (
-            <Spinner
-              aria-label={t({
-                message: "Loading",
-                comment: "Screen reader label of a spinner shown while something loads",
-              })}
-            />
-          )}
+          {extensionMutation.isPending && <LoadingSpinner />}
           <Switch
             checked={extensionsEnabled && installed}
             disabled={toggleLocked || isAnyToggleRunning}
@@ -889,14 +882,7 @@ function UpdateExtensionsButton() {
           updateExtensionsMutation.mutate();
         }}
       >
-        {updateExtensionsMutation.isPending && (
-          <Spinner
-            aria-label={t({
-              message: "Loading",
-              comment: "Screen reader label of a spinner shown while something loads",
-            })}
-          />
-        )}
+        {updateExtensionsMutation.isPending && <LoadingSpinner />}
         <Trans>Update extensions</Trans>
       </Button>
       <ExtensionErrorDialog

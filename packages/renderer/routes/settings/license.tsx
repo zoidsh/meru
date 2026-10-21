@@ -26,12 +26,12 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@meru/ui/components/input-group";
-import { Spinner } from "@meru/ui/components/spinner";
 import { useForm, useForm as useTanStackForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { EyeIcon, EyeOffIcon, MoreHorizontalIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { z } from "zod";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useConfig } from "@/lib/react-query";
@@ -324,13 +324,7 @@ export function LicenseSettings() {
                             />
                             {!deviceInfo && (
                               <InputGroupAddon>
-                                <Spinner
-                                  aria-label={t({
-                                    message: "Loading",
-                                    comment:
-                                      "Screen reader label of a spinner shown while something loads",
-                                  })}
-                                />
+                                <LoadingSpinner />
                               </InputGroupAddon>
                             )}
                           </InputGroup>
@@ -343,15 +337,7 @@ export function LicenseSettings() {
                                 variant="secondary"
                                 disabled={isPristine || isSubmitting}
                               >
-                                {isSubmitting && (
-                                  <Spinner
-                                    aria-label={t({
-                                      message: "Loading",
-                                      comment:
-                                        "Screen reader label of a spinner shown while something loads",
-                                    })}
-                                  />
-                                )}
+                                {isSubmitting && <LoadingSpinner />}
                                 <Trans comment="Button that saves the device label">Save</Trans>
                               </Button>
                             )}
