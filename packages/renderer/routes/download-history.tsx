@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import { DownloadHistoryList } from "@/components/download-history";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -22,7 +23,7 @@ function DownloadHistoryClearAllButton() {
       }}
       disabled={config["downloads.history"].length === 0}
     >
-      Clear all
+      <Trans comment="Button that clears the whole download history">Clear all</Trans>
     </Button>
   );
 }
@@ -31,7 +32,9 @@ export function DownloadHistory() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Download history</SettingsTitle>
+        <SettingsTitle>
+          <Trans>Download history</Trans>
+        </SettingsTitle>
         <DownloadHistoryClearAllButton />
       </SettingsHeader>
       <DownloadHistoryList />

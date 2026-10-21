@@ -89,6 +89,11 @@ msgstr "{remainingExcludedAppCount, plural, one {{visibleExcludedApps} +# exclud
 msgid "{selectedCount, plural, one {# additional language} other {# additional languages}}"
 msgstr "{selectedCount, plural, one {# additional language} other {# additional languages}}"
 
+#. Tooltip of the tab every link to a Google Workspace app opens in. tabTitle is the page's title; appName is the app's English name, such as Calendar
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle} — opens {appName} links"
+
 #. appLinksTabTitle is the title of the tab that opens the links today; appLabel is the name of a Google Workspace app, such as Docs or Sheets
 #: packages/app/dialogs.ts
 msgid "{target, select, window {“{appLinksTabTitle}” currently opens all {appLabel} links. This window will open them instead.} other {“{appLinksTabTitle}” currently opens all {appLabel} links. This tab will open them instead.}}"
@@ -113,6 +118,11 @@ msgstr "{target, select, window {Open {appLabel} Links in This Window} other {Op
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
 msgstr "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
+
+#. Titlebar badge counting the whole days left in the Meru Pro trial
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
 
 #. The days left in the Meru Pro trial, on the License page in Settings
 #: packages/renderer/routes/settings/license.tsx
@@ -363,6 +373,11 @@ msgstr "Always show trimmed content"
 msgid "Amber"
 msgstr "Amber"
 
+#. Titlebar button on Windows and Linux that opens Meru's menu, in place of a menu bar
+#: packages/renderer/components/app-titlebar.tsx
+msgid "App menu"
+msgstr "App menu"
+
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Heading of the Gmail page's section about how Gmail looks
 #: packages/renderer/lib/settings-pages.ts
@@ -374,8 +389,10 @@ msgstr "Appearance"
 msgid "Application version"
 msgstr "Application version"
 
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
+#: packages/renderer/routes/unified-inbox.tsx
 msgid "Archive"
 msgstr "Archive"
 
@@ -464,10 +481,25 @@ msgstr "Blocker"
 msgid "Blue"
 msgstr "Blue"
 
+#. Button that bookmarks the page on display
+#. Button that bookmarks the page on display
 #. Context menu item that bookmarks the tab
 #: packages/app/ipc.ts
+#: packages/renderer/components/vertical-tabs.tsx
+#: packages/renderer/workspace-app.tsx
 msgid "Bookmark"
 msgstr "Bookmark"
+
+#: packages/renderer/bookmarks.tsx
+msgid "Bookmark a page with the star on its tab or window titlebar, or from a tab's context menu."
+msgstr "Bookmark a page with the star on its tab or window titlebar, or from a tab's context menu."
+
+#. Button in the vertical tabs strip that shows the bookmarks
+#. Heading of the bookmarks popup
+#: packages/renderer/bookmarks.tsx
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Bookmarks"
+msgstr "Bookmarks"
 
 #. Name of a notification sound, picked in Settings
 #: packages/renderer/lib/notifications/index.ts
@@ -492,6 +524,7 @@ msgstr "C&opy Image Address"
 #: packages/app/url.ts
 #: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
+#: packages/renderer/desktop-sources.tsx
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/settings/extensions.tsx
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -569,6 +602,11 @@ msgstr "Choose whether every new email or only the emails Gmail marks as importa
 msgid "Choose which releases to receive. The beta channel gets upcoming features early."
 msgstr "Choose which releases to receive. The beta channel gets upcoming features early."
 
+#. Button that clears the whole download history
+#: packages/renderer/routes/download-history.tsx
+msgid "Clear all"
+msgstr "Clear all"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Clear Cache"
@@ -578,13 +616,21 @@ msgstr "Clear Cache"
 msgid "Clear color"
 msgstr "Clear color"
 
+#. Button that closes the bookmarks popup
+#. Button that closes the recent download history popup
 #. Screen reader label of the button that closes a dialog in Settings
+#. Titlebar button that closes the details of an update Meru couldn't verify
+#: packages/renderer/bookmarks.tsx
+#: packages/renderer/components/app-titlebar.tsx
 #: packages/renderer/components/settings-dialog-content.tsx
+#: packages/renderer/recent-download-history.tsx
 msgid "Close"
 msgstr "Close"
 
+#. Button on a tab in the vertical tabs strip that closes the tab
 #. Context menu item that closes the tab
 #: packages/app/ipc.ts
+#: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
 msgid "Close"
 msgstr "Close"
@@ -602,6 +648,10 @@ msgstr "Close compose window after send"
 #: packages/renderer/components/app-main.tsx
 msgid "Close download history"
 msgstr "Close download history"
+
+#: packages/renderer/components/find-in-page.tsx
+msgid "Close find in page"
+msgstr "Close find in page"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -831,9 +881,15 @@ msgid "Default mail client"
 msgstr "Default mail client"
 
 #. A menu or a menu item in Meru's menu bar
-#. Button on a new email notification
-#: packages/app/gmail/index.ts
 #: packages/app/menu.ts
+msgid "Delete"
+msgstr "Delete"
+
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
+#: packages/app/gmail/index.ts
+#: packages/renderer/routes/unified-inbox.tsx
+msgctxt "Gmail action"
 msgid "Delete"
 msgstr "Delete"
 
@@ -903,6 +959,15 @@ msgstr "Don't show again"
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Done"
 msgstr "Done"
+
+#. Titlebar button that opens the release page of an update Meru couldn't verify, to download it from there
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Download"
+msgstr "Download"
+
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Download history"
 
 #: packages/app/downloads.ts
 msgid "Downloaded {fileName}"
@@ -1083,6 +1148,15 @@ msgstr "Extensions are in testing"
 msgid "File"
 msgstr "File"
 
+#. In the download history, in place of when a file was downloaded, once the file is no longer where it was saved
+#: packages/renderer/components/download-history.tsx
+msgid "File moved or deleted"
+msgstr "File moved or deleted"
+
+#: packages/renderer/components/download-history.tsx
+msgid "Files you download appear here for 30 days."
+msgstr "Files you download appear here for 30 days."
+
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
 msgstr "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
@@ -1097,10 +1171,22 @@ msgstr "Fills and generates passwords and passkeys for your Google Account. Need
 msgid "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
 msgstr "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
 
+#: packages/renderer/components/find-in-page.tsx
+msgid "Find next match"
+msgstr "Find next match"
+
+#: packages/renderer/components/find-in-page.tsx
+msgid "Find previous match"
+msgstr "Find previous match"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Find…"
 msgstr "Find…"
+
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "First page"
+msgstr "First page"
 
 #. Option of the Unread count preference setting: count only the first section of Gmail's multiple inboxes
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -1121,6 +1207,10 @@ msgstr "Friends"
 #: packages/shared/accounts.ts
 msgid "Fuchsia"
 msgstr "Fuchsia"
+
+#: packages/renderer/recent-download-history.tsx
+msgid "Full download history"
+msgstr "Full download history"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Heading of the Appearance section for the settings that apply to the whole app
@@ -1144,6 +1234,14 @@ msgstr "Gmail Keyboard Shortcuts"
 #: packages/app/menu.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#: packages/renderer/components/titlebar.tsx
+msgid "Go back"
+msgstr "Go back"
+
+#: packages/renderer/components/titlebar.tsx
+msgid "Go forward"
+msgstr "Go forward"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -1346,12 +1444,18 @@ msgstr "Language"
 msgid "Languages"
 msgstr "Languages"
 
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Last page"
+msgstr "Last page"
+
 #. Button on the toast after a setting changes, which dismisses it and leaves the restart for later
 #. Dialog button that puts off restarting Meru
 #. Dialog button that puts off restarting Meru
 #. Dialog button that puts off restarting Meru
+#. Titlebar button that puts off installing a downloaded update
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
+#: packages/renderer/components/app-titlebar.tsx
 #: packages/renderer/lib/toast.ts
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Later"
@@ -1445,10 +1549,20 @@ msgstr "Look Up “{selection}”"
 msgid "Manage Accounts"
 msgstr "Manage Accounts"
 
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Mark as read"
+msgstr "Mark as read"
+
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
 msgid "Mark as Read"
 msgstr "Mark as Read"
+
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Mark as spam"
+msgstr "Mark as spam"
 
 #. Button on a new email notification
 #: packages/app/gmail/index.ts
@@ -1470,6 +1584,14 @@ msgstr "Mark the tab that opens all of an app's links, set from the tab's contex
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
 msgstr "Menu bar icon"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Meru {version} couldn't be verified, so it wasn't installed"
+msgstr "Meru {version} couldn't be verified, so it wasn't installed"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Meru {version} is available and ready to install"
+msgstr "Meru {version} is available and ready to install"
 
 #: packages/app/dialogs.ts
 msgid "Meru {version} is available."
@@ -1593,8 +1715,10 @@ msgstr "Miscellaneous"
 msgid "Mode"
 msgstr "Mode"
 
+#. Button in a Google Workspace app window's titlebar that opens its menu
 #. Button that opens a menu of actions for the license key
 #: packages/renderer/routes/settings/license.tsx
+#: packages/renderer/workspace-app.tsx
 msgid "More options"
 msgstr "More options"
 
@@ -1631,6 +1755,10 @@ msgstr "Move to Tab"
 msgid "Narrow"
 msgstr "Narrow"
 
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "Narrow the tab strip"
+
 #. Heading of the Settings section about going back and forward between pages
 #: packages/renderer/routes/settings/general.tsx
 msgid "Navigation"
@@ -1651,6 +1779,10 @@ msgstr "New emails"
 msgid "New windows"
 msgstr "New windows"
 
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Next page"
+msgstr "Next page"
+
 #: packages/renderer/routes/settings/languages.tsx
 msgid "No additional languages selected"
 msgstr "No additional languages selected"
@@ -1659,6 +1791,14 @@ msgstr "No additional languages selected"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "No apps in the launcher yet. Add one from Available."
 msgstr "No apps in the launcher yet. Add one from Available."
+
+#: packages/renderer/bookmarks.tsx
+msgid "No bookmarks yet"
+msgstr "No bookmarks yet"
+
+#: packages/renderer/components/download-history.tsx
+msgid "No downloads yet"
+msgstr "No downloads yet"
 
 #: packages/renderer/components/emoji-picker-button.tsx
 msgid "No emoji found."
@@ -1677,6 +1817,10 @@ msgstr "No Guesses Found"
 #: packages/renderer/routes/settings/phishing-protection.tsx
 msgid "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
 msgstr "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
+
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "No unread messages"
+msgstr "No unread messages"
 
 #. The Excluded apps field when no Workspace app is excluded
 #. The account's color when no color is picked
@@ -1702,6 +1846,12 @@ msgstr "Notification times overlap. Adjust the windows so that none of them do."
 #. Switch, and a badge on the account, for showing the account's notifications
 #: packages/renderer/lib/settings-pages.ts
 #: packages/renderer/routes/settings/accounts.tsx
+msgid "Notifications"
+msgstr "Notifications"
+
+#. Screen reader label of the area of the window where Meru's toasts appear, not the system's notifications
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
 msgid "Notifications"
 msgstr "Notifications"
 
@@ -1758,6 +1908,11 @@ msgstr "Open and unlock 1Password again."
 msgid "Open and unlock 1Password."
 msgstr "Open and unlock 1Password."
 
+#. Button in the vertical tabs strip that opens the launcher of Google Workspace apps
+#: packages/renderer/components/workspace-apps-launcher.tsx
+msgid "Open app"
+msgstr "Open app"
+
 #. Option of what a finished download's notification does
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Open file"
@@ -1766,6 +1921,10 @@ msgstr "Open file"
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open folder when done"
 msgstr "Open folder when done"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Open Gmail settings to turn off out of office"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Open in app"
@@ -1817,10 +1976,19 @@ msgstr "Open the folder containing the file when a download finishes."
 msgid "Open this link in your default browser?"
 msgstr "Open this link in your default browser?"
 
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Open unified inbox"
+msgstr "Open unified inbox"
+
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Windows Settings"
 msgstr "Open Windows Settings"
+
+#. Titlebar button that opens the launcher of Google Workspace apps
+#: packages/renderer/components/workspace-apps-launcher.tsx
+msgid "Open workspace app"
+msgstr "Open workspace app"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Open Workspace apps in the app instead of the external browser."
@@ -1839,6 +2007,11 @@ msgstr "Options"
 #: packages/shared/accounts.ts
 msgid "Orange"
 msgstr "Orange"
+
+#. The unified inbox's current page and how many pages it has
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Page {currentPage} of {pageCount}"
+msgstr "Page {currentPage} of {pageCount}"
 
 #: packages/app/workspace-app.ts
 msgid "Passkey sign-in isn't supported on this platform yet."
@@ -1905,10 +2078,24 @@ msgstr "Play a sound when showing a notification."
 msgid "Play sound"
 msgstr "Play sound"
 
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Previous page"
+msgstr "Previous page"
+
 #. Option of the Categories to monitor setting. Primary is Gmail's inbox category of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Primary only"
 msgstr "Primary only"
+
+#. Titlebar badge once the Meru Pro trial has run out
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Pro trial ended"
+msgstr "Pro trial ended"
+
+#. Titlebar badge in the last day of the Meru Pro trial
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Pro trial ends in less than a day"
+msgstr "Pro trial ends in less than a day"
 
 #: packages/renderer/routes/settings/phishing-protection.tsx
 msgid "Prompt for confirmation before opening links from untrusted hosts in your browser."
@@ -1949,6 +2136,10 @@ msgstr "Quit 1Password."
 msgid "Receive notifications when updates are available."
 msgstr "Receive notifications when updates are available."
 
+#: packages/renderer/recent-download-history.tsx
+msgid "Recent download history"
+msgstr "Recent download history"
+
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with the background, and can be set to white or black instead."
 msgstr "Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with the background, and can be set to white or black instead."
@@ -1968,6 +2159,10 @@ msgstr "Release channel"
 #: packages/app/menu.ts
 msgid "Reload"
 msgstr "Reload"
+
+#: packages/renderer/components/titlebar.tsx
+msgid "Reload page"
+msgstr "Reload page"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
@@ -2003,10 +2198,24 @@ msgstr "Remove account"
 msgid "Remove and restart"
 msgstr "Remove and restart"
 
+#. Button on a bookmark in the bookmarks popup that removes it
+#. Button that removes the bookmark of the page on display
+#. Button that removes the bookmark of the page on display
+#: packages/renderer/bookmarks.tsx
+#: packages/renderer/components/vertical-tabs.tsx
+#: packages/renderer/workspace-app.tsx
+msgid "Remove bookmark"
+msgstr "Remove bookmark"
+
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Remove Bookmark"
 msgstr "Remove Bookmark"
+
+#. Button that removes a download from the download history
+#: packages/renderer/components/download-history.tsx
+msgid "Remove from history"
+msgstr "Remove from history"
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Remove time window"
@@ -2096,6 +2305,11 @@ msgstr "Restart Meru to try again, or contact support. A VPN or a firewall can b
 msgid "Restart Meru."
 msgstr "Restart Meru."
 
+#. Titlebar button that restarts Meru to install a downloaded update
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Restart now"
+msgstr "Restart now"
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Restrict minimum window size"
 msgstr "Restrict minimum window size"
@@ -2103,6 +2317,11 @@ msgstr "Restrict minimum window size"
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Reverse conversation"
 msgstr "Reverse conversation"
+
+#. Label of the unified inbox's picker for how many messages a page lists
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Rows per page"
+msgstr "Rows per page"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Run the installed extensions. Turning this off stops them without uninstalling them."
@@ -2152,6 +2371,19 @@ msgstr "Saved searches"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Screen sharing"
 msgstr "Screen sharing"
+
+#. Tab of the screen sharing picker listing the displays to share
+#: packages/renderer/desktop-sources.tsx
+msgid "Screens"
+msgstr "Screens"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts left"
+msgstr "Scroll accounts left"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts right"
+msgstr "Scroll accounts right"
 
 #. Placeholder of the emoji picker's search field
 #: packages/renderer/components/emoji-picker-button.tsx
@@ -2260,7 +2492,9 @@ msgid "Set up desktop app"
 msgstr "Set up desktop app"
 
 #. A menu or a menu item in Meru's menu bar
+#. Title of the Settings window, in its titlebar
 #: packages/app/menu.ts
+#: packages/renderer/components/app-titlebar.tsx
 msgid "Settings"
 msgstr "Settings"
 
@@ -2268,6 +2502,12 @@ msgstr "Settings"
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/context-menu.ts
 #: packages/app/menu.ts
+msgid "Share"
+msgstr "Share"
+
+#. Button of the screen sharing picker that shares the window or screen picked
+#: packages/renderer/desktop-sources.tsx
+msgctxt "screen sharing"
 msgid "Share"
 msgstr "Share"
 
@@ -2310,6 +2550,11 @@ msgstr "Show an unread count next to the menu bar icon when there are unread ema
 msgid "Show app links badge"
 msgstr "Show app links badge"
 
+#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Show bookmarks"
+msgstr "Show bookmarks"
+
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
 msgstr "Show bookmarks button"
@@ -2336,7 +2581,9 @@ msgstr "Show in File Explorer"
 msgid "Show in Finder"
 msgstr "Show in Finder"
 
+#. Button in the download history that shows the file in the file manager
 #. Option of what a finished download's notification does
+#: packages/renderer/components/download-history.tsx
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Show in folder"
 msgstr "Show in folder"
@@ -2373,10 +2620,19 @@ msgstr "Show notifications for new emails."
 msgid "Show notifications from Workspace apps such as Calendar, Meet, and Chat."
 msgstr "Show notifications from Workspace apps such as Calendar, Meet, and Chat."
 
+#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/workspace-app.tsx
+msgid "Show recent download history"
+msgstr "Show recent download history"
+
 #. Save As names the operating system's dialog that asks where to save a file
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Show Save As dialog before downloading"
 msgstr "Show Save As dialog before downloading"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Show saved searches"
+msgstr "Show saved searches"
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Show sender"
@@ -2556,6 +2812,10 @@ msgstr "Start the application minimized."
 msgid "Startup"
 msgstr "Startup"
 
+#: packages/renderer/components/titlebar.tsx
+msgid "Stop loading"
+msgstr "Stop loading"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Stop Speaking"
@@ -2639,6 +2899,10 @@ msgstr "The extension starts after Meru restarts. Restart Meru, then try again."
 #: packages/renderer/routes/settings/version-history.tsx
 msgid "The release notes come from GitHub. Check your connection, then try again."
 msgstr "The release notes come from GitHub. Check your connection, then try again."
+
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
+msgstr "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -2745,6 +3009,14 @@ msgstr "Try again, or contact support. A VPN or a firewall can block the connect
 msgid "Try updating again."
 msgstr "Try updating again."
 
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "Turn Do Not Disturb off"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb on"
+msgstr "Turn Do Not Disturb on"
+
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Turn off Do Not Disturb to show a test notification."
 msgstr "Turn off Do Not Disturb to show a test notification."
@@ -2756,8 +3028,10 @@ msgstr "Undo"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Switch, and a badge on the account, for including the account in the unified inbox
+#. Title of the unified inbox page
 #: packages/renderer/lib/settings-pages.ts
 #: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
 msgstr "Unified inbox"
 
@@ -2799,9 +3073,19 @@ msgstr "Unread count preference"
 msgid "Until Tomorrow"
 msgstr "Until Tomorrow"
 
+#. Titlebar button that shows the details of a downloaded update, ready to install
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Update available"
+msgstr "Update available"
+
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Update extensions"
 msgstr "Update extensions"
+
+#. Titlebar button that shows the details of an update Meru downloaded but couldn't verify
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Update not verified"
+msgstr "Update not verified"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -2823,6 +3107,7 @@ msgstr "Upgrade"
 #: packages/app/dialogs.ts
 #: packages/app/trial.ts
 #: packages/app/workspace-app.ts
+#: packages/renderer/components/app-titlebar.tsx
 msgid "Upgrade to Meru Pro"
 msgstr "Upgrade to Meru Pro"
 
@@ -2913,6 +3198,8 @@ msgid "Website"
 msgstr "Website"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Titlebar button beside a downloaded update that opens the version history
+#: packages/renderer/components/app-titlebar.tsx
 #: packages/renderer/lib/settings-pages.ts
 msgid "What's new"
 msgstr "What's new"
@@ -2958,6 +3245,10 @@ msgstr "White"
 msgid "Wide"
 msgstr "Wide"
 
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Widen the tab strip"
+msgstr "Widen the tab strip"
+
 #. Setting for how wide the vertical tabs sidebar is
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Width"
@@ -2973,6 +3264,11 @@ msgstr "Window"
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Window controls"
 msgstr "Window controls"
+
+#. Tab of the screen sharing picker listing the open application windows to share, never the Windows operating system
+#: packages/renderer/desktop-sources.tsx
+msgid "Windows"
+msgstr "Windows"
 
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -3007,6 +3303,11 @@ msgstr "Yellow"
 #: packages/app/ipc.ts
 msgid "You have unread messages"
 msgstr "You have unread messages"
+
+#. The Meru Pro trial in its last day, on the License page in Settings
+#: packages/renderer/routes/settings/license.tsx
+msgid "You're using a Meru Pro trial with less than a day left."
+msgstr "You're using a Meru Pro trial with less than a day left."
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "You're using Meru Pro, with the professional features and a license for commercial use. Thank you for supporting Meru."

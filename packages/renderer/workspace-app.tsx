@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
 import { cn } from "@meru/ui/lib/utils";
@@ -19,6 +20,8 @@ import { renderApp } from "@/lib/react";
 import { useConfig } from "@/lib/react-query";
 
 function RecentDownloadHistoryButton() {
+  const { t } = useLingui();
+
   return (
     <TitlebarIconButton
       onClick={() => {
@@ -30,7 +33,7 @@ function RecentDownloadHistoryButton() {
       onMouseLeave={() => {
         ipc.main.send("downloads.setDownloadHistoryPopupOnBlurEnabled", true);
       }}
-      title="Show recent download history"
+      title={t`Show recent download history`}
     >
       <DownloadIcon />
     </TitlebarIconButton>
@@ -48,6 +51,8 @@ function RecentDownloadHistoryButton() {
  * from here there is nothing to shift.
  */
 function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
+  const { t } = useLingui();
+
   const [bookmarkState, setBookmarkState] = useState<WorkspaceAppBookmarkState>({
     savable: false,
     bookmarked: false,
@@ -69,7 +74,17 @@ function BookmarkButton({ workspaceAppId }: { workspaceAppId: string }) {
 
   return (
     <TitlebarIconButton
-      title={bookmarkState.bookmarked ? "Remove bookmark" : "Bookmark"}
+      title={
+        bookmarkState.bookmarked
+          ? t({
+              message: "Remove bookmark",
+              comment: "Button that removes the bookmark of the page on display",
+            })
+          : t({
+              message: "Bookmark",
+              comment: "Button that bookmarks the page on display",
+            })
+      }
       onClick={() => {
         ipc.main.send("workspaceApp.toggleBookmark", workspaceAppId);
       }}
@@ -172,6 +187,8 @@ function FindInPageControls() {
 }
 
 function WorkspaceApp() {
+  const { t } = useLingui();
+
   const { config } = useConfig();
 
   const searchParams = new URLSearchParams(window.location.search);
@@ -216,7 +233,10 @@ function WorkspaceApp() {
           <BookmarkButton workspaceAppId={workspaceAppId} />
           <RecentDownloadHistoryButton />
           <TitlebarIconButton
-            title="More options"
+            title={t({
+              message: "More options",
+              comment: "Button in a Google Workspace app window's titlebar that opens its menu",
+            })}
             onClick={() => {
               ipc.main.send("workspaceApp.showMenu", workspaceAppId);
             }}
