@@ -58,7 +58,11 @@ const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 const MESSAGE_ACTIONS = [
   { action: "archive", label: msg`Archive`, icon: ArchiveIcon },
   { action: "markAsRead", label: msg`Mark as read`, icon: MailOpenIcon },
-  { action: "delete", label: msg`Delete`, icon: Trash2Icon },
+  {
+    action: "delete",
+    label: msg({ message: "Delete", context: "Gmail action" }),
+    icon: Trash2Icon,
+  },
   { action: "markAsSpam", label: msg`Mark as spam`, icon: OctagonAlertIcon },
 ] as const satisfies {
   action: GmailAction;

@@ -881,11 +881,15 @@ msgid "Default mail client"
 msgstr "Default mail client"
 
 #. A menu or a menu item in Meru's menu bar
-#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
-#. Button on a new email notification
-#: packages/app/gmail/index.ts
 #: packages/app/menu.ts
+msgid "Delete"
+msgstr "Delete"
+
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
+#: packages/app/gmail/index.ts
 #: packages/renderer/routes/unified-inbox.tsx
+msgctxt "Gmail action"
 msgid "Delete"
 msgstr "Delete"
 
