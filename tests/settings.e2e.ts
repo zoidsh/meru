@@ -211,3 +211,11 @@ test("every Pro-gated control is locked on the free version", async () => {
   // nothing at all.
   expect(bannerCount).toBeGreaterThan(5);
 });
+
+test("a copy button is named for screen readers", async () => {
+  await openSettingsPage(meru, await meru.openSettings(), "About Meru");
+
+  await expect(
+    meru.renderer.getByRole("button", { name: "Copy", exact: true }).first(),
+  ).toBeVisible();
+});
