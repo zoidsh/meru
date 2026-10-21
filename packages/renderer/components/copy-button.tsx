@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps } from "react";
@@ -9,12 +10,17 @@ export function CopyButton({
   size = "icon",
   ...props
 }: { value: string } & ComponentProps<typeof Button>) {
+  const { t } = useLingui();
   const { copied, markCopied } = useCopied();
 
   return (
     <Button
       variant={variant}
       size={size}
+      aria-label={t({
+        message: "Copy",
+        comment: "Screen reader label of an icon button that copies the value beside it",
+      })}
       {...props}
       onClick={() => {
         navigator.clipboard.writeText(value);
