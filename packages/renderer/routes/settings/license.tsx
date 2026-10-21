@@ -317,7 +317,7 @@ export function LicenseSettings() {
                 <div>
                   Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru.
                 </div>
-                <div>Purchase Meru Pro to keep using all features.</div>
+                <div>Upgrade to Meru Pro to keep using all features.</div>
               </>
             ) : (
               <>
@@ -325,7 +325,7 @@ export function LicenseSettings() {
                   You're using a Meru Pro trial with {trialDaysLeft} day
                   {trialDaysLeft > 1 ? "s" : ""} left.
                 </div>
-                <div>Purchase Meru Pro before your trial ends to keep using all features.</div>
+                <div>Upgrade to Meru Pro before your trial ends to keep using all features.</div>
               </>
             )}
           </div>
@@ -337,7 +337,7 @@ export function LicenseSettings() {
               rel="noreferrer"
               className={buttonVariants()}
             >
-              Purchase
+              Upgrade
             </a>
           </div>
         </>
@@ -361,7 +361,7 @@ export function LicenseSettings() {
             rel="noreferrer"
             className={buttonVariants()}
           >
-            Purchase
+            Upgrade
           </a>
         </div>
       </>
