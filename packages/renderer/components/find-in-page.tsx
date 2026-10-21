@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { Button } from "@meru/ui/components/button";
 import { Input } from "@meru/ui/components/input";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
@@ -19,6 +20,8 @@ export function FindInPage({
   onFind,
   onClose,
 }: FindInPageProps) {
+  const { t } = useLingui();
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [text, setText] = useState("");
@@ -81,7 +84,7 @@ export function FindInPage({
           onClick={() => {
             onFind(text, { forward: false, findNext: false });
           }}
-          title="Find previous match"
+          title={t`Find previous match`}
         >
           <ChevronUpIcon />
         </Button>
@@ -91,11 +94,11 @@ export function FindInPage({
           onClick={() => {
             onFind(text, { findNext: false });
           }}
-          title="Find next match"
+          title={t`Find next match`}
         >
           <ChevronDownIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} title="Close find in page">
+        <Button variant="ghost" size="icon-sm" onClick={onClose} title={t`Close find in page`}>
           <XIcon />
         </Button>
       </div>

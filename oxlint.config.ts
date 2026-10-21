@@ -28,14 +28,19 @@ const LOCALIZED_FILES = [
   "packages/preload-gmail/toast.ts",
   "packages/renderer/components/app-main.tsx",
   "packages/renderer/components/app-sidebar.tsx",
+  "packages/renderer/components/app-titlebar.tsx",
   "packages/renderer/components/config-select-field.tsx",
   "packages/renderer/components/config-switch-field.tsx",
   "packages/renderer/components/emoji-picker-button.tsx",
+  "packages/renderer/components/find-in-page.tsx",
   "packages/renderer/components/license-key-required-banner.tsx",
   "packages/renderer/components/license-key-required-field-badge.tsx",
   "packages/renderer/components/loading-spinner.tsx",
   "packages/renderer/components/maturity-field-badge.tsx",
   "packages/renderer/components/settings-dialog-content.tsx",
+  "packages/renderer/components/titlebar.tsx",
+  "packages/renderer/components/vertical-tabs.tsx",
+  "packages/renderer/components/workspace-apps-launcher.tsx",
   "packages/renderer/lib/extension-descriptions.ts",
   "packages/renderer/lib/notifications/index.ts",
   "packages/renderer/lib/settings-pages.ts",
@@ -61,6 +66,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/routes/settings/verification-codes.tsx",
   "packages/renderer/routes/settings/version-history.tsx",
   "packages/renderer/routes/settings/workspace-apps.tsx",
+  "packages/renderer/workspace-app.tsx",
   "packages/shared/accounts.ts",
   "packages/shared/schemas.ts",
   "packages/shared/tabs.ts",
@@ -109,6 +115,8 @@ export default defineConfig({
               "^[a-z][A-Za-z]*\\.[a-z][A-Za-z]*$",
               // An HTML heading element, which Markdown's headings are mapped onto.
               "^h[1-6]$",
+              // A CSS math function, which is a length rather than text.
+              "^(?:calc|max|min)\\(",
             ],
             ignoreFunctions: [
               "console.*",
@@ -152,6 +160,11 @@ export default defineConfig({
               "execFile",
               "fetch",
               "useRoute",
+              "navigate",
+              // CSS selectors.
+              "*.querySelector",
+              // Keyboard shortcuts, named by their keys.
+              "useHotkeys",
             ],
             ignoreNames: [
               // A module constant is an id, a namespace or a selector, not copy.
@@ -175,6 +188,12 @@ export default defineConfig({
               // A maturity badge's key, which the badge translates.
               "maturity",
               { regex: { pattern: "^iconFileName" } },
+              // `Intl.DateTimeFormat` options, whose values are style keywords.
+              "hour",
+              "minute",
+              "month",
+              "day",
+              "year",
             ],
           },
         ],
