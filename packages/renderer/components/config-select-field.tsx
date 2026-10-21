@@ -1,10 +1,9 @@
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Trans } from "@lingui/react/macro";
 import type { Config } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -23,6 +22,7 @@ import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { restartRequiredToast } from "@/lib/toast";
 import { LicenseKeyRequiredFieldBadge } from "./license-key-required-field-badge";
+import { SettingsDialogContent } from "./settings-dialog-content";
 
 export function ConfigSelectField({
   configKey,
@@ -66,8 +66,6 @@ export function ConfigSelectField({
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   const [confirmableValue, setConfirmableValue] = useState<string | null>(null);
-
-  const { t } = useLingui();
 
   if (!config) {
     return;
@@ -134,12 +132,7 @@ export function ConfigSelectField({
             }
           }}
         >
-          <DialogContent
-            closeLabel={t({
-              message: "Close",
-              comment: "Screen reader label of the button that closes a dialog in Settings",
-            })}
-          >
+          <SettingsDialogContent>
             <DialogHeader>
               <DialogTitle>{confirmation.title}</DialogTitle>
             </DialogHeader>
@@ -166,7 +159,7 @@ export function ConfigSelectField({
                 {confirmation.confirmLabel}
               </Button>
             </DialogFooter>
-          </DialogContent>
+          </SettingsDialogContent>
         </Dialog>
       )}
     </Field>

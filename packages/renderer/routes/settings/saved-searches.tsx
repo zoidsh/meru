@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -22,7 +23,6 @@ import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -40,16 +40,20 @@ import {
 } from "@meru/ui/components/item";
 import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { z } from "zod";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 
 export function SavedSearchForm({
   savedSearch = { label: "", query: "" },
-  labelPlaceholder = "Friends",
+  labelPlaceholder,
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a Gmail search query, whose operators Gmail reads only in English
   queryPlaceholder = "label:friends is:unread",
   type,
   onSubmit,
@@ -60,10 +64,21 @@ export function SavedSearchForm({
   type: "add" | "edit";
   onSubmit: (savedSearch: GmailSavedSearchInput) => void;
 }) {
+  const { t } = useLingui();
+
+  const schema = useMemo(
+    () =>
+      gmailSavedSearchInputSchema.extend({
+        label: z.string().min(1, t`Enter a label`),
+        query: z.string().min(1, t`Enter a search query`),
+      }),
+    [t],
+  );
+
   const form = useForm({
     defaultValues: savedSearch,
     validators: {
-      onSubmit: gmailSavedSearchInputSchema,
+      onSubmit: schema,
     },
     onSubmit: ({ value }) => {
       onSubmit(value);
@@ -83,7 +98,9 @@ export function SavedSearchForm({
         <form.Field name="label">
           {(field) => (
             <Field>
-              <FieldLabel htmlFor={field.name}>Label</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                <Trans comment="Field for the name Meru shows for the saved search">Label</Trans>
+              </FieldLabel>
               <div className="flex gap-2">
                 <Input
                   id={field.name}
@@ -91,7 +108,13 @@ export function SavedSearchForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
-                  placeholder={labelPlaceholder}
+                  placeholder={
+                    labelPlaceholder ??
+                    t({
+                      message: "Friends",
+                      comment: "Example of a saved search's label, shown in the empty Label field",
+                    })
+                  }
                 />
                 <EmojiPickerButton
                   onEmojiSelect={({ emoji }) => {
@@ -107,7 +130,9 @@ export function SavedSearchForm({
         <form.Field name="query">
           {(field) => (
             <Field>
-              <FieldLabel htmlFor={field.name}>Query</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                <Trans comment="Field for the Gmail search the saved search runs">Query</Trans>
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -122,8 +147,20 @@ export function SavedSearchForm({
         </form.Field>
       </FieldGroup>
       <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
-        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+        <DialogClose
+          render={
+            <Button variant="outline">
+              <Trans>Cancel</Trans>
+            </Button>
+          }
+        />
+        <Button type="submit">
+          {type === "add" ? (
+            <Trans comment="Button that adds the saved search in the dialog">Add</Trans>
+          ) : (
+            <Trans comment="Button that saves the saved search's changes in the dialog">Save</Trans>
+          )}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -148,13 +185,15 @@ export function AddSavedSearchButton({
             }}
             disabled={!isLicenseKeyValid}
           >
-            Add
+            <Trans comment="Button that opens the dialog for adding a saved search">Add</Trans>
           </Button>
         }
       />
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Add saved search</DialogTitle>
+          <DialogTitle>
+            <Trans>Add saved search</Trans>
+          </DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           type="add"
@@ -164,7 +203,7 @@ export function AddSavedSearchButton({
             setIsDialogOpen(false);
           }}
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -178,18 +217,22 @@ function EditSavedSearchButton({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const { t } = useLingui();
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="outline" title="Edit saved search">
+          <Button size="icon" className="size-8 p-0" variant="outline" title={t`Edit saved search`}>
             <PencilIcon />
           </Button>
         }
       />
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Edit saved search</DialogTitle>
+          <DialogTitle>
+            <Trans>Edit saved search</Trans>
+          </DialogTitle>
         </DialogHeader>
         <SavedSearchForm
           savedSearch={savedSearch}
@@ -203,7 +246,7 @@ function EditSavedSearchButton({
           }}
           type="edit"
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -223,6 +266,10 @@ function SortableSavedSearchItem({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: savedSearch.id, index, disabled });
 
+  const { t } = useLingui();
+
+  const { label } = savedSearch;
+
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
       <Button
@@ -231,12 +278,12 @@ function SortableSavedSearchItem({
         className="size-8 cursor-grab touch-none p-0"
         variant="ghost"
         disabled={disabled}
-        aria-label={`Drag ${savedSearch.label} to reorder`}
+        aria-label={t`Drag ${label} to reorder`}
       >
         <GripVerticalIcon />
       </Button>
       <ItemContent>
-        <ItemTitle>{savedSearch.label}</ItemTitle>
+        <ItemTitle>{label}</ItemTitle>
         <ItemDescription>{savedSearch.query}</ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -248,7 +295,7 @@ function SortableSavedSearchItem({
                 size="icon"
                 className="size-8 p-0"
                 variant="outline"
-                title="Delete saved search"
+                title={t`Delete saved search`}
               >
                 <TrashIcon />
               </Button>
@@ -256,18 +303,22 @@ function SortableSavedSearchItem({
           />
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {savedSearch.label}?</AlertDialogTitle>
+              <AlertDialogTitle>
+                <Trans>Delete {label}?</Trans>
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                This deletes the saved search, not the mail it finds.
+                <Trans>This deletes the saved search, not the mail it finds.</Trans>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>
+                <Trans>Cancel</Trans>
+              </AlertDialogCancel>
               <AlertDialogClose
                 render={<AlertDialogAction variant="destructive" />}
                 onClick={onDelete}
               >
-                Delete saved search
+                <Trans>Delete saved search</Trans>
               </AlertDialogClose>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -284,6 +335,8 @@ export function SavedSearchesSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const { t } = useLingui();
+
   if (!config) {
     return;
   }
@@ -291,7 +344,7 @@ export function SavedSearchesSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Saved searches</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.savedSearches)}</SettingsTitle>
         <AddSavedSearchButton
           onAdd={(savedSearch) => {
             configMutation.mutate({
@@ -308,7 +361,7 @@ export function SavedSearchesSettings() {
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
-          Upgrade to Meru Pro to add saved searches
+          <Trans>Upgrade to Meru Pro to add saved searches</Trans>
         </LicenseKeyRequiredBanner>
         <DragDropProvider
           onDragEnd={(event) => {

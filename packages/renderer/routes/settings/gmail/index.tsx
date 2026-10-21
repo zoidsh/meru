@@ -1,3 +1,5 @@
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -20,19 +22,48 @@ import { useConfig } from "@/lib/react-query";
 import { GmailLabelColors } from "./label-colors";
 
 const unreadCountPreferenceItems = [
-  { value: "first-section", label: "First section only" },
-  { value: "inbox", label: "Inbox only" },
+  {
+    value: "first-section",
+    label: msg({
+      message: "First section only",
+      comment:
+        "Option of the Unread count preference setting: count only the first section of Gmail's multiple inboxes",
+    }),
+  },
+  {
+    value: "inbox",
+    label: msg({
+      message: "Inbox only",
+      comment:
+        "Option of the Unread count preference setting. Inbox is Gmail's folder of that name, so it follows Gmail's word for it",
+    }),
+  },
 ];
 
 const inboxCategoriesToMonitorItems = [
-  { value: "primary", label: "Primary only" },
-  { value: "all", label: "All categories" },
+  {
+    value: "primary",
+    label: msg({
+      message: "Primary only",
+      comment:
+        "Option of the Categories to monitor setting. Primary is Gmail's inbox category of that name, so it follows Gmail's word for it",
+    }),
+  },
+  {
+    value: "all",
+    label: msg({
+      message: "All categories",
+      comment: "Option of the Categories to monitor setting: every category of Gmail's inbox",
+    }),
+  },
 ];
 
 export function GmailSettings() {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
   const { config } = useConfig();
+
+  const { t } = useLingui();
 
   if (!config) {
     return;
@@ -41,43 +72,72 @@ export function GmailSettings() {
   return (
     <Settings>
       <SettingsHeader>
+        {/* oxlint-disable-next-line lingui/no-unlocalized-strings -- a product name, which stays as it is */}
         <SettingsTitle>Gmail</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Appearance</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Gmail page's section about how Gmail looks">
+                Appearance
+              </Trans>
+            </FieldLegend>
             <ConfigSwitchField
-              label="Hide Gmail logo"
-              description="Hide the Gmail logo in the top left corner."
+              label={t`Hide Gmail logo`}
+              description={t`Hide the Gmail logo in the top left corner.`}
               configKey="gmail.hideGmailLogo"
               restartRequired
             />
             <ConfigSwitchField
-              label="Hide out-of-office banner"
-              description="Hide the out-of-office banner at the top of the window."
+              label={t({
+                message: "Hide out-of-office banner",
+                comment:
+                  "The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it",
+              })}
+              description={t({
+                message: "Hide the out-of-office banner at the top of the window.",
+                comment:
+                  "The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it",
+              })}
               configKey="gmail.hideOutOfOfficeBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Hide promotional banner"
-              description="Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
+              label={t`Hide promotional banner`}
+              description={t`Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer.`}
               configKey="gmail.hidePromoBanner"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Hide upgrade button"
-              description="Hide the Upgrade button in Gmail."
+              label={t({
+                message: "Hide upgrade button",
+                comment:
+                  "The upgrade button is Gmail's own Upgrade button, so it follows Gmail's word for it, not Meru Pro's",
+              })}
+              description={t({
+                message: "Hide the Upgrade button in Gmail.",
+                comment:
+                  "Upgrade is the label of Gmail's own button, so it is written as Gmail writes it, not as Meru Pro's Upgrade",
+              })}
               configKey="gmail.hideUpgradeButton"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Extend dark theme"
-              description="Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
+              label={t({
+                message: "Extend dark theme",
+                comment: "Dark theme is Gmail's own theme of that name",
+              })}
+              description={t({
+                message:
+                  "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong.",
+                comment:
+                  "Dark theme is Gmail's own theme of that name, and dark the name of its setting, so both follow Gmail's words for them",
+              })}
               configKey="gmail.extendDarkTheme"
               restartRequired
               licenseKeyRequired
@@ -86,17 +146,21 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Compose</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Gmail page's section about writing emails">
+                Compose
+              </Trans>
+            </FieldLegend>
             <ConfigSwitchField
-              label="Always compose new emails in new window"
-              description="Open a new window to compose an email, instead of composing inside Gmail."
+              label={t`Always compose new emails in new window`}
+              description={t`Open a new window to compose an email, instead of composing inside Gmail.`}
               configKey="gmail.openComposeInNewWindow"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Close compose window after send"
-              description="Close the compose window after you send."
+              label={t`Close compose window after send`}
+              description={t`Close the compose window after you send.`}
               configKey="gmail.closeComposeWindowAfterSend"
               restartRequired
               licenseKeyRequired
@@ -104,38 +168,59 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Conversation</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Gmail page's section about reading an email conversation">
+                Conversation
+              </Trans>
+            </FieldLegend>
             <ConfigSwitchField
-              label="Reverse conversation"
-              description="Show email conversations in reverse order, with the latest message at the top."
+              label={t`Reverse conversation`}
+              description={t`Show email conversations in reverse order, with the latest message at the top.`}
               configKey="gmail.reverseConversation"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Move attachments to top"
-              description="Move email attachments to the top of the email."
+              label={t`Move attachments to top`}
+              description={t`Move email attachments to the top of the email.`}
               configKey="gmail.moveAttachmentsToTop"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Always show trimmed content"
-              description="Show the quoted text Gmail hides behind the ••• button."
+              label={t`Always show trimmed content`}
+              description={t({
+                message: "Show the quoted text Gmail hides behind the ••• button.",
+                comment:
+                  "••• is the label of Gmail's button that shows trimmed content, kept as is",
+              })}
               configKey="gmail.showTrimmedContent"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Load clipped messages in full"
-              description="Show the whole message when Gmail clips a long one, instead of a “View entire message” link."
+              label={t`Load clipped messages in full`}
+              description={t({
+                message:
+                  "Show the whole message when Gmail clips a long one, instead of a “View entire message” link.",
+                comment:
+                  "View entire message is the text of Gmail's own link under a clipped message, so it is written as Gmail writes it",
+              })}
               configKey="gmail.loadClippedMessages"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSwitchField
-              label="Always reply and forward in a pop-out"
-              description="Open replies and forwards in a pop-out instead of below the message."
+              label={t({
+                message: "Always reply and forward in a pop-out",
+                comment:
+                  "A pop-out is Gmail's own name for a reply in its own window, so it follows Gmail's word for it",
+              })}
+              description={t({
+                message: "Open replies and forwards in a pop-out instead of below the message.",
+                comment:
+                  "A pop-out is Gmail's own name for a reply in its own window, so it follows Gmail's word for it",
+              })}
               configKey="gmail.replyForwardInPopOut"
               restartRequired
               licenseKeyRequired
@@ -143,33 +228,53 @@ export function GmailSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Inbox</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Gmail page's section about Gmail's inbox; Inbox follows Gmail's word for it">
+                Inbox
+              </Trans>
+            </FieldLegend>
             <ConfigSwitchField
-              label="Hide inbox footer"
-              description="Hide the footer at the bottom of the inbox."
+              label={t`Hide inbox footer`}
+              description={t`Hide the footer at the bottom of the inbox.`}
               configKey="gmail.hideInboxFooter"
               restartRequired
             />
             <ConfigSwitchField
-              label="Show sender icons"
-              description="Show sender icons next to the senders in your inbox."
+              label={t`Show sender icons`}
+              description={t`Show sender icons next to the senders in your inbox.`}
               configKey="gmail.showSenderIcons"
               restartRequired
               licenseKeyRequired
             />
             <ConfigSelectField
               configKey="gmail.unreadCountPreference"
-              label="Unread count preference"
-              description="With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
-              items={unreadCountPreferenceItems}
+              label={t`Unread count preference`}
+              description={t({
+                message:
+                  "With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section.",
+                comment:
+                  "Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it",
+              })}
+              items={unreadCountPreferenceItems.map(({ value, label }) => ({
+                value,
+                label: t(label),
+              }))}
               licenseKeyRequired
               restartRequired
             />
             <ConfigSelectField
               configKey="gmail.inboxCategoriesToMonitor"
-              label="Categories to monitor"
-              description="With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-              items={inboxCategoriesToMonitorItems}
+              label={t`Categories to monitor`}
+              description={t({
+                message:
+                  "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox.",
+                comment:
+                  "A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them",
+              })}
+              items={inboxCategoriesToMonitorItems.map(({ value, label }) => ({
+                value,
+                label: t(label),
+              }))}
               licenseKeyRequired
               restartRequired
             />
@@ -177,23 +282,31 @@ export function GmailSettings() {
           <FieldSeparator />
           <FieldSet>
             <FieldLegend className="flex items-center gap-2">
-              Label colors
+              <Trans>Label colors</Trans>
               <LicenseKeyRequiredFieldBadge />
             </FieldLegend>
             <GmailLabelColors />
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Advanced</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Gmail page's section for settings most people leave alone">
+                Advanced
+              </Trans>
+            </FieldLegend>
             <Field>
               <FieldContent>
                 <FieldTitle>
-                  User styles
+                  <Trans comment="Setting for the user's own CSS, applied to Gmail">
+                    User styles
+                  </Trans>
                   <LicenseKeyRequiredFieldBadge />
                 </FieldTitle>
                 <FieldDescription>
-                  Add your own CSS to personalize the Gmail interface further. Changes take effect
-                  after a restart.
+                  <Trans>
+                    Add your own CSS to personalize the Gmail interface further. Changes take effect
+                    after a restart.
+                  </Trans>
                 </FieldDescription>
               </FieldContent>
               <div className="flex gap-2">
@@ -204,7 +317,9 @@ export function GmailSettings() {
                   }}
                   disabled={!isLicenseKeyValid}
                 >
-                  Open in editor
+                  <Trans comment="Button that opens the user styles file in the default text editor">
+                    Open in editor
+                  </Trans>
                 </Button>
                 <Button
                   variant="outline"
@@ -213,7 +328,9 @@ export function GmailSettings() {
                   }}
                   disabled={!isLicenseKeyValid}
                 >
-                  Open in folder
+                  <Trans comment="Button that shows the user styles file in its folder">
+                    Open in folder
+                  </Trans>
                 </Button>
               </div>
             </Field>
