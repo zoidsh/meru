@@ -1,5 +1,6 @@
 import type { LoginItemSettings } from "electron";
 import type { GmailAction, GmailInboxMessage } from "./gmail";
+import type { MacOSNotificationSound } from "./notification-sounds";
 import type {
   AccountConfig,
   AccountConfigInput,
@@ -116,7 +117,7 @@ export type Config = {
   "notifications.showSummary": boolean;
   "notifications.playSound": boolean;
   "notifications.allowFromWorkspaceApps": boolean;
-  "notifications.sound": "system" | NotificationSound;
+  "notifications.sound": "system" | NotificationSound | MacOSNotificationSound;
   "notifications.volume": number;
   "notifications.downloadCompleted": boolean;
   "notifications.onClickDownloadCompleted": "openFile" | "showInFolder";
@@ -241,6 +242,7 @@ export type IpcMainEvents =
       "app.openDefaultAppsSettings": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
       "notifications.showTestNotification": [];
+      "notifications.previewSound": [sound: MacOSNotificationSound];
       "tabs.selectTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.closeTab": [accountId: AccountConfig["id"], tabId: string];
       "tabs.moveTab": [accountId: AccountConfig["id"], tabId: string, targetSectionIndex: number];

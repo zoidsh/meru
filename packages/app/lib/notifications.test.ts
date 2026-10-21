@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { NotificationTime } from "@meru/shared/types";
-import { checkWithinNotificationTimes, shouldPlayNewEmailSound } from "./notifications";
+import type { Config, NotificationTime } from "@meru/shared/types";
+import {
+  checkWithinNotificationTimes,
+  createNewEmailSoundGate,
+  resolveNewEmailSound,
+  shouldPlayNewEmailSound,
+} from "./notifications";
 
 function makeTime(start: string, end: string, days?: number[]): NotificationTime {
   return {
@@ -142,5 +147,152 @@ describe("shouldPlayNewEmailSound", () => {
 
   test("a notification after 5 seconds of quiet plays a sound", () => {
     expect(soundsFor([0, 4000, 9000, 20000])).toEqual([true, false, true, true]);
+  });
+});
+
+describe("resolveNewEmailSound", () => {
+  const resolve = (
+    isMacOS: boolean,
+    isLicensed: boolean,
+    sound: Config["notifications.sound"],
+    playSound = true,
+  ) => resolveNewEmailSound({ isMacOS, isLicensed, sound, playSound });
+
+  describe("on macOS", () => {
+    test("a licensed user hears the built-in sound they picked, carried by the notification", () => {
+      expect(resolve(true, true, "Tink")).toEqual({ silent: false, sound: "Tink" });
+    });
+
+    test("a licensed user on System hears the macOS alert sound", () => {
+      expect(resolve(true, true, "system")).toEqual({ silent: false });
+    });
+
+    test("a stored bundled sound plays Blow", () => {
+      for (const sound of ["breeze", "chime", "duet", "knock", "linen"] as const) {
+        expect(resolve(true, true, sound)).toEqual({ silent: false, sound: "Blow" });
+      }
+    });
+
+    test("an unlicensed user always hears Blow", () => {
+      for (const sound of ["Tink", "system", "linen"] as const) {
+        expect(resolve(true, false, sound)).toEqual({ silent: false, sound: "Blow" });
+      }
+    });
+
+    test("nothing plays in the renderer", () => {
+      for (const isLicensed of [true, false]) {
+        for (const sound of ["Tink", "system", "linen"] as const) {
+          expect(resolve(true, isLicensed, sound).rendererSound).toBeUndefined();
+        }
+      }
+    });
+
+    test("a notification the gate or the setting quiets is silent", () => {
+      for (const isLicensed of [true, false]) {
+        for (const sound of ["Tink", "system", "linen"] as const) {
+          expect(resolve(true, isLicensed, sound, false)).toEqual({ silent: true });
+        }
+      }
+    });
+  });
+
+  describe("on Windows and Linux", () => {
+    test("a licensed user hears the bundled sound they picked, played by the renderer", () => {
+      expect(resolve(false, true, "chime")).toEqual({ silent: true, rendererSound: "chime" });
+    });
+
+    test("an unlicensed user hears Linen", () => {
+      expect(resolve(false, false, "chime")).toEqual({ silent: true, rendererSound: "linen" });
+    });
+
+    test("System plays the platform's sound for a licensed user only", () => {
+      expect(resolve(false, true, "system")).toEqual({ silent: false });
+      expect(resolve(false, false, "system")).toEqual({ silent: true });
+    });
+
+    test("a stored built-in macOS sound plays Linen", () => {
+      expect(resolve(false, true, "Tink")).toEqual({ silent: true, rendererSound: "linen" });
+    });
+
+    test("a notification the gate or the setting quiets is silent", () => {
+      expect(resolve(false, true, "chime", false)).toEqual({ silent: true });
+      expect(resolve(false, true, "system", false)).toEqual({ silent: true });
+      expect(resolve(false, false, "chime", false)).toEqual({ silent: true });
+    });
+  });
+});
+
+describe("createNewEmailSoundGate", () => {
+  function createGate(isMacOS: boolean) {
+    let time = 0;
+    let pendingTaskEnds: (() => void)[] = [];
+
+    const allowsSound = createNewEmailSoundGate({
+      isMacOS,
+      now: () => time,
+      afterTask: (callback) => pendingTaskEnds.push(callback),
+    });
+
+    return {
+      allowsSound,
+      /** Ends the current task, then moves the clock on. */
+      later(ms: number) {
+        const taskEnds = pendingTaskEnds;
+        pendingTaskEnds = [];
+        for (const taskEnd of taskEnds) {
+          taskEnd();
+        }
+        time += ms;
+      },
+    };
+  }
+
+  const postBatch = (allowsSound: () => boolean, count: number) =>
+    Array.from({ length: count }, () => allowsSound());
+
+  test("on macOS, every notification of the task that opened the sound carries it", () => {
+    const { allowsSound } = createGate(true);
+
+    expect(postBatch(allowsSound, 5)).toEqual([true, true, true, true, true]);
+  });
+
+  test("on macOS, a batch in a later task within 5 seconds is silent", () => {
+    const { allowsSound, later } = createGate(true);
+
+    postBatch(allowsSound, 2);
+    later(300);
+
+    expect(postBatch(allowsSound, 3)).toEqual([false, false, false]);
+  });
+
+  test("on macOS, notifications a second apart sound only the first", () => {
+    const { allowsSound, later } = createGate(true);
+    const sounds = [];
+
+    for (let i = 0; i < 5; i++) {
+      sounds.push(allowsSound());
+      later(1000);
+    }
+
+    expect(sounds).toEqual([true, false, false, false, false]);
+  });
+
+  test("on macOS, a batch after 5 seconds of quiet sounds again", () => {
+    const { allowsSound, later } = createGate(true);
+
+    postBatch(allowsSound, 2);
+    later(6000);
+
+    expect(postBatch(allowsSound, 2)).toEqual([true, true]);
+  });
+
+  test("on Windows and Linux, only the first notification of a batch sounds", () => {
+    const { allowsSound, later } = createGate(false);
+
+    expect(postBatch(allowsSound, 3)).toEqual([true, false, false]);
+
+    later(6000);
+
+    expect(allowsSound()).toBe(true);
   });
 });
