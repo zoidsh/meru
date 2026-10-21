@@ -119,7 +119,7 @@ msgstr "{target, select, window {Open {appLabel} Links in This Window} other {Op
 msgid "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
 msgstr "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
 
-#. Titlebar badge counting the days left in the Meru Pro trial, which can be a fraction such as 2.5
+#. Titlebar badge counting the whole days left in the Meru Pro trial
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
 msgstr "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"

@@ -139,13 +139,16 @@ function AppMenuButton({ className }: { className?: string }) {
 function Trial() {
   const { t } = useLingui();
 
-  const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+  const exactTrialDaysLeft = useTrialStore((state) => state.daysLeft);
 
   const isTrialExpired = useTrialStore((state) => state.expired);
 
-  if (!trialDaysLeft && !isTrialExpired) {
+  if (!exactTrialDaysLeft && !isTrialExpired) {
     return;
   }
+
+  // The API counts to a tenth of a day, which reads as noise in a badge.
+  const trialDaysLeft = Math.floor(exactTrialDaysLeft);
 
   return (
     <Badge
@@ -153,7 +156,7 @@ function Trial() {
       className={cn(
         "group relative h-7 border-yellow-600/60 text-yellow-600/60 transition draggable-none hover:border-transparent hover:bg-secondary hover:text-secondary-foreground",
         {
-          "border-red-600/60 text-red-600/60": isTrialExpired || trialDaysLeft <= 3,
+          "border-red-600/60 text-red-600/60": isTrialExpired || exactTrialDaysLeft <= 3,
         },
       )}
     >
@@ -170,8 +173,7 @@ function Trial() {
                     one: "Pro trial ends in # day",
                     other: "Pro trial ends in # days",
                   }),
-                  comment:
-                    "Titlebar badge counting the days left in the Meru Pro trial, which can be a fraction such as 2.5",
+                  comment: "Titlebar badge counting the whole days left in the Meru Pro trial",
                 })
               : t({
                   message: "Pro trial ends in less than a day",

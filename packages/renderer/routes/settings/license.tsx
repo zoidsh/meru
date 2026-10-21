@@ -169,7 +169,10 @@ function ActivateLicenseKeyButton() {
 export function LicenseSettings() {
   const { t } = useLingui();
 
-  const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+  const exactTrialDaysLeft = useTrialStore((state) => state.daysLeft);
+
+  // The API counts to a tenth of a day, which reads as noise in a sentence.
+  const trialDaysLeft = Math.floor(exactTrialDaysLeft);
 
   const isTrialExpired = useTrialStore((state) => state.expired);
 
@@ -355,7 +358,7 @@ export function LicenseSettings() {
       );
     }
 
-    if (trialDaysLeft || isTrialExpired) {
+    if (exactTrialDaysLeft || isTrialExpired) {
       return (
         <>
           <div className="mb-4 space-y-2 text-sm">
