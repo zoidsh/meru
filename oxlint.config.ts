@@ -36,6 +36,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/components/loading-spinner.tsx",
   "packages/renderer/components/maturity-field-badge.tsx",
   "packages/renderer/components/settings-dialog-content.tsx",
+  "packages/renderer/lib/extension-descriptions.ts",
   "packages/renderer/lib/notifications/index.ts",
   "packages/renderer/lib/settings-pages.ts",
   "packages/renderer/lib/toast.ts",

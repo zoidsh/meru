@@ -1,8 +1,6 @@
-import type { MessageDescriptor } from "@lingui/core";
-import { msg, plural } from "@lingui/core/macro";
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import {
-  BITWARDEN_EXTENSION_ID,
   type CuratedExtension,
   curatedExtensions,
   getConflictingExtensionIds,
@@ -67,6 +65,7 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 import { MaturityFieldBadge } from "@/components/maturity-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
 import { SettingsDialogContent } from "@/components/settings-dialog-content";
+import { extensionDescriptions } from "@/lib/extension-descriptions";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient, useConfig, useConfigMutation } from "@/lib/react-query";
 import { settingsPageLabels } from "@/lib/settings-pages";
@@ -81,17 +80,6 @@ const installedExtensionsQueryKey = ["installed-extensions"];
  * second item turned on meanwhile would install without asking.
  */
 const extensionToggleMutationKey = ["extension-toggle"];
-
-/**
- * Translated here rather than in `@meru/shared/extensions`, which end-to-end
- * tests and the download script import without the Lingui transform.
- */
-// lingui-set comment="Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language"
-const extensionDescriptions: Record<string, MessageDescriptor> = {
-  [ONEPASSWORD_EXTENSION_ID]: msg`Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru.`,
-  [BITWARDEN_EXTENSION_ID]: msg`Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app.`,
-};
-// lingui-reset
 
 const ONEPASSWORD_ALLOWED_BROWSERS_COMMAND = "sudo nano /etc/1password/custom_allowed_browsers";
 

@@ -1088,12 +1088,12 @@ msgid "Filling passwords and passkeys needs the 1Password desktop app, because M
 msgstr "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
 
 #. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
-#: packages/renderer/routes/settings/extensions.tsx
+#: packages/renderer/lib/extension-descriptions.ts
 msgid "Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru."
 msgstr "Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru."
 
 #. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
-#: packages/renderer/routes/settings/extensions.tsx
+#: packages/renderer/lib/extension-descriptions.ts
 msgid "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
 msgstr "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
 
