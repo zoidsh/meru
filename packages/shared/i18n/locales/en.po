@@ -34,6 +34,16 @@ msgstr "{downloadNotificationAction, select, click {On click} other {Button}}"
 msgid "{EXAMPLE_HEX_COLOR} or {EXAMPLE_RGB_COLOR}"
 msgstr "{EXAMPLE_HEX_COLOR} or {EXAMPLE_RGB_COLOR}"
 
+#. extensionName is a password manager extension's name
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
+msgstr "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
+
+#. Title of the dialog when more than one extension failed to update
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{failedCount, plural, one {Couldn't update # extension} other {Couldn't update # extensions}}"
+msgstr "{failedCount, plural, one {Couldn't update # extension} other {Couldn't update # extensions}}"
+
 #. name is the name of a browser extension, such as Bitwarden
 #: packages/app/lib/extension-window.ts
 msgid "{name} is running, but Meru can't open a window for it."
@@ -44,15 +54,35 @@ msgstr "{name} is running, but Meru can't open a window for it."
 msgid "{name} is still on."
 msgstr "{name} is still on."
 
+#. name is an extension's name
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{name} is up to date"
+msgstr "{name} is up to date"
+
 #. name is the name of a browser extension, such as Bitwarden
 #: packages/app/lib/extension-window.ts
 msgid "{name} starts after Meru restarts. Restart Meru, then try again."
 msgstr "{name} starts after Meru restarts. Restart Meru, then try again."
 
+#. name is an extension's name
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{name} updated to {version}"
+msgstr "{name} updated to {version}"
+
+#. name is an extension's name; reason is the technical reason, left untranslated
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{name}: {reason}"
+msgstr "{name}: {reason}"
+
 #. The first form is shown on Windows, the other on macOS
 #: packages/app/workspace-app.ts
 msgid "{platformName, select, windows {Continue with Windows Hello if you've created a passkey in Meru. Passkeys from Chrome, Google Password Manager, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.} other {Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.}}"
 msgstr "{platformName, select, windows {Continue with Windows Hello if you've created a passkey in Meru. Passkeys from Chrome, Google Password Manager, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.} other {Continue with Touch ID if you've created a passkey in Meru. Passkeys from Chrome, iCloud, or your phone don't work here — sign in with your password or another second factor, then create a passkey for Meru in your Google account's security settings.}}"
+
+#. The Excluded apps field once more than three apps are excluded: the names of the first three, then how many more are excluded
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "{remainingExcludedAppCount, plural, one {{visibleExcludedApps} +# excluded} other {{visibleExcludedApps} +# excluded}}"
+msgstr "{remainingExcludedAppCount, plural, one {{visibleExcludedApps} +# excluded} other {{visibleExcludedApps} +# excluded}}"
 
 #. Spellchecker languages chosen beyond the system language, counted once there are more than two to name
 #: packages/renderer/routes/settings/languages.tsx
@@ -83,6 +113,16 @@ msgstr "{target, select, window {Open {appLabel} Links in This Window} other {Op
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
 msgstr "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
+
+#. The days left in the Meru Pro trial, on the License page in Settings
+#: packages/renderer/routes/settings/license.tsx
+msgid "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day left.} other {You're using a Meru Pro trial with # days left.}}"
+msgstr "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day left.} other {You're using a Meru Pro trial with # days left.}}"
+
+#. Dialog asking to confirm switching the Workspace apps Mode setting to New windows, which says more when Workspace app tabs are open, when pinned apps load on launch, or both
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
+msgstr "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -203,6 +243,16 @@ msgstr "About Meru"
 msgid "Accounts"
 msgstr "Accounts"
 
+#. Button that activates the license key entered in the dialog
+#. Button that opens the dialog for activating a license key
+#: packages/renderer/routes/settings/license.tsx
+msgid "Activate"
+msgstr "Activate"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Activate license key"
+msgstr "Activate license key"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Actual Size"
@@ -211,13 +261,33 @@ msgstr "Actual Size"
 #. Button that adds the account in the dialog
 #. Button that adds the label color in the dialog
 #. Button that adds the saved search in the dialog
+#. Button that adds the site entered in the field
 #. Button that opens the dialog for adding a saved search
 #. Button that opens the dialog for adding an account
 #: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/extensions.tsx
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Add"
 msgstr "Add"
+
+#. Screen reader label of the button that puts a Workspace app in the launcher; label is the app's name
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Add {label} to launcher"
+msgstr "Add {label} to launcher"
+
+#. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
+msgstr "Add <0>{allowlistEntry}</0> on its own line, then save."
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
+msgstr "Add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
+msgstr "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Add account"
@@ -231,9 +301,18 @@ msgstr "Add label color"
 msgid "Add saved search"
 msgstr "Add saved search"
 
+#. Button that opens the dialog of the sites the extension runs on
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add sites"
+msgstr "Add sites"
+
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Add time window"
 msgstr "Add time window"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Add Workspace apps to the launcher on the right of the titlebar."
+msgstr "Add Workspace apps to the launcher on the right of the titlebar."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
@@ -329,6 +408,11 @@ msgstr "Auto"
 msgid "Automatic"
 msgstr "Automatic"
 
+#. Heading of the Workspace apps that can be added to the launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Available"
+msgstr "Available"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Back"
@@ -409,7 +493,9 @@ msgstr "C&opy Image Address"
 #: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
 #: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/extensions.tsx
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/license.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -417,6 +503,15 @@ msgstr "Cancel"
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Categories to monitor"
 msgstr "Categories to monitor"
+
+#. Menu item that opens the dialog for changing the license key
+#: packages/renderer/routes/settings/license.tsx
+msgid "Change"
+msgstr "Change"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Change license key"
+msgstr "Change license key"
 
 #. Button that picks another folder for downloads
 #: packages/renderer/routes/settings/downloads.tsx
@@ -445,6 +540,16 @@ msgstr "Chime"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Choose Meru as the default mail client in Windows Settings."
 msgstr "Choose Meru as the default mail client in Windows Settings."
+
+#. installFolder is the folder Meru is installed in on Windows, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Choose Meru in <0>{installFolder}</0>."
+msgstr "Choose Meru in <0>{installFolder}</0>."
+
+#. Applications is the macOS folder, so use the name the Finder shows in that language
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Choose Meru in the Applications folder."
+msgstr "Choose Meru in the Applications folder."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Choose the color of the system tray icon."
@@ -530,6 +635,11 @@ msgstr "Close unified inbox"
 msgid "Close Window"
 msgstr "Close Window"
 
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Cmd"
+msgstr "Cmd"
+
 #. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
 #: packages/shared/workspace-apps.ts
 msgid "Collapsed"
@@ -555,6 +665,10 @@ msgstr "Compose"
 msgid "Confirm external links before opening"
 msgstr "Confirm external links before opening"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Connect 1Password"
+msgstr "Connect 1Password"
+
 #: packages/app/trial.ts
 msgid "Continue with the free version"
 msgstr "Continue with the free version"
@@ -575,8 +689,10 @@ msgstr "Copied verification code {verificationCode}"
 
 #. A menu or a menu item in Meru's menu bar
 #. Button on a notification that copies the verification code
+#. Menu item that copies the license key
 #: packages/app/gmail/index.ts
 #: packages/app/menu.ts
+#: packages/renderer/routes/settings/license.tsx
 msgid "Copy"
 msgstr "Copy"
 
@@ -623,6 +739,10 @@ msgstr "Couldn't activate the license key."
 msgid "Couldn't export the logs."
 msgstr "Couldn't export the logs."
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't install {extensionName}"
+msgstr "Couldn't install {extensionName}"
+
 #. errorMessage is the technical reason, left untranslated
 #: packages/app/lib/extension-swap.ts
 msgid "Couldn't install the extension: {errorMessage}"
@@ -632,15 +752,32 @@ msgstr "Couldn't install the extension: {errorMessage}"
 msgid "Couldn't load what's new"
 msgstr "Couldn't load what's new"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't open {extensionName}"
+msgstr "Couldn't open {extensionName}"
+
 #. conflictName is an extension's name; errorMessage is the technical reason, left untranslated
 #: packages/app/lib/extension-swap.ts
 msgid "Couldn't turn off {conflictName}: {errorMessage}"
 msgstr "Couldn't turn off {conflictName}: {errorMessage}"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't uninstall {extensionName}"
+msgstr "Couldn't uninstall {extensionName}"
+
 #. errorMessage is the technical reason, left untranslated
 #: packages/app/ipc.ts
 msgid "Couldn't uninstall the extension: {errorMessage}"
 msgstr "Couldn't uninstall the extension: {errorMessage}"
+
+#. failedName is an extension's name, shown when only that one failed to update
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't update {failedName}"
+msgstr "Couldn't update {failedName}"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't update extensions"
+msgstr "Couldn't update extensions"
 
 #: packages/app/license-key.ts
 msgid "Couldn't validate the license key."
@@ -649,6 +786,11 @@ msgstr "Couldn't validate the license key."
 #: packages/app/trial.ts
 msgid "Couldn't validate your Meru Pro trial."
 msgstr "Couldn't validate your Meru Pro trial."
+
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Ctrl"
+msgstr "Ctrl"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -721,6 +863,11 @@ msgstr "Developer Tools"
 msgid "Device ID"
 msgstr "Device ID"
 
+#. Field for the name this computer goes by among the devices using the license key
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Device label"
+
 #. Do Not Disturb menu item that turns Do Not Disturb off
 #: packages/app/ipc.ts
 msgid "Disable"
@@ -752,6 +899,11 @@ msgstr "Dock icon"
 msgid "Don't show again"
 msgstr "Don't show again"
 
+#. Button that closes the dialog of an extension's sites
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Done"
+msgstr "Done"
+
 #: packages/app/downloads.ts
 msgid "Downloaded {fileName}"
 msgstr "Downloaded {fileName}"
@@ -767,6 +919,7 @@ msgstr "Downloads"
 
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Drag {label} to reorder"
 msgstr "Drag {label} to reorder"
 
@@ -820,6 +973,10 @@ msgstr "Enable blocker"
 msgid "Enable dock icon"
 msgstr "Enable dock icon"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Enable extensions"
+msgstr "Enable extensions"
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Enable menu bar icon"
 msgstr "Enable menu bar icon"
@@ -836,6 +993,10 @@ msgstr "Enable unified inbox"
 msgid "Enter a color"
 msgstr "Enter a color"
 
+#: packages/renderer/routes/settings/license.tsx
+msgid "Enter a device label"
+msgstr "Enter a device label"
+
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Enter a label"
@@ -848,6 +1009,19 @@ msgstr "Enter a search query"
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a valid hex, rgb, or rgba color"
 msgstr "Enter a valid hex, rgb, or rgba color"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Enter a website address, like {exampleSite}."
+msgstr "Enter a website address, like {exampleSite}."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Enter the license key sent to your email address after your purchase."
+msgstr "Enter the license key sent to your email address after your purchase."
+
+#. Setting that picks the Workspace apps that open in the external browser
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Excluded apps"
+msgstr "Excluded apps"
 
 #. Tray menu item that quits Meru, as Windows names it
 #: packages/app/tray.ts
@@ -887,15 +1061,41 @@ msgstr "Extend dark theme"
 msgid "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
 msgstr "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extension support is still being tested and may not work as reliably as the rest of Meru. To help make it stable, report any issues."
+msgstr "Extension support is still being tested and may not work as reliably as the rest of Meru. To help make it stable, report any issues."
+
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "Extensions"
 msgstr "Extensions"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn one on below and Meru installs the official version from the Chrome Web Store. Extensions start after a restart, and every account shares one copy, so you sign in to an extension once."
+msgstr "Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn one on below and Meru installs the official version from the Chrome Web Store. Extensions start after a restart, and every account shares one copy, so you sign in to an extension once."
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions are in testing"
+msgstr "Extensions are in testing"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "File"
 msgstr "File"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
+msgstr "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
+
+#. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
+#: packages/renderer/lib/extension-descriptions.ts
+msgid "Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru."
+msgstr "Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru."
+
+#. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
+#: packages/renderer/lib/extension-descriptions.ts
+msgid "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
+msgstr "Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -964,6 +1164,14 @@ msgstr "Hardware acceleration"
 msgid "Help"
 msgstr "Help"
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate after"
+msgstr "Hibernate after"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Hibernate idle tabs"
+
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Hibernate When Idle"
@@ -986,6 +1194,10 @@ msgstr "Hide Gmail logo"
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Hide inbox footer"
 msgstr "Hide inbox footer"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Hide license key"
+msgstr "Hide license key"
 
 #. Tray menu item that hides Meru's window
 #: packages/app/tray.ts
@@ -1038,6 +1250,25 @@ msgstr "Hide upgrade button"
 msgid "History"
 msgstr "History"
 
+#. Auto, Collapsed and Expanded quote this setting's options, so they match those options' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
+msgstr "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
+msgstr "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
+
+#. Auto quotes this setting's option and Reset Width the sidebar's context menu item, so they match those messages' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
+msgstr "How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
+
+#. Tabs and New windows quote this setting's options, so they match those options' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "How Workspace apps open. Tabs, the default, opens them in the main window. New windows gives each one its own window with no tab strip. In Tabs, hold <0>{backgroundTabKey}</0> to open a background tab or <1>{newWindowKey}</1> to open a new window."
+msgstr "How Workspace apps open. Tabs, the default, opens them in the main window. New windows gives each one its own window with no tab strip. In Tabs, hold <0>{backgroundTabKey}</0> to open a background tab or <1>{newWindowKey}</1> to open a new window."
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "I&nspect Element"
@@ -1047,6 +1278,11 @@ msgstr "I&nspect Element"
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Important only"
 msgstr "Important only"
+
+#. Heading of the Workspace apps already in the launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "In launcher"
 
 #. Heading of the Gmail page's section about Gmail's inbox; Inbox follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -1072,6 +1308,11 @@ msgstr "Indigo"
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
 msgstr "Inspect Element"
+
+#. Screen reader label of the switch that installs the extension
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Install {extensionName}"
+msgstr "Install {extensionName}"
 
 #. Name of a notification sound, picked in Settings
 #: packages/renderer/lib/notifications/index.ts
@@ -1108,9 +1349,11 @@ msgstr "Languages"
 #. Button on the toast after a setting changes, which dismisses it and leaves the restart for later
 #. Dialog button that puts off restarting Meru
 #. Dialog button that puts off restarting Meru
+#. Dialog button that puts off restarting Meru
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
 #: packages/renderer/lib/toast.ts
+#: packages/renderer/routes/settings/extensions.tsx
 msgid "Later"
 msgstr "Later"
 
@@ -1122,10 +1365,28 @@ msgstr "Launch at login"
 msgid "Launch minimized"
 msgstr "Launch minimized"
 
+#. Heading of the settings for the Workspace apps launcher and the bookmarks button
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Launcher and bookmarks"
+msgstr "Launcher and bookmarks"
+
+#. Setting that picks the Workspace apps in the launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Launcher apps"
+msgstr "Launcher apps"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Launcher display"
+msgstr "Launcher display"
+
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "License"
 msgstr "License"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "License key"
+msgstr "License key"
 
 #: packages/app/license-key.ts
 msgid "License key activated."
@@ -1147,6 +1408,14 @@ msgstr "Lime"
 msgid "Linen"
 msgstr "Linen"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Linux has no system passkey support, so a password manager extension is the only way to sign in to Google with a passkey in Meru."
+msgstr "Linux has no system passkey support, so a password manager extension is the only way to sign in to Google with a passkey in Meru."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "List Workspace apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
+msgstr "List Workspace apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
+
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Load clipped messages in full"
 msgstr "Load clipped messages in full"
@@ -1155,6 +1424,11 @@ msgstr "Load clipped messages in full"
 #: packages/app/ipc.ts
 msgid "Load on Launch"
 msgstr "Load on Launch"
+
+#. Screen reader label of a spinner shown while something loads
+#: packages/renderer/components/loading-spinner.tsx
+msgid "Loading"
+msgstr "Loading"
 
 #. Heading of the About Meru section for exporting the application's logs
 #: packages/renderer/routes/settings/about.tsx
@@ -1188,6 +1462,10 @@ msgstr "Mark email as read after copying"
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "Mark the email as read once its verification code has been copied."
 msgstr "Mark the email as read once its verification code has been copied."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Mark the tab that opens all of an app's links, set from the tab's context menu. With this off, the tab still takes the links, and its tooltip still says so."
+msgstr "Mark the tab that opens all of an app's links, set from the tab's context menu. With this off, the tab still takes the links, and its tooltip still says so."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
@@ -1282,6 +1560,10 @@ msgstr "Meru Pro is required to sign in with Touch ID."
 msgid "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
 msgstr "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Meru Pro lets you add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
+msgstr "Meru Pro lets you add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
+
 #. Badge beside a setting that needs a Meru Pro license
 #: packages/renderer/components/license-key-required-field-badge.tsx
 msgid "Meru Pro required"
@@ -1305,6 +1587,16 @@ msgstr "Minimize"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Miscellaneous"
 msgstr "Miscellaneous"
+
+#. Setting for whether Workspace apps open as tabs or in windows of their own
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Mode"
+msgstr "Mode"
+
+#. Button that opens a menu of actions for the license key
+#: packages/renderer/routes/settings/license.tsx
+msgid "More options"
+msgstr "More options"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Move attachments to top"
@@ -1363,6 +1655,11 @@ msgstr "New windows"
 msgid "No additional languages selected"
 msgstr "No additional languages selected"
 
+#. Available quotes the heading of the apps that can be added, so it matches that heading's wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "No apps in the launcher yet. Add one from Available."
+msgstr "No apps in the launcher yet. Add one from Available."
+
 #: packages/renderer/components/emoji-picker-button.tsx
 msgid "No emoji found."
 msgstr "No emoji found."
@@ -1381,8 +1678,10 @@ msgstr "No Guesses Found"
 msgid "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
 msgstr "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
 
+#. The Excluded apps field when no Workspace app is excluded
 #. The account's color when no color is picked
 #: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "None"
 msgstr "None"
 
@@ -1417,8 +1716,14 @@ msgstr "Notify when updates are available"
 
 #: packages/app/dialogs.ts
 #: packages/app/workspace-app.ts
+#: packages/renderer/routes/settings/extensions.tsx
 msgid "OK"
 msgstr "OK"
+
+#. Both are password manager extensions
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Only one password manager can be on at a time. Turning on {extensionName} turns off {replacedExtensionName} in Meru and signs you out of it here. Your passwords stay in your {replacedExtensionName} account."
+msgstr "Only one password manager can be on at a time. Turning on {extensionName} turns off {replacedExtensionName} in Meru and signs you out of it here. Your passwords stay in your {replacedExtensionName} account."
 
 #: packages/app/workspace-app.ts
 msgid "Only passkeys created in Meru work here."
@@ -1436,9 +1741,22 @@ msgstr "Only when you ask"
 msgid "Open"
 msgstr "Open"
 
+#. Button that opens the extension's own window, to sign in to it
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Open {extensionName}"
+msgstr "Open {extensionName}"
+
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Open a new window to compose an email, instead of composing inside Gmail."
 msgstr "Open a new window to compose an email, instead of composing inside Gmail."
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Open and unlock 1Password again."
+msgstr "Open and unlock 1Password again."
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Open and unlock 1Password."
+msgstr "Open and unlock 1Password."
 
 #. Option of what a finished download's notification does
 #: packages/renderer/routes/settings/notifications.tsx
@@ -1448,6 +1766,10 @@ msgstr "Open file"
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open folder when done"
 msgstr "Open folder when done"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Open in app"
+msgstr "Open in app"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/context-menu.ts
@@ -1483,6 +1805,10 @@ msgstr "Open Meru Portal"
 msgid "Open replies and forwards in a pop-out instead of below the message."
 msgstr "Open replies and forwards in a pop-out instead of below the message."
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Open the browser allowlist in an editor with root permissions."
+msgstr "Open the browser allowlist in an editor with root permissions."
+
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open the folder containing the file when a download finishes."
 msgstr "Open the folder containing the file when a download finishes."
@@ -1495,6 +1821,10 @@ msgstr "Open this link in your default browser?"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Windows Settings"
 msgstr "Open Windows Settings"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Open Workspace apps in the app instead of the external browser."
+msgstr "Open Workspace apps in the app instead of the external browser."
 
 #: packages/renderer/routes/settings/about.tsx
 msgid "Operating system"
@@ -1514,6 +1844,15 @@ msgstr "Orange"
 msgid "Passkey sign-in isn't supported on this platform yet."
 msgstr "Passkey sign-in isn't supported on this platform yet."
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Passkeys need a password manager"
+msgstr "Passkeys need a password manager"
+
+#. Heading of the password manager extensions
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Password managers"
+msgstr "Password managers"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Paste"
@@ -1524,6 +1863,10 @@ msgstr "Paste"
 #: packages/app/menu.ts
 msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Persist zoom"
+msgstr "Persist zoom"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -1548,6 +1891,11 @@ msgstr "Pin"
 #: packages/shared/accounts.ts
 msgid "Pink"
 msgstr "Pink"
+
+#. Setting for where the Workspace apps launcher and the bookmarks button sit
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Placement"
+msgstr "Placement"
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Play a sound when showing a notification."
@@ -1593,6 +1941,10 @@ msgstr "Quit"
 msgid "Quit {appName}"
 msgstr "Quit {appName}"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Quit 1Password."
+msgstr "Quit 1Password."
+
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Receive notifications when updates are available."
 msgstr "Receive notifications when updates are available."
@@ -1617,14 +1969,30 @@ msgstr "Release channel"
 msgid "Reload"
 msgstr "Reload"
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
+msgstr "Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
+
 #. Button that removes a host from the trusted hosts
+#. Button that removes a site from the extension's sites
+#: packages/renderer/routes/settings/extensions.tsx
 #: packages/renderer/routes/settings/phishing-protection.tsx
 msgid "Remove"
 msgstr "Remove"
 
+#. Screen reader label of the button that takes a Workspace app out of the launcher; label is the app's name
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Remove {label} from launcher"
+msgstr "Remove {label} from launcher"
+
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
 msgstr "Remove {label}?"
+
+#. Screen reader label of the button that removes a site; site is its address
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Remove {site}"
+msgstr "Remove {site}"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove account"
@@ -1653,6 +2021,16 @@ msgstr "Render with the GPU. This can improve performance, and can also cause co
 #: packages/app/menu.ts
 msgid "Reopen Closed Tab"
 msgstr "Reopen Closed Tab"
+
+#. Button that turns on a password manager extension in place of the one that is on
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Replace"
+msgstr "Replace"
+
+#. Both are password manager extensions
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Replace {replacedExtensionName} with {extensionName}?"
+msgstr "Replace {replacedExtensionName} with {extensionName}?"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1688,10 +2066,12 @@ msgstr "Reset Width"
 #. Dialog button that restarts Meru
 #. Dialog button that restarts Meru
 #. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
 #: packages/app/dialogs.ts
 #: packages/app/license-key.ts
 #: packages/app/trial.ts
 #: packages/renderer/lib/toast.ts
+#: packages/renderer/routes/settings/extensions.tsx
 msgid "Restart"
 msgstr "Restart"
 
@@ -1712,6 +2092,10 @@ msgstr "Restart Meru to try again, or contact support. A VPN or a firewall can b
 "\n"
 "{errorMessage} ({errorCause})"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Restart Meru."
+msgstr "Restart Meru."
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Restrict minimum window size"
 msgstr "Restrict minimum window size"
@@ -1720,16 +2104,22 @@ msgstr "Restrict minimum window size"
 msgid "Reverse conversation"
 msgstr "Reverse conversation"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Run the installed extensions. Turning this off stops them without uninstalling them."
+msgstr "Run the installed extensions. Turning this off stops them without uninstalling them."
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Sa&ve Image As…"
 msgstr "Sa&ve Image As…"
 
 #. Button that saves the account's changes in the dialog
+#. Button that saves the device label
 #. Button that saves the label color's changes in the dialog
 #. Button that saves the saved search's changes in the dialog
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/license.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Save"
 msgstr "Save"
@@ -1792,6 +2182,11 @@ msgstr "Select All"
 msgid "Select an emoji…"
 msgstr "Select an emoji…"
 
+#. Browser and Add Browser are in 1Password's settings, so use the words 1Password shows in that language
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Select Browser, then select Add Browser."
+msgstr "Select Browser, then select Add Browser."
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Select first unread account on click"
 msgstr "Select first unread account on click"
@@ -1824,6 +2219,15 @@ msgstr "Select the application theme."
 msgid "Select the sound to play for notifications."
 msgstr "Select the sound to play for notifications."
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Select the Workspace apps that open in the external browser instead of the app."
+msgstr "Select the Workspace apps that open in the external browser instead of the app."
+
+#. Settings is the item in the 1Password app, so use the word 1Password shows in that language
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Select your account at the top of the sidebar, then select Settings."
+msgstr "Select your account at the top of the sidebar, then select Settings."
+
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
 msgid "Selected tabs"
@@ -1850,6 +2254,11 @@ msgstr "Set the time windows when notifications are active. Outside them, notifi
 msgid "Set the volume level for notification sounds."
 msgstr "Set the volume level for notification sounds."
 
+#. Button that opens the steps for connecting the extension to the 1Password desktop app
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Set up desktop app"
+msgstr "Set up desktop app"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Settings"
@@ -1861,6 +2270,11 @@ msgstr "Settings"
 #: packages/app/menu.ts
 msgid "Share"
 msgstr "Share"
+
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Shift"
+msgstr "Shift"
 
 #. Option of the Window controls setting: whether the titlebar shows the close, minimize and maximize buttons
 #: packages/renderer/routes/settings/appearance.tsx
@@ -1892,6 +2306,14 @@ msgstr "Show an unread badge on the dock icon when there are unread emails."
 msgid "Show an unread count next to the menu bar icon when there are unread emails."
 msgstr "Show an unread count next to the menu bar icon when there are unread emails."
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show app links badge"
+msgstr "Show app links badge"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show bookmarks button"
+msgstr "Show bookmarks button"
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show Do Not Disturb button"
 msgstr "Show Do Not Disturb button"
@@ -1899,6 +2321,10 @@ msgstr "Show Do Not Disturb button"
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show email conversations in reverse order, with the latest message at the top."
 msgstr "Show email conversations in reverse order, with the latest message at the top."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show Gmail unread badge"
+msgstr "Show Gmail unread badge"
 
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
@@ -1919,6 +2345,10 @@ msgstr "Show in folder"
 #: packages/app/downloads.ts
 msgid "Show in your file manager"
 msgstr "Show in your file manager"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Show license key"
+msgstr "Show license key"
 
 #. Tray menu item that brings Meru's window back
 #: packages/app/tray.ts
@@ -1989,6 +2419,15 @@ msgstr "Show the application icon in the menu bar."
 msgid "Show the application icon in the system tray."
 msgstr "Show the application icon in the system tray."
 
+#. Reset Width quotes the sidebar's context menu item and Width the setting above, so they match those messages' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
+msgstr "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show the button that opens bookmarks."
+msgstr "Show the button that opens bookmarks."
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show the button that turns Do Not Disturb on and off. Turning this off also turns Do Not Disturb off."
 msgstr "Show the button that turns Do Not Disturb on and off. Turning this off also turns Do Not Disturb off."
@@ -2002,6 +2441,11 @@ msgstr "Show the close, minimize and maximize buttons in the titlebar. Automatic
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show the quoted text Gmail hides behind the ••• button."
 msgstr "Show the quoted text Gmail hides behind the ••• button."
+
+#. When another tab is active quotes this setting's option, so it matches that option's wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show the unread count on the Gmail tab. When another tab is active hides it while Gmail is in front, where the inbox already shows it. Accounts that need attention are still flagged whichever you pick."
+msgstr "Show the unread count on the Gmail tab. When another tab is active hides it while Gmail is in front, where the inbox already shows it. Accounts that need attention are still flagged whichever you pick."
 
 #. View entire message is the text of Gmail's own link under a clipped message, so it is written as Gmail writes it
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -2024,10 +2468,26 @@ msgstr "Show unread badges, following each account's own setting."
 msgid "Show unread count"
 msgstr "Show unread count"
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show width button"
+msgstr "Show width button"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show windows"
+msgstr "Show windows"
+
 #. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
 #: packages/shared/workspace-apps.ts
 msgid "Sidebar"
 msgstr "Sidebar"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Sign in to Google with a passkey and Touch ID"
+msgstr "Sign in to Google with a passkey and Touch ID"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Sign in to Google with a passkey and Windows Hello"
+msgstr "Sign in to Google with a passkey and Windows Hello"
 
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
@@ -2036,6 +2496,16 @@ msgstr "Sign in with your password or another available second factor. If the ac
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
 msgstr "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
+
+#. Screen reader label of the field for the address of a site to add
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Site to add"
+msgstr "Site to add"
+
+#. extensionName is a password manager extension's name
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Sites for {extensionName}"
+msgstr "Sites for {extensionName}"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -2108,6 +2578,16 @@ msgstr "Swipe left or right with two fingers on a trackpad to go back or forward
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Switch to beta"
 msgstr "Switch to beta"
+
+#. Button that confirms switching the Mode setting to its New windows option, matching that option's wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Switch to New windows"
+msgstr "Switch to New windows"
+
+#. New windows quotes the Mode setting's option, so it matches that option's wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Switch to New windows?"
+msgstr "Switch to New windows?"
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Switch to the beta channel?"
@@ -2261,6 +2741,10 @@ msgstr "Try again, or contact support. A VPN or a firewall can block the connect
 "\n"
 "{errorMessage} ({errorCause})"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Try updating again."
+msgstr "Try updating again."
+
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Turn off Do Not Disturb to show a test notification."
 msgstr "Turn off Do Not Disturb to show a test notification."
@@ -2281,6 +2765,15 @@ msgstr "Unified inbox"
 #: packages/app/menu.ts
 msgid "Unified Inbox"
 msgstr "Unified Inbox"
+
+#. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Unpinned tabs leaves your pinned tabs loaded, and Selected tabs hibernates nothing until you mark a tab. Whichever you pick, a single tab can opt in or out with Hibernate When Idle in its context menu."
+msgstr "Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Unpinned tabs leaves your pinned tabs loaded, and Selected tabs hibernates nothing until you mark a tab. Whichever you pick, a single tab can opt in or out with Hibernate When Idle in its context menu."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Unlock Meru Pro for professional features and commercial use. Your upgrade supports ongoing development."
+msgstr "Unlock Meru Pro for professional features and commercial use. Your upgrade supports ongoing development."
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -2306,6 +2799,10 @@ msgstr "Unread count preference"
 msgid "Until Tomorrow"
 msgstr "Until Tomorrow"
 
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Update extensions"
+msgstr "Update extensions"
+
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "Updates"
@@ -2315,8 +2812,11 @@ msgstr "Updates"
 msgid "Updates need macOS 13 or later, so Meru won't check for them on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
 msgstr "Updates need macOS 13 or later, so Meru won't check for them on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
 
+#. Button on the License page in Settings, which opens Meru Pro's pricing page
+#. Button on the License page in Settings, which opens Meru Pro's pricing page
 #. Button on the banner at the top of a Settings page, which opens Meru Pro's pricing page
 #: packages/renderer/components/license-key-required-banner.tsx
+#: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
 
@@ -2325,6 +2825,10 @@ msgstr "Upgrade"
 #: packages/app/workspace-app.ts
 msgid "Upgrade to Meru Pro"
 msgstr "Upgrade to Meru Pro"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
+msgstr "Upgrade to Meru Pro before your trial ends to keep using all features."
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Upgrade to Meru Pro to add more accounts"
@@ -2337,6 +2841,10 @@ msgstr "Upgrade to Meru Pro to add saved searches"
 #: packages/app/trial.ts
 msgid "Upgrade to Meru Pro to keep every feature, or continue with the free version."
 msgstr "Upgrade to Meru Pro to keep every feature, or continue with the free version."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro to keep using all features."
+msgstr "Upgrade to Meru Pro to keep using all features."
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade to Meru Pro to unlock all options"
@@ -2368,6 +2876,16 @@ msgstr "Verification code {verificationCode}"
 #: packages/renderer/lib/settings-pages.ts
 msgid "Verification codes"
 msgstr "Verification codes"
+
+#. Badge with the installed version of the extension
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Version {installedVersion}"
+msgstr "Version {installedVersion}"
+
+#. Heading of the settings for the vertical tabs sidebar
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Vertical tabs"
+msgstr "Vertical tabs"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2417,6 +2935,11 @@ msgstr "When to copy"
 msgid "Where downloaded files are saved."
 msgstr "Where downloaded files are saved."
 
+#. Auto, Sidebar and Titlebar quote this setting's options, so they match those options' wording
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
+msgstr "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
+
 #: packages/app/protocol/index.ts
 msgid "Which account should compose this email?"
 msgstr "Which account should compose this email?"
@@ -2434,6 +2957,11 @@ msgstr "White"
 #: packages/shared/tabs.ts
 msgid "Wide"
 msgstr "Wide"
+
+#. Setting for how wide the vertical tabs sidebar is
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Width"
+msgstr "Width"
 
 #. A menu or a menu item in Meru's menu bar
 #. Heading of the Appearance section about Meru's window
@@ -2480,9 +3008,21 @@ msgstr "Yellow"
 msgid "You have unread messages"
 msgstr "You have unread messages"
 
+#: packages/renderer/routes/settings/license.tsx
+msgid "You're using Meru Pro, with the professional features and a license for commercial use. Thank you for supporting Meru."
+msgstr "You're using Meru Pro, with the professional features and a license for commercial use. Thank you for supporting Meru."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "You're using the free version of Meru for personal use."
+msgstr "You're using the free version of Meru for personal use."
+
 #: packages/app/trial.ts
 msgid "Your Meru Pro trial has ended."
 msgstr "Your Meru Pro trial has ended."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru."
+msgstr "Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru."
 
 #. Subject of the sample email in the test notification
 #: packages/app/ipc.ts
