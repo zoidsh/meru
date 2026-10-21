@@ -10,7 +10,7 @@ import { createWebNavigation } from "./api/web-navigation";
 import { createWebRequest } from "./api/web-request";
 import { createWindows } from "./api/windows";
 import type { ChromeNamespace } from "./lib/chrome";
-import { fillMissing } from "./lib/fill";
+import { defineMember, fillMissing } from "./lib/fill";
 
 /**
  * Everything the facade has to offer, built without looking at what Electron
@@ -30,10 +30,6 @@ export function createChromeFacade({
     commands: createCommands(),
     contextMenus: createContextMenus(),
     notifications: createNotifications(),
-    // Filled rather than taken over, Electron shipping no `permissions` module
-    // at all. The facade reaches no content script — only the runtime proxy's
-    // shim rides in one — so filling cannot put a namespace where Chrome
-    // exposes none
     permissions: createPermissions(),
     privacy: createPrivacy(),
     tabs: createTabs(),
@@ -50,18 +46,25 @@ export function createChromeFacade({
  * implements is left exactly as it is, and only the gaps around it are filled
  * (see the noop-first decision in the feature docs).
  *
- * Two namespaces are the exception, and they are because filling gaps cannot
+ * Three namespaces are the exception, and they are because filling gaps cannot
  * help there: Electron implements `connectNative` and refuses every host from
- * it (`api/native-messaging.ts`), and it implements `alarms` and delivers
- * `onAlarm` nowhere a background handler can hear it (`api/alarms.ts`). Both
- * are taken over rather than filled, which is why `alarms` is lifted out of the
- * fill below — it is a real implementation and not a gap to leave alone.
+ * it (`api/native-messaging.ts`), it implements `alarms` and delivers
+ * `onAlarm` nowhere a background handler can hear it (`api/alarms.ts`), and
+ * Chromium's own `permissions` answers from grants Meru never makes and
+ * refuses every `request` outside a user gesture, which a worker never has
+ * (`api/permissions.ts`). All three are taken over rather than filled, which
+ * is why `alarms` and `permissions` are lifted out of the fill below — they are
+ * real implementations and not gaps to leave alone.
+ *
+ * `permissions` is defined whether or not the context has one, because the
+ * facade reaches no content script — only the runtime proxy's shim rides in
+ * one — so it cannot put a namespace where Chrome exposes none.
  */
 export function installChromeFacade(
   extensionApi: ChromeNamespace,
   { opensExtensionWindows = false, deliversNavigationEvents = false } = {},
 ) {
-  const { alarms, ...fillableFacade } = createChromeFacade({
+  const { alarms, permissions, ...fillableFacade } = createChromeFacade({
     opensExtensionWindows,
     deliversNavigationEvents,
   });
@@ -71,4 +74,6 @@ export function installChromeFacade(
   installNativeMessaging(extensionApi);
 
   installAlarms(extensionApi, alarms as ChromeNamespace);
+
+  defineMember(extensionApi, "permissions", permissions);
 }

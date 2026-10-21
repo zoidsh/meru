@@ -508,8 +508,8 @@ runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   /*
-   * `chrome.permissions` as the worker sees it, which is where Electron ships
-   * nothing at all and where Bitwarden asks. The call runs here rather than in
+   * `chrome.permissions` as the worker sees it, which is the facade's in place
+   * of Chromium's and where Bitwarden asks. The call runs here rather than in
    * the asking context because a grant belongs to the extension rather than to
    * a context: the worker is what has to still hold it after a relaunch.
    *
