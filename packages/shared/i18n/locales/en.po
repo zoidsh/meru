@@ -19,6 +19,21 @@ msgstr "{conflictName} is still on, and {extensionName} wasn't installed."
 msgid "{conflictName} was turned off, and you're signed out of it in Meru."
 msgstr "{conflictName} was turned off, and you're signed out of it in Meru."
 
+#. On Linux, a finished download's notification acts when clicked; elsewhere, through its button
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "{downloadNotificationAction, select, click {Choose what clicking the notification does.} other {Choose what the notification's button does.}}"
+msgstr "{downloadNotificationAction, select, click {Choose what clicking the notification does.} other {Choose what the notification's button does.}}"
+
+#. Setting that picks what a finished download's notification does: on Linux, clicking it; elsewhere, its button
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "{downloadNotificationAction, select, click {On click} other {Button}}"
+msgstr "{downloadNotificationAction, select, click {On click} other {Button}}"
+
+#. Placeholder of the Color field, giving two example colors: a hex code and an rgb() value
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "{EXAMPLE_HEX_COLOR} or {EXAMPLE_RGB_COLOR}"
+msgstr "{EXAMPLE_HEX_COLOR} or {EXAMPLE_RGB_COLOR}"
+
 #. name is the name of a browser extension, such as Bitwarden
 #: packages/app/lib/extension-window.ts
 msgid "{name} is running, but Meru can't open a window for it."
@@ -193,10 +208,53 @@ msgstr "Accounts"
 msgid "Actual Size"
 msgstr "Actual Size"
 
+#. Button that adds the account in the dialog
+#. Button that adds the label color in the dialog
+#. Button that adds the saved search in the dialog
+#. Button that opens the dialog for adding a saved search
+#. Button that opens the dialog for adding an account
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Add"
+msgstr "Add"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Add account"
+msgstr "Add account"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Add label color"
+msgstr "Add label color"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Add saved search"
+msgstr "Add saved search"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Add time window"
+msgstr "Add time window"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
+msgstr "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
+
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Heading of the Gmail page's section for settings most people leave alone
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Advanced"
 msgstr "Advanced"
+
+#. Option of the Categories to monitor setting: every category of Gmail's inbox
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "All categories"
+msgstr "All categories"
+
+#. Option of the Notify for setting: a notification for every new email
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "All new emails"
+msgstr "All new emails"
 
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
@@ -208,13 +266,28 @@ msgstr "All tabs"
 msgid "Always"
 msgstr "Always"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Always compose new emails in new window"
+msgstr "Always compose new emails in new window"
+
+#. A pop-out is Gmail's own name for a reply in its own window, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Always reply and forward in a pop-out"
+msgstr "Always reply and forward in a pop-out"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Always show trimmed content"
+msgstr "Always show trimmed content"
+
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
 msgid "Amber"
 msgstr "Amber"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Heading of the Gmail page's section about how Gmail looks
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Appearance"
 msgstr "Appearance"
 
@@ -241,9 +314,11 @@ msgstr "Ask Question…"
 msgid "Ask where to save each file before it downloads."
 msgstr "Ask where to save each file before it downloads."
 
+#. Option of a label color's Text color setting
 #. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
 #. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
 #. Option of the Width setting for the vertical tabs sidebar
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/shared/tabs.ts
 #: packages/shared/workspace-apps.ts
 msgid "Auto"
@@ -269,6 +344,11 @@ msgstr "Beta"
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time."
 msgstr "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time."
+
+#. Option of a label color's Text color setting
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Black"
+msgstr "Black"
 
 #: packages/renderer/routes/settings/blocker.tsx
 msgid "Block ads"
@@ -305,6 +385,11 @@ msgstr "Blue"
 msgid "Bookmark"
 msgstr "Bookmark"
 
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Breeze"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Bring All to Front"
@@ -323,8 +408,15 @@ msgstr "C&opy Image Address"
 #: packages/app/url.ts
 #: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Cancel"
 msgstr "Cancel"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Categories to monitor"
+msgstr "Categories to monitor"
 
 #. Button that picks another folder for downloads
 #: packages/renderer/routes/settings/downloads.tsx
@@ -344,6 +436,11 @@ msgstr "Check for updates in the background."
 msgid "Check for Updates…"
 msgstr "Check for Updates…"
 
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Chime"
+
 #. Windows Settings is the Settings app of Windows, so it follows Microsoft's name for it
 #: packages/renderer/routes/settings/general.tsx
 msgid "Choose Meru as the default mail client in Windows Settings."
@@ -358,6 +455,11 @@ msgstr "Choose the color of the system tray icon."
 msgid "Choose what to share"
 msgstr "Choose what to share"
 
+#. Marks as important names Gmail's Important marker, so important follows Gmail's word for it
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Choose whether every new email or only the emails Gmail marks as important shows a notification."
+msgstr "Choose whether every new email or only the emails Gmail marks as important shows a notification."
+
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Choose which releases to receive. The beta channel gets upcoming features early."
 msgstr "Choose which releases to receive. The beta channel gets upcoming features early."
@@ -367,8 +469,12 @@ msgstr "Choose which releases to receive. The beta channel gets upcoming feature
 msgid "Clear Cache"
 msgstr "Clear Cache"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Clear color"
+msgstr "Clear color"
+
 #. Screen reader label of the button that closes a dialog in Settings
-#: packages/renderer/components/config-select-field.tsx
+#: packages/renderer/components/settings-dialog-content.tsx
 msgid "Close"
 msgstr "Close"
 
@@ -383,6 +489,10 @@ msgstr "Close"
 msgctxt "window"
 msgid "Close"
 msgstr "Close"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close compose window after send"
+msgstr "Close compose window after send"
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close download history"
@@ -407,6 +517,10 @@ msgstr "Close Tab"
 msgid "Close Tabs Below"
 msgstr "Close Tabs Below"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close the compose window after you send."
+msgstr "Close the compose window after you send."
+
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
 msgstr "Close unified inbox"
@@ -421,13 +535,19 @@ msgstr "Close Window"
 msgid "Collapsed"
 msgstr "Collapsed"
 
+#. Field for the background color of a Gmail label
+#. Field that picks the account's color
 #. Setting that picks the system tray icon's color
+#: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/settings/appearance.tsx
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Color"
 msgstr "Color"
 
 #. A menu or a menu item in Meru's menu bar
+#. Heading of the Gmail page's section about writing emails
 #: packages/app/menu.ts
+#: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Compose"
 msgstr "Compose"
 
@@ -438,6 +558,11 @@ msgstr "Confirm external links before opening"
 #: packages/app/trial.ts
 msgid "Continue with the free version"
 msgstr "Continue with the free version"
+
+#. Heading of the Gmail page's section about reading an email conversation
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Conversation"
+msgstr "Conversation"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -570,6 +695,18 @@ msgstr "Default mail client"
 msgid "Delete"
 msgstr "Delete"
 
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Delete {label}?"
+msgstr "Delete {label}?"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Delete label color"
+msgstr "Delete label color"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Delete saved search"
+msgstr "Delete saved search"
+
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "Detect a verification code in an incoming email and copy it to your clipboard."
 msgstr "Detect a verification code in an incoming email and copy it to your clipboard."
@@ -589,6 +726,23 @@ msgstr "Device ID"
 msgid "Disable"
 msgstr "Disable"
 
+#. Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Disabled"
+msgstr "Disabled"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Display the email sender's name in notifications."
+msgstr "Display the email sender's name in notifications."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Display the email subject in notifications."
+msgstr "Display the email subject in notifications."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Display the email summary in notifications."
+msgstr "Display the email summary in notifications."
+
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Dock icon"
@@ -604,10 +758,22 @@ msgstr "Downloaded {fileName}"
 
 #. A menu or a menu item in Meru's menu bar
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Heading of the Notifications section about notifications for finished downloads
 #: packages/app/menu.ts
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/notifications.tsx
 msgid "Downloads"
 msgstr "Downloads"
+
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Drag {label} to reorder"
+msgstr "Drag {label} to reorder"
+
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duet"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -619,10 +785,27 @@ msgstr "Duplicate"
 msgid "Edit"
 msgstr "Edit"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Edit account"
+msgstr "Edit account"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Edit Config"
 msgstr "Edit Config"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Edit label color"
+msgstr "Edit label color"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Edit saved search"
+msgstr "Edit saved search"
+
+#. Heading of the Notifications section about notifications for new emails
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Emails"
+msgstr "Emails"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -648,6 +831,23 @@ msgstr "Enable system tray icon"
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
 msgstr "Enable unified inbox"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Enter a color"
+msgstr "Enter a color"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Enter a label"
+msgstr "Enter a label"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Enter a search query"
+msgstr "Enter a search query"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Enter a valid hex, rgb, or rgba color"
+msgstr "Enter a valid hex, rgb, or rgba color"
 
 #. Tray menu item that quits Meru, as Windows names it
 #: packages/app/tray.ts
@@ -677,6 +877,16 @@ msgstr "Export logs"
 msgid "Export the application logs to a file, to diagnose a problem or to share with support."
 msgstr "Export the application logs to a file, to diagnose a problem or to share with support."
 
+#. Dark theme is Gmail's own theme of that name
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Extend dark theme"
+msgstr "Extend dark theme"
+
+#. Dark theme is Gmail's own theme of that name, and dark the name of its setting, so both follow Gmail's words for them
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
+msgstr "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong."
+
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "Extensions"
@@ -692,10 +902,20 @@ msgstr "File"
 msgid "Find…"
 msgstr "Find…"
 
+#. Option of the Unread count preference setting: count only the first section of Gmail's multiple inboxes
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "First section only"
+msgstr "First section only"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Forward"
 msgstr "Forward"
+
+#. Example of a saved search's label, shown in the empty Label field
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Friends"
+msgstr "Friends"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -759,6 +979,14 @@ msgstr "Hide"
 msgid "Hide {appName}"
 msgstr "Hide {appName}"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide Gmail logo"
+msgstr "Hide Gmail logo"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide inbox footer"
+msgstr "Hide inbox footer"
+
 #. Tray menu item that hides Meru's window
 #: packages/app/tray.ts
 msgid "Hide Meru"
@@ -769,6 +997,42 @@ msgstr "Hide Meru"
 msgid "Hide Others"
 msgstr "Hide Others"
 
+#. The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide out-of-office banner"
+msgstr "Hide out-of-office banner"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide promotional banner"
+msgstr "Hide promotional banner"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the footer at the bottom of the inbox."
+msgstr "Hide the footer at the bottom of the inbox."
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the Gmail logo in the top left corner."
+msgstr "Hide the Gmail logo in the top left corner."
+
+#. The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the out-of-office banner at the top of the window."
+msgstr "Hide the out-of-office banner at the top of the window."
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
+msgstr "Hide the promotional banners at the top of the message list, such as the Google Workspace upgrade offer."
+
+#. Upgrade is the label of Gmail's own button, so it is written as Gmail writes it, not as Meru Pro's Upgrade
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the Upgrade button in Gmail."
+msgstr "Hide the Upgrade button in Gmail."
+
+#. The upgrade button is Gmail's own Upgrade button, so it follows Gmail's word for it, not Meru Pro's
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide upgrade button"
+msgstr "Hide upgrade button"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "History"
@@ -778,6 +1042,21 @@ msgstr "History"
 #: packages/app/context-menu.ts
 msgid "I&nspect Element"
 msgstr "I&nspect Element"
+
+#. Option of the Notify for setting: a notification only for the emails Gmail marks as important. Important is Gmail's word for them, so it follows Gmail's word in this language
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Important only"
+msgstr "Important only"
+
+#. Heading of the Gmail page's section about Gmail's inbox; Inbox follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Inbox"
+msgstr "Inbox"
+
+#. Option of the Unread count preference setting. Inbox is Gmail's folder of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Inbox only"
+msgstr "Inbox only"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
@@ -793,6 +1072,28 @@ msgstr "Indigo"
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
 msgstr "Inspect Element"
+
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Knock"
+
+#. Field for the name Meru shows for the account
+#. Field for the name Meru shows for the saved search
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Label"
+msgstr "Label"
+
+#. Field for the exact name of the Gmail label to recolor; label is Gmail's word
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Label"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Label colors"
+msgstr "Label colors"
 
 #. Label of the setting that chooses the language of Meru's own menus and settings
 #: packages/renderer/routes/settings/language-field.tsx
@@ -840,6 +1141,15 @@ msgstr "Light"
 #: packages/shared/accounts.ts
 msgid "Lime"
 msgstr "Lime"
+
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linen"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Load clipped messages in full"
+msgstr "Load clipped messages in full"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
@@ -936,6 +1246,14 @@ msgstr "Meru is set as your default browser, so there's no other browser to open
 msgid "Meru is up to date."
 msgstr "Meru is up to date."
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru keeps this account signed in but doesn't load it."
+msgstr "Meru keeps this account signed in but doesn't load it."
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru needs at least one account turned on."
+msgstr "Meru needs at least one account turned on."
+
 #: packages/app/trial.ts
 msgid "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
 msgstr "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
@@ -969,6 +1287,10 @@ msgstr "Meru Pro is required to update extensions. Upgrade to Meru Pro to contin
 msgid "Meru Pro required"
 msgstr "Meru Pro required"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru signs out of this account and clears its data from this computer, including saved tabs and bookmarks. Your Gmail account isn't affected."
+msgstr "Meru signs out of this account and clears its data from this computer, including saved tabs and bookmarks. Your Gmail account isn't affected."
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Message"
@@ -983,6 +1305,14 @@ msgstr "Minimize"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Miscellaneous"
 msgstr "Miscellaneous"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Move attachments to top"
+msgstr "Move attachments to top"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Move email attachments to the top of the email."
+msgstr "Move email attachments to the top of the email."
 
 #. Trash is Gmail's folder of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/verification-codes.tsx
@@ -1019,6 +1349,11 @@ msgstr "Navigation"
 msgid "Never"
 msgstr "Never"
 
+#. Setting that turns on notifications for new emails
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "New emails"
+msgstr "New emails"
+
 #. Option of the Workspace apps Mode setting: whether Workspace apps open as tabs in the main window or in windows of their own
 #: packages/shared/workspace-apps.ts
 msgid "New windows"
@@ -1032,6 +1367,10 @@ msgstr "No additional languages selected"
 msgid "No emoji found."
 msgstr "No emoji found."
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "No free time slot left for another window. Remove or shorten one first."
+msgstr "No free time slot left for another window. Remove or shorten one first."
+
 #. Disabled context menu item shown in place of spelling suggestions when there are none
 #: packages/app/context-menu.ts
 msgid "No Guesses Found"
@@ -1042,15 +1381,35 @@ msgstr "No Guesses Found"
 msgid "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
 msgstr "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
 
+#. The account's color when no color is picked
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "None"
+msgstr "None"
+
 #. Dialog button that dismisses the end-of-trial message
 #: packages/app/trial.ts
 msgid "Not now"
 msgstr "Not now"
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Notification times"
+msgstr "Notification times"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Notification times overlap. Adjust the windows so that none of them do."
+msgstr "Notification times overlap. Adjust the windows so that none of them do."
+
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Switch, and a badge on the account, for showing the account's notifications
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/accounts.tsx
 msgid "Notifications"
 msgstr "Notifications"
+
+#. Setting that picks which new emails show a notification
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Notify for"
+msgstr "Notify for"
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Notify when updates are available"
@@ -1077,6 +1436,15 @@ msgstr "Only when you ask"
 msgid "Open"
 msgstr "Open"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Open a new window to compose an email, instead of composing inside Gmail."
+msgstr "Open a new window to compose an email, instead of composing inside Gmail."
+
+#. Option of what a finished download's notification does
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Open file"
+msgstr "Open file"
+
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open folder when done"
 msgstr "Open folder when done"
@@ -1086,6 +1454,16 @@ msgstr "Open folder when done"
 #: packages/app/ipc.ts
 msgid "Open in Default Browser"
 msgstr "Open in Default Browser"
+
+#. Button that opens the user styles file in the default text editor
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Open in editor"
+msgstr "Open in editor"
+
+#. Button that shows the user styles file in its folder
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Open in folder"
+msgstr "Open in folder"
 
 #: packages/app/url.ts
 msgid "Open link"
@@ -1099,6 +1477,11 @@ msgstr "Open links here"
 #: packages/app/license-key.ts
 msgid "Open Meru Portal"
 msgstr "Open Meru Portal"
+
+#. A pop-out is Gmail's own name for a reply in its own window, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Open replies and forwards in a pop-out instead of below the message."
+msgstr "Open replies and forwards in a pop-out instead of below the message."
 
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open the folder containing the file when a download finishes."
@@ -1116,6 +1499,11 @@ msgstr "Open Windows Settings"
 #: packages/renderer/routes/settings/about.tsx
 msgid "Operating system"
 msgstr "Operating system"
+
+#. Heading of the account's switches in the account dialog
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Options"
+msgstr "Options"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -1142,6 +1530,10 @@ msgstr "Paste and Match Style"
 msgid "Phishing protection"
 msgstr "Phishing protection"
 
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Pick color"
+msgstr "Pick color"
+
 #. Tooltip of the button that opens the emoji picker
 #: packages/renderer/components/emoji-picker-button.tsx
 msgid "Pick emoji"
@@ -1157,6 +1549,19 @@ msgstr "Pin"
 msgid "Pink"
 msgstr "Pink"
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Play a sound when showing a notification."
+msgstr "Play a sound when showing a notification."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Play sound"
+msgstr "Play sound"
+
+#. Option of the Categories to monitor setting. Primary is Gmail's inbox category of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Primary only"
+msgstr "Primary only"
+
 #: packages/renderer/routes/settings/phishing-protection.tsx
 msgid "Prompt for confirmation before opening links from untrusted hosts in your browser."
 msgstr "Prompt for confirmation before opening links from untrusted hosts in your browser."
@@ -1165,6 +1570,11 @@ msgstr "Prompt for confirmation before opening links from untrusted hosts in you
 #: packages/shared/accounts.ts
 msgid "Purple"
 msgstr "Purple"
+
+#. Field for the Gmail search the saved search runs
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Query"
+msgstr "Query"
 
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
@@ -1187,6 +1597,10 @@ msgstr "Quit {appName}"
 msgid "Receive notifications when updates are available."
 msgstr "Receive notifications when updates are available."
 
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with the background, and can be set to white or black instead."
+msgstr "Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with the background, and can be set to white or black instead."
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Redo"
@@ -1208,6 +1622,14 @@ msgstr "Reload"
 msgid "Remove"
 msgstr "Remove"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "Remove {label}?"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account"
+msgstr "Remove account"
+
 #. Button that removes the license key from Meru and restarts it
 #: packages/app/license-key.ts
 msgid "Remove and restart"
@@ -1217,6 +1639,10 @@ msgstr "Remove and restart"
 #: packages/app/ipc.ts
 msgid "Remove Bookmark"
 msgstr "Remove Bookmark"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Remove time window"
+msgstr "Remove time window"
 
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Render with the GPU. This can improve performance, and can also cause compatibility problems on some systems."
@@ -1290,10 +1716,23 @@ msgstr "Restart Meru to try again, or contact support. A VPN or a firewall can b
 msgid "Restrict minimum window size"
 msgstr "Restrict minimum window size"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Reverse conversation"
+msgstr "Reverse conversation"
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Sa&ve Image As…"
 msgstr "Sa&ve Image As…"
+
+#. Button that saves the account's changes in the dialog
+#. Button that saves the label color's changes in the dialog
+#. Button that saves the saved search's changes in the dialog
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Save"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -1381,6 +1820,10 @@ msgstr "Select Previous Tab"
 msgid "Select the application theme."
 msgstr "Select the application theme."
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Select the sound to play for notifications."
+msgstr "Select the sound to play for notifications."
+
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
 msgid "Selected tabs"
@@ -1399,6 +1842,14 @@ msgstr "Services"
 msgid "Set Meru as the default mail client to handle email links and related protocols."
 msgstr "Set Meru as the default mail client to handle email links and related protocols."
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Set the time windows when notifications are active. Outside them, notifications stay silent. Leave the list empty to allow notifications at any time."
+msgstr "Set the time windows when notifications are active. Outside them, notifications stay silent. Leave the list empty to allow notifications at any time."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Set the volume level for notification sounds."
+msgstr "Set the volume level for notification sounds."
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Settings"
@@ -1415,6 +1866,14 @@ msgstr "Share"
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show"
 msgstr "Show"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show a notification when a download finishes."
+msgstr "Show a notification when a download finishes."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show a test notification to see how notifications appear."
+msgstr "Show a test notification to see how notifications appear."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1437,6 +1896,10 @@ msgstr "Show an unread count next to the menu bar icon when there are unread ema
 msgid "Show Do Not Disturb button"
 msgstr "Show Do Not Disturb button"
 
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Show email conversations in reverse order, with the latest message at the top."
+msgstr "Show email conversations in reverse order, with the latest message at the top."
+
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
 msgid "Show in File Explorer"
@@ -1446,6 +1909,11 @@ msgstr "Show in File Explorer"
 #: packages/app/downloads.ts
 msgid "Show in Finder"
 msgstr "Show in Finder"
+
+#. Option of what a finished download's notification does
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show in folder"
+msgstr "Show in folder"
 
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
@@ -1457,11 +1925,34 @@ msgstr "Show in your file manager"
 msgid "Show Meru"
 msgstr "Show Meru"
 
+#. Setting that shows a notification when a download finishes
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show notification"
+msgstr "Show notification"
+
+#. Setting that lets Workspace apps show notifications
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show notifications"
+msgstr "Show notifications"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show notifications for new emails."
+msgstr "Show notifications for new emails."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show notifications from Workspace apps such as Calendar, Meet, and Chat."
+msgstr "Show notifications from Workspace apps such as Calendar, Meet, and Chat."
+
 #. Save As names the operating system's dialog that asks where to save a file
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Show Save As dialog before downloading"
 msgstr "Show Save As dialog before downloading"
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show sender"
+msgstr "Show sender"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons"
 msgstr "Show sender icons"
@@ -1469,6 +1960,22 @@ msgstr "Show sender icons"
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
 msgstr "Show sender icons next to the senders in the unified inbox."
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Show sender icons next to the senders in your inbox."
+msgstr "Show sender icons next to the senders in your inbox."
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show subject"
+msgstr "Show subject"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show summary"
+msgstr "Show summary"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show test notification"
+msgstr "Show test notification"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show the application icon in the dock."
@@ -1490,6 +1997,16 @@ msgstr "Show the button that turns Do Not Disturb on and off. Turning this off a
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show the close, minimize and maximize buttons in the titlebar. Automatic hides them on window managers without decorations, such as dwm, i3 and sway."
 msgstr "Show the close, minimize and maximize buttons in the titlebar. Automatic hides them on window managers without decorations, such as dwm, i3 and sway."
+
+#. ••• is the label of Gmail's button that shows trimmed content, kept as is
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Show the quoted text Gmail hides behind the ••• button."
+msgstr "Show the quoted text Gmail hides behind the ••• button."
+
+#. View entire message is the text of Gmail's own link under a clipped message, so it is written as Gmail writes it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Show the whole message when Gmail clips a long one, instead of a “View entire message” link."
+msgstr "Show the whole message when Gmail clips a long one, instead of a “View entire message” link."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show unread badge"
@@ -1524,6 +2041,12 @@ msgstr "Sign in with your password or another second factor. Meru Pro lets you c
 #: packages/shared/accounts.ts
 msgid "Sky"
 msgstr "Sky"
+
+#. Heading of the Notifications section about notification sounds
+#. Setting that picks the notification sound
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Sound"
+msgstr "Sound"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1591,10 +2114,12 @@ msgid "Switch to the beta channel?"
 msgstr "Switch to the beta channel?"
 
 #. Language picker option: follow the operating system's language
+#. Option of the Sound setting: the operating system's own notification sound
 #. Option of the Theme setting
 #. Option of the system tray icon's Color setting
 #: packages/renderer/routes/settings/appearance.tsx
 #: packages/renderer/routes/settings/language-field.tsx
+#: packages/renderer/routes/settings/notifications.tsx
 msgid "System"
 msgstr "System"
 
@@ -1614,6 +2139,15 @@ msgstr "Tabs"
 msgid "Teal"
 msgstr "Teal"
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Test notification"
+msgstr "Test notification"
+
+#. Setting for the color of a Gmail label's name
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Text color"
+msgstr "Text color"
+
 #: packages/app/lib/extension-window.ts
 msgid "The extension is running, but Meru can't open a window for it."
 msgstr "The extension is running, but Meru can't open a window for it."
@@ -1630,6 +2164,10 @@ msgstr "The release notes come from GitHub. Check your connection, then try agai
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Theme"
 msgstr "Theme"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "This deletes the saved search, not the mail it finds."
+msgstr "This deletes the saved search, not the mail it finds."
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "This is the last version of Meru for this Mac"
@@ -1686,6 +2224,11 @@ msgstr "This signs out of every account and clears all settings and data on this
 msgid "Titlebar"
 msgstr "Titlebar"
 
+#. Sits between a start time field and an end time field, as in 09:00 to 17:00
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "to"
+msgstr "to"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Troubleshooting"
@@ -1718,13 +2261,19 @@ msgstr "Try again, or contact support. A VPN or a firewall can block the connect
 "\n"
 "{errorMessage} ({errorCause})"
 
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Turn off Do Not Disturb to show a test notification."
+msgstr "Turn off Do Not Disturb to show a test notification."
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Undo"
 msgstr "Undo"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Switch, and a badge on the account, for including the account in the unified inbox
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/accounts.tsx
 msgid "Unified inbox"
 msgstr "Unified inbox"
 
@@ -1742,6 +2291,15 @@ msgstr "Unpin"
 #: packages/shared/workspace-apps.ts
 msgid "Unpinned tabs"
 msgstr "Unpinned tabs"
+
+#. Switch, and a badge on the account, for showing the account's unread badge
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Unread badge"
+msgstr "Unread badge"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Unread count preference"
+msgstr "Unread count preference"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
@@ -1768,6 +2326,14 @@ msgstr "Upgrade"
 msgid "Upgrade to Meru Pro"
 msgstr "Upgrade to Meru Pro"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Upgrade to Meru Pro to add more accounts"
+msgstr "Upgrade to Meru Pro to add more accounts"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Upgrade to Meru Pro to add saved searches"
+msgstr "Upgrade to Meru Pro to add saved searches"
+
 #: packages/app/trial.ts
 msgid "Upgrade to Meru Pro to keep every feature, or continue with the free version."
 msgstr "Upgrade to Meru Pro to keep every feature, or continue with the free version."
@@ -1788,6 +2354,11 @@ msgstr "Use system picker"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Use the system's native screen sharing picker when sharing your screen."
 msgstr "Use the system's native screen sharing picker when sharing your screen."
+
+#. Setting for the user's own CSS, applied to Gmail
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "User styles"
+msgstr "User styles"
 
 #: packages/app/gmail/index.ts
 msgid "Verification code {verificationCode}"
@@ -1812,6 +2383,11 @@ msgstr "View Logs"
 #: packages/shared/accounts.ts
 msgid "Violet"
 msgstr "Violet"
+
+#. Title of the notification sound's volume slider; percent is the volume, such as 50%
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Volume {percent}"
+msgstr "Volume {percent}"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1849,6 +2425,11 @@ msgstr "Which account should compose this email?"
 msgid "Which account should open this link?"
 msgstr "Which account should open this link?"
 
+#. Option of a label color's Text color setting
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "White"
+msgstr "White"
+
 #. Option of the Width setting for the vertical tabs sidebar
 #: packages/shared/tabs.ts
 msgid "Wide"
@@ -1865,8 +2446,27 @@ msgstr "Window"
 msgid "Window controls"
 msgstr "Window controls"
 
+#. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
+msgstr "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
+
+#. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
+msgstr "With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
+
+#. Example of a Gmail label's name, shown in the empty Label field
+#. Example of an account's label, shown in the empty Label field
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Work"
+msgstr "Work"
+
 #. A page of Settings, named in the settings sidebar and as the page's title
+#. Heading of the Notifications section about notifications from Workspace apps
 #: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/notifications.tsx
 msgid "Workspace apps"
 msgstr "Workspace apps"
 

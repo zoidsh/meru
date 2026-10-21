@@ -420,7 +420,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
 ## Gmail's words
 
-What Gmail itself shows for the things a Meru string can name, used over Apple's word by the rule above. Folder names keep Gmail's capitalization. Sources, all Gmail Help with `hl=<tag>`: **shortcuts** is "Keyboard shortcuts for Gmail" (support.google.com/mail/answer/6594), **undo send** is "Undo sending" (answer/2819488), **spam** is "Mark or unmark Spam" (answer/1366858) and **trash** is "Delete or recover deleted Gmail messages" (answer/7401).
+What Gmail itself shows for the things a Meru string can name, used over Apple's word by the rule above. Folder names keep Gmail's capitalization. Sources, all Gmail Help with `hl=<tag>`: **shortcuts** is "Keyboard shortcuts for Gmail" (support.google.com/mail/answer/6594), **undo send** is "Undo sending" (answer/2819488), **spam** is "Mark or unmark Spam" (answer/1366858), **trash** is "Delete or recover deleted Gmail messages" (answer/7401), **categories** is "Add or remove inbox categories & tabs" (answer/3055016) and **importance** is "Importance markers in Gmail" (answer/186543).
 
 ### Undo, in the message-sent toast
 
@@ -505,6 +505,55 @@ From shortcuts: the folder of starred conversations, the action and the folder o
 - pl: Oznaczone gwiazdką; Odłóż, Odłożone; etykieta
 - sv: Stjärnmärkt; Skjut upp, uppskjutna; etikett
 - ja: スター付き; スヌーズ; ラベル
+
+### Primary
+
+The inbox category, as in _Primary only_. From categories.
+
+- de: Allgemein
+- fr: Principale
+- it: Principale
+- es: Principal
+- es-419: Principal
+- pt-BR: Principal
+- nl: Primair
+- pl: Główne
+- sv: Primär
+- ja: メイン
+
+### Important
+
+What Gmail marks as important, as in _Important only_ and _the emails Gmail marks as important_. From importance, which uses the word in _marked as important_; the label takes the language's label form.
+
+- de: wichtig
+- fr: important
+- it: importante
+- es: importante
+- es-419: importante
+- pt-BR: importante
+- nl: belangrijk
+- pl: ważny
+- sv: viktig
+- ja: 重要
+
+### Pop-out
+
+A reply or forward opened in a window of its own. Gmail Help calls it a new window, so a pop-out is the window of _Reply in a new window_. From shortcuts.
+
+- de: neues Fenster; _In einem neuen Fenster antworten_
+- fr: nouvelle fenêtre; _Répondre dans une nouvelle fenêtre_
+- it: nuova finestra; _Rispondi in una nuova finestra_
+- es: ventana nueva; _Responder en una ventana nueva_
+- es-419: nueva ventana; _Responder en una nueva ventana_
+- pt-BR: nova janela; _Responder em uma nova janela_
+- nl: nieuw venster; _Beantwoorden in een nieuw venster_
+- pl: nowe okno; _Odpowiedz w nowym oknie_
+- sv: nytt fönster; _Svara i ett nytt fönster_
+- ja: 新しいウィンドウ; _新しいウィンドウで返信_
+
+### View entire message, Upgrade
+
+_View entire message_ is the link under a message Gmail has clipped, and _Upgrade_ the button Gmail shows for more Google storage, never Meru Pro's [Upgrade](#upgrade). Both are quoted as Gmail writes them in that language, from Gmail's own interface: no Gmail Help page carries either, so there is no source to list here. Say in your summary which wording you used, so it can be added.
 
 ## Common actions
 
