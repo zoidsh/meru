@@ -1,7 +1,8 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { useLingui } from "@lingui/react/macro";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
@@ -23,7 +24,6 @@ import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -56,10 +56,33 @@ import type { Entries } from "type-fest";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { useAccountsStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
+
+/** Each names both the switch in the account dialog and the badge on the account. */
+const accountOptionLabels = {
+  unreadBadge: msg({
+    message: "Unread badge",
+    comment: "Switch, and a badge on the account, for showing the account's unread badge",
+  }),
+  unifiedInbox: msg({
+    message: "Unified inbox",
+    comment: "Switch, and a badge on the account, for including the account in the unified inbox",
+  }),
+  notifications: msg({
+    message: "Notifications",
+    comment: "Switch, and a badge on the account, for showing the account's notifications",
+  }),
+  disabled: msg({
+    message: "Disabled",
+    comment:
+      "Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load",
+  }),
+};
 
 function AccountForm({
   account = {
@@ -68,7 +91,7 @@ function AccountForm({
     gmail: { unreadBadge: true, unifiedInbox: true },
     notifications: true,
   },
-  placeholder = "Work",
+  placeholder,
   onSubmit,
   type,
   isLastEnabledAccount = false,
@@ -106,7 +129,9 @@ function AccountForm({
           <form.Field name="color">
             {(field) => (
               <Field>
-                <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  <Trans comment="Field that picks the account's color">Color</Trans>
+                </FieldLabel>
                 <div className="flex gap-2">
                   <Select
                     name={field.name}
@@ -117,7 +142,10 @@ function AccountForm({
                       <SelectValue>
                         {(value: keyof typeof accountColorsMap | null) => {
                           if (!value) {
-                            return "None";
+                            return t({
+                              message: "None",
+                              comment: "The account's color when no color is picked",
+                            });
                           }
 
                           const { label, className } = accountColorsMap[value];
@@ -151,7 +179,7 @@ function AccountForm({
                       onClick={() => {
                         form.setFieldValue("color", null);
                       }}
-                      title="Clear color"
+                      title={t`Clear color`}
                     >
                       <XIcon />
                     </Button>
@@ -166,7 +194,9 @@ function AccountForm({
 
               return (
                 <Field>
-                  <FieldLabel htmlFor={field.name}>Label</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    <Trans comment="Field for the name Meru shows for the account">Label</Trans>
+                  </FieldLabel>
                   <div className="flex gap-2">
                     <Input
                       id={field.name}
@@ -175,7 +205,13 @@ function AccountForm({
                       onBlur={field.handleBlur}
                       onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
-                      placeholder={placeholder}
+                      placeholder={
+                        placeholder ??
+                        t({
+                          message: "Work",
+                          comment: "Example of an account's label, shown in the empty Label field",
+                        })
+                      }
                     />
                     <EmojiPickerButton
                       onEmojiSelect={({ emoji }) => {
@@ -190,12 +226,14 @@ function AccountForm({
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLegend variant="label">Options</FieldLegend>
+          <FieldLegend variant="label">
+            <Trans comment="Heading of the account's switches in the account dialog">Options</Trans>
+          </FieldLegend>
           <form.Field name="gmail.unreadBadge">
             {(field) => (
               <Field orientation="horizontal">
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Unread badge</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t(accountOptionLabels.unreadBadge)}</FieldLabel>
                 </FieldContent>
                 <Switch
                   id={field.name}
@@ -210,7 +248,9 @@ function AccountForm({
             {(field) => (
               <Field orientation="horizontal">
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Unified inbox</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t(accountOptionLabels.unifiedInbox)}
+                  </FieldLabel>
                 </FieldContent>
                 <Switch
                   id={field.name}
@@ -225,7 +265,9 @@ function AccountForm({
             {(field) => (
               <Field orientation="horizontal">
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Notifications</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t(accountOptionLabels.notifications)}
+                  </FieldLabel>
                 </FieldContent>
                 <Switch
                   id={field.name}
@@ -241,11 +283,13 @@ function AccountForm({
               {(field) => (
                 <Field orientation="horizontal">
                   <FieldContent>
-                    <FieldLabel htmlFor={field.name}>Disabled</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t(accountOptionLabels.disabled)}</FieldLabel>
                     <FieldDescription>
-                      {isLastEnabledAccount
-                        ? "Meru needs at least one account turned on."
-                        : "Meru keeps this account signed in but doesn't load it."}
+                      {isLastEnabledAccount ? (
+                        <Trans>Meru needs at least one account turned on.</Trans>
+                      ) : (
+                        <Trans>Meru keeps this account signed in but doesn't load it.</Trans>
+                      )}
                     </FieldDescription>
                   </FieldContent>
                   <Switch
@@ -262,8 +306,20 @@ function AccountForm({
         </FieldSet>
       </FieldGroup>
       <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
-        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+        <DialogClose
+          render={
+            <Button variant="outline">
+              <Trans>Cancel</Trans>
+            </Button>
+          }
+        />
+        <Button type="submit">
+          {type === "add" ? (
+            <Trans comment="Button that adds the account in the dialog">Add</Trans>
+          ) : (
+            <Trans comment="Button that saves the account's changes in the dialog">Save</Trans>
+          )}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -276,16 +332,20 @@ function AddAccountButton() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const addLabel = <Trans comment="Button that opens the dialog for adding an account">Add</Trans>;
+
   if (!isLicenseKeyValid) {
-    return <Button disabled>Add</Button>;
+    return <Button disabled>{addLabel}</Button>;
   }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger render={<Button>Add</Button>} />
-      <DialogContent>
+      <DialogTrigger render={<Button>{addLabel}</Button>} />
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Add account</DialogTitle>
+          <DialogTitle>
+            <Trans>Add account</Trans>
+          </DialogTitle>
         </DialogHeader>
         <AccountForm
           onSubmit={(account) => {
@@ -295,7 +355,7 @@ function AddAccountButton() {
           }}
           type="add"
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -309,18 +369,22 @@ function EditAccountButton({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const { t } = useLingui();
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="outline" title="Edit account">
+          <Button size="icon" className="size-8 p-0" variant="outline" title={t`Edit account`}>
             <PencilIcon />
           </Button>
         }
       />
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Edit account</DialogTitle>
+          <DialogTitle>
+            <Trans>Edit account</Trans>
+          </DialogTitle>
         </DialogHeader>
         <AccountForm
           account={account}
@@ -350,7 +414,7 @@ function EditAccountButton({
           type="edit"
           isLastEnabledAccount={isLastEnabledAccount}
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -370,6 +434,10 @@ function SortableAccountItem({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
+  const { t } = useLingui();
+
+  const { label } = account;
+
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
       <Button
@@ -378,7 +446,7 @@ function SortableAccountItem({
         className="size-8 cursor-grab touch-none p-0"
         variant="ghost"
         disabled={disabled}
-        aria-label={`Drag ${account.label} to reorder`}
+        aria-label={t`Drag ${label} to reorder`}
       >
         <GripVerticalIcon />
       </Button>
@@ -394,10 +462,16 @@ function SortableAccountItem({
         </ItemTitle>
         {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
-            {account.disabled && <Badge variant="outline">Disabled</Badge>}
-            {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
-            {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
-            {account.notifications && <Badge variant="outline">Notifications</Badge>}
+            {account.disabled && <Badge variant="outline">{t(accountOptionLabels.disabled)}</Badge>}
+            {account.gmail.unreadBadge && (
+              <Badge variant="outline">{t(accountOptionLabels.unreadBadge)}</Badge>
+            )}
+            {account.gmail.unifiedInbox && (
+              <Badge variant="outline">{t(accountOptionLabels.unifiedInbox)}</Badge>
+            )}
+            {account.notifications && (
+              <Badge variant="outline">{t(accountOptionLabels.notifications)}</Badge>
+            )}
           </div>
         )}
       </ItemContent>
@@ -407,28 +481,39 @@ function SortableAccountItem({
           <AlertDialog>
             <AlertDialogTrigger
               render={
-                <Button size="icon" className="size-8 p-0" variant="outline" title="Remove account">
+                <Button
+                  size="icon"
+                  className="size-8 p-0"
+                  variant="outline"
+                  title={t`Remove account`}
+                >
                   <TrashIcon />
                 </Button>
               }
             />
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Remove {account.label}?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  <Trans>Remove {label}?</Trans>
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Meru signs out of this account and clears its data from this computer, including
-                  saved tabs and bookmarks. Your Gmail account isn't affected.
+                  <Trans>
+                    Meru signs out of this account and clears its data from this computer, including
+                    saved tabs and bookmarks. Your Gmail account isn't affected.
+                  </Trans>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>
+                  <Trans>Cancel</Trans>
+                </AlertDialogCancel>
                 <AlertDialogClose
                   render={<AlertDialogAction variant="destructive" />}
                   onClick={() => {
                     ipc.main.send("accounts.removeAccount", account.id);
                   }}
                 >
-                  Remove account
+                  <Trans>Remove account</Trans>
                 </AlertDialogClose>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -444,6 +529,8 @@ export function AccountsSettings() {
 
   const configMutation = useConfigMutation();
 
+  const { t } = useLingui();
+
   if (!config) {
     return;
   }
@@ -453,12 +540,12 @@ export function AccountsSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>Accounts</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.accounts)}</SettingsTitle>
         <AddAccountButton />
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner>
-          Upgrade to Meru Pro to add more accounts
+          <Trans>Upgrade to Meru Pro to add more accounts</Trans>
         </LicenseKeyRequiredBanner>
         <DragDropProvider
           onDragEnd={(event) => {
