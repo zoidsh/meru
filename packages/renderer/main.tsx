@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { Toaster } from "@meru/ui/components/sonner";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
@@ -11,6 +12,8 @@ import { useThemeStore } from "@/lib/theme";
 import "@/lib/ipc";
 
 function Main() {
+  const { t } = useLingui();
+
   const theme = useThemeStore((state) => state.theme);
 
   useMouseAccountSwitching();
@@ -37,7 +40,15 @@ function Main() {
           </Switch>
         </div>
       </div>
-      <Toaster theme={theme} />
+      <Toaster
+        theme={theme}
+        containerAriaLabel={t({
+          message: "Notifications",
+          context: "toasts",
+          comment:
+            "Screen reader label of the area of the window where Meru's toasts appear, not the system's notifications",
+        })}
+      />
     </Router>
   );
 }
