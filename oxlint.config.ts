@@ -39,6 +39,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/lib/settings-pages.ts",
   "packages/renderer/lib/toast.ts",
   "packages/renderer/routes/settings/about.tsx",
+  "packages/renderer/routes/settings/accounts.tsx",
   "packages/renderer/routes/settings/advanced.tsx",
   "packages/renderer/routes/settings/appearance.tsx",
   "packages/renderer/routes/settings/blocker.tsx",
