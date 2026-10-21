@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
@@ -87,6 +88,8 @@ export function NotificationsSettings() {
   const configMutation = useConfigMutation();
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
+
+  const { t } = useLingui();
 
   if (!config) {
     return;
@@ -336,7 +339,7 @@ export function NotificationsSettings() {
                     <Select
                       items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
                         value: sound,
-                        label,
+                        label: t(label),
                       }))}
                       value={config["notifications.sound"]}
                       onValueChange={(value) => {
@@ -361,7 +364,7 @@ export function NotificationsSettings() {
                       <SelectContent>
                         {Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => (
                           <SelectItem key={sound} value={sound}>
-                            {label}
+                            {t(label)}
                           </SelectItem>
                         ))}
                         <SelectSeparator />
