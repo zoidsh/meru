@@ -852,13 +852,20 @@ function UpdateExtensionsButton() {
           .join("\n");
 
         setExtensionError({
-          title: t({
-            message: plural(failedCount, {
-              1: `Couldn't update ${failedName}`,
-              other: "Couldn't update # extensions",
-            }),
-            comment: "failedName is an extension's name, shown when only that one failed to update",
-          }),
+          title:
+            failedCount === 1
+              ? t({
+                  message: `Couldn't update ${failedName}`,
+                  comment:
+                    "failedName is an extension's name, shown when only that one failed to update",
+                })
+              : t({
+                  message: plural(failedCount, {
+                    one: "Couldn't update # extension",
+                    other: "Couldn't update # extensions",
+                  }),
+                  comment: "Title of the dialog when more than one extension failed to update",
+                }),
           description: `${failures}\n\n${t`Try updating again.`}`,
         });
       }

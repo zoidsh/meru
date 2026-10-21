@@ -39,10 +39,10 @@ msgstr "{EXAMPLE_HEX_COLOR} or {EXAMPLE_RGB_COLOR}"
 msgid "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
 msgstr "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
 
-#. failedName is an extension's name, shown when only that one failed to update
+#. Title of the dialog when more than one extension failed to update
 #: packages/renderer/routes/settings/extensions.tsx
-msgid "{failedCount, plural, =1 {Couldn't update {failedName}} other {Couldn't update # extensions}}"
-msgstr "{failedCount, plural, =1 {Couldn't update {failedName}} other {Couldn't update # extensions}}"
+msgid "{failedCount, plural, one {Couldn't update # extension} other {Couldn't update # extensions}}"
+msgstr "{failedCount, plural, one {Couldn't update # extension} other {Couldn't update # extensions}}"
 
 #. name is the name of a browser extension, such as Bitwarden
 #: packages/app/lib/extension-window.ts
@@ -769,6 +769,11 @@ msgstr "Couldn't uninstall {extensionName}"
 #: packages/app/ipc.ts
 msgid "Couldn't uninstall the extension: {errorMessage}"
 msgstr "Couldn't uninstall the extension: {errorMessage}"
+
+#. failedName is an extension's name, shown when only that one failed to update
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't update {failedName}"
+msgstr "Couldn't update {failedName}"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Couldn't update extensions"
