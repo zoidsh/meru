@@ -104,10 +104,13 @@ function containsOrigins(heldOrigins: string[], askedOrigins: string[]) {
  * `chrome.permissions`, answered from the manifest Chromium loaded and the
  * grants the main process keeps per extension id.
  *
- * Electron ships no `permissions` module at all, so the namespace is
- * `undefined` and every call on it throws — Bitwarden's `permissionsGranted`
- * helper reads `contains` and takes whatever message it was answering down
- * with it, and Proton Pass dies at worker evaluation on `onAdded`.
+ * Chromium's own namespace, which Electron exposes, cannot serve: its grants
+ * are never the ones a catalog allows, and its `request` refuses outside a
+ * user gesture, which a worker never has. So this one replaces it
+ * (`installChromeFacade`). Where a context has no namespace at all, every call
+ * throws — Bitwarden's `permissionsGranted` helper reads `contains` and takes
+ * whatever message it was answering down with it, and Proton Pass dies at
+ * worker evaluation on `onAdded`.
  *
  * The answers are honest rather than blanket-granted, which the survey measured
  * mattering: a `contains` that answered `true` for `nativeMessaging` made
