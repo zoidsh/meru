@@ -116,13 +116,26 @@ export function getCommonBrowserWindowOptions() {
   };
 }
 
+// Wayland sometimes never emits `ready-to-show` (electron/electron#48859)
+export function onceReadyToShow(browserWindow: BrowserWindow, callback: () => void) {
+  const onReady = () => {
+    browserWindow.off("ready-to-show", onReady);
+    browserWindow.webContents.off("did-finish-load", onReady);
+
+    callback();
+  };
+
+  browserWindow.on("ready-to-show", onReady);
+  browserWindow.webContents.on("did-finish-load", onReady);
+}
+
 export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
   const browserWindow = new BrowserWindow({
     show: false,
     ...options,
   });
 
-  browserWindow.once("ready-to-show", () => {
+  onceReadyToShow(browserWindow, () => {
     browserWindow.show();
   });
 
