@@ -1,6 +1,6 @@
 import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
-import { useLingui } from "@lingui/react/macro";
+import { msg, plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   BITWARDEN_EXTENSION_ID,
   type CuratedExtension,
@@ -29,7 +29,6 @@ import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -67,8 +66,10 @@ import { LicenseKeyRequiredBanner } from "@/components/license-key-required-bann
 import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { MaturityFieldBadge } from "@/components/maturity-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { queryClient, useConfig, useConfigMutation } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { restartRequiredToast } from "@/lib/toast";
 import { platform } from "@/lib/utils";
 
@@ -105,11 +106,15 @@ function Code({ className, ...props }: ComponentProps<"code">) {
 
 function OnePasswordSetupSteps() {
   if (platform.isLinux) {
+    const allowlistEntry = "meru";
+
     return (
       <>
-        <li>Quit 1Password.</li>
         <li>
-          Open the browser allowlist in an editor with root permissions.
+          <Trans>Quit 1Password.</Trans>
+        </li>
+        <li>
+          <Trans>Open the browser allowlist in an editor with root permissions.</Trans>
           <div className="mt-2 flex items-center gap-2">
             <Code className="min-w-0 flex-1 truncate rounded-md px-2 py-1.5">
               {ONEPASSWORD_ALLOWED_BROWSERS_COMMAND}
@@ -118,29 +123,52 @@ function OnePasswordSetupSteps() {
           </div>
         </li>
         <li>
-          Add <Code>meru</Code> on its own line, then save.
+          <Trans comment="allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is">
+            Add <Code>{allowlistEntry}</Code> on its own line, then save.
+          </Trans>
         </li>
-        <li>Open and unlock 1Password again.</li>
-        <li>Restart Meru.</li>
+        <li>
+          <Trans>Open and unlock 1Password again.</Trans>
+        </li>
+        <li>
+          <Trans>Restart Meru.</Trans>
+        </li>
       </>
     );
   }
 
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a Windows folder path, the same in every language
+  const installFolder = "%LOCALAPPDATA%\\Programs\\Meru";
+
   return (
     <>
-      <li>Open and unlock 1Password.</li>
-      <li>Select your account at the top of the sidebar, then select Settings.</li>
-      <li>Select Browser, then select Add Browser.</li>
+      <li>
+        <Trans>Open and unlock 1Password.</Trans>
+      </li>
+      <li>
+        <Trans comment="Settings is the item in the 1Password app, so use the word 1Password shows in that language">
+          Select your account at the top of the sidebar, then select Settings.
+        </Trans>
+      </li>
+      <li>
+        <Trans comment="Browser and Add Browser are in 1Password's settings, so use the words 1Password shows in that language">
+          Select Browser, then select Add Browser.
+        </Trans>
+      </li>
       <li>
         {platform.isMacOS ? (
-          "Choose Meru in the Applications folder."
+          <Trans comment="Applications is the macOS folder, so use the name the Finder shows in that language">
+            Choose Meru in the Applications folder.
+          </Trans>
         ) : (
-          <>
-            Choose Meru in <Code>%LOCALAPPDATA%\Programs\Meru</Code>.
-          </>
+          <Trans comment="installFolder is the folder Meru is installed in on Windows, which stays as it is">
+            Choose Meru in <Code>{installFolder}</Code>.
+          </Trans>
         )}
       </li>
-      <li>Restart Meru.</li>
+      <li>
+        <Trans>Restart Meru.</Trans>
+      </li>
     </>
   );
 }
@@ -154,28 +182,38 @@ function OnePasswordSetupDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Connect 1Password</DialogTitle>
+          <DialogTitle>
+            <Trans>Connect 1Password</Trans>
+          </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no
-          vault data of its own. Trust Meru in 1Password's settings to connect the two.
+          <Trans>
+            Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no
+            vault data of its own. Trust Meru in 1Password's settings to connect the two.
+          </Trans>
         </DialogDescription>
         <ol className="ml-4 list-decimal space-y-2 marker:text-muted-foreground">
           <OnePasswordSetupSteps />
         </ol>
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Later</Button>} />
+          <DialogClose
+            render={
+              <Button variant="outline">
+                <Trans comment="Dialog button that puts off restarting Meru">Later</Trans>
+              </Button>
+            }
+          />
           <Button
             onClick={() => {
               ipc.main.send("app.relaunch");
             }}
           >
-            Restart
+            <Trans comment="Dialog button that restarts Meru">Restart</Trans>
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -199,26 +237,38 @@ function ReplaceExtensionDialog({
     return;
   }
 
+  const extensionName = extension.name;
+
+  const replacedExtensionName = replacedExtension.name;
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent initialFocus={cancelButtonRef}>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Replace {replacedExtension.name} with {extension.name}?
+            <Trans comment="Both are password manager extensions">
+              Replace {replacedExtensionName} with {extensionName}?
+            </Trans>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Only one password manager can be on at a time. Turning on {extension.name} turns off{" "}
-            {replacedExtension.name} in Meru and signs you out of it here. Your passwords stay in
-            your {replacedExtension.name} account.
+            <Trans comment="Both are password manager extensions">
+              Only one password manager can be on at a time. Turning on {extensionName} turns off{" "}
+              {replacedExtensionName} in Meru and signs you out of it here. Your passwords stay in
+              your {replacedExtensionName} account.
+            </Trans>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel ref={cancelButtonRef}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel ref={cancelButtonRef}>
+            <Trans>Cancel</Trans>
+          </AlertDialogCancel>
           <AlertDialogClose
             render={<AlertDialogAction variant="destructive" />}
             onClick={onReplace}
           >
-            Replace
+            <Trans comment="Button that turns on a password manager extension in place of the one that is on">
+              Replace
+            </Trans>
           </AlertDialogClose>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -247,15 +297,21 @@ function ExtensionErrorDialog({
         }
       }}
     >
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
           <DialogTitle>{error?.title}</DialogTitle>
         </DialogHeader>
         <DialogDescription className="whitespace-pre-line">{error?.description}</DialogDescription>
         <DialogFooter>
-          <DialogClose render={<Button>OK</Button>} />
+          <DialogClose
+            render={
+              <Button>
+                <Trans>OK</Trans>
+              </Button>
+            }
+          />
         </DialogFooter>
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -277,6 +333,13 @@ function ExtensionSitesDialog({
 }) {
   const siteInputId = useId();
 
+  const { t } = useLingui();
+
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- an example address, the same in every language
+  const exampleSite = "sso.example.com";
+
+  const extensionName = extension.name;
+
   const [siteInput, setSiteInput] = useState("");
 
   const [siteInputError, setSiteInputError] = useState<string | null>(null);
@@ -295,7 +358,7 @@ function ExtensionSitesDialog({
     const hostname = normalizeExtensionSiteHostname(siteInput);
 
     if (!hostname) {
-      setSiteInputError("Enter a website address, like sso.example.com.");
+      setSiteInputError(t`Enter a website address, like ${exampleSite}.`);
 
       return;
     }
@@ -313,13 +376,19 @@ function ExtensionSitesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Sites for {extension.name}</DialogTitle>
+          <DialogTitle>
+            <Trans comment="extensionName is a password manager extension's name">
+              Sites for {extensionName}
+            </Trans>
+          </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          {extension.name} runs on Google's sign-in pages only. Add a site to run it there too, such
-          as your company's single sign-on provider. Sites apply after a restart.
+          <Trans comment="extensionName is a password manager extension's name">
+            {extensionName} runs on Google's sign-in pages only. Add a site to run it there too,
+            such as your company's single sign-on provider. Sites apply after a restart.
+          </Trans>
         </DialogDescription>
         {sites.length > 0 && (
           <div className="space-y-2">
@@ -332,9 +401,15 @@ function ExtensionSitesDialog({
                   onClick={() => {
                     saveSites(sites.filter((keptSite) => keptSite !== site));
                   }}
-                  aria-label={`Remove ${site}`}
+                  aria-label={t({
+                    message: `Remove ${site}`,
+                    comment:
+                      "Screen reader label of the button that removes a site; site is its address",
+                  })}
                 >
-                  Remove
+                  <Trans comment="Button that removes a site from the extension's sites">
+                    Remove
+                  </Trans>
                 </Button>
               </div>
             ))}
@@ -342,7 +417,9 @@ function ExtensionSitesDialog({
         )}
         <Field>
           <FieldLabel htmlFor={siteInputId} className="sr-only">
-            Site to add
+            <Trans comment="Screen reader label of the field for the address of a site to add">
+              Site to add
+            </Trans>
           </FieldLabel>
           <form
             className="flex gap-2"
@@ -360,18 +437,24 @@ function ExtensionSitesDialog({
 
                 setSiteInputError(null);
               }}
-              placeholder="sso.example.com"
+              placeholder={exampleSite}
             />
             <Button type="submit" variant="outline">
-              Add
+              <Trans comment="Button that adds the site entered in the field">Add</Trans>
             </Button>
           </form>
           {siteInputError && <FieldError>{siteInputError}</FieldError>}
         </Field>
         <DialogFooter>
-          <DialogClose render={<Button>Done</Button>} />
+          <DialogClose
+            render={
+              <Button>
+                <Trans comment="Button that closes the dialog of an extension's sites">Done</Trans>
+              </Button>
+            }
+          />
         </DialogFooter>
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -394,6 +477,8 @@ function ExtensionItem({
   const { t } = useLingui();
 
   const description = extensionDescriptions[extension.id];
+
+  const extensionName = extension.name;
 
   const installed = installedExtensionIds.includes(extension.id);
 
@@ -433,7 +518,7 @@ function ExtensionItem({
     mutationFn: () => ipc.main.invoke("extensions.openWindow", extension.id),
     onSuccess: ({ error }) => {
       if (error) {
-        setExtensionError({ title: `Couldn't open ${extension.name}`, description: error });
+        setExtensionError({ title: t`Couldn't open ${extensionName}`, description: error });
       }
     },
   });
@@ -453,8 +538,8 @@ function ExtensionItem({
 
         setExtensionError({
           title: install
-            ? `Couldn't install ${extension.name}`
-            : `Couldn't uninstall ${extension.name}`,
+            ? t`Couldn't install ${extensionName}`
+            : t`Couldn't uninstall ${extensionName}`,
           description: error,
         });
 
@@ -488,10 +573,16 @@ function ExtensionItem({
               rel="noreferrer"
               className="flex items-center gap-1 hover:underline"
             >
-              {extension.name}
+              {extensionName}
               <ExternalLinkIcon className="size-3 text-muted-foreground" />
             </a>
-            {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
+            {installedVersion && (
+              <Badge variant="outline">
+                <Trans comment="Badge with the installed version of the extension">
+                  Version {installedVersion}
+                </Trans>
+              </Badge>
+            )}
             <LicenseKeyRequiredFieldBadge />
           </ItemTitle>
           <ItemDescription>{description ? t(description) : extension.description}</ItemDescription>
@@ -506,7 +597,9 @@ function ExtensionItem({
                     openWindowMutation.mutate();
                   }}
                 >
-                  Open {extension.name}
+                  <Trans comment="Button that opens the extension's own window, to sign in to it">
+                    Open {extensionName}
+                  </Trans>
                 </Button>
               )}
               {isOnePassword && (
@@ -522,7 +615,9 @@ function ExtensionItem({
                     setIsSetupDialogOpen(true);
                   }}
                 >
-                  Set up desktop app
+                  <Trans comment="Button that opens the steps for connecting the extension to the 1Password desktop app">
+                    Set up desktop app
+                  </Trans>
                 </Button>
               )}
               {extension.contentScriptMatches && (
@@ -536,14 +631,23 @@ function ExtensionItem({
                     setIsSitesDialogOpen(true);
                   }}
                 >
-                  Add sites
+                  <Trans comment="Button that opens the dialog of the sites the extension runs on">
+                    Add sites
+                  </Trans>
                 </Button>
               )}
             </div>
           )}
         </ItemContent>
         <ItemActions>
-          {extensionMutation.isPending && <Spinner />}
+          {extensionMutation.isPending && (
+            <Spinner
+              aria-label={t({
+                message: "Loading",
+                comment: "Screen reader label of a spinner shown while something loads",
+              })}
+            />
+          )}
           <Switch
             checked={extensionsEnabled && installed}
             disabled={toggleLocked || isAnyToggleRunning}
@@ -556,7 +660,10 @@ function ExtensionItem({
 
               extensionMutation.mutate(checked);
             }}
-            aria-label={`Install ${extension.name}`}
+            aria-label={t({
+              message: `Install ${extensionName}`,
+              comment: "Screen reader label of the switch that installs the extension",
+            })}
           />
         </ItemActions>
       </Item>
@@ -594,10 +701,14 @@ function ExperimentalAlert() {
   return (
     <Alert>
       <FlaskConicalIcon />
-      <AlertTitle>Extensions are in testing</AlertTitle>
+      <AlertTitle>
+        <Trans>Extensions are in testing</Trans>
+      </AlertTitle>
       <AlertDescription>
-        Extension support is still being tested and may not work as reliably as the rest of Meru. To
-        help make it stable, report any issues.
+        <Trans>
+          Extension support is still being tested and may not work as reliably as the rest of Meru.
+          To help make it stable, report any issues.
+        </Trans>
       </AlertDescription>
     </Alert>
   );
@@ -610,14 +721,25 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Sign in to Google with a passkey and Touch ID</AlertTitle>
+        <AlertTitle>
+          <Trans>Sign in to Google with a passkey and Touch ID</Trans>
+        </AlertTitle>
         <AlertDescription>
-          {isLicenseKeyValid
-            ? "Add a passkey to your Google account"
-            : "Meru Pro lets you add a passkey to your Google account"}{" "}
-          from its security settings inside Meru, then sign in with Touch ID — no password manager
-          extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and
-          filling passwords still needs a password manager.
+          {isLicenseKeyValid ? (
+            <Trans>
+              Add a passkey to your Google account from its security settings inside Meru, then sign
+              in with Touch ID — no password manager extension to install, so Meru stays fast and
+              light. iCloud passkeys don't work here, and filling passwords still needs a password
+              manager.
+            </Trans>
+          ) : (
+            <Trans>
+              Meru Pro lets you add a passkey to your Google account from its security settings
+              inside Meru, then sign in with Touch ID — no password manager extension to install, so
+              Meru stays fast and light. iCloud passkeys don't work here, and filling passwords
+              still needs a password manager.
+            </Trans>
+          )}
         </AlertDescription>
       </Alert>
     );
@@ -627,12 +749,16 @@ function PasskeysAlert() {
     return (
       <Alert>
         <KeyRoundIcon />
-        <AlertTitle>Sign in to Google with a passkey and Windows Hello</AlertTitle>
+        <AlertTitle>
+          <Trans>Sign in to Google with a passkey and Windows Hello</Trans>
+        </AlertTitle>
         <AlertDescription>
-          Add a passkey to your Google account from its security settings inside Meru, then sign in
-          with Windows Hello — no password manager extension to install, so Meru stays fast and
-          light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and
-          filling passwords still needs a password manager.
+          <Trans>
+            Add a passkey to your Google account from its security settings inside Meru, then sign
+            in with Windows Hello — no password manager extension to install, so Meru stays fast and
+            light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and
+            filling passwords still needs a password manager.
+          </Trans>
         </AlertDescription>
       </Alert>
     );
@@ -641,23 +767,29 @@ function PasskeysAlert() {
   return (
     <Alert>
       <KeyRoundIcon />
-      <AlertTitle>Passkeys need a password manager</AlertTitle>
+      <AlertTitle>
+        <Trans>Passkeys need a password manager</Trans>
+      </AlertTitle>
       <AlertDescription>
-        Linux has no system passkey support, so a password manager extension is the only way to sign
-        in to Google with a passkey in Meru.
+        <Trans>
+          Linux has no system passkey support, so a password manager extension is the only way to
+          sign in to Google with a passkey in Meru.
+        </Trans>
       </AlertDescription>
     </Alert>
   );
 }
 
 function UpdateExtensionsButton() {
+  const { t } = useLingui();
+
   const [extensionError, setExtensionError] = useState<ExtensionError | null>(null);
 
   const updateExtensionsMutation = useMutation({
     mutationFn: () => ipc.main.invoke("extensions.update"),
     onSuccess: ({ error, results }) => {
       if (error) {
-        setExtensionError({ title: "Couldn't update extensions", description: error });
+        setExtensionError({ title: t`Couldn't update extensions`, description: error });
 
         return;
       }
@@ -673,12 +805,24 @@ function UpdateExtensionsButton() {
           case "updated": {
             updatedAny = true;
 
-            toast.success(`${name} updated to ${result.version}`);
+            const { version } = result;
+
+            toast.success(
+              t({
+                message: `${name} updated to ${version}`,
+                comment: "name is an extension's name",
+              }),
+            );
 
             break;
           }
           case "upToDate": {
-            toast.success(`${name} is up to date`);
+            toast.success(
+              t({
+                message: `${name} is up to date`,
+                comment: "name is an extension's name",
+              }),
+            );
 
             break;
           }
@@ -693,14 +837,29 @@ function UpdateExtensionsButton() {
       const [firstFailedUpdate] = failedUpdates;
 
       if (firstFailedUpdate) {
+        const failedName = firstFailedUpdate.name;
+
+        const failedCount = failedUpdates.length;
+
+        const failures = failedUpdates
+          .map(({ name, reason }) =>
+            t({
+              message: `${name}: ${reason}`,
+              comment:
+                "name is an extension's name; reason is the technical reason, left untranslated",
+            }),
+          )
+          .join("\n");
+
         setExtensionError({
-          title:
-            failedUpdates.length === 1
-              ? `Couldn't update ${firstFailedUpdate.name}`
-              : `Couldn't update ${failedUpdates.length} extensions`,
-          description: `${failedUpdates
-            .map(({ name, reason }) => `${name}: ${reason}`)
-            .join("\n")}\n\nTry updating again.`,
+          title: t({
+            message: plural(failedCount, {
+              1: `Couldn't update ${failedName}`,
+              other: "Couldn't update # extensions",
+            }),
+            comment: "failedName is an extension's name, shown when only that one failed to update",
+          }),
+          description: `${failures}\n\n${t`Try updating again.`}`,
         });
       }
 
@@ -723,8 +882,15 @@ function UpdateExtensionsButton() {
           updateExtensionsMutation.mutate();
         }}
       >
-        {updateExtensionsMutation.isPending && <Spinner />}
-        Update extensions
+        {updateExtensionsMutation.isPending && (
+          <Spinner
+            aria-label={t({
+              message: "Loading",
+              comment: "Screen reader label of a spinner shown while something loads",
+            })}
+          />
+        )}
+        <Trans>Update extensions</Trans>
       </Button>
       <ExtensionErrorDialog
         error={extensionError}
@@ -738,6 +904,8 @@ function UpdateExtensionsButton() {
 
 export function ExtensionsSettings() {
   const { config } = useConfig();
+
+  const { t } = useLingui();
 
   const { data: installedExtensions } = useQuery({
     queryKey: installedExtensionsQueryKey,
@@ -754,7 +922,7 @@ export function ExtensionsSettings() {
     <Settings>
       <SettingsHeader>
         <SettingsTitle className="flex items-center gap-2">
-          Extensions
+          {t(settingsPageLabels.extensions)}
           <MaturityFieldBadge maturity="Experimental" />
         </SettingsTitle>
         {extensionsEnabled && config["extensions.installed"].length > 0 && (
@@ -766,21 +934,25 @@ export function ExtensionsSettings() {
         <FieldGroup>
           <ExperimentalAlert />
           <FieldDescription>
-            Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn
-            one on below and Meru installs the official version from the Chrome Web Store.
-            Extensions start after a restart, and every account shares one copy, so you sign in to
-            an extension once.
+            <Trans>
+              Extensions add features to Meru, like filling passwords on the Google sign-in page.
+              Turn one on below and Meru installs the official version from the Chrome Web Store.
+              Extensions start after a restart, and every account shares one copy, so you sign in to
+              an extension once.
+            </Trans>
           </FieldDescription>
           <ConfigSwitchField
-            label="Enable extensions"
-            description="Run the installed extensions. Turning this off stops them without uninstalling them."
+            label={t`Enable extensions`}
+            description={t`Run the installed extensions. Turning this off stops them without uninstalling them.`}
             configKey="extensions.enabled"
             licenseKeyRequired
             restartRequired
           />
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Password managers</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the password manager extensions">Password managers</Trans>
+            </FieldLegend>
             <PasskeysAlert />
             <ItemGroup>
               {curatedExtensions

@@ -44,6 +44,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/routes/settings/appearance.tsx",
   "packages/renderer/routes/settings/blocker.tsx",
   "packages/renderer/routes/settings/downloads.tsx",
+  "packages/renderer/routes/settings/extensions.tsx",
   "packages/renderer/routes/settings/general.tsx",
   "packages/renderer/routes/settings/gmail/index.tsx",
   "packages/renderer/routes/settings/gmail/label-colors.tsx",
