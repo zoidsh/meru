@@ -11,6 +11,7 @@ import {
   getTitleBarOptions,
   isWindowVisibleOnConnectedDisplay,
   loadRenderer,
+  onceReadyToShow,
 } from "@/lib/window";
 import { appMenu } from "@/menu";
 import { openExternalUrl } from "@/url";
@@ -140,7 +141,7 @@ class Main {
     });
 
     if (!this.shouldLaunchMinimized) {
-      this.window.once("ready-to-show", () => {
+      onceReadyToShow(this.window, () => {
         this.show();
       });
 
