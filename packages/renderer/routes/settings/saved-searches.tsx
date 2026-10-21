@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { useLingui } from "@lingui/react/macro";
 import {
   type GmailSavedSearch,
   type GmailSavedSearchInput,
@@ -40,7 +41,8 @@ import {
 } from "@meru/ui/components/item";
 import { useForm } from "@tanstack/react-form";
 import { GripVerticalIcon, PencilIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { z } from "zod";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
 import { SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
@@ -60,10 +62,21 @@ export function SavedSearchForm({
   type: "add" | "edit";
   onSubmit: (savedSearch: GmailSavedSearchInput) => void;
 }) {
+  const { t } = useLingui();
+
+  const schema = useMemo(
+    () =>
+      gmailSavedSearchInputSchema.extend({
+        label: z.string().min(1, t`Enter a label`),
+        query: z.string().min(1, t`Enter a search query`),
+      }),
+    [t],
+  );
+
   const form = useForm({
     defaultValues: savedSearch,
     validators: {
-      onSubmit: gmailSavedSearchInputSchema,
+      onSubmit: schema,
     },
     onSubmit: ({ value }) => {
       onSubmit(value);

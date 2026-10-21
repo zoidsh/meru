@@ -1,3 +1,5 @@
+import { useLingui } from "@lingui/react/macro";
+import { isValidCssColorInput } from "@meru/shared/color";
 import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
 import {
   type GmailLabelColor,
@@ -28,7 +30,8 @@ import {
 } from "@meru/ui/components/select";
 import { useForm } from "@tanstack/react-form";
 import { PencilIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { z } from "zod";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
@@ -49,10 +52,24 @@ function LabelColorForm({
   type: "add" | "edit";
   onSubmit: (labelColor: GmailLabelColorInput) => void;
 }) {
+  const { t } = useLingui();
+
+  const schema = useMemo(
+    () =>
+      gmailLabelColorInputSchema.extend({
+        label: z.string().min(1, t`Enter a label`),
+        color: z
+          .string()
+          .min(1, t`Enter a color`)
+          .refine(isValidCssColorInput, t`Enter a valid hex, rgb, or rgba color`),
+      }),
+    [t],
+  );
+
   const form = useForm({
     defaultValues: labelColor,
     validators: {
-      onSubmit: gmailLabelColorInputSchema,
+      onSubmit: schema,
     },
     onSubmit: ({ value }) => {
       onSubmit(value);
