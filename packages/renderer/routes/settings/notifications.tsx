@@ -1,4 +1,5 @@
-import { useLingui } from "@lingui/react/macro";
+import { msg, select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { minutesToTime, timeToMinutes } from "@meru/shared/time";
 import type { NotificationTime } from "@meru/shared/types";
@@ -25,7 +26,7 @@ import {
 } from "@meru/ui/components/select";
 import { Slider } from "@meru/ui/components/slider";
 import { Plus, X } from "lucide-react";
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { toast } from "sonner";
 import { ConfigSelectField } from "@/components/config-select-field";
 import { ConfigSwitchField } from "@/components/config-switch-field";
@@ -35,12 +36,30 @@ import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/comp
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { NOTIFICATION_SOUNDS, playNotificationSound } from "@/lib/notifications";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { platform } from "@/lib/utils";
 
 const newEmailsItems = [
-  { value: "all", label: "All new emails" },
-  { value: "important", label: "Important only" },
+  {
+    value: "all",
+    label: msg({
+      message: "All new emails",
+      comment: "Option of the Notify for setting: a notification for every new email",
+    }),
+  },
+  {
+    value: "important",
+    label: msg({
+      message: "Important only",
+      comment:
+        "Option of the Notify for setting: a notification only for the emails Gmail marks as important. Important is Gmail's word for them, so it follows Gmail's word in this language",
+    }),
+  },
 ];
+
+const FIRST_TIME_WINDOW = { start: "09:00", end: "17:00" };
+
+const MONDAY_FIRST_WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const;
 
 function hasOverlap(times: NotificationTime[]) {
   return times.some((timeA, index) =>
@@ -57,7 +76,7 @@ function hasOverlap(times: NotificationTime[]) {
 
 function findFreeSlot(existingTimes: NotificationTime[]) {
   if (existingTimes.length === 0) {
-    return { start: "09:00", end: "17:00" };
+    return FIRST_TIME_WINDOW;
   }
 
   for (let hour = 0; hour < 24; hour++) {
@@ -89,7 +108,17 @@ export function NotificationsSettings() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
-  const { t } = useLingui();
+  const { i18n, t } = useLingui();
+
+  const weekdayFormat = useMemo(
+    () => new Intl.DateTimeFormat(i18n.locale, { weekday: "short", timeZone: "UTC" }),
+    [i18n.locale],
+  );
+
+  const percentFormat = useMemo(
+    () => new Intl.NumberFormat(i18n.locale, { style: "percent", maximumFractionDigits: 0 }),
+    [i18n.locale],
+  );
 
   if (!config) {
     return;
@@ -97,11 +126,19 @@ export function NotificationsSettings() {
 
   const times = config["notifications.times"];
 
+  const percent = percentFormat.format(config["notifications.volume"]);
+
+  const downloadNotificationAction = platform.isLinux ? "click" : "button";
+
+  // 4 January 1970 was a Sunday, so day 4 + n is weekday n.
+  const getWeekdayLabel = (dayIndex: number) =>
+    weekdayFormat.format(Date.UTC(1970, 0, 4 + dayIndex));
+
   const addTime = () => {
     const slot = findFreeSlot(times);
 
     if (!slot) {
-      toast.error("No free time slot left for another window. Remove or shorten one first.");
+      toast.error(t`No free time slot left for another window. Remove or shorten one first.`);
 
       return;
     }
@@ -115,7 +152,7 @@ export function NotificationsSettings() {
     const newTimes = times.map((time) => (time.id === id ? { ...time, [field]: value } : time));
 
     if (hasOverlap(newTimes)) {
-      toast.error("Notification times overlap. Adjust the windows so that none of them do.");
+      toast.error(t`Notification times overlap. Adjust the windows so that none of them do.`);
 
       return;
     }
@@ -149,52 +186,69 @@ export function NotificationsSettings() {
   return (
     <Settings>
       <SettingsHeader>
-        <SettingsTitle>Notifications</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.notifications)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
         <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Emails</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Notifications section about notifications for new emails">
+                Emails
+              </Trans>
+            </FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="New emails"
-                description="Show notifications for new emails."
+                label={t({
+                  message: "New emails",
+                  comment: "Setting that turns on notifications for new emails",
+                })}
+                description={t`Show notifications for new emails.`}
                 configKey="notifications.enabled"
               />
               {config["notifications.enabled"] && (
                 <>
                   <ConfigSelectField
                     configKey="notifications.newEmails"
-                    label="Notify for"
-                    description="Choose whether every new email or only the emails Gmail marks as important shows a notification."
-                    items={newEmailsItems}
+                    label={t({
+                      message: "Notify for",
+                      comment: "Setting that picks which new emails show a notification",
+                    })}
+                    description={t({
+                      message:
+                        "Choose whether every new email or only the emails Gmail marks as important shows a notification.",
+                      comment:
+                        "Marks as important names Gmail's Important marker, so important follows Gmail's word for it",
+                    })}
+                    items={newEmailsItems.map(({ value, label }) => ({ value, label: t(label) }))}
                     licenseKeyRequired
                   />
                   <ConfigSwitchField
-                    label="Show sender"
-                    description="Display the email sender's name in notifications."
+                    label={t`Show sender`}
+                    description={t`Display the email sender's name in notifications.`}
                     configKey="notifications.showSender"
                   />
                   <ConfigSwitchField
-                    label="Show subject"
-                    description="Display the email subject in notifications."
+                    label={t`Show subject`}
+                    description={t`Display the email subject in notifications.`}
                     configKey="notifications.showSubject"
                   />
                   <ConfigSwitchField
-                    label="Show summary"
-                    description="Display the email summary in notifications."
+                    label={t`Show summary`}
+                    description={t`Display the email summary in notifications.`}
                     configKey="notifications.showSummary"
                   />
                   <Field>
                     <FieldTitle>
-                      Notification times
+                      <Trans>Notification times</Trans>
                       <LicenseKeyRequiredFieldBadge />
                     </FieldTitle>
                     <FieldDescription>
-                      Set the time windows when notifications are active. Outside them,
-                      notifications stay silent. Leave the list empty to allow notifications at any
-                      time.
+                      <Trans>
+                        Set the time windows when notifications are active. Outside them,
+                        notifications stay silent. Leave the list empty to allow notifications at
+                        any time.
+                      </Trans>
                     </FieldDescription>
                     {times.map((time) => (
                       <Item key={time.id} variant="muted">
@@ -207,7 +261,11 @@ export function NotificationsSettings() {
                               className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                               disabled={!isLicenseKeyValid}
                             />
-                            <span className="shrink-0 text-sm text-muted-foreground">to</span>
+                            <span className="shrink-0 text-sm text-muted-foreground">
+                              <Trans comment="Sits between a start time field and an end time field, as in 09:00 to 17:00">
+                                to
+                              </Trans>
+                            </span>
                             <Input
                               type="time"
                               value={time.end}
@@ -217,8 +275,7 @@ export function NotificationsSettings() {
                             />
                           </div>
                           <div className="flex gap-2">
-                            {([1, 2, 3, 4, 5, 6, 0] as const).map((dayIndex, position) => {
-                              const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                            {MONDAY_FIRST_WEEKDAYS.map((dayIndex) => {
                               const isActive = (time.days ?? []).includes(dayIndex);
 
                               return (
@@ -230,7 +287,7 @@ export function NotificationsSettings() {
                                   onClick={() => updateTimeDays(time.id, dayIndex)}
                                   disabled={!isLicenseKeyValid}
                                 >
-                                  {dayLabels[position]}
+                                  {getWeekdayLabel(dayIndex)}
                                 </Button>
                               );
                             })}
@@ -242,7 +299,7 @@ export function NotificationsSettings() {
                             size="icon"
                             onClick={() => removeTime(time.id)}
                             disabled={!isLicenseKeyValid}
-                            title="Remove time window"
+                            title={t`Remove time window`}
                           >
                             <X />
                           </Button>
@@ -251,21 +308,23 @@ export function NotificationsSettings() {
                     ))}
                     <div>
                       <Button variant="outline" onClick={addTime} disabled={!isLicenseKeyValid}>
-                        <Plus /> Add time window
+                        <Plus /> <Trans>Add time window</Trans>
                       </Button>
                     </div>
                   </Field>
                   <Field>
-                    <FieldTitle>Test notification</FieldTitle>
+                    <FieldTitle>
+                      <Trans>Test notification</Trans>
+                    </FieldTitle>
                     <FieldDescription>
-                      Show a test notification to see how notifications appear.
+                      <Trans>Show a test notification to see how notifications appear.</Trans>
                     </FieldDescription>
                     <div>
                       <Button
                         variant="outline"
                         onClick={() => {
                           if (config["doNotDisturb.enabled"]) {
-                            toast.error("Turn off Do Not Disturb to show a test notification.");
+                            toast.error(t`Turn off Do Not Disturb to show a test notification.`);
 
                             return;
                           }
@@ -273,7 +332,7 @@ export function NotificationsSettings() {
                           ipc.main.send("notifications.showTestNotification");
                         }}
                       >
-                        Show test notification
+                        <Trans>Show test notification</Trans>
                       </Button>
                     </div>
                   </Field>
@@ -283,25 +342,54 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Downloads</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Notifications section about notifications for finished downloads">
+                Downloads
+              </Trans>
+            </FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Show notification"
-                description="Show a notification when a download finishes."
+                label={t({
+                  message: "Show notification",
+                  comment: "Setting that shows a notification when a download finishes",
+                })}
+                description={t`Show a notification when a download finishes.`}
                 configKey="notifications.downloadCompleted"
               />
               {config["notifications.downloadCompleted"] && (
                 <ConfigSelectField
-                  label={platform.isLinux ? "On click" : "Button"}
-                  description={
-                    platform.isLinux
-                      ? "Choose what clicking the notification does."
-                      : "Choose what the notification's button does."
-                  }
+                  label={t({
+                    message: select(downloadNotificationAction, {
+                      click: "On click",
+                      other: "Button",
+                    }),
+                    comment:
+                      "Setting that picks what a finished download's notification does: on Linux, clicking it; elsewhere, its button",
+                  })}
+                  description={t({
+                    message: select(downloadNotificationAction, {
+                      click: "Choose what clicking the notification does.",
+                      other: "Choose what the notification's button does.",
+                    }),
+                    comment:
+                      "On Linux, a finished download's notification acts when clicked; elsewhere, through its button",
+                  })}
                   configKey="notifications.onClickDownloadCompleted"
                   items={[
-                    { value: "showInFolder", label: "Show in folder" },
-                    { value: "openFile", label: "Open file" },
+                    {
+                      value: "showInFolder",
+                      label: t({
+                        message: "Show in folder",
+                        comment: "Option of what a finished download's notification does",
+                      }),
+                    },
+                    {
+                      value: "openFile",
+                      label: t({
+                        message: "Open file",
+                        comment: "Option of what a finished download's notification does",
+                      }),
+                    },
                   ]}
                 />
               )}
@@ -309,11 +397,18 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Workspace apps</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Notifications section about notifications from Workspace apps">
+                Workspace apps
+              </Trans>
+            </FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Show notifications"
-                description="Show notifications from Workspace apps such as Calendar, Meet, and Chat."
+                label={t({
+                  message: "Show notifications",
+                  comment: "Setting that lets Workspace apps show notifications",
+                })}
+                description={t`Show notifications from Workspace apps such as Calendar, Meet, and Chat.`}
                 configKey="notifications.allowFromWorkspaceApps"
                 licenseKeyRequired
               />
@@ -321,21 +416,29 @@ export function NotificationsSettings() {
           </FieldSet>
           <FieldSeparator />
           <FieldSet>
-            <FieldLegend>Sound</FieldLegend>
+            <FieldLegend>
+              <Trans comment="Heading of the Notifications section about notification sounds, and the setting that picks the sound">
+                Sound
+              </Trans>
+            </FieldLegend>
             <FieldGroup>
               <ConfigSwitchField
-                label="Play sound"
-                description="Play a sound when showing a notification."
+                label={t`Play sound`}
+                description={t`Play a sound when showing a notification.`}
                 configKey="notifications.playSound"
               />
               {config["notifications.playSound"] && (
                 <>
                   <Field>
                     <FieldLabel htmlFor={soundFieldId} className="flex items-center gap-2">
-                      Sound
+                      <Trans comment="Heading of the Notifications section about notification sounds, and the setting that picks the sound">
+                        Sound
+                      </Trans>
                       <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
-                    <FieldDescription>Select the sound to play for notifications.</FieldDescription>
+                    <FieldDescription>
+                      <Trans>Select the sound to play for notifications.</Trans>
+                    </FieldDescription>
                     <Select
                       items={Object.entries(NOTIFICATION_SOUNDS).map(([sound, { label }]) => ({
                         value: sound,
@@ -368,17 +471,23 @@ export function NotificationsSettings() {
                           </SelectItem>
                         ))}
                         <SelectSeparator />
-                        <SelectItem value="system">System</SelectItem>
+                        <SelectItem value="system">
+                          <Trans comment="Option of the Sound setting: the operating system's own notification sound">
+                            System
+                          </Trans>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                   {config["notifications.sound"] !== "system" && (
                     <Field>
                       <FieldTitle>
-                        Volume {(config["notifications.volume"] * 100).toFixed(0)}%
+                        <Trans comment="Title of the notification sound's volume slider; percent is the volume, such as 50%">
+                          Volume {percent}
+                        </Trans>
                       </FieldTitle>
                       <FieldDescription>
-                        Set the volume level for notification sounds.
+                        <Trans>Set the volume level for notification sounds.</Trans>
                       </FieldDescription>
                       <Slider
                         className="my-2"
