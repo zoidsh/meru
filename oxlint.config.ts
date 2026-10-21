@@ -45,6 +45,8 @@ const LOCALIZED_FILES = [
   "packages/renderer/routes/settings/blocker.tsx",
   "packages/renderer/routes/settings/downloads.tsx",
   "packages/renderer/routes/settings/general.tsx",
+  "packages/renderer/routes/settings/gmail/index.tsx",
+  "packages/renderer/routes/settings/gmail/label-colors.tsx",
   "packages/renderer/routes/settings/language-field.tsx",
   "packages/renderer/routes/settings/languages.tsx",
   "packages/renderer/routes/settings/phishing-protection.tsx",
@@ -164,6 +166,8 @@ export default defineConfig({
               "defaultPath",
               // A route the renderer navigates to.
               "path",
+              // A maturity badge's key, which the badge translates.
+              "maturity",
               { regex: { pattern: "^iconFileName" } },
             ],
           },
