@@ -33,6 +33,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/components/app-toaster.tsx",
   "packages/renderer/components/config-select-field.tsx",
   "packages/renderer/components/config-switch-field.tsx",
+  "packages/renderer/components/copy-button.tsx",
   "packages/renderer/components/download-history.tsx",
   "packages/renderer/components/emoji-picker-button.tsx",
   "packages/renderer/components/find-in-page.tsx",
