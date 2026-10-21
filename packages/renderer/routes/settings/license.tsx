@@ -1,10 +1,11 @@
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button, buttonVariants } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -32,7 +33,9 @@ import { EyeIcon, EyeOffIcon, MoreHorizontalIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { z } from "zod";
 import { SettingsHeader, SettingsTitle } from "@/components/settings";
+import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useConfig } from "@/lib/react-query";
+import { settingsPageLabels } from "@/lib/settings-pages";
 import { useTrialStore } from "@/lib/stores";
 
 export const licenseKeySchema = z.object({
@@ -70,7 +73,9 @@ function LicenseKeyForm({
           {(field) => {
             return (
               <Field>
-                <FieldLabel htmlFor={field.name}>License key</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  <Trans>License key</Trans>
+                </FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -78,6 +83,7 @@ function LicenseKeyForm({
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
+                  // oxlint-disable-next-line lingui/no-unlocalized-strings -- the license key's format, which is the same in every language
                   placeholder="MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
                 />
               </Field>
@@ -86,8 +92,18 @@ function LicenseKeyForm({
         </form.Field>
       </FieldGroup>
       <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
-        <Button type="submit">Activate</Button>
+        <DialogClose
+          render={
+            <Button variant="outline">
+              <Trans>Cancel</Trans>
+            </Button>
+          }
+        />
+        <Button type="submit">
+          <Trans comment="Button that activates the license key entered in the dialog">
+            Activate
+          </Trans>
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -105,14 +121,18 @@ function ActivateLicenseDialog({
   return (
     <Dialog {...props}>
       {children}
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
           <DialogTitle>
-            {variant === "activate" ? "Activate license key" : "Change license key"}
+            {variant === "activate" ? (
+              <Trans>Activate license key</Trans>
+            ) : (
+              <Trans>Change license key</Trans>
+            )}
           </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Enter the license key sent to your email address after your purchase.
+          <Trans>Enter the license key sent to your email address after your purchase.</Trans>
         </DialogDescription>
         <LicenseKeyForm
           onSubmit={async ({ licenseKey }) => {
@@ -123,7 +143,7 @@ function ActivateLicenseDialog({
             }
           }}
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -133,12 +153,22 @@ function ActivateLicenseKeyButton() {
 
   return (
     <ActivateLicenseDialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button variant="outline">Activate</Button>} />
+      <DialogTrigger
+        render={
+          <Button variant="outline">
+            <Trans comment="Button that opens the dialog for activating a license key">
+              Activate
+            </Trans>
+          </Button>
+        }
+      />
     </ActivateLicenseDialog>
   );
 }
 
 export function LicenseSettings() {
+  const { t } = useLingui();
+
   const trialDaysLeft = useTrialStore((state) => state.daysLeft);
 
   const isTrialExpired = useTrialStore((state) => state.expired);
@@ -165,7 +195,7 @@ export function LicenseSettings() {
     },
     validators: {
       onSubmit: z.object({
-        label: z.string().min(1, "Enter a device label"),
+        label: z.string().min(1, t`Enter a device label`),
       }),
     },
     onSubmit: async ({ value, formApi }) => {
@@ -188,13 +218,17 @@ export function LicenseSettings() {
       return (
         <div className="space-y-4">
           <div className="text-sm">
-            You're using Meru Pro, with the professional features and a license for commercial use.
-            Thank you for supporting Meru.
+            <Trans>
+              You're using Meru Pro, with the professional features and a license for commercial
+              use. Thank you for supporting Meru.
+            </Trans>
           </div>
           <div>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor={licenseKeyFieldId}>License key</FieldLabel>
+                <FieldLabel htmlFor={licenseKeyFieldId}>
+                  <Trans>License key</Trans>
+                </FieldLabel>
                 <div className="flex gap-2">
                   <InputGroup>
                     <InputGroupInput
@@ -206,7 +240,7 @@ export function LicenseSettings() {
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
                         size="icon-xs"
-                        title={isLicenseKeyRevealed ? "Hide license key" : "Show license key"}
+                        title={isLicenseKeyRevealed ? t`Hide license key` : t`Show license key`}
                         onClick={() => {
                           setIsLicenseKeyRevealed((isRevealed) => !isRevealed);
                         }}
@@ -218,7 +252,14 @@ export function LicenseSettings() {
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
-                        <Button size="icon" variant="secondary" title="More options">
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          title={t({
+                            message: "More options",
+                            comment: "Button that opens a menu of actions for the license key",
+                          })}
+                        >
                           <MoreHorizontalIcon />
                         </Button>
                       }
@@ -231,14 +272,16 @@ export function LicenseSettings() {
                           }
                         }}
                       >
-                        Copy
+                        <Trans comment="Menu item that copies the license key">Copy</Trans>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
                           setIsChangeLicenseDialogOpen(true);
                         }}
                       >
-                        Change
+                        <Trans comment="Menu item that opens the dialog for changing the license key">
+                          Change
+                        </Trans>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -263,7 +306,11 @@ export function LicenseSettings() {
 
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Device label</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          <Trans comment="Field for the name this computer goes by among the devices using the license key">
+                            Device label
+                          </Trans>
+                        </FieldLabel>
                         <div className="flex items-end gap-2">
                           <InputGroup>
                             <InputGroupInput
@@ -277,7 +324,13 @@ export function LicenseSettings() {
                             />
                             {!deviceInfo && (
                               <InputGroupAddon>
-                                <Spinner />
+                                <Spinner
+                                  aria-label={t({
+                                    message: "Loading",
+                                    comment:
+                                      "Screen reader label of a spinner shown while something loads",
+                                  })}
+                                />
                               </InputGroupAddon>
                             )}
                           </InputGroup>
@@ -290,8 +343,16 @@ export function LicenseSettings() {
                                 variant="secondary"
                                 disabled={isPristine || isSubmitting}
                               >
-                                {isSubmitting && <Spinner />}
-                                Save
+                                {isSubmitting && (
+                                  <Spinner
+                                    aria-label={t({
+                                      message: "Loading",
+                                      comment:
+                                        "Screen reader label of a spinner shown while something loads",
+                                    })}
+                                  />
+                                )}
+                                <Trans comment="Button that saves the device label">Save</Trans>
                               </Button>
                             )}
                           </deviceInfoForm.Subscribe>
@@ -315,17 +376,30 @@ export function LicenseSettings() {
             {isTrialExpired ? (
               <>
                 <div>
-                  Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru.
+                  <Trans>
+                    Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru.
+                  </Trans>
                 </div>
-                <div>Upgrade to Meru Pro to keep using all features.</div>
+                <div>
+                  <Trans>Upgrade to Meru Pro to keep using all features.</Trans>
+                </div>
               </>
             ) : (
               <>
                 <div>
-                  You're using a Meru Pro trial with {trialDaysLeft} day
-                  {trialDaysLeft > 1 ? "s" : ""} left.
+                  {t({
+                    message: plural(trialDaysLeft, {
+                      one: "You're using a Meru Pro trial with # day left.",
+                      other: "You're using a Meru Pro trial with # days left.",
+                    }),
+                    comment: "The days left in the Meru Pro trial, on the License page in Settings",
+                  })}
                 </div>
-                <div>Upgrade to Meru Pro before your trial ends to keep using all features.</div>
+                <div>
+                  <Trans>
+                    Upgrade to Meru Pro before your trial ends to keep using all features.
+                  </Trans>
+                </div>
               </>
             )}
           </div>
@@ -337,7 +411,9 @@ export function LicenseSettings() {
               rel="noreferrer"
               className={buttonVariants()}
             >
-              Upgrade
+              <Trans comment="Button on the License page in Settings, which opens Meru Pro's pricing page">
+                Upgrade
+              </Trans>
             </a>
           </div>
         </>
@@ -347,10 +423,14 @@ export function LicenseSettings() {
     return (
       <>
         <div className="mb-4 space-y-2 text-sm">
-          <div>You're using the free version of Meru for personal use.</div>
           <div>
-            Unlock Meru Pro for professional features and commercial use. Your upgrade supports
-            ongoing development.
+            <Trans>You're using the free version of Meru for personal use.</Trans>
+          </div>
+          <div>
+            <Trans>
+              Unlock Meru Pro for professional features and commercial use. Your upgrade supports
+              ongoing development.
+            </Trans>
           </div>
         </div>
         <div className="flex gap-4">
@@ -361,7 +441,9 @@ export function LicenseSettings() {
             rel="noreferrer"
             className={buttonVariants()}
           >
-            Upgrade
+            <Trans comment="Button on the License page in Settings, which opens Meru Pro's pricing page">
+              Upgrade
+            </Trans>
           </a>
         </div>
       </>
@@ -371,7 +453,7 @@ export function LicenseSettings() {
   return (
     <>
       <SettingsHeader>
-        <SettingsTitle>License</SettingsTitle>
+        <SettingsTitle>{t(settingsPageLabels.license)}</SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>
