@@ -1,4 +1,8 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
+  BITWARDEN_EXTENSION_ID,
   type CuratedExtension,
   curatedExtensions,
   getConflictingExtensionIds,
@@ -76,6 +80,17 @@ const installedExtensionsQueryKey = ["installed-extensions"];
  * second item turned on meanwhile would install without asking.
  */
 const extensionToggleMutationKey = ["extension-toggle"];
+
+/**
+ * Translated here rather than in `@meru/shared/extensions`, which end-to-end
+ * tests and the download script import without the Lingui transform.
+ */
+// lingui-set comment="Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language"
+const extensionDescriptions: Record<string, MessageDescriptor> = {
+  [ONEPASSWORD_EXTENSION_ID]: msg`Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru.`,
+  [BITWARDEN_EXTENSION_ID]: msg`Fills and generates passwords and passkeys for your Google Account. Unlocking with biometrics needs the Bitwarden desktop app.`,
+};
+// lingui-reset
 
 const ONEPASSWORD_ALLOWED_BROWSERS_COMMAND = "sudo nano /etc/1password/custom_allowed_browsers";
 
@@ -376,6 +391,10 @@ function ExtensionItem({
 }) {
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const { t } = useLingui();
+
+  const description = extensionDescriptions[extension.id];
+
   const installed = installedExtensionIds.includes(extension.id);
 
   const [replacedExtensionId] = getConflictingExtensionIds(extension.id, installedExtensionIds);
@@ -475,7 +494,7 @@ function ExtensionItem({
             {installedVersion && <Badge variant="outline">Version {installedVersion}</Badge>}
             <LicenseKeyRequiredFieldBadge />
           </ItemTitle>
-          <ItemDescription>{extension.description}</ItemDescription>
+          <ItemDescription>{description ? t(description) : extension.description}</ItemDescription>
           {(isOnePassword || showsWindowButton || extension.contentScriptMatches) && (
             <div className="mt-1 flex flex-wrap gap-2 self-start">
               {showsWindowButton && (
