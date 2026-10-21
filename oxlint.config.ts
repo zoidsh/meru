@@ -57,6 +57,7 @@ const LOCALIZED_FILES = [
   "packages/renderer/routes/settings/updates.tsx",
   "packages/renderer/routes/settings/verification-codes.tsx",
   "packages/renderer/routes/settings/version-history.tsx",
+  "packages/renderer/routes/settings/workspace-apps.tsx",
   "packages/shared/accounts.ts",
   "packages/shared/schemas.ts",
   "packages/shared/tabs.ts",
