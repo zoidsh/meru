@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { GmailAction } from "@meru/shared/gmail";
 import { getGoogleDomainFaviconUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
@@ -40,7 +43,7 @@ import {
   OctagonAlertIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { navigate } from "wouter/use-hash-location";
 import { AccountBadge } from "@/components/account-badge";
@@ -51,16 +54,31 @@ import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const columnHelper = createColumnHelper<UnifiedInboxMessage>();
 
+// lingui-set comment="Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it"
 const MESSAGE_ACTIONS = [
-  { action: "archive", label: "Archive", icon: ArchiveIcon },
-  { action: "markAsRead", label: "Mark as read", icon: MailOpenIcon },
-  { action: "delete", label: "Delete", icon: Trash2Icon },
-  { action: "markAsSpam", label: "Mark as spam", icon: OctagonAlertIcon },
+  { action: "archive", label: msg`Archive`, icon: ArchiveIcon },
+  { action: "markAsRead", label: msg`Mark as read`, icon: MailOpenIcon },
+  {
+    action: "delete",
+    label: msg({ message: "Delete", context: "Gmail action" }),
+    icon: Trash2Icon,
+  },
+  { action: "markAsSpam", label: msg`Mark as spam`, icon: OctagonAlertIcon },
 ] as const satisfies {
   action: GmailAction;
-  label: string;
+  label: MessageDescriptor;
   icon: typeof ArchiveIcon;
 }[];
+// lingui-reset
+
+function MessageActionButton({
+  label,
+  ...props
+}: Omit<ComponentProps<typeof Button>, "title"> & { label: MessageDescriptor }) {
+  const { t } = useLingui();
+
+  return <Button title={t(label)} {...props} />;
+}
 
 type PendingMessageAction = { messageId: string; action: GmailAction };
 
@@ -174,7 +192,7 @@ const createColumns = ({
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-data-[pending]:opacity-100 group-data-[state=selected]:opacity-100">
             {MESSAGE_ACTIONS.map(({ action, label, icon: Icon }) => (
-              <Button
+              <MessageActionButton
                 key={action}
                 variant="ghost"
                 size="icon-sm"
@@ -183,7 +201,7 @@ const createColumns = ({
                 // the `enter` hotkey, which cancels the press and opens the
                 // message.
                 tabIndex={-1}
-                title={label}
+                label={label}
                 disabled={pendingAction !== null}
                 className={cn(pendingAction === action && "disabled:opacity-100")}
                 onClick={(event) => {
@@ -193,7 +211,7 @@ const createColumns = ({
                 }}
               >
                 {pendingAction === action ? <Loader2Icon className="animate-spin" /> : <Icon />}
-              </Button>
+              </MessageActionButton>
             ))}
           </div>
         </>
@@ -211,6 +229,8 @@ function UnifiedInboxTable({
   rowsPerPage: number;
   showSenderIcons: boolean;
 }) {
+  const { t } = useLingui();
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: rowsPerPage,
@@ -270,6 +290,10 @@ function UnifiedInboxTable({
   const configMutation = useConfigMutation();
 
   const rows = table.getRowModel().rows;
+
+  const currentPage = table.getState().pagination.pageIndex + 1;
+
+  const pageCount = table.getPageCount();
 
   const focusedRowRef = useRef<HTMLTableRowElement>(null);
 
@@ -500,7 +524,11 @@ function UnifiedInboxTable({
       </div>
       <div className="mt-4 flex justify-between">
         <div className="flex items-center gap-2">
-          <div className="text-sm">Rows per page</div>
+          <div className="text-sm">
+            <Trans comment="Label of the unified inbox's picker for how many messages a page lists">
+              Rows per page
+            </Trans>
+          </div>
           <Select
             value={rowsPerPage}
             onValueChange={(value) => {
@@ -525,13 +553,15 @@ function UnifiedInboxTable({
         </div>
         <div className="flex items-center gap-2">
           <div className="text-sm">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            <Trans comment="The unified inbox's current page and how many pages it has">
+              Page {currentPage} of {pageCount}
+            </Trans>
           </div>
           <Button
             size="icon"
             variant="outline"
             onClick={() => table.firstPage()}
-            title="First page"
+            title={t`First page`}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronsLeftIcon />
@@ -540,7 +570,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.previousPage()}
-            title="Previous page"
+            title={t`Previous page`}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronLeftIcon />
@@ -549,7 +579,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.nextPage()}
-            title="Next page"
+            title={t`Next page`}
             disabled={!table.getCanNextPage()}
           >
             <ChevronRightIcon />
@@ -558,7 +588,7 @@ function UnifiedInboxTable({
             size="icon"
             variant="outline"
             onClick={() => table.lastPage()}
-            title="Last page"
+            title={t`Last page`}
             disabled={!table.getCanNextPage()}
           >
             <ChevronsRightIcon />
@@ -587,10 +617,14 @@ export function UnifiedInbox() {
               <EmptyMedia variant="icon">
                 <InboxIcon />
               </EmptyMedia>
-              <EmptyTitle>No unread messages</EmptyTitle>
+              <EmptyTitle>
+                <Trans>No unread messages</Trans>
+              </EmptyTitle>
               <EmptyDescription>
-                The unified inbox shows every unread message from your accounts in one place. A
-                message leaves the list after you read it.
+                <Trans>
+                  The unified inbox shows every unread message from your accounts in one place. A
+                  message leaves the list after you read it.
+                </Trans>
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -610,7 +644,9 @@ export function UnifiedInbox() {
   return (
     <>
       <SettingsHeader className="flex-col">
-        <SettingsTitle>Unified inbox</SettingsTitle>
+        <SettingsTitle>
+          <Trans comment="Title of the unified inbox page">Unified inbox</Trans>
+        </SettingsTitle>
       </SettingsHeader>
       {renderContent()}
     </>

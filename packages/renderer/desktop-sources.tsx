@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { DesktopSource, DesktopSources } from "@meru/shared/types";
 import { Button } from "@meru/ui/components/button";
@@ -51,8 +52,16 @@ function DesktopSources() {
       <Tabs defaultValue="windows" className="flex-1 gap-0 overflow-hidden">
         <div className="border-b px-4 py-3.5">
           <TabsList className="w-full">
-            <TabsTrigger value="windows">Windows</TabsTrigger>
-            <TabsTrigger value="screens">Screens</TabsTrigger>
+            <TabsTrigger value="windows">
+              <Trans comment="Tab of the screen sharing picker listing the open application windows to share, never the Windows operating system">
+                Windows
+              </Trans>
+            </TabsTrigger>
+            <TabsTrigger value="screens">
+              <Trans comment="Tab of the screen sharing picker listing the displays to share">
+                Screens
+              </Trans>
+            </TabsTrigger>
           </TabsList>
         </div>
         <ScrollArea className="flex-1 overflow-hidden">
@@ -71,7 +80,7 @@ function DesktopSources() {
             window.close();
           }}
         >
-          Cancel
+          <Trans>Cancel</Trans>
         </Button>
         <Button
           disabled={!selectedDesktopSourceId}
@@ -87,7 +96,12 @@ function DesktopSources() {
             ipc.main.send("desktopSources.select", selectedDesktopSource);
           }}
         >
-          Share
+          <Trans
+            context="screen sharing"
+            comment="Button of the screen sharing picker that shares the window or screen picked"
+          >
+            Share
+          </Trans>
         </Button>
       </div>
     </div>

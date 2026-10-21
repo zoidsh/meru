@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { type DragEndEvent, DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { BookmarkState } from "@meru/shared/schemas";
 import { Button } from "@meru/ui/components/button";
@@ -34,6 +35,8 @@ function Bookmark({
   bookmark: BookmarkState;
   className?: string;
 }) {
+  const { t } = useLingui();
+
   return (
     <div ref={ref} className={cn("group relative", className)}>
       <Button
@@ -57,7 +60,10 @@ function Bookmark({
         size="icon"
         data-sortable-action
         className="absolute inset-y-0 right-1 my-auto size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-        title="Remove bookmark"
+        title={t({
+          message: "Remove bookmark",
+          comment: "Button on a bookmark in the bookmarks popup that removes it",
+        })}
         onClick={() => {
           ipc.main.send("bookmarks.removeBookmark", accountId, id);
         }}
@@ -128,10 +134,14 @@ function BookmarkList() {
           <EmptyMedia variant="icon">
             <BookOpenIcon />
           </EmptyMedia>
-          <EmptyTitle>No bookmarks yet</EmptyTitle>
+          <EmptyTitle>
+            <Trans>No bookmarks yet</Trans>
+          </EmptyTitle>
           <EmptyDescription>
-            Bookmark a page with the star on its tab or window titlebar, or from a tab's context
-            menu.
+            <Trans>
+              Bookmark a page with the star on its tab or window titlebar, or from a tab's context
+              menu.
+            </Trans>
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -156,15 +166,22 @@ function BookmarkList() {
 }
 
 function Bookmarks() {
+  const { t } = useLingui();
+
   return (
     <>
-      <div className="p-4 font-semibold">Bookmarks</div>
+      <div className="p-4 font-semibold">
+        <Trans comment="Heading of the bookmarks popup">Bookmarks</Trans>
+      </div>
       <Button
         size="icon"
         variant="ghost"
         className="absolute top-2 right-2 size-7"
         onClick={closePopup}
-        title="Close"
+        title={t({
+          message: "Close",
+          comment: "Button that closes the bookmarks popup",
+        })}
       >
         <XIcon />
       </Button>

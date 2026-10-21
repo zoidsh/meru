@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import {
   type LauncherWorkspaceApp,
@@ -61,6 +62,8 @@ export function WorkspaceAppsLauncher({
   display: WorkspaceAppsLauncherDisplay;
   disabled?: boolean;
 }) {
+  const { t } = useLingui();
+
   const { isOpen, setIsOpen, getLauncherAppProps } = useLauncherApps();
 
   if (resolveWorkspaceAppsLauncherDisplay(display, launcherApps.length) === "expanded") {
@@ -73,7 +76,10 @@ export function WorkspaceAppsLauncher({
 
   return (
     <TitlebarDropdownMenu
-      title="Open workspace app"
+      title={t({
+        message: "Open workspace app",
+        comment: "Titlebar button that opens the launcher of Google Workspace apps",
+      })}
       icon={<LayoutGridIcon />}
       side="left"
       disabled={disabled}
@@ -101,7 +107,14 @@ export function VerticalTabsWorkspaceAppsLauncher({
   launcherApps: LauncherWorkspaceApp[];
   isWide: boolean;
 }) {
+  const { t } = useLingui();
+
   const { isOpen, setIsOpen, getLauncherAppProps } = useLauncherApps();
+
+  const openAppLabel = t({
+    message: "Open app",
+    comment: "Button in the vertical tabs strip that opens the launcher of Google Workspace apps",
+  });
 
   const { rootProps, triggerProps, contentProps } = useChromeMenu(isOpen, setIsOpen);
 
@@ -120,10 +133,10 @@ export function VerticalTabsWorkspaceAppsLauncher({
               "text-muted-foreground transition-colors",
               isWide && "w-full justify-start",
             )}
-            title="Open app"
+            title={openAppLabel}
           >
             <LayoutGridIcon />
-            {isWide && "Open app"}
+            {isWide && openAppLabel}
           </Button>
         }
       />

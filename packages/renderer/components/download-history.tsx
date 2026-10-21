@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -20,6 +21,8 @@ import { DateFromNow } from "@/components/date-from-now";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 export function DownloadHistoryList({ limit }: { limit?: number }) {
+  const { t } = useLingui();
+
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
@@ -37,8 +40,12 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
           <EmptyMedia variant="icon">
             <DownloadIcon />
           </EmptyMedia>
-          <EmptyTitle>No downloads yet</EmptyTitle>
-          <EmptyDescription>Files you download appear here for 30 days.</EmptyDescription>
+          <EmptyTitle>
+            <Trans>No downloads yet</Trans>
+          </EmptyTitle>
+          <EmptyDescription>
+            <Trans>Files you download appear here for 30 days.</Trans>
+          </EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -82,7 +89,13 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
                 {fileName}
               </ItemTitle>
               <ItemDescription className="first-letter:capitalize">
-                {exists ? <DateFromNow timestamp={createdAt} /> : "File moved or deleted"}
+                {exists ? (
+                  <DateFromNow timestamp={createdAt} />
+                ) : (
+                  <Trans comment="In the download history, in place of when a file was downloaded, once the file is no longer where it was saved">
+                    File moved or deleted
+                  </Trans>
+                )}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
@@ -90,7 +103,11 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  title="Show in folder"
+                  title={t({
+                    message: "Show in folder",
+                    comment:
+                      "Button in the download history that shows the file in the file manager",
+                  })}
                   onClick={(event) => {
                     event.stopPropagation();
 
@@ -103,7 +120,10 @@ export function DownloadHistoryList({ limit }: { limit?: number }) {
               <Button
                 size="sm"
                 variant="ghost"
-                title="Remove from history"
+                title={t({
+                  message: "Remove from history",
+                  comment: "Button that removes a download from the download history",
+                })}
                 onClick={(event) => {
                   event.stopPropagation();
 

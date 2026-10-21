@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
@@ -8,9 +9,13 @@ import { Popup } from "@/components/popup";
 import { renderApp } from "@/lib/react";
 
 function RecentDownloadHistory() {
+  const { t } = useLingui();
+
   return (
     <>
-      <div className="p-4 font-semibold">Recent download history</div>
+      <div className="p-4 font-semibold">
+        <Trans>Recent download history</Trans>
+      </div>
       <Button
         size="icon"
         variant="ghost"
@@ -18,7 +23,10 @@ function RecentDownloadHistory() {
         onClick={() => {
           ipc.main.send("downloads.closeRecentDownloadHistoryPopup");
         }}
-        title="Close"
+        title={t({
+          message: "Close",
+          comment: "Button that closes the recent download history popup",
+        })}
       >
         <XIcon />
       </Button>
@@ -35,7 +43,7 @@ function RecentDownloadHistory() {
             ipc.main.send("downloads.openDownloadHistory");
           }}
         >
-          <SquareArrowOutUpRightIcon /> Full download history
+          <SquareArrowOutUpRightIcon /> <Trans>Full download history</Trans>
         </Button>
       </div>
     </>
