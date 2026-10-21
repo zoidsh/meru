@@ -506,6 +506,21 @@ From shortcuts, with Sent and Drafts confirmed by undo send.
 - sv: Arkivera; Skriv; Utkast; Skickat
 - ja: アーカイブ; 作成; 下書き; 送信済み
 
+### Mark as read, Mark as spam, Delete
+
+The actions on a message in the unified inbox, beside Archive above. From shortcuts, which names each beside its key: Shift+i, ! and #.
+
+- de: Als gelesen markieren; Als Spam markieren; Löschen
+- fr: Marquer comme lu; Signaler comme spam; Supprimer
+- it: Segna come già letto; Segnala come spam; Elimina
+- es: Marcar como leído; Marcar como spam; Eliminar
+- es-419: Marcar como leído; Marcar como spam; Eliminar
+- pt-BR: Marcar como lida; Denunciar como spam; Excluir
+- nl: Markeren als gelezen; Melden als spam; Verwijderen
+- pl: Oznacz jako przeczytane; Zgłoś jako spam; Usuń
+- sv: Markera som läst; Rapportera som skräppost; Ta bort
+- ja: 既読にする; 迷惑メールとして報告; 削除
+
 ### Starred, Snooze, Label
 
 From shortcuts: the folder of starred conversations, the action and the folder of snoozed ones, and a label.

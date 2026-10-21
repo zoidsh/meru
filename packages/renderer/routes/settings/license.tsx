@@ -169,7 +169,10 @@ function ActivateLicenseKeyButton() {
 export function LicenseSettings() {
   const { t } = useLingui();
 
-  const trialDaysLeft = useTrialStore((state) => state.daysLeft);
+  const exactTrialDaysLeft = useTrialStore((state) => state.daysLeft);
+
+  // The API counts to a tenth of a day, which reads as noise in a sentence.
+  const trialDaysLeft = Math.floor(exactTrialDaysLeft);
 
   const isTrialExpired = useTrialStore((state) => state.expired);
 
@@ -355,7 +358,7 @@ export function LicenseSettings() {
       );
     }
 
-    if (trialDaysLeft || isTrialExpired) {
+    if (exactTrialDaysLeft || isTrialExpired) {
       return (
         <>
           <div className="mb-4 space-y-2 text-sm">
@@ -373,13 +376,20 @@ export function LicenseSettings() {
             ) : (
               <>
                 <div>
-                  {t({
-                    message: plural(trialDaysLeft, {
-                      one: "You're using a Meru Pro trial with # day left.",
-                      other: "You're using a Meru Pro trial with # days left.",
-                    }),
-                    comment: "The days left in the Meru Pro trial, on the License page in Settings",
-                  })}
+                  {trialDaysLeft >= 1
+                    ? t({
+                        message: plural(trialDaysLeft, {
+                          one: "You're using a Meru Pro trial with # day left.",
+                          other: "You're using a Meru Pro trial with # days left.",
+                        }),
+                        comment:
+                          "The days left in the Meru Pro trial, on the License page in Settings",
+                      })
+                    : t({
+                        message: "You're using a Meru Pro trial with less than a day left.",
+                        comment:
+                          "The Meru Pro trial in its last day, on the License page in Settings",
+                      })}
                 </div>
                 <div>
                   <Trans>
