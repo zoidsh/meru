@@ -152,6 +152,7 @@ export class Account {
       switch (permission) {
         case "clipboard-read":
         case "clipboard-sanitized-write":
+        case "display-capture":
         case "fullscreen":
         case "media":
         case "speaker-selection": {
