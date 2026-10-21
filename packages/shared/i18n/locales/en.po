@@ -727,7 +727,6 @@ msgid "Disable"
 msgstr "Disable"
 
 #. Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load
-#. Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Disabled"
 msgstr "Disabled"
@@ -1402,7 +1401,6 @@ msgstr "Notification times overlap. Adjust the windows so that none of them do."
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Switch, and a badge on the account, for showing the account's notifications
-#. Switch, and a badge on the account, for showing the account's notifications
 #: packages/renderer/lib/settings-pages.ts
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Notifications"
@@ -2044,8 +2042,8 @@ msgstr "Sign in with your password or another second factor. Meru Pro lets you c
 msgid "Sky"
 msgstr "Sky"
 
-#. Heading of the Notifications section about notification sounds, and the setting that picks the sound
-#. Heading of the Notifications section about notification sounds, and the setting that picks the sound
+#. Heading of the Notifications section about notification sounds
+#. Setting that picks the notification sound
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Sound"
 msgstr "Sound"
@@ -2274,7 +2272,6 @@ msgstr "Undo"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Switch, and a badge on the account, for including the account in the unified inbox
-#. Switch, and a badge on the account, for including the account in the unified inbox
 #: packages/renderer/lib/settings-pages.ts
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unified inbox"
@@ -2295,7 +2292,6 @@ msgstr "Unpin"
 msgid "Unpinned tabs"
 msgstr "Unpinned tabs"
 
-#. Switch, and a badge on the account, for showing the account's unread badge
 #. Switch, and a badge on the account, for showing the account's unread badge
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unread badge"

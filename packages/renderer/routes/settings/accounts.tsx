@@ -1,6 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { accountColorsMap } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -61,6 +62,27 @@ import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { settingsPageLabels } from "@/lib/settings-pages";
 import { useAccountsStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
+
+/** Each names both the switch in the account dialog and the badge on the account. */
+const accountOptionLabels = {
+  unreadBadge: msg({
+    message: "Unread badge",
+    comment: "Switch, and a badge on the account, for showing the account's unread badge",
+  }),
+  unifiedInbox: msg({
+    message: "Unified inbox",
+    comment: "Switch, and a badge on the account, for including the account in the unified inbox",
+  }),
+  notifications: msg({
+    message: "Notifications",
+    comment: "Switch, and a badge on the account, for showing the account's notifications",
+  }),
+  disabled: msg({
+    message: "Disabled",
+    comment:
+      "Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load",
+  }),
+};
 
 function AccountForm({
   account = {
@@ -211,11 +233,7 @@ function AccountForm({
             {(field) => (
               <Field orientation="horizontal">
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>
-                    <Trans comment="Switch, and a badge on the account, for showing the account's unread badge">
-                      Unread badge
-                    </Trans>
-                  </FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t(accountOptionLabels.unreadBadge)}</FieldLabel>
                 </FieldContent>
                 <Switch
                   id={field.name}
@@ -231,9 +249,7 @@ function AccountForm({
               <Field orientation="horizontal">
                 <FieldContent>
                   <FieldLabel htmlFor={field.name}>
-                    <Trans comment="Switch, and a badge on the account, for including the account in the unified inbox">
-                      Unified inbox
-                    </Trans>
+                    {t(accountOptionLabels.unifiedInbox)}
                   </FieldLabel>
                 </FieldContent>
                 <Switch
@@ -250,9 +266,7 @@ function AccountForm({
               <Field orientation="horizontal">
                 <FieldContent>
                   <FieldLabel htmlFor={field.name}>
-                    <Trans comment="Switch, and a badge on the account, for showing the account's notifications">
-                      Notifications
-                    </Trans>
+                    {t(accountOptionLabels.notifications)}
                   </FieldLabel>
                 </FieldContent>
                 <Switch
@@ -269,11 +283,7 @@ function AccountForm({
               {(field) => (
                 <Field orientation="horizontal">
                   <FieldContent>
-                    <FieldLabel htmlFor={field.name}>
-                      <Trans comment="Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load">
-                        Disabled
-                      </Trans>
-                    </FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t(accountOptionLabels.disabled)}</FieldLabel>
                     <FieldDescription>
                       {isLastEnabledAccount ? (
                         <Trans>Meru needs at least one account turned on.</Trans>
@@ -452,33 +462,15 @@ function SortableAccountItem({
         </ItemTitle>
         {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
           <div className="flex gap-2">
-            {account.disabled && (
-              <Badge variant="outline">
-                <Trans comment="Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load">
-                  Disabled
-                </Trans>
-              </Badge>
-            )}
+            {account.disabled && <Badge variant="outline">{t(accountOptionLabels.disabled)}</Badge>}
             {account.gmail.unreadBadge && (
-              <Badge variant="outline">
-                <Trans comment="Switch, and a badge on the account, for showing the account's unread badge">
-                  Unread badge
-                </Trans>
-              </Badge>
+              <Badge variant="outline">{t(accountOptionLabels.unreadBadge)}</Badge>
             )}
             {account.gmail.unifiedInbox && (
-              <Badge variant="outline">
-                <Trans comment="Switch, and a badge on the account, for including the account in the unified inbox">
-                  Unified inbox
-                </Trans>
-              </Badge>
+              <Badge variant="outline">{t(accountOptionLabels.unifiedInbox)}</Badge>
             )}
             {account.notifications && (
-              <Badge variant="outline">
-                <Trans comment="Switch, and a badge on the account, for showing the account's notifications">
-                  Notifications
-                </Trans>
-              </Badge>
+              <Badge variant="outline">{t(accountOptionLabels.notifications)}</Badge>
             )}
           </div>
         )}

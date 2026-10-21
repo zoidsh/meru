@@ -417,7 +417,7 @@ export function NotificationsSettings() {
           <FieldSeparator />
           <FieldSet>
             <FieldLegend>
-              <Trans comment="Heading of the Notifications section about notification sounds, and the setting that picks the sound">
+              <Trans comment="Heading of the Notifications section about notification sounds">
                 Sound
               </Trans>
             </FieldLegend>
@@ -431,9 +431,7 @@ export function NotificationsSettings() {
                 <>
                   <Field>
                     <FieldLabel htmlFor={soundFieldId} className="flex items-center gap-2">
-                      <Trans comment="Heading of the Notifications section about notification sounds, and the setting that picks the sound">
-                        Sound
-                      </Trans>
+                      <Trans comment="Setting that picks the notification sound">Sound</Trans>
                       <LicenseKeyRequiredFieldBadge />
                     </FieldLabel>
                     <FieldDescription>
