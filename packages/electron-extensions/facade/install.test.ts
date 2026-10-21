@@ -252,6 +252,22 @@ describe("installChromeFacade", () => {
     expect(namespaceOf(chrome, "alarms").getAll).toBeFunction();
   });
 
+  test("takes over the permissions Electron ships natively", () => {
+    const chrome = createNativeChrome();
+
+    const permissions = { contains: () => {}, request: () => {} };
+
+    chrome.permissions = permissions;
+
+    installChromeFacade(chrome);
+
+    // Chromium's answers from its own grants, and its `request` refuses
+    // outside a user gesture, which a worker never has — see
+    // `api/permissions.ts`
+    expect(chrome.permissions).not.toBe(permissions);
+    expect(namespaceOf(chrome, "permissions").getAll).toBeFunction();
+  });
+
   test("runs twice without replacing what the first run added", () => {
     const chrome = install();
 

@@ -1,9 +1,9 @@
 /*
  * `chrome.permissions`, exercised through the checked-in fixture extension
  * (`packages/electron-extensions/fixture`) rather than through a curated one,
- * which needs a real account and a desktop app. Electron ships no `permissions`
- * module at all, so every answer here is the facade's
- * (`facade/api/permissions.ts`) over the grants the main process keeps
+ * which needs a real account and a desktop app. The facade replaces the
+ * namespace Electron exposes from Chromium, so every answer here is the
+ * facade's (`facade/api/permissions.ts`) over the grants the main process keeps
  * (`permissions/permissions.ts`).
  *
  * Every call is made in the extension's service worker, asked for over
