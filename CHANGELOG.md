@@ -28,7 +28,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **macOS:** A downloaded file is marked as coming from the internet, so macOS checks an app, installer or script before it opens, the way it does for a browser download
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
 - The close button on the unified inbox and the download history says what it closes, instead of offering to close settings that are not open
-- **Meru Pro:** The Pro trial's days left show as whole days, in the titlebar and in `Settings… → License`, instead of fractions like 1.5 day
+- **Meru Pro:** The Pro trial's days left show as whole days, or less than a day, in the titlebar and in `Settings… → License`, instead of fractions like 1.5 day
 - Keyboard focus is visible again in Meru's own interface: buttons, switches, checkboxes, tabs and sliders draw a focus ring when you tab to them, instead of leaving you to guess where you are
 - Tab walks the page you are on rather than the titlebar and the tab strip around it, the way it already does in Gmail
 - **Windows and Linux:** F10, and a tap of Alt, open the app menu from anywhere in the window, so it no longer takes a click

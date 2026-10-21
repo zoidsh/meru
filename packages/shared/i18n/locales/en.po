@@ -3304,6 +3304,11 @@ msgstr "Yellow"
 msgid "You have unread messages"
 msgstr "You have unread messages"
 
+#. The Meru Pro trial in its last day, on the License page in Settings
+#: packages/renderer/routes/settings/license.tsx
+msgid "You're using a Meru Pro trial with less than a day left."
+msgstr "You're using a Meru Pro trial with less than a day left."
+
 #: packages/renderer/routes/settings/license.tsx
 msgid "You're using Meru Pro, with the professional features and a license for commercial use. Thank you for supporting Meru."
 msgstr "You're using Meru Pro, with the professional features and a license for commercial use. Thank you for supporting Meru."
