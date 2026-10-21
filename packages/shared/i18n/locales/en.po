@@ -1846,9 +1846,7 @@ msgid "Notifications"
 msgstr "Notifications"
 
 #. Screen reader label of the area of the window where Meru's toasts appear, not the system's notifications
-#. Screen reader label of the area of the window where Meru's toasts appear, not the system's notifications
-#: packages/renderer/components/popup-window.tsx
-#: packages/renderer/main.tsx
+#: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
 msgstr "Notifications"
