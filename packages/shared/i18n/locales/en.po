@@ -740,8 +740,10 @@ msgstr "Copied verification code {verificationCode}"
 #. A menu or a menu item in Meru's menu bar
 #. Button on a notification that copies the verification code
 #. Menu item that copies the license key
+#. Screen reader label of an icon button that copies the value beside it
 #: packages/app/gmail/index.ts
 #: packages/app/menu.ts
+#: packages/renderer/components/copy-button.tsx
 #: packages/renderer/routes/settings/license.tsx
 msgid "Copy"
 msgstr "Copy"
