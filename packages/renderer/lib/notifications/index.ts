@@ -1,3 +1,5 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import type { NotificationSound } from "@meru/shared/types";
 import breeze from "./sounds/breeze.wav";
 import chime from "./sounds/chime.wav";
@@ -5,13 +7,18 @@ import duet from "./sounds/duet.wav";
 import knock from "./sounds/knock.wav";
 import linen from "./sounds/linen.wav";
 
-export const NOTIFICATION_SOUNDS: Record<NotificationSound, { label: string; file: string }> = {
-  breeze: { label: "Breeze", file: breeze },
-  chime: { label: "Chime", file: chime },
-  duet: { label: "Duet", file: duet },
-  knock: { label: "Knock", file: knock },
-  linen: { label: "Linen", file: linen },
+// lingui-set comment="Name of a notification sound, picked in Settings"
+export const NOTIFICATION_SOUNDS: Record<
+  NotificationSound,
+  { label: MessageDescriptor; file: string }
+> = {
+  breeze: { label: msg`Breeze`, file: breeze },
+  chime: { label: msg`Chime`, file: chime },
+  duet: { label: msg`Duet`, file: duet },
+  knock: { label: msg`Knock`, file: knock },
+  linen: { label: msg`Linen`, file: linen },
 };
+// lingui-reset
 
 export function playNotificationSound({
   sound,
