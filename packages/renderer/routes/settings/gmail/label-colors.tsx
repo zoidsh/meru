@@ -1,3 +1,7 @@
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
+import { isValidCssColorInput } from "@meru/shared/color";
 import { resolveGmailLabelTextColor } from "@meru/shared/gmail";
 import {
   type GmailLabelColor,
@@ -10,7 +14,6 @@ import { Button } from "@meru/ui/components/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -28,17 +31,25 @@ import {
 } from "@meru/ui/components/select";
 import { useForm } from "@tanstack/react-form";
 import { PencilIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { z } from "zod";
+import { SettingsDialogContent } from "@/components/settings-dialog-content";
 import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 
 const HEX_COLOR_REGEXP = /^#[0-9a-fA-F]{6}$/;
 
-const textColorItems: { value: GmailLabelTextColor; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "white", label: "White" },
-  { value: "black", label: "Black" },
+const EXAMPLE_HEX_COLOR = "#1a73e8";
+
+const EXAMPLE_RGB_COLOR = "rgb(26, 115, 232)";
+
+// lingui-set comment="Option of a label color's Text color setting"
+const textColorItems: { value: GmailLabelTextColor; label: MessageDescriptor }[] = [
+  { value: "auto", label: msg`Auto` },
+  { value: "white", label: msg`White` },
+  { value: "black", label: msg`Black` },
 ];
+// lingui-reset
 
 function LabelColorForm({
   labelColor = { label: "", color: "#1a73e8", textColor: "auto" },
@@ -49,10 +60,29 @@ function LabelColorForm({
   type: "add" | "edit";
   onSubmit: (labelColor: GmailLabelColorInput) => void;
 }) {
+  const { t } = useLingui();
+
+  const schema = useMemo(
+    () =>
+      gmailLabelColorInputSchema.extend({
+        label: z.string().min(1, t`Enter a label`),
+        color: z
+          .string()
+          .min(1, t`Enter a color`)
+          .refine(isValidCssColorInput, t`Enter a valid hex, rgb, or rgba color`),
+      }),
+    [t],
+  );
+
+  const translatedTextColorItems = textColorItems.map(({ value, label }) => ({
+    value,
+    label: t(label),
+  }));
+
   const form = useForm({
     defaultValues: labelColor,
     validators: {
-      onSubmit: gmailLabelColorInputSchema,
+      onSubmit: schema,
     },
     onSubmit: ({ value }) => {
       onSubmit(value);
@@ -71,14 +101,24 @@ function LabelColorForm({
       <form.Field name="label">
         {(field) => (
           <Field>
-            <FieldLabel htmlFor={field.name}>Label</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              <Trans
+                context="Gmail label"
+                comment="Field for the exact name of the Gmail label to recolor; label is Gmail's word"
+              >
+                Label
+              </Trans>
+            </FieldLabel>
             <Input
               id={field.name}
               name={field.name}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}
-              placeholder="Work"
+              placeholder={t({
+                message: "Work",
+                comment: "Example of a Gmail label's name, shown in the empty Label field",
+              })}
             />
             <FieldError errors={field.state.meta.errors} />
           </Field>
@@ -87,11 +127,13 @@ function LabelColorForm({
       <form.Field name="color">
         {(field) => (
           <Field>
-            <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              <Trans comment="Field for the background color of a Gmail label">Color</Trans>
+            </FieldLabel>
             <div className="flex gap-2">
               <input
                 type="color"
-                aria-label="Pick color"
+                aria-label={t`Pick color`}
                 className="h-9 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
                 value={HEX_COLOR_REGEXP.test(field.state.value) ? field.state.value : "#000000"}
                 onChange={(event) => field.handleChange(event.target.value)}
@@ -102,7 +144,11 @@ function LabelColorForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.target.value)}
-                placeholder="#1a73e8 or rgb(26, 115, 232)"
+                placeholder={t({
+                  message: `${EXAMPLE_HEX_COLOR} or ${EXAMPLE_RGB_COLOR}`,
+                  comment:
+                    "Placeholder of the Color field, giving two example colors: a hex code and an rgb() value",
+                })}
               />
             </div>
             <FieldError errors={field.state.meta.errors} />
@@ -112,9 +158,11 @@ function LabelColorForm({
       <form.Field name="textColor">
         {(field) => (
           <Field>
-            <FieldLabel htmlFor={field.name}>Text color</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              <Trans comment="Setting for the color of a Gmail label's name">Text color</Trans>
+            </FieldLabel>
             <Select
-              items={textColorItems}
+              items={translatedTextColorItems}
               value={field.state.value}
               onValueChange={(value) => {
                 if (value) {
@@ -126,7 +174,7 @@ function LabelColorForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {textColorItems.map(({ value, label }) => (
+                {translatedTextColorItems.map(({ value, label }) => (
                   <SelectItem key={value} value={value}>
                     {label}
                   </SelectItem>
@@ -137,8 +185,20 @@ function LabelColorForm({
         )}
       </form.Field>
       <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
-        <Button type="submit">{type === "add" ? "Add" : "Save"}</Button>
+        <DialogClose
+          render={
+            <Button variant="outline">
+              <Trans>Cancel</Trans>
+            </Button>
+          }
+        />
+        <Button type="submit">
+          {type === "add" ? (
+            <Trans comment="Button that adds the label color in the dialog">Add</Trans>
+          ) : (
+            <Trans comment="Button that saves the label color's changes in the dialog">Save</Trans>
+          )}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -154,13 +214,15 @@ function AddLabelColorButton({ onAdd }: { onAdd: (labelColor: GmailLabelColorInp
       <DialogTrigger
         render={
           <Button variant="outline" disabled={!isLicenseKeyValid}>
-            Add label color
+            <Trans>Add label color</Trans>
           </Button>
         }
       />
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Add label color</DialogTitle>
+          <DialogTitle>
+            <Trans>Add label color</Trans>
+          </DialogTitle>
         </DialogHeader>
         <LabelColorForm
           type="add"
@@ -170,7 +232,7 @@ function AddLabelColorButton({ onAdd }: { onAdd: (labelColor: GmailLabelColorInp
             setIsDialogOpen(false);
           }}
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -184,18 +246,22 @@ function EditLabelColorButton({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const { t } = useLingui();
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
         render={
-          <Button size="icon" className="size-8 p-0" variant="outline" title="Edit label color">
+          <Button size="icon" className="size-8 p-0" variant="outline" title={t`Edit label color`}>
             <PencilIcon />
           </Button>
         }
       />
-      <DialogContent>
+      <SettingsDialogContent>
         <DialogHeader>
-          <DialogTitle>Edit label color</DialogTitle>
+          <DialogTitle>
+            <Trans>Edit label color</Trans>
+          </DialogTitle>
         </DialogHeader>
         <LabelColorForm
           labelColor={labelColor}
@@ -206,7 +272,7 @@ function EditLabelColorButton({
             setIsDialogOpen(false);
           }}
         />
-      </DialogContent>
+      </SettingsDialogContent>
     </Dialog>
   );
 }
@@ -218,6 +284,8 @@ export function GmailLabelColors() {
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
 
+  const { t } = useLingui();
+
   if (!config) {
     return;
   }
@@ -225,8 +293,10 @@ export function GmailLabelColors() {
   return (
     <Field>
       <FieldDescription>
-        Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with
-        the background, and can be set to white or black instead.
+        <Trans>
+          Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts
+          with the background, and can be set to white or black instead.
+        </Trans>
       </FieldDescription>
       {config["gmail.labelColors"].length > 0 && (
         <ItemGroup className="grid grid-cols-2 gap-2">
@@ -260,7 +330,7 @@ export function GmailLabelColors() {
                   size="icon"
                   className="size-8 p-0"
                   variant="outline"
-                  title="Delete label color"
+                  title={t`Delete label color`}
                   onClick={() => {
                     configMutation.mutate({
                       "gmail.labelColors": config["gmail.labelColors"].filter(
