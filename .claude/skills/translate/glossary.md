@@ -1,6 +1,6 @@
 # Glossary
 
-One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. **Apple** marks Apple's own word, read from macOS Mail, AppKit or, where noted, macOS's Focus strings; a word without the mark has no Apple equivalent and was chosen to sit beside Apple's. Where a term is missing here, follow the style sheet and Apple's word for it, and say in your summary which word you chose so it can be added.
+One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. **Apple** marks Apple's own word, read from macOS Mail, AppKit or, where noted, macOS's Focus strings; a word without the mark has no Apple equivalent and was chosen to sit beside Apple's. The words here are the house words for Meru's own copy. **An OS label takes its platform's word instead**: an entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label each operating system names its own way, such as the File menu or Paste, and takes Apple's word (Apple Mail's for a mail menu item), Microsoft's or GNOME's, from the style sheet's Platform words where it has them. Where a term is missing here, follow the style sheet, whose house words come first and Apple's after, and say in your summary which word you chose so it can be added.
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
@@ -12,9 +12,9 @@ Capitalization below is the base form inside a sentence. A label takes its langu
 
 ## Settings
 
-The window and the app-menu item. AppKit's word for each, also the language's row in the style sheet.
+The window and Meru's own copy, in AppKit's word for each, also the language's row in the style sheet. The app-menu item has a platform `msgctxt`: on macOS it is this word with AppKit's ellipsis, and on Windows and Linux the platform's word, from the style sheet.
 
-- de: Einstellungen; menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
+- de: Einstellungen; the macOS menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
 - fr: Réglages (Apple)
 - it: Impostazioni (Apple)
 - es: Ajustes (Apple)
@@ -29,7 +29,7 @@ The window and the app-menu item. AppKit's word for each, also the language's ro
 
 A Google account in Meru: _Add account_, _Remove account_, _Manage Accounts_.
 
-- de: Account, plural Accounts (Apple; _Account hinzufügen …_)
+- de: Konto, plural Konten (_Konto hinzufügen …_). Never _Account_.
 - fr: compte (Apple; _Ajouter un compte…_)
 - it: account, invariable (Apple; _Aggiungi account…_)
 - es: cuenta (Apple; _Añadir cuenta…_)
@@ -102,7 +102,7 @@ A timed or indefinite hold on notifications. Apple's names, from macOS's Focus s
 
 ## Notification
 
-- de: Mitteilung, plural Mitteilungen (Apple). Never _Benachrichtigung_.
+- de: Benachrichtigung, plural Benachrichtigungen. Never _Mitteilung_.
 - fr: notification (Apple)
 - it: notifica, plural notifiche (Apple)
 - es: notificación (Apple)
@@ -115,9 +115,9 @@ A timed or indefinite hold on notifications. Apple's names, from macOS's Focus s
 
 ## Notification hours
 
-The time windows outside which no notification is shown. The interface reads _Notification times_; one window is a _time window_. Built on Apple's word for notification.
+The time windows outside which no notification is shown. The interface reads _Notification times_; one window is a _time window_. Built on the word for notification above.
 
-- de: Mitteilungszeiten; a window is a _Zeitfenster_
+- de: Benachrichtigungszeiten; a window is a _Zeitfenster_
 - fr: horaires des notifications; a window is a _plage horaire_
 - it: orari delle notifiche; a window is una _fascia oraria_
 - es: horario de notificaciones; a window is una _franja horaria_
@@ -263,9 +263,9 @@ The strip across the top of the window.
 
 ## Menu bar icon, System tray icon
 
-The icon in the macOS menu bar, or in the Windows and Linux system tray.
+The icon in the macOS menu bar, or in the Windows and Linux system tray. The system tray strings carry a `Windows` or `Linux` `msgctxt`; the second word below is Microsoft's, for `Windows`, and `Linux` takes the style sheet's word where it gives one, else this one.
 
-- de: Menüleiste; Infobereich
+- de: Menüleiste; Infobereich; Linux _Statusbereich_
 - fr: barre des menus; zone de notification
 - it: barra dei menu; area di notifica
 - es: barra de menús; bandeja del sistema
@@ -274,7 +274,7 @@ The icon in the macOS menu bar, or in the Windows and Linux system tray.
 - nl: menubalk; systeemvak
 - pl: pasek menu; zasobnik systemowy
 - sv: menyrad; meddelandefält
-- ja: メニューバー; 通知領域
+- ja: メニューバー; 通知領域; Linux システムトレイ
 
 ## Window
 
@@ -287,7 +287,7 @@ The icon in the macOS menu bar, or in the Windows and Linux system tray.
 - nl: venster (Apple)
 - pl: okno (Apple)
 - sv: fönster (Apple)
-- ja: ウインドウ (Apple), never ウィンドウ
+- ja: ウィンドウ, never ウインドウ
 
 ## Verification code
 
@@ -420,7 +420,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
 ## Keyboard keys
 
-A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ or _Ctrl_ and _Shift_. The source writes the short form printed on keys, so keep a short form where the language has one: Cmd and Option on macOS, Ctrl, Shift and Alt on Windows and Linux, the latter taking Microsoft's word. Sources: **Apple** is "Mac keyboard shortcuts" (support.apple.com/<locale>/102650), which names each key with its short form in brackets; **Microsoft** is "Keyboard shortcuts in Windows" (support.microsoft.com/<locale>/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec). Each line gives Apple's Command, Shift, Option and Control, then Microsoft's Ctrl, Shift and Alt.
+A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ or _Ctrl_ and _Shift_. The source writes the short form printed on keys, so keep a short form where the language has one: Cmd and Option on macOS, Ctrl, Shift and Alt on Windows and Linux. Cmd and Ctrl are separate messages already, and Shift carries a platform `msgctxt`: `macOS` takes Apple's name, `Windows` Microsoft's and `Linux` GNOME's, from the style sheet's Platform words where it has them. Sources: **Apple** is "Mac keyboard shortcuts" (support.apple.com/<locale>/102650), which names each key with its short form in brackets; **Microsoft** is "Keyboard shortcuts in Windows" (support.microsoft.com/<locale>/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec). Each line gives Apple's Command, Shift, Option and Control, then Microsoft's Ctrl, Shift and Alt.
 
 - de: Apple Befehlstaste (Cmd), Umschalttaste, Wahltaste (Alt), Control-Taste (Ctrl); Microsoft Strg, Umschalt, Alt (Microsoft writes them in capitals, STRG and UMSCHALT)
 - fr: Apple Commande (Cmd), Maj, Option (Alt), Contrôle (Ctrl); Microsoft Ctrl, Maj, Alt
@@ -493,7 +493,7 @@ The folder, and _Not spam_ for the button that takes a message out of it.
 
 ### Archive, Compose, Drafts, Sent
 
-From shortcuts, with Sent and Drafts confirmed by undo send.
+From shortcuts, with Sent and Drafts confirmed by undo send. The File menu's Compose is not this one: it carries a platform `msgctxt` and takes the platform's word for a new email, from the style sheet.
 
 - de: Archivieren; Schreiben; Entwürfe; Gesendet
 - fr: Archiver; Nouveau message; Brouillons; Messages envoyés
@@ -602,4 +602,4 @@ The steps for connecting the 1Password desktop app quote its own interface: Sett
 
 ## Common actions
 
-Apple's labels for everyday actions such as Cancel, Undo, Close, Delete, Save, Quit and Copy Link are in each style sheet, under Apple's words. Use them for the same actions and as the model for others, except where the string names a Gmail action or folder: then Gmail's word above wins, as for the Undo button in the message-sent toast.
+The labels for everyday actions such as Cancel, Close, Delete, Save, Quit and Copy Link are in each style sheet, under Common labels or Apple's words, as its house words. Use them for the same actions and as the model for others, except where the string names a Gmail action or folder, where Gmail's word above wins, as for the Undo button in the message-sent toast, and where the entry has a platform `msgctxt`, where the platform's word wins.
