@@ -386,6 +386,7 @@ function UnifiedInboxTable({
   );
 
   useHotkeys(
+    // oxlint-disable-next-line lingui/no-unlocalized-strings -- a keyboard shortcut
     "shift+i",
     (event) => {
       event.preventDefault();
