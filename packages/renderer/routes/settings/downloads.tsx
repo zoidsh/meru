@@ -1,4 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { byPlatform } from "@meru/shared/platform";
 import { ipc } from "@meru/shared/renderer/ipc";
 import { Button } from "@meru/ui/components/button";
 import {
@@ -16,6 +17,7 @@ import { SettingsHeader, SettingsTitle } from "@/components/settings";
 import { useConfig } from "@/lib/react-query";
 import { settingsPageLabels } from "@/lib/settings-pages";
 import { restartRequiredToast } from "@/lib/toast";
+import { platform } from "@/lib/utils";
 
 export function DownloadsSettings() {
   const { config } = useConfig();
@@ -27,6 +29,14 @@ export function DownloadsSettings() {
   if (!config) {
     return null;
   }
+
+  // lingui-set comment="Save As names the operating system's dialog that asks where to save a file"
+  const showSaveAsDialogLabel = byPlatform(platform, {
+    macOS: t({ message: "Show Save As dialog before downloading", context: "macOS" }),
+    windows: t({ message: "Show Save As dialog before downloading", context: "Windows" }),
+    linux: t({ message: "Show Save As dialog before downloading", context: "Linux" }),
+  });
+  // lingui-reset
 
   return (
     <>
@@ -41,10 +51,7 @@ export function DownloadsSettings() {
             </Trans>
           </FieldLegend>
           <ConfigSwitchField
-            label={t({
-              message: "Show Save As dialog before downloading",
-              comment: "Save As names the operating system's dialog that asks where to save a file",
-            })}
+            label={showSaveAsDialogLabel}
             description={t`Ask where to save each file before it downloads.`}
             configKey="downloads.saveAs"
             restartRequired

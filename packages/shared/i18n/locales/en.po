@@ -114,11 +114,6 @@ msgstr "{target, select, window {Open {appLabel} links in this window?} other {O
 msgid "{target, select, window {Open {appLabel} Links in This Window} other {Open {appLabel} Links in This Tab}}"
 msgstr "{target, select, window {Open {appLabel} Links in This Window} other {Open {appLabel} Links in This Tab}}"
 
-#. The icon is the one Meru shows in the macOS menu bar, or in the system tray elsewhere
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
-msgstr "{trayLocation, select, menuBar {Automatically select the first account with unread emails when clicking the menu bar icon.} other {Automatically select the first account with unread emails when clicking the system tray icon.}}"
-
 #. Titlebar badge counting the whole days left in the Meru Pro trial
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
@@ -145,11 +140,37 @@ msgstr "&Learn Spelling"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
 msgid "&Paste"
 msgstr "&Paste"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "&Paste"
+msgstr "&Paste"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Paste"
+msgstr "&Paste"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "&Paste And Match Style"
+msgstr "&Paste And Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "&Paste And Match Style"
+msgstr "&Paste And Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
 msgid "&Paste And Match Style"
 msgstr "&Paste And Match Style"
 
@@ -235,6 +256,19 @@ msgstr "A notification shows the code either way. Press its Copy button to copy 
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "About {appName}"
+msgstr "About {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "About {appName}"
+msgstr "About {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "About {appName}"
 msgstr "About {appName}"
 
@@ -424,6 +458,20 @@ msgstr "Auto"
 msgid "Automatic"
 msgstr "Automatic"
 
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Automatically select the first account with unread emails when clicking the menu bar icon."
+msgstr "Automatically select the first account with unread emails when clicking the menu bar icon."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Linux"
+msgid "Automatically select the first account with unread emails when clicking the system tray icon."
+msgstr "Automatically select the first account with unread emails when clicking the system tray icon."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
+msgid "Automatically select the first account with unread emails when clicking the system tray icon."
+msgstr "Automatically select the first account with unread emails when clicking the system tray icon."
+
 #. Heading of the Workspace apps that can be added to the launcher
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Available"
@@ -560,6 +608,19 @@ msgstr "Check for updates in the background."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Check for Updates…"
 msgstr "Check for Updates…"
 
@@ -584,6 +645,12 @@ msgid "Choose Meru in the Applications folder."
 msgstr "Choose Meru in the Applications folder."
 
 #: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Linux"
+msgid "Choose the color of the system tray icon."
+msgstr "Choose the color of the system tray icon."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
 msgid "Choose the color of the system tray icon."
 msgstr "Choose the color of the system tray icon."
 
@@ -703,10 +770,26 @@ msgstr "Collapsed"
 msgid "Color"
 msgstr "Color"
 
-#. A menu or a menu item in Meru's menu bar
 #. Heading of the Gmail page's section about writing emails
-#: packages/app/menu.ts
 #: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Compose"
+msgstr "Compose"
+
+#. File menu item that opens a new email in Gmail
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Compose"
+msgstr "Compose"
+
+#. File menu item that opens a new email in Gmail
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Compose"
+msgstr "Compose"
+
+#. File menu item that opens a new email in Gmail
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Compose"
 msgstr "Compose"
 
@@ -845,6 +928,19 @@ msgstr "Ctrl"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Cu&t"
+msgstr "Cu&t"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Cu&t"
+msgstr "Cu&t"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
 msgid "Cu&t"
 msgstr "Cu&t"
 
@@ -859,6 +955,19 @@ msgstr "Current version: v{version}"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Cut"
+msgstr "Cut"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Cut"
+msgstr "Cut"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Cut"
 msgstr "Cut"
 
@@ -1048,6 +1157,12 @@ msgid "Enable menu bar icon"
 msgstr "Enable menu bar icon"
 
 #: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Linux"
+msgid "Enable system tray icon"
+msgstr "Enable system tray icon"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
 msgid "Enable system tray icon"
 msgstr "Enable system tray icon"
 
@@ -1106,6 +1221,19 @@ msgstr "Experimental"
 
 #. Button in the save dialog that exports Meru's log file
 #: packages/app/ipc.ts
+msgctxt "Linux"
+msgid "Export"
+msgstr "Export"
+
+#. Button in the save dialog that exports Meru's log file
+#: packages/app/ipc.ts
+msgctxt "macOS"
+msgid "Export"
+msgstr "Export"
+
+#. Button in the save dialog that exports Meru's log file
+#: packages/app/ipc.ts
+msgctxt "Windows"
 msgid "Export"
 msgstr "Export"
 
@@ -1146,6 +1274,19 @@ msgstr "Extensions are in testing"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "File"
+msgstr "File"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "File"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "File"
 msgstr "File"
 
@@ -1300,6 +1441,19 @@ msgstr "Hide license key"
 
 #. Tray menu item that hides Meru's window
 #: packages/app/tray.ts
+msgctxt "Linux"
+msgid "Hide Meru"
+msgstr "Hide Meru"
+
+#. Tray menu item that hides Meru's window
+#: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Hide Meru"
+msgstr "Hide Meru"
+
+#. Tray menu item that hides Meru's window
+#: packages/app/tray.ts
+msgctxt "Windows"
 msgid "Hide Meru"
 msgstr "Hide Meru"
 
@@ -2029,12 +2183,37 @@ msgstr "Password managers"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
 msgid "Paste"
 msgstr "Paste"
 
 #. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Paste"
+msgstr "Paste"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Windows"
+msgid "Paste"
+msgstr "Paste"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Paste and Match Style"
+msgstr "Paste and Match Style"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Paste and Match Style"
+msgstr "Paste and Match Style"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
 
@@ -2147,6 +2326,19 @@ msgstr "Recolor Gmail labels by their exact name. The text color defaults to wha
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Redo"
+msgstr "Redo"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Redo"
+msgstr "Redo"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Redo"
 msgstr "Redo"
 
@@ -2330,6 +2522,19 @@ msgstr "Run the installed extensions. Turning this off stops them without uninst
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Sa&ve Image As…"
+msgstr "Sa&ve Image As…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Sa&ve Image As…"
+msgstr "Sa&ve Image As…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
 msgid "Sa&ve Image As…"
 msgstr "Sa&ve Image As…"
 
@@ -2398,6 +2603,13 @@ msgstr "Select"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Select &All"
+msgstr "Select &All"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
 msgid "Select &All"
 msgstr "Select &All"
 
@@ -2407,6 +2619,19 @@ msgstr "Select additional languages for spellchecking alongside the system langu
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Select All"
+msgstr "Select All"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Select All"
+msgstr "Select All"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Select All"
 msgstr "Select All"
 
@@ -2492,10 +2717,26 @@ msgstr "Set the volume level for notification sounds."
 msgid "Set up desktop app"
 msgstr "Set up desktop app"
 
-#. A menu or a menu item in Meru's menu bar
 #. Title of the Settings window, in its titlebar
-#: packages/app/menu.ts
 #: packages/renderer/components/app-titlebar.tsx
+msgid "Settings"
+msgstr "Settings"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Settings"
+msgstr "Settings"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Settings"
+msgstr "Settings"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Settings"
 msgstr "Settings"
 
@@ -2514,6 +2755,19 @@ msgstr "Share"
 
 #. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
 #: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "Linux"
+msgid "Shift"
+msgstr "Shift"
+
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "macOS"
+msgid "Shift"
+msgstr "Shift"
+
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "Windows"
 msgid "Shift"
 msgstr "Shift"
 
@@ -2600,6 +2854,19 @@ msgstr "Show license key"
 
 #. Tray menu item that brings Meru's window back
 #: packages/app/tray.ts
+msgctxt "Linux"
+msgid "Show Meru"
+msgstr "Show Meru"
+
+#. Tray menu item that brings Meru's window back
+#: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Show Meru"
+msgstr "Show Meru"
+
+#. Tray menu item that brings Meru's window back
+#: packages/app/tray.ts
+msgctxt "Windows"
 msgid "Show Meru"
 msgstr "Show Meru"
 
@@ -2628,6 +2895,19 @@ msgstr "Show recent download history"
 
 #. Save As names the operating system's dialog that asks where to save a file
 #: packages/renderer/routes/settings/downloads.tsx
+msgctxt "Linux"
+msgid "Show Save As dialog before downloading"
+msgstr "Show Save As dialog before downloading"
+
+#. Save As names the operating system's dialog that asks where to save a file
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "macOS"
+msgid "Show Save As dialog before downloading"
+msgstr "Show Save As dialog before downloading"
+
+#. Save As names the operating system's dialog that asks where to save a file
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "Windows"
 msgid "Show Save As dialog before downloading"
 msgstr "Show Save As dialog before downloading"
 
@@ -2673,6 +2953,12 @@ msgid "Show the application icon in the menu bar."
 msgstr "Show the application icon in the menu bar."
 
 #: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Linux"
+msgid "Show the application icon in the system tray."
+msgstr "Show the application icon in the system tray."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
 msgid "Show the application icon in the system tray."
 msgstr "Show the application icon in the system tray."
 
@@ -2865,6 +3151,12 @@ msgid "System"
 msgstr "System"
 
 #: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Linux"
+msgid "System tray icon"
+msgstr "System tray icon"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
 msgid "System tray icon"
 msgstr "System tray icon"
 
@@ -3024,6 +3316,19 @@ msgstr "Turn off Do Not Disturb to show a test notification."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Undo"
+msgstr "Undo"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Undo"
+msgstr "Undo"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Undo"
 msgstr "Undo"
 
@@ -3175,6 +3480,19 @@ msgstr "Vertical tabs"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "View"
+msgstr "View"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "View"
+msgstr "View"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "View"
 msgstr "View"
 

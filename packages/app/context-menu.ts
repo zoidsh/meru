@@ -1,4 +1,6 @@
+import { platform } from "@electron-toolkit/utils";
 import { ph, t } from "@lingui/core/macro";
+import { byPlatform } from "@meru/shared/platform";
 import {
   type BrowserWindow,
   type MenuItemConstructorOptions,
@@ -25,13 +27,34 @@ function getDefaultItemLabels(): Labels {
       comment: "Context menu item on macOS; selection is the selected text",
     }),
     searchWithGoogle: t`&Search with Google`,
-    cut: t`Cu&t`,
+    cut: byPlatform(platform, {
+      macOS: t({ message: "Cu&t", context: "macOS" }),
+      windows: t({ message: "Cu&t", context: "Windows" }),
+      linux: t({ message: "Cu&t", context: "Linux" }),
+    }),
     copy: t`&Copy`,
-    paste: t`&Paste`,
-    pasteAndMatchStyle: t`&Paste And Match Style`,
-    selectAll: t`Select &All`,
+    paste: byPlatform(platform, {
+      macOS: t({ message: "&Paste", context: "macOS" }),
+      windows: t({ message: "&Paste", context: "Windows" }),
+      linux: t({ message: "&Paste", context: "Linux" }),
+    }),
+    pasteAndMatchStyle: byPlatform(platform, {
+      macOS: t({ message: "&Paste And Match Style", context: "macOS" }),
+      windows: t({ message: "&Paste And Match Style", context: "Windows" }),
+      linux: t({ message: "&Paste And Match Style", context: "Linux" }),
+    }),
+    // electron-context-menu shows Select All everywhere but on macOS.
+    selectAll: byPlatform(platform, {
+      macOS: undefined,
+      windows: t({ message: "Select &All", context: "Windows" }),
+      linux: t({ message: "Select &All", context: "Linux" }),
+    }),
     saveImage: t`Save I&mage`,
-    saveImageAs: t`Sa&ve Image As…`,
+    saveImageAs: byPlatform(platform, {
+      macOS: t({ message: "Sa&ve Image As…", context: "macOS" }),
+      windows: t({ message: "Sa&ve Image As…", context: "Windows" }),
+      linux: t({ message: "Sa&ve Image As…", context: "Linux" }),
+    }),
     saveVideo: t`Save Vide&o`,
     saveVideoAs: t`Save Video& As…`,
     copyLink: t`Copy Lin&k`,
