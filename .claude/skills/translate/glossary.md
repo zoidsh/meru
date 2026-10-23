@@ -287,7 +287,7 @@ The icon in the macOS menu bar, or in the Windows and Linux system tray. The sys
 - nl: venster (Apple)
 - pl: okno (Apple)
 - sv: fönster (Apple)
-- ja: ウィンドウ, never ウインドウ
+- ja: ウィンドウ in Meru's own copy, never ウインドウ; a `macOS` label such as the Window menu takes Apple's ウインドウ
 
 ## Verification code
 

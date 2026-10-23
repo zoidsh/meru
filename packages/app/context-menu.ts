@@ -25,6 +25,7 @@ function getDefaultItemLabels(): Labels {
     learnSpelling: t`&Learn Spelling`,
     lookUpSelection: t({
       message: `Look Up “${ph({ selection: SELECTION_PLACEHOLDER })}”`,
+      context: "macOS",
       comment: "Context menu item on macOS; selection is the selected text",
     }),
     searchWithGoogle: t`&Search with Google`,

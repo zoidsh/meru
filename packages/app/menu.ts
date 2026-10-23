@@ -91,15 +91,15 @@ export class AppMenu {
     // lingui-set comment="A menu or a menu item in Meru's menu bar"
     const macOSAppHideItems: MenuItemConstructorOptions[] = [
       {
-        label: t`Hide ${appName}`,
+        label: t({ message: `Hide ${appName}`, context: "macOS" }),
         role: "hide",
       },
       {
-        label: t`Hide Others`,
+        label: t({ message: "Hide Others", context: "macOS" }),
         role: "hideOthers",
       },
       {
-        label: t`Show All`,
+        label: t({ message: "Show All", context: "macOS" }),
         role: "unhide",
       },
       {
@@ -111,16 +111,17 @@ export class AppMenu {
     // on Windows and Linux.
     const macOSSpeechItems: MenuItemConstructorOptions[] = [
       {
-        label: t`Speech`,
+        label: t({ message: "Speech", context: "macOS" }),
         submenu: [
-          { label: t`Start Speaking`, role: "startSpeaking" },
-          { label: t`Stop Speaking`, role: "stopSpeaking" },
+          { label: t({ message: "Start Speaking", context: "macOS" }), role: "startSpeaking" },
+          { label: t({ message: "Stop Speaking", context: "macOS" }), role: "stopSpeaking" },
         ],
       },
     ];
 
+    // Windows and Linux carry this item hidden, so only macOS ever shows its label.
     const minimizeItem: MenuItemConstructorOptions = {
-      label: t`Minimize`,
+      label: t({ message: "Minimize", context: "macOS" }),
       accelerator: "CommandOrControl+M",
       role: "minimize",
     };
@@ -135,13 +136,14 @@ export class AppMenu {
     // itself is a macOS convention, so the whole menu ships on macOS alone.
     const macOSWindowMenuItems: MenuItemConstructorOptions[] = [
       {
-        label: t`Window`,
+        label: t({ message: "Window", context: "macOS" }),
         role: "window",
         submenu: [
           minimizeItem,
           {
             label: t({
               message: "Zoom",
+              context: "macOS",
               comment:
                 "Window menu item that toggles the window between its size and filling the screen",
             }),
@@ -151,7 +153,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: t`Bring All to Front`,
+            label: t({ message: "Bring All to Front", context: "macOS" }),
             role: "front",
           },
         ],
@@ -396,7 +398,7 @@ export class AppMenu {
           },
           {
             label: platform.isMacOS
-              ? t`Close Window`
+              ? t({ message: "Close Window", context: "macOS" })
               : t({
                   message: "Close",
                   context: "window",

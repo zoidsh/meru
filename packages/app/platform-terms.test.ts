@@ -119,6 +119,9 @@ const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
   saveImageAs: "Sa&ve Image As…",
 };
 
+/** An OS label only macOS shows, which takes Apple's word through the macOS message alone. */
+const MACOS_ONLY_MENU_MESSAGE = "Window";
+
 /** macOS never shows electron-context-menu's Select All. */
 const NON_MACOS_CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
   selectAll: "Select &All",
@@ -132,6 +135,7 @@ function markedTranslation(context: PlatformContext, message: string) {
 function activatePlatformMarkedCatalog() {
   const messages = [
     ...MENU_MESSAGES,
+    MACOS_ONLY_MENU_MESSAGE,
     ...Object.values(CONTEXT_MENU_MESSAGES),
     ...Object.values(NON_MACOS_CONTEXT_MENU_MESSAGES),
   ].filter((message) => message !== undefined);
@@ -178,6 +182,18 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
       for (const otherContext of otherContexts) {
         expect(label).not.toStartWith(`[${otherContext}]`);
       }
+    }
+  });
+
+  test("a menu only macOS shows takes the macOS message", () => {
+    new AppMenu().createMenu();
+
+    const labels = collectLabels(builtTemplate);
+
+    if (context === "macOS") {
+      expect(labels).toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
+    } else {
+      expect(labels).not.toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
     }
   });
 

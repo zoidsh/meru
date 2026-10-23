@@ -555,6 +555,7 @@ msgstr "Breeze"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Bring All to Front"
 msgstr "Bring All to Front"
 
@@ -748,6 +749,7 @@ msgstr "Close unified inbox"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Close Window"
 msgstr "Close Window"
 
@@ -1419,6 +1421,7 @@ msgstr "Hide"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Hide {appName}"
 msgstr "Hide {appName}"
 
@@ -1454,6 +1457,7 @@ msgstr "Hide Meru"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Hide Others"
 msgstr "Hide Others"
 
@@ -1686,6 +1690,7 @@ msgstr "Logs"
 
 #. Context menu item on macOS; selection is the selected text
 #: packages/app/context-menu.ts
+msgctxt "macOS"
 msgid "Look Up “{selection}”"
 msgstr "Look Up “{selection}”"
 
@@ -1847,6 +1852,7 @@ msgstr "Message"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Minimize"
 msgstr "Minimize"
 
@@ -2751,6 +2757,7 @@ msgstr "Show a test notification to see how notifications appear."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Show All"
 msgstr "Show All"
 
@@ -2798,6 +2805,7 @@ msgstr "Show in File Explorer"
 
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
+msgctxt "macOS"
 msgid "Show in Finder"
 msgstr "Show in Finder"
 
@@ -3033,6 +3041,7 @@ msgstr "Source Code"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Speech"
 msgstr "Speech"
 
@@ -3048,6 +3057,7 @@ msgstr "Stable"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Start Speaking"
 msgstr "Start Speaking"
 
@@ -3070,6 +3080,7 @@ msgstr "Stop loading"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Stop Speaking"
 msgstr "Stop Speaking"
 
@@ -3538,10 +3549,14 @@ msgstr "Widen the tab strip"
 msgid "Width"
 msgstr "Width"
 
-#. A menu or a menu item in Meru's menu bar
 #. Heading of the Appearance section about Meru's window
-#: packages/app/menu.ts
 #: packages/renderer/routes/settings/appearance.tsx
+msgid "Window"
+msgstr "Window"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Window"
 msgstr "Window"
 
@@ -3615,6 +3630,7 @@ msgstr "Your test notification request"
 
 #. Window menu item that toggles the window between its size and filling the screen
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Zoom"
 msgstr "Zoom"
 
