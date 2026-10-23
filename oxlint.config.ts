@@ -39,9 +39,6 @@ const NO_UNLOCALIZED_STRINGS_OPTIONS = {
     "log.*",
     "openExternalUrl",
     "require",
-    // IPC channel names, which are the contract rather than copy.
-    "ipc.main.*",
-    "ipc.renderer.*",
     // Class names.
     "cn",
     "cva",
@@ -49,7 +46,6 @@ const NO_UNLOCALIZED_STRINGS_OPTIONS = {
     // Config keys.
     "config.get",
     "config.set",
-    "config.onDidChange",
     // `new URL(…)`, whose callee the rule matches like a call's.
     "URL",
     // A thrown error is for the log, and its message is never shown.
@@ -85,8 +81,6 @@ const NO_UNLOCALIZED_STRINGS_OPTIONS = {
     "*.closest",
     "$$",
     "applyDarkTheme",
-    // Keyboard shortcuts, named by their keys.
-    "useHotkeys",
     // Names a platform API defines: canvas contexts, Chromium switches and
     // Windows registry keys.
     "*.getContext",
