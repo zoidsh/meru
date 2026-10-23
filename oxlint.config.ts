@@ -83,14 +83,12 @@ const NO_UNLOCALIZED_STRINGS_OPTIONS = {
     // CSS selectors, and the colors and image URLs the dark theme matches.
     "*.querySelector",
     "*.closest",
-    "$",
     "$$",
     "applyDarkTheme",
     // Keyboard shortcuts, named by their keys.
     "useHotkeys",
-    // Names a platform API defines: DOM events, canvas contexts, Chromium
-    // switches and Windows registry keys.
-    "*.addEventListener",
+    // Names a platform API defines: canvas contexts, Chromium switches and
+    // Windows registry keys.
     "*.getContext",
     "app.commandLine.appendSwitch",
     "queryUserChoiceProgIds",
@@ -166,7 +164,6 @@ export default defineConfig({
         "packages/app/lib/linux.ts",
         "packages/app/lib/machine-id/**",
         "packages/app/lib/quarantine.ts",
-        "packages/renderer/components/workspace-app-icon.tsx",
       ],
       rules: {
         "lingui/no-unlocalized-strings": ["error", NO_UNLOCALIZED_STRINGS_OPTIONS],
