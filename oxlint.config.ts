@@ -42,7 +42,6 @@ const NO_UNLOCALIZED_STRINGS_OPTIONS = {
     // IPC channel names, which are the contract rather than copy.
     "ipc.main.*",
     "ipc.renderer.*",
-    "this.main.*",
     // Class names.
     "cn",
     "cva",
@@ -162,14 +161,11 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/*.e2e.ts",
         // Files whose strings are data: blocked hosts, SVG ids, window manager
-        // names, system paths, URL patterns and attribute values.
+        // names, system paths and attribute values.
         "packages/app/blocker/hosts.ts",
-        "packages/app/extensions.ts",
-        "packages/app/lib/deep-link.ts",
         "packages/app/lib/linux.ts",
         "packages/app/lib/machine-id/**",
         "packages/app/lib/quarantine.ts",
-        "packages/app/lib/window.ts",
         "packages/renderer/components/workspace-app-icon.tsx",
       ],
       rules: {

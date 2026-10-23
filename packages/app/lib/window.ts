@@ -158,6 +158,7 @@ export function loadRenderer(
   window: BrowserWindow | WebContentsView,
   options: LoadRendererOptions,
 ) {
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a file name
   const pageFileName = `${options.page}.html`;
 
   const searchParams = options.searchParams ?? new URLSearchParams();
@@ -169,6 +170,7 @@ export function loadRenderer(
   if (is.dev) {
     // `||`, not `??`: an empty value is as unusable as an unset one, and
     // keeping it loads the page with no origin to resolve against.
+    // oxlint-disable-next-line lingui/no-unlocalized-strings -- a URL
     const rendererUrl = process.env.MERU_RENDERER_URL || "http://localhost:3000/";
 
     loadUrl(window.webContents, `${rendererUrl}${pageFileName}?${searchParams.toString()}`);

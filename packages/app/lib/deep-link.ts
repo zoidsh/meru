@@ -48,6 +48,7 @@ export function upgradeToHttps(url: string) {
 }
 
 export function createMeruMessageUrl(userEmail: string, messageId: string) {
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a URL
   return `${MERU_URL_PREFIX}${userEmail}/message/${messageId}`;
 }
 
