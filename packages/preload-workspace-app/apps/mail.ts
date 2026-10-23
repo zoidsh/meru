@@ -104,6 +104,7 @@ function darkThemeMail() {
 const isComposeWindow = process.argv.includes(GMAIL_PRELOAD_ARGUMENTS.composeWindow);
 
 export function initMailPreload() {
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a DOM event name
   document.addEventListener("DOMContentLoaded", () => {
     if (isComposeWindow || isGmailComposeWindowUrl(window.location.href)) {
       observeBodyMutations(() => {

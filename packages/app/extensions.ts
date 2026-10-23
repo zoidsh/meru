@@ -103,6 +103,7 @@ function getFixtureExtensionDirs() {
   return [
     path
       .join(app.getAppPath(), "build-js", "fixture-extension")
+      // oxlint-disable-next-line lingui/no-unlocalized-strings -- a path in the app bundle
       .replace("app.asar", "app.asar.unpacked"),
   ];
 }
@@ -317,6 +318,7 @@ function getContentScriptMatches(extensionId: string) {
  */
 function getWorkerSessionPagePatterns() {
   if (!is.dev) {
+    // oxlint-disable-next-line lingui/no-unlocalized-strings -- a URL match pattern
     return ["file:///*"];
   }
 
