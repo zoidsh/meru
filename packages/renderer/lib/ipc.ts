@@ -37,11 +37,13 @@ ipc.renderer.on("taskbar.setOverlayIcon", (_event, unreadCount) => {
   ctx.beginPath();
   ctx.arc(radius, radius, radius, 0, Math.PI * 2);
   ctx.fill();
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a CSS font
   ctx.font = `${fontSize}px Arial`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "white";
 
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a count cap drawn into a small icon, not a sentence
   const text = unreadCount > 999 ? "1k+" : unreadCount.toString();
 
   const fontWidth = ctx.measureText(text).width;
