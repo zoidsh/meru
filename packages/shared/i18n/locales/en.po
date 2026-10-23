@@ -860,11 +860,6 @@ msgstr "Copy Link"
 msgid "Copy Message Link"
 msgstr "Copy Message Link"
 
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Copy Video Ad&dress"
-msgstr "Copy Video Ad&dress"
-
 #: packages/app/license-key.ts
 msgid "Couldn't activate the license key."
 msgstr "Couldn't activate the license key."
@@ -1521,11 +1516,6 @@ msgstr "How wide the vertical tabs sidebar is. Auto switches between narrow and 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How Workspace apps open. Tabs, the default, opens them in the main window. New windows gives each one its own window with no tab strip. In Tabs, hold <0>{backgroundTabKey}</0> to open a background tab or <1>{newWindowKey}</1> to open a new window."
 msgstr "How Workspace apps open. Tabs, the default, opens them in the main window. New windows gives each one its own window with no tab strip. In Tabs, hold <0>{backgroundTabKey}</0> to open a background tab or <1>{newWindowKey}</1> to open a new window."
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "I&nspect Element"
-msgstr "I&nspect Element"
 
 #. Option of the Notify for setting: a notification only for the emails Gmail marks as important. Important is Gmail's word for them, so it follows Gmail's word in this language
 #: packages/renderer/routes/settings/notifications.tsx
@@ -2549,26 +2539,6 @@ msgstr "Sa&ve Image As…"
 msgid "Save"
 msgstr "Save"
 
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Save I&mage"
-msgstr "Save I&mage"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Save Link As…"
-msgstr "Save Link As…"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Save Vide&o"
-msgstr "Save Vide&o"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Save Video& As…"
-msgstr "Save Video& As…"
-
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "Saved searches"
@@ -2694,11 +2664,6 @@ msgstr "Selected tabs"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
 msgstr "Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgid "Services"
-msgstr "Services"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."

@@ -17,7 +17,8 @@ import { openExternalUrl } from "./url";
 const SELECTION_PLACEHOLDER = "{selection}";
 
 // electron-context-menu's own items, keeping its ampersands, which mark the
-// access key on Windows and Linux.
+// access key on Windows and Linux. Only the items the options below show are
+// here, so no translation is written for an item nobody sees.
 function getDefaultItemLabels(): Labels {
   // lingui-set comment="An item in the context menu of a page or a text field; & marks the access key on Windows and Linux"
   return {
@@ -49,22 +50,15 @@ function getDefaultItemLabels(): Labels {
       windows: t({ message: "Select &All", context: "Windows" }),
       linux: t({ message: "Select &All", context: "Linux" }),
     }),
-    saveImage: t`Save I&mage`,
     saveImageAs: byPlatform(platform, {
       macOS: t({ message: "Sa&ve Image As…", context: "macOS" }),
       windows: t({ message: "Sa&ve Image As…", context: "Windows" }),
       linux: t({ message: "Sa&ve Image As…", context: "Linux" }),
     }),
-    saveVideo: t`Save Vide&o`,
-    saveVideoAs: t`Save Video& As…`,
     copyLink: t`Copy Lin&k`,
-    saveLinkAs: t`Save Link As…`,
     copyImage: t`Cop&y Image`,
     copyImageAddress: t`C&opy Image Address`,
-    copyVideoAddress: t`Copy Video Ad&dress`,
     copyEmailAddress: t`Copy Email Address`,
-    inspect: t`I&nspect Element`,
-    services: t`Services`,
     noGuessesFound: t({
       message: "No Guesses Found",
       comment:

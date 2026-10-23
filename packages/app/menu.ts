@@ -107,6 +107,18 @@ export class AppMenu {
       },
     ];
 
+    // Start Speaking and Stop Speaking are macOS-only roles, which do nothing
+    // on Windows and Linux.
+    const macOSSpeechItems: MenuItemConstructorOptions[] = [
+      {
+        label: t`Speech`,
+        submenu: [
+          { label: t`Start Speaking`, role: "startSpeaking" },
+          { label: t`Stop Speaking`, role: "stopSpeaking" },
+        ],
+      },
+    ];
+
     const minimizeItem: MenuItemConstructorOptions = {
       label: t`Minimize`,
       accelerator: "CommandOrControl+M",
@@ -482,13 +494,7 @@ export class AppMenu {
               targetWebContents.focus();
             },
           },
-          {
-            label: t`Speech`,
-            submenu: [
-              { label: t`Start Speaking`, role: "startSpeaking" },
-              { label: t`Stop Speaking`, role: "stopSpeaking" },
-            ],
-          },
+          ...(platform.isMacOS ? macOSSpeechItems : []),
         ],
       },
       {
