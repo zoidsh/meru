@@ -22,5 +22,6 @@ function getPlatformToken() {
 export function getChromeUserAgent(chromeVersion: string) {
   const [majorVersion] = chromeVersion.split(".");
 
+  // oxlint-disable-next-line lingui/no-unlocalized-strings -- a user agent, which websites read the same in every language
   return `Mozilla/5.0 (${getPlatformToken()}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${majorVersion}.0.0.0 Safari/537.36`;
 }
