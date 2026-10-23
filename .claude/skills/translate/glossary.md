@@ -583,7 +583,7 @@ A reply or forward opened in a window of its own. Gmail Help calls it a new wind
 
 ### View entire message, Upgrade
 
-_View entire message_ is the link under a message Gmail has clipped, and _Upgrade_ the button Gmail shows for more Google storage, never Meru Pro's [Upgrade](#upgrade). Read from Gmail's interface with the account's display language set to each, 23 October 2026.
+_View entire message_ is the link under a message Gmail has clipped, and _Upgrade_ the button Gmail shows for more Google storage, never Meru Pro's [Upgrade](#upgrade). Read from Gmail's interface with the account's display language set to each.
 
 - de: Vollständige Nachricht ansehen; Upgraden
 - fr: Afficher l’intégralité du message; Mettre à niveau
