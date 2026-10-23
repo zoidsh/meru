@@ -583,7 +583,18 @@ A reply or forward opened in a window of its own. Gmail Help calls it a new wind
 
 ### View entire message, Upgrade
 
-_View entire message_ is the link under a message Gmail has clipped, and _Upgrade_ the button Gmail shows for more Google storage, never Meru Pro's [Upgrade](#upgrade). Both are quoted as Gmail writes them in that language, from Gmail's own interface: no Gmail Help page carries either, so there is no source to list here. Say in your summary which wording you used, so it can be added.
+_View entire message_ is the link under a message Gmail has clipped, and _Upgrade_ the button Gmail shows for more Google storage, never Meru Pro's [Upgrade](#upgrade). Read from Gmail's interface with the account's display language set to each.
+
+- de: Vollständige Nachricht ansehen; Upgraden
+- fr: Afficher l’intégralité du message; Mettre à niveau
+- it: Visualizza intero messaggio; Fai l’upgrade
+- es: Ver todo el mensaje; Cambiar a plan superior
+- es-419: Ver mensaje completo; Actualizar
+- pt-BR: Exibir toda a mensagem; Fazer upgrade
+- nl: Hele bericht bekijken; Upgraden
+- pl: Pokaż całą wiadomość; Zmień na większy pakiet
+- sv: Visa hela meddelandet; Uppgradera
+- ja: メッセージ全体を表示; アップグレード
 
 ## 1Password's words
 
