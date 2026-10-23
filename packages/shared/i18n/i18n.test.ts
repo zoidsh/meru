@@ -83,7 +83,7 @@ describe("resolveLocale", () => {
   });
 
   test("falls back to English for a language this build does not ship", () => {
-    expect(resolveLocale(["de-DE", "fr-FR"], SHIPPED_CATALOG_TAGS)).toBe("en");
+    expect(resolveLocale(["fr-FR", "pl-PL"], SHIPPED_CATALOG_TAGS)).toBe("en");
   });
 
   test("names every catalog", () => {
@@ -124,7 +124,7 @@ describe("activateLocale", () => {
   });
 
   test("activates English, plural rules included, for a tag whose catalog is not in this build", () => {
-    activateLocale("de");
+    activateLocale("fr");
 
     expect(i18n.locale).toBe("en");
     expect(translate("Settings")).toBe("Settings");
