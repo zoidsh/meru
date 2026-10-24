@@ -2,6 +2,8 @@
 
 Polish follows what Apple ships in macOS Mail and AppKit. Where this sheet and a habit from other software disagree, this sheet wins.
 
+An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is an OS label, a label each operating system names its own way, such as the File menu or Paste. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's. Only the word changes: this sheet's address, capitalization and punctuation hold on every platform.
+
 ## Address
 
 Informal second person singular, with every form of the pronoun capitalized as a courtesy: _Ty_, _Ciebie_, _Ci_, _Twój_, _Twoja_, _Twoich_: _Twoich skrzynek_, _przypomnieć Ci_. The verb carries the person, so the pronoun is mostly left out (_Czy na pewno chcesz …?_); when it appears, it is capitalized. Never _Pan_, _Pani_ or _Państwo_, and never a lowercase _twój_ or _ci_.
@@ -16,7 +18,7 @@ Sentence style: only the first word, proper nouns and the courtesy pronouns abov
 
 ## Settings
 
-_Ustawienia_; the app-menu item is _Ustawienia…_.
+_Ustawienia_. The app-menu item with `msgctxt` `macOS` is _Ustawienia…_, as AppKit writes it; with `Windows` or `Linux` it takes Microsoft's or GNOME's word, without the ellipsis the English lacks.
 
 ## Plural categories
 

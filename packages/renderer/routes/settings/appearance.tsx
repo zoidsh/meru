@@ -1,5 +1,6 @@
-import { msg, select } from "@lingui/core/macro";
+import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { byPlatform } from "@meru/shared/platform";
 import { ipc } from "@meru/shared/renderer/ipc";
 import {
   Field,
@@ -65,20 +66,21 @@ export function AppearanceSettings() {
   const translatedThemeItems = themeItems.map(({ value, label }) => ({ value, label: t(label) }));
 
   const renderPlatformIconSettings = () => {
-    const trayLocation = platform.isMacOS ? "menuBar" : "systemTray";
-
     const selectAccountWithUnreadField = (
       <ConfigSwitchField
         label={t`Select first unread account on click`}
-        description={t({
-          message: select(trayLocation, {
-            menuBar:
-              "Automatically select the first account with unread emails when clicking the menu bar icon.",
-            other:
+        description={byPlatform(platform, {
+          macOS: t`Automatically select the first account with unread emails when clicking the menu bar icon.`,
+          windows: t({
+            message:
               "Automatically select the first account with unread emails when clicking the system tray icon.",
+            context: "Windows",
           }),
-          comment:
-            "The icon is the one Meru shows in the macOS menu bar, or in the system tray elsewhere",
+          linux: t({
+            message:
+              "Automatically select the first account with unread emails when clicking the system tray icon.",
+            context: "Linux",
+          }),
         })}
         configKey="tray.selectAccountWithUnread"
         disabled={!config["tray.enabled"]}
@@ -133,14 +135,25 @@ export function AppearanceSettings() {
       );
     }
 
+    // Only Windows and Linux get here, and each names the tray its own way.
     return (
       <FieldSet>
         <FieldLegend>
-          <Trans>System tray icon</Trans>
+          {platform.isWindows
+            ? t({ message: "System tray icon", context: "Windows" })
+            : t({ message: "System tray icon", context: "Linux" })}
         </FieldLegend>
         <ConfigSwitchField
-          label={t`Enable system tray icon`}
-          description={t`Show the application icon in the system tray.`}
+          label={
+            platform.isWindows
+              ? t({ message: "Enable system tray icon", context: "Windows" })
+              : t({ message: "Enable system tray icon", context: "Linux" })
+          }
+          description={
+            platform.isWindows
+              ? t({ message: "Show the application icon in the system tray.", context: "Windows" })
+              : t({ message: "Show the application icon in the system tray.", context: "Linux" })
+          }
           configKey="tray.enabled"
           restartRequired
         />
@@ -150,7 +163,11 @@ export function AppearanceSettings() {
             message: "Color",
             comment: "Setting that picks the system tray icon's color",
           })}
-          description={t`Choose the color of the system tray icon.`}
+          description={
+            platform.isWindows
+              ? t({ message: "Choose the color of the system tray icon.", context: "Windows" })
+              : t({ message: "Choose the color of the system tray icon.", context: "Linux" })
+          }
           items={systemTrayIconColorItems.map(({ value, label }) => ({ value, label: t(label) }))}
           restartRequired
         />
