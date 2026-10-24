@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 import type { BrowserWindow, MenuItemConstructorOptions } from "electron";
 
-const currentPlatform = { isMacOS: false, isWindows: false, isLinux: false };
+const currentPlatform = { isMacOS: false, isWindows: false, isLinux: true };
 
 mock.module("@electron-toolkit/utils", () => ({ platform: currentPlatform }));
 
@@ -129,7 +129,7 @@ describe("context menu on an open Gmail message", () => {
 
   test("has a Share item for the message link on macOS", () => {
     expect(openOn("isMacOS").filter(({ role }) => role === "shareMenu")).toEqual([
-      { role: "shareMenu", sharingItem: { urls: ["meru://message"] } },
+      { label: "Share", role: "shareMenu", sharingItem: { urls: ["meru://message"] } },
     ]);
   });
 });
