@@ -188,3 +188,11 @@ msgstr "Nascondi il pannello laterale"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show recent download history"
 msgstr "Mostra la cronologia dei download recenti"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Attiva l’opzione anche in Impostazioni di Sistema."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Icona del Dock"

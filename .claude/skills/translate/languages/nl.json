@@ -930,6 +930,20 @@
       "expect": "^Linen$",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linen."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Systeeminstellingen",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Systeeminstellingen, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
   "accessKeys": {

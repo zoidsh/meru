@@ -743,7 +743,7 @@
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "No molestar",
       "severity": "wrong",
-      "reason": "Do Not Disturb is No molestar, Apple's name for its Focus mode, as in every language (Control Center Settings Localizable do not disturb); Chrome's No interrumpir is not followed."
+      "reason": "Do Not Disturb is No molestar, Apple's name for its Focus mode, as in every language (DoNotDisturb.framework Localizable MODE_NAME_DEFAULT); Chrome's No interrumpir is not followed."
     },
     {
       "id": "restart",
@@ -778,7 +778,21 @@
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Bb]arra de menús",
       "severity": "doubtful",
-      "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (Control Center Settings Localizable menu bar); Chrome's barra de menú is not followed."
+      "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar); Chrome's barra de menú is not followed."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Configuración del Sistema",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Configuración del Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
   "accessKeys": {

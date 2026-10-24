@@ -170,3 +170,11 @@ msgstr "Start Meru opnieuw om de wijzigingen toe te passen."
 #: packages/app/menu.ts
 msgid "Find…"
 msgstr "Zoek…"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Zet de optie ook aan in Systeeminstellingen."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Dock-pictogram"

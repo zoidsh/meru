@@ -204,3 +204,11 @@ msgstr "Ícone da bandeja do sistema"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, one {# guia} many {# guias} other {# guias}}"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Ícone do Dock"
+
+#: packages/app/tray.ts
+msgid "Turn Do Not Disturb on"
+msgstr "Ativar Não Perturbe"

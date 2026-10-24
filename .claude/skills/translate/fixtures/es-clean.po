@@ -217,3 +217,7 @@ msgstr "{count, plural, one {# pestaña} many {# pestañas} other {# pestañas}}
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "30 minutes"
 msgstr "30 minutos"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Icono del Dock"

@@ -183,3 +183,11 @@ msgstr "Otwórz w aplikacji"
 #: packages/app/downloads.ts
 msgid "Show in folder"
 msgstr "Pokaż w folderze"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Włącz to także w Ustawieniach systemowych."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Ikona w Docku"

@@ -553,6 +553,12 @@
   },
   "banned": [
     {
+      "id": "lowercase-ci",
+      "pattern": "(?<!\\p{L})ci(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "The short dative for the user is capitalized, Ci, as every form of the pronoun is. Lower-case ci is also the plural these (ci użytkownicy), so a match asks rather than fails."
+    },
+    {
       "id": "uaktualnienie",
       "pattern": "[Uu]aktualni",
       "severity": "wrong",
@@ -587,9 +593,9 @@
     },
     {
       "id": "lowercase-pronoun",
-      "pattern": "(?<!\\p{L})(?:twój|twoja|twoje|twojego|twojej|twojemu|twoim|twoją|twoich|twoimi|ciebie|tobie|tobą)(?!\\p{L})",
+      "pattern": "(?<!\\p{L})(?:twój|twoja|twoje|twojego|twojej|twojemu|twoim|twoją|twoich|twoimi|ciebie|cię|tobie|tobą)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Every form of the pronoun for the user is capitalized: Twój, Ciebie, Tobie (Chrome: 935 messages, none in lower case)."
+      "reason": "Every form of the pronoun for the user is capitalized: Twój, Ciebie, Cię, Tobie (Chrome: 935 messages, none in lower case)."
     },
     {
       "id": "formal-address",
@@ -935,6 +941,20 @@
       "expect": "^Linen$",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Linen."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Ustawie\\p{L}* systemow",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Ustawienia systemowe, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
   "accessKeys": {

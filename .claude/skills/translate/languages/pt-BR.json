@@ -619,6 +619,13 @@
   ],
   "pinned": [
     {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "Não Perturbe",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is Apple's Não Perturbe, the name of macOS's Focus mode, in every language (DoNotDisturb.framework Localizable MODE_NAME_DEFAULT); Chrome's Não perturbe in prose is not followed."
+    },
+    {
       "id": "settings",
       "msgid": "Settings",
       "msgctxt": null,
@@ -752,6 +759,20 @@
       "expect": "[Bb]arra de [Mm]enus",
       "severity": "doubtful",
       "reason": "The macOS menu bar is the barra de menus. Chrome: 8 of 9 messages."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Ajustes do Sistema",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Ajustes do Sistema, the name of macOS's own app, in Meru's own copy too (TranslationAPIExtension.appex Localizable SYSTEM_SETTINGS)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
   "accessKeys": {

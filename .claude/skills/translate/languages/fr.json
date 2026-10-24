@@ -582,7 +582,7 @@
     },
     {
       "id": "site-web",
-      "pattern": "(?<!\\p{L})sites? web(?!\\p{L})",
+      "pattern": "(?<!\\p{L})[Ss]ites? web(?!\\p{L})",
       "severity": "style",
       "reason": "Chrome writes site Web, with a capital W (Chrome: 109 messages, 1 with site web)."
     },
@@ -630,9 +630,9 @@
     },
     {
       "id": "tu",
-      "pattern": "(?<!\\p{L})(?:[Tt]u|[Tt]oi|[Tt]es|[Tt]a)(?!\\p{L})",
+      "pattern": "(?<!\\p{L})(?:[Tt]u|[Tt]oi|[Tt]on|[Tt]es|[Tt]a|[Tt]e)(?!\\p{L})|(?<!\\p{L})[Tt][’'](?=\\p{L})",
       "severity": "wrong",
-      "reason": "The user is vous, with votre and vos, never tu."
+      "reason": "The user is vous, with votre and vos, never tu, toi, te, t’, ton, ta or tes."
     },
     {
       "id": "apology",
@@ -796,7 +796,7 @@
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "barre des menus",
       "severity": "doubtful",
-      "reason": "The macOS menu bar is the barre des menus, Apple's name for its own interface, in Meru's own copy too (Control Center Settings Localizable menu bar); Chrome's barre de menu is not followed."
+      "reason": "The macOS menu bar is the barre des menus, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar); Chrome's barre de menu is not followed."
     },
     {
       "id": "trusted-hosts",
@@ -811,6 +811,20 @@
       "expect": "[Vv]ersion",
       "severity": "doubtful",
       "reason": "A release channel is a version, as Chrome writes it: Version de mise à jour, version bêta (Chrome: 10 of 11 messages)."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Réglages[ \\u00a0]Système",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Réglages Système, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
   "accessKeys": {

@@ -268,3 +268,28 @@ msgstr "Obtenir les applis Google"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Settings"
 msgstr "Réglages"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Activez aussi l’option dans Paramètres système."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Icône du dock"
+
+# fault: banned:tu
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account"
+msgstr "Supprimer ton compte"
+
+# fault: banned:tu
+#: packages/renderer/routes/settings/general.tsx
+msgid "We'll send you a code."
+msgstr "Nous t’enverrons un code."
+
+# fault: banned:site-web
+#: packages/renderer/routes/settings/general.tsx
+msgid "Website"
+msgstr "Site web"

@@ -9,7 +9,7 @@ Where this sheet and a habit from other software disagree, this sheet wins.
 
 ## Address
 
-_vous_, with _votre_ and _vos_: _votre boîte_, _Voulez-vous vraiment … ?_. Never _tu_, _toi_, _ta_ or _tes_.
+_vous_, with _votre_ and _vos_: _votre boîte_, _Voulez-vous vraiment … ?_. Never _tu_, _toi_, _te_, _t’_, _ton_, _ta_ or _tes_.
 
 ## Buttons and menu items
 
@@ -45,7 +45,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro. They take French articles outsi
 - **Placeholders and articles.** _le_, _la_, _l’_ and _de_/_d’_ change with the value. Put the placeholder after a noun (_le compte {name}_), never _de {name}_ where the value can start with a vowel.
 - The apostrophe is ’ (U+2019), as Apple writes _l’onglet_, never Chrome's straight '.
 - **House words.** Where Chrome has a term, Meru's own copy takes Chrome's word; `fr.json`'s `banned` and `pinned` rules hold them, each with Chrome's count as its source. A bookmark is a _favori_, never a _signet_. An app is an _appli_ (_applis Google_, _appli Workspace_), or in full an _application_, never _app_. An email is an _e-mail_, never _email_ or _courriel_. A website is a _site Web_. Reloading is _Actualiser_ (_Actualisation forcée_), never Apple's _Recharger_. A verification code is a _code de validation_. The tab strip is the _barre d’onglets_. The tab context menu's Pin and Unpin are _Épingler_ and _Retirer_. The clipboard is the _presse-papiers_, phishing is _hameçonnage_, an on-screen button a _bouton_, a trusted host an _hôte approuvé_, and a release channel a _version_ (_version bêta_).
-- **macOS's own elements.** The menu bar, the Dock, Finder and System Settings take Apple's names in Meru's own copy too, since they name Apple's interface and show only on macOS: _barre des menus_ (Control Center Settings `Localizable` `menu bar`), _Dock_ (Desktop & Dock Settings `Localizable` `Dock`), _Finder_ and _Réglages Système_ (System Settings `InfoPlist` `CFBundleDisplayName`).
+- **macOS's own elements.** The menu bar, the Dock, Finder and System Settings take Apple's names in Meru's own copy too, since they name Apple's interface and show only on macOS: _barre des menus_ (ControlCenterSettings.appex `Localizable` `Show in Menu Bar`), _Dock_ (DesktopSettings.appex `Localizable` `Dock`), _Finder_ and _Réglages Système_ (System Settings `InfoPlist` `CFBundleDisplayName`).
 
 ## Error messages
 

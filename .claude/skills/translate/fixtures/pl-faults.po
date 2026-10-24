@@ -238,3 +238,23 @@ msgstr "Wytnij"
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete {label}?"
 msgstr "Usunąć?"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Włącz to także w Preferencjach systemowych."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Ikona w doku"
+
+# fault: banned:lowercase-pronoun
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru signs you out of this account."
+msgstr "Meru wyloguje cię z tego konta."
+
+# fault: banned:lowercase-ci
+#: packages/renderer/routes/settings/license.tsx
+msgid "Meru reminds you before your trial ends."
+msgstr "Meru przypomni ci o końcu okresu próbnego."

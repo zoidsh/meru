@@ -170,3 +170,11 @@ msgstr "Markera e-postmeddelandet som läst efter kopiering"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Phishing protection"
 msgstr "Skydd mot nätfiske"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Aktivera även alternativet i Systeminställningar."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Dockikon"

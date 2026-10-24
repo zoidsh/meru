@@ -237,3 +237,13 @@ msgstr "Klipp ut"
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete {label}?"
 msgstr "Radera?"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Aktivera även alternativet i Systempreferenser."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "dockikon"
