@@ -1,0 +1,11 @@
+{
+  "platformWords": {
+    "severity": "wrong",
+    "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
+    "entries": []
+  },
+  "banned": [],
+  "pinned": [],
+  "accessKeys": null,
+  "families": []
+}

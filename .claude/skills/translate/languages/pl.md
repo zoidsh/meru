@@ -47,3 +47,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Zamknij kartę_, Close Other Tabs _Zamknij pozostałe karty_, Close Window _Zamknij okno_, Pin Tab _Przypnij kartę_, Show Sidebar _Pokaż pasek boczny_, Minimize _Minimalizuj okno_, Copy Link _Kopiuj łącze_, Mark as Read _Oznacz jako przeczytane_, Add Account… _Dodaj konto…_
 - _Czy na pewno chcesz usunąć tę wiadomość?_ (Are you sure you want to delete this message?)
 - _Twoja prośba o wysłanie tej wiadomości została odrzucona przez administratora konta._
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `pl.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.
