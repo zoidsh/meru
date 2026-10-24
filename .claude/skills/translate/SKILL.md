@@ -64,3 +64,15 @@ The first drops the obsolete entries the translators used as prior art. A failur
 Say, per locale, how many entries were translated, how many review rounds they took, and every finding still open, with its msgid, the problem and the suggested fix. Name any term a translator chose that the glossary lacks, so it can be added to `glossary.md`. Then show the output of the five checks.
 
 Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate.
+
+## Adding a language
+
+A language ships once it is in five places:
+
+1. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`, which `lingui.config.ts` reads as its locales.
+2. The `catalogs` record in `packages/shared/i18n/index.ts`, importing `messages` from `./locales/<tag>`.
+3. The dayjs locale import in `packages/renderer/lib/date.ts`, `dayjs/locale/<name>` with the name `getDayjsLocale` gives the tag, such as `es-mx` for `es-419`.
+4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
+5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
+
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: extract writes the new locale's `.po` files, which `i18n:compile` turns into the `.ts` modules those imports name, so without them the compiled catalog doesn't exist and `bun run types` fails. Then run this skill to translate the new catalogs.
