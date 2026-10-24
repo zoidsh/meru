@@ -21,7 +21,7 @@ msgstr "Account hinzufügen"
 msgid "Save"
 msgstr "Sichern"
 
-# Run 1's „Taste“ for an on-screen button.
+# A standalone Taste for an on-screen button reads as a keyboard key.
 # fault: banned:taste
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show bookmarks button"

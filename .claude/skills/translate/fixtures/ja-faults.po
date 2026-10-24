@@ -93,7 +93,7 @@ msgstr "切り取り"
 msgid "Cmd"
 msgstr "command"
 
-# A catalog from before the platform split, as run 1 wrote it: one Shift for every platform.
+# A Shift without a platform context shows on macOS too, so it is held to macOS's lower case beside command.
 # fault: family:key-names
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Shift"
