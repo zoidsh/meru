@@ -1,6 +1,7 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { t } from "@lingui/core/macro";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
+import { byPlatform } from "@meru/shared/platform";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
 import { app, BrowserWindow, dialog, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { accounts } from "@/accounts";
@@ -90,15 +91,15 @@ export class AppMenu {
     // lingui-set comment="A menu or a menu item in Meru's menu bar"
     const macOSAppHideItems: MenuItemConstructorOptions[] = [
       {
-        label: t`Hide ${appName}`,
+        label: t({ message: `Hide ${appName}`, context: "macOS" }),
         role: "hide",
       },
       {
-        label: t`Hide Others`,
+        label: t({ message: "Hide Others", context: "macOS" }),
         role: "hideOthers",
       },
       {
-        label: t`Show All`,
+        label: t({ message: "Show All", context: "macOS" }),
         role: "unhide",
       },
       {
@@ -106,23 +107,43 @@ export class AppMenu {
       },
     ];
 
+    // Start Speaking and Stop Speaking are macOS-only roles, which do nothing
+    // on Windows and Linux.
+    const macOSSpeechItems: MenuItemConstructorOptions[] = [
+      {
+        label: t({ message: "Speech", context: "macOS" }),
+        submenu: [
+          { label: t({ message: "Start Speaking", context: "macOS" }), role: "startSpeaking" },
+          { label: t({ message: "Stop Speaking", context: "macOS" }), role: "stopSpeaking" },
+        ],
+      },
+    ];
+
+    // Windows and Linux carry this item hidden, so only macOS ever shows its label.
     const minimizeItem: MenuItemConstructorOptions = {
-      label: t`Minimize`,
+      label: t({ message: "Minimize", context: "macOS" }),
       accelerator: "CommandOrControl+M",
       role: "minimize",
     };
+
+    const pasteAndMatchStyleLabel = byPlatform(platform, {
+      macOS: t({ message: "Paste and Match Style", context: "macOS" }),
+      windows: t({ message: "Paste and Match Style", context: "Windows" }),
+      linux: t({ message: "Paste and Match Style", context: "Linux" }),
+    });
 
     // Zoom and Bring All to Front are macOS-only roles, and the Window menu
     // itself is a macOS convention, so the whole menu ships on macOS alone.
     const macOSWindowMenuItems: MenuItemConstructorOptions[] = [
       {
-        label: t`Window`,
+        label: t({ message: "Window", context: "macOS" }),
         role: "window",
         submenu: [
           minimizeItem,
           {
             label: t({
               message: "Zoom",
+              context: "macOS",
               comment:
                 "Window menu item that toggles the window between its size and filling the screen",
             }),
@@ -132,7 +153,7 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: t`Bring All to Front`,
+            label: t({ message: "Bring All to Front", context: "macOS" }),
             role: "front",
           },
         ],
@@ -275,13 +296,21 @@ export class AppMenu {
         label: app.name,
         submenu: [
           {
-            label: t`About ${appName}`,
+            label: byPlatform(platform, {
+              macOS: t({ message: `About ${appName}`, context: "macOS" }),
+              windows: t({ message: `About ${appName}`, context: "Windows" }),
+              linux: t({ message: `About ${appName}`, context: "Linux" }),
+            }),
             click: () => {
               main.navigate("/settings/about");
             },
           },
           {
-            label: t`Check for Updates…`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Check for Updates…", context: "macOS" }),
+              windows: t({ message: "Check for Updates…", context: "Windows" }),
+              linux: t({ message: "Check for Updates…", context: "Linux" }),
+            }),
             enabled: appUpdater.isUpdateSupported(),
             click: () => {
               appUpdater.checkForUpdates({ isManualCheck: true });
@@ -291,7 +320,11 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: t`Settings`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Settings", context: "macOS" }),
+              windows: t({ message: "Settings", context: "Windows" }),
+              linux: t({ message: "Settings", context: "Linux" }),
+            }),
             accelerator: "CommandOrControl+,",
             click: () => {
               main.navigate("/settings/general");
@@ -324,11 +357,31 @@ export class AppMenu {
         ],
       },
       {
-        label: t`File`,
+        label: byPlatform(platform, {
+          macOS: t({ message: "File", context: "macOS" }),
+          windows: t({ message: "File", context: "Windows" }),
+          linux: t({ message: "File", context: "Linux" }),
+        }),
         role: "fileMenu",
         submenu: [
           {
-            label: t`Compose`,
+            label: byPlatform(platform, {
+              macOS: t({
+                message: "Compose",
+                context: "macOS",
+                comment: "File menu item that opens a new email in Gmail",
+              }),
+              windows: t({
+                message: "Compose",
+                context: "Windows",
+                comment: "File menu item that opens a new email in Gmail",
+              }),
+              linux: t({
+                message: "Compose",
+                context: "Linux",
+                comment: "File menu item that opens a new email in Gmail",
+              }),
+            }),
             enabled: isGmailVisible,
             click: () => {
               ipc.renderer.send(
@@ -345,7 +398,7 @@ export class AppMenu {
           },
           {
             label: platform.isMacOS
-              ? t`Close Window`
+              ? t({ message: "Close Window", context: "macOS" })
               : t({
                   message: "Close",
                   context: "window",
@@ -361,18 +414,30 @@ export class AppMenu {
         role: "editMenu",
         submenu: [
           {
-            label: t`Undo`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Undo", context: "macOS" }),
+              windows: t({ message: "Undo", context: "Windows" }),
+              linux: t({ message: "Undo", context: "Linux" }),
+            }),
             role: "undo",
           },
           {
-            label: t`Redo`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Redo", context: "macOS" }),
+              windows: t({ message: "Redo", context: "Windows" }),
+              linux: t({ message: "Redo", context: "Linux" }),
+            }),
             role: "redo",
           },
           {
             type: "separator",
           },
           {
-            label: t`Cut`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Cut", context: "macOS" }),
+              windows: t({ message: "Cut", context: "Windows" }),
+              linux: t({ message: "Cut", context: "Linux" }),
+            }),
             role: "cut",
           },
           {
@@ -380,16 +445,20 @@ export class AppMenu {
             role: "copy",
           },
           {
-            label: t`Paste`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Paste", context: "macOS" }),
+              windows: t({ message: "Paste", context: "Windows" }),
+              linux: t({ message: "Paste", context: "Linux" }),
+            }),
             role: "paste",
           },
           {
-            label: t`Paste and Match Style`,
+            label: pasteAndMatchStyleLabel,
             role: "pasteAndMatchStyle",
             accelerator: "CommandOrControl+Shift+V",
           },
           {
-            label: t`Paste and Match Style`,
+            label: pasteAndMatchStyleLabel,
             role: "pasteAndMatchStyle",
             accelerator: "CommandOrControl+Alt+Shift+V",
             visible: false,
@@ -400,7 +469,11 @@ export class AppMenu {
             role: "delete",
           },
           {
-            label: t`Select All`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Select All", context: "macOS" }),
+              windows: t({ message: "Select All", context: "Windows" }),
+              linux: t({ message: "Select All", context: "Linux" }),
+            }),
             role: "selectAll",
           },
           {
@@ -423,17 +496,15 @@ export class AppMenu {
               targetWebContents.focus();
             },
           },
-          {
-            label: t`Speech`,
-            submenu: [
-              { label: t`Start Speaking`, role: "startSpeaking" },
-              { label: t`Stop Speaking`, role: "stopSpeaking" },
-            ],
-          },
+          ...(platform.isMacOS ? macOSSpeechItems : []),
         ],
       },
       {
-        label: t`View`,
+        label: byPlatform(platform, {
+          macOS: t({ message: "View", context: "macOS" }),
+          windows: t({ message: "View", context: "Windows" }),
+          linux: t({ message: "View", context: "Linux" }),
+        }),
         submenu: [
           {
             label: t`Unified Inbox`,
