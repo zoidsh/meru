@@ -5,13 +5,16 @@ description: Translate Meru's interface strings into every shipped language, wit
 
 # Translate
 
-Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; both are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
+Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; a locale no person reviews also gets a `translation-second-reviewer`, a cold second pass. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
+
+**Human-reviewed languages: `de`.** A person reads the doubtful and style findings of these. Every other locale is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
 
 ## Before you start
 
 - `CLAUDE_CODE_EFFORT_LEVEL` overrides the `effort` in the agents' frontmatter, and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` their `model`. Run `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`; if either prints a value, stop and tell the user to start the session again without it, such as `env -u CLAUDE_CODE_EFFORT_LEVEL claude`.
-- Never pass `model` or `effort` when spawning either agent, which would override the frontmatter too.
+- Never pass `model` or `effort` when spawning any of the agents, which would override the frontmatter too.
 - Read `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`. When it holds `en` alone, say there is nothing to translate, since English is the source, and stop.
+- `<scratchpad>` below is the session's scratchpad directory, never `/tmp`. A headless session, such as `claude -p`, may have none: then create one with `mktemp -d "$TMPDIR/translate.XXXXXX"`, use it for the whole run and print its path in the report. Never look for one in other sessions' folders.
 
 ## 1. Extract
 
@@ -19,7 +22,7 @@ Run `bun run i18n:extract`, so each catalog holds every string in the code.
 
 ## 2. Collect the entries
 
-Run `bun .claude/skills/translate/collect.ts --base origin/<base> --out <scratchpad>/translate`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`, and `<scratchpad>` is the session's scratchpad directory, never `/tmp`. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
+Run `bun .claude/skills/translate/collect.ts --base origin/<base> --out <scratchpad>/translate`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
 
 When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`, and warns on stderr when `--base` doesn't resolve. Check that each pairing is really the same string reworded, by searching the entry files for `prior art` rather than reading them whole; drop one that isn't.
 
@@ -50,7 +53,7 @@ Then spawn one `translation-reviewer` for that locale. Its prompt carries the lo
 - the style sheet `languages/<tag>.md`, its sidecar `languages/<tag>.json` and the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
 - the output path `<scratchpad>/translate/<tag>.review.json`, where it writes its findings.
 
-Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the fix loop; `doubtful` and `style` go to the report as the review set a person reads.
+Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the fix loop. For a human-reviewed locale, `doubtful` and `style` go to the report as the review set a person reads; for any other locale, the translator applies them after the loop, as [below](#a-locale-no-person-reviews).
 
 - A reviewer whose reply ends `PASS: <tag>` and whose `check.ts` report has no `wrong` finding it left standing closes that locale.
 - Otherwise, build one fix list: the `check.ts` findings of severity `wrong` the reviewer didn't dismiss, plus the `wrong` findings in `<tag>.review.json`, each with its msgid, msgctxt, catalog, reason and suggestion. `check.ts` gives `catalog` as the PO file's path, so write it as the name `--apply` takes: `app` for `packages/shared/i18n/locales/<tag>.po`, `preload-gmail` for `packages/preload-gmail/locales/<tag>.po`. Continue the same translator with `SendMessage` to its agent ID, passing the list, so it keeps its context. Then run `check.ts` again into the same file, and continue the same reviewer with `SendMessage` to re-review only the entries on the list, naming the new report.
@@ -59,7 +62,24 @@ Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the
 
 Never ask the reviewer to rule on anything else. The translator's own unsure choices, listed in its reply, go to the report for the user, and so do product questions from either agent, such as how a platform behaves or whether a label needs an access key: anything that isn't wording.
 
-If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply.
+If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply. A new `translation-second-reviewer` gets its original prompt and the fix list only, never the translator's reply, so it stays cold.
+
+### A locale no person reviews
+
+For a locale not on the human-reviewed list, once the loop above has closed it or reached its cap:
+
+1. **Apply suggestions.** Continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its doubtful and style findings. It applies every one that carries a `suggestion` unless it disagrees, and says why for each it leaves. A finding whose `msgstr` no longer matches the entry's translation was written before a fix in the loop; the translator skips it or merges it by hand, never writing the suggestion over the fix, and says so. Then run `check.ts` again into `<tag>.check.json`; a `wrong` finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
+2. **Second pass.** Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate` again, so the dump holds the catalogs as they now stand, and spawn one `translation-second-reviewer` for the locale. It is cold: its prompt carries the locale tag, the Lingui docs instruction and only these paths, never `<tag>.review.json`, `<tag>.check.json` or anything the translator said:
+   - the dump `<tag>.dump.txt`;
+   - the style sheet `languages/<tag>.md` and its sidecar `languages/<tag>.json`;
+   - the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
+   - the output path `<scratchpad>/translate/<tag>.second-review.json`.
+
+   It reads the source itself, by each entry's origin.
+
+3. **One more fix round.** When `<tag>.second-review.json` has `wrong` findings, send them to the translator as a fix list, built as in the loop above, run `check.ts` again, and continue the second reviewer with `SendMessage` to re-review only those entries against a fresh dump. That is the only round: a `wrong` finding still open after it goes to the report, as in the loop above. The second pass's doubtful and style findings go to the report.
+
+For a human-reviewed locale, nothing here runs: its doubtful and style findings stay for the person. The user can ask for the second pass on one too; then run step 2 and step 3 alone.
 
 ## 5. Check
 
@@ -82,11 +102,12 @@ Per locale, say:
 
 - how many entries were translated, how many review rounds they took, and the `wrong` findings fixed and still open, each open one with its msgid, the problem, the suggested fix and the translator's answer;
 - the counts of `doubtful` and `style` findings, and the path of `<tag>.review.json` that holds them;
+- for a locale no person reviews: how many suggestions the translator applied, each one it left with its reason, the second pass's counts by severity with the path of `<tag>.second-review.json`, its `wrong` findings fixed and still open, and its doubtful and style findings, each with its msgid, reason and suggestion;
 - the translator's unsure choices, as its reply lists them, and the product questions from either agent;
 - each `check.ts` finding the reviewer dismissed, with its reason;
 - every term a translator chose that the glossary lacks, so it can be added to `glossary.md`.
 
-Say that the `<tag>.review.json` files are the human review set: the reviewer's doubtful and style findings, which no agent has fixed. Then show the output of the checks in step 5.
+Say that the `<tag>.review.json` files of the human-reviewed locales are the human review set: the reviewer's doubtful and style findings, which no agent has fixed. Say that the second pass can run for those locales too, if the user asks. Then show the output of the checks in step 5.
 
 Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate.
 
@@ -100,4 +121,8 @@ A language ships once it is in five places:
 4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
 5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
 
-Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: extract writes the new locale's `.po` files, which `i18n:compile` turns into the `.ts` modules those imports name, so without them the compiled catalog doesn't exist and `bun run types` fails. Then run this skill to translate the new catalogs.
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Then run this skill to translate the new catalogs.
+
+## Changing a rule
+
+A decision recorded in a sidecar, `languages/<tag>.json`, is encoded in `check.ts`'s fixtures as well: `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault for each rule, which `scripts/translate-check.test.ts` holds the rules against. Changing a decision means changing the style sheet, the glossary, the sidecar and the fixtures together, then running `bun test --isolate scripts/translate-*.test.ts`.
