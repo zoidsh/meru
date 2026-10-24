@@ -93,5 +93,9 @@ describe("check.ts", () => {
     test("is 2 without a locale", () => {
       expect(exitCodeOf()).toBe(2);
     });
+
+    test("is 0 for --help", () => {
+      expect(exitCodeOf("--help")).toBe(0);
+    });
   });
 });

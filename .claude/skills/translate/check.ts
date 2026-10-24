@@ -394,18 +394,31 @@ function summarize(report: Report) {
   return lines.join("\n");
 }
 
+const USAGE = `Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]…
+
+Checks a locale's catalogs against .claude/skills/translate/languages/<tag>.json.
+Without --catalog, it reads both of the locale's catalogs from lingui.config.ts.
+Prints the report as JSON on stdout and a summary on stderr.
+
+Exit codes: 0 no wrong finding, 1 a wrong finding, 2 the check could not run.`;
+
 async function run() {
   const { values } = parseArgs({
     options: {
       locale: { type: "string" },
       catalog: { type: "string", multiple: true },
+      help: { type: "boolean", short: "h" },
     },
   });
 
+  if (values.help) {
+    console.log(USAGE);
+
+    return;
+  }
+
   if (!values.locale) {
-    console.error(
-      "Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]…",
-    );
+    console.error(USAGE);
 
     process.exit(2);
   }
