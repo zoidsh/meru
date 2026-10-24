@@ -152,12 +152,16 @@ const GLOSSARY_PATH = path.join(import.meta.dir, "glossary.md");
 
 const LOCALE_BULLET = /^[-*] ([A-Za-z]{2,3}(?:-[A-Za-z0-9]+)*): /;
 
+/** A bullet that starts like a locale's but in another form, such as `- **de**:` or `- de (Apple):`. */
+const TAG_LIKE_BULLET = /^[-*+] (?:\*\*|_)?[a-z]{2,3}(?:-[A-Za-z0-9]+)*(?:\*\*|_)?(?: \([^)]*\))?:/;
+
 /*
- * Keeps the headings and the English prose of every entry, and of the bullets
- * only the locale's own. Anything else, such as a table, a code block or a list
- * that isn't one line per locale, is dropped with a warning rather than guessed
- * at, so a change to the glossary's shape shows up instead of leaking every
- * language into the slice.
+ * Drops only the other locales' `- <tag>:` bullets, keeping every heading,
+ * paragraph and general rule, lists included. What might hold another
+ * language's words in a shape it can't split, a table, a code block or a
+ * bullet whose tag it doesn't recognise, is dropped with a warning rather than
+ * guessed at, so a change to the glossary's shape shows up instead of leaking
+ * every language into the slice or losing one.
  */
 export function sliceGlossary(
   markdown: string,
@@ -170,7 +174,7 @@ export function sliceGlossary(
 
   let inFence = false;
 
-  let bullet: "kept" | "dropped" | undefined;
+  let droppingBullet = false;
 
   for (const [index, line] of markdown.split("\n").entries()) {
     const skip = () =>
@@ -183,32 +187,28 @@ export function sliceGlossary(
 
       inFence = !inFence;
 
-      bullet = undefined;
+      droppingBullet = false;
 
       continue;
     }
 
-    if (inFence) {
+    if (inFence || (droppingBullet && /^\s+\S/.test(line))) {
       continue;
     }
 
     const tag = LOCALE_BULLET.exec(line)?.[1];
 
-    const continuesBullet = bullet !== undefined && /^\s+\S/.test(line);
+    droppingBullet = false;
 
     if (tag && tags.includes(tag)) {
-      bullet = tag === locale ? "kept" : "dropped";
-    } else if (!continuesBullet) {
-      bullet = undefined;
+      droppingBullet = tag !== locale;
+    } else if (TAG_LIKE_BULLET.test(line) || /^\s*\|/.test(line)) {
+      skip();
 
-      if (/^\s*(?:[-*+] |\d+[.)] |\|)|^\s+\S/.test(line)) {
-        skip();
-
-        continue;
-      }
+      droppingBullet = true;
     }
 
-    if (bullet !== "dropped") {
+    if (!droppingBullet) {
       kept.push(line);
     }
   }

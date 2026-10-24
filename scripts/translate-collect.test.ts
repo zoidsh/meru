@@ -208,13 +208,23 @@ describe("sliceGlossary", () => {
 
 One fixed word per term.
 
+- A rule for every language
+  that runs on
+
+1. First, the house word.
+2. Then Apple's.
+
 ## Settings
 
 The window.
 
 - de: Einstellungen
+  on every platform
 - ja: 設定
   with no ellipsis on Windows
+- de-CH: Einstellungen
+- **de**: Einstellungen
+- de (Apple): Einstellungen
 
 ## Tab
 
@@ -224,15 +234,23 @@ The window.
 | Term | de |
 | --- | --- |
 
-- Something else
+\`\`\`
+de: Tab
+\`\`\`
 `;
 
-  test("keeps every heading and paragraph and only the locale's bullets", () => {
+  test("drops only the other locales' bullets, warning on what it can't split", () => {
     const { text, warnings } = sliceGlossary(GLOSSARY, "ja", ["de", "ja"]);
 
     expect(text).toBe(`# Glossary
 
 One fixed word per term.
+
+- A rule for every language
+  that runs on
+
+1. First, the house word.
+2. Then Apple's.
 
 ## Settings
 
@@ -247,9 +265,12 @@ The window.
 `);
 
     expect(warnings).toEqual([
-      'glossary.md:18: skipped "| Term | de |"',
-      'glossary.md:19: skipped "| --- | --- |"',
-      'glossary.md:21: skipped "- Something else"',
+      'glossary.md:19: skipped "- de-CH: Einstellungen"',
+      'glossary.md:20: skipped "- **de**: Einstellungen"',
+      'glossary.md:21: skipped "- de (Apple): Einstellungen"',
+      'glossary.md:28: skipped "| Term | de |"',
+      'glossary.md:29: skipped "| --- | --- |"',
+      'glossary.md:31: skipped "```"',
     ]);
   });
 });
