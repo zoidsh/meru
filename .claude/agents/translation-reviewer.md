@@ -24,6 +24,8 @@ Read the style sheet, the sidecar and the glossary slice in full. Then read the 
 
 Then read the dump in batches, one `###` origin heading at a time, using `Read` with an offset and limit rather than the whole file at once. Review every entry of the entry file in full, against the checklist. Read the rest of the dump for consistency: an older entry can show that a new one picked a different word for the same English, or settle which of two words the catalog already uses. A problem you find in an older entry is a finding too.
 
+When the entry file lists every entry, as in a locale's first translation, the dump already holds each of them with its msgstr, comments and origins. Read the dump in full then, and use the entry file only to know which entries are new, rather than reading both.
+
 When you are unsure of ICU or Lingui syntax, read the Markdown copy of Lingui's docs, the page URL with `.md` appended, for example https://lingui.dev/ref/macro.md, rather than guess. When an entry is ambiguous, read the line in the source file its origin names.
 
 ## Checklist
@@ -61,7 +63,9 @@ A question that isn't about wording, such as how a platform behaves, whether a l
 
 ## Your findings file
 
-Write your findings to the output path you were given, as a JSON array with one object per finding:
+Any scratch file you write, such as a helper script, goes in the directory of your output path, never `/tmp`.
+
+Write your findings with `Write` to the output path you were given, as a JSON array with one object per finding:
 
 ```json
 [
