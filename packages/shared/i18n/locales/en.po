@@ -158,24 +158,6 @@ msgstr "&Paste"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
-msgctxt "Linux"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "macOS"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "Windows"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
 msgid "&Search with Google"
 msgstr "&Search with Google"
 
@@ -2201,6 +2183,24 @@ msgstr "Paste"
 msgctxt "Windows"
 msgid "Paste"
 msgstr "Paste"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
