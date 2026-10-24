@@ -1,0 +1,157 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+# fault: banned:mitteilung
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Show notifications"
+msgstr "Mitteilungen anzeigen"
+
+# fault: banned:account
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Add account"
+msgstr "Account hinzufügen"
+
+# fault: banned:sichern
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Sichern"
+
+# A standalone Taste for an on-screen button reads as a keyboard key.
+# fault: banned:taste
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "Lesezeichen-Taste anzeigen"
+
+# A license key is a Lizenzschlüssel, so the English's key allows no Taste.
+# fault: banned:taste
+#: packages/renderer/routes/settings/license.tsx
+msgid "Enter the license key"
+msgstr "Gib die Taste ein"
+
+# fault: banned:sie
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Möchten Sie diese Nachricht wirklich löschen?"
+
+# fault: banned:ellipsis-space
+#: packages/renderer/routes/settings/license.tsx
+msgid "Learn More…"
+msgstr "Weitere Infos …"
+
+# fault: banned:english-quotes
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "\"{label}\" entfernen?"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "Das Konto konnte leider nicht hinzugefügt werden."
+
+# fault: pinned:download-history
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "Letzte Downloads"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Meru Pro kaufen"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Etikett"
+
+# fault: platform-word:File
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Datei"
+
+# fault: access-key:inline
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Ausschneiden"
+
+# fault: catalog:placeholder dropped
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete {label}?"
+msgstr "Löschen?"
+
+# fault: banned:bewegen
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Move to New Window"
+msgstr "In neues Fenster bewegen"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Toast schließen"
+
+# fault: banned:ungelesen-kennzeichen
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Unread badge"
+msgstr "Ungelesen-Kennzeichen"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Ungelesene anzeigen"
+
+# fault: pinned:tab-strip
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "Tabs verschmälern"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Label"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Gerätebezeichnung"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Update-Version"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "Bekannte Hosts"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Phishing-Abwehr"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmail-Einstellungen öffnen, um die Urlaubsantwort zu deaktivieren"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Mehrfach-Posteingang"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Melden für"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Leinen"

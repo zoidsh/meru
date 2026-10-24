@@ -47,3 +47,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Chiudi pannello_, Close Other Tabs _Chiudi gli altri pannelli_, Close Window _Chiudi finestra_, Pin Tab _Fissa pannello_, Show Sidebar _Mostra la barra laterale_, Minimize _Contrai_, Copy Link _Copia link_, Mark as Read _Segna come letto_, Quit Mail _Esci da Mail_
 - _Confermi di voler eliminare questo messaggio?_ (Are you sure you want to delete this message?)
 - _Impossibile trascinare allegati prima di averli scaricati. Vuoi scaricare questo allegato?_
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `it.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.

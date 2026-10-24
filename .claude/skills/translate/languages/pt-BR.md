@@ -46,3 +46,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Fechar Aba_, Close Other Tabs _Fechar as Outras Abas_, Close Window _Fechar Janela_, Pin Tab _Fixar Aba_, Show Sidebar _Mostrar Barra Lateral_, Minimize _Minimizar_, Copy Link _Copiar Link_, Mark as Read _Marcar como Lida_, Add Account… _Adicionar Conta…_, Quit Mail _Encerrar Mail_
 - _Tem certeza de que deseja apagar esta mensagem?_ (Are you sure you want to delete this message?)
 - _Até que os anexos tenham sido baixados, você não poderá arrastá-los. Deseja baixar este anexo?_
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `pt-BR.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.

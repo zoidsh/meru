@@ -48,3 +48,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Stäng flik_, Close Other Tabs _Stäng övriga flikar_, Close Window _Stäng fönster_, Pin Tab _Nåla fast flik_, Show Sidebar _Visa sidofältet_, Minimize _Minimera_, Copy Link _Kopiera länk_, Mark as Read _Markera som läst_, Add Account… _Lägg till konto…_, Quit Mail _Avsluta Mail_
 - _Är du säker på att du vill radera detta mejl?_ (Are you sure you want to delete this message?)
 - _Du kan inte dra bilagor förrän de har hämtats. Vill du hämta den här bilagan?_
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `sv.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.
