@@ -4,7 +4,9 @@ import dayjsPrimitive from "dayjs";
 // by loading its module and a bundle has nothing to fetch one from at runtime.
 // English is dayjs's built-in locale, so this import only states the rule the
 // rest follow.
+import "dayjs/locale/de";
 import "dayjs/locale/en";
+import "dayjs/locale/ja";
 import calendar from "dayjs/plugin/calendar";
 import isToday from "dayjs/plugin/isToday";
 import localizedFormat from "dayjs/plugin/localizedFormat";
