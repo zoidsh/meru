@@ -1,0 +1,616 @@
+{
+  "platformWords": {
+    "severity": "wrong",
+    "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
+    "entries": [
+      {
+        "row": "File",
+        "msgctxt": "macOS",
+        "msgid": "File",
+        "msgstr": "Ablage"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Windows",
+        "msgid": "File",
+        "msgstr": "Datei"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Linux",
+        "msgid": "File",
+        "msgstr": "Datei"
+      },
+      {
+        "row": "View",
+        "msgctxt": "macOS",
+        "msgid": "View",
+        "msgstr": "Darstellung"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Windows",
+        "msgid": "View",
+        "msgstr": "Ansicht"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Linux",
+        "msgid": "View",
+        "msgstr": "Ansicht"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "macOS",
+        "msgid": "Undo",
+        "msgstr": "Widerrufen"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Windows",
+        "msgid": "Undo",
+        "msgstr": "Rückgängig machen"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Linux",
+        "msgid": "Undo",
+        "msgstr": "Rückgängig"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "macOS",
+        "msgid": "Redo",
+        "msgstr": "Wiederholen"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Windows",
+        "msgid": "Redo",
+        "msgstr": "Wiederholen"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Linux",
+        "msgid": "Redo",
+        "msgstr": "Wiederholen"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cut",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cut",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cut",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cu&t",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cu&t",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cu&t",
+        "msgstr": "Ausschneiden"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "Paste",
+        "msgstr": "Einsetzen"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "Paste",
+        "msgstr": "Einfügen"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "Paste",
+        "msgstr": "Einfügen"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste",
+        "msgstr": "Einsetzen"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste",
+        "msgstr": "Einfügen"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste",
+        "msgstr": "Einfügen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Einsetzen und Stil anpassen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Einfügen und Format anpassen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Einfügen und Stil anpassen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "Einsetzen und Stil anpassen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "Einfügen und Format anpassen"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "Einfügen und Stil anpassen"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "macOS",
+        "msgid": "Select All",
+        "msgstr": "Alles auswählen"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select All",
+        "msgstr": "Alles markieren"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select All",
+        "msgstr": "Alles auswählen"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select &All",
+        "msgstr": "Alles markieren"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select &All",
+        "msgstr": "Alles auswählen"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "macOS",
+        "msgid": "About {appName}",
+        "msgstr": "Über {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Windows",
+        "msgid": "About {appName}",
+        "msgstr": "Info zu {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Linux",
+        "msgid": "About {appName}",
+        "msgstr": "Info zu {appName}"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "macOS",
+        "msgid": "Check for Updates…",
+        "msgstr": "Nach Updates suchen\u00a0…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Windows",
+        "msgid": "Check for Updates…",
+        "msgstr": "Nach Updates suchen\u00a0…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Linux",
+        "msgid": "Check for Updates…",
+        "msgstr": "Nach Aktualisierungen suchen\u00a0…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "macOS",
+        "msgid": "Settings",
+        "msgstr": "Einstellungen\u00a0…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Windows",
+        "msgid": "Settings",
+        "msgstr": "Einstellungen"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Linux",
+        "msgid": "Settings",
+        "msgstr": "Einstellungen"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "macOS",
+        "msgid": "Compose",
+        "msgstr": "Neue E-Mail"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Windows",
+        "msgid": "Compose",
+        "msgstr": "Neue E-Mail"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Linux",
+        "msgid": "Compose",
+        "msgstr": "Neue E-Mail"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Bild sichern unter\u00a0…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Bild speichern unter\u00a0…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Bild speichern unter\u00a0…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Sichern unter"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Speichern unter"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Speichern unter"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "Export",
+        "msgstr": "Exportieren"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "Export",
+        "msgstr": "Exportieren"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "Export",
+        "msgstr": "Exportieren"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "macOS",
+        "msgid": "Shift",
+        "msgstr": "Umschalttaste"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Windows",
+        "msgid": "Shift",
+        "msgstr": "Umschalt"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Linux",
+        "msgid": "Shift",
+        "msgstr": "Umschalt"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Show Meru",
+        "msgstr": "Meru einblenden"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Show Meru",
+        "msgstr": "Meru anzeigen"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Show Meru",
+        "msgstr": "Meru anzeigen"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Hide Meru",
+        "msgstr": "Meru ausblenden"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Hide Meru",
+        "msgstr": "Meru ausblenden"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Hide Meru",
+        "msgstr": "Meru verbergen"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Enable system tray icon",
+        "contains": "Infobereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Enable system tray icon",
+        "contains": "Statusbereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "System tray icon",
+        "contains": "Infobereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "System tray icon",
+        "contains": "Statusbereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "Infobereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "Statusbereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "Infobereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "Statusbereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "Infobereich"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "Statusbereich"
+      },
+      {
+        "row": "Hide {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Hide {appName}",
+        "msgstr": "{appName} ausblenden"
+      },
+      {
+        "row": "Hide Others",
+        "msgctxt": "macOS",
+        "msgid": "Hide Others",
+        "msgstr": "Andere ausblenden"
+      },
+      {
+        "row": "Show All",
+        "msgctxt": "macOS",
+        "msgid": "Show All",
+        "msgstr": "Alle einblenden"
+      },
+      {
+        "row": "Close Window",
+        "msgctxt": "macOS",
+        "msgid": "Close Window",
+        "msgstr": "Fenster schließen"
+      },
+      {
+        "row": "Window, the menu",
+        "msgctxt": "macOS",
+        "msgid": "Window",
+        "msgstr": "Fenster"
+      },
+      {
+        "row": "Minimize",
+        "msgctxt": "macOS",
+        "msgid": "Minimize",
+        "msgstr": "Im Dock ablegen"
+      },
+      {
+        "row": "Zoom, the window",
+        "msgctxt": "macOS",
+        "msgid": "Zoom",
+        "msgstr": "Zoomen"
+      },
+      {
+        "row": "Bring All to Front",
+        "msgctxt": "macOS",
+        "msgid": "Bring All to Front",
+        "msgstr": "Alle nach vorne bringen"
+      },
+      {
+        "row": "Speech",
+        "msgctxt": "macOS",
+        "msgid": "Speech",
+        "msgstr": "Sprachausgabe"
+      },
+      {
+        "row": "Start Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Start Speaking",
+        "msgstr": "Sprachausgabe starten"
+      },
+      {
+        "row": "Stop Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Stop Speaking",
+        "msgstr": "Sprachausgabe stoppen"
+      },
+      {
+        "row": "Look Up “{selection}”",
+        "msgctxt": "macOS",
+        "msgid": "Look Up “{selection}”",
+        "msgstr": "„{selection}“ nachschlagen"
+      },
+      {
+        "row": "Show in Finder",
+        "msgctxt": "macOS",
+        "msgid": "Show in Finder",
+        "msgstr": "Im Finder zeigen"
+      }
+    ]
+  },
+  "banned": [
+    {
+      "id": "mitteilung",
+      "pattern": "[Mm]itteilung",
+      "severity": "wrong",
+      "reason": "A notification is Benachrichtigung in Meru's own copy; Mitteilung is Apple's word, for a macOS label only.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "account",
+      "pattern": "(?<![\\p{L}\\p{N}./@])Accounts?(?![\\p{L}\\p{N}])",
+      "severity": "wrong",
+      "reason": "An account is Konto, plural Konten, as in Google-Konto; never Account."
+    },
+    {
+      "id": "sichern",
+      "pattern": "(?<!\\p{L})(?:[Ss]ichern|[Ss]ichert|gesichert\\p{L}*|[Ss]ichere(?=\\s+\\p{Ll}))(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "Keeping something is speichern; sichern is only Apple's word in a macOS label such as Sichern unter …",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "sie",
+      "pattern": "(?<=[\\p{Ll},;:] )(?:Sie|Ihnen|Ihr|Ihre[mnrs]?)(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "The user is du, never Sie, Ihr or Ihnen."
+    },
+    {
+      "id": "ellipsis-space",
+      "pattern": "(?<!\\u00a0)…",
+      "severity": "wrong",
+      "reason": "An ellipsis follows a no-break space (U+00A0): Einstellungen …"
+    },
+    {
+      "id": "english-quotes",
+      "pattern": "[\"”]",
+      "severity": "wrong",
+      "reason": "Quotation marks are „…“ (U+201E, U+201C)."
+    },
+    {
+      "id": "apology",
+      "pattern": "(?<!\\p{L})(?:[Ll]eider|Entschuldigung|[Bb]itte)(?!\\p{L})",
+      "severity": "style",
+      "reason": "Say what happened, without leider, Entschuldigung or Bitte."
+    }
+  ],
+  "pinned": [
+    {
+      "id": "download-history",
+      "msgidPattern": "\\bdownload history\\b",
+      "expect": "Downloadverlauf",
+      "severity": "wrong",
+      "reason": "The download history is Downloadverlauf (glossary)."
+    },
+    {
+      "id": "upgrade",
+      "msgidPattern": "\\bupgrade\\b",
+      "expect": "[Uu]pgrade",
+      "severity": "wrong",
+      "reason": "Reaching Pro is an Upgrade, in buttons and prose alike, never a word for purchase (glossary)."
+    },
+    {
+      "id": "gmail-label",
+      "msgctxt": "Gmail label",
+      "msgidPattern": "\\blabel\\b",
+      "expect": "Label",
+      "severity": "wrong",
+      "reason": "A Gmail label is Gmail's Label (glossary)."
+    }
+  ],
+  "accessKeys": {
+    "style": "inline",
+    "severity": "wrong",
+    "reason": "A label whose English has an & keeps one & inline, before a letter of the German word; a macOS label drops it."
+  },
+  "families": []
+}
