@@ -90,6 +90,11 @@ msgstr "In neues Fenster bewegen"
 msgid "Close toast"
 msgstr "Toast schließen"
 
+# fault: banned:ungelesen-kennzeichen
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Unread badge"
+msgstr "Ungelesen-Kennzeichen"
+
 # fault: pinned:unread-badge
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"

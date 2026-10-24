@@ -577,6 +577,12 @@
       }
     },
     {
+      "id": "ungelesen-kennzeichen",
+      "pattern": "Ungelesen-Kennzeichen",
+      "severity": "doubtful",
+      "reason": "The unread badge is Kennzeichen für ungelesene E-Mails (glossary, agent-chosen), never the coined Ungelesen-Kennzeichen."
+    },
+    {
       "id": "sie",
       "pattern": "(?<=[\\p{Ll},;:] )(?:Sie|Ihnen|Ihr|Ihre[mnrs]?)(?!\\p{L})",
       "severity": "wrong",
@@ -653,7 +659,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "Kennzeichen",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a badge is Apple's Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
+      "reason": "Glossary, agent-chosen: a badge is a Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
     },
     {
       "id": "tab-strip",
