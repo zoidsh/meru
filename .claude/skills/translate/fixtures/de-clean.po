@@ -40,6 +40,15 @@ msgstr "Letzte Downloads anzeigen"
 msgid "Download history"
 msgstr "Downloadverlauf"
 
+#: packages/renderer/recent-download-history.tsx
+msgid "Full download history"
+msgstr "Vollständiger Downloadverlauf"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "Ungelesen"
+
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "30 minutes"
 msgstr "30 Minuten"

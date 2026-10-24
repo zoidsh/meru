@@ -451,6 +451,11 @@ The count on an account, a tab or the dock icon for its unread emails: _Show unr
 - de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Kennzeichen_ (agent-chosen)
 - ja: 未読バッジ (未読バッジを表示) (agent-chosen)
 
+The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form:
+
+- de: Ungelesen
+- ja: 未読
+
 ## Tab strip
 
 The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_.

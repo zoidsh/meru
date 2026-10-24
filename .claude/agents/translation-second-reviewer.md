@@ -58,7 +58,7 @@ Write your findings with `Write` to the output path you were given, as a JSON ar
 [
   {
     "catalog": "app",
-    "msgctxt": null,
+    "msgctxt": "account row badge",
     "msgid": "Unread badge",
     "msgstr": "Kennzeichen für ungelesene E-Mails",
     "severity": "style",

@@ -134,3 +134,8 @@ msgstr "root権限でエディタを使って、許可リストを開いてく�
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Narrow the tab strip"
 msgstr "タブバーを狭くする"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "未読"

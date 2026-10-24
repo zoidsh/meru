@@ -780,6 +780,7 @@
     },
     {
       "id": "unread-badge",
+      "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
       "severity": "doubtful",
