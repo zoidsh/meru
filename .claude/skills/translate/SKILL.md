@@ -14,6 +14,7 @@ Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `p
 - `CLAUDE_CODE_EFFORT_LEVEL` overrides the `effort` in the agents' frontmatter, and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` their `model`. Run `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`; if either prints a value, stop and tell the user to start the session again without it, such as `env -u CLAUDE_CODE_EFFORT_LEVEL claude`.
 - Never pass `model` or `effort` when spawning any of the agents, which would override the frontmatter too.
 - Read `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`. When it holds `en` alone, say there is nothing to translate, since English is the source, and stop.
+- `<scratchpad>` below is the session's scratchpad directory, never `/tmp`. A headless session, such as `claude -p`, may have none: then create one with `mktemp -d "$TMPDIR/translate.XXXXXX"`, use it for the whole run and print its path in the report. Never look for one in other sessions' folders.
 
 ## 1. Extract
 
@@ -21,7 +22,7 @@ Run `bun run i18n:extract`, so each catalog holds every string in the code.
 
 ## 2. Collect the entries
 
-Run `bun .claude/skills/translate/collect.ts --base origin/<base> --out <scratchpad>/translate`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`, and `<scratchpad>` is the session's scratchpad directory, never `/tmp`. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
+Run `bun .claude/skills/translate/collect.ts --base origin/<base> --out <scratchpad>/translate`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
 
 When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`, and warns on stderr when `--base` doesn't resolve. Check that each pairing is really the same string reworded, by searching the entry files for `prior art` rather than reading them whole; drop one that isn't.
 
@@ -120,4 +121,8 @@ A language ships once it is in five places:
 4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
 5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
 
-Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: extract writes the new locale's `.po` files, which `i18n:compile` turns into the `.ts` modules those imports name, so without them the compiled catalog doesn't exist and `bun run types` fails. Then run this skill to translate the new catalogs.
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Then run this skill to translate the new catalogs.
+
+## Changing a rule
+
+A decision recorded in a sidecar, `languages/<tag>.json`, is encoded in `check.ts`'s fixtures as well: `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault for each rule, which `scripts/translate-check.test.ts` holds the rules against. Changing a decision means changing the style sheet, the glossary, the sidecar and the fixtures together, then running `bun test --isolate scripts/translate-*.test.ts`.
