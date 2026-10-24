@@ -53,7 +53,9 @@ The comment and the context are what tell you what a short string is: a button, 
 
 ## Check your work
 
-Run `bun run i18n:check` and read the lines for your locale; fix every one. Other locales may be mid-translation at the same time, so ignore their lines, and never run `lingui extract` or `lingui compile`, which rewrite every locale's files.
+Run `bun run i18n:check` and read the lines for your locale; fix every one. Other locales may be mid-translation at the same time, so ignore their lines.
+
+Never run `lingui extract`, `lingui compile`, `bun run i18n:extract`, `bun run i18n:compile` or CI's other catalog checks, `lingui check sync` and `lingui check missing`. Compile writes only gitignored `.ts` files, but `lingui compile --strict` and `check missing` fail while any locale still has untranslated entries, and the other locales are mid-translation beside you; extract rewrites every locale's catalog under the other translators. The skill runs all of them once, after every locale is done, and sends you any failure in your locale.
 
 ## Your reply
 
