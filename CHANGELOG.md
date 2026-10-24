@@ -37,3 +37,4 @@ This file is the draft of the next release, written one line at a time as work l
 - Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.
 - <kbd>Shift</kbd>-clicking a link to a Gmail page opens it in a new window, instead of showing an error and an empty window
 - **Linux:** On Wayland, Meru's window appears when it starts, instead of only when it is opened a second time
+- **Windows and Linux:** In the context menu, `Paste and Match Style` has its own access key, M, instead of sharing P with `Paste`

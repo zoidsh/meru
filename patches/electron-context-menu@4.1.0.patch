@@ -38,7 +38,7 @@ index 8ec2624b2ed049733788311aed0852432dbefb42..4f8124fbd4f036cece184b4e3f580aef
  			}),
 +			pasteAndMatchStyle: decorateMenuItem({
 +				id: 'pasteAndMatchStyle',
-+				label: '&Paste And Match Style',
++				label: 'Paste and &Match Style',
 +				enabled: editFlags.canPaste,
 +				visible: properties.isEditable,
 +				click(menuItem) {
