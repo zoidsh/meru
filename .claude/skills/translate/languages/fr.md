@@ -47,3 +47,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Fermer l’onglet_, Close Other Tabs _Fermer les autres onglets_, Close Window _Fermer la fenêtre_, Pin Tab _Épingler l’onglet_, Show Sidebar _Afficher la barre latérale_, Minimize _Minimiser_, Copy Link _Copier le lien_, Mark as Read _Marquer comme lu_, Quit Mail _Quitter Mail_
 - _Souhaitez-vous vraiment supprimer ce message ?_ (Are you sure you want to delete this message?)
 - _Il est impossible de glisser des pièces jointes qui n’ont pas été téléchargées. Souhaitez-vous télécharger cette pièce jointe ?_
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `fr.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.
