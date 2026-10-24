@@ -95,3 +95,50 @@ msgstr "Möchtest du diese Nachricht wirklich löschen?"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, one {# Tab} other {# Tabs}}"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Move to New Window"
+msgstr "In neues Fenster verschieben"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Drag {label} to reorder"
+msgstr "{label} bewegen, um die Reihenfolge zu ändern"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Hinweis schließen"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Hinweise"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Hinweise"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Name"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Namen eingeben"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Enter a label"
+msgstr "Label eingeben"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Kennzeichen für ungelesene E-Mails anzeigen"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Klangspiel"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify when updates are available"
+msgstr "Bei verfügbaren Updates benachrichtigen"

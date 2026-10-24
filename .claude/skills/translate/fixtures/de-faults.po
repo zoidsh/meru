@@ -79,3 +79,68 @@ msgstr "Ausschneiden"
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete {label}?"
 msgstr "Löschen?"
+
+# fault: banned:bewegen
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Move to New Window"
+msgstr "In neues Fenster bewegen"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Toast schließen"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Ungelesene anzeigen"
+
+# fault: pinned:tab-strip
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "Tabs verschmälern"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Label"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Gerätebezeichnung"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Update-Version"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "Bekannte Hosts"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Phishing-Abwehr"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmail-Einstellungen öffnen, um die Urlaubsantwort zu deaktivieren"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Mehrfach-Posteingang"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Melden für"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Leinen"

@@ -568,6 +568,15 @@
       }
     },
     {
+      "id": "bewegen",
+      "pattern": "(?<!\\p{L})[Bb]eweg(?:en|e|st|t|te|ten|ter|tes)?(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Moving a file, tab or email is verschieben (glossary, agent-chosen); bewegen is only for dragging or the pointer.",
+      "allow": {
+        "msgidPattern": "\\b(?:mouse|pointer|cursor|drag\\w*)\\b"
+      }
+    },
+    {
       "id": "sie",
       "pattern": "(?<=[\\p{Ll},;:] )(?:Sie|Ihnen|Ihr|Ihre[mnrs]?)(?!\\p{L})",
       "severity": "wrong",
@@ -614,6 +623,149 @@
       "expect": "Label",
       "severity": "wrong",
       "reason": "A Gmail label is Gmail's Label (glossary)."
+    },
+    {
+      "id": "toast",
+      "msgidPattern": "\\btoasts?\\b",
+      "expect": "Hinweis",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+    },
+    {
+      "id": "toast",
+      "msgctxt": "toasts",
+      "msgid": "Notifications",
+      "expect": "Hinweis",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+    },
+    {
+      "id": "toast",
+      "msgctxt": null,
+      "msgid": "Notifications",
+      "origin": "packages/preload-gmail/",
+      "expect": "Hinweis",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+    },
+    {
+      "id": "unread-badge",
+      "msgidPattern": "\\bunread badges?\\b",
+      "expect": "Kennzeichen",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a badge is Apple's Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
+    },
+    {
+      "id": "tab-strip",
+      "msgidPattern": "\\btab strip\\b",
+      "expect": "Tableiste",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the tab strip is Tableiste."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": null,
+      "msgid": "Label",
+      "expect": "Name",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": "saved search",
+      "msgid": "Enter a label",
+      "expect": "Name",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+    },
+    {
+      "id": "device-label",
+      "msgidPattern": "\\bdevice label\\b",
+      "expect": "Gerätename",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a device label is Gerätename."
+    },
+    {
+      "id": "release-channel",
+      "msgidPattern": "\\bchannel\\b",
+      "expect": "Kanal",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a release channel is a Kanal: Update-Kanal, Beta-Kanal."
+    },
+    {
+      "id": "trusted-hosts",
+      "msgidPattern": "\\btrusted hosts?\\b",
+      "expect": "[Vv]ertrauenswürdig",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: trusted hosts are vertrauenswürdige Hosts."
+    },
+    {
+      "id": "phishing-protection",
+      "msgidPattern": "\\bphishing protection\\b",
+      "expect": "Phishing-Schutz",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: phishing protection is Phishing-Schutz."
+    },
+    {
+      "id": "out-of-office",
+      "msgidPattern": "\\bout of office\\b",
+      "expect": "Abwesenheitsnotiz",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: out of office is Gmail's Abwesenheitsnotiz."
+    },
+    {
+      "id": "multiple-inboxes",
+      "msgidPattern": "\\bmultiple inboxes\\b",
+      "expect": "[Mm]ehrere\\p{L}* Posteingäng",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's Mehrere Posteingänge."
+    },
+    {
+      "id": "notify",
+      "msgidPattern": "\\bnotify\\b",
+      "expect": "[Bb]enachrichtig",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: to notify is benachrichtigen, beside Benachrichtigung."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Breeze",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Brise$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Chime",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Klangspiel$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Duet",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Duett$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Knock",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Klopfen$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Linen",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Linen$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
     }
   ],
   "accessKeys": {

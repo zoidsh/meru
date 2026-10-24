@@ -88,3 +88,28 @@ msgstr "最近のダウンロード履歴"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, other {#個のタブ}}"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "お知らせを閉じる"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "お知らせ"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "名前"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "デバイス名"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "チャイム"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "マルチ受信トレイ"

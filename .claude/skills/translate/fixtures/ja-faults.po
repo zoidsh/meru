@@ -98,3 +98,63 @@ msgstr "Shift"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, one {#個のタブ} other {#個のタブ}}"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "通知を閉じる"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "未読数を表示"
+
+# fault: pinned:tab-strip
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "タブバーを狭くする"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "ラベル"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "デバイスラベル"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "リリース経路"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "安全なホスト"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "フィッシング保護"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmailの設定を開いて休暇応答をオフにする"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "複数の受信トレイ"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "知らせる対象"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "鐘"
