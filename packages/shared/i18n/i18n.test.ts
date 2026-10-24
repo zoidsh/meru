@@ -124,18 +124,13 @@ describe("activateLocale", () => {
   });
 
   // `activateLocale` reads the compiled catalogs, not a list it is passed, so
-  // the example is any tag this build doesn't ship.
-  const unshippedTag = CATALOG_TAGS.find((tag) => !SHIPPED_CATALOG_TAGS.includes(tag));
+  // the example is a tag that is never a catalog's.
+  test("activates English, plural rules included, for a tag whose catalog is not in this build", () => {
+    activateLocale("xx" as CatalogTag);
 
-  test.skipIf(unshippedTag === undefined)(
-    "activates English, plural rules included, for a tag whose catalog is not in this build",
-    () => {
-      activateLocale(unshippedTag as CatalogTag);
-
-      expect(i18n.locale).toBe("en");
-      expect(translate("Settings")).toBe("Settings");
-    },
-  );
+    expect(i18n.locale).toBe("en");
+    expect(translate("Settings")).toBe("Settings");
+  });
 });
 
 describe("catalogs", () => {
