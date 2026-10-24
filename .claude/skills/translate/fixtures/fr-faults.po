@@ -184,7 +184,7 @@ msgstr "Afficher la touche des favoris"
 # fault: pinned:menu-bar
 #: packages/renderer/routes/settings/general.tsx
 msgid "Menu bar icon"
-msgstr "Icône de la barre des menus"
+msgstr "Icône de la barre de menu"
 
 # fault: pinned:trusted-hosts
 #: packages/renderer/routes/settings/general.tsx

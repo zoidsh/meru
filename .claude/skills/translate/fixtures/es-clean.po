@@ -158,7 +158,7 @@ msgstr "Aún no hay hosts de confianza. Al seleccionar Confiar en todos los enla
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
-msgstr "Icono de la barra de menú"
+msgstr "Icono de la barra de menús"
 
 #: packages/app/menu.ts
 msgctxt "macOS"

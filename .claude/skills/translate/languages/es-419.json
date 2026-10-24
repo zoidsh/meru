@@ -776,9 +776,9 @@
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
-      "expect": "[Bb]arra de menú(?!s)",
+      "expect": "[Bb]arra de menús",
       "severity": "doubtful",
-      "reason": "The macOS menu bar is the barra de menú. Chrome: 9 of 9 messages."
+      "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (Control Center Settings Localizable menu bar); Chrome's barra de menú is not followed."
     }
   ],
   "accessKeys": {

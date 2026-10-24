@@ -43,6 +43,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro. They decline only where Polish 
 - **Numbers and units.** A no-break space (U+00A0) joins a number to its unit, as Chrome writes it: _5 minut_, _30 dni_, and in a plural _# dni_.
 - Quotation marks are „…” (U+201E, U+201D).
 - **House words, as Chrome writes them.** A link is a _link_, never Apple's _łącze_: _Kopiuj link_. Saving is _zapisać_: _Zapisz_, _zapisane wyszukiwanie_; _Zachowaj_ is only Apple's word in a `macOS` label such as _Zachowaj jako…_. An update is an _aktualizacja_, never _uaktualnienie_, which is only Apple's word in a `macOS` label. Restarting is _uruchomić ponownie_, never _zrestartować_. The titlebar is the _pasek tytułu_, the tab strip the _pasek kart_, a button a _przycisk_, a passkey a _klucz dostępu_, the clipboard the _schowek_ and a folder a _folder_, never _katalog_.
+- **macOS's own elements.** The menu bar, the Dock, Finder and System Settings take Apple's names in Meru's own copy too, since they name Apple's interface and show only on macOS: _pasek menu_ (Control Center Settings `Localizable` `menu bar`), _Dock_ (Desktop & Dock Settings `Localizable` `Dock`), _Finder_ and _Ustawienia systemowe_ (System Settings `InfoPlist` `CFBundleDisplayName`).
 
 ## Error messages
 

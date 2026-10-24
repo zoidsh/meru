@@ -4,6 +4,8 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
+**macOS's own elements take Apple's names.** The menu bar, the Dock, Finder and System Settings are named as Apple names them in every language, in Meru's own copy as well as in an OS label, because they name Apple's interface and show only on macOS. Each style sheet gives its language's words, under Traps.
+
 **Chrome** marks Chrome's word, read from Chromium's translations; the sidecar rule that enforces it gives Chrome's count as its source.
 
 **Agent-chosen** marks a word a translating agent picked for its language's first catalog, brought into line with the house words but not yet reviewed by a speaker. Use it like any other entry; a reviewer's word replaces it. An entry that lists only some languages gets the others' words when they are added.
@@ -267,14 +269,14 @@ The strip across the top of the window.
 
 ## Menu bar icon, System tray icon
 
-The icon in the macOS menu bar, or in the Windows and Linux system tray. The system tray strings carry a `Windows` or `Linux` `msgctxt`; the second word below is Microsoft's, for `Windows`, and `Linux` takes the style sheet's word where it gives one, else this one.
+The icon in the macOS menu bar, or in the Windows and Linux system tray. The menu bar is macOS's own, so its first word below is Apple's, by the rule for macOS's own elements above. The system tray strings carry a `Windows` or `Linux` `msgctxt`; the second word below is Microsoft's, for `Windows`, and `Linux` takes the style sheet's word where it gives one, else this one.
 
 - de: Menüleiste; Infobereich; Linux _Statusbereich_
-- fr: barre de menu (Chrome; Apple's _barre des menus_ only in a `macOS` label); zone de notification
+- fr: barre des menus (Apple); zone de notification
 - it: barra dei menu (Apple, Chrome); area di notifica
-- es: barra de menú (Chrome); bandeja del sistema (Chrome)
-- es-419: barra de menú (Chrome); bandeja del sistema (Chrome)
-- pt-BR: barra de menus (Chrome); bandeja do sistema (Chrome)
+- es: barra de menús (Apple); bandeja del sistema (Chrome)
+- es-419: barra de menús (Apple); bandeja del sistema (Chrome)
+- pt-BR: barra de menus (Apple, Chrome); bandeja do sistema (Chrome)
 - nl: menubalk; systeemvak (Chrome both)
 - pl: pasek menu; obszar powiadomień (Chrome both)
 - sv: menyrad; systemfält (Chrome both)

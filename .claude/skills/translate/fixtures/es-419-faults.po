@@ -170,7 +170,7 @@ msgstr "Revisión ortográfica"
 # fault: pinned:menu-bar
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
-msgstr "Ícono de la barra de menús"
+msgstr "Ícono de la barra de menú"
 
 # fault: platform-word:File
 #: packages/app/menu.ts

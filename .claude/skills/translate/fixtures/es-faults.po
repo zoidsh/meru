@@ -161,7 +161,7 @@ msgstr "Hosts fiables"
 # fault: pinned:menu-bar
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
-msgstr "Icono de la barra de menús"
+msgstr "Icono de la barra de menú"
 
 # fault: platform-word:File
 #: packages/app/menu.ts

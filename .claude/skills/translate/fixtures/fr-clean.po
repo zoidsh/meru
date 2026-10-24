@@ -145,7 +145,7 @@ msgstr "Afficher le bouton des favoris"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Menu bar icon"
-msgstr "Icône de la barre de menu"
+msgstr "Icône de la barre des menus"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Trusted hosts"

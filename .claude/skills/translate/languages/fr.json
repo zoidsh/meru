@@ -794,9 +794,9 @@
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
-      "expect": "barre de menu",
+      "expect": "barre des menus",
       "severity": "doubtful",
-      "reason": "The macOS menu bar is the barre de menu in Meru's own copy, as Chrome writes it (Chrome: 9 of 9 messages); Apple's barre des menus is for a macOS label only."
+      "reason": "The macOS menu bar is the barre des menus, Apple's name for its own interface, in Meru's own copy too (Control Center Settings Localizable menu bar); Chrome's barre de menu is not followed."
     },
     {
       "id": "trusted-hosts",

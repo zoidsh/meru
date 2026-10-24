@@ -149,7 +149,7 @@ msgstr "Corrector ortográfico"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Menu bar icon"
-msgstr "Ícono de la barra de menú"
+msgstr "Ícono de la barra de menús"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
