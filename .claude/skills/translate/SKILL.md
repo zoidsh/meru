@@ -62,14 +62,14 @@ Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the
 
 Never ask the reviewer to rule on anything else. The translator's own unsure choices, listed in its reply, go to the report for the user, and so do product questions from either agent, such as how a platform behaves or whether a label needs an access key: anything that isn't wording.
 
-If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply.
+If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply. A new `translation-second-reviewer` gets its original prompt and the fix list only, never the translator's reply, so it stays cold.
 
 ### A locale no person reviews
 
 For a locale not on the human-reviewed list, once the loop above has closed it or reached its cap:
 
-1. **Apply suggestions.** Continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its doubtful and style findings. It applies every one that carries a `suggestion` unless it disagrees, and says why for each it leaves. Then run `check.ts` again into `<tag>.check.json`; a `wrong` finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
-2. **Second pass.** Run `collect.ts --dump <tag>` again, so the dump holds the catalogs as they now stand, and spawn one `translation-second-reviewer` for the locale. It is cold: its prompt carries the locale tag, the Lingui docs instruction and only these paths, never `<tag>.review.json`, `<tag>.check.json` or anything the translator said:
+1. **Apply suggestions.** Continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its doubtful and style findings. It applies every one that carries a `suggestion` unless it disagrees, and says why for each it leaves. A finding whose `msgstr` no longer matches the entry's translation was written before a fix in the loop; the translator skips it or merges it by hand, never writing the suggestion over the fix, and says so. Then run `check.ts` again into `<tag>.check.json`; a `wrong` finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
+2. **Second pass.** Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate` again, so the dump holds the catalogs as they now stand, and spawn one `translation-second-reviewer` for the locale. It is cold: its prompt carries the locale tag, the Lingui docs instruction and only these paths, never `<tag>.review.json`, `<tag>.check.json` or anything the translator said:
    - the dump `<tag>.dump.txt`;
    - the style sheet `languages/<tag>.md` and its sidecar `languages/<tag>.json`;
    - the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
