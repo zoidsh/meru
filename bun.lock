@@ -55,6 +55,7 @@
         "node-api-headers": "^1.9.0",
         "oxfmt": "^0.57.0",
         "oxlint": "^1.72.0",
+        "pofile-ts": "^4.0.3",
         "postcss": "^8.5.8",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",
