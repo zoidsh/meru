@@ -1,4 +1,6 @@
+import { platform } from "@electron-toolkit/utils";
 import { ph, t } from "@lingui/core/macro";
+import { byPlatform } from "@meru/shared/platform";
 import {
   type BrowserWindow,
   type MenuItemConstructorOptions,
@@ -15,33 +17,49 @@ import { openExternalUrl } from "./url";
 const SELECTION_PLACEHOLDER = "{selection}";
 
 // electron-context-menu's own items, keeping its ampersands, which mark the
-// access key on Windows and Linux.
+// access key on Windows and Linux. Only the items the options below show are
+// here, so no translation is written for an item nobody sees.
 function getDefaultItemLabels(): Labels {
   // lingui-set comment="An item in the context menu of a page or a text field; & marks the access key on Windows and Linux"
   return {
     learnSpelling: t`&Learn Spelling`,
     lookUpSelection: t({
       message: `Look Up “${ph({ selection: SELECTION_PLACEHOLDER })}”`,
+      context: "macOS",
       comment: "Context menu item on macOS; selection is the selected text",
     }),
     searchWithGoogle: t`&Search with Google`,
-    cut: t`Cu&t`,
+    cut: byPlatform(platform, {
+      macOS: t({ message: "Cu&t", context: "macOS" }),
+      windows: t({ message: "Cu&t", context: "Windows" }),
+      linux: t({ message: "Cu&t", context: "Linux" }),
+    }),
     copy: t`&Copy`,
-    paste: t`&Paste`,
-    pasteAndMatchStyle: t`&Paste And Match Style`,
-    selectAll: t`Select &All`,
-    saveImage: t`Save I&mage`,
-    saveImageAs: t`Sa&ve Image As…`,
-    saveVideo: t`Save Vide&o`,
-    saveVideoAs: t`Save Video& As…`,
+    paste: byPlatform(platform, {
+      macOS: t({ message: "&Paste", context: "macOS" }),
+      windows: t({ message: "&Paste", context: "Windows" }),
+      linux: t({ message: "&Paste", context: "Linux" }),
+    }),
+    pasteAndMatchStyle: byPlatform(platform, {
+      macOS: t({ message: "&Paste And Match Style", context: "macOS" }),
+      windows: t({ message: "&Paste And Match Style", context: "Windows" }),
+      linux: t({ message: "&Paste And Match Style", context: "Linux" }),
+    }),
+    // electron-context-menu shows Select All everywhere but on macOS.
+    selectAll: byPlatform(platform, {
+      macOS: undefined,
+      windows: t({ message: "Select &All", context: "Windows" }),
+      linux: t({ message: "Select &All", context: "Linux" }),
+    }),
+    saveImageAs: byPlatform(platform, {
+      macOS: t({ message: "Sa&ve Image As…", context: "macOS" }),
+      windows: t({ message: "Sa&ve Image As…", context: "Windows" }),
+      linux: t({ message: "Sa&ve Image As…", context: "Linux" }),
+    }),
     copyLink: t`Copy Lin&k`,
-    saveLinkAs: t`Save Link As…`,
     copyImage: t`Cop&y Image`,
     copyImageAddress: t`C&opy Image Address`,
-    copyVideoAddress: t`Copy Video Ad&dress`,
     copyEmailAddress: t`Copy Email Address`,
-    inspect: t`I&nspect Element`,
-    services: t`Services`,
     noGuessesFound: t({
       message: "No Guesses Found",
       comment:
