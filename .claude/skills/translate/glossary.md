@@ -4,6 +4,8 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
+**Chrome** marks Chrome's word, read from Chromium's translations, where the user chose it over Apple's; the sidecar rule that enforces it gives Chrome's count as its source.
+
 **Agent-chosen** marks a word a translating agent picked for its language's first catalog, brought into line with the house words but not yet reviewed by a speaker. Use it like any other entry; a reviewer's word replaces it. An entry that lists only some languages gets the others' words when they are added.
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
@@ -334,7 +336,7 @@ A Chrome extension from Meru's list.
 - nl: extensie (Apple)
 - pl: rozszerzenie (Apple)
 - sv: tillägg (Apple)
-- ja: 機能拡張 (Apple), never 拡張機能
+- ja: 拡張機能 (Chrome), never 機能拡張, Apple's word
 
 ## Experimental, Beta
 
@@ -454,7 +456,7 @@ The count on an account, a tab or the dock icon for its unread emails: _Show unr
 The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_.
 
 - de: Tableiste (_Tableiste verschmälern_) (agent-chosen)
-- ja: タブストリップ (タブストリップを狭くする) (agent-chosen)
+- ja: タブバー (タブバーを狭くする) (Chrome), never タブストリップ
 
 ## Label, Meru's
 

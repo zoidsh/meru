@@ -545,18 +545,147 @@
     },
     {
       "id": "long-vowel",
-      "pattern": "(?:ブラウザ|フォルダ|ユーザ|マネージャ|コンピュータ|エディタ|プロバイダ|デベロッパ|サーバ|プリンタ|ドライバ|スキャナ|ヘッダ|ビューア|プレーヤ|パラメータ|アダプタ|コントローラ)(?!ー)",
+      "pattern": "ブラウザー",
       "severity": "wrong",
-      "reason": "A word ending in a long vowel keeps its ー in Meru's own copy: ブラウザー, フォルダー, ユーザー; a macOS label spells it as Apple does.",
-      "allow": {
-        "contexts": ["macOS"]
-      }
+      "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome: 198 messages, none the other way)."
     },
     {
-      "id": "kakuchou-kinou",
-      "pattern": "拡張機能",
+      "id": "long-vowel",
+      "pattern": "フォルダー",
       "severity": "wrong",
-      "reason": "An extension is 機能拡張, never 拡張機能."
+      "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome: 110 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "コンピューター",
+      "severity": "wrong",
+      "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome: 10 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "エディター",
+      "severity": "wrong",
+      "reason": "Chrome writes エディタ, without ー, never エディター (Chrome: 10 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "プロバイダー",
+      "severity": "wrong",
+      "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome: 28 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "プリンター",
+      "severity": "wrong",
+      "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome: 87 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "ビューアー",
+      "severity": "wrong",
+      "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome: 7 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "ドライバー",
+      "severity": "wrong",
+      "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome: 1 message, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "パラメーター",
+      "severity": "wrong",
+      "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome: 4 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "セキュリティー",
+      "severity": "wrong",
+      "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome: 218 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "カテゴリー",
+      "severity": "wrong",
+      "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome: 2 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "メモリー",
+      "severity": "wrong",
+      "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome: 51 messages, 1 the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "ユーザ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome: 339 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "サーバ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome: 114 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "マネージャ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome: 93 messages, 6 the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "デベロッパ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome: 32 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "ランチャ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome: 21 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "センタ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes センター, with ー, never センタ (Chrome: 10 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "リーダ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome: 14 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "ヘッダ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome: 5 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "フッタ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes フッター, with ー, never フッタ (Chrome: 4 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "トラッカ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome: 2 messages, none the other way)."
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "エクスプローラ(?!ー)",
+      "severity": "wrong",
+      "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome: 1 message, none the other way)."
+    },
+    {
+      "id": "kinou-kakuchou",
+      "pattern": "機能拡張",
+      "severity": "wrong",
+      "reason": "An extension is 拡張機能, as Chrome writes it, never 機能拡張 (Chrome: 395 messages, none the other way)."
     },
     {
       "id": "anata",
@@ -659,9 +788,9 @@
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
-      "expect": "タブストリップ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the tab strip is タブストリップ."
+      "expect": "タブバー",
+      "severity": "wrong",
+      "reason": "The tab strip is タブバー, as Chrome writes it (glossary, Chrome), never タブストリップ."
     },
     {
       "id": "meru-label",
