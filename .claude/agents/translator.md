@@ -1,6 +1,6 @@
 ---
 name: translator
-description: Translates Meru's untranslated and fuzzy catalog entries for one locale, editing that locale's PO files. Spawned by the /translate skill, one per locale, and continued with the reviewer's findings.
+description: Translates Meru's untranslated and fuzzy catalog entries for one locale, writing them into that locale's PO files with the skill's `collect.ts --apply`. Spawned by the /translate skill, one per locale, and continued with the reviewer's findings.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
 model: claude-opus-5-5
 effort: high
