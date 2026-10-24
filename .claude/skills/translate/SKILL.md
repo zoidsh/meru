@@ -37,17 +37,33 @@ Keep each translator's agent ID; the review sends its findings back to the same 
 
 ## 4. Review, then fix, at most twice
 
-As each translator returns, spawn one `translation-reviewer` for that locale, giving it the locale tag, the path of the same entry file, the style sheet, glossary and PO paths, and the same instruction about Lingui's Markdown docs. Keep its agent ID too.
+As each translator returns, prepare that locale's review in the same scratch directory, `<scratchpad>/translate`:
 
-- A reviewer that replies `PASS: <tag>` closes that locale.
-- Otherwise, continue the same translator with `SendMessage` to its agent ID, passing the findings verbatim, so it keeps its context. Then continue the same reviewer with `SendMessage` to re-review those entries.
-- Stop after two rounds of fixes. A finding still open then is reported to the user in the summary, with the reviewer's text and the translator's answer; it is never forced through by editing the catalog yourself.
+1. Run `bun .claude/skills/translate/check.ts --locale <tag> > <scratchpad>/translate/<tag>.check.json`. It exits 1 when a finding is `wrong`, which is a result, not a failure; exit 2 is a crash, which you report rather than review around.
+2. Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate`, which writes `<tag>.dump.txt`, both catalogs grouped by the file each entry comes from.
 
-If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the findings and the translator's previous reply.
+Then spawn one `translation-reviewer` for that locale. Its prompt carries the locale tag, the same instruction about Lingui's Markdown docs, and these paths, never their contents:
+
+- the entry file `<tag>.txt`, the entries it reviews in full;
+- the dump `<tag>.dump.txt`, which it reads for consistency;
+- the `check.ts` report `<tag>.check.json`;
+- the style sheet `languages/<tag>.md`, its sidecar `languages/<tag>.json` and the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
+- the output path `<scratchpad>/translate/<tag>.review.json`, where it writes its findings.
+
+Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the fix loop; `doubtful` and `style` go to the report as the review set a person reads.
+
+- A reviewer whose reply ends `PASS: <tag>` and whose `check.ts` report has no `wrong` finding it left standing closes that locale.
+- Otherwise, build one fix list: the `check.ts` findings of severity `wrong` the reviewer didn't dismiss, plus the `wrong` findings in `<tag>.review.json`, each with its msgid, msgctxt, catalog, reason and suggestion. `check.ts` gives `catalog` as the PO file's path, so write it as the name `--apply` takes: `app` for `packages/shared/i18n/locales/<tag>.po`, `preload-gmail` for `packages/preload-gmail/locales/<tag>.po`. Continue the same translator with `SendMessage` to its agent ID, passing the list, so it keeps its context. Then run `check.ts` again into the same file, and continue the same reviewer with `SendMessage` to re-review only the entries on the list, naming the new report.
+- Stop after two rounds of fixes. A `wrong` finding still open then goes to the report, with the reviewer's text and the translator's answer; it is never forced through by editing the catalog yourself.
+- A `check.ts` finding the reviewer dismissed goes to the report with the reviewer's reason, since a false positive points at a sidecar rule to fix.
+
+Never ask the reviewer to rule on anything else. The translator's own unsure choices, listed in its reply, go to the report for the user, and so do product questions from either agent, such as how a platform behaves or whether a label needs an access key: anything that isn't wording.
+
+If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply.
 
 ## 5. Check
 
-Run, in this order, as CI does:
+Run, in this order, CI's checks and then the rules check for each shipped locale except `en`:
 
 ```sh
 bun run i18n:extract
@@ -55,13 +71,22 @@ bunx lingui check sync --clean --workers 1
 bunx lingui check missing --mode catalog --verbose --workers 1
 bun run i18n:check
 bunx lingui compile --strict
+bun .claude/skills/translate/check.ts --locale <tag>
 ```
 
-The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry.
+The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale, and so does a `wrong` finding from `check.ts`, which fails the run the same way: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry. A `check.ts` exit of 2 is a crash; report it, never retry it. Two `wrong` findings from `check.ts` don't go to a translator: one the reviewer dismissed in step 4 doesn't fail the run and stays in the report's dismissed list, since it points at a sidecar rule to fix; one in a locale no translator worked on this run goes straight to the report.
 
 ## 6. Report
 
-Say, per locale, how many entries were translated, how many review rounds they took, and every finding still open, with its msgid, the problem and the suggested fix. Name any term a translator chose that the glossary lacks, so it can be added to `glossary.md`. Then show the output of the five checks.
+Per locale, say:
+
+- how many entries were translated, how many review rounds they took, and the `wrong` findings fixed and still open, each open one with its msgid, the problem, the suggested fix and the translator's answer;
+- the counts of `doubtful` and `style` findings, and the path of `<tag>.review.json` that holds them;
+- the translator's unsure choices, as its reply lists them, and the product questions from either agent;
+- each `check.ts` finding the reviewer dismissed, with its reason;
+- every term a translator chose that the glossary lacks, so it can be added to `glossary.md`.
+
+Say that the `<tag>.review.json` files are the human review set: the reviewer's doubtful and style findings, which no agent has fixed. Then show the output of the checks in step 5.
 
 Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate.
 

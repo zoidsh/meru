@@ -59,6 +59,18 @@ Never run `lingui extract`, `lingui compile`, `bun run i18n:extract`, `bun run i
 
 ## Your reply
 
-List each entry you translated as `msgid` → translation, then any term the glossary lacks with the word you chose, then anything you were unsure of. Keep it short.
+Keep it short, in three parts:
 
-When you are continued with a reviewer's findings, fix each finding you agree with, and for one you disagree with say why in a line, citing the style sheet or glossary. Run `bun run i18n:check` again and reply with what you changed.
+1. Each entry you translated as `msgid` → translation.
+2. Each term the glossary lacks, with the word you chose.
+3. Your unsure choices, as a list the skill copies into its report for the user, one per choice:
+
+   ```text
+   - msgid: "Show unread badge" (msgctxt none, app)
+     choice: "Kennzeichen für ungelesene E-Mails anzeigen"
+     unsure: the glossary's word reads long for a settings switch
+   ```
+
+   Write `Unsure: none` when there are none. A question that isn't about wording, such as how a platform behaves, goes here too.
+
+When you are continued with a fix list, from `check.ts` or the reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run `bun run i18n:check` again and reply with what you changed.
