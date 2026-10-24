@@ -1,8 +1,9 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { getConfig } from "@lingui/conf";
+import { getConfig, type LinguiConfigNormalized } from "@lingui/conf";
 import { formatter } from "@lingui/format-po";
+import { extractString, formatKeyword } from "pofile-ts";
 import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 
 /*
@@ -219,16 +220,313 @@ export function sliceGlossary(
   };
 }
 
-async function run() {
-  const config = getConfig();
+export type Translation = { msgctxt?: string; msgid: string; msgstr: string };
 
-  const { values, positionals: requested } = parseArgs({
-    options: { base: { type: "string" }, out: { type: "string" } },
-    allowPositionals: true,
+type PoEntry = {
+  context?: string;
+  id: string;
+  plural: boolean;
+  flags?: { line: number; values: string[] };
+  msgstrStart: number;
+  msgstrEnd: number;
+};
+
+function entryKey(context: string | undefined, id: string) {
+  return JSON.stringify([context ?? null, id]);
+}
+
+function describe({ msgctxt, msgid }: Translation) {
+  return msgctxt === undefined
+    ? JSON.stringify(msgid)
+    : `${JSON.stringify(msgid)} with msgctxt ${JSON.stringify(msgctxt)}`;
+}
+
+function readString(lines: string[], start: number) {
+  let value = "";
+
+  let next = start;
+
+  do {
+    value += extractString(lines[next] ?? "");
+    next++;
+  } while (lines[next]?.startsWith('"'));
+
+  return { value, next };
+}
+
+/** The live entries of a PO file, by line, skipping the header and obsolete `#~` entries. */
+function poEntries(lines: string[]) {
+  const entries: PoEntry[] = [];
+
+  let entry: Partial<PoEntry> = {};
+
+  let obsolete = false;
+
+  const finish = () => {
+    if (entry.id && !obsolete && entry.msgstrStart !== undefined) {
+      entries.push({ plural: false, ...entry } as PoEntry);
+    }
+
+    entry = {};
+    obsolete = false;
+  };
+
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index] ?? "";
+
+    const keyword = /^(msgctxt|msgid|msgstr) "/.exec(line)?.[1];
+
+    if (keyword) {
+      const { value, next } = readString(lines, index);
+
+      if (keyword === "msgctxt") {
+        entry.context = value;
+      } else if (keyword === "msgid") {
+        entry.id = value;
+      } else {
+        entry.msgstrStart = index;
+        entry.msgstrEnd = next;
+      }
+
+      index = next;
+
+      continue;
+    }
+
+    if (line === "") {
+      finish();
+    } else if (line.startsWith("#~")) {
+      obsolete = true;
+    } else if (line.startsWith("#,")) {
+      entry.flags = {
+        line: index,
+        values: line
+          .slice(2)
+          .split(",")
+          .map((flag) => flag.trim())
+          .filter(Boolean),
+      };
+    } else if (line.startsWith("msgid_plural ") || line.startsWith("msgstr[")) {
+      entry.plural = true;
+    }
+
+    index++;
+  }
+
+  finish();
+
+  return entries;
+}
+
+/*
+ * Edits the PO text line by line rather than through a parse and a serialize,
+ * so every line it doesn't write, the comments, origins and obsolete entries
+ * included, stays byte for byte as extract wrote it. The `msgstr` is formatted
+ * the way Lingui's formatter writes one, with no folding, so `lingui check
+ * sync` finds nothing to change. Nothing is written unless every translation
+ * names exactly one entry.
+ */
+export function applyTranslations(text: string, translations: Translation[]) {
+  const lines = text.split("\n");
+
+  const entries = poEntries(lines);
+
+  const byKey = new Map<string, PoEntry[]>();
+
+  for (const entry of entries) {
+    const key = entryKey(entry.context, entry.id);
+
+    byKey.set(key, [...(byKey.get(key) ?? []), entry]);
+  }
+
+  const errors: string[] = [];
+
+  const edits: { entry: PoEntry; msgstr: string }[] = [];
+
+  const seen = new Set<string>();
+
+  for (const translation of translations) {
+    const key = entryKey(translation.msgctxt, translation.msgid);
+
+    const matches = byKey.get(key) ?? [];
+
+    const [match] = matches;
+
+    if (seen.has(key)) {
+      errors.push(`${describe(translation)} is given more than once`);
+    } else if (!match) {
+      const contexts = entries
+        .filter((entry) => entry.id === translation.msgid)
+        .map((entry) => (entry.context === undefined ? "none" : JSON.stringify(entry.context)));
+
+      errors.push(
+        `${describe(translation)} matches no entry${contexts.length > 0 ? `; that msgid has msgctxt ${contexts.join(", ")}` : ""}`,
+      );
+    } else if (matches.length > 1) {
+      errors.push(`${describe(translation)} matches ${matches.length} entries`);
+    } else if (match.plural) {
+      errors.push(`${describe(translation)} is a gettext plural, which Lingui never writes`);
+    } else {
+      edits.push({ entry: match, msgstr: translation.msgstr });
+    }
+
+    seen.add(key);
+  }
+
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  edits.sort((a, b) => b.entry.msgstrStart - a.entry.msgstrStart);
+
+  for (const { entry, msgstr } of edits) {
+    lines.splice(
+      entry.msgstrStart,
+      entry.msgstrEnd - entry.msgstrStart,
+      ...formatKeyword("msgstr", msgstr, undefined, { foldLength: 0 }),
+    );
+
+    if (!entry.flags?.values.includes("fuzzy")) {
+      continue;
+    }
+
+    const kept = entry.flags.values.filter((flag) => flag !== "fuzzy");
+
+    lines.splice(entry.flags.line, 1, ...(kept.length > 0 ? [`#, ${kept.join(",")}`] : []));
+  }
+
+  return { text: lines.join("\n"), errors };
+}
+
+const CATALOG_NAMES: Record<string, string> = {
+  "packages/shared/i18n/locales/{locale}": "app",
+  "packages/preload-gmail/locales/{locale}": "preload-gmail",
+};
+
+function catalogFiles(config: LinguiConfigNormalized, locale: string) {
+  return config.catalogs.map((catalogConfig) => {
+    const template = path.relative(config.rootDir, catalogConfig.path);
+
+    const name = CATALOG_NAMES[template];
+
+    if (!name) {
+      throw new Error(`The catalog ${template} has no name in CATALOG_NAMES.`);
+    }
+
+    const absolute = `${catalogConfig.path.replace("{locale}", locale)}${po.catalogExtension}`;
+
+    return { name, absolute, relative: path.relative(config.rootDir, absolute) };
   });
+}
 
-  const { base, out } = values;
+function translationsOf(json: unknown, catalogNames: string[]) {
+  const errors: string[] = [];
 
+  const byCatalog = new Map<string, Translation[]>();
+
+  if (!Array.isArray(json)) {
+    return { errors: ["The file must hold a JSON array."], byCatalog };
+  }
+
+  for (const [index, item] of json.entries()) {
+    const record = item as Record<string, unknown>;
+
+    const valid =
+      typeof record === "object" &&
+      record !== null &&
+      typeof record.catalog === "string" &&
+      typeof record.msgid === "string" &&
+      typeof record.msgstr === "string" &&
+      record.msgstr !== "" &&
+      (record.msgctxt === undefined || typeof record.msgctxt === "string");
+
+    if (!valid) {
+      errors.push(
+        `Item ${index} must be { catalog, msgctxt?, msgid, msgstr }, with a msgstr that isn't empty.`,
+      );
+
+      continue;
+    }
+
+    const catalog = record.catalog as string;
+
+    if (!catalogNames.includes(catalog)) {
+      errors.push(
+        `Item ${index} names catalog ${JSON.stringify(catalog)}; use ${catalogNames.join(" or ")}.`,
+      );
+
+      continue;
+    }
+
+    const { msgctxt, msgid, msgstr } = record as Translation;
+
+    byCatalog.set(catalog, [...(byCatalog.get(catalog) ?? []), { msgctxt, msgid, msgstr }]);
+  }
+
+  return { errors, byCatalog };
+}
+
+async function apply(config: LinguiConfigNormalized, jsonPath: string, locales: string[]) {
+  const [locale] = locales;
+
+  if (
+    locales.length !== 1 ||
+    !locale ||
+    locale === config.sourceLocale ||
+    !config.locales.includes(locale)
+  ) {
+    throw new Error(
+      `--apply takes one locale, one of ${config.locales.filter((tag) => tag !== config.sourceLocale).join(", ")}.`,
+    );
+  }
+
+  const files = catalogFiles(config, locale);
+
+  const { errors, byCatalog } = translationsOf(
+    await Bun.file(jsonPath).json(),
+    files.map(({ name }) => name),
+  );
+
+  const writes: { relative: string; absolute: string; text: string; count: number }[] = [];
+
+  for (const { name, absolute, relative } of files) {
+    const translations = byCatalog.get(name);
+
+    if (!translations) {
+      continue;
+    }
+
+    const result = applyTranslations(await Bun.file(absolute).text(), translations);
+
+    errors.push(...result.errors.map((error) => `${name}: ${error}`));
+
+    if (result.text !== undefined) {
+      writes.push({ relative, absolute, text: result.text, count: translations.length });
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error(`Wrote nothing, since:\n${errors.map((error) => `- ${error}`).join("\n")}`);
+
+    process.exitCode = 1;
+
+    return;
+  }
+
+  for (const { relative, absolute, text, count } of writes) {
+    await Bun.write(absolute, text);
+
+    console.log(`Wrote ${count} translations to ${relative}.`);
+  }
+}
+
+async function collect(
+  config: LinguiConfigNormalized,
+  { base, out }: { base?: string; out?: string },
+  requested: string[],
+) {
   const baseCommit = base ? mergeBase(base) : undefined;
 
   if (base && !baseCommit) {
@@ -261,15 +559,11 @@ async function run() {
   for (const locale of locales) {
     const sections: string[] = [];
 
-    for (const catalogConfig of config.catalogs) {
-      const absolute = `${catalogConfig.path.replace("{locale}", locale)}${po.catalogExtension}`;
-
-      const relative = path.relative(config.rootDir, absolute);
-
+    for (const { name, absolute, relative } of catalogFiles(config, locale)) {
       const file = Bun.file(absolute);
 
       if (!(await file.exists())) {
-        sections.push(`### ${relative}\n\nMissing; run \`bun run i18n:extract\` first.`);
+        sections.push(`### ${name}: ${relative}\n\nMissing; run \`bun run i18n:extract\` first.`);
 
         missingTotal++;
 
@@ -341,7 +635,7 @@ async function run() {
         return fields.filter(Boolean).join("\n");
       });
 
-      sections.push(`### ${relative}\n\n${lines.join("\n")}`);
+      sections.push(`### ${name}: ${relative}\n\n${lines.join("\n")}`);
     }
 
     if (sections.length === 0) {
@@ -384,6 +678,23 @@ async function run() {
   if (pendingTotal === 0 && missingTotal === 0) {
     console.log(`Nothing to translate in ${locales.join(", ")}.`);
   }
+}
+
+async function run() {
+  const config = getConfig();
+
+  const { values, positionals } = parseArgs({
+    options: { base: { type: "string" }, out: { type: "string" }, apply: { type: "string" } },
+    allowPositionals: true,
+  });
+
+  if (values.apply) {
+    await apply(config, values.apply, positionals);
+
+    return;
+  }
+
+  await collect(config, values, positionals);
 }
 
 if (import.meta.main) {
