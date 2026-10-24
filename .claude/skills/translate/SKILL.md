@@ -19,9 +19,9 @@ Run `bun run i18n:extract`, so each catalog holds every string in the code.
 
 ## 2. Collect the entries
 
-Run `bun .claude/skills/translate/collect.ts --base origin/<base>`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`. It prints, for every shipped locale except `en` and across both catalogs, each untranslated or fuzzy entry with its `msgctxt`, its `#.` comments and its origin.
+Run `bun .claude/skills/translate/collect.ts --base origin/<base> --out <scratchpad>/translate`, where `<base>` is the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`, and `<scratchpad>` is the session's scratchpad directory, never `/tmp`. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
 
-When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`, and warns on stderr when `--base` doesn't resolve. Check that each pairing is really the same string reworded; drop one that isn't.
+When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`, and warns on stderr when `--base` doesn't resolve. Check that each pairing is really the same string reworded, by searching the entry files for `prior art` rather than reading them whole; drop one that isn't.
 
 If it prints `Nothing to translate`, go to step 5.
 
@@ -29,15 +29,15 @@ If it prints `Nothing to translate`, go to step 5.
 
 Spawn one `translator` per locale with entries, all in one message so they run in parallel. Each prompt carries:
 
-- the locale tag, and the paths of its style sheet `.claude/skills/translate/languages/<tag>.md`, of `.claude/skills/translate/glossary.md` and of its two PO files;
-- its section of the script's output verbatim, every entry with its `msgctxt`, comments, origin and prior art;
+- the locale tag, and the paths of its style sheet `.claude/skills/translate/languages/<tag>.md`, whose JSON sidecar `languages/<tag>.json` sits beside it, of its glossary slice `<tag>.glossary.md` and of its two PO files;
+- the path of its entry file `<tag>.txt`, never the entries pasted into the prompt;
 - that it looks up Lingui syntax in the Markdown copy of a docs page, the page URL with `.md` appended, such as https://lingui.dev/ref/macro.md, rather than guess.
 
 Keep each translator's agent ID; the review sends its findings back to the same agent.
 
 ## 4. Review, then fix, at most twice
 
-As each translator returns, spawn one `translation-reviewer` for that locale, giving it the locale tag, the same entry list, the style sheet, glossary and PO paths, and the same instruction about Lingui's Markdown docs. Keep its agent ID too.
+As each translator returns, spawn one `translation-reviewer` for that locale, giving it the locale tag, the path of the same entry file, the style sheet, glossary and PO paths, and the same instruction about Lingui's Markdown docs. Keep its agent ID too.
 
 - A reviewer that replies `PASS: <tag>` closes that locale.
 - Otherwise, continue the same translator with `SendMessage` to its agent ID, passing the findings verbatim, so it keeps its context. Then continue the same reviewer with `SendMessage` to re-review those entries.
@@ -64,3 +64,15 @@ The first drops the obsolete entries the translators used as prior art. A failur
 Say, per locale, how many entries were translated, how many review rounds they took, and every finding still open, with its msgid, the problem and the suggested fix. Name any term a translator chose that the glossary lacks, so it can be added to `glossary.md`. Then show the output of the five checks.
 
 Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate.
+
+## Adding a language
+
+A language ships once it is in five places:
+
+1. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`, which `lingui.config.ts` reads as its locales.
+2. The `catalogs` record in `packages/shared/i18n/index.ts`, importing `messages` from `./locales/<tag>`.
+3. The dayjs locale import in `packages/renderer/lib/date.ts`, `dayjs/locale/<name>` with the name `getDayjsLocale` gives the tag, such as `es-mx` for `es-419`.
+4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
+5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
+
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: extract writes the new locale's `.po` files, which `i18n:compile` turns into the `.ts` modules those imports name, so without them the compiled catalog doesn't exist and `bun run types` fails. Then run this skill to translate the new catalogs.

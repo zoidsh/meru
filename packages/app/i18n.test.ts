@@ -5,8 +5,8 @@ let language = "system";
 let preferredSystemLanguages: string[] = [];
 
 /*
- * Only English ships, which every resolution would land on, so the catalogs
- * here are faked: German and French ship, and only German has a catalog.
+ * The catalogs here are faked, so the tests don't depend on what this build
+ * ships: German and French ship, and only German has a catalog.
  */
 mock.module("@meru/shared/i18n", () => ({
   SHIPPED_CATALOG_TAGS: ["en", "de", "fr"],
