@@ -67,6 +67,14 @@ msgctxt "macOS"
 msgid "Shift"
 msgstr "Umschalttaste"
 
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "Lesezeichen-Schaltfläche anzeigen"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hold the Control key to open it in the background."
+msgstr "Halte die Control-Taste gedrückt, um ihn im Hintergrund zu öffnen."
+
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
 msgstr "Auf Meru Pro upgraden"

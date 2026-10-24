@@ -614,6 +614,13 @@
       "expect": "ラベル",
       "severity": "wrong",
       "reason": "A Gmail label is Gmail's ラベル (glossary)."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "ボタン",
+      "severity": "doubtful",
+      "reason": "An on-screen button is ボタン (glossary)."
     }
   ],
   "accessKeys": {

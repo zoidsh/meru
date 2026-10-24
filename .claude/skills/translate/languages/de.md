@@ -39,7 +39,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro, never inflected inside the word
 
 - **Placeholders and articles.** An article or adjective before a placeholder must agree with every value it can take, which it usually cannot. Put the placeholder after a noun that carries the case (_im Konto {name}_), or in its own phrase, never _der {name}_.
 - **Gendered forms.** Address with _du_ avoids most of them; where a person is described, rewrite around the gender.
-- **House words.** _Benachrichtigung_, never _Mitteilung_, for a notification. _Konto_, plural _Konten_, never _Account_, for an account. _Speichern_, never _Sichern_, for keeping something; _Sichern_ is only Apple's word in a `macOS` label such as _Sichern unter …_.
+- **House words.** _Benachrichtigung_, never _Mitteilung_, for a notification. _Konto_, plural _Konten_, never _Account_, for an account. _Speichern_, never _Sichern_, for keeping something; _Sichern_ is only Apple's word in a `macOS` label such as _Sichern unter …_. _Schaltfläche_ for an on-screen button, such as the bookmarks button: _Lesezeichen-Schaltfläche_. A standalone _Taste_ reads as a keyboard key and means only that, as in the key names _Umschalttaste_ and _Control-Taste_.
 - English quotation marks become „…“ (U+201E, U+201C).
 
 ## Error messages

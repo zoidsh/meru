@@ -65,6 +65,10 @@ msgctxt "Linux"
 msgid "Shift"
 msgstr "Shift"
 
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "ブックマークボタンを表示"
+
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
 msgstr "Meru Proにアップグレード"

@@ -559,6 +559,15 @@
       }
     },
     {
+      "id": "taste",
+      "pattern": "(?<!(?:Control|Ctrl|Strg|Alt|Fn|Esc|Option|Cmd|Tab)-)(?<!\\p{L})Tasten?(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "An on-screen button is Schaltfläche; a standalone Taste reads as a keyboard key. Key names such as Umschalttaste are fine.",
+      "allow": {
+        "msgidPattern": "\\b(?:keys?|keyboard)\\b"
+      }
+    },
+    {
       "id": "sie",
       "pattern": "(?<=[\\p{Ll},;:] )(?:Sie|Ihnen|Ihr|Ihre[mnrs]?)(?!\\p{L})",
       "severity": "wrong",

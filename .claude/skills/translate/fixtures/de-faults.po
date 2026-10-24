@@ -21,6 +21,12 @@ msgstr "Account hinzufügen"
 msgid "Save"
 msgstr "Sichern"
 
+# Run 1's „Taste“ for an on-screen button.
+# fault: banned:taste
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "Lesezeichen-Taste anzeigen"
+
 # fault: banned:sie
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Are you sure you want to delete this message?"

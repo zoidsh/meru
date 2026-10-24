@@ -67,6 +67,11 @@ msgctxt "Gmail label"
 msgid "Label"
 msgstr "タグ"
 
+# fault: pinned:button
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "ブックマークキーを表示"
+
 # fault: platform-word:Undo
 #: packages/app/menu.ts
 msgctxt "macOS"
