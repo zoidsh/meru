@@ -1,6 +1,9 @@
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { parseArgs } from "node:util";
 import { getConfig } from "@lingui/conf";
 import { formatter } from "@lingui/format-po";
+import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 
 /*
  * Lists, per locale, the entries a translator has to write, each with the old
@@ -8,6 +11,10 @@ import { formatter } from "@lingui/format-po";
  * English is a new entry, so the old one is only obsolete in the catalog, or
  * gone from it once `extract --clean` has run, which is why the catalog is also
  * read as `HEAD` and as the merge base with `--base` have it.
+ *
+ * With `--out <dir>`, each locale's list goes to `<dir>/<tag>.txt` instead,
+ * with that locale's slice of the glossary beside it, so an agent reads one
+ * language rather than every one.
  */
 
 type Entry = {
@@ -138,20 +145,89 @@ function mergeBase(ref: string) {
   return result.success ? result.stdout.toString().trim() : undefined;
 }
 
-function argumentsOf(argv: string[]) {
-  const baseIndex = argv.indexOf("--base");
+const GLOSSARY_PATH = path.join(import.meta.dir, "glossary.md");
 
-  const base = baseIndex === -1 ? undefined : argv[baseIndex + 1];
+const LOCALE_BULLET = /^[-*] ([A-Za-z]{2,3}(?:-[A-Za-z0-9]+)*): /;
 
-  const locales = argv.filter((_, index) => index !== baseIndex && index !== baseIndex + 1);
+/*
+ * Keeps the headings and the English prose of every entry, and of the bullets
+ * only the locale's own. Anything else, such as a table, a code block or a list
+ * that isn't one line per locale, is dropped with a warning rather than guessed
+ * at, so a change to the glossary's shape shows up instead of leaking every
+ * language into the slice.
+ */
+export function sliceGlossary(
+  markdown: string,
+  locale: string,
+  tags: readonly string[] = CATALOG_TAGS,
+) {
+  const kept: string[] = [];
 
-  return { base, locales };
+  const warnings: string[] = [];
+
+  let inFence = false;
+
+  let bullet: "kept" | "dropped" | undefined;
+
+  for (const [index, line] of markdown.split("\n").entries()) {
+    const skip = () =>
+      warnings.push(`glossary.md:${index + 1}: skipped ${JSON.stringify(line.slice(0, 60))}`);
+
+    if (line.trimStart().startsWith("```")) {
+      if (!inFence) {
+        skip();
+      }
+
+      inFence = !inFence;
+
+      bullet = undefined;
+
+      continue;
+    }
+
+    if (inFence) {
+      continue;
+    }
+
+    const tag = LOCALE_BULLET.exec(line)?.[1];
+
+    const continuesBullet = bullet !== undefined && /^\s+\S/.test(line);
+
+    if (tag && tags.includes(tag)) {
+      bullet = tag === locale ? "kept" : "dropped";
+    } else if (!continuesBullet) {
+      bullet = undefined;
+
+      if (/^\s*(?:[-*+] |\d+[.)] |\|)|^\s+\S/.test(line)) {
+        skip();
+
+        continue;
+      }
+    }
+
+    if (bullet !== "dropped") {
+      kept.push(line);
+    }
+  }
+
+  return {
+    text: `${kept
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()}\n`,
+    warnings,
+  };
 }
 
 async function run() {
   const config = getConfig();
 
-  const { base, locales: requested } = argumentsOf(process.argv.slice(2));
+  const { values, positionals: requested } = parseArgs({
+    options: { base: { type: "string" }, out: { type: "string" } },
+    allowPositionals: true,
+  });
+
+  const { base, out } = values;
 
   const baseCommit = base ? mergeBase(base) : undefined;
 
@@ -177,6 +253,10 @@ async function run() {
   let pendingTotal = 0;
 
   let missingTotal = 0;
+
+  let glossary: string | undefined;
+
+  let glossaryWarned = false;
 
   for (const locale of locales) {
     const sections: string[] = [];
@@ -264,9 +344,41 @@ async function run() {
       sections.push(`### ${relative}\n\n${lines.join("\n")}`);
     }
 
-    if (sections.length > 0) {
-      console.log(`## ${locale}\n\n${sections.join("\n\n")}\n`);
+    if (sections.length === 0) {
+      continue;
     }
+
+    const section = `## ${locale}\n\n${sections.join("\n\n")}\n`;
+
+    if (!out) {
+      console.log(section);
+
+      continue;
+    }
+
+    const entriesPath = path.join(out, `${locale}.txt`);
+
+    const glossaryPath = path.join(out, `${locale}.glossary.md`);
+
+    glossary ??= await Bun.file(GLOSSARY_PATH).text();
+
+    const slice = sliceGlossary(glossary, locale);
+
+    if (!glossaryWarned) {
+      for (const warning of slice.warnings) {
+        console.error(`Warning: ${warning}`);
+      }
+
+      glossaryWarned = true;
+    }
+
+    await mkdir(out, { recursive: true });
+
+    await Bun.write(entriesPath, section);
+
+    await Bun.write(glossaryPath, slice.text);
+
+    console.log(`${locale}: ${entriesPath} ${glossaryPath}`);
   }
 
   if (pendingTotal === 0 && missingTotal === 0) {
@@ -274,4 +386,6 @@ async function run() {
   }
 }
 
-await run();
+if (import.meta.main) {
+  await run();
+}

@@ -13,7 +13,7 @@ You translate Meru's interface into one language. Meru is a desktop client for G
 Read, in full:
 
 1. `.claude/skills/translate/languages/<locale>.md`, your language's style sheet: address, label form, capitalization, plural categories, traps.
-2. `.claude/skills/translate/glossary.md`, the one fixed word per term for your locale.
+2. Your glossary slice, `<locale>.glossary.md` beside your entry file: `.claude/skills/translate/glossary.md` with only your locale's words, the one fixed word per term.
 
 The style sheet and the glossary win over your own preference and over what other software does. They give two kinds of word:
 
@@ -26,7 +26,7 @@ An `&` in the English marks a Windows and Linux access key. Your style sheet say
 
 ## What you are given
 
-A list of entries for your locale, from the two catalogs `packages/shared/i18n/locales/<locale>.po` and `packages/preload-gmail/locales/<locale>.po`. Each has the English `msgid`, its `msgctxt` if any, its `#.` translator comments, where in the code it comes from, and, when the English changed, the prior art: the old English and its old translation. Keep the old translation's wording wherever the English change doesn't call for a different one.
+The path of an entry file, `<locale>.txt`, listing the entries for your locale; read all of it. They come from the two catalogs `packages/shared/i18n/locales/<locale>.po` and `packages/preload-gmail/locales/<locale>.po`. Each has the English `msgid`, its `msgctxt` if any, its `#.` translator comments, where in the code it comes from, and, when the English changed, the prior art: the old English and its old translation. Keep the old translation's wording wherever the English change doesn't call for a different one.
 
 The comment and the context are what tell you what a short string is: a button, a menu item, an accessible name, a fragment of a longer sentence. When an entry is still ambiguous, read the line in the source file it comes from.
 
