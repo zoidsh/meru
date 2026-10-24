@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: es\n"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "¿Seguro que quieres eliminar este mensaje?"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru signs out of this account and clears its data from this computer, including saved tabs and bookmarks. Your Gmail account isn't affected."
+msgstr "Meru cierra la sesión de esta cuenta y borra sus datos de este ordenador, incluidos los marcadores y las pestañas guardadas. Tu cuenta de Gmail no se ve afectada."
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Add account"
+msgstr "Añadir cuenta"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Enter a color"
+msgstr "Introduce un color"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Gmail Settings"
+msgstr "Ajustes de Gmail"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Settings"
+msgstr "Ajustes…"
+
+#: packages/app/menu.ts
+msgctxt "Windows"
+msgid "Settings"
+msgstr "Configuración"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Choose Meru as the default mail client in Windows Settings."
+msgstr "Elige Meru como cliente de correo predeterminado en Configuración de Windows."
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "No se ha podido añadir la cuenta."
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Fijar"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Desfijar"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Copy link"
+msgstr "Copiar enlace"
+
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "Volver a cargar de manera forzada"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "¿Quitar {label}?"
+
+# Chrome's own label keeps eliminar.
+#: packages/renderer/routes/download-history.tsx
+msgid "Remove from history"
+msgstr "Eliminar del historial"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle}: abre los enlaces de “{appName}”"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Learn More…"
+msgstr "Más información…"
+
+#: packages/app/dialogs.ts
+msgid "OK"
+msgstr "Aceptar"
+
+#: packages/renderer/components/bookmarks.tsx
+msgid "Bookmarks"
+msgstr "Marcadores"
+
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Historial de descargas"
+
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "Historial de descargas recientes"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions"
+msgstr "Extensiones"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Close Other Tabs"
+msgstr "Cerrar las demás pestañas"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Password managers"
+msgstr "Gestores de contraseñas"
+
+#: packages/renderer/routes/settings/passkeys.tsx
+msgid "Only passkeys created in Meru work here."
+msgstr "Aquí solo funcionan las llaves de acceso creadas en Meru."
+
+#: packages/app/context-menu.ts
+msgid "Open in Default Browser"
+msgstr "Abrir en el navegador predeterminado"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "Estrechar la barra de pestañas"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Add {label} to launcher"
+msgstr "Añadir {label} al menú de aplicaciones"
+
+# Apple's own word stays in a macOS label.
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Hide Others"
+msgstr "Ocultar otras apps"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Launcher apps"
+msgstr "Aplicaciones del menú de aplicaciones"
+
+#: packages/app/tray.ts
+msgid "Turn Do Not Disturb on"
+msgstr "Activar No molestar"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart Meru to apply the changes."
+msgstr "Reinicia Meru para aplicar los cambios."
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Check for Updates…"
+msgstr "Buscar actualizaciones…"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "No trusted hosts yet. Selecting Trust all links on a host in the link prompt adds it here."
+msgstr "Aún no hay hosts de confianza. Al seleccionar Confiar en todos los enlaces de un host en el aviso de enlaces, se añade aquí."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Icono de la barra de menú"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Archivo"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Look Up “{selection}”"
+msgstr "Consultar “{selection}”"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Cu&t"
+msgstr "Cortar"
+
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Cor&tar"
+
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Paste and &Match Style"
+msgstr "Pegar con el &mismo formato"
+
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Sa&ve Image As…"
+msgstr "&Guardar imagen como…"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "Windows"
+msgid "Show Save As dialog before downloading"
+msgstr "Mostrar el cuadro de diálogo Guardar como antes de descargar"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
+msgid "Enable system tray icon"
+msgstr "Activar el icono de la bandeja del sistema"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "macOS"
+msgid "Shift"
+msgstr "Mayúsculas"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "Windows"
+msgid "Shift"
+msgstr "Mayús"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, one {# pestaña} many {# pestañas} other {# pestañas}}"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "30 minutes"
+msgstr "30 minutos"
