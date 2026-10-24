@@ -25,7 +25,7 @@ _Einstellungen_. The app-menu item with `msgctxt` `macOS` is _Einstellungen …_
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the German word, the English's letter where the German has it: `Cu&t` _&Ausschneiden_, `&Paste` _&Einfügen_. Two labels in the same menu never share a letter, so `Paste and &Match Style` takes P, _Einfügen und Format an&passen_, since _Alles &markieren_ has M. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the German word, the English's letter where the German has it: `Cu&t` _&Ausschneiden_, `&Paste` _&Einfügen_, `Select &All` _&Alles markieren_, `Paste and &Match Style` _Einfügen und For&mat anpassen_ on Windows. Where the German lacks the letter, take a free one: on Linux, _Einfügen und Stil anpassen_ has no M. Two labels in the same menu never share a letter. macOS drops the `&`.
 
 ## Plural categories
 
