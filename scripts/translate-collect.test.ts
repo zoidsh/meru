@@ -153,6 +153,19 @@ msgstr ""
   });
 });
 
+test("applyTranslations rejects a gettext plural rather than miss it", () => {
+  const plural = `${CATALOG}
+msgid "One file"
+msgid_plural "{0} files"
+msgstr[0] ""
+msgstr[1] ""
+`;
+
+  expect(applyTranslations(plural, [{ msgid: "One file", msgstr: "Eine Datei" }])).toEqual({
+    errors: ['"One file" is a gettext plural, which Lingui never writes'],
+  });
+});
+
 describe("dumpCatalogs", () => {
   test("lists every live entry under its first origin, marking the ones used in several files", async () => {
     const gmail = `${HEADER}

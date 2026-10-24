@@ -275,7 +275,7 @@ function poEntries(lines: string[]) {
   let obsolete = false;
 
   const finish = () => {
-    if (entry.id && !obsolete && entry.msgstrStart !== undefined) {
+    if (entry.id && !obsolete && (entry.plural || entry.msgstrStart !== undefined)) {
       entries.push({ plural: false, ...entry } as PoEntry);
     }
 
