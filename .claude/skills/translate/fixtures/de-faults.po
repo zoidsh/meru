@@ -1,0 +1,75 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+# fault: banned:mitteilung
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Show notifications"
+msgstr "Mitteilungen anzeigen"
+
+# fault: banned:account
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Add account"
+msgstr "Account hinzufügen"
+
+# fault: banned:sichern
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Sichern"
+
+# fault: banned:sie
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Möchten Sie diese Nachricht wirklich löschen?"
+
+# fault: banned:ellipsis-space
+#: packages/renderer/routes/settings/license.tsx
+msgid "Learn More…"
+msgstr "Weitere Infos …"
+
+# fault: banned:english-quotes
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "\"{label}\" entfernen?"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "Das Konto konnte leider nicht hinzugefügt werden."
+
+# fault: pinned:download-history
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "Letzte Downloads"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Meru Pro kaufen"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Etikett"
+
+# fault: platform-word:File
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Datei"
+
+# fault: access-key:inline
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Ausschneiden"
+
+# fault: catalog:placeholder dropped
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete {label}?"
+msgstr "Löschen?"

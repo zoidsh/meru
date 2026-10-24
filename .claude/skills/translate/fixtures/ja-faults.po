@@ -1,0 +1,95 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+# fault: banned:uindou
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Open in a new window"
+msgstr "新しいウインドウで開く"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open in browser"
+msgstr "ブラウザで開く"
+
+# fault: banned:kakuchou-kinou
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions"
+msgstr "拡張機能"
+
+# fault: banned:anata
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Your accounts"
+msgstr "あなたのアカウント"
+
+# fault: banned:full-width-marks
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "{label}を削除しますか？"
+
+# fault: banned:quotes
+#: packages/renderer/components/search.tsx
+msgid "Search “{query}”"
+msgstr "「{query}」を検索"
+
+# fault: banned:half-width-punctuation
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "アカウントを追加できませんでした."
+
+# fault: banned:latin-spacing
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Meru Pro にアップグレード"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Something went wrong."
+msgstr "申し訳ありません。問題が発生しました。"
+
+# fault: pinned:download-history
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "最近のダウンロード"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade now"
+msgstr "今すぐ購入"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "タグ"
+
+# fault: platform-word:Undo
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Undo"
+msgstr "元に戻す"
+
+# fault: access-key:suffix
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "切り取り"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Cmd"
+msgstr "command"
+
+# A catalog from before the platform split, as run 1 wrote it: one Shift for every platform.
+# fault: family:key-names
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Shift"
+msgstr "Shift"
+
+# fault: catalog:plural category unused
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, one {#個のタブ} other {#個のタブ}}"

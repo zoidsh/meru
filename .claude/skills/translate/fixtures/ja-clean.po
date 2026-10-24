@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Close Window"
+msgstr "ウインドウを閉じる"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Open in a new window"
+msgstr "新しいウィンドウで開く"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open in browser"
+msgstr "ブラウザーで開く"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions"
+msgstr "機能拡張"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Cu&t"
+msgstr "カット"
+
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "切り取り(&T)"
+
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Sa&ve Image As…"
+msgstr "名前を付けて画像を保存(&V)…"
+
+#: packages/app/context-menu.ts
+msgid "&Copy"
+msgstr "コピー(&C)"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Cmd"
+msgstr "command"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Ctrl"
+msgstr "Ctrl"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "macOS"
+msgid "Shift"
+msgstr "shift"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "Windows"
+msgid "Shift"
+msgstr "Shift"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "Linux"
+msgid "Shift"
+msgstr "Shift"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Meru Proにアップグレード"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "{label}を削除しますか?"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "アカウントを追加できませんでした。"
+
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "最近のダウンロード履歴"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, other {#個のタブ}}"
