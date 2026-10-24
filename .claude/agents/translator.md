@@ -73,4 +73,6 @@ Keep it short, in three parts:
 
    Write `Unsure: none` when there are none. A question that isn't about wording, such as how a platform behaves, goes here too.
 
-When you are continued with a fix list, from `check.ts` or the reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run `bun run i18n:check` again and reply with what you changed.
+When you are continued with a fix list, from `check.ts` or a reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run `bun run i18n:check` again and reply with what you changed.
+
+When you are continued with the path of a reviewer's findings file, `<locale>.review.json`, to apply its suggestions, your language has no human reviewer, so its doubtful and style findings are yours to settle. Apply every doubtful or style finding that carries a `suggestion`, writing it with `collect.ts --apply` as above, unless you disagree with it; leave a finding without a suggestion as it is. Reply with how many you applied, and for each you left, its msgid and why in a line, citing the style sheet or glossary where one decides it.
