@@ -1175,8 +1175,15 @@ msgstr "Enter a color"
 msgid "Enter a device label"
 msgstr "Enter a device label"
 
+#. Error under the empty Label field, which takes the exact name of a Gmail label; label is Gmail's word
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Enter a label"
+msgstr "Enter a label"
+
+#. Error under the empty Label field, which takes the name Meru shows for the saved search
 #: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
 msgid "Enter a label"
 msgstr "Enter a label"
 
