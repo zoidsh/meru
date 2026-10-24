@@ -791,7 +791,7 @@
       "msgidPattern": "\\btab strip\\b",
       "expect": "タブバー",
       "severity": "wrong",
-      "reason": "The tab strip is タブバー, as Chrome writes it (glossary, Chrome), never タブストリップ."
+      "reason": "The tab strip is タブバー, as Chrome writes it (glossary, Chrome: 10 messages, among them IDS_TAB_STRIP_BUTTON_TOOLTIP, none with タブストリップ)."
     },
     {
       "id": "meru-label",

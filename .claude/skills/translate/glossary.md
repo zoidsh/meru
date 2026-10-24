@@ -4,7 +4,7 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
-**Chrome** marks Chrome's word, read from Chromium's translations, where the user chose it over Apple's; the sidecar rule that enforces it gives Chrome's count as its source.
+**Chrome** marks Chrome's word, read from Chromium's translations; the sidecar rule that enforces it gives Chrome's count as its source.
 
 **Agent-chosen** marks a word a translating agent picked for its language's first catalog, brought into line with the house words but not yet reviewed by a speaker. Use it like any other entry; a reviewer's word replaces it. An entry that lists only some languages gets the others' words when they are added.
 
@@ -530,7 +530,7 @@ What Gmail itself shows for the things a Meru string can name, used over Apple's
 
 ### Undo, in the message-sent toast
 
-- de: Rückgängig machen (Tim's call, from Gmail's own toast; the undo send page writes _Rückgängig_; Apple's is _Widerrufen_)
+- de: Rückgängig machen (the user's call, from Gmail's own toast; the undo send page writes _Rückgängig_; Apple's is _Widerrufen_)
 - fr: Annuler (undo send)
 - it: Annulla (undo send)
 - es: Deshacer (undo send)

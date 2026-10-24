@@ -235,25 +235,25 @@
         "row": "Check for Updates…",
         "msgctxt": "macOS",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Updates suchen …"
+        "msgstr": "Nach Updates suchen\u00a0…"
       },
       {
         "row": "Check for Updates…",
         "msgctxt": "Windows",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Updates suchen …"
+        "msgstr": "Nach Updates suchen\u00a0…"
       },
       {
         "row": "Check for Updates…",
         "msgctxt": "Linux",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Aktualisierungen suchen …"
+        "msgstr": "Nach Aktualisierungen suchen\u00a0…"
       },
       {
         "row": "Settings, the app-menu item",
         "msgctxt": "macOS",
         "msgid": "Settings",
-        "msgstr": "Einstellungen …"
+        "msgstr": "Einstellungen\u00a0…"
       },
       {
         "row": "Settings, the app-menu item",
@@ -289,19 +289,19 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "macOS",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild sichern unter …"
+        "msgstr": "Bild sichern unter\u00a0…"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "Windows",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild speichern unter …"
+        "msgstr": "Bild speichern unter\u00a0…"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "Linux",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild speichern unter …"
+        "msgstr": "Bild speichern unter\u00a0…"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
