@@ -10,20 +10,20 @@ msgstr ""
 #. Accessible name of the close button on a brief notification Meru shows over Gmail
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr ""
+msgstr "お知らせを閉じる"
 
 #. Toast in the Gmail view once a message has been sent
 #: packages/preload-gmail/ipc.ts
 msgid "Message sent"
-msgstr ""
+msgstr "メールを送信しました"
 
 #. Accessible name of the region Meru's own toasts appear in
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr ""
+msgstr "お知らせ"
 
 #. Button in the message-sent toast, which recalls the message
 #: packages/preload-gmail/ipc.ts
 msgctxt "button"
 msgid "Undo"
-msgstr ""
+msgstr "取り消し"
