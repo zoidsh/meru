@@ -58,6 +58,11 @@ msgstr "Das Konto konnte leider nicht hinzugefügt werden."
 msgid "Download history"
 msgstr "Download-Verlauf"
 
+# fault: pinned:download-history
+#: packages/renderer/recent-download-history.tsx
+msgid "Full download history"
+msgstr "Alle Downloads"
+
 # fault: pinned:recent-downloads
 #: packages/renderer/recent-download-history.tsx
 msgid "Recent download history"

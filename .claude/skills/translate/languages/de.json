@@ -616,10 +616,10 @@
   "pinned": [
     {
       "id": "download-history",
-      "msgid": "Download history",
-      "expect": "^Downloadverlauf$",
+      "msgidPattern": "(?<!recent )\\bdownload history\\b",
+      "expect": "Downloadverlauf",
       "severity": "wrong",
-      "reason": "The download history page is Downloadverlauf (glossary)."
+      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history (glossary)."
     },
     {
       "id": "recent-downloads",
