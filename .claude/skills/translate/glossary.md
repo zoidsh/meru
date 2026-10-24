@@ -398,7 +398,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
 ## Download history
 
-- de: Downloadverlauf (Apple's _Download_)
+- de: Downloadverlauf for the page, _Download history_, alone (Apple's _Download_); the recent download history popup is _Letzte Downloads_ (_Letzte Downloads anzeigen_), never _Aktueller Downloadverlauf_
 - fr: historique des téléchargements (Apple's _Télécharger_)
 - it: cronologia dei download (Apple's _download_)
 - es: historial de descargas (Apple's _Descargar_)

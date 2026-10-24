@@ -235,25 +235,25 @@
         "row": "Check for Updates…",
         "msgctxt": "macOS",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Updates suchen\u00a0…"
+        "msgstr": "Nach Updates suchen …"
       },
       {
         "row": "Check for Updates…",
         "msgctxt": "Windows",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Updates suchen\u00a0…"
+        "msgstr": "Nach Updates suchen …"
       },
       {
         "row": "Check for Updates…",
         "msgctxt": "Linux",
         "msgid": "Check for Updates…",
-        "msgstr": "Nach Aktualisierungen suchen\u00a0…"
+        "msgstr": "Nach Aktualisierungen suchen …"
       },
       {
         "row": "Settings, the app-menu item",
         "msgctxt": "macOS",
         "msgid": "Settings",
-        "msgstr": "Einstellungen\u00a0…"
+        "msgstr": "Einstellungen …"
       },
       {
         "row": "Settings, the app-menu item",
@@ -289,19 +289,19 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "macOS",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild sichern unter\u00a0…"
+        "msgstr": "Bild sichern unter …"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "Windows",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild speichern unter\u00a0…"
+        "msgstr": "Bild speichern unter …"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "msgctxt": "Linux",
         "msgid": "Sa&ve Image As…",
-        "msgstr": "Bild speichern unter\u00a0…"
+        "msgstr": "Bild speichern unter …"
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
@@ -595,6 +595,12 @@
       "reason": "An ellipsis follows a no-break space (U+00A0): Einstellungen …"
     },
     {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}]) (?=(?:Sekunden?|Minuten?|Stunden?|Tag(?:e|en)?|Wochen?|Monat(?:e|en)?|Jahr(?:e|en)?|[kKMGT]B)(?!\\p{L}))",
+      "severity": "style",
+      "reason": "A number and its unit are joined by a no-break space (U+00A0), as Chrome writes them: 5 Minuten, # Tage."
+    },
+    {
       "id": "english-quotes",
       "pattern": "[\"”]",
       "severity": "wrong",
@@ -610,10 +616,17 @@
   "pinned": [
     {
       "id": "download-history",
-      "msgidPattern": "\\bdownload history\\b",
-      "expect": "Downloadverlauf",
+      "msgid": "Download history",
+      "expect": "^Downloadverlauf$",
       "severity": "wrong",
-      "reason": "The download history is Downloadverlauf (glossary)."
+      "reason": "The download history page is Downloadverlauf (glossary)."
+    },
+    {
+      "id": "recent-downloads",
+      "msgidPattern": "\\brecent download history\\b",
+      "expect": "Letzte Downloads",
+      "severity": "doubtful",
+      "reason": "The recent download history popup is Letzte Downloads, as in Letzte Downloads anzeigen (glossary), never Aktueller Downloadverlauf."
     },
     {
       "id": "upgrade",

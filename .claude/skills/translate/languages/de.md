@@ -41,6 +41,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro, never inflected inside the word
 - **Gendered forms.** Address with _du_ avoids most of them; where a person is described, rewrite around the gender.
 - **House words.** _Benachrichtigung_, never _Mitteilung_, for a notification. _Konto_, plural _Konten_, never _Account_, for an account. _Speichern_, never _Sichern_, for keeping something; _Sichern_ is only Apple's word in a `macOS` label such as _Sichern unter …_. _Schaltfläche_ for an on-screen button, such as the bookmarks button: _Lesezeichen-Schaltfläche_. A standalone _Taste_ reads as a keyboard key and means only that, as in the key names _Umschalttaste_ and _Control-Taste_.
 - English quotation marks become „…“ (U+201E, U+201C).
+- **Numbers and units.** A no-break space (U+00A0) joins a number to its unit, as Chrome writes it, so the two never break apart: _5 Minuten_, _30 Tage_, and in a plural _# Tage_.
 
 ## Error messages
 
