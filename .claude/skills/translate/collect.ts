@@ -233,6 +233,16 @@ type PoEntry = {
   msgstrEnd: number;
 };
 
+function append<K, V>(map: Map<K, V[]>, key: K, value: V) {
+  const values = map.get(key);
+
+  if (values) {
+    values.push(value);
+  } else {
+    map.set(key, [value]);
+  }
+}
+
 function entryKey(context: string | undefined, id: string) {
   return JSON.stringify([context ?? null, id]);
 }
@@ -340,7 +350,7 @@ export function applyTranslations(text: string, translations: Translation[]) {
   for (const entry of entries) {
     const key = entryKey(entry.context, entry.id);
 
-    byKey.set(key, [...(byKey.get(key) ?? []), entry]);
+    append(byKey, key, entry);
   }
 
   const errors: string[] = [];
@@ -464,7 +474,7 @@ function translationsOf(json: unknown, catalogNames: string[]) {
 
     const { msgctxt, msgid, msgstr } = record as Translation;
 
-    byCatalog.set(catalog, [...(byCatalog.get(catalog) ?? []), { msgctxt, msgid, msgstr }]);
+    append(byCatalog, catalog, { msgctxt, msgid, msgstr });
   }
 
   return { errors, byCatalog };
@@ -563,12 +573,11 @@ export function dumpCatalogs(
         origins.join(", "),
       ];
 
-      const group = origins[0] ?? "(no origin)";
-
-      groups.set(group, [
-        ...(groups.get(group) ?? []),
+      append(
+        groups,
+        origins[0] ?? "(no origin)",
         `${multi ? "[multi] " : ""}${columns.join(" | ")}`,
-      ]);
+      );
 
       total++;
 
