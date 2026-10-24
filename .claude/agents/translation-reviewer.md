@@ -20,7 +20,7 @@ Paths, from the `/translate` skill:
 
 ## Before you review
 
-Read the style sheet, the sidecar and the glossary slice in full. Then read the `check.ts` report: each finding there is already found. Confirm or dismiss each one, giving the reason for a dismissal, such as an allowlisted compound the sidecar misses, and never repeat a confirmed one in your findings.
+Read the style sheet, the sidecar and the glossary slice in full. Then read the `check.ts` report: each finding there is already found. Confirm or dismiss each one, giving the reason for a dismissal, such as an allowlisted compound the sidecar misses, and never repeat a confirmed one in your findings. That holds per finding, not per entry: a different problem in an entry `check.ts` flagged is still a finding of yours.
 
 Then read the dump in batches, one `###` origin heading at a time, using `Read` with an offset and limit rather than the whole file at once. Review every entry of the entry file in full, against the checklist. Read the rest of the dump for consistency: an older entry can show that a new one picked a different word for the same English, or settle which of two words the catalog already uses. A problem you find in an older entry is a finding too.
 

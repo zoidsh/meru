@@ -53,7 +53,7 @@ Then spawn one `translation-reviewer` for that locale. Its prompt carries the lo
 Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the fix loop; `doubtful` and `style` go to the report as the review set a person reads.
 
 - A reviewer whose reply ends `PASS: <tag>` and whose `check.ts` report has no `wrong` finding it left standing closes that locale.
-- Otherwise, build one fix list: the `check.ts` findings of severity `wrong` the reviewer didn't dismiss, plus the `wrong` findings in `<tag>.review.json`, each with its msgid, msgctxt, catalog, reason and suggestion. Continue the same translator with `SendMessage` to its agent ID, passing the list, so it keeps its context. Then run `check.ts` again into the same file, and continue the same reviewer with `SendMessage` to re-review only the entries on the list, naming the new report.
+- Otherwise, build one fix list: the `check.ts` findings of severity `wrong` the reviewer didn't dismiss, plus the `wrong` findings in `<tag>.review.json`, each with its msgid, msgctxt, catalog, reason and suggestion. `check.ts` gives `catalog` as the PO file's path, so write it as the name `--apply` takes: `app` for `packages/shared/i18n/locales/<tag>.po`, `preload-gmail` for `packages/preload-gmail/locales/<tag>.po`. Continue the same translator with `SendMessage` to its agent ID, passing the list, so it keeps its context. Then run `check.ts` again into the same file, and continue the same reviewer with `SendMessage` to re-review only the entries on the list, naming the new report.
 - Stop after two rounds of fixes. A `wrong` finding still open then goes to the report, with the reviewer's text and the translator's answer; it is never forced through by editing the catalog yourself.
 - A `check.ts` finding the reviewer dismissed goes to the report with the reviewer's reason, since a false positive points at a sidecar rule to fix.
 
@@ -74,7 +74,7 @@ bunx lingui compile --strict
 bun .claude/skills/translate/check.ts --locale <tag>
 ```
 
-The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale, and so does a `wrong` finding from `check.ts`, which fails the run the same way: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry. A `check.ts` exit of 2 is a crash; report it, never retry it.
+The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale, and so does a `wrong` finding from `check.ts`, which fails the run the same way: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry. A `check.ts` exit of 2 is a crash; report it, never retry it. Two `wrong` findings from `check.ts` don't go to a translator: one the reviewer dismissed in step 4 doesn't fail the run and stays in the report's dismissed list, since it points at a sidecar rule to fix; one in a locale no translator worked on this run goes straight to the report.
 
 ## 6. Report
 
