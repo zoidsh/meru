@@ -3,9 +3,9 @@
  * it asks for, and the `lang` every renderer page carries at first paint.
  *
  * Seeded with `"system"` rather than the `"en"` every other launch takes, so
- * that picking English is a change the config has to record. English is the
- * only catalog this build ships, so the system resolution lands there too and
- * nothing here depends on the machine's own languages.
+ * that picking English is a change the config has to record. The system
+ * resolution lands on English on a machine set to English, as CI's runners
+ * are, and the `lang` checks below expect it there.
  */
 import { expect, type Page, test } from "@playwright/test";
 import { useApp } from "./lib/app";
