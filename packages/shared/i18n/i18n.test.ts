@@ -23,7 +23,7 @@ function translate(message: string, values?: Record<string, unknown>) {
   return i18n._(generateMessageId(message), values, { message });
 }
 
-/** `activateLocale` with a catalog made here, since only English is compiled. */
+/** `activateLocale` with a catalog made here, whatever this build compiles. */
 function activateFixtureCatalog(locale: string, translations: Record<string, string>) {
   i18n.loadAndActivate({
     locale,
@@ -83,7 +83,7 @@ describe("resolveLocale", () => {
   });
 
   test("falls back to English for a language this build does not ship", () => {
-    expect(resolveLocale(["de-DE", "fr-FR"], SHIPPED_CATALOG_TAGS)).toBe("en");
+    expect(resolveLocale(["de-DE", "fr-FR"], ["en"])).toBe("en");
   });
 
   test("names every catalog", () => {
@@ -123,12 +123,19 @@ describe("activateLocale", () => {
     }
   });
 
-  test("activates English, plural rules included, for a tag whose catalog is not in this build", () => {
-    activateLocale("de");
+  // `activateLocale` reads the compiled catalogs, not a list it is passed, so
+  // the example is any tag this build doesn't ship.
+  const unshippedTag = CATALOG_TAGS.find((tag) => !SHIPPED_CATALOG_TAGS.includes(tag));
 
-    expect(i18n.locale).toBe("en");
-    expect(translate("Settings")).toBe("Settings");
-  });
+  test.skipIf(unshippedTag === undefined)(
+    "activates English, plural rules included, for a tag whose catalog is not in this build",
+    () => {
+      activateLocale(unshippedTag as CatalogTag);
+
+      expect(i18n.locale).toBe("en");
+      expect(translate("Settings")).toBe("Settings");
+    },
+  );
 });
 
 describe("catalogs", () => {
