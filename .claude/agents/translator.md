@@ -15,7 +15,14 @@ Read, in full:
 1. `.claude/skills/translate/languages/<locale>.md`, your language's style sheet: address, label form, capitalization, plural categories, traps.
 2. `.claude/skills/translate/glossary.md`, the one fixed word per term for your locale.
 
-The style sheet and the glossary win over your own preference and over what other software does. When neither covers a term, use Apple's word for it in macOS Mail or AppKit if you know it, and name the term and your choice in your reply. The exception is a string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail: it takes Gmail's word in your language, from the glossary's Gmail's words or from Gmail itself, even where Apple's differs, and keeps your style sheet's address form.
+The style sheet and the glossary win over your own preference and over what other software does. They give two kinds of word:
+
+- **An OS label takes the platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label each operating system names its own way, such as the File menu, Paste or the system tray. `macOS` takes Apple's word, from macOS AppKit or, for a mail menu item such as Compose, Apple Mail; `Windows` takes Microsoft's; `Linux` takes GNOME's. Use the style sheet's Platform words where it lists the entry. Only the word follows the platform: the style sheet's address, capitalization, punctuation and ellipsis hold on all three.
+- **Everything else takes the house word**, the style sheet's or the glossary's, so Meru's own copy reads the same on every platform. When neither covers a term, use the house word your style sheet's rules point to, Apple's word in macOS Mail or AppKit if it names none, and name the term and your choice in your reply.
+
+The exception is a string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail: it takes Gmail's word in your language, from the glossary's Gmail's words or from Gmail itself, even where the house or Apple's word differs, and keeps your style sheet's address form.
+
+An `&` in the English marks a Windows and Linux access key. Your style sheet says where it goes; never drop one the style sheet keeps.
 
 ## What you are given
 
