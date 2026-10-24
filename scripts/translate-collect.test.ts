@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { formatter } from "@lingui/format-po";
-import { applyTranslations, sliceGlossary } from "../.claude/skills/translate/collect";
+import {
+  applyTranslations,
+  type Catalog,
+  dumpCatalogs,
+  sliceGlossary,
+} from "../.claude/skills/translate/collect";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -145,6 +150,56 @@ msgstr ""
         '"Notifications" is given more than once',
       ],
     });
+  });
+});
+
+describe("dumpCatalogs", () => {
+  test("lists every live entry under its first origin, marking the ones used in several files", async () => {
+    const gmail = `${HEADER}
+#. Toast in the Gmail view once a message has been sent
+#: packages/preload-gmail/ipc.ts
+msgid "Message sent"
+msgstr "Nachricht gesendet"
+`;
+
+    const parse = async (text: string) => (await po.parse(text, context)) as Catalog;
+
+    const { text, total, multiOrigin } = dumpCatalogs("de", [
+      { name: "app", relative: "app/de.po", catalog: await parse(CATALOG) },
+      { name: "preload-gmail", relative: "gmail/de.po", catalog: await parse(gmail) },
+    ]);
+
+    expect(text).toBe(`# de: every entry, grouped by the file it comes from
+
+Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[multi]" marks an entry used in more than one file, listed under the first.
+
+## app: app/de.po
+
+### packages/app/dialogs.ts
+
+- | "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later." | "" |  | packages/app/dialogs.ts
+
+### packages/app/menu.ts
+
+"macOS" | "Settings" | "" | App menu item that opens the settings window | packages/app/menu.ts
+"Windows" | "Settings" | "" | App menu item that opens the settings window | packages/app/menu.ts
+
+### packages/app/settings.ts
+
+[multi] - | "Settings" | "" | Title of the settings window | packages/app/settings.ts, packages/renderer/routes/settings.tsx
+
+### packages/app/toast.ts
+
+- | "Notifications" | "Hinweise" (fuzzy) | Accessible name of the region Meru's own toasts appear in | packages/app/toast.ts
+
+## preload-gmail: gmail/de.po
+
+### packages/preload-gmail/ipc.ts
+
+- | "Message sent" | "Nachricht gesendet" | Toast in the Gmail view once a message has been sent | packages/preload-gmail/ipc.ts
+`);
+
+    expect({ total, multiOrigin }).toEqual({ total: 6, multiOrigin: 1 });
   });
 });
 

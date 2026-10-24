@@ -15,7 +15,9 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  *
  * With `--out <dir>`, each locale's list goes to `<dir>/<tag>.txt` instead,
  * with that locale's slice of the glossary beside it, so an agent reads one
- * language rather than every one.
+ * language rather than every one. `<tag> --apply <json>` writes translations
+ * into a locale's catalogs, and `--dump <tag> --out <dir>` writes its whole
+ * catalog for review.
  */
 
 type Entry = {
@@ -28,7 +30,7 @@ type Entry = {
   extra?: { flags?: string[] };
 };
 
-type Catalog = Record<string, Entry>;
+export type Catalog = Record<string, Entry>;
 
 type PriorArt = { source: string; translation: string; match: string };
 
@@ -522,6 +524,93 @@ async function apply(config: LinguiConfigNormalized, jsonPath: string, locales: 
   }
 }
 
+/*
+ * Every live entry of a locale side by side with its English, grouped by the
+ * file it comes from so a reviewer reads a screen's strings together. An entry
+ * used in several files is listed once, under the first, and marked, since its
+ * one translation has to fit every place.
+ */
+export function dumpCatalogs(
+  locale: string,
+  catalogs: { name: string; relative: string; catalog: Catalog }[],
+) {
+  const sections = [
+    `# ${locale}: every entry, grouped by the file it comes from`,
+    'Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[multi]" marks an entry used in more than one file, listed under the first.',
+  ];
+
+  let total = 0;
+
+  let multiOrigin = 0;
+
+  for (const { name, relative, catalog } of catalogs) {
+    const groups = new Map<string, string[]>();
+
+    for (const [id, entry] of Object.entries(catalog)) {
+      if (entry.obsolete) {
+        continue;
+      }
+
+      const origins = [...new Set((entry.origin ?? []).map(([origin]) => origin))];
+
+      const multi = origins.length > 1;
+
+      const columns = [
+        entry.context === undefined ? "-" : JSON.stringify(entry.context),
+        JSON.stringify(entry.message ?? id),
+        `${JSON.stringify(entry.translation ?? "")}${entry.extra?.flags?.includes("fuzzy") ? " (fuzzy)" : ""}`,
+        (entry.comments ?? []).join(" / "),
+        origins.join(", "),
+      ];
+
+      const group = origins[0] ?? "(no origin)";
+
+      groups.set(group, [
+        ...(groups.get(group) ?? []),
+        `${multi ? "[multi] " : ""}${columns.join(" | ")}`,
+      ]);
+
+      total++;
+
+      if (multi) {
+        multiOrigin++;
+      }
+    }
+
+    sections.push(`## ${name}: ${relative}`);
+
+    for (const [origin, lines] of [...groups].sort(([a], [b]) => a.localeCompare(b))) {
+      sections.push(`### ${origin}\n\n${lines.join("\n")}`);
+    }
+  }
+
+  return { text: `${sections.join("\n\n")}\n`, total, multiOrigin };
+}
+
+async function dump(config: LinguiConfigNormalized, locale: string, out: string | undefined) {
+  if (!out || !config.locales.includes(locale)) {
+    throw new Error(`--dump takes a locale, one of ${config.locales.join(", ")}, and --out <dir>.`);
+  }
+
+  const catalogs = await Promise.all(
+    catalogFiles(config, locale).map(async ({ name, absolute, relative }) => ({
+      name,
+      relative,
+      catalog: await parse(await Bun.file(absolute).text(), locale, config.sourceLocale, relative),
+    })),
+  );
+
+  const { text, total, multiOrigin } = dumpCatalogs(locale, catalogs);
+
+  const dumpPath = path.join(out, `${locale}.dump.txt`);
+
+  await mkdir(out, { recursive: true });
+
+  await Bun.write(dumpPath, text);
+
+  console.log(`${dumpPath}: ${total} entries, ${multiOrigin} used in more than one file`);
+}
+
 async function collect(
   config: LinguiConfigNormalized,
   { base, out }: { base?: string; out?: string },
@@ -684,12 +773,23 @@ async function run() {
   const config = getConfig();
 
   const { values, positionals } = parseArgs({
-    options: { base: { type: "string" }, out: { type: "string" }, apply: { type: "string" } },
+    options: {
+      base: { type: "string" },
+      out: { type: "string" },
+      apply: { type: "string" },
+      dump: { type: "string" },
+    },
     allowPositionals: true,
   });
 
   if (values.apply) {
     await apply(config, values.apply, positionals);
+
+    return;
+  }
+
+  if (values.dump) {
+    await dump(config, values.dump, values.out);
 
     return;
   }
