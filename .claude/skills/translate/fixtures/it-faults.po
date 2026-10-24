@@ -1,0 +1,229 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: it\n"
+
+# fault: banned:pannello
+#: packages/app/menu.ts
+msgid "Close Tab"
+msgstr "Chiudi pannello"
+
+# fault: banned:segnalibro
+# fault: pinned:bookmark
+#: packages/renderer/components/bookmarks.tsx
+msgid "No bookmarks yet"
+msgstr "Nessun segnalibro"
+
+# fault: banned:e-mail
+#: packages/renderer/routes/settings/general.tsx
+msgid "New emails"
+msgstr "Nuove e-mail"
+
+# fault: banned:cliccare
+#: packages/renderer/routes/settings/general.tsx
+msgid "Click one to bring its window forward."
+msgstr "Clicca su una per portare la sua finestra in primo piano."
+
+# fault: banned:accounts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Manage Accounts"
+msgstr "Gestisci accounts"
+
+# fault: banned:ellipsis
+#: packages/renderer/routes/settings/general.tsx
+msgid "Learn More…"
+msgstr "Scopri di più..."
+
+# fault: banned:quotes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Delete “{label}”?"
+msgstr "Eliminare \"{label}\"?"
+
+# fault: banned:apostrophe
+#: packages/renderer/routes/settings/general.tsx
+msgid "Add to the account"
+msgstr "Aggiungi all'account"
+
+# fault: banned:lei
+#: packages/renderer/routes/settings/general.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Conferma di voler eliminare il Suo messaggio?"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/general.tsx
+msgid "Couldn't add the account."
+msgstr "Spiacenti, impossibile aggiungere l’account."
+
+# fault: pinned:download-history
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Storico dei download"
+
+# fault: pinned:download-history
+#: packages/renderer/components/downloads.tsx
+msgid "Full download history"
+msgstr "Tutti i download"
+
+# fault: pinned:recent-downloads
+#: packages/renderer/components/downloads.tsx
+msgid "Recent download history"
+msgstr "Ultimi download"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Contrassegno"
+
+# fault: banned:tabstrip
+# fault: pinned:tab-strip
+#: packages/renderer/routes/settings/general.tsx
+msgid "Narrow the tab strip"
+msgstr "Restringi la tabstrip"
+
+# fault: pinned:default-browser
+#: packages/app/context-menu.ts
+msgid "Open in Default Browser"
+msgstr "Apri nel browser principale"
+
+# fault: pinned:password-manager
+#: packages/renderer/routes/settings/general.tsx
+msgid "Password managers"
+msgstr "Gestori di password"
+
+# fault: pinned:passkey
+#: packages/renderer/routes/settings/general.tsx
+msgid "Only passkeys created in Meru work here."
+msgstr "Qui funzionano solo le chiavi di accesso create in Meru."
+
+# fault: pinned:update
+#: packages/renderer/routes/settings/general.tsx
+msgid "Updates"
+msgstr "Novità"
+
+# fault: pinned:restart
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart now"
+msgstr "Rilancia ora"
+
+# fault: pinned:reload
+#: packages/app/menu.ts
+msgid "Reload"
+msgstr "Aggiorna"
+
+# fault: pinned:verification-code
+#: packages/renderer/routes/settings/general.tsx
+msgid "Copied verification code {verificationCode}"
+msgstr "Codice di conferma {verificationCode} copiato"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "Host affidabili"
+
+# fault: pinned:developer-tools
+#: packages/app/menu.ts
+msgid "Developer Tools"
+msgstr "Strumenti di sviluppo"
+
+# fault: pinned:learn-more
+#: packages/renderer/routes/settings/general.tsx
+msgid "Learn more"
+msgstr "Ulteriori informazioni"
+
+# fault: pinned:pin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Blocca"
+
+# fault: pinned:unpin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Sblocca"
+
+# fault: pinned:extension
+#: packages/renderer/routes/settings/general.tsx
+msgid "Enable extensions"
+msgstr "Attiva i componenti aggiuntivi"
+
+# fault: pinned:clipboard
+#: packages/renderer/routes/settings/general.tsx
+msgid "Copy the code to your clipboard."
+msgstr "Copia il codice."
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/routes/settings/general.tsx
+msgid "Do Not Disturb"
+msgstr "Modalità silenziosa"
+
+# fault: pinned:button
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show bookmarks button"
+msgstr "Mostra il tasto dei preferiti"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/general.tsx
+msgid "Menu bar icon"
+msgstr "Icona nella barra di stato"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Versione di aggiornamento"
+
+# Apple's word on Windows, where Microsoft's is Visualizza.
+# fault: platform-word:View
+#: packages/app/menu.ts
+msgctxt "Windows"
+msgid "View"
+msgstr "Vista"
+
+# fault: access-key:inline
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Taglia"
+
+# fault: catalog:placeholder dropped
+#: packages/renderer/routes/settings/general.tsx
+msgid "Delete {label}?"
+msgstr "Eliminare?"
+
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "Incolla e adegua lo &stile"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Sa&ve Image As…"
+msgstr "Salva immagine col nome…"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Look Up “{selection}”"
+msgstr "Cerca info su “{selection}”"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "Windows"
+msgid "Show Save As dialog before downloading"
+msgstr "Mostra la finestra “Salva con nome” prima di scaricare"
+
+#: packages/app/context-menu.ts
+msgid "Copy Email Address"
+msgstr "Copia indirizzo email"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Signed in as {accounts}"
+msgstr "Accesso eseguito come {accounts}"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Hide the side panel"
+msgstr "Nascondi il pannello laterale"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show recent download history"
+msgstr "Mostra la cronologia dei download recenti"
