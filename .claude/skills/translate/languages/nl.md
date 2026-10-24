@@ -47,3 +47,7 @@ From Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuComm
 - Close Tab _Sluit tabblad_, Close Other Tabs _Sluit andere tabbladen_, Close Window _Sluit venster_, Pin Tab _Maak tabblad vast_, Show Sidebar _Toon navigatiekolom_, Minimize _Minimaliseer_, Copy Link _Kopieer link_, Mark as Read _Markeer als gelezen_, Add Account… _Voeg account toe…_, Quit Mail _Stop Mail_
 - _Weet je zeker dat je dit bericht wilt verwijderen?_ (Are you sure you want to delete this message?)
 - _Je kunt bijlagen pas slepen nadat ze zijn gedownload. Wil je deze bijlage downloaden?_
+
+## Platform words
+
+Not yet written. This table, laid out as `de.md`'s, and `nl.json` beside this sheet, which holds the same words by `msgctxt` and `msgid` with the banned words, pinned terms and access-key style that `check.ts` reads, are filled when the language is added.

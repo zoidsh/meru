@@ -1,0 +1,825 @@
+{
+  "platformWords": {
+    "severity": "wrong",
+    "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
+    "entries": [
+      {
+        "row": "File",
+        "msgctxt": "macOS",
+        "msgid": "File",
+        "msgstr": "ファイル"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Windows",
+        "msgid": "File",
+        "msgstr": "ファイル"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Linux",
+        "msgid": "File",
+        "msgstr": "ファイル"
+      },
+      {
+        "row": "View",
+        "msgctxt": "macOS",
+        "msgid": "View",
+        "msgstr": "表示"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Windows",
+        "msgid": "View",
+        "msgstr": "表示"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Linux",
+        "msgid": "View",
+        "msgstr": "表示"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "macOS",
+        "msgid": "Undo",
+        "msgstr": "取り消す"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Windows",
+        "msgid": "Undo",
+        "msgstr": "元に戻す"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Linux",
+        "msgid": "Undo",
+        "msgstr": "元に戻す"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "macOS",
+        "msgid": "Redo",
+        "msgstr": "やり直す"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Windows",
+        "msgid": "Redo",
+        "msgstr": "やり直し"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Linux",
+        "msgid": "Redo",
+        "msgstr": "やり直す"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cut",
+        "msgstr": "カット"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cut",
+        "msgstr": "切り取り"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cut",
+        "msgstr": "切り取り"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cu&t",
+        "msgstr": "カット"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cu&t",
+        "msgstr": "切り取り"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cu&t",
+        "msgstr": "切り取り"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "Paste",
+        "msgstr": "ペースト"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "Paste",
+        "msgstr": "貼り付け"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "Paste",
+        "msgstr": "貼り付け"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste",
+        "msgstr": "ペースト"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste",
+        "msgstr": "貼り付け"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste",
+        "msgstr": "貼り付け"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and Match Style",
+        "msgstr": "ペーストしてスタイルを合わせる"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and Match Style",
+        "msgstr": "貼り付けて書式を合わせる"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and Match Style",
+        "msgstr": "貼り付けてスタイルを合わせる"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "ペーストしてスタイルを合わせる"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "貼り付けて書式を合わせる"
+      },
+      {
+        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste And Match Style",
+        "msgstr": "貼り付けてスタイルを合わせる"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "macOS",
+        "msgid": "Select All",
+        "msgstr": "すべてを選択"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select All",
+        "msgstr": "すべて選択"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select All",
+        "msgstr": "すべて選択"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select &All",
+        "msgstr": "すべて選択"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select &All",
+        "msgstr": "すべて選択"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "macOS",
+        "msgid": "About {appName}",
+        "msgstr": "{appName}について"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Windows",
+        "msgid": "About {appName}",
+        "msgstr": "{appName}のバージョン情報"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Linux",
+        "msgid": "About {appName}",
+        "msgstr": "{appName}について"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "macOS",
+        "msgid": "Check for Updates…",
+        "msgstr": "アップデートを確認…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Windows",
+        "msgid": "Check for Updates…",
+        "msgstr": "更新プログラムの確認…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Linux",
+        "msgid": "Check for Updates…",
+        "msgstr": "更新を確認…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "macOS",
+        "msgid": "Settings",
+        "msgstr": "設定…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Windows",
+        "msgid": "Settings",
+        "msgstr": "設定"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Linux",
+        "msgid": "Settings",
+        "msgstr": "設定"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "macOS",
+        "msgid": "Compose",
+        "msgstr": "新規メッセージ"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Windows",
+        "msgid": "Compose",
+        "msgstr": "新しいメール"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Linux",
+        "msgid": "Compose",
+        "msgstr": "新しいメール"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "画像を別名で保存…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "名前を付けて画像を保存…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "名前を付けて画像を保存…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "別名で保存"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "名前を付けて保存"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "名前を付けて保存"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "Export",
+        "msgstr": "書き出す"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "Export",
+        "msgstr": "エクスポート"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "Export",
+        "msgstr": "エクスポート"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "macOS",
+        "msgid": "Shift",
+        "msgstr": "shift"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Windows",
+        "msgid": "Shift",
+        "msgstr": "Shift"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Linux",
+        "msgid": "Shift",
+        "msgstr": "Shift"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Show Meru",
+        "msgstr": "Meruを表示"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Show Meru",
+        "msgstr": "Meruを表示"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Show Meru",
+        "msgstr": "Meruを表示"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Hide Meru",
+        "msgstr": "Meruを非表示"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Hide Meru",
+        "msgstr": "Meruを非表示"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Hide Meru",
+        "msgstr": "Meruを隠す"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Enable system tray icon",
+        "contains": "通知領域"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Enable system tray icon",
+        "contains": "システムトレイ"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "System tray icon",
+        "contains": "通知領域"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "System tray icon",
+        "contains": "システムトレイ"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "通知領域"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "システムトレイ"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "通知領域"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "システムトレイ"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "通知領域"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "システムトレイ"
+      },
+      {
+        "row": "Hide {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Hide {appName}",
+        "msgstr": "{appName}を非表示"
+      },
+      {
+        "row": "Hide Others",
+        "msgctxt": "macOS",
+        "msgid": "Hide Others",
+        "msgstr": "ほかを非表示"
+      },
+      {
+        "row": "Show All",
+        "msgctxt": "macOS",
+        "msgid": "Show All",
+        "msgstr": "すべてを表示"
+      },
+      {
+        "row": "Close Window",
+        "msgctxt": "macOS",
+        "msgid": "Close Window",
+        "msgstr": "ウインドウを閉じる"
+      },
+      {
+        "row": "Window, the menu",
+        "msgctxt": "macOS",
+        "msgid": "Window",
+        "msgstr": "ウインドウ"
+      },
+      {
+        "row": "Minimize",
+        "msgctxt": "macOS",
+        "msgid": "Minimize",
+        "msgstr": "しまう"
+      },
+      {
+        "row": "Zoom, the window",
+        "msgctxt": "macOS",
+        "msgid": "Zoom",
+        "msgstr": "拡大/縮小"
+      },
+      {
+        "row": "Bring All to Front",
+        "msgctxt": "macOS",
+        "msgid": "Bring All to Front",
+        "msgstr": "すべてを手前に移動"
+      },
+      {
+        "row": "Speech",
+        "msgctxt": "macOS",
+        "msgid": "Speech",
+        "msgstr": "スピーチ"
+      },
+      {
+        "row": "Start Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Start Speaking",
+        "msgstr": "読み上げを開始"
+      },
+      {
+        "row": "Stop Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Stop Speaking",
+        "msgstr": "読み上げを停止"
+      },
+      {
+        "row": "Look Up “{selection}”",
+        "msgctxt": "macOS",
+        "msgid": "Look Up “{selection}”",
+        "msgstr": "“{selection}”を調べる"
+      },
+      {
+        "row": "Show in Finder",
+        "msgctxt": "macOS",
+        "msgid": "Show in Finder",
+        "msgstr": "Finderに表示"
+      }
+    ]
+  },
+  "banned": [
+    {
+      "id": "uindou",
+      "pattern": "ウインドウ",
+      "severity": "wrong",
+      "reason": "A window is ウィンドウ in Meru's own copy; ウインドウ is Apple's spelling, for a macOS label only.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "long-vowel",
+      "pattern": "(?:ブラウザ|フォルダ|ユーザ|マネージャ|コンピュータ|エディタ|プロバイダ|デベロッパ|サーバ|プリンタ|ドライバ|スキャナ|ヘッダ|ビューア|プレーヤ|パラメータ|アダプタ|コントローラ)(?!ー)",
+      "severity": "wrong",
+      "reason": "A word ending in a long vowel keeps its ー in Meru's own copy: ブラウザー, フォルダー, ユーザー; a macOS label spells it as Apple does.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "kakuchou-kinou",
+      "pattern": "拡張機能",
+      "severity": "wrong",
+      "reason": "An extension is 機能拡張, never 拡張機能."
+    },
+    {
+      "id": "anata",
+      "pattern": "あなた",
+      "severity": "wrong",
+      "reason": "No pronoun for the user: never あなた."
+    },
+    {
+      "id": "full-width-marks",
+      "pattern": "[？！]",
+      "severity": "wrong",
+      "reason": "A question or exclamation mark is the half-width ? or !."
+    },
+    {
+      "id": "quotes",
+      "pattern": "[「」『』\"]",
+      "severity": "wrong",
+      "reason": "Quotation marks are “” (U+201C, U+201D), never 「」 or straight quotes."
+    },
+    {
+      "id": "half-width-punctuation",
+      "pattern": "(?<=[\\p{sc=Hiragana}\\p{sc=Katakana}\\p{sc=Han}ー])[,.]",
+      "severity": "wrong",
+      "reason": "The comma is 、 and the full stop 。 in Japanese text."
+    },
+    {
+      "id": "latin-spacing",
+      "pattern": "(?<=[\\p{sc=Hiragana}\\p{sc=Katakana}\\p{sc=Han}ー、。]) (?=[\\p{sc=Latin}\\p{N}{<])|(?<=[\\p{sc=Latin}\\p{N}}>]) (?=[\\p{sc=Hiragana}\\p{sc=Katakana}\\p{sc=Han}ー])",
+      "severity": "wrong",
+      "reason": "No space around Latin text, numbers or placeholders: Meru Proにアップグレード."
+    },
+    {
+      "id": "apology",
+      "pattern": "すみません|申し訳ありません",
+      "severity": "style",
+      "reason": "Say what happened, without すみません or 申し訳ありません."
+    }
+  ],
+  "pinned": [
+    {
+      "id": "download-history",
+      "msgidPattern": "\\bdownload history\\b",
+      "expect": "ダウンロード履歴",
+      "severity": "wrong",
+      "reason": "The download history is ダウンロード履歴 (glossary)."
+    },
+    {
+      "id": "upgrade",
+      "msgidPattern": "\\bupgrade\\b",
+      "expect": "アップグレード",
+      "severity": "wrong",
+      "reason": "Reaching Pro is アップグレード, in buttons and prose alike, never a word for purchase (glossary)."
+    },
+    {
+      "id": "gmail-label",
+      "msgctxt": "Gmail label",
+      "msgidPattern": "\\blabel\\b",
+      "expect": "ラベル",
+      "severity": "wrong",
+      "reason": "A Gmail label is Gmail's ラベル (glossary)."
+    },
+    {
+      "id": "toast",
+      "msgidPattern": "\\btoasts?\\b",
+      "expect": "お知らせ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+    },
+    {
+      "id": "toast",
+      "msgctxt": "toasts",
+      "msgid": "Notifications",
+      "expect": "お知らせ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+    },
+    {
+      "id": "toast",
+      "msgctxt": null,
+      "msgid": "Notifications",
+      "origin": "packages/preload-gmail/",
+      "expect": "お知らせ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "ボタン",
+      "severity": "doubtful",
+      "reason": "An on-screen button is ボタン (glossary)."
+    },
+    {
+      "id": "unread-badge",
+      "msgidPattern": "\\bunread badges?\\b",
+      "expect": "未読バッジ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the unread badge is 未読バッジ."
+    },
+    {
+      "id": "tab-strip",
+      "msgidPattern": "\\btab strip\\b",
+      "expect": "タブストリップ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the tab strip is タブストリップ."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": null,
+      "msgid": "Label",
+      "expect": "名前",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": "saved search",
+      "msgid": "Enter a label",
+      "expect": "名前",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+    },
+    {
+      "id": "device-label",
+      "msgidPattern": "\\bdevice label\\b",
+      "expect": "デバイス名",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a device label is デバイス名."
+    },
+    {
+      "id": "release-channel",
+      "msgidPattern": "\\bchannel\\b",
+      "expect": "チャンネル",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a release channel is チャンネル: リリースチャンネル, ベータチャンネル."
+    },
+    {
+      "id": "trusted-hosts",
+      "msgidPattern": "\\btrusted hosts?\\b",
+      "expect": "信頼するホスト",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: trusted hosts are 信頼するホスト."
+    },
+    {
+      "id": "phishing-protection",
+      "msgidPattern": "\\bphishing protection\\b",
+      "expect": "フィッシング対策",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: phishing protection is フィッシング対策."
+    },
+    {
+      "id": "out-of-office",
+      "msgidPattern": "\\bout of office\\b",
+      "expect": "不在通知",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: out of office is Gmail's 不在通知."
+    },
+    {
+      "id": "multiple-inboxes",
+      "msgidPattern": "\\bmultiple inboxes\\b",
+      "expect": "マルチ受信トレイ",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's マルチ受信トレイ."
+    },
+    {
+      "id": "notify",
+      "msgidPattern": "\\bnotify\\b",
+      "expect": "通知",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: to notify is 通知する."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Breeze",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^ブリーズ$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Chime",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^チャイム$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Duet",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^デュエット$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Knock",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^ノック$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Linen",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^リネン$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    }
+  ],
+  "accessKeys": {
+    "style": "suffix",
+    "severity": "wrong",
+    "reason": "A label whose English has an & ends in (&X), the English letter upper-case, before a trailing ellipsis; a macOS label has no access key."
+  },
+  "families": [
+    {
+      "id": "key-names",
+      "severity": "wrong",
+      "reason": "Key names on one platform follow one source: Apple's lower-case command and shift on macOS, Microsoft's Ctrl and Shift on Windows and Linux.",
+      "groups": [
+        {
+          "name": "macOS",
+          "case": "lower",
+          "entries": [
+            {
+              "msgid": "Cmd"
+            },
+            {
+              "msgid": "Shift",
+              "msgctxt": "macOS"
+            }
+          ]
+        },
+        {
+          "name": "Windows",
+          "case": "capitalized",
+          "entries": [
+            {
+              "msgid": "Ctrl"
+            },
+            {
+              "msgid": "Shift",
+              "msgctxt": "Windows"
+            }
+          ]
+        },
+        {
+          "name": "Linux",
+          "case": "capitalized",
+          "entries": [
+            {
+              "msgid": "Ctrl"
+            },
+            {
+              "msgid": "Shift",
+              "msgctxt": "Linux"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
