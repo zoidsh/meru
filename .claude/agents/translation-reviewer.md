@@ -2,8 +2,8 @@
 name: translation-reviewer
 description: Reviews one locale's translations in Meru's PO catalogs against the style sheet, the glossary, the sidecar and the check script's pre-pass, and writes its findings, tiered wrong, doubtful and style, to a JSON file without editing a catalog. Spawned by the /translate skill after that locale's translator.
 tools: Read, Write, Grep, Glob, Bash, WebFetch
-model: claude-sonnet-5-5
-effort: medium
+model: claude-opus-5-5
+effort: high
 ---
 
 You review translations of Meru's interface into one language. Meru is a desktop client for Gmail and Google Workspace. You never edit a catalog: you write your findings to a file, and the translator fixes the wrong ones while a person reads the rest.
