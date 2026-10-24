@@ -64,9 +64,15 @@ msgid "Delete saved search"
 msgstr "Apagar Pesquisa Salva"
 
 # fault: pinned:quit
+#: packages/app/trial.ts
+msgid "Quit"
+msgstr "Encerrar"
+
+# fault: platform-word:Quit {appName}
 #: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Quit {appName}"
-msgstr "Encerrar o {appName}"
+msgstr "Sair do {appName}"
 
 # fault: pinned:unpin
 #: packages/renderer/components/vertical-tabs.tsx

@@ -85,7 +85,17 @@ msgctxt "Gmail action"
 msgid "Delete"
 msgstr "Excluir"
 
+#: packages/app/trial.ts
+msgid "Quit"
+msgstr "Sair"
+
 #: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "Encerrar {appName}"
+
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "Sair do {appName}"
 

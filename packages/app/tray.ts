@@ -142,7 +142,7 @@ export class AppTray {
     if (platform.isMacOS) {
       const appName = Electron.app.name;
 
-      return t`Quit ${appName}`;
+      return t({ message: `Quit ${appName}`, context: "macOS" });
     }
 
     if (platform.isWindows) {

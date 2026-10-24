@@ -472,6 +472,24 @@
         "msgstr": "Mostrar Tudo"
       },
       {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "Encerrar {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "Sair do {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "Sair do {appName}"
+      },
+      {
         "row": "Close Window",
         "msgctxt": "macOS",
         "msgid": "Close Window",
@@ -618,9 +636,10 @@
     {
       "id": "quit",
       "msgidPattern": "^Quit\\b",
+      "msgctxt": null,
       "expect": "^Sai",
       "severity": "doubtful",
-      "reason": "Quitting is sair. Chrome: sair in 6 of 7 messages for quit, encerrar only in its macOS app menu."
+      "reason": "Quitting is sair in Meru's own copy, such as the dialogs' Quit button. Chrome: sair in 6 of 7 messages for quit, encerrar only in its macOS app menu, where Quit {appName} is a macOS label and takes Apple's Encerrar."
     },
     {
       "id": "unpin",

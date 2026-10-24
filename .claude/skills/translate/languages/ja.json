@@ -472,6 +472,24 @@
         "msgstr": "すべてを表示"
       },
       {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
         "row": "Close Window",
         "msgctxt": "macOS",
         "msgid": "Close Window",

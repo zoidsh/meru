@@ -472,6 +472,24 @@
         "msgstr": "Tout afficher"
       },
       {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "Quitter {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "Quitter {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "Quitter {appName}"
+      },
+      {
         "row": "Close Window",
         "msgctxt": "macOS",
         "msgid": "Close Window",
