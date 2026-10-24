@@ -54,4 +54,44 @@ describe("check.ts", () => {
       expect(found.sort()).toEqual(planted.sort());
     });
   }
+
+  describe("exit code", () => {
+    const ROOT = path.join(import.meta.dir, "..");
+
+    function exitCodeOf(...args: string[]) {
+      return Bun.spawnSync(["bun", ".claude/skills/translate/check.ts", ...args], {
+        cwd: ROOT,
+        stdout: "ignore",
+        stderr: "ignore",
+      }).exitCode;
+    }
+
+    test("is 0 for a clean catalog", () => {
+      expect(
+        exitCodeOf("--locale", "de", "--catalog", path.join(FIXTURES_DIR, "de-clean.po")),
+      ).toBe(0);
+    });
+
+    test("is 1 for wrong findings", () => {
+      expect(
+        exitCodeOf("--locale", "de", "--catalog", path.join(FIXTURES_DIR, "de-faults.po")),
+      ).toBe(1);
+    });
+
+    test("is 2 when a catalog is missing", () => {
+      expect(exitCodeOf("--locale", "de", "--catalog", path.join(FIXTURES_DIR, "missing.po"))).toBe(
+        2,
+      );
+    });
+
+    test("is 2 for a locale without a sidecar", () => {
+      expect(
+        exitCodeOf("--locale", "xx", "--catalog", path.join(FIXTURES_DIR, "de-clean.po")),
+      ).toBe(2);
+    });
+
+    test("is 2 without a locale", () => {
+      expect(exitCodeOf()).toBe(2);
+    });
+  });
 });

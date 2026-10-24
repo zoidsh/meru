@@ -437,6 +437,13 @@ async function run() {
   }
 }
 
+// A run that could not check anything exits 2, so a caller never reads a crash as findings.
 if (import.meta.main) {
-  await run();
+  try {
+    await run();
+  } catch (error) {
+    console.error(`check.ts: ${error instanceof Error ? error.message : String(error)}`);
+
+    process.exit(2);
+  }
 }
