@@ -16,17 +16,17 @@ Capitalization below is the base form inside a sentence. A label takes its langu
 
 ## Settings
 
-The window and Meru's own copy, in AppKit's word for each, also the language's row in the style sheet. The app-menu item has a platform `msgctxt`: on macOS it is this word with AppKit's ellipsis, and on Windows and Linux the platform's word, from the style sheet.
+The window and Meru's own copy, in Chrome's word where Chrome settles it, also the Settings section of the language's style sheet. The app-menu item has a platform `msgctxt`: on macOS it is AppKit's word with AppKit's ellipsis, named below where it differs, and on Windows and Linux the platform's word, from the style sheet.
 
 - de: Einstellungen; the macOS menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
-- fr: Réglages (Apple)
-- it: Impostazioni (Apple)
-- es: Ajustes (Apple)
-- es-419: Configuración (Apple)
-- pt-BR: Ajustes (Apple)
-- nl: Instellingen (Apple)
-- pl: Ustawienia (Apple)
-- sv: Inställningar (Apple)
+- fr: Paramètres (Chrome); the macOS menu item _Réglages…_ (Apple)
+- it: Impostazioni (Apple, Chrome)
+- es: Configuración (Chrome); the macOS menu item _Ajustes…_ (Apple)
+- es-419: Configuración (Apple, Chrome)
+- pt-BR: Configurações (Chrome); the macOS menu item _Ajustes…_ (Apple)
+- nl: Instellingen; the macOS menu item _Instellingen…_ (Apple, Chrome)
+- pl: Ustawienia; the macOS menu item _Ustawienia…_ (Apple, Chrome)
+- sv: Inställningar; the macOS menu item _Inställningar…_ (Apple, Chrome)
 - ja: 設定 (Apple)
 
 ## Account
@@ -34,14 +34,14 @@ The window and Meru's own copy, in AppKit's word for each, also the language's r
 A Google account in Meru: _Add account_, _Remove account_, _Manage Accounts_.
 
 - de: Konto, plural Konten (_Konto hinzufügen …_). Never _Account_.
-- fr: compte (Apple; _Ajouter un compte…_)
-- it: account, invariable (Apple; _Aggiungi account…_)
-- es: cuenta (Apple; _Añadir cuenta…_)
-- es-419: cuenta (Apple; _Agregar cuenta…_)
-- pt-BR: conta (Apple; _Adicionar Conta…_)
-- nl: account (Apple; _Voeg account toe…_)
-- pl: konto (Apple; _Dodaj konto…_)
-- sv: konto, plural konton (Apple; _Lägg till konto…_)
+- fr: compte (Apple, Chrome; _Ajouter un compte…_)
+- it: account, invariable (Apple, Chrome; _Aggiungi account…_), never _accounts_
+- es: cuenta (Apple, Chrome; _Añadir cuenta…_)
+- es-419: cuenta (Apple, Chrome; _Agregar cuenta…_)
+- pt-BR: conta (Apple, Chrome; _Adicionar Conta…_)
+- nl: account (Apple, Chrome; _Voeg account toe…_)
+- pl: konto (Apple, Chrome; _Dodaj konto…_)
+- sv: konto, plural konton (Apple, Chrome; _Lägg till konto…_)
 - ja: アカウント (Apple; アカウントを追加…)
 
 ## Tab
@@ -49,14 +49,14 @@ A Google account in Meru: _Add account_, _Remove account_, _Manage Accounts_.
 An entry in an account's vertical tabs strip.
 
 - de: Tab, der; plural Tabs (Apple; _Tab schließen_)
-- fr: onglet (Apple; _Fermer l’onglet_)
-- it: pannello (Apple; _Chiudi pannello_). Apple's Italian calls a tab a _pannello_, never _scheda_.
-- es: pestaña (Apple; _Cerrar pestaña_)
-- es-419: pestaña (Apple)
-- pt-BR: aba (Apple; _Fechar Aba_)
-- nl: tabblad (Apple; _Sluit tabblad_)
-- pl: karta (Apple; _Zamknij kartę_)
-- sv: flik (Apple; _Stäng flik_)
+- fr: onglet (Apple, Chrome; _Fermer l’onglet_)
+- it: scheda, plural schede (Chrome; _Chiudi scheda_), never Apple's _pannello_
+- es: pestaña (Apple, Chrome; _Cerrar pestaña_)
+- es-419: pestaña (Apple, Chrome)
+- pt-BR: guia (Chrome; _Fechar Guia_), never _aba_, Apple's word
+- nl: tabblad (Apple, Chrome; _Sluit tabblad_)
+- pl: karta (Apple, Chrome; _Zamknij kartę_)
+- sv: flik (Apple, Chrome; _Stäng flik_)
 - ja: タブ (Apple; タブを閉じる)
 
 ## Pinned tab, Pin, Unpin
@@ -64,14 +64,14 @@ An entry in an account's vertical tabs strip.
 A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu actions; _Unpinned tabs_ is a hibernation option.
 
 - de: fixierter Tab; _Fixieren_, _Loslösen_ (Apple: _Tab fixieren_, _Tab loslösen_)
-- fr: onglet épinglé; _Épingler_, _Ne plus épingler_ (Apple)
-- it: pannello fissato; _Fissa_, _Sblocca_ (Apple: _Fissa pannello_, _Sblocca pannello_)
-- es: pestaña anclada; _Anclar_, _Desanclar_ (Apple)
-- es-419: pestaña anclada; _Anclar_, _Desanclar_ (Apple)
-- pt-BR: aba fixada; _Fixar_, _Desafixar_ (Apple: _Fixar Aba_, _Desafixar Aba_)
-- nl: vastgemaakt tabblad; _Maak vast_, _Maak los_ (Apple: _Maak tabblad vast_)
-- pl: przypięta karta; _Przypnij_, _Odepnij_ (Apple: _Przypnij kartę_, _Odepnij kartę_)
-- sv: fastnålad flik; _Nåla fast_, _Lossa_ (Apple: _Nåla fast flik_, _Lossa på flik_)
+- fr: onglet épinglé; _Épingler_, _Retirer_ (Chrome: the tab context menu's Pin and Unpin)
+- it: scheda fissata; _Fissa_, _Stacca_ (Chrome: the tab context menu's Pin and Unpin)
+- es: pestaña fijada; _Fijar_, _Desfijar_ (Chrome: _Fijar pestaña_), never _anclar_, Apple's word
+- es-419: pestaña fijada; _Fijar_, _Dejar de fijar_ (Chrome: _Fijar pestaña_), never _anclar_, Apple's word
+- pt-BR: guia fixada; _Fixar_, _Liberar_ (Chrome: _Fixar Guia_); Apple's unpin is _Desafixar_
+- nl: vastgezet tabblad; _Zet vast_, _Maak los_ (Chrome: _Vastzetten_, _Losmaken_), never _vastmaken_, Apple's word
+- pl: przypięta karta; _Przypnij_, _Odepnij_ (Apple, Chrome: _Przypnij kartę_, _Odepnij_)
+- sv: fäst flik; _Fäst_, _Lossa_ (Chrome), never _nåla fast_, Apple's word
 - ja: 固定タブ; 固定, 固定解除 (Apple: タブを固定, タブを固定解除)
 
 ## Unified inbox
@@ -94,27 +94,27 @@ The page listing new mail across every account. A description, so lower case ins
 A timed or indefinite hold on notifications. Apple's names, from macOS's Focus strings; they keep Apple's capitalization as a feature name.
 
 - de: Nicht stören (Apple)
-- fr: Ne pas déranger (Apple)
-- it: Non disturbare (Apple)
-- es: No molestar (Apple)
-- es-419: No molestar (Apple)
-- pt-BR: Não Perturbe (Apple)
-- nl: Niet storen (Apple)
-- pl: Nie przeszkadzać (Apple)
-- sv: Stör ej (Apple)
+- fr: Ne pas déranger (Apple, Chrome)
+- it: Non disturbare (Apple, Chrome)
+- es: No molestar (Apple, Chrome)
+- es-419: No interrumpir (Chrome); Apple's is _No molestar_
+- pt-BR: Não Perturbe (Apple; Chrome writes _Não perturbe_ in prose)
+- nl: Niet storen (Apple, Chrome)
+- pl: Nie przeszkadzać (Apple, Chrome)
+- sv: Stör ej (Apple, Chrome)
 - ja: おやすみモード (Apple)
 
 ## Notification
 
 - de: Benachrichtigung, plural Benachrichtigungen. Never _Mitteilung_.
-- fr: notification (Apple)
-- it: notifica, plural notifiche (Apple)
-- es: notificación (Apple)
-- es-419: notificación (Apple)
-- pt-BR: notificação (Apple)
-- nl: melding (Apple)
-- pl: powiadomienie (Apple)
-- sv: notis, plural notiser (Apple)
+- fr: notification (Apple, Chrome)
+- it: notifica, plural notifiche (Apple, Chrome)
+- es: notificación (Apple, Chrome)
+- es-419: notificación (Apple, Chrome)
+- pt-BR: notificação (Apple, Chrome)
+- nl: melding (Apple, Chrome), never _notificatie_
+- pl: powiadomienie (Apple, Chrome)
+- sv: avisering, plural aviseringar (Chrome). Never _notis_, Apple's word, which only a `macOS` label keeps.
 - ja: 通知 (Apple)
 
 ## Notification hours
@@ -129,7 +129,7 @@ The time windows outside which no notification is shown. The interface reads _No
 - pt-BR: horários de notificação; a window is um _intervalo de horário_
 - nl: meldingstijden; a window is een _tijdvak_
 - pl: godziny powiadomień; a window is _przedział czasu_
-- sv: notistider; a window is ett _tidsfönster_
+- sv: aviseringstider; a window is ett _tidsfönster_
 - ja: 通知時間帯; a window is 時間帯
 
 ## Hibernation, Hibernate
@@ -152,11 +152,11 @@ Unloading an idle tab to give back its memory. _Hibernate idle tabs_, _Hibernate
 A Google Workspace site opened as a tab or window. _Workspace_ stays English.
 
 - de: Workspace-App, plural Workspace-Apps
-- fr: app Workspace, plural apps Workspace
-- it: app di Workspace
-- es: app de Workspace
-- es-419: app de Workspace
-- pt-BR: app do Workspace
+- fr: appli Workspace, plural applis Workspace (Chrome's _appli_), never _app_
+- it: app di Workspace (Chrome's _app_)
+- es: aplicación de Workspace (Chrome's _aplicación_), never _app_ outside a `macOS` label
+- es-419: app de Workspace (Chrome's _app_)
+- pt-BR: app do Workspace (Chrome's _app_)
 - nl: Workspace-app
 - pl: aplikacja Workspace
 - sv: Workspace-app
@@ -167,11 +167,11 @@ A Google Workspace site opened as a tab or window. _Workspace_ stays English.
 The one tab per app that every link to that app opens in. The badge setting reads _Show app links badge_.
 
 - de: Tab für App-Links
-- fr: onglet des liens d’app
-- it: pannello dei link dell’app
-- es: pestaña de enlaces de la app
-- es-419: pestaña de enlaces de la app
-- pt-BR: aba de links do app
+- fr: onglet des liens d’appli
+- it: scheda dei link dell’app
+- es: pestaña de enlaces de la aplicación
+- es-419: pestaña de vínculos de la app
+- pt-BR: guia de links do app
 - nl: tabblad voor app-links
 - pl: karta linków aplikacji
 - sv: flik för applänkar
@@ -186,10 +186,10 @@ A named Gmail query an account keeps.
 - it: ricerca salvata (Apple's _Salva_)
 - es: búsqueda guardada (Apple's _Guardar_)
 - es-419: búsqueda guardada (Apple's _Guardar_)
-- pt-BR: busca salva (Apple's _Buscar_, _Salvar_)
-- nl: bewaarde zoekopdracht (Apple's _Bewaar_)
-- pl: zapisane wyszukiwanie
-- sv: sparad sökning (Apple's _Spara_, _Sök_)
+- pt-BR: pesquisa salva (Chrome's _pesquisa_), never _busca_
+- nl: opgeslagen zoekopdracht (Chrome's _opslaan_; Apple's _Bewaar_ only in a `macOS` label)
+- pl: zapisane wyszukiwanie (Chrome's _zapisać_)
+- sv: sparad sökning (Apple's and Chrome's _Spara_, Apple's _Sök_)
 - ja: 保存した検索 (Apple's 保存, 検索)
 
 ## Bookmark
@@ -197,14 +197,14 @@ A named Gmail query an account keeps.
 A saved URL for an account, opened from the bookmarks popup.
 
 - de: Lesezeichen
-- fr: signet
-- it: segnalibro
-- es: marcador
-- es-419: marcador
-- pt-BR: favorito
-- nl: bladwijzer
-- pl: zakładka
-- sv: bokmärke
+- fr: favori, plural favoris (Chrome; _Ajouter aux favoris_), never _signet_
+- it: preferito, plural preferiti (Chrome; _Preferiti_, _Aggiungi ai Preferiti_), never _segnalibro_
+- es: marcador (Chrome)
+- es-419: favorito (Chrome), never _marcador_
+- pt-BR: favorito (Chrome)
+- nl: bookmark (Chrome), never _bladwijzer_, Apple's word
+- pl: zakładka (Chrome)
+- sv: bokmärke (Chrome)
 - ja: ブックマーク
 
 ## Launcher
@@ -212,11 +212,11 @@ A saved URL for an account, opened from the bookmarks popup.
 The titlebar or sidebar dropdown that opens a workspace app.
 
 - de: Starter
-- fr: lanceur
-- it: launcher, invariable
-- es: lanzador
-- es-419: lanzador
-- pt-BR: inicializador
+- fr: lanceur (Chrome)
+- it: launcher, invariable. Chrome's _Avvio app_ is ChromeOS's name for its own launcher, not taken
+- es: menú de aplicaciones (Chrome)
+- es-419: selector (Chrome)
+- pt-BR: iniciador (Chrome)
 - nl: starter
 - pl: menu aplikacji
 - sv: appstartare
@@ -227,14 +227,14 @@ The titlebar or sidebar dropdown that opens a workspace app.
 The strip down the left edge of the window.
 
 - de: vertikale Tabs (Apple's _Tab_)
-- fr: onglets verticaux (Apple's _onglet_)
-- it: pannelli verticali (Apple's _pannello_)
-- es: pestañas verticales (Apple's _pestaña_)
-- es-419: pestañas verticales (Apple's _pestaña_)
-- pt-BR: abas verticais (Apple's _aba_)
-- nl: verticale tabbladen (Apple's _tabblad_)
-- pl: karty pionowe (Apple's _karta_)
-- sv: vertikala flikar (Apple's _flik_)
+- fr: onglets verticaux (Apple's _onglet_; Chrome)
+- it: schede verticali (Chrome)
+- es: pestañas verticales (Apple's and Chrome's _pestaña_)
+- es-419: pestañas verticales (Apple's and Chrome's _pestaña_)
+- pt-BR: guias verticais (Chrome's _guia_)
+- nl: verticale tabbladen (Apple's _tabblad_, Chrome)
+- pl: karty pionowe (Apple's _karta_, Chrome)
+- sv: vertikala flikar (Apple's _flik_, Chrome)
 - ja: 縦型タブ (Apple's タブ)
 
 ## Titlebar
@@ -242,27 +242,27 @@ The strip down the left edge of the window.
 The strip across the top of the window.
 
 - de: Titelleiste
-- fr: barre de titre
-- it: barra del titolo
-- es: barra de título
-- es-419: barra de título
-- pt-BR: barra de título
-- nl: titelbalk
-- pl: pasek tytułowy
-- sv: namnlist
+- fr: barre de titre (Chrome)
+- it: barra del titolo (Chrome)
+- es: barra de título (Chrome)
+- es-419: barra de título (Chrome)
+- pt-BR: barra de título (Chrome)
+- nl: titelbalk (Chrome)
+- pl: pasek tytułu (Chrome), never _pasek tytułowy_
+- sv: namnlist (Chrome)
 - ja: タイトルバー
 
 ## Sidebar
 
 - de: Seitenleiste (Apple)
-- fr: barre latérale (Apple)
-- it: barra laterale (Apple)
+- fr: barre latérale (Apple, Chrome)
+- it: barra laterale (Apple, Chrome)
 - es: barra lateral (Apple)
 - es-419: barra lateral (Apple)
 - pt-BR: barra lateral (Apple)
 - nl: navigatiekolom (Apple)
-- pl: pasek boczny (Apple)
-- sv: sidofält (Apple)
+- pl: pasek boczny (Apple, Chrome)
+- sv: sidofält (Apple, Chrome)
 - ja: サイドバー (Apple)
 
 ## Menu bar icon, System tray icon
@@ -270,27 +270,27 @@ The strip across the top of the window.
 The icon in the macOS menu bar, or in the Windows and Linux system tray. The system tray strings carry a `Windows` or `Linux` `msgctxt`; the second word below is Microsoft's, for `Windows`, and `Linux` takes the style sheet's word where it gives one, else this one.
 
 - de: Menüleiste; Infobereich; Linux _Statusbereich_
-- fr: barre des menus; zone de notification
-- it: barra dei menu; area di notifica
-- es: barra de menús; bandeja del sistema
-- es-419: barra de menús; bandeja del sistema
-- pt-BR: barra de menus; bandeja do sistema
-- nl: menubalk; systeemvak
-- pl: pasek menu; zasobnik systemowy
-- sv: menyrad; meddelandefält
+- fr: barre de menu (Chrome; Apple's _barre des menus_ only in a `macOS` label); zone de notification
+- it: barra dei menu (Apple, Chrome); area di notifica
+- es: barra de menú (Chrome); bandeja del sistema (Chrome)
+- es-419: barra de menú (Chrome); bandeja del sistema (Chrome)
+- pt-BR: barra de menus (Chrome); bandeja do sistema (Chrome)
+- nl: menubalk; systeemvak (Chrome both)
+- pl: pasek menu; obszar powiadomień (Chrome both)
+- sv: menyrad; systemfält (Chrome both)
 - ja: メニューバー; 通知領域; Linux システムトレイ
 
 ## Window
 
 - de: Fenster (Apple)
-- fr: fenêtre (Apple)
-- it: finestra (Apple)
-- es: ventana (Apple)
-- es-419: ventana (Apple)
-- pt-BR: janela (Apple)
-- nl: venster (Apple)
-- pl: okno (Apple)
-- sv: fönster (Apple)
+- fr: fenêtre (Apple, Chrome)
+- it: finestra (Apple, Chrome)
+- es: ventana (Apple, Chrome)
+- es-419: ventana (Apple, Chrome)
+- pt-BR: janela (Apple, Chrome)
+- nl: venster (Apple, Chrome)
+- pl: okno (Apple, Chrome)
+- sv: fönster (Apple, Chrome)
 - ja: ウィンドウ in Meru's own copy, never ウインドウ; a `macOS` label such as the Window menu takes Apple's ウインドウ
 
 ## Verification code
@@ -298,14 +298,14 @@ The icon in the macOS menu bar, or in the Windows and Linux system tray. The sys
 A one-time passcode Meru copies to the clipboard.
 
 - de: Bestätigungscode
-- fr: code de vérification
-- it: codice di verifica
-- es: código de verificación
-- es-419: código de verificación
-- pt-BR: código de verificação
-- nl: verificatiecode
-- pl: kod weryfikacyjny
-- sv: verifieringskod
+- fr: code de validation (Chrome), never _code de vérification_
+- it: codice di verifica (Chrome)
+- es: código de verificación (Chrome)
+- es-419: código de verificación (Chrome)
+- pt-BR: código de verificação (Chrome)
+- nl: verificatiecode (Chrome)
+- pl: kod weryfikacyjny (Chrome)
+- sv: verifieringskod (Chrome)
 - ja: 確認コード
 
 ## Move email to Trash
@@ -328,14 +328,14 @@ The verification-codes switch. It names Gmail's own folder, so _Trash_ takes Gma
 A Chrome extension from Meru's list.
 
 - de: Erweiterung (Apple)
-- fr: extension (Apple)
-- it: estensione (Apple)
-- es: extensión (Apple)
-- es-419: extensión (Apple)
-- pt-BR: extensão (Apple)
-- nl: extensie (Apple)
-- pl: rozszerzenie (Apple)
-- sv: tillägg (Apple)
+- fr: extension (Apple, Chrome)
+- it: estensione (Apple, Chrome)
+- es: extensión (Apple, Chrome)
+- es-419: extensión (Apple, Chrome)
+- pt-BR: extensão (Apple, Chrome)
+- nl: extensie (Apple, Chrome)
+- pl: rozszerzenie (Apple, Chrome)
+- sv: tillägg (Apple, Chrome)
 - ja: 拡張機能 (Chrome), never 機能拡張, Apple's word
 
 ## Experimental, Beta
@@ -343,14 +343,14 @@ A Chrome extension from Meru's list.
 The two maturity badges, and _Beta_ is also the update channel beside _Stable_. Never a third word.
 
 - de: Experimentell; Beta; Stabil
-- fr: Expérimental; Bêta; Stable
-- it: Sperimentale; Beta; Stabile
-- es: Experimental; Beta; Estable
-- es-419: Experimental; Beta; Estable
-- pt-BR: Experimental; Beta; Estável
-- nl: Experimenteel; Bèta; Stabiel
+- fr: Expérimental; Bêta; Stable (Chrome)
+- it: Sperimentale; Beta; Stabile (Chrome)
+- es: Experimental; Beta; Estable (Chrome)
+- es-419: Experimental; Beta; Estable (Chrome)
+- pt-BR: Experimental; Beta; Estável (Chrome)
+- nl: Experimenteel; Bèta; Stabiel (Chrome's _Bèta_ and _Stabiel_)
 - pl: Eksperymentalne; Beta; Stabilna
-- sv: Experimentell; Beta; Stabil
+- sv: Experimentell; Beta; Stabil (Chrome)
 - ja: 実験的; ベータ; 安定版
 
 ## Load on Launch
@@ -358,8 +358,8 @@ The two maturity badges, and _Beta_ is also the update channel beside _Stable_. 
 The pinned tab's context-menu item deciding whether it comes back as a view at start.
 
 - de: Beim Start laden
-- fr: Charger au démarrage
-- it: Carica all’avvio
+- fr: Charger au démarrage (Chrome's _démarrage_)
+- it: Carica all’avvio (Chrome's _avvio_)
 - es: Cargar al iniciar
 - es-419: Cargar al iniciar
 - pt-BR: Carregar ao Iniciar
@@ -386,40 +386,40 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 ## License key, Trial, Device
 
 - de: Lizenzschlüssel; Testzeitraum; Gerät
-- fr: clé de licence; période d’essai; appareil
-- it: chiave di licenza; periodo di prova; dispositivo
-- es: clave de licencia; periodo de prueba; dispositivo
-- es-419: clave de licencia; período de prueba; dispositivo
-- pt-BR: chave de licença; período de avaliação; dispositivo
-- nl: licentiesleutel; proefperiode; apparaat
-- pl: klucz licencyjny; okres próbny; urządzenie
-- sv: licensnyckel; provperiod; enhet
+- fr: clé de licence; période d’essai; appareil (Chrome)
+- it: chiave di licenza; periodo di prova; dispositivo (Chrome)
+- es: clave de licencia; periodo de prueba; dispositivo (Chrome)
+- es-419: clave de licencia; período de prueba; dispositivo (Chrome)
+- pt-BR: chave de licença; período de avaliação; dispositivo (Chrome)
+- nl: licentiesleutel; proefperiode; apparaat (Chrome's _apparaat_)
+- pl: klucz licencyjny; okres próbny; urządzenie (Chrome's _urządzenie_)
+- sv: licensnyckel; provperiod; enhet (Chrome's _enhet_)
 - ja: ライセンスキー; 試用期間; デバイス
 
 ## Download history
 
 - de: Downloadverlauf for the page, in _Download history_, _Full download history_ and _Close download history_ (Apple's _Download_); the recent download history popup is _Letzte Downloads_ (_Letzte Downloads anzeigen_), never _Aktueller Downloadverlauf_
-- fr: historique des téléchargements (Apple's _Télécharger_)
-- it: cronologia dei download (Apple's _download_)
-- es: historial de descargas (Apple's _Descargar_)
-- es-419: historial de descargas (Apple's _Descargar_)
-- pt-BR: histórico de downloads (Apple's _Pasta de downloads_)
-- nl: downloadgeschiedenis (Apple's _Download_)
-- pl: historia pobierania (Apple's _Pobierz_)
-- sv: hämtningshistorik (Apple's _Hämta_)
+- fr: historique des téléchargements, in _Historique complet des téléchargements_ and _Fermer l’historique des téléchargements_ (Chrome); the recent download history popup is _Historique des téléchargements récents_ (Chrome)
+- it: cronologia dei download; the page's title _Cronologia download_ (Chrome); the recent download history popup is _Cronologia dei download recenti_ (Chrome)
+- es: historial de descargas (Chrome), also in _Historial de descargas recientes_
+- es-419: historial de descargas (Chrome), also in _Historial de descargas recientes_
+- pt-BR: histórico de downloads (Chrome), also in _Histórico de downloads recentes_
+- nl: downloadgeschiedenis (Chrome; Apple's _Download_)
+- pl: historia pobierania (Chrome; Apple's _Pobierz_)
+- sv: nedladdningshistorik (Chrome), never _hämtningshistorik_; downloading is _ladda ned_, a download a _nedladdning_
 - ja: ダウンロード履歴 (Apple's ダウンロード)
 
 ## Dark theme, Blocker, Spellchecker
 
 - de: dunkles Design; Blocker; Rechtschreibprüfung
-- fr: thème sombre; bloqueur; correcteur orthographique (Apple)
-- it: tema scuro; blocco contenuti; controllo ortografico
-- es: tema oscuro; bloqueador; corrector ortográfico
-- es-419: tema oscuro; bloqueador; corrector ortográfico
-- pt-BR: tema escuro; bloqueador; verificação ortográfica
-- nl: donker thema; blokkering; spellingcontrole
-- pl: ciemny motyw; blokowanie; sprawdzanie pisowni (Apple)
-- sv: mörkt tema; blockerare; stavningskontroll
+- fr: thème sombre (Chrome); bloqueur; correcteur orthographique (Apple, Chrome)
+- it: tema scuro (Chrome); blocco contenuti; controllo ortografico (Chrome)
+- es: tema oscuro (Chrome); bloqueador; corrector ortográfico (Chrome)
+- es-419: tema oscuro (Chrome); bloqueador; corrector ortográfico (Chrome)
+- pt-BR: tema escuro (Chrome); bloqueador; verificação ortográfica (Chrome)
+- nl: donker thema (Chrome); blokkering; spellingcontrole (Chrome)
+- pl: ciemny motyw (Chrome); blokowanie; sprawdzanie pisowni (Apple, Chrome)
+- sv: mörkt tema (Chrome); blockerare; stavningskontroll (Chrome)
 - ja: ダークテーマ; ブロッカー; スペルチェック
 
 ## Keyboard keys
@@ -427,8 +427,8 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ or _Ctrl_ and _Shift_. The source writes the short form printed on keys, so keep a short form where the language has one: Cmd and Option on macOS, Ctrl, Shift and Alt on Windows and Linux. Cmd and Ctrl are separate messages already, and Shift carries a platform `msgctxt`: `macOS` takes Apple's name, `Windows` Microsoft's and `Linux` GNOME's, from the style sheet's Platform words where it has them. Sources: **Apple** is "Mac keyboard shortcuts" (support.apple.com/<locale>/102650), which names each key with its short form in brackets; **Microsoft** is "Keyboard shortcuts in Windows" (support.microsoft.com/<locale>/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec). Each line gives Apple's Command, Shift, Option and Control, then Microsoft's Ctrl, Shift and Alt.
 
 - de: Apple Befehlstaste (Cmd), Umschalttaste, Wahltaste (Alt), Control-Taste (Ctrl); Microsoft Strg, Umschalt, Alt (Microsoft writes them in capitals, STRG and UMSCHALT)
-- fr: Apple Commande (Cmd), Maj, Option (Alt), Contrôle (Ctrl); Microsoft Ctrl, Maj, Alt
-- it: Apple Comando (Cmd), Maiuscole, Opzione (Alt), Control (Ctrl); Microsoft Ctrl, Maiusc, Alt (Microsoft writes them in capitals, CTRL and MAIUSC)
+- fr: Apple Commande (Cmd), Maj, Option (Alt), Contrôle (Ctrl); Microsoft Ctrl, Maj, Alt (Chrome writes Maj too)
+- it: Apple Comando (Cmd), Maiuscole, Opzione (Alt), Control (Ctrl); Microsoft Ctrl, Maiusc, Alt (Microsoft writes them in capitals, CTRL and MAIUSC; Chrome writes Maiusc)
 - es: Apple Comando (Cmd), Mayúsculas, Opción (Alt), Control (Ctrl); Microsoft Ctrl, Mayús, Alt
 - es-419: Apple Comando (Cmd), Mayúsculas, Opción (Alt), Control (Ctrl); Microsoft Ctrl, Mayús, Alt
 - pt-BR: Apple Command (Cmd), Shift, Option (Alt), Control (Ctrl); Microsoft Ctrl, Shift, Alt
@@ -442,6 +442,14 @@ A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ 
 A brief message Meru shows over its window or over Gmail, such as the one after a setting changes, and the region the toasts appear in, which the interface reads as _Notifications_ with `msgctxt` `toasts`. Never the word for a system [notification](#notification).
 
 - de: Hinweis, plural Hinweise (_Hinweis schließen_) (agent-chosen)
+- fr: avis (_Fermer l’avis_), never _notification_ (agent-chosen)
+- it: avviso, plural avvisi (_Chiudi avviso_), never _notifica_ (agent-chosen)
+- es: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen)
+- es-419: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen)
+- pt-BR: aviso, plural avisos (_Fechar Aviso_), never _notificação_ (agent-chosen)
+- nl: mededeling, plural mededelingen (_Sluit mededeling_), never _melding_ (agent-chosen)
+- pl: komunikat, plural komunikaty (_Zamknij komunikat_), never _powiadomienie_ (agent-chosen)
+- sv: inforuta, plural inforutor (_Stäng inforuta_), never _avisering_ (agent-chosen)
 - ja: お知らせ (お知らせを閉じる), never 通知 (agent-chosen)
 
 ## Unread badge
@@ -449,11 +457,27 @@ A brief message Meru shows over its window or over Gmail, such as the one after 
 The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_.
 
 - de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Kennzeichen_ (agent-chosen)
+- fr: pastille, Apple's word for a badge; in full _pastille des e-mails non lus_ (_Afficher la pastille des e-mails non lus_) (agent-chosen)
+- it: badge, as Apple writes it; in full _badge delle email non lette_ (_Mostra il badge delle email non lette_) (agent-chosen)
+- es: indicador de no leídos (_Mostrar indicador de no leídos_) (agent-chosen)
+- es-419: indicador de no leídos (_Mostrar indicador de no leídos_) (agent-chosen)
+- pt-BR: indicador de não lidos (_Mostrar Indicador de Não Lidos_) (agent-chosen)
+- nl: badge; in full _badge voor ongelezen e-mails_ (_Toon badge voor ongelezen e-mails_) (agent-chosen)
+- pl: plakietka; in full _plakietka z liczbą nieprzeczytanych_ (_Pokaż plakietkę z liczbą nieprzeczytanych_) (agent-chosen)
+- sv: symbolbricka; in full _symbolbricka för olästa_ (_Visa symbolbricka för olästa_) (agent-chosen)
 - ja: 未読バッジ (未読バッジを表示) (agent-chosen)
 
 The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form:
 
 - de: Ungelesen
+- fr: Non lus
+- it: Non lette
+- es: No leídos
+- es-419: No leídos
+- pt-BR: Não lidos
+- nl: Ongelezen
+- pl: Nieprzeczytane
+- sv: Olästa
 - ja: 未読
 
 ## Tab strip
@@ -461,6 +485,14 @@ The badge on an account's row in Settings, `msgctxt` `account row badge`, sits o
 The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_.
 
 - de: Tableiste (_Tableiste verschmälern_) (agent-chosen)
+- fr: barre d’onglets (_Réduire la barre d’onglets_) (Chrome)
+- it: barra delle schede (_Restringi la barra delle schede_) (the user's call; Chrome's is _tabstrip_)
+- es: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome)
+- es-419: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome)
+- pt-BR: barra de guias (_Estreitar a Barra de Guias_) (Chrome)
+- nl: tabbladstrook (_Maak de tabbladstrook smaller_) (Chrome)
+- pl: pasek kart (_Zwęź pasek kart_) (Chrome)
+- sv: flikhuvud (_Gör flikhuvudet smalare_) (Chrome)
 - ja: タブバー (タブバーを狭くする) (Chrome), never タブストリップ
 
 ## Label, Meru's
@@ -468,6 +500,14 @@ The tabs within an account, which Workspace apps' New windows mode leaves out: _
 The name Meru shows for an account or a saved search, in its _Label_ field and _Enter a label_ with `msgctxt` `saved search`. Never Gmail's label, which is under [Starred, Snooze, Label](#starred-snooze-label) and carries `msgctxt` `Gmail label`.
 
 - de: Name (_Namen eingeben_) (agent-chosen)
+- fr: nom (_Saisir un nom_) (agent-chosen)
+- it: nome (_Inserisci un nome_) (agent-chosen)
+- es: nombre (_Introduce un nombre_) (agent-chosen)
+- es-419: nombre (_Ingresa un nombre_) (agent-chosen)
+- pt-BR: nome (_Digite um nome_) (agent-chosen)
+- nl: Naam (_Voer een naam in_) (agent-chosen)
+- pl: Nazwa (_Wpisz nazwę_) (agent-chosen)
+- sv: Namn (_Ange ett namn_) (agent-chosen)
 - ja: 名前 (名前を入力) (agent-chosen)
 
 ## Device label
@@ -475,6 +515,14 @@ The name Meru shows for an account or a saved search, in its _Label_ field and _
 The name this computer goes by among the devices using a license key.
 
 - de: Gerätename (_Gerätenamen eingeben_) (agent-chosen)
+- fr: nom de l’appareil (_Saisir le nom de l’appareil_) (agent-chosen, with Chrome's _appareil_)
+- it: nome del dispositivo (_Inserisci il nome del dispositivo_) (agent-chosen, with Chrome's _dispositivo_)
+- es: nombre del dispositivo (_Introduce un nombre del dispositivo_) (Chrome's _nombre de dispositivo_)
+- es-419: nombre del dispositivo (_Ingresa un nombre del dispositivo_) (Chrome's _nombre de dispositivo_)
+- pt-BR: nome do dispositivo (_Digite um nome do dispositivo_) (Chrome's _nome do dispositivo_)
+- nl: apparaatnaam (_Voer een apparaatnaam in_) (Chrome)
+- pl: nazwa urządzenia (_Wpisz nazwę urządzenia_) (Chrome)
+- sv: enhetsnamn (_Ange ett enhetsnamn_) (Chrome)
 - ja: デバイス名 (デバイス名を入力) (agent-chosen)
 
 ## Release channel
@@ -482,6 +530,14 @@ The name this computer goes by among the devices using a license key.
 Which releases Meru updates to, Stable or [Beta](#experimental-beta): _Release channel_, _Switch to the beta channel?_
 
 - de: Update-Kanal; _Beta-Kanal_ (_Zum Beta-Kanal wechseln?_) (agent-chosen)
+- fr: version de mise à jour; _version bêta_ (_Passer à la version bêta ?_, with a no-break space before ?) (Chrome)
+- it: canale di aggiornamento; _canale beta_ (_Passare al canale beta?_) (Chrome)
+- es: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_)
+- es-419: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_)
+- pt-BR: canal de versões; _canal beta_ (_Mudar para o canal beta?_) (Chrome's _canal_)
+- nl: updatekanaal; _bètakanaal_ (_Overschakelen naar het bètakanaal?_) (Chrome's _kanaal_ and _Bèta_; the compounds agent-chosen)
+- pl: kanał aktualizacji; _kanał beta_ (_Przełączyć na kanał beta?_) (Chrome's _kanał aktualizacji_)
+- sv: uppdateringskanal; _betakanal_ (_Vill du byta till betakanalen?_) (Chrome's _kanal_; the compounds agent-chosen)
 - ja: リリースチャンネル; ベータチャンネル (ベータチャンネルに切り替えますか?) (agent-chosen)
 
 ## Trusted hosts
@@ -489,11 +545,27 @@ Which releases Meru updates to, Stable or [Beta](#experimental-beta): _Release c
 The hosts whose links open without the link prompt: _Trusted hosts_, _links from untrusted hosts_.
 
 - de: vertrauenswürdige Hosts; _nicht vertrauenswürdige Hosts_ (agent-chosen)
+- fr: hôtes approuvés; _hôtes non approuvés_ (Chrome's _approuvé_)
+- it: host attendibili; _host non attendibili_ (Chrome)
+- es: hosts de confianza; _hosts que no son de confianza_ (Chrome's _de confianza_)
+- es-419: hosts de confianza; _hosts que no son de confianza_ (Chrome's _de confianza_)
+- pt-BR: hosts confiáveis; _hosts não confiáveis_ (Chrome's _confiável_)
+- nl: vertrouwde hosts; _niet-vertrouwde hosts_ (Chrome's _vertrouwd_ and _host_)
+- pl: zaufane hosty; _niezaufane hosty_ (Chrome's _zaufany_ and _host_)
+- sv: betrodda värdar; _ej betrodda värdar_ (Chrome's _betrodd_ and _värd_)
 - ja: 信頼するホスト; 信頼されていないホスト (agent-chosen)
 
 ## Phishing protection
 
 - de: Phishing-Schutz (agent-chosen)
+- fr: protection contre l’hameçonnage (Chrome's _hameçonnage_)
+- it: protezione dal phishing (Chrome's _phishing_)
+- es: protección contra phishing (Chrome's _phishing_)
+- es-419: protección contra phishing (Chrome's _phishing_)
+- pt-BR: proteção contra phishing (Chrome's _phishing_)
+- nl: phishingbescherming (Chrome's _phishing_; agent-chosen compound)
+- pl: ochrona przed phishingiem (agent-chosen; Chrome writes both _phishing_ and _wyłudzanie informacji_)
+- sv: skydd mot nätfiske (Chrome's _nätfiske_)
 - ja: フィッシング対策 (agent-chosen)
 
 ## Notify
@@ -501,6 +573,14 @@ The hosts whose links open without the link prompt: _Trusted hosts_, _links from
 The verb beside [Notification](#notification): _Notify when updates are available_, _Notify for_.
 
 - de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen)
+- fr: avertir (_M’avertir quand des mises à jour sont disponibles_) (agent-chosen)
+- it: avvisare (_Avvisa quando sono disponibili aggiornamenti_) (agent-chosen)
+- es: notificar (_Notificar cuando haya actualizaciones_) (Chrome)
+- es-419: notificar (_Notificar cuando haya actualizaciones_) (Chrome)
+- pt-BR: notificar (_Notificar Quando Houver Atualizações_) (agent-chosen; Chrome rewrites it as _enviar notificações_)
+- nl: melden (_Meld wanneer er updates beschikbaar zijn_) (agent-chosen)
+- pl: powiadamiać (_Powiadamiaj o dostępnych aktualizacjach_) (agent-chosen)
+- sv: avisera (_Avisera när uppdateringar finns_) (agent-chosen, beside Chrome's _avisering_)
 - ja: 通知する (アップデートが利用可能になったら通知) (agent-chosen)
 
 ## Move
@@ -508,6 +588,14 @@ The verb beside [Notification](#notification): _Notify when updates are availabl
 Moving a tab, an email, an attachment or a file: _Move to New Window_, _Move attachments to top_, _File moved or deleted_.
 
 - de: verschieben (_In neues Fenster verschieben_, _Datei verschoben oder gelöscht_); _bewegen_ is only for dragging or the pointer (agent-chosen)
+- fr: déplacer (_Déplacer vers une nouvelle fenêtre_, _Fichier déplacé ou supprimé_) (Chrome)
+- it: spostare (_Sposta in una nuova finestra_, _File spostato o eliminato_) (Chrome)
+- es: mover (_Mover a una ventana nueva_, _Archivo movido o eliminado_) (Chrome)
+- es-419: mover (_Mover a una nueva ventana_, _Archivo movido o borrado_) (Chrome)
+- pt-BR: mover (_Mover para uma Nova Janela_, _Arquivo movido ou excluído_) (Chrome)
+- nl: verplaatsen (_Verplaats naar nieuw venster_, _Bestand verplaatst of verwijderd_) (Chrome)
+- pl: przenieść (_Przenieś do nowego okna_, _Plik przeniesiony lub usunięty_) (Chrome)
+- sv: flytta (_Flytta till nytt fönster_, _Filen har flyttats eller raderats_) (Chrome)
 - ja: 移動 (新しいウィンドウに移動) (agent-chosen)
 
 ## Sound names
@@ -515,6 +603,14 @@ Moving a tab, an email, an attachment or a file: _Move to New Window_, _Move att
 The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings. They are names, each translated by what one hears, and kept in English where the language's word names something else.
 
 - de: Brise, Klangspiel, Duett, Klopfen, Linen; the German _Leinen_ names only the fabric (agent-chosen)
+- fr: Brise, Carillon, Duo, Toc-toc, Lin (agent-chosen)
+- it: Brezza, Rintocco, Duetto, Bussata, Lino (agent-chosen)
+- es: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen)
+- es-419: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen)
+- pt-BR: Brisa, Sino, Dueto, Batida, Linho (agent-chosen)
+- nl: Bries, Klokkenspel, Duet, Klop, Linen; the Dutch _linnen_ names only the fabric (agent-chosen)
+- pl: Bryza, Dzwonek, Duet, Pukanie, Linen; the Polish _len_ names the fabric and the plant (agent-chosen)
+- sv: Bris, Klockspel, Duett, Knack, Linen; the Swedish _linne_ names the fabric and a vest (agent-chosen)
 - ja: ブリーズ, チャイム, デュエット, ノック, リネン (agent-chosen)
 
 ## Button
@@ -522,6 +618,14 @@ The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings
 A button drawn on screen, such as the bookmarks button, the width button or Gmail's Upgrade button, never a key on the keyboard, which is under [Keyboard keys](#keyboard-keys).
 
 - de: Schaltfläche (_Lesezeichen-Schaltfläche_). Never a standalone _Taste_, which reads as a keyboard key; a key name such as _Umschalttaste_ keeps it.
+- fr: bouton (_bouton des favoris_) (Chrome); a key on the keyboard is a _touche_
+- it: pulsante (_pulsante dei preferiti_) (Chrome); a key on the keyboard, or a hardware button, is a _tasto_
+- es: botón (_botón de marcadores_) (Chrome)
+- es-419: botón (_botón de favoritos_) (Chrome)
+- pt-BR: botão (_botão de favoritos_) (Chrome)
+- nl: knop (_bookmarkknop_) (Chrome)
+- pl: przycisk (_przycisk zakładek_) (Chrome)
+- sv: knapp (_bokmärkesknapp_) (Chrome)
 - ja: ボタン (ブックマークボタン)
 
 ## Gmail's words
@@ -536,7 +640,7 @@ What Gmail itself shows for the things a Meru string can name, used over Apple's
 - es: Deshacer (undo send)
 - es-419: Deshacer (undo send)
 - pt-BR: Desfazer (undo send)
-- nl: Ongedaan maken (undo send; Apple's is _Herstel_)
+- nl: Ongedaan maken (undo send, and Chrome's; Apple's is _Herstel_)
 - pl: Cofnij (undo send)
 - sv: Ångra (undo send)
 - ja: 取り消し (undo send; Apple's is 取り消す)
@@ -551,7 +655,7 @@ What Gmail itself shows for the things a Meru string can name, used over Apple's
 - pt-BR: Mensagem enviada (undo send)
 - nl: Bericht verzonden (undo send)
 - pl: Wiadomość wysłana (undo send)
-- sv: Meddelandet har skickats (undo send; Apple's word for a message is _mejl_)
+- sv: Meddelandet har skickats (undo send; Apple's word for a message is _mejl_, Chrome's _e-postmeddelande_)
 - ja: メールを送信しました (undo send)
 
 ### Inbox
@@ -605,7 +709,7 @@ The actions on a message in the unified inbox, beside Archive above. From shortc
 - fr: Marquer comme lu; Signaler comme spam; Supprimer
 - it: Segna come già letto; Segnala come spam; Elimina
 - es: Marcar como leído; Marcar como spam; Eliminar
-- es-419: Marcar como leído; Marcar como spam; Eliminar
+- es-419: Marcar como leído; Marcar como spam; Eliminar, Gmail's word, though Meru's own Delete is _Borrar_
 - pt-BR: Marcar como lida; Denunciar como spam; Excluir
 - nl: Markeren als gelezen; Melden als spam; Verwijderen
 - pl: Oznacz jako przeczytane; Zgłoś jako spam; Usuń
@@ -617,8 +721,8 @@ The actions on a message in the unified inbox, beside Archive above. From shortc
 From shortcuts: the folder of starred conversations, the action and the folder of snoozed ones, and a label.
 
 - de: Markiert; Zurückstellen, zurückgestellt; Label
-- fr: suivi (_conversations dont le suivi est activé_); Mettre en attente, En attente; libellé
-- it: Speciali; Posticipa, posticipate; etichetta
+- fr: suivi (_conversations dont le suivi est activé_); Mettre en attente, En attente; libellé (Chrome writes _libellé_ too)
+- it: Speciali; Posticipa, posticipate; etichetta (Chrome writes _etichetta_ too)
 - es: Destacados; Posponer, pospuestas; etiqueta
 - es-419: Destacados; Posponer, pospuestas; etiqueta
 - pt-BR: Com estrela; Adiar, adiadas; marcador
@@ -668,7 +772,7 @@ A reply or forward opened in a window of its own. Gmail Help calls it a new wind
 - es-419: nueva ventana; _Responder en una nueva ventana_
 - pt-BR: nova janela; _Responder em uma nova janela_
 - nl: nieuw venster; _Beantwoorden in een nieuw venster_
-- pl: nowe okno; _Odpowiedz w nowym oknie_
+- pl: nowe okno; _Odpowiedz w nowym oknie_
 - sv: nytt fönster; _Svara i ett nytt fönster_
 - ja: 新しいウィンドウ; _新しいウィンドウで返信_
 
@@ -692,6 +796,14 @@ _View entire message_ is the link under a message Gmail has clipped, and _Upgrad
 Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Not yet read from Gmail's interface.
 
 - de: Abwesenheitsnotiz; mehrere Posteingänge (agent-chosen)
+- fr: réponse automatique d’absence; boîtes de réception multiples (agent-chosen)
+- it: risposta automatica; Posta in arrivo multipla (agent-chosen)
+- es: respuesta automática; varias bandejas de entrada (agent-chosen)
+- es-419: respuesta automática; varias bandejas de entrada (agent-chosen)
+- pt-BR: resposta automática; várias caixas de entrada (agent-chosen)
+- nl: automatisch antwoord bij afwezigheid; meerdere inboxen (agent-chosen)
+- pl: autoodpowiedź; wiele skrzynek odbiorczych (agent-chosen)
+- sv: frånvaromeddelande; flera inkorgar (agent-chosen)
 - ja: 不在通知; マルチ受信トレイ (agent-chosen)
 
 ## 1Password's words
