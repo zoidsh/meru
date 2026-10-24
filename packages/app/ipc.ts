@@ -9,6 +9,7 @@ import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
+import { byPlatform } from "@meru/shared/platform";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { workspaceApps } from "@meru/shared/workspace-apps";
@@ -828,12 +829,17 @@ class Ipc {
     }));
 
     ipc.main.handle("about.exportLogs", async () => {
+      // lingui-set comment="Button in the save dialog that exports Meru's log file"
+      const buttonLabel = byPlatform(platform, {
+        macOS: t({ message: "Export", context: "macOS" }),
+        windows: t({ message: "Export", context: "Windows" }),
+        linux: t({ message: "Export", context: "Linux" }),
+      });
+      // lingui-reset
+
       const { canceled, filePath } = await dialog.showSaveDialog({
         defaultPath: "meru.log",
-        buttonLabel: t({
-          message: "Export",
-          comment: "Button in the save dialog that exports Meru's log file",
-        }),
+        buttonLabel,
       });
 
       if (canceled || !filePath) {

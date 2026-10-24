@@ -3,6 +3,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { plural, select } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { byPlatform } from "@meru/shared/platform";
 import { GMAIL_TAB_ID, verticalTabsGmailUnreadBadges, verticalTabsWidths } from "@meru/shared/tabs";
 import {
   DEV_WORKSPACE_APPS_HIBERNATION_TIMEOUT,
@@ -202,11 +203,13 @@ export function WorkspaceAppsSettings() {
           "Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl",
       });
 
-  const newWindowKey = t({
-    message: "Shift",
-    comment:
-      "Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl",
+  // lingui-set comment="Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl"
+  const newWindowKey = byPlatform(platform, {
+    macOS: t({ message: "Shift", context: "macOS" }),
+    windows: t({ message: "Shift", context: "Windows" }),
+    linux: t({ message: "Shift", context: "Linux" }),
   });
+  // lingui-reset
 
   return (
     <Settings>

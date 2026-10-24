@@ -2,6 +2,8 @@
 
 Swedish follows what Apple ships in macOS Mail and AppKit. Where this sheet and a habit from other software disagree, this sheet wins.
 
+An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is an OS label, a label each operating system names its own way, such as the File menu or Paste. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's. Only the word changes: this sheet's address, capitalization and punctuation hold on every platform.
+
 ## Address
 
 _du_, with _din_, _ditt_, _dina_ and _dig_, lowercase: _Är du säker … din_. Never _ni_.
@@ -16,7 +18,7 @@ Sentence style: only the first word and proper nouns take a capital.
 
 ## Settings
 
-_Inställningar_; the app-menu item is _Inställningar…_.
+_Inställningar_. The app-menu item with `msgctxt` `macOS` is _Inställningar…_, as AppKit writes it; with `Windows` or `Linux` it takes Microsoft's or GNOME's word, without the ellipsis the English lacks.
 
 ## Plural categories
 

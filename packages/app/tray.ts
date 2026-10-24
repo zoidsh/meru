@@ -1,6 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { t } from "@lingui/core/macro";
+import { byPlatform } from "@meru/shared/platform";
 import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
@@ -151,6 +152,26 @@ export class AppTray {
     return t({ message: "Quit", comment: "Tray menu item that quits Meru" });
   }
 
+  private getHideLabel() {
+    // lingui-set comment="Tray menu item that hides Meru's window"
+    return byPlatform(platform, {
+      macOS: t({ message: "Hide Meru", context: "macOS" }),
+      windows: t({ message: "Hide Meru", context: "Windows" }),
+      linux: t({ message: "Hide Meru", context: "Linux" }),
+    });
+    // lingui-reset
+  }
+
+  private getShowLabel() {
+    // lingui-set comment="Tray menu item that brings Meru's window back"
+    return byPlatform(platform, {
+      macOS: t({ message: "Show Meru", context: "macOS" }),
+      windows: t({ message: "Show Meru", context: "Windows" }),
+      linux: t({ message: "Show Meru", context: "Linux" }),
+    });
+    // lingui-reset
+  }
+
   getMenuTemplate() {
     const mainWindowIsVisible = main.window.isVisible();
 
@@ -171,9 +192,7 @@ export class AppTray {
         type: "separator",
       },
       {
-        label: mainWindowIsVisible
-          ? t({ message: "Hide Meru", comment: "Tray menu item that hides Meru's window" })
-          : t({ message: "Show Meru", comment: "Tray menu item that brings Meru's window back" }),
+        label: mainWindowIsVisible ? this.getHideLabel() : this.getShowLabel(),
         click: () => {
           main.window[mainWindowIsVisible ? "hide" : "show"]();
         },

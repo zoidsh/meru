@@ -2,6 +2,8 @@
 
 French follows what Apple ships in macOS Mail and AppKit, for France. Where this sheet and a habit from other software disagree, this sheet wins.
 
+An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is an OS label, a label each operating system names its own way, such as the File menu or Paste. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's. Only the word changes: this sheet's address, capitalization and punctuation hold on every platform.
+
 ## Address
 
 _vous_, with _votre_ and _vos_: _votre boîte_, _Voulez-vous vraiment … ?_. Never _tu_.
@@ -16,7 +18,7 @@ Sentence style: only the first word and proper nouns take a capital, in labels a
 
 ## Settings
 
-_Réglages_; the app-menu item is _Réglages…_.
+_Réglages_. The app-menu item with `msgctxt` `macOS` is _Réglages…_, as AppKit writes it; with `Windows` or `Linux` it takes Microsoft's or GNOME's word, without the ellipsis the English lacks.
 
 ## Plural categories
 

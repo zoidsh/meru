@@ -19,7 +19,7 @@ import { quarantineFile } from "./lib/quarantine";
 
 // lingui-set comment="Button on the download notification that shows the file in the file manager"
 const SHOW_IN_FILE_MANAGER = platform.isMacOS
-  ? msg`Show in Finder`
+  ? msg({ message: "Show in Finder", context: "macOS" })
   : platform.isWindows
     ? msg`Show in File Explorer`
     : msg`Show in your file manager`;
