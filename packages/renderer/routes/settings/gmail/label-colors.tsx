@@ -65,7 +65,15 @@ function LabelColorForm({
   const schema = useMemo(
     () =>
       gmailLabelColorInputSchema.extend({
-        label: z.string().min(1, t`Enter a label`),
+        label: z.string().min(
+          1,
+          t({
+            message: "Enter a label",
+            context: "Gmail label",
+            comment:
+              "Error under the empty Label field, which takes the exact name of a Gmail label; label is Gmail's word",
+          }),
+        ),
         color: z
           .string()
           .min(1, t`Enter a color`)

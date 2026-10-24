@@ -69,7 +69,15 @@ export function SavedSearchForm({
   const schema = useMemo(
     () =>
       gmailSavedSearchInputSchema.extend({
-        label: z.string().min(1, t`Enter a label`),
+        label: z.string().min(
+          1,
+          t({
+            message: "Enter a label",
+            context: "saved search",
+            comment:
+              "Error under the empty Label field, which takes the name Meru shows for the saved search",
+          }),
+        ),
         query: z.string().min(1, t`Enter a search query`),
       }),
     [t],

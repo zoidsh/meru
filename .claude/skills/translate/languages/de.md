@@ -39,7 +39,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro, never inflected inside the word
 
 - **Placeholders and articles.** An article or adjective before a placeholder must agree with every value it can take, which it usually cannot. Put the placeholder after a noun that carries the case (_im Konto {name}_), or in its own phrase, never _der {name}_.
 - **Gendered forms.** Address with _du_ avoids most of them; where a person is described, rewrite around the gender.
-- **House words.** _Benachrichtigung_, never _Mitteilung_, for a notification. _Konto_, plural _Konten_, never _Account_, for an account. _Speichern_, never _Sichern_, for keeping something; _Sichern_ is only Apple's word in a `macOS` label such as _Sichern unter …_.
+- **House words.** _Benachrichtigung_, never _Mitteilung_, for a notification. _Konto_, plural _Konten_, never _Account_, for an account. _Speichern_, never _Sichern_, for keeping something; _Sichern_ is only Apple's word in a `macOS` label such as _Sichern unter …_. _Schaltfläche_ for an on-screen button, such as the bookmarks button: _Lesezeichen-Schaltfläche_. A standalone _Taste_ reads as a keyboard key and means only that, as in the key names _Umschalttaste_ and _Control-Taste_.
 - English quotation marks become „…“ (U+201E, U+201C).
 
 ## Error messages
@@ -58,6 +58,8 @@ House words for everyday actions, most of them Apple's from Mail's `MainMenu`, `
 ## Platform words
 
 The word each platform uses for every label with a platform `msgctxt`. A label keeps its English placeholders and access key as the rules above say; the table gives the words.
+
+`de.json` beside this sheet holds the same words by `msgctxt` and `msgid`, with the banned words, pinned terms and access-key style that `check.ts` holds a catalog against. A test keeps it and this table in step: a cell's words are the italic spans that open each `;`-separated part, and the space before an ellipsis stands for the catalog's no-break space.
 
 Sources: **AppKit** and **Mail** are the `.loctable` files in `/System/Library/Frameworks/AppKit.framework/Versions/C/Resources` and `/System/Applications/Mail.app/Contents/Resources` on macOS 27, named by table and key, as are **Dictionary** and **Screen Sharing**, in `/System/Applications/Dictionary.app` and `/System/Applications/Utilities/Screen Sharing.app`; **Software Update** is `/System/Library/ExtensionKit/Extensions/SoftwareUpdateSettingsExtension.appex/Contents/Resources/Localizable.loctable`; **TBX** is the Microsoft Terminology Collection, `GERMAN.tbx`, by `termEntry` id; **gtk4**, **nautilus** and **gedit** are GNOME's `de.po` for each, by `msgid` (and `msgctxt` where it has one). _Inferred_ marks a word no source gives for that label, built from the source words named.
 

@@ -4,6 +4,8 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
+**Agent-chosen** marks a word a translating agent picked for its language's first catalog, brought into line with the house words but not yet reviewed by a speaker. Use it like any other entry; a reviewer's word replaces it. An entry that lists only some languages gets the others' words when they are added.
+
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
 ## Terms that stay English
@@ -368,7 +370,7 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 
 Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
-- de: Upgrade; _Auf Meru Pro upgraden_
+- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen)
 - fr: Passer à Meru Pro
 - it: Passa a Meru Pro
 - es: Mejorar a Meru Pro
@@ -377,7 +379,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 - nl: Upgrade naar Meru Pro
 - pl: Przejdź na Meru Pro
 - sv: Uppgradera till Meru Pro
-- ja: Meru Proにアップグレード
+- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (agent-chosen)
 
 ## License key, Trial, Device
 
@@ -432,6 +434,88 @@ A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ 
 - pl: Apple Command (Cmd), Shift, Option (Alt), Control (Ctrl); Microsoft Ctrl, Shift, Alt
 - sv: Apple Kommando (Kmd), Skift, Alternativ (Alt), Kontroll (Ctrl); Microsoft Ctrl, Skift, Alt
 - ja: Apple command (cmd), shift, option (alt), control (ctrl), in lower case; Microsoft Ctrl, Shift, Alt, with キー after the name in running prose
+
+## Toast
+
+A brief message Meru shows over its window or over Gmail, such as the one after a setting changes, and the region the toasts appear in, which the interface reads as _Notifications_ with `msgctxt` `toasts`. Never the word for a system [notification](#notification).
+
+- de: Hinweis, plural Hinweise (_Hinweis schließen_) (agent-chosen)
+- ja: お知らせ (お知らせを閉じる), never 通知 (agent-chosen)
+
+## Unread badge
+
+The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_.
+
+- de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Kennzeichen_ (agent-chosen)
+- ja: 未読バッジ (未読バッジを表示) (agent-chosen)
+
+## Tab strip
+
+The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_.
+
+- de: Tableiste (_Tableiste verschmälern_) (agent-chosen)
+- ja: タブストリップ (タブストリップを狭くする) (agent-chosen)
+
+## Label, Meru's
+
+The name Meru shows for an account or a saved search, in its _Label_ field and _Enter a label_ with `msgctxt` `saved search`. Never Gmail's label, which is under [Starred, Snooze, Label](#starred-snooze-label) and carries `msgctxt` `Gmail label`.
+
+- de: Name (_Namen eingeben_) (agent-chosen)
+- ja: 名前 (名前を入力) (agent-chosen)
+
+## Device label
+
+The name this computer goes by among the devices using a license key.
+
+- de: Gerätename (_Gerätenamen eingeben_) (agent-chosen)
+- ja: デバイス名 (デバイス名を入力) (agent-chosen)
+
+## Release channel
+
+Which releases Meru updates to, Stable or [Beta](#experimental-beta): _Release channel_, _Switch to the beta channel?_
+
+- de: Update-Kanal; _Beta-Kanal_ (_Zum Beta-Kanal wechseln?_) (agent-chosen)
+- ja: リリースチャンネル; ベータチャンネル (ベータチャンネルに切り替えますか?) (agent-chosen)
+
+## Trusted hosts
+
+The hosts whose links open without the link prompt: _Trusted hosts_, _links from untrusted hosts_.
+
+- de: vertrauenswürdige Hosts; _nicht vertrauenswürdige Hosts_ (agent-chosen)
+- ja: 信頼するホスト; 信頼されていないホスト (agent-chosen)
+
+## Phishing protection
+
+- de: Phishing-Schutz (agent-chosen)
+- ja: フィッシング対策 (agent-chosen)
+
+## Notify
+
+The verb beside [Notification](#notification): _Notify when updates are available_, _Notify for_.
+
+- de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen)
+- ja: 通知する (アップデートが利用可能になったら通知) (agent-chosen)
+
+## Move
+
+Moving a tab, an email, an attachment or a file: _Move to New Window_, _Move attachments to top_, _File moved or deleted_.
+
+- de: verschieben (_In neues Fenster verschieben_, _Datei verschoben oder gelöscht_); _bewegen_ is only for dragging or the pointer (agent-chosen)
+- ja: 移動 (新しいウィンドウに移動) (agent-chosen)
+
+## Sound names
+
+The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings. They are names, each translated by what one hears, and kept in English where the language's word names something else.
+
+- de: Brise, Klangspiel, Duett, Klopfen, Linen; the German _Leinen_ names only the fabric (agent-chosen)
+- ja: ブリーズ, チャイム, デュエット, ノック, リネン (agent-chosen)
+
+## Button
+
+A button drawn on screen, such as the bookmarks button, the width button or Gmail's Upgrade button, never a key on the keyboard, which is under [Keyboard keys](#keyboard-keys).
+
+- de: Schaltfläche (_Lesezeichen-Schaltfläche_). Never a standalone _Taste_, which reads as a keyboard key; a key name such as _Umschalttaste_ keeps it.
+- ja: ボタン (ブックマークボタン)
 
 ## Gmail's words
 
@@ -595,6 +679,13 @@ _View entire message_ is the link under a message Gmail has clipped, and _Upgrad
 - pl: Pokaż całą wiadomość; Zmień na większy pakiet
 - sv: Visa hela meddelandet; Uppgradera
 - ja: メッセージ全体を表示; アップグレード
+
+### Out of office, Multiple inboxes
+
+Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Not yet read from Gmail's interface.
+
+- de: Abwesenheitsnotiz; mehrere Posteingänge (agent-chosen)
+- ja: 不在通知; マルチ受信トレイ (agent-chosen)
 
 ## 1Password's words
 
