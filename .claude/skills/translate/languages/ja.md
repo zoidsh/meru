@@ -43,7 +43,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro, in Latin letters, never katakan
 - **Punctuation follows Apple.** The comma is the full-width 、 (U+3001) and the full stop the full-width 。 (U+3002), never a half-width `,` or `.` in Japanese text. A question or exclamation mark is the half-width `?` or `!`, never ？ or ！. Quotation marks are “” (U+201C, U+201D), never 「」 or straight `"…"`. The ellipsis on a label is … as in 設定…
 - **No spaces around Latin text or numbers.** _Meru Proにアップグレード_, _3個のタブ_, _Gmailの設定_; never _Meru Pro にアップグレード_.
 - **No plain-form sentences.** です/ます throughout, as above.
-- **House katakana.** A word ending in a long vowel keeps its ー: ブラウザー, フォルダー, ユーザー, マネージャー, コンピューター, never ブラウザ, フォルダ, ユーザ, マネージャ, コンピュータ. A window in Meru's own copy is ウィンドウ, never ウインドウ; a `macOS` label takes Apple's ウインドウ, as in ウインドウを閉じる. An extension is 機能拡張, never 拡張機能.
+- **House katakana.** A word ending in a long vowel keeps its ー: ブラウザー, フォルダー, ユーザー, マネージャー, コンピューター, エディター, サーバー, never ブラウザ, フォルダ, ユーザ, マネージャ, コンピュータ, エディタ, サーバ; a `macOS` label spells the word as Apple does. A Gmail term such as フィルタ keeps Gmail's spelling. A window in Meru's own copy is ウィンドウ, never ウインドウ; a `macOS` label takes Apple's ウインドウ, as in ウインドウを閉じる. An extension is 機能拡張, never 拡張機能.
 - **Placeholders.** Particles follow the placeholder (_{name}のアカウント_), and Japanese word order often moves it; keep every placeholder exactly as written.
 
 ## Error messages

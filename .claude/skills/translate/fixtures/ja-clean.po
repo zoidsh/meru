@@ -19,6 +19,11 @@ msgstr "新しいウィンドウで開く"
 msgid "Open in browser"
 msgstr "ブラウザーで開く"
 
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Open in Browser"
+msgstr "ブラウザで開く"
+
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions"
 msgstr "機能拡張"

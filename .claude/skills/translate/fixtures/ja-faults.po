@@ -16,6 +16,11 @@ msgstr "新しいウインドウで開く"
 msgid "Open in browser"
 msgstr "ブラウザで開く"
 
+# fault: banned:long-vowel
+#: packages/app/lib/browser-allowlist.ts
+msgid "Open the browser allowlist in an editor with root permissions."
+msgstr "root権限でエディタを使って、許可リストを開いてください。"
+
 # fault: banned:kakuchou-kinou
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions"

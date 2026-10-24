@@ -545,9 +545,12 @@
     },
     {
       "id": "long-vowel",
-      "pattern": "(?:ブラウザ|フォルダ|ユーザ|マネージャ|コンピュータ)(?!ー)",
+      "pattern": "(?:ブラウザ|フォルダ|ユーザ|マネージャ|コンピュータ|エディタ|プロバイダ|デベロッパ|サーバ|プリンタ|ドライバ|スキャナ|ヘッダ|ビューア|プレーヤ|パラメータ|アダプタ|コントローラ)(?!ー)",
       "severity": "wrong",
-      "reason": "A word ending in a long vowel keeps its ー: ブラウザー, フォルダー, ユーザー."
+      "reason": "A word ending in a long vowel keeps its ー in Meru's own copy: ブラウザー, フォルダー, ユーザー; a macOS label spells it as Apple does.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
     },
     {
       "id": "kakuchou-kinou",
