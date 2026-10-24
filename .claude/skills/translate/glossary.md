@@ -372,7 +372,7 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 
 Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
-- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen)
+- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (Tim's call)
 - fr: Passer à Meru Pro
 - it: Passa a Meru Pro
 - es: Mejorar a Meru Pro
@@ -514,7 +514,7 @@ Moving a tab, an email, an attachment or a file: _Move to New Window_, _Move att
 
 The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings. They are names, each translated by what one hears, and kept in English where the language's word names something else.
 
-- de: Brise, Klangspiel, Duett, Klopfen, Linen; the German _Leinen_ names only the fabric (agent-chosen)
+- de: Brise, Klangspiel, Duett, Klopfen (agent-chosen); Leinen (Tim's call)
 - ja: ブリーズ, チャイム, デュエット, ノック, リネン (agent-chosen)
 
 ## Button

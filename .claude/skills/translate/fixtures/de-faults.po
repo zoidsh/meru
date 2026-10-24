@@ -174,4 +174,4 @@ msgstr "Melden für"
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
-msgstr "Leinen"
+msgstr "Linen"

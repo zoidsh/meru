@@ -753,7 +753,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen."
     },
     {
       "id": "sound-name",
@@ -761,7 +761,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klangspiel$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen."
     },
     {
       "id": "sound-name",
@@ -769,7 +769,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen."
     },
     {
       "id": "sound-name",
@@ -777,15 +777,15 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klopfen$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen."
     },
     {
       "id": "sound-name",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
-      "expect": "^Linen$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "expect": "^Leinen$",
+      "severity": "wrong",
+      "reason": "The sound Linen is Leinen (glossary, Tim's call)."
     }
   ],
   "accessKeys": {
