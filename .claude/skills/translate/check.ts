@@ -67,6 +67,10 @@ function toEntries(catalogPath: string, catalog: Catalog) {
   );
 }
 
+function keyOf(msgctxt: string | null, msgid: string) {
+  return `${msgctxt ?? ""}\u0004${msgid}`;
+}
+
 function appendText(tokens: CompiledMessage, parts: string[]) {
   for (const token of tokens) {
     if (typeof token === "string") {
@@ -110,8 +114,24 @@ function visibleText(msgstr: string) {
   }
 }
 
+const compiledPatterns = new Map<string, RegExp>();
+
+/** Every rule runs against every entry, so each pattern compiles once. */
 function regex(source: string, flags = "") {
-  return new RegExp(source, `u${flags}`);
+  const cacheKey = `${flags}/${source}`;
+
+  let compiled = compiledPatterns.get(cacheKey);
+
+  if (!compiled) {
+    compiled = new RegExp(source, `u${flags}`);
+
+    compiledPatterns.set(cacheKey, compiled);
+  }
+
+  // A global pattern carries `lastIndex` between calls.
+  compiled.lastIndex = 0;
+
+  return compiled;
 }
 
 function matchesSelector(
@@ -182,6 +202,8 @@ export function checkCatalogs(
     toEntries(catalogPath, catalog),
   );
 
+  const byKey = new Map(entries.map((entry) => [keyOf(entry.msgctxt, entry.msgid), entry]));
+
   const report = (
     entry: Entry,
     rule: Rule,
@@ -251,9 +273,7 @@ export function checkCatalogs(
   let platformEntriesFound = 0;
 
   for (const word of sidecar.platformWords.entries) {
-    const entry = entries.find(
-      (candidate) => candidate.msgctxt === word.msgctxt && candidate.msgid === word.msgid,
-    );
+    const entry = byKey.get(keyOf(word.msgctxt, word.msgid));
 
     if (!entry) {
       continue;
@@ -283,12 +303,10 @@ export function checkCatalogs(
 
     for (const group of family.groups) {
       for (const member of group.entries) {
-        const candidates = entries.filter((entry) => entry.msgid === member.msgid);
-
         // A catalog from before the platform split shows its one entry everywhere.
         const entry =
-          candidates.find((candidate) => candidate.msgctxt === (member.msgctxt ?? null)) ??
-          candidates.find((candidate) => candidate.msgctxt === null);
+          byKey.get(keyOf(member.msgctxt ?? null, member.msgid)) ??
+          byKey.get(keyOf(null, member.msgid));
 
         if (entry && !isInCase(entry.msgstr, group.case)) {
           deviations.set(entry, [
