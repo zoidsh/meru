@@ -1,0 +1,172 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: sv\n"
+
+# Apple's mejl is the macOS label's word.
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Compose"
+msgstr "Nytt mejl"
+
+# Apple's Göm is the macOS label's word.
+#: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Hide Meru"
+msgstr "Göm Meru"
+
+#: packages/app/tray.ts
+msgctxt "Windows"
+msgid "Hide Meru"
+msgstr "Dölj Meru"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "macOS"
+msgid "Show Save As dialog before downloading"
+msgstr "Visa dialogrutan ”Spara som” före nedladdning"
+
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Nedladdningshistorik"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Show recent download history"
+msgstr "Visa senaste nedladdningshistoriken"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Arkiv"
+
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "File"
+msgstr "Fil"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Settings"
+msgstr "Inställningar…"
+
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Klipp u&t"
+
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Sa&ve Image As…"
+msgstr "S&para bild som…"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Look Up “{selection}”"
+msgstr "Slå upp ”{selection}”"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
+msgid "Enable system tray icon"
+msgstr "Aktivera ikonen i systemfältet"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "Visa bokmärkesknappen"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Show a notification when a download finishes."
+msgstr "Visa en avisering när en nedladdning är klar."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Uppgradera till Meru Pro"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Etikett"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Enter a label"
+msgstr "Ange en etikett"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Namn"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Ange ett namn"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "Vill du ta bort ”{label}”?"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Är du säker på att du vill radera det här meddelandet?"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, one {# flik} other {# flikar}}"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Move to New Window"
+msgstr "Flytta till nytt fönster"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Stäng inforuta"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Inforutor"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Inforutor"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Visa symbolbricka för olästa"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Klockspel"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify when updates are available"
+msgstr "Avisera när uppdateringar finns"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Fäst"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Unpinned tabs"
+msgstr "Flikar som inte är fästa"
+
+#: packages/app/menu.ts
+msgid "Reload page"
+msgstr "Läs in sidan igen"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart Meru to apply the changes."
+msgstr "Starta om Meru för att tillämpa ändringarna."
+
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Sök…"
+
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "Mark email as read after copying"
+msgstr "Markera e-postmeddelandet som läst efter kopiering"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Skydd mot nätfiske"
