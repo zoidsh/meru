@@ -158,24 +158,6 @@ msgstr "&Paste"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
-msgctxt "Linux"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "macOS"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "Windows"
-msgid "&Paste And Match Style"
-msgstr "&Paste And Match Style"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
 msgid "&Search with Google"
 msgstr "&Search with Google"
 
@@ -423,7 +405,7 @@ msgid "Application version"
 msgstr "Application version"
 
 #. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Archive"
@@ -1711,7 +1693,7 @@ msgstr "Manage Accounts"
 msgid "Mark as read"
 msgstr "Mark as read"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Read"
 msgstr "Mark as Read"
@@ -1721,7 +1703,7 @@ msgstr "Mark as Read"
 msgid "Mark as spam"
 msgstr "Mark as spam"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Spam"
 msgstr "Mark as Spam"
@@ -2201,6 +2183,24 @@ msgstr "Paste"
 msgctxt "Windows"
 msgid "Paste"
 msgstr "Paste"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Paste and &Match Style"
+msgstr "Paste and &Match Style"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -3348,8 +3348,14 @@ msgstr "Unpin"
 msgid "Unpinned tabs"
 msgstr "Unpinned tabs"
 
-#. Switch, and a badge on the account, for showing the account's unread badge
+#. Switch for showing the account's unread badge
 #: packages/renderer/routes/settings/accounts.tsx
+msgid "Unread badge"
+msgstr "Unread badge"
+
+#. Badge on an account's row in Settings when its unread badge is on: a short badge on a row that cannot wrap; keep it as short as possible
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
 msgid "Unread badge"
 msgstr "Unread badge"
 

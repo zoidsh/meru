@@ -4,6 +4,8 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 **Gmail's word wins.** When a Meru string names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, it uses the word Gmail shows in that language, not Apple's, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
 
+**Chrome** marks Chrome's word, read from Chromium's translations; the sidecar rule that enforces it gives Chrome's count as its source.
+
 **Agent-chosen** marks a word a translating agent picked for its language's first catalog, brought into line with the house words but not yet reviewed by a speaker. Use it like any other entry; a reviewer's word replaces it. An entry that lists only some languages gets the others' words when they are added.
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
@@ -334,7 +336,7 @@ A Chrome extension from Meru's list.
 - nl: extensie (Apple)
 - pl: rozszerzenie (Apple)
 - sv: tillägg (Apple)
-- ja: 機能拡張 (Apple), never 拡張機能
+- ja: 拡張機能 (Chrome), never 機能拡張, Apple's word
 
 ## Experimental, Beta
 
@@ -396,7 +398,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_.
 
 ## Download history
 
-- de: Downloadverlauf (Apple's _Download_)
+- de: Downloadverlauf for the page, in _Download history_, _Full download history_ and _Close download history_ (Apple's _Download_); the recent download history popup is _Letzte Downloads_ (_Letzte Downloads anzeigen_), never _Aktueller Downloadverlauf_
 - fr: historique des téléchargements (Apple's _Télécharger_)
 - it: cronologia dei download (Apple's _download_)
 - es: historial de descargas (Apple's _Descargar_)
@@ -449,12 +451,17 @@ The count on an account, a tab or the dock icon for its unread emails: _Show unr
 - de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Kennzeichen_ (agent-chosen)
 - ja: 未読バッジ (未読バッジを表示) (agent-chosen)
 
+The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form:
+
+- de: Ungelesen
+- ja: 未読
+
 ## Tab strip
 
 The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_.
 
 - de: Tableiste (_Tableiste verschmälern_) (agent-chosen)
-- ja: タブストリップ (タブストリップを狭くする) (agent-chosen)
+- ja: タブバー (タブバーを狭くする) (Chrome), never タブストリップ
 
 ## Label, Meru's
 
@@ -523,7 +530,7 @@ What Gmail itself shows for the things a Meru string can name, used over Apple's
 
 ### Undo, in the message-sent toast
 
-- de: Rückgängig machen (Tim's call, from Gmail's own toast; the undo send page writes _Rückgängig_; Apple's is _Widerrufen_)
+- de: Rückgängig machen (the user's call, from Gmail's own toast; the undo send page writes _Rückgängig_; Apple's is _Widerrufen_)
 - fr: Annuler (undo send)
 - it: Annulla (undo send)
 - es: Deshacer (undo send)

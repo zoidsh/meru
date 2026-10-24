@@ -148,39 +148,39 @@
         "msgstr": "Einfügen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "macOS",
         "msgid": "Paste and Match Style",
         "msgstr": "Einsetzen und Stil anpassen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "Windows",
         "msgid": "Paste and Match Style",
         "msgstr": "Einfügen und Format anpassen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "Linux",
         "msgid": "Paste and Match Style",
         "msgstr": "Einfügen und Stil anpassen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "macOS",
-        "msgid": "&Paste And Match Style",
+        "msgid": "Paste and &Match Style",
         "msgstr": "Einsetzen und Stil anpassen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "Windows",
-        "msgid": "&Paste And Match Style",
+        "msgid": "Paste and &Match Style",
         "msgstr": "Einfügen und Format anpassen"
       },
       {
-        "row": "Paste and Match Style, `&Paste And Match Style`",
+        "row": "Paste and Match Style, `Paste and &Match Style`",
         "msgctxt": "Linux",
-        "msgid": "&Paste And Match Style",
+        "msgid": "Paste and &Match Style",
         "msgstr": "Einfügen und Stil anpassen"
       },
       {
@@ -595,6 +595,12 @@
       "reason": "An ellipsis follows a no-break space (U+00A0): Einstellungen …"
     },
     {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}]) (?=(?:Sekunden?|Minuten?|Stunden?|Tag(?:e|en)?|Wochen?|Monat(?:e|en)?|Jahr(?:e|en)?|[kKMGT]B)(?!\\p{L}))",
+      "severity": "style",
+      "reason": "A number and its unit are joined by a no-break space (U+00A0), as Chrome writes them: 5 Minuten, # Tage."
+    },
+    {
       "id": "english-quotes",
       "pattern": "[\"”]",
       "severity": "wrong",
@@ -610,10 +616,17 @@
   "pinned": [
     {
       "id": "download-history",
-      "msgidPattern": "\\bdownload history\\b",
+      "msgidPattern": "(?<!recent )\\bdownload history\\b",
       "expect": "Downloadverlauf",
       "severity": "wrong",
-      "reason": "The download history is Downloadverlauf (glossary)."
+      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history (glossary)."
+    },
+    {
+      "id": "recent-downloads",
+      "msgidPattern": "\\brecent download history\\b",
+      "expect": "Letzte Downloads",
+      "severity": "doubtful",
+      "reason": "The recent download history popup is Letzte Downloads, as in Letzte Downloads anzeigen (glossary), never Aktueller Downloadverlauf."
     },
     {
       "id": "upgrade",
@@ -656,6 +669,7 @@
     },
     {
       "id": "unread-badge",
+      "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "Kennzeichen",
       "severity": "doubtful",

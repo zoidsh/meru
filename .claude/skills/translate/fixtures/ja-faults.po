@@ -14,17 +14,34 @@ msgstr "新しいウインドウで開く"
 # fault: banned:long-vowel
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open in browser"
-msgstr "ブラウザで開く"
+msgstr "ブラウザーで開く"
+
+# A macOS label takes Chrome's spelling too, which is Apple's.
+# fault: banned:long-vowel
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Open in folder"
+msgstr "フォルダーで開く"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "User agent"
+msgstr "ユーザエージェント"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Only one password manager can be on at a time."
+msgstr "一度にオンにできるパスワードマネージャは1つだけです。"
 
 # fault: banned:long-vowel
 #: packages/app/lib/browser-allowlist.ts
 msgid "Open the browser allowlist in an editor with root permissions."
-msgstr "root権限でエディタを使って、許可リストを開いてください。"
+msgstr "root権限でエディターを使って、許可リストを開いてください。"
 
-# fault: banned:kakuchou-kinou
+# fault: banned:kinou-kakuchou
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions"
-msgstr "拡張機能"
+msgstr "機能拡張"
 
 # fault: banned:anata
 #: packages/renderer/routes/settings/accounts.tsx
@@ -117,7 +134,7 @@ msgstr "未読数を表示"
 # fault: pinned:tab-strip
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Narrow the tab strip"
-msgstr "タブバーを狭くする"
+msgstr "タブストリップを狭くする"
 
 # fault: pinned:meru-label
 #: packages/renderer/routes/settings/accounts.tsx

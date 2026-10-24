@@ -17,7 +17,7 @@ msgstr "新しいウィンドウで開く"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open in browser"
-msgstr "ブラウザーで開く"
+msgstr "ブラウザで開く"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
@@ -26,7 +26,7 @@ msgstr "ブラウザで開く"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions"
-msgstr "機能拡張"
+msgstr "拡張機能"
 
 #: packages/app/context-menu.ts
 msgctxt "macOS"
@@ -118,3 +118,24 @@ msgstr "チャイム"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Multiple inboxes"
 msgstr "マルチ受信トレイ"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "User agent"
+msgstr "ユーザーエージェント"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Only one password manager can be on at a time."
+msgstr "一度にオンにできるパスワードマネージャーは1つだけです。"
+
+#: packages/app/lib/browser-allowlist.ts
+msgid "Open the browser allowlist in an editor with root permissions."
+msgstr "root権限でエディタを使って、許可リストを開いてください。"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Narrow the tab strip"
+msgstr "タブバーを狭くする"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "未読"
