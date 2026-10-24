@@ -2,6 +2,8 @@
 
 Italian follows what Apple ships in macOS Mail and AppKit. Where this sheet and a habit from other software disagree, this sheet wins.
 
+An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is an OS label, a label each operating system names its own way, such as the File menu or Paste. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's. Only the word changes: this sheet's address, capitalization and punctuation hold on every platform.
+
 ## Address
 
 _tu_, with _tuo_, _tua_ and _ti_: _del tuo account_, _Vuoi …?_. Never _Lei_ or _voi_.
@@ -16,7 +18,7 @@ Sentence style: only the first word and proper nouns take a capital.
 
 ## Settings
 
-_Impostazioni_; the app-menu item is _Impostazioni…_.
+_Impostazioni_. The app-menu item with `msgctxt` `macOS` is _Impostazioni…_, as AppKit writes it; with `Windows` or `Linux` it takes Microsoft's or GNOME's word, without the ellipsis the English lacks.
 
 ## Plural categories
 
