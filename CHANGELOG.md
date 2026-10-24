@@ -33,6 +33,7 @@ This file is the draft of the next release, written one line at a time as work l
 - Right-clicking a link in a Workspace app offers `Copy Link Address` for the link and `Copy URL` for the page you're on, instead of two items both named `Copy Link`, and a tab's menu says `Copy URL` too
 - **macOS:** A downloaded file is marked as coming from the internet, so macOS checks an app, installer or script before it opens, the way it does for a browser download
 - The notification sound volume slider stops at 5%, the quietest volume Meru plays, instead of reaching a 0% that was ignored
+- **Windows and Linux:** The Edit menu no longer shows a Speech submenu, whose items did nothing there
 - The close button on the unified inbox and the download history says what it closes, instead of offering to close settings that are not open
 - **Meru Pro:** The Pro trial's days left show as whole days, or less than a day, in the titlebar and in `Settings… → License`, instead of fractions like 1.5 day
 - Keyboard focus is visible again in Meru's own interface: buttons, switches, checkboxes, tabs and sliders draw a focus ring when you tab to them, instead of leaving you to guess where you are

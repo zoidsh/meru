@@ -2,6 +2,8 @@
 
 Brazilian Portuguese follows what Apple ships in macOS Mail and AppKit for `pt_BR`. It is the only Portuguese catalog, so it reads as Brazilian, never European. Where this sheet and a habit from other software disagree, this sheet wins.
 
+An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is an OS label, a label each operating system names its own way, such as the File menu or Paste. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's. Only the word changes: this sheet's address, capitalization and punctuation hold on every platform.
+
 ## Address
 
 _você_, with _seu_ and _sua_: _Tem certeza de que deseja …?_, _sua conta_. Never _tu_ or its verb forms (_queres_, _tens_).
@@ -16,7 +18,7 @@ Title case for menu items and buttons, as Apple writes them: every word except a
 
 ## Settings
 
-_Ajustes_; the app-menu item is _Ajustes…_.
+_Ajustes_. The app-menu item with `msgctxt` `macOS` is _Ajustes…_, as AppKit writes it; with `Windows` or `Linux` it takes Microsoft's or GNOME's word, without the ellipsis the English lacks.
 
 ## Plural categories
 

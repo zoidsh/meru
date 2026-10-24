@@ -20,6 +20,10 @@ const electron = {
 
 mock.module("electron", () => ({ ...electron, default: electron }));
 
+mock.module("@electron-toolkit/utils", () => ({
+  platform: { isMacOS: false, isWindows: false, isLinux: true },
+}));
+
 const gmailView = { webContents: { getURL: () => "https://mail.google.com/mail/u/0/" } };
 
 mock.module("./accounts", () => ({
