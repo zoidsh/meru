@@ -27,6 +27,12 @@ msgstr "Sichern"
 msgid "Show bookmarks button"
 msgstr "Lesezeichen-Taste anzeigen"
 
+# A license key is a Lizenzschlüssel, so the English's key allows no Taste.
+# fault: banned:taste
+#: packages/renderer/routes/settings/license.tsx
+msgid "Enter the license key"
+msgstr "Gib die Taste ein"
+
 # fault: banned:sie
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Are you sure you want to delete this message?"

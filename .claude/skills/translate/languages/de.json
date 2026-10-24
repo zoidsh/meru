@@ -560,11 +560,11 @@
     },
     {
       "id": "taste",
-      "pattern": "(?<!(?:Control|Ctrl|Strg|Alt|Fn|Esc|Option|Cmd|Tab)-)(?<!\\p{L})Tasten?(?!\\p{L})",
+      "pattern": "(?<!(?:Control|Ctrl|Strg|Alt|Fn|Esc|Option|Cmd|Tab|Shift|Umschalt|Enter|Eingabe|Windows|Befehls)-)(?<!\\p{L})Tasten?(?!\\p{L})",
       "severity": "wrong",
       "reason": "An on-screen button is Schaltfläche; a standalone Taste reads as a keyboard key. Key names such as Umschalttaste are fine.",
       "allow": {
-        "msgidPattern": "\\b(?:keys?|keyboard)\\b"
+        "msgidPattern": "\\bkeyboard\\b|(?<!license )\\bkeys?\\b"
       }
     },
     {

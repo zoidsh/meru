@@ -75,6 +75,10 @@ msgstr "Lesezeichen-Schaltfläche anzeigen"
 msgid "Hold the Control key to open it in the background."
 msgstr "Halte die Control-Taste gedrückt, um ihn im Hintergrund zu öffnen."
 
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hold Shift to open it in a new window."
+msgstr "Halte die Shift-Taste gedrückt, um ihn in einem neuen Fenster zu öffnen."
+
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
 msgstr "Auf Meru Pro upgraden"
