@@ -2,10 +2,803 @@
   "platformWords": {
     "severity": "wrong",
     "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
-    "entries": []
+    "entries": [
+      {
+        "row": "File",
+        "msgctxt": "macOS",
+        "msgid": "File",
+        "msgstr": "Fichier"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Windows",
+        "msgid": "File",
+        "msgstr": "Fichier"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Linux",
+        "msgid": "File",
+        "msgstr": "Fichier"
+      },
+      {
+        "row": "View",
+        "msgctxt": "macOS",
+        "msgid": "View",
+        "msgstr": "Présentation"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Windows",
+        "msgid": "View",
+        "msgstr": "Affichage"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Linux",
+        "msgid": "View",
+        "msgstr": "Vue"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "macOS",
+        "msgid": "Undo",
+        "msgstr": "Annuler"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Windows",
+        "msgid": "Undo",
+        "msgstr": "Annuler"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Linux",
+        "msgid": "Undo",
+        "msgstr": "Annuler"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "macOS",
+        "msgid": "Redo",
+        "msgstr": "Rétablir"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Windows",
+        "msgid": "Redo",
+        "msgstr": "Rétablir"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Linux",
+        "msgid": "Redo",
+        "msgstr": "Rétablir"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cut",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cut",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cut",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cu&t",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cu&t",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cu&t",
+        "msgstr": "Couper"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste",
+        "msgstr": "Coller"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Coller et adapter le style"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Coller et adapter la mise en forme"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Coller et adapter le style"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Coller et adapter le style"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Coller et adapter la mise en forme"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Coller et adapter le style"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "macOS",
+        "msgid": "Select All",
+        "msgstr": "Tout sélectionner"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select All",
+        "msgstr": "Sélectionner tout"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select All",
+        "msgstr": "Tout sélectionner"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select &All",
+        "msgstr": "Sélectionner tout"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select &All",
+        "msgstr": "Tout sélectionner"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "macOS",
+        "msgid": "About {appName}",
+        "msgstr": "À propos de {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Windows",
+        "msgid": "About {appName}",
+        "msgstr": "À propos de {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Linux",
+        "msgid": "About {appName}",
+        "msgstr": "À propos de {appName}"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "macOS",
+        "msgid": "Check for Updates…",
+        "msgstr": "Rechercher les mises à jour…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Windows",
+        "msgid": "Check for Updates…",
+        "msgstr": "Rechercher les mises à jour…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Linux",
+        "msgid": "Check for Updates…",
+        "msgstr": "Rechercher les mises à jour…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "macOS",
+        "msgid": "Settings",
+        "msgstr": "Réglages…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Windows",
+        "msgid": "Settings",
+        "msgstr": "Paramètres"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Linux",
+        "msgid": "Settings",
+        "msgstr": "Paramètres"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "macOS",
+        "msgid": "Compose",
+        "msgstr": "Nouveau message"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Windows",
+        "msgid": "Compose",
+        "msgstr": "Nouveau message"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Linux",
+        "msgid": "Compose",
+        "msgstr": "Nouveau message"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Enregistrer l’image sous…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Enregistrer l’image sous…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Enregistrer l’image sous…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Enregistrer sous"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Enregistrer sous"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Enregistrer sous"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "Export",
+        "msgstr": "Exporter"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "Export",
+        "msgstr": "Exporter"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "Export",
+        "msgstr": "Exporter"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "macOS",
+        "msgid": "Shift",
+        "msgstr": "Maj"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Windows",
+        "msgid": "Shift",
+        "msgstr": "Maj"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Linux",
+        "msgid": "Shift",
+        "msgstr": "Maj"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Show Meru",
+        "msgstr": "Afficher Meru"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Show Meru",
+        "msgstr": "Afficher Meru"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Show Meru",
+        "msgstr": "Afficher Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Hide Meru",
+        "msgstr": "Masquer Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Hide Meru",
+        "msgstr": "Masquer Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Hide Meru",
+        "msgstr": "Masquer Meru"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Enable system tray icon",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Enable system tray icon",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "System tray icon",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "System tray icon",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "zone de notification"
+      },
+      {
+        "row": "Hide {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Hide {appName}",
+        "msgstr": "Masquer {appName}"
+      },
+      {
+        "row": "Hide Others",
+        "msgctxt": "macOS",
+        "msgid": "Hide Others",
+        "msgstr": "Masquer les autres"
+      },
+      {
+        "row": "Show All",
+        "msgctxt": "macOS",
+        "msgid": "Show All",
+        "msgstr": "Tout afficher"
+      },
+      {
+        "row": "Close Window",
+        "msgctxt": "macOS",
+        "msgid": "Close Window",
+        "msgstr": "Fermer la fenêtre"
+      },
+      {
+        "row": "Window, the menu",
+        "msgctxt": "macOS",
+        "msgid": "Window",
+        "msgstr": "Fenêtre"
+      },
+      {
+        "row": "Minimize",
+        "msgctxt": "macOS",
+        "msgid": "Minimize",
+        "msgstr": "Minimiser"
+      },
+      {
+        "row": "Zoom, the window",
+        "msgctxt": "macOS",
+        "msgid": "Zoom",
+        "msgstr": "Réduire/agrandir"
+      },
+      {
+        "row": "Bring All to Front",
+        "msgctxt": "macOS",
+        "msgid": "Bring All to Front",
+        "msgstr": "Tout ramener au premier plan"
+      },
+      {
+        "row": "Speech",
+        "msgctxt": "macOS",
+        "msgid": "Speech",
+        "msgstr": "Parole"
+      },
+      {
+        "row": "Start Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Start Speaking",
+        "msgstr": "Commencer la lecture"
+      },
+      {
+        "row": "Stop Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Stop Speaking",
+        "msgstr": "Arrêter la lecture"
+      },
+      {
+        "row": "Look Up “{selection}”",
+        "msgctxt": "macOS",
+        "msgid": "Look Up “{selection}”",
+        "msgstr": "Rechercher « {selection} »"
+      },
+      {
+        "row": "Show in Finder",
+        "msgctxt": "macOS",
+        "msgid": "Show in Finder",
+        "msgstr": "Afficher dans le Finder"
+      }
+    ]
   },
-  "banned": [],
-  "pinned": [],
-  "accessKeys": null,
+  "banned": [
+    {
+      "id": "reglages",
+      "pattern": "(?<!\\p{L})[Rr]églages?(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 390 of 417 messages for settings, 18 with réglages). Réglages is Apple's word, for a macOS label such as the app menu's Réglages… and for macOS's own Réglages Système.",
+      "allow": {
+        "contexts": ["macOS"],
+        "msgidPattern": "\\bSystem Settings\\b"
+      }
+    },
+    {
+      "id": "signet",
+      "pattern": "(?<!\\p{L})[Ss]ignets?(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "A bookmark is a favori, plural favoris, as Chrome writes it, never a signet (Chrome: 200 messages, none with signet)."
+    },
+    {
+      "id": "app",
+      "pattern": "(?<![\\p{L}\\p{N}./@{-])[Aa]pps?(?![\\p{L}\\p{N}}-])",
+      "severity": "wrong",
+      "reason": "An app is an appli, plural applis, as Chrome writes it, or in full an application; never app (Chrome: 368 messages with appli, 3 with app)."
+    },
+    {
+      "id": "email",
+      "pattern": "(?<![\\p{L}\\p{N}{-])[Ee]mails?(?![\\p{L}\\p{N}}-])",
+      "severity": "wrong",
+      "reason": "An email is an e-mail, with the hyphen, as Chrome writes it (Chrome: 57 messages, none with email)."
+    },
+    {
+      "id": "site-web",
+      "pattern": "(?<!\\p{L})sites? web(?!\\p{L})",
+      "severity": "style",
+      "reason": "Chrome writes site Web, with a capital W (Chrome: 109 messages, 1 with site web)."
+    },
+    {
+      "id": "presse-papier",
+      "pattern": "(?<!\\p{L})[Pp]resse-papier(?!s)",
+      "severity": "style",
+      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome: 37 messages, 3 with presse-papier)."
+    },
+    {
+      "id": "ellipsis",
+      "pattern": "\\.\\.\\.|[ \\u00a0\\u202f]…",
+      "severity": "wrong",
+      "reason": "An ellipsis is … (U+2026) straight after the word, as Apple and Chrome write it (Chrome: 208 messages, 1 with a space before it)."
+    },
+    {
+      "id": "punctuation-space",
+      "pattern": "(?<!\\u00a0)[;?!]|(?<![\\u00a0\\p{N}]):(?!//)",
+      "severity": "wrong",
+      "reason": "A no-break space (U+00A0) goes before : ; ? and !, as Chrome writes it: Voulez-vous vraiment … ? (Chrome: 428 messages with ?, 566 with :, 10 of them with a plain space before :)."
+    },
+    {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}]) (?=(?:secondes?|minutes?|heures?|jours?|semaines?|mois|ans|[kKMGT]o|%)(?!\\p{L}))|(?<=[\\p{N}#}])%",
+      "severity": "style",
+      "reason": "A number and its unit, or %, are joined by a no-break space (U+00A0), as Chrome writes them: 5 minutes, # jours, 50 % (Chrome: 150 messages with a unit, 1 with a plain space, and 37 with %)."
+    },
+    {
+      "id": "quotes",
+      "pattern": "[\"“”]",
+      "severity": "wrong",
+      "reason": "Quotation marks are « » with no-break spaces inside: « Paramètres ». Chrome's straight quotes are not adopted."
+    },
+    {
+      "id": "guillemet-space",
+      "pattern": "«(?!\\u00a0)|(?<!\\u00a0)»",
+      "severity": "wrong",
+      "reason": "A no-break space (U+00A0) goes inside « », as Apple writes « %@ »."
+    },
+    {
+      "id": "apostrophe",
+      "pattern": "'",
+      "severity": "wrong",
+      "reason": "The apostrophe is ’ (U+2019), as Apple writes it; Chrome's straight ' is not adopted."
+    },
+    {
+      "id": "tu",
+      "pattern": "(?<!\\p{L})(?:[Tt]u|[Tt]oi|[Tt]es|[Tt]a)(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "The user is vous, with votre and vos, never tu."
+    },
+    {
+      "id": "apology",
+      "pattern": "(?<!\\p{L})(?:[Dd]ésolée?s?|[Vv]euillez)(?!\\p{L})",
+      "severity": "style",
+      "reason": "Say what happened, without Désolé or Veuillez."
+    }
+  ],
+  "pinned": [
+    {
+      "id": "settings",
+      "msgid": "Settings",
+      "msgctxt": null,
+      "expect": "^Paramètres$",
+      "severity": "wrong",
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 390 of 417 messages for settings)."
+    },
+    {
+      "id": "download-history",
+      "msgidPattern": "(?<!recent )\\bdownload history\\b",
+      "expect": "[Hh]istorique (?:complet )?des téléchargements",
+      "severity": "wrong",
+      "reason": "The download history is historique des téléchargements, as Chrome writes it, in its title and in Close download history and Full download history (Chrome: 8 messages)."
+    },
+    {
+      "id": "recent-downloads",
+      "msgidPattern": "\\brecent download history\\b",
+      "expect": "téléchargements récents",
+      "severity": "doubtful",
+      "reason": "The recent download history popup is Historique des téléchargements récents, as Chrome writes it (Chrome: 2 messages)."
+    },
+    {
+      "id": "gmail-label",
+      "msgidPattern": "\\blabel\\b",
+      "msgctxt": "Gmail label",
+      "expect": "[Ll]ibellé",
+      "severity": "wrong",
+      "reason": "A Gmail label is Gmail's libellé (glossary), as Chrome also writes it."
+    },
+    {
+      "id": "bookmark",
+      "msgidPattern": "\\bbookmarks?\\b",
+      "expect": "[Ff]avori",
+      "severity": "wrong",
+      "reason": "A bookmark is a favori, as Chrome writes it (Chrome: 200 of 208 messages)."
+    },
+    {
+      "id": "tab-strip",
+      "msgidPattern": "\\btab strip\\b",
+      "expect": "barre d’onglets",
+      "severity": "wrong",
+      "reason": "The tab strip is the barre d’onglets, as Chrome writes it (Chrome: 8 of 8 messages)."
+    },
+    {
+      "id": "default-browser",
+      "msgidPattern": "\\bdefault browser\\b",
+      "expect": "navigateur par défaut",
+      "severity": "wrong",
+      "reason": "The default browser is the navigateur par défaut, as Chrome writes it (Chrome: 34 of 35 messages)."
+    },
+    {
+      "id": "password-manager",
+      "msgidPattern": "\\bpassword managers?\\b",
+      "expect": "[Gg]estionnaires? de mots de passe",
+      "severity": "wrong",
+      "reason": "A password manager is a gestionnaire de mots de passe, as Chrome writes it (Chrome: 83 of 85 messages)."
+    },
+    {
+      "id": "passkey",
+      "msgidPattern": "\\bpasskeys?\\b",
+      "expect": "[Cc]lés? d’accès",
+      "severity": "wrong",
+      "reason": "A passkey is a clé d’accès, as Chrome writes it (Chrome: 97 of 101 messages)."
+    },
+    {
+      "id": "update",
+      "msgidPattern": "\\bupdates?\\b",
+      "expect": "à jour",
+      "severity": "doubtful",
+      "reason": "An update is a mise à jour, and to update is mettre à jour, as Chrome writes them (Chrome: 236 of 265 messages)."
+    },
+    {
+      "id": "restart",
+      "msgidPattern": "\\brestarts?\\b",
+      "expect": "[Rr]edémarr",
+      "severity": "doubtful",
+      "reason": "Restarting is redémarrer, a restart a redémarrage, as Chrome writes them (Chrome: 65 of 69 messages, 4 with relancer)."
+    },
+    {
+      "id": "reload",
+      "msgidPattern": "\\breload\\b",
+      "expect": "[Aa]ctualis",
+      "severity": "wrong",
+      "reason": "Reloading is actualiser, as Chrome writes it: Actualiser, Actualisation forcée; never Apple's recharger (Chrome: 28 of 30 messages, none with recharger)."
+    },
+    {
+      "id": "verification-code",
+      "msgidPattern": "\\bverification codes?\\b",
+      "expect": "[Cc]odes? de validation",
+      "severity": "wrong",
+      "reason": "A verification code is a code de validation, as Chrome writes it (Chrome: 8 of 8 messages, none with code de vérification)."
+    },
+    {
+      "id": "phishing",
+      "msgidPattern": "\\bphishing\\b",
+      "expect": "hameçonnage",
+      "severity": "doubtful",
+      "reason": "Phishing is hameçonnage, as Chrome writes it: protection contre l’hameçonnage (Chrome: 5 of 7 messages, 2 with phishing)."
+    },
+    {
+      "id": "learn-more",
+      "msgidPattern": "\\blearn more\\b",
+      "expect": "[Ee]n savoir plus",
+      "severity": "doubtful",
+      "reason": "Learn more is En savoir plus, as Chrome writes it (Chrome: 207 of 213 messages)."
+    },
+    {
+      "id": "pin",
+      "msgid": "Pin",
+      "expect": "^Épingler$",
+      "severity": "doubtful",
+      "reason": "The tab context menu's Pin is Épingler, as Chrome writes it."
+    },
+    {
+      "id": "unpin",
+      "msgid": "Unpin",
+      "expect": "^Retirer$",
+      "severity": "doubtful",
+      "reason": "The tab context menu's Unpin is Retirer, as Chrome writes it (Chrome: 19 of 20 messages, none with Ne plus épingler)."
+    },
+    {
+      "id": "extension",
+      "msgidPattern": "\\bextensions?\\b",
+      "expect": "[Ee]xtension",
+      "severity": "wrong",
+      "reason": "An extension is an extension (Chrome: 396 of 400 messages)."
+    },
+    {
+      "id": "clipboard",
+      "msgidPattern": "\\bclipboard\\b",
+      "expect": "presse-papiers",
+      "severity": "doubtful",
+      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome: 37 of 41 messages)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "Ne pas déranger",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is Ne pas déranger, as Apple and Chrome write it (Chrome: 6 of 6 messages)."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "[Bb]outon",
+      "severity": "doubtful",
+      "reason": "An on-screen button is a bouton, as Chrome writes it (Chrome: 111 of 111 messages)."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "barre de menu",
+      "severity": "doubtful",
+      "reason": "The macOS menu bar is the barre de menu in Meru's own copy, as Chrome writes it (Chrome: 9 of 9 messages); Apple's barre des menus is for a macOS label only."
+    },
+    {
+      "id": "trusted-hosts",
+      "msgidPattern": "\\btrusted hosts?\\b",
+      "expect": "approuvé",
+      "severity": "doubtful",
+      "reason": "A trusted host is an hôte approuvé, as Chrome writes trusted (Chrome: 14 of 22 messages, 7 with fiable)."
+    },
+    {
+      "id": "release-channel",
+      "msgidPattern": "\\bchannel\\b",
+      "expect": "[Vv]ersion",
+      "severity": "doubtful",
+      "reason": "A release channel is a version, as Chrome writes it: Version de mise à jour, version bêta (Chrome: 10 of 11 messages)."
+    }
+  ],
+  "accessKeys": {
+    "style": "inline",
+    "severity": "wrong",
+    "reason": "A label whose English has an & keeps one & inline, before a letter of the French word, the English letter where the word has it; a macOS label drops it."
+  },
   "families": []
 }
