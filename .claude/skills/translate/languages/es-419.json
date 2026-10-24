@@ -741,9 +741,9 @@
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
-      "expect": "No interrumpir",
-      "severity": "doubtful",
-      "reason": "Do Not Disturb is No interrumpir. Chrome: 6 of 6 messages."
+      "expect": "No molestar",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is No molestar, Apple's name for its Focus mode, as in every language (Control Center Settings Localizable do not disturb); Chrome's No interrumpir is not followed."
     },
     {
       "id": "restart",

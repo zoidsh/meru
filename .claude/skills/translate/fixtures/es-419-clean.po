@@ -128,7 +128,7 @@ msgstr "Agregar {label} al selector"
 
 #: packages/app/tray.ts
 msgid "Turn Do Not Disturb on"
-msgstr "Activar No interrumpir"
+msgstr "Activar No molestar"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Restart Meru to apply the changes."

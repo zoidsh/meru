@@ -99,7 +99,7 @@ A timed or indefinite hold on notifications. Apple's names, from macOS's Focus s
 - fr: Ne pas déranger (Apple, Chrome)
 - it: Non disturbare (Apple, Chrome)
 - es: No molestar (Apple, Chrome)
-- es-419: No interrumpir (Chrome); Apple's is _No molestar_
+- es-419: No molestar (Apple; Chrome's _No interrumpir_ is not followed)
 - pt-BR: Não Perturbe (Apple; Chrome writes _Não perturbe_ in prose)
 - nl: Niet storen (Apple, Chrome)
 - pl: Nie przeszkadzać (Apple, Chrome)

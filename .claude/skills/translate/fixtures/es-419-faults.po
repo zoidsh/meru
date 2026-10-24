@@ -145,7 +145,7 @@ msgstr "Apps del lanzador"
 # fault: pinned:do-not-disturb
 #: packages/app/tray.ts
 msgid "Turn Do Not Disturb on"
-msgstr "Activar No molestar"
+msgstr "Activar No interrumpir"
 
 # fault: pinned:restart
 #: packages/app/updater.ts
