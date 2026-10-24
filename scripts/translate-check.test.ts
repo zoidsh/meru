@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
-import { loadSidecar } from "../.claude/skills/translate/rules";
+import { LANGUAGES_DIR, loadSidecar } from "../.claude/skills/translate/rules";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -22,13 +22,31 @@ function key(msgctxt: string | null, msgid: string, rule: string) {
 }
 
 describe("check.ts", () => {
-  test("has a clean fixture and a faults fixture for each locale with rules", () => {
-    expect(fixtures.sort()).toEqual(["de-clean.po", "de-faults.po", "ja-clean.po", "ja-faults.po"]);
+  test("has a clean fixture and a faults fixture for each locale with rules", async () => {
+    const localesWithRules: string[] = [];
+
+    for (const file of await readdir(LANGUAGES_DIR)) {
+      if (!file.endsWith(".json")) {
+        continue;
+      }
+
+      const locale = file.slice(0, -".json".length);
+
+      const sidecar = await loadSidecar(locale);
+
+      if (sidecar.banned.length > 0 || sidecar.pinned.length > 0) {
+        localesWithRules.push(locale);
+      }
+    }
+
+    expect(fixtures.sort()).toEqual(
+      localesWithRules.sort().flatMap((locale) => [`${locale}-clean.po`, `${locale}-faults.po`]),
+    );
   });
 
   for (const fixture of fixtures) {
     test(`finds exactly the faults planted in ${fixture}`, async () => {
-      const locale = fixture.split("-")[0] as string;
+      const locale = fixture.replace(/-(?:clean|faults)\.po$/u, "");
 
       const fixturePath = path.join(FIXTURES_DIR, fixture);
 
