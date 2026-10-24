@@ -43,6 +43,7 @@ The comment and the context are what tell you what a short string is: a button, 
 
   `catalog` is the name before the colon in the entry file's `###` heading, `app` or `preload-gmail`. `msgid` and `msgctxt` are the entry's, exactly; leave `msgctxt` out when the entry has none, since the same `msgid` often appears under several contexts. `msgstr` is your translation as plain JSON text; the script escapes it for the PO file and clears a fuzzy entry's `#, fuzzy`.
 
+- Apply in batches by origin file, the source file an entry's first `origin` line names: one JSON file and one `--apply` run per origin file, or per few small ones, never every entry at once. A mistake then costs one batch, and the batches already applied survive an interruption.
 - The script writes nothing when any object names no entry, or the same entry twice, and lists each one; fix them and run it again. Running it again over an entry overwrites that entry, so send fixes the same way, in a smaller file.
 - Translate only the listed entries, in your locale only. Never change `en`.
 - Placeholders such as `{name}` and `{0}` stay exactly as written, the same names, each one present. Tags such as `<0>` and `</0>` stay, the same numbers and as many of each, around the words that belong inside them in your language.
@@ -53,17 +54,21 @@ The comment and the context are what tell you what a short string is: a button, 
 
 ## Check your work
 
-Run `bun run i18n:check` and read the lines for your locale; fix every one. Other locales may be mid-translation at the same time, so ignore their lines.
+Before you reply, run both checks:
+
+- `bun run i18n:check`, and read the lines for your locale; fix every one. Other locales may be mid-translation at the same time, so ignore their lines.
+- `bun .claude/skills/translate/check.ts --locale <locale> > <dir>/<locale>.self-check.json`, with `<dir>` the directory of your entry file, which holds your locale's catalogs against the sidecar. Its summary on stderr gives the counts by severity; exit 1 means a `wrong` finding, which you fix or, if you disagree, name in your reply. Note the counts before your fixes and after them.
 
 Never run `lingui extract`, `lingui compile`, `bun run i18n:extract`, `bun run i18n:compile` or CI's other catalog checks, `lingui check sync` and `lingui check missing`. Compile writes only gitignored `.ts` files, but `lingui compile --strict` and `check missing` fail while any locale still has untranslated entries, and the other locales are mid-translation beside you; extract rewrites every locale's catalog under the other translators. The skill runs all of them once, after every locale is done, and sends you any failure in your locale.
 
 ## Your reply
 
-Keep it short, in three parts:
+Keep it short, in four parts:
 
-1. Each entry you translated as `msgid` → translation.
-2. Each term the glossary lacks, with the word you chose.
-3. Your unsure choices, as a list the skill copies into its report for the user, one per choice:
+1. The `check.ts` counts by severity, before your fixes and after them, such as `wrong 3, style 1 → style 1`.
+2. Each entry you translated as `msgid` → translation.
+3. Each term the glossary lacks, with the word you chose.
+4. Your unsure choices, as a list the skill copies into its report for the user, one per choice:
 
    ```text
    - msgid: "Show unread badge" (msgctxt none, app)
@@ -73,4 +78,6 @@ Keep it short, in three parts:
 
    Write `Unsure: none` when there are none. A question that isn't about wording, such as how a platform behaves, goes here too.
 
-When you are continued with a fix list, from `check.ts` or the reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run `bun run i18n:check` again and reply with what you changed.
+When you are continued with a fix list, from `check.ts` or a reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run both checks again and reply with what you changed and the `check.ts` counts before and after.
+
+When you are continued with the path of a reviewer's findings file, `<locale>.review.json`, to apply its suggestions, your language has no human reviewer, so its doubtful and style findings are yours to settle. Apply every doubtful or style finding that carries a `suggestion`, writing it with `collect.ts --apply` as above, unless you disagree with it; leave a finding without a suggestion as it is. A finding's `msgstr` is the translation it was written against: when it no longer matches the entry's current translation, a fix has changed the entry since, and its suggestion would undo that fix, so skip it, or merge it into the current translation by hand, and say which in your reply. Reply with how many you applied, and for each you left, its msgid and why in a line, citing the style sheet or glossary where one decides it.

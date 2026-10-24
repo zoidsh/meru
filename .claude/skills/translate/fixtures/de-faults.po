@@ -54,9 +54,29 @@ msgid "Couldn't add the account."
 msgstr "Das Konto konnte leider nicht hinzugefügt werden."
 
 # fault: pinned:download-history
-#: packages/renderer/components/downloads.tsx
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Download-Verlauf"
+
+# fault: pinned:download-history
+#: packages/renderer/recent-download-history.tsx
+msgid "Full download history"
+msgstr "Alle Downloads"
+
+# fault: pinned:recent-downloads
+#: packages/renderer/recent-download-history.tsx
 msgid "Recent download history"
-msgstr "Letzte Downloads"
+msgstr "Aktueller Downloadverlauf"
+
+# fault: banned:unit-space
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "30 minutes"
+msgstr "30 Minuten"
+
+# fault: banned:unit-space
+#: packages/renderer/routes/settings/license.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro-Testzeitraum endet in # Tagen}}"
 
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx

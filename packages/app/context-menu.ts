@@ -41,9 +41,9 @@ function getDefaultItemLabels(): Labels {
       linux: t({ message: "&Paste", context: "Linux" }),
     }),
     pasteAndMatchStyle: byPlatform(platform, {
-      macOS: t({ message: "&Paste And Match Style", context: "macOS" }),
-      windows: t({ message: "&Paste And Match Style", context: "Windows" }),
-      linux: t({ message: "&Paste And Match Style", context: "Linux" }),
+      macOS: t({ message: "Paste and &Match Style", context: "macOS" }),
+      windows: t({ message: "Paste and &Match Style", context: "Windows" }),
+      linux: t({ message: "Paste and &Match Style", context: "Linux" }),
     }),
     // electron-context-menu shows Select All everywhere but on macOS.
     selectAll: byPlatform(platform, {

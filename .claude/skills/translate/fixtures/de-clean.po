@@ -30,7 +30,36 @@ msgstr "Vor dem Download den Dialog „Speichern unter“ anzeigen"
 
 #: packages/renderer/components/downloads.tsx
 msgid "Recent download history"
-msgstr "Letzter Downloadverlauf"
+msgstr "Letzte Downloads"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Show recent download history"
+msgstr "Letzte Downloads anzeigen"
+
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Downloadverlauf"
+
+#: packages/renderer/recent-download-history.tsx
+msgid "Full download history"
+msgstr "Vollständiger Downloadverlauf"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "Ungelesen"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "30 minutes"
+msgstr "30 Minuten"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro-Testzeitraum endet in # Tagen}}"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, one {# Tab} other {# Tabs}}"
 
 #: packages/app/menu.ts
 msgctxt "macOS"

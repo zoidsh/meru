@@ -63,11 +63,15 @@ import { settingsPageLabels } from "@/lib/settings-pages";
 import { useAccountsStore } from "@/lib/stores";
 import { restartRequiredToast } from "@/lib/toast";
 
-/** Each names both the switch in the account dialog and the badge on the account. */
+/**
+ * Each names both the switch in the account dialog and the badge on the
+ * account's row, except the unread badge, whose words are too long for the row
+ * in some languages and so has a message of its own there.
+ */
 const accountOptionLabels = {
   unreadBadge: msg({
     message: "Unread badge",
-    comment: "Switch, and a badge on the account, for showing the account's unread badge",
+    comment: "Switch for showing the account's unread badge",
   }),
   unifiedInbox: msg({
     message: "Unified inbox",
@@ -83,6 +87,13 @@ const accountOptionLabels = {
       "Switch, and a badge on the account, for an account Meru keeps signed in but doesn't load",
   }),
 };
+
+const unreadBadgeRowLabel = msg({
+  message: "Unread badge",
+  context: "account row badge",
+  comment:
+    "Badge on an account's row in Settings when its unread badge is on: a short badge on a row that cannot wrap; keep it as short as possible",
+});
 
 function AccountForm({
   account = {
@@ -466,9 +477,7 @@ function SortableAccountItem({
           account.notifications) && (
           <div className="flex gap-2">
             {account.disabled && <Badge variant="outline">{t(accountOptionLabels.disabled)}</Badge>}
-            {account.gmail.unreadBadge && (
-              <Badge variant="outline">{t(accountOptionLabels.unreadBadge)}</Badge>
-            )}
+            {account.gmail.unreadBadge && <Badge variant="outline">{t(unreadBadgeRowLabel)}</Badge>}
             {account.gmail.unifiedInbox && (
               <Badge variant="outline">{t(accountOptionLabels.unifiedInbox)}</Badge>
             )}

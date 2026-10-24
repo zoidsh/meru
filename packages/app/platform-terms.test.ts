@@ -115,7 +115,7 @@ const MENU_MESSAGES = [
 const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
   cut: "Cu&t",
   paste: "&Paste",
-  pasteAndMatchStyle: "&Paste And Match Style",
+  pasteAndMatchStyle: "Paste and &Match Style",
   saveImageAs: "Sa&ve Image As…",
 };
 
