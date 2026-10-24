@@ -115,19 +115,11 @@ const INBOX_FEED_SLACK = ms("5m");
 
 const HANDLE_MESSAGE_TIMEOUT = ms("15s");
 
-// lingui-set comment="Button on a new email notification"
+// lingui-set comment="Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary"
 const NEW_EMAIL_NOTIFICATION_ACTIONS = [
   { text: msg`Archive`, action: "archive" },
   { text: msg`Mark as Read`, action: "markAsRead" },
-  {
-    text: msg({
-      message: "Delete",
-      context: "Gmail action",
-      comment:
-        "Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary",
-    }),
-    action: "delete",
-  },
+  { text: msg({ message: "Delete", context: "Gmail action" }), action: "delete" },
   { text: msg`Mark as Spam`, action: "markAsSpam" },
 ] as const satisfies { text: MessageDescriptor; action: GmailAction }[];
 // lingui-reset
