@@ -16,7 +16,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** `Settings… → Workspace Apps → Windows → Show account color` is gone, because a Workspace apps window's titlebar names the account and shows its color, which is what the setting's colored bar was for
 - The `Update available` button in the titlebar drops its icon, so it takes less room
 - Meru presents itself to websites as Chromium, the open-source browser Chrome is built on, instead of naming Meru and Electron. To go back, switch on `Settings… → Advanced → Miscellaneous → Use default user agent`
-- **macOS:** `Settings… → Advanced → Miscellaneous → Use custom user agent` is gone, because it no longer makes Google Chat huddles work, which is what it was for
+- **macOS:** `Settings… → Advanced → Miscellaneous → Use custom user agent` is gone, because Google Chat huddles, which it was for, now work without it
 
 ### Fixed
 
