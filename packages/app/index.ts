@@ -93,6 +93,12 @@ async function init() {
     log.transports.file.level = "info";
   }
 
+  // Electron exposes Document Picture-in-Picture but gives its window no native
+  // host, so the window closes as soon as it opens (electron/electron#39633).
+  // Google Chat runs a huddle's call in one and ends the huddle when it closes;
+  // without the API, Chat keeps the huddle in a panel inside the page
+  app.commandLine.appendSwitch("disable-blink-features", "DocumentPictureInPictureAPI");
+
   if (platform.isLinux) {
     app.commandLine.appendSwitch("gtk-version", "3");
     app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
