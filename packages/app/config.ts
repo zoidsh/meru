@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { is, platform } from "@electron-toolkit/utils";
 import { createDefaultConfig } from "@meru/shared/config";
+import {
+  DEFAULT_MACOS_NOTIFICATION_SOUND,
+  MACOS_NOTIFICATION_SOUNDS,
+} from "@meru/shared/notification-sounds";
 import type { SavedTab } from "@meru/shared/schemas";
 import type { Config } from "@meru/shared/types";
 import { app } from "electron";
@@ -22,6 +26,7 @@ export const config = new CachedStore<Config>({
     accountId: randomUUID(),
     downloadsLocation: app.getPath("downloads"),
     trayEnabled: !platform.isMacOS,
+    notificationSound: platform.isMacOS ? DEFAULT_MACOS_NOTIFICATION_SOUND : "linen",
   }),
   migrations: {
     ">=3.4.0": (store) => {
@@ -169,7 +174,17 @@ export const config = new CachedStore<Config>({
     ">=3.35.0": (store) => {
       const notificationSound = store.get("notifications.sound");
 
-      if (["system", "breeze", "chime", "duet", "knock", "linen"].includes(notificationSound)) {
+      if (
+        [
+          "system",
+          "breeze",
+          "chime",
+          "duet",
+          "knock",
+          "linen",
+          ...MACOS_NOTIFICATION_SOUNDS,
+        ].includes(notificationSound)
+      ) {
         return;
       }
 

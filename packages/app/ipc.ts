@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
@@ -7,6 +8,7 @@ import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
 import { ms } from "@meru/shared/ms";
+import { isMacOSNotificationSound } from "@meru/shared/notification-sounds";
 import { GMAIL_TAB_ID } from "@meru/shared/tabs";
 import type { IpcMainEvents, IpcRendererEvent } from "@meru/shared/types";
 import { workspaceApps } from "@meru/shared/workspace-apps";
@@ -777,6 +779,14 @@ class Ipc {
         subtitle: "Your test notification request",
         body: "This is what a new email notification looks like.",
       });
+    });
+
+    // The renderer can't load files from /System, since in development it is
+    // served from the Vite dev server.
+    ipc.main.on("notifications.previewSound", (_event, sound) => {
+      if (platform.isMacOS && isMacOSNotificationSound(sound)) {
+        execFile("/usr/bin/afplay", [`/System/Library/Sounds/${sound}.aiff`]);
+      }
     });
 
     ipc.main.on("workspaceApp.showNotification", (event, notification) => {
