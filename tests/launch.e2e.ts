@@ -7,6 +7,8 @@
  */
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
+import { SIGN_IN_PAGE_TITLE } from "./lib/server";
+import { readViews } from "./lib/views";
 
 const meru = useApp();
 
@@ -50,6 +52,23 @@ test("launches and renders appearance settings", async () => {
   expect(windows[0]?.isVisible).toBe(true);
 
   expect(rendererErrors.map((error) => error.stack ?? error.message)).toEqual([]);
+});
+
+test("the account view loads the suite's Gmail stand-in", async () => {
+  /*
+   * The one test that holds the harness to it. Every other test here is about
+   * something else and would pass just as well against Google, so an override
+   * that stopped arriving — a renamed variable, an env the launch drops — would
+   * put the whole suite back on a live third party with nothing to say so.
+   *
+   * Asserted on the page the stand-in redirects to rather than the URL the app
+   * was pointed at, because coming to rest there is what says the view followed
+   * the redirect the way it follows Google's, and the title says the page is the
+   * suite's own rather than an error page served on its URL.
+   */
+  await expect
+    .poll(async () => (await readViews(meru)).map((view) => ({ url: view.url, title: view.title })))
+    .toEqual([{ url: meru.gmailStandIn.signInUrl, title: SIGN_IN_PAGE_TITLE }]);
 });
 
 test("a packaged run without the fixture flag loads no extensions", async () => {

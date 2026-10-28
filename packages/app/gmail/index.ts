@@ -7,7 +7,6 @@ import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
   GMAIL_PRELOAD_ARGUMENTS,
-  GMAIL_URL,
   type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
@@ -49,6 +48,7 @@ import {
 import { registerTabBroadcasts } from "@/tabs";
 import { appTray } from "@/tray";
 import { MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR, WorkspaceApp } from "@/workspace-app";
+import { gmailUrl } from "./url";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
 
@@ -178,13 +178,13 @@ export class Gmail {
   }
 
   get messageId() {
-    const gmailUrl = this._view?.webContents.getURL();
+    const viewUrl = this._view?.webContents.getURL();
 
-    if (!gmailUrl) {
+    if (!viewUrl) {
       return null;
     }
 
-    return parseGmailMessageId(new URL(gmailUrl).hash);
+    return parseGmailMessageId(new URL(viewUrl).hash);
   }
 
   userEmail: string | null = null;
@@ -297,7 +297,7 @@ export class Gmail {
 
     this.accountId = accountId;
 
-    this.url = delegatedAccountId ? createGmailDelegatedAccountUrl(delegatedAccountId) : GMAIL_URL;
+    this.url = delegatedAccountId ? createGmailDelegatedAccountUrl(delegatedAccountId) : gmailUrl;
 
     this.baseUrl = new URL(this.url).origin;
 
@@ -358,7 +358,7 @@ export class Gmail {
     });
 
     this.view.webContents.on("dom-ready", () => {
-      if (this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+      if (this.view.webContents.getURL().startsWith(gmailUrl)) {
         this.view.webContents.insertCSS(gmailCSS);
 
         if (licenseKey.isValid && GMAIL_USER_STYLES) {
@@ -593,7 +593,7 @@ export class Gmail {
     window.webContents.setWindowOpenHandler((details) => {
       const { url, disposition } = details;
 
-      if (url.startsWith(GMAIL_URL) && disposition !== "background-tab") {
+      if (url.startsWith(gmailUrl) && disposition !== "background-tab") {
         const gmailDelegatedAccountId = url.match(GMAIL_DELEGATED_ACCOUNT_URL_REGEXP)?.[1];
 
         if (gmailDelegatedAccountId) {
@@ -604,7 +604,7 @@ export class Gmail {
           return { action: "deny" };
         }
 
-        if (url === `${GMAIL_URL}/`) {
+        if (url === `${gmailUrl}/`) {
           loadUrl(window.webContents, url);
 
           const account = accounts.getAccount(this.accountId);
@@ -709,7 +709,7 @@ export class Gmail {
     fetchAttempt = 1,
   ) {
     try {
-      if (!this.view.webContents.getURL().startsWith(GMAIL_URL)) {
+      if (!this.view.webContents.getURL().startsWith(gmailUrl)) {
         if (!this.inboxFeedBaseline) {
           await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
         }
@@ -1007,7 +1007,7 @@ export class Gmail {
     if (
       !this._view ||
       this._view.webContents.isDestroyed() ||
-      !this._view.webContents.getURL().startsWith(GMAIL_URL)
+      !this._view.webContents.getURL().startsWith(gmailUrl)
     ) {
       return;
     }
@@ -1149,7 +1149,7 @@ export class Gmail {
   createComposeWindow(url: string) {
     new WorkspaceApp({
       accountId: this.accountId,
-      url: `${GMAIL_URL}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
+      url: `${gmailUrl}/?extsrc=mailto&url=${encodeURIComponent(url)}`,
       window: { width: 800, height: 600 },
       // A view with no opener starts a renderer process of its own, so this
       // window only sees the Gmail switches if they are passed here.

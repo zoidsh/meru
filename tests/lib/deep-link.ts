@@ -37,9 +37,11 @@ export async function sendDeepLink(meru: MeruApp, url: string) {
    * second instance started without it takes a lock of its own, comes up as a
    * whole second app and never delivers anything.
    *
-   * The environment is inherited rather than rebuilt, which is what the harness
-   * does for a launch that names none of its own. DISPLAY is in it, and a
-   * second instance that cannot reach one never gets as far as the lock.
+   * The environment is the runner's own, which is the harness's minus what it
+   * hands a launch of its own — the Gmail stand-in's address above all. Nothing
+   * is lost by that: an instance that loses the lock quits before it creates a
+   * view to load anything into. DISPLAY is in it, and a second instance that
+   * cannot reach one never gets as far as the lock.
    */
   await execFileAsync(EXECUTABLE_PATH, [...launchArguments(meru.userDataDir), url], {
     cwd: process.cwd(),

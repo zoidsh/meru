@@ -1,12 +1,15 @@
 /*
- * A page for a workspace app view to load, served from this machine.
+ * The pages this machine serves to the views the app creates: one for a
+ * workspace app to load, and the Gmail stand-in every account view loads.
  *
- * A workspace app normally loads a Google property, and pointing a test at one
- * would put a live third-party site inside the assertion: a slow morning at
- * Google reads as a broken view, and nothing served there is stable enough to
- * click. Serving the page here keeps what the view loads under the test's
- * control while leaving the view itself entirely real — it is the same
- * `WebContentsView`, in the same session, loaded through the same `loadUrl`.
+ * Those views normally load a Google property, and pointing a test at one would
+ * put a live third-party site inside the assertion: a slow morning at Google
+ * reads as a broken view, nothing served there is stable enough to click, and
+ * which sign-in page a signed-out account view gets is Google's decision to
+ * make from the user agent. Serving the pages here keeps what a view loads
+ * under the test's control while leaving the view itself entirely real — it is
+ * the same `WebContentsView`, in the same session, loaded through the same
+ * `loadUrl`.
  *
  * Deliberately `node:http` rather than `Bun.serve`: Playwright runs the suite
  * in workers it starts under Node, where Bun's globals are not there to use.
@@ -18,6 +21,25 @@ import type { AddressInfo } from "node:net";
 export const DOWNLOAD_BODY = "Downloaded by an end-to-end test.\n";
 
 export const DOWNLOAD_FILE_NAME = "meru-e2e-download.txt";
+
+/**
+ * The path an account view is pointed at, shaped like Gmail's own URL so that
+ * what the app appends to it — the `extsrc=mailto` query a compose window
+ * carries — lands on this route too.
+ */
+const GMAIL_PATH = "/gmail/u/0";
+
+/**
+ * How a caller asks for a load that takes its time, as a path segment rather
+ * than a query so that the app appending its own query to the URL leaves it
+ * alone.
+ */
+const DELAY_PATH = "/delay/";
+
+const SIGN_IN_PATH = "/signin";
+
+/** What the page an account view ends up on is titled. */
+export const SIGN_IN_PAGE_TITLE = "Sign In Stand-In";
 
 /**
  * A page titled by whatever asked for it, so a view can be told from its
@@ -41,7 +63,68 @@ function renderPage(pageTitle: string) {
 }
 
 function respond(request: IncomingMessage, response: ServerResponse) {
-  const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
+  /*
+   * Resolved against the request's own authority rather than a fixed host, so
+   * that the redirect below can name this same server on the port it ended up
+   * listening on without the handler having to be told what that port is.
+   */
+  const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? "127.0.0.1"}`);
+
+  if (requestUrl.pathname.startsWith(GMAIL_PATH)) {
+    /*
+     * Off this origin and onto another host, which is what signed-out Gmail
+     * does: it redirects the view to accounts.google.com. Two things the suite
+     * reads follow from the view ending up somewhere other than where it was
+     * sent — the account's attention flag, which the app sets from the URL no
+     * longer starting with the Gmail one, and a page that commits in a renderer
+     * process of its own, since Chromium isolates `localhost` from `127.0.0.1`
+     * as two sites. `localhost` is this very server under its other name, so
+     * nothing else has to be listening.
+     */
+    const redirect = () => {
+      response.writeHead(302, {
+        location: `http://localhost:${requestUrl.port}${SIGN_IN_PATH}`,
+      });
+
+      response.end();
+    };
+
+    const delay = Number.parseInt(requestUrl.pathname.split(DELAY_PATH)[1] ?? "", 10);
+
+    if (Number.isNaN(delay)) {
+      redirect();
+
+      return;
+    }
+
+    /*
+     * Guarded against the app having quit and the server having been closed
+     * while the timer was pending: an exception out of a timer is an uncaught
+     * exception that takes the Playwright worker with it, and the handler's own
+     * guard below covers only what runs inside the handler.
+     */
+    setTimeout(() => {
+      if (response.destroyed) {
+        return;
+      }
+
+      try {
+        redirect();
+      } catch {
+        response.destroy();
+      }
+    }, delay);
+
+    return;
+  }
+
+  if (requestUrl.pathname === SIGN_IN_PATH) {
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+
+    response.end(renderPage(SIGN_IN_PAGE_TITLE));
+
+    return;
+  }
 
   if (requestUrl.pathname === "/download") {
     /*
@@ -69,6 +152,17 @@ export type TestServer = {
   origin: string;
   /** The URL of a page carrying the given title. */
   pageUrl(pageTitle: string): string;
+  /** What `MERU_TEST_GMAIL_URL` is set to, so that account views load this server. */
+  gmailUrl: string;
+  /**
+   * The same, holding the redirect back for `delayMs` first, for a test that
+   * needs the gap between a view being attached and its page arriving. A
+   * loopback page leaves no gap of its own, so the one a test reads in has to
+   * be the length it asked for.
+   */
+  slowGmailUrl(delayMs: number): string;
+  /** The page an account view is redirected to, and so the URL it comes to rest on. */
+  signInUrl: string;
   close(): Promise<void>;
 };
 
@@ -105,6 +199,11 @@ export async function startTestServer(): Promise<TestServer> {
     pageUrl(pageTitle) {
       return `${origin}/app/${encodeURIComponent(pageTitle)}`;
     },
+    gmailUrl: `${origin}${GMAIL_PATH}`,
+    slowGmailUrl(delayMs) {
+      return `${origin}${GMAIL_PATH}${DELAY_PATH}${delayMs}`;
+    },
+    signInUrl: `http://localhost:${port}${SIGN_IN_PATH}`,
     close() {
       return new Promise<void>((resolve) => {
         /*

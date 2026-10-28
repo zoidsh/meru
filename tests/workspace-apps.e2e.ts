@@ -100,10 +100,11 @@ const meru = useApp(() => ({
  *
  * Nothing about the page the account view loaded goes into that, deliberately.
  * Waiting on the Gmail URL waits for a page that never arrives, because nobody
- * is signed in here and the view sits on the sign-in page instead. Waiting on a
- * load that finished is worse than it looks: `Gmail.createView` retries once
- * when the first load fails, so "loaded something, not loading now" is a state
- * that also describes an app still on its way to the line this is anchored to.
+ * is signed in here and the view is redirected to a sign-in page instead.
+ * Waiting on a load that finished is worse than it looks: `Gmail.createView`
+ * retries once when the first load fails, so "loaded something, not loading
+ * now" is a state that also describes an app still on its way to the line this
+ * is anchored to.
  */
 async function waitForLaunchTabs() {
   await expect

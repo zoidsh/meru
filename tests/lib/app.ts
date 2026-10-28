@@ -15,6 +15,7 @@ import type { Config } from "@meru/shared/types";
 import { expect, test, type TestInfo } from "@playwright/test";
 import { _electron, type ElectronApplication, type Locator, type Page } from "playwright";
 import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
+import { startTestServer, type TestServer } from "./server";
 
 // Where electron-builder leaves the unpacked app, per platform. macOS and
 // Windows name it after productName, "Meru"; Linux lowercases it. Getting that
@@ -117,6 +118,12 @@ export type UseAppOptions = {
    * sets it, and `signedInProfile` has where the directory comes from.
    */
   signedInProfileDir?: string;
+  /**
+   * How long the Gmail stand-in holds an account view's load before answering
+   * it, for a test that needs the gap between a view being attached and its
+   * page arriving.
+   */
+  gmailStandInDelay?: number;
 };
 
 type LaunchedApp = {
@@ -426,6 +433,13 @@ export type MeruApp = {
   openSettings(): Promise<Locator>;
   /** The config as it stands on disk, which is where the main process wrote it. */
   readConfig(): Promise<Partial<Config>>;
+  /**
+   * The server standing in for Gmail, which this app's account views load
+   * instead of it. Throws for a launch on a signed-in profile, which loads the
+   * real thing — there is nothing else a signed-in account could be signed in
+   * to.
+   */
+  readonly gmailStandIn: TestServer;
 };
 
 /**
@@ -455,6 +469,48 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
     return launched;
   }
 
+  let gmailStandIn: TestServer | undefined;
+
+  /*
+   * One stand-in server for the whole file, started before the first launch in
+   * it. Nothing about it is per test: it serves the same two pages whoever
+   * asks, and the app is handed its address rather than sharing any state with
+   * it, so the isolation one app per test buys is untouched.
+   *
+   * Not for a signed-in profile, whose accounts are signed in to Gmail itself
+   * and would come up signed out against anything else.
+   */
+  if (!options.signedInProfileDir) {
+    test.beforeAll(async () => {
+      gmailStandIn = await startTestServer();
+    });
+
+    test.afterAll(async () => {
+      await gmailStandIn?.close();
+
+      gmailStandIn = undefined;
+    });
+  }
+
+  /*
+   * The caller's own environment wins, so a test that wants an account view
+   * somewhere else — or at Gmail — can still say so.
+   */
+  function launchOptions(): UseAppOptions {
+    if (!gmailStandIn) {
+      return options;
+    }
+
+    const gmailUrl = options.gmailStandInDelay
+      ? gmailStandIn.slowGmailUrl(options.gmailStandInDelay)
+      : gmailStandIn.gmailUrl;
+
+    return {
+      ...options,
+      env: { MERU_TEST_GMAIL_URL: gmailUrl, ...options.env },
+    };
+  }
+
   // Playwright resolves which fixtures to set up from the destructuring
   // pattern, so the empty one is the framework's contract for depending on
   // nothing.
@@ -462,7 +518,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
   test.beforeEach(async ({}, testInfo) => {
     hasFailed = false;
 
-    launched = await launchApp(seedConfig, options);
+    launched = await launchApp(seedConfig, launchOptions());
 
     /*
      * Assigned before the window is looked for, not after. An app that starts
@@ -540,6 +596,13 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
     get userDataDir() {
       return current().userDataDir;
     },
+    get gmailStandIn() {
+      if (!gmailStandIn) {
+        throw new Error("This app's account views load Gmail itself, so there is no stand-in");
+      }
+
+      return gmailStandIn;
+    },
     async relaunch() {
       const previous = current();
 
@@ -553,7 +616,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
 
       await closeApp(previous.app);
 
-      launched = await launchOnUserDataDir(previous.userDataDir, options);
+      launched = await launchOnUserDataDir(previous.userDataDir, launchOptions());
 
       try {
         launched.renderer = await findRendererWindow(launched.app);

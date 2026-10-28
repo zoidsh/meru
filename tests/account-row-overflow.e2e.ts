@@ -167,11 +167,11 @@ async function readSelectedAccountId(app: MeruApp) {
 /**
  * Waits for every account to have finished widening its button.
  *
- * None of the seeded accounts is signed in, so each one's Gmail lands on
- * Google's sign-in page and its button gains an attention icon. All sixteen land
- * over the first few seconds after launch, at whatever pace the network sets,
- * and each one moves the row's end further out. A row scrolled to its end before
- * the last of them is no longer at its end after it.
+ * None of the seeded accounts is signed in, so each one's view is redirected off
+ * the Gmail URL it was pointed at and its button gains an attention icon. All
+ * sixteen land over the moments after launch, and each one moves the row's end
+ * further out. A row scrolled to its end before the last of them is no longer at
+ * its end after it.
  */
 async function waitForAccountsToNeedSignIn(app: MeruApp) {
   await expect

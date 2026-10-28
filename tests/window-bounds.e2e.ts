@@ -13,13 +13,31 @@ import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 
+/**
+ * How long the stand-in holds the account view's page back. Comfortably longer
+ * than the `evaluate` round trip the first test reads the window with, on a
+ * runner with nothing to spare, and short enough to pay three times over.
+ */
+const GMAIL_LOAD_DELAY = 2_000;
+
 /*
  * The minimum window size is lifted for these tests. It defaults to 912x512,
  * and a runner's display is not much bigger — the Windows one has a work area of
  * 1024x720 — which leaves under 120px of width to resize within, and a window
  * that barely changes size is a window the view can fail to follow undetectably.
  */
-const meru = useApp({ "window.restrictMinimumSize": false });
+const meru = useApp(
+  { "window.restrictMinimumSize": false },
+  /*
+   * And the account view's page is held back, because the first test here is
+   * about what the app has done by the time a view exists but its page does
+   * not. A page that answers at once leaves no such moment, and the test would
+   * pass against an app that registered its resize listener behind the load.
+   * The delay is the only thing it changes: every other test here resizes a
+   * window that has long since settled.
+   */
+  { gmailStandInDelay: GMAIL_LOAD_DELAY },
+);
 
 /** How long a step is given to settle before it is taken as never going to. */
 const ASSERTION_TIMEOUT = 15_000;
@@ -123,7 +141,7 @@ async function expectViewToFillWindow(step: string, { slack = 0 } = {}) {
 
 /*
  * Waited for rather than assumed. `createView` attaches the view before it loads
- * anything into it, so this is reached long before Gmail is up — which is the
+ * anything into it, so this is reached long before the page is up — which is the
  * point, since a window resized during startup has to be honored too.
  */
 async function waitForAccountView() {
@@ -154,26 +172,19 @@ test("the window is listening for resizes by the time a view is attached", async
 
   /*
    * Read at that instant rather than polled for, and that is the whole test.
-   * `createView` attaches the view and only then loads Gmail into it, and the
-   * listener that lays the views out used to be registered behind that load —
-   * so for as long as it took, every resize reached nobody and the views sat at
-   * the size they were created with. A drag survives it, because the resize
-   * after the listener arrives corrects it; a maximize does not, having no
-   * second event behind it.
+   * `createView` attaches the view and only then loads the page into it, so a
+   * listener registered behind that load reaches nobody for as long as it takes
+   * and the views sit at the size they were created with. A drag survives that,
+   * because the resize after the listener arrives corrects it; a maximize does
+   * not, having no second event behind it.
    *
-   * Polling here would wait out exactly the gap it is meant to catch. Measured
-   * at over a second on a Windows runner and nearly half of one on Linux, which
-   * is why this is asserted on the listener rather than on a resize landing:
-   * racing a page load would pass or fail on how fast the machine is.
+   * Polling here would wait out exactly the gap it is meant to catch, which is
+   * why this is asserted on the listener rather than on a resize landing.
    *
-   * It only bites where that load takes time, and how hard varies. Run against
-   * the broken ordering deliberately, every platform reported zero listeners on
-   * the first, cold launch; macOS failed all three attempts, while Windows and
-   * Linux passed on the retry, whose launch is warm enough to close the gap
-   * before a test can look. So the run goes red, but macOS is what makes it
-   * reliable. Somewhere Gmail cannot be reached at all — a sandbox with no route
-   * to it — `createView` resolves immediately and this passes on the broken
-   * ordering too, which is why it was proved on CI rather than locally.
+   * It only bites where the load takes time: a load that answers at once — a
+   * sandbox with no route out, or a loopback page — leaves this passing against
+   * the broken ordering, which is what the delay `useApp` is given above sets
+   * the gap for.
    *
    * It never fails on correct ordering, on any platform: the listener is on
    * before a view exists to be found.
