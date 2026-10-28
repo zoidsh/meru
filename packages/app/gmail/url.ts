@@ -7,7 +7,7 @@ const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
  * Where an account's view loads Gmail from, and what the main process holds
  * that view's URL against.
  *
- * `MERU_E2E_GMAIL_URL` points both at a page the end-to-end suite serves
+ * `MERU_TEST_GMAIL_URL` points both at a page the end-to-end suite serves
  * itself, so that no test depends on Google being reachable or on which
  * sign-in page Google decides to serve a signed-out view. Read at runtime
  * rather than inlined by `scripts/build.ts` the way `MERU_API_URL` is, because
@@ -18,14 +18,14 @@ const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
  * this page as the user's inbox" from an environment variable.
  */
 export function resolveGmailUrl() {
-  const url = process.env.MERU_E2E_GMAIL_URL;
+  const url = process.env.MERU_TEST_GMAIL_URL;
 
   if (!url) {
     return GMAIL_URL;
   }
 
   if (!URL.canParse(url) || !LOOPBACK_HOSTNAMES.has(new URL(url).hostname)) {
-    log.warn("Ignoring MERU_E2E_GMAIL_URL, which is not a loopback URL", { url });
+    log.warn("Ignoring MERU_TEST_GMAIL_URL, which is not a loopback URL", { url });
 
     return GMAIL_URL;
   }

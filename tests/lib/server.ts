@@ -152,7 +152,7 @@ export type TestServer = {
   origin: string;
   /** The URL of a page carrying the given title. */
   pageUrl(pageTitle: string): string;
-  /** What `MERU_E2E_GMAIL_URL` is set to, so that account views load this server. */
+  /** What `MERU_TEST_GMAIL_URL` is set to, so that account views load this server. */
   gmailUrl: string;
   /**
    * The same, holding the redirect back for `delayMs` first, for a test that

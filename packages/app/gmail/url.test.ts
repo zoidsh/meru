@@ -9,13 +9,13 @@ mock.module("@/lib/log", () => ({
 
 const { resolveGmailUrl } = await import("./url");
 
-const inheritedGmailUrl = process.env.MERU_E2E_GMAIL_URL;
+const inheritedGmailUrl = process.env.MERU_TEST_GMAIL_URL;
 
 function setGmailUrl(value: string | undefined) {
   if (value === undefined) {
-    delete process.env.MERU_E2E_GMAIL_URL;
+    delete process.env.MERU_TEST_GMAIL_URL;
   } else {
-    process.env.MERU_E2E_GMAIL_URL = value;
+    process.env.MERU_TEST_GMAIL_URL = value;
   }
 }
 

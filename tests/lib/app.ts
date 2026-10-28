@@ -507,7 +507,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
 
     return {
       ...options,
-      env: { MERU_E2E_GMAIL_URL: gmailUrl, ...options.env },
+      env: { MERU_TEST_GMAIL_URL: gmailUrl, ...options.env },
     };
   }
 
