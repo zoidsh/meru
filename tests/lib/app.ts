@@ -310,7 +310,13 @@ async function launchOnUserDataDir(
     executablePath: EXECUTABLE_PATH,
     args: launchArguments(userDataDir),
     cwd: process.cwd(),
-    env: options.env ? { ...(process.env as Record<string, string>), ...options.env } : undefined,
+    // Other sessions share this machine's desktop, and a test has no use for
+    // its foreground.
+    env: {
+      ...(process.env as Record<string, string>),
+      MERU_TEST_BACKGROUND: "1",
+      ...options.env,
+    },
   });
 
   /*

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { platform } from "@electron-toolkit/utils";
+import { is, platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
 import type { TrialState } from "@meru/shared/types";
 import { app, BrowserWindow } from "electron";
@@ -74,6 +74,23 @@ class Main {
   shouldLaunchMinimized =
     app.commandLine.hasSwitch("launch-minimized") || config.get("launchMinimized");
 
+  /**
+   * Several sessions share the development Mac's one desktop, where a window's
+   * first `show()`, or any `focus()`, activates the app and takes the
+   * foreground from whatever another session is working in. A development run
+   * opens behind and stays there until someone brings it forward; a user who
+   * launches Meru expects it in front.
+   */
+  shouldStayBehindUntilFocused = is.dev;
+
+  /**
+   * The end-to-end suite runs the packaged app and says so through
+   * `MERU_TEST_BACKGROUND`. No one uses that app, so it is never let in front,
+   * and every menu command and window a test opens stays behind too, rather
+   * than each call site that shows or focuses a window learning about tests.
+   */
+  private isBackgroundOnly = platform.isMacOS && Boolean(process.env.MERU_TEST_BACKGROUND);
+
   isQuittingApp = false;
 
   loadURL() {
@@ -120,6 +137,10 @@ class Main {
   }
 
   init() {
+    if (this.isBackgroundOnly) {
+      app.setActivationPolicy("prohibited");
+    }
+
     const lastWindowState = config.get("window.lastState");
     const restrictWindowMinimumSize = config.get("window.restrictMinimumSize");
 
@@ -142,7 +163,11 @@ class Main {
 
     if (!this.shouldLaunchMinimized) {
       onceReadyToShow(this.window, () => {
-        this.show();
+        if (this.shouldStayBehindUntilFocused) {
+          this.window.showInactive();
+        } else {
+          this.show();
+        }
       });
 
       if (lastWindowState.fullscreen) {
@@ -194,7 +219,7 @@ class Main {
 
         this.window.hide();
 
-        if (!config.get("dock.enabled")) {
+        if (!config.get("dock.enabled") && !this.isBackgroundOnly) {
           app.dock?.hide();
         }
       }
@@ -226,7 +251,9 @@ class Main {
       this.window.show();
     }
 
-    if (app.dock?.isVisible) {
+    // Showing the dock icon turns the app back into a regular one, which can
+    // be activated.
+    if (app.dock?.isVisible && !this.isBackgroundOnly) {
       app.dock.show();
     }
   }
