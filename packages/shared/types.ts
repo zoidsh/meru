@@ -100,7 +100,7 @@ export type Config = {
   resetApp: boolean;
   theme: "system" | "light" | "dark";
   licenseKey: string | null;
-  customUserAgent: boolean;
+  "app.defaultUserAgent": boolean;
   "dock.enabled": boolean;
   "dock.unreadBadge": boolean;
   "externalLinks.confirm": boolean;

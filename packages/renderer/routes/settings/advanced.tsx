@@ -37,14 +37,12 @@ export function AdvancedSettings() {
                 configKey="app.hardwareAcceleration"
                 restartRequired
               />
-              {platform.isMacOS && (
-                <ConfigSwitchField
-                  label="Use custom user agent"
-                  description="Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
-                  configKey="customUserAgent"
-                  restartRequired
-                />
-              )}
+              <ConfigSwitchField
+                label="Use default user agent"
+                description="Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
+                configKey="app.defaultUserAgent"
+                restartRequired
+              />
             </FieldGroup>
           </FieldSet>
         </FieldGroup>

@@ -20,6 +20,7 @@ import { ipc } from "@/ipc";
 import { initLinuxWindowControls } from "@/lib/linux";
 import { log } from "@/lib/log";
 import { relaunchApp } from "@/lib/relaunch";
+import { getChromeUserAgent } from "@/lib/user-agent";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
@@ -118,6 +119,13 @@ async function init() {
 
   if (config.get("app.hardwareAcceleration") === false) {
     app.disableHardwareAcceleration();
+  }
+
+  // The fallback reaches every session, and cross-site iframes, which keep the
+  // stock string under `session.setUserAgent`. Client hints are left as they
+  // are: they already describe Chromium, which sends this same string
+  if (config.get("app.defaultUserAgent") === false) {
+    app.userAgentFallback = getChromeUserAgent(process.versions.chrome);
   }
 
   if (config.get("resetApp") === true) {
