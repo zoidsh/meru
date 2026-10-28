@@ -60,9 +60,12 @@ async function readCommandLine(pid: number) {
  * The renderer process ids of the child views of the window whose page is
  * `pageName`, or null while there is no such window. A view that has not
  * committed a page yet reports 0: the process it starts with is picked for the
- * URL it was asked for, and signed out, Gmail redirects to
- * accounts.google.com, an origin Chromium isolates, so the page commits in a
- * fresh process and the first one may already be gone.
+ * URL it was asked for, and a signed-out account view is redirected off that
+ * URL to a host Chromium isolates from it, so the page commits in a fresh
+ * process and the first one may already be gone. That is what Google does with
+ * a signed-out view, and what the suite's stand-in does in its place — which is
+ * the shape this test wants, since the switches it looks for have to be on the
+ * command line of whichever process ends up holding the page.
  */
 function readViewProcessIds(meru: MeruApp, pageName: string) {
   return meru.app.evaluate(({ BrowserWindow }, page) => {

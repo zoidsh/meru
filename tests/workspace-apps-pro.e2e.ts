@@ -222,8 +222,8 @@ test("waking a dormant tab adds a view and brings it to the front", async () => 
    * is this and nothing else.
    *
    * Named by what it is not, because the view in front at launch is an account's
-   * Gmail one, and its title is whatever Google served — a sign-in page, or
-   * Chromium's network error page on a runner with no route out.
+   * Gmail one, and what it is showing is the suite's stand-in for a signed-out
+   * Gmail rather than anything this file serves.
    */
   expect(viewsBefore.at(-1)?.url.startsWith(server.origin)).toBe(false);
 

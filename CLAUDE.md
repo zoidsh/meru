@@ -30,7 +30,7 @@ Several worktrees run it at once, with nothing to pass. The renderer serves on t
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types` and `bun test --isolate` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
-End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name.
+End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name. Every launch's account views load a page the suite serves itself, which `MERU_E2E_GMAIL_URL` points them at, so only the tests on a signed-in profile reach Gmail.
 
 ## Branches
 
