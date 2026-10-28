@@ -41,6 +41,12 @@ const options = {
   profile: {
     type: "string",
   },
+  // Opens the development app behind whatever is in front, for an agent on a
+  // desktop other sessions share. The app reads `MERU_BACKGROUND`, which can
+  // also be set in the environment instead.
+  background: {
+    type: "boolean",
+  },
 } satisfies NonNullable<ParseArgsConfig["options"]>;
 
 const args = parseArgs({
@@ -567,7 +573,11 @@ if (args.values.dev) {
         ...electronArgs,
       ],
       {
-        env: { ...process.env, MERU_RENDERER_URL: rendererUrl },
+        env: {
+          ...process.env,
+          MERU_RENDERER_URL: rendererUrl,
+          ...(args.values.background ? { MERU_BACKGROUND: "1" } : {}),
+        },
         onExit: async () => {
           if (isRestartingElectron) {
             isRestartingElectron = false;

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { is, platform } from "@electron-toolkit/utils";
+import { platform } from "@electron-toolkit/utils";
 import { DEFAULT_WINDOW_STATE_BOUNDS } from "@meru/shared/config";
 import type { TrialState } from "@meru/shared/types";
 import { app, BrowserWindow } from "electron";
@@ -75,13 +75,12 @@ class Main {
     app.commandLine.hasSwitch("launch-minimized") || config.get("launchMinimized");
 
   /**
-   * Several sessions share the development Mac's one desktop, where a window's
-   * first `show()`, or any `focus()`, activates the app and takes the
-   * foreground from whatever another session is working in. A development run
-   * opens behind and stays there until someone brings it forward; a user who
-   * launches Meru expects it in front.
+   * Set where several sessions share one desktop, on which a window's first
+   * `show()`, or any `focus()`, activates the app and takes the foreground
+   * from whatever another session is working in. The app opens behind and
+   * stays there until someone brings it forward.
    */
-  shouldStayBehindUntilFocused = is.dev;
+  shouldStayBehindUntilFocused = Boolean(process.env.MERU_BACKGROUND);
 
   /**
    * The end-to-end suite runs the packaged app and says so through
