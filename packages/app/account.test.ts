@@ -8,6 +8,13 @@ type DisplayMediaCallback = (streams: { video?: SelectedDesktopSource }) => void
 
 type DisplayMediaRequestHandler = (request: unknown, callback: DisplayMediaCallback) => void;
 
+type PermissionRequestHandler = (
+  webContents: unknown,
+  permission: string,
+  callback: (granted: boolean) => void,
+  details: { requestingUrl: string },
+) => void;
+
 class FakePickerWindow extends EventEmitter {
   webContents = {};
 
@@ -34,6 +41,10 @@ const ipcMain = new EventEmitter();
 
 const displayMediaRequestHandlers = new Map<string, DisplayMediaRequestHandler>();
 
+const permissionRequestHandlers = new Map<string, PermissionRequestHandler>();
+
+const EXTENSION_URL = "chrome-extension://abcdefghijklmnop/popup.html";
+
 let pickerWindows: FakePickerWindow[] = [];
 
 mock.module("@electron-toolkit/utils", () => ({ platform: { isMacOS: false } }));
@@ -43,7 +54,9 @@ mock.module("electron", () => ({
   ipcMain,
   session: {
     fromPartition: (partition: string) => ({
-      setPermissionRequestHandler: () => {},
+      setPermissionRequestHandler: (handler: PermissionRequestHandler) => {
+        permissionRequestHandlers.set(partition, handler);
+      },
       setPermissionCheckHandler: () => {},
       setDisplayMediaRequestHandler: (handler: DisplayMediaRequestHandler) => {
         displayMediaRequestHandlers.set(partition, handler);
@@ -58,8 +71,15 @@ mock.module("./blocker", () => ({ blocker: { setupSession: () => {} } }));
 mock.module("./config", () => ({ config: { get: () => false } }));
 
 mock.module("./extensions", () => ({
-  EXTENSION_PAGE_PERMISSIONS: new Set(),
-  extensions: { setupSession: async () => {} },
+  EXTENSION_PAGE_PERMISSIONS: new Set([
+    "clipboard-read",
+    "clipboard-sanitized-write",
+    "notifications",
+  ]),
+  extensions: {
+    setupSession: async () => {},
+    isLoadedExtensionUrl: (_session: unknown, url: string) => url.startsWith("chrome-extension://"),
+  },
 }));
 
 mock.module("./gmail", () => ({ Gmail: class {} }));
@@ -150,6 +170,8 @@ beforeEach(() => {
   pickerWindows = [];
 
   displayMediaRequestHandlers.clear();
+
+  permissionRequestHandlers.clear();
 
   ipcMain.removeAllListeners();
 });
@@ -246,5 +268,38 @@ describe("display media requests", () => {
     pick(openedPicker(1), screen);
 
     expect(answers).toEqual([{ video: screen }]);
+  });
+});
+
+describe("permission requests", () => {
+  function requestPermission(id: string, permission: string, requestingUrl: string) {
+    new Account({
+      id,
+      gmail: {},
+      workspaceApps: { savedTabs: [] },
+    } as unknown as AccountConfig);
+
+    const handler = permissionRequestHandlers.get(`persist:${id}`);
+
+    if (!handler) {
+      throw new Error(`No permission request handler for ${id}`);
+    }
+
+    const answers: boolean[] = [];
+
+    handler({}, permission, (granted) => answers.push(granted), { requestingUrl });
+
+    return answers;
+  }
+
+  // Electron 45 reports screen, window and tab capture as `display-capture`
+  // rather than `media`, and Google Meet's screen sharing needs it granted
+  // before the display media request handler is asked for a source
+  test("grant screen capture to a page", () => {
+    expect(requestPermission("a", "display-capture", GOOGLE_MEET_URL)).toEqual([true]);
+  });
+
+  test("refuse screen capture to an extension page", () => {
+    expect(requestPermission("a", "display-capture", EXTENSION_URL)).toEqual([false]);
   });
 });

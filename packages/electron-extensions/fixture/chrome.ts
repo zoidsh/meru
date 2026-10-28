@@ -243,9 +243,10 @@ export function getChromeStorage(): FixtureStorage {
 }
 
 /**
- * The worker's `chrome.permissions`, which is the facade's throughout —
- * Electron implements none of the namespace, so the worker reaching for it is
- * also the proof that the fill arrived before the extension's own code ran.
+ * The worker's `chrome.permissions`, which is the facade's throughout — it
+ * replaces the namespace Electron exposes from Chromium, so the worker reaching
+ * for it is also the proof that the facade arrived before the extension's own
+ * code ran.
  */
 export function getChromePermissions(): FixturePermissions {
   const workerGlobals = globalThis as unknown as { chrome: { permissions: FixturePermissions } };
