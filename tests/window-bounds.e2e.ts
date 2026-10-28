@@ -31,12 +31,10 @@ const meru = useApp(
   /*
    * And the account view's page is held back, because the first test here is
    * about what the app has done by the time a view exists but its page does
-   * not. Gmail left that gap by accident — a round trip to Google, measured at
-   * over a second on a Windows runner — and the stand-in the suite serves
-   * instead answers in milliseconds, which would leave the test passing on an
-   * app that registered its resize listener behind the load. The delay is the
-   * gap asked for rather than inherited, and it is the only thing it changes:
-   * every other test here resizes a window that has long since settled.
+   * not. A page that answers at once leaves no such moment, and the test would
+   * pass against an app that registered its resize listener behind the load.
+   * The delay is the only thing it changes: every other test here resizes a
+   * window that has long since settled.
    */
   { gmailStandInDelay: GMAIL_LOAD_DELAY },
 );
@@ -174,25 +172,19 @@ test("the window is listening for resizes by the time a view is attached", async
 
   /*
    * Read at that instant rather than polled for, and that is the whole test.
-   * `createView` attaches the view and only then loads the page into it, and the
-   * listener that lays the views out used to be registered behind that load —
-   * so for as long as it took, every resize reached nobody and the views sat at
-   * the size they were created with. A drag survives it, because the resize
-   * after the listener arrives corrects it; a maximize does not, having no
-   * second event behind it.
+   * `createView` attaches the view and only then loads the page into it, so a
+   * listener registered behind that load reaches nobody for as long as it takes
+   * and the views sit at the size they were created with. A drag survives that,
+   * because the resize after the listener arrives corrects it; a maximize does
+   * not, having no second event behind it.
    *
    * Polling here would wait out exactly the gap it is meant to catch, which is
    * why this is asserted on the listener rather than on a resize landing.
    *
-   * It only bites where that load takes time. Run against the broken ordering
-   * deliberately, back when the load was a round trip to Google, every platform
-   * reported zero listeners on the first, cold launch; macOS failed all three
-   * attempts, while Windows and Linux passed on the retry, whose launch was warm
-   * enough to close the gap before a test could look. A load that answers at
-   * once — a sandbox with no route out, or the loopback stand-in the suite
-   * serves now — leaves this passing on the broken ordering too, and that is
-   * what the delay `useApp` is given above is for: the gap is the suite's to set
-   * rather than Google's to leave.
+   * It only bites where the load takes time: a load that answers at once — a
+   * sandbox with no route out, or a loopback page — leaves this passing against
+   * the broken ordering, which is what the delay `useApp` is given above sets
+   * the gap for.
    *
    * It never fails on correct ordering, on any platform: the listener is on
    * before a view exists to be found.

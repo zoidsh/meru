@@ -156,9 +156,9 @@ export type TestServer = {
   gmailUrl: string;
   /**
    * The same, holding the redirect back for `delayMs` first, for a test that
-   * needs the gap between a view being attached and its page arriving. Gmail's
-   * own load left that gap by accident, at whatever length the network and
-   * Google decided; this is the suite naming one.
+   * needs the gap between a view being attached and its page arriving. A
+   * loopback page leaves no gap of its own, so the one a test reads in has to
+   * be the length it asked for.
    */
   slowGmailUrl(delayMs: number): string;
   /** The page an account view is redirected to, and so the URL it comes to rest on. */
