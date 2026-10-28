@@ -262,6 +262,13 @@ class Accounts {
       ipc.renderer.send(main.window.webContents, "window.blurFocusedElement");
     }
 
+    // On macOS `webContents.focus()` also focuses its window, which activates
+    // the app. The window's own focus listener calls this again once it is
+    // brought forward, so the view still gets the keys then.
+    if (main.shouldStayBehindUntilFocused && !main.window.isFocused()) {
+      return;
+    }
+
     view.webContents.focus();
   }
 
