@@ -62,6 +62,11 @@ function renderPage(pageTitle: string) {
 `;
 }
 
+/** The path `pageUrl` points at, and the key a request for it is recorded under. */
+function pagePath(pageTitle: string) {
+  return `/app/${encodeURIComponent(pageTitle)}`;
+}
+
 function respond(request: IncomingMessage, response: ServerResponse) {
   /*
    * Resolved against the request's own authority rather than a fixed host, so
@@ -163,11 +168,28 @@ export type TestServer = {
   slowGmailUrl(delayMs: number): string;
   /** The page an account view is redirected to, and so the URL it comes to rest on. */
   signInUrl: string;
+  /**
+   * The `user-agent` a view sent when it fetched the page with this title, or
+   * undefined until one has.
+   *
+   * Kept per page rather than as the last header seen, so a test whose view
+   * never loaded reads nothing instead of whatever the test before it left —
+   * which would pass an assertion against an app that fetched nothing.
+   */
+  userAgentFor(pageTitle: string): string | undefined;
   close(): Promise<void>;
 };
 
 export async function startTestServer(): Promise<TestServer> {
+  const userAgents = new Map<string, string>();
+
   const server: Server = createServer((request, response) => {
+    // Recorded off the request itself: the header a real navigation sent is the
+    // only place the app's user agent can be read from outside it.
+    if (request.url) {
+      userAgents.set(request.url, request.headers["user-agent"] ?? "");
+    }
+
     /*
      * Guarded, because an exception thrown out of a `node:http` handler is an
      * uncaught exception: it takes down the Playwright worker rather than
@@ -197,7 +219,10 @@ export async function startTestServer(): Promise<TestServer> {
   return {
     origin,
     pageUrl(pageTitle) {
-      return `${origin}/app/${encodeURIComponent(pageTitle)}`;
+      return `${origin}${pagePath(pageTitle)}`;
+    },
+    userAgentFor(pageTitle) {
+      return userAgents.get(pagePath(pageTitle));
     },
     gmailUrl: `${origin}${GMAIL_PATH}`,
     slowGmailUrl(delayMs) {
