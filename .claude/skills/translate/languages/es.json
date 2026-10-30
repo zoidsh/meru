@@ -670,7 +670,7 @@
       "msgid": "OK",
       "expect": "^Aceptar$",
       "severity": "wrong",
-      "reason": "The confirming button is Aceptar, as Apple and Chrome write it (Chrome: 2 of the 3 OK buttons)."
+      "reason": "OK is Aceptar, as Chrome writes it on the buttons it draws (6 of its 7 OK labels) and as Apple's AppKit Common OK gives it for a native dialog."
     },
     {
       "id": "bookmark",

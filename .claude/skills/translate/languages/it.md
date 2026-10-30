@@ -3,7 +3,7 @@
 Italian follows Apple's conventions in macOS Mail and AppKit for address, label form, capitalization, punctuation and the ellipsis. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the ellipsis stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a term, the house word is Chrome's. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `it.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Impostazioni_. The app-menu item with `msgctxt` `macOS` is _Impostazioni…_, a
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Italian word, the English's letter where the Italian has it: `Cu&t` _&Taglia_, `Select &All` _Selezion&a tutto_, `Sa&ve Image As…` _Sal&va immagine con nome…_, `Paste and &Match Style` _Incolla e adegua la for&mattazione_ on Windows. Where the Italian lacks the letter, take a free one: `&Paste` _&Incolla_, as GNOME marks it. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Italian word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _&Taglia_, `Select &All` _Selezion&a tutto_, `Sa&ve Image As…` _Sal&va immagine con nome…_, `Paste and &Match Style` _Incolla e adegua la for&mattazione_ on Windows. Where the word lacks the letter: `&Paste` _&Incolla_, as GNOME marks it.
 
 The page and text-field context menu shows these together, with these letters: _Aggiungi a&l dizionario_, _Ce&rca con Google_, _&Taglia_, _&Copia_, _&Incolla_, _Incolla e adegua la for&mattazione_ (Windows) or _Incolla e adegua lo &stile_ (Linux), _Selezion&a tutto_, _Sal&va immagine con nome…_, _Copia lin&k_, _Copia imma&gine_, _C&opia l’indirizzo dell’immagine_.
 
@@ -53,10 +53,10 @@ Say what happened, without _Spiacenti_ or _Ci dispiace_: _Impossibile aggiungere
 
 ## Common labels
 
-House words for everyday actions, Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands` where Chrome writes the same, Chrome's where it differs. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are two words, as Chrome writes them: Remove account never reads as deleting it. The labels:
 
 - Cancel _Annulla_, OK _OK_, Close _Chiudi_, Delete _Elimina_, Remove _Rimuovi_, Add _Aggiungi_, Save _Salva_, Edit _Modifica_, Open _Apri_, Show _Mostra_, Hide _Nascondi_, Quit _Esci_, Reload _Ricarica_, Try Again _Riprova_, Learn More… _Scopri di più…_
-- Close Tab _Chiudi scheda_, Close Other Tabs _Chiudi le altre schede_, Pin Tab _Fissa scheda_, Show Sidebar _Mostra la barra laterale_, Copy Link _Copia link_, Mark as Read _Segna come letto_, Developer Tools _Strumenti per sviluppatori_
+- Close Tab _Chiudi scheda_, Close Other Tabs _Chiudi le altre schede_, Pin Tab _Fissa scheda_, Show Sidebar _Mostra la barra laterale_, Copy Link _Copia link_, Mark as Read _Segna come già letto_, Gmail's, Developer Tools _Strumenti per sviluppatori_
 - _Confermi di voler eliminare questo messaggio?_ (Are you sure you want to delete this message?)
 - _Impossibile trascinare allegati prima di averli scaricati. Vuoi scaricare questo allegato?_
 

@@ -3,7 +3,7 @@
 Japanese follows Apple's conventions in macOS Mail and AppKit for address, label form, punctuation and the ellipsis. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, punctuation and the ellipsis stay this sheet's on every platform, and so does the katakana spelling of a house word, though a `macOS` label spells a word as Apple does: ウインドウ.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `ja.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ None. Latin words inside Japanese keep their own capitals (Gmail, Meru Pro).
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Japanese words have no Latin letter to mark, so a label shown there ends in `(&X)`, with the English's letter upper-case, after the word and before a trailing ellipsis: `Cu&t` 切り取り(&T), `Sa&ve Image As…` 名前を付けて画像を保存(&V)…. No space before the parenthesis.
+An `&` in the English marks the access key on Windows and Linux. The key is the English letter where the word has it, else the first free letter, one no other label in the same menu uses; Japanese words have no Latin letter to mark, so the English letter always applies, written as a suffix: a label shown there ends in `(&X)`, the letter upper-case, after the word and before a trailing ellipsis: `Cu&t` 切り取り(&T), `Sa&ve Image As…` 名前を付けて画像を保存(&V)…. No space before the parenthesis.
 
 - A label with `msgctxt` `macOS` carries no access key: drop the `&`.
 - A label with `&` and no platform context shows on every platform, so it takes `(&X)` too; macOS hides it, since Chromium strips a `(&X)` from every menu label there (`l10n_util::FixUpWindowsStyleLabel`).
@@ -53,10 +53,10 @@ Say what happened, without すみません or 申し訳ありません: アカ�
 
 ## Common labels
 
-House words for everyday actions, most of them Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are one word, _削除_, as Chrome writes both. The labels:
 
-- Cancel キャンセル, OK OK, Close 閉じる, Delete 削除, Remove 削除, Add 追加, Save 保存, Edit 編集, Open 開く, Show 表示, Hide 非表示, Quit 終了, Reload 再読み込み, Try Again やり直す, Learn More… 詳しい情報…
-- Close Tab タブを閉じる, Close Other Tabs その他のタブを閉じる, Pin Tab タブを固定, Show Sidebar サイドバーを表示, Copy Link リンクをコピー, Mark as Read 開封済みにする, Add Account… アカウントを追加…
+- Cancel キャンセル, OK OK, Close 閉じる, Delete 削除, Remove 削除, Add 追加, Save 保存, Edit 編集, Open 開く, Show 表示, Hide 非表示, Quit 終了, Reload 再読み込み, Try Again もう一度試す, Learn More… 詳細…
+- Close Tab タブを閉じる, Close Other Tabs 他のタブをすべて閉じる, Pin Tab タブを固定, Show Sidebar サイドバーを表示, Copy Link リンクをコピー, Mark as Read 既読にする, Gmail's, Add Account… アカウントを追加…
 - このメッセージを削除してもよろしいですか? (Are you sure you want to delete this message?)
 - ダウンロードが完了するまで添付ファイルをドラッグすることはできません。この添付ファイルをダウンロードしますか?
 

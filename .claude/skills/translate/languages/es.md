@@ -3,7 +3,7 @@
 Spanish for Spain follows Apple's conventions in macOS Mail and AppKit for `es` for address, label form, capitalization, punctuation and the ellipsis. Latin America has its own catalog, `es-419`; the two never borrow from each other. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the ellipsis stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a term, its Spanish translation is the house word, unless this sheet says otherwise. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `es.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Configuración_, Chrome's word, in Meru's own copy: the window, its title and e
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Spanish word: the English's letter where the Spanish has it, otherwise a free one. Two labels in the same menu never share a letter. macOS drops the `&`. Chrome's own letters are not followed. The context menu's labels, with their keys, the same on Windows and Linux except where noted:
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Spanish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The context menu's labels, with their keys, the same on Windows and Linux except where noted:
 
 - `Cu&t` _Cor&tar_, `&Copy` _&Copiar_, `&Paste` _&Pegar_, `Select &All` _Seleccion&ar todo_
 - `Paste and &Match Style` _Pegar con el &mismo formato_ on Windows, _Pegar con el &mismo estilo_ on Linux
@@ -56,7 +56,7 @@ Say what happened, without _Lo sentimos_ or _Por favor_: _No se ha podido añadi
 
 ## Common labels
 
-House words for everyday actions, from Chrome's Spanish where it has the label and Apple's Mail and AppKit where it does not. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are two words, as Chrome writes them: Remove account never reads as deleting it. The labels:
 
 - Cancel _Cancelar_, OK _Aceptar_, Close _Cerrar_, Delete _Eliminar_, Remove _Quitar_, Add _Añadir_, Save _Guardar_, Edit _Editar_, Open _Abrir_, Show _Mostrar_, Hide _Ocultar_, Quit _Salir_, Reload _Volver a cargar_, Try Again _Reintentar_, Done _Hecho_, Learn More… _Más información…_
 - Close Tab _Cerrar pestaña_, Close Other Tabs _Cerrar las demás pestañas_, Pin Tab _Fijar pestaña_, Unpin _Desfijar_, Show Sidebar _Mostrar barra lateral_, Copy Link _Copiar enlace_, Mark as Read _Marcar como leído_, Add Account… _Añadir cuenta…_

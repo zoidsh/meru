@@ -663,7 +663,7 @@
       "msgid": "OK",
       "expect": "^OK$",
       "severity": "wrong",
-      "reason": "The confirming button is OK in Latin America, as Apple writes it; Chrome's Aceptar is not followed."
+      "reason": "OK is Apple's OK (AppKit Common OK) for now: Meru's native dialogs and its own pages share one OK message, and a button Meru draws would take Chrome's Aceptar (6 of its 7 OK labels) once the message is split by platform."
     },
     {
       "id": "bookmark",

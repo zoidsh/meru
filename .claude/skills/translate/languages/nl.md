@@ -3,7 +3,7 @@
 Dutch follows Apple's conventions in macOS Mail and AppKit for address, label form, capitalization and punctuation. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below, in the form that platform gives its labels: Microsoft and GNOME write the infinitive, _Knippen_, _Alles selecteren_. Address, capitalization and punctuation stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a word for the thing, the house word is Chrome's, and the sidecar's rules give Chrome's count as their source. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `nl.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -13,7 +13,7 @@ _je_, with _jouw_ or _je_ for the possessive: _Weet je zeker … je account_. Ne
 
 ## Buttons and menu items
 
-The bare imperative, verb first, as Apple writes it: _Antwoord_, _Verwijder_, _Sla op_, _Annuleer_, _Markeer als gelezen_, _Sluit tabblad_, _Voeg account toe_. Never the infinitive (_Verwijderen_, _Tabblad sluiten_), which most other software uses, Chrome included; a house word Chrome writes as an infinitive takes the imperative here: Chrome's _Opslaan_ is _Sla op_, its _Bewerken_ is _Bewerk_. Only a `Windows` or `Linux` label keeps its platform's infinitive.
+The bare imperative, verb first, as Apple writes it: _Antwoord_, _Verwijder_, _Sla op_, _Annuleer_, _Markeer als gelezen_, _Sluit tabblad_, _Voeg account toe_. Never the infinitive (_Verwijderen_, _Tabblad sluiten_), which most other software uses, Chrome included; a house word Chrome writes as an infinitive takes the imperative here: Chrome's _Opslaan_ is _Sla op_, its _Bewerken_ is _Bewerk_. Only a `Windows` or `Linux` label keeps its platform's infinitive. The label form is grammar, which follows Apple's conventions as every sheet's does, so it holds for Chrome's words too: the word is Chrome's, the form Apple's.
 
 ## Capitalization
 
@@ -25,7 +25,7 @@ _Instellingen_. The app-menu item with `msgctxt` `macOS` is _Instellingen…_, a
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Dutch word, the English's letter where the Dutch has it: `&Paste` _&Plakken_, `Select &All` _&Alles selecteren_, `Paste and &Match Style` _Plakken en op&maak aanpassen_ on Windows. Where the Dutch lacks the letter, take a free one: `Cu&t` _K&nippen_, `Sa&ve Image As…` _A&fbeelding opslaan als…_, and on Linux _Plakken en s&tijl aanpassen_, which has no M. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Dutch word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `&Paste` _&Plakken_, `Select &All` _&Alles selecteren_, `Paste and &Match Style` _Plakken en op&maak aanpassen_ on Windows. Where the word lacks the letter: `Cu&t` _K&nippen_, `Sa&ve Image As…` _A&fbeelding opslaan als…_, and on Linux _Plakken en s&tijl aanpassen_, which has no M.
 
 ## Plural categories
 
@@ -51,10 +51,10 @@ Say what happened, without _helaas_ or _sorry_: _Het account kan niet worden toe
 
 ## Common labels
 
-House words for everyday actions, Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands` except where Chrome has its own word. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are one word, _Verwijder_, as Chrome writes both. The labels:
 
-- Cancel _Annuleer_, OK _OK_, Undo _Maak ongedaan_, Close _Sluit_, Delete _Verwijder_, Remove _Verwijder_, Add _Voeg toe_, Save _Sla op_, Edit _Bewerk_, Open _Open_, Show _Toon_, Hide _Verberg_, Quit _Stop_, Reload _Laad opnieuw_, Try Again _Probeer opnieuw_, Learn More… _Meer informatie…_
-- Close Tab _Sluit tabblad_, Close Other Tabs _Sluit andere tabbladen_, Pin Tab _Zet tabblad vast_, Show Sidebar _Toon navigatiekolom_, Copy Link _Kopieer link_, Mark as Read _Markeer als gelezen_, Add Account… _Voeg account toe…_, Quit Mail _Stop Mail_
+- Cancel _Annuleer_, OK _OK_, Undo _Maak ongedaan_, Close _Sluit_, Delete _Verwijder_, Remove _Verwijder_, Add _Voeg toe_, Save _Sla op_, Edit _Bewerk_, Open _Open_, Show _Toon_, Hide _Verberg_, Quit _Sluit_, Reload _Laad opnieuw_, Try Again _Probeer opnieuw_, Learn More… _Meer informatie…_
+- Close Tab _Sluit tabblad_, Close Other Tabs _Sluit andere tabbladen_, Pin Tab _Zet tabblad vast_, Show Sidebar _Toon zijbalk_, Copy Link _Kopieer link_, Mark as Read _Markeer als gelezen_, Add Account… _Voeg account toe…_
 - _Weet je zeker dat je dit bericht wilt verwijderen?_ (Are you sure you want to delete this message?)
 - _Je kunt bijlagen pas slepen nadat ze zijn gedownload. Wil je deze bijlage downloaden?_
 

@@ -3,7 +3,7 @@
 Swedish follows Apple's conventions in macOS Mail and AppKit for address, label form, capitalization and punctuation. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the imperative stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a word for the thing, the house word is Chrome's, and the sidecar's rules give Chrome's count as their source. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `sv.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Inställningar_. The app-menu item with `msgctxt` `macOS` is _Inställningar…
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Swedish word, the English's letter where the Swedish has it: `Cu&t` _Klipp u&t_, `Select &All` _Markera &allt_, `Paste and &Match Style` _Klistra in och &matcha formatet_ on Windows. Where the Swedish lacks the letter, take a free one: `&Paste` _Klistra &in_, `Sa&ve Image As…` _S&para bild som…_. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Swedish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _Klipp u&t_, `Select &All` _Markera &allt_, `Paste and &Match Style` _Klistra in och &matcha formatet_ on Windows. Where the word lacks the letter: `&Paste` _Klistra &in_, `Sa&ve Image As…` _S&para bild som…_.
 
 ## Plural categories
 
@@ -52,7 +52,7 @@ Say what happened, without _Tyvärr_ or _Ursäkta_: _Det gick inte att lägga ti
 
 ## Common labels
 
-House words for everyday actions, Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands` except where Chrome has its own word. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are two words, as Chrome writes them: Remove account never reads as deleting it. The labels:
 
 - Cancel _Avbryt_, OK _OK_, Undo _Ångra_, Close _Stäng_, Delete _Radera_, Remove _Ta bort_, Add _Lägg till_, Save _Spara_, Edit _Redigera_, Open _Öppna_, Show _Visa_, Hide _Dölj_, Quit _Avsluta_, Reload _Läs in igen_, Try Again _Försök igen_, Learn More… _Läs mer…_
 - Close Tab _Stäng flik_, Close Other Tabs _Stäng andra flikar_, Pin Tab _Fäst flik_, Show Sidebar _Visa sidofältet_, Copy Link _Kopiera länk_, Mark as Read _Markera som läst_, Add Account… _Lägg till konto…_, Quit Mail _Avsluta Mail_

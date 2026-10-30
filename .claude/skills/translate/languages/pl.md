@@ -3,7 +3,7 @@
 Polish follows Apple's conventions in macOS Mail and AppKit for address, label form, capitalization and punctuation. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the imperative stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a word for the thing, the house word is Chrome's, and the sidecar's rules give Chrome's count as their source. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `pl.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Ustawienia_. The app-menu item with `msgctxt` `macOS` is _Ustawienia…_, as Ap
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Polish word, the English's letter where the Polish has it: `Cu&t` _Wy&tnij_, `Select &All` _Z&aznacz wszystko_, `Paste and &Match Style` _Wklej i dopasuj for&mat_ on Windows. Where the Polish lacks the letter, take a free one: `&Paste` _&Wklej_, `Sa&ve Image As…` _Zapisz o&braz jako…_, and on Linux _Wklej i &dopasuj styl_, which has no M. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Polish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _Wy&tnij_, `Select &All` _Z&aznacz wszystko_, `Paste and &Match Style` _Wklej i dopasuj for&mat_ on Windows. Where the word lacks the letter: `&Paste` _&Wklej_, `Sa&ve Image As…` _Zapisz o&braz jako…_, and on Linux _Wklej i &dopasuj styl_, which has no M.
 
 ## Plural categories
 
@@ -43,6 +43,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro. They decline only where Polish 
 - **Numbers and units.** A no-break space (U+00A0) joins a number to its unit, as Chrome writes it: _5 minut_, _30 dni_, and in a plural _# dni_.
 - Quotation marks are „…” (U+201E, U+201D).
 - **House words, as Chrome writes them.** A link is a _link_, never Apple's _łącze_: _Kopiuj link_. Saving is _zapisać_: _Zapisz_, _zapisane wyszukiwanie_; _Zachowaj_ is only Apple's word in a `macOS` label such as _Zachowaj jako…_. An update is an _aktualizacja_, never _uaktualnienie_, which is only Apple's word in a `macOS` label. Restarting is _uruchomić ponownie_, never _zrestartować_. The titlebar is the _pasek tytułu_, the tab strip the _pasek kart_, a button a _przycisk_, a passkey a _klucz dostępu_, the clipboard the _schowek_ and a folder a _folder_, never _katalog_. The launcher is the _menu z aplikacjami_. Hibernating a tab is _hibernuj_, never _uśpij_, the systems' Sleep. The sound Linen is _Len_.
+- **About {appName} on macOS is _{appName}…_ alone.** Apple's Polish names the app by itself in its About item, as in Mail's _Poczta…_, _Kalkulator…_ and _Słownik…_, so the `macOS` translation is the placeholder and an ellipsis. It looks nearly empty to a reviewer and to `i18n:check`, and it is right; Windows and Linux spell the item out, as [Platform words](#platform-words) gives them.
 - **macOS's own elements.** The menu bar, the Dock, Finder and System Settings take Apple's names in Meru's own copy too, since they name Apple's interface and show only on macOS: _pasek menu_ (ControlCenterSettings.appex `Localizable` `Show in Menu Bar`), _Dock_ (DesktopSettings.appex `Localizable` `Dock`), _Finder_ and _Ustawienia systemowe_ (System Settings `InfoPlist` `CFBundleDisplayName`).
 
 ## Error messages
@@ -51,7 +52,7 @@ Say what happened, without _Niestety_ or _Przepraszamy_: _Nie można dodać kont
 
 ## Common labels
 
-House words for everyday actions, Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands` except where Chrome has its own word. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are one word, _Usuń_, as Chrome writes both. The labels:
 
 - Cancel _Anuluj_, OK _OK_, Undo _Cofnij_, Close _Zamknij_, Delete _Usuń_, Remove _Usuń_, Add _Dodaj_, Save _Zapisz_, Edit _Edytuj_, Open _Otwórz_, Show _Pokaż_, Hide _Ukryj_, Quit _Zakończ_, Reload _Odśwież_, Try Again _Spróbuj ponownie_, Learn More… _Więcej informacji…_
 - Close Tab _Zamknij kartę_, Close Other Tabs _Zamknij inne karty_, Pin Tab _Przypnij kartę_, Show Sidebar _Pokaż pasek boczny_, Copy Link _Kopiuj link_, Mark as Read _Oznacz jako przeczytane_, Add Account… _Dodaj konto…_

@@ -3,7 +3,7 @@
 French follows Apple's conventions in macOS Mail and AppKit, for France, for address, label form, capitalization, punctuation and the ellipsis. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the ellipsis stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. Where Chrome has a term, the house word is Chrome's. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `fr.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Paramètres_, Chrome's word, in Meru's own copy: the window, its title and ever
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the French word, the English's letter where the French has it: `&Copy` _&Copier_, `C&opy Image Address` _C&opier l’adresse de l’image_, `Paste and &Match Style` _Coller et adapter la &mise en forme_ on Windows. Where the French lacks the letter, take a free one: `Cu&t` _Co&uper_, as GNOME marks it. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the French word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `&Copy` _&Copier_, `C&opy Image Address` _C&opier l’adresse de l’image_, `Paste and &Match Style` _Coller et adapter la &mise en forme_ on Windows. Where the word lacks the letter: `Cu&t` _Co&uper_, as GNOME marks it.
 
 The page and text-field context menu shows these together, with these letters: _&Ajouter au dictionnaire_, _&Rechercher avec Google_, _Co&uper_, _&Copier_, _Coll&er_, _Coller et adapter la &mise en forme_ (Windows) or _Coller et adapter le &style_ (Linux), _Sélectionner &tout_ (Windows) or _&Tout sélectionner_ (Linux), _Enregistrer l’&image sous…_, _Copier le lie&n_, _Copier l’ima&ge_, _C&opier l’adresse de l’image_.
 
@@ -53,7 +53,7 @@ Say what happened, without _Désolé_ or _Veuillez_: _Impossible d’ajouter le 
 
 ## Common labels
 
-House words for everyday actions, Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands` where Chrome writes the same, Chrome's where it differs. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are one word, _Supprimer_, as Chrome writes both. The labels:
 
 - Cancel _Annuler_, OK _OK_, Close _Fermer_, Delete _Supprimer_, Remove _Supprimer_, Add _Ajouter_, Save _Enregistrer_, Edit _Modifier_, Open _Ouvrir_, Show _Afficher_, Hide _Masquer_, Quit _Quitter_, Reload _Actualiser_, Try Again _Réessayer_, Learn More… _En savoir plus…_
 - Close Tab _Fermer l’onglet_, Close Other Tabs _Fermer les autres onglets_, Pin Tab _Épingler l’onglet_, Show Sidebar _Afficher la barre latérale_, Copy Link _Copier le lien_, Mark as Read _Marquer comme lu_, Developer Tools _Outils pour les développeurs_

@@ -3,7 +3,7 @@
 German follows Apple's conventions in macOS Mail and AppKit for address, label form, capitalization, punctuation and the ellipsis. Its words follow two rules:
 
 - **An OS label takes its platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label the operating system names its own way, such as the File menu or Paste. A label only macOS shows, such as the Window menu or Hide Others, is an OS label too and carries `macOS` alone. `macOS` takes Apple's word (Apple Mail's for a mail menu item), `Windows` Microsoft's and `Linux` GNOME's, from [Platform words](#platform-words) below. Only the word changes: address, capitalization, punctuation and the ellipsis stay this sheet's on every platform.
-- **Everything else takes the house word**, from this sheet and the glossary: Meru's own copy reads the same on every platform. A term Gmail also shows takes Gmail's word from the glossary.
+- **Everything else takes the house word**, from this sheet and the glossary, by the glossary's [source order](../glossary.md#where-a-word-comes-from): Gmail's word for a term Gmail also shows, Google's for Google's names, and in Meru's own copy Chrome's word where Chrome has the term, else the word the glossary marks agent-chosen. Apple is never the source of a house word. Meru's own copy reads the same on every platform, and each rule in `de.json` gives its word's source.
 
 Where this sheet and a habit from other software disagree, this sheet wins.
 
@@ -25,7 +25,7 @@ _Einstellungen_. The app-menu item with `msgctxt` `macOS` is _Einstellungen …_
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the German word, the English's letter where the German has it: `Cu&t` _&Ausschneiden_, `&Paste` _&Einfügen_, `Select &All` _&Alles markieren_, `Paste and &Match Style` _Einfügen und For&mat anpassen_ on Windows. Where the German lacks the letter, take a free one: on Linux, _Einfügen und Stil anpassen_ has no M. Two labels in the same menu never share a letter. macOS drops the `&`.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the German word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _&Ausschneiden_, `&Paste` _&Einfügen_, `Select &All` _&Alles markieren_, `Paste and &Match Style` _Einfügen und For&mat anpassen_ on Windows. Where the word lacks the letter: on Linux, _Einfügen und Stil anpassen_ has no M.
 
 ## Plural categories
 
@@ -50,10 +50,10 @@ Say what happened, without _leider_, _Entschuldigung_ or _Bitte_: _Das Konto kon
 
 ## Common labels
 
-House words for everyday actions, most of them Apple's from Mail's `MainMenu`, `Alerts` and `Localizable` tables and AppKit's `MenuCommands`. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words):
+House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are two words, as Chrome writes them: Remove account never reads as deleting it. The labels:
 
-- Cancel _Abbrechen_, OK _OK_, Close _Schließen_, Delete _Löschen_, Remove _Entfernen_, Add _Hinzufügen_, Save _Speichern_, Edit _Bearbeiten_, Open _Öffnen_, Show _Einblenden_, Hide _Ausblenden_, Quit _Beenden_, Reload _Neu laden_, Try Again _Erneut versuchen_, Learn More… _Weitere Infos …_
-- Close Tab _Tab schließen_, Close Other Tabs _Andere Tabs schließen_, Pin Tab _Tab fixieren_, Show Sidebar _Seitenleiste einblenden_, Copy Link _Link kopieren_, Mark as Read _Als gelesen markieren_
+- Cancel _Abbrechen_, OK _OK_, Close _Schließen_, Delete _Löschen_, Remove _Entfernen_, Add _Hinzufügen_, Save _Speichern_, Edit _Bearbeiten_, Open _Öffnen_, Show _Anzeigen_, Hide _Ausblenden_, Quit _Beenden_, Reload _Neu laden_, Try Again _Erneut versuchen_, Learn More… _Weitere Informationen …_
+- Close Tab _Tab schließen_, Close Other Tabs _Andere Tabs schließen_, Pin Tab _Tab anpinnen_, Show Sidebar _Seitenleiste einblenden_, as Chrome's Show side panel, Copy Link _Link kopieren_, Mark as Read _Als gelesen markieren_
 - _Möchtest du diese Nachricht wirklich löschen?_ (Are you sure you want to delete this message?)
 - _Du kannst Anhänge nicht bewegen, solange sie nicht geladen wurden. Möchtest du diesen Anhang laden?_
 
