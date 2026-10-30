@@ -1,7 +1,8 @@
 /*
- * Workspace apps whose page closes itself with `window.close()`, which takes
- * the view's `webContents` away without going through any of the app's own
- * ways of closing a tab.
+ * Workspace apps whose view's `webContents` goes away without going through
+ * any of the app's own ways of closing a tab: the page closing itself with
+ * `window.close()`, and the app quitting, which destroys the main window
+ * before the views in it.
  *
  * Its own file rather than tests in `workspace-apps-pro.e2e.ts`, whose seed is
  * shared by every test there and whose view helpers read the first window as
@@ -10,6 +11,8 @@
  *
  * Under a license, because workspace apps are a Pro feature.
  */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { seedAccount, seedSavedTab } from "./lib/accounts";
 import { useProApp } from "./lib/app";
@@ -324,4 +327,31 @@ test("the active tab closing itself brings Gmail to the front", async () => {
   await expect(stripTab(SECOND_PAGE_TITLE)).not.toHaveClass(ACTIVE_CLASS);
 
   expect(await readMainProcessErrors()).toEqual([]);
+});
+
+test("quitting with a workspace app tab in front exits without an error", async () => {
+  await waitForVerticalTabs(meru);
+
+  await stripTab(FIRST_PAGE_TITLE).click();
+
+  await expect.poll(readFrontViewUrl).toBe(pageUrl(FIRST_PAGE_TITLE));
+
+  /*
+   * Written to a file rather than kept in the main process, which is gone by
+   * the time anything could be read back from it. The user data directory is
+   * removed only after the test.
+   */
+  const errorLogPath = path.join(meru.userDataDir, "quit-errors.log");
+
+  await meru.app.evaluate((_electron, logPath) => {
+    const { appendFileSync } = process.getBuiltinModule("node:fs");
+
+    process.on("uncaughtException", (error) => {
+      appendFileSync(logPath, `${error.stack}\n`);
+    });
+  }, errorLogPath);
+
+  expect(await meru.quit()).toBe(0);
+
+  expect(await readFile(errorLogPath, "utf8").catch(() => "")).toBe("");
 });

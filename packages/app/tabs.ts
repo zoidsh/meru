@@ -483,7 +483,12 @@ export class Tabs {
 
     // Every embedded view stays attached, so the one that was behind the
     // closed tab's shows through until the new active tab is brought forward.
-    if (wasActive && accounts.getAccount(this.accountId).config.selected) {
+    // Quitting destroys the main window before the views in it.
+    if (
+      wasActive &&
+      !main.window.isDestroyed() &&
+      accounts.getAccount(this.accountId).config.selected
+    ) {
       accounts.refreshSelectedAccountView();
     }
   }

@@ -6,7 +6,7 @@
  * `xvfb-run -a bun run test:e2e`. The -a matters, because it picks a free
  * display number rather than colliding on :99 with another run.
  */
-import { execFileSync } from "node:child_process";
+import { type ChildProcess, execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -128,6 +128,8 @@ export type UseAppOptions = {
 
 type LaunchedApp = {
   app: ElectronApplication;
+  /** Kept from the launch, because `app.process()` throws once the app has quit. */
+  mainProcess: ChildProcess;
   /** Unset until the app has shown its window, which it may never do. */
   renderer: Page | undefined;
   userDataDir: string;
@@ -325,7 +327,11 @@ async function launchOnUserDataDir(
    */
   await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
 
-  return { app, renderer: undefined, userDataDir };
+  return { app, mainProcess: app.process(), renderer: undefined, userDataDir };
+}
+
+function hasExited(mainProcess: ChildProcess) {
+  return mainProcess.exitCode !== null || mainProcess.signalCode !== null;
 }
 
 async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestInfo) {
@@ -423,6 +429,14 @@ export type MeruApp = {
   readonly userDataDir: string;
   /** Runs a menu command the way the menu bar would, and reports whether it was there. */
   runMenuCommand(label: string): Promise<boolean>;
+  /**
+   * Quits through the menu, and resolves with the main process's exit code, or
+   * null when it has not exited within the close timeout.
+   *
+   * What makes a quit assertable at all: teardown kills an app that does not
+   * quit, so a hang would otherwise pass.
+   */
+  quit(): Promise<number | null>;
   /**
    * Quits the app and starts it again on the same user data directory, which is
    * the only shape a restart can take: the single instance lock is scoped to
@@ -555,9 +569,14 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       await collectDiagnostics(current(), testInfo);
     }
 
-    const { app, userDataDir } = current();
+    const { app, mainProcess, userDataDir } = current();
 
     try {
+      // An app the test quit has nothing left to trace or close.
+      if (hasExited(mainProcess)) {
+        return;
+      }
+
       // Written only when the test failed; a passing run has nothing worth
       // uploading.
       if (hasFailed) {
@@ -574,7 +593,9 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       // which is exactly when stopping the trace throws — and leaving the app
       // running would take the next test's launch down with it through the
       // single instance lock.
-      await closeApp(app);
+      if (!hasExited(mainProcess)) {
+        await closeApp(app);
+      }
 
       await rm(userDataDir, { recursive: true, force: true });
 
@@ -667,6 +688,17 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
 
         return Boolean(menuItem);
       }, label);
+    },
+    async quit() {
+      const { mainProcess } = current();
+
+      const exited = new Promise((resolve) => {
+        mainProcess.once("exit", resolve);
+      });
+
+      expect(await this.runMenuCommand("Quit Meru")).toBe(true);
+
+      return (await withTimeout(exited, CLOSE_TIMEOUT)) ? mainProcess.exitCode : null;
     },
     async openSettings() {
       // The menu bar is the way in, and the only one the app offers. Setting the
