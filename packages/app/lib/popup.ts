@@ -185,9 +185,9 @@ export class Popup {
   }
 
   /*
-   * Apart from the app menu key's listener on the same event, which lives as
-   * long as the webContents and keeps a gesture state of its own; this one
-   * comes off with the popup.
+   * The app menu key's listener on the same event stays for the webContents'
+   * life and keeps a gesture state of its own; this one comes off with the
+   * popup.
    */
   private handleBeforeInputEvent = (event: Event, input: Input) => {
     if (
