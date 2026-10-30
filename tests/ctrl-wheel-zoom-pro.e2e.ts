@@ -74,7 +74,10 @@ function sendCtrlWheel(url: string, ticks: 1 | -1) {
         throw new Error(`No view is showing ${url}`);
       }
 
-      window.focus();
+      // `focus()` would raise the app on macOS past its background-only guard
+      if (process.platform !== "darwin") {
+        window.focus();
+      }
 
       const { width, height } = view.getBounds();
 
