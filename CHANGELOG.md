@@ -20,6 +20,7 @@ This file is the draft of the next release, written one line at a time as work l
 - **macOS:** `Settings… → Advanced → Miscellaneous → Use custom user agent` is gone, because Google Chat huddles, which it was for, now work without it
 - `Settings… → License` says Upgrade rather than Purchase, like the rest of Meru
 - `View → Zoom In` and `View → Zoom Out` step through the same zoom levels as Chrome, from 25% to 500%
+- When Meru can't check an account for new email, it tries again less and less often, down to every five minutes, and goes back to every 30 seconds as soon as a check works or your computer wakes up or comes back online
 
 ### Fixed
 
