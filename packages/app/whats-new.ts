@@ -44,6 +44,7 @@ class WhatsNew {
       height: "fill",
       preload: false,
       closeOnEscape: true,
+      stayOnTop: true,
       onDismiss: () => {
         main.window.webContents.focus();
 

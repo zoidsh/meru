@@ -33,6 +33,8 @@ export type PopupOptions = {
    */
   preload?: boolean;
   closeOnEscape?: boolean;
+  /** Kept above every view added to the window while it is open. */
+  stayOnTop?: boolean;
   /** Called when Escape or the page itself closes the popup, and on no other close. */
   onDismiss?: () => void;
 };
@@ -82,6 +84,33 @@ export class Popup {
   private view: WebContentsView | null = null;
 
   private parentWindow: BrowserWindow | null = null;
+
+  private restoreAddChildView: (() => void) | null = null;
+
+  /*
+   * Adding a view puts it on top, and views reach the window from accounts,
+   * Gmail, workspace apps and tab switches alike, each re-adding to raise its
+   * own. Wrapping the one method they all go through keeps the popup above
+   * every one of them, including any added later, without each caller knowing
+   * a popup is open.
+   */
+  private keepOnTop(parentWindow: BrowserWindow) {
+    const { contentView } = parentWindow;
+
+    const addChildView = contentView.addChildView;
+
+    contentView.addChildView = (view, index) => {
+      addChildView.call(contentView, view, index);
+
+      if (this.view && view !== this.view) {
+        addChildView.call(contentView, this.view);
+      }
+    };
+
+    this.restoreAddChildView = () => {
+      contentView.addChildView = addChildView;
+    };
+  }
 
   /**
    * Held off while the pointer is over the button that toggles the popup, so
@@ -197,6 +226,9 @@ export class Popup {
     this.options = null;
     this.closeOnBlurEnabled = false;
 
+    this.restoreAddChildView?.();
+    this.restoreAddChildView = null;
+
     if (!view || !parentWindow) {
       return;
     }
@@ -264,6 +296,10 @@ export class Popup {
     loadRenderer(this.view, { page: options.page, searchParams: options.searchParams });
 
     parentWindow.contentView.addChildView(this.view);
+
+    if (options.stayOnTop) {
+      this.keepOnTop(parentWindow);
+    }
 
     this.setBounds();
 

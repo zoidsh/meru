@@ -209,3 +209,56 @@ test("What's new follows the app's theme while open", async () => {
 
   await expect.poll(isDark).toBe(false);
 });
+
+/** The URL of the main window's topmost child view, the one painted over all the others. */
+function readTopViewUrl() {
+  return meru.app.evaluate(({ BrowserWindow }) => {
+    const [window] = BrowserWindow.getAllWindows();
+
+    const topView = window?.contentView.children.at(-1) as Electron.WebContentsView | undefined;
+
+    return topView?.webContents?.getURL() ?? "";
+  });
+}
+
+test("What's new stays over views added while it is open", async () => {
+  const releaseNotesPage = await openWhatsNew();
+
+  const pageUrl = releaseNotesPage.url();
+
+  expect(await readTopViewUrl()).toBe(pageUrl);
+
+  /*
+   * The window showing again re-adds the account's view to bring it to the
+   * front, the same call switching account or tab makes. Switching account
+   * itself would need Pro, which keeps a free run to one account, and an app
+   * that can never be activated does not show a hidden window again, so the
+   * event is emitted, which runs the app's own listener synchronously.
+   */
+  await meru.app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.emit("show");
+  });
+
+  expect(await readTopViewUrl()).toBe(pageUrl);
+
+  // Any other view, added the way every caller adds one.
+  await meru.app.evaluate(({ BrowserWindow, WebContentsView }) => {
+    const [window] = BrowserWindow.getAllWindows();
+
+    const view = new WebContentsView();
+
+    Reflect.set(globalThis, "__addedView", view);
+
+    window?.contentView.addChildView(view);
+  });
+
+  expect(await readTopViewUrl()).toBe(pageUrl);
+
+  await meru.app.evaluate(({ BrowserWindow }) => {
+    const view = Reflect.get(globalThis, "__addedView") as Electron.WebContentsView;
+
+    BrowserWindow.getAllWindows()[0]?.contentView.removeChildView(view);
+
+    view.webContents.close();
+  });
+});
