@@ -166,17 +166,26 @@ function readMainProcessErrors() {
   );
 }
 
+// As a user gesture, so the popup blocker lets a `window.open` through to the
+// app's window open handler.
+function runInPage(url: string, script: string) {
+  return meru.app.evaluate(
+    ({ webContents }, { pageUrl, pageScript }) => {
+      const contents = webContents.getAllWebContents().find((each) => each.getURL() === pageUrl);
+
+      if (!contents) {
+        throw new Error(`No webContents has loaded ${pageUrl}`);
+      }
+
+      void contents.executeJavaScript(pageScript, true);
+    },
+    { pageUrl: url, pageScript: script },
+  );
+}
+
+// Deferred so the call returns before the page and its webContents go away
 function closePageItself(url: string) {
-  return meru.app.evaluate(({ webContents }, closedUrl) => {
-    const contents = webContents.getAllWebContents().find((each) => each.getURL() === closedUrl);
-
-    if (!contents) {
-      throw new Error(`No webContents has loaded ${closedUrl}`);
-    }
-
-    // Deferred so the call returns before the page and its webContents go away
-    void contents.executeJavaScript("setTimeout(() => window.close(), 50); null");
-  }, url);
+  return runInPage(url, "setTimeout(() => window.close(), 50); null");
 }
 
 test("a saved windowed tab whose page closes itself goes dormant without an error", async () => {
@@ -260,22 +269,10 @@ test("an unpinned tab whose page closes itself can be reopened", async () => {
 
   await waitForLoadedPage(pageUrl(PINNED_PAGE_TITLE));
 
-  /*
-   * A link the page opens is the way an unpinned tab comes about, since every
-   * seeded tab is pinned. Run as a user gesture so the popup blocker lets it
-   * through to the app's window open handler.
-   */
-  await meru.app.evaluate(
-    ({ webContents }, { openerUrl, openedUrl }) => {
-      const opener = webContents.getAllWebContents().find((each) => each.getURL() === openerUrl);
-
-      if (!opener) {
-        throw new Error(`No webContents has loaded ${openerUrl}`);
-      }
-
-      void opener.executeJavaScript(`window.open(${JSON.stringify(openedUrl)}); null`, true);
-    },
-    { openerUrl: pageUrl(PINNED_PAGE_TITLE), openedUrl: pageUrl(UNPINNED_PAGE_TITLE) },
+  // Every seeded tab is pinned, so the unpinned one comes from a link.
+  await runInPage(
+    pageUrl(PINNED_PAGE_TITLE),
+    `window.open(${JSON.stringify(pageUrl(UNPINNED_PAGE_TITLE))}); null`,
   );
 
   await expect(stripTab(UNPINNED_PAGE_TITLE)).toBeVisible();
