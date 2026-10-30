@@ -93,8 +93,16 @@ function ExportLogsField() {
 export function AboutSettings() {
   return (
     <Settings>
-      <SettingsHeader>
+      <SettingsHeader className="items-center">
         <SettingsTitle>About Meru</SettingsTitle>
+        <Button
+          variant="outline"
+          onClick={() => {
+            ipc.main.send("about.openWhatsNew");
+          }}
+        >
+          What's new
+        </Button>
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>

@@ -21,7 +21,6 @@ import { SavedSearchesSettings } from "@/routes/settings/saved-searches";
 import { UnifiedInboxSettings } from "@/routes/settings/unified-inbox";
 import { UpdatesSettings } from "@/routes/settings/updates";
 import { VerificationCodesSettings } from "@/routes/settings/verification-codes";
-import { VersionHistorySettings } from "@/routes/settings/version-history";
 import { WorkspaceAppsSettings } from "@/routes/settings/workspace-apps";
 
 export const sidebarNavItems: SidebarNavItemProps[] = [
@@ -104,11 +103,6 @@ export const sidebarNavItems: SidebarNavItemProps[] = [
   },
   { type: "separator" },
   { label: "License", path: "/settings/license", component: LicenseSettings },
-  {
-    label: "What's new",
-    path: "/settings/version-history",
-    component: VersionHistorySettings,
-  },
   {
     label: "About Meru",
     path: "/settings/about",

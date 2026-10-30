@@ -17,6 +17,7 @@ import { resolveViewFocusTarget } from "./lib/view-focus";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { isWindowedTab } from "./tabs";
+import { whatsNew } from "./whats-new";
 import { WorkspaceApp } from "./workspace-app";
 
 const HIBERNATION_SWEEP_INTERVAL = ms("1m");
@@ -234,6 +235,13 @@ class Accounts {
    * focus call below is synchronous, so the click still wins against it.
    */
   focusActiveView({ blurRenderer = true }: { blurRenderer?: boolean } = {}) {
+    // It covers the whole window, so the keys belong to it until it closes.
+    if (whatsNew.isOpen) {
+      whatsNew.focus();
+
+      return;
+    }
+
     const { instance } = this.getSelectedAccount();
 
     const activeTab = instance.tabs.activeTab;

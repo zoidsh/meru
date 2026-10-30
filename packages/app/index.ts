@@ -47,6 +47,7 @@ import { isMeruUrl, isWebUrl } from "./lib/deep-link";
 import { spellchecker } from "./spellchecker";
 import { swipeNavigation } from "./swipe-navigation";
 import { trial } from "./trial";
+import { whatsNew } from "./whats-new";
 
 async function resetApp() {
   const accounts = config.get("accounts");
@@ -315,6 +316,8 @@ async function init() {
     bookmarks.popup.close();
 
     downloads.recentDownloadHistoryPopup.close();
+
+    whatsNew.close();
   });
 }
 

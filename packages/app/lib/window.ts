@@ -159,7 +159,8 @@ export type RendererPage =
   | "workspace-app"
   | "desktop-sources"
   | "recent-download-history"
-  | "bookmarks";
+  | "bookmarks"
+  | "release-notes";
 
 type LoadRendererOptions = {
   page: RendererPage;

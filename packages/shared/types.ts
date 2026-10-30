@@ -237,6 +237,7 @@ export type IpcMainEvents =
       "appUpdater.quitAndInstall": [];
       "appUpdater.openVersionHistory": [];
       "appUpdater.openReleasePage": [];
+      "about.openWhatsNew": [];
       "app.relaunch": [];
       "app.openDefaultAppsSettings": [];
       "theme.setTheme": [theme: "system" | "light" | "dark"];
