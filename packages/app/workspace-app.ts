@@ -785,6 +785,7 @@ export class WorkspaceApp {
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
     this.view.webContents.on("enter-html-full-screen", this.handleEnterHtmlFullscreen);
     this.view.webContents.on("leave-html-full-screen", this.handleLeaveHtmlFullscreen);
+    this.view.webContents.on("zoom-changed", this.handleZoomChanged);
 
     if (this._window) {
       this.registerWindowedViewListeners();
@@ -937,6 +938,10 @@ export class WorkspaceApp {
     this.htmlFullscreen = false;
 
     this.updateViewBounds();
+  };
+
+  private handleZoomChanged = (_event: Electron.Event, direction: ZoomDirection) => {
+    this.zoom(direction);
   };
 
   get navigationHistory() {

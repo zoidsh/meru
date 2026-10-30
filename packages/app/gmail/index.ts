@@ -398,6 +398,10 @@ export class Gmail {
       this.setHtmlFullscreen(false);
     });
 
+    this.view.webContents.on("zoom-changed", (_event, direction) => {
+      this.zoom(direction);
+    });
+
     registerTabBroadcasts(this.view);
 
     openViewDevToolsOnLaunch(this.view);
