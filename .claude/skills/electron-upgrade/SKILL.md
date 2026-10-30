@@ -17,7 +17,7 @@ The same procedure runs whether or not the brief names a version, so every upgra
 
 ## Pick the target
 
-Run `bun scripts/electron-upgrade.ts`. It reads the installed version from `bun.lock` and npm's publish times and published versions, and prints the newest stable release in the installed major once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
+Run `bun scripts/electron-upgrade.ts`. It reads the version `bun.lock` resolves and npm's publish times and published versions, and prints the newest stable release in the major `bun.lock` resolves once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
 
 A version named in the brief must pass the same rules: run the script, and take the named version only if it is what the script prints. Otherwise say why not and stop.
 
