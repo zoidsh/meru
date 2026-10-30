@@ -8,7 +8,7 @@ argument-hint: [version]
 
 A same-major Electron upgrade, minor or patch, is a mechanical task: the version is picked by a script, the procedure below checks what it can reach in Meru, and it ends in a pull request into `main`. Run under the `lead` skill, it skips plan approval and goes straight to the pull request. When it needed a fix beyond the bump, the report leads with that fix.
 
-The same procedure runs whether Tim asks for it or a scheduled job starts it, so both take the same release under the same rules.
+The same procedure runs whether or not the brief names a version, so every upgrade takes its release under the same rules.
 
 ## Scope
 
@@ -17,21 +17,21 @@ The same procedure runs whether Tim asks for it or a scheduled job starts it, so
 
 ## Pick the target
 
-Run `bun scripts/electron-upgrade.ts`. It reads the installed version from `bun.lock` and npm's publish times, and prints the newest stable release in the installed major once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
+Run `bun scripts/electron-upgrade.ts`. It reads the installed version from `bun.lock` and npm's publish times and published versions, and prints the newest stable release in the installed major once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
 
 A version named in the brief must pass the same rules: run the script, and take the named version only if it is what the script prints. Otherwise say why not and stop.
 
 ## Set up
 
 - In a worktree of its own, off `origin/main`, then `bun install --frozen-lockfile`.
-- Print the installed Electron with `node -p 'require("electron/package.json").version'` before and after the bump, and later read the built app's own `Electron/` and `Chrome/` versions over CDP `/json/version`. A worktree's `node_modules` can hold a different Electron from the lock, so the proof states the version that ran, not the one declared.
+- Print the installed Electron with `node -p 'require("electron/package.json").version'` before and after the bump, and read the built app's own versions too. A worktree's `node_modules` can hold a different Electron from the lock, so the proof states the version that ran, not the one declared. CDP `/json/version` does not show it, since Meru's user agent drops the `Electron/` token. On any platform, launch the build with `--remote-debugging-port=0` and evaluate `window.electron.process.versions` in the `main.html` target, which the renderer preload exposes and which works on a release build too; the VM docs' `cdp.py` is a client for it. The `test:e2e` build leaves the inspect fuse on, so `--inspect=0` also lets `process.versions` be read in the main process. On macOS, `CFBundleVersion` in `Contents/Frameworks/Electron Framework.framework/Resources/Info.plist` reads it without launching.
 - Before the bump, take the baseline in the same session: `bun test --isolate` and `op run --env-file .env.e2e.op -- bun run test:e2e`, with their counts. Never compare against a remembered number.
 
 ## Assess
 
 - Read the notes of every release between the current version and the target, not only the target's: `gh release view v<version> -R electron/electron`.
 - Read the open upstream issues labelled `<major>-x-y`: `gh issue list -R electron/electron --label <major>-x-y --state open`.
-- Check the issues behind Meru's workarounds, each still open or fixed: electron#53522 (swipe events), electron#39572 (closing from full screen), electron#54743 (a drag region that survives navigation). A fixed one makes its workaround removable, as a change of its own, not in this pull request.
+- Check whether each issue behind a Meru workaround is still open or fixed. List them fresh each run: `git grep -nE "electron(/electron)?(#|/issues/)[0-9]+" -- packages` for those the code names, plus those the latest `$PROJECT_DOCS_DIR/zoidsh/meru/electron-<major>-upgrade.md` lists without a number in the code, such as electron#53522 (swipe events) and electron#54743 (a drag region that survives navigation). A fixed one makes its workaround removable, as a change of its own, not in this pull request.
 - Class every note as reaches Meru or checked and not applicable, against this list of where Electron reaches Meru:
   - Extension namespaces. A namespace Electron newly answers natively shadows the facade, which fills only missing ones. A behaviour change in a namespace already native, such as `storage` or `alarms`, never shows in the probe's `typeof` diff, so the notes are the only source.
   - Permission names in the `setPermissionRequestHandler` and `setPermissionCheckHandler` of `packages/app/account.ts` and `packages/app/extensions.ts`. A renamed or new permission is refused by default.
@@ -47,7 +47,7 @@ A version named in the brief must pass the same rules: run the script, and take 
 ## Probe, bump and fix
 
 - Run `bun scripts/probe-extension-api.ts` before the bump, saving its output to a scratch file, then again after it, and diff the two. A changed row is a finding and goes into `$PROJECT_DOCS_DIR/zoidsh/meru/architecture/chrome-api-conformance.md`. A clean diff is necessary, not sufficient.
-- Bump with `bun add -d electron@<version>`, which keeps the caret range. The bump is one commit.
+- Bump with `bun add -d 'electron@^<version>'`. A bare `electron@<version>` writes the exact version, so check `package.json` reads `^<version>`. The bump is one commit.
 - Each fix the upgrade needs is a commit of its own, naming the upstream issue or pull request in its message.
 
 ## Check
@@ -89,7 +89,8 @@ Under `## Not verified` goes only what this Mac cannot do: Touch ID and Bitwarde
 
 ## Changelog
 
-`[Unreleased]` holds one "Updated to Electron N, which brings Chrome M and its security fixes" line per major. A same-major bump adds a line only for a user-visible fix, under `Fixed`, in the same commit as that fix. An "Updated to Electron" line already in `[Unreleased]` must name the major the branch is on; correct one that names an older major.
+- `[Unreleased]` holds one line under `Changed`, "Updated to Electron <major>, which brings Chrome <Chromium major> and its security fixes", naming the major the branch is on. The bump commit adds it when it is missing, as it is once a stable release has emptied the section, and corrects one that names an older major.
+- Any other user-visible change the upgrade brings gets a line of its own, under `Added`, `Changed` or `Fixed` as `CLAUDE.md` assigns them, in the same commit as that change.
 
 ## Record
 
