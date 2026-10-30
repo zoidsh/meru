@@ -528,7 +528,12 @@ export class Gmail {
   }
 
   zoom(direction: ZoomDirection) {
-    this.updateZoomFactor(getNextZoomFactor(this.persistedZoomFactor, direction));
+    this.updateZoomFactor(
+      getNextZoomFactor(
+        clamp(this.persistedZoomFactor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR),
+        direction,
+      ),
+    );
   }
 
   resetZoom() {
