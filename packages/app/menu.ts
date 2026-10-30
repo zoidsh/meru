@@ -14,6 +14,7 @@ import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
+import { whatsNew } from "@/whats-new";
 import { WorkspaceApp } from "@/workspace-app";
 import { createMeruMessageUrl } from "./lib/deep-link";
 import { licenseKey } from "./license-key";
@@ -680,7 +681,7 @@ export class AppMenu {
           {
             label: "What's New",
             click: () => {
-              main.navigate("/settings/version-history");
+              whatsNew.open();
             },
           },
           {

@@ -64,6 +64,7 @@ import { getIsDefaultMailtoClient, setAsDefaultMailtoClient } from "./protocol";
 import { openWindowsDefaultAppsSettings } from "./protocol/windows-mail-client";
 import { appUpdater } from "./updater";
 import { openExternalUrl } from "./url";
+import { whatsNew } from "./whats-new";
 
 const undoSendLapseTimeouts = new Map<number, NodeJS.Timeout>();
 
@@ -269,7 +270,11 @@ class Ipc {
     });
 
     ipc.main.on("appUpdater.openVersionHistory", () => {
-      main.navigate("/settings/version-history");
+      whatsNew.open();
+    });
+
+    ipc.main.on("about.openWhatsNew", () => {
+      whatsNew.open();
     });
 
     ipc.main.on("appUpdater.openReleasePage", () => {
