@@ -445,6 +445,46 @@ function buildAppFiles() {
   ]);
 }
 
+/*
+ * The renderer pages hold an unfiltered IPC bridge, so this is the second layer
+ * behind sanitizing anything remote they render. A development run differs in
+ * two places only: React refresh's preamble is an inline script, and Vite's
+ * hot reload connects back to the dev server.
+ */
+function rendererContentSecurityPolicy({ dev }: { dev: boolean }) {
+  return [
+    "default-src 'none'",
+    dev ? "script-src 'self' 'unsafe-inline'" : "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https://www.google.com https://*.gstatic.com https://github.com https://*.githubusercontent.com https://github-production-user-asset-6210df.s3.amazonaws.com",
+    "font-src 'self'",
+    "media-src 'self'",
+    `connect-src ${dev ? "'self' " : ""}https://api.github.com https://cdn.jsdelivr.net`,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join("; ");
+}
+
+function contentSecurityPolicyPlugin(policy: string): vite.Plugin {
+  return {
+    name: "meru:content-security-policy",
+    transformIndexHtml: {
+      // Last, because each hook prepends ahead of those before it, and a policy
+      // set by a meta element binds only what the parser meets after it, so
+      // it has to sit ahead of the inline scripts Vite injects in development.
+      order: "post",
+      handler: () => [
+        {
+          tag: "meta",
+          attrs: { "http-equiv": "Content-Security-Policy", content: policy },
+          injectTo: "head-prepend",
+        },
+      ],
+    },
+  };
+}
+
 async function buildRenderer(rendererName: string, port: number) {
   const rendererRoot = path.join(process.cwd(), "packages", rendererName);
 
@@ -454,7 +494,11 @@ async function buildRenderer(rendererName: string, port: number) {
     configFile: false,
     root: rendererRoot,
     base: "./",
-    plugins: [viteReact(), viteTailwindcss()],
+    plugins: [
+      contentSecurityPolicyPlugin(rendererContentSecurityPolicy({ dev: Boolean(args.values.dev) })),
+      viteReact(),
+      viteTailwindcss(),
+    ],
     resolve: {
       tsconfigPaths: true,
     },
