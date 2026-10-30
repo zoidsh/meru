@@ -240,7 +240,7 @@ msgstr "Icona del dock"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Sospendi le schede inattive"
+msgstr "Iberna le schede inutilizzate"
 
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
@@ -301,3 +301,8 @@ msgstr "5 minuti"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "Nel launcher"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Acquista"

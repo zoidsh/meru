@@ -215,7 +215,7 @@ msgstr "Ativar Não Perturbe"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Hibernar Guias Inativas"
+msgstr "Deixar Guias sem Uso Inativas"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
@@ -268,3 +268,7 @@ msgstr "Pesquisar…"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Fazer Upgrade"

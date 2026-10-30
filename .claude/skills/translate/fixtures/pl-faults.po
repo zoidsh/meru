@@ -262,9 +262,14 @@ msgstr "Meru przypomni ci o końcu okresu próbnego."
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Uśpij nieaktywne karty"
+msgstr "Hibernuj nieużywane karty"
 
 # fault: pinned:launcher
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "W menu aplikacji"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Kup"

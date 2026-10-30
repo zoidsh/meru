@@ -758,6 +758,15 @@
       "reason": "Upgrading to Pro is Meru Proにアップグレード, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to, 新しいモデルにアップグレード)."
     },
     {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
+      "expect": "アップグレード",
+      "severity": "wrong",
+      "reason": "The standalone Upgrade label is アップグレード, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+    },
+    {
       "id": "gmail-label",
       "msgctxt": "Gmail label",
       "msgidPattern": "\\blabel\\b",
@@ -769,7 +778,7 @@
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "お知らせ",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
@@ -777,7 +786,7 @@
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "お知らせ",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
@@ -786,7 +795,7 @@
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "お知らせ",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
@@ -801,7 +810,7 @@
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the unread badge is 未読バッジ."
     },
     {
@@ -816,7 +825,7 @@
       "msgctxt": null,
       "msgid": "Label",
       "expect": "名前",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
     },
     {
@@ -824,7 +833,7 @@
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "名前",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
     },
     {
@@ -859,21 +868,21 @@
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "不在通知",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: out of office is Gmail's 不在通知."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "マルチ受信トレイ",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's マルチ受信トレイ."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "通知",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: to notify is 通知する."
     },
     {
@@ -881,7 +890,7 @@
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ブリーズ$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
@@ -889,7 +898,7 @@
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^チャイム$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
@@ -897,7 +906,7 @@
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^デュエット$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
@@ -905,7 +914,7 @@
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ノック$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
@@ -913,7 +922,7 @@
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^リネン$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
@@ -933,9 +942,9 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
-      "expect": "休止",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: hibernating a tab is 休止; never スリープ, the systems' Sleep, which would read as the computer going to sleep."
+      "expect": "アクティブでない|非アクティブ",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ (Chrome: 7 of 8 messages for inactive tab), never the systems' Sleep word."
     },
     {
       "id": "menu-bar",

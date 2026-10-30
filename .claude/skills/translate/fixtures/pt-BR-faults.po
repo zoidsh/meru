@@ -189,7 +189,7 @@ msgstr "Ativar o Modo Não Incomodar"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Suspender Guias Inativas"
+msgstr "Hibernar Guias sem Uso"
 
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
@@ -255,3 +255,8 @@ msgstr "Pesquisar …"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Comprar"

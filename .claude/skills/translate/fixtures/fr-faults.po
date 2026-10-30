@@ -297,7 +297,7 @@ msgstr "Site web"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Mettre en veille les onglets inactifs"
+msgstr "Mettre en hibernation les onglets inutilisés"
 
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
@@ -343,3 +343,8 @@ msgstr "Linen"
 #: packages/renderer/routes/settings/license.tsx
 msgid "Device label"
 msgstr "Étiquette de l’appareil"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Acheter"

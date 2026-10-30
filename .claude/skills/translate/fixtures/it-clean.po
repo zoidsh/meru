@@ -199,7 +199,7 @@ msgstr "Icona del Dock"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Iberna le schede inattive"
+msgstr "Rendi inattive le schede inutilizzate"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
@@ -248,3 +248,7 @@ msgstr "5 minuti"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "In Avvio app"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Esegui l’upgrade"

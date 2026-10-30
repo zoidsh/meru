@@ -195,7 +195,7 @@ msgstr "Symbol im dock"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Inaktive Tabs in den Ruhezustand versetzen"
+msgstr "Unbenutzte Tabs in den Winterschlaf versetzen"
 
 # fault: pinned:pin
 #: packages/renderer/components/vertical-tabs.tsx
@@ -221,3 +221,8 @@ msgstr "Menüzeilensymbol"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Turn Do Not Disturb off"
 msgstr "Ruhemodus ausschalten"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Kaufen"

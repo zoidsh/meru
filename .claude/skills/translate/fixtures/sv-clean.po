@@ -181,7 +181,7 @@ msgstr "Dockikon"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Försätt inaktiva flikar i dvala"
+msgstr "Gör oanvända flikar inaktiva"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
@@ -194,3 +194,7 @@ msgstr "5 minuter"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Get the app"
 msgstr "Skaffa appen"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Uppgradera"

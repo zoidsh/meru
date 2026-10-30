@@ -194,7 +194,7 @@ msgstr "Icono del dock"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Suspender pestañas inactivas"
+msgstr "Hibernar pestañas sin usar"
 
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
@@ -260,3 +260,8 @@ msgstr "Buscar …"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Comprar"

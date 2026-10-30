@@ -181,7 +181,7 @@ msgstr "Dock-pictogram"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Zet inactieve tabbladen in winterslaap"
+msgstr "Maak ongebruikte tabbladen inactief"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
@@ -206,3 +206,7 @@ msgstr "Gebruik een U2F-beveiligingssleutel"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Type U+00A0 for a no-break space"
 msgstr "Typ U+00A0 voor een vaste spatie"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Upgrade"

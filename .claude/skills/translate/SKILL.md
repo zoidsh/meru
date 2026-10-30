@@ -18,7 +18,7 @@ Every word in every language comes from the first of these sources that has it, 
 3. Google's names take Google's word; the Workspace apps' names stay English.
 4. Meru's own copy takes Chrome's word where Chrome has the term. A recorded call of the user's overrides Chrome only as a named exception with its reason; there are none now. Otherwise it takes the best-practice word for that language, researched in Microsoft's and GNOME's style guides and terminology and the language's major software localizations, with Apple's word as evidence but never as the authority, and marked `agent-chosen` with a one-line reason.
 
-Apple is never the source of a word in Meru's own copy. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says. A rule backed by Chrome or by a call of the user's is `wrong` in every sidecar; `doubtful` is for a rule a person should judge, such as an agent-chosen word or a heuristic. The glossary's opening section says how each source is cited.
+Apple is never the source of a word in Meru's own copy. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says. A rule backed by Chrome or by a call of the user's is `wrong` in every sidecar; An agent-chosen word is `wrong` too, since the glossary is the decision and nobody reads the doubtful findings of most languages; `doubtful` is for a heuristic a person should judge. The glossary's opening section says how each source is cited.
 
 ## Before you start
 

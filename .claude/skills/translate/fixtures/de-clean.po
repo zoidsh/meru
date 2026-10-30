@@ -186,7 +186,7 @@ msgstr "Dock-Symbol"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Inaktive Tabs in den Winterschlaf versetzen"
+msgstr "Unbenutzte Tabs inaktiv machen"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
@@ -211,3 +211,7 @@ msgstr "Menüleistensymbol"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Turn Do Not Disturb off"
 msgstr "„Nicht stören“ ausschalten"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Upgrade"

@@ -240,7 +240,7 @@ msgstr "Site Web"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Mettre en hibernation les onglets inactifs"
+msgstr "Rendre inactifs les onglets inutilisés"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
@@ -277,3 +277,7 @@ msgstr "Lin"
 #: packages/renderer/routes/settings/license.tsx
 msgid "Device label"
 msgstr "Nom de l’appareil"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Passer à Pro"

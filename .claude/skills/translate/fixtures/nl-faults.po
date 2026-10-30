@@ -251,7 +251,7 @@ msgstr "dockpictogram"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Zet inactieve tabbladen in slaapstand"
+msgstr "Zet ongebruikte tabbladen in winterslaap"
 
 # fault: banned:unit-space
 #: packages/app/do-not-disturb.ts
@@ -267,3 +267,8 @@ msgstr "In starter"
 #: packages/shared/workspace-apps.ts
 msgid "Sidebar"
 msgstr "Navigatiekolom"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Koop"

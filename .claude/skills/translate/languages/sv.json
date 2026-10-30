@@ -822,6 +822,15 @@
       "reason": "Upgrading to Pro is Uppgradera till Meru Pro, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to)."
     },
     {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
+      "expect": "[Uu]ppgradera",
+      "severity": "wrong",
+      "reason": "The standalone Upgrade label is Uppgradera, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+    },
+    {
       "id": "gmail-label",
       "msgctxt": "Gmail label",
       "msgidPattern": "\\blabel\\b",
@@ -833,7 +842,7 @@
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Ii]nforut",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
     },
     {
@@ -841,7 +850,7 @@
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "[Ii]nforut",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
     },
     {
@@ -850,7 +859,7 @@
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "[Ii]nforut",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
     },
     {
@@ -858,7 +867,7 @@
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]rick",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the unread badge is the symbolbricka för olästa."
     },
     {
@@ -866,7 +875,7 @@
       "msgctxt": null,
       "msgid": "Label",
       "expect": "[Nn]amn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its namn, apart from Gmail's etikett."
     },
     {
@@ -874,28 +883,28 @@
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "[Nn]amn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its namn, apart from Gmail's etikett."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Ff]rånvaromeddelande",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: out of office is Gmail's frånvaromeddelande."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Ff]lera inkorgar",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's flera inkorgar."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Aa]viser",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: to notify is avisera, beside avisering."
     },
     {
@@ -903,7 +912,7 @@
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Bris$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German."
     },
     {
@@ -911,7 +920,7 @@
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klockspel$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German."
     },
     {
@@ -919,7 +928,7 @@
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German."
     },
     {
@@ -927,7 +936,7 @@
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Knack$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German."
     },
     {
@@ -935,7 +944,7 @@
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Linne$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German."
     },
     {
@@ -955,9 +964,9 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
-      "expect": "[Dd]vala",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: hibernating a tab is dvala, försätt i dvala; never viloläge, the systems' Sleep, which would read as the computer going to sleep."
+      "expect": "[Ii]naktiv",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
     }
   ],
   "accessKeys": {

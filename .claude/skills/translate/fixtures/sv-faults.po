@@ -252,7 +252,7 @@ msgstr "dockikon"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Försätt inaktiva flikar i viloläge"
+msgstr "Försätt oanvända flikar i dvala"
 
 # fault: banned:unit-space
 #: packages/app/do-not-disturb.ts
@@ -263,3 +263,8 @@ msgstr "5 minuter"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Get the app"
 msgstr "Hämta appen"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Köp"

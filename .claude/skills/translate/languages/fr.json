@@ -830,7 +830,7 @@
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avis, kept apart from a notification, notification."
     },
     {
@@ -838,7 +838,7 @@
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avis, kept apart from a notification, notification."
     },
     {
@@ -847,7 +847,7 @@
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avis, kept apart from a notification, notification."
     },
     {
@@ -855,7 +855,7 @@
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Pp]astille",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the unread badge is the pastille des e-mails non lus."
     },
     {
@@ -863,7 +863,7 @@
       "msgctxt": null,
       "msgid": "Label",
       "expect": "(?<!\\p{L})[Nn]om(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nom, apart from Gmail's libellé."
     },
     {
@@ -871,28 +871,28 @@
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "(?<!\\p{L})[Nn]om(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nom, apart from Gmail's libellé."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Rr]éponse automatique d’absence",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: out of office is réponse automatique d’absence, until Gmail's own word is read."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Bb]oîtes de réception multiples",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: multiple inboxes are boîtes de réception multiples, until Gmail's own word is read."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Aa]vert",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: to notify is avertir, as in M’avertir."
     },
     {
@@ -900,7 +900,7 @@
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Carillon, Duo, Toc-toc and Lin."
     },
     {
@@ -908,7 +908,7 @@
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Carillon$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Carillon, Duo, Toc-toc and Lin."
     },
     {
@@ -916,7 +916,7 @@
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duo$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Carillon, Duo, Toc-toc and Lin."
     },
     {
@@ -924,7 +924,7 @@
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Toc-toc$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Carillon, Duo, Toc-toc and Lin."
     },
     {
@@ -932,7 +932,7 @@
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Lin$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Carillon, Duo, Toc-toc and Lin."
     },
     {
@@ -945,9 +945,9 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
-      "expect": "[Hh]ibern",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: hibernating a tab is hibernation, mettre en hibernation; never mise en veille, Windows' Sleep, which would read as the computer going to sleep."
+      "expect": "[Ii]nacti",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactif, as in Onglet inactif (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
     },
     {
       "id": "upgrade",
@@ -955,6 +955,15 @@
       "expect": "[Pp]ass\\p{L}* à Meru Pro",
       "severity": "wrong",
       "reason": "Upgrading to Pro is Passer à Meru Pro, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to, passez à)."
+    },
+    {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
+      "expect": "[Pp]asser à",
+      "severity": "wrong",
+      "reason": "The standalone Upgrade label is Passer à Pro, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
     }
   ],
   "accessKeys": {

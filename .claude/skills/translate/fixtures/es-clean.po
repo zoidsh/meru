@@ -229,7 +229,7 @@ msgstr "Icono del Dock"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Hibernar pestañas inactivas"
+msgstr "Inactivar pestañas sin usar"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
@@ -282,3 +282,7 @@ msgstr "Buscar…"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Cambiar a Pro"

@@ -194,7 +194,7 @@ msgstr "Ikona w Docku"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Hibernuj nieaktywne karty"
+msgstr "Ustaw nieużywane karty jako nieaktywne"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
@@ -203,3 +203,7 @@ msgstr "Len"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "W menu z aplikacjami"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Przejdź na Pro"

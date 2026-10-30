@@ -144,18 +144,18 @@ The time windows outside which no notification is shown. The interface reads _No
 
 ## Hibernation, Hibernate
 
-Unloading an idle tab to give back its memory: _Hibernate idle tabs_, _Hibernate after_, _Hibernate When Idle_. Chrome has no word for it: its Memory Saver leaves an _inactive tab_, a state rather than the act. Every language takes its word for hibernating itself, never the operating system's word for sleep (macOS's Sleep, Windows' Sleep), which names the whole computer resting and would read as the computer going to sleep.
+Unloading an idle tab to give back its memory, keeping it in the list: _Hibernate idle tabs_, _Hibernate after_, _Hibernate When Idle_. It is what Chrome's Memory Saver does to a tab, which Chrome calls an _inactive tab_, so a hibernated tab takes Chrome's word for that state, counted in its 8 messages with _inactive tab_; to hibernate is to make a tab inactive, worded as the sentence needs. Never the operating system's word for sleep, which would read as the computer going to sleep.
 
-- de: Winterschlaf; _in den Winterschlaf versetzen_ (agent-chosen: _Ruhezustand_ is macOS's Sleep in German, so the literal hibernation)
-- fr: hibernation; _mettre en hibernation_ (agent-chosen: _mise en veille_ is Windows' Sleep in French)
-- it: ibernazione; _iberna_ (agent-chosen: the literal hibernation; Windows' Sleep is _sospensione_)
-- es: hibernación; _hibernar_ (agent-chosen: the literal hibernation; Windows' Sleep is _suspender_)
-- es-419: hibernación; _hibernar_ (agent-chosen: as for es)
-- pt-BR: hibernação; _hibernar_ (agent-chosen: the literal hibernation; Windows' Sleep is _suspender_)
-- nl: winterslaap; _in winterslaap zetten_ (agent-chosen: _slaapstand_ is Windows' Sleep and _sluimer_ macOS's in Dutch, so the literal hibernation)
-- pl: hibernacja; _hibernuj_ (agent-chosen: the literal hibernation; the Sleep of both systems is _uśpij_)
-- sv: dvala; _försätt i dvala_ (agent-chosen: _viloläge_ is the systems' Sleep in Swedish, and Chrome's word for it, so the word for an animal's hibernation)
-- ja: 休止; 休止する (agent-chosen: the systems' Sleep is スリープ)
+- de: inaktiv; _Inaktiver Tab_, _inaktiv machen_ (Chrome 8/8), never _Ruhezustand_
+- fr: inactif; _Onglet inactif_, _rendre inactif_ (Chrome 8/8), never _mise en veille_
+- it: non attiva, inattiva; _Scheda non attiva_, _rendere inattiva_ (Chrome 8/8)
+- es: inactiva; _Pestaña inactiva_, _inactivar_ (Chrome 8/8)
+- es-419: inactiva; _Pestaña inactiva_, _volver inactiva_ (Chrome 8/8)
+- pt-BR: inativa; _Guia inativa_, _deixar inativa_ (Chrome 8/8)
+- nl: inactief; _Inactief tabblad_, _inactief maken_ (Chrome 8/8), never _slaapstand_
+- pl: nieaktywna; _Karta nieaktywna_, _ustawić jako nieaktywną_ (Chrome 8/8)
+- sv: inaktiv; _Inaktiv flik_, _göra inaktiv_ (Chrome 8/8), never _viloläge_
+- ja: アクティブでない, 非アクティブ; アクティブでないタブ, 非アクティブにする (Chrome 7/8)
 
 ## Workspace app
 
@@ -394,6 +394,8 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. 
 - pl: Przejdź na Meru Pro (Chrome 6/8, _przejdź na nowszy model_)
 - sv: Uppgradera till Meru Pro (Chrome 6/8, _Uppgradera till en nyare modell_)
 - ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (Chrome 6/8, 新しいモデルにアップグレード)
+
+The standalone _Upgrade_ label, a button beside the license, is the same wording without its object: de _Upgrade_, fr _Passer à Pro_, it _Esegui l’upgrade_, es _Cambiar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Fazer Upgrade_, nl _Upgrade_, pl _Przejdź na Pro_, sv _Uppgradera_, ja アップグレード (Chrome's wording above).
 
 ## License key, Trial, Device
 

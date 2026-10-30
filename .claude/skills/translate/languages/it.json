@@ -800,7 +800,7 @@
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Aa]vvis[oi]",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
     },
     {
@@ -808,7 +808,7 @@
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "[Aa]vvis[oi]",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
     },
     {
@@ -817,7 +817,7 @@
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "[Aa]vvis[oi]",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
     },
     {
@@ -825,7 +825,7 @@
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the unread badge is the badge delle email non lette."
     },
     {
@@ -833,7 +833,7 @@
       "msgctxt": null,
       "msgid": "Label",
       "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
     },
     {
@@ -841,28 +841,28 @@
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Rr]isposta automatica",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: out of office is risposta automatica, until Gmail's own word is read."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Pp]osta in arrivo multipla",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: multiple inboxes are Posta in arrivo multipla, until Gmail's own word is read."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Nn]otific",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: to notify is notificare, the verb of notifica, never avvisare, which reads as the toast's avviso."
     },
     {
@@ -870,7 +870,7 @@
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brezza$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
@@ -878,7 +878,7 @@
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Rintocco$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
@@ -886,7 +886,7 @@
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duetto$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
@@ -894,7 +894,7 @@
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Bussata$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
@@ -902,7 +902,7 @@
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Lino$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
@@ -922,9 +922,9 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
-      "expect": "[Ii]bern",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: hibernating a tab is ibernazione, iberna; never the systems' Sleep, sospensione, which would read as the computer going to sleep."
+      "expect": "[Nn]on attiv|[Ii]nattiv",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inattiva, as in Scheda non attiva (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
     },
     {
       "id": "upgrade",
@@ -932,6 +932,15 @@
       "expect": "upgrade a Meru Pro",
       "severity": "wrong",
       "reason": "Upgrading to Pro is Esegui l’upgrade a Meru Pro, fai l’upgrade a Meru Pro in a sentence, as Chrome words upgrading to something newer (Chrome: 7 of 8 messages for upgrade to)."
+    },
+    {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
+      "expect": "upgrade",
+      "severity": "wrong",
+      "reason": "The standalone Upgrade label is Esegui l’upgrade, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
     },
     {
       "id": "launcher",

@@ -189,7 +189,7 @@ msgstr "ドックアイコン"
 # fault: pinned:hibernation
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "アイドル状態のタブをスリープ"
+msgstr "使われていないタブを休止"
 
 # fault: banned:latin-spacing
 # fault: pinned:upgrade
@@ -206,3 +206,8 @@ msgstr "メニュー列のアイコン"
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Turn Do Not Disturb off"
 msgstr "通知停止をオフにする"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "購入"

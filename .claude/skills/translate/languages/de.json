@@ -597,7 +597,7 @@
     {
       "id": "ungelesen-kennzeichen",
       "pattern": "Ungelesen-Kennzeichen",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The unread badge is Kennzeichen für ungelesene E-Mails (glossary, agent-chosen), never the coined Ungelesen-Kennzeichen."
     },
     {
@@ -654,6 +654,15 @@
       "reason": "Upgrading to Pro is Auf Meru Pro upgraden, and in a sentence ein Upgrade auf Meru Pro, with Chrome's noun Upgrade (Chrome: Durch dieses Upgrade; the verb agent-chosen)."
     },
     {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
+      "expect": "[Uu]pgrade",
+      "severity": "wrong",
+      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+    },
+    {
       "id": "gmail-label",
       "msgctxt": "Gmail label",
       "msgidPattern": "\\blabel\\b",
@@ -665,7 +674,7 @@
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "Hinweis",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
     },
     {
@@ -673,7 +682,7 @@
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "Hinweis",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
     },
     {
@@ -682,7 +691,7 @@
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "Hinweis",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
     },
     {
@@ -690,7 +699,7 @@
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "Kennzeichen",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: a badge is a Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
     },
     {
@@ -705,7 +714,7 @@
       "msgctxt": null,
       "msgid": "Label",
       "expect": "Name",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
     },
     {
@@ -713,7 +722,7 @@
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "Name",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
     },
     {
@@ -748,21 +757,21 @@
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "Abwesenheitsnotiz",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: out of office is Gmail's Abwesenheitsnotiz."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]ehrere\\p{L}* Posteingäng",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's Mehrere Posteingänge."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Bb]enachrichtig",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: to notify is benachrichtigen, beside Benachrichtigung."
     },
     {
@@ -770,7 +779,7 @@
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
@@ -778,7 +787,7 @@
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klangspiel$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
@@ -786,7 +795,7 @@
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
@@ -794,7 +803,7 @@
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klopfen$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
@@ -802,7 +811,7 @@
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Leinen$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
@@ -822,9 +831,9 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
-      "expect": "Winterschlaf",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: hibernating a tab is Winterschlaf, in den Winterschlaf versetzen; never Ruhezustand, macOS's Sleep, which would read as the computer going to sleep."
+      "expect": "[Ii]naktiv",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiver Tab (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
     },
     {
       "id": "button",
