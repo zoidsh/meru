@@ -1,16 +1,17 @@
 /**
  * Decides which Electron release, if any, the `electron-upgrade` skill takes:
- * the newest stable release in the installed major, once it has been on npm
- * for the minimum age. A new major is never offered; it is Tim's call.
+ * the newest stable release in the major `bun.lock` resolves, once it has been
+ * on npm for the minimum age. A new major is never offered; it is Tim's call.
  *
  *   bun scripts/electron-upgrade.ts [--time <file> --versions <file>] [--current <version>] [--now <iso>] [--min-age <hours>]
  *
  * Without `--time` and `--versions` it reads `npm view electron time --json`
  * and `npm view electron versions --json`, and without `--current` the
- * version `bun.lock` resolved. The `time` map keeps versions that were
- * unpublished, so only those `versions` still lists are candidates. The target alone goes to
- * stdout with exit 0; nothing to take is exit 1 and an error exit 2, each with
- * its reason on stderr, so a caller can branch on the code alone.
+ * version `bun.lock` resolves. The `time` map keeps versions that were
+ * unpublished, so only those `versions` still lists are candidates. The
+ * target alone goes to stdout with exit 0; nothing to take is exit 1 and an
+ * error exit 2, each with its reason on stderr, so a caller can branch on the
+ * code alone.
  *
  * Age is npm publish time, not the GitHub release, because npm is what
  * `bun add` installs from and it can lag the release.
