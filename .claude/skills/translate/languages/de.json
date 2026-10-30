@@ -565,7 +565,7 @@
       "id": "account",
       "pattern": "(?<![\\p{L}\\p{N}./@])Accounts?(?![\\p{L}\\p{N}])",
       "severity": "wrong",
-      "reason": "An account is Konto, plural Konten, as in Google-Konto; never Account."
+      "reason": "An account is Konto, plural Konten, as Chrome writes it, as in Google-Konto; never Account (Chrome: 392 of 404 messages for account)."
     },
     {
       "id": "sichern",
@@ -637,7 +637,7 @@
       "msgidPattern": "(?<!recent )\\bdownload history\\b",
       "expect": "Downloadverlauf",
       "severity": "wrong",
-      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history (glossary)."
+      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history, as Chrome writes it (Chrome: 10 of 10 messages)."
     },
     {
       "id": "recent-downloads",

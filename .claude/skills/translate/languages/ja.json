@@ -748,7 +748,7 @@
       "msgidPattern": "\\bdownload history\\b",
       "expect": "ダウンロード履歴",
       "severity": "wrong",
-      "reason": "The download history is ダウンロード履歴 (glossary)."
+      "reason": "The download history is ダウンロード履歴, as Chrome writes it (Chrome: 10 of 10 messages)."
     },
     {
       "id": "upgrade",
