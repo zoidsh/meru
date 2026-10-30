@@ -1,12 +1,13 @@
 import { app } from "electron";
 import { accounts } from "@/accounts";
 import { config } from "@/config";
+import { isWebUrl } from "@/lib/deep-link";
 import { Popup } from "@/lib/popup";
 import { main } from "@/main";
 import { openExternalUrl } from "@/url";
 
 function openWebUrlExternally(url: string) {
-  if (url.startsWith("https://") || url.startsWith("http://")) {
+  if (isWebUrl(url)) {
     openExternalUrl(url);
   }
 }
