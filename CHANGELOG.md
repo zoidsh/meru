@@ -43,3 +43,5 @@ This file is the draft of the next release, written one line at a time as work l
 - **Linux:** On Wayland, Meru's window appears when it starts, instead of only when it is opened a second time
 - **Windows and Linux:** In the context menu, `Paste and Match Style` has its own access key, M, instead of sharing P with `Paste`
 - **Meru Pro:** A Workspace apps window that closes itself closes cleanly, instead of showing an error that keeps coming back
+- **Meru Pro:** A pinned Workspace app tab whose page closes itself stays in the tab strip, ready to open again, instead of disappearing for good; an unpinned one comes back with `Reopen Closed Tab`
+- **Meru Pro:** When the Workspace app tab in front closes itself, Gmail comes to the front, instead of another tab's page showing while Gmail is selected

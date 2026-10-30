@@ -603,7 +603,7 @@ export class WorkspaceApp {
         return;
       }
 
-      this.close();
+      this.handleClose();
     });
 
     WorkspaceApp.instances.set(this.id, this);
@@ -752,7 +752,7 @@ export class WorkspaceApp {
     this.isClosing = true;
 
     try {
-      this.account.instance.tabs.handleWindowedTabClosed(this);
+      this.account.instance.tabs.handleTabClosedExternally(this);
     } finally {
       this.teardown();
     }
