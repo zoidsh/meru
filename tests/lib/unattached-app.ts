@@ -27,11 +27,9 @@ import { startTestServer, type TestServer } from "./server";
 type Electron = typeof import("electron");
 
 /*
- * Not the inspector's own `require`, which `includeCommandLineAPI` puts in
- * scope. An evaluation can interrupt the app's startup, and setting that up
- * there left Node's `net` half loaded: every `execFile` after it threw
- * "net.Socket is not a function", the license check among them, and the app
- * never created its accounts.
+ * Reached through `process.mainModule` rather than the inspector's own
+ * `require`. Evaluated during startup, that one half-loads Node's `net`, after
+ * which every `execFile` fails, the license check included.
  */
 const ELECTRON = `process.mainModule.require("electron")`;
 
