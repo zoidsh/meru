@@ -94,24 +94,12 @@ export function createStorageRelay(extensionApis: ChromeNamespace[]) {
    * can land after this one, and a change may not outrun the level that decides
    * who hears it.
    *
-   * **Natively this never fires on Electron 43.2.0**, so for an extension not
-   * opted into synthesis (`storage-synthesis.ts`) the fan-out below it has
-   * carriage and no source. For one that is, the event it lands on is the
-   * synthesized one, and it fans out every write through this worker's store. Measured 2 September 2026 on a bare Electron with
-   * none of Meru in it: a do-nothing MV3 extension whose worker registers
-   * `chrome.storage.onChanged` and `chrome.storage.local.onChanged` at top
-   * level, before any write, sees neither ever fire, though both are present as
-   * functions and its own writes succeed. It is not storage's own router
-   * either — `alarms.onAlarm` on a six-second alarm and `runtime.onInstalled`
-   * on a fresh profile are just as silent, so Electron dispatches no
-   * `EventRouter` events into an extension service worker. `runtime.onMessage`
-   * does still arrive, being messaging rather than an event dispatch, which is
-   * what the rest of this relay runs on. The events fire correctly in
-   * extension *pages* too.
-   *
-   * The listener stays because it is the right code against Chrome's contract,
-   * it costs nothing while silent, and it starts working the day Electron
-   * delivers the event with no change here.
+   * Electron delivers the native event into the worker, once per write, for
+   * the worker's own writes and so for every write relayed from a shimmed
+   * session too (`scripts/probe-extension-api.ts` measures it on stock
+   * Electron). For an extension opted into synthesis (`storage-synthesis.ts`)
+   * the event it lands on is the synthesized one instead, which reports the
+   * same writes, and the native one has no listener at all.
    */
   const watchChanges = () => {
     for (const extensionApi of extensionApis) {

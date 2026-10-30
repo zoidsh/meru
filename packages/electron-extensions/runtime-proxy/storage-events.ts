@@ -10,9 +10,9 @@ const SHADOWED_EVENT_MARK = "__meruRuntimeProxyStorageChangedShim";
 
 /**
  * The listeners a context registered on `chrome.storage`'s change events, kept
- * here because the native events never fire with the changes the context is
- * owed: in a shimmed session they watch a store nothing writes any more, and in
- * the worker Electron dispatches none of them.
+ * here because a shimmed session's native events watch a store nothing writes
+ * any more, and the worker's synthesis dispatches its own in place of the
+ * native ones.
  */
 type StorageChangedListeners = {
   /** On `chrome.storage.onChanged`, which is told the area's name as well. */
@@ -32,9 +32,9 @@ type StorageChangedListeners = {
  * dispatch is still real — the worker's own session messages itself. Here it
  * can only be wrong. In a shimmed session the native event watches a store
  * that is not the extension's any more, so it could report a change of the
- * wrong store and never one of the right one; in the worker it is silent, and
- * the day Electron starts delivering it a native registration would hear every
- * change twice.
+ * wrong store and never one of the right one. In the worker Electron delivers
+ * it, for the same writes the synthesis reports, so a native registration
+ * there would hear every change twice.
  */
 function shadowChangedEvent(event: ChromeNamespace, listeners: Set<ChromeEventListener>) {
   if (event[SHADOWED_EVENT_MARK]) {

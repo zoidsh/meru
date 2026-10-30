@@ -1090,12 +1090,10 @@ test("session storage keeps Chrome's access level across the proxy", async () =>
 });
 
 /*
- * Electron dispatches no `EventRouter` event into an extension service worker,
- * so the change events here exist only because the fixture is opted into the
- * relay's synthesis (`storage-synthesis.ts`), which shadows the worker's
- * writes and dispatches what they changed. `runtime.onMessage` arrives
- * natively, being messaging rather than an event dispatch, which is why every
- * other test here passes without it.
+ * The fixture is opted into the relay's synthesis (`storage-synthesis.ts`), so
+ * the change events here are the synthesized ones: it shadows the worker's
+ * writes and dispatches what they changed, in place of the native events
+ * Electron would also deliver to the worker.
  */
 test("storage.onChanged fires in the worker and the shim session, for the worker's writes and relayed ones", async () => {
   /*
@@ -1179,8 +1177,8 @@ test("storage.onChanged fires in the worker and the shim session, for the worker
   }
 
   /*
-   * And the worker hears both on its own events, which is what Electron never
-   * delivers natively. The shim session's writes come through the relay, where
+   * And the worker hears both on its own events, the synthesized ones that
+   * stand in for the native events. The shim session's writes come through the relay, where
    * the synthesis sees them; the worker session's popup writes natively in its
    * own context, and reports its write to the worker instead
    * (`page-storage-writes.ts`), which is how Bitwarden's worker hears an unlock

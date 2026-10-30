@@ -148,7 +148,7 @@ export type ExtensionsOptions = {
   getContentScriptMatches?: (extensionId: string) => string[] | undefined;
   /**
    * Which extensions get `storage.onChanged` synthesized in their service
-   * worker, by the id the extension is loaded as, where Electron never fires it.
+   * worker, in place of the native event, by the id the extension is loaded as.
    * Only with a shared instance, whose relay is what synthesizes it. Without it
    * no extension does, and none pays the extra reads on every write.
    */
@@ -755,14 +755,14 @@ export class Extensions {
 
   /**
    * Chromium stores an extension's service worker script when the worker first
-   * registers and serves that copy for as long as the partition exists: it
-   * never fetches the script again, not on a later launch and not when the file
-   * on disk has changed. Everything the derive writes into the worker — the
-   * facade above all, and the bridge token it carries — would therefore be a
-   * copy from the launch the partition was created in, which is what answered
-   * every native messaging call with 403 (measured 2026-08-16).
+   * registers. Everything the derive writes into the worker — the facade above
+   * all, and the bridge token it carries — has to be this launch's copy, and a
+   * stored one from an earlier launch answers every native messaging call with
+   * 403. Electron fetches the script again when the file on disk has changed
+   * and the version has not (`scripts/probe-extension-api.ts` measures it on
+   * stock Electron); dropping the registration first makes the fresh fetch
+   * this loader's doing rather than that check's.
    *
-   * Dropping the registration first makes Chromium fetch the script again.
    * `clearData` walks past `chrome-extension://` origins, so `clearStorageData`
    * is the way in; an extension without a `manifest.key` has no id to address
    * its storage by and keeps the worker Chromium already has.

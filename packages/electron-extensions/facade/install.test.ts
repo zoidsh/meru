@@ -246,8 +246,8 @@ describe("installChromeFacade", () => {
 
     installChromeFacade(chrome);
 
-    // Electron schedules these and delivers `onAlarm` to no service worker,
-    // which is a gap filling cannot reach — see `api/alarms.ts`
+    // Taken over in every context so they share main's store — see
+    // `api/alarms.ts`
     expect(chrome.alarms).not.toBe(alarms);
     expect(namespaceOf(chrome, "alarms").getAll).toBeFunction();
   });

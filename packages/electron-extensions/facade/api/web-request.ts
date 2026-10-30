@@ -3,11 +3,10 @@ import { createNoopEvent } from "../lib/event";
 import { createNoopMethod } from "../lib/method";
 
 /**
- * The namespace Electron declares but cannot serve: its extension bindings ship
- * no `webRequest` module, so every event on it is declared-but-`undefined` —
- * feature detection with `in` passes and the dereference that follows takes the
- * service worker down. Filling the events keeps that from happening; requests
- * still only pass through the embedder's own `session.webRequest`.
+ * A noop `webRequest` for the derived copy, which is loaded without the
+ * permission (`derive/manifest.ts`) and so has no native namespace: an
+ * extension that feature-detects it still finds every event, and requests pass
+ * only through the embedder's own `session.webRequest`.
  */
 export function createWebRequest(): ChromeNamespace {
   return {

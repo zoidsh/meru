@@ -91,16 +91,14 @@ function createServiceWorkerWrapper(
 }
 
 /**
- * Permissions whose bindings Electron declares but ships no implementation for.
- * Chromium builds the namespace from the schema the moment anything touches it,
- * looks for the JavaScript module behind it, finds none and hits a NOTREACHED —
- * once for `webRequest` and once per event on it, in every extension context.
- * That is a `DumpWithoutCrashing` in the builds Meru ships and a fatal check in
- * others, and it costs the extension nothing to avoid: extension-side
- * `webRequest` listeners never receive a request in Electron, measured in the spike.
- *
- * Dropped from the derived copy, the namespace is missing rather than broken,
- * and the facade's noop `webRequest` stands in for it.
+ * Permissions kept out of the derived copy. Electron implements `webRequest`:
+ * with it declared, the worker's observational listeners hear its own fetches
+ * and the session's page loads, tab ids included
+ * (`scripts/probe-extension-api.ts` measures it on stock Electron).
+ * `webRequestAuthProvider`, which `onAuthRequired` blocking needs, is unmeasured.
+ * Without them, no extension-side listener observes or blocks a request in the
+ * session the extension is loaded into, the native namespace is missing, and
+ * the facade's noop `webRequest` stands in for it.
  */
 const DROPPED_PERMISSIONS = new Set(["webRequest", "webRequestAuthProvider"]);
 

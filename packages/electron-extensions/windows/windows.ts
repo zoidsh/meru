@@ -336,8 +336,8 @@ export class Windows {
 
   /**
    * The stream a context parks to hear `onRemoved`, in the shape alarms are
-   * delivered in (`alarms/alarms.ts`): Electron dispatches no Chrome event to a
-   * service worker, and a password manager's worker is what waits on its
+   * delivered in (`alarms/alarms.ts`): Electron has no `chrome.windows` to
+   * dispatch it from, and a password manager's worker is what waits on its
    * popout closing. Electron cancels the stream when the context goes, which is
    * what drops it.
    */

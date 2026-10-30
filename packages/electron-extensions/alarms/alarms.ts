@@ -101,14 +101,10 @@ type ExtensionAlarms = {
  * `chrome.alarms` for extensions loaded into Electron sessions, scheduled here
  * and delivered over the extension bridge.
  *
- * Electron ships Chromium's alarm manager and it works: alarms are scheduled,
- * they come due, and their `scheduledTime` advances. What never happens is the
- * delivery — Electron dispatches no `EventRouter` event into an extension
- * service worker, so `onAlarm` fires in extension pages and never in the worker
- * that MV3 puts every background handler in (measured 2 September 2026 on
- * 43.2.0; see finding 31 of the 3.60 extensions review). 1Password's seven
- * alarms are therefore dead, `lockMonitor` and `purge-login-detection-data`
- * among them.
+ * Electron ships Chromium's alarm manager, which schedules alarms, delivers
+ * `onAlarm` into the extension's service worker as well as its pages, and keeps
+ * them across a restart (`scripts/probe-extension-api.ts` measures all three on
+ * stock Electron). This is a second implementation of the same namespace.
  *
  * The facade replaces the whole namespace rather than filling in around it, in
  * every context and not only the worker: Electron's own alarms live in
@@ -116,8 +112,9 @@ type ExtensionAlarms = {
  * one would mean a page's `getAll` could not see what the worker scheduled and
  * its `clear` would silently clear nothing.
  *
- * Alarms live in memory for as long as the session does. Chrome persists them
- * across a browser restart and this does not, which costs nothing measured:
+ * Alarms live in memory for as long as the session does. Chrome and Electron
+ * persist them across a browser restart and this does not, which costs nothing
+ * measured:
  * what an alarm has to outlive is the service worker, and main outlives it
  * either way, while every alarm 1Password owns is created again at each worker
  * boot.
