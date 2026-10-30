@@ -9,6 +9,17 @@ Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `p
 
 **Human-reviewed languages: `de`.** A person reads the doubtful and style findings of these. Every other locale is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
 
+## Where a word comes from
+
+Every word in every language comes from the first of these sources that has it, and the glossary, the style sheets and the sidecars say which:
+
+1. The operating system's own words, meaning its labels (File, Paste, Quit, Save As…) and the names of its parts (menu bar, Dock, Finder, System Settings, Do Not Disturb, system tray), come from the platform showing them: Apple on macOS, Microsoft on Windows, GNOME on Linux.
+2. Gmail's own terms take Gmail's word in that language.
+3. Google's names take Google's word; the Workspace apps' names stay English.
+4. Meru's own copy takes Chrome's word where Chrome has the term. A recorded call of the user's overrides Chrome only as a named exception with its reason; there are none now. Otherwise it takes the best-practice word for that language, researched in Microsoft's and GNOME's style guides and terminology and the language's major software localizations, with Apple's word as evidence but never as the authority, and marked `agent-chosen` with a one-line reason.
+
+Apple is never the source of a word in Meru's own copy. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says. A rule backed by Chrome or by a call of the user's is `wrong` in every sidecar; `doubtful` is for a rule a person should judge, such as an agent-chosen word or a heuristic. The glossary's opening section says how each source is cited.
+
 ## Before you start
 
 - `CLAUDE_CODE_EFFORT_LEVEL` overrides the `effort` in the agents' frontmatter, and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` their `model`. Run `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`; if either prints a value, stop and tell the user to start the session again without it, such as `env -u CLAUDE_CODE_EFFORT_LEVEL claude`.
@@ -113,15 +124,17 @@ Leave the catalogs uncommitted: the translations land in the same commit as the 
 
 ## Adding a language
 
-A language ships once it is in five places:
+A language ships once it is in seven places:
 
 1. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`, which `lingui.config.ts` reads as its locales.
 2. The `catalogs` record in `packages/shared/i18n/index.ts`, importing `messages` from `./locales/<tag>`.
 3. The dayjs locale import in `packages/renderer/lib/date.ts`, `dayjs/locale/<name>` with the name `getDayjsLocale` gives the tag, such as `es-mx` for `es-419`.
 4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
-5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
+5. The style sheet `.claude/skills/translate/languages/<tag>.md`, its words taken by the [source order](#where-a-word-comes-from), and the language's line in every glossary entry.
+6. The sidecar `languages/<tag>.json`, which `check.ts` needs to run at all: the Platform words table's rows, the banned words, the pinned terms and the access-key style. `scripts/translate-rules.test.ts` holds its platform words to the style sheet's table.
+7. The fixtures `fixtures/<tag>-clean.po`, the wording every rule allows, and `fixtures/<tag>-faults.po`, a planted fault for each rule, marked `# fault: <rule>:<id>`. `scripts/translate-check.test.ts` fails for a sidecar with rules and no fixtures, and for a fixture whose findings differ from what it plants.
 
-Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Then run this skill to translate the new catalogs.
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Run `bun test --isolate scripts/translate-*.test.ts` once the sidecar and fixtures are in. Then run this skill to translate the new catalogs.
 
 ## Changing a rule
 
