@@ -5,8 +5,10 @@ import {
   GMAIL_INBOX_FEED_URL,
   gmailFeedUrl,
   gmailSearchHash,
+  inboxFeedPollDelay,
   parseGmailMessageId,
 } from "./gmail";
+import { ms } from "./ms";
 
 const MESSAGE_ID = "FMfcgzQhVWzcNswCzNbqBmBjxGmZBbbV";
 
@@ -225,6 +227,23 @@ describe("gmailSearchHash", () => {
 
   test("encodes a quote and a backslash, which broke the string the hash used to be built in", () => {
     expect(gmailSearchHash('"\\')).toBe("#search/%22%5C");
+  });
+});
+
+describe("inboxFeedPollDelay", () => {
+  const delay = (consecutiveFailures: number) =>
+    inboxFeedPollDelay(ms("30s"), consecutiveFailures, ms("5m"));
+
+  test("polls at the interval while nothing has failed", () => {
+    expect(delay(0)).toBe(ms("30s"));
+  });
+
+  test("doubles with each consecutive failure", () => {
+    expect([1, 2, 3].map(delay)).toEqual([ms("1m"), ms("2m"), ms("4m")]);
+  });
+
+  test("never waits longer than the cap", () => {
+    expect([4, 5, 10, 2000].map(delay)).toEqual([ms("5m"), ms("5m"), ms("5m"), ms("5m")]);
   });
 });
 
