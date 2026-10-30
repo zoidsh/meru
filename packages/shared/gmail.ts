@@ -145,8 +145,8 @@ export function diffInboxFeed(
 
 /**
  * Doubles with each consecutive failure, so a feed that cannot be read, such
- * as a signed-out account's, stops costing a request and a log line every
- * interval.
+ * as behind an expired cookie or during a Google outage, stops costing a
+ * request and a log line every interval.
  */
 export function inboxFeedPollDelay(
   interval: number,

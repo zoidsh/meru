@@ -122,6 +122,13 @@ const INBOX_FEED_POLL_INTERVAL = ms("30s");
 const INBOX_FEED_POLL_MAX_DELAY = ms("5m");
 
 /*
+ * The poll arms its next tick only once the current one settles, and
+ * `session.fetch` never gives up on its own, so one request that hangs would
+ * stop the poll until the next resume or reconnect.
+ */
+const INBOX_FEED_FETCH_TIMEOUT = ms("20s");
+
+/*
  * "notReady" is the page not having loaded Gmail yet, which says nothing
  * about the feed, so it neither counts as a failure nor clears one.
  */
@@ -780,7 +787,9 @@ export class Gmail {
   private async fetchImportantFeedEntryIds() {
     try {
       const body = await this.session
-        .fetch(`${gmailFeedUrl("important")}?t=${Date.now()}`)
+        .fetch(`${gmailFeedUrl("important")}?t=${Date.now()}`, {
+          signal: AbortSignal.timeout(INBOX_FEED_FETCH_TIMEOUT),
+        })
         .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
@@ -846,7 +855,11 @@ export class Gmail {
       // it describes.
       const readAt = Date.now();
 
-      const body = await this.session.fetch(`${feedUrl}?t=${Date.now()}`).then((res) => res.text());
+      const body = await this.session
+        .fetch(`${feedUrl}?t=${Date.now()}`, {
+          signal: AbortSignal.timeout(INBOX_FEED_FETCH_TIMEOUT),
+        })
+        .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
 
