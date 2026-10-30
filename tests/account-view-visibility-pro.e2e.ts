@@ -6,9 +6,9 @@
  * whose Chromium stacks a re-added view at the bottom on Linux
  * (electron/electron#54626) leaves it underneath the other account's: the
  * window shows the wrong account from launch and takes no input, while every
- * other test passes. Each test here is a step of the manual check that caught
- * it: launch, switching back and forth, minimize and restore, and closing the
- * window and launching again.
+ * other test passes. Each test here is a step of the two-account check in the
+ * project docs' `linux-vm.md`: launch, switching back and forth, minimize and
+ * restore, and closing the window and launching again.
  *
  * Pro, because a second account is Pro. One account, the other half of the
  * same regression, is `account-view-visibility.e2e.ts`.
