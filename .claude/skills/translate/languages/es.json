@@ -670,7 +670,7 @@
       "msgid": "OK",
       "expect": "^Aceptar$",
       "severity": "wrong",
-      "reason": "OK is Aceptar, as Chrome writes it on the buttons it draws (6 of its 7 OK labels) and as Apple's AppKit Common OK gives it for a native dialog."
+      "reason": "OK is Aceptar, both on a button Meru draws, as Chrome writes it (6 of its 7 OK labels), and in a native dialog, as Apple's AppKit Common OK gives it."
     },
     {
       "id": "bookmark",

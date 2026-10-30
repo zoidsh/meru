@@ -1999,9 +1999,13 @@ msgstr "Notify for"
 msgid "Notify when updates are available"
 msgstr "Notify when updates are available"
 
-#: packages/app/dialogs.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/routes/settings/extensions.tsx
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "native dialog"
 msgid "OK"
 msgstr "OK"
 

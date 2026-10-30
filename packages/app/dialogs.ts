@@ -7,6 +7,19 @@ import { config } from "./config";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
 
+/**
+ * A native dialog's OK takes the operating system's word, which in some
+ * languages differs from the OK that Meru's own pages draw, so the two are
+ * separate messages.
+ */
+export function getNativeOkLabel() {
+  return t({
+    message: "OK",
+    context: "native dialog",
+    comment: "The OK button of a native dialog",
+  });
+}
+
 export async function showRestartDialog() {
   const { response } = await dialog.showMessageBox({
     type: "info",
@@ -34,7 +47,7 @@ export async function showUnsupportedMacOSDialog() {
     type: "info",
     message: t`This is the last version of Meru for this Mac.`,
     detail: t`Meru ${version} is the last version that runs on macOS ${macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk.`,
-    buttons: [t`OK`],
+    buttons: [getNativeOkLabel()],
     defaultId: 0,
     cancelId: 0,
     checkboxLabel: t`Don't show again`,
@@ -67,7 +80,7 @@ export function showUpdateNotAvailableDialog() {
     type: "info",
     message: t`Meru is up to date.`,
     detail: t`Meru ${version} is the latest version.`,
-    buttons: [t`OK`],
+    buttons: [getNativeOkLabel()],
     defaultId: 0,
     cancelId: 0,
   });
@@ -78,7 +91,7 @@ export function showUpdateAvailableDialog(version: string) {
     type: "info",
     message: t`Meru ${version} is available.`,
     detail: t`Meru installs it when you quit.`,
-    buttons: [t`OK`],
+    buttons: [getNativeOkLabel()],
     defaultId: 0,
     cancelId: 0,
   });
@@ -89,7 +102,7 @@ export function showUpdateCheckFailedDialog() {
     type: "warning",
     message: t`Meru couldn't check for updates.`,
     detail: t`Try again later.`,
-    buttons: [t`OK`],
+    buttons: [getNativeOkLabel()],
     defaultId: 0,
     cancelId: 0,
   });

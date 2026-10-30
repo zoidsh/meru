@@ -13,7 +13,7 @@ _tú_, with _tu_ and _te_: _¿Seguro que quieres …?_, _tu cuenta_. Never _voso
 
 ## Buttons and menu items
 
-The infinitive: _Responder_, _Eliminar_, _Guardar_, _Cancelar_, _Aceptar_, _Cerrar pestaña_. The confirming button is _Aceptar_, not _OK_.
+The infinitive: _Responder_, _Eliminar_, _Guardar_, _Cancelar_, _Aceptar_, _Cerrar pestaña_. The confirming button is _Aceptar_, not _OK_, both on a button Meru draws (Chrome) and in a native dialog, `msgctxt` `native dialog`, where Apple's AppKit writes _Aceptar_ too.
 
 ## Capitalization
 

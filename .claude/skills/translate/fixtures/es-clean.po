@@ -86,6 +86,11 @@ msgid "Learn More…"
 msgstr "Más información…"
 
 #: packages/app/dialogs.ts
+msgctxt "native dialog"
+msgid "OK"
+msgstr "Aceptar"
+
+#: packages/renderer/routes/settings/extensions.tsx
 msgid "OK"
 msgstr "Aceptar"
 

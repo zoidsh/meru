@@ -84,8 +84,14 @@ msgstr "Lo sentimos, Meru no puede abrir este vínculo en un navegador."
 
 # fault: pinned:ok-button
 #: packages/app/dialogs.ts
+msgctxt "native dialog"
 msgid "OK"
 msgstr "Aceptar"
+
+# fault: pinned:ok-button
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "OK"
+msgstr "OK"
 
 # fault: pinned:download-history
 #: packages/renderer/recent-download-history.tsx

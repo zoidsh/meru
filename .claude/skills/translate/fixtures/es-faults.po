@@ -80,6 +80,7 @@ msgstr "Lo sentimos, Meru no puede abrir este enlace en un navegador."
 
 # fault: pinned:ok-button
 #: packages/app/dialogs.ts
+msgctxt "native dialog"
 msgid "OK"
 msgstr "OK"
 

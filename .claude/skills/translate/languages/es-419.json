@@ -660,10 +660,19 @@
     },
     {
       "id": "ok-button",
+      "msgctxt": null,
+      "msgid": "OK",
+      "expect": "^Aceptar$",
+      "severity": "wrong",
+      "reason": "A button Meru draws reads Aceptar, as Chrome writes OK (Chrome: 6 of its 7 OK labels)."
+    },
+    {
+      "id": "ok-button",
+      "msgctxt": "native dialog",
       "msgid": "OK",
       "expect": "^OK$",
       "severity": "wrong",
-      "reason": "OK is Apple's OK (AppKit Common OK) for now: Meru's native dialogs and its own pages share one OK message, and a button Meru draws would take Chrome's Aceptar (6 of its 7 OK labels) once the message is split by platform."
+      "reason": "A native dialog's OK is the operating system's word: Apple's OK on macOS (AppKit Common OK). The native dialogs share one message on every platform, so it takes macOS's word for now."
     },
     {
       "id": "bookmark",
