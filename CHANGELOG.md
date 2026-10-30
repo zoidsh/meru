@@ -39,6 +39,7 @@ This file is the draft of the next release, written one line at a time as work l
 - Restarting to install an update reopens the tabs you had open, the way any other quit does, instead of losing recent changes to them
 - Back and forward buttons on a mouse set up with Logi Options+ go back and forward in Gmail and Google apps, as does a three-finger swipe between pages on a trackpad.
 - An account that needs attention at launch, such as one signed out, shows its attention icon, instead of leaving it off until something else about the accounts changed
+- **Meru Pro:** A pinned Workspace app tab whose page closes itself stays in the tab strip, ready to open again, instead of disappearing for good, an unpinned one comes back with `Reopen Closed Tab`, and Gmail takes its place on screen instead of another tab's page
 - <kbd>Shift</kbd>-clicking a link to a Gmail page opens it in a new window, instead of showing an error and an empty window
 - **Linux:** On Wayland, Meru's window appears when it starts, instead of only when it is opened a second time
 - **Windows and Linux:** In the context menu, `Paste and Match Style` has its own access key, M, instead of sharing P with `Paste`

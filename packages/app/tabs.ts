@@ -462,20 +462,30 @@ export class Tabs {
     }
   }
 
-  handleWindowedTabClosed(windowedTab: WorkspaceApp) {
-    if (!this.tabs.includes(windowedTab)) {
+  /**
+   * A tab closed by its window or its own page rather than through the strip,
+   * leaving the same entry behind as `closeTab` would.
+   */
+  handleTabClosedExternally(closedTab: WorkspaceApp) {
+    if (!this.tabs.includes(closedTab)) {
       return;
     }
 
-    if (isSavedWorkspaceApp(windowedTab)) {
-      this.dormantizeTab(windowedTab);
+    const wasActive = this.activeTabId === closedTab.id;
 
-      return;
+    if (isSavedWorkspaceApp(closedTab)) {
+      this.dormantizeTab(closedTab);
+    } else {
+      this.recordRecentlyClosedTab(closedTab.url);
+
+      this.removeTab(closedTab.id);
     }
 
-    this.recordRecentlyClosedTab(windowedTab.url);
-
-    this.removeTab(windowedTab.id);
+    // Every embedded view stays attached, so the one that was behind the
+    // closed tab's shows through until the new active tab is brought forward.
+    if (wasActive && accounts.getAccount(this.accountId).config.selected) {
+      accounts.refreshSelectedAccountView();
+    }
   }
 
   /**
