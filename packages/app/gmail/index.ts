@@ -43,6 +43,12 @@ import {
 } from "@/lib/web-contents";
 import { getPreloadPath } from "@/lib/window";
 import { xmlParser } from "@/lib/xml";
+import {
+  getNextZoomFactor,
+  MAX_ZOOM_FACTOR,
+  MIN_ZOOM_FACTOR,
+  type ZoomDirection,
+} from "@/lib/zoom";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import {
@@ -52,7 +58,7 @@ import {
 } from "@/notifications";
 import { registerTabBroadcasts } from "@/tabs";
 import { appTray } from "@/tray";
-import { MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR, WorkspaceApp } from "@/workspace-app";
+import { WorkspaceApp } from "@/workspace-app";
 import { gmailUrl } from "./url";
 import gmailCSS from "./gmail.css";
 import meruCSS from "./meru.css";
@@ -517,12 +523,8 @@ export class Gmail {
     });
   }
 
-  zoomIn() {
-    this.updateZoomFactor(this.persistedZoomFactor + 0.1);
-  }
-
-  zoomOut() {
-    this.updateZoomFactor(this.persistedZoomFactor - 0.1);
+  zoom(direction: ZoomDirection) {
+    this.updateZoomFactor(getNextZoomFactor(this.persistedZoomFactor, direction));
   }
 
   resetZoom() {

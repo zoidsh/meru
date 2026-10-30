@@ -46,13 +46,16 @@ import {
   getPreloadPath,
   loadRenderer,
 } from "./lib/window";
+import {
+  getNextZoomFactor,
+  MAX_ZOOM_FACTOR,
+  MIN_ZOOM_FACTOR,
+  type ZoomDirection,
+} from "./lib/zoom";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { isWindowedTab, registerTabBroadcasts } from "./tabs";
 import { openExternalUrl } from "./url";
-
-export const MIN_ZOOM_FACTOR = 0.1;
-export const MAX_ZOOM_FACTOR = 3;
 
 const GOOGLE_MEET_TOGGLE_MICROPHONE_ACCELERATOR = "CommandOrControl+Shift+1";
 
@@ -1059,24 +1062,14 @@ export class WorkspaceApp {
     this.view.webContents.reloadIgnoringCache();
   }
 
-  zoomIn() {
+  zoom(direction: ZoomDirection) {
     const zoomFactor = this.zoomFactor;
 
     if (zoomFactor === undefined) {
       return;
     }
 
-    this.updateZoomFactor(zoomFactor + 0.1);
-  }
-
-  zoomOut() {
-    const zoomFactor = this.zoomFactor;
-
-    if (zoomFactor === undefined) {
-      return;
-    }
-
-    this.updateZoomFactor(zoomFactor - 0.1);
+    this.updateZoomFactor(getNextZoomFactor(zoomFactor, direction));
   }
 
   resetZoom() {

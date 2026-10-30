@@ -18,6 +18,7 @@ This file is the draft of the next release, written one line at a time as work l
 - Meru presents itself to websites as Chromium, the open-source browser Chrome is built on, instead of naming Meru and Electron. To go back, switch on `Settings… → Advanced → Miscellaneous → Use default user agent`
 - **macOS:** `Settings… → Advanced → Miscellaneous → Use custom user agent` is gone, because Google Chat huddles, which it was for, now work without it
 - `Settings… → License` says Upgrade rather than Purchase, like the rest of Meru
+- `View → Zoom In` and `View → Zoom Out` step through the same zoom levels as Chrome, from 25% to 500%
 
 ### Fixed
 
