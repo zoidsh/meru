@@ -144,6 +144,19 @@ export function diffInboxFeed(
 }
 
 /**
+ * Doubles with each consecutive failure, so a feed that cannot be read, such
+ * as behind an expired cookie or during a Google outage, stops costing a
+ * request and a log line every interval.
+ */
+export function inboxFeedPollDelay(
+  interval: number,
+  consecutiveFailures: number,
+  maxDelay: number,
+): number {
+  return Math.min(interval * 2 ** consecutiveFailures, maxDelay);
+}
+
+/**
  * A null `importantIds` is the Important feed having failed rather than having
  * come back empty, and notifies for everything: a missed notification costs
  * more than an extra one.
