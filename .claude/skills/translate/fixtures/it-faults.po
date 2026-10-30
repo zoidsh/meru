@@ -237,3 +237,58 @@ msgstr "Attiva l’opzione anche in Preferenze di Sistema."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Icona del dock"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Sospendi le schede inattive"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Passa a Meru Pro"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Chiudi notifica"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Mostra il contatore dei non letti"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Etichetta"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Apri le impostazioni di Gmail per disattivare il risponditore"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Più caselle"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Avvisa per"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linen"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Etichetta del dispositivo"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Protezione dalle truffe"

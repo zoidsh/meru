@@ -178,3 +178,11 @@ msgstr "Zet de optie ook aan in Systeeminstellingen."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Dock-pictogram"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Zet inactieve tabbladen in winterslaap"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linnen"

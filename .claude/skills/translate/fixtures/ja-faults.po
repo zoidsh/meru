@@ -63,10 +63,10 @@ msgstr "「{query}」を検索"
 msgid "Couldn't add the account."
 msgstr "アカウントを追加できませんでした."
 
-# fault: banned:latin-spacing
+# fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Meru Pro にアップグレード"
+msgstr "Meru Proをアップグレード"
 
 # fault: banned:apology
 #: packages/renderer/routes/settings/accounts.tsx
@@ -77,11 +77,6 @@ msgstr "申し訳ありません。問題が発生しました。"
 #: packages/renderer/components/downloads.tsx
 msgid "Recent download history"
 msgstr "最近のダウンロード"
-
-# fault: pinned:upgrade
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade now"
-msgstr "今すぐ購入"
 
 # fault: pinned:gmail-label
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -190,3 +185,14 @@ msgstr "システム環境設定でもオンにしてください。"
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "ドックアイコン"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "アイドル状態のタブをスリープ"
+
+# fault: banned:latin-spacing
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Upgrade to Meru Pro to add more accounts"
+msgstr "Meru Pro にアップグレードしてアカウントを追加"

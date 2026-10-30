@@ -183,3 +183,11 @@ msgstr "Aktiviere das auch in den Systemeinstellungen."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Dock-Symbol"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Inaktive Tabs in den Winterschlaf versetzen"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Leinen"

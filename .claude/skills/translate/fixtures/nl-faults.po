@@ -178,7 +178,7 @@ msgstr "Wijzig account"
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Koop Meru Pro"
+msgstr "Upgrade Meru Pro"
 
 # fault: pinned:gmail-label
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -219,7 +219,7 @@ msgstr "Waarschuw voor"
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
-msgstr "Linnen"
+msgstr "Linen"
 
 # fault: platform-word:File
 #: packages/app/menu.ts
@@ -247,3 +247,8 @@ msgstr "Zet de optie ook aan in Systeemvoorkeuren."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "dockpictogram"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Zet inactieve tabbladen in slaapstand"

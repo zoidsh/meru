@@ -795,6 +795,143 @@
       "expect": "Dock",
       "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "toast",
+      "msgidPattern": "\\btoasts?\\b",
+      "expect": "[Aa]vvis[oi]",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+    },
+    {
+      "id": "toast",
+      "msgctxt": "toasts",
+      "msgid": "Notifications",
+      "expect": "[Aa]vvis[oi]",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+    },
+    {
+      "id": "toast",
+      "msgctxt": null,
+      "msgid": "Notifications",
+      "origin": "packages/preload-gmail/",
+      "expect": "[Aa]vvis[oi]",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+    },
+    {
+      "id": "unread-badge",
+      "msgctxt": null,
+      "msgidPattern": "\\bunread badges?\\b",
+      "expect": "[Bb]adge",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the unread badge is the badge delle email non lette."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": null,
+      "msgid": "Label",
+      "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": "saved search",
+      "msgid": "Enter a label",
+      "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
+    },
+    {
+      "id": "out-of-office",
+      "msgidPattern": "\\bout of office\\b",
+      "expect": "[Rr]isposta automatica",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: out of office is risposta automatica, until Gmail's own word is read."
+    },
+    {
+      "id": "multiple-inboxes",
+      "msgidPattern": "\\bmultiple inboxes\\b",
+      "expect": "[Pp]osta in arrivo multipla",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: multiple inboxes are Posta in arrivo multipla, until Gmail's own word is read."
+    },
+    {
+      "id": "notify",
+      "msgidPattern": "\\bnotify\\b",
+      "expect": "[Nn]otific",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: to notify is notificare, the verb of notifica, never avvisare, which reads as the toast's avviso."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Breeze",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Brezza$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Chime",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Rintocco$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Duet",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Duetto$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Knock",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Bussata$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Linen",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Lino$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+    },
+    {
+      "id": "device-label",
+      "msgidPattern": "\\bdevice label\\b",
+      "expect": "[Nn]ome del dispositivo",
+      "severity": "wrong",
+      "reason": "A device label is the nome del dispositivo, Chrome's words for a device name (Chrome: 4 of 11 messages for device name, the rest nome dispositivo)."
+    },
+    {
+      "id": "phishing-protection",
+      "msgidPattern": "\\bphishing protection\\b",
+      "expect": "[Pp]hishing",
+      "severity": "wrong",
+      "reason": "Phishing protection is protezione dal phishing, with Chrome's phishing (Chrome: 4 of 4 messages)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "[Ii]bern",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: hibernating a tab is ibernazione, iberna; never the systems' Sleep, sospensione, which would read as the computer going to sleep."
+    },
+    {
+      "id": "upgrade",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "upgrade a Meru Pro",
+      "severity": "wrong",
+      "reason": "Upgrading to Pro is Esegui l’upgrade a Meru Pro, fai l’upgrade a Meru Pro in a sentence, as Chrome words upgrading to something newer (Chrome: 7 of 8 messages for upgrade to)."
     }
   ],
   "accessKeys": {

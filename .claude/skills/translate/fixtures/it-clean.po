@@ -196,3 +196,47 @@ msgstr "Attiva l’opzione anche in Impostazioni di Sistema."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Icona del Dock"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Iberna le schede inattive"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Esegui l’upgrade a Meru Pro"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Chiudi avviso"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Mostra il badge delle email non lette"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Nome"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Apri le impostazioni di Gmail per disattivare la risposta automatica"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Posta in arrivo multipla"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Notifica per"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Lino"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Nome del dispositivo"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Protezione dal phishing"

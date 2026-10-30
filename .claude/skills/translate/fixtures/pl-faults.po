@@ -220,7 +220,7 @@ msgstr "Informuj dla"
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
-msgstr "Len"
+msgstr "Linen"
 
 # fault: platform-word:File
 #: packages/app/menu.ts
@@ -258,3 +258,8 @@ msgstr "Meru wyloguje cię z tego konta."
 #: packages/renderer/routes/settings/license.tsx
 msgid "Meru reminds you before your trial ends."
 msgstr "Meru przypomni ci o końcu okresu próbnego."
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Uśpij nieaktywne karty"

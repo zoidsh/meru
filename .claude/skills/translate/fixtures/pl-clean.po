@@ -191,3 +191,11 @@ msgstr "Włącz to także w Ustawieniach systemowych."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Ikona w Docku"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Hibernuj nieaktywne karty"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Len"

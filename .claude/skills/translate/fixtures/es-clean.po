@@ -221,3 +221,51 @@ msgstr "30 minutos"
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Icono del Dock"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Hibernar pestañas inactivas"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Cambiar a Meru Pro"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Cerrar aviso"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Mostrar indicador de no leídos"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Nombre"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Abre la configuración de Gmail para desactivar la respuesta automática"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Varias bandejas de entrada"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Notificar sobre"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Lino"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Nombre del dispositivo"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Protección contra phishing"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Canal de versiones"

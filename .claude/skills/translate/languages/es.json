@@ -778,6 +778,150 @@
       "expect": "Dock",
       "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "toast",
+      "msgidPattern": "\\btoasts?\\b",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an aviso, kept apart from a notification, notificación."
+    },
+    {
+      "id": "toast",
+      "msgctxt": "toasts",
+      "msgid": "Notifications",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an aviso, kept apart from a notification, notificación."
+    },
+    {
+      "id": "toast",
+      "msgctxt": null,
+      "msgid": "Notifications",
+      "origin": "packages/preload-gmail/",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an aviso, kept apart from a notification, notificación."
+    },
+    {
+      "id": "unread-badge",
+      "msgctxt": null,
+      "msgidPattern": "\\bunread badges?\\b",
+      "expect": "[Ii]ndicador de no leídos",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the unread badge is the indicador de no leídos."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": null,
+      "msgid": "Label",
+      "expect": "(?<!\\p{L})[Nn]ombre(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nombre, apart from Gmail's etiqueta."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": "saved search",
+      "msgid": "Enter a label",
+      "expect": "(?<!\\p{L})[Nn]ombre(?!\\p{L})",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nombre, apart from Gmail's etiqueta."
+    },
+    {
+      "id": "out-of-office",
+      "msgidPattern": "\\bout of office\\b",
+      "expect": "[Rr]espuesta automática",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: out of office is respuesta automática, until Gmail's own word is read."
+    },
+    {
+      "id": "multiple-inboxes",
+      "msgidPattern": "\\bmultiple inboxes\\b",
+      "expect": "[Vv]arias bandejas de entrada",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: multiple inboxes are varias bandejas de entrada, until Gmail's own word is read."
+    },
+    {
+      "id": "notify",
+      "msgidPattern": "\\bnotify\\b",
+      "expect": "[Nn]otific",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: to notify is notificar, the verb of notificación."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Breeze",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Brisa$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Chime",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Campanilla$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Duet",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Dúo$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Knock",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Golpe$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Linen",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Lino$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+    },
+    {
+      "id": "device-label",
+      "msgidPattern": "\\bdevice label\\b",
+      "expect": "[Nn]ombre del dispositivo",
+      "severity": "wrong",
+      "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 6 of 11 messages for device name)."
+    },
+    {
+      "id": "phishing-protection",
+      "msgidPattern": "\\bphishing protection\\b",
+      "expect": "[Pp]hishing",
+      "severity": "wrong",
+      "reason": "Phishing protection is protección contra phishing, with Chrome's phishing (Chrome: 4 of 4 messages)."
+    },
+    {
+      "id": "release-channel",
+      "msgidPattern": "\\bchannel\\b",
+      "expect": "[Cc]anal",
+      "severity": "wrong",
+      "reason": "A release channel is a canal: canal de versiones, canal beta, as Chrome writes channel (Chrome: 11 of 11 messages)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "[Hh]ibern",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: hibernating a tab is hibernación, hibernar; never the systems' Sleep, suspender, which would read as the computer going to sleep."
+    },
+    {
+      "id": "upgrade",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "[Cc]ambi\\p{L}* a Meru Pro",
+      "severity": "wrong",
+      "reason": "Upgrading to Pro is Cambiar a Meru Pro, as Chrome words upgrading to something newer (Chrome: 5 of 8 messages for upgrade to, cambia, cambie a)."
     }
   ],
   "accessKeys": {

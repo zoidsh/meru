@@ -237,3 +237,43 @@ msgstr "Icône du Dock"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Website"
 msgstr "Site Web"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Mettre en hibernation les onglets inactifs"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Passer à Meru Pro"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Fermer l’avis"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Afficher la pastille des e-mails non lus"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Nom"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Ouvrez les paramètres Gmail pour désactiver la réponse automatique d’absence"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Boîtes de réception multiples"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "M’avertir pour"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Lin"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Nom de l’appareil"

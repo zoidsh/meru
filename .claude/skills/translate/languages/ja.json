@@ -752,10 +752,10 @@
     },
     {
       "id": "upgrade",
-      "msgidPattern": "\\bupgrade\\b",
-      "expect": "アップグレード",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "Meru Proにアップグレード",
       "severity": "wrong",
-      "reason": "Reaching Pro is アップグレード, in buttons and prose alike, never a word for purchase (glossary)."
+      "reason": "Upgrading to Pro is Meru Proにアップグレード, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to, 新しいモデルにアップグレード)."
     },
     {
       "id": "gmail-label",
@@ -929,6 +929,13 @@
       "expect": "Dock",
       "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "休止",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: hibernating a tab is 休止; never スリープ, the systems' Sleep, which would read as the computer going to sleep."
     }
   ],
   "accessKeys": {

@@ -212,3 +212,51 @@ msgstr "Ícone do Dock"
 #: packages/app/tray.ts
 msgid "Turn Do Not Disturb on"
 msgstr "Ativar Não Perturbe"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Hibernar Guias Inativas"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Fazer Upgrade para o Meru Pro"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Fechar Aviso"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Mostrar Indicador de Não Lidos"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Nome"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Abra as configurações do Gmail para desativar a resposta automática"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Várias Caixas de Entrada"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Notificar Sobre"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linho"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Nome do Dispositivo"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Proteção Contra Phishing"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Canal de Versões"

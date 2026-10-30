@@ -185,3 +185,63 @@ msgstr "Ícone do dock"
 #: packages/app/tray.ts
 msgid "Turn Do Not Disturb on"
 msgstr "Ativar o Modo Não Incomodar"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Suspender Guias Inativas"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Comprar o Meru Pro"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Fechar Notificação"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Mostrar Selo de Não Lidos"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Marcador"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Abra as configurações do Gmail para desativar a mensagem de férias"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Caixas Múltiplas"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Avisar Sobre"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linen"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Rótulo do Dispositivo"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Proteção Contra Golpes"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Versão de Lançamento"

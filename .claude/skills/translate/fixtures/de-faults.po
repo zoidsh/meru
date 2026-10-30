@@ -81,7 +81,7 @@ msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Meru Pro kaufen"
+msgstr "Upgrade für Meru Pro"
 
 # fault: pinned:gmail-label
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -174,7 +174,7 @@ msgstr "Melden für"
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
-msgstr "Leinen"
+msgstr "Linen"
 
 # fault: pinned:system-settings
 #: packages/renderer/routes/settings/general.tsx
@@ -185,3 +185,8 @@ msgstr "Aktiviere das auch in den Systempräferenzen."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Symbol im dock"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Inaktive Tabs in den Ruhezustand versetzen"

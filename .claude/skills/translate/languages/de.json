@@ -648,10 +648,10 @@
     },
     {
       "id": "upgrade",
-      "msgidPattern": "\\bupgrade\\b",
-      "expect": "[Uu]pgrade",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "[Uu]pgrade auf Meru Pro|[Aa]uf Meru Pro upgrade",
       "severity": "wrong",
-      "reason": "Reaching Pro is an Upgrade, in buttons and prose alike, never a word for purchase (glossary)."
+      "reason": "Upgrading to Pro is Auf Meru Pro upgraden, and in a sentence ein Upgrade auf Meru Pro, with Chrome's noun Upgrade (Chrome: Durch dieses Upgrade; the verb agent-chosen)."
     },
     {
       "id": "gmail-label",
@@ -771,7 +771,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -779,7 +779,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klangspiel$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -787,7 +787,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -795,15 +795,15 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klopfen$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
-      "expect": "^Linen$",
+      "expect": "^Leinen$",
       "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "system-settings",
@@ -818,6 +818,13 @@
       "expect": "Dock",
       "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "Winterschlaf",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: hibernating a tab is Winterschlaf, in den Winterschlaf versetzen; never Ruhezustand, macOS's Sleep, which would read as the computer going to sleep."
     }
   ],
   "accessKeys": {

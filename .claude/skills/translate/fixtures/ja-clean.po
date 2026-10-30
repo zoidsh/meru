@@ -147,3 +147,7 @@ msgstr "システム設定でもオンにしてください。"
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Dockアイコン"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "アイドル状態のタブを休止"

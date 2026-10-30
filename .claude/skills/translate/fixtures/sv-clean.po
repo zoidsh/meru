@@ -178,3 +178,11 @@ msgstr "Aktivera även alternativet i Systeminställningar."
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Dock icon"
 msgstr "Dockikon"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Försätt inaktiva flikar i dvala"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linne"
