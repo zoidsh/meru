@@ -25,6 +25,7 @@ import {
 } from "@meru/ui/components/empty";
 import { Kbd } from "@meru/ui/components/kbd";
 import { Skeleton } from "@meru/ui/components/skeleton";
+import { cn } from "@meru/ui/lib/utils";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -83,14 +84,35 @@ function useReleases() {
   });
 }
 
+const PLACEHOLDER_ITEM_WIDTHS = [
+  ["w-4/5", "w-3/5", "w-2/3"],
+  ["w-3/4", "w-1/2"],
+  ["w-2/3", "w-4/5", "w-2/5"],
+];
+
 function Releases() {
   const { data: releases, isPending, isError, refetch } = useReleases();
 
   if (isPending) {
     return (
-      <div className="space-y-6 p-6">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
+      <div className="divide-y">
+        {PLACEHOLDER_ITEM_WIDTHS.map((itemWidths, index) => (
+          <section key={index} className="flex flex-col px-6 py-6">
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="my-1 h-5 w-20" />
+              {index === 0 ? <Skeleton className="h-5 w-26 rounded-4xl" /> : null}
+            </div>
+            <Skeleton className="my-0.5 h-4 w-20" />
+            <div className="mt-4 flex flex-col">
+              <Skeleton className="my-1 h-5 w-24" />
+              <div className="mt-2.5 flex flex-col gap-1.75 pl-5.5">
+                {itemWidths.map((width) => (
+                  <Skeleton key={width} className={cn("my-0.5 h-4", width)} />
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
       </div>
     );
   }
@@ -147,7 +169,11 @@ function Releases() {
 }
 
 function ReleaseDate() {
-  const { data: releases } = useReleases();
+  const { data: releases, isPending } = useReleases();
+
+  if (isPending) {
+    return <Skeleton className="my-0.5 h-4 w-28" />;
+  }
 
   const [firstRelease] = releases ?? [];
 
