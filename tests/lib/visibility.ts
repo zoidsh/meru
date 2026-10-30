@@ -40,6 +40,12 @@ function readVisibilityStates(meru: UnattachedApp) {
   });
 }
 
+function expectStates(meru: UnattachedApp, expected: Record<string, unknown>, message: string) {
+  return expect
+    .poll(() => readVisibilityStates(meru), { message, timeout: STATE_TIMEOUT })
+    .toEqual(expected);
+}
+
 /**
  * Waits for every account view to have loaded the stand-in, so a state read
  * after it is the page's own rather than the blank document before it.
@@ -61,8 +67,9 @@ export async function waitForAccountViews(meru: UnattachedApp, accountIds: strin
 /**
  * The selected account's view reports "visible". On Linux every other view
  * reports "hidden" as well, because Chromium there counts a view covered by
- * another as occluded, and that is the half the 3.62.0 bug got wrong too. macOS
- * reports a covered view "visible", so elsewhere the others are left unchecked.
+ * another as occluded, and a view stacked wrongly shows there as the wrong one
+ * visible. macOS reports a covered view "visible", so elsewhere the others are
+ * left unchecked.
  */
 export async function expectOnScreen(
   meru: UnattachedApp,
@@ -80,12 +87,7 @@ export async function expectOnScreen(
     ]),
   );
 
-  await expect
-    .poll(() => readVisibilityStates(meru), {
-      message: `only ${selectedAccountId}'s view is on screen`,
-      timeout: STATE_TIMEOUT,
-    })
-    .toEqual(expected);
+  await expectStates(meru, expected, `only ${selectedAccountId}'s view is on screen`);
 }
 
 /**
@@ -94,12 +96,11 @@ export async function expectOnScreen(
  * to be one the views went into rather than one they were held in.
  */
 async function expectAllHidden(meru: UnattachedApp, accountIds: string[]) {
-  await expect
-    .poll(() => readVisibilityStates(meru), {
-      message: "every view is hidden while the window is off screen",
-      timeout: STATE_TIMEOUT,
-    })
-    .toEqual(Object.fromEntries(accountIds.map((accountId) => [accountId, "hidden"])));
+  await expectStates(
+    meru,
+    Object.fromEntries(accountIds.map((accountId) => [accountId, "hidden"])),
+    "every view is hidden while the window is off screen",
+  );
 }
 
 /**
