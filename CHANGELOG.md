@@ -41,3 +41,4 @@ This file is the draft of the next release, written one line at a time as work l
 - <kbd>Shift</kbd>-clicking a link to a Gmail page opens it in a new window, instead of showing an error and an empty window
 - **Linux:** On Wayland, Meru's window appears when it starts, instead of only when it is opened a second time
 - **Windows and Linux:** In the context menu, `Paste and Match Style` has its own access key, M, instead of sharing P with `Paste`
+- **Meru Pro:** A Workspace apps window that closes itself closes cleanly, instead of showing an error that keeps coming back
