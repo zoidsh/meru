@@ -596,7 +596,7 @@
     },
     {
       "id": "ni",
-      "pattern": "(?<!\\p{L})[Nn]i(?!\\p{L})",
+      "pattern": "(?<![\\p{L}\\p{N}+])[Nn]i(?![\\p{L}\\p{N}+])",
       "severity": "wrong",
       "reason": "The user is du, never ni (Chrome writes du in 2,659 messages, ni in none)."
     },

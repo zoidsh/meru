@@ -630,7 +630,7 @@
     },
     {
       "id": "tu",
-      "pattern": "(?<!\\p{L})(?:[Tt]u|[Tt]oi|[Tt]on|[Tt]es|[Tt]a|[Tt]e)(?!\\p{L})|(?<!\\p{L})[Tt][’'](?=\\p{L})",
+      "pattern": "(?<![\\p{L}\\p{N}+])(?:[Tt]u|[Tt]oi|[Tt]on|[Tt]es|[Tt]a|[Tt]e)(?![\\p{L}\\p{N}+])|(?<![\\p{L}\\p{N}+])[Tt][’'](?=\\p{L})",
       "severity": "wrong",
       "reason": "The user is vous, with votre and vos, never tu, toi, te, t’, ton, ta or tes."
     },

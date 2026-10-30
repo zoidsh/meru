@@ -587,7 +587,7 @@
     },
     {
       "id": "u",
-      "pattern": "(?<!\\p{L})(?:[Uu]|[Uu]w)(?!\\p{L})",
+      "pattern": "(?<![\\p{L}\\p{N}+])(?:[Uu]|[Uu]w)(?![\\p{L}\\p{N}+])",
       "severity": "wrong",
       "reason": "The user is je, with jouw or je, never u or uw (Chrome writes je in 3,646 messages, u or uw in 1)."
     },
