@@ -92,7 +92,7 @@ Things that take more than one file to see:
 
 - Add packages with `bun add -d`. Everything is bundled, and electron-builder would ship a runtime `dependencies` entry a second time. The one exception is a native module Electron loads at runtime.
 - Style lands as a rule in `@timche/oxc-configs`, extended by `oxlint.config.ts`, never as a sweep inside a feature pull request. New code matches its neighbors until a rule lands.
-- Ask before bumping Electron or electron-builder. CI builds unsigned, so signing and installer packaging first run in the release itself.
+- Ask before taking a new Electron major or bumping electron-builder. CI builds unsigned, so signing and installer packaging first run in the release itself. A minor or patch upgrade within the current Electron major runs through the `electron-upgrade` skill.
 - Three entries in `electronFuses` are not hardening, and changing them breaks the app:
   - `grantFileProtocolExtraPrivileges` stays on. It gates the loader that serves `file://` out of the asar, and the packaged renderer is a `loadFile` page, so without it the renderer gets `ERR_FILE_NOT_FOUND`.
   - `enableCookieEncryption` stays off. It is one-way: Chromium drops a whole eTLD+1 group rather than read a cookie it cannot decrypt, so the first downgrade past a release that turned it on signs every account out of Gmail.
