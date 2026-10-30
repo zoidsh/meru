@@ -1,7 +1,7 @@
 import { platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT, BASE_SPACING } from "@meru/shared/constants";
 import { clamp } from "@meru/shared/utils";
-import type { BrowserWindow, Rectangle } from "electron";
+import type { BrowserWindow, Event, Input, Rectangle } from "electron";
 import { WebContentsView } from "electron";
 import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { getPreloadPath, loadRenderer, type RendererPage } from "./window";
@@ -15,12 +15,29 @@ export type PopupAnchor = { x: number; y: number; align: "start" | "end" };
 
 export type PopupOptions = {
   page: RendererPage;
-  /** The size of the popup itself, without the gaps the view spans. */
-  width: number;
+  searchParams?: URLSearchParams;
+  /**
+   * The size of the popup itself, without the gaps the view spans. `fill`
+   * spans the whole window with no gaps, for a page that draws its own
+   * backdrop over everything.
+   */
+  width: number | "fill";
   /** `fill` reaches the bottom of the window, leaving the gap it hangs by. */
   height: number | "fill";
   anchor?: PopupAnchor;
+  /**
+   * Off for a page that shows content from outside Meru, so that nothing
+   * slipping past its sanitizing finds a bridge to the main process. With no
+   * bridge to ask through, such a page closes itself by setting its fragment
+   * to `#close`.
+   */
+  preload?: boolean;
+  closeOnEscape?: boolean;
+  /** Called when Escape or the page itself closes the popup, and on no other close. */
+  onDismiss?: () => void;
 };
+
+const CLOSE_FRAGMENT = "#close";
 
 function isSameAnchor(anchor: PopupAnchor | undefined, otherAnchor: PopupAnchor | undefined) {
   if (!anchor || !otherAnchor) {
@@ -88,15 +105,21 @@ export class Popup {
       ? parentWindow.getContentBounds()
       : parentWindow.getBounds();
 
-    const padding = BASE_SPACING;
+    const fillsWidth = options.width === "fill";
 
-    const { width } = options;
+    const padding = fillsWidth ? 0 : BASE_SPACING;
 
-    const anchor = options.anchor ?? {
-      x: parentWindowBounds.width - padding,
-      y: APP_TITLEBAR_HEIGHT + padding,
-      align: "end" as const,
-    };
+    const width = options.width === "fill" ? parentWindowBounds.width : options.width;
+
+    const anchor =
+      options.anchor ??
+      (fillsWidth
+        ? { x: 0, y: 0, align: "start" as const }
+        : {
+            x: parentWindowBounds.width - padding,
+            y: APP_TITLEBAR_HEIGHT + padding,
+            align: "end" as const,
+          });
 
     const viewWidth = width + padding * 2;
 
@@ -121,6 +144,40 @@ export class Popup {
   private handleBlur = () => {
     if (this.closeOnBlurEnabled) {
       this.close();
+    }
+  };
+
+  private dismiss() {
+    const onDismiss = this.options?.onDismiss;
+
+    this.close();
+
+    onDismiss?.();
+  }
+
+  /*
+   * Apart from the app menu key's listener on the same event, which lives as
+   * long as the webContents and keeps a gesture state of its own; this one
+   * comes off with the popup.
+   */
+  private handleBeforeInputEvent = (event: Event, input: Input) => {
+    if (
+      input.type === "keyDown" &&
+      input.key === "Escape" &&
+      !input.alt &&
+      !input.control &&
+      !input.meta &&
+      !input.shift
+    ) {
+      event.preventDefault();
+
+      this.dismiss();
+    }
+  };
+
+  private handleDidNavigateInPage = (_event: Event, url: string) => {
+    if (URL.parse(url)?.hash === CLOSE_FRAGMENT) {
+      this.dismiss();
     }
   };
 
@@ -157,6 +214,10 @@ export class Popup {
       // Electron's own with it and leaves the webContents unable to tear down.
       view.webContents.off("blur", this.handleBlur);
 
+      view.webContents.off("before-input-event", this.handleBeforeInputEvent);
+
+      view.webContents.off("did-navigate-in-page", this.handleDidNavigateInPage);
+
       view.webContents.close();
     }
   };
@@ -184,7 +245,10 @@ export class Popup {
     }
 
     this.view = new WebContentsView({
-      webPreferences: { preload: getPreloadPath("renderer") },
+      webPreferences:
+        options.preload === false
+          ? { sandbox: true, contextIsolation: true, nodeIntegration: false }
+          : { preload: getPreloadPath("renderer") },
     });
 
     watchForAppMenuKey(this.view.webContents);
@@ -197,13 +261,21 @@ export class Popup {
 
     this.options = options;
 
-    loadRenderer(this.view, { page: options.page });
+    loadRenderer(this.view, { page: options.page, searchParams: options.searchParams });
 
     parentWindow.contentView.addChildView(this.view);
 
     this.setBounds();
 
     this.view.webContents.once("blur", this.handleBlur);
+
+    if (options.closeOnEscape) {
+      this.view.webContents.on("before-input-event", this.handleBeforeInputEvent);
+    }
+
+    if (options.preload === false) {
+      this.view.webContents.on("did-navigate-in-page", this.handleDidNavigateInPage);
+    }
 
     parentWindow.on("resize", this.setBounds);
 
