@@ -73,13 +73,10 @@ function createAlarmQuery<QueryResult>(pathName: string, emptyResult: QueryResul
  * `chrome.alarms`, scheduled in the main process and delivered over the
  * extension bridge (`alarms/alarms.ts`).
  *
- * Electron's own alarms are replaced rather than filled in around, because they
- * are half working in a way that filling cannot reach: Chromium schedules them
- * and fires them, and dispatches `onAlarm` into extension pages but never into
- * an extension service worker, which is where MV3 puts every background handler
- * (measured 2 September 2026 on Electron 43.2.0). An extension whose alarms all
- * live in the worker — 1Password's seven do — has a namespace that answers
- * every call and never fires.
+ * Electron's own alarms are replaced rather than filled in around, in every
+ * context, so that every context of an extension reads and clears the one
+ * store main keeps. Chromium's own would also deliver `onAlarm` into the
+ * service worker (`alarms/alarms.ts` says what each implementation does).
  *
  * The events stream is parked by the first `onAlarm` listener rather than at
  * startup, so a context that never listens never opens one.

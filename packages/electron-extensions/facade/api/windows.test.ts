@@ -339,8 +339,8 @@ function settle() {
 describe("windows.onRemoved", () => {
   /*
    * What a password manager's worker ends a request on when the user closes
-   * the popout it opened for it, which Electron would never deliver to a
-   * worker.
+   * the popout it opened for it, which Electron has no `chrome.windows` to
+   * deliver from.
    */
   test("fires for a window main says is gone, for an extension that opens windows", async () => {
     const bridge = installFakeEventsBridge();

@@ -46,10 +46,9 @@ export function createChromeFacade({
  * implements is left exactly as it is, and only the gaps around it are filled
  * (see the noop-first decision in the feature docs).
  *
- * Three namespaces are the exception, and they are because filling gaps cannot
- * help there: Electron implements `connectNative` and refuses every host from
- * it (`api/native-messaging.ts`), it implements `alarms` and delivers
- * `onAlarm` nowhere a background handler can hear it (`api/alarms.ts`), and
+ * Three namespaces are the exception: Electron implements `connectNative` and
+ * refuses every host from it (`api/native-messaging.ts`), the facade keeps
+ * `alarms` in main so every context shares one store (`api/alarms.ts`), and
  * Chromium's own `permissions` answers from grants Meru never makes and
  * refuses every `request` outside a user gesture, which a worker never has
  * (`api/permissions.ts`). All three are taken over rather than filled, which

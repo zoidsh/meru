@@ -31,8 +31,7 @@ type StorageChangeDispatch = ReturnType<typeof installStorageSynthesis>["dispatc
  * refuse a content script the call Chromium would have refused it. Its
  * `onChanged` is only listened to, not shadowed, and what it hears is fanned
  * out to the sessions whose own stores no longer change — unless the extension
- * is opted into synthesis, which shadows the writes and the events both, since
- * Electron never fires those events in a worker.
+ * is opted into synthesis, which shadows the writes and the events both.
  */
 const workerGlobals = globalThis as unknown as Record<string, ChromeNamespace | undefined>;
 

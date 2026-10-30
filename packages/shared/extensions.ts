@@ -69,7 +69,7 @@ export type CuratedExtension = {
   grantableOptionalPermissions?: string[];
   /**
    * Synthesizes `chrome.storage.onChanged` in the extension's service worker,
-   * where Electron never fires it, from the writes that pass through
+   * in place of the native event, from the writes that pass through
    * `chrome.storage` there. For an extension whose worker state is fed by that
    * event and stays stale without it.
    *

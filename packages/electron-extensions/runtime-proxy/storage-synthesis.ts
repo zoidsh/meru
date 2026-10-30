@@ -132,11 +132,11 @@ function answerCall(
 }
 
 /**
- * Synthesizes `chrome.storage.onChanged` in the extension's service worker,
- * where Electron dispatches no `EventRouter` event of any kind (see
- * `watchChanges` in `storage-relay.ts`). An extension whose state lives behind
- * that event otherwise never hears its own writes: Bitwarden's worker goes on
- * logging `Null or undefined account` after a sign-in has stored one.
+ * Synthesizes `chrome.storage.onChanged` in the extension's service worker in
+ * place of the native event, which Electron also delivers there (see
+ * `watchChanges` in `storage-relay.ts`). Bitwarden's state lives behind that
+ * event: without one of the two, its worker goes on logging `Null or undefined
+ * account` after a sign-in has stored one.
  *
  * Each area's `set`, `remove` and `clear` are shadowed to read the keys they
  * touch, write, read them again, and dispatch the difference to the change

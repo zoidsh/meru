@@ -29,9 +29,8 @@ function toStrings(value: unknown) {
 /**
  * What Chromium granted the context this runs in, which is the manifest it
  * loaded rather than the manifest the extension was published with: the derive
- * drops the permissions Electron declares and ships no module for
- * (`derive/manifest.ts`), so `webRequest` is missing here exactly as the
- * namespace behind it is.
+ * drops `webRequest` and `webRequestAuthProvider` (`derive/manifest.ts`), so
+ * `webRequest` is missing here exactly as the native namespace behind it is.
  */
 function readManifest() {
   const runtime = (globalThis as unknown as Record<string, ChromeNamespace | undefined>).chrome
