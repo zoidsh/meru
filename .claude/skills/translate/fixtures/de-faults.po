@@ -23,9 +23,15 @@ msgstr "Sichern"
 
 # A standalone Taste for an on-screen button reads as a keyboard key.
 # fault: banned:taste
-#: packages/renderer/routes/settings/appearance.tsx
+# fault: pinned:button
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
 msgstr "Lesezeichen-Taste anzeigen"
+
+# fault: pinned:button
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show width button"
+msgstr "Breiten-Schaltfläche anzeigen"
 
 # A license key is a Lizenzschlüssel, so the English's key allows no Taste.
 # fault: banned:taste
@@ -190,3 +196,28 @@ msgstr "Symbol im dock"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
 msgstr "Inaktive Tabs in den Ruhezustand versetzen"
+
+# fault: pinned:pin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Fixieren"
+
+# fault: pinned:unpin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Lösen"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Im Starter"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Menüzeilensymbol"
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "Ruhemodus ausschalten"

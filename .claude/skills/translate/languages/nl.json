@@ -957,6 +957,20 @@
       "expect": "[Ww]interslaap",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: hibernating a tab is winterslaap, in winterslaap zetten; never slaapstand or sluimer, the systems' Sleep, which would read as the computer going to sleep."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "[Ll]auncher",
+      "severity": "wrong",
+      "reason": "The launcher is the launcher, as Chrome names ChromeOS's (Chrome: 20 of 20 messages)."
+    },
+    {
+      "id": "sidebar",
+      "msgidPattern": "\\bsidebar\\b",
+      "expect": "[Zz]ijbalk",
+      "severity": "wrong",
+      "reason": "The sidebar is the zijbalk, as Chrome writes it in Toggle sidebar (Chrome: 1 of 1 message); Chrome's zijvenster is its side panel, a different thing."
     }
   ],
   "accessKeys": {

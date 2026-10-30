@@ -12,7 +12,7 @@ msgstr ""
 msgid "Show a notification when a download finishes."
 msgstr "Visa en notis när en nedladdning är klar."
 
-# fault: banned:hamtning
+# fault: banned:hamta
 # fault: pinned:download-history
 # fault: pinned:download
 #: packages/renderer/routes/download-history.tsx
@@ -60,6 +60,7 @@ msgstr "Sök …"
 msgid "Couldn't add the account."
 msgstr "Tyvärr gick det inte att lägga till kontot."
 
+# fault: banned:hamta
 # fault: pinned:download
 #: packages/renderer/components/downloads.tsx
 msgid "No downloads yet"
@@ -257,3 +258,8 @@ msgstr "Försätt inaktiva flikar i viloläge"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuter"
+
+# fault: banned:hamta
+#: packages/renderer/routes/settings/general.tsx
+msgid "Get the app"
+msgstr "Hämta appen"

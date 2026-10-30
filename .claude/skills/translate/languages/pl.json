@@ -962,6 +962,13 @@
       "expect": "[Hh]ibern",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: hibernating a tab is hibernacja, hibernuj; never uśpij, the systems' Sleep, which would read as the computer going to sleep."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "[Mm]enu z[ \\u00a0]aplikacjami",
+      "severity": "wrong",
+      "reason": "The launcher is the menu z aplikacjami, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
     }
   ],
   "accessKeys": {

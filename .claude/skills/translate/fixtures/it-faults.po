@@ -78,11 +78,10 @@ msgctxt "Gmail label"
 msgid "Label"
 msgstr "Contrassegno"
 
-# fault: banned:tabstrip
 # fault: pinned:tab-strip
-#: packages/renderer/routes/settings/general.tsx
+#: packages/renderer/components/vertical-tabs.tsx
 msgid "Narrow the tab strip"
-msgstr "Restringi la tabstrip"
+msgstr "Restringi la barra delle schede"
 
 # fault: pinned:default-browser
 #: packages/app/context-menu.ts
@@ -297,3 +296,8 @@ msgstr "Protezione dalle truffe"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuti"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Nel launcher"

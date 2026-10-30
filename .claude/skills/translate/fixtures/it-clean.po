@@ -63,9 +63,9 @@ msgctxt "Gmail label"
 msgid "Label"
 msgstr "Etichetta"
 
-#: packages/renderer/routes/settings/general.tsx
+#: packages/renderer/components/vertical-tabs.tsx
 msgid "Narrow the tab strip"
-msgstr "Restringi la barra delle schede"
+msgstr "Restringi la tabstrip"
 
 #: packages/app/context-menu.ts
 msgid "Open in Default Browser"
@@ -244,3 +244,7 @@ msgstr "Protezione dal phishing"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuti"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "In Avvio app"

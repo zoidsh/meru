@@ -936,6 +936,20 @@
       "expect": "休止",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: hibernating a tab is 休止; never スリープ, the systems' Sleep, which would read as the computer going to sleep."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "メニューバー",
+      "severity": "wrong",
+      "reason": "The macOS menu bar is the メニューバー, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "おやすみモード",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is おやすみモード, Apple's name for macOS's own feature, in Meru's own copy too."
     }
   ],
   "accessKeys": {

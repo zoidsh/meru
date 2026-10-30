@@ -199,3 +199,7 @@ msgstr "Hibernuj nieaktywne karty"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "Len"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "W menu z aplikacjami"

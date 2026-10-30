@@ -190,3 +190,11 @@ msgstr "Linnen"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuten"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "In launcher"
+
+#: packages/shared/workspace-apps.ts
+msgid "Sidebar"
+msgstr "Zijbalk"

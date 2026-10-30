@@ -562,10 +562,10 @@
       }
     },
     {
-      "id": "hamtning",
-      "pattern": "[Hh]ämtning",
+      "id": "hamta",
+      "pattern": "(?<!\\p{L})[Hh]ämt\\p{L}*",
       "severity": "wrong",
-      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never Apple's hämtning (Chrome: 269 messages, none the other way).",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never hämta or hämtning (Chrome: 269 messages, none the other way).",
       "allow": {
         "contexts": ["macOS"]
       }

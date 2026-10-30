@@ -196,3 +196,13 @@ msgstr "アイドル状態のタブをスリープ"
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Upgrade to Meru Pro to add more accounts"
 msgstr "Meru Pro にアップグレードしてアカウントを追加"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "メニュー列のアイコン"
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "通知停止をオフにする"

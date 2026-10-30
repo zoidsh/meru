@@ -96,9 +96,9 @@ msgctxt "macOS"
 msgid "Shift"
 msgstr "Umschalttaste"
 
-#: packages/renderer/routes/settings/appearance.tsx
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
-msgstr "Lesezeichen-Schaltfläche anzeigen"
+msgstr "Lesezeichen-Button anzeigen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hold the Control key to open it in the background."
@@ -191,3 +191,23 @@ msgstr "Inaktive Tabs in den Winterschlaf versetzen"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "Leinen"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Anpinnen"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Loslösen"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Im Launcher"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Menüleistensymbol"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "„Nicht stören“ ausschalten"

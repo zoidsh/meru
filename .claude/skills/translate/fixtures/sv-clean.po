@@ -190,3 +190,7 @@ msgstr "Linne"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuter"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Get the app"
+msgstr "Skaffa appen"

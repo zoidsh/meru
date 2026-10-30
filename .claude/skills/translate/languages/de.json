@@ -580,7 +580,7 @@
       "id": "taste",
       "pattern": "(?<!(?:Control|Ctrl|Strg|Alt|Fn|Esc|Option|Cmd|Tab|Shift|Umschalt|Enter|Eingabe|Windows|Befehls)-)(?<!\\p{L})Tasten?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "An on-screen button is Schaltfläche; a standalone Taste reads as a keyboard key. Key names such as Umschalttaste are fine.",
+      "reason": "An on-screen button is a Button; a standalone Taste reads as a keyboard key or a mouse button, as Chrome keeps it (Chrome: Button in 102 of 141 messages for button, Taste in 17, Maustaste in 16). Key names such as Umschalttaste are fine.",
       "allow": {
         "msgidPattern": "\\bkeyboard\\b|(?<!license )\\bkeys?\\b"
       }
@@ -825,6 +825,48 @@
       "expect": "Winterschlaf",
       "severity": "doubtful",
       "reason": "Glossary, agent-chosen: hibernating a tab is Winterschlaf, in den Winterschlaf versetzen; never Ruhezustand, macOS's Sleep, which would read as the computer going to sleep."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "[Bb]utton",
+      "severity": "wrong",
+      "reason": "An on-screen button is a Button, as Chrome writes it: Lesezeichen-Button (Chrome: 102 of 141 messages, 3 with Schaltfläche)."
+    },
+    {
+      "id": "pin",
+      "msgid": "Pin",
+      "expect": "^Anpinnen$",
+      "severity": "wrong",
+      "reason": "The tab context menu's Pin is Anpinnen, as Chrome writes it: Tab anpinnen, angepinnter Tab (Chrome: 16 of 16 messages for pinned)."
+    },
+    {
+      "id": "unpin",
+      "msgid": "Unpin",
+      "expect": "^Loslösen$",
+      "severity": "wrong",
+      "reason": "The tab context menu's Unpin is Loslösen, as Chrome writes it."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "Launcher",
+      "severity": "wrong",
+      "reason": "The launcher is the Launcher, as Chrome names ChromeOS's (Chrome: 18 of 20 messages)."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "Menüleiste",
+      "severity": "wrong",
+      "reason": "The macOS menu bar is the Menüleiste, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "Nicht stören",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is Nicht stören, Apple's name for macOS's own feature, in Meru's own copy too."
     }
   ],
   "accessKeys": {

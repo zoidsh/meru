@@ -151,3 +151,11 @@ msgstr "Dockアイコン"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
 msgstr "アイドル状態のタブを休止"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "メニューバーのアイコン"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "おやすみモードをオフにする"

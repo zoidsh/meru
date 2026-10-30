@@ -257,3 +257,13 @@ msgstr "Zet inactieve tabbladen in slaapstand"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuten"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "In starter"
+
+# fault: pinned:sidebar
+#: packages/shared/workspace-apps.ts
+msgid "Sidebar"
+msgstr "Navigatiekolom"

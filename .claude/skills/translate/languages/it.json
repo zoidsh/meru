@@ -559,12 +559,6 @@
       "reason": "A tab is a scheda, plural schede, as Chrome writes it, never Apple's pannello (Chrome: 792 messages, none with pannello)."
     },
     {
-      "id": "tabstrip",
-      "pattern": "[Tt]ab ?strip",
-      "severity": "wrong",
-      "reason": "The tab strip is the barra delle schede, the user's call against Chrome's loanword tabstrip (Chrome: 8 of 8 messages)."
-    },
-    {
       "id": "segnalibro",
       "pattern": "(?<!\\p{L})[Ss]egnalibr[oi](?!\\p{L})",
       "severity": "wrong",
@@ -658,9 +652,9 @@
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
-      "expect": "barra delle schede",
+      "expect": "tabstrip",
       "severity": "wrong",
-      "reason": "The tab strip is the barra delle schede, the user's call against Chrome's loanword tabstrip (Chrome: 8 of 8 messages)."
+      "reason": "The tab strip is the tabstrip, feminine, as Chrome writes it: la tabstrip (Chrome: 9 of 9 messages)."
     },
     {
       "id": "default-browser",
@@ -938,6 +932,13 @@
       "expect": "upgrade a Meru Pro",
       "severity": "wrong",
       "reason": "Upgrading to Pro is Esegui l’upgrade a Meru Pro, fai l’upgrade a Meru Pro in a sentence, as Chrome words upgrading to something newer (Chrome: 7 of 8 messages for upgrade to)."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "[Aa]vvio app",
+      "severity": "wrong",
+      "reason": "The launcher is Avvio app, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
     }
   ],
   "accessKeys": {
