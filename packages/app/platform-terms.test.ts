@@ -206,17 +206,19 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
     }
   });
 
-  test("the tray's Quit on macOS is the application menu's macOS message", () => {
+  test("the tray's Quit is the application menu's message for the platform", () => {
     new AppTray().createOrUpdateContextMenu();
 
     const labels = collectLabels(builtTemplate);
 
-    const macOSQuit = markedTranslation("macOS", "Quit Meru");
+    for (const quitContext of PLATFORM_CONTEXTS) {
+      const quit = markedTranslation(quitContext, "Quit Meru");
 
-    if (context === "macOS") {
-      expect(labels).toContain(macOSQuit);
-    } else {
-      expect(labels).not.toContain(macOSQuit);
+      if (quitContext === context) {
+        expect(labels).toContain(quit);
+      } else {
+        expect(labels).not.toContain(quit);
+      }
     }
   });
 

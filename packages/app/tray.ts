@@ -139,17 +139,13 @@ export class AppTray {
   }
 
   private getQuitLabel() {
-    if (platform.isMacOS) {
-      const appName = Electron.app.name;
+    const appName = Electron.app.name;
 
-      return t({ message: `Quit ${appName}`, context: "macOS" });
-    }
-
-    if (platform.isWindows) {
-      return t({ message: "Exit", comment: "Tray menu item that quits Meru, as Windows names it" });
-    }
-
-    return t({ message: "Quit", comment: "Tray menu item that quits Meru" });
+    return byPlatform(platform, {
+      macOS: t({ message: `Quit ${appName}`, context: "macOS" }),
+      windows: t({ message: `Quit ${appName}`, context: "Windows" }),
+      linux: t({ message: `Quit ${appName}`, context: "Linux" }),
+    });
   }
 
   private getHideLabel() {
