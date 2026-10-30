@@ -17,6 +17,7 @@ import {
   generateGmailLabelColorsCss,
   gmailFeedUrl,
   gmailSearchHash,
+  inboxFeedPollDelay,
   parseGmailMessageId,
 } from "@meru/shared/gmail";
 import { i18n } from "@meru/shared/i18n";
@@ -24,7 +25,7 @@ import { ms } from "@meru/shared/ms";
 import { clamp, wait } from "@meru/shared/utils";
 import type { SupportedWorkspaceApp } from "@meru/shared/workspace-apps";
 import { extractVerificationCode } from "@meru/verification-code";
-import { app, BrowserWindow, type Session, type WebContentsView } from "electron";
+import { app, BrowserWindow, net, type Session, type WebContentsView } from "electron";
 import z from "zod";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -110,6 +111,28 @@ const inboxTypeSchema = z.string();
  * minute, for two small feed requests a minute per account.
  */
 const INBOX_FEED_POLL_INTERVAL = ms("30s");
+
+/*
+ * Reached only while the feed fails with the network up, such as on an expired
+ * cookie, a LAN without internet or a Google outage, since a resume, the
+ * offline-to-online edge and any success all reset the backoff. Five minutes
+ * keeps the log to a line per five minutes, at the cost of noticing such a
+ * recovery up to that late.
+ */
+const INBOX_FEED_POLL_MAX_DELAY = ms("5m");
+
+/*
+ * The poll arms its next tick only once the current one settles, and
+ * `session.fetch` never gives up on its own, so one request that hangs would
+ * stop the poll until the next resume or reconnect.
+ */
+const INBOX_FEED_FETCH_TIMEOUT = ms("20s");
+
+/*
+ * "notReady" is the page not having loaded Gmail yet, which says nothing
+ * about the feed, so it neither counts as a failure nor clears one.
+ */
+type InboxFeedOutcome = "ok" | "failed" | "notReady";
 
 /*
  * Generous because an entry's `issued` time has not been verified to be
@@ -227,7 +250,13 @@ export class Gmail {
 
   private seenInboxFeedEntryIds = new Set<string>();
 
-  private inboxFeedPollInterval: NodeJS.Timeout;
+  private inboxFeedPollTimeout: NodeJS.Timeout | undefined;
+
+  private inboxFeedPollTimeoutDelay = INBOX_FEED_POLL_INTERVAL;
+
+  private inboxFeedFailures = 0;
+
+  private isDestroyed = false;
 
   private storeUnsubscribers: (() => void)[] = [];
 
@@ -328,13 +357,7 @@ export class Gmail {
 
     // Without a poll of its own, the baseline's `readAt` would sit hours behind
     // the feed through a quiet period, and the slack window with it.
-    this.inboxFeedPollInterval = setInterval(() => {
-      if (!this._view) {
-        return;
-      }
-
-      this.fetchInboxFeed({ retryWhileUnchanged: false });
-    }, INBOX_FEED_POLL_INTERVAL);
+    this.scheduleInboxFeedPoll();
   }
 
   /**
@@ -577,7 +600,9 @@ export class Gmail {
 
     main.window.contentView.removeChildView(this.view);
 
-    clearInterval(this.inboxFeedPollInterval);
+    this.isDestroyed = true;
+
+    clearTimeout(this.inboxFeedPollTimeout);
 
     for (const unsubscribe of this.storeUnsubscribers) {
       unsubscribe();
@@ -688,10 +713,65 @@ export class Gmail {
     ipc.renderer.send(main.window.webContents, "gmail.inboxChanged", this.accountId, messages);
   }
 
+  /*
+   * Rescheduled rather than repeated, so each tick can wait as long as the
+   * failures so far call for. A tick that skips still re-arms, or the poll
+   * would stop for good.
+   */
+  private scheduleInboxFeedPoll() {
+    clearTimeout(this.inboxFeedPollTimeout);
+
+    // A tick still in flight when the account is removed would otherwise arm a
+    // timer nothing clears.
+    if (this.isDestroyed) {
+      return;
+    }
+
+    const delay = inboxFeedPollDelay(
+      INBOX_FEED_POLL_INTERVAL,
+      this.inboxFeedFailures,
+      INBOX_FEED_POLL_MAX_DELAY,
+    );
+
+    this.inboxFeedPollTimeoutDelay = delay;
+
+    this.inboxFeedPollTimeout = setTimeout(async () => {
+      this.inboxFeedPollTimeout = undefined;
+
+      // Offline, the fetch can only fail, and the offline-to-online resync
+      // reads the feed as soon as the network is back.
+      if (this._view && net.isOnline()) {
+        await this.fetchInboxFeed({ retryWhileUnchanged: false });
+      }
+
+      this.scheduleInboxFeedPoll();
+    }, delay);
+  }
+
+  private recordInboxFeedOutcome(outcome: InboxFeedOutcome) {
+    if (outcome === "notReady") {
+      return;
+    }
+
+    if (outcome === "failed") {
+      this.inboxFeedFailures += 1;
+
+      return;
+    }
+
+    this.inboxFeedFailures = 0;
+
+    // A success from outside the poll, such as a reload's, would otherwise
+    // leave the recovered feed waiting out a delay armed while it was failing.
+    if (this.inboxFeedPollTimeout && this.inboxFeedPollTimeoutDelay > INBOX_FEED_POLL_INTERVAL) {
+      this.scheduleInboxFeedPoll();
+    }
+  }
+
   private async retryInboxFeedFetch(
     fetchAttempt: number,
     options: { retryWhileUnchanged: boolean },
-  ) {
+  ): Promise<InboxFeedOutcome | undefined> {
     if (fetchAttempt > 10) {
       return;
     }
@@ -701,13 +781,15 @@ export class Gmail {
     // Awaited so that the whole chain is behind one promise, which is what
     // lets `handleMessage` hold its caller until the list has caught up. Every
     // other caller drops the promise, so none of them waits on this.
-    await this.fetchInboxFeed(options, fetchAttempt + 1);
+    return this.readInboxFeed(options, fetchAttempt + 1);
   }
 
   private async fetchImportantFeedEntryIds() {
     try {
       const body = await this.session
-        .fetch(`${gmailFeedUrl("important")}?t=${Date.now()}`)
+        .fetch(`${gmailFeedUrl("important")}?t=${Date.now()}`, {
+          signal: AbortSignal.timeout(INBOX_FEED_FETCH_TIMEOUT),
+        })
         .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
@@ -722,17 +804,27 @@ export class Gmail {
     }
   }
 
-  async fetchInboxFeed(
-    { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean } = {},
+  async fetchInboxFeed(options: { retryWhileUnchanged?: boolean } = {}) {
+    this.recordInboxFeedOutcome(await this.readInboxFeed(options));
+  }
+
+  private async readInboxFeed(
+    { retryWhileUnchanged = true }: { retryWhileUnchanged?: boolean },
     fetchAttempt = 1,
-  ) {
+  ): Promise<InboxFeedOutcome> {
+    // Set once the feed has parsed, so that a later throw, such as from a
+    // malformed entry or a notification, is not held against the feed.
+    let isFeedRead = false;
+
     try {
       if (!this.view.webContents.getURL().startsWith(gmailUrl)) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          return (
+            (await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged })) ?? "notReady"
+          );
         }
 
-        return;
+        return "notReady";
       }
 
       const inboxTypeValue = await this.view.webContents.executeJavaScript("window.GM_INBOX_TYPE");
@@ -743,10 +835,12 @@ export class Gmail {
       // diff against, and otherwise return, the way the URL check above does.
       if (inboxTypeValue === undefined) {
         if (!this.inboxFeedBaseline) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          return (
+            (await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged })) ?? "notReady"
+          );
         }
 
-        return;
+        return "notReady";
       }
 
       const inboxType = inboxTypeSchema.parse(inboxTypeValue);
@@ -761,9 +855,15 @@ export class Gmail {
       // it describes.
       const readAt = Date.now();
 
-      const body = await this.session.fetch(`${feedUrl}?t=${Date.now()}`).then((res) => res.text());
+      const body = await this.session
+        .fetch(`${feedUrl}?t=${Date.now()}`, {
+          signal: AbortSignal.timeout(INBOX_FEED_FETCH_TIMEOUT),
+        })
+        .then((res) => res.text());
 
       const { feed } = inboxFeedSchema.parse(xmlParser.parse(body));
+
+      isFeedRead = true;
 
       const feedEntries = Array.isArray(feed.entry) ? feed.entry : feed.entry ? [feed.entry] : [];
 
@@ -797,10 +897,14 @@ export class Gmail {
       // for it to wait for.
       if (!changed) {
         if (retryWhileUnchanged) {
-          await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+          // A retry that finds the page gone leaves this read's success
+          // standing.
+          const retried = await this.retryInboxFeedFetch(fetchAttempt, { retryWhileUnchanged });
+
+          return retried === "failed" ? "failed" : "ok";
         }
 
-        return;
+        return "ok";
       }
 
       this.inboxFeedBaseline = {
@@ -851,7 +955,7 @@ export class Gmail {
       }
 
       if (!baseline) {
-        return;
+        return "ok";
       }
 
       // Ahead of the notifications, so that the list and the unread badge have
@@ -1023,7 +1127,11 @@ export class Gmail {
       }
     } catch (error) {
       log.error("Failed to fetch inbox feed", { error });
+
+      return isFeedRead ? "ok" : "failed";
     }
+
+    return "ok";
   }
 
   /**
@@ -1103,6 +1211,11 @@ export class Gmail {
    * refresh is what makes the stale view show it.
    */
   resyncInbox() {
+    // Whatever failed before the gap may well have been the gap.
+    this.inboxFeedFailures = 0;
+
+    this.scheduleInboxFeedPoll();
+
     if (!this._view) {
       return;
     }
