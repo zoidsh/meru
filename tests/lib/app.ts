@@ -743,7 +743,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
  * that stopped passing it, is a broken run — and a suite that skipped itself
  * would report that as green for as long as nobody looked.
  */
-function requireLicenseKey() {
+export function requireLicenseKey() {
   const licenseKey = process.env.MERU_TEST_LICENSE_KEY;
 
   if (!licenseKey) {
