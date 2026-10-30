@@ -3,10 +3,12 @@
  * the newest stable release in the installed major, once it has been on npm
  * for the minimum age. A new major is never offered; it is Tim's call.
  *
- *   bun scripts/electron-upgrade.ts [--time <file>] [--current <version>] [--now <iso>] [--min-age <hours>]
+ *   bun scripts/electron-upgrade.ts [--time <file> --versions <file>] [--current <version>] [--now <iso>] [--min-age <hours>]
  *
- * Without `--time` it reads `npm view electron time --json`, and without
- * `--current` the version `bun.lock` resolved. The target alone goes to
+ * Without `--time` and `--versions` it reads `npm view electron time --json`
+ * and `npm view electron versions --json`, and without `--current` the
+ * version `bun.lock` resolved. The `time` map keeps versions that were
+ * unpublished, so only those `versions` still lists are candidates. The target alone goes to
  * stdout with exit 0; nothing to take is exit 1 and an error exit 2, each with
  * its reason on stderr, so a caller can branch on the code alone.
  *
@@ -46,13 +48,19 @@ function compare(a: Version, b: Version) {
 }
 
 /** Stable releases from npm's `time` map, which also holds `created`, `modified` and prereleases. */
-function stableReleases(time: unknown) {
+function stableReleases(time: unknown, versions: unknown) {
   if (typeof time !== "object" || time === null || Array.isArray(time)) {
     throw new Error("npm's publish times are not an object of version to date");
   }
 
+  if (!Array.isArray(versions) || !versions.every((version) => typeof version === "string")) {
+    throw new Error("npm's versions are not a list of version strings");
+  }
+
+  const listed = new Set(versions);
+
   return Object.entries(time).flatMap(([version, published]): Release[] => {
-    if (!STABLE.test(version)) {
+    if (!STABLE.test(version) || !listed.has(version)) {
       return [];
     }
 
@@ -68,17 +76,19 @@ function stableReleases(time: unknown) {
 
 export function decide({
   time,
+  versions,
   current,
   now,
   minAgeHours = DEFAULT_MIN_AGE_HOURS,
 }: {
   time: unknown;
+  versions: unknown;
   current: string;
   now: Date;
   minAgeHours?: number;
 }): Decision {
   const currentParts = parseVersion(current);
-  const releases = stableReleases(time).sort((a, b) => compare(b.parts, a.parts));
+  const releases = stableReleases(time, versions).sort((a, b) => compare(b.parts, a.parts));
 
   // `--now` can lie in the past, where a major npm lists is not out yet.
   const newerMajor = releases.find(
@@ -150,21 +160,21 @@ export function lockedElectron(lock: string) {
   return version;
 }
 
-function npmTime() {
-  const result = Bun.spawnSync(["npm", "view", "electron", "time", "--json"]);
+function npmView(field: "time" | "versions") {
+  const result = Bun.spawnSync(["npm", "view", "electron", field, "--json"]);
 
   if (result.exitCode !== 0) {
-    throw new Error(`npm view electron time failed: ${result.stderr.toString().trim()}`);
+    throw new Error(`npm view electron ${field} failed: ${result.stderr.toString().trim()}`);
   }
 
-  return parseTime(result.stdout.toString(), "npm");
+  return parseJson(result.stdout.toString(), `npm view electron ${field}`);
 }
 
-function parseTime(json: string, source: string) {
+function parseJson(json: string, source: string) {
   try {
     return JSON.parse(json) as unknown;
   } catch (error) {
-    throw new Error(`Publish times from ${source} are not JSON: ${(error as Error).message}`);
+    throw new Error(`${source} is not JSON: ${(error as Error).message}`);
   }
 }
 
@@ -173,6 +183,7 @@ function main() {
     args: Bun.argv.slice(2),
     options: {
       time: { type: "string" },
+      versions: { type: "string" },
       current: { type: "string" },
       now: { type: "string" },
       "min-age": { type: "string" },
@@ -180,12 +191,17 @@ function main() {
     strict: true,
   });
 
-  const minAgeHours =
-    values["min-age"] === undefined ? DEFAULT_MIN_AGE_HOURS : Number(values["min-age"]);
-
-  if (!Number.isFinite(minAgeHours) || minAgeHours < 0) {
-    throw new Error(`--min-age takes a number of hours: ${values["min-age"]}`);
+  if ((values.time === undefined) !== (values.versions === undefined)) {
+    throw new Error("--time and --versions are given together, or neither");
   }
+
+  const minAge = values["min-age"];
+
+  if (minAge !== undefined && !/^\d+(\.\d+)?$/.test(minAge)) {
+    throw new Error(`--min-age takes a number of hours: "${minAge}"`);
+  }
+
+  const minAgeHours = minAge === undefined ? DEFAULT_MIN_AGE_HOURS : Number(minAge);
 
   const now = values.now === undefined ? new Date() : new Date(values.now);
 
@@ -196,12 +212,11 @@ function main() {
   const current =
     values.current ??
     lockedElectron(readFileSync(path.join(import.meta.dirname, "..", "bun.lock"), "utf8"));
-  const time =
-    values.time === undefined
-      ? npmTime()
-      : parseTime(readFileSync(values.time, "utf8"), values.time);
+  const read = (file: string) => parseJson(readFileSync(file, "utf8"), file);
+  const time = values.time === undefined ? npmView("time") : read(values.time);
+  const versions = values.versions === undefined ? npmView("versions") : read(values.versions);
 
-  const decision = decide({ time, current, now, minAgeHours });
+  const decision = decide({ time, versions, current, now, minAgeHours });
 
   for (const line of reasons(decision, current, minAgeHours)) {
     console.error(line);
